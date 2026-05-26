@@ -1,0 +1,9 @@
+{
+  "name": "flightops-web",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "build": "echo 'placeholder build — replaced in Story 1' && mkdir -p .next && echo ok > .next/placeholder",
+    "start": "echo 'placeholder start'"
+  }
+}
