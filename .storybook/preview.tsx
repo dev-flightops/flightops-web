@@ -12,6 +12,14 @@ const preview: Preview = {
       },
     },
     backgrounds: { disable: true },
+    a11y: {
+      // Same WCAG tag set as vitest + Playwright — keep all three in sync.
+      config: { rules: [] },
+      options: { runOnly: { type: "tag", values: ["wcag2a", "wcag2aa"] } },
+      // "todo" surfaces violations in the panel without failing the story —
+      // dev-time guidance, not a hard gate. CI gating is vitest + Playwright.
+      test: "todo",
+    },
   },
   decorators: [
     withThemeByClassName({
