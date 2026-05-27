@@ -17,7 +17,7 @@ jobs:
           cache: "npm"
 
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --legacy-peer-deps
 
       - name: Lint
         run: npm run lint
@@ -25,7 +25,13 @@ jobs:
       - name: Type check
         run: npm run type-check
 
+      - name: Unit tests (Vitest)
+        run: npm run test
+
       - name: Build
         run: npm run build
         env:
           NEXT_PUBLIC_API_URL: https://flightops-gateway-staging.onrender.com
+          AUTH_SECRET: ci-only-secret-do-not-use-in-prod
+  # Note: Playwright E2E suite runs against a live backend and is omitted from
+  # CI for now. Run locally via `npm run test:e2e` after `docker compose up`.
