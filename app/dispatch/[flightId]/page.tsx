@@ -10,6 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { DownloadPdfButton } from "@/components/dispatch/download-pdf-button";
 import { ReleaseButton } from "@/components/dispatch/release-button";
 import { ReleasedFooter } from "@/components/dispatch/released-footer";
 import { StatusBadge } from "@/components/dispatch/status-badge";
@@ -65,11 +66,12 @@ export default async function FlightDetailPage({ params }: Props) {
         {flight.status === "released" &&
           flight.released_at &&
           flight.released_by && (
-            <div className="mb-6">
+            <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <ReleasedFooter
                 releasedAt={flight.released_at}
                 releasedBy={flight.released_by}
               />
+              <DownloadPdfButton flightId={flight.id} />
             </div>
           )}
 
