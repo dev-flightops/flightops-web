@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { LogOut, Plane, Users, Wrench } from "lucide-react";
 
 import { auth, signOut } from "@/auth";
@@ -54,6 +55,7 @@ export default async function Home() {
           icon={<Plane className="h-5 w-5" />}
           title="Dispatch"
           description="Releases, risk scoring, compliance, weather"
+          href="/dispatch"
         />
         <ModuleCard
           icon={<Wrench className="h-5 w-5" />}
@@ -74,11 +76,25 @@ function ModuleCard({
   icon,
   title,
   description,
+  href,
 }: {
   icon: React.ReactNode;
   title: string;
   description: string;
+  href?: string;
 }) {
+  const action = href ? (
+    <Link href={href}>
+      <Button size="sm" variant="outline">
+        Open
+      </Button>
+    </Link>
+  ) : (
+    <Button size="sm" variant="outline" disabled>
+      Coming soon
+    </Button>
+  );
+
   return (
     <Card>
       <CardHeader>
@@ -86,11 +102,7 @@ function ModuleCard({
         <CardTitle>{title}</CardTitle>
         <CardDescription>{description}</CardDescription>
       </CardHeader>
-      <CardContent>
-        <Button size="sm" variant="outline">
-          Open
-        </Button>
-      </CardContent>
+      <CardContent>{action}</CardContent>
     </Card>
   );
 }

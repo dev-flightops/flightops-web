@@ -12,7 +12,8 @@ describe("cn", () => {
   });
 
   it("handles conditional classes", () => {
-    expect(cn("base", false && "hidden", "active")).toBe("base active");
+    const hidden: boolean = false;
+    expect(cn("base", hidden && "hidden", "active")).toBe("base active");
   });
 
   it("handles arrays + objects", () => {
