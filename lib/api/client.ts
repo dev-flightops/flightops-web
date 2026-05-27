@@ -20,6 +20,18 @@ export class ApiError extends Error {
   }
 }
 
+/**
+ * Thrown when the backend rejects the access_token (401), or when there is
+ * no session at all. Error boundaries should prompt re-login instead of
+ * showing a generic error page.
+ */
+export class SessionExpiredError extends ApiError {
+  constructor(path: string, message: string) {
+    super(401, path, message);
+    this.name = "SessionExpiredError";
+  }
+}
+
 const apiBaseUrl = () => {
   const url = process.env.NEXT_PUBLIC_API_URL;
   if (!url) {
@@ -34,7 +46,7 @@ export async function apiFetch<T>(
 ): Promise<T> {
   const session = await auth();
   if (!session?.access_token) {
-    throw new ApiError(401, path, "no session — caller must be authenticated");
+    throw new SessionExpiredError(path, "no session");
   }
 
   const url = `${apiBaseUrl()}${path}`;
@@ -54,6 +66,11 @@ export async function apiFetch<T>(
       body = await response.text();
     } catch {
       /* ignore */
+    }
+    // Any 401 here means the user's session is no longer valid (expired,
+    // revoked, or malformed token). Trigger the session-expired flow.
+    if (response.status === 401) {
+      throw new SessionExpiredError(path, body || "session expired");
     }
     throw new ApiError(response.status, path, body || response.statusText);
   }
