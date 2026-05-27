@@ -64,3 +64,22 @@ export interface FlightStats {
   aircraft_active: number;
   last_release_at: string | null;
 }
+
+export interface TenantSummary {
+  id: string;
+  name: string;
+  slug: string;
+  plan: string;
+  is_current: boolean;
+}
+
+export interface TenantsResponse {
+  tenants: TenantSummary[];
+}
+
+export interface SwitchTenantResponse {
+  access_token: string;
+  token_type: string;
+  expires_in: number;
+  tenant_id: string;
+}
