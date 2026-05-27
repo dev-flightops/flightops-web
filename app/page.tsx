@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { LogOut, Plane, Users, Wrench } from "lucide-react";
+import { LayoutDashboard, LogOut, Plane, Users, Wrench } from "lucide-react";
 
 import { auth, signOut } from "@/auth";
 import { Button } from "@/components/ui/button";
@@ -56,6 +56,12 @@ export default async function Home() {
           title="Dispatch"
           description="Releases, risk scoring, compliance, weather"
           href="/dispatch"
+        />
+        <ModuleCard
+          icon={<LayoutDashboard className="h-5 w-5" />}
+          title="Dashboards"
+          description="Executive, Dispatcher, Chief Pilot, Ops Score, Station"
+          href="/dashboards"
         />
         <ModuleCard
           icon={<Wrench className="h-5 w-5" />}

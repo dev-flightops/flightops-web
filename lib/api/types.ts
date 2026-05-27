@@ -48,3 +48,19 @@ export interface ReleaseResponse {
   released_at: string;
   released_by: UserRef;
 }
+
+export interface StatusCounts {
+  scheduled: number;
+  released: number;
+  cancelled: number;
+  completed: number;
+  total: number;
+}
+
+export interface FlightStats {
+  today: StatusCounts;
+  this_week: StatusCounts;
+  aircraft_total: number;
+  aircraft_active: number;
+  last_release_at: string | null;
+}

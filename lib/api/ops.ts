@@ -6,6 +6,7 @@ import { apiFetch } from "./client";
 import type {
   FlightDetail,
   FlightListResponse,
+  FlightStats,
   FlightStatus,
   ReleaseResponse,
 } from "./types";
@@ -38,4 +39,8 @@ export async function releaseFlight(flightId: string): Promise<ReleaseResponse> 
   return apiFetch<ReleaseResponse>(`/ops/flights/${flightId}/release`, {
     method: "POST",
   });
+}
+
+export async function getFlightStats(): Promise<FlightStats> {
+  return apiFetch<FlightStats>("/ops/flights/stats");
 }
