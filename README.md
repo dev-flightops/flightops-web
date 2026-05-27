@@ -35,6 +35,12 @@ Mode is just an `.env.local` change — no code edits.
 - `npm run start` — serve the production build
 - `npm run lint` — ESLint
 - `npm run type-check` — `tsc --noEmit`
+- `npm test` — Vitest unit + component tests (includes a11y assertions)
+- `npm run test:e2e` — Playwright e2e against a running local stack
+
+## Accessibility
+
+We enforce WCAG 2.0 A + AA via vitest at the component level (CI-gated) and Playwright at the page level (local/pre-merge). See [ACCESSIBILITY.md](ACCESSIBILITY.md) for the rules and how to add coverage for a new component or page.
 
 ## Deploys
 
