@@ -1,5 +1,9 @@
 import NextAuth from "next-auth";
+import type { Provider } from "next-auth/providers";
 import Credentials from "next-auth/providers/credentials";
+import Google from "next-auth/providers/google";
+import MicrosoftEntraID from "next-auth/providers/microsoft-entra-id";
+import Okta from "next-auth/providers/okta";
 
 interface AuthServiceLoginResponse {
   access_token: string;
@@ -23,11 +27,23 @@ function decodeJwtPayload(token: string): AccessTokenClaims {
   return JSON.parse(Buffer.from(padded, "base64").toString("utf8"));
 }
 
-export const { handlers, signIn, signOut, auth } = NextAuth({
-  trustHost: true,
-  pages: { signIn: "/login" },
-  session: { strategy: "jwt" },
-  providers: [
+function apiBaseUrl(): string {
+  const url = process.env.NEXT_PUBLIC_API_URL;
+  if (!url) throw new Error("NEXT_PUBLIC_API_URL not configured");
+  return url;
+}
+
+/**
+ * Build the providers list dynamically: Credentials is always on, each
+ * OAuth provider only loads when its env vars are set. This matches what
+ * the backend reports at `GET /auth/providers` — so a provider missing
+ * server-side won't render a sign-in button on the login page either.
+ *
+ * When Phil drops the OAuth client IDs into the Vercel/Render env vars,
+ * the providers below activate automatically — no code changes.
+ */
+function buildProviders(): Provider[] {
+  const providers: Provider[] = [
     Credentials({
       name: "FlightOps",
       credentials: {
@@ -37,12 +53,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       authorize: async (credentials) => {
         if (!credentials?.email || !credentials?.password) return null;
 
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-        if (!apiUrl) {
-          throw new Error("NEXT_PUBLIC_API_URL not configured");
-        }
-
-        const response = await fetch(`${apiUrl}/auth/login`, {
+        const response = await fetch(`${apiBaseUrl()}/auth/login`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -65,8 +76,80 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         };
       },
     }),
-  ],
+  ];
+
+  if (process.env.AUTH_GOOGLE_CLIENT_ID && process.env.AUTH_GOOGLE_CLIENT_SECRET) {
+    providers.push(Google);
+  }
+  if (
+    process.env.AUTH_MICROSOFT_ENTRA_ID_CLIENT_ID &&
+    process.env.AUTH_MICROSOFT_ENTRA_ID_CLIENT_SECRET
+  ) {
+    providers.push(MicrosoftEntraID);
+  }
+  if (process.env.AUTH_OKTA_CLIENT_ID && process.env.AUTH_OKTA_CLIENT_SECRET) {
+    providers.push(Okta);
+  }
+  return providers;
+}
+
+/**
+ * Exchange an upstream OAuth identity for a FlightOps JWT. The backend is
+ * the single source of identity — Auth.js handles the OAuth dance, then
+ * hands the verified `{provider, sub, email}` to auth-service which decides
+ * whether the user is provisioned (403 if not).
+ */
+async function exchangeOAuthForFlightOpsJwt(
+  provider: string,
+  providerUserId: string,
+  email: string,
+): Promise<{ access_token: string; claims: AccessTokenClaims } | null> {
+  const response = await fetch(`${apiBaseUrl()}/auth/oauth-exchange`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      provider,
+      provider_user_id: providerUserId,
+      email,
+    }),
+  });
+  if (!response.ok) return null;
+  const body = (await response.json()) as AuthServiceLoginResponse;
+  return { access_token: body.access_token, claims: decodeJwtPayload(body.access_token) };
+}
+
+export const { handlers, signIn, signOut, auth } = NextAuth({
+  trustHost: true,
+  pages: { signIn: "/login" },
+  session: { strategy: "jwt" },
+  providers: buildProviders(),
   callbacks: {
+    async signIn({ user, account }) {
+      // Credentials sign-in is already a FlightOps login — `authorize`
+      // returned the access_token. No exchange needed.
+      if (!account || account.provider === "credentials") return true;
+
+      if (!user.email) return false;
+      const result = await exchangeOAuthForFlightOpsJwt(
+        account.provider,
+        account.providerAccountId ?? user.id ?? "",
+        user.email,
+      );
+      if (!result) {
+        // Unprovisioned user (403) or other backend error — refuse the
+        // sign-in. Auth.js will redirect back to /login with an error.
+        return false;
+      }
+      // Stash on the user object so the jwt callback can copy it onto
+      // the session token. Auth.js mutates `user` between callbacks.
+      (user as unknown as Record<string, unknown>).access_token = result.access_token;
+      (user as unknown as Record<string, unknown>).tenant_id = result.claims.tenant_id;
+      (user as unknown as Record<string, unknown>).roles = result.claims.roles;
+      // Overwrite the sub so the session reports the FlightOps user id,
+      // not the upstream provider's sub.
+      user.id = result.claims.sub;
+      return true;
+    },
     async jwt({ token, user }) {
       if (user) {
         token.access_token = user.access_token;

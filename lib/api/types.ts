@@ -83,3 +83,14 @@ export interface SwitchTenantResponse {
   expires_in: number;
   tenant_id: string;
 }
+
+// SSO scaffolding (M1-M-5 / M1-G-5)
+
+export interface ProviderSummary {
+  id: string;       // "google" | "microsoft-entra-id" | "okta" — matches Auth.js provider id
+  label: string;    // human-readable, e.g. "Google"
+}
+
+export interface ProvidersResponse {
+  providers: ProviderSummary[];
+}
