@@ -1,24 +1,77 @@
-import { Plane } from "lucide-react";
+import { Plane, Wrench, Users } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
 export default function Home() {
+  const apiTarget = process.env.NEXT_PUBLIC_API_URL ?? "not configured";
+
   return (
-    <main className="container flex min-h-screen flex-col items-center justify-center gap-6 py-12">
-      <div className="flex items-center gap-3">
-        <Plane className="h-10 w-10 text-primary" />
-        <h1 className="text-4xl font-semibold tracking-tight">
-          Peregrine FlightOps
-        </h1>
+    <main className="container py-12">
+      <div className="mb-10 flex items-center gap-3">
+        <Plane className="h-9 w-9 text-primary" />
+        <div>
+          <h1 className="text-3xl font-semibold tracking-tight">Peregrine FlightOps</h1>
+          <p className="text-sm text-muted-foreground">
+            API target: <code className="font-mono">{apiTarget}</code>
+          </p>
+        </div>
       </div>
-      <p className="max-w-xl text-center text-muted-foreground">
-        Multi-tenant Part 135 aviation dispatch and operations platform.
-        Story 1 scaffold — modules ship monthly.
-      </p>
-      <div className="rounded-md border border-border bg-muted/30 px-4 py-2 text-sm text-muted-foreground">
-        API target:{" "}
-        <code className="font-mono">
-          {process.env.NEXT_PUBLIC_API_URL ?? "not configured"}
-        </code>
+
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <ModuleCard
+          icon={<Plane className="h-5 w-5" />}
+          title="Dispatch"
+          description="Releases, risk scoring, compliance, weather"
+        />
+        <ModuleCard
+          icon={<Wrench className="h-5 w-5" />}
+          title="Maintenance"
+          description="Fleet, work orders, MEL, RTS queue"
+        />
+        <ModuleCard
+          icon={<Users className="h-5 w-5" />}
+          title="Crew"
+          description="Roster, duty/rest legality, payroll"
+        />
+      </div>
+
+      <div className="mt-10 flex gap-2">
+        <Button>Primary action</Button>
+        <Button variant="outline">Secondary</Button>
+        <Button variant="ghost">Tertiary</Button>
       </div>
     </main>
+  );
+}
+
+function ModuleCard({
+  icon,
+  title,
+  description,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+}) {
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center gap-2 text-primary">{icon}</div>
+        <CardTitle>{title}</CardTitle>
+        <CardDescription>{description}</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Button size="sm" variant="outline">
+          Open
+        </Button>
+      </CardContent>
+    </Card>
   );
 }
