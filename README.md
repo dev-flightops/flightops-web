@@ -42,6 +42,20 @@ Mode is just an `.env.local` change — no code edits.
 
 We enforce WCAG 2.0 A + AA via vitest at the component level (CI-gated) and Playwright at the page level (local/pre-merge). See [ACCESSIBILITY.md](ACCESSIBILITY.md) for the rules and how to add coverage for a new component or page.
 
+## SSO providers (scaffold)
+
+The login page and Auth.js are wired for Google, Microsoft Entra ID, and Okta. Each provider activates the moment both of its env vars are set — no code changes needed.
+
+| Provider | Env vars required (both must be set) |
+|---|---|
+| Google | `AUTH_GOOGLE_CLIENT_ID`, `AUTH_GOOGLE_CLIENT_SECRET` |
+| Microsoft Entra ID | `AUTH_MICROSOFT_ENTRA_ID_CLIENT_ID`, `AUTH_MICROSOFT_ENTRA_ID_CLIENT_SECRET` |
+| Okta | `AUTH_OKTA_CLIENT_ID`, `AUTH_OKTA_CLIENT_SECRET` |
+
+When a provider's env vars are set in **both** the web env (Vercel) and the backend env (Render) it appears as a "Sign in with …" button on the login page. The backend reports its enabled providers at `GET /auth/providers`, which the login page fetches server-side.
+
+**Provisioning rule:** SSO does not auto-create users. If `pilot@acme.com` signs in via Google but doesn't exist in our `users` table, the backend rejects with `403 user_not_provisioned`. An admin must invite/create the user first.
+
 ## Deploys
 
 - **Production**: pushes to `main` → Vercel auto-deploys to `flightops-web.vercel.app`
