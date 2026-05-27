@@ -44,26 +44,30 @@ const DASHBOARDS: DashboardEntry[] = [
   {
     slug: "director-ops",
     title: "Director of Operations",
-    description: "Multi-day plan, crew utilization, exception list",
+    description: "Multi-day plan, exception list",
     icon: <LayoutDashboard className="h-5 w-5" />,
+    href: "/dashboards/director-ops",
   },
   {
     slug: "chief-pilot",
     title: "Chief Pilot",
-    description: "Pilot currency, duty/rest, qualifications",
+    description: "Pilot currency, duty/rest, qualifications (M3)",
     icon: <ShieldCheck className="h-5 w-5" />,
+    href: "/dashboards/chief-pilot",
   },
   {
     slug: "ops-score",
     title: "Ops Score",
-    description: "On-time performance, completion rate, dispatch efficiency",
+    description: "On-time performance, completion rate (M2)",
     icon: <Gauge className="h-5 w-5" />,
+    href: "/dashboards/ops-score",
   },
   {
     slug: "station",
     title: "Station",
-    description: "Per-station traffic, fuel, ground times",
+    description: "Per-station traffic; fuel + ground times in M2",
     icon: <MapPin className="h-5 w-5" />,
+    href: "/dashboards/station",
   },
 ];
 
@@ -86,8 +90,8 @@ export default function DashboardsIndexPage() {
         </div>
         <h1 className="text-3xl font-semibold tracking-tight">Dashboards</h1>
         <p className="text-sm text-muted-foreground">
-          Role-tailored views of operations. Two live now; four scheduled for
-          Month 1.
+          Role-tailored views of operations. Four live with current data; two
+          placeholders explain what lands in M2-M3.
         </p>
       </header>
 
