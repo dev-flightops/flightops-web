@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Send } from "lucide-react";
 
-import { releaseFlightAction } from "@/app/dispatch/[flightId]/actions";
+import { releaseFlightAction } from "@/app/(app)/dispatch/[flightId]/actions";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
