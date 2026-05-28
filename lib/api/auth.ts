@@ -26,17 +26,28 @@ export async function switchTenant(
  * Unauthenticated — the login page calls this directly (no session yet).
  * Returns the SSO providers whose credentials are set on the backend, so
  * the UI only renders buttons for flows that will actually work.
+ *
+ * Failure modes are *all* treated as "no SSO providers available" rather
+ * than thrown errors, because this gets invoked during the login page's
+ * server-render — including Vercel's build-time pre-render where the
+ * backend is unreachable. The credentials form still works in every case;
+ * SSO buttons are additive, so a soft failure here loses nothing.
  */
 export async function fetchEnabledProviders(): Promise<ProvidersResponse> {
   const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-  if (!apiUrl) throw new Error("NEXT_PUBLIC_API_URL not configured");
-  const response = await fetch(`${apiUrl}/auth/providers`, {
-    cache: "no-store",
-  });
-  if (!response.ok) {
-    // Don't block the login page if the auth-service hiccups — just hide
-    // the SSO buttons. The credentials form still works.
+  if (!apiUrl) {
+    // No backend URL configured — most common during Vercel Preview builds
+    // when env vars aren't propagated to the Preview environment yet.
     return { providers: [] };
   }
-  return (await response.json()) as ProvidersResponse;
+  try {
+    const response = await fetch(`${apiUrl}/auth/providers`, {
+      cache: "no-store",
+    });
+    if (!response.ok) return { providers: [] };
+    return (await response.json()) as ProvidersResponse;
+  } catch {
+    // DNS failure, network blip, tunnel down — hide SSO and move on.
+    return { providers: [] };
+  }
 }

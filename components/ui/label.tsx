@@ -6,8 +6,15 @@ import { cva, type VariantProps } from "class-variance-authority";
 
 import { cn } from "@/lib/utils";
 
+// Mirrors the legacy `.label`:
+//   - 0.6875rem font-size (~11px)
+//   - 600 weight
+//   - uppercase + heavy letter-spacing (.06em)
+//   - muted color
+// Combined this is the "all-caps tiny eyebrow" style used above every input
+// and panel field in the legacy.
 const labelVariants = cva(
-  "text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70",
+  "block text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground leading-none mb-1.5 peer-disabled:cursor-not-allowed peer-disabled:opacity-70",
 );
 
 const Label = React.forwardRef<

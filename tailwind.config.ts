@@ -14,6 +14,15 @@ const config: Config = {
       screens: { "2xl": "1400px" },
     },
     extend: {
+      fontFamily: {
+        sans: ["var(--font-sans)", "Inter", "system-ui", "sans-serif"],
+        mono: [
+          "var(--font-mono)",
+          "JetBrains Mono",
+          "ui-monospace",
+          "monospace",
+        ],
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
@@ -40,15 +49,32 @@ const config: Config = {
           DEFAULT: "hsl(var(--accent))",
           foreground: "hsl(var(--accent-foreground))",
         },
+        popover: {
+          DEFAULT: "hsl(var(--popover))",
+          foreground: "hsl(var(--popover-foreground))",
+        },
         card: {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
+        },
+        // Legacy badge / aviation-status colors used by the Badge primitive
+        // and the risk / weather indicators.
+        status: {
+          green: "#34d399",
+          yellow: "#fbbf24",
+          red: "#f87171",
+          blue: "#60a5fa",
+          gray: "#8896a7",
+          orange: "#fb923c",
+          purple: "#c084fc",
         },
       },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+        // Legacy panels use 12px corner radius.
+        xl: "0.75rem",
       },
       keyframes: {
         "accordion-down": {
@@ -59,10 +85,16 @@ const config: Config = {
           from: { height: "var(--radix-accordion-content-height)" },
           to: { height: "0" },
         },
+        "ff-pulse": {
+          "0%, 100%": { opacity: "1" },
+          "50%": { opacity: "0.45" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+        // Legacy "overdue" pulse, used on at-risk / late items.
+        "ff-pulse": "ff-pulse 1.4s ease-in-out infinite",
       },
     },
   },
