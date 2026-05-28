@@ -1,8 +1,7 @@
-import Link from "next/link";
-import { ChevronLeft, MapPin } from "lucide-react";
+import { MapPin } from "lucide-react";
 
 import { StatCard } from "@/components/dashboards/stat-card";
-import { Button } from "@/components/ui/button";
+import { Breadcrumb } from "@/components/ui/breadcrumb";
 import { listFlights } from "@/lib/api/ops";
 import type { FlightListItem } from "@/lib/api/types";
 
@@ -41,23 +40,17 @@ export default async function StationDashboardPage() {
   const totalMovements = stations.reduce((sum, s) => sum + s.total, 0);
 
   return (
-    <main className="container py-10">
-      <Link href="/dashboards" className="inline-block">
-        <Button variant="ghost" size="sm" className="mb-4 -ml-3">
-          <ChevronLeft className="h-4 w-4" />
-          Dashboards
-        </Button>
-      </Link>
-
-      <header className="mb-8 space-y-1">
-        <div className="flex items-center gap-2 text-primary">
-          <MapPin className="h-5 w-5" />
-          <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            Insights
-          </span>
-        </div>
-        <h1 className="text-3xl font-semibold tracking-tight">Station</h1>
-        <p className="text-sm text-muted-foreground">
+    <div className="container py-6">
+      <header className="mb-5">
+        <Breadcrumb
+          icon={<MapPin className="h-3.5 w-3.5" />}
+          segments={[
+            { label: "Dashboards", href: "/dashboards" },
+            { label: "Station" },
+          ]}
+        />
+        <h1 className="mt-1 text-xl font-bold tracking-tight">Station</h1>
+        <p className="mt-0.5 text-xs text-muted-foreground">
           Traffic by airport across the {flights.length} most recent flight
           {flights.length === 1 ? "" : "s"} (most recent first).
         </p>
@@ -108,7 +101,7 @@ export default async function StationDashboardPage() {
       <p className="mt-4 text-xs text-muted-foreground">
         Fuel and ground-time metrics land with the ground-service in Month 2.
       </p>
-    </main>
+    </div>
   );
 }
 

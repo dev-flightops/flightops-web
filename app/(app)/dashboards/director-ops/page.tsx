@@ -1,14 +1,9 @@
 import Link from "next/link";
-import {
-  AlertTriangle,
-  ChevronLeft,
-  ChevronRight,
-  LayoutDashboard,
-} from "lucide-react";
+import { AlertTriangle, ChevronRight, LayoutDashboard } from "lucide-react";
 
 import { StatCard } from "@/components/dashboards/stat-card";
 import { StatusBadge } from "@/components/dispatch/status-badge";
-import { Button } from "@/components/ui/button";
+import { Breadcrumb } from "@/components/ui/breadcrumb";
 import { listFlights } from "@/lib/api/ops";
 import { formatDate } from "@/lib/utils";
 import type { FlightListItem } from "@/lib/api/types";
@@ -33,25 +28,19 @@ export default async function DirectorOpsDashboardPage() {
   );
 
   return (
-    <main className="container py-10">
-      <Link href="/dashboards" className="inline-block">
-        <Button variant="ghost" size="sm" className="mb-4 -ml-3">
-          <ChevronLeft className="h-4 w-4" />
-          Dashboards
-        </Button>
-      </Link>
-
-      <header className="mb-8 space-y-1">
-        <div className="flex items-center gap-2 text-primary">
-          <LayoutDashboard className="h-5 w-5" />
-          <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            Insights
-          </span>
-        </div>
-        <h1 className="text-3xl font-semibold tracking-tight">
+    <div className="container py-6">
+      <header className="mb-5">
+        <Breadcrumb
+          icon={<LayoutDashboard className="h-3.5 w-3.5" />}
+          segments={[
+            { label: "Dashboards", href: "/dashboards" },
+            { label: "Director of Operations" },
+          ]}
+        />
+        <h1 className="mt-1 text-xl font-bold tracking-tight">
           Director of Operations
         </h1>
-        <p className="text-sm text-muted-foreground">
+        <p className="mt-0.5 text-xs text-muted-foreground">
           Next 7 days plan + exception list (UTC).
         </p>
       </header>
@@ -131,7 +120,7 @@ export default async function DirectorOpsDashboardPage() {
           </ul>
         )}
       </section>
-    </main>
+    </div>
   );
 }
 

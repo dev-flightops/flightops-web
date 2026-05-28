@@ -1,11 +1,9 @@
-import Link from "next/link";
-import { CalendarClock, ChevronLeft } from "lucide-react";
+import { CalendarClock } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
+import { Breadcrumb } from "@/components/ui/breadcrumb";
 
 interface PlaceholderDashboardProps {
   title: string;
-  eyebrow?: string;
   icon: React.ReactNode;
   /** Short one-line summary of what this dashboard will eventually show. */
   intro: string;
@@ -17,48 +15,41 @@ interface PlaceholderDashboardProps {
 
 export function PlaceholderDashboard({
   title,
-  eyebrow = "Insights",
   icon,
   intro,
   availableAfter,
   upcomingMetrics,
 }: PlaceholderDashboardProps) {
   return (
-    <main className="container py-10">
-      <Link href="/dashboards" className="inline-block">
-        <Button variant="ghost" size="sm" className="mb-4 -ml-3">
-          <ChevronLeft className="h-4 w-4" />
-          Dashboards
-        </Button>
-      </Link>
-
-      <header className="mb-8 space-y-1">
-        <div className="flex items-center gap-2 text-primary">
-          {icon}
-          <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            {eyebrow}
-          </span>
-        </div>
-        <h1 className="text-3xl font-semibold tracking-tight">{title}</h1>
-        <p className="text-sm text-muted-foreground">{intro}</p>
+    <div className="container py-6">
+      <header className="mb-5">
+        <Breadcrumb
+          icon={icon}
+          segments={[
+            { label: "Dashboards", href: "/dashboards" },
+            { label: title },
+          ]}
+        />
+        <h1 className="mt-1 text-xl font-bold tracking-tight">{title}</h1>
+        <p className="mt-0.5 text-xs text-muted-foreground">{intro}</p>
       </header>
 
-      <section className="rounded-lg border border-dashed border-border bg-muted/20 p-8">
+      <section className="rounded-xl border border-dashed border-border bg-muted/20 p-6">
         <div className="flex items-start gap-4">
-          <CalendarClock className="h-6 w-6 flex-shrink-0 text-muted-foreground" />
+          <CalendarClock className="h-5 w-5 flex-shrink-0 text-muted-foreground" />
           <div className="space-y-3">
-            <p className="font-medium">
-              Available after <span className="text-primary">{availableAfter}</span>
+            <p className="text-sm font-medium">
+              Available after <span className="text-status-blue">{availableAfter}</span>
             </p>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-xs text-muted-foreground">
               The underlying data this dashboard needs is being built in a future
               story. When it lands, this page will show:
             </p>
-            <ul className="ml-1 space-y-1.5 text-sm">
+            <ul className="ml-1 space-y-1.5 text-xs">
               {upcomingMetrics.map((metric) => (
                 <li
                   key={metric}
-                  className="before:mr-2 before:text-primary before:content-['→']"
+                  className="before:mr-2 before:text-status-blue before:content-['→']"
                 >
                   {metric}
                 </li>
@@ -67,6 +58,6 @@ export function PlaceholderDashboard({
           </div>
         </div>
       </section>
-    </main>
+    </div>
   );
 }

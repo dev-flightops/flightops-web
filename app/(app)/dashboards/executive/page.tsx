@@ -1,15 +1,8 @@
 import Link from "next/link";
-import {
-  Briefcase,
-  CheckCircle2,
-  ChevronLeft,
-  Clock,
-  Plane,
-  XCircle,
-} from "lucide-react";
+import { Briefcase, CheckCircle2, Clock, Plane, XCircle } from "lucide-react";
 
 import { StatCard } from "@/components/dashboards/stat-card";
-import { Button } from "@/components/ui/button";
+import { Breadcrumb } from "@/components/ui/breadcrumb";
 import { getFlightStats } from "@/lib/api/ops";
 import { formatDate } from "@/lib/utils";
 
@@ -21,23 +14,17 @@ export default async function ExecutiveDashboardPage() {
       : 0;
 
   return (
-    <main className="container py-10">
-      <Link href="/dashboards" className="inline-block">
-        <Button variant="ghost" size="sm" className="mb-4 -ml-3">
-          <ChevronLeft className="h-4 w-4" />
-          Dashboards
-        </Button>
-      </Link>
-
-      <header className="mb-8 space-y-1">
-        <div className="flex items-center gap-2 text-primary">
-          <Briefcase className="h-5 w-5" />
-          <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            Insights
-          </span>
-        </div>
-        <h1 className="text-3xl font-semibold tracking-tight">Executive</h1>
-        <p className="text-sm text-muted-foreground">
+    <div className="container py-6">
+      <header className="mb-5">
+        <Breadcrumb
+          icon={<Briefcase className="h-3.5 w-3.5" />}
+          segments={[
+            { label: "Dashboards", href: "/dashboards" },
+            { label: "Executive" },
+          ]}
+        />
+        <h1 className="mt-1 text-xl font-bold tracking-tight">Executive</h1>
+        <p className="mt-0.5 text-xs text-muted-foreground">
           Snapshot for the last 7 days (UTC).
         </p>
       </header>
@@ -108,7 +95,7 @@ export default async function ExecutiveDashboardPage() {
           )}
         </div>
       </section>
-    </main>
+    </div>
   );
 }
 

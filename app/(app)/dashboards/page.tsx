@@ -1,7 +1,6 @@
 import Link from "next/link";
 import {
   Briefcase,
-  ChevronLeft,
   Gauge,
   LayoutDashboard,
   MapPin,
@@ -73,23 +72,16 @@ const DASHBOARDS: DashboardEntry[] = [
 
 export default function DashboardsIndexPage() {
   return (
-    <main className="container py-10">
-      <Link href="/" className="inline-block">
-        <Button variant="ghost" size="sm" className="mb-4 -ml-3">
-          <ChevronLeft className="h-4 w-4" />
-          Home
-        </Button>
-      </Link>
-
-      <header className="mb-8 space-y-1">
-        <div className="flex items-center gap-2 text-primary">
-          <LayoutDashboard className="h-5 w-5" />
-          <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            Insights
+    <div className="container py-6">
+      <header className="mb-5">
+        <div className="flex items-center gap-2 text-muted-foreground">
+          <LayoutDashboard className="h-3.5 w-3.5" />
+          <span className="text-[0.65rem] font-bold uppercase tracking-[0.08em]">
+            Operations · Dashboards
           </span>
         </div>
-        <h1 className="text-3xl font-semibold tracking-tight">Dashboards</h1>
-        <p className="text-sm text-muted-foreground">
+        <h1 className="mt-1 text-xl font-bold tracking-tight">Dashboards</h1>
+        <p className="mt-0.5 text-xs text-muted-foreground">
           Role-tailored views of operations. Four live with current data; two
           placeholders explain what lands in M2-M3.
         </p>
@@ -119,6 +111,6 @@ export default function DashboardsIndexPage() {
           </Card>
         ))}
       </div>
-    </main>
+    </div>
   );
 }
