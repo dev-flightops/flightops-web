@@ -23,7 +23,7 @@ describe("Button", () => {
 
   it("applies size classes", () => {
     render(<Button size="sm">Small</Button>);
-    expect(screen.getByRole("button").className).toContain("h-9");
+    expect(screen.getByRole("button").className).toContain("h-8");
   });
 
   it("calls onClick when clicked", async () => {
