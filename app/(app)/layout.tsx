@@ -1,11 +1,18 @@
 import { redirect } from "next/navigation";
 
+import { auth, signOut } from "@/auth";
 import { AppShell } from "@/components/app-shell/app-shell";
+import { UserMenu } from "@/components/app-shell/user-menu";
 import { listMyTenants } from "@/lib/api/auth";
 import { SessionExpiredError } from "@/lib/api/client";
 import { TenantProvider } from "@/lib/tenant";
 
 import { switchTenantAction } from "./actions";
+
+async function signOutAction(): Promise<void> {
+  "use server";
+  await signOut({ redirectTo: "/login" });
+}
 
 /**
  * Layout for the (app) route group — wraps every in-app page (dispatch,
@@ -34,12 +41,17 @@ export default async function AppGroupLayout({
     throw error;
   }
 
+  const session = await auth();
+  const userSlot = session?.user?.email ? (
+    <UserMenu email={session.user.email} signOutAction={signOutAction} />
+  ) : null;
+
   return (
     <TenantProvider
       tenants={tenants}
       switchTenantAction={switchTenantAction}
     >
-      <AppShell>{children}</AppShell>
+      <AppShell userSlot={userSlot}>{children}</AppShell>
     </TenantProvider>
   );
 }
