@@ -1,8 +1,7 @@
-import Link from "next/link";
-import { ChevronLeft, Plane } from "lucide-react";
+import { Plane } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
-import { FlightCard } from "@/components/dispatch/flight-card";
+import { Card } from "@/components/ui/card";
+import { FlightTable } from "@/components/dispatch/flight-table";
 import { listFlights } from "@/lib/api/ops";
 
 function todayUtc(): string {
@@ -14,49 +13,41 @@ export default async function DispatchPage() {
   const { items, total } = await listFlights({ onDate: today });
 
   return (
-    <main className="container py-10">
-      <Link href="/" className="inline-block">
-        <Button variant="ghost" size="sm" className="mb-4 -ml-3">
-          <ChevronLeft className="h-4 w-4" />
-          Home
-        </Button>
-      </Link>
-
-      <header className="mb-8 flex items-end justify-between gap-4">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2 text-primary">
-            <Plane className="h-5 w-5" />
-            <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              Operations
-            </span>
-          </div>
-          <h1 className="text-3xl font-semibold tracking-tight">Dispatch</h1>
-          <p className="text-sm text-muted-foreground">
-            {total} flight{total === 1 ? "" : "s"} scheduled for {today} (UTC)
-          </p>
+    <div className="container py-6">
+      <header className="mb-5">
+        <div className="flex items-center gap-2 text-muted-foreground">
+          <Plane className="h-3.5 w-3.5" />
+          <span className="text-[0.65rem] font-bold uppercase tracking-[0.08em]">
+            Operations · Dispatch
+          </span>
         </div>
+        <h1 className="mt-1 text-xl font-bold tracking-tight">
+          Flight Dispatch
+        </h1>
+        <p className="mt-0.5 text-xs text-muted-foreground">
+          {total} flight{total === 1 ? "" : "s"} scheduled for{" "}
+          <span className="font-mono">{today}</span> (UTC)
+        </p>
       </header>
 
       {items.length === 0 ? (
         <EmptyState date={today} />
       ) : (
-        <div className="grid gap-3">
-          {items.map((flight) => (
-            <FlightCard key={flight.id} flight={flight} />
-          ))}
-        </div>
+        <Card className="p-0 overflow-hidden">
+          <FlightTable flights={items} />
+        </Card>
       )}
-    </main>
+    </div>
   );
 }
 
 function EmptyState({ date }: { date: string }) {
   return (
-    <div className="rounded-lg border border-dashed border-border bg-muted/20 p-12 text-center">
+    <Card className="border-dashed bg-muted/20 p-12 text-center">
       <Plane className="mx-auto h-8 w-8 text-muted-foreground" />
       <p className="mt-3 text-sm text-muted-foreground">
-        No flights scheduled for {date}.
+        No flights scheduled for <span className="font-mono">{date}</span>.
       </p>
-    </div>
+    </Card>
   );
 }

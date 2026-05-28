@@ -1,8 +1,8 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ChevronLeft, Package, Plane, Users } from "lucide-react";
+import { Package, Plane, Users } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
+import { Breadcrumb } from "@/components/ui/breadcrumb";
+
 import {
   Card,
   CardContent,
@@ -33,20 +33,21 @@ export default async function FlightDetailPage({ params }: Props) {
         : null;
 
     return (
-      <main className="container py-10">
-        <Link href="/dispatch" className="inline-block">
-          <Button variant="ghost" size="sm" className="mb-4 -ml-3">
-            <ChevronLeft className="h-4 w-4" />
-            Back to dispatch
-          </Button>
-        </Link>
-
-        <header className="mb-6 flex items-start justify-between gap-4">
-          <div className="space-y-1">
-            <h1 className="text-3xl font-semibold tracking-tight">
+      <div className="container py-6">
+        <header className="mb-5 flex items-start justify-between gap-4">
+          <div>
+            <Breadcrumb
+              icon={<Plane className="h-3.5 w-3.5" />}
+              segments={[
+                { label: "Operations" },
+                { label: "Dispatch", href: "/dispatch" },
+                { label: flight.flight_number },
+              ]}
+            />
+            <h1 className="mt-1 text-xl font-bold tracking-tight">
               {flight.flight_number}
             </h1>
-            <p className="font-mono text-lg text-muted-foreground">
+            <p className="mt-0.5 font-mono text-sm text-muted-foreground">
               {flight.origin} → {flight.destination}
             </p>
           </div>
@@ -143,7 +144,7 @@ export default async function FlightDetailPage({ params }: Props) {
             </Card>
           )}
         </div>
-      </main>
+      </div>
     );
   } catch (err) {
     if (err instanceof ApiError && err.status === 404) {
