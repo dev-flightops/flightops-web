@@ -12,6 +12,20 @@ export interface AircraftRef {
   seats: number;
 }
 
+export interface AircraftListItem {
+  id: string;
+  tail_number: string;
+  model: string;
+  seats: number;
+  max_payload_lbs: number | null;
+  is_active: boolean;
+}
+
+export interface AircraftListResponse {
+  items: AircraftListItem[];
+  total: number;
+}
+
 export interface UserRef {
   id: string;
   full_name: string;

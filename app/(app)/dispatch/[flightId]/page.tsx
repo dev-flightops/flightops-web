@@ -11,11 +11,12 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { DownloadPdfButton } from "@/components/dispatch/download-pdf-button";
+import { EditFlightDialog } from "@/components/dispatch/edit-flight-dialog";
 import { ReleaseButton } from "@/components/dispatch/release-button";
 import { ReleasedFooter } from "@/components/dispatch/released-footer";
 import { StatusBadge } from "@/components/dispatch/status-badge";
 import { ApiError } from "@/lib/api/client";
-import { getFlight } from "@/lib/api/ops";
+import { getFlight, listAircraft } from "@/lib/api/ops";
 import { formatDate } from "@/lib/utils";
 
 interface Props {
@@ -31,6 +32,11 @@ export default async function FlightDetailPage({ params }: Props) {
       flight.max_payload_lbs !== null
         ? flight.max_payload_lbs - flight.cargo_lbs
         : null;
+    // Aircraft list is only needed when the flight is still editable, but
+    // fetching it in parallel with `getFlight` would mean an extra call on
+    // every detail-page render. Lazy-fetch only for scheduled flights.
+    const aircraft =
+      flight.status === "scheduled" ? (await listAircraft()).items : [];
 
     return (
       <div className="container py-6">
@@ -54,12 +60,15 @@ export default async function FlightDetailPage({ params }: Props) {
           <div className="flex items-center gap-3">
             <StatusBadge status={flight.status} className="text-sm" />
             {flight.status === "scheduled" && (
-              <ReleaseButton
-                flightId={flight.id}
-                flightNumber={flight.flight_number}
-                origin={flight.origin}
-                destination={flight.destination}
-              />
+              <>
+                <EditFlightDialog flight={flight} aircraft={aircraft} />
+                <ReleaseButton
+                  flightId={flight.id}
+                  flightNumber={flight.flight_number}
+                  origin={flight.origin}
+                  destination={flight.destination}
+                />
+              </>
             )}
           </div>
         </header>
