@@ -4,6 +4,7 @@
 
 import { apiFetch } from "./client";
 import type {
+  AircraftListResponse,
   FlightDetail,
   FlightListResponse,
   FlightStats,
@@ -41,6 +42,32 @@ export async function releaseFlight(flightId: string): Promise<ReleaseResponse> 
   });
 }
 
+export interface FlightUpdatePayload {
+  flight_number?: string;
+  aircraft_id?: string;
+  origin?: string;
+  destination?: string;
+  scheduled_departure_at?: string; // ISO 8601 UTC
+  scheduled_arrival_at?: string;
+  pax_count?: number;
+  cargo_lbs?: number;
+  notes?: string | null;
+}
+
+export async function updateFlight(
+  flightId: string,
+  patch: FlightUpdatePayload,
+): Promise<FlightDetail> {
+  return apiFetch<FlightDetail>(`/ops/flights/${flightId}`, {
+    method: "PATCH",
+    body: JSON.stringify(patch),
+  });
+}
+
 export async function getFlightStats(): Promise<FlightStats> {
   return apiFetch<FlightStats>("/ops/flights/stats");
+}
+
+export async function listAircraft(): Promise<AircraftListResponse> {
+  return apiFetch<AircraftListResponse>("/ops/aircraft");
 }
