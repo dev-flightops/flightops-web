@@ -17,6 +17,7 @@ import { ReleasedFooter } from "@/components/dispatch/released-footer";
 import { StatusBadge } from "@/components/dispatch/status-badge";
 import { ApiError } from "@/lib/api/client";
 import { getFlight, listAircraft } from "@/lib/api/ops";
+import type { AircraftListItem } from "@/lib/api/types";
 import { formatDate } from "@/lib/utils";
 
 interface Props {
@@ -26,19 +27,40 @@ interface Props {
 export default async function FlightDetailPage({ params }: Props) {
   const { flightId } = await params;
 
+  // Only the flight fetch decides 404 — auxiliary calls (aircraft list)
+  // failing must NOT take the whole page down. Common case for the soft
+  // failure: a Vercel build deployed before the matching backend
+  // (`/ops/aircraft`) is live, or the Cloudflare tunnel hiccups.
+  let flight;
   try {
-    const flight = await getFlight(flightId);
-    const payloadHeadroom =
-      flight.max_payload_lbs !== null
-        ? flight.max_payload_lbs - flight.cargo_lbs
-        : null;
-    // Aircraft list is only needed when the flight is still editable, but
-    // fetching it in parallel with `getFlight` would mean an extra call on
-    // every detail-page render. Lazy-fetch only for scheduled flights.
-    const aircraft =
-      flight.status === "scheduled" ? (await listAircraft()).items : [];
+    flight = await getFlight(flightId);
+  } catch (err) {
+    if (err instanceof ApiError && err.status === 404) {
+      notFound();
+    }
+    throw err;
+  }
 
-    return (
+  const payloadHeadroom =
+    flight.max_payload_lbs !== null
+      ? flight.max_payload_lbs - flight.cargo_lbs
+      : null;
+
+  // Aircraft list is only needed when the flight is still editable, but
+  // fetching it in parallel with `getFlight` would mean an extra call on
+  // every detail-page render. Lazy-fetch only for scheduled flights — and
+  // fall back to an empty list if the call fails (we degrade by hiding
+  // the swap selector, not by failing the whole page).
+  let aircraft: AircraftListItem[] = [];
+  if (flight.status === "scheduled") {
+    try {
+      aircraft = (await listAircraft()).items;
+    } catch {
+      aircraft = [];
+    }
+  }
+
+  return (
       <div className="container py-6">
         <header className="mb-5 flex items-start justify-between gap-4">
           <div>
@@ -154,13 +176,7 @@ export default async function FlightDetailPage({ params }: Props) {
           )}
         </div>
       </div>
-    );
-  } catch (err) {
-    if (err instanceof ApiError && err.status === 404) {
-      notFound();
-    }
-    throw err;
-  }
+  );
 }
 
 function Row({
