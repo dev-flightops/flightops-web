@@ -66,7 +66,17 @@ function LoginInner({ providers }: { providers: ProviderSummary[] }) {
   const isSubmitting = form.formState.isSubmitting;
 
   return (
-    <div className="flex min-h-screen items-center justify-center px-4">
+    // Legacy login.html uses a system-font stack (not Inter like the rest
+    // of the app) — the brand "Peregrine Flight Ops" renders visibly wider
+    // and heavier with SF Pro Display vs Inter. Scoping that override here
+    // keeps the rest of the app on Inter as intended.
+    <div
+      className="flex min-h-screen items-center justify-center px-4"
+      style={{
+        fontFamily:
+          '-apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", system-ui, sans-serif',
+      }}
+    >
       <div className="w-full max-w-[380px]">
         {/* Brand block */}
         <div className="mb-8 text-center">
@@ -171,7 +181,7 @@ function LoginInner({ providers }: { providers: ProviderSummary[] }) {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="mt-2 w-full cursor-pointer rounded-md border-none bg-[#0a84ff] px-4 py-2.5 text-[0.9rem] font-semibold text-white transition-colors hover:bg-[#338dff] disabled:cursor-not-allowed disabled:opacity-60"
+              className="mt-2 w-full cursor-pointer rounded-[7px] border-none bg-[#0a84ff] p-2.5 text-[0.9rem] font-semibold text-white transition-colors hover:bg-[#338dff] disabled:cursor-not-allowed disabled:opacity-60"
             >
               {isSubmitting ? "Signing in…" : "Sign In"}
             </button>
@@ -232,7 +242,7 @@ function SsoButton({
       type="button"
       disabled={disabled}
       onClick={() => signIn(provider.id, { callbackUrl })}
-      className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-md px-4 py-2.5 text-[0.9rem] font-semibold transition-opacity disabled:cursor-not-allowed disabled:opacity-60"
+      className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-[7px] p-2.5 text-[0.9rem] font-semibold transition-opacity disabled:cursor-not-allowed disabled:opacity-60"
       style={style}
     >
       Sign in with {provider.label}
