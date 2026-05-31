@@ -29,7 +29,7 @@ export function DepartmentNav() {
     <div className="border-t border-border bg-muted">
       <div className="container flex items-center gap-1 px-3 py-1">
         <Link
-          href="/"
+          href="/home"
           className="rounded-md p-1 text-muted-foreground hover:bg-primary/8 hover:text-status-blue"
           aria-label="Home"
         >
