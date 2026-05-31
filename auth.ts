@@ -16,6 +16,9 @@ interface AccessTokenClaims {
   tenant_id: string;
   roles: string[];
   email?: string;
+  /** Display name embedded by auth-service so the UI can greet the user
+   * without an extra round-trip. May be missing on older tokens. */
+  name?: string;
   exp: number;
 }
 
@@ -70,6 +73,7 @@ function buildProviders(): Provider[] {
         return {
           id: claims.sub,
           email: credentials.email as string,
+          name: claims.name,
           tenant_id: claims.tenant_id,
           roles: claims.roles,
           access_token: body.access_token,
@@ -148,6 +152,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       // Overwrite the sub so the session reports the FlightOps user id,
       // not the upstream provider's sub.
       user.id = result.claims.sub;
+      // Prefer the name from our JWT (the User row's full_name) over the
+      // provider's so the greeting matches what admins configured, not
+      // whatever Google has on file.
+      if (result.claims.name) user.name = result.claims.name;
       return true;
     },
     async jwt({ token, user }) {
