@@ -10,7 +10,7 @@ vi.mock("next/navigation", () => ({
 }));
 
 import { AppShell } from "./app-shell";
-import { UserMenu } from "./user-menu";
+import { HeaderActions } from "./header-actions";
 
 const acme: TenantSummary = {
   id: "11111111-1111-1111-1111-111111111111",
@@ -25,9 +25,11 @@ describe("AppShell (a11y)", () => {
     const { container } = render(
       <TenantProvider tenants={[acme]} switchTenantAction={vi.fn()}>
         <AppShell
-          userSlot={
-            <UserMenu
+          brand="Acme Aviation"
+          actionsSlot={
+            <HeaderActions
               email="admin@flightops.local"
+              fullName="Admin User"
               signOutAction={vi.fn().mockResolvedValue(undefined)}
             />
           }

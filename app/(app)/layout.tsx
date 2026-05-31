@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 
 import { auth, signOut } from "@/auth";
 import { AppShell } from "@/components/app-shell/app-shell";
-import { UserMenu } from "@/components/app-shell/user-menu";
+import { HeaderActions } from "@/components/app-shell/header-actions";
 import { listMyTenants } from "@/lib/api/auth";
 import { SessionExpiredError } from "@/lib/api/client";
 import { TenantProvider } from "@/lib/tenant";
@@ -15,13 +15,15 @@ async function signOutAction(): Promise<void> {
 }
 
 /**
- * Layout for the (app) route group — wraps every in-app page (dispatch,
- * dashboards) with the AppShell chrome and a TenantProvider seeded from
- * the backend.
+ * Layout for the (app) route group — wraps every in-app page (home,
+ * dispatch, dashboards) with the AppShell chrome and a TenantProvider
+ * seeded from the backend.
  *
- * Tenants are fetched server-side per layout render. With a single tenant
- * this is cheap; when multi-tenant lands we can swap to a cached/SWR
- * source if it becomes a bottleneck.
+ * The TenantProvider stays in place even though we no longer render a
+ * visible tenant switcher in the header (the legacy header doesn't have
+ * one). Multi-tenant switching will live in Settings (M4); the provider
+ * still feeds the current-tenant data to anything downstream that needs
+ * it.
  */
 export default async function AppGroupLayout({
   children,
@@ -33,8 +35,6 @@ export default async function AppGroupLayout({
     const response = await listMyTenants();
     tenants = response.tenants;
   } catch (error) {
-    // If the session is dead we can't render this group at all — kick the
-    // user to /login with a return URL.
     if (error instanceof SessionExpiredError) {
       redirect("/login");
     }
@@ -42,8 +42,15 @@ export default async function AppGroupLayout({
   }
 
   const session = await auth();
-  const userSlot = session?.user?.email ? (
-    <UserMenu email={session.user.email} signOutAction={signOutAction} />
+  const currentTenant = tenants.find((t) => t.is_current) ?? tenants[0];
+  const brand = currentTenant?.name ?? "Peregrine Flight Ops";
+
+  const actionsSlot = session?.user?.email ? (
+    <HeaderActions
+      email={session.user.email}
+      fullName={session.user.name ?? null}
+      signOutAction={signOutAction}
+    />
   ) : null;
 
   return (
@@ -51,7 +58,9 @@ export default async function AppGroupLayout({
       tenants={tenants}
       switchTenantAction={switchTenantAction}
     >
-      <AppShell userSlot={userSlot}>{children}</AppShell>
+      <AppShell brand={brand} actionsSlot={actionsSlot}>
+        {children}
+      </AppShell>
     </TenantProvider>
   );
 }
