@@ -1,5 +1,6 @@
 import type { FlightDetail } from "@/lib/api/types";
 
+import { GeneratePdfButton } from "./generate-pdf-button";
 import { SectionPanel } from "./section-panel";
 
 /**
@@ -69,47 +70,3 @@ export function RightColumn({ flight }: { flight?: FlightDetail | null }) {
   );
 }
 
-/**
- * Generate-PDF action. With a flight selected, renders an anchor to the
- * per-flight release-PDF endpoint that ships in M1. Without a selection,
- * stays disabled with a tooltip telling the user to pick one first.
- *
- * In M2-M3, swap the href for the form-level packet generator that
- * mirrors the legacy `POST /dispatch/generate` view.
- */
-function GeneratePdfButton({ flight }: { flight: FlightDetail | null }) {
-  const baseClass =
-    "inline-flex items-center gap-1.5 rounded-md bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground";
-  const icon = (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
-      <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z" />
-    </svg>
-  );
-
-  if (!flight) {
-    return (
-      <button
-        type="button"
-        disabled
-        title="Pick a scheduled flight above first"
-        className={`${baseClass} cursor-not-allowed opacity-60`}
-      >
-        {icon}
-        Generate PDF
-      </button>
-    );
-  }
-
-  return (
-    <a
-      href={`/api/dispatch/${flight.id}/release.pdf`}
-      target="_blank"
-      rel="noopener noreferrer"
-      title={`Download the release PDF for ${flight.flight_number}`}
-      className={`${baseClass} hover:bg-primary/90`}
-    >
-      {icon}
-      Generate PDF
-    </a>
-  );
-}

@@ -1,7 +1,16 @@
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import userEvent from "@testing-library/user-event";
+import { describe, expect, it, vi } from "vitest";
 
 import type { FlightDetail } from "@/lib/api/types";
+
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ refresh: vi.fn(), push: vi.fn() }),
+}));
+
+vi.mock("@/app/(app)/dispatch/[flightId]/actions", () => ({
+  releaseFlightAction: vi.fn(),
+}));
 
 import { RightColumn } from "./right-column";
 
@@ -39,8 +48,8 @@ describe("RightColumn / Generate PDF button", () => {
     );
   });
 
-  it("renders Generate PDF as a link to the per-flight release PDF when a flight is selected", () => {
-    render(<RightColumn flight={baseFlight()} />);
+  it("renders Generate PDF as a direct download link when the flight is already released", () => {
+    render(<RightColumn flight={baseFlight({ status: "released" })} />);
     const link = screen.getByRole("link", { name: /Generate PDF/i });
     expect(link).toHaveAttribute(
       "href",
@@ -48,6 +57,24 @@ describe("RightColumn / Generate PDF button", () => {
     );
     expect(link).toHaveAttribute("target", "_blank");
     expect(link).toHaveAttribute("rel", "noopener noreferrer");
+  });
+
+  it("renders Generate PDF as a button that opens the release-confirm dialog when the flight is still scheduled", async () => {
+    const user = userEvent.setup();
+    render(<RightColumn flight={baseFlight({ status: "scheduled" })} />);
+    const btn = screen.getByRole("button", { name: /Generate PDF/i });
+    expect(btn).not.toBeDisabled();
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+
+    await user.click(btn);
+
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+    expect(
+      screen.getByText(/Release GV101 and generate PDF/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /Release & generate/i }),
+    ).toBeInTheDocument();
   });
 
   it("keeps Refresh Weather + AI Review disabled regardless of selection", () => {
