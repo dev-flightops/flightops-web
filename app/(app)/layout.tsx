@@ -1,5 +1,3 @@
-import { redirect } from "next/navigation";
-
 import { auth, signOut } from "@/auth";
 import { AppShell } from "@/components/app-shell/app-shell";
 import { HeaderActions } from "@/components/app-shell/header-actions";
@@ -36,7 +34,16 @@ export default async function AppGroupLayout({
     tenants = response.tenants;
   } catch (error) {
     if (error instanceof SessionExpiredError) {
-      redirect("/login");
+      // Bare redirect("/login") is not enough here: the Auth.js session
+      // cookie is signed with AUTH_SECRET and stays "valid" independent
+      // of the FlightOps JWT. If we redirect to /login while the
+      // session cookie is still present, proxy.ts treats the user as
+      // logged-in and bounces them back to /home/ → another 401 → loop.
+      // signOut() clears the Auth.js cookie too so /login renders for
+      // real. Triggered by: re-seeding the DB (user UUIDs change),
+      // backend JWT key rotation, user/tenant deletion. JWT TTL expiry
+      // is handled separately by the jwt callback in auth.ts.
+      await signOut({ redirectTo: "/login" });
     }
     throw error;
   }

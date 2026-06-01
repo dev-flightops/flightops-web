@@ -77,6 +77,7 @@ function buildProviders(): Provider[] {
           tenant_id: claims.tenant_id,
           roles: claims.roles,
           access_token: body.access_token,
+          access_token_exp: claims.exp,
         };
       },
     }),
@@ -149,6 +150,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       (user as unknown as Record<string, unknown>).access_token = result.access_token;
       (user as unknown as Record<string, unknown>).tenant_id = result.claims.tenant_id;
       (user as unknown as Record<string, unknown>).roles = result.claims.roles;
+      (user as unknown as Record<string, unknown>).access_token_exp = result.claims.exp;
       // Overwrite the sub so the session reports the FlightOps user id,
       // not the upstream provider's sub.
       user.id = result.claims.sub;
@@ -159,10 +161,29 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       return true;
     },
     async jwt({ token, user }) {
+      // Initial sign-in: copy the backend JWT + its expiry onto the
+      // Auth.js token so subsequent calls can validate without an extra
+      // round-trip.
       if (user) {
         token.access_token = user.access_token;
         token.tenant_id = user.tenant_id;
         token.roles = user.roles;
+        token.access_token_exp = user.access_token_exp;
+      }
+      // Subsequent calls: if the backend JWT has expired, returning null
+      // tells Auth.js to clear its own session cookie. Without this the
+      // Auth.js cookie stays valid for its own (much longer) lifetime
+      // even though every backend API call returns 401 — which leaves
+      // the user in a wedged "logged in but nothing works" state where
+      // the only fix is to delete cookies in DevTools.
+      //
+      // The `exp` claim is unix-seconds; we compare against now-in-seconds.
+      // A small grace window would be wrong here — the backend already
+      // honours its own `exp`, so a token even one second past expiry
+      // gets rejected with 401.
+      const exp = token.access_token_exp as number | undefined;
+      if (exp && Date.now() / 1000 >= exp) {
+        return null;
       }
       return token;
     },
