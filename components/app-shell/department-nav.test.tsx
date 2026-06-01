@@ -16,12 +16,13 @@ describe("DepartmentNav", () => {
     expect(container).toBeEmptyDOMElement();
   });
 
-  it("renders Operations modules on /dispatch", () => {
+  it("renders Operations modules on /dispatch (full legacy list)", () => {
     vi.mocked(usePathname).mockReturnValue("/dispatch");
     render(<DepartmentNav />);
     expect(screen.getByTestId("dept-nav-dispatch")).toBeInTheDocument();
-    expect(screen.getByTestId("dept-nav-dashboards")).toBeInTheDocument();
     expect(screen.getByTestId("dept-nav-flight-following")).toBeInTheDocument();
+    expect(screen.getByTestId("dept-nav-currency")).toBeInTheDocument();
+    expect(screen.getByTestId("dept-nav-intelligence")).toBeInTheDocument();
   });
 
   it("marks the active module's chip with aria-current", () => {
@@ -31,7 +32,7 @@ describe("DepartmentNav", () => {
       "aria-current",
       "page",
     );
-    expect(screen.getByTestId("dept-nav-dashboards")).not.toHaveAttribute(
+    expect(screen.getByTestId("dept-nav-flight-following")).not.toHaveAttribute(
       "aria-current",
     );
   });

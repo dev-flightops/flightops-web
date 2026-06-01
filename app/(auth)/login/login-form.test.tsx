@@ -78,7 +78,7 @@ describe("LoginForm", () => {
       password: "flightops-dev",
       redirect: false,
     });
-    expect(push).toHaveBeenCalledWith("/home");
+    expect(push).toHaveBeenCalledWith("/home/");
   });
 
   it("shows an inline error when signIn returns an error", async () => {
@@ -103,7 +103,7 @@ describe("LoginForm", () => {
     await user.click(
       screen.getByRole("button", { name: /Sign in with Google/i }),
     );
-    expect(signIn).toHaveBeenCalledWith("google", { callbackUrl: "/home" });
+    expect(signIn).toHaveBeenCalledWith("google", { callbackUrl: "/home/" });
   });
 
   it("has no WCAG A/AA violations on the default render", async () => {

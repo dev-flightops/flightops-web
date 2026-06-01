@@ -53,18 +53,20 @@ export const DEPARTMENTS: Department[] = [
     label: "Operations",
     status: "live",
     pathPrefixes: ["/dispatch", "/dashboards"],
+    /**
+     * Order + selection mirrors the legacy form's sub-nav row exactly:
+     *   Dispatch | Flight Following | Weather | Crew | Currency |
+     *   Flight Log | Roster | Pilot History | Village Wx | Ramp Ops |
+     *   EOD | ✨ Intelligence
+     *
+     * Dashboards isn't in the legacy top row — it still lives at
+     * /dashboards for direct navigation but isn't surfaced here.
+     */
     children: [
       {
         id: "dispatch",
         label: "Dispatch",
         href: "/dispatch",
-        status: "live",
-        department: "operations",
-      },
-      {
-        id: "dashboards",
-        label: "Dashboards",
-        href: "/dashboards",
         status: "live",
         department: "operations",
       },
@@ -81,9 +83,57 @@ export const DEPARTMENTS: Department[] = [
         department: "operations",
       },
       {
+        id: "crew",
+        label: "Crew",
+        status: "m3",
+        department: "operations",
+      },
+      {
+        id: "currency",
+        label: "Currency",
+        status: "m3",
+        department: "operations",
+      },
+      {
         id: "flight-log",
         label: "Flight Log",
         status: "m2",
+        department: "operations",
+      },
+      {
+        id: "roster",
+        label: "Roster",
+        status: "m3",
+        department: "operations",
+      },
+      {
+        id: "pilot-history",
+        label: "Pilot History",
+        status: "m3",
+        department: "operations",
+      },
+      {
+        id: "village-wx",
+        label: "Village Wx",
+        status: "m2",
+        department: "operations",
+      },
+      {
+        id: "ramp-ops",
+        label: "Ramp Ops",
+        status: "m2",
+        department: "operations",
+      },
+      {
+        id: "eod",
+        label: "EOD",
+        status: "m2",
+        department: "operations",
+      },
+      {
+        id: "intelligence",
+        label: "✨ Intelligence",
+        status: "m4",
         department: "operations",
       },
     ],

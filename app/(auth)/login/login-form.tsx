@@ -37,7 +37,7 @@ type FormValues = z.infer<typeof schema>;
 function LoginInner({ providers }: { providers: ProviderSummary[] }) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const from = searchParams.get("from") ?? "/home";
+  const from = searchParams.get("from") ?? "/home/";
   const ssoError = searchParams.get("error");
   const [error, setError] = useState<string | null>(
     ssoError ? "Sign-in failed — your account may not be provisioned." : null,
@@ -193,7 +193,7 @@ function LoginInner({ providers }: { providers: ProviderSummary[] }) {
           Authorized users only &mdash; contact your administrator for access.
         </p>
         <p className="mt-2 text-center text-xs">
-          <Link href="/home" className="text-[#8896a7] hover:underline">
+          <Link href="/home/" className="text-[#8896a7] hover:underline">
             &larr; Back to home
           </Link>
         </p>
