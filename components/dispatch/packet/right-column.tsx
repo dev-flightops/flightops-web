@@ -1,3 +1,6 @@
+import type { FlightDetail } from "@/lib/api/types";
+
+import { GeneratePdfButton } from "./generate-pdf-button";
 import { SectionPanel } from "./section-panel";
 
 /**
@@ -5,15 +8,17 @@ import { SectionPanel } from "./section-panel";
  * panels + dispatcher notes. Matches legacy
  * `templates/dispatch/form.html` lines 609-680.
  *
- * In M1 nothing on this side is interactive:
- *   - Refresh Weather → M2 weather-service
- *   - AI Review → M4 ai-service
- *   - Generate PDF → M2-M3 (needs the legality + weather data; today's
- *     /dispatch/[id]/release.pdf works per-flight from the detail page)
- *
- * Data panels are placeholders that mirror the legacy empty-state copy.
+ * M1 wiring:
+ *   - Refresh Weather → disabled (weather-service M2)
+ *   - AI Review → disabled (ai-service M4)
+ *   - Generate PDF → ENABLED once a flight is selected. Hits the
+ *     per-flight `/api/dispatch/<id>/release.pdf` endpoint we already
+ *     ship for the flight-detail page. This is the M1 stop-gap until
+ *     the full packet PDF lands in M2-M3 once weather + legality data
+ *     sources are wired. Without a selection, the button stays
+ *     disabled with a tooltip pointing the user at the dropdown above.
  */
-export function RightColumn() {
+export function RightColumn({ flight }: { flight?: FlightDetail | null }) {
   return (
     <div className="space-y-5">
       <SectionPanel title={null}>
@@ -36,23 +41,12 @@ export function RightColumn() {
             ✨ AI Review
           </button>
 
-          <button
-            type="button"
-            disabled
-            title="Pick a scheduled flight above, then release it from its detail page to download the PDF"
-            className="inline-flex cursor-not-allowed items-center gap-1.5 rounded-md bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground opacity-60"
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
-              <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z" />
-            </svg>
-            Generate PDF
-          </button>
+          <GeneratePdfButton flight={flight ?? null} />
         </div>
         <p className="mt-3 text-xs text-muted-foreground">
-          Full packet generation lands once weather + legality data sources
-          are wired. For now, release a scheduled flight from{" "}
-          <span className="font-mono">/dispatch/&lt;id&gt;</span> to grab its
-          release PDF.
+          Full packet generation (weather summary, MEL ack, crew legality
+          snapshot, risk score) lands once those services ship. M1 generates
+          the per-flight release PDF directly from the selected flight.
         </p>
       </SectionPanel>
 
@@ -75,3 +69,4 @@ export function RightColumn() {
     </div>
   );
 }
+
