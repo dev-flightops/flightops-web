@@ -39,7 +39,7 @@ export function AppShell({
           {/* Left: brand — links to /home to match legacy. */}
           <div className="flex min-w-0 flex-shrink-0 items-center gap-1 overflow-hidden">
             <Link
-              href="/home"
+              href="/home/"
               className="mr-3 flex flex-shrink-0 items-center gap-2"
             >
               <span className="truncate text-sm font-semibold tracking-tight text-foreground">

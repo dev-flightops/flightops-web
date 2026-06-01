@@ -1,53 +1,100 @@
-import { Plane } from "lucide-react";
-
-import { Card } from "@/components/ui/card";
-import { FlightTable } from "@/components/dispatch/flight-table";
-import { listFlights } from "@/lib/api/ops";
+import {
+  CrewCurrencyBanner,
+  CrewLegalityHints,
+} from "@/components/dispatch/packet/crew-status-rows";
+import {
+  FlightDetailsPanel,
+  PacketStyles,
+} from "@/components/dispatch/packet/flight-details-panel";
+import { LeftColumn } from "@/components/dispatch/packet/left-column";
+import { LoadFromSchedule } from "@/components/dispatch/packet/load-from-schedule";
+import { PacketHeader } from "@/components/dispatch/packet/packet-header";
+import { RightColumn } from "@/components/dispatch/packet/right-column";
+import { SelectedFlightSummary } from "@/components/dispatch/packet/selected-flight-summary";
+import { ApiError } from "@/lib/api/client";
+import { listMyTenants } from "@/lib/api/auth";
+import { getFlight, listFlights } from "@/lib/api/ops";
+import type { FlightDetail } from "@/lib/api/types";
 
 function todayUtc(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
-export default async function DispatchPage() {
+interface SearchParams {
+  flight?: string;
+}
+
+/**
+ * /dispatch — pixel-match for the legacy `templates/dispatch/form.html`
+ * "Flight Dispatch Packet" workflow.
+ *
+ * URL params:
+ *   ?flight=<uuid>  — preselects a flight; the dropdown shows it as the
+ *                     active option and the Flight Details panel pre-
+ *                     populates with its data. Mirrors the legacy HTMX
+ *                     pre-fill behaviour.
+ */
+export default async function DispatchPage({
+  searchParams,
+}: {
+  searchParams: Promise<SearchParams>;
+}) {
+  const { flight: selectedId } = await searchParams;
   const today = todayUtc();
-  const { items, total } = await listFlights({ onDate: today });
+
+  const [{ items: flights }, tenantsResponse, selectedFlight] =
+    await Promise.all([
+      listFlights({ onDate: today }).catch(() => ({ items: [], total: 0 })),
+      listMyTenants().catch(() => ({ tenants: [] })),
+      selectedId ? loadFlight(selectedId) : Promise.resolve(null),
+    ]);
+
+  const currentTenant =
+    tenantsResponse.tenants.find((t) => t.is_current) ??
+    tenantsResponse.tenants[0];
+  const tenantName = currentTenant?.name ?? "Peregrine Flight Ops";
 
   return (
-    <div className="container py-6">
-      <header className="mb-5">
-        <div className="flex items-center gap-2 text-muted-foreground">
-          <Plane className="h-3.5 w-3.5" />
-          <span className="text-[0.65rem] font-bold uppercase tracking-[0.08em]">
-            Operations · Dispatch
-          </span>
-        </div>
-        <h1 className="mt-1 text-xl font-bold tracking-tight">
-          Flight Dispatch
-        </h1>
-        <p className="mt-0.5 text-xs text-muted-foreground">
-          {total} flight{total === 1 ? "" : "s"} scheduled for{" "}
-          <span className="font-mono">{today}</span> (UTC)
-        </p>
-      </header>
+    <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6">
+      <PacketHeader tenantName={tenantName} />
+      <PacketStyles />
 
-      {items.length === 0 ? (
-        <EmptyState date={today} />
-      ) : (
-        <Card className="p-0 overflow-hidden">
-          <FlightTable flights={items} />
-        </Card>
-      )}
+      <div className="space-y-4">
+        <LoadFromSchedule flights={flights} selectedFlightId={selectedId ?? null}>
+          {selectedFlight && <SelectedFlightSummary flight={selectedFlight} />}
+        </LoadFromSchedule>
+
+        <FlightDetailsPanel flight={selectedFlight} />
+
+        <CrewLegalityHints />
+
+        {/* Crew-currency status only makes sense once a PIC is loaded.
+            Selecting a flight pulls the demo PIC ("Brian Larson"), so we
+            render the CLEAR banner only after that. Matches the legacy
+            where the banner appears post-selection, not as a static row. */}
+        {selectedFlight && <CrewCurrencyBanner />}
+
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+          <LeftColumn />
+          <RightColumn />
+        </div>
+      </div>
     </div>
   );
 }
 
-function EmptyState({ date }: { date: string }) {
-  return (
-    <Card className="border-dashed bg-muted/20 p-12 text-center">
-      <Plane className="mx-auto h-8 w-8 text-muted-foreground" />
-      <p className="mt-3 text-sm text-muted-foreground">
-        No flights scheduled for <span className="font-mono">{date}</span>.
-      </p>
-    </Card>
-  );
+/**
+ * Returns null instead of throwing when the flight isn't found (stale
+ * URL params). Anything else (auth failure, 500) re-throws so the layout
+ * can surface it.
+ */
+async function loadFlight(flightId: string): Promise<FlightDetail | null> {
+  try {
+    return await getFlight(flightId);
+  } catch (err) {
+    if (err instanceof ApiError && err.status === 404) {
+      return null;
+    }
+    throw err;
+  }
 }

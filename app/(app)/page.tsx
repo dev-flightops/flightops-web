@@ -6,5 +6,5 @@ import { redirect } from "next/navigation";
  * still land on the right page.
  */
 export default function RootRedirect() {
-  redirect("/home");
+  redirect("/home/");
 }
