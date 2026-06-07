@@ -121,3 +121,60 @@ export interface WeatherReportResponse {
   valid_until: string; // ISO 8601 UTC — cache TTL boundary
   cache_hit: boolean;  // true if served from weather_reports, false if AWC was hit
 }
+
+// Maintenance / airworthiness (M2-M-8 backend / M2-G-5 frontend)
+
+export type SquawkSeverity = "minor" | "major" | "grounding";
+
+export type IssueKind =
+  | "expired_mel"
+  | "open_mel"
+  | "grounding_squawk"
+  | "major_squawk";
+
+/**
+ * Discriminated union by `kind` — backend returns a single shape with
+ * nullable fields per variant. UI renders rows based on `kind` and
+ * ignores fields not relevant to that variant.
+ */
+export interface BlockingIssue {
+  kind: IssueKind;
+  description: string;
+  // MEL fields
+  mel_item_id?: string | null;
+  ata_chapter?: string | null;
+  due_at?: string | null;
+  days_overdue?: number | null;
+  // Squawk fields
+  squawk_id?: string | null;
+  severity?: SquawkSeverity | null;
+  reported_at?: string | null;
+}
+
+export interface AdvisoryIssue {
+  kind: IssueKind;
+  description: string;
+  mel_item_id?: string | null;
+  ata_chapter?: string | null;
+  due_at?: string | null;
+  days_until_due?: number | null;
+  squawk_id?: string | null;
+  severity?: SquawkSeverity | null;
+  reported_at?: string | null;
+}
+
+/** Subset of AircraftRef returned by the maintenance-service — no seats
+ * field, since airworthiness doesn't care about capacity. */
+export interface MaintenanceAircraftRef {
+  id: string;
+  tail_number: string;
+  model: string;
+}
+
+export interface AirworthinessResponse {
+  aircraft: MaintenanceAircraftRef;
+  is_airworthy: boolean;
+  checked_at: string;
+  blocking_issues: BlockingIssue[];
+  advisory_issues: AdvisoryIssue[];
+}
