@@ -1,127 +1,158 @@
-import Link from "next/link";
-import { Briefcase, CheckCircle2, Clock, Plane, XCircle } from "lucide-react";
+import { Activity, Clock, Plane, ShieldCheck, Users } from "lucide-react";
 
-import { StatCard } from "@/components/dashboards/stat-card";
-import { Breadcrumb } from "@/components/ui/breadcrumb";
+import { AlertList } from "@/components/dashboards/alert-list";
+import { DashboardNav } from "@/components/dashboards/dashboard-nav";
+import { PillarBar } from "@/components/dashboards/pillar-bar";
+import { ScorePill } from "@/components/dashboards/score-pill";
+import { StatTile } from "@/components/dashboards/stat-tile";
+import { listMyTenants } from "@/lib/api/auth";
 import { getFlightStats } from "@/lib/api/ops";
-import { formatDate } from "@/lib/utils";
 
 export default async function ExecutiveDashboardPage() {
-  const stats = await getFlightStats();
-  const fleetUtilization =
-    stats.aircraft_total > 0
-      ? Math.round((stats.aircraft_active / stats.aircraft_total) * 100)
-      : 0;
+  const [stats, tenantsResponse] = await Promise.all([
+    getFlightStats().catch(() => null),
+    listMyTenants().catch(() => ({ tenants: [] })),
+  ]);
+
+  const todayCount = stats?.today.total ?? 0;
+  const todayReleased = stats?.today.released ?? 0;
+  const completedPct =
+    todayCount > 0 ? Math.round((todayReleased / todayCount) * 1000) / 10 : 0;
+  const fleetTotal = stats?.aircraft_total ?? 0;
+  const fleetActive = stats?.aircraft_active ?? 0;
+
+  // Pillar scoring — only Fleet Airworthiness is computable from M1 data.
+  // The other pillars stay at 0 because their underlying services (flight-
+  // following for completion/on-time, crew for compliance, safety for
+  // incidents) ship in M2-M3.
+  const fleetPillar =
+    fleetTotal > 0 ? Math.round((fleetActive / fleetTotal) * 200) / 10 : 0;
+  const opsScore = fleetPillar; // 0 + 0 + 0 + fleetPillar + 0
+
+  const currentTenantName =
+    tenantsResponse.tenants.find((t) => t.is_current)?.name ??
+    tenantsResponse.tenants[0]?.name ??
+    "Peregrine Flight Ops";
 
   return (
     <div className="container py-6">
-      <header className="mb-5">
-        <Breadcrumb
-          icon={<Briefcase className="h-3.5 w-3.5" />}
-          segments={[
-            { label: "Dashboards", href: "/dashboards" },
-            { label: "Executive" },
-          ]}
-        />
-        <h1 className="mt-1 text-xl font-bold tracking-tight">Executive</h1>
-        <p className="mt-0.5 text-xs text-muted-foreground">
-          Snapshot for the last 7 days (UTC).
-        </p>
-      </header>
+      <DashboardNav active="executive" />
 
-      <section className="mb-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard
-          label="Flights today"
-          value={stats.today.total}
-          hint={`${stats.today.released} released · ${stats.today.scheduled} scheduled`}
-          icon={<Plane className="h-5 w-5" />}
-        />
-        <StatCard
-          label="Released this week"
-          value={stats.this_week.released}
-          hint={`of ${stats.this_week.total} planned`}
-          icon={<CheckCircle2 className="h-5 w-5" />}
-          tone="success"
-        />
-        <StatCard
-          label="Cancelled this week"
-          value={stats.this_week.cancelled}
-          hint={
-            stats.this_week.total > 0
-              ? `${Math.round((stats.this_week.cancelled / stats.this_week.total) * 100)}% of plan`
-              : "—"
-          }
-          icon={<XCircle className="h-5 w-5" />}
-          tone={stats.this_week.cancelled > 0 ? "destructive" : "default"}
-        />
-        <StatCard
-          label="Fleet utilization"
-          value={`${fleetUtilization}%`}
-          hint={`${stats.aircraft_active} of ${stats.aircraft_total} aircraft active`}
-          icon={<Plane className="h-5 w-5" />}
-          tone={fleetUtilization >= 80 ? "success" : fleetUtilization >= 50 ? "default" : "warning"}
-        />
-      </section>
-
-      <section className="grid gap-4 lg:grid-cols-2">
-        <div className="rounded-lg border border-border bg-card p-6">
-          <h2 className="mb-4 text-lg font-semibold">This week breakdown</h2>
-          <dl className="space-y-3 text-sm">
-            <Row label="Scheduled" value={stats.this_week.scheduled} />
-            <Row label="Released" value={stats.this_week.released} tone="success" />
-            <Row label="Cancelled" value={stats.this_week.cancelled} tone="destructive" />
-            <Row label="Completed" value={stats.this_week.completed} />
-            <Row label="Total" value={stats.this_week.total} bold />
-          </dl>
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h1 className="text-xl font-bold tracking-tight">Executive Overview</h1>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            {currentTenantName} — {currentTenantName}
+          </p>
         </div>
+        <ScorePill score={opsScore} />
+      </div>
 
-        <div className="rounded-lg border border-border bg-card p-6">
-          <h2 className="mb-4 text-lg font-semibold">Last release</h2>
-          {stats.last_release_at ? (
-            <div className="flex items-center gap-3 text-sm">
-              <Clock className="h-5 w-5 text-muted-foreground" />
-              <time dateTime={stats.last_release_at} className="font-mono">
-                {formatDate(stats.last_release_at)}
-              </time>
-            </div>
-          ) : (
-            <p className="text-sm text-muted-foreground">
-              No releases yet. Head to{" "}
-              <Link href="/dispatch" className="underline">
-                Dispatch
-              </Link>{" "}
-              to release your first flight.
-            </p>
-          )}
-        </div>
-      </section>
-    </div>
-  );
-}
+      {/* Row 1 — 5-col headline stat tiles */}
+      <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+        <StatTile value={0} label="Aircraft Airborne" tone="muted" />
+        <StatTile
+          value={todayCount}
+          label="Flights Today"
+          sub={`${completedPct.toFixed(1)}% complete`}
+          tone={todayCount > 0 ? "green" : "muted"}
+        />
+        <StatTile
+          value={fleetTotal > 0 ? `${fleetActive}/${fleetTotal}` : "0/0"}
+          label="Fleet Airworthy"
+          sub={`${fleetTotal - fleetActive} on hold`}
+          tone={fleetActive > 0 ? "green" : "muted"}
+        />
+        <StatTile
+          value="0/0"
+          label="Crew Current"
+          sub="0 expired · 0 expiring"
+          tone="muted"
+        />
+        <StatTile
+          value={0}
+          label="Overrides (30d)"
+          sub="0% of dispatches"
+          tone="muted"
+        />
+      </div>
 
-function Row({
-  label,
-  value,
-  bold,
-  tone,
-}: {
-  label: string;
-  value: number;
-  bold?: boolean;
-  tone?: "success" | "destructive";
-}) {
-  const toneClass =
-    tone === "success"
-      ? "text-green-500"
-      : tone === "destructive"
-        ? "text-destructive"
-        : undefined;
-  return (
-    <div className="flex items-center justify-between border-b border-border/40 pb-2 last:border-0 last:pb-0">
-      <dt className="text-muted-foreground">{label}</dt>
-      <dd className={`tabular-nums ${bold ? "font-semibold" : ""} ${toneClass ?? ""}`}>
-        {value}
-      </dd>
+      {/* Row 2 — 6-col financial row */}
+      <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+        <StatTile value="$0" label="Revenue MTD" sub="+0%" tone="muted" />
+        <StatTile value="0%" label="Profit Margin" tone="muted" />
+        <StatTile value="$0" label="Rev / FH" tone="muted" />
+        <StatTile value="$0" label="30d Forecast" tone="muted" />
+        <StatTile value="$0" label="Outstanding AR" tone="muted" />
+        <StatTile
+          value="→"
+          label="Executive Analytics"
+          sub="0 pax · 0 FH"
+          tone="muted"
+        />
+      </div>
+
+      {/* Row 3 — 2-col: alerts + ops-score pillars */}
+      <div className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-2">
+        <section className="rounded-xl border border-border bg-card p-5">
+          <div className="mb-3 flex items-baseline justify-between">
+            <h2 className="text-[0.65rem] font-bold uppercase tracking-[0.1em] text-muted-foreground">
+              Active Alerts
+            </h2>
+            <span className="text-[0.65rem] text-muted-foreground/70">
+              alerts-service · M3
+            </span>
+          </div>
+          <AlertList
+            alerts={[]}
+            emptyHint="No active alerts. Live alerts (medical certificate expirations, NOTAM changes, overdue flights) populate here once the alerts-service ships in M3."
+          />
+        </section>
+
+        <section className="rounded-xl border border-border bg-card p-5">
+          <div className="mb-3 flex items-baseline justify-between">
+            <h2 className="text-[0.65rem] font-bold uppercase tracking-[0.1em] text-muted-foreground">
+              Daily Operations Score —{" "}
+              <span className="text-foreground">{opsScore.toFixed(1)}/100</span>
+            </h2>
+            <span className="text-[0.65rem] text-muted-foreground/70">
+              details →
+            </span>
+          </div>
+          <div className="space-y-3">
+            <PillarBar
+              label="Completion Factor"
+              score={0}
+              max={25}
+              icon={<Plane className="h-3.5 w-3.5 text-muted-foreground" />}
+            />
+            <PillarBar
+              label="On-Time Performance"
+              score={0}
+              max={25}
+              icon={<Clock className="h-3.5 w-3.5 text-muted-foreground" />}
+            />
+            <PillarBar
+              label="Crew Compliance"
+              score={0}
+              max={20}
+              icon={<Users className="h-3.5 w-3.5 text-muted-foreground" />}
+            />
+            <PillarBar
+              label="Fleet Airworthiness"
+              score={fleetPillar}
+              max={20}
+              icon={<Activity className="h-3.5 w-3.5 text-muted-foreground" />}
+            />
+            <PillarBar
+              label="Safety Indicators"
+              score={0}
+              max={10}
+              icon={<ShieldCheck className="h-3.5 w-3.5 text-muted-foreground" />}
+            />
+          </div>
+        </section>
+      </div>
     </div>
   );
 }

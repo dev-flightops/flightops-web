@@ -42,7 +42,7 @@ export function DepartmentNav() {
 
         <nav
           aria-label={`${dept.label} modules`}
-          className="flex items-center gap-0.5"
+          className="flex flex-1 items-center gap-0.5"
         >
           {dept.children.map((module) => (
             <DepartmentNavItem
@@ -66,36 +66,60 @@ function DepartmentNavItem({
 }) {
   const isLive = module.status === "live";
   const isActive = isLive && module.href ? pathname.startsWith(module.href) : false;
+  const isPurple = module.accent === "purple";
+
+  // Default chip color: muted; active gets the blue tint; purple-accent AI
+  // items override to purple text. Disabled items dim to 40%.
+  const baseTone = isPurple
+    ? isActive
+      ? "bg-primary/12 text-status-purple font-semibold"
+      : "text-status-purple hover:bg-primary/8"
+    : isActive
+      ? "bg-primary/12 text-status-blue font-semibold"
+      : "text-muted-foreground hover:bg-primary/8 hover:text-status-blue";
 
   const className = cn(
     "rounded-md px-1.5 py-1 text-[0.68rem] font-medium whitespace-nowrap transition-colors",
-    isActive
-      ? "bg-primary/12 text-status-blue font-semibold"
-      : "text-muted-foreground hover:bg-primary/8 hover:text-status-blue",
-    !isLive && "opacity-40 cursor-not-allowed hover:bg-transparent hover:text-muted-foreground",
+    baseTone,
+    !isLive && "opacity-40 cursor-not-allowed hover:bg-transparent",
+  );
+
+  const before = (
+    <>
+      {module.pushRight && <span className="flex-1" />}
+      {module.dividerBefore && (
+        <span className="mx-1 h-3 w-px bg-border" aria-hidden />
+      )}
+    </>
   );
 
   if (!isLive || !module.href) {
     return (
-      <span
-        className={className}
-        title={moduleStatusHint(module.status)}
-        aria-disabled="true"
-        data-testid={`dept-nav-${module.id}`}
-      >
-        {module.label}
-      </span>
+      <>
+        {before}
+        <span
+          className={className}
+          title={moduleStatusHint(module.status)}
+          aria-disabled="true"
+          data-testid={`dept-nav-${module.id}`}
+        >
+          {module.label}
+        </span>
+      </>
     );
   }
 
   return (
-    <Link
-      href={module.href}
-      className={className}
-      aria-current={isActive ? "page" : undefined}
-      data-testid={`dept-nav-${module.id}`}
-    >
-      {module.label}
-    </Link>
+    <>
+      {before}
+      <Link
+        href={module.href}
+        className={className}
+        aria-current={isActive ? "page" : undefined}
+        data-testid={`dept-nav-${module.id}`}
+      >
+        {module.label}
+      </Link>
+    </>
   );
 }
