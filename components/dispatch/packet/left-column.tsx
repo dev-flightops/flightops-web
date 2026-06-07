@@ -1,5 +1,6 @@
 import type { FlightDetail } from "@/lib/api/types";
 
+import { MaintenancePanel } from "./maintenance-panel";
 import { DisabledPanel, SectionPanel } from "./section-panel";
 import { WeatherPanel } from "./weather-panel";
 
@@ -11,13 +12,15 @@ import { WeatherPanel } from "./weather-panel";
  *   → Fuel → Load Team → Company Risk Inputs → Management
  *   → Non-Certified Weather Notes
  *
- * Live as of M2-G-1:
+ * Live as of M2-G-5:
  *   - Route textarea (free input — saved nowhere yet)
  *   - Weather & ATIS — METAR + TAF via weather-service (M2-M-3)
+ *   - Maintenance & Airworthiness — open MELs + squawks via
+ *     maintenance-service (M2-M-8)
  *   - Non-Certified Weather Notes textarea
  *
- * NOTAM Review still blocked on M2-M-4 (FAA NOTAM proxy). Compliance,
- * Fuel, Load Team, Mgmt Approval all wait on their respective services.
+ * NOTAM Review still blocked on M2-M-4 (FAA NOTAM proxy). Fuel, Load
+ * Team, Mgmt Approval all wait on their respective services.
  */
 export async function LeftColumn({ flight }: { flight: FlightDetail | null }) {
   return (
@@ -64,10 +67,13 @@ export async function LeftColumn({ flight }: { flight: FlightDetail | null }) {
           </div>
         </div>
         <p className="mt-3 text-xs text-muted-foreground">
-          Full compliance gating (FAR Part 117 legality, MEL ack, airworthiness)
-          lands in M2–M3 once maintenance- and crew-services are live.
+          FAR Part 117 crew legality lands once the crew-service ships. MEL
+          acknowledgement + airworthiness is now surfaced in the Maintenance
+          panel below.
         </p>
       </SectionPanel>
+
+      <MaintenancePanel flight={flight} />
 
       <DisabledPanel
         title="Fuel"
