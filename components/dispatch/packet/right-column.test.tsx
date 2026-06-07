@@ -77,11 +77,22 @@ describe("RightColumn / Generate PDF button", () => {
     ).toBeInTheDocument();
   });
 
-  it("keeps Refresh Weather + AI Review disabled regardless of selection", () => {
+  it("Refresh Weather is live when a flight is selected (M2-G-1)", () => {
     render(<RightColumn flight={baseFlight()} />);
     expect(
       screen.getByRole("button", { name: /Refresh Weather/i }),
+    ).not.toBeDisabled();
+  });
+
+  it("Refresh Weather stays disabled when no flight is selected", () => {
+    render(<RightColumn />);
+    expect(
+      screen.getByRole("button", { name: /Refresh Weather/i }),
     ).toBeDisabled();
+  });
+
+  it("AI Review stays disabled regardless of selection (M4)", () => {
+    render(<RightColumn flight={baseFlight()} />);
     expect(
       screen.getByRole("button", { name: /AI Review/i }),
     ).toBeDisabled();

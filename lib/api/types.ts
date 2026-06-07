@@ -108,3 +108,16 @@ export interface ProviderSummary {
 export interface ProvidersResponse {
   providers: ProviderSummary[];
 }
+
+// Weather (M2-M-3 backend / M2-G-1 frontend)
+
+export type WeatherKind = "metar" | "taf" | "pirep";
+
+export interface WeatherReportResponse {
+  icao: string;
+  kind: WeatherKind;
+  raw: string;
+  parsed_at: string;   // ISO 8601 UTC — when we last fetched from AWC
+  valid_until: string; // ISO 8601 UTC — cache TTL boundary
+  cache_hit: boolean;  // true if served from weather_reports, false if AWC was hit
+}
