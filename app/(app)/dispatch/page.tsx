@@ -75,7 +75,7 @@ export default async function DispatchPage({
         {selectedFlight && <CrewCurrencyBanner />}
 
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-          <LeftColumn />
+          <LeftColumn flight={selectedFlight} />
           <RightColumn flight={selectedFlight} />
         </div>
       </div>

@@ -1,4 +1,7 @@
+import type { FlightDetail } from "@/lib/api/types";
+
 import { DisabledPanel, SectionPanel } from "./section-panel";
+import { WeatherPanel } from "./weather-panel";
 
 /**
  * Left column of the dispatch packet form, matching the legacy
@@ -8,14 +11,15 @@ import { DisabledPanel, SectionPanel } from "./section-panel";
  *   → Fuel → Load Team → Company Risk Inputs → Management
  *   → Non-Certified Weather Notes
  *
- * Live in M1:
- *   - Route textarea (free input — saved nowhere yet, just renders)
- *   - Non-Certified Weather Notes textarea (same)
+ * Live as of M2-G-1:
+ *   - Route textarea (free input — saved nowhere yet)
+ *   - Weather & ATIS — METAR + TAF via weather-service (M2-M-3)
+ *   - Non-Certified Weather Notes textarea
  *
- * Everything else needs a service we don't have yet, so each renders
- * the legacy's own empty-state copy or a milestone-tagged placeholder.
+ * NOTAM Review still blocked on M2-M-4 (FAA NOTAM proxy). Compliance,
+ * Fuel, Load Team, Mgmt Approval all wait on their respective services.
  */
-export function LeftColumn() {
+export async function LeftColumn({ flight }: { flight: FlightDetail | null }) {
   return (
     <div className="space-y-5">
       <SectionPanel title="Route">
@@ -30,11 +34,7 @@ export function LeftColumn() {
         />
       </SectionPanel>
 
-      <DisabledPanel
-        title="Weather & ATIS"
-        milestone="M2"
-        hint="Enter your routing above to pull METAR, TAF, ATIS, and village field reports for every stop. Powered by the weather-service when it ships."
-      />
+      <WeatherPanel flight={flight} />
 
       <DisabledPanel
         title="NOTAM Review"
