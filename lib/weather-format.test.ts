@@ -157,6 +157,21 @@ describe("metarSummary", () => {
     expect(metarSummary(makeReport({ flight_category: "IFR" }))).toMatch(/^Ifr/);
     expect(metarSummary(makeReport({ flight_category: "LIFR" }))).toMatch(/^Lifr/);
   });
+
+  it("says 'sky clear' when ceiling is null but vis is known (matches legacy)", () => {
+    const summary = metarSummary(
+      makeReport({ ceiling_ft: null, visibility_sm: 10 }),
+    );
+    expect(summary).toContain("sky clear");
+    expect(summary).not.toContain("ceiling");
+  });
+
+  it("omits 'sky clear' when vis is also unknown (don't claim conditions we can't see)", () => {
+    const summary = metarSummary(
+      makeReport({ ceiling_ft: null, visibility_sm: null }),
+    );
+    expect(summary).not.toContain("sky clear");
+  });
 });
 
 // ---- fieldFormat ------------------------------------------------------------
@@ -168,9 +183,9 @@ describe("fieldFormat", () => {
     );
   });
 
-  it("ceiling: 'Unlimited' when null", () => {
+  it("ceiling: 'Clear' when null (no BKN/OVC/VV layer, matches legacy wording)", () => {
     expect(fieldFormat.ceiling(makeReport({ ceiling_ft: null }))).toBe(
-      "Unlimited",
+      "Clear",
     );
   });
 

@@ -124,7 +124,7 @@ describe("WeatherPanel", () => {
     ]);
   });
 
-  it("renders a 'cached' badge when the METAR came from the cache", async () => {
+  it("does NOT render a per-card cache/live badge (legacy-parity — pulled-at on the panel header surfaces freshness instead)", async () => {
     batchWeather.mockReset().mockResolvedValueOnce(
       makeBatch([
         { icao: "PADU", kind: "metar", cache_hit: true },
@@ -135,7 +135,10 @@ describe("WeatherPanel", () => {
     const ui = await WeatherPanel({ icaos: ["PADU"] });
     render(ui);
 
-    expect(screen.getByText("cached")).toBeInTheDocument();
+    // Removed in the style-match pass — legacy doesn't show these per
+    // card; the panel-header "pulled HH:MMZ" is the single source of
+    // freshness signal.
+    expect(screen.queryByText("cached")).not.toBeInTheDocument();
     expect(screen.queryByText("live")).not.toBeInTheDocument();
   });
 

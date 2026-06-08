@@ -173,7 +173,7 @@ function AirportWeather({
 
       {metar.ok && <MetarSummaryAndGrid report={metar.report} />}
 
-      <div className="mt-3 grid gap-3 sm:grid-cols-2">
+      <div className="mt-3 space-y-3">
         <ReportBlock label="METAR" outcome={metar} />
         <ReportBlock label="TAF" outcome={taf} />
       </div>
@@ -203,18 +203,15 @@ function AirportHeader({
             size="lg"
           />
         )}
-        <span className="text-[0.65rem] uppercase tracking-[0.06em] text-muted-foreground/70">
+        <span className="text-xs text-muted-foreground/70">
           Official METAR/TAF
         </span>
       </div>
-      <div className="flex items-baseline gap-2">
-        {metar.ok && (
-          <span className="text-[0.65rem] text-muted-foreground/70">
-            METAR age: {metarAge(metar.report.parsed_at)}
-          </span>
-        )}
-        {metar.ok && <CacheBadge cacheHit={metar.report.cache_hit} />}
-      </div>
+      {metar.ok && (
+        <span className="text-xs text-muted-foreground/70">
+          METAR age: {metarAge(metar.report.parsed_at)}
+        </span>
+      )}
     </div>
   );
 }
@@ -224,7 +221,7 @@ function MetarSummaryAndGrid({ report }: { report: WeatherReportResponse }) {
   return (
     <>
       {summary && (
-        <p className="m-0 mb-3 text-sm font-semibold text-foreground">
+        <p className="m-0 mb-3 text-[0.95rem] font-bold leading-snug text-foreground">
           {summary}.
         </p>
       )}
@@ -245,7 +242,7 @@ function FieldCell({ label, value }: { label: string; value: string }) {
       <dt className="text-[0.6rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
         {label}
       </dt>
-      <dd className="m-0 font-mono text-xs text-foreground">{value}</dd>
+      <dd className="m-0 text-sm font-bold text-foreground">{value}</dd>
     </div>
   );
 }
@@ -300,25 +297,6 @@ function RoleTag({ role }: { role: RouteRole }) {
   );
 }
 
-function CacheBadge({ cacheHit }: { cacheHit: boolean }) {
-  return (
-    <span
-      className={
-        "rounded-md px-1.5 py-0.5 text-[0.6rem] font-semibold uppercase tracking-[0.06em] " +
-        (cacheHit
-          ? "bg-muted text-muted-foreground"
-          : "bg-status-green/15 text-status-green")
-      }
-      title={
-        cacheHit
-          ? "Served from the local cache (refreshed within the TTL window)"
-          : "Just fetched from Aviation Weather Center"
-      }
-    >
-      {cacheHit ? "cached" : "live"}
-    </span>
-  );
-}
 
 // Standard FAA flight-category color scheme (matches aviationweather.gov):
 //   VFR   green     ceiling >= 3000 ft AND vis >= 5 SM
