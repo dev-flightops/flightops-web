@@ -178,3 +178,32 @@ export interface AirworthinessResponse {
   blocking_issues: BlockingIssue[];
   advisory_issues: AdvisoryIssue[];
 }
+
+// MEL items (M2-M-7 backend / M2-G-6 frontend)
+
+export type MelCategory = "A" | "B" | "C" | "D";
+export type MelStatus = "open" | "closed";
+
+export interface MelItemResponse {
+  id: string;
+  aircraft: MaintenanceAircraftRef;
+  ata_chapter: string;
+  description: string;
+  category: MelCategory;
+  deferred_at: string;
+  due_at: string;
+  status: MelStatus;
+  closed_at: string | null;
+  closed_by: UserRef | null;
+  notes: string | null;
+}
+
+export interface MelItemCreateRequest {
+  aircraft_id: string;
+  ata_chapter: string;
+  description: string;
+  category: MelCategory;
+  deferred_at: string;   // ISO 8601 UTC
+  due_at: string;        // ISO 8601 UTC
+  notes?: string | null;
+}

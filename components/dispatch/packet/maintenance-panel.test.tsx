@@ -26,6 +26,24 @@ const { TestApiError, getAirworthiness } = vi.hoisted(() => {
 vi.mock("@/lib/api/client", () => ({ ApiError: TestApiError }));
 vi.mock("@/lib/api/maintenance", () => ({ getAirworthiness }));
 
+// MelDeferralDialog is a client component that calls useRouter() — there's
+// no app router mounted in this test, and the panel tests don't care about
+// dialog internals. Stub it to a marker so any "did MaintenancePanel render
+// the dialog when a flight is selected?" assertion can still check.
+vi.mock("./mel-deferral-dialog", () => ({
+  MelDeferralDialog: ({
+    aircraftId,
+    tailNumber,
+  }: {
+    aircraftId: string;
+    tailNumber: string;
+  }) => (
+    <div data-testid="mel-dialog-stub" data-aircraft-id={aircraftId}>
+      MEL dialog ({tailNumber})
+    </div>
+  ),
+}));
+
 import { MaintenancePanel } from "./maintenance-panel";
 
 const baseFlight: FlightDetail = {

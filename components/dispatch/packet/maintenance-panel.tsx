@@ -7,6 +7,7 @@ import type {
   FlightDetail,
 } from "@/lib/api/types";
 
+import { MelDeferralDialog } from "./mel-deferral-dialog";
 import { DisabledPanel, SectionPanel } from "./section-panel";
 
 /**
@@ -97,10 +98,16 @@ export async function MaintenancePanel({
         </div>
       )}
 
-      <p className="mt-3 text-[0.65rem] text-muted-foreground/70">
-        Source: maintenance-service. Release gating against this verdict
-        ships with M2-M-8b — for now this is informational only.
-      </p>
+      <div className="mt-3 flex items-center justify-between gap-3">
+        <p className="text-[0.65rem] text-muted-foreground/70">
+          Source: maintenance-service. Release gating against this verdict
+          ships with M2-M-8b — for now this is informational only.
+        </p>
+        <MelDeferralDialog
+          aircraftId={verdict.aircraft.id}
+          tailNumber={verdict.aircraft.tail_number}
+        />
+      </div>
     </SectionPanel>
   );
 }

@@ -9,7 +9,11 @@
  */
 
 import { apiFetch } from "./client";
-import type { AirworthinessResponse } from "./types";
+import type {
+  AirworthinessResponse,
+  MelItemCreateRequest,
+  MelItemResponse,
+} from "./types";
 
 export async function getAirworthiness(
   aircraftId: string,
@@ -17,4 +21,13 @@ export async function getAirworthiness(
   return apiFetch<AirworthinessResponse>(
     `/maintenance/aircraft/${aircraftId}/airworthiness`,
   );
+}
+
+export async function createMelItem(
+  payload: MelItemCreateRequest,
+): Promise<MelItemResponse> {
+  return apiFetch<MelItemResponse>(`/maintenance/mel-items`, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
 }
