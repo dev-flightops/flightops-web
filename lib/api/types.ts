@@ -207,3 +207,30 @@ export interface MelItemCreateRequest {
   due_at: string;        // ISO 8601 UTC
   notes?: string | null;
 }
+
+// Squawks (M2-M-7 backend / M2-G-7 frontend)
+// SquawkSeverity is declared earlier in the maintenance section — reuse it.
+
+export type SquawkStatus = "open" | "in_progress" | "resolved";
+
+export interface SquawkResponse {
+  id: string;
+  aircraft: MaintenanceAircraftRef;
+  reported_at: string;
+  reported_by: UserRef;
+  title: string;
+  description: string;
+  severity: SquawkSeverity;
+  status: SquawkStatus;
+  resolved_at: string | null;
+  resolved_by: UserRef | null;
+  resolution_notes: string | null;
+}
+
+export interface SquawkCreateRequest {
+  aircraft_id: string;
+  reported_at: string;  // ISO 8601 UTC
+  title: string;
+  description: string;
+  severity: SquawkSeverity;
+}
