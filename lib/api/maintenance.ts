@@ -11,9 +11,11 @@
 import { apiFetch } from "./client";
 import type {
   AirworthinessResponse,
+  MelItemCloseRequest,
   MelItemCreateRequest,
   MelItemResponse,
   SquawkCreateRequest,
+  SquawkResolveRequest,
   SquawkResponse,
 } from "./types";
 
@@ -41,4 +43,30 @@ export async function createSquawk(
     method: "POST",
     body: JSON.stringify(payload),
   });
+}
+
+export async function closeMelItem(
+  melItemId: string,
+  payload: MelItemCloseRequest,
+): Promise<MelItemResponse> {
+  return apiFetch<MelItemResponse>(
+    `/maintenance/mel-items/${melItemId}/close`,
+    {
+      method: "POST",
+      body: JSON.stringify(payload),
+    },
+  );
+}
+
+export async function resolveSquawk(
+  squawkId: string,
+  payload: SquawkResolveRequest,
+): Promise<SquawkResponse> {
+  return apiFetch<SquawkResponse>(
+    `/maintenance/squawks/${squawkId}/resolve`,
+    {
+      method: "POST",
+      body: JSON.stringify(payload),
+    },
+  );
 }

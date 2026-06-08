@@ -1,3 +1,5 @@
+import type { ReactNode } from "react";
+
 import { ApiError } from "@/lib/api/client";
 import { getAirworthiness } from "@/lib/api/maintenance";
 import type {
@@ -7,7 +9,9 @@ import type {
   FlightDetail,
 } from "@/lib/api/types";
 
+import { CloseMelDialog } from "./close-mel-dialog";
 import { MelDeferralDialog } from "./mel-deferral-dialog";
+import { ResolveSquawkDialog } from "./resolve-squawk-dialog";
 import { DisabledPanel, SectionPanel } from "./section-panel";
 import { SquawkDialog } from "./squawk-dialog";
 
@@ -23,9 +27,12 @@ import { SquawkDialog } from "./squawk-dialog";
  * A small badge in the title row gives the dispatcher the verdict at a
  * glance: AIRWORTHY (green) or NOT AIRWORTHY (red).
  *
- * The release-gating wiring in ops-service is intentionally NOT here — it
- * lands in M2-M-8b. This panel surfaces the same data; if release is
- * later refused, the reasons will already be visible on the packet.
+ * M2-G-17: each row that maps to a known MEL or squawk id gets an inline
+ * Close / Resolve button. The action posts to the matching backend
+ * endpoint (POST /mel-items/{id}/close or POST /squawks/{id}/resolve)
+ * and refreshes the panel — verdict updates immediately, item disappears
+ * from the list, blocking-issue count drops, and the release gate
+ * (M2-M-8b) unsticks if that was the last blocking issue.
  */
 export async function MaintenancePanel({
   flight,
@@ -82,6 +89,7 @@ export async function MaintenancePanel({
                 kind: i.kind,
                 description: i.description,
                 meta: blockingMeta(i),
+                action: blockingAction(i),
               }))}
             />
           )}
@@ -93,6 +101,7 @@ export async function MaintenancePanel({
                 kind: i.kind,
                 description: i.description,
                 meta: advisoryMeta(i),
+                action: advisoryAction(i),
               }))}
             />
           )}
@@ -101,8 +110,8 @@ export async function MaintenancePanel({
 
       <div className="mt-3 flex items-center justify-between gap-3">
         <p className="text-[0.65rem] text-muted-foreground/70">
-          Source: maintenance-service. Release gating against this verdict
-          ships with M2-M-8b — for now this is informational only.
+          Source: maintenance-service. Release-gating against this verdict
+          ships in M2-M-8b.
         </p>
         <div className="flex shrink-0 gap-2">
           <SquawkDialog
@@ -144,6 +153,53 @@ function advisoryMeta(issue: AdvisoryIssue): string | null {
   }
 }
 
+/** Picks the right action button (Close MEL vs Resolve squawk) based on
+ *  the issue kind. Returns null when we don't have the id we need —
+ *  shouldn't happen given the backend contract, but be defensive. */
+function blockingAction(issue: BlockingIssue): ReactNode {
+  if (issue.kind === "expired_mel" && issue.mel_item_id && issue.ata_chapter) {
+    return (
+      <CloseMelDialog
+        melItemId={issue.mel_item_id}
+        ataChapter={issue.ata_chapter}
+        description={issue.description}
+      />
+    );
+  }
+  if (issue.kind === "grounding_squawk" && issue.squawk_id) {
+    return (
+      <ResolveSquawkDialog
+        squawkId={issue.squawk_id}
+        title={issue.description}
+        severity="grounding"
+      />
+    );
+  }
+  return null;
+}
+
+function advisoryAction(issue: AdvisoryIssue): ReactNode {
+  if (issue.kind === "open_mel" && issue.mel_item_id && issue.ata_chapter) {
+    return (
+      <CloseMelDialog
+        melItemId={issue.mel_item_id}
+        ataChapter={issue.ata_chapter}
+        description={issue.description}
+      />
+    );
+  }
+  if (issue.kind === "major_squawk" && issue.squawk_id) {
+    return (
+      <ResolveSquawkDialog
+        squawkId={issue.squawk_id}
+        title={issue.description}
+        severity="major"
+      />
+    );
+  }
+  return null;
+}
+
 function VerdictBadge({ isAirworthy }: { isAirworthy: boolean }) {
   return (
     <span
@@ -156,7 +212,7 @@ function VerdictBadge({ isAirworthy }: { isAirworthy: boolean }) {
       title={
         isAirworthy
           ? "No blocking maintenance issues for this aircraft."
-          : "Blocking issues present — release will be refused once M2-M-8b lands."
+          : "Blocking issues present — release will be refused (M2-M-8b)."
       }
     >
       {isAirworthy ? "Airworthy" : "Not airworthy"}
@@ -168,6 +224,9 @@ interface RenderableIssue {
   kind: string;
   description: string;
   meta: string | null;
+  /** Per-row action button (Close MEL / Resolve squawk). null when the
+   *  issue's id wasn't in the verdict (shouldn't happen). */
+  action: ReactNode;
 }
 
 function IssueGroup({
@@ -221,6 +280,7 @@ function IssueGroup({
                 </p>
               )}
             </div>
+            {item.action && <div className="shrink-0">{item.action}</div>}
           </li>
         ))}
       </ul>
