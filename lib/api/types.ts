@@ -250,6 +250,12 @@ export interface MelItemCreateRequest {
   notes?: string | null;
 }
 
+export interface MelItemCloseRequest {
+  /** Optional closing note. Backend appends to any existing notes
+   *  rather than overwriting. */
+  notes?: string | null;
+}
+
 // Squawks (M2-M-7 backend / M2-G-7 frontend)
 // SquawkSeverity is declared earlier in the maintenance section — reuse it.
 
@@ -275,4 +281,10 @@ export interface SquawkCreateRequest {
   title: string;
   description: string;
   severity: SquawkSeverity;
+}
+
+export interface SquawkResolveRequest {
+  /** Required — what was done to clear the discrepancy. Backend
+   *  enforces min_length=1. */
+  resolution_notes: string;
 }

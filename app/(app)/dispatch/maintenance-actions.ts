@@ -3,8 +3,18 @@
 import { revalidatePath } from "next/cache";
 
 import { ApiError } from "@/lib/api/client";
-import { createMelItem, createSquawk } from "@/lib/api/maintenance";
-import type { MelItemCreateRequest, SquawkCreateRequest } from "@/lib/api/types";
+import {
+  closeMelItem,
+  createMelItem,
+  createSquawk,
+  resolveSquawk,
+} from "@/lib/api/maintenance";
+import type {
+  MelItemCloseRequest,
+  MelItemCreateRequest,
+  SquawkCreateRequest,
+  SquawkResolveRequest,
+} from "@/lib/api/types";
 
 export type MelDeferralActionResult =
   | { ok: true; mel_item_id: string }
@@ -12,6 +22,14 @@ export type MelDeferralActionResult =
 
 export type SquawkActionResult =
   | { ok: true; squawk_id: string }
+  | { ok: false; error: string };
+
+export type CloseMelActionResult =
+  | { ok: true }
+  | { ok: false; error: string };
+
+export type ResolveSquawkActionResult =
+  | { ok: true }
   | { ok: false; error: string };
 
 /**
@@ -93,6 +111,79 @@ export async function createSquawkAction(
       return { ok: false, error: `Save failed (HTTP ${err.status}).` };
     }
     return { ok: false, error: "Save failed. Please try again." };
+  }
+}
+
+/**
+ * Mark an open MEL item as closed (mechanic repaired the deferred
+ * equipment). Optional notes are appended to the existing notes
+ * server-side. After success, the maintenance panel re-fetches and
+ * the item disappears from the verdict (no longer "open").
+ */
+export async function closeMelDeferralAction(
+  melItemId: string,
+  payload: MelItemCloseRequest,
+): Promise<CloseMelActionResult> {
+  try {
+    await closeMelItem(melItemId, payload);
+
+    revalidatePath(`/dispatch`);
+    revalidatePath(`/dispatch`, "layout");
+
+    return { ok: true };
+  } catch (err) {
+    if (err instanceof ApiError) {
+      if (err.status === 404) {
+        return { ok: false, error: "MEL item not found." };
+      }
+      if (err.status === 409) {
+        return {
+          ok: false,
+          error: "This MEL item is already closed.",
+        };
+      }
+      if (err.status === 422) {
+        return { ok: false, error: extractFirst422Message(err.message) };
+      }
+      return { ok: false, error: `Close failed (HTTP ${err.status}).` };
+    }
+    return { ok: false, error: "Close failed. Please try again." };
+  }
+}
+
+/**
+ * Mark a squawk as resolved. resolution_notes is required (backend
+ * enforces min_length=1). After success the maintenance panel
+ * re-fetches and the squawk drops from the verdict.
+ */
+export async function resolveSquawkAction(
+  squawkId: string,
+  payload: SquawkResolveRequest,
+): Promise<ResolveSquawkActionResult> {
+  try {
+    await resolveSquawk(squawkId, payload);
+
+    revalidatePath(`/dispatch`);
+    revalidatePath(`/dispatch`, "layout");
+
+    return { ok: true };
+  } catch (err) {
+    if (err instanceof ApiError) {
+      if (err.status === 404) {
+        return { ok: false, error: "Squawk not found." };
+      }
+      if (err.status === 409) {
+        return {
+          ok: false,
+          error: "This squawk is already resolved.",
+        };
+      }
+      if (err.status === 422) {
+        return { ok: false, error: extractFirst422Message(err.message) };
+      }
+      return { ok: false, error: `Resolve failed (HTTP ${err.status}).` };
+    }
+    return { ok: false, error: "Resolve failed. Please try again." };
   }
 }
 

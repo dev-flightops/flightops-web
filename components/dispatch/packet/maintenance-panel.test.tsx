@@ -57,6 +57,21 @@ vi.mock("./squawk-dialog", () => ({
     </div>
   ),
 }));
+// Per-row action dialogs (M2-G-17) — same useRouter() problem as above.
+vi.mock("./close-mel-dialog", () => ({
+  CloseMelDialog: ({ melItemId }: { melItemId: string }) => (
+    <button data-testid="close-mel-stub" data-mel-id={melItemId}>
+      Close
+    </button>
+  ),
+}));
+vi.mock("./resolve-squawk-dialog", () => ({
+  ResolveSquawkDialog: ({ squawkId }: { squawkId: string }) => (
+    <button data-testid="resolve-squawk-stub" data-squawk-id={squawkId}>
+      Resolve
+    </button>
+  ),
+}));
 
 import { MaintenancePanel } from "./maintenance-panel";
 
@@ -275,6 +290,101 @@ describe("MaintenancePanel", () => {
 
     expect(
       screen.getByText(/Aircraft not found in the maintenance service/i),
+    ).toBeInTheDocument();
+  });
+
+  // ---- M2-G-17 per-row action wiring ----------------------------------------
+
+  it("renders a Close button on each MEL row (expired + open)", async () => {
+    getAirworthiness.mockReset().mockResolvedValueOnce(
+      makeVerdict({
+        is_airworthy: false,
+        blocking_issues: [
+          {
+            kind: "expired_mel",
+            description: "MEL 21-30: Cabin pressurization controller",
+            ata_chapter: "21-30",
+            days_overdue: 2,
+            mel_item_id: "mel-1",
+          },
+        ],
+        advisory_issues: [
+          {
+            kind: "open_mel",
+            description: "MEL 32-40: Brake wear pin",
+            ata_chapter: "32-40",
+            days_until_due: 5,
+            mel_item_id: "mel-2",
+          },
+        ],
+      }),
+    );
+
+    const ui = await MaintenancePanel({ flight: baseFlight });
+    render(ui);
+
+    // Two Close buttons total (one per MEL row).
+    const closeButtons = screen.getAllByTestId("close-mel-stub");
+    expect(closeButtons).toHaveLength(2);
+    expect(closeButtons[0]).toHaveAttribute("data-mel-id", "mel-1");
+    expect(closeButtons[1]).toHaveAttribute("data-mel-id", "mel-2");
+  });
+
+  it("renders a Resolve button on each squawk row (grounding + major)", async () => {
+    getAirworthiness.mockReset().mockResolvedValueOnce(
+      makeVerdict({
+        is_airworthy: false,
+        blocking_issues: [
+          {
+            kind: "grounding_squawk",
+            description: "Engine oil pressure low",
+            severity: "grounding",
+            squawk_id: "sq-1",
+          },
+        ],
+        advisory_issues: [
+          {
+            kind: "major_squawk",
+            description: "Tire wear approaching limits",
+            severity: "major",
+            squawk_id: "sq-2",
+          },
+        ],
+      }),
+    );
+
+    const ui = await MaintenancePanel({ flight: baseFlight });
+    render(ui);
+
+    const resolveButtons = screen.getAllByTestId("resolve-squawk-stub");
+    expect(resolveButtons).toHaveLength(2);
+    expect(resolveButtons[0]).toHaveAttribute("data-squawk-id", "sq-1");
+    expect(resolveButtons[1]).toHaveAttribute("data-squawk-id", "sq-2");
+  });
+
+  it("renders no action button on rows whose backend didn't include the id (defensive)", async () => {
+    getAirworthiness.mockReset().mockResolvedValueOnce(
+      makeVerdict({
+        is_airworthy: false,
+        blocking_issues: [
+          {
+            kind: "expired_mel",
+            description: "MEL with missing id (shouldn't happen)",
+            // mel_item_id intentionally omitted
+            ata_chapter: "21-30",
+            days_overdue: 1,
+          },
+        ],
+      }),
+    );
+
+    const ui = await MaintenancePanel({ flight: baseFlight });
+    render(ui);
+
+    expect(screen.queryByTestId("close-mel-stub")).not.toBeInTheDocument();
+    // Row itself still renders.
+    expect(
+      screen.getByText(/MEL with missing id/i),
     ).toBeInTheDocument();
   });
 });
