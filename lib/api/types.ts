@@ -113,6 +113,10 @@ export interface ProvidersResponse {
 
 export type WeatherKind = "metar" | "taf" | "pirep";
 
+/** FAA flight category — derived from raw METAR by weather-service (M2-M-11).
+ *  Only populated for METAR responses; TAF + PIREP always return null. */
+export type FlightCategory = "VFR" | "MVFR" | "IFR" | "LIFR";
+
 export interface WeatherReportResponse {
   icao: string;
   kind: WeatherKind;
@@ -120,6 +124,7 @@ export interface WeatherReportResponse {
   parsed_at: string;   // ISO 8601 UTC — when we last fetched from AWC
   valid_until: string; // ISO 8601 UTC — cache TTL boundary
   cache_hit: boolean;  // true if served from weather_reports, false if AWC was hit
+  flight_category: FlightCategory | null;
 }
 
 // Maintenance / airworthiness (M2-M-8 backend / M2-G-5 frontend)

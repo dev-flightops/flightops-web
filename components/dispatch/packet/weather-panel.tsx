@@ -1,6 +1,10 @@
 import { ApiError } from "@/lib/api/client";
 import { getMetar, getTaf } from "@/lib/api/weather";
-import type { FlightDetail, WeatherReportResponse } from "@/lib/api/types";
+import type {
+  FlightCategory,
+  FlightDetail,
+  WeatherReportResponse,
+} from "@/lib/api/types";
 
 import { DisabledPanel, SectionPanel } from "./section-panel";
 
@@ -88,10 +92,15 @@ function AirportWeather({
 
   return (
     <div className="rounded-md border border-border bg-card/40 p-3">
-      <div className="mb-2 flex items-baseline justify-between">
-        <span className="font-mono text-sm font-semibold text-foreground">
-          {icao}
-        </span>
+      <div className="mb-2 flex items-baseline justify-between gap-2">
+        <div className="flex items-baseline gap-2">
+          <span className="font-mono text-sm font-semibold text-foreground">
+            {icao}
+          </span>
+          {metarOutcome.ok && metarOutcome.report.flight_category && (
+            <FlightCategoryBadge category={metarOutcome.report.flight_category} />
+          )}
+        </div>
         {metarOutcome.ok && (
           <CacheBadge cacheHit={metarOutcome.report.cache_hit} />
         )}
@@ -155,6 +164,45 @@ function CacheBadge({ cacheHit }: { cacheHit: boolean }) {
       }
     >
       {cacheHit ? "cached" : "live"}
+    </span>
+  );
+}
+
+// Standard FAA flight-category color scheme (matches aviationweather.gov):
+//   VFR   green     ceiling >= 3000 ft AND vis >= 5 SM
+//   MVFR  blue      ceiling 1000-3000 ft OR vis 3-5 SM
+//   IFR   red       ceiling 500-1000 ft  OR vis 1-3 SM
+//   LIFR  magenta   ceiling < 500 ft     OR vis < 1 SM
+const FLIGHT_CATEGORY_STYLE: Record<FlightCategory, { className: string; title: string }> = {
+  VFR: {
+    className: "bg-status-green/15 text-status-green",
+    title: "VFR — ceiling ≥ 3000 ft and visibility ≥ 5 SM",
+  },
+  MVFR: {
+    className: "bg-status-blue/15 text-status-blue",
+    title: "Marginal VFR — ceiling 1000–3000 ft or visibility 3–5 SM",
+  },
+  IFR: {
+    className: "bg-status-red/15 text-status-red",
+    title: "IFR — ceiling 500–1000 ft or visibility 1–3 SM",
+  },
+  LIFR: {
+    className: "bg-status-purple/15 text-status-purple",
+    title: "Low IFR — ceiling < 500 ft or visibility < 1 SM",
+  },
+};
+
+function FlightCategoryBadge({ category }: { category: FlightCategory }) {
+  const { className, title } = FLIGHT_CATEGORY_STYLE[category];
+  return (
+    <span
+      className={
+        "rounded-md px-1.5 py-0.5 text-[0.6rem] font-bold uppercase tracking-[0.08em] " +
+        className
+      }
+      title={title}
+    >
+      {category}
     </span>
   );
 }
