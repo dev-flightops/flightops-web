@@ -1,64 +1,107 @@
 import { ApiError } from "@/lib/api/client";
-import { getMetar, getTaf } from "@/lib/api/weather";
+import { batchWeather } from "@/lib/api/weather";
 import type {
   FlightCategory,
-  FlightDetail,
   WeatherReportResponse,
 } from "@/lib/api/types";
 
 import { DisabledPanel, SectionPanel } from "./section-panel";
 
+// Backend caps batch at 20 requests — slice longer routes (one METAR +
+// one TAF per stop = 10-stop max). If the dispatcher pastes a wild
+// 30-stop bush route, we show the first 10 and a footer note.
+const MAX_STOPS = 10;
+
 /**
- * Weather & ATIS panel — replaces the M1 DisabledPanel placeholder.
+ * Weather & ATIS panel — M2-G-12.
  *
- * Pulls METAR + TAF for the selected flight's origin and destination from
- * the backend weather-service (M2-M-3). Both ICAOs are fetched in parallel
- * so the worst-case render time is one AWC round-trip, not four.
+ * Pulls METAR + TAF for every ICAO in the routing (or [origin, destination]
+ * if the dispatcher hasn't typed a routing yet). One POST /weather/batch
+ * round-trip total, regardless of stop count, with per-item failures
+ * isolated in the response.
  *
- * `cache_hit` on each response drives a small "live" / "cached" badge so
- * dispatchers know when they're looking at fresh data vs a cached row.
- *
- * Failure handling: per-report. If METAR fetches but TAF 404s, we render
- * METAR + a "no TAF" note rather than failing the whole panel. AWC 502s
- * surface as "weather feed unreachable" rather than throwing.
+ * `cache_hit` drives a small "live" / "cached" badge per airport;
+ * `flight_category` drives the colored VFR/MVFR/IFR/LIFR pill.
  */
-export async function WeatherPanel({
-  flight,
-}: {
-  flight: FlightDetail | null;
-}) {
-  if (!flight) {
+export async function WeatherPanel({ icaos }: { icaos: string[] }) {
+  if (icaos.length === 0) {
     return (
       <DisabledPanel
         title="Weather & ATIS"
         milestone="M2"
-        hint="Pick a flight from the dropdown above to pull METAR + TAF for the origin and destination."
+        hint="Pick a flight from the dropdown above, or type a routing in the Route panel, to pull METAR + TAF for every stop."
       />
     );
   }
 
-  // Deduplicate the ICAOs in case origin == destination (uncommon but
-  // possible for training / circling flights).
-  const icaos = Array.from(new Set([flight.origin, flight.destination]));
+  // Dedup preserving the dispatcher's order. The backend dedups too, but
+  // doing it here saves us from rendering duplicate cards.
+  const seen = new Set<string>();
+  const uniq: string[] = [];
+  for (const icao of icaos) {
+    if (!seen.has(icao)) {
+      seen.add(icao);
+      uniq.push(icao);
+    }
+  }
 
-  // Parallel fetch — one round-trip per (icao, kind), but all in flight at
-  // once. Each promise's failure is caught individually so one missing
-  // report doesn't take the whole panel down.
-  const results = await Promise.all(
-    icaos.map(async (icao) => ({
-      icao,
-      metar: await getMetar(icao).catch(toFetchOutcome),
-      taf: await getTaf(icao).catch(toFetchOutcome),
-    })),
-  );
+  const truncated = uniq.length > MAX_STOPS;
+  const stops = truncated ? uniq.slice(0, MAX_STOPS) : uniq;
+
+  // One round-trip — backend fans out concurrently to AWC.
+  let batch;
+  try {
+    batch = await batchWeather(
+      stops.flatMap((icao) => [
+        { icao, kind: "metar" as const },
+        { icao, kind: "taf" as const },
+      ]),
+    );
+  } catch (err) {
+    const status = err instanceof ApiError ? err.status : 0;
+    return (
+      <SectionPanel title="Weather & ATIS">
+        <p className="text-xs italic text-muted-foreground/70">
+          Weather feed unavailable ({status || "error"}) — try Refresh Weather
+          in a moment.
+        </p>
+      </SectionPanel>
+    );
+  }
+
+  // Index the batch response by (icao, kind) so the renderer can pull
+  // each card's data without an O(N²) scan.
+  const lookup = new Map<string, WeatherReportResponse>();
+  for (const item of batch.items) {
+    lookup.set(`${item.icao}/${item.kind}`, item);
+  }
+  const errorLookup = new Map<string, { status: number; detail: string }>();
+  for (const err of batch.errors) {
+    errorLookup.set(`${err.icao}/${err.kind}`, {
+      status: err.status,
+      detail: err.detail,
+    });
+  }
+
+  const cards = stops.map((icao) => ({
+    icao,
+    metar: outcomeFor(icao, "metar", lookup, errorLookup),
+    taf: outcomeFor(icao, "taf", lookup, errorLookup),
+  }));
 
   return (
     <SectionPanel title="Weather & ATIS">
       <div className="grid gap-3 lg:grid-cols-2">
-        {results.map((airport) => (
+        {cards.map((airport) => (
           <AirportWeather key={airport.icao} {...airport} />
         ))}
       </div>
+      {truncated && (
+        <p className="mt-2 text-[0.65rem] italic text-status-yellow/90">
+          Showing first {MAX_STOPS} stops of {uniq.length}. Trim the route or
+          break the trip into legs for full weather coverage.
+        </p>
+      )}
       <p className="mt-3 text-[0.65rem] text-muted-foreground/70">
         Source: Aviation Weather Center via weather-service. METAR cached 5 min,
         TAF cached 30 min. ATIS + PIREP land with M2-M-4.
@@ -67,16 +110,24 @@ export async function WeatherPanel({
   );
 }
 
+function outcomeFor(
+  icao: string,
+  kind: "metar" | "taf",
+  ok: Map<string, WeatherReportResponse>,
+  bad: Map<string, { status: number; detail: string }>,
+): FetchOutcome {
+  const report = ok.get(`${icao}/${kind}`);
+  if (report) return { ok: true, report };
+  const err = bad.get(`${icao}/${kind}`);
+  if (err) return { ok: false, status: err.status, message: err.detail };
+  // Neither item nor explicit error — shouldn't happen given the backend
+  // contract, but be defensive: render as a generic "unavailable".
+  return { ok: false, status: 0, message: `no ${kind} returned for ${icao}` };
+}
+
 type FetchOutcome =
   | { ok: true; report: WeatherReportResponse }
   | { ok: false; status: number; message: string };
-
-function toFetchOutcome(err: unknown): FetchOutcome {
-  if (err instanceof ApiError) {
-    return { ok: false, status: err.status, message: err.message };
-  }
-  return { ok: false, status: 0, message: String(err) };
-}
 
 function AirportWeather({
   icao,

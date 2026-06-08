@@ -125,6 +125,29 @@ export interface WeatherReportResponse {
   valid_until: string; // ISO 8601 UTC — cache TTL boundary
   cache_hit: boolean;  // true if served from weather_reports, false if AWC was hit
   flight_category: FlightCategory | null;
+  /** True when the current METAR is below the FAR 91.169 alternate
+   *  threshold (ceiling < 2000 ft OR vis < 3 SM). Only set for METAR;
+   *  TAFs always return null (period-based — separate problem). */
+  alternate_required: boolean | null;
+}
+
+// Batch weather (M2-M-12)
+
+export interface WeatherBatchRequestItem {
+  icao: string;
+  kind: "metar" | "taf";
+}
+
+export interface WeatherBatchItemError {
+  icao: string;
+  kind: string;
+  status: number;  // 400 | 404 | 502 — matches GET-route status code
+  detail: string;
+}
+
+export interface WeatherBatchResponse {
+  items: WeatherReportResponse[];
+  errors: WeatherBatchItemError[];
 }
 
 // Maintenance / airworthiness (M2-M-8 backend / M2-G-5 frontend)
