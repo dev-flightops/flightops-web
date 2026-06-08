@@ -38,6 +38,16 @@ function makeReport(
     cache_hit: false,
     flight_category: "VFR",
     alternate_required: false,
+    visibility_sm: 10.0,
+    ceiling_ft: null,
+    wind_direction_deg: 270,
+    wind_speed_kt: 15,
+    wind_gust_kt: null,
+    wind_variable: false,
+    wind_calm: false,
+    temp_c: 5,
+    dewpoint_c: 3,
+    altimeter_in_hg: 29.8,
     ...overrides,
   };
 }
@@ -247,5 +257,140 @@ describe("WeatherPanel", () => {
     ).toBeInTheDocument();
     // Backend was asked for only 20 records (10 stops × 2 kinds), not 24.
     expect(batchWeather.mock.calls[0][0]).toHaveLength(20);
+  });
+
+  // ---- M2-G-14 rich card ----------------------------------------------------
+
+  it("tags multi-stop routes with DEPARTURE / EN ROUTE / DESTINATION", async () => {
+    batchWeather.mockReset().mockResolvedValueOnce(
+      makeBatch(
+        ["PAEE", "PAUN", "PAGM"].flatMap((icao) => [
+          { icao, kind: "metar" as const },
+          { icao, kind: "taf" as const },
+        ]),
+      ),
+    );
+
+    const ui = await WeatherPanel({ icaos: ["PAEE", "PAUN", "PAGM"] });
+    render(ui);
+
+    expect(screen.getByText("DEPARTURE")).toBeInTheDocument();
+    expect(screen.getByText("EN ROUTE")).toBeInTheDocument();
+    expect(screen.getByText("DESTINATION")).toBeInTheDocument();
+  });
+
+  it("omits role tags on a single-stop route", async () => {
+    batchWeather.mockReset().mockResolvedValueOnce(
+      makeBatch([
+        { icao: "PADU", kind: "metar" },
+        { icao: "PADU", kind: "taf" },
+      ]),
+    );
+
+    const ui = await WeatherPanel({ icaos: ["PADU"] });
+    render(ui);
+
+    expect(screen.queryByText("DEPARTURE")).not.toBeInTheDocument();
+    expect(screen.queryByText("DESTINATION")).not.toBeInTheDocument();
+  });
+
+  it("renders the panel-header airport count + pulled-at timestamp", async () => {
+    // Override parsed_at on every item — pulled-at is the max across the
+    // whole response, so the TAF defaults from makeReport would otherwise
+    // win and shift the header timestamp.
+    batchWeather.mockReset().mockResolvedValueOnce(
+      makeBatch([
+        { icao: "PADU", kind: "metar", parsed_at: "2026-06-07T01:49:00Z" },
+        { icao: "PANC", kind: "metar", parsed_at: "2026-06-07T01:47:00Z" },
+        { icao: "PADU", kind: "taf", parsed_at: "2026-06-07T01:46:00Z" },
+        { icao: "PANC", kind: "taf", parsed_at: "2026-06-07T01:45:00Z" },
+      ]),
+    );
+
+    const ui = await WeatherPanel({ icaos: ["PADU", "PANC"] });
+    render(ui);
+
+    expect(screen.getByText(/2 airports.*pulled 01:49Z/)).toBeInTheDocument();
+  });
+
+  it("renders the parsed-field grid for each METAR (ceiling/vis/wind/temp/altimeter)", async () => {
+    batchWeather.mockReset().mockResolvedValueOnce(
+      makeBatch([
+        {
+          icao: "PADM",
+          kind: "metar",
+          ceiling_ft: 4000,
+          visibility_sm: 10,
+          wind_direction_deg: 270,
+          wind_speed_kt: 8,
+          wind_gust_kt: 15,
+          temp_c: 14,
+          dewpoint_c: 4,
+          altimeter_in_hg: 29.66,
+        },
+        { icao: "PADM", kind: "taf" },
+      ]),
+    );
+
+    const ui = await WeatherPanel({ icaos: ["PADM"] });
+    render(ui);
+
+    expect(screen.getByText("Ceiling")).toBeInTheDocument();
+    expect(screen.getByText("4,000 ft")).toBeInTheDocument();
+    expect(screen.getByText("Visibility")).toBeInTheDocument();
+    expect(screen.getByText("10.0 SM")).toBeInTheDocument();
+    expect(screen.getByText("Wind")).toBeInTheDocument();
+    expect(screen.getByText("270° @ 8G15 kt")).toBeInTheDocument();
+    expect(screen.getByText("Temp / Dew")).toBeInTheDocument();
+    expect(screen.getByText("14°C / 4°C")).toBeInTheDocument();
+    expect(screen.getByText("Altimeter")).toBeInTheDocument();
+    expect(screen.getByText("29.66 inHg")).toBeInTheDocument();
+  });
+
+  it("renders the legacy-style one-line summary above the grid", async () => {
+    batchWeather.mockReset().mockResolvedValueOnce(
+      makeBatch([
+        {
+          icao: "PADM",
+          kind: "metar",
+          flight_category: "VFR",
+          wind_direction_deg: 270,
+          wind_speed_kt: 8,
+          wind_gust_kt: null,
+          ceiling_ft: 4000,
+          visibility_sm: 10,
+          temp_c: 14,
+          dewpoint_c: 4,
+          altimeter_in_hg: 29.66,
+        },
+        { icao: "PADM", kind: "taf" },
+      ]),
+    );
+
+    const ui = await WeatherPanel({ icaos: ["PADM"] });
+    render(ui);
+    // Substring match (full sentence is verified by lib/weather-format.test).
+    expect(
+      screen.getByText(/Vfr, wind 270° at 8 kts, visibility 10\.0 sm/i),
+    ).toBeInTheDocument();
+  });
+
+  it("hides parsed-field grid + summary when METAR errored (per-row degradation)", async () => {
+    batchWeather.mockReset().mockResolvedValueOnce(
+      makeBatch(
+        [],
+        [{ icao: "PAEE", kind: "metar", status: 404, detail: "No METAR" }],
+      ),
+    );
+
+    const ui = await WeatherPanel({ icaos: ["PAEE"] });
+    render(ui);
+
+    // Card still renders with ICAO + per-row fallback, but no field grid.
+    expect(screen.getByText("PAEE")).toBeInTheDocument();
+    expect(
+      screen.getByText(/No current METAR for this airport/i),
+    ).toBeInTheDocument();
+    expect(screen.queryByText("Ceiling")).not.toBeInTheDocument();
   });
 });
