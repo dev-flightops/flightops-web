@@ -129,6 +129,20 @@ export interface WeatherReportResponse {
    *  threshold (ceiling < 2000 ft OR vis < 3 SM). Only set for METAR;
    *  TAFs always return null (period-based — separate problem). */
   alternate_required: boolean | null;
+  // Parsed METAR fields (M2-M-14). All null for TAF responses.
+  visibility_sm: number | null;
+  /** None = unlimited (clear or scattered-only). */
+  ceiling_ft: number | null;
+  /** null = variable / unmeasured / calm — check `wind_variable` and `wind_calm`. */
+  wind_direction_deg: number | null;
+  wind_speed_kt: number | null;
+  wind_gust_kt: number | null;
+  wind_variable: boolean;
+  wind_calm: boolean;
+  temp_c: number | null;
+  dewpoint_c: number | null;
+  /** European Q-codes converted to inHg server-side. */
+  altimeter_in_hg: number | null;
 }
 
 // Batch weather (M2-M-12)

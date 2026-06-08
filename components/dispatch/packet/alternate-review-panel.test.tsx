@@ -37,6 +37,16 @@ function makeReport(
     cache_hit: false,
     flight_category: "VFR",
     alternate_required: false,
+    visibility_sm: null,
+    ceiling_ft: null,
+    wind_direction_deg: null,
+    wind_speed_kt: null,
+    wind_gust_kt: null,
+    wind_variable: false,
+    wind_calm: false,
+    temp_c: null,
+    dewpoint_c: null,
+    altimeter_in_hg: null,
     ...rest,
   };
 }

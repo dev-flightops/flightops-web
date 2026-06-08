@@ -4,6 +4,14 @@ import type {
   FlightCategory,
   WeatherReportResponse,
 } from "@/lib/api/types";
+import {
+  fieldFormat,
+  metarAge,
+  metarSummary,
+  routeRoleFor,
+  utcHm,
+  type RouteRole,
+} from "@/lib/weather-format";
 
 import { DisabledPanel, SectionPanel } from "./section-panel";
 
@@ -13,15 +21,17 @@ import { DisabledPanel, SectionPanel } from "./section-panel";
 const MAX_STOPS = 10;
 
 /**
- * Weather & ATIS panel — M2-G-12.
+ * Weather & ATIS panel — M2-G-14.
  *
- * Pulls METAR + TAF for every ICAO in the routing (or [origin, destination]
- * if the dispatcher hasn't typed a routing yet). One POST /weather/batch
- * round-trip total, regardless of stop count, with per-item failures
- * isolated in the response.
+ * Rich card layout matching the legacy peregrineflight.com style:
+ *   - Panel header surfaces the airport count + pulled timestamp
+ *   - Each card has a DEPARTURE / EN ROUTE / DESTINATION role pill,
+ *     larger VFR/IFR badge, METAR age, sentence-case human summary,
+ *     5-column field grid, then the raw METAR + TAF text blocks
  *
- * `cache_hit` drives a small "live" / "cached" badge per airport;
- * `flight_category` drives the colored VFR/MVFR/IFR/LIFR pill.
+ * Failures degrade per-row: bad ICAOs (404) and 502s still render a
+ * card, just with the parsed fields blanked and a fallback message
+ * where the raw text would be.
  */
 export async function WeatherPanel({ icaos }: { icaos: string[] }) {
   if (icaos.length === 0) {
@@ -34,8 +44,8 @@ export async function WeatherPanel({ icaos }: { icaos: string[] }) {
     );
   }
 
-  // Dedup preserving the dispatcher's order. The backend dedups too, but
-  // doing it here saves us from rendering duplicate cards.
+  // Dedup preserving the dispatcher's order so role tags (DEPARTURE,
+  // DESTINATION) line up with what they typed.
   const seen = new Set<string>();
   const uniq: string[] = [];
   for (const icao of icaos) {
@@ -69,8 +79,7 @@ export async function WeatherPanel({ icaos }: { icaos: string[] }) {
     );
   }
 
-  // Index the batch response by (icao, kind) so the renderer can pull
-  // each card's data without an O(N²) scan.
+  // Index by (icao, kind) so each card pulls its data in O(1).
   const lookup = new Map<string, WeatherReportResponse>();
   for (const item of batch.items) {
     lookup.set(`${item.icao}/${item.kind}`, item);
@@ -83,15 +92,33 @@ export async function WeatherPanel({ icaos }: { icaos: string[] }) {
     });
   }
 
-  const cards = stops.map((icao) => ({
+  // Most recent parsed_at across all reports for the panel header
+  // "pulled HH:MMZ". `batch.items` is already filtered to successful
+  // fetches, so this can be empty if every ICAO 404'd.
+  const pulledAt = batch.items
+    .map((i) => i.parsed_at)
+    .sort()
+    .pop();
+
+  const cards = stops.map((icao, idx) => ({
     icao,
+    role: routeRoleFor(idx, stops.length),
     metar: outcomeFor(icao, "metar", lookup, errorLookup),
     taf: outcomeFor(icao, "taf", lookup, errorLookup),
   }));
 
   return (
-    <SectionPanel title="Weather & ATIS">
-      <div className="grid gap-3 lg:grid-cols-2">
+    <SectionPanel
+      title={
+        <span className="flex items-baseline gap-2">
+          Weather &amp; ATIS
+          <span className="text-[0.6rem] font-normal normal-case tracking-normal text-muted-foreground/70">
+            {`${stops.length} ${stops.length === 1 ? "airport" : "airports"}${pulledAt ? ` · pulled ${utcHm(pulledAt)}` : ""}`}
+          </span>
+        </span>
+      }
+    >
+      <div className="space-y-3">
         {cards.map((airport) => (
           <AirportWeather key={airport.icao} {...airport} />
         ))}
@@ -120,8 +147,6 @@ function outcomeFor(
   if (report) return { ok: true, report };
   const err = bad.get(`${icao}/${kind}`);
   if (err) return { ok: false, status: err.status, message: err.detail };
-  // Neither item nor explicit error — shouldn't happen given the backend
-  // contract, but be defensive: render as a generic "unavailable".
   return { ok: false, status: 0, message: `no ${kind} returned for ${icao}` };
 }
 
@@ -129,48 +154,103 @@ type FetchOutcome =
   | { ok: true; report: WeatherReportResponse }
   | { ok: false; status: number; message: string };
 
+// ---- Airport card ------------------------------------------------------------
+
 function AirportWeather({
   icao,
+  role,
   metar,
   taf,
 }: {
   icao: string;
-  metar: WeatherReportResponse | FetchOutcome;
-  taf: WeatherReportResponse | FetchOutcome;
+  role: RouteRole | null;
+  metar: FetchOutcome;
+  taf: FetchOutcome;
 }) {
-  const metarOutcome = normalizeOutcome(metar);
-  const tafOutcome = normalizeOutcome(taf);
-
   return (
-    <div className="rounded-md border border-border bg-card/40 p-3">
-      <div className="mb-2 flex items-baseline justify-between gap-2">
-        <div className="flex items-baseline gap-2">
-          <span className="font-mono text-sm font-semibold text-foreground">
-            {icao}
-          </span>
-          {metarOutcome.ok && metarOutcome.report.flight_category && (
-            <FlightCategoryBadge category={metarOutcome.report.flight_category} />
-          )}
-        </div>
-        {metarOutcome.ok && (
-          <CacheBadge cacheHit={metarOutcome.report.cache_hit} />
-        )}
-      </div>
+    <div className="rounded-md border border-border bg-card/40 p-4">
+      <AirportHeader icao={icao} role={role} metar={metar} />
 
-      <ReportRow label="METAR" outcome={metarOutcome} />
-      <ReportRow label="TAF" outcome={tafOutcome} />
+      {metar.ok && <MetarSummaryAndGrid report={metar.report} />}
+
+      <div className="mt-3 grid gap-3 sm:grid-cols-2">
+        <ReportBlock label="METAR" outcome={metar} />
+        <ReportBlock label="TAF" outcome={taf} />
+      </div>
     </div>
   );
 }
 
-function normalizeOutcome(
-  value: WeatherReportResponse | FetchOutcome,
-): FetchOutcome {
-  if ("ok" in value) return value;
-  return { ok: true, report: value };
+function AirportHeader({
+  icao,
+  role,
+  metar,
+}: {
+  icao: string;
+  role: RouteRole | null;
+  metar: FetchOutcome;
+}) {
+  return (
+    <div className="mb-3 flex items-baseline justify-between gap-3">
+      <div className="flex items-baseline gap-2">
+        {role && <RoleTag role={role} />}
+        <span className="font-mono text-base font-semibold text-foreground">
+          {icao}
+        </span>
+        {metar.ok && metar.report.flight_category && (
+          <FlightCategoryBadge
+            category={metar.report.flight_category}
+            size="lg"
+          />
+        )}
+        <span className="text-[0.65rem] uppercase tracking-[0.06em] text-muted-foreground/70">
+          Official METAR/TAF
+        </span>
+      </div>
+      <div className="flex items-baseline gap-2">
+        {metar.ok && (
+          <span className="text-[0.65rem] text-muted-foreground/70">
+            METAR age: {metarAge(metar.report.parsed_at)}
+          </span>
+        )}
+        {metar.ok && <CacheBadge cacheHit={metar.report.cache_hit} />}
+      </div>
+    </div>
+  );
 }
 
-function ReportRow({
+function MetarSummaryAndGrid({ report }: { report: WeatherReportResponse }) {
+  const summary = metarSummary(report);
+  return (
+    <>
+      {summary && (
+        <p className="m-0 mb-3 text-sm font-semibold text-foreground">
+          {summary}.
+        </p>
+      )}
+      <dl className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+        <FieldCell label="Ceiling" value={fieldFormat.ceiling(report)} />
+        <FieldCell label="Visibility" value={fieldFormat.visibility(report)} />
+        <FieldCell label="Wind" value={fieldFormat.wind(report)} />
+        <FieldCell label="Temp / Dew" value={fieldFormat.tempDew(report)} />
+        <FieldCell label="Altimeter" value={fieldFormat.altimeter(report)} />
+      </dl>
+    </>
+  );
+}
+
+function FieldCell({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <dt className="text-[0.6rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+        {label}
+      </dt>
+      <dd className="m-0 font-mono text-xs text-foreground">{value}</dd>
+    </div>
+  );
+}
+
+function ReportBlock({
   label,
   outcome,
 }: {
@@ -178,10 +258,10 @@ function ReportRow({
   outcome: FetchOutcome;
 }) {
   return (
-    <div className="mt-2">
-      <div className="mb-0.5 text-[0.6rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+    <div>
+      <p className="mb-0.5 text-[0.6rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
         {label}
-      </div>
+      </p>
       {outcome.ok ? (
         <pre className="m-0 whitespace-pre-wrap break-words font-mono text-[0.7rem] leading-snug text-foreground/90">
           {outcome.report.raw}
@@ -196,6 +276,27 @@ function ReportRow({
         </p>
       )}
     </div>
+  );
+}
+
+// ---- Tag / badge components --------------------------------------------------
+
+const ROLE_TAG_STYLE: Record<RouteRole, string> = {
+  DEPARTURE: "bg-status-blue/15 text-status-blue",
+  "EN ROUTE": "bg-muted text-muted-foreground",
+  DESTINATION: "bg-status-blue/15 text-status-blue",
+};
+
+function RoleTag({ role }: { role: RouteRole }) {
+  return (
+    <span
+      className={
+        "rounded-md px-1.5 py-0.5 text-[0.6rem] font-bold uppercase tracking-[0.08em] " +
+        ROLE_TAG_STYLE[role]
+      }
+    >
+      {role}
+    </span>
   );
 }
 
@@ -243,12 +344,24 @@ const FLIGHT_CATEGORY_STYLE: Record<FlightCategory, { className: string; title: 
   },
 };
 
-function FlightCategoryBadge({ category }: { category: FlightCategory }) {
+function FlightCategoryBadge({
+  category,
+  size = "md",
+}: {
+  category: FlightCategory;
+  size?: "md" | "lg";
+}) {
   const { className, title } = FLIGHT_CATEGORY_STYLE[category];
+  const sizeClass =
+    size === "lg"
+      ? "px-2 py-0.5 text-[0.7rem]"
+      : "px-1.5 py-0.5 text-[0.6rem]";
   return (
     <span
       className={
-        "rounded-md px-1.5 py-0.5 text-[0.6rem] font-bold uppercase tracking-[0.08em] " +
+        "rounded-md font-bold uppercase tracking-[0.08em] " +
+        sizeClass +
+        " " +
         className
       }
       title={title}
