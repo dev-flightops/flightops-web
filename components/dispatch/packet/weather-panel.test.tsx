@@ -55,6 +55,7 @@ function makeReport(
     parsed_at: "2026-06-07T15:53:00Z",
     valid_until: "2026-06-07T15:58:00Z",
     cache_hit: false,
+    flight_category: "VFR",
     ...overrides,
   };
 }
@@ -155,5 +156,57 @@ describe("WeatherPanel", () => {
     expect(
       screen.getAllByText(/feed unreachable — try Refresh Weather/i).length,
     ).toBeGreaterThan(0);
+  });
+
+  // M2-G-11: flight-category pill next to the ICAO header
+  it("renders each FAA flight category with its standard color title", async () => {
+    getMetar
+      .mockReset()
+      .mockResolvedValueOnce(makeReport({ icao: "PADU", flight_category: "VFR" }))
+      .mockResolvedValueOnce(makeReport({ icao: "PANC", flight_category: "IFR" }));
+    getTaf.mockReset().mockResolvedValue(makeReport({ kind: "taf", flight_category: null }));
+
+    const ui = await WeatherPanel({ flight: baseFlight });
+    render(ui);
+
+    const vfrBadge = screen.getByText("VFR");
+    expect(vfrBadge).toBeInTheDocument();
+    expect(vfrBadge.className).toMatch(/text-status-green/);
+    expect(vfrBadge).toHaveAttribute("title", expect.stringMatching(/visibility/i));
+
+    const ifrBadge = screen.getByText("IFR");
+    expect(ifrBadge).toBeInTheDocument();
+    expect(ifrBadge.className).toMatch(/text-status-red/);
+  });
+
+  it("hides the category pill when the METAR has no flight_category (TAF-only / unparsable)", async () => {
+    getMetar
+      .mockReset()
+      .mockResolvedValue(makeReport({ flight_category: null }));
+    getTaf
+      .mockReset()
+      .mockResolvedValue(makeReport({ kind: "taf", flight_category: null }));
+
+    const ui = await WeatherPanel({ flight: { ...baseFlight, destination: "PADU" } });
+    render(ui);
+
+    // No category text rendered anywhere on the panel.
+    for (const cat of ["VFR", "MVFR", "IFR", "LIFR"] as const) {
+      expect(screen.queryByText(cat)).not.toBeInTheDocument();
+    }
+  });
+
+  it("does not render a category pill when the METAR fetch failed (no report to read from)", async () => {
+    getMetar
+      .mockReset()
+      .mockRejectedValue(new TestApiError(502, "/weather/metar/PADU", "down"));
+    getTaf.mockReset().mockResolvedValue(makeReport({ kind: "taf", flight_category: null }));
+
+    const ui = await WeatherPanel({ flight: { ...baseFlight, destination: "PADU" } });
+    render(ui);
+
+    for (const cat of ["VFR", "MVFR", "IFR", "LIFR"] as const) {
+      expect(screen.queryByText(cat)).not.toBeInTheDocument();
+    }
   });
 });
