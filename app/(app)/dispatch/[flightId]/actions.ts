@@ -9,6 +9,8 @@ import {
   type FlightUpdatePayload,
 } from "@/lib/api/ops";
 
+import { extractBlockingSummary } from "./release-errors";
+
 export type ActionResult =
   | { ok: true }
   | { ok: false; error: string };
@@ -27,6 +29,20 @@ export async function releaseFlightAction(flightId: string): Promise<ActionResul
       }
       if (err.message.includes("aircraft_not_active")) {
         return { ok: false, error: "The assigned aircraft is not active." };
+      }
+      // M2-M-8b airworthiness gate. Backend sends a structured detail:
+      //   {"error": "aircraft_not_airworthy", "blocking_issues": [...]}
+      // We map to a plain-English error that points at the Maintenance
+      // & Airworthiness panel where the dispatcher can see the full
+      // list of blocking issues.
+      if (err.message.includes("aircraft_not_airworthy")) {
+        const summary = extractBlockingSummary(err.message);
+        return {
+          ok: false,
+          error: summary
+            ? `Release blocked — aircraft is not airworthy: ${summary}. See the Maintenance & Airworthiness panel for full details.`
+            : "Release blocked — aircraft is not airworthy. See the Maintenance & Airworthiness panel.",
+        };
       }
       return { ok: false, error: `Release failed (HTTP ${err.status}).` };
     }
