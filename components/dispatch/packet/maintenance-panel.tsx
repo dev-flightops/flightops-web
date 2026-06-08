@@ -9,6 +9,7 @@ import type {
 
 import { MelDeferralDialog } from "./mel-deferral-dialog";
 import { DisabledPanel, SectionPanel } from "./section-panel";
+import { SquawkDialog } from "./squawk-dialog";
 
 /**
  * Maintenance / airworthiness panel — replaces the M1 DisabledPanel
@@ -103,10 +104,16 @@ export async function MaintenancePanel({
           Source: maintenance-service. Release gating against this verdict
           ships with M2-M-8b — for now this is informational only.
         </p>
-        <MelDeferralDialog
-          aircraftId={verdict.aircraft.id}
-          tailNumber={verdict.aircraft.tail_number}
-        />
+        <div className="flex shrink-0 gap-2">
+          <SquawkDialog
+            aircraftId={verdict.aircraft.id}
+            tailNumber={verdict.aircraft.tail_number}
+          />
+          <MelDeferralDialog
+            aircraftId={verdict.aircraft.id}
+            tailNumber={verdict.aircraft.tail_number}
+          />
+        </div>
       </div>
     </SectionPanel>
   );

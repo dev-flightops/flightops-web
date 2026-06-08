@@ -3,11 +3,15 @@
 import { revalidatePath } from "next/cache";
 
 import { ApiError } from "@/lib/api/client";
-import { createMelItem } from "@/lib/api/maintenance";
-import type { MelItemCreateRequest } from "@/lib/api/types";
+import { createMelItem, createSquawk } from "@/lib/api/maintenance";
+import type { MelItemCreateRequest, SquawkCreateRequest } from "@/lib/api/types";
 
 export type MelDeferralActionResult =
   | { ok: true; mel_item_id: string }
+  | { ok: false; error: string };
+
+export type SquawkActionResult =
+  | { ok: true; squawk_id: string }
   | { ok: false; error: string };
 
 /**
@@ -53,6 +57,38 @@ export async function createMelDeferralAction(
           ok: false,
           error: extractFirst422Message(err.message),
         };
+      }
+      return { ok: false, error: `Save failed (HTTP ${err.status}).` };
+    }
+    return { ok: false, error: "Save failed. Please try again." };
+  }
+}
+
+/**
+ * File a new squawk against an aircraft.
+ *
+ * Same shape as createMelDeferralAction — the dialog handles validation;
+ * this action is the network round-trip + cache invalidation. The reporter
+ * (reported_by_user_id) is inferred from the JWT on the backend, so the
+ * client only sends aircraft_id + reported_at + title + description + severity.
+ */
+export async function createSquawkAction(
+  payload: SquawkCreateRequest,
+): Promise<SquawkActionResult> {
+  try {
+    const created = await createSquawk(payload);
+
+    revalidatePath(`/dispatch`);
+    revalidatePath(`/dispatch`, "layout");
+
+    return { ok: true, squawk_id: created.id };
+  } catch (err) {
+    if (err instanceof ApiError) {
+      if (err.status === 404) {
+        return { ok: false, error: "Aircraft not found." };
+      }
+      if (err.status === 422) {
+        return { ok: false, error: extractFirst422Message(err.message) };
       }
       return { ok: false, error: `Save failed (HTTP ${err.status}).` };
     }

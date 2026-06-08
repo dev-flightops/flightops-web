@@ -43,6 +43,20 @@ vi.mock("./mel-deferral-dialog", () => ({
     </div>
   ),
 }));
+// Same reasoning as the MEL stub above — squawk-dialog also uses useRouter().
+vi.mock("./squawk-dialog", () => ({
+  SquawkDialog: ({
+    aircraftId,
+    tailNumber,
+  }: {
+    aircraftId: string;
+    tailNumber: string;
+  }) => (
+    <div data-testid="squawk-dialog-stub" data-aircraft-id={aircraftId}>
+      Squawk dialog ({tailNumber})
+    </div>
+  ),
+}));
 
 import { MaintenancePanel } from "./maintenance-panel";
 

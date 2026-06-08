@@ -13,6 +13,8 @@ import type {
   AirworthinessResponse,
   MelItemCreateRequest,
   MelItemResponse,
+  SquawkCreateRequest,
+  SquawkResponse,
 } from "./types";
 
 export async function getAirworthiness(
@@ -27,6 +29,15 @@ export async function createMelItem(
   payload: MelItemCreateRequest,
 ): Promise<MelItemResponse> {
   return apiFetch<MelItemResponse>(`/maintenance/mel-items`, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function createSquawk(
+  payload: SquawkCreateRequest,
+): Promise<SquawkResponse> {
+  return apiFetch<SquawkResponse>(`/maintenance/squawks`, {
     method: "POST",
     body: JSON.stringify(payload),
   });
