@@ -13,8 +13,8 @@ import { RightColumn } from "@/components/dispatch/packet/right-column";
 import { SelectedFlightSummary } from "@/components/dispatch/packet/selected-flight-summary";
 import { ApiError } from "@/lib/api/client";
 import { listMyTenants } from "@/lib/api/auth";
-import { getFlight, listFlights } from "@/lib/api/ops";
-import type { FlightDetail } from "@/lib/api/types";
+import { getFlight, listAircraft, listFlights } from "@/lib/api/ops";
+import type { AircraftListItem, FlightDetail } from "@/lib/api/types";
 import { paramToRoute } from "@/lib/route";
 
 function todayUtc(): string {
@@ -58,6 +58,19 @@ export default async function DispatchPage({
     tenantsResponse.tenants[0];
   const tenantName = currentTenant?.name ?? "Peregrine Flight Ops";
 
+  // Aircraft list is only needed by the Edit dialog inside RightColumn's
+  // FlightActionsPanel — fetch it lazily, and only when a scheduled
+  // flight is selected. Soft-fail if the call errors (the dialog hides
+  // its tail-swap selector when the list is empty).
+  let aircraft: AircraftListItem[] = [];
+  if (selectedFlight?.status === "scheduled") {
+    try {
+      aircraft = (await listAircraft()).items;
+    } catch {
+      aircraft = [];
+    }
+  }
+
   // Resolve the routing for the Weather panel:
   //   1. `?route=PADU,PAUN,PAGM` if set (dispatcher typed something)
   //   2. [origin, destination] from the selected flight as a fallback
@@ -92,7 +105,7 @@ export default async function DispatchPage({
 
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
           <LeftColumn flight={selectedFlight} icaos={icaos} />
-          <RightColumn flight={selectedFlight} />
+          <RightColumn flight={selectedFlight} aircraft={aircraft} />
         </div>
       </div>
     </div>
