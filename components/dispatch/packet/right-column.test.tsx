@@ -98,3 +98,62 @@ describe("RightColumn / Generate PDF button", () => {
     ).toBeDisabled();
   });
 });
+
+// ---- M2-G-15 unified dispatch: Flight actions panel -------------------------
+
+describe("RightColumn / Flight actions panel", () => {
+  it("does not render the Flight actions panel when no flight is selected", () => {
+    render(<RightColumn />);
+    expect(screen.queryByText("Flight actions")).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /Release dispatch/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /^Edit$/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("shows Edit + Release buttons when a scheduled flight is selected", () => {
+    render(<RightColumn flight={baseFlight({ status: "scheduled" })} />);
+    expect(screen.getByText("Flight actions")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /^Edit$/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /Release dispatch/i }),
+    ).toBeInTheDocument();
+  });
+
+  it("shows the ReleasedFooter + PDF download when the flight is released", () => {
+    render(
+      <RightColumn
+        flight={baseFlight({
+          status: "released",
+          released_at: "2026-06-01T15:00:00Z",
+          released_by: {
+            id: "u-1",
+            full_name: "Demo Dispatcher",
+            email: "demo@local",
+          },
+        })}
+      />,
+    );
+
+    expect(screen.getByTestId("released-footer")).toBeInTheDocument();
+    expect(screen.getByText(/Demo Dispatcher/)).toBeInTheDocument();
+    // The Flight actions panel hides the Edit/Release buttons after release.
+    expect(
+      screen.queryByRole("button", { name: /^Edit$/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /Release dispatch/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("shows the 'no actions available' note for cancelled / completed flights", () => {
+    render(<RightColumn flight={baseFlight({ status: "cancelled" })} />);
+    expect(
+      screen.getByText(/This flight is cancelled — no actions available/i),
+    ).toBeInTheDocument();
+  });
+});
