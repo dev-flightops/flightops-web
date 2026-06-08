@@ -78,6 +78,11 @@ export function metarSummary(r: WeatherReportResponse): string {
     // Summary uses the raw number ("4000 ft") for sentence flow; the
     // field-grid cell adds the comma separator separately.
     parts.push(`ceiling ${r.ceiling_ft} ft`);
+  } else if (r.visibility_sm !== null) {
+    // No BKN/OVC/VV layer + we had visibility data → sky clear.
+    // Only render when we know vis (so we don't claim "sky clear" for a
+    // METAR we couldn't parse at all).
+    parts.push("sky clear");
   }
   if (r.temp_c !== null && r.dewpoint_c !== null) {
     parts.push(`temp ${r.temp_c}°c / dewpoint ${r.dewpoint_c}°c`);
@@ -112,7 +117,7 @@ function padDeg(deg: number): string {
  *  so the grid keeps its shape (5 columns, never collapsing). */
 export const fieldFormat = {
   ceiling: (r: WeatherReportResponse): string =>
-    r.ceiling_ft === null ? "Unlimited" : `${r.ceiling_ft.toLocaleString()} ft`,
+    r.ceiling_ft === null ? "Clear" : `${r.ceiling_ft.toLocaleString()} ft`,
 
   visibility: (r: WeatherReportResponse): string =>
     r.visibility_sm === null ? "—" : `${r.visibility_sm.toFixed(1)} SM`,
