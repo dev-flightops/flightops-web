@@ -10,22 +10,17 @@ import { RefreshWeatherButton } from "./refresh-weather-button";
 import { SectionPanel } from "./section-panel";
 
 /**
- * Right column of the dispatch packet form — action buttons + data panels.
+ * Right column of the dispatch packet form — flight-state actions on top,
+ * briefing-actions row below, then briefing-data + dispatcher notes panels.
  *
  * As of M2-G-15 this column owns ALL flight-state actions (Edit, Release,
  * Generate PDF) in addition to the existing briefing actions (Refresh
- * Weather, AI Review). Before M2-G-15 those lived on a separate
- * `/dispatch/[flightId]` detail page — that page is now a redirect.
+ * Weather, AI Review, Generate PDF). Before M2-G-15 those lived on a
+ * separate `/dispatch/[flightId]` detail page — that page is now a redirect.
  *
- *   - **Flight actions panel** — shows status + the right action for the
- *     current state. Scheduled flights get Edit + Release; released
- *     flights get the ReleasedFooter + PDF download. Hidden when no
- *     flight is selected (action panel collapses).
- *   - **Briefing actions** — Refresh Weather is live (M2-G-1 router.refresh
- *     re-runs the WeatherPanel server component, backend cache decides
- *     whether AWC is actually hit). AI Review still disabled (M4).
- *   - **Generate PDF** — opens the release PDF; for scheduled flights, the
- *     button doubles as a release-confirm dialog (M1 behavior).
+ * Layout matches the legacy peregrineflight.com style — flat button rows
+ * at the top of the column, no labeled SectionPanel wrappers around the
+ * actions. Labels would add visual weight legacy didn't have.
  */
 export function RightColumn({
   flight,
@@ -39,7 +34,7 @@ export function RightColumn({
 }) {
   return (
     <div className="space-y-5">
-      {flight && <FlightActionsPanel flight={flight} aircraft={aircraft} />}
+      {flight && <FlightActionsRow flight={flight} aircraft={aircraft} />}
 
       <SectionPanel title={null}>
         <div className="flex flex-wrap gap-3">
@@ -83,47 +78,64 @@ export function RightColumn({
   );
 }
 
-function FlightActionsPanel({
+/**
+ * Flat row of flight-state actions, no labeled wrapper. Status badge is
+ * inline with the buttons so you can see at a glance whether the flight
+ * is scheduled / released / cancelled / completed.
+ *
+ *   scheduled  → [status pill] [Edit] [Release dispatch]
+ *   released   → [status pill] + ReleasedFooter strip + [Download PDF]
+ *   cancelled/
+ *   completed  → [status pill] + small "no actions available" hint
+ */
+function FlightActionsRow({
   flight,
   aircraft,
 }: {
   flight: FlightDetail;
   aircraft: AircraftListItem[];
 }) {
-  return (
-    <SectionPanel
-      title="Flight actions"
-      titleAction={<StatusBadge status={flight.status} />}
-    >
-      {flight.status === "scheduled" && (
-        <div className="flex flex-wrap items-center gap-3">
-          <EditFlightDialog flight={flight} aircraft={aircraft} />
-          <ReleaseButton
-            flightId={flight.id}
-            flightNumber={flight.flight_number}
-            origin={flight.origin}
-            destination={flight.destination}
+  if (flight.status === "scheduled") {
+    return (
+      <div className="flex flex-wrap items-center gap-3">
+        <StatusBadge status={flight.status} />
+        <EditFlightDialog flight={flight} aircraft={aircraft} />
+        <ReleaseButton
+          flightId={flight.id}
+          flightNumber={flight.flight_number}
+          origin={flight.origin}
+          destination={flight.destination}
+        />
+      </div>
+    );
+  }
+
+  if (
+    flight.status === "released" &&
+    flight.released_at &&
+    flight.released_by
+  ) {
+    return (
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-3">
+          <StatusBadge status={flight.status} />
+          <ReleasedFooter
+            releasedAt={flight.released_at}
+            releasedBy={flight.released_by}
           />
         </div>
-      )}
+        <DownloadPdfButton flightId={flight.id} />
+      </div>
+    );
+  }
 
-      {flight.status === "released" &&
-        flight.released_at &&
-        flight.released_by && (
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <ReleasedFooter
-              releasedAt={flight.released_at}
-              releasedBy={flight.released_by}
-            />
-            <DownloadPdfButton flightId={flight.id} />
-          </div>
-        )}
-
-      {(flight.status === "cancelled" || flight.status === "completed") && (
-        <p className="text-xs text-muted-foreground">
-          This flight is {flight.status} — no actions available.
-        </p>
-      )}
-    </SectionPanel>
+  // cancelled / completed
+  return (
+    <div className="flex flex-wrap items-center gap-3">
+      <StatusBadge status={flight.status} />
+      <span className="text-xs text-muted-foreground">
+        This flight is {flight.status} — no actions available.
+      </span>
+    </div>
   );
 }

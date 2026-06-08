@@ -99,23 +99,25 @@ describe("RightColumn / Generate PDF button", () => {
   });
 });
 
-// ---- M2-G-15 unified dispatch: Flight actions panel -------------------------
+// ---- M2-G-15 unified dispatch: flight-actions row ---------------------------
 
-describe("RightColumn / Flight actions panel", () => {
-  it("does not render the Flight actions panel when no flight is selected", () => {
+describe("RightColumn / flight-actions row", () => {
+  it("renders nothing flight-state-y when no flight is selected", () => {
     render(<RightColumn />);
-    expect(screen.queryByText("Flight actions")).not.toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: /Release dispatch/i }),
     ).not.toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: /^Edit$/i }),
     ).not.toBeInTheDocument();
+    // No status pill either.
+    expect(screen.queryByText(/^scheduled$/i)).not.toBeInTheDocument();
   });
 
-  it("shows Edit + Release buttons when a scheduled flight is selected", () => {
+  it("renders status + Edit + Release in a flat row for scheduled flights", () => {
     render(<RightColumn flight={baseFlight({ status: "scheduled" })} />);
-    expect(screen.getByText("Flight actions")).toBeInTheDocument();
+    // Status pill present
+    expect(screen.getByText(/^scheduled$/i)).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: /^Edit$/i }),
     ).toBeInTheDocument();
@@ -124,7 +126,7 @@ describe("RightColumn / Flight actions panel", () => {
     ).toBeInTheDocument();
   });
 
-  it("shows the ReleasedFooter + PDF download when the flight is released", () => {
+  it("renders status + ReleasedFooter + PDF download for released flights", () => {
     render(
       <RightColumn
         flight={baseFlight({
@@ -139,9 +141,12 @@ describe("RightColumn / Flight actions panel", () => {
       />,
     );
 
+    // StatusBadge renders lowercase "released"; ReleasedFooter renders
+    // capitalized "Released". Match the StatusBadge specifically.
+    expect(screen.getByText(/^released$/)).toBeInTheDocument();
     expect(screen.getByTestId("released-footer")).toBeInTheDocument();
     expect(screen.getByText(/Demo Dispatcher/)).toBeInTheDocument();
-    // The Flight actions panel hides the Edit/Release buttons after release.
+    // Edit / Release dispatch hidden after release.
     expect(
       screen.queryByRole("button", { name: /^Edit$/i }),
     ).not.toBeInTheDocument();
@@ -150,8 +155,9 @@ describe("RightColumn / Flight actions panel", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("shows the 'no actions available' note for cancelled / completed flights", () => {
+  it("renders 'no actions available' for cancelled / completed flights", () => {
     render(<RightColumn flight={baseFlight({ status: "cancelled" })} />);
+    expect(screen.getByText(/^cancelled$/i)).toBeInTheDocument();
     expect(
       screen.getByText(/This flight is cancelled — no actions available/i),
     ).toBeInTheDocument();
