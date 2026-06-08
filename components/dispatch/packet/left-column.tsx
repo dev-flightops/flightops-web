@@ -1,6 +1,8 @@
 import type { FlightDetail } from "@/lib/api/types";
 
+import { AlternateReviewPanel } from "./alternate-review-panel";
 import { MaintenancePanel } from "./maintenance-panel";
+import { RouteInput } from "./route-input";
 import { DisabledPanel, SectionPanel } from "./section-panel";
 import { WeatherPanel } from "./weather-panel";
 
@@ -12,32 +14,42 @@ import { WeatherPanel } from "./weather-panel";
  *   → Fuel → Load Team → Company Risk Inputs → Management
  *   → Non-Certified Weather Notes
  *
- * Live as of M2-G-5:
- *   - Route textarea (free input — saved nowhere yet)
- *   - Weather & ATIS — METAR + TAF via weather-service (M2-M-3)
+ * Live as of M2-G-12:
+ *   - Route textarea — live; commits to ?route= search param on blur
+ *   - Weather & ATIS — METAR + TAF for every ICAO in the route, one
+ *     /weather/batch round-trip (M2-M-12)
  *   - Maintenance & Airworthiness — open MELs + squawks via
  *     maintenance-service (M2-M-8)
  *   - Non-Certified Weather Notes textarea
  *
  * NOTAM Review still blocked on M2-M-4 (FAA NOTAM proxy). Fuel, Load
  * Team, Mgmt Approval all wait on their respective services.
+ *
+ * `icaos` is the resolved routing — either parsed from `?route=` in the
+ * URL or [origin, destination] from the selected flight. Empty array
+ * means "no routing context", which triggers the Weather panel's
+ * placeholder.
  */
-export async function LeftColumn({ flight }: { flight: FlightDetail | null }) {
+export async function LeftColumn({
+  flight,
+  icaos,
+}: {
+  flight: FlightDetail | null;
+  icaos: string[];
+}) {
   return (
     <div className="space-y-5">
       <SectionPanel title="Route">
         <p className="mb-2 text-xs text-muted-foreground">
-          One ICAO per line — origin first, destination last
+          One ICAO per line — origin first, destination last. Blur (or
+          Cmd/Ctrl-Enter) refreshes the Weather panel for every stop.
         </p>
-        <textarea
-          rows={6}
-          disabled
-          placeholder={"PAEE\nPAUN\nPAGM"}
-          className="ff-input font-mono text-sm"
-        />
+        <RouteInput defaultText={icaos.join("\n")} />
       </SectionPanel>
 
-      <WeatherPanel flight={flight} />
+      <WeatherPanel icaos={icaos} />
+
+      <AlternateReviewPanel icaos={icaos} />
 
       <DisabledPanel
         title="NOTAM Review"

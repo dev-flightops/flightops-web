@@ -8,7 +8,11 @@
  */
 
 import { apiFetch } from "./client";
-import type { WeatherReportResponse } from "./types";
+import type {
+  WeatherBatchRequestItem,
+  WeatherBatchResponse,
+  WeatherReportResponse,
+} from "./types";
 
 export async function getMetar(icao: string): Promise<WeatherReportResponse> {
   return apiFetch<WeatherReportResponse>(`/weather/metar/${icao}`);
@@ -16,4 +20,21 @@ export async function getMetar(icao: string): Promise<WeatherReportResponse> {
 
 export async function getTaf(icao: string): Promise<WeatherReportResponse> {
   return apiFetch<WeatherReportResponse>(`/weather/taf/${icao}`);
+}
+
+/**
+ * Fetch many (icao, kind) reports in one round-trip (M2-M-12). Per-item
+ * failures are isolated into the response's errors[] — the call itself
+ * resolves successfully as long as the request shape is valid.
+ *
+ * Backend caps at 20 requests per batch. UI should slice longer routes
+ * before sending.
+ */
+export async function batchWeather(
+  requests: WeatherBatchRequestItem[],
+): Promise<WeatherBatchResponse> {
+  return apiFetch<WeatherBatchResponse>(`/weather/batch`, {
+    method: "POST",
+    body: JSON.stringify({ requests }),
+  });
 }

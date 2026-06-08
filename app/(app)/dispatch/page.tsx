@@ -15,6 +15,7 @@ import { ApiError } from "@/lib/api/client";
 import { listMyTenants } from "@/lib/api/auth";
 import { getFlight, listFlights } from "@/lib/api/ops";
 import type { FlightDetail } from "@/lib/api/types";
+import { paramToRoute } from "@/lib/route";
 
 function todayUtc(): string {
   return new Date().toISOString().slice(0, 10);
@@ -22,6 +23,9 @@ function todayUtc(): string {
 
 interface SearchParams {
   flight?: string;
+  /** Comma-separated ICAOs that override [origin, destination] for the
+   *  Weather panel. Set by the Route input on blur. */
+  route?: string;
 }
 
 /**
@@ -39,7 +43,7 @@ export default async function DispatchPage({
 }: {
   searchParams: Promise<SearchParams>;
 }) {
-  const { flight: selectedId } = await searchParams;
+  const { flight: selectedId, route: routeParam } = await searchParams;
   const today = todayUtc();
 
   const [{ items: flights }, tenantsResponse, selectedFlight] =
@@ -53,6 +57,18 @@ export default async function DispatchPage({
     tenantsResponse.tenants.find((t) => t.is_current) ??
     tenantsResponse.tenants[0];
   const tenantName = currentTenant?.name ?? "Peregrine Flight Ops";
+
+  // Resolve the routing for the Weather panel:
+  //   1. `?route=PADU,PAUN,PAGM` if set (dispatcher typed something)
+  //   2. [origin, destination] from the selected flight as a fallback
+  //   3. empty array (panel shows the placeholder)
+  const routedIcaos = paramToRoute(routeParam);
+  const icaos =
+    routedIcaos.length > 0
+      ? routedIcaos
+      : selectedFlight
+        ? [selectedFlight.origin, selectedFlight.destination]
+        : [];
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6">
@@ -75,7 +91,7 @@ export default async function DispatchPage({
         {selectedFlight && <CrewCurrencyBanner />}
 
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-          <LeftColumn flight={selectedFlight} />
+          <LeftColumn flight={selectedFlight} icaos={icaos} />
           <RightColumn flight={selectedFlight} />
         </div>
       </div>

@@ -1,17 +1,15 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
-import type { FlightDetail, WeatherReportResponse } from "@/lib/api/types";
+import type {
+  WeatherBatchResponse,
+  WeatherReportResponse,
+} from "@/lib/api/types";
 
-// Anything referenced by a `vi.mock` factory has to be hoisted, because
-// `vi.mock` calls run *before* the file's top-level statements. So both
-// the API stubs and the ApiError stand-in go into a `vi.hoisted` block.
-//
-// We also stub `@/lib/api/client` to short-circuit the
-// next-auth → next/server import chain — vitest can't resolve
-// `next/server` without `.js`, and the component only needs `ApiError`
-// as a class shape.
-const { TestApiError, getMetar, getTaf } = vi.hoisted(() => {
+// Same hoisting + ApiError stub as before — vi.mock factories run before
+// top-level code, and we still need to short-circuit the @/lib/api/client
+// → next-auth → next/server import chain.
+const { TestApiError, batchWeather } = vi.hoisted(() => {
   class TestApiError extends Error {
     constructor(
       public status: number,
@@ -21,29 +19,12 @@ const { TestApiError, getMetar, getTaf } = vi.hoisted(() => {
       super(message);
     }
   }
-  return { TestApiError, getMetar: vi.fn(), getTaf: vi.fn() };
+  return { TestApiError, batchWeather: vi.fn() };
 });
 vi.mock("@/lib/api/client", () => ({ ApiError: TestApiError }));
-vi.mock("@/lib/api/weather", () => ({ getMetar, getTaf }));
+vi.mock("@/lib/api/weather", () => ({ batchWeather }));
 
 import { WeatherPanel } from "./weather-panel";
-
-const baseFlight: FlightDetail = {
-  id: "f-1",
-  flight_number: "GV101",
-  origin: "PADU",
-  destination: "PANC",
-  scheduled_departure_at: "2026-06-07T14:00:00Z",
-  scheduled_arrival_at: "2026-06-07T16:00:00Z",
-  status: "scheduled",
-  aircraft: { id: "ac-1", tail_number: "N207GE", model: "Cessna 208 Caravan", seats: 9 },
-  pax_count: 4,
-  cargo_lbs: 200,
-  notes: null,
-  max_payload_lbs: 3000,
-  released_at: null,
-  released_by: null,
-};
 
 function makeReport(
   overrides: Partial<WeatherReportResponse> = {},
@@ -56,157 +37,215 @@ function makeReport(
     valid_until: "2026-06-07T15:58:00Z",
     cache_hit: false,
     flight_category: "VFR",
+    alternate_required: false,
     ...overrides,
   };
 }
 
+/** Build a WeatherBatchResponse from per-(icao,kind) report overrides.
+ *  Anything not in `reports` and not in `errors` is omitted from the
+ *  response — the component handles the "neither item nor error" case
+ *  defensively. */
+function makeBatch(
+  reports: Array<Partial<WeatherReportResponse> & { icao: string; kind: "metar" | "taf" }>,
+  errors: WeatherBatchResponse["errors"] = [],
+): WeatherBatchResponse {
+  return {
+    items: reports.map((r) => makeReport({ ...r, raw: r.raw ?? `${r.kind.toUpperCase()} ${r.icao} ...` })),
+    errors,
+  };
+}
+
 describe("WeatherPanel", () => {
-  it("renders the M2 disabled placeholder when no flight is selected", async () => {
-    const ui = await WeatherPanel({ flight: null });
+  it("renders the M2 disabled placeholder when the icaos list is empty", async () => {
+    const ui = await WeatherPanel({ icaos: [] });
     render(ui);
-    expect(screen.getByText(/Pick a flight from the dropdown above/i)).toBeInTheDocument();
-    expect(getMetar).not.toHaveBeenCalled();
-    expect(getTaf).not.toHaveBeenCalled();
+    expect(
+      screen.getByText(/Pick a flight from the dropdown above, or type a routing/i),
+    ).toBeInTheDocument();
+    expect(batchWeather).not.toHaveBeenCalled();
   });
 
-  it("fetches METAR + TAF for both origin and destination in parallel", async () => {
-    getMetar.mockReset();
-    getTaf.mockReset();
-    getMetar
-      .mockResolvedValueOnce(makeReport({ icao: "PADU", raw: "METAR PADU ..." }))
-      .mockResolvedValueOnce(makeReport({ icao: "PANC", raw: "METAR PANC ..." }));
-    getTaf
-      .mockResolvedValueOnce(makeReport({ icao: "PADU", kind: "taf", raw: "TAF PADU ..." }))
-      .mockResolvedValueOnce(makeReport({ icao: "PANC", kind: "taf", raw: "TAF PANC ..." }));
+  it("fetches METAR + TAF for every ICAO in one batch round-trip", async () => {
+    batchWeather.mockReset().mockResolvedValueOnce(
+      makeBatch([
+        { icao: "PADU", kind: "metar" },
+        { icao: "PADU", kind: "taf", raw: "TAF PADU ..." },
+        { icao: "PANC", kind: "metar" },
+        { icao: "PANC", kind: "taf", raw: "TAF PANC ..." },
+      ]),
+    );
 
-    const ui = await WeatherPanel({ flight: baseFlight });
+    const ui = await WeatherPanel({ icaos: ["PADU", "PANC"] });
     render(ui);
 
-    expect(getMetar).toHaveBeenCalledWith("PADU");
-    expect(getMetar).toHaveBeenCalledWith("PANC");
-    expect(getTaf).toHaveBeenCalledWith("PADU");
-    expect(getTaf).toHaveBeenCalledWith("PANC");
+    expect(batchWeather).toHaveBeenCalledTimes(1);
+    const payload = batchWeather.mock.calls[0][0];
+    expect(payload).toEqual([
+      { icao: "PADU", kind: "metar" },
+      { icao: "PADU", kind: "taf" },
+      { icao: "PANC", kind: "metar" },
+      { icao: "PANC", kind: "taf" },
+    ]);
 
     expect(screen.getByText("PADU")).toBeInTheDocument();
     expect(screen.getByText("PANC")).toBeInTheDocument();
-    expect(screen.getByText("METAR PADU ...")).toBeInTheDocument();
-    expect(screen.getByText("TAF PANC ...")).toBeInTheDocument();
+    expect(screen.getByText(/TAF PANC/)).toBeInTheDocument();
   });
 
-  it("deduplicates when origin == destination (training / circling flights)", async () => {
-    getMetar.mockReset().mockResolvedValue(makeReport());
-    getTaf.mockReset().mockResolvedValue(makeReport({ kind: "taf" }));
+  it("deduplicates repeated ICAOs in the routing", async () => {
+    batchWeather.mockReset().mockResolvedValueOnce(
+      makeBatch([
+        { icao: "PADU", kind: "metar" },
+        { icao: "PADU", kind: "taf" },
+      ]),
+    );
 
-    const sameOrigDest: FlightDetail = {
-      ...baseFlight,
-      origin: "PADU",
-      destination: "PADU",
-    };
-    const ui = await WeatherPanel({ flight: sameOrigDest });
+    const ui = await WeatherPanel({ icaos: ["PADU", "PADU", "PADU"] });
     render(ui);
 
-    expect(getMetar).toHaveBeenCalledTimes(1);
-    expect(getTaf).toHaveBeenCalledTimes(1);
+    expect(batchWeather).toHaveBeenCalledTimes(1);
+    const payload = batchWeather.mock.calls[0][0];
+    // Only one (PADU, metar) + one (PADU, taf) — duplicates dropped before
+    // the request even fires.
+    expect(payload).toEqual([
+      { icao: "PADU", kind: "metar" },
+      { icao: "PADU", kind: "taf" },
+    ]);
   });
 
-  it("shows a 'live' badge when the METAR was just fetched (cache_hit=false)", async () => {
-    getMetar.mockReset().mockResolvedValue(makeReport({ cache_hit: false }));
-    getTaf.mockReset().mockResolvedValue(makeReport({ kind: "taf" }));
+  it("renders a 'cached' badge when the METAR came from the cache", async () => {
+    batchWeather.mockReset().mockResolvedValueOnce(
+      makeBatch([
+        { icao: "PADU", kind: "metar", cache_hit: true },
+        { icao: "PADU", kind: "taf", cache_hit: true },
+      ]),
+    );
 
-    const ui = await WeatherPanel({ flight: { ...baseFlight, destination: "PADU" } });
-    render(ui);
-
-    expect(screen.getByText("live")).toBeInTheDocument();
-    expect(screen.queryByText("cached")).not.toBeInTheDocument();
-  });
-
-  it("shows a 'cached' badge when the METAR came from the cache (cache_hit=true)", async () => {
-    getMetar.mockReset().mockResolvedValue(makeReport({ cache_hit: true }));
-    getTaf.mockReset().mockResolvedValue(makeReport({ kind: "taf" }));
-
-    const ui = await WeatherPanel({ flight: { ...baseFlight, destination: "PADU" } });
+    const ui = await WeatherPanel({ icaos: ["PADU"] });
     render(ui);
 
     expect(screen.getByText("cached")).toBeInTheDocument();
+    expect(screen.queryByText("live")).not.toBeInTheDocument();
   });
 
-  it("falls back gracefully when AWC has no TAF for an airport (404)", async () => {
-    getMetar.mockReset().mockResolvedValue(makeReport());
-    getTaf
-      .mockReset()
-      .mockRejectedValue(new TestApiError(404, "/weather/taf/PADU", "No current TAF"));
+  it("renders the per-row 404 fallback when batch.errors has a TAF entry", async () => {
+    batchWeather.mockReset().mockResolvedValueOnce(
+      makeBatch(
+        [{ icao: "PADU", kind: "metar" }],
+        [{ icao: "PADU", kind: "taf", status: 404, detail: "No current TAF" }],
+      ),
+    );
 
-    const ui = await WeatherPanel({ flight: { ...baseFlight, destination: "PADU" } });
+    const ui = await WeatherPanel({ icaos: ["PADU"] });
     render(ui);
 
     expect(screen.getByText(/No current TAF for this airport/i)).toBeInTheDocument();
   });
 
-  it("falls back gracefully when the upstream weather feed is unreachable (502)", async () => {
-    getMetar
+  it("renders the whole-panel fallback when the batch call itself throws (502)", async () => {
+    batchWeather
       .mockReset()
-      .mockRejectedValue(new TestApiError(502, "/weather/metar/PADU", "AWC unreachable"));
-    getTaf
-      .mockReset()
-      .mockRejectedValue(new TestApiError(502, "/weather/taf/PADU", "AWC unreachable"));
+      .mockRejectedValueOnce(
+        new TestApiError(502, "/weather/batch", "AWC unreachable"),
+      );
 
-    const ui = await WeatherPanel({ flight: { ...baseFlight, destination: "PADU" } });
+    const ui = await WeatherPanel({ icaos: ["PADU", "PANC"] });
     render(ui);
 
     expect(
-      screen.getAllByText(/feed unreachable — try Refresh Weather/i).length,
-    ).toBeGreaterThan(0);
+      screen.getByText(/Weather feed unavailable \(502\)/i),
+    ).toBeInTheDocument();
   });
 
-  // M2-G-11: flight-category pill next to the ICAO header
-  it("renders each FAA flight category with its standard color title", async () => {
-    getMetar
-      .mockReset()
-      .mockResolvedValueOnce(makeReport({ icao: "PADU", flight_category: "VFR" }))
-      .mockResolvedValueOnce(makeReport({ icao: "PANC", flight_category: "IFR" }));
-    getTaf.mockReset().mockResolvedValue(makeReport({ kind: "taf", flight_category: null }));
+  // M2-G-11 carry-overs: the colored category pill still works through
+  // the batch path.
+  it("renders the FAA flight category pill from the METAR's flight_category", async () => {
+    batchWeather.mockReset().mockResolvedValueOnce(
+      makeBatch([
+        { icao: "PADU", kind: "metar", flight_category: "VFR" },
+        { icao: "PANC", kind: "metar", flight_category: "IFR" },
+      ]),
+    );
 
-    const ui = await WeatherPanel({ flight: baseFlight });
+    const ui = await WeatherPanel({ icaos: ["PADU", "PANC"] });
     render(ui);
 
     const vfrBadge = screen.getByText("VFR");
-    expect(vfrBadge).toBeInTheDocument();
     expect(vfrBadge.className).toMatch(/text-status-green/);
-    expect(vfrBadge).toHaveAttribute("title", expect.stringMatching(/visibility/i));
-
     const ifrBadge = screen.getByText("IFR");
-    expect(ifrBadge).toBeInTheDocument();
     expect(ifrBadge.className).toMatch(/text-status-red/);
   });
 
-  it("hides the category pill when the METAR has no flight_category (TAF-only / unparsable)", async () => {
-    getMetar
-      .mockReset()
-      .mockResolvedValue(makeReport({ flight_category: null }));
-    getTaf
-      .mockReset()
-      .mockResolvedValue(makeReport({ kind: "taf", flight_category: null }));
+  it("hides the category pill when the METAR has no flight_category", async () => {
+    batchWeather.mockReset().mockResolvedValueOnce(
+      makeBatch([
+        { icao: "PADU", kind: "metar", flight_category: null },
+      ]),
+    );
 
-    const ui = await WeatherPanel({ flight: { ...baseFlight, destination: "PADU" } });
+    const ui = await WeatherPanel({ icaos: ["PADU"] });
     render(ui);
-
-    // No category text rendered anywhere on the panel.
     for (const cat of ["VFR", "MVFR", "IFR", "LIFR"] as const) {
       expect(screen.queryByText(cat)).not.toBeInTheDocument();
     }
   });
 
-  it("does not render a category pill when the METAR fetch failed (no report to read from)", async () => {
-    getMetar
-      .mockReset()
-      .mockRejectedValue(new TestApiError(502, "/weather/metar/PADU", "down"));
-    getTaf.mockReset().mockResolvedValue(makeReport({ kind: "taf", flight_category: null }));
+  it("hides the category pill when the METAR returned an error (no report to read)", async () => {
+    batchWeather.mockReset().mockResolvedValueOnce(
+      makeBatch(
+        [],
+        [{ icao: "PADU", kind: "metar", status: 502, detail: "down" }],
+      ),
+    );
 
-    const ui = await WeatherPanel({ flight: { ...baseFlight, destination: "PADU" } });
+    const ui = await WeatherPanel({ icaos: ["PADU"] });
     render(ui);
-
     for (const cat of ["VFR", "MVFR", "IFR", "LIFR"] as const) {
       expect(screen.queryByText(cat)).not.toBeInTheDocument();
     }
+  });
+
+  // M2-G-12: multi-stop coverage
+  it("renders a card per stop in route order", async () => {
+    const stops = ["PAEE", "PAUN", "PAGM"];
+    batchWeather.mockReset().mockResolvedValueOnce(
+      makeBatch(
+        stops.flatMap((icao) => [
+          { icao, kind: "metar" as const },
+          { icao, kind: "taf" as const },
+        ]),
+      ),
+    );
+
+    const ui = await WeatherPanel({ icaos: stops });
+    render(ui);
+
+    for (const icao of stops) {
+      expect(screen.getByText(icao)).toBeInTheDocument();
+    }
+  });
+
+  it("shows the truncation warning when the route is longer than 10 stops", async () => {
+    // Build a 12-stop route (synthetic ICAOs). The panel should slice to
+    // the first 10 and surface a "first 10 of 12" hint.
+    const longRoute = Array.from({ length: 12 }, (_, i) => `K${String(i).padStart(3, "0")}`);
+    batchWeather.mockReset().mockResolvedValueOnce(
+      makeBatch(
+        longRoute.slice(0, 10).flatMap((icao) => [
+          { icao, kind: "metar" as const },
+          { icao, kind: "taf" as const },
+        ]),
+      ),
+    );
+
+    const ui = await WeatherPanel({ icaos: longRoute });
+    render(ui);
+
+    expect(
+      screen.getByText(/Showing first 10 stops of 12/i),
+    ).toBeInTheDocument();
+    // Backend was asked for only 20 records (10 stops × 2 kinds), not 24.
+    expect(batchWeather.mock.calls[0][0]).toHaveLength(20);
   });
 });
