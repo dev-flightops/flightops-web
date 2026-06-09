@@ -317,3 +317,35 @@ export interface PositionListResponse {
   items: PositionResponse[];
   total: number;
 }
+
+// Flight Following board (M2-M-14 backend / M2-G-11 frontend)
+
+export type BoardView = "today" | "tomorrow" | "week" | "all";
+
+export interface BoardFlightItem {
+  id: string;
+  flight_number: string;
+  aircraft: AircraftRef;
+  origin: string;
+  destination: string;
+  scheduled_departure_at: string;        // ISO 8601 UTC
+  scheduled_arrival_at: string;
+  /** Reserved for M2-M-14b (Check-In flow) — always null at M2-G-11. */
+  actual_departure_at: string | null;
+  actual_arrival_at: string | null;
+  status: FlightStatus;
+  pax_count: number;
+  cargo_lbs: number;
+  /** Reserved for the crew-assignment story (M3). Always null today. */
+  pic_name: string | null;
+  /** Computed: status==="released" AND now > scheduled_arrival_at + 30 min. */
+  is_overdue: boolean;
+  /** max(positions.reported_at) for this flight_id, or null. */
+  last_contact_at: string | null;
+}
+
+export interface BoardResponse {
+  items: BoardFlightItem[];
+  view: BoardView;
+  total: number;
+}

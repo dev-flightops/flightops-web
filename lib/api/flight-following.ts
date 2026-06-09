@@ -11,7 +11,11 @@
  */
 
 import { apiFetch } from "./client";
-import type { PositionListResponse } from "./types";
+import type {
+  BoardResponse,
+  BoardView,
+  PositionListResponse,
+} from "./types";
 
 /** Fleet snapshot: latest position per aircraft that has ever had a
  *  fix. Returns an empty list when no positions have been ingested. */
@@ -30,4 +34,13 @@ export async function getFlightTrack(
   return apiFetch<PositionListResponse>(
     `/flight-following/flights/${flightId}/track`,
   );
+}
+
+/** Flight Following board — server-rendered list of flights enriched
+ *  with `is_overdue` + `last_contact_at` (M2-M-14). View filter maps
+ *  directly to the same `?view=` URL param used by the page chrome.
+ *  Lives under the ops service, not flight-following — the canonical
+ *  data is the Flight row; positions are the side input. */
+export async function getFlightBoard(view: BoardView): Promise<BoardResponse> {
+  return apiFetch<BoardResponse>(`/ops/following/board?view=${view}`);
 }

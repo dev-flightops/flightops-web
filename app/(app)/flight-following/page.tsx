@@ -1,7 +1,7 @@
 import { DisplayToggle } from "@/components/flight-following/display-toggle";
 import { FilterTabs } from "@/components/flight-following/filter-tabs";
 import { FleetMapLoader } from "@/components/flight-following/fleet-map-loader";
-import { ListViewPlaceholder } from "@/components/flight-following/list-view-placeholder";
+import { FlightBoard } from "@/components/flight-following/flight-board";
 import { PageHeader } from "@/components/flight-following/page-header";
 import { SourceLegend } from "@/components/flight-following/source-legend";
 import { SplitViewPlaceholder } from "@/components/flight-following/split-view-placeholder";
@@ -9,31 +9,35 @@ import {
   VIEW_HINTS,
   parseDisplay,
   parseView,
+  type FlightFollowingView,
 } from "@/components/flight-following/view-types";
 import { ApiError } from "@/lib/api/client";
-import { getLatestPositions } from "@/lib/api/flight-following";
-import type { PositionResponse } from "@/lib/api/types";
+import {
+  getFlightBoard,
+  getLatestPositions,
+} from "@/lib/api/flight-following";
+import type {
+  BoardFlightItem,
+  BoardView,
+  PositionResponse,
+} from "@/lib/api/types";
 
 /**
- * /flight-following — live ops board (M2-G-10 chrome).
+ * /flight-following — live ops board.
  *
  * URL-driven view state:
  *   ?view=today|tomorrow|week|all   (default: today)
  *   ?display=list|split|map         (default: list)
  *
- * Both parameters are independent — switching the day filter
- * preserves the user's display mode and vice versa. Each combination
- * is deep-linkable, which matches how dispatchers actually share
- * board state ("look at /flight-following?view=tomorrow").
+ * Each display mode fetches only what it needs:
+ *   list  → /ops/following/board?view=...  (M2-M-14 endpoint)
+ *   map   → /flight-following/positions/latest
+ *   split → both (map for left pane; board reserved for M2-G-12)
  *
- * Story scope:
- *   M2-G-10 (this) — header, filter tabs, display toggle, route to
- *                    one of three view bodies. List + Split bodies
- *                    are placeholders.
- *   M2-G-11        — real flight board table for the List view,
- *                    powered by a new ops endpoint that returns
- *                    flights filtered by the day-window tab.
- *   M2-G-12        — wire the real list into Split view's right pane.
+ * Story scope progression:
+ *   M2-G-10 — header, filter tabs, display toggle, three placeholder bodies.
+ *   M2-G-11 — list-view body now renders the real flight board table.
+ *   M2-G-12 — wire the board into the split view's right pane.
  */
 export default async function FlightFollowingPage({
   searchParams,
@@ -44,24 +48,27 @@ export default async function FlightFollowingPage({
   const view = parseView(viewParam);
   const display = parseDisplay(displayParam);
 
-  // Positions are only needed when the map is on screen. Skip the
-  // fetch entirely for the pure list view — keeps the page snappy and
-  // doesn't pin the user to the flight-following-service being up
-  // when they just want the flight table.
   const needsPositions = display === "map" || display === "split";
+  const needsBoard = display === "list";
+
   let positions: PositionResponse[] = [];
-  let loadError: string | null = null;
+  let positionsError: string | null = null;
+  let board: BoardFlightItem[] = [];
+  let boardError: string | null = null;
 
   if (needsPositions) {
     try {
-      const response = await getLatestPositions();
-      positions = response.items;
+      positions = (await getLatestPositions()).items;
     } catch (err) {
-      const status = err instanceof ApiError ? err.status : 0;
-      loadError =
-        status === 401
-          ? "Your session expired — please sign in again."
-          : "Flight-following feed unavailable. Try refreshing in a moment.";
+      positionsError = errorMessage(err, "flight-following");
+    }
+  }
+
+  if (needsBoard) {
+    try {
+      board = (await getFlightBoard(view as BoardView)).items;
+    } catch (err) {
+      boardError = errorMessage(err, "board");
     }
   }
 
@@ -75,11 +82,13 @@ export default async function FlightFollowingPage({
       </div>
 
       <div className="min-h-0 flex-1">
-        {display === "list" && <ListViewPlaceholder />}
+        {display === "list" && (
+          <BoardOrError flights={board} loadError={boardError} />
+        )}
         {display === "split" && (
           <MapOrFallback
             positions={positions}
-            loadError={loadError}
+            loadError={positionsError}
             render={(p) => <SplitViewPlaceholder positions={p} />}
             heightClass="h-[calc(100vh-22rem)]"
           />
@@ -87,7 +96,7 @@ export default async function FlightFollowingPage({
         {display === "map" && (
           <MapOrFallback
             positions={positions}
-            loadError={loadError}
+            loadError={positionsError}
             render={(p) => (
               <div className="h-full overflow-hidden rounded-lg border border-border bg-card">
                 <FleetMapLoader positions={p} />
@@ -98,10 +107,39 @@ export default async function FlightFollowingPage({
         )}
       </div>
 
-      <p className="mt-3 text-xs text-muted-foreground/70">{VIEW_HINTS[view]}</p>
+      <p className="mt-3 text-xs text-muted-foreground/70">
+        {VIEW_HINTS[view as FlightFollowingView]}
+      </p>
       {(display === "map" || display === "split") && <SourceLegend />}
     </div>
   );
+}
+
+function errorMessage(err: unknown, surface: "flight-following" | "board"): string {
+  const status = err instanceof ApiError ? err.status : 0;
+  if (status === 401) {
+    return "Your session expired — please sign in again.";
+  }
+  return surface === "board"
+    ? "Flight board unavailable. Try refreshing in a moment."
+    : "Flight-following feed unavailable. Try refreshing in a moment.";
+}
+
+function BoardOrError({
+  flights,
+  loadError,
+}: {
+  flights: BoardFlightItem[];
+  loadError: string | null;
+}) {
+  if (loadError) {
+    return (
+      <div className="flex h-[calc(100vh-22rem)] w-full items-center justify-center rounded-lg border border-border bg-card px-4 text-center text-sm text-muted-foreground">
+        {loadError}
+      </div>
+    );
+  }
+  return <FlightBoard flights={flights} />;
 }
 
 /**

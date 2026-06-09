@@ -1,9 +1,9 @@
 import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { PositionResponse } from "@/lib/api/types";
+import type { BoardFlightItem, PositionResponse } from "@/lib/api/types";
 
-const { TestApiError, getLatestPositions } = vi.hoisted(() => {
+const { TestApiError, getLatestPositions, getFlightBoard } = vi.hoisted(() => {
   class TestApiError extends Error {
     constructor(
       public status: number,
@@ -13,10 +13,17 @@ const { TestApiError, getLatestPositions } = vi.hoisted(() => {
       super(message);
     }
   }
-  return { TestApiError, getLatestPositions: vi.fn() };
+  return {
+    TestApiError,
+    getLatestPositions: vi.fn(),
+    getFlightBoard: vi.fn(),
+  };
 });
 vi.mock("@/lib/api/client", () => ({ ApiError: TestApiError }));
-vi.mock("@/lib/api/flight-following", () => ({ getLatestPositions }));
+vi.mock("@/lib/api/flight-following", () => ({
+  getLatestPositions,
+  getFlightBoard,
+}));
 
 // Leaflet touches `window` at import time — stub the loader.
 vi.mock("@/components/flight-following/fleet-map-loader", () => ({
@@ -55,8 +62,34 @@ function makePosition(
   };
 }
 
+function makeBoardItem(
+  overrides: Partial<BoardFlightItem> & { flight_number: string },
+): BoardFlightItem {
+  return {
+    id: `flight-${overrides.flight_number}`,
+    aircraft: { id: "ac-1", tail_number: "N207GE", model: "Cessna 208", seats: 9 },
+    origin: "PADU",
+    destination: "PANC",
+    scheduled_departure_at: "2026-06-15T20:00:00Z",
+    scheduled_arrival_at: "2026-06-15T22:00:00Z",
+    actual_departure_at: null,
+    actual_arrival_at: null,
+    status: "scheduled",
+    pax_count: 4,
+    cargo_lbs: 200,
+    pic_name: null,
+    is_overdue: false,
+    last_contact_at: null,
+    ...overrides,
+  };
+}
+
 beforeEach(() => {
   getLatestPositions.mockReset();
+  getFlightBoard.mockReset();
+  // Chrome tests render the list view by default, which fetches the
+  // board. Default to empty so they don't need to opt in.
+  getFlightBoard.mockResolvedValue({ items: [], view: "today", total: 0 });
 });
 
 async function renderPage(searchParams: { view?: string; display?: string }) {
@@ -84,8 +117,13 @@ describe("FlightFollowingPage chrome (M2-G-10)", () => {
     const history = screen.getByRole("link", { name: /^history$/i });
     expect(history).toHaveAttribute("href", "/flight-following/history");
 
-    const open = screen.getByRole("link", { name: /open flight/i });
-    expect(open).toHaveAttribute("href", "/flight-following/new");
+    // The empty-state board CTA also renders an "Open Flight" link, so
+    // assert at least one matching link points at the new-flight stub.
+    const openLinks = screen.getAllByRole("link", { name: /open flight/i });
+    expect(openLinks.length).toBeGreaterThanOrEqual(1);
+    expect(
+      openLinks.every((a) => a.getAttribute("href") === "/flight-following/new"),
+    ).toBe(true);
   });
 
   it("highlights the active filter tab and preserves display in the href", async () => {
@@ -140,21 +178,109 @@ describe("FlightFollowingPage chrome (M2-G-10)", () => {
       "aria-selected",
       "true",
     );
-    expect(
-      screen.getByText(/flight board lands in m2-g-11/i),
-    ).toBeInTheDocument();
+    // List view default → empty board (no flights seeded) shows the
+    // "No active flights" copy.
+    expect(screen.getByText(/no active flights/i)).toBeInTheDocument();
   });
 });
 
-describe("FlightFollowingPage list view (M2-G-10 default)", () => {
-  it("renders the M2-G-11 placeholder and does NOT call the positions API", async () => {
+describe("FlightFollowingPage list view (M2-G-11)", () => {
+  it("calls the board API with the active view and does NOT call positions", async () => {
+    await renderPage({ view: "tomorrow", display: "list" });
+
+    expect(getFlightBoard).toHaveBeenCalledWith("tomorrow");
+    expect(getLatestPositions).not.toHaveBeenCalled();
+  });
+
+  it("renders one row per flight with status badges and contact times", async () => {
+    getFlightBoard.mockResolvedValueOnce({
+      items: [
+        makeBoardItem({
+          flight_number: "GV303",
+          status: "released",
+          last_contact_at: "2026-06-15T21:00:00Z",
+        }),
+        makeBoardItem({
+          flight_number: "GV310",
+          status: "scheduled",
+          pax_count: 0,
+          cargo_lbs: 0,
+        }),
+      ],
+      view: "today",
+      total: 2,
+    });
+
+    await renderPage({ display: "list" });
+
+    expect(screen.getByText("GV303")).toBeInTheDocument();
+    expect(screen.getByText("GV310")).toBeInTheDocument();
+    // released → AIRBORNE badge (exact match — the view hint copy under
+    // the board also contains the lowercase word "airborne")
+    expect(screen.getByText(/^airborne$/i)).toBeInTheDocument();
+    // scheduled → PLANNED badge
+    expect(screen.getByText(/^planned$/i)).toBeInTheDocument();
+    // last_contact_at on the released flight rendered as Zulu
+    expect(screen.getByText(/^21:00z$/)).toBeInTheDocument();
+  });
+
+  it("renders the OVERDUE pill alongside AIRBORNE on overdue rows", async () => {
+    getFlightBoard.mockResolvedValueOnce({
+      items: [
+        makeBoardItem({
+          flight_number: "GV999",
+          status: "released",
+          is_overdue: true,
+        }),
+      ],
+      view: "today",
+      total: 1,
+    });
+
+    await renderPage({ display: "list" });
+
+    expect(screen.getByText(/^airborne$/i)).toBeInTheDocument();
+    expect(screen.getByText(/^overdue$/i)).toBeInTheDocument();
+  });
+
+  it("renders the empty-state CTA when there are no flights", async () => {
+    await renderPage({ display: "list" });
+
+    expect(screen.getByText(/no active flights/i)).toBeInTheDocument();
+    // Empty-state CTA + header button both link to /new — assert both.
+    const newLinks = screen.getAllByRole("link", { name: /open flight/i });
+    expect(newLinks).toHaveLength(2);
+    expect(
+      newLinks.every((a) => a.getAttribute("href") === "/flight-following/new"),
+    ).toBe(true);
+  });
+
+  it("renders a board-unavailable hint when the board API errors", async () => {
+    getFlightBoard
+      .mockReset()
+      .mockRejectedValueOnce(
+        new TestApiError(502, "/ops/following/board", "Bad Gateway"),
+      );
+
     await renderPage({ display: "list" });
 
     expect(
-      screen.getByText(/flight board lands in m2-g-11/i),
+      screen.getByText(/flight board unavailable/i),
     ).toBeInTheDocument();
-    expect(getLatestPositions).not.toHaveBeenCalled();
-    expect(screen.queryByTestId("fleet-map-stub")).not.toBeInTheDocument();
+  });
+
+  it("renders the 'session expired' hint when the board API returns 401", async () => {
+    getFlightBoard
+      .mockReset()
+      .mockRejectedValueOnce(
+        new TestApiError(401, "/ops/following/board", "Unauthorized"),
+      );
+
+    await renderPage({ display: "list" });
+
+    expect(
+      screen.getByText(/session expired — please sign in again/i),
+    ).toBeInTheDocument();
   });
 });
 
