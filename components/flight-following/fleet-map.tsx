@@ -1,10 +1,18 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import L from "leaflet";
-import { CircleMarker, MapContainer, Popup, TileLayer, Tooltip } from "react-leaflet";
+import {
+  CircleMarker,
+  MapContainer,
+  Polyline,
+  Popup,
+  TileLayer,
+  Tooltip,
+} from "react-leaflet";
 
+import { getFlightTrackAction } from "@/app/(app)/flight-following/actions";
 import type { PositionResponse } from "@/lib/api/types";
 
 import "leaflet/dist/leaflet.css";
@@ -29,9 +37,23 @@ const DEFAULT_CENTER: [number, number] = [62.0, -155.0];
 const DEFAULT_ZOOM = 5;
 const REFRESH_INTERVAL_MS = 30_000;
 
+/** Visible-track state lives here so the polyline survives the 30 s
+ *  position refresh (parent's positions[] prop changes don't reset
+ *  the selection). */
+interface TrackState {
+  flightId: string;
+  positions: PositionResponse[] | null;  // null = loading
+  error: string | null;
+}
+
 /**
  * Live aircraft map. Renders one colored dot per aircraft at its
  * latest known position; click to see tail / altitude / heading.
+ *
+ * M2-G-9: clicking an aircraft that's currently flying (has a non-null
+ * `flight_id` on its latest fix) fetches `/flights/{id}/track` and
+ * draws the path as a blue polyline with start/end markers. Click the
+ * polyline (or the Clear track button in the popup) to remove it.
  *
  * Refresh strategy: `router.refresh()` every 30 seconds re-runs the
  * parent server component, which re-fetches `/positions/latest` and
@@ -40,6 +62,8 @@ const REFRESH_INTERVAL_MS = 30_000;
  */
 export function FleetMap({ positions }: { positions: PositionResponse[] }) {
   const router = useRouter();
+  const [track, setTrack] = useState<TrackState | null>(null);
+  const [isLoadingTrack, startTrackLoad] = useTransition();
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -47,6 +71,21 @@ export function FleetMap({ positions }: { positions: PositionResponse[] }) {
     }, REFRESH_INTERVAL_MS);
     return () => clearInterval(interval);
   }, [router]);
+
+  const showTrack = (flightId: string) => {
+    // Optimistic: clear previous, mark new as loading.
+    setTrack({ flightId, positions: null, error: null });
+    startTrackLoad(async () => {
+      const result = await getFlightTrackAction(flightId);
+      setTrack(
+        result.ok
+          ? { flightId, positions: result.positions, error: null }
+          : { flightId, positions: [], error: result.error },
+      );
+    });
+  };
+
+  const clearTrack = () => setTrack(null);
 
   return (
     <MapContainer
@@ -60,16 +99,111 @@ export function FleetMap({ positions }: { positions: PositionResponse[] }) {
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
       {positions.map((p) => (
-        <AircraftMarker key={p.aircraft.id} position={p} />
+        <AircraftMarker
+          key={p.aircraft.id}
+          position={p}
+          dimmed={track !== null && track.flightId !== p.flight_id}
+          isTrackLoading={
+            isLoadingTrack &&
+            track !== null &&
+            track.flightId === p.flight_id
+          }
+          onShowTrack={
+            p.flight_id ? () => showTrack(p.flight_id!) : undefined
+          }
+          onClearTrack={
+            track !== null && track.flightId === p.flight_id
+              ? clearTrack
+              : undefined
+          }
+        />
       ))}
+      {track !== null && (
+        <TrackOverlay track={track} />
+      )}
     </MapContainer>
   );
 }
 
-function AircraftMarker({ position }: { position: PositionResponse }) {
+function TrackOverlay({ track }: { track: TrackState }) {
+  if (track.positions === null) return null;  // still loading; no polyline yet
+  if (track.positions.length === 0) return null;
+  // Need at least 2 points to draw a line. A single-fix flight just
+  // shows the existing aircraft marker — no polyline.
+  if (track.positions.length < 2) return null;
+
+  const path: [number, number][] = track.positions.map((p) => [
+    p.latitude,
+    p.longitude,
+  ]);
+  const start = track.positions[0];
+  const end = track.positions[track.positions.length - 1];
+
+  return (
+    <>
+      <Polyline
+        positions={path}
+        pathOptions={{
+          color: "#3b82f6",  // status-blue
+          weight: 3,
+          opacity: 0.9,
+        }}
+      />
+      {/* Start of track — small ring to mark departure */}
+      <CircleMarker
+        center={[start.latitude, start.longitude]}
+        radius={5}
+        pathOptions={{
+          color: "#3b82f6",
+          fillColor: "#ffffff",
+          fillOpacity: 1,
+          weight: 2,
+        }}
+      >
+        <Tooltip>
+          <span className="font-mono text-xs">
+            Departed · {start.aircraft.tail_number}
+          </span>
+        </Tooltip>
+      </CircleMarker>
+      {/* End of track — solid dot to mark current/last position */}
+      <CircleMarker
+        center={[end.latitude, end.longitude]}
+        radius={5}
+        pathOptions={{
+          color: "#3b82f6",
+          fillColor: "#3b82f6",
+          fillOpacity: 1,
+          weight: 2,
+        }}
+      >
+        <Tooltip>
+          <span className="font-mono text-xs">
+            Latest · {end.aircraft.tail_number}
+          </span>
+        </Tooltip>
+      </CircleMarker>
+    </>
+  );
+}
+
+function AircraftMarker({
+  position,
+  dimmed,
+  isTrackLoading,
+  onShowTrack,
+  onClearTrack,
+}: {
+  position: PositionResponse;
+  dimmed: boolean;
+  isTrackLoading: boolean;
+  /** Provided when the aircraft has a flight_id; click triggers track load. */
+  onShowTrack?: () => void;
+  /** Provided when THIS aircraft's track is currently shown; click clears. */
+  onClearTrack?: () => void;
+}) {
   // Colored by source so the dispatcher can tell simulated demo data
-  // from a real ADS-B/GPS feed at a glance. Simulated rows show in
-  // muted yellow; real feeds in vibrant green.
+  // from a real ADS-B/GPS feed at a glance.
   const colour = colourForSource(position.source);
 
   return (
@@ -79,8 +213,9 @@ function AircraftMarker({ position }: { position: PositionResponse }) {
       pathOptions={{
         color: colour,
         fillColor: colour,
-        fillOpacity: 0.85,
+        fillOpacity: dimmed ? 0.25 : 0.85,
         weight: 2,
+        opacity: dimmed ? 0.4 : 1,
       }}
     >
       <Tooltip direction="top" offset={[0, -8]}>
@@ -118,6 +253,33 @@ function AircraftMarker({ position }: { position: PositionResponse }) {
             <dt>Source</dt>
             <dd className="m-0 font-mono uppercase">{position.source}</dd>
           </dl>
+
+          {/* Track controls — only render when the aircraft has a
+              flight_id (otherwise there's nothing to fetch). */}
+          {onShowTrack && (
+            <button
+              type="button"
+              onClick={onShowTrack}
+              disabled={isTrackLoading}
+              className="mt-3 w-full rounded-md border border-status-blue/40 bg-status-blue/10 px-2 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.06em] text-status-blue hover:bg-status-blue/20 disabled:opacity-50"
+            >
+              {isTrackLoading ? "Loading track…" : "Show flight track"}
+            </button>
+          )}
+          {onClearTrack && (
+            <button
+              type="button"
+              onClick={onClearTrack}
+              className="mt-3 w-full rounded-md border border-border bg-muted/30 px-2 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground hover:bg-muted/50"
+            >
+              Clear track
+            </button>
+          )}
+          {!onShowTrack && !onClearTrack && (
+            <p className="m-0 mt-3 text-[0.65rem] italic text-muted-foreground/70">
+              No flight plan filed — no track to show.
+            </p>
+          )}
         </div>
       </Popup>
     </CircleMarker>
