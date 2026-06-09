@@ -13,6 +13,7 @@ import {
 } from "react-leaflet";
 
 import { getFlightTrackAction } from "@/app/(app)/flight-following/actions";
+import { Spinner } from "@/components/ui/spinner";
 import type { PositionResponse } from "@/lib/api/types";
 
 import "leaflet/dist/leaflet.css";
@@ -261,8 +262,9 @@ function AircraftMarker({
               type="button"
               onClick={onShowTrack}
               disabled={isTrackLoading}
-              className="mt-3 w-full rounded-md border border-status-blue/40 bg-status-blue/10 px-2 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.06em] text-status-blue hover:bg-status-blue/20 disabled:opacity-50"
+              className="mt-3 inline-flex w-full items-center justify-center gap-1.5 rounded-md border border-status-blue/40 bg-status-blue/10 px-2 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.06em] text-status-blue hover:bg-status-blue/20 disabled:opacity-50"
             >
+              {isTrackLoading && <Spinner size="xs" />}
               {isTrackLoading ? "Loading track…" : "Show flight track"}
             </button>
           )}

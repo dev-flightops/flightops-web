@@ -2,6 +2,7 @@
 
 import dynamic from "next/dynamic";
 
+import { LoadingPanel } from "@/components/ui/spinner";
 import type { PositionResponse } from "@/lib/api/types";
 
 // react-leaflet touches `window` at import time (it instantiates
@@ -9,18 +10,13 @@ import type { PositionResponse } from "@/lib/api/types";
 // during the server render otherwise. Dynamic import with
 // ssr:false defers the bundle to client-side only.
 //
-// The placeholder while the chunk loads is a styled box so the
-// layout doesn't reflow when the map mounts. Same height as the
-// real map.
+// The placeholder while the chunk loads is a centred spinner so the
+// layout doesn't reflow when the map mounts.
 const FleetMapInner = dynamic(
   () => import("./fleet-map").then((mod) => mod.FleetMap),
   {
     ssr: false,
-    loading: () => (
-      <div className="flex h-full w-full items-center justify-center rounded-md border border-border bg-card/40 text-xs text-muted-foreground">
-        Loading map…
-      </div>
-    ),
+    loading: () => <LoadingPanel label="Loading map…" />,
   },
 );
 
