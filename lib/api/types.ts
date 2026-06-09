@@ -288,3 +288,32 @@ export interface SquawkResolveRequest {
    *  enforces min_length=1. */
   resolution_notes: string;
 }
+
+// Flight-following (M2-M-9 through M-13b backend / M2-G-8 frontend)
+
+export type PositionSource = "adsb" | "gps" | "manual" | "simulated";
+
+export interface PositionAircraftRef {
+  id: string;
+  tail_number: string;
+  model: string;
+}
+
+export interface PositionResponse {
+  id: string;
+  aircraft: PositionAircraftRef;
+  flight_id: string | null;
+  latitude: number;
+  longitude: number;
+  altitude_ft: number | null;
+  groundspeed_kt: number | null;
+  heading_deg: number | null;
+  source: PositionSource;
+  reported_at: string;  // ISO 8601 UTC — observation time (track ordering)
+  received_at: string;  // ISO 8601 UTC — ingest time
+}
+
+export interface PositionListResponse {
+  items: PositionResponse[];
+  total: number;
+}
