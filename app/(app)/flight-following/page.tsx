@@ -4,7 +4,7 @@ import { FleetMapLoader } from "@/components/flight-following/fleet-map-loader";
 import { FlightBoard } from "@/components/flight-following/flight-board";
 import { PageHeader } from "@/components/flight-following/page-header";
 import { SourceLegend } from "@/components/flight-following/source-legend";
-import { SplitViewPlaceholder } from "@/components/flight-following/split-view-placeholder";
+import { SplitView } from "@/components/flight-following/split-view";
 import {
   VIEW_HINTS,
   parseDisplay,
@@ -49,7 +49,7 @@ export default async function FlightFollowingPage({
   const display = parseDisplay(displayParam);
 
   const needsPositions = display === "map" || display === "split";
-  const needsBoard = display === "list";
+  const needsBoard = display === "list" || display === "split";
 
   let positions: PositionResponse[] = [];
   let positionsError: string | null = null;
@@ -86,10 +86,11 @@ export default async function FlightFollowingPage({
           <BoardOrError flights={board} loadError={boardError} />
         )}
         {display === "split" && (
-          <MapOrFallback
+          <SplitOrError
+            flights={board}
             positions={positions}
-            loadError={positionsError}
-            render={(p) => <SplitViewPlaceholder positions={p} />}
+            boardError={boardError}
+            positionsError={positionsError}
             heightClass="h-[calc(100vh-22rem)]"
           />
         )}
@@ -140,6 +141,41 @@ function BoardOrError({
     );
   }
   return <FlightBoard flights={flights} />;
+}
+
+/**
+ * Split view needs BOTH feeds. Prefer the more specific error message
+ * when only one failed; if both failed, surface the board one
+ * (typically the auth error — same root cause for both endpoints).
+ */
+function SplitOrError({
+  flights,
+  positions,
+  boardError,
+  positionsError,
+  heightClass,
+}: {
+  flights: BoardFlightItem[];
+  positions: PositionResponse[];
+  boardError: string | null;
+  positionsError: string | null;
+  heightClass: string;
+}) {
+  const loadError = boardError ?? positionsError;
+  if (loadError) {
+    return (
+      <div
+        className={`flex w-full items-center justify-center rounded-lg border border-border bg-card px-4 text-center text-sm text-muted-foreground ${heightClass}`}
+      >
+        {loadError}
+      </div>
+    );
+  }
+  return (
+    <div className={heightClass}>
+      <SplitView flights={flights} positions={positions} />
+    </div>
+  );
 }
 
 /**

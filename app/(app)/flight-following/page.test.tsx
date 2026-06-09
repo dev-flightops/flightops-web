@@ -348,19 +348,128 @@ describe("FlightFollowingPage map view", () => {
   });
 });
 
-describe("FlightFollowingPage split view", () => {
-  it("renders the map AND the Tracked aircraft placeholder", async () => {
+describe("FlightFollowingPage split view (M2-G-12)", () => {
+  it("fetches BOTH the board and positions in split mode", async () => {
     getLatestPositions.mockResolvedValueOnce({
       items: [makePosition({ tail: "N207GE" })],
+      total: 1,
+    });
+    getFlightBoard.mockResolvedValueOnce({
+      items: [makeBoardItem({ flight_number: "GV1" })],
+      view: "today",
+      total: 1,
+    });
+
+    await renderPage({ display: "split" });
+
+    expect(getLatestPositions).toHaveBeenCalled();
+    expect(getFlightBoard).toHaveBeenCalledWith("today");
+  });
+
+  it("renders the map and merges flight + position data into the side table", async () => {
+    // Same aircraft.id on both feeds so the row merges. Released
+    // status with a position fix populates Alt + Spd.
+    const ac = { id: "ac-1", tail_number: "N207GE", model: "Cessna 208" };
+    getLatestPositions.mockResolvedValueOnce({
+      items: [
+        makePosition({
+          tail: "N207GE",
+          aircraft: { ...ac },
+          altitude_ft: 8500,
+          groundspeed_kt: 175,
+        }),
+      ],
+      total: 1,
+    });
+    getFlightBoard.mockResolvedValueOnce({
+      items: [
+        makeBoardItem({
+          flight_number: "GV303",
+          aircraft: { ...ac, seats: 9 },
+          status: "released",
+        }),
+      ],
+      view: "today",
       total: 1,
     });
 
     await renderPage({ display: "split" });
 
     expect(screen.getByTestId("fleet-map-stub")).toBeInTheDocument();
-    expect(screen.getByText(/tracked aircraft/i)).toBeInTheDocument();
     expect(
-      screen.getByText(/side table lands in m2-g-12/i),
+      screen.getByRole("heading", { name: /tracked aircraft/i, level: 2 }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("GV303")).toBeInTheDocument();
+    expect(screen.getByText("8,500")).toBeInTheDocument();
+    expect(screen.getByText("175 kt")).toBeInTheDocument();
+  });
+
+  it("shows -- for altitude and speed on non-airborne flights", async () => {
+    const ac = { id: "ac-1", tail_number: "N207GE", model: "Cessna 208" };
+    getLatestPositions.mockResolvedValueOnce({
+      items: [
+        makePosition({
+          tail: "N207GE",
+          aircraft: { ...ac },
+          altitude_ft: 8500,
+          groundspeed_kt: 175,
+        }),
+      ],
+      total: 1,
+    });
+    getFlightBoard.mockResolvedValueOnce({
+      items: [
+        makeBoardItem({
+          flight_number: "GV404",
+          aircraft: { ...ac, seats: 9 },
+          status: "scheduled",
+        }),
+      ],
+      view: "today",
+      total: 1,
+    });
+
+    await renderPage({ display: "split" });
+
+    expect(screen.getByText("GV404")).toBeInTheDocument();
+    // Two "--" cells (Alt + Spd) because the flight is scheduled, not
+    // released — the latest position is stale relative to this flight.
+    expect(screen.getAllByText("--")).toHaveLength(2);
+    expect(screen.queryByText("8,500")).not.toBeInTheDocument();
+  });
+
+  it("renders the empty-message when no flights match the filter", async () => {
+    getLatestPositions.mockResolvedValueOnce({
+      items: [makePosition({ tail: "N207GE" })],
+      total: 1,
+    });
+    getFlightBoard.mockResolvedValueOnce({
+      items: [],
+      view: "today",
+      total: 0,
+    });
+
+    await renderPage({ display: "split" });
+
+    expect(
+      screen.getByText(/no flights match the current filter/i),
+    ).toBeInTheDocument();
+    // Map still renders even when the side table is empty.
+    expect(screen.getByTestId("fleet-map-stub")).toBeInTheDocument();
+  });
+
+  it("surfaces the board error first when both feeds fail", async () => {
+    getFlightBoard.mockReset().mockRejectedValueOnce(
+      new TestApiError(401, "/ops/following/board", "Unauthorized"),
+    );
+    getLatestPositions.mockRejectedValueOnce(
+      new TestApiError(502, "/positions/latest", "Bad Gateway"),
+    );
+
+    await renderPage({ display: "split" });
+
+    expect(
+      screen.getByText(/session expired — please sign in again/i),
     ).toBeInTheDocument();
   });
 });
