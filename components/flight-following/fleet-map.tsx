@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import L from "leaflet";
 import {
@@ -64,6 +64,7 @@ export function FleetMap({ positions }: { positions: PositionResponse[] }) {
   const router = useRouter();
   const [track, setTrack] = useState<TrackState | null>(null);
   const [isLoadingTrack, startTrackLoad] = useTransition();
+  const mapRef = useRef<L.Map | null>(null);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -71,6 +72,21 @@ export function FleetMap({ positions }: { positions: PositionResponse[] }) {
     }, REFRESH_INTERVAL_MS);
     return () => clearInterval(interval);
   }, [router]);
+
+  // React 18+ strict mode (and Turbopack HMR) double-mount effects in
+  // dev. react-leaflet 4.x doesn't reset the `_leaflet_id` on its
+  // container div between mounts, so the second init throws
+  // "Map container is already initialized". Explicitly remove() the
+  // Leaflet map instance on unmount so the next mount sees a clean
+  // container.
+  useEffect(() => {
+    return () => {
+      if (mapRef.current) {
+        mapRef.current.remove();
+        mapRef.current = null;
+      }
+    };
+  }, []);
 
   const showTrack = (flightId: string) => {
     // Optimistic: clear previous, mark new as loading.
@@ -89,6 +105,7 @@ export function FleetMap({ positions }: { positions: PositionResponse[] }) {
 
   return (
     <MapContainer
+      ref={mapRef}
       center={DEFAULT_CENTER}
       zoom={DEFAULT_ZOOM}
       style={{ height: "100%", width: "100%" }}
