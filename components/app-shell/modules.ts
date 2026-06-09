@@ -90,7 +90,7 @@ export const DEPARTMENTS: Department[] = [
      */
     children: [
       { id: "dispatch",         label: "Dispatch",         href: "/dispatch", status: "live", department: "operations" },
-      { id: "flight-following", label: "Flight Following", status: "m2", department: "operations" },
+      { id: "flight-following", label: "Flight Following", href: "/flight-following", status: "live", department: "operations" },
       { id: "weather",          label: "Weather",          status: "m2", department: "operations" },
       { id: "crew",             label: "Crew",             status: "m3", department: "operations" },
       { id: "currency",         label: "Currency",         status: "m3", department: "operations" },
