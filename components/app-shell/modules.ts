@@ -72,7 +72,7 @@ export const DEPARTMENTS: Department[] = [
      */
     pathPrefixes: [
       "/dispatch",
-      "/following",
+      "/flight-following",
       "/weather",
       "/crew",
       "/currency",

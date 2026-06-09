@@ -37,6 +37,19 @@ describe("DepartmentNav", () => {
     );
   });
 
+  it("renders Operations modules on /flight-following with the right chip active", () => {
+    // Regression: the path prefix was previously `/following` from a
+    // pre-rename era, which silently dropped the whole dept nav on
+    // /flight-following pages.
+    vi.mocked(usePathname).mockReturnValue("/flight-following");
+    render(<DepartmentNav />);
+    expect(screen.getByTestId("dept-nav-dispatch")).toBeInTheDocument();
+    expect(screen.getByTestId("dept-nav-flight-following")).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
+  });
+
   it("renders future modules as disabled spans with milestone hint", () => {
     vi.mocked(usePathname).mockReturnValue("/dispatch");
     render(<DepartmentNav />);
