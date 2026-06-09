@@ -7,14 +7,15 @@ import {
   CircleMarker,
   MapContainer,
   Polyline,
-  Popup,
   TileLayer,
   Tooltip,
 } from "react-leaflet";
 
 import { getFlightTrackAction } from "@/app/(app)/flight-following/actions";
-import { Spinner } from "@/components/ui/spinner";
 import type { PositionResponse } from "@/lib/api/types";
+
+import { AircraftDetailPanel } from "./aircraft-detail-panel";
+import { SimBanner } from "./sim-banner";
 
 import "leaflet/dist/leaflet.css";
 
@@ -49,12 +50,15 @@ interface TrackState {
 
 /**
  * Live aircraft map. Renders one colored dot per aircraft at its
- * latest known position; click to see tail / altitude / heading.
+ * latest known position. Click a marker → side panel slides in with
+ * full details + Open Dispatch Packet CTA (M2-G-13).
  *
- * M2-G-9: clicking an aircraft that's currently flying (has a non-null
- * `flight_id` on its latest fix) fetches `/flights/{id}/track` and
- * draws the path as a blue polyline with start/end markers. Click the
- * polyline (or the Clear track button in the popup) to remove it.
+ * Layered behaviors:
+ *   M2-G-8  — base map + per-aircraft markers + Tooltip on hover
+ *   M2-G-9  — Show flight track → polyline of /flights/{id}/track
+ *   M2-G-13 — sim-mode banner (when any source=simulated) + the
+ *             slide-in AircraftDetailPanel that replaces the Leaflet
+ *             Popup used in earlier stories
  *
  * Refresh strategy: `router.refresh()` every 30 seconds re-runs the
  * parent server component, which re-fetches `/positions/latest` and
@@ -65,6 +69,10 @@ export function FleetMap({ positions }: { positions: PositionResponse[] }) {
   const router = useRouter();
   const [track, setTrack] = useState<TrackState | null>(null);
   const [isLoadingTrack, startTrackLoad] = useTransition();
+  /** Currently-selected aircraft.id, or null when the panel is closed. */
+  const [selectedAircraftId, setSelectedAircraftId] = useState<string | null>(
+    null,
+  );
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -87,42 +95,60 @@ export function FleetMap({ positions }: { positions: PositionResponse[] }) {
   };
 
   const clearTrack = () => setTrack(null);
+  const closePanel = () => setSelectedAircraftId(null);
+
+  // Re-derive the selected position each render from props — the
+  // 30s refresh updates altitude/speed live behind the panel without
+  // needing to reach into the panel's state.
+  const selectedPosition =
+    selectedAircraftId !== null
+      ? positions.find((p) => p.aircraft.id === selectedAircraftId) ?? null
+      : null;
 
   return (
-    <MapContainer
-      center={DEFAULT_CENTER}
-      zoom={DEFAULT_ZOOM}
-      style={{ height: "100%", width: "100%" }}
-      scrollWheelZoom
-    >
-      <TileLayer
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-      />
-      {positions.map((p) => (
-        <AircraftMarker
-          key={p.aircraft.id}
-          position={p}
-          dimmed={track !== null && track.flightId !== p.flight_id}
+    <div className="relative h-full w-full">
+      <SimBanner positions={positions} />
+      <MapContainer
+        center={DEFAULT_CENTER}
+        zoom={DEFAULT_ZOOM}
+        style={{ height: "100%", width: "100%" }}
+        scrollWheelZoom
+      >
+        <TileLayer
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        />
+        {positions.map((p) => (
+          <AircraftMarker
+            key={p.aircraft.id}
+            position={p}
+            dimmed={track !== null && track.flightId !== p.flight_id}
+            isSelected={p.aircraft.id === selectedAircraftId}
+            onSelect={() => setSelectedAircraftId(p.aircraft.id)}
+          />
+        ))}
+        {track !== null && <TrackOverlay track={track} />}
+      </MapContainer>
+      {selectedPosition !== null && (
+        <AircraftDetailPanel
+          position={selectedPosition}
+          isTrackVisible={
+            track !== null && track.flightId === selectedPosition.flight_id
+          }
           isTrackLoading={
             isLoadingTrack &&
             track !== null &&
-            track.flightId === p.flight_id
+            track.flightId === selectedPosition.flight_id
           }
-          onShowTrack={
-            p.flight_id ? () => showTrack(p.flight_id!) : undefined
+          onClose={closePanel}
+          onShowTrack={() =>
+            selectedPosition.flight_id !== null &&
+            showTrack(selectedPosition.flight_id)
           }
-          onClearTrack={
-            track !== null && track.flightId === p.flight_id
-              ? clearTrack
-              : undefined
-          }
+          onClearTrack={clearTrack}
         />
-      ))}
-      {track !== null && (
-        <TrackOverlay track={track} />
       )}
-    </MapContainer>
+    </div>
   );
 }
 
@@ -191,17 +217,13 @@ function TrackOverlay({ track }: { track: TrackState }) {
 function AircraftMarker({
   position,
   dimmed,
-  isTrackLoading,
-  onShowTrack,
-  onClearTrack,
+  isSelected,
+  onSelect,
 }: {
   position: PositionResponse;
   dimmed: boolean;
-  isTrackLoading: boolean;
-  /** Provided when the aircraft has a flight_id; click triggers track load. */
-  onShowTrack?: () => void;
-  /** Provided when THIS aircraft's track is currently shown; click clears. */
-  onClearTrack?: () => void;
+  isSelected: boolean;
+  onSelect: () => void;
 }) {
   // Colored by source so the dispatcher can tell simulated demo data
   // from a real ADS-B/GPS feed at a glance.
@@ -210,80 +232,21 @@ function AircraftMarker({
   return (
     <CircleMarker
       center={[position.latitude, position.longitude]}
-      radius={6}
+      radius={isSelected ? 8 : 6}
       pathOptions={{
         color: colour,
         fillColor: colour,
         fillOpacity: dimmed ? 0.25 : 0.85,
-        weight: 2,
+        weight: isSelected ? 3 : 2,
         opacity: dimmed ? 0.4 : 1,
       }}
+      eventHandlers={{ click: onSelect }}
     >
       <Tooltip direction="top" offset={[0, -8]}>
         <span className="font-mono font-semibold">
           {position.aircraft.tail_number}
         </span>
       </Tooltip>
-      <Popup>
-        <div className="text-xs">
-          <p className="m-0 font-mono text-sm font-bold">
-            {position.aircraft.tail_number}
-          </p>
-          <p className="m-0 text-muted-foreground">
-            {position.aircraft.model}
-          </p>
-          <dl className="m-0 mt-2 grid grid-cols-2 gap-x-3 gap-y-1">
-            <dt>Altitude</dt>
-            <dd className="m-0 font-mono">
-              {position.altitude_ft !== null
-                ? `${position.altitude_ft.toLocaleString()} ft`
-                : "—"}
-            </dd>
-            <dt>Speed</dt>
-            <dd className="m-0 font-mono">
-              {position.groundspeed_kt !== null
-                ? `${position.groundspeed_kt} kt`
-                : "—"}
-            </dd>
-            <dt>Heading</dt>
-            <dd className="m-0 font-mono">
-              {position.heading_deg !== null
-                ? `${String(position.heading_deg).padStart(3, "0")}°`
-                : "—"}
-            </dd>
-            <dt>Source</dt>
-            <dd className="m-0 font-mono uppercase">{position.source}</dd>
-          </dl>
-
-          {/* Track controls — only render when the aircraft has a
-              flight_id (otherwise there's nothing to fetch). */}
-          {onShowTrack && (
-            <button
-              type="button"
-              onClick={onShowTrack}
-              disabled={isTrackLoading}
-              className="mt-3 inline-flex w-full items-center justify-center gap-1.5 rounded-md border border-status-blue/40 bg-status-blue/10 px-2 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.06em] text-status-blue hover:bg-status-blue/20 disabled:opacity-50"
-            >
-              {isTrackLoading && <Spinner size="xs" />}
-              {isTrackLoading ? "Loading track…" : "Show flight track"}
-            </button>
-          )}
-          {onClearTrack && (
-            <button
-              type="button"
-              onClick={onClearTrack}
-              className="mt-3 w-full rounded-md border border-border bg-muted/30 px-2 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground hover:bg-muted/50"
-            >
-              Clear track
-            </button>
-          )}
-          {!onShowTrack && !onClearTrack && (
-            <p className="m-0 mt-3 text-[0.65rem] italic text-muted-foreground/70">
-              No flight plan filed — no track to show.
-            </p>
-          )}
-        </div>
-      </Popup>
     </CircleMarker>
   );
 }
