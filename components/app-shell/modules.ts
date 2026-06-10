@@ -157,8 +157,8 @@ export const DEPARTMENTS: Department[] = [
     children: [
       { id: "fleet",       label: "Fleet",       href: "/maintenance", status: "live", department: "maintenance" },
       { id: "work-orders", label: "Work Orders", status: "m2", department: "maintenance" },
-      { id: "mel",         label: "MEL",         status: "m2", department: "maintenance" },
-      { id: "squawks",     label: "Squawks",     status: "m2", department: "maintenance" },
+      { id: "mel",         label: "MEL",         href: "/maintenance/mel",     status: "live", department: "maintenance" },
+      { id: "squawks",     label: "Squawks",     href: "/maintenance/squawks", status: "live", department: "maintenance" },
     ],
   },
   {
