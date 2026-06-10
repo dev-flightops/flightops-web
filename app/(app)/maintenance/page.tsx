@@ -1,21 +1,22 @@
 import { FleetCard } from "@/components/maintenance/fleet-card";
+import { MaintenanceHeader } from "@/components/maintenance/maintenance-header";
 import { ApiError } from "@/lib/api/client";
 import { getFleetAirworthiness } from "@/lib/api/maintenance";
 import type { FleetAircraftSummary } from "@/lib/api/types";
 
 /**
- * /maintenance — Maintenance landing (M2-G-19).
+ * /maintenance — Fleet Management landing.
  *
- * One card per aircraft in the tenant with the airworthiness verdict
- * + open MEL/squawk counts (from the M2-M-16 bulk endpoint). Sorted
- * server-side by tail number. Grounded aircraft surface first via
- * red border treatment; advisory state gets yellow; clean stays
- * muted. Inactive tails fade to 60% so retired aircraft are visible
- * but don't compete with the active fleet for attention.
+ * Layout matches legacy `templates/maintenance/dashboard.html` after
+ * the M2-G-22b restyle: title + subtitle on the left, action-button
+ * row on the right (8 sub-modules — Due List / Work Orders /
+ * Inspections / Inventory / Vendors / RTS Queue / Roster / + Aircraft,
+ * all disabled until M3), then one card per aircraft below.
  *
- * Future stories (M2-G-20+) replace the "Details →" link target with
- * the real per-aircraft maintenance detail page; for now the URL is
- * provisional and the link 404s.
+ * Cards are powered by the M2-M-16 bulk airworthiness endpoint and
+ * stacked vertically so each one gets the full page width — same as
+ * legacy, which keeps TTAF/SMOH/Prop legible and the action target
+ * (Details →) on the right edge where dispatchers expect it.
  */
 export default async function MaintenanceLandingPage() {
   let items: FleetAircraftSummary[] = [];
@@ -31,34 +32,9 @@ export default async function MaintenanceLandingPage() {
         : "Maintenance feed unavailable. Try refreshing in a moment.";
   }
 
-  const grounded = items.filter(
-    (a) => !a.is_airworthy || a.blocking_count > 0,
-  ).length;
-  const advisory = items.filter(
-    (a) => a.is_airworthy && a.advisory_count > 0,
-  ).length;
-  const clean = items.length - grounded - advisory;
-
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
-      <header className="mb-6 flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="text-xl font-bold tracking-tight sm:text-2xl">
-            Fleet Maintenance
-          </h1>
-          <p className="mt-1 text-xs text-muted-foreground">
-            Airworthiness verdict + open work per aircraft. Updated on
-            page load.
-          </p>
-        </div>
-        {items.length > 0 && (
-          <div className="flex gap-2 text-[0.65rem] uppercase tracking-[0.08em]">
-            <Summary label="Grounded" value={grounded} tone="red" />
-            <Summary label="Advisory" value={advisory} tone="yellow" />
-            <Summary label="Airworthy" value={clean} tone="green" />
-          </div>
-        )}
-      </header>
+    <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6">
+      <MaintenanceHeader />
 
       {loadError ? (
         <div
@@ -75,38 +51,18 @@ export default async function MaintenanceLandingPage() {
           <p className="text-sm text-muted-foreground">
             No aircraft in this tenant&apos;s fleet yet.
           </p>
+          <p className="mt-2 text-xs text-muted-foreground/70">
+            Add the first one through the &ldquo;+ Aircraft&rdquo; action
+            once the create form ships in M3.
+          </p>
         </div>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4">
           {items.map((summary) => (
             <FleetCard key={summary.aircraft.id} summary={summary} />
           ))}
         </div>
       )}
     </div>
-  );
-}
-
-function Summary({
-  label,
-  value,
-  tone,
-}: {
-  label: string;
-  value: number;
-  tone: "red" | "yellow" | "green";
-}) {
-  const toneClass = {
-    red: "bg-status-red/15 text-status-red",
-    yellow: "bg-status-yellow/15 text-status-yellow",
-    green: "bg-status-green/15 text-status-green",
-  }[tone];
-  return (
-    <span
-      className={`inline-flex items-center gap-1 rounded px-2 py-1 font-semibold ${toneClass}`}
-    >
-      <span className="font-mono text-sm font-bold tabular-nums">{value}</span>
-      <span>{label}</span>
-    </span>
   );
 }
