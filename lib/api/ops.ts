@@ -68,6 +68,14 @@ export async function releaseFlight(flightId: string): Promise<ReleaseResponse> 
   });
 }
 
+/** Transition a flight from `scheduled` → `cancelled` (M2-M-18).
+ *  Used by the M2-G-25 EOD page's bulk "Cancel stale flights" action. */
+export async function cancelFlight(flightId: string): Promise<FlightDetail> {
+  return apiFetch<FlightDetail>(`/ops/flights/${flightId}/cancel`, {
+    method: "POST",
+  });
+}
+
 export interface FlightUpdatePayload {
   flight_number?: string;
   aircraft_id?: string;
