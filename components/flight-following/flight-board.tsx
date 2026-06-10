@@ -3,6 +3,7 @@ import Link from "next/link";
 import type { BoardFlightItem } from "@/lib/api/types";
 import { formatBoth, formatZulu } from "@/lib/format/flight-time";
 
+import { CheckInButton } from "./check-in-button";
 import { OverdueBadge, StatusBadge } from "./status-badge";
 
 /**
@@ -126,12 +127,12 @@ function FlightBoardRow({ flight }: { flight: BoardFlightItem }) {
         {flight.last_contact_at ? formatZulu(flight.last_contact_at) : "—"}
       </td>
       <td className="whitespace-nowrap px-3 py-2.5 text-right">
-        <Link
-          href={`/flight-following/${flight.id}/check-in`}
-          className="mr-3 text-[0.7rem] font-medium text-status-green hover:underline"
-        >
-          Check In
-        </Link>
+        {flight.status === "released" && flight.actual_departure_at === null && (
+          <CheckInButton flightId={flight.id} event="depart" />
+        )}
+        {flight.status === "released" && flight.actual_departure_at !== null && (
+          <CheckInButton flightId={flight.id} event="arrive" />
+        )}
         <Link
           href={`/flight-following/${flight.id}/docs`}
           className="mr-3 text-[0.7rem] font-medium text-muted-foreground hover:underline"
