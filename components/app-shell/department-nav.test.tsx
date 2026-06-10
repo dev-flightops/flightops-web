@@ -53,10 +53,19 @@ describe("DepartmentNav", () => {
   it("renders future modules as disabled spans with milestone hint", () => {
     vi.mocked(usePathname).mockReturnValue("/dispatch");
     render(<DepartmentNav />);
+    // Flight Log is still M2 and unbuilt — assert disabled-span shape.
+    const flightLog = screen.getByTestId("dept-nav-flight-log");
+    expect(flightLog.tagName).toBe("SPAN");
+    expect(flightLog).toHaveAttribute("aria-disabled", "true");
+    expect(flightLog).toHaveAttribute("title", "Coming in M2");
+  });
+
+  it("renders Weather as a live link (M2-G-24)", () => {
+    vi.mocked(usePathname).mockReturnValue("/dispatch");
+    render(<DepartmentNav />);
     const weather = screen.getByTestId("dept-nav-weather");
-    expect(weather.tagName).toBe("SPAN");
-    expect(weather).toHaveAttribute("aria-disabled", "true");
-    expect(weather).toHaveAttribute("title", "Coming in M2");
+    expect(weather.tagName).toBe("A");
+    expect(weather).toHaveAttribute("href", "/weather");
   });
 
   it("renders the legacy Maintenance subnav on /maintenance (Fleet + 7 future chips + MX Intel)", () => {
