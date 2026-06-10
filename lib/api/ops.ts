@@ -76,6 +76,24 @@ export async function cancelFlight(flightId: string): Promise<FlightDetail> {
   });
 }
 
+export interface CheckInPayload {
+  event: "depart" | "arrive";
+  /** Optional override; defaults to server-side now() on the backend. */
+  at?: string | null;
+}
+
+/** Record actual departure or arrival on a released flight (M2-M-19).
+ *  Arrival also flips the status to `completed` server-side. */
+export async function checkInFlight(
+  flightId: string,
+  payload: CheckInPayload,
+): Promise<FlightDetail> {
+  return apiFetch<FlightDetail>(`/ops/flights/${flightId}/check-in`, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
 export interface FlightUpdatePayload {
   flight_number?: string;
   aircraft_id?: string;

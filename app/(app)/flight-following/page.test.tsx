@@ -40,6 +40,23 @@ vi.mock("@/components/flight-following/auto-clock", () => ({
   AutoClock: () => <span data-testid="auto-clock">12:00z</span>,
 }));
 
+// CheckInButton uses next/navigation's useRouter, which isn't mounted
+// in jsdom. Stub it as a passive marker — the dedicated tests in
+// check-in-action.test.ts cover the action behaviour.
+vi.mock("@/components/flight-following/check-in-button", () => ({
+  CheckInButton: ({
+    flightId,
+    event,
+  }: {
+    flightId: string;
+    event: "depart" | "arrive";
+  }) => (
+    <span data-testid={`check-in-${flightId}`} data-event={event}>
+      {event === "depart" ? "Mark Departed" : "Mark Arrived"}
+    </span>
+  ),
+}));
+
 import FlightFollowingPage from "./page";
 
 function makePosition(
