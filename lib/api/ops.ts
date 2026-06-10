@@ -7,6 +7,10 @@ import type {
   AircraftListResponse,
   FlightDetail,
   FlightListResponse,
+  FlightLogCreateRequest,
+  FlightLogListResponse,
+  FlightLogResponse,
+  FlightLogStatus,
   FlightStats,
   FlightStatus,
   ReleaseResponse,
@@ -122,4 +126,40 @@ export async function getFlightStats(): Promise<FlightStats> {
 
 export async function listAircraft(): Promise<AircraftListResponse> {
   return apiFetch<AircraftListResponse>("/ops/aircraft");
+}
+
+// ---- Electronic Flight Log (M2-M-21 / M2-G-26b) ----------------------------
+
+export interface ListFlightLogsParams {
+  status?: FlightLogStatus | FlightLogStatus[];
+  aircraftId?: string;
+  limit?: number;
+}
+
+/** Fetch flight logs, optionally filtered by status (single or multi)
+ *  and aircraft. Powers the M2-G-26b Active Drafts panel + the M3
+ *  per-tail history view. */
+export async function listFlightLogs(
+  params: ListFlightLogsParams = {},
+): Promise<FlightLogListResponse> {
+  const search = new URLSearchParams();
+  if (params.status) {
+    const values = Array.isArray(params.status) ? params.status : [params.status];
+    for (const s of values) search.append("status", s);
+  }
+  if (params.aircraftId) search.set("aircraft_id", params.aircraftId);
+  if (params.limit !== undefined) search.set("limit", String(params.limit));
+  const qs = search.toString() ? `?${search.toString()}` : "";
+  return apiFetch<FlightLogListResponse>(`/ops/flight-logs${qs}`);
+}
+
+/** Create a new draft flight log. Backs the "Start Flight Log"
+ *  submit action on the elog landing. */
+export async function createFlightLog(
+  payload: FlightLogCreateRequest,
+): Promise<FlightLogResponse> {
+  return apiFetch<FlightLogResponse>("/ops/flight-logs", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
 }
