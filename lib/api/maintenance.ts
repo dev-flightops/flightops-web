@@ -11,6 +11,7 @@
 import { apiFetch } from "./client";
 import type {
   AirworthinessResponse,
+  FleetAirworthinessResponse,
   MelItemCloseRequest,
   MelItemCreateRequest,
   MelItemResponse,
@@ -25,6 +26,13 @@ export async function getAirworthiness(
   return apiFetch<AirworthinessResponse>(
     `/maintenance/aircraft/${aircraftId}/airworthiness`,
   );
+}
+
+/** Bulk airworthiness summary for the Maintenance landing (M2-M-16).
+ *  Returns one row per aircraft in the tenant with counts (no issue
+ *  arrays) — drill into getAirworthiness(id) for the full verdict. */
+export async function getFleetAirworthiness(): Promise<FleetAirworthinessResponse> {
+  return apiFetch<FleetAirworthinessResponse>("/maintenance/airworthiness/fleet");
 }
 
 export async function createMelItem(
