@@ -99,7 +99,7 @@ export const DEPARTMENTS: Department[] = [
       { id: "pilot-history",    label: "Pilot History",    status: "m3", department: "operations" },
       { id: "village-wx",       label: "Village Wx",       status: "m2", department: "operations" },
       { id: "ramp-ops",         label: "Ramp Ops",         status: "m2", department: "operations" },
-      { id: "eod",              label: "EOD",              status: "m2", department: "operations" },
+      { id: "eod",              label: "EOD",              href: "/eod", status: "live", department: "operations" },
       { id: "intelligence",     label: "✨ Intelligence",   status: "m4", department: "operations", accent: "purple" },
     ],
   },
