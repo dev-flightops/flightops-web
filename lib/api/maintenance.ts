@@ -14,11 +14,53 @@ import type {
   FleetAirworthinessResponse,
   MelItemCloseRequest,
   MelItemCreateRequest,
+  MelItemListResponse,
   MelItemResponse,
+  MelStatus,
   SquawkCreateRequest,
+  SquawkListResponse,
   SquawkResolveRequest,
   SquawkResponse,
+  SquawkStatus,
 } from "./types";
+
+export interface ListMelItemsParams {
+  aircraftId?: string;
+  status?: MelStatus;
+  limit?: number;
+  offset?: number;
+}
+
+export async function listMelItems(
+  params: ListMelItemsParams = {},
+): Promise<MelItemListResponse> {
+  const search = new URLSearchParams();
+  if (params.aircraftId) search.set("aircraft_id", params.aircraftId);
+  if (params.status) search.set("status", params.status);
+  if (params.limit !== undefined) search.set("limit", String(params.limit));
+  if (params.offset !== undefined) search.set("offset", String(params.offset));
+  const qs = search.toString() ? `?${search.toString()}` : "";
+  return apiFetch<MelItemListResponse>(`/maintenance/mel-items${qs}`);
+}
+
+export interface ListSquawksParams {
+  aircraftId?: string;
+  status?: SquawkStatus;
+  limit?: number;
+  offset?: number;
+}
+
+export async function listSquawks(
+  params: ListSquawksParams = {},
+): Promise<SquawkListResponse> {
+  const search = new URLSearchParams();
+  if (params.aircraftId) search.set("aircraft_id", params.aircraftId);
+  if (params.status) search.set("status", params.status);
+  if (params.limit !== undefined) search.set("limit", String(params.limit));
+  if (params.offset !== undefined) search.set("offset", String(params.offset));
+  const qs = search.toString() ? `?${search.toString()}` : "";
+  return apiFetch<SquawkListResponse>(`/maintenance/squawks${qs}`);
+}
 
 export async function getAirworthiness(
   aircraftId: string,

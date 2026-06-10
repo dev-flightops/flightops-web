@@ -274,6 +274,11 @@ export interface MelItemCloseRequest {
   notes?: string | null;
 }
 
+export interface MelItemListResponse {
+  items: MelItemResponse[];
+  total: number;
+}
+
 // Squawks (M2-M-7 backend / M2-G-7 frontend)
 // SquawkSeverity is declared earlier in the maintenance section — reuse it.
 
@@ -305,6 +310,11 @@ export interface SquawkResolveRequest {
   /** Required — what was done to clear the discrepancy. Backend
    *  enforces min_length=1. */
   resolution_notes: string;
+}
+
+export interface SquawkListResponse {
+  items: SquawkResponse[];
+  total: number;
 }
 
 // Flight-following (M2-M-9 through M-13b backend / M2-G-8 frontend)
