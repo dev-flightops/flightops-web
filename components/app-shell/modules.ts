@@ -154,11 +154,30 @@ export const DEPARTMENTS: Department[] = [
     label: "Maintenance",
     status: "m2",
     pathPrefixes: ["/maintenance"],
+    /**
+     * Mirrors legacy `templates/maintenance/dashboard.html` subnav
+     * exactly — Fleet / Work Orders / RTS / Inventory / Expiration /
+     * Batch Trace / MX Clock / Availability / ✨ MX Intel. None of
+     * the M3 items have routes yet; they render as disabled chips
+     * with milestone tooltips.
+     *
+     * MEL + Squawks are intentionally NOT in this list. In the legacy
+     * those live inside the per-aircraft Fleet detail (and we mirror
+     * that — both appear on /maintenance/aircraft/[id]). The cross-
+     * fleet /maintenance/mel and /maintenance/squawks routes that
+     * M2-G-21 ships stay reachable by URL but don't get a subnav chip,
+     * preserving legacy parity.
+     */
     children: [
-      { id: "fleet",       label: "Fleet",       href: "/maintenance", status: "live", department: "maintenance" },
-      { id: "work-orders", label: "Work Orders", status: "m2", department: "maintenance" },
-      { id: "mel",         label: "MEL",         href: "/maintenance/mel",     status: "live", department: "maintenance" },
-      { id: "squawks",     label: "Squawks",     href: "/maintenance/squawks", status: "live", department: "maintenance" },
+      { id: "fleet",         label: "Fleet",         href: "/maintenance", status: "live", department: "maintenance" },
+      { id: "work-orders",   label: "Work Orders",   status: "m3", department: "maintenance" },
+      { id: "rts",           label: "RTS",           status: "m3", department: "maintenance" },
+      { id: "inventory",     label: "Inventory",     status: "m3", department: "maintenance" },
+      { id: "expiration",    label: "Expiration",    status: "m3", department: "maintenance" },
+      { id: "batch-trace",   label: "Batch Trace",   status: "m3", department: "maintenance" },
+      { id: "mx-clock",      label: "MX Clock",      status: "m3", department: "maintenance" },
+      { id: "availability",  label: "Availability",  status: "m3", department: "maintenance" },
+      { id: "mx-intel",      label: "✨ MX Intel",   status: "m4", department: "maintenance", accent: "purple" },
     ],
   },
   {
