@@ -32,6 +32,14 @@ function makeSummary(
     advisory_count: 0,
     open_mel_count: 0,
     open_squawk_count: 0,
+    airframe_type: null,
+    base: null,
+    special_notes: null,
+    total_time_hours: 0,
+    engine_time_hours: 0,
+    engine_tbo_hours: null,
+    prop_time_hours: 0,
+    prop_tbo_hours: null,
     ...overrides,
   };
 }
