@@ -41,6 +41,15 @@ export interface FlightListItem {
   scheduled_arrival_at: string;
   status: FlightStatus;
   aircraft: AircraftRef;
+  /** Check-in actuals (M2-M-19); lifted onto the list shape in
+   *  M2-M-20a so list views can render real flown hours. Null while
+   *  the flight is in scheduled / released-but-not-yet-departed /
+   *  cancelled state. Optional in TS so existing mock factories that
+   *  predate M2-M-20a stay valid — the backend always emits the
+   *  field (defaults to null), so consumers narrow with
+   *  `?? scheduled_*_at` either way. */
+  actual_departure_at?: string | null;
+  actual_arrival_at?: string | null;
 }
 
 export interface FlightDetail extends FlightListItem {
