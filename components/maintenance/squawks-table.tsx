@@ -1,11 +1,14 @@
+import Link from "next/link";
+
 import { cn } from "@/lib/utils";
 import type { SquawkResponse, SquawkSeverity } from "@/lib/api/types";
 import { formatBoth } from "@/lib/format/flight-time";
 
 /**
- * Open-squawk list rendered on the aircraft detail page (M2-G-20).
- * Resolved squawks are filtered out by the caller — the page asks the
- * backend for `status=open` and `status=in_progress` only.
+ * Squawks list — used in two contexts:
+ *   - Per-aircraft (M2-G-20): aircraft column omitted, scope implied.
+ *   - Cross-fleet (M2-G-21): aircraft column shown with click-through
+ *     to the aircraft detail page.
  *
  * Severity pill colors match the dispatch maintenance panel:
  *   grounding → red (always dispatch-blocking)
@@ -13,11 +16,19 @@ import { formatBoth } from "@/lib/format/flight-time";
  *   minor     → muted (cosmetic; backend already drops these from the
  *               airworthiness verdict so they only surface in lists)
  */
-export function SquawksTable({ items }: { items: SquawkResponse[] }) {
+export function SquawksTable({
+  items,
+  showAircraft = false,
+  emptyMessage = "No open squawks.",
+}: {
+  items: SquawkResponse[];
+  showAircraft?: boolean;
+  emptyMessage?: string;
+}) {
   if (items.length === 0) {
     return (
       <div className="rounded-md border border-dashed border-border bg-card/40 px-4 py-8 text-center text-xs text-muted-foreground">
-        No open squawks.
+        {emptyMessage}
       </div>
     );
   }
@@ -27,6 +38,7 @@ export function SquawksTable({ items }: { items: SquawkResponse[] }) {
       <table className="w-full text-xs">
         <thead className="bg-muted/30">
           <tr className="text-left text-[0.6rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+            {showAircraft && <th className="px-3 py-2">Aircraft</th>}
             <th className="px-3 py-2">Title</th>
             <th className="px-3 py-2">Severity</th>
             <th className="px-3 py-2">Reported</th>
@@ -36,7 +48,11 @@ export function SquawksTable({ items }: { items: SquawkResponse[] }) {
         </thead>
         <tbody>
           {items.map((sq) => (
-            <SquawkRow key={sq.id} squawk={sq} />
+            <SquawkRow
+              key={sq.id}
+              squawk={sq}
+              showAircraft={showAircraft}
+            />
           ))}
         </tbody>
       </table>
@@ -44,11 +60,30 @@ export function SquawksTable({ items }: { items: SquawkResponse[] }) {
   );
 }
 
-function SquawkRow({ squawk }: { squawk: SquawkResponse }) {
+function SquawkRow({
+  squawk,
+  showAircraft,
+}: {
+  squawk: SquawkResponse;
+  showAircraft: boolean;
+}) {
   const reported = formatBoth(squawk.reported_at);
 
   return (
     <tr className="border-t border-border hover:bg-muted/20">
+      {showAircraft && (
+        <td className="px-3 py-2.5">
+          <Link
+            href={`/maintenance/aircraft/${squawk.aircraft.id}`}
+            className="font-mono font-semibold text-status-blue hover:underline"
+          >
+            {squawk.aircraft.tail_number}
+          </Link>
+          <div className="text-[0.6rem] text-muted-foreground">
+            {squawk.aircraft.model}
+          </div>
+        </td>
+      )}
       <td className="px-3 py-2.5 text-foreground">{squawk.title}</td>
       <td className="px-3 py-2.5">
         <SeverityPill severity={squawk.severity} />
