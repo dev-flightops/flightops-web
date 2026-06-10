@@ -14,7 +14,9 @@ import type {
 
 export interface ListFlightsParams {
   onDate?: string; // YYYY-MM-DD (UTC)
-  status?: FlightStatus;
+  /** Single or multiple statuses. Multi-value lands as repeated
+   *  `?status=` params, which FastAPI delivers as a list (M2-M-15). */
+  status?: FlightStatus | FlightStatus[];
   limit?: number;
   offset?: number;
 }
@@ -24,12 +26,36 @@ export async function listFlights(
 ): Promise<FlightListResponse> {
   const search = new URLSearchParams();
   if (params.onDate) search.set("on_date", params.onDate);
-  if (params.status) search.set("status", params.status);
+  if (params.status) {
+    const values = Array.isArray(params.status) ? params.status : [params.status];
+    for (const s of values) search.append("status", s);
+  }
   if (params.limit !== undefined) search.set("limit", String(params.limit));
   if (params.offset !== undefined) search.set("offset", String(params.offset));
 
   const qs = search.toString() ? `?${search.toString()}` : "";
   return apiFetch<FlightListResponse>(`/ops/flights${qs}`);
+}
+
+export interface FlightCreatePayload {
+  flight_number: string;
+  aircraft_id: string;
+  origin: string;
+  destination: string;
+  scheduled_departure_at: string;  // ISO 8601 UTC
+  scheduled_arrival_at: string;
+  pax_count?: number;
+  cargo_lbs?: number;
+  notes?: string | null;
+}
+
+export async function createFlight(
+  payload: FlightCreatePayload,
+): Promise<FlightDetail> {
+  return apiFetch<FlightDetail>("/ops/flights", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
 }
 
 export async function getFlight(flightId: string): Promise<FlightDetail> {
