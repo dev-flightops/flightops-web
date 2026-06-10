@@ -155,7 +155,7 @@ export const DEPARTMENTS: Department[] = [
     status: "m2",
     pathPrefixes: ["/maintenance"],
     children: [
-      { id: "fleet",       label: "Fleet",       status: "m2", department: "maintenance" },
+      { id: "fleet",       label: "Fleet",       href: "/maintenance", status: "live", department: "maintenance" },
       { id: "work-orders", label: "Work Orders", status: "m2", department: "maintenance" },
       { id: "mel",         label: "MEL",         status: "m2", department: "maintenance" },
       { id: "squawks",     label: "Squawks",     status: "m2", department: "maintenance" },

@@ -221,6 +221,24 @@ export interface AirworthinessResponse {
   advisory_issues: AdvisoryIssue[];
 }
 
+/** One row on the Maintenance fleet landing (M2-M-16 / M2-G-19) —
+ *  count-only summary per aircraft. */
+export interface FleetAircraftSummary {
+  aircraft: MaintenanceAircraftRef;
+  is_active: boolean;
+  is_airworthy: boolean;
+  checked_at: string;
+  blocking_count: number;
+  advisory_count: number;
+  open_mel_count: number;
+  open_squawk_count: number;
+}
+
+export interface FleetAirworthinessResponse {
+  items: FleetAircraftSummary[];
+  total: number;
+}
+
 // MEL items (M2-M-7 backend / M2-G-6 frontend)
 
 export type MelCategory = "A" | "B" | "C" | "D";
