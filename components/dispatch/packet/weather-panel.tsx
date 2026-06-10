@@ -1,9 +1,7 @@
+import { FlightCategoryBadge } from "@/components/weather/flight-category-badge";
 import { ApiError } from "@/lib/api/client";
 import { batchWeather } from "@/lib/api/weather";
-import type {
-  FlightCategory,
-  WeatherReportResponse,
-} from "@/lib/api/types";
+import type { WeatherReportResponse } from "@/lib/api/types";
 import {
   fieldFormat,
   metarAge,
@@ -293,58 +291,6 @@ function RoleTag({ role }: { role: RouteRole }) {
       }
     >
       {role}
-    </span>
-  );
-}
-
-
-// Standard FAA flight-category color scheme (matches aviationweather.gov):
-//   VFR   green     ceiling >= 3000 ft AND vis >= 5 SM
-//   MVFR  blue      ceiling 1000-3000 ft OR vis 3-5 SM
-//   IFR   red       ceiling 500-1000 ft  OR vis 1-3 SM
-//   LIFR  magenta   ceiling < 500 ft     OR vis < 1 SM
-const FLIGHT_CATEGORY_STYLE: Record<FlightCategory, { className: string; title: string }> = {
-  VFR: {
-    className: "bg-status-green/15 text-status-green",
-    title: "VFR — ceiling ≥ 3000 ft and visibility ≥ 5 SM",
-  },
-  MVFR: {
-    className: "bg-status-blue/15 text-status-blue",
-    title: "Marginal VFR — ceiling 1000–3000 ft or visibility 3–5 SM",
-  },
-  IFR: {
-    className: "bg-status-red/15 text-status-red",
-    title: "IFR — ceiling 500–1000 ft or visibility 1–3 SM",
-  },
-  LIFR: {
-    className: "bg-status-purple/15 text-status-purple",
-    title: "Low IFR — ceiling < 500 ft or visibility < 1 SM",
-  },
-};
-
-function FlightCategoryBadge({
-  category,
-  size = "md",
-}: {
-  category: FlightCategory;
-  size?: "md" | "lg";
-}) {
-  const { className, title } = FLIGHT_CATEGORY_STYLE[category];
-  const sizeClass =
-    size === "lg"
-      ? "px-2 py-0.5 text-[0.7rem]"
-      : "px-1.5 py-0.5 text-[0.6rem]";
-  return (
-    <span
-      className={
-        "rounded-md font-bold uppercase tracking-[0.08em] " +
-        sizeClass +
-        " " +
-        className
-      }
-      title={title}
-    >
-      {category}
     </span>
   );
 }
