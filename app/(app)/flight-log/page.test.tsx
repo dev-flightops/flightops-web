@@ -1,248 +1,189 @@
 import { render, screen } from "@testing-library/react";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type {
   AircraftListItem,
   FlightListItem,
+  FlightLogResponse,
 } from "@/lib/api/types";
 
-const { TestApiError, listFlights, listAircraft } = vi.hoisted(() => {
-  class TestApiError extends Error {
-    constructor(
-      public status: number,
-      public path: string,
-      message: string,
-    ) {
-      super(message);
+const { TestApiError, listFlightLogs, listAircraft, listFlights } =
+  vi.hoisted(() => {
+    class TestApiError extends Error {
+      constructor(
+        public status: number,
+        public path: string,
+        message: string,
+      ) {
+        super(message);
+      }
     }
-  }
-  return {
-    TestApiError,
-    listFlights: vi.fn(),
-    listAircraft: vi.fn(),
-  };
-});
+    return {
+      TestApiError,
+      listFlightLogs: vi.fn(),
+      listAircraft: vi.fn(),
+      listFlights: vi.fn(),
+    };
+  });
 vi.mock("@/lib/api/client", () => ({ ApiError: TestApiError }));
-vi.mock("@/lib/api/ops", () => ({ listFlights, listAircraft }));
+vi.mock("@/lib/api/ops", () => ({
+  listFlightLogs,
+  listAircraft,
+  listFlights,
+}));
+
+// NewFlightLogForm is a client component using useActionState — stub
+// it to a marker. The dedicated actions.test.ts covers the action
+// behaviour separately.
+vi.mock("./new-flight-log-form", () => ({
+  NewFlightLogForm: ({
+    aircraft,
+    recentFlights,
+  }: {
+    aircraft: AircraftListItem[];
+    recentFlights: FlightListItem[];
+  }) => (
+    <form
+      data-testid="new-log-form"
+      data-aircraft-count={aircraft.length}
+      data-flight-count={recentFlights.length}
+    />
+  ),
+}));
 
 import FlightLogPage from "./page";
 
-const NOW = new Date("2026-06-15T20:00:00Z");
-
-function makeFlight(
-  overrides: Partial<FlightListItem> & { id: string },
-): FlightListItem {
+function makeAircraft(
+  overrides: Partial<AircraftListItem> & { id: string },
+): AircraftListItem {
   return {
-    flight_number: `GV${overrides.id}`,
-    aircraft: { id: "ac-1", tail_number: "N207GE", model: "C208", seats: 9 },
-    origin: "PADU",
-    destination: "PANC",
-    scheduled_departure_at: "2026-06-15T14:00:00Z",
-    scheduled_arrival_at: "2026-06-15T16:00:00Z",
-    status: "completed",
-    actual_departure_at: "2026-06-15T14:05:00Z",
-    actual_arrival_at: "2026-06-15T16:10:00Z",
-    ...overrides,
-  };
-}
-
-function makeAircraft(id: string, tail: string): AircraftListItem {
-  return {
-    id,
-    tail_number: tail,
+    tail_number: "N207GE",
     model: "C208",
     seats: 9,
     max_payload_lbs: 3000,
     is_active: true,
+    ...overrides,
+  };
+}
+
+function makeLog(
+  overrides: Partial<FlightLogResponse> & { id: string },
+): FlightLogResponse {
+  return {
+    log_number: `LOG-20260615-${overrides.id}`,
+    aircraft: { id: "ac-1", tail_number: "N207GE", model: "C208", seats: 9 },
+    flight_id: null,
+    flight_number: null,
+    flight_type: "advisory",
+    flight_date: "2026-06-15",
+    status: "draft",
+    created_by: { id: "u-1", full_name: "Pilot", email: "p@x" },
+    created_at: "2026-06-15T12:00:00Z",
+    ...overrides,
   };
 }
 
 beforeEach(() => {
-  vi.useFakeTimers();
-  vi.setSystemTime(NOW);
-  listFlights.mockReset();
+  listFlightLogs.mockReset();
   listAircraft.mockReset();
-  listAircraft.mockResolvedValue({ items: [], total: 0 });
-});
-
-afterEach(() => {
-  vi.useRealTimers();
-});
-
-async function renderPage(
-  searchParams: { range?: string; aircraft?: string } = {},
-) {
-  const ui = await FlightLogPage({
-    searchParams: Promise.resolve(searchParams),
+  listFlights.mockReset();
+  // Sensible defaults so each test only mocks what it asserts on.
+  listFlightLogs.mockResolvedValue({ items: [], total: 0 });
+  listAircraft.mockResolvedValue({
+    items: [makeAircraft({ id: "ac-1" })],
+    total: 1,
   });
+  listFlights.mockResolvedValue({ items: [], total: 0 });
+});
+
+async function renderPage() {
+  const ui = await FlightLogPage();
   return render(ui);
 }
 
-describe("FlightLogPage", () => {
-  it("requests completed flights only + lists aircraft in parallel", async () => {
-    listFlights.mockResolvedValueOnce({ items: [], total: 0 });
-
+describe("FlightLogPage (M2-G-26b)", () => {
+  it("issues three parallel calls (drafts, aircraft, released flights)", async () => {
     await renderPage();
 
-    expect(listFlights).toHaveBeenCalledWith({
-      status: "completed",
-      limit: 200,
+    expect(listFlightLogs).toHaveBeenCalledWith({
+      status: "draft",
+      limit: 50,
     });
     expect(listAircraft).toHaveBeenCalled();
+    expect(listFlights).toHaveBeenCalledWith({
+      status: "released",
+      limit: 50,
+    });
   });
 
-  it("defaults to the past-7-days range when no ?range is given", async () => {
-    listFlights.mockResolvedValueOnce({ items: [], total: 0 });
-
+  it("renders the legacy title + today's date subtitle + form", async () => {
     await renderPage();
 
     expect(
-      screen.getByRole("tab", { name: /past 7 days/i }),
-    ).toHaveAttribute("aria-selected", "true");
-  });
-
-  it("falls back to 'week' on a bogus ?range value", async () => {
-    listFlights.mockResolvedValueOnce({ items: [], total: 0 });
-
-    await renderPage({ range: "decade" });
-
-    expect(
-      screen.getByRole("tab", { name: /past 7 days/i }),
-    ).toHaveAttribute("aria-selected", "true");
-  });
-
-  it("filters flights by the active date range (only the past 7 days)", async () => {
-    listFlights.mockResolvedValueOnce({
-      items: [
-        makeFlight({
-          id: "recent",
-          actual_arrival_at: "2026-06-14T16:00:00Z", // 1 day ago
-        }),
-        makeFlight({
-          id: "old",
-          actual_arrival_at: "2026-06-01T16:00:00Z", // 14 days ago — out of range
-        }),
-      ],
-      total: 2,
-    });
-
-    await renderPage();
-
-    expect(screen.getByText("GVrecent")).toBeInTheDocument();
-    expect(screen.queryByText("GVold")).not.toBeInTheDocument();
-  });
-
-  it("widens the window to 'All time' when range=all", async () => {
-    listFlights.mockResolvedValueOnce({
-      items: [
-        makeFlight({
-          id: "old",
-          actual_arrival_at: "2025-01-01T16:00:00Z",
-        }),
-      ],
-      total: 1,
-    });
-
-    await renderPage({ range: "all" });
-
-    expect(screen.getByText("GVold")).toBeInTheDocument();
-  });
-
-  it("filters by ?aircraft= when provided", async () => {
-    listFlights.mockResolvedValueOnce({
-      items: [
-        makeFlight({
-          id: "a",
-          aircraft: { id: "ac-1", tail_number: "N207GE", model: "C208", seats: 9 },
-        }),
-        makeFlight({
-          id: "b",
-          aircraft: { id: "ac-2", tail_number: "N510PA", model: "B1900", seats: 19 },
-        }),
-      ],
-      total: 2,
-    });
-    listAircraft.mockResolvedValueOnce({
-      items: [makeAircraft("ac-1", "N207GE"), makeAircraft("ac-2", "N510PA")],
-      total: 2,
-    });
-
-    await renderPage({ range: "all", aircraft: "ac-1" });
-
-    expect(screen.getByText("GVa")).toBeInTheDocument();
-    expect(screen.queryByText("GVb")).not.toBeInTheDocument();
-  });
-
-  it("renders ATD / ATA in green when actuals are set", async () => {
-    listFlights.mockResolvedValueOnce({
-      items: [
-        makeFlight({
-          id: "real",
-          actual_departure_at: "2026-06-15T14:05:00Z",
-          actual_arrival_at: "2026-06-15T16:10:00Z",
-        }),
-      ],
-      total: 1,
-    });
-
-    await renderPage({ range: "all" });
-
-    // 14:05 UTC = 06:05 AKD in summer (UTC-8); 16:10Z = 08:10 AKD.
-    expect(screen.getByText(/06:05 AKD/)).toBeInTheDocument();
-    expect(screen.getByText(/08:10 AKD/)).toBeInTheDocument();
-  });
-
-  it("falls back to a 'sched' tag when actuals are missing", async () => {
-    listFlights.mockResolvedValueOnce({
-      items: [
-        makeFlight({
-          id: "noactual",
-          actual_departure_at: null,
-          actual_arrival_at: null,
-        }),
-      ],
-      total: 1,
-    });
-
-    await renderPage({ range: "all" });
-
-    // Two cells (ATD + ATA) render the "sched" tag.
-    expect(screen.getAllByText(/^sched$/i)).toHaveLength(2);
-    // Block hours get a "*" suffix to indicate scheduled-times proxy.
-    expect(screen.getByText(/2\.0h\*/)).toBeInTheDocument();
-  });
-
-  it("renders the summary strip with count + total block hours", async () => {
-    listFlights.mockResolvedValueOnce({
-      items: [
-        makeFlight({ id: "x" }),  // 2:05 block (14:05 → 16:10)
-        makeFlight({ id: "y" }),
-      ],
-      total: 2,
-    });
-
-    await renderPage({ range: "all" });
-
-    // Count label appears in the summary strip.
-    expect(screen.getByText(/^flights$/i)).toBeInTheDocument();
-    // 2 flights × 2:05 each ≈ 4.2h — locale-formatted
-    expect(screen.getByText("4.2")).toBeInTheDocument();
-    expect(screen.getByText(/^block hrs$/i)).toBeInTheDocument();
-  });
-
-  it("renders the empty-state copy when no flights match the filter", async () => {
-    listFlights.mockResolvedValueOnce({ items: [], total: 0 });
-
-    await renderPage();
-
-    expect(
-      screen.getByText(/no completed flights in this range/i),
+      screen.getByRole("heading", {
+        name: /electronic flight log/i,
+        level: 1,
+      }),
     ).toBeInTheDocument();
+    expect(screen.getByTestId("new-log-form")).toBeInTheDocument();
   });
 
-  it("renders the session-expired banner on 401", async () => {
-    listFlights.mockRejectedValueOnce(
-      new TestApiError(401, "/ops/flights", "Unauthorized"),
+  it("renders the Active Drafts panel when drafts exist", async () => {
+    listFlightLogs.mockResolvedValueOnce({
+      items: [
+        makeLog({ id: "1" }),
+        makeLog({ id: "2", aircraft: { id: "ac-2", tail_number: "N510PA", model: "B1900", seats: 19 } }),
+      ],
+      total: 2,
+    });
+
+    await renderPage();
+
+    expect(screen.getByText(/active logs \(draft\)/i)).toBeInTheDocument();
+    expect(screen.getByText("LOG-20260615-1")).toBeInTheDocument();
+    expect(screen.getByText("LOG-20260615-2")).toBeInTheDocument();
+    expect(screen.getAllByText(/^draft$/i).length).toBeGreaterThanOrEqual(2);
+  });
+
+  it("hides the Active Drafts panel entirely when there are no drafts", async () => {
+    await renderPage();
+
+    expect(
+      screen.queryByText(/active logs \(draft\)/i),
+    ).not.toBeInTheDocument();
+  });
+
+  it("filters out inactive aircraft before passing to the form", async () => {
+    listAircraft.mockResolvedValueOnce({
+      items: [
+        makeAircraft({ id: "ac-1", is_active: true }),
+        makeAircraft({ id: "ac-2", is_active: false }),
+      ],
+      total: 2,
+    });
+
+    await renderPage();
+
+    expect(screen.getByTestId("new-log-form")).toHaveAttribute(
+      "data-aircraft-count",
+      "1",
+    );
+  });
+
+  it("renders the empty-state copy when the tenant has no active aircraft", async () => {
+    listAircraft.mockResolvedValueOnce({ items: [], total: 0 });
+
+    await renderPage();
+
+    expect(
+      screen.getByText(/no active aircraft on this tenant/i),
+    ).toBeInTheDocument();
+    expect(screen.queryByTestId("new-log-form")).not.toBeInTheDocument();
+  });
+
+  it("renders the session-expired alert on 401", async () => {
+    listFlightLogs.mockRejectedValueOnce(
+      new TestApiError(401, "/ops/flight-logs", "Unauthorized"),
     );
 
     await renderPage();
@@ -250,15 +191,13 @@ describe("FlightLogPage", () => {
     expect(screen.getByText(/session expired/i)).toBeInTheDocument();
   });
 
-  it("renders the generic error banner on 5xx", async () => {
-    listFlights.mockRejectedValueOnce(
-      new TestApiError(502, "/ops/flights", "Bad Gateway"),
+  it("renders the generic error hint on backend failure", async () => {
+    listFlightLogs.mockRejectedValueOnce(
+      new TestApiError(502, "/ops/flight-logs", "Bad Gateway"),
     );
 
     await renderPage();
 
-    expect(
-      screen.getByText(/flight log unavailable/i),
-    ).toBeInTheDocument();
+    expect(screen.getByText(/flight log unavailable/i)).toBeInTheDocument();
   });
 });

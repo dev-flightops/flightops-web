@@ -66,6 +66,43 @@ export interface FlightListResponse {
   total: number;
 }
 
+// Electronic Flight Log (M2-M-21 backend / M2-G-26b frontend)
+
+export type FlightLogStatus = "draft" | "submitted";
+export type FlightType =
+  | "advisory"
+  | "charter"
+  | "training"
+  | "ferry"
+  | "other";
+
+export interface FlightLogResponse {
+  id: string;
+  log_number: string;          // LOG-YYYYMMDD-HHMMSS
+  aircraft: AircraftRef;
+  flight_id: string | null;
+  flight_number: string | null;
+  flight_type: FlightType;
+  flight_date: string;         // YYYY-MM-DD
+  status: FlightLogStatus;
+  created_by: UserRef;
+  created_at: string;          // ISO 8601 UTC
+}
+
+export interface FlightLogListResponse {
+  items: FlightLogResponse[];
+  total: number;
+}
+
+export interface FlightLogCreateRequest {
+  aircraft_id: string;
+  flight_id?: string | null;
+  flight_number?: string | null;
+  flight_type?: FlightType;
+  /** YYYY-MM-DD; defaults server-side to today (UTC). */
+  flight_date?: string | null;
+}
+
 export interface ReleaseResponse {
   flight: FlightDetail;
   released_at: string;
