@@ -221,8 +221,11 @@ export interface AirworthinessResponse {
   advisory_issues: AdvisoryIssue[];
 }
 
-/** One row on the Maintenance fleet landing (M2-M-16 / M2-G-19) —
- *  count-only summary per aircraft. */
+/** One row on the Maintenance fleet landing. Counts come from
+ *  M2-M-16; the airframe metadata + time-tracking block (airframe_type
+ *  through prop_tbo_hours) is M2-M-17. Backend defaults preserve
+ *  back-compat — fields may be absent on responses from a service
+ *  that's been deployed but not migrated. */
 export interface FleetAircraftSummary {
   aircraft: MaintenanceAircraftRef;
   is_active: boolean;
@@ -232,6 +235,15 @@ export interface FleetAircraftSummary {
   advisory_count: number;
   open_mel_count: number;
   open_squawk_count: number;
+  // M2-M-17 — fleet-card display fields
+  airframe_type: string | null;
+  base: string | null;
+  special_notes: string | null;
+  total_time_hours: number;
+  engine_time_hours: number;
+  engine_tbo_hours: number | null;
+  prop_time_hours: number;
+  prop_tbo_hours: number | null;
 }
 
 export interface FleetAirworthinessResponse {
