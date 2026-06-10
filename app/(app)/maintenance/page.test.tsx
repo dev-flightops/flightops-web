@@ -46,7 +46,7 @@ async function renderPage() {
 }
 
 describe("MaintenanceLandingPage", () => {
-  it("renders one card per aircraft and the summary chip totals", async () => {
+  it("renders one card per aircraft with the right footer badge", async () => {
     getFleetAirworthiness.mockResolvedValueOnce({
       items: [
         makeSummary({ id: "ac-1", tail: "N101", is_airworthy: false, blocking_count: 1 }),
@@ -62,12 +62,23 @@ describe("MaintenanceLandingPage", () => {
     expect(screen.getByText("N102")).toBeInTheDocument();
     expect(screen.getByText("N103")).toBeInTheDocument();
 
-    // Each status word can match in multiple places (card pills,
-    // stat labels, the totals chip). Assert presence rather than
-    // exact count — the per-card pill tests live in fleet-card.test.
-    expect(screen.getAllByText(/^grounded$/i).length).toBeGreaterThanOrEqual(2); // pill + chip
-    expect(screen.getAllByText(/^advisory$/i).length).toBeGreaterThanOrEqual(2);
-    expect(screen.getAllByText(/^airworthy$/i).length).toBeGreaterThanOrEqual(2); // pill + chip
+    // One badge per row: Overdue / Due Soon / All items current.
+    expect(screen.getByText(/1 overdue/i)).toBeInTheDocument();
+    expect(screen.getByText(/1 due soon/i)).toBeInTheDocument();
+    expect(screen.getByText(/all items current/i)).toBeInTheDocument();
+  });
+
+  it("renders the legacy 'Fleet Management' header + action buttons", async () => {
+    getFleetAirworthiness.mockResolvedValueOnce({ items: [], total: 0 });
+
+    await renderPage();
+
+    expect(
+      screen.getByRole("heading", { name: /fleet management/i, level: 1 }),
+    ).toBeInTheDocument();
+    // Action button row sourced from MaintenanceHeader
+    expect(screen.getByText("Due List")).toBeInTheDocument();
+    expect(screen.getByText("+ Aircraft")).toBeInTheDocument();
   });
 
   it("renders the empty-state copy when the fleet is empty", async () => {
