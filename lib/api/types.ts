@@ -482,3 +482,77 @@ export interface BoardResponse {
   view: BoardView;
   total: number;
 }
+
+// Ground (M2-M-25a backend / M2-G-38 frontend) -------------------------------
+
+export type StationRunwaySource = "faa_api" | "manual" | "seeded";
+
+export interface StationListItem {
+  id: string;
+  icao_code: string;
+  name: string;
+  city: string | null;
+  state: string | null;
+  elevation_ft: number | null;
+  has_reporting_function: boolean;
+  runway_length_ft: number | null;
+  runway_width_ft: number | null;
+  runway_primary_name: string | null;
+  runway_source: StationRunwaySource | null;
+  runway_cache_updated_at: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  notes: string | null;
+  open_issue_count: number;
+}
+
+export interface StationListResponse {
+  items: StationListItem[];
+  total: number;
+}
+
+export type StationIssueCategory =
+  | "equipment"
+  | "facilities"
+  | "safety"
+  | "ops"
+  | "staffing"
+  | "weather"
+  | "fuel"
+  | "comms"
+  | "other";
+
+export type StationIssuePriority = "low" | "normal" | "high" | "critical";
+
+export type StationIssueStatus =
+  | "open"
+  | "in_progress"
+  | "resolved"
+  | "closed";
+
+export interface StationIssueStationRef {
+  id: string;
+  icao_code: string;
+  name: string;
+}
+
+export interface StationIssueResponse {
+  id: string;
+  station: StationIssueStationRef;
+  category: StationIssueCategory;
+  priority: StationIssuePriority;
+  status: StationIssueStatus;
+  title: string;
+  description: string;
+  submitted_by: UserRef | null;
+  submitted_date: string;     // YYYY-MM-DD
+  assigned_to: string | null;
+  resolution_notes: string | null;
+  resolved_date: string | null;
+  created_at: string;
+}
+
+export interface StationIssueListResponse {
+  items: StationIssueResponse[];
+  total: number;
+}
