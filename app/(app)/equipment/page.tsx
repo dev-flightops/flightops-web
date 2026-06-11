@@ -103,54 +103,86 @@ export default async function EquipmentPage({
 
   const grouped = groupByStation(filtered);
 
+  const hasFiltersApplied = Boolean(status || type || stationFilter);
+  const totalUnits = units.length;
+
   return (
-    <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
+    <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6">
       <header className="mb-5 flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">
+          <h1 className="text-lg font-bold tracking-tight">
             Ground Support Equipment
           </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="mt-0.5 text-xs text-muted-foreground">
             Equipment inventory, status, and service tracking
           </p>
         </div>
+        <button
+          type="button"
+          disabled
+          title="Coming in M2"
+          className="cursor-not-allowed rounded-md border border-status-blue bg-status-blue/15 px-3 py-1.5 text-xs font-semibold text-status-blue opacity-70"
+        >
+          + Add Equipment
+        </button>
       </header>
 
-      {loadError ? (
+      {loadError && (
         <div
           role="alert"
-          className="rounded-lg border border-border bg-card px-4 py-6 text-center text-sm text-muted-foreground"
+          className="mb-4 rounded-md border border-status-yellow/40 bg-status-yellow/10 px-3 py-2 text-xs text-status-yellow"
         >
           {loadError}
         </div>
-      ) : (
-        <>
-          <Stats stats={stats} />
-          <Filters
-            status={status}
-            type={type}
-            stationFilter={stationFilter}
-            stations={stationsInUse}
-          />
-          {filtered.length === 0 ? (
-            <div className="rounded-lg border border-border bg-card px-4 py-16 text-center">
-              <p className="text-sm text-muted-foreground">
-                No equipment matches the current filters.
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-5">
-              {Object.entries(grouped).map(([station, list]) => (
-                <StationGroup
-                  key={station}
-                  stationLabel={station}
-                  units={list}
-                />
-              ))}
-            </div>
-          )}
-        </>
       )}
+
+      <Stats stats={stats} />
+      <Filters
+        status={status}
+        type={type}
+        stationFilter={stationFilter}
+        stations={stationsInUse}
+      />
+
+      {filtered.length === 0 ? (
+        totalUnits === 0 && !hasFiltersApplied ? (
+          <EmptyState />
+        ) : (
+          <div className="rounded-lg border border-border bg-card px-4 py-16 text-center">
+            <p className="text-sm text-muted-foreground">
+              No equipment matches the current filters.
+            </p>
+          </div>
+        )
+      ) : (
+        <div className="space-y-5">
+          {Object.entries(grouped).map(([station, list]) => (
+            <StationGroup
+              key={station}
+              stationLabel={station}
+              units={list}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function EmptyState() {
+  return (
+    <div className="rounded-lg border border-border bg-card px-4 py-16 text-center">
+      <p className="mb-4 text-sm text-muted-foreground">
+        No equipment tracked yet.
+      </p>
+      <button
+        type="button"
+        disabled
+        title="Coming in M2"
+        className="cursor-not-allowed rounded-md border border-status-blue bg-status-blue/15 px-4 py-2 text-xs font-semibold text-status-blue opacity-70"
+      >
+        Add First Unit
+      </button>
     </div>
   );
 }
@@ -194,23 +226,23 @@ function Stats({
 }: {
   stats: ReturnType<typeof computeStats>;
 }) {
+  // Tones are persistent per-category (matches legacy gse/dashboard.html
+  // where Operational stays green / In Maintenance stays yellow / Needs
+  // Attention stays red even at zero) — they communicate severity-class,
+  // not "is currently a problem".
   return (
     <section className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
       <Tile label="Total Units" value={stats.total} />
-      <Tile
-        label="Operational"
-        value={stats.operational}
-        tone="green"
-      />
+      <Tile label="Operational" value={stats.operational} tone="green" />
       <Tile
         label="In Maintenance"
         value={stats.maintenance}
-        tone={stats.maintenance > 0 ? "yellow" : undefined}
+        tone="yellow"
       />
       <Tile
         label="Needs Attention"
         value={stats.needsAttention}
-        tone={stats.needsAttention > 0 ? "red" : undefined}
+        tone="red"
       />
     </section>
   );

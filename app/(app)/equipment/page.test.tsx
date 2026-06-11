@@ -207,6 +207,45 @@ describe("EquipmentPage (M2-G-39)", () => {
     ).toBeInTheDocument();
   });
 
+  it("shows the legacy 'No equipment tracked yet' + 'Add First Unit' empty state when there are no units at all", async () => {
+    listGseUnits.mockResolvedValueOnce({ items: [], total: 0 });
+
+    await renderPage();
+
+    expect(
+      screen.getByText(/no equipment tracked yet/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /add first unit/i }),
+    ).toBeDisabled();
+  });
+
+  it("renders the disabled '+ Add Equipment' button in the header", async () => {
+    listGseUnits.mockResolvedValueOnce({ items: [], total: 0 });
+
+    await renderPage();
+
+    expect(
+      screen.getByRole("button", { name: /\+ add equipment/i }),
+    ).toBeDisabled();
+  });
+
+  it("renders stats + filters + empty state even on error (page chrome stays put)", async () => {
+    listGseUnits.mockRejectedValueOnce(
+      new TestApiError(502, "/ground/gse", "Bad Gateway"),
+    );
+
+    await renderPage();
+
+    // Banner shows
+    expect(screen.getByText(/equipment feed unavailable/i)).toBeInTheDocument();
+    // Stats strip + filter row still render so the page doesn't blank
+    expect(screen.getAllByText(/total units/i).length).toBeGreaterThan(0);
+    expect(screen.getByLabelText(/station/i)).toBeInTheDocument();
+    // Empty state still surfaces since there are 0 units
+    expect(screen.getByText(/no equipment tracked yet/i)).toBeInTheDocument();
+  });
+
   it("renders the session-expired alert on 401", async () => {
     listGseUnits.mockRejectedValueOnce(
       new TestApiError(401, "/ground/gse", "Unauthorized"),
@@ -215,15 +254,5 @@ describe("EquipmentPage (M2-G-39)", () => {
     await renderPage();
 
     expect(screen.getByText(/session expired/i)).toBeInTheDocument();
-  });
-
-  it("renders the generic error alert on 5xx", async () => {
-    listGseUnits.mockRejectedValueOnce(
-      new TestApiError(502, "/ground/gse", "Bad Gateway"),
-    );
-
-    await renderPage();
-
-    expect(screen.getByText(/equipment feed unavailable/i)).toBeInTheDocument();
   });
 });
