@@ -556,3 +556,102 @@ export interface StationIssueListResponse {
   items: StationIssueResponse[];
   total: number;
 }
+
+// GSE (M2-M-25b backend / M2-G-39 frontend) ---------------------------------
+
+export type GSEEquipmentType =
+  | "tug"
+  | "gpu"
+  | "deice_truck"
+  | "belt_loader"
+  | "fuel_truck"
+  | "lavatory"
+  | "air_start"
+  | "heater"
+  | "other";
+
+export type GSEUnitStatus = "operational" | "maintenance" | "out_of_service";
+
+export type GSEMxItemType =
+  | "service"
+  | "inspection"
+  | "calibration"
+  | "certification"
+  | "custom";
+
+export type GSEMxStatus = "current" | "due_soon" | "overdue";
+
+export type GSESquawkStatus = "open" | "in_progress" | "resolved";
+
+export interface GSEUnitStationRef {
+  id: string;
+  icao_code: string;
+  name: string;
+}
+
+export interface GSEUnitListItem {
+  id: string;
+  name: string;
+  equipment_type: GSEEquipmentType;
+  make: string | null;
+  model: string | null;
+  serial_number: string | null;
+  year: number | null;
+  station: GSEUnitStationRef | null;
+  status: GSEUnitStatus;
+  status_note: string | null;
+  last_service_date: string | null;
+  next_service_date: string | null;
+  service_interval_days: number | null;
+  hours_total: number;
+  purchase_date: string | null;
+  manufacturer: string | null;
+  is_active: boolean;
+  notes: string | null;
+  open_squawk_count: number;
+}
+
+export interface GSEUnitListResponse {
+  items: GSEUnitListItem[];
+  total: number;
+}
+
+export interface GSEMaintenanceItemResponse {
+  id: string;
+  gse_unit_id: string;
+  title: string;
+  description: string | null;
+  item_type: GSEMxItemType;
+  interval_days: number | null;
+  interval_hours: number | null;
+  last_completed_date: string | null;
+  last_completed_hours: number | null;
+  due_date: string | null;
+  due_hours: number | null;
+  status: GSEMxStatus;
+  is_recurring: boolean;
+  is_active: boolean;
+}
+
+export interface GSEMaintenanceListResponse {
+  items: GSEMaintenanceItemResponse[];
+  total: number;
+}
+
+export interface GSESquawkResponse {
+  id: string;
+  gse_unit_id: string;
+  description: string;
+  reported_date: string;
+  reported_by: UserRef | null;
+  status: GSESquawkStatus;
+  resolved_date: string | null;
+  resolved_by: UserRef | null;
+  resolution_notes: string | null;
+  created_at: string;
+}
+
+export interface GSESquawkListResponse {
+  items: GSESquawkResponse[];
+  total: number;
+}
