@@ -11,6 +11,9 @@ import { apiFetch } from "./client";
 import type {
   WeatherBatchRequestItem,
   WeatherBatchResponse,
+  WeatherBriefingCreateRequest,
+  WeatherBriefingListResponse,
+  WeatherBriefingResponse,
   WeatherReportResponse,
 } from "./types";
 
@@ -36,5 +39,49 @@ export async function batchWeather(
   return apiFetch<WeatherBatchResponse>(`/weather/batch`, {
     method: "POST",
     body: JSON.stringify({ requests }),
+  });
+}
+
+// ---- Saved briefings (M2-M-22 / M2-G-27) ------------------------------------
+
+export interface ListWeatherBriefingsParams {
+  flightId?: string;
+  aircraftId?: string;
+  limit?: number;
+}
+
+/** List saved weather briefings, newest-first. Powers the M2-G-27
+ *  /weather landing. */
+export async function listWeatherBriefings(
+  params: ListWeatherBriefingsParams = {},
+): Promise<WeatherBriefingListResponse> {
+  const search = new URLSearchParams();
+  if (params.flightId) search.set("flight_id", params.flightId);
+  if (params.aircraftId) search.set("aircraft_id", params.aircraftId);
+  if (params.limit !== undefined) search.set("limit", String(params.limit));
+  const qs = search.toString() ? `?${search.toString()}` : "";
+  return apiFetch<WeatherBriefingListResponse>(`/weather/briefings${qs}`);
+}
+
+/** Fetch a single saved briefing including its frozen snapshot.
+ *  Used by /weather/{id} for the permalink-able detail view. */
+export async function getWeatherBriefing(
+  briefingId: string,
+): Promise<WeatherBriefingResponse> {
+  return apiFetch<WeatherBriefingResponse>(
+    `/weather/briefings/${briefingId}`,
+  );
+}
+
+/** Create a new briefing — backend fetches METAR/TAF for each airport,
+ *  snapshots them, and persists. Returns the saved briefing with the
+ *  snapshot inline so the redirect target page can render without
+ *  re-fetching. */
+export async function createWeatherBriefing(
+  payload: WeatherBriefingCreateRequest,
+): Promise<WeatherBriefingResponse> {
+  return apiFetch<WeatherBriefingResponse>(`/weather/briefings`, {
+    method: "POST",
+    body: JSON.stringify(payload),
   });
 }
