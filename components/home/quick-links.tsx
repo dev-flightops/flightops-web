@@ -24,12 +24,12 @@ export interface QuickLink {
 }
 
 export const HOME_QUICK_LINKS: QuickLink[] = [
-  { label: "EOD Closeout", href: "/following/eod", status: "m2" },
+  { label: "EOD Closeout", href: "/eod", status: "live" },
   { label: "Business Intelligence", href: "/reports/executive/bi", status: "m4" },
   { label: "Invoices", href: "/invoicing/", status: "m4" },
   { label: "My Flight History", href: "/crew/my-history/flights", status: "m3" },
   { label: "My Duty History", href: "/crew/my-history/duty", status: "m3" },
-  { label: "Flight Log", href: "/elog/", status: "m2" },
+  { label: "Flight Log", href: "/flight-log", status: "live" },
   { label: "Crew Roster", href: "/crew/roster", status: "m3" },
   { label: "Compliance Board", href: "/compliance/status-board", status: "m3" },
   { label: "Settings", href: "/settings/", status: "m4", accent: "gold" },
