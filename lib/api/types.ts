@@ -210,6 +210,53 @@ export interface WeatherBatchResponse {
   errors: WeatherBatchItemError[];
 }
 
+// Saved weather briefings (M2-M-22 backend / M2-G-27 frontend)
+
+export interface WeatherBriefingFlightRef {
+  id: string;
+  flight_number: string;
+}
+
+export interface WeatherBriefingAircraftRef {
+  id: string;
+  tail_number: string;
+}
+
+export interface WeatherBriefingUserRef {
+  id: string;
+  full_name: string;
+  email: string;
+}
+
+export interface WeatherBriefingListItem {
+  id: string;
+  airports: string[];
+  flight: WeatherBriefingFlightRef | null;
+  aircraft: WeatherBriefingAircraftRef | null;
+  worst_flight_category: FlightCategory | null;
+  briefed_by: WeatherBriefingUserRef;
+  created_at: string;  // ISO 8601 UTC
+}
+
+export interface WeatherBriefingResponse extends WeatherBriefingListItem {
+  dispatcher_notes: string | null;
+  /** Frozen WeatherBatchResponse-shaped payload captured at briefing
+   *  time. Detail page renders its airport cards directly from this. */
+  snapshot: WeatherBatchResponse;
+}
+
+export interface WeatherBriefingListResponse {
+  items: WeatherBriefingListItem[];
+  total: number;
+}
+
+export interface WeatherBriefingCreateRequest {
+  airports: string[];
+  flight_id?: string | null;
+  aircraft_id?: string | null;
+  dispatcher_notes?: string | null;
+}
+
 // Maintenance / airworthiness (M2-M-8 backend / M2-G-5 frontend)
 
 export type SquawkSeverity = "minor" | "major" | "grounding";

@@ -1,178 +1,155 @@
-import {
-  AirportWeatherCard,
-  type WeatherFetchOutcome,
-} from "@/components/weather/airport-weather-card";
-import { ApiError } from "@/lib/api/client";
-import { batchWeather } from "@/lib/api/weather";
-import type { WeatherReportResponse } from "@/lib/api/types";
-import { utcHm } from "@/lib/weather-format";
-import { parseIcaos } from "@/lib/weather/icaos";
+import Link from "next/link";
 
-import { IcaoInputForm } from "./icao-input-form";
+import { Button } from "@/components/ui/button";
+import { FlightCategoryBadge } from "@/components/weather/flight-category-badge";
+import { ApiError } from "@/lib/api/client";
+import { listWeatherBriefings } from "@/lib/api/weather";
+import type { WeatherBriefingListItem } from "@/lib/api/types";
 
 /**
- * /weather — standalone multi-ICAO METAR + TAF lookup (M2-G-24).
+ * /weather — saved Weather Briefings landing (M2-G-27 rebuild).
  *
- * URL-driven via `?icaos=PANC,PAEN,PADU` so each lookup is deep-
- * linkable. Empty / missing param shows just the input form with a
- * coaching hint; otherwise the server component fans out via the
- * M2-M-12 batch endpoint (one round-trip per render).
- *
- * Lighter than the dispatch packet weather panel: no route role
- * tags, no 5-column field grid — that depth lives on the packet
- * where the dispatcher is making a release call. The standalone page
- * is for quick "what's the weather at PANC right now" lookups +
- * deep-linkable shares between dispatchers and pilots.
- *
- * Persistence is out of scope here. A `WeatherBriefing` model that
- * saves the result with dispatcher notes is M3 (legacy /weather/new
- * → briefing/{id} flow); for now the URL is the persistence layer.
+ * Layout matches legacy `templates/weather_briefing/history.html`:
+ *   - max-w-5xl, py-10 — narrower + more vertical breathing than the
+ *     dispatcher's other list pages so the table doesn't feel as
+ *     dense
+ *   - "Weather Briefings" title + "Stored weather briefings for your
+ *     operation" subtitle (verbatim from legacy)
+ *   - "+ New Briefing" primary button top-right
+ *   - 7-column table inside a single panel: Date/Time · Airports ·
+ *     Flight · Aircraft · Conditions · Briefed By · View →
+ *   - Empty state matches legacy: "No briefings yet." + "Create First
+ *     Briefing" CTA inside the panel
  */
-const MAX_AIRPORTS = 10;
 
-export default async function WeatherPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ icaos?: string }>;
-}) {
-  const { icaos: icaosParam } = await searchParams;
-  const icaos = parseIcaos(icaosParam ?? "").slice(0, MAX_AIRPORTS);
+const BRIEFINGS_LIMIT = 100;
 
-  // Fetch eagerly inside the page render so the test harness sees a
-  // fully-resolved tree (nested async server components rely on
-  // Next's Suspense plumbing that jsdom doesn't have).
-  let items: WeatherReportResponse[] = [];
-  let errors: { icao: string; kind: string; status: number; detail: string }[] = [];
+function formatBriefingTimestamp(iso: string): string {
+  // "MM/DD HH:MM AKD" matches the legacy column format exactly.
+  const d = new Date(iso);
+  const md = d.toLocaleDateString("en-US", {
+    timeZone: "America/Anchorage",
+    month: "2-digit",
+    day: "2-digit",
+  });
+  const hm = d.toLocaleTimeString("en-US", {
+    timeZone: "America/Anchorage",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+  return `${md} ${hm} AKD`;
+}
+
+export default async function WeatherBriefingsPage() {
+  let briefings: WeatherBriefingListItem[] = [];
   let loadError: string | null = null;
-  if (icaos.length > 0) {
-    try {
-      const response = await batchWeather(
-        icaos.flatMap((icao) => [
-          { icao, kind: "metar" as const },
-          { icao, kind: "taf" as const },
-        ]),
-      );
-      items = response.items;
-      errors = response.errors;
-    } catch (err) {
-      const status = err instanceof ApiError ? err.status : 0;
-      loadError =
-        status === 401
-          ? "Your session expired — please sign in again."
-          : "Weather feed unavailable. Try again in a moment.";
-    }
+
+  try {
+    briefings = (await listWeatherBriefings({ limit: BRIEFINGS_LIMIT })).items;
+  } catch (err) {
+    const status = err instanceof ApiError ? err.status : 0;
+    loadError =
+      status === 401
+        ? "Your session expired — please sign in again."
+        : "Briefings feed unavailable. Try refreshing in a moment.";
   }
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
-      <header className="mb-6">
-        <h1 className="text-xl font-bold tracking-tight sm:text-2xl">
-          Weather
-        </h1>
-        <p className="mt-1 text-xs text-muted-foreground">
-          Live METAR + TAF for the airports you enter. Backend caches
-          METAR 5 min, TAF 30 min.
-        </p>
-      </header>
-
-      <div className="mb-6 rounded-lg border border-border bg-card p-4">
-        <IcaoInputForm initialIcaos={icaos} />
+    <div className="mx-auto max-w-5xl px-4 py-10">
+      <div className="mb-8 flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">
+            Weather Briefings
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            Stored weather briefings for your operation
+          </p>
+        </div>
+        <Button asChild>
+          <Link href="/weather/new">+ New Briefing</Link>
+        </Button>
       </div>
 
-      {icaos.length === 0 ? (
-        <EmptyState />
-      ) : loadError ? (
+      {loadError ? (
         <div
           role="alert"
-          className="rounded-md border border-border bg-card px-4 py-6 text-center text-sm text-muted-foreground"
+          className="rounded-lg border border-border bg-card px-4 py-6 text-center text-sm text-muted-foreground"
         >
           {loadError}
         </div>
+      ) : briefings.length === 0 ? (
+        <div className="rounded-lg border border-border bg-card px-4 py-16 text-center">
+          <p className="mb-4 text-lg text-muted-foreground">
+            No briefings yet.
+          </p>
+          <Button asChild>
+            <Link href="/weather/new">Create First Briefing</Link>
+          </Button>
+        </div>
       ) : (
-        <Results icaos={icaos} items={items} errors={errors} />
+        <BriefingsTable briefings={briefings} />
       )}
     </div>
   );
 }
 
-function EmptyState() {
+function BriefingsTable({
+  briefings,
+}: {
+  briefings: WeatherBriefingListItem[];
+}) {
   return (
-    <div className="rounded-md border border-dashed border-border bg-card/40 px-4 py-12 text-center">
-      <p className="text-sm text-muted-foreground">
-        Enter one or more airports above to pull current weather.
-      </p>
-      <p className="mt-2 text-[0.65rem] text-muted-foreground/70">
-        Try{" "}
-        <code className="font-mono">PANC PAEN PADU</code> — Anchorage,
-        Kenai, Unalaska/Dutch Harbor.
-      </p>
+    <div className="overflow-hidden rounded-lg border border-border bg-card">
+      <table className="w-full text-sm">
+        <thead>
+          <tr className="border-b border-border text-left text-[0.6rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+            <th className="px-4 py-3">Date / Time</th>
+            <th className="px-4 py-3">Airports</th>
+            <th className="px-4 py-3">Flight</th>
+            <th className="px-4 py-3">Aircraft</th>
+            <th className="px-4 py-3">Conditions</th>
+            <th className="px-4 py-3">Briefed By</th>
+            <th className="px-4 py-3"></th>
+          </tr>
+        </thead>
+        <tbody>
+          {briefings.map((b) => (
+            <tr key={b.id} className="border-b border-border last:border-0">
+              <td className="px-4 py-3 text-sm text-muted-foreground">
+                {formatBriefingTimestamp(b.created_at)}
+              </td>
+              <td className="px-4 py-3 font-medium text-foreground">
+                {b.airports.join(", ")}
+              </td>
+              <td className="px-4 py-3 text-foreground">
+                {b.flight?.flight_number ?? "—"}
+              </td>
+              <td className="px-4 py-3 text-foreground">
+                {b.aircraft?.tail_number ?? "—"}
+              </td>
+              <td className="px-4 py-3">
+                {b.worst_flight_category ? (
+                  <FlightCategoryBadge category={b.worst_flight_category} />
+                ) : (
+                  <span className="text-muted-foreground">—</span>
+                )}
+              </td>
+              <td className="px-4 py-3 text-sm text-muted-foreground">
+                {b.briefed_by.full_name}
+              </td>
+              <td className="px-4 py-3 text-right">
+                <Link
+                  href={`/weather/${b.id}`}
+                  className="text-sm font-medium text-status-blue hover:underline"
+                >
+                  View →
+                </Link>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
-}
-
-function Results({
-  icaos,
-  items,
-  errors,
-}: {
-  icaos: string[];
-  items: WeatherReportResponse[];
-  errors: { icao: string; kind: string; status: number; detail: string }[];
-}) {
-  const reportLookup = new Map<string, WeatherReportResponse>();
-  for (const item of items) {
-    reportLookup.set(`${item.icao}/${item.kind}`, item);
-  }
-  const errorLookup = new Map<string, { status: number; detail: string }>();
-  for (const err of errors) {
-    errorLookup.set(`${err.icao}/${err.kind}`, {
-      status: err.status,
-      detail: err.detail,
-    });
-  }
-
-  const cards = icaos.map((icao) => ({
-    icao,
-    metar: outcomeFor(icao, "metar", reportLookup, errorLookup),
-    taf: outcomeFor(icao, "taf", reportLookup, errorLookup),
-  }));
-
-  const pulledAt = items
-    .map((i) => i.parsed_at)
-    .sort()
-    .pop();
-
-  return (
-    <>
-      <div className="mb-3 flex items-center justify-between gap-4">
-        <p className="text-[0.65rem] text-muted-foreground">
-          {icaos.length} {icaos.length === 1 ? "airport" : "airports"}
-          {pulledAt ? ` · pulled ${utcHm(pulledAt)}` : ""}
-        </p>
-      </div>
-      <div className="space-y-3">
-        {cards.map((c) => (
-          <AirportWeatherCard
-            key={c.icao}
-            icao={c.icao}
-            metar={c.metar}
-            taf={c.taf}
-          />
-        ))}
-      </div>
-    </>
-  );
-}
-
-function outcomeFor(
-  icao: string,
-  kind: "metar" | "taf",
-  ok: Map<string, WeatherReportResponse>,
-  bad: Map<string, { status: number; detail: string }>,
-): WeatherFetchOutcome {
-  const report = ok.get(`${icao}/${kind}`);
-  if (report) return { ok: true, report };
-  const err = bad.get(`${icao}/${kind}`);
-  if (err) return { ok: false, status: err.status, message: err.detail };
-  return { ok: false, status: 0, message: `no ${kind} returned for ${icao}` };
 }
