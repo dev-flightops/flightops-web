@@ -159,13 +159,13 @@ export const DEPARTMENTS: Department[] = [
      * Stations, Equipment (GSE), Fuel, and Ramp. Stations is live (M2-G-38);
      * the rest land as later M2 stories.
      */
-    pathPrefixes: ["/ground-ops", "/stations", "/equipment", "/fuel", "/ramper"],
+    pathPrefixes: ["/ground-ops", "/ramp", "/stations", "/equipment", "/fuel"],
     children: [
       { id: "ground-ops-hub", label: "Hub", href: "/ground-ops", status: "live", department: "ground-ops" },
+      { id: "ramp",           label: "Ramp", status: "m2", department: "ground-ops" },
       { id: "stations",       label: "Stations", href: "/stations", status: "live", department: "ground-ops" },
       { id: "equipment",      label: "Equipment", href: "/equipment", status: "live", department: "ground-ops" },
       { id: "fuel",           label: "Fuel", status: "m2", department: "ground-ops" },
-      { id: "ramper",         label: "Ramper", status: "m2", department: "ground-ops" },
     ],
   },
   {

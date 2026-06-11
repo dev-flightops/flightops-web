@@ -51,16 +51,34 @@ async function renderPage() {
   return render(ui);
 }
 
-describe("StationsPage (M2-G-38 list)", () => {
-  it("renders title + subtitle", async () => {
+describe("StationsPage", () => {
+  it("renders the legacy Ground Ops header + subtitle", async () => {
     listStations.mockResolvedValueOnce({ items: [], total: 0 });
 
     await renderPage();
 
     expect(
-      screen.getByRole("heading", { name: /^stations$/i, level: 1 }),
+      screen.getByRole("heading", { name: /^ground ops$/i, level: 1 }),
     ).toBeInTheDocument();
-    expect(screen.getByText(/ICAO master list/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/stations, issue tracker, crew/i),
+    ).toBeInTheDocument();
+  });
+
+  it("renders the three header action buttons (all dimmed)", async () => {
+    listStations.mockResolvedValueOnce({ items: [], total: 0 });
+
+    await renderPage();
+
+    expect(
+      screen.getByRole("button", { name: /issue tracker/i }),
+    ).toBeDisabled();
+    expect(
+      screen.getByRole("button", { name: /\+ report issue/i }),
+    ).toBeDisabled();
+    expect(
+      screen.getByRole("button", { name: /\+ add station/i }),
+    ).toBeDisabled();
   });
 
   it("fetches with the page limit", async () => {
@@ -71,7 +89,7 @@ describe("StationsPage (M2-G-38 list)", () => {
     expect(listStations).toHaveBeenCalledWith({ limit: 200 });
   });
 
-  it("renders one row per station with ICAO, name, runway, source", async () => {
+  it("renders one row per station with ICAO, name, runway, source, Grant Stn cell, View link", async () => {
     listStations.mockResolvedValueOnce({
       items: [
         makeStation({}),
@@ -96,6 +114,16 @@ describe("StationsPage (M2-G-38 list)", () => {
     ).toBeInTheDocument();
     expect(screen.getByText(/FAA API/i)).toBeInTheDocument();
     expect(screen.getByText(/seeded/i)).toBeInTheDocument();
+
+    // Each row has FAA / Override / Edit dimmed buttons + a live View link
+    expect(screen.getAllByRole("button", { name: /↻ faa/i }).length).toBe(2);
+    expect(
+      screen.getAllByRole("button", { name: /✎ override/i }).length,
+    ).toBe(2);
+    expect(screen.getAllByRole("button", { name: /^edit$/i }).length).toBe(
+      2,
+    );
+
     const viewLinks = screen.getAllByRole("link", { name: /view/i });
     expect(viewLinks[0]).toHaveAttribute("href", "/stations/s-1");
     expect(viewLinks[1]).toHaveAttribute("href", "/stations/s-2");
@@ -126,15 +154,15 @@ describe("StationsPage (M2-G-38 list)", () => {
     expect(screen.getByText(/^caution$/i)).toBeInTheDocument();
   });
 
-  it("renders the open-issue chip when count > 0", async () => {
+  it("renders the YES reporting chip when the station reports", async () => {
     listStations.mockResolvedValueOnce({
-      items: [makeStation({ open_issue_count: 3 })],
+      items: [makeStation({ has_reporting_function: true })],
       total: 1,
     });
 
     await renderPage();
 
-    expect(screen.getByText(/3 open/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/^yes$/i).length).toBeGreaterThanOrEqual(1);
   });
 
   it("renders the empty state when there are no stations", async () => {
@@ -142,7 +170,9 @@ describe("StationsPage (M2-G-38 list)", () => {
 
     await renderPage();
 
-    expect(screen.getByText(/no stations yet/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/no stations yet\. add your first station above\./i),
+    ).toBeInTheDocument();
   });
 
   it("renders the session-expired alert on 401", async () => {
