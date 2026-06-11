@@ -39,6 +39,7 @@ export interface ModuleEntry {
 
 export type DepartmentId =
   | "operations"
+  | "ground-ops"
   | "maintenance"
   | "crew"
   | "safety"
@@ -147,6 +148,24 @@ export const DEPARTMENTS: Department[] = [
       { id: "ops-brief",              label: "Ops Brief",   status: "m4", department: "admin", accent: "purple" },
       { id: "ai-query",               label: "AI Query",    status: "m4", department: "admin", accent: "purple" },
       { id: "users",                  label: "Users",       status: "m4", department: "admin", pushRight: true },
+    ],
+  },
+  {
+    id: "ground-ops",
+    label: "Ground Ops",
+    status: "m2",
+    /**
+     * Mirrors legacy `templates/ground_ops/hub.html` — top-level dept for
+     * Stations, Equipment (GSE), Fuel, and Ramp. Stations is live (M2-G-38);
+     * the rest land as later M2 stories.
+     */
+    pathPrefixes: ["/ground-ops", "/stations", "/gse", "/fuel", "/ramper"],
+    children: [
+      { id: "ground-ops-hub", label: "Hub", href: "/ground-ops", status: "live", department: "ground-ops" },
+      { id: "stations",       label: "Stations", href: "/stations", status: "live", department: "ground-ops" },
+      { id: "gse",            label: "Equipment", status: "m2", department: "ground-ops" },
+      { id: "fuel",           label: "Fuel", status: "m2", department: "ground-ops" },
+      { id: "ramper",         label: "Ramper", status: "m2", department: "ground-ops" },
     ],
   },
   {
