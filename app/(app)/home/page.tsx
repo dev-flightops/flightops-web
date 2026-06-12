@@ -1,4 +1,5 @@
 import { auth } from "@/auth";
+import { ActiveAlertsPanel } from "@/components/home/active-alerts-panel";
 import {
   HOME_QUICK_LINKS,
   QuickLinks,
@@ -9,6 +10,23 @@ import { StatusStrip, type StatusItem } from "@/components/home/status-strip";
 import { listMyTenants } from "@/lib/api/auth";
 import { getFlightStats } from "@/lib/api/ops";
 import { currentGreeting, firstNameFrom } from "@/lib/greeting";
+
+/**
+ * Roles permitted to see the Active Alerts panel per the Home Page
+ * spec, Component 5: Super Admin, Director of Operations, Chief Pilot,
+ * Dispatcher, Safety Officer. Other roles get the standard tile grid
+ * without the alerts section.
+ */
+const ALERT_VIEWING_ROLES = new Set([
+  "super_admin",
+  "director_of_operations",
+  "chief_pilot",
+  "dispatcher",
+  "safety_officer",
+  // The demo user comes through as "admin" in the seeded data; treat
+  // that as the SA equivalent so the panel is visible in QA.
+  "admin",
+]);
 
 /**
  * Home page — pixel-match for `dispatch-platform-main/templates/home.html`.
@@ -45,6 +63,10 @@ export default async function HomePage() {
     firstNameFrom(session?.user?.name) || firstNameFrom(userEmail.split("@")[0]);
   const greeting = currentGreeting();
 
+  const sessionRoles =
+    (session as unknown as { roles?: string[] } | null)?.roles ?? [];
+  const canSeeAlerts = sessionRoles.some((r) => ALERT_VIEWING_ROLES.has(r));
+
   const onGround = stats ? stats.today.scheduled + stats.today.released : 0;
   const acftHold = stats
     ? Math.max(0, stats.aircraft_total - stats.aircraft_active)
@@ -74,6 +96,8 @@ export default async function HomePage() {
       </div>
 
       <StatusStrip items={statusItems} />
+
+      {canSeeAlerts && <ActiveAlertsPanel />}
 
       {/* Module grid */}
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
