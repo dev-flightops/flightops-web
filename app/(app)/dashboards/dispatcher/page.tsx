@@ -4,6 +4,8 @@ import { AlertList } from "@/components/dashboards/alert-list";
 import { DashboardNav } from "@/components/dashboards/dashboard-nav";
 import { StatTile } from "@/components/dashboards/stat-tile";
 import { listAircraft, listFlights, getFlightStats } from "@/lib/api/ops";
+import { loadOperationalSnapshot } from "@/lib/dashboards/operational-snapshot";
+import { snapshotAlertsToList } from "@/lib/dashboards/snapshot-to-alerts";
 import type { AircraftListItem, FlightListItem } from "@/lib/api/types";
 
 function todayUtc(): string {
@@ -12,16 +14,27 @@ function todayUtc(): string {
 
 export default async function DispatcherDashboardPage() {
   const today = todayUtc();
-  const [stats, todaysFlights, pendingResult, aircraftResult] = await Promise.all([
-    getFlightStats().catch(() => null),
-    listFlights({ onDate: today }).catch(() => ({ items: [], total: 0 })),
-    listFlights({ status: "scheduled", limit: 10 }).catch(() => ({ items: [], total: 0 })),
-    listAircraft().catch(() => ({ items: [], total: 0 })),
-  ]);
+  const [stats, todaysFlights, pendingResult, aircraftResult, snapshot] =
+    await Promise.all([
+      getFlightStats().catch(() => null),
+      listFlights({ onDate: today }).catch(() => ({ items: [], total: 0 })),
+      listFlights({ status: "scheduled", limit: 10 }).catch(() => ({ items: [], total: 0 })),
+      listAircraft().catch(() => ({ items: [], total: 0 })),
+      loadOperationalSnapshot(),
+    ]);
 
   const scheduledToday = stats?.today.scheduled ?? 0;
-  const fleetActive = stats?.aircraft_active ?? 0;
-  const fleetTotal = stats?.aircraft_total ?? 0;
+  // Real airworthiness rollup first; fall back to ops aircraft_active.
+  const fleetTotal =
+    snapshot.fleetTotal > 0 ? snapshot.fleetTotal : stats?.aircraft_total ?? 0;
+  const fleetActive =
+    snapshot.fleetTotal > 0
+      ? snapshot.fleetAirworthy
+      : stats?.aircraft_active ?? 0;
+  const fleetGrounded =
+    snapshot.fleetTotal > 0
+      ? snapshot.fleetGrounded
+      : Math.max(0, fleetTotal - fleetActive);
 
   return (
     <div className="container py-6">
@@ -54,10 +67,10 @@ export default async function DispatcherDashboardPage() {
           href="/dispatch/"
         />
         <StatTile
-          value={fleetActive}
+          value={fleetGrounded}
           label="Fleet Hold"
           sub={`${fleetActive}/${fleetTotal} avail`}
-          tone="muted"
+          tone={fleetGrounded > 0 ? "orange" : "muted"}
         />
         <StatTile
           value={0}
@@ -74,12 +87,12 @@ export default async function DispatcherDashboardPage() {
             Active Alerts
           </h2>
           <span className="text-[0.65rem] text-muted-foreground/70">
-            Live feed · alerts-service M3
+            {snapshot.alerts.length} live · 7 more land with M3 services
           </span>
         </div>
         <AlertList
-          alerts={[]}
-          emptyHint="No active alerts. Live alerts (overdue flights, expired currency, NOTAM changes) light up here once the alerts-service ships in M3."
+          alerts={snapshotAlertsToList(snapshot.alerts)}
+          emptyHint="No active alerts from the wired sources. Overdue flights, MELs about to expire, and grounded aircraft show up here; expired currency / NOTAM alerts land with M3 services."
         />
       </section>
 

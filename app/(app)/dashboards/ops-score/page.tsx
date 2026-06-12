@@ -4,14 +4,25 @@ import { DashboardNav } from "@/components/dashboards/dashboard-nav";
 import { PillarBar } from "@/components/dashboards/pillar-bar";
 import { ScorePill } from "@/components/dashboards/score-pill";
 import { getFlightStats } from "@/lib/api/ops";
+import { loadOperationalSnapshot } from "@/lib/dashboards/operational-snapshot";
 
 export default async function OpsScoreDashboardPage() {
-  const stats = await getFlightStats().catch(() => null);
-  const fleetTotal = stats?.aircraft_total ?? 0;
-  const fleetActive = stats?.aircraft_active ?? 0;
+  const [stats, snapshot] = await Promise.all([
+    getFlightStats().catch(() => null),
+    loadOperationalSnapshot(),
+  ]);
+  // Per spec, Fleet Airworthiness is worth 15 points (not 20). Pull from
+  // the maintenance-service airworthiness rollup when available so the
+  // score reflects real blocking-issue counts, not just is_active.
+  const fleetTotal =
+    snapshot.fleetTotal > 0 ? snapshot.fleetTotal : stats?.aircraft_total ?? 0;
+  const fleetActive =
+    snapshot.fleetTotal > 0
+      ? snapshot.fleetAirworthy
+      : stats?.aircraft_active ?? 0;
   const fleetPillar =
-    fleetTotal > 0 ? Math.round((fleetActive / fleetTotal) * 200) / 10 : 0;
-  const opsScore = fleetPillar; // sum of 0+0+0+fleetPillar+0
+    fleetTotal > 0 ? Math.round((fleetActive / fleetTotal) * 150) / 10 : 0;
+  const opsScore = fleetPillar; // sum of 0+0+0+fleetPillar+0; remaining pillars wait on crew + flight-following + safety services
 
   const today = new Date().toISOString().slice(0, 10);
 

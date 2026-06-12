@@ -4,6 +4,11 @@ import { AlertList } from "@/components/dashboards/alert-list";
 import { DashboardNav } from "@/components/dashboards/dashboard-nav";
 import { StatTile } from "@/components/dashboards/stat-tile";
 import { listFlights } from "@/lib/api/ops";
+import {
+  loadOperationalSnapshot,
+  scopeSnapshotToIcao,
+} from "@/lib/dashboards/operational-snapshot";
+import { snapshotAlertsToList } from "@/lib/dashboards/snapshot-to-alerts";
 import type { FlightListItem } from "@/lib/api/types";
 
 function todayUtc(): string {
@@ -21,9 +26,13 @@ export default async function StationDashboardPage({
 }) {
   const { station: requestedStation } = await searchParams;
   const today = todayUtc();
-  const todaysFlights = await listFlights({ onDate: today, limit: 200 }).catch(
-    () => ({ items: [], total: 0 }),
-  );
+  const [todaysFlights, snapshot] = await Promise.all([
+    listFlights({ onDate: today, limit: 200 }).catch(() => ({
+      items: [],
+      total: 0,
+    })),
+    loadOperationalSnapshot(),
+  ]);
 
   // Collect unique ICAOs from origin + destination across today's flights
   const stations = new Set<string>();
@@ -35,6 +44,11 @@ export default async function StationDashboardPage({
   const station = requestedStation && stations.has(requestedStation)
     ? requestedStation
     : (stationList[0] ?? "PADU");
+
+  // Scope live alerts to this base — overdue flights at this origin
+  // surface, MEL / grounded aircraft alerts (which aren't ICAO-scoped)
+  // pass through so dispatchers see them on every base view.
+  const scopedSnapshot = scopeSnapshotToIcao(snapshot, station);
 
   const inbound = todaysFlights.items.filter((f) => f.destination === station);
   const outbound = todaysFlights.items.filter((f) => f.origin === station);
@@ -89,12 +103,12 @@ export default async function StationDashboardPage({
               Active Alerts
             </h2>
             <span className="text-[0.65rem] text-muted-foreground/70">
-              alerts-service · M3
+              {scopedSnapshot.alerts.length} live · NOTAM / weather alerts land with M3
             </span>
           </div>
           <AlertList
-            alerts={[]}
-            emptyHint={`No active alerts for ${station}. Station-scoped alerts (NOTAMs, weather, ramp issues) populate here once the alerts-service ships in M3.`}
+            alerts={snapshotAlertsToList(scopedSnapshot.alerts)}
+            emptyHint={`No active alerts scoped to ${station}. Station-only alerts (NOTAMs, weather, ramp issues) populate here once their services ship.`}
           />
         </section>
       </div>

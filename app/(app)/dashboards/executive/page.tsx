@@ -7,19 +7,34 @@ import { ScorePill } from "@/components/dashboards/score-pill";
 import { StatTile } from "@/components/dashboards/stat-tile";
 import { listMyTenants } from "@/lib/api/auth";
 import { getFlightStats } from "@/lib/api/ops";
+import { loadOperationalSnapshot } from "@/lib/dashboards/operational-snapshot";
+import { snapshotAlertsToList } from "@/lib/dashboards/snapshot-to-alerts";
 
 export default async function ExecutiveDashboardPage() {
-  const [stats, tenantsResponse] = await Promise.all([
+  const [stats, tenantsResponse, snapshot] = await Promise.all([
     getFlightStats().catch(() => null),
     listMyTenants().catch(() => ({ tenants: [] })),
+    loadOperationalSnapshot(),
   ]);
 
   const todayCount = stats?.today.total ?? 0;
   const todayReleased = stats?.today.released ?? 0;
   const completedPct =
     todayCount > 0 ? Math.round((todayReleased / todayCount) * 1000) / 10 : 0;
-  const fleetTotal = stats?.aircraft_total ?? 0;
-  const fleetActive = stats?.aircraft_active ?? 0;
+  // Prefer the real airworthiness rollup from maintenance-service when
+  // it's available — that's `is_active && is_airworthy` per aircraft.
+  // Fall back to ops `aircraft_active` (just `is_active`) if maintenance
+  // is unreachable so the tile never blanks.
+  const fleetTotal =
+    snapshot.fleetTotal > 0 ? snapshot.fleetTotal : stats?.aircraft_total ?? 0;
+  const fleetActive =
+    snapshot.fleetTotal > 0
+      ? snapshot.fleetAirworthy
+      : stats?.aircraft_active ?? 0;
+  const fleetGrounded =
+    snapshot.fleetTotal > 0
+      ? snapshot.fleetGrounded
+      : Math.max(0, fleetTotal - fleetActive);
 
   // Pillar scoring — only Fleet Airworthiness is computable from M1 data.
   // The other pillars stay at 0 because their underlying services (flight-
@@ -50,7 +65,12 @@ export default async function ExecutiveDashboardPage() {
 
       {/* Row 1 — 5-col headline stat tiles */}
       <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-        <StatTile value={0} label="Aircraft Airborne" tone="muted" />
+        <StatTile
+          value={snapshot.airborneCount}
+          label="Aircraft Airborne"
+          sub={`${snapshot.releasedCount} released today`}
+          tone={snapshot.airborneCount > 0 ? "green" : "muted"}
+        />
         <StatTile
           value={todayCount}
           label="Flights Today"
@@ -60,7 +80,7 @@ export default async function ExecutiveDashboardPage() {
         <StatTile
           value={fleetTotal > 0 ? `${fleetActive}/${fleetTotal}` : "0/0"}
           label="Fleet Airworthy"
-          sub={`${fleetTotal - fleetActive} on hold`}
+          sub={`${fleetGrounded} on hold`}
           tone={fleetActive > 0 ? "green" : "muted"}
         />
         <StatTile
@@ -100,12 +120,12 @@ export default async function ExecutiveDashboardPage() {
               Active Alerts
             </h2>
             <span className="text-[0.65rem] text-muted-foreground/70">
-              alerts-service · M3
+              {snapshot.alerts.length} live · 7 more land with M3 services
             </span>
           </div>
           <AlertList
-            alerts={[]}
-            emptyHint="No active alerts. Live alerts (medical certificate expirations, NOTAM changes, overdue flights) populate here once the alerts-service ships in M3."
+            alerts={snapshotAlertsToList(snapshot.alerts)}
+            emptyHint="No active alerts from the wired sources. Pilot currency / NOTAM / safety report alerts populate here once their services ship in M3."
           />
         </section>
 
