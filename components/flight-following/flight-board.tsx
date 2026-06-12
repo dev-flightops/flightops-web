@@ -100,9 +100,12 @@ function FlightBoardRow({ flight }: { flight: BoardFlightItem }) {
           <span className="text-muted-foreground">→</span> {flight.destination}
         </div>
         {hasPax && (
-          <div className="text-[0.65rem] text-muted-foreground">
-            {flight.pax_count} pax
-            {flight.cargo_lbs > 0 && ` · ${flight.cargo_lbs} lbs`}
+          <div className="text-[0.65rem]">
+            <LoadIndicator
+              pax={flight.pax_count}
+              seats={flight.aircraft.seats}
+              cargoLbs={flight.cargo_lbs}
+            />
           </div>
         )}
       </td>
@@ -123,8 +126,15 @@ function FlightBoardRow({ flight }: { flight: BoardFlightItem }) {
           {flight.is_overdue && <OverdueBadge />}
         </div>
       </td>
-      <td className="px-3 py-2.5 text-muted-foreground">
-        {flight.last_contact_at ? formatZulu(flight.last_contact_at) : "—"}
+      <td className="px-3 py-2.5">
+        <LastContactCell
+          iso={flight.last_contact_at}
+          airborne={
+            flight.status === "released" &&
+            flight.actual_departure_at !== null &&
+            flight.actual_arrival_at === null
+          }
+        />
       </td>
       <td className="whitespace-nowrap px-3 py-2.5 text-right">
         {flight.status === "released" && flight.actual_departure_at === null && (
@@ -148,6 +158,65 @@ function FlightBoardRow({ flight }: { flight: BoardFlightItem }) {
       </td>
     </tr>
   );
+}
+
+/**
+ * Load indicator — "8/9" for pax-against-seats per spec, plus cargo
+ * lbs when present. Red when pax > seats (over-capacity), default
+ * muted otherwise. Cargo-only flights show just the weight.
+ */
+function LoadIndicator({
+  pax,
+  seats,
+  cargoLbs,
+}: {
+  pax: number;
+  seats: number;
+  cargoLbs: number;
+}) {
+  const overCapacity = pax > seats && seats > 0;
+  return (
+    <span
+      className={
+        overCapacity ? "font-semibold text-status-red" : "text-muted-foreground"
+      }
+    >
+      {pax > 0 && (
+        <>
+          <span className="font-mono">
+            {pax}/{seats > 0 ? seats : "?"}
+          </span>{" "}
+          pax
+        </>
+      )}
+      {pax > 0 && cargoLbs > 0 && <span className="mx-1">·</span>}
+      {cargoLbs > 0 && <span>{cargoLbs.toLocaleString()} lbs</span>}
+    </span>
+  );
+}
+
+/**
+ * Last Contact cell — colour-coded by age per spec:
+ *   <10 min       grey
+ *   10–20 min     yellow
+ *   >20 min       red (only when the flight is airborne)
+ * On-ground or no contact yet → muted dash.
+ */
+function LastContactCell({
+  iso,
+  airborne,
+}: {
+  iso: string | null;
+  airborne: boolean;
+}) {
+  if (!iso) {
+    return <span className="text-muted-foreground">—</span>;
+  }
+  const ageMin = (Date.now() - new Date(iso).getTime()) / 60_000;
+  let tone = "text-muted-foreground";
+  if (airborne && ageMin > 20) tone = "font-semibold text-status-red";
+  else if (ageMin >= 10) tone = "text-status-yellow";
+  return <span className={`font-mono ${tone}`}>{formatZulu(iso)}</span>;
 }
 
 /** ETD/ATD or ETA/ATA cell. Shows the scheduled time muted; when an

@@ -1,10 +1,13 @@
+import { BoardFilters } from "@/components/flight-following/board-filters";
 import { DisplayToggle } from "@/components/flight-following/display-toggle";
 import { FilterTabs } from "@/components/flight-following/filter-tabs";
 import { FleetMapLoader } from "@/components/flight-following/fleet-map-loader";
 import { FlightBoard } from "@/components/flight-following/flight-board";
+import { ManualRefreshButton } from "@/components/flight-following/manual-refresh-button";
 import { PageHeader } from "@/components/flight-following/page-header";
 import { SourceLegend } from "@/components/flight-following/source-legend";
 import { SplitView } from "@/components/flight-following/split-view";
+import { SummaryStatsBar } from "@/components/flight-following/summary-stats-bar";
 import {
   VIEW_HINTS,
   parseDisplay,
@@ -19,8 +22,58 @@ import {
 import type {
   BoardFlightItem,
   BoardView,
+  FlightStatus,
   PositionResponse,
 } from "@/lib/api/types";
+
+const ALLOWED_STATUSES: ReadonlySet<FlightStatus> = new Set([
+  "scheduled",
+  "released",
+  "cancelled",
+  "completed",
+]);
+
+function parseStatuses(raw: string | undefined): FlightStatus[] {
+  if (!raw) return [];
+  return [
+    ...new Set(
+      raw
+        .split(",")
+        .map((s) => s.trim().toLowerCase() as FlightStatus)
+        .filter((s) => ALLOWED_STATUSES.has(s)),
+    ),
+  ];
+}
+
+function applyClientFilters(
+  flights: BoardFlightItem[],
+  q: string,
+  statuses: FlightStatus[],
+  base: string,
+): BoardFlightItem[] {
+  const qNorm = q.trim().toLowerCase();
+  const baseNorm = base.trim().toUpperCase();
+  return flights.filter((f) => {
+    if (statuses.length > 0 && !statuses.includes(f.status)) return false;
+    if (baseNorm && f.origin !== baseNorm && f.destination !== baseNorm) {
+      return false;
+    }
+    if (qNorm) {
+      const hay = [
+        f.flight_number,
+        f.aircraft.tail_number,
+        f.aircraft.model,
+        f.pic_name ?? "",
+        f.origin,
+        f.destination,
+      ]
+        .join(" ")
+        .toLowerCase();
+      if (!hay.includes(qNorm)) return false;
+    }
+    return true;
+  });
+}
 
 /**
  * /flight-following — live ops board.
@@ -42,11 +95,26 @@ import type {
 export default async function FlightFollowingPage({
   searchParams,
 }: {
-  searchParams: Promise<{ view?: string; display?: string }>;
+  searchParams: Promise<{
+    view?: string;
+    display?: string;
+    q?: string;
+    statuses?: string;
+    base?: string;
+  }>;
 }) {
-  const { view: viewParam, display: displayParam } = await searchParams;
+  const {
+    view: viewParam,
+    display: displayParam,
+    q: qParam,
+    statuses: statusesParam,
+    base: baseParam,
+  } = await searchParams;
   const view = parseView(viewParam);
   const display = parseDisplay(displayParam);
+  const q = qParam ?? "";
+  const statuses = parseStatuses(statusesParam);
+  const base = (baseParam ?? "").trim().toUpperCase();
 
   const needsPositions = display === "map" || display === "split";
   const needsBoard = display === "list" || display === "split";
@@ -72,18 +140,42 @@ export default async function FlightFollowingPage({
     }
   }
 
+  const filteredBoard = applyClientFilters(board, q, statuses, base);
+  const baseOptions = Array.from(
+    new Set(board.flatMap((f) => [f.origin, f.destination])),
+  )
+    .filter(Boolean)
+    .sort();
+
   return (
     <div className="mx-auto flex min-h-[calc(100vh-9rem)] max-w-7xl flex-col px-4 py-6 sm:px-6">
       <PageHeader />
 
       <div className="mb-4 flex items-center justify-between gap-4">
         <FilterTabs activeView={view} display={display} />
-        <DisplayToggle view={view} activeDisplay={display} />
+        <div className="flex items-center gap-2">
+          <ManualRefreshButton />
+          <DisplayToggle view={view} activeDisplay={display} />
+        </div>
       </div>
+
+      {needsBoard && !boardError && (
+        <>
+          <SummaryStatsBar flights={board} />
+          {display === "list" && (
+            <BoardFilters
+              bases={baseOptions}
+              q={q}
+              statuses={statuses}
+              base={base}
+            />
+          )}
+        </>
+      )}
 
       <div className="min-h-0 flex-1">
         {display === "list" && (
-          <BoardOrError flights={board} loadError={boardError} />
+          <BoardOrError flights={filteredBoard} loadError={boardError} />
         )}
         {display === "split" && (
           <SplitOrError

@@ -40,6 +40,17 @@ vi.mock("@/components/flight-following/auto-clock", () => ({
   AutoClock: () => <span data-testid="auto-clock">12:00z</span>,
 }));
 
+// BoardFilters + ManualRefreshButton are client components that pull
+// useRouter / useSearchParams from next/navigation, which isn't
+// mounted in jsdom. Stub them as passive markers — their behaviours
+// are exercised manually until dedicated tests land.
+vi.mock("@/components/flight-following/board-filters", () => ({
+  BoardFilters: () => <div data-testid="board-filters" />,
+}));
+vi.mock("@/components/flight-following/manual-refresh-button", () => ({
+  ManualRefreshButton: () => <button type="button">Refresh</button>,
+}));
+
 // CheckInButton uses next/navigation's useRouter, which isn't mounted
 // in jsdom. Stub it as a passive marker — the dedicated tests in
 // check-in-action.test.ts cover the action behaviour.
@@ -232,11 +243,15 @@ describe("FlightFollowingPage list view (M2-G-11)", () => {
 
     expect(screen.getByText("GV303")).toBeInTheDocument();
     expect(screen.getByText("GV310")).toBeInTheDocument();
-    // released → AIRBORNE badge (exact match — the view hint copy under
-    // the board also contains the lowercase word "airborne")
-    expect(screen.getByText(/^airborne$/i)).toBeInTheDocument();
-    // scheduled → PLANNED badge
-    expect(screen.getByText(/^planned$/i)).toBeInTheDocument();
+    // "Airborne" appears in two places now: the SummaryStatsBar chip
+    // and the per-row status badge. We expect at least one match.
+    expect(
+      screen.getAllByText(/^airborne$/i).length,
+    ).toBeGreaterThanOrEqual(1);
+    // "Planned" also appears in both the stats chip and the row badge.
+    expect(
+      screen.getAllByText(/^planned$/i).length,
+    ).toBeGreaterThanOrEqual(1);
     // last_contact_at on the released flight rendered as Zulu
     expect(screen.getByText(/^21:00z$/)).toBeInTheDocument();
   });
@@ -256,7 +271,9 @@ describe("FlightFollowingPage list view (M2-G-11)", () => {
 
     await renderPage({ display: "list" });
 
-    expect(screen.getByText(/^airborne$/i)).toBeInTheDocument();
+    expect(
+      screen.getAllByText(/^airborne$/i).length,
+    ).toBeGreaterThanOrEqual(1);
     expect(screen.getByText(/^overdue$/i)).toBeInTheDocument();
   });
 
