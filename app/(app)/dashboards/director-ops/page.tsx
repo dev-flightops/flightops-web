@@ -5,6 +5,8 @@ import { DashboardNav } from "@/components/dashboards/dashboard-nav";
 import { ScorePill } from "@/components/dashboards/score-pill";
 import { StatTile } from "@/components/dashboards/stat-tile";
 import { listFlights, getFlightStats } from "@/lib/api/ops";
+import { loadOperationalSnapshot } from "@/lib/dashboards/operational-snapshot";
+import { snapshotAlertsToList } from "@/lib/dashboards/snapshot-to-alerts";
 import type { FlightListItem } from "@/lib/api/types";
 
 function todayUtc(): string {
@@ -13,10 +15,11 @@ function todayUtc(): string {
 
 export default async function DirectorOpsDashboardPage() {
   const today = todayUtc();
-  const [stats, todaysFlights, pendingResult] = await Promise.all([
+  const [stats, todaysFlights, pendingResult, snapshot] = await Promise.all([
     getFlightStats().catch(() => null),
     listFlights({ onDate: today }).catch(() => ({ items: [], total: 0 })),
     listFlights({ status: "scheduled", limit: 10 }).catch(() => ({ items: [], total: 0 })),
+    loadOperationalSnapshot(),
   ]);
 
   const todayCounts = stats?.today;
@@ -26,9 +29,18 @@ export default async function DirectorOpsDashboardPage() {
   const cancelledToday = todayCounts?.cancelled ?? 0;
   const completedPct =
     totalToday > 0 ? Math.round((releasedToday / totalToday) * 1000) / 10 : 0;
-  const fleetTotal = stats?.aircraft_total ?? 0;
-  const fleetActive = stats?.aircraft_active ?? 0;
-  const fleetHold = fleetTotal - fleetActive;
+  // Prefer real airworthiness rollup; fall back to ops aircraft_active
+  // if maintenance is down.
+  const fleetTotal =
+    snapshot.fleetTotal > 0 ? snapshot.fleetTotal : stats?.aircraft_total ?? 0;
+  const fleetActive =
+    snapshot.fleetTotal > 0
+      ? snapshot.fleetAirworthy
+      : stats?.aircraft_active ?? 0;
+  const fleetHold =
+    snapshot.fleetTotal > 0
+      ? snapshot.fleetGrounded
+      : Math.max(0, fleetTotal - fleetActive);
   const opsScore = fleetTotal > 0 ? Math.round((fleetActive / fleetTotal) * 200) / 10 : 0;
 
   return (
@@ -81,8 +93,8 @@ export default async function DirectorOpsDashboardPage() {
             Active Alerts
           </h2>
           <AlertList
-            alerts={[]}
-            emptyHint="No active alerts. Live alerts (overdue flights, MEL changes, NOTAM updates) populate here once the alerts-service ships in M3."
+            alerts={snapshotAlertsToList(snapshot.alerts)}
+            emptyHint="No active alerts from the wired sources. NOTAM / compliance / safety alerts populate here once their services ship in M3."
           />
         </section>
 

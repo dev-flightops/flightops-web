@@ -1,106 +1,30 @@
 import Link from "next/link";
 
-import { getFlightBoard } from "@/lib/api/flight-following";
-import { getFleetAirworthiness, listMelItems } from "@/lib/api/maintenance";
+import {
+  loadOperationalSnapshot,
+  type OperationalAlert,
+} from "@/lib/dashboards/operational-snapshot";
 
 /**
  * Active Alerts panel — Home Page spec, Component 5.
  *
- * The spec lists 10 alert types across red / yellow severity, sorted
- * red first. Three have data we already collect today; the other
- * seven need services we haven't built (crew, safety, fuel-quality,
- * load-teams). We render the three live ones and surface a small
- * caption explaining the rest land with their services.
+ * Data source is the shared loadOperationalSnapshot(), which is also
+ * consumed by the Executive / DO / Dispatcher / Station dashboards.
+ * One source = no drift between Home and the dashboards.
  *
- *   Live today:
- *     RED   - Aircraft grounded  (fleet airworthiness blocking_count > 0)
- *     RED   - Flight overdue     (board.is_overdue == true)
- *     YELLOW - MEL expiring <2d  (mel_item.due_at within 48h)
+ * The spec lists 10 alert types; three of them are wired today
+ * (aircraft grounded / flight overdue / MEL expiring <2d). The other
+ * seven need services we haven't built — the caption notes that.
  *
- *   Pending:
- *     RED    - Pilot non-current             (crew-service, M3)
- *     RED    - Aircraft on fuel hold         (fuel quality test, M3)
- *     RED    - Safety report at critical     (safety-service, M3)
- *     YELLOW - Pilot in grace month          (crew-service, M3)
- *     YELLOW - Corrective action overdue     (safety-service, M3)
- *     YELLOW - No load team assigned         (ground load-teams, M2-M-25d)
- *     YELLOW - Drug test result pending      (crew-service, M3)
- *
- * Spec roles: SA, DO, CP, DS, SO only. The role check happens at the
- * call site in app/(app)/home/page.tsx — this component renders
- * whatever it's handed.
- *
- * Spec says alerts cache for 60s. We rely on Next's default fetch
- * cache (no-store on the underlying apiFetch today, so callers get
- * fresh data per render). When traffic warrants we'll move to a
- * Redis-backed snapshot.
+ * Role gate happens at the call site in app/(app)/home/page.tsx.
  */
 export async function ActiveAlertsPanel() {
-  const [fleet, openMels, board] = await Promise.all([
-    getFleetAirworthiness().catch(() => null),
-    listMelItems({ status: "open" }).catch(() => null),
-    getFlightBoard("today").catch(() => null),
-  ]);
+  const snap = await loadOperationalSnapshot();
 
-  const alerts: Alert[] = [];
-  const now = Date.now();
-  const TWO_DAYS_MS = 2 * 24 * 60 * 60 * 1000;
+  return <AlertsList alerts={snap.alerts} />;
+}
 
-  // Red — Aircraft grounded (blocking_count > 0)
-  if (fleet) {
-    for (const row of fleet.items) {
-      if (row.blocking_count > 0) {
-        alerts.push({
-          id: `grounded-${row.aircraft.id}`,
-          severity: "red",
-          title: `Aircraft grounded — ${row.aircraft.tail_number}`,
-          detail: `${row.blocking_count} blocking issue${
-            row.blocking_count === 1 ? "" : "s"
-          } open. Cannot dispatch.`,
-          href: `/maintenance/aircraft/${row.aircraft.id}`,
-        });
-      }
-    }
-  }
-
-  // Red — Flight overdue
-  if (board) {
-    for (const row of board.items) {
-      if (row.is_overdue) {
-        alerts.push({
-          id: `overdue-${row.id}`,
-          severity: "red",
-          title: `Flight overdue — ${row.flight_number}`,
-          detail: `${row.aircraft.tail_number} · ${row.origin} → ${row.destination} · no contact 20+ min`,
-          href: "/flight-following",
-        });
-      }
-    }
-  }
-
-  // Yellow — MEL expiring within 2 days
-  if (openMels) {
-    for (const mel of openMels.items) {
-      const dueMs = new Date(mel.due_at).getTime();
-      const remainingMs = dueMs - now;
-      if (remainingMs > 0 && remainingMs < TWO_DAYS_MS) {
-        const hours = Math.floor(remainingMs / (60 * 60 * 1000));
-        alerts.push({
-          id: `mel-soon-${mel.id}`,
-          severity: "yellow",
-          title: `MEL expiring — ${mel.aircraft.tail_number} · ATA ${mel.ata_chapter}`,
-          detail: `${hours}h remaining · ${mel.description}`,
-          href: `/maintenance/aircraft/${mel.aircraft.id}`,
-        });
-      }
-    }
-  }
-
-  // Sort: red before yellow, stable within each band.
-  alerts.sort((a, b) =>
-    a.severity === b.severity ? 0 : a.severity === "red" ? -1 : 1,
-  );
-
+function AlertsList({ alerts }: { alerts: OperationalAlert[] }) {
   return (
     <section className="mb-6 rounded-lg border border-border bg-card p-4">
       <header className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
@@ -153,12 +77,4 @@ export async function ActiveAlertsPanel() {
       )}
     </section>
   );
-}
-
-interface Alert {
-  id: string;
-  severity: "red" | "yellow";
-  title: string;
-  detail: string;
-  href: string;
 }
