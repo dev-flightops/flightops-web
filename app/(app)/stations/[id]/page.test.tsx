@@ -30,6 +30,16 @@ vi.mock("@/lib/api/client", () => ({ ApiError: TestApiError }));
 vi.mock("@/lib/api/ground", () => ({ listStations, listStationIssues }));
 vi.mock("next/navigation", () => ({ notFound: notFoundSpy }));
 
+// New dialog components use React 19's useActionState which isn't
+// available in jsdom. Stub them as passive markers — their actions
+// are exercised by the manual QA path.
+vi.mock("@/components/stations/report-issue-dialog", () => ({
+  ReportIssueDialog: () => <button type="button">+ Report Issue</button>,
+}));
+vi.mock("@/components/stations/resolve-issue-button", () => ({
+  ResolveIssueButton: () => <button type="button">Resolve</button>,
+}));
+
 import StationDetailPage from "./page";
 
 function makeStation(overrides: Partial<StationListItem> = {}): StationListItem {

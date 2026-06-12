@@ -45,6 +45,12 @@ export default async function StationsPage() {
             station-issue tracker.
           </p>
         </div>
+        <Link
+          href="/stations/new"
+          className="rounded-md border border-status-blue bg-status-blue/15 px-3 py-1.5 text-xs font-semibold text-status-blue hover:bg-status-blue/20"
+        >
+          + Add Station
+        </Link>
       </header>
 
       {loadError ? (

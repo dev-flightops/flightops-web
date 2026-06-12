@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { ReportIssueDialog } from "@/components/stations/report-issue-dialog";
+import { ResolveIssueButton } from "@/components/stations/resolve-issue-button";
 import { ApiError } from "@/lib/api/client";
 import { listStationIssues, listStations } from "@/lib/api/ground";
 import type {
@@ -82,12 +84,15 @@ export default async function StationDetailPage({
       <Header station={station} />
       <Meta station={station} />
       <IssuesSection
+        stationId={station.id}
         title={`Open issues (${openIssues.length})`}
         issues={openIssues}
-        emptyHint="No open issues. Use the API to submit one until M2-G-38b ships the form."
+        emptyHint="No open issues at this station."
+        showResolve
       />
       {resolvedIssues.length > 0 && (
         <IssuesSection
+          stationId={station.id}
           title={`Recently resolved (${resolvedIssues.length})`}
           issues={resolvedIssues}
           emptyHint=""
@@ -123,15 +128,21 @@ function Header({ station }: { station: StationListItem }) {
           <p className="mt-1 text-sm text-muted-foreground">{location}</p>
         )}
       </div>
-      {station.has_reporting_function ? (
-        <span className="rounded-md border border-status-green/40 bg-status-green/10 px-3 py-1 text-xs font-semibold text-status-green">
-          Reporting
-        </span>
-      ) : (
-        <span className="rounded-md border border-status-red/40 bg-status-red/10 px-3 py-1 text-xs font-semibold text-status-red">
-          Non-reporting
-        </span>
-      )}
+      <div className="flex items-center gap-2">
+        {station.has_reporting_function ? (
+          <span className="rounded-md border border-status-green/40 bg-status-green/10 px-3 py-1 text-xs font-semibold text-status-green">
+            Reporting
+          </span>
+        ) : (
+          <span className="rounded-md border border-status-red/40 bg-status-red/10 px-3 py-1 text-xs font-semibold text-status-red">
+            Non-reporting
+          </span>
+        )}
+        <ReportIssueDialog
+          stationId={station.id}
+          stationLabel={`${station.icao_code} · ${station.name}`}
+        />
+      </div>
     </div>
   );
 }
@@ -167,13 +178,17 @@ function Meta({ station }: { station: StationListItem }) {
 }
 
 function IssuesSection({
+  stationId,
   title,
   issues,
   emptyHint,
+  showResolve = false,
 }: {
+  stationId: string;
   title: string;
   issues: StationIssueResponse[];
   emptyHint: string;
+  showResolve?: boolean;
 }) {
   return (
     <section className="mb-4">
@@ -185,7 +200,12 @@ function IssuesSection({
       ) : (
         <ul className="space-y-2">
           {issues.map((issue) => (
-            <IssueRow key={issue.id} issue={issue} />
+            <IssueRow
+              key={issue.id}
+              stationId={stationId}
+              issue={issue}
+              showResolve={showResolve}
+            />
           ))}
         </ul>
       )}
@@ -193,7 +213,15 @@ function IssuesSection({
   );
 }
 
-function IssueRow({ issue }: { issue: StationIssueResponse }) {
+function IssueRow({
+  stationId,
+  issue,
+  showResolve,
+}: {
+  stationId: string;
+  issue: StationIssueResponse;
+  showResolve: boolean;
+}) {
   return (
     <li className="rounded-lg border border-border bg-card p-3">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
@@ -201,6 +229,13 @@ function IssueRow({ issue }: { issue: StationIssueResponse }) {
         <div className="flex items-center gap-2">
           <PriorityChip priority={issue.priority} />
           <StatusChip status={issue.status} />
+          {showResolve && (
+            <ResolveIssueButton
+              stationId={stationId}
+              issueId={issue.id}
+              issueTitle={issue.title}
+            />
+          )}
         </div>
       </div>
       <p className="mt-1 whitespace-pre-wrap text-xs text-muted-foreground">

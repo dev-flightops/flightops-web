@@ -1,6 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { ChangeStatusDialog } from "@/components/equipment/change-status-dialog";
+import { CompleteMaintenanceButton } from "@/components/equipment/complete-maintenance-button";
+import { ReportSquawkDialog } from "@/components/equipment/report-squawk-dialog";
+import { ResolveSquawkButton } from "@/components/equipment/resolve-squawk-button";
+import { ScheduleMaintenanceDialog } from "@/components/equipment/schedule-maintenance-dialog";
 import { ApiError } from "@/lib/api/client";
 import {
   getGseUnit,
@@ -85,14 +90,22 @@ export default async function EquipmentDetailPage({
       <BackLink />
       <Header unit={unit} />
       <Meta unit={unit} />
-      <MaintenanceSection items={maintenance} />
+      <MaintenanceSection
+        unitId={unit.id}
+        unitHours={unit.hours_total}
+        items={maintenance}
+      />
       <SquawksSection
+        unitId={unit.id}
         title={`Open squawks (${openSquawks.length})`}
         squawks={openSquawks}
-        emptyHint="No open squawks. Use the API to submit until M2-G-39b ships the form."
+        emptyHint="No open squawks on this unit."
+        showReportButton
+        showResolve
       />
       {resolvedSquawks.length > 0 && (
         <SquawksSection
+          unitId={unit.id}
           title={`Recently resolved (${resolvedSquawks.length})`}
           squawks={resolvedSquawks}
           emptyHint=""
@@ -140,7 +153,10 @@ function Header({ unit }: { unit: GSEUnitListItem }) {
           )}
         </p>
       </div>
-      <UnitStatusChip status={unit.status} size="lg" />
+      <div className="flex items-center gap-2">
+        <UnitStatusChip status={unit.status} size="lg" />
+        <ChangeStatusDialog unitId={unit.id} currentStatus={unit.status} />
+      </div>
     </div>
   );
 }
@@ -193,19 +209,26 @@ function Meta({ unit }: { unit: GSEUnitListItem }) {
 }
 
 function MaintenanceSection({
+  unitId,
+  unitHours,
   items,
 }: {
+  unitId: string;
+  unitHours: number;
   items: GSEMaintenanceItemResponse[];
 }) {
   return (
     <section className="mb-6">
-      <h2 className="mb-2 text-sm font-semibold text-foreground">
-        Scheduled maintenance ({items.length})
-      </h2>
+      <div className="mb-2 flex items-baseline justify-between">
+        <h2 className="text-sm font-semibold text-foreground">
+          Scheduled maintenance ({items.length})
+        </h2>
+        <ScheduleMaintenanceDialog unitId={unitId} />
+      </div>
       {items.length === 0 ? (
         <div className="rounded-md border border-dashed border-border bg-card/40 px-4 py-8 text-center text-xs text-muted-foreground">
-          No scheduled maintenance items. Schedule them via the API or the
-          form (M2-G-39b).
+          No scheduled maintenance items. Use the + Schedule MX button
+          above to add one.
         </div>
       ) : (
         <div className="overflow-hidden rounded-lg border border-border bg-card">
@@ -217,6 +240,7 @@ function MaintenanceSection({
                 <th className="px-4 py-3">Interval</th>
                 <th className="px-4 py-3">Due</th>
                 <th className="px-4 py-3">Status</th>
+                <th className="px-4 py-3 text-right">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -257,6 +281,14 @@ function MaintenanceSection({
                   <td className="px-4 py-3">
                     <MxStatusChip status={mx.status} />
                   </td>
+                  <td className="px-4 py-3 text-right">
+                    <CompleteMaintenanceButton
+                      unitId={unitId}
+                      mxId={mx.id}
+                      mxTitle={mx.title}
+                      unitHours={unitHours}
+                    />
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -268,17 +300,26 @@ function MaintenanceSection({
 }
 
 function SquawksSection({
+  unitId,
   title,
   squawks,
   emptyHint,
+  showReportButton = false,
+  showResolve = false,
 }: {
+  unitId: string;
   title: string;
   squawks: GSESquawkResponse[];
   emptyHint: string;
+  showReportButton?: boolean;
+  showResolve?: boolean;
 }) {
   return (
     <section className="mb-4">
-      <h2 className="mb-2 text-sm font-semibold text-foreground">{title}</h2>
+      <div className="mb-2 flex items-baseline justify-between">
+        <h2 className="text-sm font-semibold text-foreground">{title}</h2>
+        {showReportButton && <ReportSquawkDialog unitId={unitId} />}
+      </div>
       {squawks.length === 0 ? (
         <div className="rounded-md border border-dashed border-border bg-card/40 px-4 py-8 text-center text-xs text-muted-foreground">
           {emptyHint}
@@ -292,7 +333,16 @@ function SquawksSection({
             >
               <div className="flex flex-wrap items-baseline justify-between gap-2">
                 <p className="text-sm text-foreground">{sq.description}</p>
-                <SquawkStatusChip status={sq.status} />
+                <div className="flex items-center gap-2">
+                  <SquawkStatusChip status={sq.status} />
+                  {showResolve && sq.status !== "resolved" && (
+                    <ResolveSquawkButton
+                      unitId={unitId}
+                      squawkId={sq.id}
+                      squawkSummary={sq.description}
+                    />
+                  )}
+                </div>
               </div>
               <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[0.65rem] text-muted-foreground">
                 <span>
