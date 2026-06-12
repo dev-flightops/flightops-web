@@ -15,6 +15,7 @@ import { ApiError } from "@/lib/api/client";
 import { listMyTenants } from "@/lib/api/auth";
 import { getFlight, listAircraft, listFlights } from "@/lib/api/ops";
 import type { AircraftListItem, FlightDetail } from "@/lib/api/types";
+import { parseAckedIcaos } from "@/components/dispatch/packet/notam-acks";
 import { paramToRoute } from "@/lib/route";
 
 function todayUtc(): string {
@@ -26,6 +27,9 @@ interface SearchParams {
   /** Comma-separated ICAOs that override [origin, destination] for the
    *  Weather panel. Set by the Route input on blur. */
   route?: string;
+  /** Comma-separated ICAOs the dispatcher has manually acknowledged
+   *  NOTAMs for. Bridges until the M2-M-4 NOTAM proxy ships. */
+  notams_acked?: string;
 }
 
 /**
@@ -43,7 +47,11 @@ export default async function DispatchPage({
 }: {
   searchParams: Promise<SearchParams>;
 }) {
-  const { flight: selectedId, route: routeParam } = await searchParams;
+  const {
+    flight: selectedId,
+    route: routeParam,
+    notams_acked: notamsAckedParam,
+  } = await searchParams;
   const today = todayUtc();
 
   const [{ items: flights }, tenantsResponse, selectedFlight] =
@@ -76,6 +84,7 @@ export default async function DispatchPage({
   //   2. [origin, destination] from the selected flight as a fallback
   //   3. empty array (panel shows the placeholder)
   const routedIcaos = paramToRoute(routeParam);
+  const notamAckedIcaos = parseAckedIcaos(notamsAckedParam);
   const icaos =
     routedIcaos.length > 0
       ? routedIcaos
@@ -104,7 +113,11 @@ export default async function DispatchPage({
         {selectedFlight && <CrewCurrencyBanner />}
 
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-          <LeftColumn flight={selectedFlight} icaos={icaos} />
+          <LeftColumn
+            flight={selectedFlight}
+            icaos={icaos}
+            notamAckedIcaos={notamAckedIcaos}
+          />
           <RightColumn flight={selectedFlight} aircraft={aircraft} />
         </div>
       </div>

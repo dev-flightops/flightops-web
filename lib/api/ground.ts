@@ -7,6 +7,9 @@
 
 import { apiFetch } from "./client";
 import type {
+  FuelSupplierBaseListResponse,
+  FuelSupplierListResponse,
+  FuelTypeListResponse,
   GSEEquipmentType,
   GSEMaintenanceListResponse,
   GSESquawkListResponse,
@@ -122,5 +125,49 @@ export async function listGseSquawks(
   const qs = search.toString() ? `?${search.toString()}` : "";
   return apiFetch<GSESquawkListResponse>(
     `/ground/gse/${unitId}/squawks${qs}`,
+  );
+}
+
+// Fuel directory + pricing matrix (M2-M-25c) ---------------------------------
+
+/** List fuel types configured for this tenant. Active-only by default. */
+export async function listFuelTypes(
+  params: { includeInactive?: boolean } = {},
+): Promise<FuelTypeListResponse> {
+  const search = new URLSearchParams();
+  if (params.includeInactive) search.set("include_inactive", "true");
+  const qs = search.toString() ? `?${search.toString()}` : "";
+  return apiFetch<FuelTypeListResponse>(`/ground/fuel/types${qs}`);
+}
+
+/** List fuel suppliers. Active-only by default. */
+export async function listFuelSuppliers(
+  params: { includeInactive?: boolean } = {},
+): Promise<FuelSupplierListResponse> {
+  const search = new URLSearchParams();
+  if (params.includeInactive) search.set("include_inactive", "true");
+  const qs = search.toString() ? `?${search.toString()}` : "";
+  return apiFetch<FuelSupplierListResponse>(`/ground/fuel/suppliers${qs}`);
+}
+
+export interface ListSupplierBasesParams {
+  supplierId?: string;
+  baseCode?: string;
+  fuelTypeId?: string;
+  includeInactive?: boolean;
+}
+
+/** Pricing matrix rows for the supplier × base × fuel_type intersection. */
+export async function listSupplierBases(
+  params: ListSupplierBasesParams = {},
+): Promise<FuelSupplierBaseListResponse> {
+  const search = new URLSearchParams();
+  if (params.supplierId) search.set("supplier_id", params.supplierId);
+  if (params.baseCode) search.set("base_code", params.baseCode);
+  if (params.fuelTypeId) search.set("fuel_type_id", params.fuelTypeId);
+  if (params.includeInactive) search.set("include_inactive", "true");
+  const qs = search.toString() ? `?${search.toString()}` : "";
+  return apiFetch<FuelSupplierBaseListResponse>(
+    `/ground/fuel/supplier-bases${qs}`,
   );
 }

@@ -655,3 +655,59 @@ export interface GSESquawkListResponse {
   items: GSESquawkResponse[];
   total: number;
 }
+
+// Fuel (M2-M-25c backend) ---------------------------------------------------
+
+export interface FuelTypeResponse {
+  id: string;
+  code: string;
+  label: string;
+  is_active: boolean;
+  sort_order: number;
+}
+
+export interface FuelTypeListResponse {
+  items: FuelTypeResponse[];
+  total: number;
+}
+
+export interface FuelSupplierResponse {
+  id: string;
+  name: string;
+  contact_name: string | null;
+  phone: string | null;
+  sms_phone: string | null;
+  email: string | null;
+  cc_emails: string | null;
+  account_number: string | null;
+  billing_terms: string | null;
+  notes: string | null;
+  is_active: boolean;
+}
+
+export interface FuelSupplierListResponse {
+  items: FuelSupplierResponse[];
+  total: number;
+}
+
+export interface FuelSupplierBaseResponse {
+  id: string;
+  supplier_id: string;
+  supplier_name: string;
+  base_code: string;
+  fuel_type_id: string;
+  fuel_type_code: string;
+  fuel_type_label: string;
+  price_per_gallon: number | null;
+  is_contract_rate: boolean;
+  effective_from: string | null;
+  effective_to: string | null;
+  is_default: boolean;
+  notes: string | null;
+  is_active: boolean;
+}
+
+export interface FuelSupplierBaseListResponse {
+  items: FuelSupplierBaseResponse[];
+  total: number;
+}
