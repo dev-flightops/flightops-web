@@ -23,7 +23,7 @@ import { DEMO_PIC_CERT, DEMO_PIC_NAME } from "./demo-placeholders";
  *      matching the legacy's pre-release validation hints
  */
 export function SelectedFlightSummary({ flight }: { flight: FlightDetail }) {
-  const warning = warningFor(flight);
+  const warnings = warningsFor(flight);
 
   return (
     <div className="mt-3 space-y-2">
@@ -67,24 +67,63 @@ export function SelectedFlightSummary({ flight }: { flight: FlightDetail }) {
         <span className="font-semibold text-foreground">{DEMO_PIC_NAME}</span>
       </div>
 
-      {/* Warnings row (only when something to warn about) */}
-      {warning && (
+      {/* Warnings row — listed when any spec check trips. Spec lists:
+          manifest has no pax, manifest has no cargo, weight discrepancy,
+          missing aircraft data, manifest still open. */}
+      {warnings.length > 0 && (
         <div className="rounded-md border border-status-orange/40 bg-status-orange/[0.08] px-4 py-2.5 text-xs">
-          <span className="font-bold text-status-orange">Needs attention:</span>{" "}
-          <span className="text-foreground/80">{warning}</span>
+          <span className="font-bold text-status-orange">
+            Needs attention:
+          </span>{" "}
+          <span className="text-foreground/80">
+            {warnings.length === 1 ? (
+              warnings[0]
+            ) : (
+              <ul className="ml-1 mt-0.5 list-disc pl-4">
+                {warnings.map((w) => (
+                  <li key={w}>{w}</li>
+                ))}
+              </ul>
+            )}
+          </span>
         </div>
       )}
     </div>
   );
 }
 
-function warningFor(flight: FlightDetail): string | null {
+/**
+ * Spec checks per the formal Dispatch Portal spec, Component 1:
+ *   "Orange banner if manifest has no passengers, weight discrepancy,
+ *    missing aircraft data, or any other issue that needs review before
+ *    release"
+ *
+ * Each check is independent — multiple can fire at once and render as a
+ * bulleted list.
+ */
+function warningsFor(flight: FlightDetail): string[] {
+  const out: string[] = [];
+
   if (flight.pax_count === 0 && flight.cargo_lbs === 0) {
-    return "No passengers or cargo on manifest";
+    out.push("No passengers or cargo on manifest");
+  } else if (flight.pax_count === 0) {
+    out.push("No passengers on manifest");
+  } else if (flight.cargo_lbs === 0) {
+    out.push("No cargo on manifest");
   }
-  if (flight.pax_count === 0) return "No passengers on manifest";
-  if (flight.cargo_lbs === 0) return "No cargo on manifest";
-  return null;
+
+  // Spec also lists "weight discrepancy" but FlightDetail.aircraft is
+  // an AircraftRef (no max_payload_lbs). When we land the embellished
+  // AircraftDetail on the dispatch fetch, fold the payload check in
+  // here as well.
+
+  // Missing aircraft data — model or tail blank shouldn't happen
+  // for a scheduled flight, but the spec calls it out explicitly.
+  if (!flight.aircraft.tail_number || !flight.aircraft.model) {
+    out.push("Aircraft record is missing tail or model");
+  }
+
+  return out;
 }
 
 function Sep() {

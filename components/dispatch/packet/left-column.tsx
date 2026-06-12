@@ -1,7 +1,9 @@
 import type { FlightDetail } from "@/lib/api/types";
 
 import { AlternateReviewPanel } from "./alternate-review-panel";
+import { FuelOrderPanel } from "./fuel-order-panel";
 import { MaintenancePanel } from "./maintenance-panel";
+import { NotamAcknowledgmentPanel } from "./notam-acknowledgment-panel";
 import { RouteInput } from "./route-input";
 import { DisabledPanel, SectionPanel } from "./section-panel";
 import { WeatherPanel } from "./weather-panel";
@@ -33,9 +35,13 @@ import { WeatherPanel } from "./weather-panel";
 export async function LeftColumn({
   flight,
   icaos,
+  notamAckedIcaos,
 }: {
   flight: FlightDetail | null;
   icaos: string[];
+  /** ICAOs the dispatcher has manually acknowledged NOTAMs for (from
+   *  the `?notams_acked=` query param). Empty when no acks yet. */
+  notamAckedIcaos: string[];
 }) {
   return (
     <div className="space-y-5">
@@ -51,10 +57,9 @@ export async function LeftColumn({
 
       <AlternateReviewPanel icaos={icaos} />
 
-      <DisabledPanel
-        title="NOTAM Review"
-        milestone="M2"
-        hint="Enter your routing above to pull NOTAMs for departure, destination, and intermediate stops. Powered by the weather-service NOTAM proxy when it ships."
+      <NotamAcknowledgmentPanel
+        icaos={icaos}
+        ackedFromUrl={notamAckedIcaos}
       />
 
       <SectionPanel title="Compliance Gates">
@@ -87,12 +92,7 @@ export async function LeftColumn({
 
       <MaintenancePanel flight={flight} />
 
-      <DisabledPanel
-        title="Fuel"
-        milestone="M2"
-        hint="Auto-calculated from base + tail + route once the ground-service fuel module ships."
-        accent="yellow"
-      />
+      <FuelOrderPanel flight={flight} />
 
       <DisabledPanel
         title="Load Team"
