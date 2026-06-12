@@ -32,6 +32,11 @@ export function PageHeader() {
       </div>
       <div className="flex gap-2">
         <Button asChild variant="secondary" size="sm">
+          <Link href="/schedule" title="Published schedule + printable manifest">
+            Schedule
+          </Link>
+        </Button>
+        <Button asChild variant="secondary" size="sm">
           <Link href="/flight-following/history">History</Link>
         </Button>
         <Button asChild size="sm">
