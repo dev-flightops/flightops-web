@@ -1,6 +1,7 @@
 import { auth, signOut } from "@/auth";
 import { AppShell } from "@/components/app-shell/app-shell";
 import { HeaderActions } from "@/components/app-shell/header-actions";
+import { SafetyReportButton } from "@/components/safety/safety-report-button";
 import { listMyTenants } from "@/lib/api/auth";
 import { SessionExpiredError } from "@/lib/api/client";
 import { TenantProvider } from "@/lib/tenant";
@@ -67,6 +68,10 @@ export default async function AppGroupLayout({
     >
       <AppShell brand={brand} actionsSlot={actionsSlot}>
         {children}
+        {/* Spec: global Safety Report button, fixed bottom-right on every
+            page. Mounted at the layout so it survives client-side
+            navigation between routes inside the (app) group. */}
+        <SafetyReportButton />
       </AppShell>
     </TenantProvider>
   );
