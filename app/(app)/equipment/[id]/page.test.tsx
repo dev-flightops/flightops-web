@@ -34,6 +34,24 @@ const {
   };
 });
 vi.mock("@/lib/api/client", () => ({ ApiError: TestApiError }));
+
+// New dialog components use React 19's useActionState which isn't
+// available in jsdom. Stub them as passive markers.
+vi.mock("@/components/equipment/change-status-dialog", () => ({
+  ChangeStatusDialog: () => <button type="button">Change status</button>,
+}));
+vi.mock("@/components/equipment/report-squawk-dialog", () => ({
+  ReportSquawkDialog: () => <button type="button">+ Report squawk</button>,
+}));
+vi.mock("@/components/equipment/resolve-squawk-button", () => ({
+  ResolveSquawkButton: () => <button type="button">Resolve</button>,
+}));
+vi.mock("@/components/equipment/schedule-maintenance-dialog", () => ({
+  ScheduleMaintenanceDialog: () => <button type="button">+ Schedule MX</button>,
+}));
+vi.mock("@/components/equipment/complete-maintenance-button", () => ({
+  CompleteMaintenanceButton: () => <button type="button">Complete</button>,
+}));
 vi.mock("@/lib/api/ground", () => ({
   getGseUnit,
   listGseMaintenance,

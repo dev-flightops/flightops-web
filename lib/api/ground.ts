@@ -11,14 +11,21 @@ import type {
   FuelSupplierListResponse,
   FuelTypeListResponse,
   GSEEquipmentType,
+  GSEMaintenanceItemResponse,
   GSEMaintenanceListResponse,
+  GSEMxItemType,
   GSESquawkListResponse,
+  GSESquawkResponse,
   GSESquawkStatus,
   GSEUnitListItem,
   GSEUnitListResponse,
   GSEUnitStatus,
+  StationIssueCategory,
   StationIssueListResponse,
+  StationIssuePriority,
+  StationIssueResponse,
   StationIssueStatus,
+  StationListItem,
   StationListResponse,
 } from "./types";
 
@@ -169,5 +176,163 @@ export async function listSupplierBases(
   const qs = search.toString() ? `?${search.toString()}` : "";
   return apiFetch<FuelSupplierBaseListResponse>(
     `/ground/fuel/supplier-bases${qs}`,
+  );
+}
+
+// Stations CRUD (M2-G-38b) ---------------------------------------------------
+
+export interface CreateStationPayload {
+  icao_code: string;
+  name: string;
+  city?: string | null;
+  state?: string | null;
+  elevation_ft?: number | null;
+  has_reporting_function?: boolean;
+  latitude?: number | null;
+  longitude?: number | null;
+  notes?: string | null;
+}
+
+export async function createStation(
+  payload: CreateStationPayload,
+): Promise<StationListItem> {
+  return apiFetch<StationListItem>("/ground/stations", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export interface CreateStationIssuePayload {
+  title: string;
+  description: string;
+  category?: StationIssueCategory;
+  priority?: StationIssuePriority;
+  assigned_to?: string | null;
+}
+
+export async function createStationIssue(
+  stationId: string,
+  payload: CreateStationIssuePayload,
+): Promise<StationIssueResponse> {
+  return apiFetch<StationIssueResponse>(
+    `/ground/stations/${stationId}/issues`,
+    {
+      method: "POST",
+      body: JSON.stringify(payload),
+    },
+  );
+}
+
+export async function resolveStationIssue(
+  issueId: string,
+  resolutionNotes: string,
+): Promise<StationIssueResponse> {
+  return apiFetch<StationIssueResponse>(
+    `/ground/station-issues/${issueId}/resolve`,
+    {
+      method: "POST",
+      body: JSON.stringify({ resolution_notes: resolutionNotes }),
+    },
+  );
+}
+
+// GSE CRUD (M2-G-39b) --------------------------------------------------------
+
+export interface CreateGseUnitPayload {
+  name: string;
+  equipment_type: GSEEquipmentType;
+  make?: string | null;
+  model?: string | null;
+  serial_number?: string | null;
+  year?: number | null;
+  station_id?: string | null;
+  service_interval_days?: number | null;
+  hours_total?: number;
+  manufacturer?: string | null;
+  notes?: string | null;
+}
+
+export async function createGseUnit(
+  payload: CreateGseUnitPayload,
+): Promise<GSEUnitListItem> {
+  return apiFetch<GSEUnitListItem>("/ground/gse", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function changeGseStatus(
+  unitId: string,
+  status: GSEUnitStatus,
+  statusNote: string | null,
+): Promise<GSEUnitListItem> {
+  return apiFetch<GSEUnitListItem>(`/ground/gse/${unitId}/status`, {
+    method: "POST",
+    body: JSON.stringify({ status, status_note: statusNote }),
+  });
+}
+
+export interface CreateGseMaintenancePayload {
+  title: string;
+  description?: string | null;
+  item_type?: GSEMxItemType;
+  interval_days?: number | null;
+  interval_hours?: number | null;
+  due_date?: string | null;
+  due_hours?: number | null;
+  is_recurring?: boolean;
+}
+
+export async function createGseMaintenance(
+  unitId: string,
+  payload: CreateGseMaintenancePayload,
+): Promise<GSEMaintenanceItemResponse> {
+  return apiFetch<GSEMaintenanceItemResponse>(
+    `/ground/gse/${unitId}/maintenance`,
+    {
+      method: "POST",
+      body: JSON.stringify(payload),
+    },
+  );
+}
+
+export async function completeGseMaintenance(
+  unitId: string,
+  mxId: string,
+  payload: { completed_date: string; completed_hours?: number | null },
+): Promise<GSEMaintenanceItemResponse> {
+  return apiFetch<GSEMaintenanceItemResponse>(
+    `/ground/gse/${unitId}/maintenance/${mxId}/complete`,
+    {
+      method: "POST",
+      body: JSON.stringify(payload),
+    },
+  );
+}
+
+export async function createGseSquawk(
+  unitId: string,
+  description: string,
+  reportedDate: string,
+): Promise<GSESquawkResponse> {
+  return apiFetch<GSESquawkResponse>(`/ground/gse/${unitId}/squawks`, {
+    method: "POST",
+    body: JSON.stringify({
+      description,
+      reported_date: reportedDate,
+    }),
+  });
+}
+
+export async function resolveGseSquawk(
+  squawkId: string,
+  resolutionNotes: string,
+): Promise<GSESquawkResponse> {
+  return apiFetch<GSESquawkResponse>(
+    `/ground/gse/squawks/${squawkId}/resolve`,
+    {
+      method: "POST",
+      body: JSON.stringify({ resolution_notes: resolutionNotes }),
+    },
   );
 }
