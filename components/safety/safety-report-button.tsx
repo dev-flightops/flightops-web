@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -12,14 +12,45 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
-import { fileSafetyReportAction, type FileSafetyReportResult } from "./actions";
+import {
+  fileSafetyReportAction,
+  type FileSafetyReportResult,
+  type Likelihood,
+  type ReportType,
+  type Severity,
+} from "./actions";
 
-const SEVERITIES = [
+const REPORT_TYPES: { value: ReportType; label: string }[] = [
+  { value: "safety_concern", label: "Safety Concern" },
+  { value: "hazard", label: "Hazard Report" },
+  { value: "near_miss", label: "Near Miss" },
+  { value: "asap", label: "ASAP Report" },
+  { value: "incident", label: "Incident" },
+];
+
+const SEVERITIES: { value: Severity; label: string }[] = [
   { value: "low", label: "Low — informational" },
   { value: "medium", label: "Medium — hazard worth tracking" },
   { value: "high", label: "High — operational risk" },
   { value: "critical", label: "Critical — immediate attention" },
-] as const;
+];
+
+const LIKELIHOODS: { value: Likelihood; label: string }[] = [
+  { value: "rare", label: "Rare — unlikely to ever recur" },
+  { value: "unlikely", label: "Unlikely — could occur but improbable" },
+  { value: "possible", label: "Possible — could occur occasionally" },
+  { value: "likely", label: "Likely — will probably recur" },
+  { value: "almost_certain", label: "Almost Certain — recurring pattern" },
+];
+
+function todayIsoDate(): string {
+  const d = new Date();
+  return [
+    d.getFullYear(),
+    String(d.getMonth() + 1).padStart(2, "0"),
+    String(d.getDate()).padStart(2, "0"),
+  ].join("-");
+}
 
 /**
  * Floating red Safety Report button — fixed bottom-right of every
@@ -30,27 +61,40 @@ const SEVERITIES = [
  *    visible regardless of scroll position. All roles see it at all
  *    times."
  *
- * The button itself ships today; the actual safety-service backend
- * (safety_reports table, anonymous user_id stripping, ASAP-style
- * routing) is M3. Submit calls a stub server action that returns
- * success without persisting — the modal shows a success state so the
- * UX path is testable end-to-end, with a clear note that storage lands
- * with safety-service.
+ * Field set follows legacy peregrineflight.com /safety/reports/new:
+ * title, description, report type, severity, likelihood, location,
+ * flight #, aircraft tail, occurrence date, anonymous. File
+ * attachments + the full SMS module (Policy / SRM / Assurance /
+ * Promotion / ASAP / Part 5 / Reports / Incidents) land with
+ * safety-service in M3.
  */
 export function SafetyReportButton() {
   const [open, setOpen] = useState(false);
   const [anonymous, setAnonymous] = useState(false);
-  const [severity, setSeverity] = useState<(typeof SEVERITIES)[number]["value"]>(
-    "medium",
-  );
+  const [title, setTitle] = useState("");
+  const [reportType, setReportType] = useState<ReportType>("safety_concern");
+  const [severity, setSeverity] = useState<Severity>("medium");
+  const [likelihood, setLikelihood] = useState<Likelihood | "">("");
   const [description, setDescription] = useState("");
+  const [location, setLocation] = useState("");
+  const [flightNumber, setFlightNumber] = useState("");
+  const [aircraftTail, setAircraftTail] = useState("");
+  const today = useMemo(todayIsoDate, []);
+  const [occurredOn, setOccurredOn] = useState<string>(today);
   const [result, setResult] = useState<FileSafetyReportResult | null>(null);
   const [isPending, startTransition] = useTransition();
 
   const reset = () => {
     setAnonymous(false);
+    setTitle("");
+    setReportType("safety_concern");
     setSeverity("medium");
+    setLikelihood("");
     setDescription("");
+    setLocation("");
+    setFlightNumber("");
+    setAircraftTail("");
+    setOccurredOn(today);
     setResult(null);
   };
 
@@ -58,13 +102,24 @@ export function SafetyReportButton() {
     e.preventDefault();
     startTransition(async () => {
       const res = await fileSafetyReportAction({
+        title,
         description,
+        report_type: reportType,
         severity,
+        likelihood: likelihood === "" ? null : likelihood,
+        location: location || null,
+        flight_number: flightNumber || null,
+        aircraft_tail: aircraftTail || null,
+        occurred_on: occurredOn || null,
         anonymous,
       });
       setResult(res);
     });
   };
+
+  const titleOk = title.trim().length >= 4;
+  const descriptionOk = description.trim().length >= 10;
+  const canSubmit = titleOk && descriptionOk && !isPending;
 
   return (
     <>
@@ -86,7 +141,7 @@ export function SafetyReportButton() {
           if (!isPending) setOpen(o);
         }}
       >
-        <DialogContent className="sm:max-w-[480px]">
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-[640px]">
           <DialogHeader>
             <DialogTitle>File a safety report</DialogTitle>
             <DialogDescription>
@@ -96,7 +151,10 @@ export function SafetyReportButton() {
           </DialogHeader>
 
           {result?.status === "ok" ? (
-            <SuccessPanel onClose={() => setOpen(false)} />
+            <SuccessPanel
+              reportId={result.report_id}
+              onClose={() => setOpen(false)}
+            />
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
               {result?.status === "error" && (
@@ -108,18 +166,46 @@ export function SafetyReportButton() {
                 </div>
               )}
 
+              <Field
+                id="safety-title"
+                label="Title"
+                required
+                value={title}
+                onChange={setTitle}
+                placeholder="Short summary of the safety concern"
+                maxLength={200}
+              />
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Select
+                  id="safety-report-type"
+                  label="Report type"
+                  value={reportType}
+                  onChange={(v) => setReportType(v as ReportType)}
+                  options={REPORT_TYPES}
+                />
+                <Field
+                  id="safety-occurred-on"
+                  label="Date occurred"
+                  type="date"
+                  value={occurredOn}
+                  onChange={setOccurredOn}
+                />
+              </div>
+
               <div>
                 <label
                   htmlFor="safety-description"
                   className="mb-1 block text-[0.7rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground"
                 >
-                  What happened?
+                  What happened?{" "}
+                  <span className="text-status-red">*</span>
                 </label>
                 <textarea
                   id="safety-description"
                   required
                   minLength={10}
-                  rows={5}
+                  rows={4}
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="Describe the hazard, near-miss, or concern. Be specific about who, what, where, when."
@@ -127,29 +213,49 @@ export function SafetyReportButton() {
                 />
               </div>
 
-              <div>
-                <label
-                  htmlFor="safety-severity"
-                  className="mb-1 block text-[0.7rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground"
-                >
-                  Severity
-                </label>
-                <select
+              <div className="grid gap-4 sm:grid-cols-3">
+                <Field
+                  id="safety-location"
+                  label="Location / Airport"
+                  value={location}
+                  onChange={setLocation}
+                  placeholder="PANC, ramp, hangar"
+                />
+                <Field
+                  id="safety-flight-number"
+                  label="Flight #"
+                  value={flightNumber}
+                  onChange={setFlightNumber}
+                  placeholder="e.g. PER123"
+                />
+                <Field
+                  id="safety-aircraft-tail"
+                  label="Aircraft tail"
+                  value={aircraftTail}
+                  onChange={(v) => setAircraftTail(v.toUpperCase())}
+                  placeholder="N207GE"
+                  autoCapitalize="characters"
+                />
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Select
                   id="safety-severity"
+                  label="Severity"
                   value={severity}
-                  onChange={(e) =>
-                    setSeverity(
-                      e.target.value as (typeof SEVERITIES)[number]["value"],
-                    )
-                  }
-                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-status-red focus:outline-none"
-                >
-                  {SEVERITIES.map((s) => (
-                    <option key={s.value} value={s.value}>
-                      {s.label}
-                    </option>
-                  ))}
-                </select>
+                  onChange={(v) => setSeverity(v as Severity)}
+                  options={SEVERITIES}
+                />
+                <Select
+                  id="safety-likelihood"
+                  label="Likelihood (optional)"
+                  value={likelihood}
+                  onChange={(v) => setLikelihood(v as Likelihood | "")}
+                  options={[
+                    { value: "", label: "— Pick if known —" },
+                    ...LIKELIHOODS,
+                  ]}
+                />
               </div>
 
               <label className="flex cursor-pointer items-center gap-2 rounded-md border border-border bg-card/40 px-3 py-2 text-xs text-foreground">
@@ -165,9 +271,10 @@ export function SafetyReportButton() {
               </label>
 
               <p className="text-[0.65rem] text-muted-foreground/70">
-                Safety service lands in M3; submissions today are
-                acknowledged but not yet persisted. Filing this report
-                still records that you tried.
+                Safety-service lands in M3 — your filing is recorded to a
+                local audit log in dev. File attachments + the full SMS
+                module (Policy / SRM / Assurance / ASAP / Part 5 / Incidents)
+                follow when safety-service ships.
               </p>
 
               <DialogFooter>
@@ -181,7 +288,7 @@ export function SafetyReportButton() {
                 </Button>
                 <Button
                   type="submit"
-                  disabled={isPending || description.length < 10}
+                  disabled={!canSubmit}
                   className="bg-status-red text-white hover:bg-status-red/90"
                 >
                   {isPending ? "Submitting…" : "Submit report"}
@@ -195,7 +302,95 @@ export function SafetyReportButton() {
   );
 }
 
-function SuccessPanel({ onClose }: { onClose: () => void }) {
+function Field({
+  id,
+  label,
+  value,
+  onChange,
+  required,
+  type = "text",
+  placeholder,
+  maxLength,
+  autoCapitalize,
+}: {
+  id: string;
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  required?: boolean;
+  type?: string;
+  placeholder?: string;
+  maxLength?: number;
+  autoCapitalize?: string;
+}) {
+  return (
+    <div>
+      <label
+        htmlFor={id}
+        className="mb-1 block text-[0.7rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground"
+      >
+        {label}
+        {required && <span className="text-status-red"> *</span>}
+      </label>
+      <input
+        id={id}
+        type={type}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        required={required}
+        placeholder={placeholder}
+        maxLength={maxLength}
+        autoCapitalize={autoCapitalize}
+        className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-status-red focus:outline-none"
+      />
+    </div>
+  );
+}
+
+function Select({
+  id,
+  label,
+  value,
+  onChange,
+  options,
+}: {
+  id: string;
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  options: readonly { value: string; label: string }[];
+}) {
+  return (
+    <div>
+      <label
+        htmlFor={id}
+        className="mb-1 block text-[0.7rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground"
+      >
+        {label}
+      </label>
+      <select
+        id={id}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-status-red focus:outline-none"
+      >
+        {options.map((o) => (
+          <option key={o.value} value={o.value}>
+            {o.label}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+}
+
+function SuccessPanel({
+  reportId,
+  onClose,
+}: {
+  reportId: string;
+  onClose: () => void;
+}) {
   return (
     <div className="space-y-4">
       <div
@@ -204,9 +399,10 @@ function SuccessPanel({ onClose }: { onClose: () => void }) {
       >
         <p className="font-semibold">✓ Report acknowledged.</p>
         <p className="mt-1 text-xs text-status-green/80">
+          Recorded as <code className="font-mono">{reportId.slice(0, 8)}</code>.
           Real submission persists to <code>safety_reports</code> when the
-          safety-service ships (M3). Until then your filing has been
-          recorded in the session log only.
+          safety-service ships (M3). Until then the report has been
+          appended to the local audit log.
         </p>
       </div>
       <DialogFooter>
