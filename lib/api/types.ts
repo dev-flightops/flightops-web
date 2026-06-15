@@ -787,6 +787,24 @@ export interface FuelOrderStatusLogResponse {
   total: number;
 }
 
+// Load Teams (M2-M-25d backend / M2-G-ramp-ops-redesign frontend)
+
+export interface LoadTeamResponse {
+  id: string;
+  team_name: string;
+  base_icao: string;
+  team_lead: UserRef | null;
+  color_code: string;
+  is_active: boolean;
+  notes: string | null;
+  member_count: number;
+}
+
+export interface LoadTeamListResponse {
+  items: LoadTeamResponse[];
+  total: number;
+}
+
 // Settings — M2-M-28a / M2-G-46+47+53
 
 export interface CompanyProfileResponse {

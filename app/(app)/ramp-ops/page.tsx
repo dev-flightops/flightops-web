@@ -1,88 +1,76 @@
 import Link from "next/link";
 
-import {
-  listFuelOrders,
-  listGseUnits,
-  listOpenStationIssues,
-} from "@/lib/api/ground";
-import { getFlightBoard } from "@/lib/api/flight-following";
+import { listCompanyBases } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
+import { getFlightBoard } from "@/lib/api/flight-following";
+import { listLoadTeams } from "@/lib/api/ground";
 import type {
   BoardFlightItem,
-  FuelOrderResponse,
-  GSEUnitListItem,
-  StationIssueResponse,
+  CompanyBaseResponse,
+  LoadTeamResponse,
 } from "@/lib/api/types";
 
+import { BaseFilter } from "./base-filter";
+
 /**
- * /ramp-ops — Daily Ramp Ops dashboard.
+ * /ramp-ops — Ramp Operations (legacy parity).
  *
- * Mirrors the legacy "Ramp Operations" landing — a single screen the
- * ramp lead can glance at to see what needs attention today: open
- * fuel orders awaiting confirm/fueled, equipment out of service or
- * scheduled for maintenance, open station issues, and today's
- * inbound/outbound flights.
+ * Daily flight-to-load-team assignment workspace. Two columns:
  *
- * No new backend — this is purely a re-aggregation of data already
- * exposed by ground-service + ops-service. The deep-link CTAs on each
- * card route to the existing detail pages.
+ *   Today's Flights        Load Teams
+ *   ──────────────────     ──────────────────
+ *   (one card per flight)  (one card per team)
+ *   draggable target       drop targets
+ *
+ * Header carries an "All Bases" filter that scopes the flight list
+ * to a single ICAO (origin or destination match), plus a right-
+ * aligned `<weekday>, <month> <day> · N flights` summary.
+ *
+ * Drag-to-assign + the assignment row are M2-M-25e backend work —
+ * until that lands, each flight card carries an "Assign team" affordance
+ * that's disabled with a hint. The team column shows the existing
+ * LoadTeam directory read-only.
  */
-export default async function RampOpsPage() {
-  const [
-    fuelResult,
-    gseResult,
-    issuesResult,
-    boardResult,
-  ] = await Promise.allSettled([
-    Promise.all([
-      listFuelOrders({ status: "ordered", limit: 50 }),
-      listFuelOrders({ status: "confirmed", limit: 50 }),
-    ]),
-    listGseUnits({ limit: 200 }),
-    listOpenStationIssues(),
+export default async function RampOpsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ base?: string }>;
+}) {
+  const { base: baseFilterRaw } = await searchParams;
+  const baseFilter = baseFilterRaw?.trim().toUpperCase() || null;
+
+  const [basesResult, flightsResult, teamsResult] = await Promise.allSettled([
+    listCompanyBases(),
     getFlightBoard("today"),
+    listLoadTeams({ baseIcao: baseFilter ?? undefined }),
   ]);
 
-  let openOrders: FuelOrderResponse[] = [];
-  let pendingConfirmCount = 0;
-  let pendingFueledCount = 0;
-  if (fuelResult.status === "fulfilled") {
-    const [ordered, confirmed] = fuelResult.value;
-    pendingConfirmCount = ordered.total;
-    pendingFueledCount = confirmed.total;
-    // Merge — newest first, capped at 8 for the visible card list.
-    openOrders = [...ordered.items, ...confirmed.items]
-      .sort((a, b) =>
-        a.requested_at < b.requested_at ? 1 : -1,
-      )
-      .slice(0, 8);
+  const bases: CompanyBaseResponse[] =
+    basesResult.status === "fulfilled"
+      ? basesResult.value.items.filter((b) => b.is_active)
+      : [];
+
+  let flights: BoardFlightItem[] =
+    flightsResult.status === "fulfilled" ? flightsResult.value.items : [];
+  if (baseFilter) {
+    flights = flights.filter(
+      (f) => f.origin === baseFilter || f.destination === baseFilter,
+    );
   }
 
-  const gseUnits: GSEUnitListItem[] =
-    gseResult.status === "fulfilled" ? gseResult.value.items : [];
-  const gseDown = gseUnits.filter((u) => u.status === "out_of_service");
-  const gseMaint = gseUnits.filter((u) => u.status === "maintenance");
-
-  const stationIssues: StationIssueResponse[] =
-    issuesResult.status === "fulfilled" ? issuesResult.value.items : [];
-
-  const flightsToday: BoardFlightItem[] =
-    boardResult.status === "fulfilled" ? boardResult.value.items : [];
-  const departingToday = flightsToday.filter(
-    (f) => f.status === "scheduled" || f.status === "released",
-  );
+  const teams: LoadTeamResponse[] =
+    teamsResult.status === "fulfilled"
+      ? teamsResult.value.items.filter((t) => t.is_active)
+      : [];
 
   const errors: string[] = [];
-  const labelByResult = [
-    ["Fuel orders", fuelResult],
-    ["Equipment", gseResult],
-    ["Station issues", issuesResult],
-    ["Flight board", boardResult],
-  ] as const;
-  for (const [label, r] of labelByResult) {
+  for (const [label, r] of [
+    ["Bases", basesResult],
+    ["Today's flights", flightsResult],
+    ["Load teams", teamsResult],
+  ] as const) {
     if (r.status === "rejected") {
-      const status =
-        r.reason instanceof ApiError ? r.reason.status : 0;
+      const status = r.reason instanceof ApiError ? r.reason.status : 0;
       errors.push(
         status === 401
           ? "Session expired — please sign in again."
@@ -93,13 +81,7 @@ export default async function RampOpsPage() {
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6">
-      <header className="mb-6">
-        <h1 className="text-2xl font-bold tracking-tight">Ramp Ops</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Today&apos;s ramp activity at a glance — fuel queue, equipment
-          status, station issues, and flight movements
-        </p>
-      </header>
+      <PageHeader bases={bases} baseFilter={baseFilter} flightCount={flights.length} />
 
       {errors.length > 0 && (
         <div
@@ -110,270 +92,228 @@ export default async function RampOpsPage() {
         </div>
       )}
 
-      <section className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-5">
-        <StatTile
-          label="Awaiting confirm"
-          value={pendingConfirmCount}
-          accent={pendingConfirmCount > 0 ? "yellow" : undefined}
-        />
-        <StatTile
-          label="Awaiting fueling"
-          value={pendingFueledCount}
-          accent={pendingFueledCount > 0 ? "blue" : undefined}
-        />
-        <StatTile
-          label="Equipment down"
-          value={gseDown.length}
-          accent={gseDown.length > 0 ? "red" : undefined}
-        />
-        <StatTile label="In maintenance" value={gseMaint.length} />
-        <StatTile
-          label="Open station issues"
-          value={stationIssues.length}
-          accent={stationIssues.length > 0 ? "yellow" : undefined}
-        />
-      </section>
-
-      <div className="grid gap-4 lg:grid-cols-2">
-        <Card title="Fuel queue" actionHref="/fuel/orders" actionLabel="All orders →">
-          {openOrders.length === 0 ? (
-            <p className="text-xs text-muted-foreground">
-              No open fuel orders.
-            </p>
-          ) : (
-            <ul className="divide-y divide-border">
-              {openOrders.map((o) => (
-                <li key={o.id} className="py-2.5">
-                  <Link
-                    href={`/fuel/orders/${o.id}`}
-                    className="flex items-center justify-between gap-3 hover:bg-muted/10"
-                  >
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2 text-sm">
-                        <span className="font-mono font-semibold">
-                          {o.n_number}
-                        </span>
-                        <span className="text-muted-foreground">
-                          @ {o.base_code}
-                        </span>
-                      </div>
-                      <div className="text-[0.7rem] text-muted-foreground">
-                        {o.supplier_name_snapshot} •{" "}
-                        {o.fuel_type_label_snapshot} •{" "}
-                        {o.requested_quantity_gallons.toLocaleString()} gal
-                      </div>
-                    </div>
-                    <StatusChip status={o.status} />
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          )}
-        </Card>
-
-        <Card
-          title="Equipment status"
-          actionHref="/equipment"
-          actionLabel="All equipment →"
-        >
-          {gseDown.length === 0 && gseMaint.length === 0 ? (
-            <p className="text-xs text-muted-foreground">
-              All units operational.
-            </p>
-          ) : (
-            <ul className="divide-y divide-border">
-              {[...gseDown, ...gseMaint].slice(0, 8).map((u) => (
-                <li key={u.id} className="py-2.5">
-                  <Link
-                    href={`/equipment/${u.id}`}
-                    className="flex items-center justify-between gap-3 hover:bg-muted/10"
-                  >
-                    <div className="min-w-0">
-                      <div className="text-sm font-semibold text-foreground">
-                        {u.name}
-                      </div>
-                      <div className="text-[0.7rem] text-muted-foreground">
-                        {u.equipment_type} • {u.station?.name ?? "—"}
-                      </div>
-                    </div>
-                    <GseStatusChip status={u.status} />
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          )}
-        </Card>
-
-        <Card
-          title="Open station issues"
-          actionHref="/stations"
-          actionLabel="All stations →"
-        >
-          {stationIssues.length === 0 ? (
-            <p className="text-xs text-muted-foreground">
-              No open issues at any station.
-            </p>
-          ) : (
-            <ul className="divide-y divide-border">
-              {stationIssues.slice(0, 8).map((i) => (
-                <li key={i.id} className="py-2.5">
-                  <Link
-                    href={`/stations/${i.station.id}`}
-                    className="flex items-center justify-between gap-3 hover:bg-muted/10"
-                  >
-                    <div className="min-w-0">
-                      <div className="text-sm font-semibold text-foreground">
-                        {i.title}
-                      </div>
-                      <div className="text-[0.7rem] text-muted-foreground">
-                        {i.station.icao_code} • {i.priority}
-                      </div>
-                    </div>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          )}
-        </Card>
-
-        <Card
-          title="Today's flights"
-          actionHref="/flight-following"
-          actionLabel="Flight Following →"
-        >
-          {departingToday.length === 0 ? (
-            <p className="text-xs text-muted-foreground">
-              No flights scheduled for today.
-            </p>
-          ) : (
-            <ul className="divide-y divide-border">
-              {departingToday.slice(0, 8).map((f) => (
-                <li key={f.id} className="py-2.5 text-sm">
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="font-mono font-semibold">
-                          {f.flight_number}
-                        </span>
-                        <span className="text-muted-foreground">
-                          {f.origin} → {f.destination}
-                        </span>
-                      </div>
-                      <div className="text-[0.7rem] text-muted-foreground">
-                        {f.aircraft.tail_number} • {f.pax_count} pax
-                      </div>
-                    </div>
-                    <span className="text-[0.7rem] text-muted-foreground">
-                      {formatTime(f.scheduled_departure_at)}
-                    </span>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
-        </Card>
+      <div className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
+        <FlightsColumn flights={flights} hasTeams={teams.length > 0} />
+        <TeamsColumn teams={teams} baseFilter={baseFilter} />
       </div>
     </div>
   );
 }
 
-function StatTile({
-  label,
-  value,
-  accent,
+// ---- Header -----------------------------------------------------------------
+
+function PageHeader({
+  bases,
+  baseFilter,
+  flightCount,
 }: {
-  label: string;
-  value: number;
-  accent?: "yellow" | "blue" | "red";
+  bases: CompanyBaseResponse[];
+  baseFilter: string | null;
+  flightCount: number;
 }) {
-  const valueClass =
-    accent === "yellow"
-      ? "text-status-yellow"
-      : accent === "blue"
-        ? "text-status-blue"
-        : accent === "red"
-          ? "text-status-red"
-          : "text-foreground";
+  const today = new Date();
+  const formatted = today.toLocaleDateString(undefined, {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+  });
   return (
-    <div className="rounded-lg border border-border bg-card px-4 py-3 text-center">
-      <div className={`text-2xl font-bold leading-none ${valueClass}`}>
-        {value}
+    <header className="mb-6 flex flex-wrap items-end justify-between gap-3">
+      <div className="flex items-center gap-3">
+        <h1 className="text-2xl font-bold tracking-tight">Ramp Operations</h1>
+        <BaseFilter bases={bases} active={baseFilter} />
       </div>
-      <div className="mt-1.5 text-[0.6rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-        {label}
+      <div className="text-xs text-muted-foreground">
+        {formatted} · {flightCount}{" "}
+        {flightCount === 1 ? "flight" : "flights"}
       </div>
-    </div>
+    </header>
   );
 }
 
-function Card({
-  title,
-  actionHref,
-  actionLabel,
-  children,
+// ---- Flights column ---------------------------------------------------------
+
+function FlightsColumn({
+  flights,
+  hasTeams,
 }: {
-  title: string;
-  actionHref: string;
-  actionLabel: string;
-  children: React.ReactNode;
+  flights: BoardFlightItem[];
+  hasTeams: boolean;
 }) {
   return (
-    <article className="rounded-lg border border-border bg-card p-5">
-      <header className="mb-3 flex items-center justify-between">
-        <h3 className="text-sm font-semibold uppercase tracking-[0.06em] text-foreground">
-          {title}
-        </h3>
-        <Link
-          href={actionHref}
-          className="text-[0.7rem] font-semibold text-status-blue hover:underline"
+    <section>
+      <header className="mb-3 flex items-baseline justify-between">
+        <h2 className="text-lg font-semibold">Today&apos;s Flights</h2>
+        <span
+          className="text-[0.7rem] text-muted-foreground"
+          title={
+            hasTeams
+              ? "Drag-to-assign + the Assign button are gated on M2-M-25e (FlightLoadTeamAssignment backend)."
+              : "Create a load team first so you have something to assign to."
+          }
         >
-          {actionLabel}
-        </Link>
+          Drag to assign
+        </span>
       </header>
+      {flights.length === 0 ? (
+        <EmptyCard>No flights today.</EmptyCard>
+      ) : (
+        <ul className="space-y-2">
+          {flights.map((f) => (
+            <FlightCard key={f.id} flight={f} />
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+}
+
+function FlightCard({ flight: f }: { flight: BoardFlightItem }) {
+  const time = formatTime(f.scheduled_departure_at);
+  return (
+    <li>
+      <article
+        className="rounded-md border border-border bg-card p-3 hover:border-status-blue/60"
+        aria-grabbed="false"
+      >
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 text-sm">
+              <Link
+                href={`/dispatch/${f.id}`}
+                className="font-mono font-semibold text-foreground hover:underline"
+              >
+                {f.flight_number}
+              </Link>
+              <span className="text-muted-foreground">
+                {f.origin} → {f.destination}
+              </span>
+              <StatusChip status={f.status} />
+            </div>
+            <div className="mt-1 text-[0.7rem] text-muted-foreground">
+              {f.aircraft.tail_number} · {f.pax_count} pax · {f.cargo_lbs} lb
+              cargo · {time}
+            </div>
+          </div>
+          <button
+            type="button"
+            disabled
+            title="Assignment lands in M2-M-25e"
+            className="shrink-0 cursor-not-allowed rounded-md border border-dashed border-border bg-card/40 px-2.5 py-1 text-[0.65rem] font-semibold text-muted-foreground"
+          >
+            Assign team
+          </button>
+        </div>
+      </article>
+    </li>
+  );
+}
+
+// ---- Teams column -----------------------------------------------------------
+
+function TeamsColumn({
+  teams,
+  baseFilter,
+}: {
+  teams: LoadTeamResponse[];
+  baseFilter: string | null;
+}) {
+  return (
+    <section>
+      <header className="mb-3 flex items-baseline justify-between">
+        <h2 className="text-lg font-semibold">Load Teams</h2>
+        {baseFilter && (
+          <span className="text-[0.7rem] text-muted-foreground">
+            Filtered to {baseFilter}
+          </span>
+        )}
+      </header>
+      {teams.length === 0 ? (
+        <EmptyCard>
+          No teams.{" "}
+          <Link
+            href="/settings/load-teams"
+            className="font-semibold text-status-blue hover:underline"
+            title="Load team management UI lands with M2-M-25e"
+          >
+            Create teams →
+          </Link>
+        </EmptyCard>
+      ) : (
+        <ul className="space-y-2">
+          {teams.map((t) => (
+            <TeamCard key={t.id} team={t} />
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+}
+
+function TeamCard({ team }: { team: LoadTeamResponse }) {
+  return (
+    <li>
+      <article className="rounded-md border border-border bg-card p-3">
+        <div className="flex items-start gap-3">
+          <span
+            aria-hidden
+            className="mt-1.5 inline-block h-3 w-3 shrink-0 rounded-sm"
+            style={{ backgroundColor: team.color_code }}
+          />
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center justify-between gap-2">
+              <h3 className="text-sm font-semibold text-foreground">
+                {team.team_name}
+              </h3>
+              <span className="font-mono text-[0.7rem] text-muted-foreground">
+                {team.base_icao}
+              </span>
+            </div>
+            <div className="mt-1 text-[0.7rem] text-muted-foreground">
+              {team.team_lead?.full_name ? (
+                <>Lead: {team.team_lead.full_name} · </>
+              ) : null}
+              {team.member_count}{" "}
+              {team.member_count === 1 ? "member" : "members"}
+            </div>
+            {team.notes && (
+              <p className="mt-1 text-[0.7rem] text-muted-foreground/80">
+                {team.notes}
+              </p>
+            )}
+          </div>
+        </div>
+      </article>
+    </li>
+  );
+}
+
+// ---- Shared bits ------------------------------------------------------------
+
+function EmptyCard({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="rounded-md border border-dashed border-border bg-card/40 px-4 py-8 text-center text-xs text-muted-foreground">
       {children}
-    </article>
+    </div>
   );
 }
 
 function StatusChip({ status }: { status: string }) {
   const palette: Record<string, string> = {
-    ordered:
-      "border-status-yellow/40 bg-status-yellow/10 text-status-yellow",
-    confirmed:
+    scheduled: "border-border bg-muted/30 text-muted-foreground",
+    released:
       "border-status-blue/40 bg-status-blue/10 text-status-blue",
-    fueled:
+    completed:
       "border-status-green/40 bg-status-green/10 text-status-green",
-    discrepancy:
-      "border-status-red/40 bg-status-red/10 text-status-red",
-    cancelled: "border-border bg-muted/30 text-muted-foreground",
-  };
-  const className =
-    palette[status] ?? "border-border bg-muted/30 text-muted-foreground";
-  return (
-    <span
-      className={`shrink-0 rounded-sm border px-1.5 py-0.5 text-[0.6rem] font-semibold uppercase tracking-[0.08em] ${className}`}
-    >
-      {status}
-    </span>
-  );
-}
-
-function GseStatusChip({ status }: { status: string }) {
-  const palette: Record<string, string> = {
-    operational:
-      "border-status-green/40 bg-status-green/10 text-status-green",
-    maintenance:
-      "border-status-yellow/40 bg-status-yellow/10 text-status-yellow",
-    out_of_service:
-      "border-status-red/40 bg-status-red/10 text-status-red",
+    cancelled: "border-border bg-muted/30 text-muted-foreground/70",
   };
   return (
     <span
-      className={`shrink-0 rounded-sm border px-1.5 py-0.5 text-[0.6rem] font-semibold uppercase tracking-[0.08em] ${
+      className={`shrink-0 rounded-sm border px-1.5 py-0.5 text-[0.55rem] font-semibold uppercase tracking-[0.08em] ${
         palette[status] ?? "border-border bg-muted/30 text-muted-foreground"
       }`}
     >
-      {status.replace(/_/g, " ")}
+      {status}
     </span>
   );
 }
