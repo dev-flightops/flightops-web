@@ -153,19 +153,21 @@ describe("GroundOpsHubPage", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("renders dimmed Ramp + Fuel sub-links with Coming in M2 markers", async () => {
+  it("renders live links for Ramp Dashboard + Fuel sub-links; Messages still dim", async () => {
     listStations.mockResolvedValueOnce({ items: [], total: 0 });
     listOpenStationIssues.mockResolvedValueOnce({ items: [], total: 0 });
     listGseUnits.mockResolvedValueOnce({ items: [], total: 0 });
 
     await renderPage();
 
-    // 3 Ramp + Add Station + Add Equipment + 1 Fuel Quality (3 fuel
-    // sub-links flipped live in M2-G-40) = 6 dimmed entries.
-    expect(screen.getAllByText(/coming in m2/i).length).toBeGreaterThanOrEqual(6);
-    expect(screen.getByText(/ramp dashboard/i)).toBeInTheDocument();
+    // Ramp Dashboard + Fuel Orders now live (M2). Ramp Messages stays
+    // M3-dimmed; Fuel Quality Log still M2-dimmed.
+    expect(
+      screen.getByRole("link", { name: /ramp dashboard/i }),
+    ).toHaveAttribute("href", "/ramper");
     expect(screen.getByText(/^order fuel$/i)).toBeInTheDocument();
     expect(screen.getByText(/suppliers & pricing/i)).toBeInTheDocument();
+    expect(screen.getByText(/ramp messages/i)).toBeInTheDocument();
   });
 
   it("renders the session-expired alert on 401", async () => {
