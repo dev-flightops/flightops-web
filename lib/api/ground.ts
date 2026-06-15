@@ -7,6 +7,11 @@
 
 import { apiFetch } from "./client";
 import type {
+  FuelOrderCloseSource,
+  FuelOrderListResponse,
+  FuelOrderResponse,
+  FuelOrderStatus,
+  FuelOrderStatusLogResponse,
   FuelSupplierBaseListResponse,
   FuelSupplierListResponse,
   FuelTypeListResponse,
@@ -333,6 +338,116 @@ export async function resolveGseSquawk(
     {
       method: "POST",
       body: JSON.stringify({ resolution_notes: resolutionNotes }),
+    },
+  );
+}
+
+// Fuel orders (M2-M-27b / M2-G-40) -------------------------------------------
+
+export interface ListFuelOrdersParams {
+  status?: FuelOrderStatus;
+  baseCode?: string;
+  nNumber?: string;
+  limit?: number;
+}
+
+export async function listFuelOrders(
+  params: ListFuelOrdersParams = {},
+): Promise<FuelOrderListResponse> {
+  const search = new URLSearchParams();
+  if (params.status) search.set("status", params.status);
+  if (params.baseCode) search.set("base_code", params.baseCode);
+  if (params.nNumber) search.set("n_number", params.nNumber);
+  if (params.limit !== undefined) search.set("limit", String(params.limit));
+  const qs = search.toString() ? `?${search.toString()}` : "";
+  return apiFetch<FuelOrderListResponse>(`/ground/fuel/orders${qs}`);
+}
+
+export async function getFuelOrder(
+  orderId: string,
+): Promise<FuelOrderResponse> {
+  return apiFetch<FuelOrderResponse>(`/ground/fuel/orders/${orderId}`);
+}
+
+export async function getFuelOrderStatusLog(
+  orderId: string,
+): Promise<FuelOrderStatusLogResponse> {
+  return apiFetch<FuelOrderStatusLogResponse>(
+    `/ground/fuel/orders/${orderId}/status-log`,
+  );
+}
+
+export interface CreateFuelOrderPayload {
+  n_number: string;
+  base_code: string;
+  supplier_id: string;
+  fuel_type_id: string;
+  requested_quantity_gallons: number;
+  requested_fuel_date: string;
+  requested_fuel_time?: string | null;
+  special_instructions?: string | null;
+}
+
+export async function createFuelOrder(
+  payload: CreateFuelOrderPayload,
+): Promise<FuelOrderResponse> {
+  return apiFetch<FuelOrderResponse>("/ground/fuel/orders", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function confirmFuelOrder(
+  orderId: string,
+  confirmedByName: string,
+  confirmedNote: string | null,
+): Promise<FuelOrderResponse> {
+  return apiFetch<FuelOrderResponse>(
+    `/ground/fuel/orders/${orderId}/confirm`,
+    {
+      method: "POST",
+      body: JSON.stringify({
+        confirmed_by_name: confirmedByName,
+        confirmed_note: confirmedNote,
+      }),
+    },
+  );
+}
+
+export interface FuelOrderFueledPayload {
+  fueled_by_name: string;
+  actual_quantity_gallons: number;
+  discrepancy_reason?: string | null;
+  closed_by_source?: FuelOrderCloseSource;
+  invoice_pending?: boolean;
+}
+
+export async function markFuelOrderFueled(
+  orderId: string,
+  payload: FuelOrderFueledPayload,
+): Promise<FuelOrderResponse> {
+  return apiFetch<FuelOrderResponse>(
+    `/ground/fuel/orders/${orderId}/fueled`,
+    {
+      method: "POST",
+      body: JSON.stringify(payload),
+    },
+  );
+}
+
+export async function cancelFuelOrder(
+  orderId: string,
+  cancelReason: string,
+  closedBySource: FuelOrderCloseSource = "dispatch",
+): Promise<FuelOrderResponse> {
+  return apiFetch<FuelOrderResponse>(
+    `/ground/fuel/orders/${orderId}/cancel`,
+    {
+      method: "POST",
+      body: JSON.stringify({
+        cancel_reason: cancelReason,
+        closed_by_source: closedBySource,
+      }),
     },
   );
 }
