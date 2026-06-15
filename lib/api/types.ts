@@ -891,3 +891,49 @@ export interface FlightTrackingConfigUpdateRequest {
   spider_tracks_aff_email?: string | null;
   spider_tracks_aff_endpoint?: string | null;
 }
+
+// Users + Permissions — M2-M-28b / M2-G-48
+
+export interface UserResponse {
+  id: string;
+  email: string;
+  full_name: string;
+  is_active: boolean;
+  roles: string[];
+  has_password: boolean;
+  last_login_at: string | null;
+  created_at: string;
+}
+
+export interface UserListResponse {
+  items: UserResponse[];
+  total: number;
+}
+
+export interface UserCreateRequest {
+  email: string;
+  full_name: string;
+  roles?: string[];
+  password?: string | null;
+  is_active?: boolean;
+}
+
+export interface UserUpdateRequest {
+  full_name?: string;
+  roles?: string[];
+  is_active?: boolean;
+}
+
+export interface UserSetPasswordRequest {
+  password: string;
+}
+
+export interface RoleSummary {
+  id: string;
+  label: string;
+  description: string;
+}
+
+export interface RolesResponse {
+  roles: RoleSummary[];
+}
