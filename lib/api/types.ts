@@ -1036,3 +1036,43 @@ export interface VillageBoardResponse {
   items: VillageBoardRow[];
   total: number;
 }
+
+// Flight × LoadTeam assignments — M2-M-25e / M2-G-25e-wire-flight-assignments
+
+export interface FlightAssignmentFlightRef {
+  id: string;
+  flight_number: string;
+  origin: string;
+  destination: string;
+  scheduled_departure_at: string;
+  status: string;
+}
+
+export interface FlightAssignmentTeamRef {
+  id: string;
+  team_name: string;
+  base_icao: string;
+  color_code: string;
+}
+
+export interface FlightAssignmentResponse {
+  id: string;
+  flight: FlightAssignmentFlightRef;
+  load_team: FlightAssignmentTeamRef;
+  assigned_by: UserRef | null;
+  assigned_at: string;
+  cleared_at: string | null;
+  cleared_by: UserRef | null;
+  note: string | null;
+}
+
+export interface FlightAssignmentListResponse {
+  items: FlightAssignmentResponse[];
+  total: number;
+}
+
+export interface FlightAssignmentCreateRequest {
+  flight_id: string;
+  load_team_id: string;
+  note?: string | null;
+}

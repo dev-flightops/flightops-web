@@ -3,33 +3,34 @@ import Link from "next/link";
 import { listCompanyBases } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
 import { getFlightBoard } from "@/lib/api/flight-following";
-import { listLoadTeams } from "@/lib/api/ground";
+import { listAssignmentsByTeam, listLoadTeams } from "@/lib/api/ground";
 import type {
   BoardFlightItem,
   CompanyBaseResponse,
+  FlightAssignmentResponse,
   LoadTeamResponse,
 } from "@/lib/api/types";
 
+import { AssignTeamDropdown } from "./assign-team-dropdown";
 import { BaseFilter } from "./base-filter";
 
 /**
- * /ramp-ops — Ramp Operations (legacy parity).
+ * /ramp-ops — Ramp Operations (legacy parity, with M2-M-25e wired).
  *
  * Daily flight-to-load-team assignment workspace. Two columns:
  *
  *   Today's Flights        Load Teams
  *   ──────────────────     ──────────────────
- *   (one card per flight)  (one card per team)
- *   draggable target       drop targets
+ *   per-flight card        per-team card
+ *   • Assign team dropdown • lists flights currently on the team
  *
- * Header carries an "All Bases" filter that scopes the flight list
- * to a single ICAO (origin or destination match), plus a right-
- * aligned `<weekday>, <month> <day> · N flights` summary.
+ * Header: All Bases filter + right-aligned `<weekday>, <month> <day>
+ * · N flights` summary.
  *
- * Drag-to-assign + the assignment row are M2-M-25e backend work —
- * until that lands, each flight card carries an "Assign team" affordance
- * that's disabled with a hint. The team column shows the existing
- * LoadTeam directory read-only.
+ * Assignment state comes from /ground/flight-assignments — we fan out
+ * one call per active team and build a flight→team lookup so flight
+ * cards can render their current assignment chip without a per-flight
+ * round-trip.
  */
 export default async function RampOpsPage({
   searchParams,
@@ -63,6 +64,28 @@ export default async function RampOpsPage({
       ? teamsResult.value.items.filter((t) => t.is_active)
       : [];
 
+  // Fan out one assignment fetch per team — parallel, capped by team
+  // count (small N for an op). Build both maps from the results so
+  // flight cards can show their current team chip and team cards can
+  // list assigned flights.
+  const assignmentsByTeam = new Map<string, FlightAssignmentResponse[]>();
+  const teamByFlightId = new Map<string, LoadTeamResponse>();
+  let assignmentError = false;
+  const assignmentResults = await Promise.allSettled(
+    teams.map((t) => listAssignmentsByTeam(t.id)),
+  );
+  assignmentResults.forEach((r, i) => {
+    const team = teams[i];
+    if (r.status === "fulfilled") {
+      assignmentsByTeam.set(team.id, r.value.items);
+      for (const a of r.value.items) {
+        teamByFlightId.set(a.flight.id, team);
+      }
+    } else {
+      assignmentError = true;
+    }
+  });
+
   const errors: string[] = [];
   for (const [label, r] of [
     ["Bases", basesResult],
@@ -78,6 +101,7 @@ export default async function RampOpsPage({
       );
     }
   }
+  if (assignmentError) errors.push("Some team assignments unavailable.");
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6">
@@ -93,8 +117,16 @@ export default async function RampOpsPage({
       )}
 
       <div className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
-        <FlightsColumn flights={flights} hasTeams={teams.length > 0} />
-        <TeamsColumn teams={teams} baseFilter={baseFilter} />
+        <FlightsColumn
+          flights={flights}
+          teams={teams}
+          teamByFlightId={teamByFlightId}
+        />
+        <TeamsColumn
+          teams={teams}
+          assignmentsByTeam={assignmentsByTeam}
+          baseFilter={baseFilter}
+        />
       </div>
     </div>
   );
@@ -135,24 +167,19 @@ function PageHeader({
 
 function FlightsColumn({
   flights,
-  hasTeams,
+  teams,
+  teamByFlightId,
 }: {
   flights: BoardFlightItem[];
-  hasTeams: boolean;
+  teams: LoadTeamResponse[];
+  teamByFlightId: Map<string, LoadTeamResponse>;
 }) {
   return (
     <section>
       <header className="mb-3 flex items-baseline justify-between">
         <h2 className="text-lg font-semibold">Today&apos;s Flights</h2>
-        <span
-          className="text-[0.7rem] text-muted-foreground"
-          title={
-            hasTeams
-              ? "Drag-to-assign + the Assign button are gated on M2-M-25e (FlightLoadTeamAssignment backend)."
-              : "Create a load team first so you have something to assign to."
-          }
-        >
-          Drag to assign
+        <span className="text-[0.7rem] text-muted-foreground">
+          Click Assign team to place a flight
         </span>
       </header>
       {flights.length === 0 ? (
@@ -160,7 +187,12 @@ function FlightsColumn({
       ) : (
         <ul className="space-y-2">
           {flights.map((f) => (
-            <FlightCard key={f.id} flight={f} />
+            <FlightCard
+              key={f.id}
+              flight={f}
+              teams={teams}
+              currentTeam={teamByFlightId.get(f.id) ?? null}
+            />
           ))}
         </ul>
       )}
@@ -168,14 +200,19 @@ function FlightsColumn({
   );
 }
 
-function FlightCard({ flight: f }: { flight: BoardFlightItem }) {
+function FlightCard({
+  flight: f,
+  teams,
+  currentTeam,
+}: {
+  flight: BoardFlightItem;
+  teams: LoadTeamResponse[];
+  currentTeam: LoadTeamResponse | null;
+}) {
   const time = formatTime(f.scheduled_departure_at);
   return (
     <li>
-      <article
-        className="rounded-md border border-border bg-card p-3 hover:border-status-blue/60"
-        aria-grabbed="false"
-      >
+      <article className="rounded-md border border-border bg-card p-3 hover:border-status-blue/60">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <div className="flex items-center gap-2 text-sm">
@@ -195,14 +232,12 @@ function FlightCard({ flight: f }: { flight: BoardFlightItem }) {
               cargo · {time}
             </div>
           </div>
-          <button
-            type="button"
-            disabled
-            title="Assignment lands in M2-M-25e"
-            className="shrink-0 cursor-not-allowed rounded-md border border-dashed border-border bg-card/40 px-2.5 py-1 text-[0.65rem] font-semibold text-muted-foreground"
-          >
-            Assign team
-          </button>
+          <AssignTeamDropdown
+            flightId={f.id}
+            flightOrigin={f.origin}
+            teams={teams}
+            currentTeam={currentTeam}
+          />
         </div>
       </article>
     </li>
@@ -213,9 +248,11 @@ function FlightCard({ flight: f }: { flight: BoardFlightItem }) {
 
 function TeamsColumn({
   teams,
+  assignmentsByTeam,
   baseFilter,
 }: {
   teams: LoadTeamResponse[];
+  assignmentsByTeam: Map<string, FlightAssignmentResponse[]>;
   baseFilter: string | null;
 }) {
   return (
@@ -234,7 +271,7 @@ function TeamsColumn({
           <Link
             href="/settings/load-teams"
             className="font-semibold text-status-blue hover:underline"
-            title="Load team management UI lands with M2-M-25e"
+            title="Load team management UI lands with a follow-up settings story"
           >
             Create teams →
           </Link>
@@ -242,7 +279,11 @@ function TeamsColumn({
       ) : (
         <ul className="space-y-2">
           {teams.map((t) => (
-            <TeamCard key={t.id} team={t} />
+            <TeamCard
+              key={t.id}
+              team={t}
+              assignments={assignmentsByTeam.get(t.id) ?? []}
+            />
           ))}
         </ul>
       )}
@@ -250,7 +291,13 @@ function TeamsColumn({
   );
 }
 
-function TeamCard({ team }: { team: LoadTeamResponse }) {
+function TeamCard({
+  team,
+  assignments,
+}: {
+  team: LoadTeamResponse;
+  assignments: FlightAssignmentResponse[];
+}) {
   return (
     <li>
       <article className="rounded-md border border-border bg-card p-3">
@@ -275,11 +322,44 @@ function TeamCard({ team }: { team: LoadTeamResponse }) {
               ) : null}
               {team.member_count}{" "}
               {team.member_count === 1 ? "member" : "members"}
+              {assignments.length > 0 && (
+                <>
+                  {" · "}
+                  <span className="font-semibold text-foreground">
+                    {assignments.length} assigned
+                  </span>
+                </>
+              )}
             </div>
             {team.notes && (
               <p className="mt-1 text-[0.7rem] text-muted-foreground/80">
                 {team.notes}
               </p>
+            )}
+            {assignments.length > 0 && (
+              <ul className="mt-2 space-y-1 border-t border-border pt-2">
+                {assignments.map((a) => (
+                  <li
+                    key={a.id}
+                    className="flex items-center justify-between gap-2 text-[0.75rem]"
+                  >
+                    <Link
+                      href={`/dispatch/${a.flight.id}`}
+                      className="min-w-0 truncate hover:underline"
+                    >
+                      <span className="font-mono font-semibold text-foreground">
+                        {a.flight.flight_number}
+                      </span>
+                      <span className="ml-1.5 text-muted-foreground">
+                        {a.flight.origin} → {a.flight.destination}
+                      </span>
+                    </Link>
+                    <span className="shrink-0 text-[0.7rem] text-muted-foreground">
+                      {formatTime(a.flight.scheduled_departure_at)}
+                    </span>
+                  </li>
+                ))}
+              </ul>
             )}
           </div>
         </div>
