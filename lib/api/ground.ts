@@ -25,6 +25,9 @@ import type {
   GSEUnitListItem,
   GSEUnitListResponse,
   GSEUnitStatus,
+  FlightAssignmentCreateRequest,
+  FlightAssignmentListResponse,
+  FlightAssignmentResponse,
   LoadTeamListResponse,
   StationIssueCategory,
   StationIssueListResponse,
@@ -468,4 +471,40 @@ export async function listLoadTeams(
   if (options.baseIcao) search.set("base_icao", options.baseIcao);
   const qs = search.toString() ? `?${search.toString()}` : "";
   return apiFetch<LoadTeamListResponse>(`/ground/load-teams${qs}`);
+}
+
+// Flight × LoadTeam assignments (M2-M-25e) ---------------------------------
+
+/** List active assignments for a team — flights currently on that team.
+ *  Used by /ramp-ops to render the flights-by-team list in the right
+ *  column. */
+export async function listAssignmentsByTeam(
+  teamId: string,
+): Promise<FlightAssignmentListResponse> {
+  return apiFetch<FlightAssignmentListResponse>(
+    `/ground/flight-assignments?team_id=${teamId}`,
+  );
+}
+
+/** Idempotent upsert: assign a flight to a team. Re-posting the same
+ *  (flight, team) returns the existing row; reposting with a different
+ *  team closes the old assignment and creates a new one in one
+ *  transaction. */
+export async function assignFlightToTeam(
+  body: FlightAssignmentCreateRequest,
+): Promise<FlightAssignmentResponse> {
+  return apiFetch<FlightAssignmentResponse>(`/ground/flight-assignments`, {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+}
+
+/** Clear the active assignment for a flight. 404 from the server if
+ *  nothing was assigned — callers should treat that as "already
+ *  unassigned" rather than user-facing error. */
+export async function unassignFlight(flightId: string): Promise<void> {
+  await apiFetch<void>(
+    `/ground/flight-assignments?flight_id=${flightId}`,
+    { method: "DELETE" },
+  );
 }

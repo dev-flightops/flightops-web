@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import type {
   BoardFlightItem,
   CompanyBaseResponse,
+  FlightAssignmentResponse,
   LoadTeamResponse,
 } from "@/lib/api/types";
 
@@ -12,6 +13,7 @@ const {
   listCompanyBases,
   getFlightBoard,
   listLoadTeams,
+  listAssignmentsByTeam,
 } = vi.hoisted(() => {
   class TestApiError extends Error {
     constructor(
@@ -27,16 +29,34 @@ const {
     listCompanyBases: vi.fn(),
     getFlightBoard: vi.fn(),
     listLoadTeams: vi.fn(),
+    listAssignmentsByTeam: vi.fn(),
   };
 });
 
 vi.mock("@/lib/api/client", () => ({ ApiError: TestApiError }));
 vi.mock("@/lib/api/auth", () => ({ listCompanyBases }));
 vi.mock("@/lib/api/flight-following", () => ({ getFlightBoard }));
-vi.mock("@/lib/api/ground", () => ({ listLoadTeams }));
+vi.mock("@/lib/api/ground", () => ({
+  listLoadTeams,
+  listAssignmentsByTeam,
+}));
 vi.mock("./base-filter", () => ({
   BaseFilter: ({ active }: { active: string | null }) => (
     <div data-testid="base-filter" data-active={active ?? ""} />
+  ),
+}));
+vi.mock("./assign-team-dropdown", () => ({
+  AssignTeamDropdown: ({
+    flightId,
+    currentTeam,
+  }: {
+    flightId: string;
+    currentTeam: LoadTeamResponse | null;
+  }) => (
+    <div
+      data-testid={`assign-${flightId}`}
+      data-current-team={currentTeam?.id ?? ""}
+    />
   ),
 }));
 
@@ -95,14 +115,43 @@ function makeTeam(overrides: Partial<LoadTeamResponse>): LoadTeamResponse {
   };
 }
 
+function makeAssignment(
+  overrides: Partial<FlightAssignmentResponse>,
+): FlightAssignmentResponse {
+  return {
+    id: "asg-1",
+    flight: {
+      id: "f-1",
+      flight_number: "PER123",
+      origin: "PANC",
+      destination: "PAAQ",
+      scheduled_departure_at: "2026-06-15T18:00:00Z",
+      status: "scheduled",
+    },
+    load_team: {
+      id: "t-1",
+      team_name: "Team Alpha",
+      base_icao: "PANC",
+      color_code: "#3B82F6",
+    },
+    assigned_by: { id: "u-1", full_name: "Lead Ramp", email: "lead@x" },
+    assigned_at: "2026-06-15T17:00:00Z",
+    cleared_at: null,
+    cleared_by: null,
+    note: null,
+    ...overrides,
+  };
+}
+
 beforeEach(() => {
   listCompanyBases.mockReset();
   getFlightBoard.mockReset();
   listLoadTeams.mockReset();
-  // Sane defaults — most tests just override the one fixture they care about.
+  listAssignmentsByTeam.mockReset();
   listCompanyBases.mockResolvedValue({ items: [], total: 0 });
   getFlightBoard.mockResolvedValue({ items: [], view: "today", total: 0 });
   listLoadTeams.mockResolvedValue({ items: [], total: 0 });
+  listAssignmentsByTeam.mockResolvedValue({ items: [], total: 0 });
 });
 
 async function renderPage(search: { base?: string } = {}) {
@@ -110,7 +159,7 @@ async function renderPage(search: { base?: string } = {}) {
   return render(ui);
 }
 
-describe("RampOpsPage (M2 redesign)", () => {
+describe("RampOpsPage (M2 with M2-M-25e wiring)", () => {
   it("renders the two-column layout with header chip + flight count", async () => {
     getFlightBoard.mockResolvedValueOnce({
       items: [makeFlight({}), makeFlight({ id: "f-2", flight_number: "PER456" })],
@@ -145,7 +194,7 @@ describe("RampOpsPage (M2 redesign)", () => {
     });
     getFlightBoard.mockResolvedValueOnce({
       items: [
-        makeFlight({ id: "f-1", origin: "PANC", destination: "PAJN" }), // no PAAQ
+        makeFlight({ id: "f-1", origin: "PANC", destination: "PAJN" }),
         makeFlight({ id: "f-2", origin: "PAAQ", destination: "PANC" }),
       ],
       view: "today",
@@ -154,10 +203,7 @@ describe("RampOpsPage (M2 redesign)", () => {
 
     await renderPage({ base: "PAAQ" });
 
-    // Header reflects the filtered count (1) and the team column shows
-    // the filter chip
     expect(screen.getByText(/1 flight/i)).toBeInTheDocument();
-    // listLoadTeams should be called with baseIcao=PAAQ to scope teams
     expect(listLoadTeams).toHaveBeenCalledWith({ baseIcao: "PAAQ" });
   });
 
@@ -174,18 +220,52 @@ describe("RampOpsPage (M2 redesign)", () => {
     ).toHaveAttribute("href", "/settings/load-teams");
   });
 
-  it("disables the Assign team button (M2-M-25e gates the backend)", async () => {
+  it("passes the current team through to AssignTeamDropdown for assigned flights", async () => {
     getFlightBoard.mockResolvedValueOnce({
-      items: [makeFlight({})],
+      items: [
+        makeFlight({ id: "f-1" }),
+        makeFlight({ id: "f-2", flight_number: "PER456" }),
+      ],
       view: "today",
+      total: 2,
+    });
+    listLoadTeams.mockResolvedValueOnce({ items: [makeTeam({})], total: 1 });
+    listAssignmentsByTeam.mockResolvedValueOnce({
+      items: [makeAssignment({ id: "asg-1" })],
       total: 1,
     });
 
     await renderPage();
 
-    const btn = screen.getByRole("button", { name: /assign team/i });
-    expect(btn).toBeDisabled();
-    expect(btn).toHaveAttribute("title", expect.stringMatching(/M2-M-25e/));
+    // f-1 is assigned to t-1; f-2 is not
+    expect(screen.getByTestId("assign-f-1")).toHaveAttribute(
+      "data-current-team",
+      "t-1",
+    );
+    expect(screen.getByTestId("assign-f-2")).toHaveAttribute(
+      "data-current-team",
+      "",
+    );
+  });
+
+  it("renders assigned flights inside the team card", async () => {
+    getFlightBoard.mockResolvedValueOnce({
+      items: [makeFlight({})],
+      view: "today",
+      total: 1,
+    });
+    listLoadTeams.mockResolvedValueOnce({ items: [makeTeam({})], total: 1 });
+    listAssignmentsByTeam.mockResolvedValueOnce({
+      items: [makeAssignment({})],
+      total: 1,
+    });
+
+    await renderPage();
+
+    expect(screen.getByText(/1 assigned/i)).toBeInTheDocument();
+    // Flight number appears twice — once in the flight card, once in
+    // the team's assigned-flights list.
+    expect(screen.getAllByText("PER123").length).toBeGreaterThanOrEqual(2);
   });
 
   it("surfaces an aggregated error banner on partial fetch failure", async () => {
@@ -194,6 +274,21 @@ describe("RampOpsPage (M2 redesign)", () => {
     await renderPage();
 
     expect(screen.getByRole("alert")).toHaveTextContent(/load teams/i);
+  });
+
+  it("flags when assignment lookups fail without breaking the page", async () => {
+    listLoadTeams.mockResolvedValueOnce({ items: [makeTeam({})], total: 1 });
+    listAssignmentsByTeam.mockRejectedValueOnce(
+      new TestApiError(500, "/flight-assignments", "x"),
+    );
+
+    await renderPage();
+
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      /team assignments unavailable/i,
+    );
+    // Page still renders the team card
+    expect(screen.getByText("Team Alpha")).toBeInTheDocument();
   });
 
   it("shows session-expired when any fetch returns 401", async () => {
