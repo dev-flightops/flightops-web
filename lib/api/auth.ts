@@ -14,8 +14,14 @@ import type {
   FlightTrackingConfigResponse,
   FlightTrackingConfigUpdateRequest,
   ProvidersResponse,
+  RolesResponse,
   SwitchTenantResponse,
   TenantsResponse,
+  UserCreateRequest,
+  UserListResponse,
+  UserResponse,
+  UserSetPasswordRequest,
+  UserUpdateRequest,
 } from "./types";
 
 export async function listMyTenants(): Promise<TenantsResponse> {
@@ -123,4 +129,49 @@ export async function updateFlightTrackingConfig(
       body: JSON.stringify(body),
     },
   );
+}
+
+// ---- Users + Permissions (M2-M-28b) ----
+
+export async function listUsers(): Promise<UserListResponse> {
+  return apiFetch<UserListResponse>("/auth/settings/users");
+}
+
+export async function createUser(
+  body: UserCreateRequest,
+): Promise<UserResponse> {
+  return apiFetch<UserResponse>("/auth/settings/users", {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+}
+
+export async function updateUser(
+  userId: string,
+  body: UserUpdateRequest,
+): Promise<UserResponse> {
+  return apiFetch<UserResponse>(`/auth/settings/users/${userId}`, {
+    method: "PATCH",
+    body: JSON.stringify(body),
+  });
+}
+
+export async function setUserPassword(
+  userId: string,
+  body: UserSetPasswordRequest,
+): Promise<UserResponse> {
+  return apiFetch<UserResponse>(`/auth/settings/users/${userId}/password`, {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+}
+
+export async function deactivateUser(userId: string): Promise<void> {
+  await apiFetch<void>(`/auth/settings/users/${userId}`, {
+    method: "DELETE",
+  });
+}
+
+export async function listRoles(): Promise<RolesResponse> {
+  return apiFetch<RolesResponse>("/auth/settings/roles");
 }

@@ -6,6 +6,7 @@ const {
   getCompanyProfile,
   listCompanyBases,
   getFlightTrackingConfig,
+  listUsers,
 } = vi.hoisted(() => {
   class TestApiError extends Error {
     constructor(
@@ -21,6 +22,7 @@ const {
     getCompanyProfile: vi.fn(),
     listCompanyBases: vi.fn(),
     getFlightTrackingConfig: vi.fn(),
+    listUsers: vi.fn(),
   };
 });
 
@@ -29,6 +31,7 @@ vi.mock("@/lib/api/auth", () => ({
   getCompanyProfile,
   listCompanyBases,
   getFlightTrackingConfig,
+  listUsers,
 }));
 
 import SettingsLandingPage from "./page";
@@ -46,6 +49,10 @@ beforeEach(() => {
   getCompanyProfile.mockReset();
   listCompanyBases.mockReset();
   getFlightTrackingConfig.mockReset();
+  listUsers.mockReset();
+  // Default: exec_admin path — users API returns a count. Tests that
+  // want the 403 path override with .mockRejectedValueOnce.
+  listUsers.mockResolvedValue({ items: [], total: 5 });
 });
 
 describe("SettingsLandingPage (M2-G-46)", () => {
@@ -98,7 +105,7 @@ describe("SettingsLandingPage (M2-G-46)", () => {
     ).toHaveAttribute("href", "/settings/flight-tracking");
   });
 
-  it("renders disabled chips for M2-next + M3 features", async () => {
+  it("links Users + Permissions live; SSO + Pilot Pay stay disabled", async () => {
     getCompanyProfile.mockResolvedValueOnce({
       id: "cp-1",
       legal_name: null,
@@ -124,11 +131,53 @@ describe("SettingsLandingPage (M2-G-46)", () => {
     const ui = await SettingsLandingPage();
     render(ui);
 
-    // Disabled chips for users / SSO / pilot pay
-    expect(screen.getByText("Users").closest("[aria-disabled]"))
-      .toHaveAttribute("aria-disabled", "true");
+    expect(
+      screen.getByRole("link", { name: /^users/i }),
+    ).toHaveAttribute("href", "/settings/users");
+    expect(
+      screen.getByRole("link", { name: /^permissions/i }),
+    ).toHaveAttribute("href", "/settings/permissions");
+    // SSO + Pilot Pay still disabled
     expect(screen.getByText("SSO").closest("[aria-disabled]"))
       .toHaveAttribute("aria-disabled", "true");
+    expect(screen.getByText("Pilot Pay").closest("[aria-disabled]"))
+      .toHaveAttribute("aria-disabled", "true");
+  });
+
+  it("soft-falls back when /users is forbidden (non-exec_admin)", async () => {
+    getCompanyProfile.mockResolvedValueOnce({
+      id: "cp-1",
+      legal_name: "Aurora",
+      short_name: "Aurora",
+      logo_url: null,
+      street_line_1: null,
+      street_line_2: null,
+      city: null,
+      state: null,
+      postal_code: null,
+      country: null,
+      main_phone: null,
+      ops_phone: null,
+      main_email: null,
+      ops_email: null,
+      part_135_certificate: null,
+      fiscal_year_end: null,
+      notes: null,
+    });
+    listCompanyBases.mockResolvedValueOnce({ items: [], total: 0 });
+    getFlightTrackingConfig.mockResolvedValueOnce(seededTracking);
+    listUsers.mockReset();
+    listUsers.mockRejectedValueOnce(new TestApiError(403, "/users", "forbidden"));
+
+    const ui = await SettingsLandingPage();
+    render(ui);
+
+    // Page still renders — no error banner, Users link still surfaces
+    // with "—" sublabel rather than a count.
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: /^users/i }),
+    ).toHaveAttribute("href", "/settings/users");
   });
 
   it("shows a banner when the API call fails", async () => {

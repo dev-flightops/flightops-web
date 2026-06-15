@@ -5,21 +5,27 @@ import {
   getCompanyProfile,
   getFlightTrackingConfig,
   listCompanyBases,
+  listUsers,
 } from "@/lib/api/auth";
 
 /**
- * /settings — Settings landing (M2-G-46).
+ * /settings — Settings landing (M2-G-46, Users card flipped live in M2-G-48).
  *
  * Foundational tenant settings the dispatcher / exec admin configures:
- * Company profile, Bases directory, Flight Tracking thresholds. The
- * Users / Permissions / SSO / Pilot Pay / Currency cards stay dim
- * (status "m2-next"/"m3") until M2-M-28b/c lands.
+ * Company profile, Bases directory, Flight Tracking thresholds, Users +
+ * Permissions. SSO + Pilot Pay + Currency cards stay dim (M2-M-28c / M3).
+ *
+ * The Users count tile soft-falls back to "—" when the caller isn't
+ * exec_admin — the rest of the landing is readable by any role, but the
+ * /settings/users endpoint requires exec_admin. We don't want a 403 to
+ * blank the whole page.
  */
 export default async function SettingsLandingPage() {
   let companyName: string | null = null;
   let basesCount = 0;
   let overdueMinutes: number | null = null;
   let simMode: boolean | null = null;
+  let usersTotal: number | null = null;
   let loadError: string | null = null;
 
   try {
@@ -38,6 +44,14 @@ export default async function SettingsLandingPage() {
       status === 401
         ? "Your session expired — please sign in again."
         : "Settings data unavailable. Try refreshing in a moment.";
+  }
+
+  try {
+    const users = await listUsers();
+    usersTotal = users.total;
+  } catch {
+    // 403 (not exec_admin) is the expected path for non-admins; leave
+    // the tile blank rather than blocking the whole landing.
   }
 
   return (
@@ -123,7 +137,20 @@ export default async function SettingsLandingPage() {
           icon="👥"
           title="Users & Permissions"
           blurb="Invite users, assign roles, manage per-tenant permissions."
-          links={[{ label: "Users", sublabel: "Coming in M2", disabled: true }]}
+          links={[
+            {
+              label: "Users",
+              sublabel:
+                usersTotal === null ? "—" : `${usersTotal} total`,
+              href: "/settings/users",
+              primary: true,
+            },
+            {
+              label: "Permissions",
+              sublabel: "Role catalog",
+              href: "/settings/permissions",
+            },
+          ]}
         />
         <SectionCard
           icon="🔐"
