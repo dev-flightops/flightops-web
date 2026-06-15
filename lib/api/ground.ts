@@ -25,6 +25,7 @@ import type {
   GSEUnitListItem,
   GSEUnitListResponse,
   GSEUnitStatus,
+  LoadTeamListResponse,
   StationIssueCategory,
   StationIssueListResponse,
   StationIssuePriority,
@@ -450,4 +451,21 @@ export async function cancelFuelOrder(
       }),
     },
   );
+}
+
+// Load Teams (M2-M-25d) -----------------------------------------------------
+
+/** List load teams, alphabetically by team_name. Active-only filter
+ *  is server-side; pass `includeInactive: true` to surface archived teams.
+ *
+ *  Flight-to-team assignment is M2-M-25e — until that lands, /ramp-ops
+ *  uses the list read-only to render the team column. */
+export async function listLoadTeams(
+  options: { includeInactive?: boolean; baseIcao?: string } = {},
+): Promise<LoadTeamListResponse> {
+  const search = new URLSearchParams();
+  if (options.includeInactive) search.set("include_inactive", "true");
+  if (options.baseIcao) search.set("base_icao", options.baseIcao);
+  const qs = search.toString() ? `?${search.toString()}` : "";
+  return apiFetch<LoadTeamListResponse>(`/ground/load-teams${qs}`);
 }
