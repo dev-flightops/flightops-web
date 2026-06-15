@@ -12,13 +12,13 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
-import {
-  fileSafetyReportAction,
-  type FileSafetyReportResult,
-  type Likelihood,
-  type ReportType,
-  type Severity,
-} from "./actions";
+import { fileSafetyReportAction } from "./actions";
+import type {
+  FileSafetyReportResult,
+  Likelihood,
+  ReportType,
+  Severity,
+} from "./types";
 
 const REPORT_TYPES: { value: ReportType; label: string }[] = [
   { value: "safety_concern", label: "Safety Concern" },
