@@ -955,3 +955,84 @@ export interface RoleSummary {
 export interface RolesResponse {
   roles: RoleSummary[];
 }
+
+// Village weather — M2-M-29 / M2-G-village-wx-redesign
+
+export type CloudCover = "SKC" | "CLR" | "FEW" | "SCT" | "BKN" | "OVC" | "VV";
+
+export interface VillageAirportResponse {
+  id: string;
+  icao: string;
+  name: string;
+  region: string | null;
+  is_active: boolean;
+  notes: string | null;
+}
+
+export interface VillageAirportListResponse {
+  items: VillageAirportResponse[];
+  total: number;
+}
+
+export interface VillageAirportCreateRequest {
+  icao: string;
+  name: string;
+  region?: string | null;
+  notes?: string | null;
+}
+
+export interface VillageReporterRef {
+  id: string;
+  full_name: string;
+}
+
+export interface VillageWeatherReportResponse {
+  id: string;
+  village_airport_id: string;
+  reported_by: VillageReporterRef | null;
+  reported_by_name: string | null;
+  reported_at: string;
+
+  cloud_cover: CloudCover | null;
+  ceiling_ft: number | null;
+  visibility_sm: number | null;
+
+  wind_dir_deg: number | null;
+  wind_speed_kt: number | null;
+  wind_gust_kt: number | null;
+
+  temperature_c: number | null;
+  altimeter_in_hg: number | null;
+
+  notes: string | null;
+  flight_category: FlightCategory | null;
+}
+
+export interface VillageWeatherReportListResponse {
+  items: VillageWeatherReportResponse[];
+  total: number;
+}
+
+export interface VillageWeatherReportCreateRequest {
+  village_airport_id: string;
+  reported_at?: string | null;
+  cloud_cover?: CloudCover | null;
+  ceiling_ft?: number | null;
+  visibility_sm?: number | null;
+  wind_dir_deg?: number | null;
+  wind_speed_kt?: number | null;
+  wind_gust_kt?: number | null;
+  temperature_c?: number | null;
+  altimeter_in_hg?: number | null;
+  notes?: string | null;
+}
+
+export interface VillageBoardRow {
+  airport: VillageAirportResponse;
+  latest_report: VillageWeatherReportResponse | null;
+}
+
+export interface VillageBoardResponse {
+  items: VillageBoardRow[];
+  total: number;
+}

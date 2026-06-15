@@ -9,6 +9,13 @@
 
 import { apiFetch } from "./client";
 import type {
+  VillageAirportCreateRequest,
+  VillageAirportListResponse,
+  VillageAirportResponse,
+  VillageBoardResponse,
+  VillageWeatherReportCreateRequest,
+  VillageWeatherReportListResponse,
+  VillageWeatherReportResponse,
   WeatherBatchRequestItem,
   WeatherBatchResponse,
   WeatherBriefingCreateRequest,
@@ -83,5 +90,47 @@ export async function createWeatherBriefing(
   return apiFetch<WeatherBriefingResponse>(`/weather/briefings`, {
     method: "POST",
     body: JSON.stringify(payload),
+  });
+}
+
+// ---- Village weather (M2-M-29) ----------------------------------------------
+
+export async function getVillageBoard(): Promise<VillageBoardResponse> {
+  return apiFetch<VillageBoardResponse>(`/weather/village-board`);
+}
+
+export async function listVillageAirports(
+  options: { includeInactive?: boolean } = {},
+): Promise<VillageAirportListResponse> {
+  const qs = options.includeInactive ? "?include_inactive=true" : "";
+  return apiFetch<VillageAirportListResponse>(
+    `/weather/village-airports${qs}`,
+  );
+}
+
+export async function createVillageAirport(
+  body: VillageAirportCreateRequest,
+): Promise<VillageAirportResponse> {
+  return apiFetch<VillageAirportResponse>(`/weather/village-airports`, {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+}
+
+export async function listVillageReportsForAirport(
+  airportId: string,
+  limit = 20,
+): Promise<VillageWeatherReportListResponse> {
+  return apiFetch<VillageWeatherReportListResponse>(
+    `/weather/village-airports/${airportId}/reports?limit=${limit}`,
+  );
+}
+
+export async function createVillageWeatherReport(
+  body: VillageWeatherReportCreateRequest,
+): Promise<VillageWeatherReportResponse> {
+  return apiFetch<VillageWeatherReportResponse>(`/weather/village-reports`, {
+    method: "POST",
+    body: JSON.stringify(body),
   });
 }
