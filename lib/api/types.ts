@@ -786,3 +786,108 @@ export interface FuelOrderStatusLogResponse {
   items: FuelOrderStatusLogEntry[];
   total: number;
 }
+
+// Settings — M2-M-28a / M2-G-46+47+53
+
+export interface CompanyProfileResponse {
+  id: string;
+  legal_name: string | null;
+  short_name: string | null;
+  logo_url: string | null;
+  street_line_1: string | null;
+  street_line_2: string | null;
+  city: string | null;
+  state: string | null;
+  postal_code: string | null;
+  country: string | null;
+  main_phone: string | null;
+  ops_phone: string | null;
+  main_email: string | null;
+  ops_email: string | null;
+  part_135_certificate: string | null;
+  fiscal_year_end: string | null; // ISO date (yyyy-mm-dd)
+  notes: string | null;
+}
+
+export interface CompanyProfileUpdateRequest {
+  legal_name?: string | null;
+  short_name?: string | null;
+  logo_url?: string | null;
+  street_line_1?: string | null;
+  street_line_2?: string | null;
+  city?: string | null;
+  state?: string | null;
+  postal_code?: string | null;
+  country?: string | null;
+  main_phone?: string | null;
+  ops_phone?: string | null;
+  main_email?: string | null;
+  ops_email?: string | null;
+  part_135_certificate?: string | null;
+  fiscal_year_end?: string | null;
+  notes?: string | null;
+}
+
+export interface CompanyBaseResponse {
+  id: string;
+  icao: string;
+  display_name: string;
+  city: string | null;
+  state: string | null;
+  timezone: string | null;
+  is_hub: boolean;
+  is_active: boolean;
+  manager_name: string | null;
+  manager_phone: string | null;
+  manager_email: string | null;
+  notes: string | null;
+}
+
+export interface CompanyBaseListResponse {
+  items: CompanyBaseResponse[];
+  total: number;
+}
+
+export interface CompanyBaseCreateRequest {
+  icao: string;
+  display_name: string;
+  city?: string | null;
+  state?: string | null;
+  timezone?: string | null;
+  is_hub?: boolean;
+  is_active?: boolean;
+  manager_name?: string | null;
+  manager_phone?: string | null;
+  manager_email?: string | null;
+  notes?: string | null;
+}
+
+export interface CompanyBaseUpdateRequest {
+  display_name?: string;
+  city?: string | null;
+  state?: string | null;
+  timezone?: string | null;
+  is_hub?: boolean;
+  is_active?: boolean;
+  manager_name?: string | null;
+  manager_phone?: string | null;
+  manager_email?: string | null;
+  notes?: string | null;
+}
+
+export interface FlightTrackingConfigResponse {
+  id: string;
+  overdue_threshold_minutes: number;
+  position_polling_seconds: number;
+  simulation_mode_enabled: boolean;
+  spider_tracks_aff_email: string | null;
+  spider_tracks_aff_endpoint: string | null;
+}
+
+export interface FlightTrackingConfigUpdateRequest {
+  overdue_threshold_minutes?: number;
+  position_polling_seconds?: number;
+  simulation_mode_enabled?: boolean;
+  spider_tracks_aff_email?: string | null;
+  spider_tracks_aff_endpoint?: string | null;
+}

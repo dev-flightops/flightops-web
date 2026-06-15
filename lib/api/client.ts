@@ -75,5 +75,9 @@ export async function apiFetch<T>(
     throw new ApiError(response.status, path, body || response.statusText);
   }
 
+  // 204 No Content (e.g. DELETE soft-delete endpoints) — no body to parse.
+  if (response.status === 204) {
+    return undefined as T;
+  }
   return (await response.json()) as T;
 }

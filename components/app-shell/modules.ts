@@ -121,7 +121,7 @@ export const DEPARTMENTS: Department[] = [
       "/accounting",
       "/fleetbrain",
       "/ai",
-      "/settings/users",
+      "/settings",
       "/reservations/sim-export",
     ],
     /**
@@ -147,7 +147,8 @@ export const DEPARTMENTS: Department[] = [
       { id: "fleetbrain",             label: "✨ Fleet Brain", status: "m4", department: "admin", accent: "purple", dividerBefore: true },
       { id: "ops-brief",              label: "Ops Brief",   status: "m4", department: "admin", accent: "purple" },
       { id: "ai-query",               label: "AI Query",    status: "m4", department: "admin", accent: "purple" },
-      { id: "users",                  label: "Users",       status: "m4", department: "admin", pushRight: true },
+      { id: "settings",               label: "Settings",    href: "/settings", status: "live", department: "admin", pushRight: true },
+      { id: "users",                  label: "Users",       status: "m4", department: "admin" },
     ],
   },
   {
