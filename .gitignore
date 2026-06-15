@@ -24,6 +24,9 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
+# safety-service stub log — local-dev JSONL of safety submissions until M3
+.safety-reports.log
+
 # env files
 .env*.local
 .env.development
