@@ -53,11 +53,23 @@ describe("DepartmentNav", () => {
   it("renders future modules as disabled spans with milestone hint", () => {
     vi.mocked(usePathname).mockReturnValue("/dispatch");
     render(<DepartmentNav />);
-    // Village Wx is still M2 and unbuilt — assert disabled-span shape.
+    // Crew + Currency are M3 — assert one of them keeps the disabled-span shape.
+    const crew = screen.getByTestId("dept-nav-crew");
+    expect(crew.tagName).toBe("SPAN");
+    expect(crew).toHaveAttribute("aria-disabled", "true");
+    expect(crew).toHaveAttribute("title", "Coming in M3");
+  });
+
+  it("renders Village Wx + Ramp Ops as live links (M2)", () => {
+    vi.mocked(usePathname).mockReturnValue("/dispatch");
+    render(<DepartmentNav />);
     const villageWx = screen.getByTestId("dept-nav-village-wx");
-    expect(villageWx.tagName).toBe("SPAN");
-    expect(villageWx).toHaveAttribute("aria-disabled", "true");
-    expect(villageWx).toHaveAttribute("title", "Coming in M2");
+    expect(villageWx.tagName).toBe("A");
+    expect(villageWx).toHaveAttribute("href", "/village-wx");
+
+    const rampOps = screen.getByTestId("dept-nav-ramp-ops");
+    expect(rampOps.tagName).toBe("A");
+    expect(rampOps).toHaveAttribute("href", "/ramp-ops");
   });
 
   it("renders Weather as a live link (M2-G-24)", () => {
