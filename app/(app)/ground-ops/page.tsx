@@ -170,20 +170,20 @@ export default async function GroundOpsHubPage() {
             {
               label: "Order Fuel",
               sublabel: "New fuel order by aircraft and base",
-              href: "/fuel/order",
-              status: "m2",
+              href: "/fuel/orders/new",
+              status: "live",
             },
             {
               label: "Fuel Orders",
               sublabel: "All orders, status, and history",
               href: "/fuel/orders",
-              status: "m2",
+              status: "live",
             },
             {
               label: "Suppliers & Pricing",
               sublabel: "Manage fuel suppliers and base pricing",
               href: "/fuel/suppliers",
-              status: "m2",
+              status: "live",
             },
             {
               label: "Fuel Quality Log",

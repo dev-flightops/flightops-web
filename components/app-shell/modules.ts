@@ -164,7 +164,7 @@ export const DEPARTMENTS: Department[] = [
       { id: "ground-ops-hub", label: "Hub", href: "/ground-ops", status: "live", department: "ground-ops" },
       { id: "stations",       label: "Stations", href: "/stations", status: "live", department: "ground-ops" },
       { id: "equipment",      label: "Equipment", href: "/equipment", status: "live", department: "ground-ops" },
-      { id: "fuel",           label: "Fuel", status: "m2", department: "ground-ops" },
+      { id: "fuel",           label: "Fuel", href: "/fuel", status: "live", department: "ground-ops" },
       { id: "ramper",         label: "Ramper", status: "m2", department: "ground-ops" },
     ],
   },

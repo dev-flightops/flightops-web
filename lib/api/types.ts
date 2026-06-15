@@ -711,3 +711,78 @@ export interface FuelSupplierBaseListResponse {
   items: FuelSupplierBaseResponse[];
   total: number;
 }
+
+// Fuel orders (M2-M-27b backend / M2-G-40 frontend) -------------------------
+
+export type FuelOrderStatus =
+  | "ordered"
+  | "confirmed"
+  | "fueled"
+  | "discrepancy"
+  | "cancelled";
+
+export type FuelOrderCloseSource = "supplier" | "ramp" | "dispatch";
+
+export interface FuelOrderSupplierRef {
+  id: string;
+  name: string;
+}
+
+export interface FuelOrderFuelTypeRef {
+  id: string;
+  code: string;
+  label: string;
+}
+
+export interface FuelOrderResponse {
+  id: string;
+  n_number: string;
+  base_code: string;
+  requested_fuel_date: string;
+  requested_fuel_time: string | null;
+  supplier: FuelOrderSupplierRef;
+  fuel_type: FuelOrderFuelTypeRef;
+  supplier_name_snapshot: string;
+  fuel_type_label_snapshot: string;
+  price_per_gallon: number | null;
+  requested_quantity_gallons: number;
+  special_instructions: string | null;
+  status: FuelOrderStatus;
+  confirmed_at: string | null;
+  confirmed_by_name: string | null;
+  confirmed_note: string | null;
+  fueled_at: string | null;
+  fueled_by_name: string | null;
+  actual_quantity_gallons: number | null;
+  discrepancy_reason: string | null;
+  closed_by_source: FuelOrderCloseSource | null;
+  cancel_reason: string | null;
+  invoice_pending: boolean;
+  requested_by: UserRef;
+  requested_at: string;
+  notification_sent_at: string | null;
+  notification_channel: string | null;
+  notification_to: string | null;
+  notification_subject: string | null;
+}
+
+export interface FuelOrderListResponse {
+  items: FuelOrderResponse[];
+  total: number;
+}
+
+export interface FuelOrderStatusLogEntry {
+  id: string;
+  from_status: FuelOrderStatus | null;
+  to_status: FuelOrderStatus;
+  actor: UserRef | null;
+  actor_name: string | null;
+  source: FuelOrderCloseSource | null;
+  note: string | null;
+  created_at: string;
+}
+
+export interface FuelOrderStatusLogResponse {
+  items: FuelOrderStatusLogEntry[];
+  total: number;
+}

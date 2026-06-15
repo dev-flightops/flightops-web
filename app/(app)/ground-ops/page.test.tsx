@@ -160,8 +160,9 @@ describe("GroundOpsHubPage", () => {
 
     await renderPage();
 
-    // 3 Ramp + Add Station + Add Equipment + 4 Fuel = 9 dimmed entries.
-    expect(screen.getAllByText(/coming in m2/i).length).toBeGreaterThanOrEqual(9);
+    // 3 Ramp + Add Station + Add Equipment + 1 Fuel Quality (3 fuel
+    // sub-links flipped live in M2-G-40) = 6 dimmed entries.
+    expect(screen.getAllByText(/coming in m2/i).length).toBeGreaterThanOrEqual(6);
     expect(screen.getByText(/ramp dashboard/i)).toBeInTheDocument();
     expect(screen.getByText(/^order fuel$/i)).toBeInTheDocument();
     expect(screen.getByText(/suppliers & pricing/i)).toBeInTheDocument();
