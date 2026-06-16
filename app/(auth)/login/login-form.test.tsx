@@ -1,6 +1,6 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { expectNoA11yViolations } from "@/tests/a11y";
 
@@ -16,9 +16,21 @@ vi.mock("next/navigation", () => ({
   useSearchParams: () => new URLSearchParams(),
 }));
 
+const resolveSsoAction = vi.fn();
+vi.mock("./actions", () => ({
+  resolveSsoAction: (...args: unknown[]) => resolveSsoAction(...args),
+}));
+
 import { LoginForm } from "./login-form";
 
 describe("LoginForm", () => {
+  beforeEach(() => {
+    resolveSsoAction.mockResolvedValue({ tenant_id: null, providers: [] });
+    signIn.mockReset();
+    push.mockReset();
+    refresh.mockReset();
+  });
+
   it("renders the brand block + form fields + sign-in button", () => {
     render(<LoginForm providers={[]} />);
     expect(screen.getByText("Peregrine Flight Ops")).toBeInTheDocument();
@@ -44,7 +56,7 @@ describe("LoginForm", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("renders SSO buttons + divider when providers are present", () => {
+  it("renders SSO buttons + divider when env-driven providers are present", () => {
     render(
       <LoginForm
         providers={[
@@ -64,8 +76,6 @@ describe("LoginForm", () => {
 
   it("calls signIn('credentials', …) on submit and pushes /home on success", async () => {
     signIn.mockResolvedValue({ error: null, ok: true });
-    push.mockReset();
-    refresh.mockReset();
     const user = userEvent.setup();
     render(<LoginForm providers={[]} />);
 
@@ -96,7 +106,6 @@ describe("LoginForm", () => {
   });
 
   it("calls signIn(provider) when an SSO button is clicked", async () => {
-    signIn.mockReset();
     const user = userEvent.setup();
     render(<LoginForm providers={[{ id: "google", label: "Google" }]} />);
 
@@ -109,5 +118,82 @@ describe("LoginForm", () => {
   it("has no WCAG A/AA violations on the default render", async () => {
     const { container } = render(<LoginForm providers={[]} />);
     await expectNoA11yViolations(container);
+  });
+
+  // ---- M2 SSO end-to-end: per-tenant resolve after email entry ----
+
+  it("calls resolveSsoAction with the typed email", async () => {
+    const user = userEvent.setup();
+    render(<LoginForm providers={[]} />);
+    await user.type(screen.getByLabelText(/email/i), "pilot@acme.local");
+    await waitFor(
+      () =>
+        expect(resolveSsoAction).toHaveBeenCalledWith("pilot@acme.local"),
+      { timeout: 1500 },
+    );
+  });
+
+  it("replaces env-driven SSO buttons with the tenant-resolved list", async () => {
+    resolveSsoAction.mockResolvedValue({
+      tenant_id: "t-1",
+      providers: [
+        {
+          id: "google",
+          label: "Google",
+          display_name: "Sign in with Acme Google",
+        },
+      ],
+    });
+    const user = userEvent.setup();
+    render(
+      <LoginForm
+        providers={[
+          { id: "google", label: "Google" },
+          { id: "microsoft-entra-id", label: "Microsoft" },
+        ]}
+      />,
+    );
+    // Initial state: env-driven Microsoft button is visible
+    expect(
+      screen.getByRole("button", { name: /Sign in with Microsoft/i }),
+    ).toBeInTheDocument();
+
+    await user.type(screen.getByLabelText(/email/i), "pilot@acme.local");
+
+    // After resolve: only Google appears (per-tenant list), with the
+    // admin-overridden display_name
+    await waitFor(
+      () =>
+        expect(
+          screen.queryByRole("button", { name: /Sign in with Microsoft/i }),
+        ).not.toBeInTheDocument(),
+      { timeout: 1500 },
+    );
+    expect(
+      screen.getByRole("button", { name: /Sign in with Acme Google/i }),
+    ).toBeInTheDocument();
+  });
+
+  it("hides the SSO panel when the tenant has no active providers", async () => {
+    resolveSsoAction.mockResolvedValue({
+      tenant_id: "t-1",
+      providers: [],
+    });
+    const user = userEvent.setup();
+    render(<LoginForm providers={[{ id: "google", label: "Google" }]} />);
+
+    expect(
+      screen.getByRole("button", { name: /Sign in with Google/i }),
+    ).toBeInTheDocument();
+    await user.type(screen.getByLabelText(/email/i), "pilot@acme.local");
+
+    await waitFor(
+      () =>
+        expect(
+          screen.queryByRole("button", { name: /Sign in with Google/i }),
+        ).not.toBeInTheDocument(),
+      { timeout: 1500 },
+    );
+    expect(screen.queryByText(/or use password/i)).not.toBeInTheDocument();
   });
 });

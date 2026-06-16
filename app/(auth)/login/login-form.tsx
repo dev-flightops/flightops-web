@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
@@ -8,7 +8,12 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 
-import type { ProviderSummary } from "@/lib/api/types";
+import type {
+  ProviderSummary,
+  SsoResolveProvider,
+} from "@/lib/api/types";
+
+import { resolveSsoAction } from "./actions";
 
 /**
  * Login page — pixel-match for `dispatch-platform-main/templates/login.html`:
@@ -47,6 +52,49 @@ function LoginInner({ providers }: { providers: ProviderSummary[] }) {
     resolver: zodResolver(schema),
     defaultValues: { email: "", password: "" },
   });
+
+  // SSO providers shown to the user. Starts as the env-enabled list
+  // (server-fetched, in the initial render). When the user types an
+  // email that resolves to a tenant with per-tenant SSO config, this
+  // gets replaced with the tenant-specific list (with display_name
+  // overrides). Empty list hides the SSO panel entirely.
+  const [resolvedProviders, setResolvedProviders] = useState<
+    SsoResolveProvider[] | null
+  >(null);
+  const email = form.watch("email");
+
+  // Debounced /sso/resolve lookup as the user types. 400 ms is long
+  // enough that typing a 30-char email doesn't fan out 30 calls but
+  // short enough that the button changes feel instantaneous after
+  // the user pauses.
+  useEffect(() => {
+    if (!email || !email.includes("@")) {
+      setResolvedProviders(null);
+      return;
+    }
+    let cancelled = false;
+    const handle = setTimeout(() => {
+      resolveSsoAction(email).then((resp) => {
+        if (!cancelled) setResolvedProviders(resp.providers);
+      });
+    }, 400);
+    return () => {
+      cancelled = true;
+      clearTimeout(handle);
+    };
+  }, [email]);
+
+  // What buttons actually render: the resolved per-tenant list when
+  // we have one, otherwise the server-rendered env-driven default.
+  const visibleProviders: SsoButtonProvider[] =
+    resolvedProviders !== null
+      ? resolvedProviders.map((p) => ({
+          id: p.id,
+          // Per-tenant display_name overrides the catalog label
+          // ("Sign in with Acme Google" instead of "Sign in with Google").
+          label: p.display_name ?? p.label,
+        }))
+      : providers.map((p) => ({ id: p.id, label: p.label }));
 
   const onSubmit = async (values: FormValues) => {
     setError(null);
@@ -106,10 +154,10 @@ function LoginInner({ providers }: { providers: ProviderSummary[] }) {
             </div>
           )}
 
-          {providers.length > 0 && (
+          {visibleProviders.length > 0 && (
             <>
               <div className="mb-4 space-y-2">
-                {providers.map((p) => (
+                {visibleProviders.map((p) => (
                   <SsoButton
                     key={p.id}
                     provider={p}
@@ -224,19 +272,41 @@ function LoginInner({ providers }: { providers: ProviderSummary[] }) {
 }
 
 /**
+ * The shape this component needs — narrower than ProviderSummary or
+ * SsoResolveProvider so the same button works for both the env-driven
+ * and resolved-per-tenant providers. `label` here is either the
+ * catalog label (env path) or the per-tenant display_name override
+ * (resolved path).
+ */
+interface SsoButtonProvider {
+  id: string;
+  label: string;
+}
+
+/**
  * Brand-coloured SSO button per provider, matching the legacy login.html
  * styling (Microsoft / Google / Okta each get their own pill colors).
+ *
+ * The button text reads "Sign in with <label>" — for env-driven the
+ * label is the catalog default ("Google"), for tenant-resolved it's
+ * whatever display_name the admin configured ("Sign in with Acme
+ * Google" if the admin overrode the label, or just "Google" if not).
  */
 function SsoButton({
   provider,
   callbackUrl,
   disabled,
 }: {
-  provider: ProviderSummary;
+  provider: SsoButtonProvider;
   callbackUrl: string;
   disabled?: boolean;
 }) {
   const style = SSO_STYLES[provider.id] ?? SSO_STYLES.default;
+  // When the per-tenant display_name already starts with "Sign in"
+  // (e.g. "Sign in with Acme Corp") don't double the prefix.
+  const renderedLabel = /^sign\s*in/i.test(provider.label)
+    ? provider.label
+    : `Sign in with ${provider.label}`;
   return (
     <button
       type="button"
@@ -246,7 +316,7 @@ function SsoButton({
       style={style}
     >
       <ProviderIcon providerId={provider.id} />
-      Sign in with {provider.label}
+      {renderedLabel}
     </button>
   );
 }

@@ -17,6 +17,7 @@ import type {
   ProvidersResponse,
   RolesResponse,
   SsoProviderId,
+  SsoResolveResponse,
   SwitchTenantResponse,
   TenantSsoProviderListResponse,
   TenantSsoProviderResponse,
@@ -68,6 +69,38 @@ export async function fetchEnabledProviders(): Promise<ProvidersResponse> {
   } catch {
     // DNS failure, network blip, tunnel down — hide SSO and move on.
     return { providers: [] };
+  }
+}
+
+/**
+ * Email-first SSO resolution (M2 — SSO end-to-end).
+ *
+ * Unauthenticated — the login page calls this AFTER the user enters
+ * their email but BEFORE they pick a sign-in method. Returns the
+ * tenant's active SSO providers (with per-tenant display_name
+ * overrides) so the UI can render the right buttons.
+ *
+ * Same soft-failure contract as fetchEnabledProviders: any backend
+ * error returns an empty response so the credentials form keeps
+ * working. The backend also never throws on unknown emails — it
+ * returns the same fixed empty shape — so we don't need to special-
+ * case missing tenants here.
+ */
+export async function resolveSsoForEmail(
+  email: string,
+): Promise<SsoResolveResponse> {
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+  const empty: SsoResolveResponse = { tenant_id: null, providers: [] };
+  if (!apiUrl) return empty;
+  try {
+    const response = await fetch(
+      `${apiUrl}/auth/sso/resolve?email=${encodeURIComponent(email)}`,
+      { cache: "no-store" },
+    );
+    if (!response.ok) return empty;
+    return (await response.json()) as SsoResolveResponse;
+  } catch {
+    return empty;
   }
 }
 
