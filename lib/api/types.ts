@@ -1076,3 +1076,42 @@ export interface FlightAssignmentCreateRequest {
   load_team_id: string;
   note?: string | null;
 }
+
+// Per-tenant SSO providers — M2-M-28c / M2-G-settings-sso-admin
+
+export type SsoProviderId = "google" | "microsoft-entra-id" | "okta";
+
+export interface TenantSsoProviderResponse {
+  id: string;
+  provider_id: SsoProviderId;
+  display_name: string | null;
+  client_id: string | null;
+  has_secret: boolean;
+  extra_config: Record<string, string | number | boolean | null> | null;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface TenantSsoProviderListResponse {
+  items: TenantSsoProviderResponse[];
+  total: number;
+}
+
+export interface TenantSsoProviderUpsertRequest {
+  display_name?: string | null;
+  client_id?: string | null;
+  // Special handling: omit → keep existing; "" → clear; value → overwrite.
+  client_secret?: string | null;
+  extra_config?: Record<string, string | number | boolean | null> | null;
+  is_active?: boolean;
+}
+
+export interface ProviderCatalogEntry {
+  id: SsoProviderId;
+  label: string;
+}
+
+export interface ProviderCatalogResponse {
+  providers: ProviderCatalogEntry[];
+}
