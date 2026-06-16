@@ -161,13 +161,16 @@ describe("GroundOpsHubPage", () => {
     await renderPage();
 
     // Ramp Dashboard + Fuel Orders now live (M2). Ramp Messages stays
-    // M3-dimmed; Fuel Quality Log still M2-dimmed.
+    // M3-dimmed; Fuel Quality Log now live (M2-G-fuel-quality-log).
     expect(
       screen.getByRole("link", { name: /ramp dashboard/i }),
     ).toHaveAttribute("href", "/ramper");
     expect(screen.getByText(/^order fuel$/i)).toBeInTheDocument();
     expect(screen.getByText(/suppliers & pricing/i)).toBeInTheDocument();
     expect(screen.getByText(/ramp messages/i)).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: /fuel quality log/i }),
+    ).toHaveAttribute("href", "/fuel/quality");
   });
 
   it("renders the session-expired alert on 401", async () => {

@@ -1128,3 +1128,60 @@ export interface SsoResolveResponse {
   tenant_id: string | null;
   providers: SsoResolveProvider[];
 }
+
+// Fuel quality test log — M2-M-30 / M2-G-fuel-quality-log
+
+export type FuelQualityTestKind =
+  | "sump"
+  | "supplier_bulk"
+  | "tank_calibration"
+  | "other";
+
+export type FuelQualityResult =
+  | "pass"
+  | "fail"
+  | "contamination_water"
+  | "contamination_particulate";
+
+export interface FuelTypeRef {
+  id: string;
+  code: string;
+  label: string;
+}
+
+export interface FuelQualityTestResponse {
+  id: string;
+  base_code: string;
+  n_number: string | null;
+  fuel_type: FuelTypeRef | null;
+  fuel_type_label_snapshot: string | null;
+  test_kind: FuelQualityTestKind;
+  water_detected: boolean;
+  particulates_detected: boolean;
+  result: FuelQualityResult;
+  sample_volume_oz: number | null;
+  ambient_temp_c: number | null;
+  notes: string | null;
+  tested_at: string;
+  tested_by: UserRef | null;
+  tested_by_name: string | null;
+  created_at: string;
+}
+
+export interface FuelQualityTestListResponse {
+  items: FuelQualityTestResponse[];
+  total: number;
+}
+
+export interface FuelQualityTestCreateRequest {
+  base_code: string;
+  n_number?: string | null;
+  fuel_type_id?: string | null;
+  test_kind?: FuelQualityTestKind;
+  water_detected?: boolean;
+  particulates_detected?: boolean;
+  sample_volume_oz?: number | null;
+  ambient_temp_c?: number | null;
+  notes?: string | null;
+  tested_at?: string | null;
+}
