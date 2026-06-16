@@ -44,6 +44,7 @@ export type DepartmentId =
   | "crew"
   | "safety"
   | "admin"
+  | "settings"
   | "ai";
 
 export interface Department {
@@ -121,7 +122,6 @@ export const DEPARTMENTS: Department[] = [
       "/accounting",
       "/fleetbrain",
       "/ai",
-      "/settings",
       "/reservations/sim-export",
     ],
     /**
@@ -147,8 +147,6 @@ export const DEPARTMENTS: Department[] = [
       { id: "fleetbrain",             label: "✨ Fleet Brain", status: "m4", department: "admin", accent: "purple", dividerBefore: true },
       { id: "ops-brief",              label: "Ops Brief",   status: "m4", department: "admin", accent: "purple" },
       { id: "ai-query",               label: "AI Query",    status: "m4", department: "admin", accent: "purple" },
-      { id: "settings",               label: "Settings",    href: "/settings", status: "live", department: "admin", pushRight: true },
-      { id: "users",                  label: "Users",       status: "m4", department: "admin" },
     ],
   },
   {
@@ -222,6 +220,36 @@ export const DEPARTMENTS: Department[] = [
     children: [
       { id: "sms",       label: "Safety SMS", status: "m3", department: "safety" },
       { id: "documents", label: "Documents",  status: "m3", department: "safety" },
+    ],
+  },
+  {
+    id: "settings",
+    label: "Settings",
+    status: "live",
+    /**
+     * Settings is its own top-level surface — matches the legacy
+     * `templates/settings/index.html` sub-nav (Settings · Users ·
+     * Company · Costs · Load Teams · Permissions · SSO · …). Lives
+     * outside the Admin dept (which is dashboards + reporting +
+     * financials + AI tools) so the global gear icon in the header
+     * has its own scope and doesn't share a sub-nav with /dashboards.
+     */
+    pathPrefixes: ["/settings"],
+    children: [
+      { id: "settings-home",     label: "Overview",        href: "/settings",                  status: "live", department: "settings" },
+      { id: "settings-users",    label: "Users",           href: "/settings/users",            status: "live", department: "settings" },
+      { id: "settings-company",  label: "Company",         href: "/settings/company",          status: "live", department: "settings" },
+      { id: "settings-bases",    label: "Bases",           href: "/settings/bases",            status: "live", department: "settings" },
+      { id: "settings-tracking", label: "Flight Tracking", href: "/settings/flight-tracking",  status: "live", department: "settings" },
+      { id: "settings-perms",    label: "Permissions",     href: "/settings/permissions",      status: "live", department: "settings" },
+      { id: "settings-sso",      label: "SSO",             href: "/settings/sso",              status: "live", department: "settings" },
+      // M3+ — placeholders matching the legacy sub-nav order. Each
+      // becomes a real link once its surface ships.
+      { id: "settings-costs",     label: "Costs",         status: "m4", department: "settings" },
+      { id: "settings-load",      label: "Load Teams",    status: "m3", department: "settings" },
+      { id: "settings-pilotpay",  label: "Pilot Pay",     status: "m3", department: "settings" },
+      { id: "settings-currency",  label: "Currency",      status: "m3", department: "settings" },
+      { id: "settings-billing",   label: "Billing",       status: "m3", department: "settings" },
     ],
   },
   {
