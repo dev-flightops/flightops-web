@@ -189,7 +189,7 @@ export default async function GroundOpsHubPage() {
               label: "Fuel Quality Log",
               sublabel: "Quality testing records and compliance",
               href: "/fuel/quality",
-              status: "m2",
+              status: "live",
             },
           ]}
         />

@@ -12,6 +12,11 @@ import type {
   FuelOrderResponse,
   FuelOrderStatus,
   FuelOrderStatusLogResponse,
+  FuelQualityResult,
+  FuelQualityTestCreateRequest,
+  FuelQualityTestKind,
+  FuelQualityTestListResponse,
+  FuelQualityTestResponse,
   FuelSupplierBaseListResponse,
   FuelSupplierListResponse,
   FuelTypeListResponse,
@@ -506,5 +511,41 @@ export async function unassignFlight(flightId: string): Promise<void> {
   await apiFetch<void>(
     `/ground/flight-assignments?flight_id=${flightId}`,
     { method: "DELETE" },
+  );
+}
+
+// Fuel quality test log (M2-M-30) ------------------------------------------
+
+export interface ListFuelQualityTestsParams {
+  baseCode?: string;
+  nNumber?: string;
+  testKind?: FuelQualityTestKind;
+  result?: FuelQualityResult;
+  onlyFailures?: boolean;
+  limit?: number;
+}
+
+export async function listFuelQualityTests(
+  params: ListFuelQualityTestsParams = {},
+): Promise<FuelQualityTestListResponse> {
+  const search = new URLSearchParams();
+  if (params.baseCode) search.set("base_code", params.baseCode);
+  if (params.nNumber) search.set("n_number", params.nNumber);
+  if (params.testKind) search.set("test_kind", params.testKind);
+  if (params.result) search.set("result", params.result);
+  if (params.onlyFailures) search.set("only_failures", "true");
+  if (params.limit !== undefined) search.set("limit", String(params.limit));
+  const qs = search.toString() ? `?${search.toString()}` : "";
+  return apiFetch<FuelQualityTestListResponse>(
+    `/ground/fuel/quality-tests${qs}`,
+  );
+}
+
+export async function createFuelQualityTest(
+  body: FuelQualityTestCreateRequest,
+): Promise<FuelQualityTestResponse> {
+  return apiFetch<FuelQualityTestResponse>(
+    `/ground/fuel/quality-tests`,
+    { method: "POST", body: JSON.stringify(body) },
   );
 }
