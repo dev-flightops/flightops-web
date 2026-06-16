@@ -32,6 +32,8 @@ describe("HeaderActions", () => {
         signOutAction={vi.fn()}
       />,
     );
+    // Settings shipped in M2 and is no longer on the disabled list —
+    // see the next test for its live-link assertion.
     for (const label of [
       "Notifications",
       "AI Assistant",
@@ -39,12 +41,24 @@ describe("HeaderActions", () => {
       "Users",
       "Owner Admin",
       "Help",
-      "Settings",
     ]) {
       const el = screen.getByLabelText(label);
       expect(el).toBeDisabled();
       expect(el.getAttribute("title")).toMatch(/Coming in M[234]/);
     }
+  });
+
+  it("Settings is a live link to /settings (shipped M2)", () => {
+    render(
+      <HeaderActions
+        email="admin@flightops.local"
+        signOutAction={vi.fn()}
+      />,
+    );
+    const settings = screen.getByLabelText("Settings");
+    expect(settings.tagName).toBe("A");
+    expect(settings).toHaveAttribute("href", "/settings");
+    expect(settings).not.toBeDisabled();
   });
 
   it("shows the user's full name when provided, falls back to email", () => {
