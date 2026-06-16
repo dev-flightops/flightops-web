@@ -7,6 +7,7 @@ const {
   listCompanyBases,
   getFlightTrackingConfig,
   listUsers,
+  listSsoProviders,
 } = vi.hoisted(() => {
   class TestApiError extends Error {
     constructor(
@@ -23,6 +24,7 @@ const {
     listCompanyBases: vi.fn(),
     getFlightTrackingConfig: vi.fn(),
     listUsers: vi.fn(),
+    listSsoProviders: vi.fn(),
   };
 });
 
@@ -32,6 +34,7 @@ vi.mock("@/lib/api/auth", () => ({
   listCompanyBases,
   getFlightTrackingConfig,
   listUsers,
+  listSsoProviders,
 }));
 
 import SettingsLandingPage from "./page";
@@ -50,9 +53,11 @@ beforeEach(() => {
   listCompanyBases.mockReset();
   getFlightTrackingConfig.mockReset();
   listUsers.mockReset();
+  listSsoProviders.mockReset();
   // Default: exec_admin path — users API returns a count. Tests that
   // want the 403 path override with .mockRejectedValueOnce.
   listUsers.mockResolvedValue({ items: [], total: 5 });
+  listSsoProviders.mockResolvedValue({ items: [], total: 0 });
 });
 
 describe("SettingsLandingPage (M2-G-46)", () => {
@@ -105,7 +110,7 @@ describe("SettingsLandingPage (M2-G-46)", () => {
     ).toHaveAttribute("href", "/settings/flight-tracking");
   });
 
-  it("links Users + Permissions live; SSO + Pilot Pay stay disabled", async () => {
+  it("links Users + Permissions + SSO live; Pilot Pay stays disabled", async () => {
     getCompanyProfile.mockResolvedValueOnce({
       id: "cp-1",
       legal_name: null,
@@ -137,9 +142,10 @@ describe("SettingsLandingPage (M2-G-46)", () => {
     expect(
       screen.getByRole("link", { name: /^permissions/i }),
     ).toHaveAttribute("href", "/settings/permissions");
-    // SSO + Pilot Pay still disabled
-    expect(screen.getByText("SSO").closest("[aria-disabled]"))
-      .toHaveAttribute("aria-disabled", "true");
+    expect(
+      screen.getByRole("link", { name: /^sso providers/i }),
+    ).toHaveAttribute("href", "/settings/sso");
+    // Pilot Pay still disabled
     expect(screen.getByText("Pilot Pay").closest("[aria-disabled]"))
       .toHaveAttribute("aria-disabled", "true");
   });

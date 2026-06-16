@@ -13,9 +13,14 @@ import type {
   CompanyProfileUpdateRequest,
   FlightTrackingConfigResponse,
   FlightTrackingConfigUpdateRequest,
+  ProviderCatalogResponse,
   ProvidersResponse,
   RolesResponse,
+  SsoProviderId,
   SwitchTenantResponse,
+  TenantSsoProviderListResponse,
+  TenantSsoProviderResponse,
+  TenantSsoProviderUpsertRequest,
   TenantsResponse,
   UserCreateRequest,
   UserListResponse,
@@ -174,4 +179,34 @@ export async function deactivateUser(userId: string): Promise<void> {
 
 export async function listRoles(): Promise<RolesResponse> {
   return apiFetch<RolesResponse>("/auth/settings/roles");
+}
+
+// ---- Per-tenant SSO providers (M2-M-28c) ----
+
+export async function getSsoCatalog(): Promise<ProviderCatalogResponse> {
+  return apiFetch<ProviderCatalogResponse>("/auth/settings/sso/catalog");
+}
+
+export async function listSsoProviders(): Promise<TenantSsoProviderListResponse> {
+  return apiFetch<TenantSsoProviderListResponse>(
+    "/auth/settings/sso/providers",
+  );
+}
+
+export async function upsertSsoProvider(
+  providerId: SsoProviderId,
+  body: TenantSsoProviderUpsertRequest,
+): Promise<TenantSsoProviderResponse> {
+  return apiFetch<TenantSsoProviderResponse>(
+    `/auth/settings/sso/providers/${providerId}`,
+    { method: "PUT", body: JSON.stringify(body) },
+  );
+}
+
+export async function deleteSsoProvider(
+  providerId: SsoProviderId,
+): Promise<void> {
+  await apiFetch<void>(`/auth/settings/sso/providers/${providerId}`, {
+    method: "DELETE",
+  });
 }

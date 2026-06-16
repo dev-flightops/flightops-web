@@ -5,15 +5,16 @@ import {
   getCompanyProfile,
   getFlightTrackingConfig,
   listCompanyBases,
+  listSsoProviders,
   listUsers,
 } from "@/lib/api/auth";
 
 /**
- * /settings — Settings landing (M2-G-46, Users card flipped live in M2-G-48).
+ * /settings — Settings landing.
  *
- * Foundational tenant settings the dispatcher / exec admin configures:
- * Company profile, Bases directory, Flight Tracking thresholds, Users +
- * Permissions. SSO + Pilot Pay + Currency cards stay dim (M2-M-28c / M3).
+ * Foundational tenant settings: Company profile, Bases directory, Flight
+ * Tracking thresholds, Users + Permissions, SSO. Pilot Pay + Currency
+ * cards stay dim (M3).
  *
  * The Users count tile soft-falls back to "—" when the caller isn't
  * exec_admin — the rest of the landing is readable by any role, but the
@@ -52,6 +53,15 @@ export default async function SettingsLandingPage() {
   } catch {
     // 403 (not exec_admin) is the expected path for non-admins; leave
     // the tile blank rather than blocking the whole landing.
+  }
+
+  let ssoConnected = 0;
+  try {
+    const sso = await listSsoProviders();
+    ssoConnected = sso.items.filter((p) => p.is_active && p.has_secret).length;
+  } catch {
+    // Same fall-through as listUsers — non-admins shouldn't see the
+    // SSO sublabel either way.
   }
 
   return (
@@ -156,7 +166,16 @@ export default async function SettingsLandingPage() {
           icon="🔐"
           title="SSO & Integrations"
           blurb="Per-tenant SSO provider config (Google / Okta / Entra ID)."
-          links={[{ label: "SSO", sublabel: "Coming in M2", disabled: true }]}
+          links={[
+            {
+              label: "SSO Providers",
+              sublabel:
+                ssoConnected === 0
+                  ? "None connected"
+                  : `${ssoConnected} active`,
+              href: "/settings/sso",
+            },
+          ]}
         />
         <SectionCard
           icon="💰"
