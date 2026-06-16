@@ -117,9 +117,31 @@ export function SafetyReportButton() {
     });
   };
 
-  const titleOk = title.trim().length >= 4;
-  const descriptionOk = description.trim().length >= 10;
+  const titleTrim = title.trim();
+  const descriptionTrim = description.trim();
+  const titleOk = titleTrim.length >= 4;
+  const descriptionOk = descriptionTrim.length >= 10;
   const canSubmit = titleOk && descriptionOk && !isPending;
+
+  // Single "what's missing" line shown when the user has started
+  // typing but hasn't hit the minima yet. Without this, the disabled
+  // Submit button looks silently broken — there's no indication of
+  // why it won't fire.
+  const missing: string[] = [];
+  if (!titleOk) {
+    missing.push(
+      titleTrim.length === 0
+        ? "title"
+        : `title (need ${4 - titleTrim.length} more)`,
+    );
+  }
+  if (!descriptionOk) {
+    missing.push(
+      descriptionTrim.length === 0
+        ? "description"
+        : `description (need ${10 - descriptionTrim.length} more)`,
+    );
+  }
 
   return (
     <>
@@ -168,7 +190,7 @@ export function SafetyReportButton() {
 
               <Field
                 id="safety-title"
-                label="Title"
+                label="Title (min 4 characters)"
                 required
                 value={title}
                 onChange={setTitle}
@@ -198,7 +220,7 @@ export function SafetyReportButton() {
                   htmlFor="safety-description"
                   className="mb-1 block text-[0.7rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground"
                 >
-                  What happened?{" "}
+                  What happened? (min 10 characters){" "}
                   <span className="text-status-red">*</span>
                 </label>
                 <textarea
@@ -276,6 +298,15 @@ export function SafetyReportButton() {
                 module (Policy / SRM / Assurance / ASAP / Part 5 / Incidents)
                 follow when safety-service ships.
               </p>
+
+              {missing.length > 0 && (
+                <p
+                  role="status"
+                  className="text-[0.7rem] text-status-yellow"
+                >
+                  Need {missing.join(" + ")} before submitting.
+                </p>
+              )}
 
               <DialogFooter>
                 <Button
