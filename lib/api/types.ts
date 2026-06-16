@@ -1115,3 +1115,16 @@ export interface ProviderCatalogEntry {
 export interface ProviderCatalogResponse {
   providers: ProviderCatalogEntry[];
 }
+
+// Email-first SSO resolution at login (M2 — SSO end-to-end)
+
+export interface SsoResolveProvider {
+  id: SsoProviderId;
+  label: string;
+  display_name: string | null;
+}
+
+export interface SsoResolveResponse {
+  tenant_id: string | null;
+  providers: SsoResolveProvider[];
+}
