@@ -154,11 +154,13 @@ export const DEPARTMENTS: Department[] = [
   {
     id: "ground-ops",
     label: "Ground Ops",
-    status: "m2",
+    status: "live",
     /**
      * Mirrors legacy `templates/ground_ops/hub.html` — top-level dept for
-     * Stations, Equipment (GSE), Fuel, and Ramp. Stations is live (M2-G-38);
-     * the rest land as later M2 stories.
+     * Stations, Equipment (GSE), Fuel, and Ramper. All children landed
+     * across M2 (M2-G-38, M2-G-39, M2-G-40/43/44/45 fuel vertical,
+     * ramper redesign, fuel quality log) so the dept chip itself reads
+     * live as of M2 close.
      */
     pathPrefixes: ["/ground-ops", "/stations", "/equipment", "/fuel", "/ramper"],
     children: [
@@ -172,7 +174,7 @@ export const DEPARTMENTS: Department[] = [
   {
     id: "maintenance",
     label: "Maintenance",
-    status: "m2",
+    status: "live",
     pathPrefixes: ["/maintenance"],
     /**
      * Mirrors legacy `templates/maintenance/dashboard.html` subnav
