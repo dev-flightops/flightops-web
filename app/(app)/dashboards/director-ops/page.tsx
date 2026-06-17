@@ -18,9 +18,22 @@ export default async function DirectorOpsDashboardPage() {
   const [stats, todaysFlights, pendingResult, snapshot] = await Promise.all([
     getFlightStats().catch(() => null),
     listFlights({ onDate: today }).catch(() => ({ items: [], total: 0 })),
-    listFlights({ status: "scheduled", limit: 10 }).catch(() => ({ items: [], total: 0 })),
+    // Pull a wider window then filter to today + tomorrow client-side —
+    // the API doesn't have a date-range param yet, and a bare
+    // status='scheduled' query also picks up orphaned old-date rows
+    // from prior seed runs. Mirrors legacy's "today + tomorrow" scope.
+    listFlights({ status: "scheduled", limit: 50 }).catch(() => ({ items: [], total: 0 })),
     loadOperationalSnapshot(),
   ]);
+
+  const todayDate = today;
+  const tomorrowDate = new Date(Date.now() + 24 * 60 * 60 * 1000)
+    .toISOString()
+    .slice(0, 10);
+  const pendingTodayAndTomorrow = pendingResult.items.filter((f) => {
+    const d = f.scheduled_departure_at.slice(0, 10);
+    return d === todayDate || d === tomorrowDate;
+  });
 
   const todayCounts = stats?.today;
   const scheduledToday = todayCounts?.scheduled ?? 0;
@@ -100,7 +113,7 @@ export default async function DirectorOpsDashboardPage() {
         <StatTile
           value={totalToday}
           label="Sched Today"
-          sub={`${completedPct.toFixed(1)}% complete`}
+          sub={`${completedPct.toFixed(0)}%`}
           tone={totalToday > 0 ? "green" : "muted"}
         />
         <StatTile
@@ -117,6 +130,7 @@ export default async function DirectorOpsDashboardPage() {
         <StatTile
           value={scheduledToday}
           label="Undispatched"
+          sub="today + tomorrow"
           tone={scheduledToday > 0 ? "orange" : "muted"}
           href="/dispatch/"
         />
@@ -126,7 +140,7 @@ export default async function DirectorOpsDashboardPage() {
       <div className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-[280px_1fr]">
         <section className="rounded-xl border border-border bg-card p-5">
           <h2 className="mb-3 text-xs font-bold uppercase tracking-wider text-muted-foreground">
-            Active Alerts
+            Alerts
           </h2>
           <AlertList
             alerts={snapshotAlertsToList(snapshot.alerts)}
@@ -165,7 +179,7 @@ export default async function DirectorOpsDashboardPage() {
             </Link>
           </div>
           <FlightsTable
-            flights={pendingResult.items}
+            flights={pendingTodayAndTomorrow}
             compact
             emptyHint="✅ All scheduled flights dispatched"
           />
@@ -322,13 +336,33 @@ function FlightStatusBadge({ flight }: { flight: FlightListItem }) {
 }
 
 function CompletionTrendStub() {
+  // Show 8 week-start dates ending with the most recent Monday. Labels
+  // read "MM/DD" — matches legacy's "W04/27", "W05/04" format but with
+  // an explicit leading "W". Bars stay at 0% until flight-following
+  // aggregation lands (M2 follow-up).
+  const labels: string[] = [];
+  const now = new Date();
+  // Find this week's Monday (UTC). getUTCDay: Sun=0, Mon=1 ... Sat=6.
+  const monday = new Date(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()),
+  );
+  const day = monday.getUTCDay();
+  const daysSinceMon = day === 0 ? 6 : day - 1;
+  monday.setUTCDate(monday.getUTCDate() - daysSinceMon);
+  for (let i = 7; i >= 0; i--) {
+    const d = new Date(monday);
+    d.setUTCDate(d.getUTCDate() - i * 7);
+    const mm = String(d.getUTCMonth() + 1).padStart(2, "0");
+    const dd = String(d.getUTCDate()).padStart(2, "0");
+    labels.push(`W${mm}/${dd}`);
+  }
   return (
     <div className="flex h-32 items-end justify-between gap-1">
-      {Array.from({ length: 8 }, (_, i) => (
-        <div key={i} className="flex flex-1 flex-col items-center gap-1">
+      {labels.map((label) => (
+        <div key={label} className="flex flex-1 flex-col items-center gap-1">
           <div className="w-full rounded-t bg-muted" style={{ height: "8%" }} />
           <span className="text-[0.6rem] font-mono text-muted-foreground/60">
-            w-{8 - i}
+            {label}
           </span>
         </div>
       ))}
