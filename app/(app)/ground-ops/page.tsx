@@ -93,7 +93,7 @@ export default async function GroundOpsHubPage() {
           links={[
             {
               label: "Ramp Dashboard",
-              sublabel: "Today's worklist for ramp staff",
+              sublabel: "Flight board, turnaround timers",
               href: "/ramper",
               status: "live",
             },
