@@ -87,7 +87,7 @@ export default async function ExecutiveDashboardPage() {
       </div>
 
       {/* Row 1 — 5-col headline stat tiles */}
-      <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+      <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5">
         <StatTile
           value={snapshot.airborneCount}
           label="Aircraft Airborne"
@@ -121,7 +121,7 @@ export default async function ExecutiveDashboardPage() {
       </div>
 
       {/* Row 2 — 6-col financial row */}
-      <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+      <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-6">
         <StatTile value="$0" label="Revenue MTD" sub="+0%" tone="muted" />
         <StatTile value="0%" label="Profit Margin" tone="muted" />
         <StatTile value="$0" label="Rev / FH" tone="muted" />
@@ -136,7 +136,7 @@ export default async function ExecutiveDashboardPage() {
       </div>
 
       {/* Row 3 — 2-col: alerts + ops-score pillars */}
-      <div className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-2">
+      <div className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2">
         <section className="rounded-xl border border-border bg-card p-5">
           <div className="mb-3 flex items-baseline justify-between">
             <h2 className="text-[0.65rem] font-bold uppercase tracking-[0.1em] text-muted-foreground">
@@ -198,7 +198,7 @@ export default async function ExecutiveDashboardPage() {
       </div>
 
       {/* Row 4 — 2-col: fleet airworthiness list + live ops board */}
-      <div className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-2">
+      <div className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2">
         <FleetAirworthinessPanel fleet={snapshot.fleet} />
         <LiveOpsBoard board={snapshot.board} />
       </div>

@@ -30,19 +30,22 @@ export function DepartmentNav() {
       <div className="container flex items-center gap-1 px-3 py-1">
         <Link
           href="/home/"
-          className="rounded-md p-1 text-muted-foreground hover:bg-primary/8 hover:text-status-blue"
+          className="flex-shrink-0 rounded-md p-1 text-muted-foreground hover:bg-primary/8 hover:text-status-blue"
           aria-label="Home"
         >
           <Home className="h-3 w-3 opacity-60" aria-hidden />
         </Link>
         <ChevronRight
-          className="h-3 w-3 text-muted-foreground/40"
+          className="h-3 w-3 flex-shrink-0 text-muted-foreground/40"
           aria-hidden
         />
 
+        {/* h-scroll on narrow widths instead of wrapping or clipping —
+            keeps the row to a single line and lets the user swipe across
+            the modules on phones. */}
         <nav
           aria-label={`${dept.label} modules`}
-          className="flex flex-1 items-center gap-0.5"
+          className="flex flex-1 items-center gap-0.5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         >
           {dept.children.map((module) => (
             <DepartmentNavItem
