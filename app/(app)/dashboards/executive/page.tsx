@@ -67,6 +67,18 @@ export default async function ExecutiveDashboardPage() {
   const opsScore =
     Math.round((completionPillar + onTimePillar + fleetPillar) * 10) / 10;
 
+  // Executive Analytics sub: passengers on today's board + actual flown
+  // hours for any completed leg today. Matches legacy's "N pax · X.X hrs"
+  // format. Values stay 0 until check-in flow stamps actual_arrival_at.
+  const todayPax = snapshot.board.reduce((s, f) => s + (f.pax_count ?? 0), 0);
+  const todayHours = snapshot.board.reduce((s, f) => {
+    if (!f.actual_departure_at || !f.actual_arrival_at) return s;
+    const ms =
+      new Date(f.actual_arrival_at).getTime() -
+      new Date(f.actual_departure_at).getTime();
+    return s + Math.max(0, ms / (1000 * 60 * 60));
+  }, 0);
+
   const currentTenantName =
     tenantsResponse.tenants.find((t) => t.is_current)?.name ??
     tenantsResponse.tenants[0]?.name ??
@@ -142,7 +154,7 @@ export default async function ExecutiveDashboardPage() {
         <StatTile
           value="→"
           label="Executive Analytics"
-          sub="0 pax · 0 FH"
+          sub={`${todayPax} pax · ${todayHours.toFixed(1)} hrs`}
           tone="default"
           size="small"
         />
