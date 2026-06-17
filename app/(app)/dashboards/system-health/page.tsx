@@ -1,3 +1,14 @@
+import {
+  AlertCircle,
+  Calendar,
+  CheckCircle2,
+  ClipboardList,
+  CloudSun,
+  type LucideIcon,
+  Radio,
+  Settings as SettingsIcon,
+  Wrench,
+} from "lucide-react";
 import Link from "next/link";
 
 import { DashboardNav } from "@/components/dashboards/dashboard-nav";
@@ -167,20 +178,25 @@ export default async function SystemHealthDashboardPage() {
           Quick Navigation
         </h2>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-          {QUICK_NAV.map((q) => (
-            <Link
-              key={q.href}
-              href={q.href}
-              className="flex flex-col items-center gap-2 rounded-lg border border-border bg-background/40 p-4 text-center transition-colors hover:border-status-blue/40 hover:bg-status-blue/[0.04]"
-            >
-              <span className="text-xl" aria-hidden>
-                {q.icon}
-              </span>
-              <span className="text-xs font-medium text-foreground">
-                {q.label}
-              </span>
-            </Link>
-          ))}
+          {QUICK_NAV.map((q) => {
+            const Icon = q.icon;
+            return (
+              <Link
+                key={q.href}
+                href={q.href}
+                className="flex flex-col items-center gap-2 rounded-lg border border-border bg-background/40 p-4 text-center transition-colors hover:border-status-blue/40 hover:bg-status-blue/[0.04]"
+              >
+                <Icon
+                  className="h-6 w-6 text-status-blue/80"
+                  aria-hidden
+                  strokeWidth={1.5}
+                />
+                <span className="text-xs font-medium text-foreground">
+                  {q.label}
+                </span>
+              </Link>
+            );
+          })}
         </div>
       </section>
 
@@ -225,14 +241,16 @@ function OverallStatusPill({
 }) {
   if (ok) {
     return (
-      <span className="inline-flex items-center gap-2 rounded-full border border-status-green/30 bg-status-green/10 px-3 py-1 text-xs font-semibold text-status-green">
-        🟢 All Systems OK
+      <span className="inline-flex items-center gap-1.5 rounded-full border border-status-green/30 bg-status-green/10 px-3 py-1 text-xs font-semibold text-status-green">
+        <CheckCircle2 className="h-3.5 w-3.5" aria-hidden />
+        All Systems OK
       </span>
     );
   }
   return (
-    <span className="inline-flex items-center gap-2 rounded-full border border-status-red/30 bg-status-red/10 px-3 py-1 text-xs font-semibold text-status-red">
-      🔴 {degraded} Degraded
+    <span className="inline-flex items-center gap-1.5 rounded-full border border-status-red/30 bg-status-red/10 px-3 py-1 text-xs font-semibold text-status-red">
+      <AlertCircle className="h-3.5 w-3.5" aria-hidden />
+      {degraded} Degraded
     </span>
   );
 }
@@ -297,12 +315,14 @@ function formatTime(iso: string): string {
 // Quick Navigation grid — mirrors legacy's six-cell layout, mapped to
 // our actual routes (we don't have a Recognition module yet; Settings
 // is the closest analogue for the admin shelf, and Schedule replaces
-// the "Crew" cell since /crew is M3).
-const QUICK_NAV: { label: string; icon: string; href: string }[] = [
-  { label: "Dispatch", icon: "📋", href: "/dispatch" },
-  { label: "Flight Following", icon: "📡", href: "/flight-following" },
-  { label: "Maintenance", icon: "🔧", href: "/maintenance" },
-  { label: "Schedule", icon: "🗓️", href: "/schedule" },
-  { label: "Weather", icon: "🌦️", href: "/weather" },
-  { label: "Settings", icon: "⚙️", href: "/settings" },
+// the "Crew" cell since /crew is M3). Icons come from lucide-react
+// because emoji glyphs fall back to missing-glyph boxes on systems
+// without an emoji font installed.
+const QUICK_NAV: { label: string; icon: LucideIcon; href: string }[] = [
+  { label: "Dispatch", icon: ClipboardList, href: "/dispatch" },
+  { label: "Flight Following", icon: Radio, href: "/flight-following" },
+  { label: "Maintenance", icon: Wrench, href: "/maintenance" },
+  { label: "Schedule", icon: Calendar, href: "/schedule" },
+  { label: "Weather", icon: CloudSun, href: "/weather" },
+  { label: "Settings", icon: SettingsIcon, href: "/settings" },
 ];
