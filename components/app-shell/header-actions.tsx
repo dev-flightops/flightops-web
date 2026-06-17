@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { LogOut } from "lucide-react";
+import { LogOut, Sparkles } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
@@ -56,7 +56,7 @@ export function HeaderActions({
         srLabel="AI Assistant"
         className="hidden text-status-purple sm:inline-flex"
       >
-        <span className="text-sm leading-none">✨</span>
+        <Sparkles className="h-4 w-4" aria-hidden />
       </IconButton>
 
       {/* Clock button — its own pill, not an IconButton. Default (clocked-out)

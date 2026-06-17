@@ -32,7 +32,7 @@ const ACTIONS: ActionButton[] = [
   { label: "Inventory", status: "m3" },
   { label: "Vendors", status: "m3" },
   { label: "RTS Queue", status: "m3" },
-  { label: "🗓 Roster", status: "m3" },
+  { label: "Roster", status: "m3" },
   { label: "+ Aircraft", status: "m3", primary: true },
 ];
 

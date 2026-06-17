@@ -25,7 +25,7 @@ describe("MaintenanceHeader", () => {
       "Inventory",
       "Vendors",
       "RTS Queue",
-      "🗓 Roster",
+      "Roster",
       "+ Aircraft",
     ]) {
       expect(screen.getByText(label)).toBeInTheDocument();

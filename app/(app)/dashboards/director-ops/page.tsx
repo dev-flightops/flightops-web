@@ -1,3 +1,4 @@
+import { CheckCircle2 } from "lucide-react";
 import Link from "next/link";
 
 import { AlertList } from "@/components/dashboards/alert-list";
@@ -181,7 +182,15 @@ export default async function DirectorOpsDashboardPage() {
           <FlightsTable
             flights={pendingTodayAndTomorrow}
             compact
-            emptyHint="✅ All scheduled flights dispatched"
+            emptyHint={
+              <span className="inline-flex items-center gap-1.5">
+                <CheckCircle2
+                  className="h-3.5 w-3.5 text-status-green"
+                  aria-hidden
+                />
+                All scheduled flights dispatched
+              </span>
+            }
           />
         </section>
 
@@ -238,7 +247,7 @@ function FlightsTable({
 }: {
   flights: FlightListItem[];
   compact?: boolean;
-  emptyHint?: string;
+  emptyHint?: React.ReactNode;
 }) {
   if (flights.length === 0) {
     return (
