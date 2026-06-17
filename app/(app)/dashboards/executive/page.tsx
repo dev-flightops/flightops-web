@@ -86,25 +86,28 @@ export default async function ExecutiveDashboardPage() {
         <ScorePill score={opsScore} />
       </div>
 
-      {/* Row 1 — 5-col headline stat tiles */}
+      {/* Row 1 — 5-col headline stat tiles.
+          Tones match legacy peregrineflight: brand colors are stable
+          per-metric, not status-driven. Aircraft Airborne stays blue
+          even at 0; Flights Today + Fleet Airworthy stay green; the
+          M3/M4-blocked tiles (Crew, Overrides) stay muted. */}
       <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5">
         <StatTile
           value={snapshot.airborneCount}
           label="Aircraft Airborne"
-          sub={`${snapshot.releasedCount} released today`}
-          tone={snapshot.airborneCount > 0 ? "green" : "muted"}
+          tone="blue"
         />
         <StatTile
           value={todayCount}
           label="Flights Today"
           sub={`${completedPct.toFixed(1)}% complete`}
-          tone={todayCount > 0 ? "green" : "muted"}
+          tone="green"
         />
         <StatTile
           value={fleetTotal > 0 ? `${fleetActive}/${fleetTotal}` : "0/0"}
           label="Fleet Airworthy"
           sub={`${fleetGrounded} on hold`}
-          tone={fleetActive > 0 ? "green" : "muted"}
+          tone="green"
         />
         <StatTile
           value="0/0"
@@ -120,18 +123,28 @@ export default async function ExecutiveDashboardPage() {
         />
       </div>
 
-      {/* Row 2 — 6-col financial row */}
+      {/* Row 2 — 6-col financial row. Smaller value font (size="small")
+          and each tile takes a stable brand color per legacy: green
+          revenue/margin, blue rev-per-hour, yellow forecast, purple AR,
+          and the analytics → arrow stays neutral. */}
       <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-6">
-        <StatTile value="$0" label="Revenue MTD" sub="+0%" tone="muted" />
-        <StatTile value="0%" label="Profit Margin" tone="muted" />
-        <StatTile value="$0" label="Rev / FH" tone="muted" />
-        <StatTile value="$0" label="30d Forecast" tone="muted" />
-        <StatTile value="$0" label="Outstanding AR" tone="muted" />
+        <StatTile
+          value="$0"
+          label="Revenue MTD"
+          sub="+0%"
+          tone="green"
+          size="small"
+        />
+        <StatTile value="0%" label="Profit Margin" tone="green" size="small" />
+        <StatTile value="$0" label="Rev / FH" tone="blue" size="small" />
+        <StatTile value="$0" label="30d Forecast" tone="yellow" size="small" />
+        <StatTile value="$0" label="Outstanding AR" tone="purple" size="small" />
         <StatTile
           value="→"
           label="Executive Analytics"
           sub="0 pax · 0 FH"
-          tone="muted"
+          tone="default"
+          size="small"
         />
       </div>
 

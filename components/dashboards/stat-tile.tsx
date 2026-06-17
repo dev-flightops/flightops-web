@@ -21,7 +21,15 @@ import { cn } from "@/lib/utils";
  * `StatTile`; lighter pages use `StatCard`.
  */
 
-type StatTileTone = "default" | "blue" | "green" | "yellow" | "orange" | "red" | "muted";
+type StatTileTone =
+  | "default"
+  | "blue"
+  | "green"
+  | "yellow"
+  | "orange"
+  | "red"
+  | "purple"
+  | "muted";
 
 const VALUE_TONE: Record<StatTileTone, string> = {
   default: "text-foreground",
@@ -30,7 +38,20 @@ const VALUE_TONE: Record<StatTileTone, string> = {
   yellow:  "text-status-yellow",
   orange:  "text-status-orange",
   red:     "text-status-red",
+  purple:  "text-status-purple",
   muted:   "text-muted-foreground/60",
+};
+
+/**
+ * Value size. `large` (default) is the 30px headline number used on the
+ * top tile row; `small` is the 18px money number used on the financial
+ * row, matching legacy peregrineflight's two-tier sizing.
+ */
+type StatTileSize = "large" | "small";
+
+const VALUE_SIZE: Record<StatTileSize, string> = {
+  large: "text-3xl leading-9",
+  small: "text-lg leading-6",
 };
 
 interface StatTileProps {
@@ -38,23 +59,34 @@ interface StatTileProps {
   label: string;
   sub?: string;
   tone?: StatTileTone;
+  size?: StatTileSize;
   href?: string;
 }
 
-export function StatTile({ value, label, sub, tone = "default", href }: StatTileProps) {
+export function StatTile({
+  value,
+  label,
+  sub,
+  tone = "default",
+  size = "large",
+  href,
+}: StatTileProps) {
   const content = (
     <>
-      <div className={cn(
-        "font-mono text-3xl font-bold tabular-nums leading-none",
-        VALUE_TONE[tone],
-      )}>
+      <div
+        className={cn(
+          "font-bold tabular-nums",
+          VALUE_SIZE[size],
+          VALUE_TONE[tone],
+        )}
+      >
         {value}
       </div>
-      <div className="mt-2 text-xs font-normal text-muted-foreground">
+      <div className="mt-1 text-xs font-normal text-muted-foreground">
         {label}
       </div>
       {sub && (
-        <div className="mt-1 text-[0.65rem] text-muted-foreground/70">
+        <div className="mt-1 text-xs text-muted-foreground/40">
           {sub}
         </div>
       )}
@@ -62,7 +94,7 @@ export function StatTile({ value, label, sub, tone = "default", href }: StatTile
   );
 
   const className = cn(
-    "rounded-xl border border-border bg-card p-4 text-center transition-colors",
+    "rounded-xl border border-border bg-card p-5 text-center transition-colors",
     href && "hover:border-primary/30 hover:bg-card/80 cursor-pointer",
   );
 
