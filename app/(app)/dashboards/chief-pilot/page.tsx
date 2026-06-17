@@ -1,8 +1,14 @@
 import { DashboardNav } from "@/components/dashboards/dashboard-nav";
 import { AlertList } from "@/components/dashboards/alert-list";
 import { StatTile } from "@/components/dashboards/stat-tile";
+import { loadOperationalSnapshot } from "@/lib/dashboards/operational-snapshot";
 
-export default function ChiefPilotDashboardPage() {
+export default async function ChiefPilotDashboardPage() {
+  // Almost everything on this page is crew-service data (M3); we only
+  // pull the snapshot for the "Airborne Now" tile so it doesn't read
+  // hardcoded 0 like the rest of the M3-blocked metrics.
+  const snapshot = await loadOperationalSnapshot();
+
   return (
     <div className="container py-6">
       <DashboardNav active="chief-pilot" />
@@ -13,16 +19,20 @@ export default function ChiefPilotDashboardPage() {
       </p>
 
       {/* Row 1 — 5-col stats */}
-      <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+      <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5">
         <StatTile value={0} label="Active Crew" tone="muted" />
         <StatTile value="0/0" label="Fully Current" sub="0% compliance" tone="muted" />
         <StatTile value={0} label="Expired" tone="muted" />
         <StatTile value={0} label="Expiring Soon" sub="next 30 days" tone="muted" />
-        <StatTile value={0} label="Airborne Now" tone="muted" />
+        <StatTile
+          value={snapshot.airborneCount}
+          label="Airborne Now"
+          tone={snapshot.airborneCount > 0 ? "blue" : "muted"}
+        />
       </div>
 
       {/* Row 2 — 2-col: Crew alerts + Duty periods */}
-      <div className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-2">
+      <div className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2">
         <Panel title="Crew & Ops Alerts" milestone="M3">
           <AlertList
             alerts={[]}
@@ -70,7 +80,7 @@ export default function ChiefPilotDashboardPage() {
       </Panel>
 
       {/* Row 4 — 2-col: Pilot Risk Profiles + Review */}
-      <div className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-2">
+      <div className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2">
         <Panel title="Pilot Risk Profiles (90d)" milestone="M3">
           <p className="py-4 text-center text-xs text-muted-foreground/70">
             0 pilots scored. Per-PIC risk rolling-up dispatch risk scores
@@ -97,7 +107,7 @@ export default function ChiefPilotDashboardPage() {
       </div>
 
       {/* Row 5 — 2-col: Overrides + Recognition */}
-      <div className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-2">
+      <div className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2">
         <Panel title="Recent Overrides" milestone="M3">
           <p className="py-4 text-center text-xs text-muted-foreground/70">
             0 overrides logged. Supervisor-approved currency / risk overrides
@@ -130,7 +140,7 @@ function Panel({
   return (
     <section className={`rounded-xl border border-border bg-card p-5 ${className ?? ""}`}>
       <div className="mb-3 flex items-baseline justify-between">
-        <h2 className="text-[0.65rem] font-bold uppercase tracking-[0.1em] text-muted-foreground">
+        <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
           {title}
         </h2>
         <span className="rounded-md bg-muted px-1.5 py-0.5 text-[0.6rem] font-bold uppercase text-muted-foreground">

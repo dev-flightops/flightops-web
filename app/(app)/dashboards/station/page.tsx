@@ -56,6 +56,14 @@ export default async function StationDashboardPage({
     (f) => f.origin === station || f.destination === station,
   );
 
+  // Airborne legs scoped to this station: an inbound is "Inbound Now"
+  // when it has departed (status=released + actual_departure_at set) but
+  // hasn't landed yet. Same shape for outbound but at the origin side.
+  const isAirborne = (f: FlightListItem) =>
+    f.status === "released" && f.actual_departure_at && !f.actual_arrival_at;
+  const inboundNow = inbound.filter(isAirborne).length;
+  const outboundNow = outbound.filter(isAirborne).length;
+
   return (
     <div className="container py-6">
       <DashboardNav active="station" />
@@ -73,7 +81,7 @@ export default async function StationDashboardPage({
       </div>
 
       {/* Row 1 — 4-col stats */}
-      <div className="mt-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div className="mt-5 grid grid-cols-2 gap-3 md:grid-cols-4">
         <StatTile
           value={outbound.length}
           label="Scheduled Departures"
@@ -84,14 +92,24 @@ export default async function StationDashboardPage({
           label="Scheduled Arrivals"
           tone={inbound.length > 0 ? "green" : "muted"}
         />
-        <StatTile value={0} label="Inbound Now" sub="airborne to station" tone="muted" />
-        <StatTile value={0} label="Outbound Now" sub="departed from station" tone="muted" />
+        <StatTile
+          value={inboundNow}
+          label="Inbound Now"
+          sub="en route"
+          tone={inboundNow > 0 ? "blue" : "muted"}
+        />
+        <StatTile
+          value={outboundNow}
+          label="Outbound Now"
+          sub="airborne"
+          tone={outboundNow > 0 ? "blue" : "muted"}
+        />
       </div>
 
       {/* Row 2 — 2-col: Inbound table + Alerts */}
-      <div className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-2">
+      <div className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2">
         <section className="rounded-xl border border-border bg-card p-5">
-          <h2 className="mb-3 text-[0.65rem] font-bold uppercase tracking-[0.1em] text-muted-foreground">
+          <h2 className="mb-3 text-xs font-bold uppercase tracking-wider text-muted-foreground">
             Inbound Flights
           </h2>
           <StationFlightsTable flights={inbound} direction="in" />
@@ -99,7 +117,7 @@ export default async function StationDashboardPage({
 
         <section className="rounded-xl border border-border bg-card p-5">
           <div className="mb-3 flex items-baseline justify-between">
-            <h2 className="text-[0.65rem] font-bold uppercase tracking-[0.1em] text-muted-foreground">
+            <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
               Active Alerts
             </h2>
             <span className="text-[0.65rem] text-muted-foreground/70">
@@ -116,7 +134,7 @@ export default async function StationDashboardPage({
       {/* Row 3 — All active flights at this station */}
       <section className="mt-5 rounded-xl border border-border bg-card p-5">
         <div className="mb-3 flex items-baseline justify-between">
-          <h2 className="text-[0.65rem] font-bold uppercase tracking-[0.1em] text-muted-foreground">
+          <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
             All Activity — <span className="font-mono">{station}</span>
           </h2>
           <Link
@@ -131,7 +149,7 @@ export default async function StationDashboardPage({
 
       {/* Row 4 — Network overview */}
       <section className="mt-5 rounded-xl border border-border bg-card p-5">
-        <h2 className="mb-3 text-[0.65rem] font-bold uppercase tracking-[0.1em] text-muted-foreground">
+        <h2 className="mb-3 text-xs font-bold uppercase tracking-wider text-muted-foreground">
           Network Overview
         </h2>
         <NetworkGrid flights={todaysFlights.items} currentStation={station} />
@@ -264,7 +282,7 @@ function NetworkGrid({
     );
   }
   return (
-    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
+    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-6">
       {entries.map(([icao, c]) => (
         <Link
           key={icao}
