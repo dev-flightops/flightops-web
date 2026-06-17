@@ -50,7 +50,7 @@ export function StatTile({ value, label, sub, tone = "default", href }: StatTile
       )}>
         {value}
       </div>
-      <div className="mt-2 text-[0.65rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+      <div className="mt-2 text-xs font-normal text-muted-foreground">
         {label}
       </div>
       {sub && (
