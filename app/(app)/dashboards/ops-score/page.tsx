@@ -1,3 +1,4 @@
+import { Activity, Clock, Plane, Shield, Stethoscope, Users } from "lucide-react";
 import Link from "next/link";
 
 import { DashboardNav } from "@/components/dashboards/dashboard-nav";
@@ -95,9 +96,10 @@ export default async function OpsScoreDashboardPage() {
         </div>
         <Link
           href="/dashboards/system-health"
-          className="text-xs text-status-blue hover:underline"
+          className="inline-flex items-center gap-1.5 text-xs text-status-blue hover:underline"
         >
-          🩺 System Health →
+          <Stethoscope className="h-3.5 w-3.5" aria-hidden />
+          System Health →
         </Link>
       </div>
 
@@ -130,35 +132,35 @@ export default async function OpsScoreDashboardPage() {
             label="Completion Factor"
             score={completionPillar}
             max={25}
-            icon={<span aria-hidden>✈️</span>}
+            icon={<Plane className="h-3.5 w-3.5 text-muted-foreground" aria-hidden />}
             context={completionContext}
           />
           <PillarBar
             label="On-Time Performance"
             score={onTimePillar}
             max={25}
-            icon={<span aria-hidden>⏱️</span>}
+            icon={<Clock className="h-3.5 w-3.5 text-muted-foreground" aria-hidden />}
             context={onTimeContext}
           />
           <PillarBar
             label="Crew Compliance"
             score={0}
             max={20}
-            icon={<span aria-hidden>👤</span>}
+            icon={<Users className="h-3.5 w-3.5 text-muted-foreground" aria-hidden />}
             context={crewContext}
           />
           <PillarBar
             label="Fleet Airworthiness"
             score={fleetPillar}
             max={20}
-            icon={<span aria-hidden>🔧</span>}
+            icon={<Activity className="h-3.5 w-3.5 text-muted-foreground" aria-hidden />}
             context={fleetContext}
           />
           <PillarBar
             label="Safety Indicators"
             score={0}
             max={10}
-            icon={<span aria-hidden>🛡️</span>}
+            icon={<Shield className="h-3.5 w-3.5 text-muted-foreground" aria-hidden />}
             context={safetyContext}
           />
         </div>
@@ -171,23 +173,28 @@ export default async function OpsScoreDashboardPage() {
         </h2>
         <div className="grid grid-cols-1 gap-4 text-xs text-muted-foreground sm:grid-cols-2 md:grid-cols-5">
           <Methodology
-            title="✈️ Completion Factor (25 pts)"
+            icon={<Plane className="h-3.5 w-3.5" aria-hidden />}
+            title="Completion Factor (25 pts)"
             body="Flights that landed or completed vs flights that should have been done today. Remaining scheduled flights are excluded — they are not yet judged. Weather cancellations are noted but still counted."
           />
           <Methodology
-            title="⏱️ On-Time Performance (25 pts)"
+            icon={<Clock className="h-3.5 w-3.5" aria-hidden />}
+            title="On-Time Performance (25 pts)"
             body="Arrivals within 15 minutes of ETA. Delays caused by weather, ATC, or cascading previous legs are excluded from the penalty — those are not within the operation's control."
           />
           <Methodology
-            title="👤 Crew Compliance (20 pts)"
+            icon={<Users className="h-3.5 w-3.5" aria-hidden />}
+            title="Crew Compliance (20 pts)"
             body="Starts at 20. Deducts 2 pts per expired medical certificate, 0.5 pts per certificate expiring within 30 days. Floors at 0."
           />
           <Methodology
-            title="🔧 Fleet Airworthiness (20 pts)"
+            icon={<Activity className="h-3.5 w-3.5" aria-hidden />}
+            title="Fleet Airworthiness (20 pts)"
             body="Starts at 20. Deducts proportionally per aircraft on RTS Hold, smaller deduction per aircraft with open squawks but not on hold."
           />
           <Methodology
-            title="🛡️ Safety Indicators (10 pts)"
+            icon={<Shield className="h-3.5 w-3.5" aria-hidden />}
+            title="Safety Indicators (10 pts)"
             body="Starts at 10. Deducts 3 pts per diversion or return-to-departure today, 2 pts per currently overdue flight. This is not a safety compliance score — it is a signal of unusual events that warrant leadership attention."
           />
         </div>
@@ -230,10 +237,21 @@ export default async function OpsScoreDashboardPage() {
   );
 }
 
-function Methodology({ title, body }: { title: string; body: string }) {
+function Methodology({
+  icon,
+  title,
+  body,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  body: string;
+}) {
   return (
     <div>
-      <p className="mb-1 font-semibold text-foreground">{title}</p>
+      <p className="mb-1 flex items-center gap-1.5 font-semibold text-foreground">
+        {icon}
+        {title}
+      </p>
       <p>{body}</p>
     </div>
   );
