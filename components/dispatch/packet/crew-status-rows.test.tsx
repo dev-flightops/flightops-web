@@ -6,13 +6,13 @@ import { expectNoA11yViolations } from "@/tests/a11y";
 import { CrewCurrencyBanner, CrewLegalityHints } from "./crew-status-rows";
 
 describe("CrewLegalityHints", () => {
-  it("renders the two crew-legality + currency hint lines", () => {
+  it("renders the two crew-legality + airworthiness hint lines", () => {
     render(<CrewLegalityHints />);
     expect(
       screen.getByText(/Enter PIC\/SIC names above to check crew legality/i),
     ).toBeInTheDocument();
     expect(
-      screen.getByText(/Select a pilot to run a live currency check/i),
+      screen.getByText(/Enter N-number above to check airworthiness/i),
     ).toBeInTheDocument();
   });
 
