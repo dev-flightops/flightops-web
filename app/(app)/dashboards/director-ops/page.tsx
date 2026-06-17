@@ -41,7 +41,34 @@ export default async function DirectorOpsDashboardPage() {
     snapshot.fleetTotal > 0
       ? snapshot.fleetGrounded
       : Math.max(0, fleetTotal - fleetActive);
-  const opsScore = fleetTotal > 0 ? Math.round((fleetActive / fleetTotal) * 200) / 10 : 0;
+  // Same default-full-credit / subtract-for-failures score model as the
+  // executive dashboard (see ExecutiveDashboardPage). Completion + on-time
+  // start at full credit, fleet airworthiness scales linearly, and the
+  // M3 pillars (crew, safety) stay 0 until those services ship.
+  const fleetPillar =
+    fleetTotal > 0 ? Math.round((fleetActive / fleetTotal) * 200) / 10 : 0;
+
+  const cancelledOrOverdue = snapshot.board.filter(
+    (f) => f.status === "cancelled" || f.is_overdue,
+  ).length;
+  const completionPillar = Math.max(0, 25 - cancelledOrOverdue * 5);
+
+  const FIFTEEN_MIN_MS = 15 * 60 * 1000;
+  const delayedDepartures = snapshot.board.filter((f) => {
+    if (!f.actual_departure_at) return false;
+    const delta =
+      new Date(f.actual_departure_at).getTime() -
+      new Date(f.scheduled_departure_at).getTime();
+    return delta > FIFTEEN_MIN_MS;
+  }).length;
+  const onTimePillar = Math.max(0, 25 - delayedDepartures * 5);
+
+  const opsScore =
+    Math.round((completionPillar + onTimePillar + fleetPillar) * 10) / 10;
+
+  const overdueCount = snapshot.alerts.filter(
+    (a) => a.category === "flight_overdue",
+  ).length;
 
   return (
     <div className="container py-6">
@@ -57,10 +84,19 @@ export default async function DirectorOpsDashboardPage() {
         <ScorePill score={opsScore} />
       </div>
 
-      {/* Row 1 — 6-col stat tiles */}
-      <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-        <StatTile value={0} label="Airborne" tone="muted" />
-        <StatTile value={0} label="Overdue" tone="muted" />
+      {/* Row 1 — 6-col stat tiles. Airborne + Overdue come from the
+          shared snapshot; the others derive from today's stats query. */}
+      <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-6">
+        <StatTile
+          value={snapshot.airborneCount}
+          label="Airborne"
+          tone="blue"
+        />
+        <StatTile
+          value={overdueCount}
+          label="Overdue"
+          tone={overdueCount > 0 ? "red" : "muted"}
+        />
         <StatTile
           value={totalToday}
           label="Sched Today"
@@ -87,7 +123,7 @@ export default async function DirectorOpsDashboardPage() {
       </div>
 
       {/* Row 2 — 2-col: Alerts (left, narrow) + Active Flights (right) */}
-      <div className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-[320px_1fr]">
+      <div className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-[280px_1fr]">
         <section className="rounded-xl border border-border bg-card p-5">
           <h2 className="mb-3 text-[0.65rem] font-bold uppercase tracking-[0.1em] text-muted-foreground">
             Active Alerts
@@ -115,7 +151,7 @@ export default async function DirectorOpsDashboardPage() {
       </div>
 
       {/* Row 3 — 2-col: Pending Dispatch + 8-Week Completion Trend */}
-      <div className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-2">
+      <div className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2">
         <section className="rounded-xl border border-border bg-card p-5">
           <div className="mb-3 flex items-baseline justify-between">
             <h2 className="text-[0.65rem] font-bold uppercase tracking-[0.1em] text-muted-foreground">
@@ -128,7 +164,11 @@ export default async function DirectorOpsDashboardPage() {
               + New Packet
             </Link>
           </div>
-          <FlightsTable flights={pendingResult.items} compact />
+          <FlightsTable
+            flights={pendingResult.items}
+            compact
+            emptyHint="✅ All scheduled flights dispatched"
+          />
         </section>
 
         <section className="rounded-xl border border-border bg-card p-5">
@@ -145,7 +185,7 @@ export default async function DirectorOpsDashboardPage() {
       </div>
 
       {/* Row 4 — 3-col: Stations + Crew Compliance + Risk Distribution */}
-      <div className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-3">
+      <div className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-3">
         <ListPanel
           title="Station Summary"
           milestone="M2"
@@ -180,14 +220,16 @@ export default async function DirectorOpsDashboardPage() {
 function FlightsTable({
   flights,
   compact = false,
+  emptyHint = "No flights to show.",
 }: {
   flights: FlightListItem[];
   compact?: boolean;
+  emptyHint?: string;
 }) {
   if (flights.length === 0) {
     return (
       <p className="py-6 text-center text-xs text-muted-foreground/70">
-        No flights to show.
+        {emptyHint}
       </p>
     );
   }
@@ -213,7 +255,9 @@ function FlightsTable({
               </td>
               <td className="px-2 py-2 text-foreground/90">{f.aircraft.tail_number}</td>
               {!compact && (
-                <td className="px-2 py-2 text-foreground/80">{f.status}</td>
+                <td className="px-2 py-2">
+                  <FlightStatusBadge flight={f} />
+                </td>
               )}
               <td className="px-2 py-2 text-foreground/80">
                 {f.scheduled_departure_at.slice(11, 16)}Z
@@ -231,6 +275,49 @@ function FlightsTable({
         </tbody>
       </table>
     </div>
+  );
+}
+
+/**
+ * Status pill for the Active Flights row — same color palette the Live
+ * Ops Board on Executive uses, so the two tables read the same vibe.
+ * "released" + actual_departure_at flips to the green "Airborne" pill.
+ */
+function FlightStatusBadge({ flight }: { flight: FlightListItem }) {
+  const cls =
+    "inline-flex items-center rounded bg-opacity-15 px-1.5 py-0.5 text-[0.65rem] font-semibold";
+  if (flight.status === "released" && flight.actual_departure_at) {
+    return (
+      <span className={`${cls} bg-status-green/15 text-status-green`}>
+        Airborne
+      </span>
+    );
+  }
+  if (flight.status === "released") {
+    return (
+      <span className={`${cls} bg-status-blue/15 text-status-blue`}>
+        Released
+      </span>
+    );
+  }
+  if (flight.status === "cancelled") {
+    return (
+      <span className={`${cls} bg-status-red/15 text-status-red`}>
+        Cancelled
+      </span>
+    );
+  }
+  if (flight.status === "completed") {
+    return (
+      <span className={`${cls} bg-muted/40 text-muted-foreground`}>
+        Completed
+      </span>
+    );
+  }
+  return (
+    <span className={`${cls} bg-muted/30 text-muted-foreground`}>
+      Planned
+    </span>
   );
 }
 
