@@ -102,7 +102,7 @@ export const DEPARTMENTS: Department[] = [
       { id: "village-wx",       label: "Village Wx",       href: "/village-wx", status: "live", department: "operations" },
       { id: "ramp-ops",         label: "Ramp Ops",         href: "/ramp-ops", status: "live", department: "operations" },
       { id: "eod",              label: "EOD",              href: "/eod", status: "live", department: "operations" },
-      { id: "intelligence",     label: "✨ Intelligence",   status: "m4", department: "operations", accent: "purple" },
+      { id: "intelligence",     label: "Intelligence",     status: "m4", department: "operations", accent: "purple" },
     ],
   },
   {
@@ -144,7 +144,7 @@ export const DEPARTMENTS: Department[] = [
       { id: "profitability",          label: "Profitability", status: "m4", department: "admin" },
       { id: "invoicing",              label: "Invoicing",   status: "m4", department: "admin" },
       { id: "accounting",             label: "Accounting",  status: "m4", department: "admin" },
-      { id: "fleetbrain",             label: "✨ Fleet Brain", status: "m4", department: "admin", accent: "purple", dividerBefore: true },
+      { id: "fleetbrain",             label: "Fleet Brain",    status: "m4", department: "admin", accent: "purple", dividerBefore: true },
       { id: "ops-brief",              label: "Ops Brief",   status: "m4", department: "admin", accent: "purple" },
       { id: "ai-query",               label: "AI Query",    status: "m4", department: "admin", accent: "purple" },
     ],
@@ -197,7 +197,7 @@ export const DEPARTMENTS: Department[] = [
       { id: "batch-trace",   label: "Batch Trace",   status: "m3", department: "maintenance" },
       { id: "mx-clock",      label: "MX Clock",      status: "m3", department: "maintenance" },
       { id: "availability",  label: "Availability",  status: "m3", department: "maintenance" },
-      { id: "mx-intel",      label: "✨ MX Intel",   status: "m4", department: "maintenance", accent: "purple" },
+      { id: "mx-intel",      label: "MX Intel",      status: "m4", department: "maintenance", accent: "purple" },
     ],
   },
   {

@@ -1,3 +1,4 @@
+import { AlertTriangle, CheckCircle2 } from "lucide-react";
 import Link from "next/link";
 
 import { AlertList } from "@/components/dashboards/alert-list";
@@ -96,8 +97,9 @@ export default async function DispatcherDashboardPage() {
       {/* Row 2 — alerts */}
       <section className="mt-5 rounded-xl border border-border bg-card p-5">
         <div className="mb-3 flex items-baseline justify-between">
-          <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-            ⚠ Active Alerts
+          <h2 className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-muted-foreground">
+            <AlertTriangle className="h-3.5 w-3.5" aria-hidden />
+            Active Alerts
           </h2>
           <span className="text-[0.65rem] text-muted-foreground/70">
             {snapshot.alerts.length} live · 7 more land with M3 services
@@ -258,8 +260,12 @@ function LiveOpsTable({ flights }: { flights: FlightListItem[] }) {
 function PendingDispatchTable({ flights }: { flights: FlightListItem[] }) {
   if (flights.length === 0) {
     return (
-      <p className="py-6 text-center text-xs text-muted-foreground/70">
-        ✅ All scheduled flights have dispatch packets
+      <p className="inline-flex w-full items-center justify-center gap-1.5 py-6 text-center text-xs text-muted-foreground/70">
+        <CheckCircle2
+          className="h-3.5 w-3.5 text-status-green"
+          aria-hidden
+        />
+        All scheduled flights have dispatch packets
       </p>
     );
   }

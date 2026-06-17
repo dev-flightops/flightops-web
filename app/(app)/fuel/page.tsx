@@ -1,3 +1,4 @@
+import { Building2, Droplets, Fuel } from "lucide-react";
 import Link from "next/link";
 
 import { ApiError } from "@/lib/api/client";
@@ -65,7 +66,7 @@ export default async function FuelLandingPage() {
 
       <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <SectionCard
-          icon="⛽"
+          icon={<Fuel className="h-6 w-6 text-status-blue/80" strokeWidth={1.5} />}
           title="Orders"
           blurb="Place fuel orders by aircraft + base; track status through confirm and fueled."
           links={[
@@ -74,7 +75,7 @@ export default async function FuelLandingPage() {
           ]}
         />
         <SectionCard
-          icon="🏢"
+          icon={<Building2 className="h-6 w-6 text-status-blue/80" strokeWidth={1.5} />}
           title="Suppliers & Pricing"
           blurb="Vendor directory with contract pricing per base + fuel type."
           links={[
@@ -82,7 +83,7 @@ export default async function FuelLandingPage() {
           ]}
         />
         <SectionCard
-          icon="🛢"
+          icon={<Droplets className="h-6 w-6 text-status-blue/80" strokeWidth={1.5} />}
           title="Fuel Types"
           blurb="Tenant's fuel catalog — Jet A, 100LL, mogas, etc."
           links={[
@@ -128,14 +129,14 @@ function SectionCard({
   blurb,
   links,
 }: {
-  icon: string;
+  icon: React.ReactNode;
   title: string;
   blurb: string;
   links: SectionLink[];
 }) {
   return (
     <article className="rounded-lg border border-border bg-card p-5">
-      <div className="mb-2 text-xl">{icon}</div>
+      <div className="mb-2">{icon}</div>
       <h3 className="text-base font-semibold">{title}</h3>
       <p className="mt-1 text-xs text-muted-foreground">{blurb}</p>
       <ul className="mt-3 space-y-1.5">

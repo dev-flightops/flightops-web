@@ -1,3 +1,5 @@
+import { Sparkles } from "lucide-react";
+
 import type { FlightDetail } from "@/lib/api/types";
 
 /**
@@ -62,9 +64,10 @@ export function PacketHeader({
           type="button"
           disabled
           title="AI Assistant · Coming in M4"
-          className="inline-flex cursor-not-allowed items-center gap-1 rounded-md border border-status-purple/40 bg-transparent px-3 py-1.5 text-xs font-semibold text-status-purple opacity-60"
+          className="inline-flex cursor-not-allowed items-center gap-1.5 rounded-md border border-status-purple/40 bg-transparent px-3 py-1.5 text-xs font-semibold text-status-purple opacity-60"
         >
-          ✨ AI Assistant
+          <Sparkles className="h-3.5 w-3.5" aria-hidden />
+          AI Assistant
         </button>
 
         {/* History — disabled, M3 (no dispatch-packet history table yet). */}

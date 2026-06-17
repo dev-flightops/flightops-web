@@ -1,5 +1,6 @@
 "use client";
 
+import { Fuel } from "lucide-react";
 import { useActionState, useEffect, useState } from "react";
 
 import {
@@ -39,9 +40,10 @@ export function MarkFueledDialog({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="rounded-md border border-status-green/40 bg-status-green/10 px-3 py-1.5 text-xs font-semibold text-status-green hover:bg-status-green/20"
+        className="inline-flex items-center gap-1.5 rounded-md border border-status-green/40 bg-status-green/10 px-3 py-1.5 text-xs font-semibold text-status-green hover:bg-status-green/20"
       >
-        ⛽ Mark fueled
+        <Fuel className="h-3.5 w-3.5" aria-hidden />
+        Mark fueled
       </button>
 
       <Dialog open={open} onOpenChange={(o) => !pending && setOpen(o)}>
