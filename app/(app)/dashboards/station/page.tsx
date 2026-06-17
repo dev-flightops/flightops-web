@@ -2,14 +2,16 @@ import Link from "next/link";
 
 import { AlertList } from "@/components/dashboards/alert-list";
 import { DashboardNav } from "@/components/dashboards/dashboard-nav";
+import { StationPicker } from "@/components/dashboards/station-picker";
 import { StatTile } from "@/components/dashboards/stat-tile";
+import { listCompanyBases } from "@/lib/api/auth";
 import { listFlights } from "@/lib/api/ops";
 import {
   loadOperationalSnapshot,
   scopeSnapshotToIcao,
 } from "@/lib/dashboards/operational-snapshot";
 import { snapshotAlertsToList } from "@/lib/dashboards/snapshot-to-alerts";
-import type { FlightListItem } from "@/lib/api/types";
+import type { CompanyBaseResponse, FlightListItem } from "@/lib/api/types";
 
 function todayUtc(): string {
   return new Date().toISOString().slice(0, 10);
@@ -26,24 +28,27 @@ export default async function StationDashboardPage({
 }) {
   const { station: requestedStation } = await searchParams;
   const today = todayUtc();
-  const [todaysFlights, snapshot] = await Promise.all([
+  const [todaysFlights, snapshot, basesResponse] = await Promise.all([
     listFlights({ onDate: today, limit: 200 }).catch(() => ({
       items: [],
       total: 0,
     })),
     loadOperationalSnapshot(),
+    // Full bases catalog drives both the dropdown picker and the
+    // network grid — same source legacy uses. Falls back to today's
+    // traffic stations if the catalog query fails.
+    listCompanyBases().catch(() => ({ items: [], total: 0 })),
   ]);
 
-  // Collect unique ICAOs from origin + destination across today's flights
-  const stations = new Set<string>();
-  for (const f of todaysFlights.items) {
-    stations.add(f.origin);
-    stations.add(f.destination);
-  }
-  const stationList = Array.from(stations).sort();
-  const station = requestedStation && stations.has(requestedStation)
-    ? requestedStation
-    : (stationList[0] ?? "PADU");
+  // Bases sorted by ICAO — drives the <select> and the network grid.
+  const bases = [...basesResponse.items].sort((a, b) =>
+    a.icao.localeCompare(b.icao),
+  );
+  const baseIcaos = new Set(bases.map((b) => b.icao));
+  const station =
+    requestedStation && baseIcaos.has(requestedStation)
+      ? requestedStation
+      : (bases[0]?.icao ?? "PADU");
 
   // Scope live alerts to this base — overdue flights at this origin
   // surface, MEL / grounded aircraft alerts (which aren't ICAO-scoped)
@@ -64,6 +69,11 @@ export default async function StationDashboardPage({
   const inboundNow = inbound.filter(isAirborne).length;
   const outboundNow = outbound.filter(isAirborne).length;
 
+  // Outbound "departed" and inbound "landed" counters for the tile subs —
+  // anything with an actual_departure_at / actual_arrival_at counts.
+  const outboundDeparted = outbound.filter((f) => f.actual_departure_at).length;
+  const inboundLanded = inbound.filter((f) => f.actual_arrival_at).length;
+
   return (
     <div className="container py-6">
       <DashboardNav active="station" />
@@ -77,7 +87,13 @@ export default async function StationDashboardPage({
             Per-station traffic, ground times, and turn metrics
           </p>
         </div>
-        <StationSelector current={station} stations={stationList} />
+        <StationPicker
+          current={station}
+          options={bases.map((b) => ({
+            icao: b.icao,
+            label: `${b.icao} — ${b.display_name}`,
+          }))}
+        />
       </div>
 
       {/* Row 1 — 4-col stats */}
@@ -85,11 +101,13 @@ export default async function StationDashboardPage({
         <StatTile
           value={outbound.length}
           label="Scheduled Departures"
+          sub={`${outboundDeparted} departed`}
           tone={outbound.length > 0 ? "blue" : "muted"}
         />
         <StatTile
           value={inbound.length}
           label="Scheduled Arrivals"
+          sub={`${inboundLanded} landed`}
           tone={inbound.length > 0 ? "green" : "muted"}
         />
         <StatTile
@@ -135,7 +153,7 @@ export default async function StationDashboardPage({
       <section className="mt-5 rounded-xl border border-border bg-card p-5">
         <div className="mb-3 flex items-baseline justify-between">
           <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-            All Activity — <span className="font-mono">{station}</span>
+            All Active Flights
           </h2>
           <Link
             href="/dispatch/"
@@ -144,51 +162,24 @@ export default async function StationDashboardPage({
             Open dispatch →
           </Link>
         </div>
-        <StationFlightsTable flights={allAtStation} direction="both" station={station} />
+        <StationFlightsTable
+          flights={allAtStation}
+          direction="both"
+          station={station}
+        />
       </section>
 
-      {/* Row 4 — Network overview */}
+      {/* Row 4 — Network station summary (all bases, not just today's traffic) */}
       <section className="mt-5 rounded-xl border border-border bg-card p-5">
         <h2 className="mb-3 text-xs font-bold uppercase tracking-wider text-muted-foreground">
-          Network Overview
+          Network Station Summary — Today
         </h2>
-        <NetworkGrid flights={todaysFlights.items} currentStation={station} />
+        <NetworkGrid
+          bases={bases}
+          flights={todaysFlights.items}
+          currentStation={station}
+        />
       </section>
-    </div>
-  );
-}
-
-function StationSelector({
-  current,
-  stations,
-}: {
-  current: string;
-  stations: string[];
-}) {
-  if (stations.length === 0) {
-    return null;
-  }
-  return (
-    <div className="flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2">
-      <span className="text-[0.65rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
-        Station
-      </span>
-      <div className="flex gap-1">
-        {stations.map((icao) => (
-          <Link
-            key={icao}
-            href={`/dashboards/station/?station=${icao}`}
-            className={
-              icao === current
-                ? "rounded-md bg-primary/12 px-2 py-0.5 font-mono text-xs font-semibold text-status-blue"
-                : "rounded-md px-2 py-0.5 font-mono text-xs text-muted-foreground hover:bg-primary/8 hover:text-status-blue"
-            }
-            aria-current={icao === current ? "page" : undefined}
-          >
-            {icao}
-          </Link>
-        ))}
-      </div>
     </div>
   );
 }
@@ -256,50 +247,65 @@ function StationFlightsTable({
 }
 
 function NetworkGrid({
+  bases,
   flights,
   currentStation,
 }: {
+  bases: CompanyBaseResponse[];
   flights: FlightListItem[];
   currentStation: string;
 }) {
-  const counts = new Map<string, { dep: number; arr: number }>();
+  // Tally departures + arrivals per ICAO from today's board.
+  const counts = new Map<string, { dep: number; arr: number; inbound: number }>();
   for (const f of flights) {
-    const dep = counts.get(f.origin) ?? { dep: 0, arr: 0 };
+    const dep = counts.get(f.origin) ?? { dep: 0, arr: 0, inbound: 0 };
     dep.dep += 1;
     counts.set(f.origin, dep);
-    const arr = counts.get(f.destination) ?? { dep: 0, arr: 0 };
+    const arr = counts.get(f.destination) ?? { dep: 0, arr: 0, inbound: 0 };
     arr.arr += 1;
+    // Inbound = currently airborne, destined here.
+    if (f.status === "released" && f.actual_departure_at && !f.actual_arrival_at) {
+      arr.inbound += 1;
+    }
     counts.set(f.destination, arr);
   }
-  const entries = Array.from(counts.entries()).sort(([a], [b]) =>
-    a.localeCompare(b),
-  );
-  if (entries.length === 0) {
+
+  if (bases.length === 0) {
     return (
       <p className="py-4 text-center text-xs text-muted-foreground/70">
-        No station traffic today.
+        No bases configured. Add bases in Settings → Bases.
       </p>
     );
   }
+
   return (
     <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-6">
-      {entries.map(([icao, c]) => (
-        <Link
-          key={icao}
-          href={`/dashboards/station/?station=${icao}`}
-          className={
-            "rounded-md border p-3 text-xs transition-colors " +
-            (icao === currentStation
-              ? "border-status-blue/40 bg-status-blue/[0.08]"
-              : "border-border bg-card hover:border-primary/30")
-          }
-        >
-          <p className="font-mono font-semibold text-foreground">{icao}</p>
-          <p className="mt-1 text-[0.65rem] text-muted-foreground">
-            {c.dep} dep · {c.arr} arr
-          </p>
-        </Link>
-      ))}
+      {bases.map((b) => {
+        const c = counts.get(b.icao) ?? { dep: 0, arr: 0, inbound: 0 };
+        return (
+          <Link
+            key={b.icao}
+            href={`/dashboards/station/?station=${b.icao}`}
+            className={
+              "rounded-md border p-3 text-xs transition-colors " +
+              (b.icao === currentStation
+                ? "border-status-blue/40 bg-status-blue/[0.08]"
+                : "border-border bg-card hover:border-primary/30")
+            }
+          >
+            <p className="font-mono font-semibold text-foreground">{b.icao}</p>
+            <p className="mt-1 text-[0.65rem] text-muted-foreground">
+              <span className="text-status-blue/80">↑ {c.dep} dep</span>{" "}
+              <span className="text-status-green/80">↓ {c.arr} arr</span>
+            </p>
+            {c.inbound > 0 && (
+              <p className="mt-0.5 text-[0.6rem] text-status-blue">
+                ✈ {c.inbound} inbound
+              </p>
+            )}
+          </Link>
+        );
+      })}
     </div>
   );
 }
