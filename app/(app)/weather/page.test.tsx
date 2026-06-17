@@ -138,4 +138,20 @@ describe("WeatherBriefingsPage (M2-G-27 list)", () => {
 
     expect(screen.getByText(/briefings feed unavailable/i)).toBeInTheDocument();
   });
+
+  it("falls through to the empty state on 404 (endpoint not yet built)", async () => {
+    // /weather/briefings 404s while the weather-service hasn't shipped
+    // its list endpoint. We treat that as "no briefings" so the user
+    // sees the Create CTA, not a scary "feed unavailable" alert.
+    listWeatherBriefings.mockRejectedValueOnce(
+      new TestApiError(404, "/weather/briefings", "Not Found"),
+    );
+
+    await renderPage();
+
+    expect(screen.getByText(/no briefings yet/i)).toBeInTheDocument();
+    expect(
+      screen.queryByText(/briefings feed unavailable/i),
+    ).not.toBeInTheDocument();
+  });
 });
