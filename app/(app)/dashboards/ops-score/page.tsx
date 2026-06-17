@@ -11,9 +11,10 @@ export default async function OpsScoreDashboardPage() {
     getFlightStats().catch(() => null),
     loadOperationalSnapshot(),
   ]);
-  // Per spec, Fleet Airworthiness is worth 15 points (not 20). Pull from
-  // the maintenance-service airworthiness rollup when available so the
-  // score reflects real blocking-issue counts, not just is_active.
+  // Pillar model matches the executive dashboard exactly: default-full-
+  // credit for Completion + On-Time, subtract per failure; fleet pillar
+  // scales linearly with airworthy count; Crew + Safety stay 0 until
+  // their M3 services ship.
   const fleetTotal =
     snapshot.fleetTotal > 0 ? snapshot.fleetTotal : stats?.aircraft_total ?? 0;
   const fleetActive =
@@ -21,8 +22,25 @@ export default async function OpsScoreDashboardPage() {
       ? snapshot.fleetAirworthy
       : stats?.aircraft_active ?? 0;
   const fleetPillar =
-    fleetTotal > 0 ? Math.round((fleetActive / fleetTotal) * 150) / 10 : 0;
-  const opsScore = fleetPillar; // sum of 0+0+0+fleetPillar+0; remaining pillars wait on crew + flight-following + safety services
+    fleetTotal > 0 ? Math.round((fleetActive / fleetTotal) * 200) / 10 : 0;
+
+  const cancelledOrOverdue = snapshot.board.filter(
+    (f) => f.status === "cancelled" || f.is_overdue,
+  ).length;
+  const completionPillar = Math.max(0, 25 - cancelledOrOverdue * 5);
+
+  const FIFTEEN_MIN_MS = 15 * 60 * 1000;
+  const delayedDepartures = snapshot.board.filter((f) => {
+    if (!f.actual_departure_at) return false;
+    const delta =
+      new Date(f.actual_departure_at).getTime() -
+      new Date(f.scheduled_departure_at).getTime();
+    return delta > FIFTEEN_MIN_MS;
+  }).length;
+  const onTimePillar = Math.max(0, 25 - delayedDepartures * 5);
+
+  const opsScore =
+    Math.round((completionPillar + onTimePillar + fleetPillar) * 10) / 10;
 
   const today = new Date().toISOString().slice(0, 10);
 
@@ -56,13 +74,13 @@ export default async function OpsScoreDashboardPage() {
         <div className="space-y-4">
           <PillarBar
             label="Completion Factor"
-            score={0}
+            score={completionPillar}
             max={25}
             icon={<Plane className="h-3.5 w-3.5 text-muted-foreground" />}
           />
           <PillarBar
             label="On-Time Performance"
-            score={0}
+            score={onTimePillar}
             max={25}
             icon={<Clock className="h-3.5 w-3.5 text-muted-foreground" />}
           />
@@ -92,7 +110,7 @@ export default async function OpsScoreDashboardPage() {
         <h2 className="mb-3 text-[0.65rem] font-bold uppercase tracking-[0.1em] text-muted-foreground">
           Methodology
         </h2>
-        <div className="grid grid-cols-1 gap-4 text-xs text-muted-foreground sm:grid-cols-2 lg:grid-cols-5">
+        <div className="grid grid-cols-1 gap-4 text-xs text-muted-foreground sm:grid-cols-2 md:grid-cols-5">
           <Methodology
             title="Completion Factor (25 pts)"
             body="Released flights that completed without cancellation or diversion. Computed from outcomes once flight-following adds ATD/ATA timestamps (M2)."

@@ -24,6 +24,9 @@ export default async function DispatcherDashboardPage() {
     ]);
 
   const scheduledToday = stats?.today.scheduled ?? 0;
+  const overdueCount = snapshot.alerts.filter(
+    (a) => a.category === "flight_overdue",
+  ).length;
   // Real airworthiness rollup first; fall back to ops aircraft_active.
   const fleetTotal =
     snapshot.fleetTotal > 0 ? snapshot.fleetTotal : stats?.aircraft_total ?? 0;
@@ -46,18 +49,18 @@ export default async function DispatcherDashboardPage() {
       </p>
 
       {/* Row 1 — 5-col stat tiles */}
-      <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+      <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5">
         <StatTile
-          value={0}
+          value={snapshot.airborneCount}
           label="Airborne"
           sub="in flight now"
-          tone="muted"
+          tone={snapshot.airborneCount > 0 ? "blue" : "muted"}
         />
         <StatTile
-          value={0}
+          value={overdueCount}
           label="Overdue"
           sub="immediate attention"
-          tone="muted"
+          tone={overdueCount > 0 ? "red" : "muted"}
         />
         <StatTile
           value={scheduledToday}
@@ -113,7 +116,7 @@ export default async function DispatcherDashboardPage() {
       </section>
 
       {/* Row 4 — 2-col: Pending dispatch + Fleet */}
-      <div className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-2">
+      <div className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2">
         <section className="rounded-xl border border-border bg-card p-5">
           <div className="mb-3 flex items-baseline justify-between">
             <h2 className="text-[0.65rem] font-bold uppercase tracking-[0.1em] text-muted-foreground">
@@ -143,7 +146,7 @@ export default async function DispatcherDashboardPage() {
       </div>
 
       {/* Row 5 — 3-col footer panels (all backed by services not yet built) */}
-      <div className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-3">
+      <div className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-3">
         <FuturePanel
           title="Crew Currency"
           milestone="M3"
@@ -196,7 +199,7 @@ function LiveOpsTable({ flights }: { flights: FlightListItem[] }) {
                 {f.origin} → {f.destination}
               </td>
               <td className="px-2 py-2">
-                <StatusPill status={f.status} />
+                <StatusPill flight={f} />
               </td>
               <td className="px-2 py-2 text-foreground/80">{formatTime(f.scheduled_departure_at)}</td>
               <td className="px-2 py-2 text-foreground/80">{formatTime(f.scheduled_arrival_at)}</td>
@@ -322,21 +325,33 @@ function FuturePanel({
   );
 }
 
-function StatusPill({ status }: { status: string }) {
-  const styles: Record<string, string> = {
-    released:  "bg-status-green/15 text-status-green",
-    scheduled: "bg-status-blue/15 text-status-blue",
-    cancelled: "bg-status-red/15 text-status-red",
-    completed: "bg-muted text-muted-foreground",
-  };
+function StatusPill({ flight }: { flight: FlightListItem }) {
+  // Same status taxonomy as the executive/director Live Ops Board so
+  // dispatch reads the same vibe across dashboards.
+  const isAirborne =
+    flight.status === "released" && flight.actual_departure_at;
+  const label = isAirborne
+    ? "Airborne"
+    : flight.status === "scheduled"
+      ? "Planned"
+      : flight.status.charAt(0).toUpperCase() + flight.status.slice(1);
+  const styles = isAirborne
+    ? "bg-status-green/15 text-status-green"
+    : flight.status === "released"
+      ? "bg-status-blue/15 text-status-blue"
+      : flight.status === "cancelled"
+        ? "bg-status-red/15 text-status-red"
+        : flight.status === "completed"
+          ? "bg-muted text-muted-foreground"
+          : "bg-muted/40 text-muted-foreground";
   return (
     <span
       className={
         "inline-flex rounded-md px-1.5 py-0.5 text-[0.6rem] font-bold uppercase tracking-[0.06em] " +
-        (styles[status] ?? "bg-muted text-muted-foreground")
+        styles
       }
     >
-      {status}
+      {label}
     </span>
   );
 }
