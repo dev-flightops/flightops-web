@@ -22,9 +22,16 @@ import type { FleetAircraftSummary } from "@/lib/api/types";
 
 interface Props {
   fleet: FleetAircraftSummary[];
+  /** Section heading text. Legacy uses "Fleet Airworthiness" on the
+   *  executive dashboard and "Fleet Availability" on the dispatcher
+   *  dashboard for the same component shape — override per host. */
+  title?: string;
 }
 
-export function FleetAirworthinessPanel({ fleet }: Props) {
+export function FleetAirworthinessPanel({
+  fleet,
+  title = "Fleet Airworthiness",
+}: Props) {
   const active = fleet.filter((r) => r.is_active);
   const openSquawks = active.reduce((s, r) => s + r.open_squawk_count, 0);
   const openMels = active.reduce((s, r) => s + r.open_mel_count, 0);
@@ -33,7 +40,7 @@ export function FleetAirworthinessPanel({ fleet }: Props) {
   return (
     <section className="rounded-xl border border-border bg-card p-5">
       <h2 className="mb-3 text-xs font-bold uppercase tracking-wider text-muted-foreground">
-        Fleet Airworthiness
+        {title}
       </h2>
 
       <div className="max-h-[560px] space-y-1.5 overflow-y-auto pr-2">

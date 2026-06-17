@@ -2,11 +2,12 @@ import Link from "next/link";
 
 import { AlertList } from "@/components/dashboards/alert-list";
 import { DashboardNav } from "@/components/dashboards/dashboard-nav";
+import { FleetAirworthinessPanel } from "@/components/dashboards/fleet-airworthiness-panel";
 import { StatTile } from "@/components/dashboards/stat-tile";
-import { listAircraft, listFlights, getFlightStats } from "@/lib/api/ops";
+import { listFlights, getFlightStats } from "@/lib/api/ops";
 import { loadOperationalSnapshot } from "@/lib/dashboards/operational-snapshot";
 import { snapshotAlertsToList } from "@/lib/dashboards/snapshot-to-alerts";
-import type { AircraftListItem, FlightListItem } from "@/lib/api/types";
+import type { FlightListItem } from "@/lib/api/types";
 
 function todayUtc(): string {
   return new Date().toISOString().slice(0, 10);
@@ -14,14 +15,24 @@ function todayUtc(): string {
 
 export default async function DispatcherDashboardPage() {
   const today = todayUtc();
-  const [stats, todaysFlights, pendingResult, aircraftResult, snapshot] =
-    await Promise.all([
-      getFlightStats().catch(() => null),
-      listFlights({ onDate: today }).catch(() => ({ items: [], total: 0 })),
-      listFlights({ status: "scheduled", limit: 10 }).catch(() => ({ items: [], total: 0 })),
-      listAircraft().catch(() => ({ items: [], total: 0 })),
-      loadOperationalSnapshot(),
-    ]);
+  const [stats, todaysFlights, pendingResult, snapshot] = await Promise.all([
+    getFlightStats().catch(() => null),
+    listFlights({ onDate: today }).catch(() => ({ items: [], total: 0 })),
+    // Wider window then filter to today + tomorrow — same fix as
+    // director-ops. Bare status='scheduled' picks up orphan rows from
+    // prior seed runs.
+    listFlights({ status: "scheduled", limit: 50 }).catch(() => ({ items: [], total: 0 })),
+    loadOperationalSnapshot(),
+  ]);
+
+  const todayDate = today;
+  const tomorrowDate = new Date(Date.now() + 24 * 60 * 60 * 1000)
+    .toISOString()
+    .slice(0, 10);
+  const pendingTodayAndTomorrow = pendingResult.items.filter((f) => {
+    const d = f.scheduled_departure_at.slice(0, 10);
+    return d === todayDate || d === tomorrowDate;
+  });
 
   const scheduledToday = stats?.today.scheduled ?? 0;
   const overdueCount = snapshot.alerts.filter(
@@ -53,7 +64,6 @@ export default async function DispatcherDashboardPage() {
         <StatTile
           value={snapshot.airborneCount}
           label="Airborne"
-          sub="in flight now"
           tone={snapshot.airborneCount > 0 ? "blue" : "muted"}
         />
         <StatTile
@@ -87,7 +97,7 @@ export default async function DispatcherDashboardPage() {
       <section className="mt-5 rounded-xl border border-border bg-card p-5">
         <div className="mb-3 flex items-baseline justify-between">
           <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-            Active Alerts
+            ⚠ Active Alerts
           </h2>
           <span className="text-[0.65rem] text-muted-foreground/70">
             {snapshot.alerts.length} live · 7 more land with M3 services
@@ -106,16 +116,16 @@ export default async function DispatcherDashboardPage() {
             Live Ops Board
           </h2>
           <Link
-            href="/dispatch/"
+            href="/flight-following"
             className="text-[0.7rem] text-muted-foreground/70 hover:text-status-blue"
           >
-            Open dispatch →
+            Full following →
           </Link>
         </div>
         <LiveOpsTable flights={todaysFlights.items} />
       </section>
 
-      {/* Row 4 — 2-col: Pending dispatch + Fleet */}
+      {/* Row 4 — 2-col: Pending dispatch + Fleet Availability */}
       <div className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2">
         <section className="rounded-xl border border-border bg-card p-5">
           <div className="mb-3 flex items-baseline justify-between">
@@ -129,20 +139,13 @@ export default async function DispatcherDashboardPage() {
               + New Packet
             </Link>
           </div>
-          <PendingDispatchTable flights={pendingResult.items} />
+          <PendingDispatchTable flights={pendingTodayAndTomorrow} />
         </section>
 
-        <section className="rounded-xl border border-border bg-card p-5">
-          <div className="mb-3 flex items-baseline justify-between">
-            <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-              Fleet Status
-            </h2>
-            <span className="text-[0.65rem] text-muted-foreground/70">
-              MEL + airworthiness · M2
-            </span>
-          </div>
-          <FleetList aircraft={aircraftResult.items} />
-        </section>
+        <FleetAirworthinessPanel
+          fleet={snapshot.fleet}
+          title="Fleet Availability"
+        />
       </div>
 
       {/* Row 5 — 3-col footer panels (all backed by services not yet built) */}
@@ -157,13 +160,30 @@ export default async function DispatcherDashboardPage() {
           milestone="M3"
           hint="Bar chart of LOW / MEDIUM / HIGH / EXTREME risk scores across the last 7 days once risk-analytics is wired."
         />
-        <FuturePanel
-          title="Recent Outcomes"
-          milestone="M2"
-          hint="On-time vs delayed vs cancelled for the last 30 days once flight-following adds ATD/ATA timestamps."
-        />
+        <RecentOutcomesPanel />
       </div>
     </div>
+  );
+}
+
+function RecentOutcomesPanel() {
+  return (
+    <section className="rounded-xl border border-border bg-card p-5">
+      <div className="mb-2 flex items-center justify-between">
+        <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+          Recent Outcomes
+        </h2>
+        <Link
+          href="/flight-following/history"
+          className="text-[0.7rem] text-muted-foreground/70 hover:text-status-blue"
+        >
+          Dispatch history →
+        </Link>
+      </div>
+      <p className="py-4 text-center text-xs text-muted-foreground/70">
+        No outcomes recorded yet.
+      </p>
+    </section>
   );
 }
 
@@ -176,6 +196,11 @@ function LiveOpsTable({ flights }: { flights: FlightListItem[] }) {
     );
   }
 
+  // Columns mirror legacy peregrineflight verbatim:
+  // FLIGHT / TAIL / ROUTE / PIC / STATUS / ETD / ATD / ETA / CONTACT.
+  // PIC stays "—" until crew-service ships (M3). ATD reads from
+  // actual_departure_at; CONTACT from a future position-tracker. Both
+  // null-safe with "—" fallback.
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-xs">
@@ -184,9 +209,12 @@ function LiveOpsTable({ flights }: { flights: FlightListItem[] }) {
             <th className="px-2 py-2">Flight</th>
             <th className="px-2 py-2">Tail</th>
             <th className="px-2 py-2">Route</th>
+            <th className="px-2 py-2">PIC</th>
             <th className="px-2 py-2">Status</th>
-            <th className="px-2 py-2">STD</th>
-            <th className="px-2 py-2">STA</th>
+            <th className="px-2 py-2">ETD</th>
+            <th className="px-2 py-2">ATD</th>
+            <th className="px-2 py-2">ETA</th>
+            <th className="px-2 py-2">Contact</th>
             <th className="px-2 py-2 text-right">&nbsp;</th>
           </tr>
         </thead>
@@ -196,13 +224,24 @@ function LiveOpsTable({ flights }: { flights: FlightListItem[] }) {
               <td className="px-2 py-2 font-semibold text-foreground">{f.flight_number}</td>
               <td className="px-2 py-2 text-foreground/90">{f.aircraft.tail_number}</td>
               <td className="px-2 py-2 text-muted-foreground">
-                {f.origin} → {f.destination}
+                {f.origin}→{f.destination}
               </td>
+              <td className="px-2 py-2 text-muted-foreground/60">—</td>
               <td className="px-2 py-2">
                 <StatusPill flight={f} />
               </td>
-              <td className="px-2 py-2 text-foreground/80">{formatTime(f.scheduled_departure_at)}</td>
-              <td className="px-2 py-2 text-foreground/80">{formatTime(f.scheduled_arrival_at)}</td>
+              <td className="px-2 py-2 text-foreground/80">
+                {formatTime(f.scheduled_departure_at)}
+              </td>
+              <td className="px-2 py-2 text-foreground/80">
+                {f.actual_departure_at
+                  ? formatTime(f.actual_departure_at)
+                  : "—"}
+              </td>
+              <td className="px-2 py-2 text-foreground/80">
+                {formatTime(f.scheduled_arrival_at)}
+              </td>
+              <td className="px-2 py-2 text-muted-foreground/60">—</td>
               <td className="px-2 py-2 text-right">
                 <Link href={`/dispatch/${f.id}`} className="text-status-blue hover:underline">
                   →
@@ -220,7 +259,7 @@ function PendingDispatchTable({ flights }: { flights: FlightListItem[] }) {
   if (flights.length === 0) {
     return (
       <p className="py-6 text-center text-xs text-muted-foreground/70">
-        No pending releases — all scheduled flights have been released.
+        ✅ All scheduled flights have dispatch packets
       </p>
     );
   }
@@ -259,42 +298,6 @@ function PendingDispatchTable({ flights }: { flights: FlightListItem[] }) {
         </tbody>
       </table>
     </div>
-  );
-}
-
-function FleetList({ aircraft }: { aircraft: AircraftListItem[] }) {
-  if (aircraft.length === 0) {
-    return (
-      <p className="py-6 text-center text-xs text-muted-foreground/70">
-        Fleet roster empty.
-      </p>
-    );
-  }
-
-  return (
-    <ul className="space-y-1.5 text-xs">
-      {aircraft.map((a) => (
-        <li
-          key={a.id}
-          className="flex items-baseline justify-between rounded-md border border-border/60 px-3 py-2"
-        >
-          <div className="flex items-baseline gap-3">
-            <span className="font-mono font-semibold text-foreground">{a.tail_number}</span>
-            <span className="text-muted-foreground">{a.model}</span>
-            <span className="text-[0.65rem] text-muted-foreground/70">{a.seats} seats</span>
-          </div>
-          <span
-            className={
-              a.is_active
-                ? "text-[0.65rem] font-semibold uppercase tracking-[0.06em] text-status-green"
-                : "text-[0.65rem] font-semibold uppercase tracking-[0.06em] text-status-orange"
-            }
-          >
-            {a.is_active ? "Active" : "Hold"}
-          </span>
-        </li>
-      ))}
-    </ul>
   );
 }
 
