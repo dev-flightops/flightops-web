@@ -109,7 +109,7 @@ export default async function StationDashboardPage({
       {/* Row 2 — 2-col: Inbound table + Alerts */}
       <div className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2">
         <section className="rounded-xl border border-border bg-card p-5">
-          <h2 className="mb-3 text-[0.65rem] font-bold uppercase tracking-[0.1em] text-muted-foreground">
+          <h2 className="mb-3 text-xs font-bold uppercase tracking-wider text-muted-foreground">
             Inbound Flights
           </h2>
           <StationFlightsTable flights={inbound} direction="in" />
@@ -117,7 +117,7 @@ export default async function StationDashboardPage({
 
         <section className="rounded-xl border border-border bg-card p-5">
           <div className="mb-3 flex items-baseline justify-between">
-            <h2 className="text-[0.65rem] font-bold uppercase tracking-[0.1em] text-muted-foreground">
+            <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
               Active Alerts
             </h2>
             <span className="text-[0.65rem] text-muted-foreground/70">
@@ -134,7 +134,7 @@ export default async function StationDashboardPage({
       {/* Row 3 — All active flights at this station */}
       <section className="mt-5 rounded-xl border border-border bg-card p-5">
         <div className="mb-3 flex items-baseline justify-between">
-          <h2 className="text-[0.65rem] font-bold uppercase tracking-[0.1em] text-muted-foreground">
+          <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
             All Activity — <span className="font-mono">{station}</span>
           </h2>
           <Link
@@ -149,7 +149,7 @@ export default async function StationDashboardPage({
 
       {/* Row 4 — Network overview */}
       <section className="mt-5 rounded-xl border border-border bg-card p-5">
-        <h2 className="mb-3 text-[0.65rem] font-bold uppercase tracking-[0.1em] text-muted-foreground">
+        <h2 className="mb-3 text-xs font-bold uppercase tracking-wider text-muted-foreground">
           Network Overview
         </h2>
         <NetworkGrid flights={todaysFlights.items} currentStation={station} />

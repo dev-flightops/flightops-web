@@ -55,7 +55,7 @@ export default async function OpsScoreDashboardPage() {
 
       {/* Central dial */}
       <section className="mt-5 rounded-xl border border-border bg-card p-8 text-center">
-        <p className="text-[0.65rem] font-bold uppercase tracking-[0.1em] text-muted-foreground">
+        <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
           Today&apos;s Ops Score
         </p>
         <div className="mt-4 flex justify-center">
@@ -68,7 +68,7 @@ export default async function OpsScoreDashboardPage() {
 
       {/* Pillar breakdown */}
       <section className="mt-5 rounded-xl border border-border bg-card p-5">
-        <h2 className="mb-4 text-[0.65rem] font-bold uppercase tracking-[0.1em] text-muted-foreground">
+        <h2 className="mb-4 text-xs font-bold uppercase tracking-wider text-muted-foreground">
           Pillar Breakdown
         </h2>
         <div className="space-y-4">
@@ -107,7 +107,7 @@ export default async function OpsScoreDashboardPage() {
 
       {/* Methodology */}
       <section className="mt-5 rounded-xl border border-border bg-card p-5">
-        <h2 className="mb-3 text-[0.65rem] font-bold uppercase tracking-[0.1em] text-muted-foreground">
+        <h2 className="mb-3 text-xs font-bold uppercase tracking-wider text-muted-foreground">
           Methodology
         </h2>
         <div className="grid grid-cols-1 gap-4 text-xs text-muted-foreground sm:grid-cols-2 md:grid-cols-5">
@@ -137,7 +137,7 @@ export default async function OpsScoreDashboardPage() {
       {/* 8-week trend */}
       <section className="mt-5 rounded-xl border border-border bg-card p-5">
         <div className="mb-3 flex items-baseline justify-between">
-          <h2 className="text-[0.65rem] font-bold uppercase tracking-[0.1em] text-muted-foreground">
+          <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
             8-Week Score Trend
           </h2>
           <span className="text-[0.65rem] text-muted-foreground/70">

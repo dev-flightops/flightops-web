@@ -140,7 +140,7 @@ function Panel({
   return (
     <section className={`rounded-xl border border-border bg-card p-5 ${className ?? ""}`}>
       <div className="mb-3 flex items-baseline justify-between">
-        <h2 className="text-[0.65rem] font-bold uppercase tracking-[0.1em] text-muted-foreground">
+        <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
           {title}
         </h2>
         <span className="rounded-md bg-muted px-1.5 py-0.5 text-[0.6rem] font-bold uppercase text-muted-foreground">

@@ -86,7 +86,7 @@ export default async function DispatcherDashboardPage() {
       {/* Row 2 — alerts */}
       <section className="mt-5 rounded-xl border border-border bg-card p-5">
         <div className="mb-3 flex items-baseline justify-between">
-          <h2 className="text-[0.65rem] font-bold uppercase tracking-[0.1em] text-muted-foreground">
+          <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
             Active Alerts
           </h2>
           <span className="text-[0.65rem] text-muted-foreground/70">
@@ -102,7 +102,7 @@ export default async function DispatcherDashboardPage() {
       {/* Row 3 — Live Ops Board */}
       <section className="mt-5 rounded-xl border border-border bg-card p-5">
         <div className="mb-3 flex items-baseline justify-between">
-          <h2 className="text-[0.65rem] font-bold uppercase tracking-[0.1em] text-muted-foreground">
+          <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
             Live Ops Board
           </h2>
           <Link
@@ -119,7 +119,7 @@ export default async function DispatcherDashboardPage() {
       <div className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2">
         <section className="rounded-xl border border-border bg-card p-5">
           <div className="mb-3 flex items-baseline justify-between">
-            <h2 className="text-[0.65rem] font-bold uppercase tracking-[0.1em] text-muted-foreground">
+            <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
               Flights Needing Dispatch
             </h2>
             <Link
@@ -134,7 +134,7 @@ export default async function DispatcherDashboardPage() {
 
         <section className="rounded-xl border border-border bg-card p-5">
           <div className="mb-3 flex items-baseline justify-between">
-            <h2 className="text-[0.65rem] font-bold uppercase tracking-[0.1em] text-muted-foreground">
+            <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
               Fleet Status
             </h2>
             <span className="text-[0.65rem] text-muted-foreground/70">
@@ -310,7 +310,7 @@ function FuturePanel({
   return (
     <section className="rounded-xl border border-border bg-card p-5">
       <div className="mb-2 flex items-center justify-between">
-        <h2 className="text-[0.65rem] font-bold uppercase tracking-[0.1em] text-muted-foreground">
+        <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
           {title}
         </h2>
         <span

@@ -152,7 +152,7 @@ export default async function ExecutiveDashboardPage() {
       <div className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2">
         <section className="rounded-xl border border-border bg-card p-5">
           <div className="mb-3 flex items-baseline justify-between">
-            <h2 className="text-[0.65rem] font-bold uppercase tracking-[0.1em] text-muted-foreground">
+            <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
               Active Alerts
             </h2>
             <span className="text-[0.65rem] text-muted-foreground/70">
@@ -167,7 +167,7 @@ export default async function ExecutiveDashboardPage() {
 
         <section className="rounded-xl border border-border bg-card p-5">
           <div className="mb-3 flex items-baseline justify-between">
-            <h2 className="text-[0.65rem] font-bold uppercase tracking-[0.1em] text-muted-foreground">
+            <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
               Daily Operations Score —{" "}
               <span className="text-foreground">{opsScore.toFixed(1)}/100</span>
             </h2>

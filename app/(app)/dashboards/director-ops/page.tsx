@@ -125,7 +125,7 @@ export default async function DirectorOpsDashboardPage() {
       {/* Row 2 — 2-col: Alerts (left, narrow) + Active Flights (right) */}
       <div className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-[280px_1fr]">
         <section className="rounded-xl border border-border bg-card p-5">
-          <h2 className="mb-3 text-[0.65rem] font-bold uppercase tracking-[0.1em] text-muted-foreground">
+          <h2 className="mb-3 text-xs font-bold uppercase tracking-wider text-muted-foreground">
             Active Alerts
           </h2>
           <AlertList
@@ -136,7 +136,7 @@ export default async function DirectorOpsDashboardPage() {
 
         <section className="rounded-xl border border-border bg-card p-5">
           <div className="mb-3 flex items-baseline justify-between">
-            <h2 className="text-[0.65rem] font-bold uppercase tracking-[0.1em] text-muted-foreground">
+            <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
               Active Flights
             </h2>
             <Link
@@ -154,7 +154,7 @@ export default async function DirectorOpsDashboardPage() {
       <div className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2">
         <section className="rounded-xl border border-border bg-card p-5">
           <div className="mb-3 flex items-baseline justify-between">
-            <h2 className="text-[0.65rem] font-bold uppercase tracking-[0.1em] text-muted-foreground">
+            <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
               Pending Dispatch
             </h2>
             <Link
@@ -173,7 +173,7 @@ export default async function DirectorOpsDashboardPage() {
 
         <section className="rounded-xl border border-border bg-card p-5">
           <div className="mb-3 flex items-baseline justify-between">
-            <h2 className="text-[0.65rem] font-bold uppercase tracking-[0.1em] text-muted-foreground">
+            <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
               8-Week Completion Trend
             </h2>
             <span className="text-[0.65rem] text-muted-foreground/70">
@@ -356,7 +356,7 @@ function ListPanel({
   return (
     <section className="rounded-xl border border-border bg-card p-5">
       <div className="mb-3 flex items-baseline justify-between">
-        <h2 className="text-[0.65rem] font-bold uppercase tracking-[0.1em] text-muted-foreground">
+        <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
           {title}
         </h2>
         <span className="rounded-md bg-muted px-1.5 py-0.5 text-[0.6rem] font-bold uppercase text-muted-foreground">
