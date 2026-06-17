@@ -83,14 +83,15 @@ function Row({ row }: { row: FleetAircraftSummary }) {
   const grounded = !row.is_airworthy;
   const advisory = row.is_airworthy && row.advisory_count > 0;
 
-  let badge = (
-    <span className="text-status-green">🟢 Airworthy</span>
-  );
+  // Colored-dot pattern (same shape as the score-band legend on
+  // /dashboards/ops-score) instead of 🟢🟡🔴 emoji — those fall back
+  // to missing-glyph boxes on systems without an emoji font installed.
+  let badge = <StatusBadge tone="green" label="Airworthy" />;
   if (advisory) {
-    badge = <span className="text-status-yellow">🟡 Advisory</span>;
+    badge = <StatusBadge tone="yellow" label="Advisory" />;
   }
   if (grounded) {
-    badge = <span className="text-status-red">🔴 Grounded</span>;
+    badge = <StatusBadge tone="red" label="Grounded" />;
   }
 
   return (
@@ -107,7 +108,34 @@ function Row({ row }: { row: FleetAircraftSummary }) {
       <span className="text-xs text-muted-foreground/40">
         {row.base ?? "—"}
       </span>
-      <span className="text-xs">{badge}</span>
+      {badge}
     </Link>
+  );
+}
+
+function StatusBadge({
+  tone,
+  label,
+}: {
+  tone: "green" | "yellow" | "red";
+  label: string;
+}) {
+  const dotClass =
+    tone === "green"
+      ? "bg-status-green"
+      : tone === "yellow"
+        ? "bg-status-yellow"
+        : "bg-status-red";
+  const textClass =
+    tone === "green"
+      ? "text-status-green"
+      : tone === "yellow"
+        ? "text-status-yellow"
+        : "text-status-red";
+  return (
+    <span className={`inline-flex items-center gap-1.5 text-xs ${textClass}`}>
+      <span className={`h-2 w-2 rounded-full ${dotClass}`} aria-hidden />
+      {label}
+    </span>
   );
 }
