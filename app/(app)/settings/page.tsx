@@ -1,3 +1,12 @@
+import {
+  Building2,
+  KeyRound,
+  MapPin,
+  Satellite,
+  Users,
+  Wallet,
+  type LucideIcon,
+} from "lucide-react";
 import Link from "next/link";
 
 import { ApiError } from "@/lib/api/client";
@@ -104,7 +113,7 @@ export default async function SettingsLandingPage() {
 
       <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <SectionCard
-          icon="🏢"
+          icon={Building2}
           title="Company"
           blurb="Legal name, address, contacts, Part 135 certificate."
           links={[
@@ -117,7 +126,7 @@ export default async function SettingsLandingPage() {
           ]}
         />
         <SectionCard
-          icon="📍"
+          icon={MapPin}
           title="Bases"
           blurb="Master directory of ICAOs the operator works out of. Hub + active flags drive what other modules show."
           links={[
@@ -129,7 +138,7 @@ export default async function SettingsLandingPage() {
           ]}
         />
         <SectionCard
-          icon="📡"
+          icon={Satellite}
           title="Flight Tracking"
           blurb="Overdue threshold, polling cadence, simulation mode, Spider Tracks AFF."
           links={[
@@ -144,7 +153,7 @@ export default async function SettingsLandingPage() {
           ]}
         />
         <SectionCard
-          icon="👥"
+          icon={Users}
           title="Users & Permissions"
           blurb="Invite users, assign roles, manage per-tenant permissions."
           links={[
@@ -163,7 +172,7 @@ export default async function SettingsLandingPage() {
           ]}
         />
         <SectionCard
-          icon="🔐"
+          icon={KeyRound}
           title="SSO & Integrations"
           blurb="Per-tenant SSO provider config (Google / Okta / Entra ID)."
           links={[
@@ -178,7 +187,7 @@ export default async function SettingsLandingPage() {
           ]}
         />
         <SectionCard
-          icon="💰"
+          icon={Wallet}
           title="Pilot Pay & Currency"
           blurb="Pay rates, per-diem, currency items + due-date catalog."
           links={[
@@ -226,19 +235,22 @@ interface SectionLink {
 }
 
 function SectionCard({
-  icon,
+  icon: Icon,
   title,
   blurb,
   links,
 }: {
-  icon: string;
+  icon: LucideIcon;
   title: string;
   blurb: string;
   links: SectionLink[];
 }) {
   return (
     <article className="rounded-lg border border-border bg-card p-5">
-      <div className="mb-2 text-xl">{icon}</div>
+      <Icon
+        className="mb-2 h-5 w-5 text-muted-foreground"
+        aria-hidden
+      />
       <h3 className="text-base font-semibold">{title}</h3>
       <p className="mt-1 text-xs text-muted-foreground">{blurb}</p>
       <ul className="mt-3 space-y-1.5">
