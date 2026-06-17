@@ -9,19 +9,25 @@ import { cn } from "@/lib/utils";
  *   ≥50% of max  yellow  (watch)
  *   <50% of max  red     (issue)
  *
- * Callers pass `score` and `max` separately because the legacy displays
- * both ("25.0 / 25") and color-codes against the ratio.
+ * The score is displayed as a big number with a small ` / max` suffix
+ * to match legacy peregrineflight's emphasis (the dial number is the
+ * thing that matters; the denominator is reference). `context` adds a
+ * short reason-line under the bar — "54/54 airworthy", "No flights
+ * scheduled today", etc. — so the user sees *why* the pillar scored
+ * as it did, not just the number.
  */
 export function PillarBar({
   label,
   score,
   max,
   icon,
+  context,
 }: {
   label: string;
   score: number;
   max: number;
   icon?: React.ReactNode;
+  context?: string;
 }) {
   const pct = max > 0 ? Math.min(100, Math.round((score / max) * 100)) : 0;
   const tone =
@@ -32,10 +38,20 @@ export function PillarBar({
         : "bg-status-red";
 
   return (
-    <div className="grid grid-cols-[1fr,2fr,auto] items-center gap-3 text-xs">
-      <div className="flex items-center gap-2 text-foreground/80">
-        {icon}
-        <span>{label}</span>
+    <div className="space-y-1.5">
+      <div className="flex items-baseline justify-between text-xs">
+        <div className="flex items-center gap-2 text-foreground/90">
+          {icon}
+          <span className="font-medium">{label}</span>
+        </div>
+        <div className="font-mono tabular-nums">
+          <span className="text-base font-semibold text-foreground">
+            {score.toFixed(1)}
+          </span>
+          <span className="ml-1 text-[0.7rem] text-muted-foreground">
+            / {max}
+          </span>
+        </div>
       </div>
       <div className="h-1.5 overflow-hidden rounded-full bg-muted">
         <div
@@ -48,9 +64,9 @@ export function PillarBar({
           aria-label={`${label} score`}
         />
       </div>
-      <span className="font-mono text-[0.7rem] tabular-nums text-muted-foreground">
-        {score.toFixed(1)}/{max}
-      </span>
+      {context && (
+        <p className="text-[0.7rem] text-muted-foreground/80">{context}</p>
+      )}
     </div>
   );
 }
