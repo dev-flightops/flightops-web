@@ -2,6 +2,8 @@ import { Activity, Clock, Plane, ShieldCheck, Users } from "lucide-react";
 
 import { AlertList } from "@/components/dashboards/alert-list";
 import { DashboardNav } from "@/components/dashboards/dashboard-nav";
+import { FleetAirworthinessPanel } from "@/components/dashboards/fleet-airworthiness-panel";
+import { LiveOpsBoard } from "@/components/dashboards/live-ops-board";
 import { PillarBar } from "@/components/dashboards/pillar-bar";
 import { ScorePill } from "@/components/dashboards/score-pill";
 import { StatTile } from "@/components/dashboards/stat-tile";
@@ -36,13 +38,34 @@ export default async function ExecutiveDashboardPage() {
       ? snapshot.fleetGrounded
       : Math.max(0, fleetTotal - fleetActive);
 
-  // Pillar scoring — only Fleet Airworthiness is computable from M1 data.
-  // The other pillars stay at 0 because their underlying services (flight-
-  // following for completion/on-time, crew for compliance, safety for
-  // incidents) ship in M2-M3.
+  // Pillar scoring — Fleet/Completion/On-Time are derivable from M1+M2
+  // data; Crew Compliance + Safety Indicators need M3 services and stay
+  // at 0 until then.
+  //
+  // The model is "default-full-credit, subtract for visible failures" —
+  // matches the legacy peregrineflight behavior. Early in the day with
+  // no cancellations or delays, the score is high; each failure event
+  // docks points until floored at 0.
   const fleetPillar =
     fleetTotal > 0 ? Math.round((fleetActive / fleetTotal) * 200) / 10 : 0;
-  const opsScore = fleetPillar; // 0 + 0 + 0 + fleetPillar + 0
+
+  const cancelledOrOverdue = snapshot.board.filter(
+    (f) => f.status === "cancelled" || f.is_overdue,
+  ).length;
+  const completionPillar = Math.max(0, 25 - cancelledOrOverdue * 5);
+
+  const FIFTEEN_MIN_MS = 15 * 60 * 1000;
+  const delayedDepartures = snapshot.board.filter((f) => {
+    if (!f.actual_departure_at) return false;
+    const delta =
+      new Date(f.actual_departure_at).getTime() -
+      new Date(f.scheduled_departure_at).getTime();
+    return delta > FIFTEEN_MIN_MS;
+  }).length;
+  const onTimePillar = Math.max(0, 25 - delayedDepartures * 5);
+
+  const opsScore =
+    Math.round((completionPillar + onTimePillar + fleetPillar) * 10) / 10;
 
   const currentTenantName =
     tenantsResponse.tenants.find((t) => t.is_current)?.name ??
@@ -142,13 +165,13 @@ export default async function ExecutiveDashboardPage() {
           <div className="space-y-3">
             <PillarBar
               label="Completion Factor"
-              score={0}
+              score={completionPillar}
               max={25}
               icon={<Plane className="h-3.5 w-3.5 text-muted-foreground" />}
             />
             <PillarBar
               label="On-Time Performance"
-              score={0}
+              score={onTimePillar}
               max={25}
               icon={<Clock className="h-3.5 w-3.5 text-muted-foreground" />}
             />
@@ -172,6 +195,12 @@ export default async function ExecutiveDashboardPage() {
             />
           </div>
         </section>
+      </div>
+
+      {/* Row 4 — 2-col: fleet airworthiness list + live ops board */}
+      <div className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-2">
+        <FleetAirworthinessPanel fleet={snapshot.fleet} />
+        <LiveOpsBoard board={snapshot.board} />
       </div>
     </div>
   );
