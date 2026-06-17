@@ -23,7 +23,7 @@ export function CrewLegalityHints() {
         Enter PIC/SIC names above to check crew legality.
       </div>
       <div className="rounded-md bg-muted/40 px-5 py-3.5 text-xs text-muted-foreground">
-        Select a pilot to run a live currency check.
+        Enter N-number above to check airworthiness.
       </div>
     </div>
   );

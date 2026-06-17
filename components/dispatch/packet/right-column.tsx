@@ -34,7 +34,11 @@ export function RightColumn({
 }) {
   return (
     <div className="space-y-5">
-      {flight && <FlightActionsRow flight={flight} aircraft={aircraft} />}
+      {flight && (
+        <div id="release-actions">
+          <FlightActionsRow flight={flight} aircraft={aircraft} />
+        </div>
+      )}
 
       <SectionPanel title={null}>
         <div className="flex flex-wrap gap-3">
@@ -51,11 +55,6 @@ export function RightColumn({
 
           <GeneratePdfButton flight={flight ?? null} />
         </div>
-        <p className="mt-3 text-xs text-muted-foreground">
-          Full packet generation (weather summary, MEL ack, crew legality
-          snapshot, risk score) lands once those services ship. M1 generates
-          the per-flight release PDF directly from the selected flight.
-        </p>
       </SectionPanel>
 
       <SectionPanel title="Briefing data">

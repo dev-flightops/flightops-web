@@ -104,7 +104,17 @@ export function FlightDetailsPanel({ flight }: { flight?: FlightDetail | null })
 
         <Field label="Area Forecast Region">
           <select disabled className="ff-input cursor-not-allowed">
-            <option>Southwest AK &amp; Eastern Aleutians</option>
+            {/* FAA Area Forecast Discussion regions covering AK ops. Codes
+                match legacy peregrineflight; "Southeast Alaska (fallback)"
+                is the legacy catch-all when no other region claims the
+                routing. */}
+            <option>Southwest AK &amp; Eastern Aleutians (FAAK58)</option>
+            <option>Southcentral Alaska (FAAK48)</option>
+            <option>Bering Sea &amp; Western Aleutians (FAAK68)</option>
+            <option>Interior Alaska (FAAK49)</option>
+            <option>Northern Alaska (FAAK59)</option>
+            <option>E Gulf Coast &amp; SE Coastal Waters (FAAK57)</option>
+            <option>Southeast Alaska (fallback)</option>
           </select>
         </Field>
       </div>
