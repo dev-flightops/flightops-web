@@ -42,8 +42,8 @@ export function LiveOpsBoard({ board }: Props) {
           No flights on today&apos;s board.
         </p>
       ) : (
-        <div className="max-h-[560px] overflow-y-auto">
-          <table className="w-full text-xs">
+        <div className="max-h-[560px] overflow-auto">
+          <table className="w-full min-w-[560px] text-xs">
             <thead className="sticky top-0 bg-card">
               <tr className="text-left text-[0.65rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
                 <th className="py-1.5 pr-3">Flight</th>

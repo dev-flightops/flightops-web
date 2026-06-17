@@ -43,6 +43,7 @@ export function HeaderActions({
         title="Notifications · Coming in M3"
         disabled
         srLabel="Notifications"
+        className="hidden sm:inline-flex"
       >
         <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
           <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z" />
@@ -53,20 +54,21 @@ export function HeaderActions({
         title="AI Assistant · Coming in M4"
         disabled
         srLabel="AI Assistant"
-        className="text-status-purple"
+        className="hidden text-status-purple sm:inline-flex"
       >
         <span className="text-sm leading-none">✨</span>
       </IconButton>
 
       {/* Clock button — its own pill, not an IconButton. Default (clocked-out)
           state shows iOS-blue text on a faint blue tint with a bordered chip;
-          when crew-service ships in M3 the active state will turn green. */}
+          when crew-service ships in M3 the active state will turn green.
+          Hidden below sm because clock-in is a desktop/tablet workflow. */}
       <button
         type="button"
         disabled
         title="Time Clock · Coming in M3"
         aria-label="Time Clock"
-        className="inline-flex cursor-not-allowed items-center gap-1 rounded-md border border-border bg-primary/8 p-1.5 text-xs font-semibold text-primary opacity-50"
+        className="hidden cursor-not-allowed items-center gap-1 rounded-md border border-border bg-primary/8 p-1.5 text-xs font-semibold text-primary opacity-50 sm:inline-flex"
       >
         <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
           <path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z" />
@@ -78,7 +80,7 @@ export function HeaderActions({
         title="User Management · Coming in M4"
         disabled
         srLabel="Users"
-        className="text-xs"
+        className="hidden text-xs sm:inline-flex"
         inlineText
       >
         <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
@@ -91,7 +93,7 @@ export function HeaderActions({
         title="Owner Admin · Coming in M4"
         disabled
         srLabel="Owner Admin"
-        className="text-status-yellow"
+        className="hidden text-status-yellow sm:inline-flex"
       >
         <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
           <path d="M12 1L9.2 8H2l6 4.4-2.3 7.1L12 15l6.3 4.5L16 12.4 22 8h-7.2L12 1z" />
@@ -102,6 +104,7 @@ export function HeaderActions({
         title="Help · Coming in M4"
         disabled
         srLabel="Help"
+        className="hidden sm:inline-flex"
       >
         <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
           <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z" />
