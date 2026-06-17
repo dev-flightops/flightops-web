@@ -9,6 +9,7 @@ import { HOME_MODULES } from "@/components/home/module-catalog";
 import { StatusStrip, type StatusItem } from "@/components/home/status-strip";
 import { listMyTenants } from "@/lib/api/auth";
 import { getFlightStats } from "@/lib/api/ops";
+import { loadOperationalSnapshot } from "@/lib/dashboards/operational-snapshot";
 import { currentGreeting, firstNameFrom } from "@/lib/greeting";
 
 /**
@@ -46,12 +47,13 @@ export default async function HomePage() {
   // Pull everything in parallel. listMyTenants is also fetched by the (app)
   // layout for the tenant switcher; the duplicate call is the price of
   // keeping the home page self-contained.
-  const [session, tenantsResponse, stats] = await Promise.all([
+  const [session, tenantsResponse, stats, snapshot] = await Promise.all([
     auth(),
     listMyTenants().catch(() => ({ tenants: [] })),
     // Stats degrade to zeros if the backend hiccups — the demo audience
     // sees a working layout instead of a 500.
     getFlightStats().catch(() => null),
+    loadOperationalSnapshot(),
   ]);
 
   const currentTenant =
@@ -67,15 +69,20 @@ export default async function HomePage() {
     (session as unknown as { roles?: string[] } | null)?.roles ?? [];
   const canSeeAlerts = sessionRoles.some((r) => ALERT_VIEWING_ROLES.has(r));
 
-  const onGround = stats ? stats.today.scheduled + stats.today.released : 0;
+  // Airborne pulls from the shared snapshot (released + actual_departure_at
+  // set, not yet arrived). On-ground = today's flights minus the airborne
+  // count — released-but-not-yet-departed counts as on ground.
+  const airborne = snapshot.airborneCount;
+  const todayTotal = stats
+    ? stats.today.scheduled + stats.today.released
+    : 0;
+  const onGround = Math.max(0, todayTotal - airborne);
   const acftHold = stats
     ? Math.max(0, stats.aircraft_total - stats.aircraft_active)
     : 0;
 
   const statusItems: StatusItem[] = [
-    // "airborne" needs flight-following (M2) — show 0 with a muted treatment
-    // so demo audiences don't read it as a live tracker.
-    { value: 0, label: "airborne", pending: true },
+    { value: airborne, label: "airborne", color: "#34d399" },
     { value: onGround, label: "on ground", color: "#fbbf24" },
   ];
   if (acftHold > 0) {
