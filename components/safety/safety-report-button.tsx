@@ -152,9 +152,19 @@ export function SafetyReportButton() {
           setOpen(true);
         }}
         aria-label="File a safety report"
-        className="fixed bottom-5 right-5 z-30 inline-flex items-center gap-1.5 rounded-full border border-status-red bg-status-red px-4 py-2.5 text-xs font-bold uppercase tracking-[0.05em] text-white shadow-lg shadow-status-red/40 transition-transform hover:-translate-y-0.5 hover:bg-status-red/90"
+        className="fixed bottom-6 right-6 z-30 inline-flex items-center gap-2 rounded-[14px] bg-gradient-to-br from-red-600 to-red-700 px-[17.6px] py-[10.4px] text-[12.8px] font-bold text-white shadow-[0_4px_20px_0_rgba(220,38,38,0.45)] ring-1 ring-red-600/30 transition-transform hover:-translate-y-0.5 hover:from-red-500 hover:to-red-600"
       >
-        <span aria-hidden>🛡</span> Safety
+        <svg
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          fill="currentColor"
+          aria-hidden
+          className="flex-shrink-0"
+        >
+          <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-1 6h2v2h-2V7zm0 4h2v6h-2v-6z" />
+        </svg>
+        Safety
       </button>
 
       <Dialog
