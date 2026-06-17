@@ -49,10 +49,17 @@ export default async function WeatherBriefingsPage() {
     briefings = (await listWeatherBriefings({ limit: BRIEFINGS_LIMIT })).items;
   } catch (err) {
     const status = err instanceof ApiError ? err.status : 0;
-    loadError =
-      status === 401
-        ? "Your session expired — please sign in again."
-        : "Briefings feed unavailable. Try refreshing in a moment.";
+    if (status === 404) {
+      // Backend endpoint not built yet (or no briefings table seeded) —
+      // render as empty so the page falls through to the "No briefings
+      // yet" empty state + "Create First Briefing" CTA. Auto-upgrades
+      // to the populated table the moment the endpoint ships.
+      briefings = [];
+    } else if (status === 401) {
+      loadError = "Your session expired — please sign in again.";
+    } else {
+      loadError = "Briefings feed unavailable. Try refreshing in a moment.";
+    }
   }
 
   return (
