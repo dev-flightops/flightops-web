@@ -49,7 +49,7 @@ export function FleetCard({ summary }: { summary: FleetAircraftSummary }) {
             {!summary.is_active && <InactiveChip />}
           </div>
           <p className="mt-1 truncate text-xs text-muted-foreground">
-            {summary.aircraft.model || "No details"}
+            {displayModel(summary.aircraft.model)}
           </p>
           {summary.special_notes && (
             <p className="mt-1 flex items-center gap-1 text-xs text-status-yellow">
@@ -95,6 +95,17 @@ function formatHours(value: number): string {
     minimumFractionDigits: 1,
     maximumFractionDigits: 1,
   });
+}
+
+/** The maintenance service stamps the literal string "Unknown" on
+ *  aircraft imported without a model field. Legacy renders "No
+ *  details" for both empty AND that placeholder, so we treat them
+ *  the same. Mirrors the same null-vs-"Unknown" logic in
+ *  components/dashboards/fleet-airworthiness-panel.tsx. */
+function displayModel(rawModel: string): string {
+  if (!rawModel) return "No details";
+  if (rawModel.toLowerCase() === "unknown") return "No details";
+  return rawModel;
 }
 
 /** Six known airframe slugs map to a colored chip; anything else
@@ -181,12 +192,12 @@ function Stat({
       <div className="mt-1 font-mono text-lg font-bold tabular-nums text-foreground">
         {value}
         {tbo != null && (
-          <span className="ml-1 text-[0.7rem] font-normal text-muted-foreground">
-            / {tbo.toLocaleString("en-US")}
+          <span className="text-[0.7rem] font-normal text-muted-foreground">
+            {` / ${tbo.toLocaleString("en-US")}`}
           </span>
         )}
-        <span className="ml-1 text-[0.65rem] font-normal text-muted-foreground">
-          hrs
+        <span className="text-[0.65rem] font-normal text-muted-foreground">
+          {" hrs"}
         </span>
       </div>
     </div>
