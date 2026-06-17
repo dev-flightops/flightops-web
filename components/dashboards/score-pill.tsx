@@ -5,13 +5,13 @@ import { cn } from "@/lib/utils";
  * number at the top-right of the Executive view + the center of the
  * Ops Score view. Color tracks the score band:
  *
- *   90-100  excellent (green)
- *   75-89   good      (light green / yellow-green)
- *   60-74   fair      (orange)
- *   0-59    poor      (red)
+ *   90-100  excellent       (green)
+ *   75-89   good            (light green / yellow-green)
+ *   60-74   fair            (orange)
+ *   0-59    needs attention (red)
  *
- * Until the ops-score service ships in M2, callers pass `0` and the
- * pill renders as "0.0 Poor" — honest about the absence of data.
+ * Legacy peregrineflight uses "Needs Attention" rather than "Poor" for
+ * the bottom band — softer phrasing for a customer-facing dial.
  */
 export function ScorePill({
   score,
@@ -75,7 +75,7 @@ function ratingFor(score: number) {
       border: "border-status-orange/30",
     };
   return {
-    label: "Poor",
+    label: "Needs Attention",
     text: "text-status-red",
     bg: "bg-status-red/10",
     border: "border-status-red/30",
