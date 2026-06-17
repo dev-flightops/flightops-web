@@ -64,15 +64,10 @@ export async function LeftColumn({
 
       <SectionPanel title="Compliance Gates">
         <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="mb-1.5 block text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
-              Hazmat Flight
-            </label>
-            <select disabled className="ff-input cursor-not-allowed">
-              <option>No</option>
-              <option>Yes</option>
-            </select>
-          </div>
+          <YesNoSelect label="Hazmat Flight" />
+          <YesNoSelect label="Hazmat Approved" />
+          <YesNoSelect label="MEL/DMI on A/C" />
+          <YesNoSelect label="Pilot Actions Required" />
           <div>
             <label className="mb-1.5 block text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
               IFR / VFR
@@ -83,9 +78,18 @@ export async function LeftColumn({
             </select>
           </div>
         </div>
+        <label className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
+          <input
+            type="checkbox"
+            disabled
+            className="cursor-not-allowed"
+            aria-label="MEL/DMI pilot actions complete"
+          />
+          MEL/DMI pilot actions complete
+        </label>
         <p className="mt-3 text-xs text-muted-foreground">
           FAR Part 117 crew legality lands once the crew-service ships. MEL
-          acknowledgement + airworthiness is now surfaced in the Maintenance
+          acknowledgement + airworthiness is also surfaced in the Maintenance
           panel below.
         </p>
       </SectionPanel>
@@ -135,11 +139,27 @@ export async function LeftColumn({
         </div>
       </SectionPanel>
 
-      <DisabledPanel
-        title="Management Approval Triggers"
-        milestone="M3"
-        hint="Surfaces when risk inputs + crew legality + weather combine to require management sign-off. Needs the crew + safety services."
-      />
+      <SectionPanel title="Management Approval Triggers">
+        <div className="grid grid-cols-3 gap-4">
+          <YesNoSelect label="Outside Pilot Restrictions" />
+          <YesNoSelect label="VFR Mtn Terrain at Night" />
+          <YesNoSelect label="<4 hrs until MX" />
+        </div>
+        <label className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
+          <input
+            type="checkbox"
+            disabled
+            className="cursor-not-allowed"
+            aria-label="Mgmt approval obtained"
+          />
+          Mgmt approval obtained
+        </label>
+        <p className="mt-2 text-[0.7rem] text-muted-foreground/70">
+          Yes/No flags are dispatcher-set today; crew-service (M3) will
+          auto-trigger management sign-off when risk inputs + crew legality
+          combine to require it.
+        </p>
+      </SectionPanel>
 
       <SectionPanel title="Non-Certified Weather Notes">
         <p className="mb-2 text-xs text-muted-foreground">
@@ -153,6 +173,28 @@ export async function LeftColumn({
           className="ff-input font-mono text-sm"
         />
       </SectionPanel>
+    </div>
+  );
+}
+
+function YesNoSelect({
+  label,
+  defaultYes = false,
+}: {
+  label: string;
+  /** Some legacy fields default to "Yes" (Reporting OK); most default to
+   *  "No". The disabled select still needs the right initial option. */
+  defaultYes?: boolean;
+}) {
+  return (
+    <div>
+      <label className="mb-1.5 block text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+        {label}
+      </label>
+      <select disabled className="ff-input cursor-not-allowed">
+        <option>{defaultYes ? "Yes" : "No"}</option>
+        <option>{defaultYes ? "No" : "Yes"}</option>
+      </select>
     </div>
   );
 }

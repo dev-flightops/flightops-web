@@ -94,7 +94,7 @@ export default async function DispatchPage({
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6">
-      <PacketHeader tenantName={tenantName} />
+      <PacketHeader tenantName={tenantName} flight={selectedFlight} />
       <PacketStyles />
 
       <div className="space-y-4">
