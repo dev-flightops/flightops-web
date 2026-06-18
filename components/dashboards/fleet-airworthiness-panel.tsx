@@ -1,5 +1,3 @@
-import Link from "next/link";
-
 import type { FleetAircraftSummary } from "@/lib/api/types";
 
 /**
@@ -56,18 +54,17 @@ export function FleetAirworthinessPanel({
         )}
       </div>
 
-      <div className="mt-3 flex items-baseline justify-between border-t border-border pt-3 text-[0.65rem] text-muted-foreground/70">
+      <div className="mt-3 border-t border-border pt-3 text-[0.65rem] text-muted-foreground/70">
+        {/* "Maintenance →" link dropped for the M1 demo deploy — the
+            /maintenance route is gated in the home grid + ops sub-nav,
+            so this drill-in shouldn't escape that. The rollup numbers
+            still render. Restore the Link when the deploy promotes
+            past M1 (search "M1 demo deploy"). */}
         <span>
           <span className="text-foreground">{openSquawks}</span> open squawks ·{" "}
           <span className="text-foreground">{pendingRts}</span> pending RTS ·{" "}
           <span className="text-foreground">{openMels}</span> MEL deferred
         </span>
-        <Link
-          href="/maintenance"
-          className="text-status-blue hover:underline"
-        >
-          Maintenance →
-        </Link>
       </div>
     </section>
   );
@@ -94,11 +91,13 @@ function Row({ row }: { row: FleetAircraftSummary }) {
     badge = <StatusBadge tone="red" label="Grounded" />;
   }
 
+  // Row is rendered as a plain <div> for the M1 demo deploy — the
+  // per-aircraft detail route (/maintenance/aircraft/{id}) is gated,
+  // and the dashboards (where this panel lives) shouldn't be a back
+  // door. Restore the wrapping <Link href={`/maintenance/aircraft/...`}>
+  // when the deploy promotes past M1 (search "M1 demo deploy").
   return (
-    <Link
-      href={`/maintenance/aircraft/${row.aircraft.id}`}
-      className="flex items-center gap-2 rounded px-1 py-0.5 text-xs hover:bg-primary/5"
-    >
+    <div className="flex items-center gap-2 rounded px-1 py-0.5 text-xs">
       <span className="w-16 flex-shrink-0 font-mono font-semibold text-foreground">
         {tail}
       </span>
@@ -109,7 +108,7 @@ function Row({ row }: { row: FleetAircraftSummary }) {
         {row.base ?? "—"}
       </span>
       {badge}
-    </Link>
+    </div>
   );
 }
 
