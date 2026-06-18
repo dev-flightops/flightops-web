@@ -10,6 +10,7 @@ import type {
 const {
   TestApiError,
   getAirworthiness,
+  getFleetAirworthiness,
   listMelItems,
   listSquawks,
   notFoundSpy,
@@ -26,6 +27,7 @@ const {
   return {
     TestApiError,
     getAirworthiness: vi.fn(),
+    getFleetAirworthiness: vi.fn(),
     listMelItems: vi.fn(),
     listSquawks: vi.fn(),
     notFoundSpy: vi.fn(() => {
@@ -39,6 +41,7 @@ const {
 vi.mock("@/lib/api/client", () => ({ ApiError: TestApiError }));
 vi.mock("@/lib/api/maintenance", () => ({
   getAirworthiness,
+  getFleetAirworthiness,
   listMelItems,
   listSquawks,
 }));
@@ -94,9 +97,14 @@ function makeSquawk(id: string, overrides: Partial<SquawkResponse> = {}): Squawk
 
 beforeEach(() => {
   getAirworthiness.mockReset();
+  getFleetAirworthiness.mockReset();
   listMelItems.mockReset();
   listSquawks.mockReset();
   notFoundSpy.mockClear();
+  // Default: fleet summary fetch resolves to an empty list. Tests that
+  // care about TTAF / special_notes (which side-load from this call)
+  // override; failure-mode tests just need the call to not reject.
+  getFleetAirworthiness.mockResolvedValue({ items: [], total: 0 });
 });
 
 async function renderPage(id = "ac-1") {
@@ -213,5 +221,60 @@ describe("AircraftDetailPage", () => {
     expect(
       screen.getByText(/session expired/i),
     ).toBeInTheDocument();
+  });
+
+  it("renders TTAF + special-notes from the side-loaded fleet summary", async () => {
+    getAirworthiness.mockResolvedValueOnce(makeVerdict());
+    listMelItems.mockResolvedValueOnce({ items: [], total: 0 });
+    listSquawks
+      .mockResolvedValueOnce({ items: [], total: 0 })
+      .mockResolvedValueOnce({ items: [], total: 0 });
+    getFleetAirworthiness.mockResolvedValueOnce({
+      items: [
+        {
+          aircraft: { id: "ac-1", tail_number: "N207GE", model: "Cessna 208" },
+          is_active: true,
+          is_airworthy: true,
+          checked_at: "2026-06-15T20:00:00Z",
+          blocking_count: 0,
+          advisory_count: 0,
+          open_mel_count: 0,
+          open_squawk_count: 0,
+          // TTAF + special-notes are the side-loaded fields the
+          // header now surfaces.
+          total_time_hours: 3247.5,
+          engine_time_hours: 982.3,
+          prop_time_hours: 982.3,
+          engine_tbo_hours: 3600,
+          prop_tbo_hours: 2400,
+          airframe_type: "caravan",
+          base: "PANC",
+          special_notes: "Commuter Seats",
+        },
+      ],
+      total: 1,
+    });
+
+    await renderPage();
+
+    expect(screen.getByText(/TTAF 3,247\.5 hrs/i)).toBeInTheDocument();
+    expect(screen.getByText(/Commuter Seats/i)).toBeInTheDocument();
+  });
+
+  it("gracefully degrades when the fleet summary fetch fails", async () => {
+    getAirworthiness.mockResolvedValueOnce(makeVerdict());
+    listMelItems.mockResolvedValueOnce({ items: [], total: 0 });
+    listSquawks
+      .mockResolvedValueOnce({ items: [], total: 0 })
+      .mockResolvedValueOnce({ items: [], total: 0 });
+    getFleetAirworthiness.mockRejectedValueOnce(
+      new TestApiError(500, "/maintenance/fleet", "x"),
+    );
+
+    await renderPage();
+
+    // Header still renders — just without the TTAF / special-notes line
+    expect(screen.getByText("N207GE")).toBeInTheDocument();
+    expect(screen.queryByText(/TTAF/i)).not.toBeInTheDocument();
   });
 });

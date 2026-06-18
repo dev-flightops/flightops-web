@@ -7,11 +7,13 @@ import { cn } from "@/lib/utils";
 import { ApiError } from "@/lib/api/client";
 import {
   getAirworthiness,
+  getFleetAirworthiness,
   listMelItems,
   listSquawks,
 } from "@/lib/api/maintenance";
 import type {
   AirworthinessResponse,
+  FleetAircraftSummary,
   MelItemResponse,
   SquawkResponse,
 } from "@/lib/api/types";
@@ -44,20 +46,35 @@ export default async function AircraftDetailPage({
   let mels: MelItemResponse[] = [];
   let openSquawks: SquawkResponse[] = [];
   let inProgressSquawks: SquawkResponse[] = [];
+  // Fleet summary row for *this* aircraft — carries TTAF +
+  // special_notes + base + airframe_type. Not available on
+  // `AirworthinessResponse.aircraft` (which is only id/tail/model),
+  // so we side-load via getFleetAirworthiness and find our row.
+  // Soft-fail to null on its own catch so the page still renders if
+  // the fleet endpoint errors. Lookup is O(N) over a small fleet — no
+  // perf concern.
+  let summary: FleetAircraftSummary | null = null;
   let loadError: string | null = null;
 
   try {
-    const [verdictResult, melsResult, openResult, inProgressResult] =
-      await Promise.all([
-        getAirworthiness(id),
-        listMelItems({ aircraftId: id, status: "open" }),
-        listSquawks({ aircraftId: id, status: "open" }),
-        listSquawks({ aircraftId: id, status: "in_progress" }),
-      ]);
+    const [
+      verdictResult,
+      melsResult,
+      openResult,
+      inProgressResult,
+      fleetResult,
+    ] = await Promise.all([
+      getAirworthiness(id),
+      listMelItems({ aircraftId: id, status: "open" }),
+      listSquawks({ aircraftId: id, status: "open" }),
+      listSquawks({ aircraftId: id, status: "in_progress" }),
+      getFleetAirworthiness().catch(() => null),
+    ]);
     verdict = verdictResult;
     mels = melsResult.items;
     openSquawks = openResult.items;
     inProgressSquawks = inProgressResult.items;
+    summary = fleetResult?.items.find((r) => r.aircraft.id === id) ?? null;
   } catch (err) {
     if (err instanceof ApiError && err.status === 404) {
       notFound();
@@ -91,7 +108,7 @@ export default async function AircraftDetailPage({
   return (
     <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
       <BackLink />
-      <AircraftHeader verdict={verdict} />
+      <AircraftHeader verdict={verdict} summary={summary} />
 
       <section className="mt-8">
         <SectionHeader title="Open MEL items" count={mels.length} />
@@ -117,10 +134,35 @@ function BackLink() {
   );
 }
 
-function AircraftHeader({ verdict }: { verdict: AirworthinessResponse }) {
+function AircraftHeader({
+  verdict,
+  summary,
+}: {
+  verdict: AirworthinessResponse;
+  /** Side-loaded from getFleetAirworthiness — supplies TTAF +
+   *  special_notes that aren't on AirworthinessResponse. Null on
+   *  fetch failure; the header gracefully degrades to model-only. */
+  summary: FleetAircraftSummary | null;
+}) {
   const blockingCount = verdict.blocking_issues.length;
   const advisoryCount = verdict.advisory_issues.length;
   const isAirworthy = verdict.is_airworthy;
+
+  // Same model-name treatment as fleet-card.tsx — the maintenance
+  // service stamps "Unknown" on aircraft imported without a model
+  // field; render those as null and fall back to "No details" in the
+  // sub-line.
+  const rawModel = verdict.aircraft.model;
+  const model =
+    rawModel && rawModel.toLowerCase() !== "unknown" ? rawModel : null;
+  const ttafLabel = summary
+    ? `TTAF ${summary.total_time_hours.toLocaleString("en-US", {
+        minimumFractionDigits: 1,
+        maximumFractionDigits: 1,
+      })} hrs`
+    : null;
+  const subParts = [model ?? "No details", ttafLabel].filter(Boolean);
+
   return (
     <header className="flex flex-wrap items-end justify-between gap-3 border-b border-border pb-4">
       <div>
@@ -128,8 +170,14 @@ function AircraftHeader({ verdict }: { verdict: AirworthinessResponse }) {
           {verdict.aircraft.tail_number}
         </h1>
         <p className="mt-1 text-xs text-muted-foreground">
-          {verdict.aircraft.model}
+          {subParts.join(" · ")}
         </p>
+        {summary?.special_notes && (
+          <p className="mt-1 flex items-center gap-1 text-xs text-status-yellow">
+            <span aria-hidden>&#9873;</span>
+            {summary.special_notes}
+          </p>
+        )}
       </div>
       <div className="flex flex-wrap items-center gap-2 text-[0.65rem] uppercase tracking-[0.08em]">
         <VerdictPill isAirworthy={isAirworthy} blockingCount={blockingCount} />
