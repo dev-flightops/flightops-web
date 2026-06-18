@@ -345,10 +345,13 @@ function FlightStatusBadge({ flight }: { flight: FlightListItem }) {
 }
 
 function CompletionTrendStub() {
-  // Show 8 week-start dates ending with the most recent Monday. Labels
-  // read "MM/DD" — matches legacy's "W04/27", "W05/04" format but with
-  // an explicit leading "W". Bars stay at 0% until flight-following
-  // aggregation lands (M2 follow-up).
+  // Show 8 week-start dates ending with the most recent Monday — labels
+  // "W{MM}/{DD}" match legacy peregrineflight's trend axis. Bars stay
+  // at a thin placeholder height until DispatchOutcomes aggregation
+  // lands (M2 follow-up). Styling mirrors the sibling chart on
+  // /dashboards/ops-score (PR #85): percent label above each bar,
+  // status-blue bar fill at 60% alpha, gap-2 between columns — so
+  // both dashboards read the same vibe.
   const labels: string[] = [];
   const now = new Date();
   // Find this week's Monday (UTC). getUTCDay: Sun=0, Mon=1 ... Sat=6.
@@ -366,11 +369,15 @@ function CompletionTrendStub() {
     labels.push(`W${mm}/${dd}`);
   }
   return (
-    <div className="flex h-32 items-end justify-between gap-1">
+    <div className="flex h-32 items-end justify-between gap-2">
       {labels.map((label) => (
         <div key={label} className="flex flex-1 flex-col items-center gap-1">
-          <div className="w-full rounded-t bg-muted" style={{ height: "8%" }} />
-          <span className="text-[0.6rem] font-mono text-muted-foreground/60">
+          <span className="text-[0.6rem] text-muted-foreground/60">0%</span>
+          <div
+            className="w-full rounded-t bg-status-blue/60"
+            style={{ height: "2%" }}
+          />
+          <span className="font-mono text-[0.6rem] text-muted-foreground/60">
             {label}
           </span>
         </div>
