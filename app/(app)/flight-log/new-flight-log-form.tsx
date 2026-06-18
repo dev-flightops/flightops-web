@@ -68,7 +68,7 @@ export function NewFlightLogForm({
           <option value="">Select aircraft…</option>
           {aircraft.map((a) => (
             <option key={a.id} value={a.id}>
-              {a.tail_number} — {a.model}
+              {aircraftOptionLabel(a)}
             </option>
           ))}
         </FieldSelect>
@@ -98,11 +98,14 @@ export function NewFlightLogForm({
         <FieldSelect
           name="flight_type"
           label="Flight Type"
-          defaultValue="advisory"
+          // Default to "charter" — Part 135 carriers' primary leg type.
+          // Was "advisory" (a Part 91 VFR-tracking term) which is wrong
+          // for the carrier's main use case.
+          defaultValue="charter"
           error={fieldError("flight_type")}
         >
-          <option value="advisory">Advisory Flight</option>
           <option value="charter">Charter</option>
+          <option value="advisory">Advisory Flight</option>
           <option value="training">Training</option>
           <option value="ferry">Ferry</option>
           <option value="other">Other</option>
@@ -121,6 +124,20 @@ export function NewFlightLogForm({
       </div>
     </form>
   );
+}
+
+/**
+ * Aircraft dropdown label. The maintenance service stamps the literal
+ * string "Unknown" as the model when an aircraft was imported without
+ * one — surfacing that here ("N1026V — Unknown") just adds visual
+ * noise across the 50+ row dropdown. Strip it to a bare tail-number
+ * for those rows; render `tail — model` only when there's real model
+ * data. Mirrors `displayModel()` in components/maintenance/fleet-card.tsx.
+ */
+function aircraftOptionLabel(a: AircraftListItem): string {
+  const model = a.model?.trim();
+  if (!model || model.toLowerCase() === "unknown") return a.tail_number;
+  return `${a.tail_number} — ${model}`;
 }
 
 function Field({
