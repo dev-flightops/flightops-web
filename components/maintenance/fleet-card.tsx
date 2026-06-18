@@ -102,7 +102,7 @@ function formatHours(value: number): string {
  *  details" for both empty AND that placeholder, so we treat them
  *  the same. Mirrors the same null-vs-"Unknown" logic in
  *  components/dashboards/fleet-airworthiness-panel.tsx. */
-function displayModel(rawModel: string): string {
+function displayModel(rawModel: string | null): string {
   if (!rawModel) return "No details";
   if (rawModel.toLowerCase() === "unknown") return "No details";
   return rawModel;
