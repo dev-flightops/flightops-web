@@ -5,7 +5,7 @@ import { AddUserDialog } from "@/components/settings/users/add-user-dialog";
 import { DeactivateUserButton } from "@/components/settings/users/deactivate-user-button";
 import { EditUserDialog } from "@/components/settings/users/edit-user-dialog";
 import { SetPasswordDialog } from "@/components/settings/users/set-password-dialog";
-import { listRoles, listUsers } from "@/lib/api/auth";
+import { listMyTenants, listRoles, listUsers } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
 import type { RoleSummary, UserResponse } from "@/lib/api/types";
 
@@ -22,13 +22,24 @@ export default async function SettingsUsersPage() {
   let roles: RoleSummary[] = [];
   let loadError: string | null = null;
   let unauthorized = false;
+  let tenantName: string | null = null;
   try {
-    const [usersResponse, rolesResponse] = await Promise.all([
+    const [usersResponse, rolesResponse, tenantsResponse] = await Promise.all([
       listUsers(),
       listRoles(),
+      // Tenant name powers the subhead ("{tenant} — N accounts").
+      // Soft-fail to null if it errors; we just drop the prefix in
+      // that case rather than blowing up the whole page.
+      listMyTenants().catch(() => null),
     ]);
     users = usersResponse.items;
     roles = rolesResponse.roles;
+    if (tenantsResponse) {
+      const current =
+        tenantsResponse.tenants.find((t) => t.is_current) ??
+        tenantsResponse.tenants[0];
+      tenantName = current?.name ?? null;
+    }
   } catch (err) {
     if (err instanceof ApiError) {
       if (err.status === 401) {
@@ -64,9 +75,13 @@ export default async function SettingsUsersPage() {
 
       <header className="mb-6 flex items-end justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Users</h1>
+          <h1 className="text-2xl font-bold tracking-tight">User Management</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Invite users, assign roles, set or reset passwords
+            {/* Subhead: "{tenant} — N account{s}", matches legacy
+                peregrineflight's user-management page. Drops the tenant
+                prefix gracefully if listMyTenants failed. */}
+            {tenantName ? `${tenantName} — ` : ""}
+            {users.length} account{users.length === 1 ? "" : "s"}
           </p>
         </div>
         {!unauthorized && !loadError && <AddUserDialog roles={roles} />}

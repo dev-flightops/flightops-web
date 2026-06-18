@@ -8,6 +8,7 @@ const {
   auth,
   listUsers,
   listRoles,
+  listMyTenants,
 } = vi.hoisted(() => {
   class TestApiError extends Error {
     constructor(
@@ -23,11 +24,12 @@ const {
     auth: vi.fn(),
     listUsers: vi.fn(),
     listRoles: vi.fn(),
+    listMyTenants: vi.fn(),
   };
 });
 
 vi.mock("@/lib/api/client", () => ({ ApiError: TestApiError }));
-vi.mock("@/lib/api/auth", () => ({ listUsers, listRoles }));
+vi.mock("@/lib/api/auth", () => ({ listUsers, listRoles, listMyTenants }));
 vi.mock("@/auth", () => ({ auth }));
 vi.mock("@/components/settings/users/add-user-dialog", () => ({
   AddUserDialog: () => <div data-testid="add-user-dialog" />,
@@ -73,9 +75,16 @@ const SAMPLE_ROLES: RoleSummary[] = [
 beforeEach(() => {
   listUsers.mockReset();
   listRoles.mockReset();
+  listMyTenants.mockReset();
   auth.mockReset();
   auth.mockResolvedValue({ user: { id: "u-1" } });
   listRoles.mockResolvedValue({ roles: SAMPLE_ROLES });
+  // Default: tenant list resolves to a single current tenant. Tests
+  // that care about the subhead can override; failure-mode tests just
+  // need it to not reject the Promise.all.
+  listMyTenants.mockResolvedValue({
+    tenants: [{ id: "t-1", name: "Test Tenant", is_current: true }],
+  });
 });
 
 describe("SettingsUsersPage (M2-G-48)", () => {
@@ -97,7 +106,7 @@ describe("SettingsUsersPage (M2-G-48)", () => {
     render(ui);
 
     expect(
-      screen.getByRole("heading", { name: /^users$/i, level: 1 }),
+      screen.getByRole("heading", { name: /^user management$/i, level: 1 }),
     ).toBeInTheDocument();
     expect(screen.getByText("Me")).toBeInTheDocument();
     expect(screen.getByText("Other")).toBeInTheDocument();
