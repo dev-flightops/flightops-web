@@ -60,24 +60,29 @@ describe("DepartmentNav", () => {
     expect(crew).toHaveAttribute("title", "Coming in M3");
   });
 
-  it("renders Village Wx + Ramp Ops as live links (M2)", () => {
+  it("renders Village Wx + Ramp Ops as disabled chips for the M1 demo deploy", () => {
+    // Both routes have working M2 implementations but are gated in
+    // the operations sub-nav so the M1 demo audience can't click in.
+    // Flip back when the deploy promotes past M1.
     vi.mocked(usePathname).mockReturnValue("/dispatch");
     render(<DepartmentNav />);
     const villageWx = screen.getByTestId("dept-nav-village-wx");
-    expect(villageWx.tagName).toBe("A");
-    expect(villageWx).toHaveAttribute("href", "/village-wx");
+    expect(villageWx.tagName).toBe("SPAN");
+    expect(villageWx).not.toHaveAttribute("href");
 
     const rampOps = screen.getByTestId("dept-nav-ramp-ops");
-    expect(rampOps.tagName).toBe("A");
-    expect(rampOps).toHaveAttribute("href", "/ramp-ops");
+    expect(rampOps.tagName).toBe("SPAN");
+    expect(rampOps).not.toHaveAttribute("href");
   });
 
-  it("renders Weather as a live link (M2-G-24)", () => {
+  it("renders Weather as a disabled chip for the M1 demo deploy", () => {
+    // Working M2 implementation gated for the demo — see the
+    // Village Wx + Ramp Ops sibling test above.
     vi.mocked(usePathname).mockReturnValue("/dispatch");
     render(<DepartmentNav />);
     const weather = screen.getByTestId("dept-nav-weather");
-    expect(weather.tagName).toBe("A");
-    expect(weather).toHaveAttribute("href", "/weather");
+    expect(weather.tagName).toBe("SPAN");
+    expect(weather).not.toHaveAttribute("href");
   });
 
   it("renders the legacy Maintenance subnav on /maintenance (Fleet + 7 future chips + MX Intel)", () => {
