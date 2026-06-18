@@ -72,7 +72,10 @@ export const HOME_MODULES: HomeModule[] = [
     label: "Maintenance",
     sub: "Aircraft, squawks, MEL",
     href: "/maintenance",
-    status: "live",
+    // Gated for the M1 demo deploy — Dispatch + Admin are the only
+    // live cards on /home for that audience. Flip back to "live" when
+    // the deploy promotes past M1.
+    status: "m2",
     color: "#f87171",
     iconPath:
       "M22.7 19l-9.1-9.1c.9-2.3.4-5-1.5-6.9-2-2-5-2.4-7.4-1.3L9 6 6 9 1.6 4.7C.4 7.1.9 10.1 2.9 12.1c1.9 1.9 4.6 2.4 6.9 1.5l9.1 9.1c.4.4 1 .4 1.4 0l2.3-2.3c.5-.4.5-1.1.1-1.4z",
@@ -82,7 +85,8 @@ export const HOME_MODULES: HomeModule[] = [
     label: "Ground Operations",
     sub: "Ramp, stations, GSE, fuel",
     href: "/ground-ops/",
-    status: "live",
+    // Gated for the M1 demo deploy. See note on `maintenance`.
+    status: "m2",
     color: "#fbbf24",
     iconPath:
       "M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z",
@@ -152,7 +156,8 @@ export const HOME_MODULES: HomeModule[] = [
     label: "Flight Following",
     sub: "Live ops board, tracking, history",
     href: "/flight-following",
-    status: "live",
+    // Gated for the M1 demo deploy. See note on `maintenance`.
+    status: "m2",
     color: "#34d399",
     iconPath:
       "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z",

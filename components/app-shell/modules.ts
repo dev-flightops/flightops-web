@@ -90,18 +90,25 @@ export const DEPARTMENTS: Department[] = [
      * sub-nav exactly. Items without a target route render as disabled
      * chips with a milestone tooltip.
      */
+    // Operations sub-nav — for the M1 demo deploy only Dispatch +
+    // Flight Following stay live. Weather / Flight Log / Village Wx
+    // / Ramp Ops / EOD have working M2 implementations but are gated
+    // here so the demo audience can't click into work-in-progress
+    // surfaces. Flip back to "live" + restore `href` when the deploy
+    // promotes past M1 (search "M1 demo deploy" for the matching
+    // home-grid gate).
     children: [
       { id: "dispatch",         label: "Dispatch",         href: "/dispatch", status: "live", department: "operations" },
       { id: "flight-following", label: "Flight Following", href: "/flight-following", status: "live", department: "operations" },
-      { id: "weather",          label: "Weather",          href: "/weather", status: "live", department: "operations" },
+      { id: "weather",          label: "Weather",          status: "m2", department: "operations" },
       { id: "crew",             label: "Crew",             status: "m3", department: "operations" },
       { id: "currency",         label: "Currency",         status: "m3", department: "operations" },
-      { id: "flight-log",       label: "Flight Log",       href: "/flight-log", status: "live", department: "operations" },
+      { id: "flight-log",       label: "Flight Log",       status: "m2", department: "operations" },
       { id: "roster",           label: "Roster",           status: "m3", department: "operations" },
       { id: "pilot-history",    label: "Pilot History",    status: "m3", department: "operations" },
-      { id: "village-wx",       label: "Village Wx",       href: "/village-wx", status: "live", department: "operations" },
-      { id: "ramp-ops",         label: "Ramp Ops",         href: "/ramp-ops", status: "live", department: "operations" },
-      { id: "eod",              label: "EOD",              href: "/eod", status: "live", department: "operations" },
+      { id: "village-wx",       label: "Village Wx",       status: "m2", department: "operations" },
+      { id: "ramp-ops",         label: "Ramp Ops",         status: "m2", department: "operations" },
+      { id: "eod",              label: "EOD",              status: "m2", department: "operations" },
       { id: "intelligence",     label: "Intelligence",     status: "m4", department: "operations", accent: "purple" },
     ],
   },
