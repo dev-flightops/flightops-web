@@ -222,15 +222,17 @@ function Conditions({
     : null;
 
   if (view === "compact") {
-    const left = skyLine ?? "—";
-    const right = [windLine, altPiece].filter(Boolean).join(" · ");
+    // Two-line layout matches legacy peregrineflight: sky + visibility
+    // on line 1 (the at-a-glance VFR-or-not signal), wind + altimeter
+    // on line 2 (the supporting data). One-line packed reads dense at
+    // typical card widths.
+    const top = skyLine ?? "—";
+    const bottom = [windLine, altPiece].filter(Boolean).join(" · ");
     return (
-      <p className="mt-1 text-[0.85rem] text-foreground">
-        {left}
-        {right && (
-          <span className="ml-2 text-muted-foreground">{right}</span>
-        )}
-      </p>
+      <div className="mt-1 text-[0.85rem]">
+        <p className="text-foreground">{top}</p>
+        {bottom && <p className="text-muted-foreground">{bottom}</p>}
+      </div>
     );
   }
 
@@ -302,6 +304,16 @@ function CategoryBadge({ category }: { category: FlightCategory }) {
   );
 }
 
+// ICAO color scheme for the four flight categories — same one legacy
+// peregrineflight and most aviation weather tools (AWC, ForeFlight,
+// Garmin Pilot) use, so dispatchers and pilots see the same accent
+// across platforms:
+//   VFR  green   ceiling >3000 ft AND vis >5 sm
+//   MVFR blue    ceiling 1000-3000 ft OR vis 3-5 sm
+//   IFR  red     ceiling 500-1000 ft OR vis 1-3 sm
+//   LIFR magenta ceiling <500 ft OR vis <1 sm (status-purple is the
+//                closest hue in our palette).
+// Previously IFR was yellow + LIFR was red — non-standard.
 function categoryAccent(category: FlightCategory | null) {
   switch (category) {
     case "VFR":
@@ -322,18 +334,18 @@ function categoryAccent(category: FlightCategory | null) {
       };
     case "IFR":
       return {
-        leftBorder: "border-l-status-yellow",
-        border: "border-border",
-        dot: "bg-status-yellow",
-        badge:
-          "border-status-yellow/40 bg-status-yellow/10 text-status-yellow",
-      };
-    case "LIFR":
-      return {
         leftBorder: "border-l-status-red",
         border: "border-border",
         dot: "bg-status-red",
         badge: "border-status-red/40 bg-status-red/10 text-status-red",
+      };
+    case "LIFR":
+      return {
+        leftBorder: "border-l-status-purple",
+        border: "border-border",
+        dot: "bg-status-purple",
+        badge:
+          "border-status-purple/40 bg-status-purple/10 text-status-purple",
       };
     default:
       return {
@@ -349,8 +361,11 @@ function categoryAccent(category: FlightCategory | null) {
 
 function formatSky(r: VillageWeatherReportResponse): string | null {
   const cloud = r.cloud_cover;
-  const ceiling =
-    r.ceiling_ft != null ? `${r.ceiling_ft.toLocaleString()}ft` : null;
+  // Legacy peregrineflight renders ceiling as a bare number ("1000ft"),
+  // not the US-locale-grouped "1,000ft". Pilots scan ceilings at a
+  // glance — the comma adds visual noise without aiding readability
+  // at the typical 200–10,000 ft range.
+  const ceiling = r.ceiling_ft != null ? `${r.ceiling_ft}ft` : null;
   const vis = r.visibility_sm != null ? formatVis(r.visibility_sm) : null;
 
   const left = [cloud, ceiling].filter(Boolean).join(" ");
