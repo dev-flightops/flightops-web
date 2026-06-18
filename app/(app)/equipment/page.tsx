@@ -140,9 +140,27 @@ export default async function EquipmentPage({
           />
           {filtered.length === 0 ? (
             <div className="rounded-lg border border-border bg-card px-4 py-16 text-center">
-              <p className="text-sm text-muted-foreground">
-                No equipment matches the current filters.
-              </p>
+              {units.length === 0 ? (
+                <>
+                  {/* True empty state — no equipment in the DB.
+                      Matches legacy peregrineflight's CTA-anchored
+                      message; "Add First Unit" deep-links to the same
+                      create form as the header "+ Add Equipment". */}
+                  <p className="mb-4 text-sm text-muted-foreground">
+                    No equipment tracked yet.
+                  </p>
+                  <Link
+                    href="/equipment/new"
+                    className="inline-block rounded-md border border-status-blue bg-status-blue/15 px-4 py-2 text-xs font-semibold text-status-blue hover:bg-status-blue/20"
+                  >
+                    + Add First Unit
+                  </Link>
+                </>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  No equipment matches the current filters.
+                </p>
+              )}
             </div>
           ) : (
             <div className="space-y-5">
@@ -208,16 +226,13 @@ function Stats({
         value={stats.operational}
         tone="green"
       />
-      <Tile
-        label="In Maintenance"
-        value={stats.maintenance}
-        tone={stats.maintenance > 0 ? "yellow" : undefined}
-      />
-      <Tile
-        label="Needs Attention"
-        value={stats.needsAttention}
-        tone={stats.needsAttention > 0 ? "red" : undefined}
-      />
+      {/* Category tone is always applied — matches legacy
+          peregrineflight's "In Maintenance=yellow, Needs Attention=red"
+          even when the count is 0, so the tile reads as the
+          *category color* (what it would look like populated) rather
+          than as a neutral counter that only lights up under threat. */}
+      <Tile label="In Maintenance" value={stats.maintenance} tone="yellow" />
+      <Tile label="Needs Attention" value={stats.needsAttention} tone="red" />
     </section>
   );
 }
