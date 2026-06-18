@@ -70,7 +70,13 @@ export default async function EodPage() {
     const [completed, released, scheduled] = await Promise.all([
       listFlights({ status: "completed", onDate: today, limit: 200 }),
       listFlights({ status: "released", limit: 200 }),
-      listFlights({ status: "scheduled", limit: 200 }),
+      // Scope to today — bare `listFlights({status:'scheduled'})` pulls
+      // in orphan rows from previous seed dates (the same bug we fixed
+      // on the dispatcher + director-ops dashboards). EOD is "close out
+      // TODAY", so a flight scheduled three days ago that's still
+      // status=scheduled was a bookkeeping miss on those older days,
+      // not an action item for tonight's closeout.
+      listFlights({ status: "scheduled", onDate: today, limit: 200 }),
     ]);
     completedToday = completed.items;
     airborne = released.items;
@@ -83,15 +89,18 @@ export default async function EodPage() {
         : "EOD feed unavailable. Try refreshing in a moment.";
   }
 
-  // Split scheduled flights into "stale" (departure window past, never
-  // departed) and "today's planned" (departure still ahead, today UTC).
+  // Split today's scheduled flights (server-filtered above) into
+  // "stale" (departure window passed, never departed) and "today's
+  // planned" (departure still ahead). The server query already
+  // restricted to today, so every row in allScheduled is one or the
+  // other.
   const stale: FlightListItem[] = [];
   const todayPlanned: FlightListItem[] = [];
   for (const f of allScheduled) {
     const dep = Date.parse(f.scheduled_departure_at);
     if (dep < staleCutoff) {
       stale.push(f);
-    } else if (f.scheduled_departure_at.slice(0, 10) === today) {
+    } else {
       todayPlanned.push(f);
     }
   }
