@@ -388,7 +388,10 @@ function CompletionTrendStub() {
 
 interface ListRow {
   left: string;
-  right: string;
+  /** Right-side value. ReactNode so callers can compose styled spans
+   *  (color-coded dep/arr counts on the Station Summary panel use
+   *  this; the other panels still pass plain strings). */
+  right: React.ReactNode;
   tone?: "green" | "yellow" | "orange" | "red";
 }
 
@@ -418,11 +421,17 @@ function ListPanel({
           {emptyHint ?? "—"}
         </p>
       ) : (
-        <ul className="space-y-1.5 text-xs">
+        // Row separator dropped + padding bumped from py-1 to py-2 —
+        // borders between rows clashed with the panel's outer border
+        // and made the list read as a table; legacy uses whitespace
+        // alone for the row rhythm. Values are sans-serif except for
+        // tonal status numbers (green/yellow/orange/red), where mono
+        // keeps numeric width consistent across the column.
+        <ul className="space-y-1 text-xs">
           {rows.map((row, i) => (
             <li
               key={i}
-              className="flex items-baseline justify-between border-b border-border/40 py-1 last:border-0"
+              className="flex items-baseline justify-between py-2"
             >
               <span className="text-foreground/80">{row.left}</span>
               <span
@@ -435,7 +444,7 @@ function ListPanel({
                         ? "font-mono font-semibold text-status-orange"
                         : row.tone === "red"
                           ? "font-mono font-semibold text-status-red"
-                          : "font-mono text-foreground"
+                          : "font-semibold text-foreground"
                 }
               >
                 {row.right}
@@ -458,11 +467,27 @@ function collectStations(flights: FlightListItem[]): ListRow[] {
     arr.arr += 1;
     counts.set(f.destination, arr);
   }
+  // Departures + arrivals color-coded — blue for outbound (matches
+  // the StatTile + dep arrows elsewhere) and green for inbound
+  // (matches the Inbound Now tile on /dashboards/station). Mirrors
+  // legacy peregrineflight's color treatment on the same panel; the
+  // muted "·" + "dep"/"arr" labels keep the row scannable.
   return Array.from(counts.entries())
     .sort(([a], [b]) => a.localeCompare(b))
     .slice(0, 8)
     .map(([icao, c]) => ({
       left: icao,
-      right: `${c.dep} dep · ${c.arr} arr`,
+      right: (
+        <span className="font-mono">
+          <span className="font-semibold text-status-blue">{c.dep}</span>
+          <span className="font-normal text-muted-foreground/70">
+            {" dep · "}
+          </span>
+          <span className="font-semibold text-status-green">{c.arr}</span>
+          <span className="font-normal text-muted-foreground/70">
+            {" arr"}
+          </span>
+        </span>
+      ),
     }));
 }
