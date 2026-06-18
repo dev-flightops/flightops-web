@@ -180,6 +180,25 @@ export default async function SystemHealthDashboardPage() {
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
           {QUICK_NAV.map((q) => {
             const Icon = q.icon;
+            if (q.gated) {
+              return (
+                <div
+                  key={q.href}
+                  title="Coming in M2"
+                  aria-disabled="true"
+                  className="flex cursor-not-allowed flex-col items-center gap-2 rounded-lg border border-border bg-background/20 p-4 text-center opacity-50"
+                >
+                  <Icon
+                    className="h-6 w-6 text-muted-foreground"
+                    aria-hidden
+                    strokeWidth={1.5}
+                  />
+                  <span className="text-xs font-medium text-muted-foreground">
+                    {q.label}
+                  </span>
+                </div>
+              );
+            }
             return (
               <Link
                 key={q.href}
@@ -318,11 +337,21 @@ function formatTime(iso: string): string {
 // the "Crew" cell since /crew is M3). Icons come from lucide-react
 // because emoji glyphs fall back to missing-glyph boxes on systems
 // without an emoji font installed.
-const QUICK_NAV: { label: string; icon: LucideIcon; href: string }[] = [
+//
+// `gated: true` cells are demoted for the M1 demo deploy (search
+// "M1 demo deploy" for the matching home-grid + ops-sub-nav gates).
+// They render as muted, non-clickable cards. Flip the flag back when
+// the deploy promotes past M1.
+const QUICK_NAV: {
+  label: string;
+  icon: LucideIcon;
+  href: string;
+  gated?: boolean;
+}[] = [
   { label: "Dispatch", icon: ClipboardList, href: "/dispatch" },
   { label: "Flight Following", icon: Radio, href: "/flight-following" },
-  { label: "Maintenance", icon: Wrench, href: "/maintenance" },
-  { label: "Schedule", icon: Calendar, href: "/schedule" },
-  { label: "Weather", icon: CloudSun, href: "/weather" },
+  { label: "Maintenance", icon: Wrench, href: "/maintenance", gated: true },
+  { label: "Schedule", icon: Calendar, href: "/schedule", gated: true },
+  { label: "Weather", icon: CloudSun, href: "/weather", gated: true },
   { label: "Settings", icon: SettingsIcon, href: "/settings" },
 ];
