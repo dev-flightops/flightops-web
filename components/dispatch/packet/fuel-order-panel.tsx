@@ -224,10 +224,12 @@ function Field({
  * spec exactly:
  *   208 / 208B / King Air         → JET-A
  *   207 / GA8 / PA-31             → 100LL
- * Anything else falls back to JET-A (the legacy default for unknown
- * turbine equipment).
+ * Anything else (including null model, since flightops-services
+ * migration 0023 made aircraft.model nullable) falls back to JET-A
+ * (the legacy default for unknown turbine equipment).
  */
-function fuelTypeForAircraft(model: string): string {
+function fuelTypeForAircraft(model: string | null): string {
+  if (!model) return "JET-A";
   const normalized = model.toUpperCase();
   if (/(207|GA[\s-]?8|PA[\s-]?31)/.test(normalized)) return "100LL";
   return "JET-A";

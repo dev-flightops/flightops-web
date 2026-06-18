@@ -8,14 +8,19 @@ export type FlightStatus = "scheduled" | "released" | "cancelled" | "completed";
 export interface AircraftRef {
   id: string;
   tail_number: string;
-  model: string;
+  /** Nullable since flightops-services migration 0023 — aircraft
+   *  imported without a confirmed airframe come through as null
+   *  rather than the literal "Unknown" string the backend used to
+   *  stamp. UI surfaces use `displayModel()` helpers that render
+   *  null (or any stray "Unknown") as "No details". */
+  model: string | null;
   seats: number;
 }
 
 export interface AircraftListItem {
   id: string;
   tail_number: string;
-  model: string;
+  model: string | null;
   seats: number;
   max_payload_lbs: number | null;
   is_active: boolean;
@@ -303,7 +308,7 @@ export interface AdvisoryIssue {
 export interface MaintenanceAircraftRef {
   id: string;
   tail_number: string;
-  model: string;
+  model: string | null;
 }
 
 export interface AirworthinessResponse {
@@ -429,7 +434,7 @@ export type PositionSource = "adsb" | "gps" | "manual" | "simulated";
 export interface PositionAircraftRef {
   id: string;
   tail_number: string;
-  model: string;
+  model: string | null;
 }
 
 export interface PositionResponse {

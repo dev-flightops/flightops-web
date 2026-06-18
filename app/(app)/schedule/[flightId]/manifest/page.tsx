@@ -123,7 +123,7 @@ export default async function ManifestPage({
 
       <Section title="Aircraft">
         <Field label="Tail" value={flight.aircraft.tail_number} mono />
-        <Field label="Type" value={flight.aircraft.model} />
+        <Field label="Type" value={flight.aircraft.model ?? "—"} />
         <Field label="Seats" value={String(flight.aircraft.seats)} />
         <Field
           label="Max Payload"

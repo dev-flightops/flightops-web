@@ -6,9 +6,12 @@ import { SectionPanel } from "./section-panel";
 /**
  * Abbreviate the long aircraft model string ("Cessna 208 Caravan") to
  * the short label the legacy form uses ("208 (Caravan)"). Falls back
- * to the raw model for anything we don't recognize.
+ * to the raw model for anything we don't recognize; renders a dash
+ * placeholder when the aircraft has no model on file (nullable since
+ * flightops-services migration 0023).
  */
-function shortAircraftModel(model: string): string {
+function shortAircraftModel(model: string | null): string {
+  if (!model) return "—";
   if (/Cessna\s+208\s+Caravan/i.test(model)) return "208 (Caravan)";
   if (/Beechcraft\s+1900D/i.test(model)) return "1900D (Beech)";
   return model;
