@@ -345,10 +345,13 @@ function FlightStatusBadge({ flight }: { flight: FlightListItem }) {
 }
 
 function CompletionTrendStub() {
-  // Show 8 week-start dates ending with the most recent Monday. Labels
-  // read "MM/DD" — matches legacy's "W04/27", "W05/04" format but with
-  // an explicit leading "W". Bars stay at 0% until flight-following
-  // aggregation lands (M2 follow-up).
+  // Show 8 week-start dates ending with the most recent Monday — labels
+  // "W{MM}/{DD}" match legacy peregrineflight's trend axis. Bars stay
+  // at a thin placeholder height until DispatchOutcomes aggregation
+  // lands (M2 follow-up). Styling mirrors the sibling chart on
+  // /dashboards/ops-score (PR #85): percent label above each bar,
+  // status-blue bar fill at 60% alpha, gap-2 between columns — so
+  // both dashboards read the same vibe.
   const labels: string[] = [];
   const now = new Date();
   // Find this week's Monday (UTC). getUTCDay: Sun=0, Mon=1 ... Sat=6.
@@ -366,11 +369,15 @@ function CompletionTrendStub() {
     labels.push(`W${mm}/${dd}`);
   }
   return (
-    <div className="flex h-32 items-end justify-between gap-1">
+    <div className="flex h-32 items-end justify-between gap-2">
       {labels.map((label) => (
         <div key={label} className="flex flex-1 flex-col items-center gap-1">
-          <div className="w-full rounded-t bg-muted" style={{ height: "8%" }} />
-          <span className="text-[0.6rem] font-mono text-muted-foreground/60">
+          <span className="text-[0.6rem] text-muted-foreground/60">0%</span>
+          <div
+            className="w-full rounded-t bg-status-blue/60"
+            style={{ height: "2%" }}
+          />
+          <span className="font-mono text-[0.6rem] text-muted-foreground/60">
             {label}
           </span>
         </div>
@@ -381,7 +388,10 @@ function CompletionTrendStub() {
 
 interface ListRow {
   left: string;
-  right: string;
+  /** Right-side value. ReactNode so callers can compose styled spans
+   *  (color-coded dep/arr counts on the Station Summary panel use
+   *  this; the other panels still pass plain strings). */
+  right: React.ReactNode;
   tone?: "green" | "yellow" | "orange" | "red";
 }
 
@@ -411,11 +421,17 @@ function ListPanel({
           {emptyHint ?? "—"}
         </p>
       ) : (
-        <ul className="space-y-1.5 text-xs">
+        // Row separator dropped + padding bumped from py-1 to py-2 —
+        // borders between rows clashed with the panel's outer border
+        // and made the list read as a table; legacy uses whitespace
+        // alone for the row rhythm. Values are sans-serif except for
+        // tonal status numbers (green/yellow/orange/red), where mono
+        // keeps numeric width consistent across the column.
+        <ul className="space-y-1 text-xs">
           {rows.map((row, i) => (
             <li
               key={i}
-              className="flex items-baseline justify-between border-b border-border/40 py-1 last:border-0"
+              className="flex items-baseline justify-between py-2"
             >
               <span className="text-foreground/80">{row.left}</span>
               <span
@@ -428,7 +444,7 @@ function ListPanel({
                         ? "font-mono font-semibold text-status-orange"
                         : row.tone === "red"
                           ? "font-mono font-semibold text-status-red"
-                          : "font-mono text-foreground"
+                          : "font-semibold text-foreground"
                 }
               >
                 {row.right}
@@ -451,11 +467,27 @@ function collectStations(flights: FlightListItem[]): ListRow[] {
     arr.arr += 1;
     counts.set(f.destination, arr);
   }
+  // Departures + arrivals color-coded — blue for outbound (matches
+  // the StatTile + dep arrows elsewhere) and green for inbound
+  // (matches the Inbound Now tile on /dashboards/station). Mirrors
+  // legacy peregrineflight's color treatment on the same panel; the
+  // muted "·" + "dep"/"arr" labels keep the row scannable.
   return Array.from(counts.entries())
     .sort(([a], [b]) => a.localeCompare(b))
     .slice(0, 8)
     .map(([icao, c]) => ({
       left: icao,
-      right: `${c.dep} dep · ${c.arr} arr`,
+      right: (
+        <span className="font-mono">
+          <span className="font-semibold text-status-blue">{c.dep}</span>
+          <span className="font-normal text-muted-foreground/70">
+            {" dep · "}
+          </span>
+          <span className="font-semibold text-status-green">{c.arr}</span>
+          <span className="font-normal text-muted-foreground/70">
+            {" arr"}
+          </span>
+        </span>
+      ),
     }));
 }
