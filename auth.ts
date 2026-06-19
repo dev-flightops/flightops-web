@@ -15,6 +15,10 @@ interface AccessTokenClaims {
   sub: string;
   tenant_id: string;
   roles: string[];
+  /** M2-X-1: minted by auth-service as the union of the per-tenant
+   * Admin Access toggle across the user's roles. May be missing on
+   * tokens issued before migration 0024 — treat as false in that case. */
+  admin_access?: boolean;
   email?: string;
   /** Display name embedded by auth-service so the UI can greet the user
    * without an extra round-trip. May be missing on older tokens. */
@@ -76,6 +80,7 @@ function buildProviders(): Provider[] {
           name: claims.name,
           tenant_id: claims.tenant_id,
           roles: claims.roles,
+          admin_access: claims.admin_access ?? false,
           access_token: body.access_token,
           access_token_exp: claims.exp,
         };
@@ -150,6 +155,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       (user as unknown as Record<string, unknown>).access_token = result.access_token;
       (user as unknown as Record<string, unknown>).tenant_id = result.claims.tenant_id;
       (user as unknown as Record<string, unknown>).roles = result.claims.roles;
+      (user as unknown as Record<string, unknown>).admin_access =
+        result.claims.admin_access ?? false;
       (user as unknown as Record<string, unknown>).access_token_exp = result.claims.exp;
       // Overwrite the sub so the session reports the FlightOps user id,
       // not the upstream provider's sub.
@@ -168,6 +175,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         token.access_token = user.access_token;
         token.tenant_id = user.tenant_id;
         token.roles = user.roles;
+        token.admin_access = user.admin_access;
         token.access_token_exp = user.access_token_exp;
       }
       // Subsequent calls: if the backend JWT has expired, returning null
@@ -192,6 +200,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       session.access_token = token.access_token as string;
       session.tenant_id = token.tenant_id as string;
       session.roles = (token.roles as string[]) ?? [];
+      session.admin_access = Boolean(token.admin_access);
       return session;
     },
   },

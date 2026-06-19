@@ -1,34 +1,38 @@
 import Link from "next/link";
 
-import { listRoles, listUsers } from "@/lib/api/auth";
+import { listAdminAccess, listUsers } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
-import type { RoleSummary, UserResponse } from "@/lib/api/types";
+import type { AdminAccessRoleRow, UserResponse } from "@/lib/api/types";
+
+import { AdminAccessToggle } from "./admin-access-toggle";
 
 /**
- * /settings/permissions — Role catalog (M2-G-48).
+ * /settings/permissions — Role catalog + per-tenant Admin Access toggle
+ * (M2-G-48 + M2-X-1).
  *
- * Read-only view of the canonical role list (defined in
- * shared/flightops_shared/auth/roles.py). Shows each role's display
- * label, description, and a small count of how many active users
- * currently hold it — useful sanity check ("does anyone actually have
- * the maintenance role yet?").
+ * Per Phil's M1 demo review (Jun 18 2026): every role gets an Admin
+ * Access on/off switch so operators can decide which roles can see
+ * /dashboards/*. The toggle writes to `tenant_role_admin_access` on the
+ * backend; the JWT mints the union of those flags as `admin_access`
+ * which the app-shell reads to gate the Admin card and the dashboards
+ * routes.
  *
  * Editing the role catalog itself is intentionally not on this page —
- * roles are a code-level constant; UI-editable per-tenant permissions
- * land with the granular permission system in M4.
+ * roles are a code-level constant; granular per-action permissions
+ * land with the M4 permission system.
  */
 export default async function SettingsPermissionsPage() {
-  let roles: RoleSummary[] = [];
+  let roles: AdminAccessRoleRow[] = [];
   let users: UserResponse[] = [];
   let loadError: string | null = null;
   let unauthorized = false;
 
   try {
-    const [rolesResponse, usersResponse] = await Promise.all([
-      listRoles(),
+    const [accessResponse, usersResponse] = await Promise.all([
+      listAdminAccess(),
       listUsers(),
     ]);
-    roles = rolesResponse.roles;
+    roles = accessResponse.roles;
     users = usersResponse.items;
   } catch (err) {
     if (err instanceof ApiError) {
@@ -60,7 +64,8 @@ export default async function SettingsPermissionsPage() {
       <header className="mb-6">
         <h1 className="text-2xl font-bold tracking-tight">Permissions</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Roles available in FlightOps and what each one is allowed to do
+          Roles available in FlightOps and which ones can access the Admin
+          portal (dashboards, analytics, user management).
         </p>
       </header>
 
@@ -104,14 +109,15 @@ export default async function SettingsPermissionsPage() {
                     <p className="mt-1 text-sm text-muted-foreground">
                       {role.description}
                     </p>
+                    <p className="mt-2 text-[0.65rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+                      {count} active {count === 1 ? "user" : "users"}
+                    </p>
                   </div>
-                  <div className="shrink-0 text-right">
-                    <div className="text-xl font-bold text-foreground">
-                      {count}
-                    </div>
-                    <div className="text-[0.6rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-                      Active {count === 1 ? "user" : "users"}
-                    </div>
+                  <div className="shrink-0">
+                    <AdminAccessToggle
+                      roleId={role.id}
+                      initial={role.admin_access}
+                    />
                   </div>
                 </div>
               </li>
@@ -130,7 +136,8 @@ export default async function SettingsPermissionsPage() {
             Users page
           </Link>
           . Granular per-action permissions (e.g. &quot;dispatcher can release
-          but not cancel&quot;) ship in M4.
+          but not cancel&quot;) ship in M4. Users have to sign out and back in
+          for an Admin Access change to take effect.
         </p>
       )}
     </div>
