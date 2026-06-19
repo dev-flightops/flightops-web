@@ -40,8 +40,8 @@ export const HOME_MODULES: HomeModule[] = [
     id: "flight-crew",
     label: "Flight Crew",
     sub: "Schedule, duty, weather, aircraft",
-    href: "/crew/my-dashboard",
-    status: "m3",
+    href: "/flight-crew",
+    status: "live",
     color: "#0a84ff",
     highlight: true,
     iconPath:
