@@ -961,6 +961,25 @@ export interface RolesResponse {
   roles: RoleSummary[];
 }
 
+// Per-tenant Admin Access toggle (M2-X-1).
+export interface AdminAccessRoleRow {
+  id: string;
+  label: string;
+  description: string;
+  /** Whether this role grants Admin portal visibility in this tenant. */
+  admin_access: boolean;
+}
+
+export interface AdminAccessRolesResponse {
+  roles: AdminAccessRoleRow[];
+}
+
+export interface AdminAccessToggleRequest {
+  admin_access: boolean;
+  /** Optional free-text reason captured in `admin_access_audit.reason`. */
+  reason?: string;
+}
+
 // Village weather — M2-M-29 / M2-G-village-wx-redesign
 
 export type CloudCover = "SKC" | "CLR" | "FEW" | "SCT" | "BKN" | "OVC" | "VV";

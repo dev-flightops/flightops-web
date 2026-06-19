@@ -69,6 +69,18 @@ export default async function HomePage() {
     (session as unknown as { roles?: string[] } | null)?.roles ?? [];
   const canSeeAlerts = sessionRoles.some((r) => ALERT_VIEWING_ROLES.has(r));
 
+  // M2-X-1: hide the Admin card from users whose roles don't have the
+  // per-tenant Admin Access toggle. session.admin_access is the union of
+  // `tenant_role_admin_access.admin_access` across the user's roles —
+  // the same boolean the backend uses to gate /dashboards/*-like
+  // endpoints.
+  const hasAdminAccess = Boolean(
+    (session as unknown as { admin_access?: boolean } | null)?.admin_access,
+  );
+  const visibleModules = hasAdminAccess
+    ? HOME_MODULES
+    : HOME_MODULES.filter((m) => m.id !== "admin");
+
   // Airborne pulls from the shared snapshot (released + actual_departure_at
   // set, not yet arrived). On-ground = today's flights minus the airborne
   // count — released-but-not-yet-departed counts as on ground.
@@ -108,7 +120,7 @@ export default async function HomePage() {
 
       {/* Module grid */}
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
-        {HOME_MODULES.map((module) => (
+        {visibleModules.map((module) => (
           <ModuleCard key={module.id} module={module} />
         ))}
       </div>

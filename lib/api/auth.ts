@@ -5,6 +5,9 @@
 
 import { apiFetch } from "./client";
 import type {
+  AdminAccessRoleRow,
+  AdminAccessRolesResponse,
+  AdminAccessToggleRequest,
   CompanyBaseCreateRequest,
   CompanyBaseListResponse,
   CompanyBaseResponse,
@@ -212,6 +215,26 @@ export async function deactivateUser(userId: string): Promise<void> {
 
 export async function listRoles(): Promise<RolesResponse> {
   return apiFetch<RolesResponse>("/auth/settings/roles");
+}
+
+// ---- Admin Access toggle per role (M2-X-1) ----
+
+export async function listAdminAccess(): Promise<AdminAccessRolesResponse> {
+  return apiFetch<AdminAccessRolesResponse>("/auth/settings/admin-access");
+}
+
+export async function setAdminAccess(
+  role: string,
+  body: AdminAccessToggleRequest,
+): Promise<AdminAccessRoleRow> {
+  return apiFetch<AdminAccessRoleRow>(
+    `/auth/settings/admin-access/${role}`,
+    {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    },
+  );
 }
 
 // ---- Per-tenant SSO providers (M2-M-28c) ----
