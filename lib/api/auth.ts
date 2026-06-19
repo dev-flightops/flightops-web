@@ -218,23 +218,23 @@ export async function listRoles(): Promise<RolesResponse> {
 }
 
 // ---- Admin Access toggle per role (M2-X-1) ----
+// Backend lives at /auth/admin-access (no `/settings/` prefix today —
+// follow-up to align with the sibling /auth/settings/* routes is tracked
+// for the next backend pass; both URLs are equivalent semantically.
 
 export async function listAdminAccess(): Promise<AdminAccessRolesResponse> {
-  return apiFetch<AdminAccessRolesResponse>("/auth/settings/admin-access");
+  return apiFetch<AdminAccessRolesResponse>("/auth/admin-access");
 }
 
 export async function setAdminAccess(
   role: string,
   body: AdminAccessToggleRequest,
 ): Promise<AdminAccessRoleRow> {
-  return apiFetch<AdminAccessRoleRow>(
-    `/auth/settings/admin-access/${role}`,
-    {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    },
-  );
+  return apiFetch<AdminAccessRoleRow>(`/auth/admin-access/${role}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
 }
 
 // ---- Per-tenant SSO providers (M2-M-28c) ----
