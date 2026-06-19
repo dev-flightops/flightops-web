@@ -24,17 +24,13 @@ export interface QuickLink {
 }
 
 // Order matches legacy peregrineflight's /home dash-strip verbatim.
-// For the M1 demo deploy only Settings stays live (it's the Admin-side
-// shortcut that pairs with the Admin card above). EOD Closeout +
-// Flight Log are M2 work — flip back to "live" when the deploy
-// promotes past M1.
 export const HOME_QUICK_LINKS: QuickLink[] = [
-  { label: "EOD Closeout", href: "/eod", status: "m2" },
+  { label: "EOD Closeout", href: "/eod", status: "live" },
   { label: "Business Intelligence", href: "/reports/executive/bi", status: "m4" },
   { label: "Invoices", href: "/invoicing/", status: "m4" },
   { label: "My Flight History", href: "/crew/my-history/flights", status: "m3" },
   { label: "My Duty History", href: "/crew/my-history/duty", status: "m3" },
-  { label: "Flight Log", href: "/flight-log", status: "m2" },
+  { label: "Flight Log", href: "/flight-log", status: "live" },
   { label: "Settings", href: "/settings", status: "live", accent: "gold" },
 ];
 
