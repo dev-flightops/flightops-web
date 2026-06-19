@@ -5,6 +5,9 @@
 import { apiFetch } from "./client";
 import type {
   AircraftListResponse,
+  CurrentDutyResponse,
+  DutyHistoryResponse,
+  DutyPeriodSummary,
   FlightDetail,
   FlightListResponse,
   FlightLogCreateRequest,
@@ -162,4 +165,38 @@ export async function createFlightLog(
     method: "POST",
     body: JSON.stringify(payload),
   });
+}
+
+// ---- Pilot duty tracking (Spec 4 §"Duty time tracking") ----
+
+export async function getCurrentDuty(): Promise<CurrentDutyResponse> {
+  return apiFetch<CurrentDutyResponse>("/ops/duty/current");
+}
+
+export async function clockIn(
+  body: { rest_acknowledged?: boolean } = {},
+): Promise<DutyPeriodSummary> {
+  return apiFetch<DutyPeriodSummary>("/ops/duty/clock-in", {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+}
+
+export async function clockOut(
+  body: { reason?: string } = {},
+): Promise<DutyPeriodSummary> {
+  return apiFetch<DutyPeriodSummary>("/ops/duty/clock-out", {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+}
+
+export async function listDutyHistory(
+  params: { limit?: number; offset?: number } = {},
+): Promise<DutyHistoryResponse> {
+  const qs = new URLSearchParams();
+  if (params.limit !== undefined) qs.set("limit", String(params.limit));
+  if (params.offset !== undefined) qs.set("offset", String(params.offset));
+  const tail = qs.toString() ? `?${qs.toString()}` : "";
+  return apiFetch<DutyHistoryResponse>(`/ops/duty/history${tail}`);
 }

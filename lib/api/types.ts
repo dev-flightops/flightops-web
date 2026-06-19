@@ -961,6 +961,35 @@ export interface RolesResponse {
   roles: RoleSummary[];
 }
 
+// Pilot duty tracking (Spec 4 §"Duty time tracking" / M2 Duty backend).
+export interface DutyPeriodSummary {
+  id: string;
+  clock_in_at: string;
+  clock_out_at: string | null;
+  elapsed_hours: number;
+  is_open: boolean;
+  rest_acknowledged: boolean;
+}
+
+export interface DutyWarning {
+  level: "yellow" | "red";
+  kind: "short_rest" | "max_duty" | "approaching";
+  message: string;
+}
+
+export interface CurrentDutyResponse {
+  open: DutyPeriodSummary | null;
+  last_closed: DutyPeriodSummary | null;
+  min_rest_hours: number;
+  max_duty_hours: number;
+  warnings: DutyWarning[];
+}
+
+export interface DutyHistoryResponse {
+  items: DutyPeriodSummary[];
+  total: number;
+}
+
 // Per-tenant Admin Access toggle (M2-X-1).
 export interface AdminAccessRoleRow {
   id: string;
