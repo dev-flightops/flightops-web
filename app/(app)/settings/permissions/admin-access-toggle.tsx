@@ -2,9 +2,9 @@
 
 import { useState, useTransition } from "react";
 
-import { setAdminAccess } from "@/lib/api/auth";
-import { ApiError } from "@/lib/api/client";
 import { cn } from "@/lib/utils";
+
+import { toggleAdminAccessAction } from "./actions";
 
 interface Props {
   roleId: string;
@@ -18,13 +18,19 @@ interface Props {
 /**
  * Settings → Permissions → per-role Admin Access toggle (M2-X-1).
  *
- * Submits PATCH /auth/settings/admin-access/{role} on every flip with an
- * optimistic UI update — if the call fails we roll back to the original
- * value and surface an error message inline.
+ * Submits the flip through `toggleAdminAccessAction` (server action) so
+ * the API call lives server-side where the Auth.js session cookie is
+ * actually readable. Calling `setAdminAccess` directly from this
+ * client component used to fail with "no session", surfaced as
+ * "Couldn't save — try again".
  *
- * exec_admin stays locked on regardless of what's passed in. Phil's review
- * was explicit that Admin is Admin; turning the toggle off for exec_admin
- * would leave a tenant unable to reach Settings at all.
+ * Optimistic UI: the local state flips immediately so the click feels
+ * responsive; on action failure we roll back to the original value
+ * and surface a context-specific inline message.
+ *
+ * exec_admin stays locked on regardless of what's passed in. Phil's
+ * review was explicit that Admin is Admin; turning the toggle off for
+ * exec_admin would leave a tenant unable to reach Settings at all.
  */
 export function AdminAccessToggle({ roleId, initial, locked }: Props) {
   const [enabled, setEnabled] = useState(initial);
@@ -40,12 +46,19 @@ export function AdminAccessToggle({ roleId, initial, locked }: Props) {
     setError(null);
 
     startTransition(async () => {
-      try {
-        await setAdminAccess(roleId, { admin_access: next });
-      } catch (err) {
+      // The action validates `role` against the catalog with zod, so an
+      // unknown roleId returns `error: "unknown_role"` rather than
+      // throwing at the type boundary. Cast is safe.
+      const result = await toggleAdminAccessAction({
+        role: roleId as Parameters<typeof toggleAdminAccessAction>[0]["role"],
+        admin_access: next,
+      });
+      if (!result.ok) {
         setEnabled(previous);
-        if (err instanceof ApiError && err.status === 403) {
+        if (result.error === "forbidden") {
           setError("You need Executive Admin to change this.");
+        } else if (result.error === "unknown_role") {
+          setError("Unknown role.");
         } else {
           setError("Couldn't save — try again.");
         }

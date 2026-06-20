@@ -1,36 +1,21 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { TestApiError, setAdminAccess } = vi.hoisted(() => {
-  class TestApiError extends Error {
-    constructor(
-      public status: number,
-      public path: string,
-      message: string,
-    ) {
-      super(message);
-    }
-  }
-  return { TestApiError, setAdminAccess: vi.fn() };
-});
+const { toggleAdminAccessAction } = vi.hoisted(() => ({
+  toggleAdminAccessAction: vi.fn(),
+}));
 
-vi.mock("@/lib/api/client", () => ({ ApiError: TestApiError }));
-vi.mock("@/lib/api/auth", () => ({ setAdminAccess }));
+vi.mock("./actions", () => ({ toggleAdminAccessAction }));
 
 import { AdminAccessToggle } from "./admin-access-toggle";
 
 beforeEach(() => {
-  setAdminAccess.mockReset();
+  toggleAdminAccessAction.mockReset();
 });
 
 describe("AdminAccessToggle", () => {
-  it("flips on click and calls the backend with the new value", async () => {
-    setAdminAccess.mockResolvedValueOnce({
-      id: "dispatcher",
-      label: "Dispatcher",
-      description: "",
-      admin_access: true,
-    });
+  it("flips on click and calls the server action with the new value", async () => {
+    toggleAdminAccessAction.mockResolvedValueOnce({ ok: true });
 
     render(<AdminAccessToggle roleId="dispatcher" initial={false} />);
     const toggle = screen.getByLabelText("Admin Access for dispatcher");
@@ -39,17 +24,19 @@ describe("AdminAccessToggle", () => {
     fireEvent.click(toggle);
 
     await waitFor(() =>
-      expect(setAdminAccess).toHaveBeenCalledWith("dispatcher", {
+      expect(toggleAdminAccessAction).toHaveBeenCalledWith({
+        role: "dispatcher",
         admin_access: true,
       }),
     );
     expect(toggle).toBeChecked();
   });
 
-  it("rolls back the optimistic update on 403", async () => {
-    setAdminAccess.mockRejectedValueOnce(
-      new TestApiError(403, "/admin-access/dispatcher", "x"),
-    );
+  it("rolls back the optimistic update on forbidden", async () => {
+    toggleAdminAccessAction.mockResolvedValueOnce({
+      ok: false,
+      error: "forbidden",
+    });
 
     render(<AdminAccessToggle roleId="dispatcher" initial={false} />);
     const toggle = screen.getByLabelText("Admin Access for dispatcher");
@@ -58,8 +45,20 @@ describe("AdminAccessToggle", () => {
 
     await waitFor(() => screen.getByRole("alert"));
     expect(screen.getByRole("alert")).toHaveTextContent(/executive admin/i);
-    // Optimistic update reverted.
     expect(toggle).not.toBeChecked();
+  });
+
+  it("shows the generic retry message on a network error", async () => {
+    toggleAdminAccessAction.mockResolvedValueOnce({
+      ok: false,
+      error: "network",
+    });
+
+    render(<AdminAccessToggle roleId="dispatcher" initial={false} />);
+    fireEvent.click(screen.getByLabelText("Admin Access for dispatcher"));
+
+    await waitFor(() => screen.getByRole("alert"));
+    expect(screen.getByRole("alert")).toHaveTextContent(/try again/i);
   });
 
   it("renders exec_admin as locked-on regardless of initial flag", () => {
