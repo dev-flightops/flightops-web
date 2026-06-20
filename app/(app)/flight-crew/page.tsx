@@ -2,13 +2,21 @@ import Link from "next/link";
 
 import { auth } from "@/auth";
 import { ApiError } from "@/lib/api/client";
-import { listFlights } from "@/lib/api/ops";
-import type { FlightListItem } from "@/lib/api/types";
+import { getCurrentDuty, listFlights } from "@/lib/api/ops";
+import type { CurrentDutyResponse, FlightListItem } from "@/lib/api/types";
 import { currentGreeting, firstNameFrom } from "@/lib/greeting";
 
 import { DutyClockButton } from "./duty-clock-button";
 import { TodayFlightsPanel } from "./today-flights-panel";
 import { TrainingCurrencySummary } from "./training-currency-summary";
+
+const DUTY_OFFLINE_DEFAULT: CurrentDutyResponse = {
+  open: null,
+  last_closed: null,
+  min_rest_hours: 9,
+  max_duty_hours: 14,
+  warnings: [],
+};
 
 /**
  * /flight-crew/ — Pilot home page (Spec 4 §"PILOT HOME PAGE").
@@ -47,19 +55,26 @@ export default async function FlightCrewPage() {
     firstNameFrom((session?.user?.email ?? "").split("@")[0]);
   const greeting = currentGreeting();
 
+  let duty: CurrentDutyResponse = DUTY_OFFLINE_DEFAULT;
+
   try {
-    // Today's flights + upcoming-today. Released first (most likely
-    // what the pilot is actively flying), then scheduled.
     const today = new Date().toISOString().slice(0, 10);
-    const result = await listFlights({
-      onDate: today,
-      status: ["scheduled", "released"],
-      limit: 50,
-    });
+    // Fetch in parallel: today's flights + current duty state. Duty
+    // failure degrades the button to its default off-duty shape rather
+    // than blocking the whole page.
+    const [flightsResult, dutyResult] = await Promise.all([
+      listFlights({
+        onDate: today,
+        status: ["scheduled", "released"],
+        limit: 50,
+      }),
+      getCurrentDuty().catch(() => DUTY_OFFLINE_DEFAULT),
+    ]);
     // Sort by ETD ascending per Spec 4.
-    flights = [...result.items].sort((a, b) =>
+    flights = [...flightsResult.items].sort((a, b) =>
       a.scheduled_departure_at.localeCompare(b.scheduled_departure_at),
     );
+    duty = dutyResult;
   } catch (err) {
     if (err instanceof ApiError && err.status === 401) {
       loadError = "Your session expired — please sign in again.";
@@ -85,7 +100,7 @@ export default async function FlightCrewPage() {
 
       {/* 1. Duty In / Out — Spec 4 §"Page layout / Duty In / Out button" */}
       <section className="mb-6">
-        <DutyClockButton />
+        <DutyClockButton initial={duty} />
       </section>
 
       {/* 2. My Flights today + 3. + Create Flight Log */}
