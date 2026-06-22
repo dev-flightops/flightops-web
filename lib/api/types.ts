@@ -492,6 +492,17 @@ export interface BoardResponse {
 
 export type StationRunwaySource = "faa_api" | "manual" | "seeded";
 
+// Spec 6 §"Add Station form / Station type" catalog.
+export type StationType =
+  | "hub_base"
+  | "spoke_base"
+  | "village_airport"
+  | "maintenance_base"
+  | "custom";
+
+// Spec 6 §"Add Station form / Fuel types available".
+export type FuelTypeName = "Jet A" | "100LL";
+
 export interface StationListItem {
   id: string;
   icao_code: string;
@@ -499,7 +510,15 @@ export interface StationListItem {
   city: string | null;
   state: string | null;
   elevation_ft: number | null;
+  // Spec 6: this column carries the Weather board inclusion semantics.
   has_reporting_function: boolean;
+  // Spec 6 §"Add Station form" fields (migration 0026).
+  station_type: StationType;
+  is_hub: boolean;
+  is_active: boolean;
+  fuel_available: boolean;
+  fuel_types_available: FuelTypeName[];
+  primary_fuel_supplier_id: string | null;
   runway_length_ft: number | null;
   runway_width_ft: number | null;
   runway_primary_name: string | null;

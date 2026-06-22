@@ -41,21 +41,36 @@ import type {
   StationIssueStatus,
   StationListItem,
   StationListResponse,
+  StationType,
+  FuelTypeName,
 } from "./types";
 
 export interface ListStationsParams {
   /** ICAO prefix filter — server-side case-insensitive prefix match. */
   icaoPrefix?: string;
+  /** When true, include deactivated stations (Spec 6 — Settings UI). */
+  includeInactive?: boolean;
+  /** When true, return only fueled stations (fuel order picker). */
+  fuelAvailable?: boolean;
+  /** When true, return only hub bases (FF map + dispatch routing). */
+  isHub?: boolean;
   limit?: number;
 }
 
-/** List stations alphabetically by ICAO with per-station open-issue
- *  counts aggregated server-side. Powers /stations. */
+/** List stations with per-station open-issue counts aggregated
+ *  server-side. Default ordering: hub bases first, then alphabetical
+ *  by ICAO (Spec 6). Powers /stations + every base dropdown.
+ */
 export async function listStations(
   params: ListStationsParams = {},
 ): Promise<StationListResponse> {
   const search = new URLSearchParams();
   if (params.icaoPrefix) search.set("icao_prefix", params.icaoPrefix);
+  if (params.includeInactive) search.set("include_inactive", "true");
+  if (params.fuelAvailable !== undefined) {
+    search.set("fuel_available", String(params.fuelAvailable));
+  }
+  if (params.isHub !== undefined) search.set("is_hub", String(params.isHub));
   if (params.limit !== undefined) search.set("limit", String(params.limit));
   const qs = search.toString() ? `?${search.toString()}` : "";
   return apiFetch<StationListResponse>(`/ground/stations${qs}`);
@@ -202,6 +217,13 @@ export interface CreateStationPayload {
   state?: string | null;
   elevation_ft?: number | null;
   has_reporting_function?: boolean;
+  /** Spec 6 §"Add Station form" fields. */
+  station_type?: StationType;
+  is_hub?: boolean;
+  is_active?: boolean;
+  fuel_available?: boolean;
+  fuel_types_available?: FuelTypeName[];
+  primary_fuel_supplier_id?: string | null;
   latitude?: number | null;
   longitude?: number | null;
   notes?: string | null;
@@ -212,6 +234,36 @@ export async function createStation(
 ): Promise<StationListItem> {
   return apiFetch<StationListItem>("/ground/stations", {
     method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export interface UpdateStationPayload {
+  name?: string;
+  city?: string | null;
+  state?: string | null;
+  elevation_ft?: number | null;
+  has_reporting_function?: boolean;
+  station_type?: StationType;
+  is_hub?: boolean;
+  is_active?: boolean;
+  fuel_available?: boolean;
+  fuel_types_available?: FuelTypeName[];
+  primary_fuel_supplier_id?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  notes?: string | null;
+}
+
+/** Partial update of a station. Spec 6 §"Stations list page /
+ *  Active / Inactive toggle" calls this out specifically for the
+ *  deactivate-without-delete path. */
+export async function updateStation(
+  stationId: string,
+  payload: UpdateStationPayload,
+): Promise<StationListItem> {
+  return apiFetch<StationListItem>(`/ground/stations/${stationId}`, {
+    method: "PATCH",
     body: JSON.stringify(payload),
   });
 }
