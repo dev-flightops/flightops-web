@@ -8,7 +8,18 @@ import { listStationIssues, listStations } from "@/lib/api/ground";
 import type {
   StationIssueResponse,
   StationListItem,
+  StationType,
 } from "@/lib/api/types";
+
+import { StationActiveToggle } from "./active-toggle";
+
+const STATION_TYPE_LABELS: Record<StationType, string> = {
+  hub_base: "Hub Base",
+  spoke_base: "Spoke Base",
+  village_airport: "Village Airport",
+  maintenance_base: "Maintenance Base",
+  custom: "Custom",
+};
 
 /**
  * /stations/{id} — Station detail + station-issue feed (M2-G-38).
@@ -40,7 +51,10 @@ export default async function StationDetailPage({
 
   try {
     const [stationsResult, issuesResult] = await Promise.all([
-      listStations({ limit: 500 }),
+      // includeInactive: the detail page must resolve a station whose
+      // is_active was just flipped off — otherwise the toggle-off action
+      // would surface as a 404 redirect.
+      listStations({ limit: 500, includeInactive: true }),
       listStationIssues(id, { limit: 50 }),
     ]);
     station = stationsResult.items.find((s) => s.id === id) ?? null;
@@ -118,12 +132,31 @@ function Header({ station }: { station: StationListItem }) {
   return (
     <div className="mb-6 flex items-start justify-between gap-4">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">
-          <span className="font-mono">{station.icao_code}</span>
-          <span className="ml-3 font-normal text-muted-foreground">
-            {station.name}
+        <div className="flex flex-wrap items-center gap-2">
+          <h1 className="text-2xl font-bold tracking-tight">
+            <span className="font-mono">{station.icao_code}</span>
+            <span className="ml-3 font-normal text-muted-foreground">
+              {station.name}
+            </span>
+          </h1>
+          {/* Spec 6 §"Add Station form / Station type" badge */}
+          <span className="rounded-md border border-border bg-card/60 px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+            {STATION_TYPE_LABELS[station.station_type]}
           </span>
-        </h1>
+          {station.is_hub && (
+            <span
+              title="Hub bases sort first in all dropdowns + render as larger markers on the flight following map."
+              className="rounded-md border border-status-blue/40 bg-status-blue/10 px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-[0.06em] text-status-blue"
+            >
+              Hub
+            </span>
+          )}
+          {!station.is_active && (
+            <span className="rounded-md border border-status-yellow/40 bg-status-yellow/10 px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-[0.06em] text-status-yellow">
+              Deactivated
+            </span>
+          )}
+        </div>
         {location && (
           <p className="mt-1 text-sm text-muted-foreground">{location}</p>
         )}
@@ -131,13 +164,14 @@ function Header({ station }: { station: StationListItem }) {
       <div className="flex items-center gap-2">
         {station.has_reporting_function ? (
           <span className="rounded-md border border-status-green/40 bg-status-green/10 px-3 py-1 text-xs font-semibold text-status-green">
-            Reporting
+            Weather board
           </span>
-        ) : (
-          <span className="rounded-md border border-status-red/40 bg-status-red/10 px-3 py-1 text-xs font-semibold text-status-red">
-            Non-reporting
-          </span>
-        )}
+        ) : null}
+        <StationActiveToggle
+          stationId={station.id}
+          initial={station.is_active}
+          icaoCode={station.icao_code}
+        />
         <ReportIssueDialog
           stationId={station.id}
           stationLabel={`${station.icao_code} · ${station.name}`}
@@ -166,6 +200,18 @@ function Meta({ station }: { station: StationListItem }) {
         <Field
           label="Runway source"
           value={station.runway_source ?? "—"}
+        />
+        <Field
+          label="Fuel available"
+          value={station.fuel_available ? "Yes" : "No"}
+        />
+        <Field
+          label="Fuel types"
+          value={
+            station.fuel_available && station.fuel_types_available.length > 0
+              ? station.fuel_types_available.join(", ")
+              : "—"
+          }
         />
       </dl>
       {station.notes && (

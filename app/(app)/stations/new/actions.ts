@@ -16,6 +16,16 @@ import { createStation } from "@/lib/api/ground";
  * dispatcher can pick a different code.
  */
 
+const STATION_TYPES = [
+  "hub_base",
+  "spoke_base",
+  "village_airport",
+  "maintenance_base",
+  "custom",
+] as const;
+
+const FUEL_TYPES = ["Jet A", "100LL"] as const;
+
 const Schema = z.object({
   icao_code: z
     .string()
@@ -47,6 +57,21 @@ const Schema = z.object({
     .string()
     .optional()
     .transform((v) => v === "on" || v === "true"),
+  // Spec 6 §"Add Station form" fields (migration 0026 / PR #61).
+  station_type: z.enum(STATION_TYPES).default("spoke_base"),
+  is_hub: z
+    .string()
+    .optional()
+    .transform((v) => v === "on" || v === "true"),
+  fuel_available: z
+    .string()
+    .optional()
+    .transform((v) => v === "on" || v === "true"),
+  // FormData repeats checkboxes with the same name; we read .getAll() in
+  // the action and pass a list straight to the schema.
+  fuel_types_available: z
+    .array(z.enum(FUEL_TYPES))
+    .default([]),
   latitude: z
     .string()
     .optional()
@@ -78,7 +103,10 @@ export async function createStationAction(
   _prev: NewStationState,
   formData: FormData,
 ): Promise<NewStationState> {
-  const raw = Object.fromEntries(formData.entries());
+  // FormData.entries() collapses repeated keys to the last value; the
+  // fuel-types checkboxes need .getAll() so we can preserve all selections.
+  const raw: Record<string, unknown> = Object.fromEntries(formData.entries());
+  raw.fuel_types_available = formData.getAll("fuel_types_available");
   const parsed = Schema.safeParse(raw);
   if (!parsed.success) {
     const errors: Record<string, string> = {};
@@ -98,6 +126,16 @@ export async function createStationAction(
       state: parsed.data.state ?? null,
       elevation_ft: parsed.data.elevation_ft ?? null,
       has_reporting_function: parsed.data.has_reporting_function,
+      station_type: parsed.data.station_type,
+      is_hub: parsed.data.is_hub,
+      fuel_available: parsed.data.fuel_available,
+      // Only forward fuel types when the toggle is on — keeps the
+      // backend's invariant (an unfueled station has no fuel-type
+      // selection) clean even if the user left checkboxes ticked
+      // before flipping the toggle off.
+      fuel_types_available: parsed.data.fuel_available
+        ? parsed.data.fuel_types_available
+        : [],
       latitude: parsed.data.latitude ?? null,
       longitude: parsed.data.longitude ?? null,
       notes: parsed.data.notes ?? null,

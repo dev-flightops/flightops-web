@@ -29,6 +29,13 @@ function makeStation(overrides: Partial<StationListItem>): StationListItem {
     state: "AK",
     elevation_ft: 152,
     has_reporting_function: true,
+    // Spec 6 / migration 0026 defaults.
+    station_type: "spoke_base",
+    is_hub: false,
+    is_active: true,
+    fuel_available: false,
+    fuel_types_available: [],
+    primary_fuel_supplier_id: null,
     runway_length_ft: 10897,
     runway_width_ft: 200,
     runway_primary_name: "7R/25L",

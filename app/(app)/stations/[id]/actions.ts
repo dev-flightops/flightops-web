@@ -7,6 +7,7 @@ import { ApiError } from "@/lib/api/client";
 import {
   createStationIssue,
   resolveStationIssue,
+  updateStation,
 } from "@/lib/api/ground";
 
 /**
@@ -149,4 +150,40 @@ function apiToState(err: unknown): ReportIssueState {
     status: "api-error",
     message: "Action failed. Try again in a moment.",
   };
+}
+
+
+/**
+ * Station deactivate / reactivate (Spec 6 §"Stations list page /
+ * Active / Inactive toggle").
+ *
+ * Wraps PATCH /ground/stations/{id} with `is_active`. Revalidates the
+ * station detail + the listing pages so dropdowns elsewhere refetch.
+ * The full revalidateTag("stations") wiring lands in Base management
+ * PR 3 — for now we revalidate the two stations pages explicitly.
+ */
+
+export interface SetActiveResult {
+  ok: boolean;
+  error?: string;
+}
+
+export async function setStationActiveAction(
+  stationId: string,
+  isActive: boolean,
+): Promise<SetActiveResult> {
+  try {
+    await updateStation(stationId, { is_active: isActive });
+  } catch (err) {
+    if (err instanceof ApiError) {
+      if (err.status === 401) {
+        return { ok: false, error: "Your session expired — sign in again." };
+      }
+      return { ok: false, error: `Couldn't save (HTTP ${err.status}).` };
+    }
+    return { ok: false, error: "Couldn't save — try again." };
+  }
+  revalidatePath(`/stations/${stationId}`);
+  revalidatePath("/stations");
+  return { ok: true };
 }
