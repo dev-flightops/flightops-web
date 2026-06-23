@@ -30,7 +30,7 @@ export const HOME_QUICK_LINKS: QuickLink[] = [
   { label: "Invoices", href: "/invoicing/", status: "m4" },
   { label: "My Flight History", href: "/crew/my-history/flights", status: "m3" },
   { label: "My Duty History", href: "/crew/my-history/duty", status: "m3" },
-  { label: "Flight Log", href: "/flight-log", status: "live" },
+  { label: "Flight Log", href: "/flight-crew/elog", status: "live" },
   { label: "Settings", href: "/settings", status: "live", accent: "gold" },
 ];
 

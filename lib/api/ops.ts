@@ -14,6 +14,7 @@ import type {
   FlightLogListResponse,
   FlightLogResponse,
   FlightLogStatus,
+  FlightLogSubmitResponse,
   FlightStats,
   FlightStatus,
   FratAssessmentResponse,
@@ -173,6 +174,22 @@ export async function createFlightLog(
     method: "POST",
     body: JSON.stringify(payload),
   });
+}
+
+/** Fetch a single flight log — drives the 7-tab elog detail page. */
+export async function getFlightLog(id: string): Promise<FlightLogResponse> {
+  return apiFetch<FlightLogResponse>(`/ops/flight-logs/${id}`);
+}
+
+/** Flip a draft log to submitted. Returns the updated row so the
+ *  caller can swap state without a follow-up GET. */
+export async function submitFlightLog(
+  id: string,
+): Promise<FlightLogSubmitResponse> {
+  return apiFetch<FlightLogSubmitResponse>(
+    `/ops/flight-logs/${id}/submit`,
+    { method: "POST" },
+  );
 }
 
 // ---- Pilot duty tracking (Spec 4 §"Duty time tracking") ----

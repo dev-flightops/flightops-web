@@ -22,7 +22,7 @@ import {
  *   Flight Type     — advisory / charter / training / ferry / other
  *
  * Submit calls createFlightLogAction → backend → redirect to
- * /flight-log/{id} (stub until M3 ships the 7-tab detail).
+ * /flight-crew/elog/{id} (the 7-tab page shell).
  */
 export function NewFlightLogForm({
   aircraft,
