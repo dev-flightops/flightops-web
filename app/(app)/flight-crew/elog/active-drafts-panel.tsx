@@ -10,8 +10,8 @@ import type { FlightLogResponse } from "@/lib/api/types";
  * flight date, and a DRAFT pill. Empty list collapses the whole
  * panel — the legacy hides it entirely too.
  *
- * Each row links to /flight-log/{id} which lands on the stub page
- * until the M3 7-tab detail ships.
+ * Each row links to /flight-crew/elog/{id} — the 7-tab page shell
+ * (Tab 1 wired up, Tabs 2/3/5/6/7 stubbed for follow-ups).
  */
 export function ActiveDraftsPanel({
   drafts,
@@ -29,7 +29,7 @@ export function ActiveDraftsPanel({
         {drafts.map((log) => (
           <li key={log.id}>
             <Link
-              href={`/flight-log/${log.id}`}
+              href={`/flight-crew/elog/${log.id}`}
               className="flex items-center justify-between gap-3 rounded-md border border-status-yellow/20 bg-card px-3 py-2 hover:border-status-yellow/40"
             >
               <div className="min-w-0 flex-1 truncate">

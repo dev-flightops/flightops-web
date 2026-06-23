@@ -77,6 +77,7 @@ function makeLog(
     flight_type: "advisory",
     flight_date: "2026-06-15",
     status: "draft",
+    is_manual_entry: false,
     created_by: { id: "u-1", full_name: "Pilot", email: "p@x" },
     created_at: "2026-06-15T12:00:00Z",
     ...overrides,

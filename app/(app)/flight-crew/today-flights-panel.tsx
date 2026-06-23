@@ -22,7 +22,7 @@ export function TodayFlightsPanel({ flights }: Props) {
       <div className="rounded-xl border border-dashed border-border bg-card/50 px-5 py-8 text-center text-sm text-muted-foreground">
         Nothing on your schedule today.{" "}
         <Link
-          href="/flight-log"
+          href="/flight-crew/elog"
           className="font-semibold text-status-blue hover:underline"
         >
           Create a manual log

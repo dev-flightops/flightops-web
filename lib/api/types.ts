@@ -90,6 +90,10 @@ export interface FlightLogResponse {
   flight_type: FlightType;
   flight_date: string;         // YYYY-MM-DD
   status: FlightLogStatus;
+  /** Permanent flag — true when the pilot started this log without a
+   *  dispatch packet (ferry, training, historical entry). Drives the
+   *  amber MANUAL ENTRY badge on Tab 1 + the flight history row. */
+  is_manual_entry: boolean;
   created_by: UserRef;
   created_at: string;          // ISO 8601 UTC
 }
@@ -97,6 +101,10 @@ export interface FlightLogResponse {
 export interface FlightLogListResponse {
   items: FlightLogResponse[];
   total: number;
+}
+
+export interface FlightLogSubmitResponse {
+  log: FlightLogResponse;
 }
 
 export interface FlightLogCreateRequest {

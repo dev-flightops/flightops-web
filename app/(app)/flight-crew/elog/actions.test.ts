@@ -1,30 +1,32 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { TestApiError, createFlightLog, redirectSpy } = vi.hoisted(() => {
-  class TestApiError extends Error {
-    constructor(
-      public status: number,
-      public path: string,
-      message: string,
-    ) {
-      super(message);
+const { TestApiError, createFlightLog, submitFlightLog, redirectSpy } =
+  vi.hoisted(() => {
+    class TestApiError extends Error {
+      constructor(
+        public status: number,
+        public path: string,
+        message: string,
+      ) {
+        super(message);
+      }
     }
-  }
-  return {
-    TestApiError,
-    createFlightLog: vi.fn(),
-    redirectSpy: vi.fn((_url: string) => {
-      // Next's redirect() throws NEXT_REDIRECT internally.
-      const err = new Error("NEXT_REDIRECT");
-      throw err;
-    }),
-  };
-});
+    return {
+      TestApiError,
+      createFlightLog: vi.fn(),
+      submitFlightLog: vi.fn(),
+      redirectSpy: vi.fn((_url: string) => {
+        // Next's redirect() throws NEXT_REDIRECT internally.
+        const err = new Error("NEXT_REDIRECT");
+        throw err;
+      }),
+    };
+  });
 vi.mock("@/lib/api/client", () => ({ ApiError: TestApiError }));
-vi.mock("@/lib/api/ops", () => ({ createFlightLog }));
+vi.mock("@/lib/api/ops", () => ({ createFlightLog, submitFlightLog }));
 vi.mock("next/navigation", () => ({ redirect: redirectSpy }));
 
-import { createFlightLogAction } from "./actions";
+import { createFlightLogAction, submitFlightLogAction } from "./actions";
 
 function makeFormData(overrides: Record<string, string> = {}): FormData {
   const fd = new FormData();
@@ -39,11 +41,18 @@ function makeFormData(overrides: Record<string, string> = {}): FormData {
 
 beforeEach(() => {
   createFlightLog.mockReset();
+  submitFlightLog.mockReset();
   redirectSpy.mockClear();
 });
 
+function makeSubmitFormData(logId: string | null): FormData {
+  const fd = new FormData();
+  if (logId !== null) fd.set("log_id", logId);
+  return fd;
+}
+
 describe("createFlightLogAction", () => {
-  it("creates the log and redirects to /flight-log/{id} on success", async () => {
+  it("creates the log and redirects to /flight-crew/elog/{id} on success", async () => {
     createFlightLog.mockResolvedValueOnce({ id: "log-42" });
 
     await expect(
@@ -56,7 +65,7 @@ describe("createFlightLogAction", () => {
       flight_number: null,
       flight_type: "advisory",
     });
-    expect(redirectSpy).toHaveBeenCalledWith("/flight-log/log-42");
+    expect(redirectSpy).toHaveBeenCalledWith("/flight-crew/elog/log-42");
   });
 
   it("forwards optional flight_id + flight_number when supplied", async () => {
@@ -158,5 +167,82 @@ describe("createFlightLogAction", () => {
     if (result.status === "api-error") {
       expect(result.message).toMatch(/session expired/i);
     }
+  });
+});
+
+describe("submitFlightLogAction", () => {
+  it("returns {submitted} on a happy-path 200", async () => {
+    submitFlightLog.mockResolvedValueOnce({ log: { id: "log-1" } });
+
+    const result = await submitFlightLogAction(
+      { status: "idle" },
+      makeSubmitFormData("log-1"),
+    );
+
+    expect(submitFlightLog).toHaveBeenCalledWith("log-1");
+    expect(result.status).toBe("submitted");
+  });
+
+  it("treats already-submitted as submitted (no scary error on double-click)", async () => {
+    submitFlightLog.mockRejectedValueOnce(
+      new TestApiError(
+        409,
+        "/ops/flight-logs/log-1/submit",
+        JSON.stringify({ detail: "flight_log_already_submitted" }),
+      ),
+    );
+
+    const result = await submitFlightLogAction(
+      { status: "idle" },
+      makeSubmitFormData("log-1"),
+    );
+
+    expect(result.status).toBe("submitted");
+  });
+
+  it("maps 404 to a 'no longer exists' message", async () => {
+    submitFlightLog.mockRejectedValueOnce(
+      new TestApiError(
+        404,
+        "/ops/flight-logs/log-1/submit",
+        JSON.stringify({ detail: "flight_log_not_found" }),
+      ),
+    );
+
+    const result = await submitFlightLogAction(
+      { status: "idle" },
+      makeSubmitFormData("log-1"),
+    );
+
+    expect(result.status).toBe("error");
+    if (result.status === "error") {
+      expect(result.message).toMatch(/no longer exists/i);
+    }
+  });
+
+  it("maps 401 to the session-expired message", async () => {
+    submitFlightLog.mockRejectedValueOnce(
+      new TestApiError(401, "/ops/flight-logs/log-1/submit", "Unauthorized"),
+    );
+
+    const result = await submitFlightLogAction(
+      { status: "idle" },
+      makeSubmitFormData("log-1"),
+    );
+
+    expect(result.status).toBe("error");
+    if (result.status === "error") {
+      expect(result.message).toMatch(/session expired/i);
+    }
+  });
+
+  it("returns error when log_id is missing from the form", async () => {
+    const result = await submitFlightLogAction(
+      { status: "idle" },
+      makeSubmitFormData(null),
+    );
+
+    expect(submitFlightLog).not.toHaveBeenCalled();
+    expect(result.status).toBe("error");
   });
 });

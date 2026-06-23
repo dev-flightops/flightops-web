@@ -1,37 +1,16 @@
-import Link from "next/link";
-
-import { Button } from "@/components/ui/button";
+import { permanentRedirect } from "next/navigation";
 
 /**
- * Stub — the rich 7-tab e-log detail page from legacy
- * `templates/elog/log_page.html` (Flight Info / Legs / W&B / Flight
- * Summary / Trends / VOR / Misc) lands in M3 with its child tables.
- *
- * Shipped now so the M2-G-26b "Start Flight Log" submit + Active
- * Drafts panel links don't 404 — every newly-created draft lands
- * here. Renders a friendly placeholder + link back to the landing.
+ * Bookmark-safety redirect — per-log detail moved from
+ * /flight-log/{id} to /flight-crew/elog/{id} with the elog surface
+ * grouping under flight-crew. Preserve the id so deep links from
+ * pilot emails / dispatch packets still land on the right log.
  */
-export default async function FlightLogDetailPage({
+export default async function FlightLogIdRedirect({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-
-  return (
-    <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6">
-      <h1 className="text-xl font-bold tracking-tight sm:text-2xl">
-        Flight Log
-      </h1>
-      <p className="mt-2 text-sm text-muted-foreground">
-        Draft created. The rich log editor — flight info, legs, W&amp;B,
-        VOR checks, trends, and miscellaneous notes — lands in M3.
-        Your draft is saved as <span className="font-mono">{id}</span>
-        {" "}and will be picked up automatically once the editor ships.
-      </p>
-      <Button asChild variant="secondary" size="sm" className="mt-6">
-        <Link href="/flight-log">← Back to logs</Link>
-      </Button>
-    </div>
-  );
+  permanentRedirect(`/flight-crew/elog/${id}`);
 }

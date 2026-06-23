@@ -4,18 +4,21 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import { ApiError } from "@/lib/api/client";
-import { createFlightLog } from "@/lib/api/ops";
+import { createFlightLog, submitFlightLog } from "@/lib/api/ops";
 
 /**
- * Server action behind the M2-G-26b "Start Flight Log" form.
+ * Server actions behind the Spec 4 §"Flight Log" UI:
+ *   createFlightLogAction — "Start Flight Log" form on the landing
+ *   submitFlightLogAction — Submit Log button on the 7-tab page
  *
- * Validates the form payload with zod, calls POST /ops/flight-logs
- * (M2-M-21), then redirects to the per-log detail stub. Maps known
- * backend `detail` strings to friendly inline error messages.
+ * apiFetch is server-only, so the client form + Submit button bounce
+ * through these wrappers. Errors are mapped to friendly inline
+ * messages where the backend's `detail` string is meaningful; opaque
+ * fallbacks otherwise.
  *
- * The redirect target is /flight-log/{id} which is a placeholder
- * page until the M3 7-tab elog detail (legs / W&B / VOR / trends /
- * misc) ships.
+ * Redirect after create lands on /flight-crew/elog/{id} — the 7-tab
+ * scaffold. Tab 1 (Flight Info) renders today; Tabs 2/3/5/6/7 ship
+ * in follow-up PRs.
  */
 
 const Schema = z.object({
@@ -117,7 +120,65 @@ export async function createFlightLogAction(
     };
   }
 
-  redirect(`/flight-log/${logId}`);
+  redirect(`/flight-crew/elog/${logId}`);
+}
+
+export type SubmitFlightLogState =
+  | { status: "idle" }
+  | { status: "error"; message: string }
+  | { status: "submitted" };
+
+/**
+ * Flip a draft log to submitted. Wrapper around the apiFetch server
+ * call so the Tab-7 Submit button (a client component) can invoke it.
+ *
+ * On success we return `{status: "submitted"}` so the page can
+ * re-render the badge + lock the form rather than redirect — the
+ * pilot's still on the same log, just in a read-only state now.
+ *
+ * `already_submitted` is treated as success-equivalent for UX
+ * purposes: if a double-click slipped through the disabled button,
+ * the user shouldn't see a scary error for what they intended.
+ */
+export async function submitFlightLogAction(
+  _prev: SubmitFlightLogState,
+  formData: FormData,
+): Promise<SubmitFlightLogState> {
+  const logId = formData.get("log_id");
+  if (typeof logId !== "string" || logId === "") {
+    return { status: "error", message: "Missing log id." };
+  }
+  try {
+    await submitFlightLog(logId);
+    return { status: "submitted" };
+  } catch (err) {
+    if (err instanceof ApiError) {
+      if (err.status === 401) {
+        return {
+          status: "error",
+          message: "Your session expired — please sign in again.",
+        };
+      }
+      const detail = parseDetail(err.message);
+      if (detail === "flight_log_already_submitted") {
+        return { status: "submitted" };
+      }
+      if (detail === "flight_log_not_found") {
+        return {
+          status: "error",
+          message: "This log no longer exists.",
+        };
+      }
+      return {
+        status: "error",
+        message: `Couldn't submit the log (HTTP ${err.status}). Try again in a moment.`,
+      };
+    }
+    return {
+      status: "error",
+      message: "Couldn't submit the log. Try again in a moment.",
+    };
+  }
 }
 
 function parseDetail(message: string): string {

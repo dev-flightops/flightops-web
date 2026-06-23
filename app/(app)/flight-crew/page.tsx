@@ -110,7 +110,7 @@ export default async function FlightCrewPage() {
             My Flights today
           </h2>
           <Link
-            href="/flight-log"
+            href="/flight-crew/elog"
             className="text-xs font-semibold text-status-blue hover:underline"
           >
             + Create Flight Log
