@@ -60,7 +60,15 @@ export interface ListStationsParams {
 /** List stations with per-station open-issue counts aggregated
  *  server-side. Default ordering: hub bases first, then alphabetical
  *  by ICAO (Spec 6). Powers /stations + every base dropdown.
+ *
+ *  Opt into Next's tag-based cache so every consumer
+ *  (Flight Following filter, dispatch routing, fuel ordering, etc.)
+ *  re-fetches automatically when Settings → Stations mutates via
+ *  revalidateTag("stations"). Spec 6: "Adding a base in Settings
+ *  should propagate everywhere in the app automatically."
  */
+export const STATIONS_CACHE_TAG = "stations";
+
 export async function listStations(
   params: ListStationsParams = {},
 ): Promise<StationListResponse> {
@@ -73,7 +81,9 @@ export async function listStations(
   if (params.isHub !== undefined) search.set("is_hub", String(params.isHub));
   if (params.limit !== undefined) search.set("limit", String(params.limit));
   const qs = search.toString() ? `?${search.toString()}` : "";
-  return apiFetch<StationListResponse>(`/ground/stations${qs}`);
+  return apiFetch<StationListResponse>(`/ground/stations${qs}`, {
+    next: { tags: [STATIONS_CACHE_TAG] },
+  });
 }
 
 export interface ListStationIssuesParams {

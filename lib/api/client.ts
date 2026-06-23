@@ -40,14 +40,32 @@ const apiBaseUrl = () => {
   return url;
 };
 
+// Next.js-flavoured RequestInit shape carries a `next` field with the
+// caching extensions (`tags`, `revalidate`). Allow callers to opt
+// into tag-based caching for the few endpoints where the data
+// propagates via revalidateTag (Spec 6 stations is the M2 case).
+type NextFetchInit = RequestInit & {
+  next?: { tags?: string[]; revalidate?: number | false };
+};
+
 export async function apiFetch<T>(
   path: string,
-  init: RequestInit = {},
+  init: NextFetchInit = {},
 ): Promise<T> {
   const session = await auth();
   if (!session?.access_token) {
     throw new SessionExpiredError(path, "no session");
   }
+
+  // If the caller opted into tag-based caching (`next: { tags: [...] }`),
+  // skip the default `cache: "no-store"` so Next's data cache actually
+  // populates and `revalidateTag()` has something to invalidate.
+  // Operational endpoints (dispatch, flights, duty, etc.) don't pass
+  // tags, so they keep the no-store behaviour they had before.
+  const hasTags =
+    Array.isArray(init.next?.tags) && init.next!.tags!.length > 0;
+  const cache: RequestCache | undefined =
+    init.cache ?? (hasTags ? undefined : "no-store");
 
   const url = `${apiBaseUrl()}${path}`;
   const response = await fetch(url, {
@@ -57,7 +75,7 @@ export async function apiFetch<T>(
       ...init.headers,
       Authorization: `Bearer ${session.access_token}`,
     },
-    cache: "no-store", // dispatch data is operational — never cache
+    cache,
   });
 
   if (!response.ok) {

@@ -1,10 +1,11 @@
 "use server";
 
+import { revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import { ApiError } from "@/lib/api/client";
-import { createStation } from "@/lib/api/ground";
+import { createStation, STATIONS_CACHE_TAG } from "@/lib/api/ground";
 
 /**
  * Add Station form action (M2-G-38b).
@@ -141,6 +142,13 @@ export async function createStationAction(
       notes: parsed.data.notes ?? null,
     });
     stationId = created.id;
+    // Invalidate the stations cache tag so every consumer (Flight
+    // Following filter, dispatch routing, fuel order picker, etc.)
+    // refetches on next read — Spec 6 §"Base management": adding a
+    // base in Settings propagates everywhere automatically.
+    // Next 16 requires a cacheLife profile; "max" is the always-valid
+    // built-in that fully invalidates without configuring next.config.
+    revalidateTag(STATIONS_CACHE_TAG, "max");
   } catch (err) {
     if (err instanceof ApiError) {
       if (err.status === 401) {
