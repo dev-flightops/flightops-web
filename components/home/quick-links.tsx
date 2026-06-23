@@ -28,8 +28,16 @@ export const HOME_QUICK_LINKS: QuickLink[] = [
   { label: "EOD Closeout", href: "/eod", status: "live" },
   { label: "Business Intelligence", href: "/reports/executive/bi", status: "m4" },
   { label: "Invoices", href: "/invoicing/", status: "m4" },
-  { label: "My Flight History", href: "/crew/my-history/flights", status: "m3" },
-  { label: "My Duty History", href: "/crew/my-history/duty", status: "m3" },
+  {
+    label: "My Flight History",
+    href: "/flight-crew/history?tab=flight",
+    status: "live",
+  },
+  {
+    label: "My Duty History",
+    href: "/flight-crew/history?tab=duty",
+    status: "live",
+  },
   { label: "Flight Log", href: "/flight-crew/elog", status: "live" },
   { label: "Settings", href: "/settings", status: "live", accent: "gold" },
 ];

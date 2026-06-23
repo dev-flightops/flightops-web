@@ -145,12 +145,20 @@ export async function listAircraft(): Promise<AircraftListResponse> {
 export interface ListFlightLogsParams {
   status?: FlightLogStatus | FlightLogStatus[];
   aircraftId?: string;
+  /** Filter to logs created by the current user. Server reads the
+   *  user id from the JWT so the client doesn't need to know its own. */
+  mine?: boolean;
+  /** Inclusive lower bound on flight_date (YYYY-MM-DD). */
+  fromDate?: string;
+  /** Inclusive upper bound on flight_date (YYYY-MM-DD). */
+  toDate?: string;
   limit?: number;
 }
 
-/** Fetch flight logs, optionally filtered by status (single or multi)
- *  and aircraft. Powers the M2-G-26b Active Drafts panel + the M3
- *  per-tail history view. */
+/** Fetch flight logs, optionally filtered by status, aircraft,
+ *  creator, and a flight-date range. Powers the elog landing's
+ *  Active Drafts panel + the Spec 4 step 5 /flight-crew/history
+ *  page's Flight tab. */
 export async function listFlightLogs(
   params: ListFlightLogsParams = {},
 ): Promise<FlightLogListResponse> {
@@ -160,6 +168,9 @@ export async function listFlightLogs(
     for (const s of values) search.append("status", s);
   }
   if (params.aircraftId) search.set("aircraft_id", params.aircraftId);
+  if (params.mine) search.set("mine", "true");
+  if (params.fromDate) search.set("from_date", params.fromDate);
+  if (params.toDate) search.set("to_date", params.toDate);
   if (params.limit !== undefined) search.set("limit", String(params.limit));
   const qs = search.toString() ? `?${search.toString()}` : "";
   return apiFetch<FlightLogListResponse>(`/ops/flight-logs${qs}`);
