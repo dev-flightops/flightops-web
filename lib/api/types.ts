@@ -1104,6 +1104,88 @@ export interface DutyHistoryResponse {
   total: number;
 }
 
+// Spec 5 Compliance / Currency
+export type CurrencyStatus =
+  | "not_started"
+  | "upcoming"
+  | "early_month"
+  | "due_this_month"
+  | "grace_month"
+  | "non_current";
+
+export type CurrencyIntervalType =
+  | "annual"
+  | "semi_annual"
+  | "medical_hard_expiry"
+  | "rolling_days";
+
+export interface CurrencyItemRef {
+  id: string;
+  code: string;
+  name: string;
+  regulation: string;
+  interval_type: CurrencyIntervalType;
+  requires_examiner: boolean;
+  is_check_event: boolean;
+  is_initial_only: boolean;
+  rolling_days: number | null;
+  rolling_threshold: number | null;
+  sort_order: number;
+}
+
+export interface PilotCurrencyCell {
+  currency_item_id: string;
+  status: CurrencyStatus;
+  last_completed_date: string | null;
+  base_month_due: string | null;
+  grace_month_end: string | null;
+  rolling_count: number | null;
+}
+
+export interface PilotComplianceRow {
+  pilot: UserRef;
+  overall_status: CurrencyStatus;
+  cells: PilotCurrencyCell[];
+}
+
+export interface ComplianceChips {
+  fully_current: number;
+  early_month: number;
+  grace_month: number;
+  non_current: number;
+}
+
+export interface ComplianceBoardResponse {
+  items: CurrencyItemRef[];
+  rows: PilotComplianceRow[];
+  chips: ComplianceChips;
+}
+
+export interface PilotProfileResponse {
+  pilot: UserRef;
+  overall_status: CurrencyStatus;
+  cells: PilotCurrencyCell[];
+  items: CurrencyItemRef[];
+}
+
+export interface LogCompletionRequest {
+  pilot_user_id: string;
+  currency_item_id: string;
+  /** YYYY-MM-DD; server rejects future dates. */
+  completion_date: string;
+  completed_by: string;
+  examiner_cert_number?: string | null;
+  result?: "pass" | "fail" | null;
+  score?: number | null;
+  notes?: string | null;
+  document_url?: string | null;
+}
+
+export interface LogCompletionResponse {
+  completion_id: string;
+  cell: PilotCurrencyCell;
+}
+
 // Per-tenant Admin Access toggle (M2-X-1).
 export interface AdminAccessRoleRow {
   id: string;

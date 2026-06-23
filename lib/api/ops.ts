@@ -5,7 +5,11 @@
 import { apiFetch } from "./client";
 import type {
   AircraftListResponse,
+  ComplianceBoardResponse,
   CurrentDutyResponse,
+  LogCompletionRequest,
+  LogCompletionResponse,
+  PilotProfileResponse,
   DutyHistoryResponse,
   DutyPeriodSummary,
   FlightDetail,
@@ -311,4 +315,40 @@ export async function getLatestPilotAcceptance(
   return apiFetch<PilotAcceptanceResponse>(
     `/ops/flights/${flightId}/pilot-acceptance/latest`,
   );
+}
+
+// ---- Spec 5 Compliance ----------------------------------------------------
+
+export interface ListComplianceBoardParams {
+  /** Filter cells to listed statuses (repeated query param). */
+  status?: string[];
+}
+
+/** Fleet compliance board — pilot × currency-item grid + summary chips. */
+export async function getComplianceBoard(
+  params: ListComplianceBoardParams = {},
+): Promise<ComplianceBoardResponse> {
+  const qs = new URLSearchParams();
+  for (const s of params.status ?? []) qs.append("status", s);
+  const tail = qs.toString() ? `?${qs.toString()}` : "";
+  return apiFetch<ComplianceBoardResponse>(`/ops/compliance/board${tail}`);
+}
+
+/** Per-pilot currency profile — header + all-item cells. */
+export async function getPilotComplianceProfile(
+  pilotId: string,
+): Promise<PilotProfileResponse> {
+  return apiFetch<PilotProfileResponse>(
+    `/ops/compliance/pilots/${pilotId}/profile`,
+  );
+}
+
+/** Log a new currency completion. Backs the Log Completion modal. */
+export async function logCurrencyCompletion(
+  body: LogCompletionRequest,
+): Promise<LogCompletionResponse> {
+  return apiFetch<LogCompletionResponse>("/ops/compliance/completions", {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
 }

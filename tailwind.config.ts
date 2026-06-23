@@ -67,6 +67,11 @@ const config: Config = {
           gray: "#8896a7",
           orange: "#fb923c",
           purple: "#c084fc",
+          // Spec 5 §"Cell badge colors" — teal cells render the
+          // EARLY MONTH window. Distinct from status-green
+          // (DUE THIS MONTH) so the grid clearly separates "in
+          // early window" from "in base window".
+          teal: "#5eead4",
         },
       },
       borderRadius: {
