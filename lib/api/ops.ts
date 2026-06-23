@@ -19,6 +19,8 @@ import type {
   FratAssessmentResponse,
   FratAuthorizeRequest,
   FratSubmitRequest,
+  PilotAcceptanceRequest,
+  PilotAcceptanceResponse,
   PreflightProgressResponse,
   ReleaseResponse,
   StepCompletionRequest,
@@ -257,5 +259,28 @@ export async function recordFratAuthorization(
       method: "POST",
       body: JSON.stringify(body),
     },
+  );
+}
+
+// ---- Pilot Accept/Deny release (Spec 4 §"The 8 steps / 6") ----
+
+export async function submitPilotAcceptance(
+  flightId: string,
+  body: PilotAcceptanceRequest,
+): Promise<PilotAcceptanceResponse> {
+  return apiFetch<PilotAcceptanceResponse>(
+    `/ops/flights/${flightId}/pilot-acceptance`,
+    {
+      method: "POST",
+      body: JSON.stringify(body),
+    },
+  );
+}
+
+export async function getLatestPilotAcceptance(
+  flightId: string,
+): Promise<PilotAcceptanceResponse> {
+  return apiFetch<PilotAcceptanceResponse>(
+    `/ops/flights/${flightId}/pilot-acceptance/latest`,
   );
 }

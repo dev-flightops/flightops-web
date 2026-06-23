@@ -7,11 +7,14 @@ import {
   completePreflightStep,
   recordFratAuthorization,
   submitFratAssessment,
+  submitPilotAcceptance,
 } from "@/lib/api/ops";
 import type {
   FratAssessmentResponse,
   FratAuthorizeRequest,
   FratSubmitRequest,
+  PilotAcceptanceRequest,
+  PilotAcceptanceResponse,
 } from "@/lib/api/types";
 
 /**
@@ -119,4 +122,52 @@ function fratErrorToMessage(err: unknown): string {
     return `Couldn't save (HTTP ${err.status}).`;
   }
   return "Couldn't save — try again.";
+}
+
+/**
+ * Spec 4 step 6 — submit Accept or Deny.
+ *
+ * On accept: writes the row + advances to Step 7 (the next-step
+ * gate clears once the latest acceptance row has accepted=true).
+ *
+ * On deny: writes the row with the reason. Spec 4: "Pilot cannot
+ * proceed with job flow until issue resolved." We surface this in
+ * the Step 6 UI as a red-banner state with the denied_reason — the
+ * pilot can re-submit (accept) once dispatch resolves whatever
+ * triggered the deny. The preflight Step 6 row is NOT written on
+ * a deny; the gate stays open.
+ */
+
+export type PilotAcceptanceResult =
+  | { ok: true; acceptance: PilotAcceptanceResponse }
+  | { ok: false; error: string };
+
+export async function submitPilotAcceptanceAction(
+  flightId: string,
+  body: PilotAcceptanceRequest,
+): Promise<PilotAcceptanceResult> {
+  try {
+    const acceptance = await submitPilotAcceptance(flightId, body);
+    revalidatePath(`/flight-crew/preflight/${flightId}`);
+    return { ok: true, acceptance };
+  } catch (err) {
+    if (err instanceof ApiError) {
+      if (err.status === 401) {
+        return { ok: false, error: "Your session expired — sign in again." };
+      }
+      if (err.status === 422) {
+        return {
+          ok: false,
+          error: body.accepted
+            ? "Couldn't accept — clear the deny-reason field and try again."
+            : "Deny reason must be at least 20 characters.",
+        };
+      }
+      if (err.status === 404) {
+        return { ok: false, error: "Flight not found." };
+      }
+      return { ok: false, error: `Couldn't save (HTTP ${err.status}).` };
+    }
+    return { ok: false, error: "Couldn't save — try again." };
+  }
 }

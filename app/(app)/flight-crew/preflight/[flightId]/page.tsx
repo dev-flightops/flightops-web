@@ -6,12 +6,14 @@ import {
   getCurrentDuty,
   getFlight,
   getLatestFratAssessment,
+  getLatestPilotAcceptance,
   getPreflightProgress,
 } from "@/lib/api/ops";
 import type {
   CurrentDutyResponse,
   FlightDetail,
   FratAssessmentResponse,
+  PilotAcceptanceResponse,
   PreflightProgressResponse,
 } from "@/lib/api/types";
 
@@ -63,13 +65,14 @@ export default async function PreflightPage({
   let progress: PreflightProgressResponse | null = null;
   let duty: CurrentDutyResponse = DUTY_OFFLINE_DEFAULT;
   let frat: FratAssessmentResponse | null = null;
+  let acceptance: PilotAcceptanceResponse | null = null;
   let loadError: string | null = null;
 
   try {
-    // Fan-out: flight + progress are required; duty + latest FRAT are
-    // best-effort (404 / missing data is normal and the step UIs
-    // handle the empty case gracefully).
-    const [flightResult, progressResult, dutyResult, fratResult] =
+    // Fan-out: flight + progress are required; duty + latest FRAT +
+    // latest pilot acceptance are best-effort (404 / missing data is
+    // normal and the step UIs handle the empty case gracefully).
+    const [flightResult, progressResult, dutyResult, fratResult, acceptanceResult] =
       await Promise.all([
         getFlight(flightId),
         getPreflightProgress(flightId),
@@ -79,11 +82,16 @@ export default async function PreflightPage({
           if (err instanceof ApiError && err.status === 404) return null;
           throw err;
         }),
+        getLatestPilotAcceptance(flightId).catch((err) => {
+          if (err instanceof ApiError && err.status === 404) return null;
+          throw err;
+        }),
       ]);
     flight = flightResult;
     progress = progressResult;
     duty = dutyResult;
     frat = fratResult;
+    acceptance = acceptanceResult;
   } catch (err) {
     if (err instanceof ApiError && err.status === 404) {
       notFound();
@@ -118,6 +126,7 @@ export default async function PreflightPage({
         progress={progress}
         duty={duty}
         frat={frat}
+        acceptance={acceptance}
       />
     </div>
   );

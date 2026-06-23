@@ -2,6 +2,7 @@ import type {
   CurrentDutyResponse,
   FlightDetail,
   FratAssessmentResponse,
+  PilotAcceptanceResponse,
   PreflightProgressResponse,
 } from "@/lib/api/types";
 
@@ -10,6 +11,7 @@ import { WeightAndBalanceStep } from "./step-2-weight-balance";
 import { WeatherAndNotamStep } from "./step-3-weather-notam";
 import { FlightRiskAssessmentStep } from "./step-4-frat";
 import { DutyInConfirmStep } from "./step-5-duty";
+import { AcceptOrDenyStep } from "./step-6-accept-deny";
 
 interface Props {
   flight: FlightDetail;
@@ -17,6 +19,8 @@ interface Props {
   duty: CurrentDutyResponse;
   /** Latest FRAT assessment if any — null when no submission yet. */
   frat: FratAssessmentResponse | null;
+  /** Latest pilot Accept/Deny if any — null when no submission yet. */
+  acceptance: PilotAcceptanceResponse | null;
 }
 
 /**
@@ -31,7 +35,13 @@ interface Props {
  * "Coming in M2 (follow-up)" stub so the progress indicator
  * remains accurate (next_step still advances correctly).
  */
-export function PreflightShell({ flight, progress, duty, frat }: Props) {
+export function PreflightShell({
+  flight,
+  progress,
+  duty,
+  frat,
+  acceptance,
+}: Props) {
   const completedNumbers = new Set(progress.completed.map((s) => s.step_number));
   const nextStep = progress.next_step;
   const allDone = nextStep === null;
@@ -54,6 +64,7 @@ export function PreflightShell({ flight, progress, duty, frat }: Props) {
           stepNumber={nextStep}
           duty={duty}
           frat={frat}
+          acceptance={acceptance}
         />
       )}
 
@@ -136,12 +147,14 @@ function ActiveStep({
   stepNumber,
   duty,
   frat,
+  acceptance,
 }: {
   flightId: string;
   flight: FlightDetail;
   stepNumber: number;
   duty: CurrentDutyResponse;
   frat: FratAssessmentResponse | null;
+  acceptance: PilotAcceptanceResponse | null;
 }) {
   switch (stepNumber) {
     case 1:
@@ -154,6 +167,8 @@ function ActiveStep({
       return <FlightRiskAssessmentStep flightId={flightId} initial={frat} />;
     case 5:
       return <DutyInConfirmStep flightId={flightId} duty={duty} />;
+    case 6:
+      return <AcceptOrDenyStep flightId={flightId} initial={acceptance} />;
     default:
       return <StepStubPanel stepNumber={stepNumber} />;
   }
