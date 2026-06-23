@@ -16,7 +16,10 @@ import type {
   FlightLogStatus,
   FlightStats,
   FlightStatus,
+  PreflightProgressResponse,
   ReleaseResponse,
+  StepCompletionRequest,
+  StepCompletionResponse,
 } from "./types";
 
 export interface ListFlightsParams {
@@ -199,4 +202,26 @@ export async function listDutyHistory(
   if (params.offset !== undefined) qs.set("offset", String(params.offset));
   const tail = qs.toString() ? `?${qs.toString()}` : "";
   return apiFetch<DutyHistoryResponse>(`/ops/duty/history${tail}`);
+}
+
+// ---- 8-step preflight job flow (Spec 4 §"8-STEP PREFLIGHT JOB FLOW") ----
+
+export async function getPreflightProgress(
+  flightId: string,
+): Promise<PreflightProgressResponse> {
+  return apiFetch<PreflightProgressResponse>(`/ops/preflight/${flightId}`);
+}
+
+export async function completePreflightStep(
+  flightId: string,
+  stepNumber: number,
+  body: StepCompletionRequest = {},
+): Promise<StepCompletionResponse> {
+  return apiFetch<StepCompletionResponse>(
+    `/ops/preflight/${flightId}/steps/${stepNumber}`,
+    {
+      method: "POST",
+      body: JSON.stringify(body),
+    },
+  );
 }
