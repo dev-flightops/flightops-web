@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import type {
   CurrencyItemRef,
   PilotComplianceRow,
@@ -80,9 +82,12 @@ export function ComplianceGrid({
                   className="sticky left-0 z-10 bg-card/95 px-3 py-2 text-left"
                 >
                   <div className="flex items-center gap-2">
-                    <span className="font-semibold text-foreground">
+                    <Link
+                      href={`/compliance/pilots/${row.pilot.id}`}
+                      className="font-semibold text-foreground hover:text-status-blue hover:underline"
+                    >
                       {row.pilot.full_name}
-                    </span>
+                    </Link>
                     <span className={overallToken.pill}>
                       {overallToken.label}
                     </span>
