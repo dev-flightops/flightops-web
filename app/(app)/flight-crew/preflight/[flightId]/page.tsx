@@ -2,13 +2,28 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { ApiError } from "@/lib/api/client";
-import { getFlight, getPreflightProgress } from "@/lib/api/ops";
+import {
+  getCurrentDuty,
+  getFlight,
+  getLatestFratAssessment,
+  getPreflightProgress,
+} from "@/lib/api/ops";
 import type {
+  CurrentDutyResponse,
   FlightDetail,
+  FratAssessmentResponse,
   PreflightProgressResponse,
 } from "@/lib/api/types";
 
 import { PreflightShell } from "./preflight-shell";
+
+const DUTY_OFFLINE_DEFAULT: CurrentDutyResponse = {
+  open: null,
+  last_closed: null,
+  min_rest_hours: 9,
+  max_duty_hours: 14,
+  warnings: [],
+};
 
 /**
  * /flight-crew/preflight/[flightId] — 8-step gated preflight job flow
@@ -46,13 +61,29 @@ export default async function PreflightPage({
 
   let flight: FlightDetail | null = null;
   let progress: PreflightProgressResponse | null = null;
+  let duty: CurrentDutyResponse = DUTY_OFFLINE_DEFAULT;
+  let frat: FratAssessmentResponse | null = null;
   let loadError: string | null = null;
 
   try {
-    [flight, progress] = await Promise.all([
-      getFlight(flightId),
-      getPreflightProgress(flightId),
-    ]);
+    // Fan-out: flight + progress are required; duty + latest FRAT are
+    // best-effort (404 / missing data is normal and the step UIs
+    // handle the empty case gracefully).
+    const [flightResult, progressResult, dutyResult, fratResult] =
+      await Promise.all([
+        getFlight(flightId),
+        getPreflightProgress(flightId),
+        getCurrentDuty().catch(() => DUTY_OFFLINE_DEFAULT),
+        getLatestFratAssessment(flightId).catch((err) => {
+          // 404 'no_assessment' is the normal pre-FRAT state.
+          if (err instanceof ApiError && err.status === 404) return null;
+          throw err;
+        }),
+      ]);
+    flight = flightResult;
+    progress = progressResult;
+    duty = dutyResult;
+    frat = fratResult;
   } catch (err) {
     if (err instanceof ApiError && err.status === 404) {
       notFound();
@@ -82,7 +113,12 @@ export default async function PreflightPage({
   return (
     <div className="mx-auto max-w-3xl px-4 py-6 sm:px-6">
       <BackLink />
-      <PreflightShell flight={flight} progress={progress} />
+      <PreflightShell
+        flight={flight}
+        progress={progress}
+        duty={duty}
+        frat={frat}
+      />
     </div>
   );
 }
