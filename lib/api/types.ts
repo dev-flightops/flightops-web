@@ -980,6 +980,32 @@ export interface RolesResponse {
   roles: RoleSummary[];
 }
 
+// 8-step preflight job flow (Spec 4 §"8-STEP PREFLIGHT JOB FLOW").
+// Backend in services/ops/app/routes/preflight.py (migration 0027).
+export interface StepCompletionResponse {
+  id: string;
+  flight_id: string;
+  pilot_user_id: string;
+  step_number: number;
+  label: string;
+  completed_at: string;
+  payload: Record<string, unknown>;
+}
+
+export interface PreflightProgressResponse {
+  flight_id: string;
+  pilot_user_id: string;
+  completed: StepCompletionResponse[];
+  /** The lowest step_number not yet completed for this (flight, pilot).
+   *  Null when all 8 are done. */
+  next_step: number | null;
+  total_steps: number;
+}
+
+export interface StepCompletionRequest {
+  payload?: Record<string, unknown>;
+}
+
 // Pilot duty tracking (Spec 4 §"Duty time tracking" / M2 Duty backend).
 export interface DutyPeriodSummary {
   id: string;
