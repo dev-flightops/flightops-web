@@ -980,6 +980,23 @@ export interface RolesResponse {
   roles: RoleSummary[];
 }
 
+// Pilot Accept/Deny release (Spec 4 §"The 8 steps / 6").
+// Backend in services/ops/app/routes/flight_pilot_acceptance.py
+// (migration 0029).
+export interface PilotAcceptanceResponse {
+  id: string;
+  flight_id: string;
+  pilot_user_id: string;
+  accepted: boolean;
+  denied_reason: string | null;
+  created_at: string;
+}
+
+export interface PilotAcceptanceRequest {
+  accepted: boolean;
+  denied_reason?: string;
+}
+
 // FRAT — Flight Risk Assessment Tool (Spec 4 §"The 8 steps / 4").
 // Backend in services/ops/app/routes/frat.py (migration 0028).
 
