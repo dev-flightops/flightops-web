@@ -1,15 +1,22 @@
 import type {
+  CurrentDutyResponse,
   FlightDetail,
+  FratAssessmentResponse,
   PreflightProgressResponse,
 } from "@/lib/api/types";
 
 import { ReviewDispatchReleaseStep } from "./step-1-dispatch-release";
 import { WeightAndBalanceStep } from "./step-2-weight-balance";
 import { WeatherAndNotamStep } from "./step-3-weather-notam";
+import { FlightRiskAssessmentStep } from "./step-4-frat";
+import { DutyInConfirmStep } from "./step-5-duty";
 
 interface Props {
   flight: FlightDetail;
   progress: PreflightProgressResponse;
+  duty: CurrentDutyResponse;
+  /** Latest FRAT assessment if any — null when no submission yet. */
+  frat: FratAssessmentResponse | null;
 }
 
 /**
@@ -24,7 +31,7 @@ interface Props {
  * "Coming in M2 (follow-up)" stub so the progress indicator
  * remains accurate (next_step still advances correctly).
  */
-export function PreflightShell({ flight, progress }: Props) {
+export function PreflightShell({ flight, progress, duty, frat }: Props) {
   const completedNumbers = new Set(progress.completed.map((s) => s.step_number));
   const nextStep = progress.next_step;
   const allDone = nextStep === null;
@@ -45,6 +52,8 @@ export function PreflightShell({ flight, progress }: Props) {
           flightId={flight.id}
           flight={flight}
           stepNumber={nextStep}
+          duty={duty}
+          frat={frat}
         />
       )}
 
@@ -125,10 +134,14 @@ function ActiveStep({
   flightId,
   flight,
   stepNumber,
+  duty,
+  frat,
 }: {
   flightId: string;
   flight: FlightDetail;
   stepNumber: number;
+  duty: CurrentDutyResponse;
+  frat: FratAssessmentResponse | null;
 }) {
   switch (stepNumber) {
     case 1:
@@ -137,6 +150,10 @@ function ActiveStep({
       return <WeightAndBalanceStep flightId={flightId} flight={flight} />;
     case 3:
       return <WeatherAndNotamStep flightId={flightId} flight={flight} />;
+    case 4:
+      return <FlightRiskAssessmentStep flightId={flightId} initial={frat} />;
+    case 5:
+      return <DutyInConfirmStep flightId={flightId} duty={duty} />;
     default:
       return <StepStubPanel stepNumber={stepNumber} />;
   }

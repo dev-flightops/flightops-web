@@ -980,6 +980,50 @@ export interface RolesResponse {
   roles: RoleSummary[];
 }
 
+// FRAT — Flight Risk Assessment Tool (Spec 4 §"The 8 steps / 4").
+// Backend in services/ops/app/routes/frat.py (migration 0028).
+
+export type FratRiskLevel = "low" | "medium" | "high" | "extreme";
+export type FratAuthorizationKind =
+  | "dispatch_contact"
+  | "cp_do_authorization";
+
+export interface FratAuthorizationResponse {
+  id: string;
+  frat_assessment_id: string;
+  kind: FratAuthorizationKind;
+  authorizer_name: string;
+  authorizer_role: string;
+  authorizer_cert_number: string | null;
+  notes: string | null;
+  authorized_at: string;
+}
+
+export interface FratAssessmentResponse {
+  id: string;
+  flight_id: string;
+  pilot_user_id: string;
+  answers: Record<string, number>;
+  total_score: number;
+  risk_level: FratRiskLevel;
+  mitigations: string | null;
+  created_at: string;
+  authorizations: FratAuthorizationResponse[];
+}
+
+export interface FratSubmitRequest {
+  answers: Record<string, number>;
+  mitigations?: string;
+}
+
+export interface FratAuthorizeRequest {
+  kind: FratAuthorizationKind;
+  authorizer_name: string;
+  authorizer_role: string;
+  authorizer_cert_number?: string;
+  notes?: string;
+}
+
 // 8-step preflight job flow (Spec 4 §"8-STEP PREFLIGHT JOB FLOW").
 // Backend in services/ops/app/routes/preflight.py (migration 0027).
 export interface StepCompletionResponse {

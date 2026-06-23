@@ -16,6 +16,9 @@ import type {
   FlightLogStatus,
   FlightStats,
   FlightStatus,
+  FratAssessmentResponse,
+  FratAuthorizeRequest,
+  FratSubmitRequest,
   PreflightProgressResponse,
   ReleaseResponse,
   StepCompletionRequest,
@@ -219,6 +222,37 @@ export async function completePreflightStep(
 ): Promise<StepCompletionResponse> {
   return apiFetch<StepCompletionResponse>(
     `/ops/preflight/${flightId}/steps/${stepNumber}`,
+    {
+      method: "POST",
+      body: JSON.stringify(body),
+    },
+  );
+}
+
+// ---- FRAT — Flight Risk Assessment Tool (Spec 4 §"The 8 steps / 4") ----
+
+export async function submitFratAssessment(
+  flightId: string,
+  body: FratSubmitRequest,
+): Promise<FratAssessmentResponse> {
+  return apiFetch<FratAssessmentResponse>(`/ops/frat/${flightId}`, {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+}
+
+export async function getLatestFratAssessment(
+  flightId: string,
+): Promise<FratAssessmentResponse> {
+  return apiFetch<FratAssessmentResponse>(`/ops/frat/${flightId}/latest`);
+}
+
+export async function recordFratAuthorization(
+  flightId: string,
+  body: FratAuthorizeRequest,
+): Promise<FratAssessmentResponse> {
+  return apiFetch<FratAssessmentResponse>(
+    `/ops/frat/${flightId}/authorize`,
     {
       method: "POST",
       body: JSON.stringify(body),
