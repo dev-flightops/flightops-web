@@ -1,12 +1,13 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { z } from "zod";
 
 import { ApiError } from "@/lib/api/client";
 import {
   createStationIssue,
   resolveStationIssue,
+  STATIONS_CACHE_TAG,
   updateStation,
 } from "@/lib/api/ground";
 
@@ -183,7 +184,17 @@ export async function setStationActiveAction(
     }
     return { ok: false, error: "Couldn't save — try again." };
   }
+  // Tag-based invalidation reaches every consumer of listStations
+  // (Flight Following filter, dispatch routing, fuel order picker,
+  // load teams, housing, reports) — Spec 6 §"Base management":
+  // deactivating a station hides it from dropdowns everywhere
+  // without each consumer needing to know about the mutation.
+  // Next 16 requires a cacheLife profile; "max" is the always-valid
+  // built-in that fully invalidates without configuring next.config.
+  revalidateTag(STATIONS_CACHE_TAG, "max");
+  // The detail-page route renders the station from its own fetch;
+  // revalidate the path so the badge/buttons re-render with the
+  // new is_active state immediately on next paint.
   revalidatePath(`/stations/${stationId}`);
-  revalidatePath("/stations");
   return { ok: true };
 }
