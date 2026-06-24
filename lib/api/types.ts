@@ -1186,6 +1186,46 @@ export interface LogCompletionResponse {
   cell: PilotCurrencyCell;
 }
 
+export type PicDotColor = "green" | "yellow" | "red";
+
+export interface ComplianceFinding {
+  currency_item_id: string;
+  code: string;
+  name: string;
+  regulation: string;
+  status: CurrencyStatus;
+  last_completed_date: string | null;
+  grace_month_end: string | null;
+  message: string;
+}
+
+export interface PicComplianceResponse {
+  pilot: UserRef;
+  dot_color: PicDotColor;
+  hard_blocks: ComplianceFinding[];
+  soft_warnings: ComplianceFinding[];
+}
+
+export interface OverrideRequest {
+  pilot_user_id: string;
+  currency_item_id: string;
+  flight_id?: string | null;
+  supervisor_cert_number: string;
+  /** Spec 5: minimum 50 characters. */
+  reason: string;
+}
+
+export interface OverrideResponse {
+  id: string;
+  pilot_user_id: string;
+  currency_item_id: string;
+  flight_id: string | null;
+  supervisor_user_id: string;
+  supervisor_cert_number: string;
+  reason: string;
+  created_at: string;
+}
+
 // Per-tenant Admin Access toggle (M2-X-1).
 export interface AdminAccessRoleRow {
   id: string;
