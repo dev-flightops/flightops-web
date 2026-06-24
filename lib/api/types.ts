@@ -107,6 +107,54 @@ export interface FlightLogSubmitResponse {
   log: FlightLogResponse;
 }
 
+// ---- Spec 4 elog Tab 2 (Legs) ---------------------------------------------
+
+export type PilotFlying = "pic" | "sic";
+
+export interface FlightLogLeg {
+  id: string;
+  flight_log_id: string;
+  leg_number: number;
+  origin_icao: string | null;
+  dest_icao: string | null;
+  /** HH:MM:SS clock time (UTC) — pair with the parent log's
+   *  `flight_date` to reconstruct a datetime. Null while a draft
+   *  leg is still being filled in. */
+  engine_on: string | null;
+  blocks_off: string | null;
+  blocks_on: string | null;
+  engine_off: string | null;
+  crosses_midnight: boolean;
+  start_hobbs: number | null;
+  end_hobbs: number | null;
+  landings: number;
+  night_landings: number;
+  pilot_flying: PilotFlying;
+  routing: string | null;
+}
+
+export interface FlightLogLegCreateRequest {
+  origin_icao?: string | null;
+  dest_icao?: string | null;
+  engine_on?: string | null;
+  blocks_off?: string | null;
+  blocks_on?: string | null;
+  engine_off?: string | null;
+  crosses_midnight?: boolean;
+  start_hobbs?: number | null;
+  end_hobbs?: number | null;
+  landings?: number;
+  night_landings?: number;
+  pilot_flying?: PilotFlying;
+  routing?: string | null;
+}
+
+export type FlightLogLegUpdateRequest = FlightLogLegCreateRequest;
+
+export interface FlightLogLegListResponse {
+  items: FlightLogLeg[];
+}
+
 export interface FlightLogCreateRequest {
   aircraft_id: string;
   flight_id?: string | null;

@@ -2,12 +2,13 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 
 import { ApiError } from "@/lib/api/client";
-import { getFlightLog } from "@/lib/api/ops";
+import { getFlightLog, listFlightLogLegs } from "@/lib/api/ops";
 import { Button } from "@/components/ui/button";
 
 import { TAB_KEYS, TAB_LABELS, isTabKey, type TabKey } from "./tabs";
 import { TabNav } from "./tab-nav";
 import { FlightInfoTab } from "./flight-info-tab";
+import { LegsTab } from "./legs-tab";
 import { TabStub } from "./tab-stub";
 import { SubmitLogButton } from "./submit-log-button";
 
@@ -54,6 +55,13 @@ export default async function FlightLogDetailPage({
     throw err;
   }
 
+  // Tab 2 needs the legs collection up-front; we only pay this fetch
+  // when the legs tab is rendered. Other tabs skip the round-trip.
+  const legs =
+    activeTab === "legs"
+      ? (await listFlightLogLegs(log.id)).items
+      : [];
+
   return (
     <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6">
       <header className="mb-4 flex flex-wrap items-start justify-between gap-3">
@@ -88,9 +96,10 @@ export default async function FlightLogDetailPage({
       <div className="mt-4 rounded-lg border border-border bg-card p-4">
         {activeTab === "info" && <FlightInfoTab log={log} />}
         {activeTab === "legs" && (
-          <TabStub
-            tab="legs"
-            description="Per-leg origin / destination, engine + block times, hobbs deltas, landings, pilot flying, and routing. Ships next."
+          <LegsTab
+            logId={log.id}
+            logStatus={log.status}
+            initialLegs={legs}
           />
         )}
         {activeTab === "wb" && (
