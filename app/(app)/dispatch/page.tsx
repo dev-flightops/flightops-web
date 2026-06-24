@@ -1,5 +1,7 @@
 import { CrewLegalityHints } from "@/components/dispatch/packet/crew-status-rows";
 import { DispatchComplianceGate } from "@/components/dispatch/packet/dispatch-compliance-gate";
+import { parseAckedMelIds } from "@/components/dispatch/packet/mel-acks";
+import { OpenMelPanel } from "@/components/dispatch/packet/open-mel-panel";
 import {
   FlightDetailsPanel,
   PacketStyles,
@@ -35,6 +37,10 @@ interface SearchParams {
   /** Comma-separated ICAOs the dispatcher has manually acknowledged
    *  NOTAMs for. Bridges until the M2-M-4 NOTAM proxy ships. */
   notams_acked?: string;
+  /** Comma-separated MEL ids the dispatcher has acknowledged on this
+   *  packet (Spec 7). Mirrors the NOTAM-ack pattern — URL-driven so
+   *  state survives reload + can be shared. */
+  mels_acked?: string;
   /** Pilot UUID to render the Spec 5 compliance gate against. There's
    *  no real PIC field on the Flight yet (M3 crew-service); this is
    *  the manual-override knob for demos + verification. */
@@ -60,6 +66,7 @@ export default async function DispatchPage({
     flight: selectedId,
     route: routeParam,
     notams_acked: notamsAckedParam,
+    mels_acked: melsAckedParam,
     pic: picOverrideId,
   } = await searchParams;
   const today = todayUtc();
@@ -95,6 +102,7 @@ export default async function DispatchPage({
   //   3. empty array (panel shows the placeholder)
   const routedIcaos = paramToRoute(routeParam);
   const notamAckedIcaos = parseAckedIcaos(notamsAckedParam);
+  const ackedMelIds = parseAckedMelIds(melsAckedParam);
   const icaos =
     routedIcaos.length > 0
       ? routedIcaos
@@ -124,6 +132,16 @@ export default async function DispatchPage({
         {selectedFlight && (
           <DispatchComplianceGate
             pilotUserId={isUuid(picOverrideId) ? picOverrideId : null}
+          />
+        )}
+
+        {/* Open MEL items on the selected aircraft — Spec 7. Each item
+            gets a dispatcher ack checkbox; state persists in the URL
+            (?mels_acked=) so reload + share preserve it. */}
+        {selectedFlight && (
+          <OpenMelPanel
+            aircraftId={selectedFlight.aircraft.id}
+            ackedMelIds={ackedMelIds}
           />
         )}
 
