@@ -19,6 +19,10 @@ import type {
   FlightListResponse,
   FlightLogCreateRequest,
   FlightLogListResponse,
+  FlightLogLeg,
+  FlightLogLegCreateRequest,
+  FlightLogLegListResponse,
+  FlightLogLegUpdateRequest,
   FlightLogResponse,
   FlightLogStatus,
   FlightLogSubmitResponse,
@@ -376,4 +380,50 @@ export async function createComplianceOverride(
     method: "POST",
     body: JSON.stringify(body),
   });
+}
+
+// ---- Spec 4 elog Tab 2 (Legs) ---------------------------------------------
+
+/** List legs for a flight log, ordered by leg_number. */
+export async function listFlightLogLegs(
+  logId: string,
+): Promise<FlightLogLegListResponse> {
+  return apiFetch<FlightLogLegListResponse>(
+    `/ops/flight-logs/${logId}/legs`,
+  );
+}
+
+/** Append a new leg. Server assigns leg_number = max + 1. */
+export async function addFlightLogLeg(
+  logId: string,
+  body: FlightLogLegCreateRequest = {},
+): Promise<FlightLogLeg> {
+  return apiFetch<FlightLogLeg>(`/ops/flight-logs/${logId}/legs`, {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+}
+
+/** Partial update — only the fields in `body` are written. */
+export async function updateFlightLogLeg(
+  logId: string,
+  legId: string,
+  body: FlightLogLegUpdateRequest,
+): Promise<FlightLogLeg> {
+  return apiFetch<FlightLogLeg>(
+    `/ops/flight-logs/${logId}/legs/${legId}`,
+    { method: "PATCH", body: JSON.stringify(body) },
+  );
+}
+
+/** Remove a leg. Backend returns 204; apiFetch handles the no-body
+ *  response shape directly. Backend preserves gaps in leg_number. */
+export async function deleteFlightLogLeg(
+  logId: string,
+  legId: string,
+): Promise<void> {
+  await apiFetch<void>(
+    `/ops/flight-logs/${logId}/legs/${legId}`,
+    { method: "DELETE" },
+  );
 }
