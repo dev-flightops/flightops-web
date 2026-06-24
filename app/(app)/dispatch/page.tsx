@@ -1,7 +1,5 @@
-import {
-  CrewCurrencyBanner,
-  CrewLegalityHints,
-} from "@/components/dispatch/packet/crew-status-rows";
+import { CrewLegalityHints } from "@/components/dispatch/packet/crew-status-rows";
+import { DispatchComplianceGate } from "@/components/dispatch/packet/dispatch-compliance-gate";
 import {
   FlightDetailsPanel,
   PacketStyles,
@@ -22,6 +20,13 @@ function todayUtc(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function isUuid(value: string | undefined): value is string {
+  return value !== undefined && UUID_RE.test(value);
+}
+
 interface SearchParams {
   flight?: string;
   /** Comma-separated ICAOs that override [origin, destination] for the
@@ -30,6 +35,10 @@ interface SearchParams {
   /** Comma-separated ICAOs the dispatcher has manually acknowledged
    *  NOTAMs for. Bridges until the M2-M-4 NOTAM proxy ships. */
   notams_acked?: string;
+  /** Pilot UUID to render the Spec 5 compliance gate against. There's
+   *  no real PIC field on the Flight yet (M3 crew-service); this is
+   *  the manual-override knob for demos + verification. */
+  pic?: string;
 }
 
 /**
@@ -51,6 +60,7 @@ export default async function DispatchPage({
     flight: selectedId,
     route: routeParam,
     notams_acked: notamsAckedParam,
+    pic: picOverrideId,
   } = await searchParams;
   const today = todayUtc();
 
@@ -107,10 +117,15 @@ export default async function DispatchPage({
         <CrewLegalityHints />
 
         {/* Crew-currency status only makes sense once a PIC is loaded.
-            Selecting a flight pulls the demo PIC ("Brian Larson"), so we
-            render the CLEAR banner only after that. Matches the legacy
-            where the banner appears post-selection, not as a static row. */}
-        {selectedFlight && <CrewCurrencyBanner />}
+            Until the Flight model carries a PIC field (M3 crew-service),
+            we accept a `?pic=<uuid>` URL override for testing — the
+            gate renders the "Awaiting PIC" placeholder otherwise. The
+            live check goes to /compliance/pic-check (Spec 5). */}
+        {selectedFlight && (
+          <DispatchComplianceGate
+            pilotUserId={isUuid(picOverrideId) ? picOverrideId : null}
+          />
+        )}
 
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
           <LeftColumn

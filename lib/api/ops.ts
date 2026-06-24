@@ -9,6 +9,9 @@ import type {
   CurrentDutyResponse,
   LogCompletionRequest,
   LogCompletionResponse,
+  OverrideRequest,
+  OverrideResponse,
+  PicComplianceResponse,
   PilotProfileResponse,
   DutyHistoryResponse,
   DutyPeriodSummary,
@@ -348,6 +351,28 @@ export async function logCurrencyCompletion(
   body: LogCompletionRequest,
 ): Promise<LogCompletionResponse> {
   return apiFetch<LogCompletionResponse>("/ops/compliance/completions", {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+}
+
+/** Real-time PIC compliance check — backs the dispatch packet's
+ *  status dot, hard-block list, and soft-warning ack list. Spec 5
+ *  mandates this isn't cached: every call hits live state. */
+export async function getPicCompliance(
+  pilotId: string,
+): Promise<PicComplianceResponse> {
+  return apiFetch<PicComplianceResponse>(
+    `/ops/compliance/pic-check?pilot_id=${pilotId}`,
+  );
+}
+
+/** Record a supervisor override. Reason min 50 chars enforced by
+ *  the backend (Pydantic schema). Returns the persisted row. */
+export async function createComplianceOverride(
+  body: OverrideRequest,
+): Promise<OverrideResponse> {
+  return apiFetch<OverrideResponse>("/ops/compliance/overrides", {
     method: "POST",
     body: JSON.stringify(body),
   });
