@@ -11,6 +11,7 @@ import { FlightInfoTab } from "./flight-info-tab";
 import { LegsTab } from "./legs-tab";
 import { TabStub } from "./tab-stub";
 import { SubmitLogButton } from "./submit-log-button";
+import { TrendsTab } from "./trends-tab";
 import { WeightBalanceTab } from "./wb-tab";
 
 /**
@@ -56,10 +57,12 @@ export default async function FlightLogDetailPage({
     throw err;
   }
 
-  // Legs power both Tab 2 (editable list) + Tab 3 (W&B forms keyed to
-  // each leg). Fetch when either tab is active; other tabs skip.
+  // Legs power Tabs 2 (editable list), 3 (W&B forms), and 5 (Trends
+  // forms). Fetch when any of them are active; other tabs skip.
   const legs =
-    activeTab === "legs" || activeTab === "wb"
+    activeTab === "legs" ||
+    activeTab === "wb" ||
+    activeTab === "trends"
       ? (await listFlightLogLegs(log.id)).items
       : [];
 
@@ -117,9 +120,11 @@ export default async function FlightLogDetailPage({
           />
         )}
         {activeTab === "trends" && (
-          <TabStub
-            tab="trends"
-            description="Engine and prop trend monitoring samples per leg (ITT / NG / NP / fuel flow). Aircraft-type-aware — Caravan / King Air / Pilatus show different fields. Ships with the Maintenance trends ingest."
+          <TrendsTab
+            logId={log.id}
+            logStatus={log.status}
+            airframeType={log.aircraft.airframe_type ?? null}
+            initialLegs={legs}
           />
         )}
         {activeTab === "vor" && (

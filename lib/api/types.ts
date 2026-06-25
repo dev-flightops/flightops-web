@@ -15,6 +15,11 @@ export interface AircraftRef {
    *  null (or any stray "Unknown") as "No details". */
   model: string | null;
   seats: number;
+  /** Spec 4 Tab 5 — airframe-family slug ("caravan" / "kingair" /
+   *  "navajo" / "c207" / "ga8") so the trend form can pick the
+   *  right input set. Nullable for aircraft imported without the
+   *  airframe metadata set. */
+  airframe_type?: string | null;
 }
 
 export interface AircraftListItem {
@@ -140,6 +145,9 @@ export interface FlightLogLeg {
   cargo_weight_lbs: number | null;
   fuel_gallons: number | null;
   fuel_weight_lbs: number | null;
+  /** Spec 4 Tab 5 — per-airframe trend monitoring blob.
+   *  Empty object on legs without trends entered. */
+  trend_data: Record<string, number | string | null>;
 }
 
 export interface FlightLogLegCreateRequest {
@@ -164,6 +172,7 @@ export interface FlightLogLegCreateRequest {
   cargo_weight_lbs?: number | null;
   fuel_gallons?: number | null;
   fuel_weight_lbs?: number | null;
+  trend_data?: Record<string, number | string | null>;
 }
 
 export type FlightLogLegUpdateRequest = FlightLogLegCreateRequest;
