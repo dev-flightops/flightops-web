@@ -41,6 +41,7 @@ function makeLeg(over: Partial<FlightLogLeg> & { id: string }): FlightLogLeg {
     cargo_weight_lbs: null,
     fuel_gallons: null,
     fuel_weight_lbs: null,
+    trend_data: {},
     ...over,
   };
 }
