@@ -26,6 +26,7 @@ import type {
   FlightLogResponse,
   FlightLogStatus,
   FlightLogSubmitResponse,
+  FlightLogUpdateRequest,
   FlightStats,
   FlightStatus,
   FratAssessmentResponse,
@@ -212,6 +213,18 @@ export async function submitFlightLog(
     `/ops/flight-logs/${id}/submit`,
     { method: "POST" },
   );
+}
+
+/** Partial PATCH of a flight log. Today carries Spec 4 Tab 6 VOR
+ *  check fields; Tab 7 fields land here when they ship. */
+export async function updateFlightLog(
+  id: string,
+  body: FlightLogUpdateRequest,
+): Promise<FlightLogResponse> {
+  return apiFetch<FlightLogResponse>(`/ops/flight-logs/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(body),
+  });
 }
 
 // ---- Pilot duty tracking (Spec 4 §"Duty time tracking") ----

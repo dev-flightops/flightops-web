@@ -86,6 +86,8 @@ export type FlightType =
   | "ferry"
   | "other";
 
+export type VorCheckType = "ground" | "airborne" | "vot" | "dual";
+
 export interface FlightLogResponse {
   id: string;
   log_number: string;          // LOG-YYYYMMDD-HHMMSS
@@ -101,6 +103,31 @@ export interface FlightLogResponse {
   is_manual_entry: boolean;
   created_by: UserRef;
   created_at: string;          // ISO 8601 UTC
+  // Spec 4 Tab 6 — VOR 30-day check (FAA 91.171). All optional —
+  // non-IFR flights leave the form empty.
+  vor_identifier?: string | null;
+  vor_check_type?: VorCheckType | null;
+  vor_station_facility?: string | null;
+  vor_location?: string | null;
+  vor_bearing_indicated?: number | null;
+  vor_bearing_known?: number | null;
+  /** Computed: indicated - known (signed). Null when either bearing
+   *  is missing. UI handles the tolerance check per check_type
+   *  (+/- 4° for ground/vot/dual, +/- 6° for airborne). */
+  vor_error_degrees?: number | null;
+  vor_checked_at?: string | null;
+  vor_certified?: boolean;
+}
+
+export interface FlightLogUpdateRequest {
+  vor_identifier?: string | null;
+  vor_check_type?: VorCheckType | null;
+  vor_station_facility?: string | null;
+  vor_location?: string | null;
+  vor_bearing_indicated?: number | null;
+  vor_bearing_known?: number | null;
+  vor_checked_at?: string | null;
+  vor_certified?: boolean | null;
 }
 
 export interface FlightLogListResponse {

@@ -12,6 +12,7 @@ import { LegsTab } from "./legs-tab";
 import { TabStub } from "./tab-stub";
 import { SubmitLogButton } from "./submit-log-button";
 import { TrendsTab } from "./trends-tab";
+import { VorTab } from "./vor-tab";
 import { WeightBalanceTab } from "./wb-tab";
 
 /**
@@ -127,12 +128,7 @@ export default async function FlightLogDetailPage({
             initialLegs={legs}
           />
         )}
-        {activeTab === "vor" && (
-          <TabStub
-            tab="vor"
-            description="30-day VOR accuracy check log — checkpoint, error, bearing, pilot sign-off. Required for IFR currency."
-          />
-        )}
+        {activeTab === "vor" && <VorTab log={log} />}
         {activeTab === "misc" && (
           <TabStub
             tab="misc"
