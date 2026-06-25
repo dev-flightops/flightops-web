@@ -33,6 +33,14 @@ function makeLeg(over: Partial<FlightLogLeg> & { id: string }): FlightLogLeg {
     night_landings: 0,
     pilot_flying: "pic",
     routing: "PANC..ENA..PADU",
+    basic_empty_weight_lbs: null,
+    pilot_weight_lbs: null,
+    sic_weight_lbs: null,
+    pax_weight_lbs: null,
+    baggage_weight_lbs: null,
+    cargo_weight_lbs: null,
+    fuel_gallons: null,
+    fuel_weight_lbs: null,
     ...over,
   };
 }

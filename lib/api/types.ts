@@ -131,6 +131,15 @@ export interface FlightLogLeg {
   night_landings: number;
   pilot_flying: PilotFlying;
   routing: string | null;
+  // Spec 4 Tab 3 — Weight & Balance inputs (lbs except fuel_gallons).
+  basic_empty_weight_lbs: number | null;
+  pilot_weight_lbs: number | null;
+  sic_weight_lbs: number | null;
+  pax_weight_lbs: number | null;
+  baggage_weight_lbs: number | null;
+  cargo_weight_lbs: number | null;
+  fuel_gallons: number | null;
+  fuel_weight_lbs: number | null;
 }
 
 export interface FlightLogLegCreateRequest {
@@ -147,6 +156,14 @@ export interface FlightLogLegCreateRequest {
   night_landings?: number;
   pilot_flying?: PilotFlying;
   routing?: string | null;
+  basic_empty_weight_lbs?: number | null;
+  pilot_weight_lbs?: number | null;
+  sic_weight_lbs?: number | null;
+  pax_weight_lbs?: number | null;
+  baggage_weight_lbs?: number | null;
+  cargo_weight_lbs?: number | null;
+  fuel_gallons?: number | null;
+  fuel_weight_lbs?: number | null;
 }
 
 export type FlightLogLegUpdateRequest = FlightLogLegCreateRequest;
