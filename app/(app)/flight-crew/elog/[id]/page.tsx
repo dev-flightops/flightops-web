@@ -11,6 +11,7 @@ import { FlightInfoTab } from "./flight-info-tab";
 import { LegsTab } from "./legs-tab";
 import { TabStub } from "./tab-stub";
 import { SubmitLogButton } from "./submit-log-button";
+import { WeightBalanceTab } from "./wb-tab";
 
 /**
  * /flight-crew/elog/[id] — the 7-tab Electronic Flight Log detail page
@@ -55,10 +56,10 @@ export default async function FlightLogDetailPage({
     throw err;
   }
 
-  // Tab 2 needs the legs collection up-front; we only pay this fetch
-  // when the legs tab is rendered. Other tabs skip the round-trip.
+  // Legs power both Tab 2 (editable list) + Tab 3 (W&B forms keyed to
+  // each leg). Fetch when either tab is active; other tabs skip.
   const legs =
-    activeTab === "legs"
+    activeTab === "legs" || activeTab === "wb"
       ? (await listFlightLogLegs(log.id)).items
       : [];
 
@@ -103,9 +104,10 @@ export default async function FlightLogDetailPage({
           />
         )}
         {activeTab === "wb" && (
-          <TabStub
-            tab="wb"
-            description="Per-leg weight & balance — basic empty weight, pilot/SIC/PAX/baggage/cargo/fuel, with live ramp / takeoff / landing / CG calculations. Ships after Tab 2 (Legs) lands."
+          <WeightBalanceTab
+            logId={log.id}
+            logStatus={log.status}
+            initialLegs={legs}
           />
         )}
         {activeTab === "times" && (
