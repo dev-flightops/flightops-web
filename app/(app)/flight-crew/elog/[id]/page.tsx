@@ -117,7 +117,7 @@ export default async function FlightLogDetailPage({
             initialLegs={legs}
           />
         )}
-        {activeTab === "times" && <SummaryTab legs={legs} />}
+        {activeTab === "times" && <SummaryTab log={log} legs={legs} />}
         {activeTab === "trends" && (
           <TrendsTab
             logId={log.id}
