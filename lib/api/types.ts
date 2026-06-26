@@ -120,6 +120,16 @@ export interface FlightLogResponse {
   /** Spec 4 Tab 7 — freeform maintenance discrepancies. Auto-fires
    *  a Maintenance work order on submission (M2-M-9). */
   mx_discrepancy?: string | null;
+  /** Spec 4 Tab 4 — pilot-writable currency counters. Null = not
+   *  entered (em-dash); 0 = explicitly zero today. The M2-M-9b
+   *  recompute uses the distinction to bump only the days the pilot
+   *  actually flew vs days they haven't logged yet. */
+  night_takeoffs?: number | null;
+  approach_precision?: number | null;
+  approach_non_precision?: number | null;
+  holds?: number | null;
+  ifr_actual_minutes?: number | null;
+  ifr_simulated_minutes?: number | null;
 }
 
 export interface FlightLogUpdateRequest {
@@ -132,6 +142,12 @@ export interface FlightLogUpdateRequest {
   vor_checked_at?: string | null;
   vor_certified?: boolean | null;
   mx_discrepancy?: string | null;
+  night_takeoffs?: number | null;
+  approach_precision?: number | null;
+  approach_non_precision?: number | null;
+  holds?: number | null;
+  ifr_actual_minutes?: number | null;
+  ifr_simulated_minutes?: number | null;
 }
 
 export interface FlightLogListResponse {
