@@ -3,6 +3,7 @@ import Link from "next/link";
 import type { ComplianceChips } from "@/lib/api/types";
 
 import type { CurrencyStatus } from "./types";
+import type { ComplianceView } from "./view-switcher";
 
 /**
  * The four summary chips at the top of the compliance board.
@@ -70,17 +71,25 @@ const CHIPS: ChipDef[] = [
 export function SummaryChips({
   chips,
   active,
+  view = "grid",
 }: {
   chips: ComplianceChips;
   active: CurrencyStatus | null;
+  /** Preserves the M2-G-3 view selection when toggling status. */
+  view?: ComplianceView;
 }) {
   return (
     <div className="mb-4 flex flex-wrap gap-2">
       {CHIPS.map((chip) => {
         const isActive = chip.filterStatus === active;
-        const href = isActive
-          ? "/compliance/crew-currency"
-          : `/compliance/crew-currency?status=${chip.filterStatus}`;
+        const params = new URLSearchParams();
+        if (!isActive && chip.filterStatus) {
+          params.set("status", chip.filterStatus);
+        }
+        if (view !== "grid") params.set("view", view);
+        const href =
+          "/compliance/crew-currency" +
+          (params.toString() ? `?${params.toString()}` : "");
         return (
           <Link
             key={chip.key}
