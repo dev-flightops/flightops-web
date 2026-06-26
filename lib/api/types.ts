@@ -117,6 +117,9 @@ export interface FlightLogResponse {
   vor_error_degrees?: number | null;
   vor_checked_at?: string | null;
   vor_certified?: boolean;
+  /** Spec 4 Tab 7 — freeform maintenance discrepancies. Auto-fires
+   *  a Maintenance work order on submission (M2-M-9). */
+  mx_discrepancy?: string | null;
 }
 
 export interface FlightLogUpdateRequest {
@@ -128,6 +131,7 @@ export interface FlightLogUpdateRequest {
   vor_bearing_known?: number | null;
   vor_checked_at?: string | null;
   vor_certified?: boolean | null;
+  mx_discrepancy?: string | null;
 }
 
 export interface FlightLogListResponse {

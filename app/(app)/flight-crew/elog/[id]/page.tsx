@@ -9,6 +9,7 @@ import { TAB_KEYS, TAB_LABELS, isTabKey, type TabKey } from "./tabs";
 import { TabNav } from "./tab-nav";
 import { FlightInfoTab } from "./flight-info-tab";
 import { LegsTab } from "./legs-tab";
+import { MiscTab } from "./misc-tab";
 import { TabStub } from "./tab-stub";
 import { SubmitLogButton } from "./submit-log-button";
 import { TrendsTab } from "./trends-tab";
@@ -129,12 +130,7 @@ export default async function FlightLogDetailPage({
           />
         )}
         {activeTab === "vor" && <VorTab log={log} />}
-        {activeTab === "misc" && (
-          <TabStub
-            tab="misc"
-            description="Free-form notes, squawks, and the optional log-page-number reference. Squawks captured here roll into the Maintenance squawks queue."
-          />
-        )}
+        {activeTab === "misc" && <MiscTab log={log} />}
       </div>
 
       {Object.keys(TAB_LABELS).length !== TAB_KEYS.length && (
