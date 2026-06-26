@@ -485,6 +485,47 @@ export async function confirmFuelOrder(
   );
 }
 
+// ---- M2-G-12 fuel supplier portal ----
+
+export interface ListSupplierOrdersParams {
+  status?: string;
+  baseCode?: string;
+  limit?: number;
+}
+
+/** Supplier-portal inbox — orders for the caller's supplier. 403s if
+ *  the caller's user row has no fuel_supplier_id. */
+export async function listSupplierFuelOrders(
+  params: ListSupplierOrdersParams = {},
+): Promise<FuelOrderListResponse> {
+  const search = new URLSearchParams();
+  if (params.status) search.set("status", params.status);
+  if (params.baseCode) search.set("base_code", params.baseCode);
+  if (params.limit !== undefined) search.set("limit", String(params.limit));
+  const qs = search.toString() ? `?${search.toString()}` : "";
+  return apiFetch<FuelOrderListResponse>(
+    `/ground/fuel/supplier/orders${qs}`,
+  );
+}
+
+/** Supplier-side acknowledge — flips an order ordered → confirmed. */
+export async function acknowledgeSupplierFuelOrder(
+  orderId: string,
+  confirmedByName: string,
+  confirmedNote: string | null,
+): Promise<FuelOrderResponse> {
+  return apiFetch<FuelOrderResponse>(
+    `/ground/fuel/supplier/orders/${orderId}/acknowledge`,
+    {
+      method: "POST",
+      body: JSON.stringify({
+        confirmed_by_name: confirmedByName,
+        confirmed_note: confirmedNote,
+      }),
+    },
+  );
+}
+
 export interface FuelOrderFueledPayload {
   fueled_by_name: string;
   actual_quantity_gallons: number;
