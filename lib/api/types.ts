@@ -130,6 +130,20 @@ export interface FlightLogResponse {
   holds?: number | null;
   ifr_actual_minutes?: number | null;
   ifr_simulated_minutes?: number | null;
+  /** M2-M-10 lifecycle anchors. `submitted_at` is set when status
+   *  flips draft → submitted and anchors the 90-day reopen window
+   *  the UI counts down from. `deleted_at` is always null on
+   *  responses today (deleted rows are filtered out server-side)
+   *  but kept on the shape so an admin/audit endpoint can echo it
+   *  without a schema fork. */
+  submitted_at?: string | null;
+  deleted_at?: string | null;
+}
+
+/** M2-M-10 — body shared by POST /flight-logs/{id}/reopen and
+ *  /delete. Optional pilot context captured in the audit row. */
+export interface FlightLogLifecycleRequest {
+  reason?: string | null;
 }
 
 export interface FlightLogUpdateRequest {

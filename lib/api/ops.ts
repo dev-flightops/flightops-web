@@ -23,6 +23,7 @@ import type {
   FlightLogLegCreateRequest,
   FlightLogLegListResponse,
   FlightLogLegUpdateRequest,
+  FlightLogLifecycleRequest,
   FlightLogResponse,
   FlightLogStatus,
   FlightLogSubmitResponse,
@@ -223,6 +224,29 @@ export async function updateFlightLog(
 ): Promise<FlightLogResponse> {
   return apiFetch<FlightLogResponse>(`/ops/flight-logs/${id}`, {
     method: "PATCH",
+    body: JSON.stringify(body),
+  });
+}
+
+/** M2-M-10: submitted → draft within the 90-day creator window. */
+export async function reopenFlightLog(
+  id: string,
+  body: FlightLogLifecycleRequest = {},
+): Promise<FlightLogResponse> {
+  return apiFetch<FlightLogResponse>(`/ops/flight-logs/${id}/reopen`, {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+}
+
+/** M2-M-10: soft-delete a flight log (drafts always; submitted only
+ *  within 90 days). Returns the updated row with deleted_at set. */
+export async function deleteFlightLog(
+  id: string,
+  body: FlightLogLifecycleRequest = {},
+): Promise<FlightLogResponse> {
+  return apiFetch<FlightLogResponse>(`/ops/flight-logs/${id}/delete`, {
+    method: "POST",
     body: JSON.stringify(body),
   });
 }

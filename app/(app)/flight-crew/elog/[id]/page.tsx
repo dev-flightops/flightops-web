@@ -9,6 +9,7 @@ import { TAB_KEYS, TAB_LABELS, isTabKey, type TabKey } from "./tabs";
 import { TabNav } from "./tab-nav";
 import { FlightInfoTab } from "./flight-info-tab";
 import { LegsTab } from "./legs-tab";
+import { LifecycleButtons } from "./lifecycle-buttons";
 import { MiscTab } from "./misc-tab";
 import { SubmitLogButton } from "./submit-log-button";
 import { SummaryTab } from "./summary-tab";
@@ -95,6 +96,11 @@ export default async function FlightLogDetailPage({
           <Button asChild variant="secondary" size="sm">
             <Link href="/flight-crew/elog">← Back</Link>
           </Button>
+          <LifecycleButtons
+            logId={log.id}
+            status={log.status}
+            submittedAt={log.submitted_at ?? null}
+          />
           {log.status === "draft" && <SubmitLogButton logId={log.id} />}
         </div>
       </header>
