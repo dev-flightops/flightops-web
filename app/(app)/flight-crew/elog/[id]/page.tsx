@@ -10,8 +10,8 @@ import { TabNav } from "./tab-nav";
 import { FlightInfoTab } from "./flight-info-tab";
 import { LegsTab } from "./legs-tab";
 import { MiscTab } from "./misc-tab";
-import { TabStub } from "./tab-stub";
 import { SubmitLogButton } from "./submit-log-button";
+import { SummaryTab } from "./summary-tab";
 import { TrendsTab } from "./trends-tab";
 import { VorTab } from "./vor-tab";
 import { WeightBalanceTab } from "./wb-tab";
@@ -59,11 +59,13 @@ export default async function FlightLogDetailPage({
     throw err;
   }
 
-  // Legs power Tabs 2 (editable list), 3 (W&B forms), and 5 (Trends
-  // forms). Fetch when any of them are active; other tabs skip.
+  // Legs power Tabs 2 (editable list), 3 (W&B forms), 4 (Summary
+  // roll-ups), and 5 (Trends forms). Fetch when any of them are
+  // active; other tabs skip.
   const legs =
     activeTab === "legs" ||
     activeTab === "wb" ||
+    activeTab === "times" ||
     activeTab === "trends"
       ? (await listFlightLogLegs(log.id)).items
       : [];
@@ -115,12 +117,7 @@ export default async function FlightLogDetailPage({
             initialLegs={legs}
           />
         )}
-        {activeTab === "times" && (
-          <TabStub
-            tab="times"
-            description="Roll-up of block / flight / hobbs across all legs + the total log summary the dispatcher sees on the history page. Auto-calculated from Tab 2."
-          />
-        )}
+        {activeTab === "times" && <SummaryTab legs={legs} />}
         {activeTab === "trends" && (
           <TrendsTab
             logId={log.id}
