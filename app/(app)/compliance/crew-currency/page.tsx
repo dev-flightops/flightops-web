@@ -1,47 +1,46 @@
 import { ApiError } from "@/lib/api/client";
 import { getComplianceBoard } from "@/lib/api/ops";
 
+import { ComplianceCalendar } from "./compliance-calendar";
 import { ComplianceGrid } from "./compliance-grid";
+import { ComplianceList } from "./compliance-list";
 import { NonCurrentBanner } from "./non-current-banner";
 import { SummaryChips } from "./summary-chips";
 import { isCurrencyStatus, type CurrencyStatus } from "./types";
+import { isComplianceView, ViewSwitcher, type ComplianceView } from "./view-switcher";
 
 /**
  * /compliance/crew-currency — Fleet Compliance Board (Spec 5).
  *
- * The Chief Pilot's primary workspace. Layout from Spec 5 §"Page
- * layout":
- *   1. Non-current alert banner (only if any pilot is non-current —
- *      undismissable per spec)
- *   2. Summary chips: Fully Current / Early / Grace / Non-Current.
- *      Clicking any chip filters the grid to that status.
- *   3. Grid: frozen pilot rows × frozen item columns, color-coded
- *      cells, click-to-log-completion (lands in PR 4 with the modal).
+ * Three views over the same data (M2-G-3):
+ *   Grid     — default; matrix of pilots × items with color cells
+ *   List     — flat sortable rows; status-urgency-first
+ *   Calendar — 6-month plot of base / grace anchors
  *
- * Status filter lives in the URL `?status=…` so a CP can share a
- * filtered link with a peer. The chips render the filter state by
- * highlighting the active bucket.
- *
- * Deferred (PR 4 + later):
- *   - List view + Calendar view tabs
- *   - Log Completion modal (cell click → modal)
- *   - PDF / CSV export
- *   - Filter bar (base, aircraft type, name search)
- *   - Hover tooltip on cells (last completed, days until grace)
+ * View state lives in the URL `?view=grid|list|calendar` so the CP
+ * can share a deep link (e.g. `?view=calendar&status=grace_month`).
+ * Status filter shares the same surface — chips link to the active
+ * view + chosen status.
  */
 export default async function ComplianceCrewCurrencyPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string | string[] }>;
+  searchParams: Promise<{ status?: string | string[]; view?: string | string[] }>;
 }) {
-  const { status: statusParam } = await searchParams;
+  const { status: statusParam, view: viewParam } = await searchParams;
   const statusFilter = parseStatusFilter(statusParam);
+  const view = parseView(viewParam);
 
   let board;
   let loadError: string | null = null;
   try {
     board = await getComplianceBoard({
-      status: statusFilter ? [statusFilter] : undefined,
+      // Only the Grid view consumes the server-side status filter via
+      // the API (so the matrix stays sparse). List + Calendar filter
+      // client-side because they aggregate findings differently and
+      // need the full dataset to render counters / overflow correctly.
+      status:
+        view === "grid" && statusFilter ? [statusFilter] : undefined,
     });
   } catch (err) {
     const status = err instanceof ApiError ? err.status : 0;
@@ -74,12 +73,33 @@ export default async function ComplianceCrewCurrencyPage({
           {board.chips.non_current > 0 && (
             <NonCurrentBanner count={board.chips.non_current} />
           )}
-          <SummaryChips chips={board.chips} active={statusFilter} />
-          <ComplianceGrid
-            items={board.items}
-            rows={board.rows}
-            activeFilter={statusFilter}
+          <SummaryChips
+            chips={board.chips}
+            active={statusFilter}
+            view={view}
           />
+          <ViewSwitcher active={view} statusFilter={statusFilter} />
+          {view === "grid" && (
+            <ComplianceGrid
+              items={board.items}
+              rows={board.rows}
+              activeFilter={statusFilter}
+            />
+          )}
+          {view === "list" && (
+            <ComplianceList
+              items={board.items}
+              rows={board.rows}
+              statusFilter={statusFilter}
+            />
+          )}
+          {view === "calendar" && (
+            <ComplianceCalendar
+              items={board.items}
+              rows={board.rows}
+              statusFilter={statusFilter}
+            />
+          )}
         </>
       ) : null}
     </div>
@@ -92,4 +112,12 @@ function parseStatusFilter(
   if (!param) return null;
   const first = Array.isArray(param) ? param[0] : param;
   return isCurrencyStatus(first) ? first : null;
+}
+
+function parseView(
+  param: string | string[] | undefined,
+): ComplianceView {
+  if (!param) return "grid";
+  const first = Array.isArray(param) ? param[0] : param;
+  return isComplianceView(first) ? first : "grid";
 }
