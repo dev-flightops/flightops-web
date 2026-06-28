@@ -6,6 +6,11 @@ import { apiFetch } from "./client";
 import type {
   AircraftListResponse,
   ComplianceBoardResponse,
+  CpReviewCreateRequest,
+  CpReviewDecisionRequest,
+  CpReviewListResponse,
+  CpReviewResponse,
+  CpReviewStatus,
   CurrentDutyResponse,
   LogCompletionRequest,
   LogCompletionResponse,
@@ -249,6 +254,56 @@ export async function deleteFlightLog(
     method: "POST",
     body: JSON.stringify(body),
   });
+}
+
+/** M2-M-10b: pilot creator opens a CP review for an out-of-window
+ *  reopen / delete. Refuses inside the 90-day window — use reopen /
+ *  delete directly there. */
+export async function requestCpReview(
+  logId: string,
+  body: CpReviewCreateRequest,
+): Promise<CpReviewResponse> {
+  return apiFetch<CpReviewResponse>(`/ops/flight-logs/${logId}/cp-review`, {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+}
+
+export interface ListCpReviewsParams {
+  status?: CpReviewStatus;
+  limit?: number;
+}
+
+/** M2-M-10b: CP queue. 403 for non-CP callers; defaults to pending
+ *  when no status is supplied. */
+export async function listCpReviews(
+  params: ListCpReviewsParams = {},
+): Promise<CpReviewListResponse> {
+  const search = new URLSearchParams();
+  if (params.status) search.set("status", params.status);
+  if (params.limit !== undefined) search.set("limit", String(params.limit));
+  const qs = search.toString() ? `?${search.toString()}` : "";
+  return apiFetch<CpReviewListResponse>(`/ops/flight-log-cp-reviews${qs}`);
+}
+
+export async function approveCpReview(
+  reviewId: string,
+  body: CpReviewDecisionRequest = {},
+): Promise<CpReviewResponse> {
+  return apiFetch<CpReviewResponse>(
+    `/ops/flight-log-cp-reviews/${reviewId}/approve`,
+    { method: "POST", body: JSON.stringify(body) },
+  );
+}
+
+export async function declineCpReview(
+  reviewId: string,
+  body: CpReviewDecisionRequest = {},
+): Promise<CpReviewResponse> {
+  return apiFetch<CpReviewResponse>(
+    `/ops/flight-log-cp-reviews/${reviewId}/decline`,
+    { method: "POST", body: JSON.stringify(body) },
+  );
 }
 
 // ---- Pilot duty tracking (Spec 4 §"Duty time tracking") ----

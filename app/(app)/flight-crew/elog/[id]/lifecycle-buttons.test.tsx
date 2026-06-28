@@ -1,10 +1,12 @@
 import { render, screen, fireEvent } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { reopenFlightLogAction, deleteFlightLogAction } = vi.hoisted(() => ({
-  reopenFlightLogAction: vi.fn(),
-  deleteFlightLogAction: vi.fn(),
-}));
+const { reopenFlightLogAction, deleteFlightLogAction, requestCpReviewAction } =
+  vi.hoisted(() => ({
+    reopenFlightLogAction: vi.fn(),
+    deleteFlightLogAction: vi.fn(),
+    requestCpReviewAction: vi.fn(),
+  }));
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ refresh: vi.fn() }),
@@ -13,12 +15,16 @@ vi.mock("./lifecycle-actions", () => ({
   reopenFlightLogAction,
   deleteFlightLogAction,
 }));
+vi.mock("./cp-review-actions", () => ({
+  requestCpReviewAction,
+}));
 
 import { LifecycleButtons } from "./lifecycle-buttons";
 
 beforeEach(() => {
   reopenFlightLogAction.mockReset();
   deleteFlightLogAction.mockReset();
+  requestCpReviewAction.mockReset();
 });
 
 const yesterday = () =>
@@ -49,7 +55,7 @@ describe("LifecycleButtons", () => {
     expect(screen.getByRole("button", { name: /delete/i })).toBeInTheDocument();
   });
 
-  it("hides Reopen and Delete when the submitted log is past 90 days", () => {
+  it("swaps to CP-review buttons when the submitted log is past 90 days", () => {
     render(
       <LifecycleButtons
         logId="log-1"
@@ -57,11 +63,23 @@ describe("LifecycleButtons", () => {
         submittedAt={ninetyOneDaysAgo()}
       />,
     );
-    expect(screen.queryByRole("button", { name: /reopen/i })).toBeNull();
-    expect(screen.queryByRole("button", { name: /delete/i })).toBeNull();
+    // Direct-action buttons are gone.
+    expect(
+      screen.queryByRole("button", { name: /^reopen$/i }),
+    ).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: /^delete$/i }),
+    ).toBeNull();
+    // CP-review CTAs take their place.
+    expect(
+      screen.getByRole("button", { name: /request cp reopen/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /request cp delete/i }),
+    ).toBeInTheDocument();
   });
 
-  it("hides Reopen + Delete when submittedAt fails to parse on a submitted log", () => {
+  it("hides all lifecycle buttons when submittedAt fails to parse on a submitted log", () => {
     render(
       <LifecycleButtons
         logId="log-1"
@@ -71,6 +89,9 @@ describe("LifecycleButtons", () => {
     );
     expect(screen.queryByRole("button", { name: /reopen/i })).toBeNull();
     expect(screen.queryByRole("button", { name: /delete/i })).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: /request cp/i }),
+    ).toBeNull();
   });
 
   it("opens the confirm panel when Reopen is clicked", () => {
