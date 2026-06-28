@@ -5,6 +5,7 @@
 import { apiFetch } from "./client";
 import type {
   AircraftListResponse,
+  AuditTimelineResponse,
   ComplianceBoardResponse,
   CpReviewCreateRequest,
   CpReviewDecisionRequest,
@@ -303,6 +304,16 @@ export async function declineCpReview(
   return apiFetch<CpReviewResponse>(
     `/ops/flight-log-cp-reviews/${reviewId}/decline`,
     { method: "POST", body: JSON.stringify(body) },
+  );
+}
+
+/** M2-M-10c: unified history timeline for the elog detail page —
+ *  audit mutations + CP-review events interleaved chronologically. */
+export async function getFlightLogAuditTimeline(
+  logId: string,
+): Promise<AuditTimelineResponse> {
+  return apiFetch<AuditTimelineResponse>(
+    `/ops/flight-logs/${logId}/audit-timeline`,
   );
 }
 
