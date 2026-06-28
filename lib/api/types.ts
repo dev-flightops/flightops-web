@@ -179,6 +179,28 @@ export interface CpReviewListResponse {
   total: number;
 }
 
+/** M2-M-10c — unified history timeline for the elog detail page.
+ *  Each event is one row on the timeline (audit mutation or CP-
+ *  review request/decision). */
+export type AuditTimelineKind =
+  | "submit"
+  | "reopen"
+  | "delete"
+  | "cp_review_requested"
+  | "cp_review_approved"
+  | "cp_review_declined";
+
+export interface AuditTimelineEvent {
+  kind: AuditTimelineKind;
+  occurred_at: string;
+  actor: UserRef;
+  note: string | null;
+}
+
+export interface AuditTimelineResponse {
+  items: AuditTimelineEvent[];
+}
+
 export interface FlightLogUpdateRequest {
   vor_identifier?: string | null;
   vor_check_type?: VorCheckType | null;

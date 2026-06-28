@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { TAB_KEYS, TAB_LABELS, isTabKey, type TabKey } from "./tabs";
 import { TabNav } from "./tab-nav";
 import { FlightInfoTab } from "./flight-info-tab";
+import { AuditTimelinePanel } from "./audit-timeline-panel";
 import { LegsTab } from "./legs-tab";
 import { LifecycleButtons } from "./lifecycle-buttons";
 import { MiscTab } from "./misc-tab";
@@ -135,6 +136,11 @@ export default async function FlightLogDetailPage({
         {activeTab === "vor" && <VorTab log={log} />}
         {activeTab === "misc" && <MiscTab log={log} />}
       </div>
+
+      {/* M2-M-10c — collapsible audit history for the log. Closed by
+          default; expands to show the unified audit + CP-review
+          timeline. Visible to anyone who can read the log. */}
+      <AuditTimelinePanel logId={log.id} />
 
       {Object.keys(TAB_LABELS).length !== TAB_KEYS.length && (
         // Invariant guard — TAB_KEYS and TAB_LABELS must stay in sync.
