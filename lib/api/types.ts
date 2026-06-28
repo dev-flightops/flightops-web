@@ -146,6 +146,39 @@ export interface FlightLogLifecycleRequest {
   reason?: string | null;
 }
 
+/** M2-M-10b — pilot opens a CP review for an out-of-window
+ *  reopen/delete. The reason text is shown to the CP in the queue. */
+export type CpReviewAction = "reopen" | "delete";
+export type CpReviewStatus = "pending" | "approved" | "declined";
+
+export interface CpReviewCreateRequest {
+  requested_action: CpReviewAction;
+  requested_reason?: string | null;
+}
+
+export interface CpReviewDecisionRequest {
+  reviewer_note?: string | null;
+}
+
+export interface CpReviewResponse {
+  id: string;
+  flight_log_id: string;
+  log_number: string;
+  requested_action: CpReviewAction;
+  requested_by: UserRef;
+  requested_reason: string | null;
+  requested_at: string;
+  status: CpReviewStatus;
+  reviewed_by: UserRef | null;
+  reviewed_at: string | null;
+  reviewer_note: string | null;
+}
+
+export interface CpReviewListResponse {
+  items: CpReviewResponse[];
+  total: number;
+}
+
 export interface FlightLogUpdateRequest {
   vor_identifier?: string | null;
   vor_check_type?: VorCheckType | null;
