@@ -5,6 +5,7 @@ import { listSupplierFuelOrders } from "@/lib/api/ground";
 import type { FuelOrderResponse, FuelOrderStatus } from "@/lib/api/types";
 
 import { AcknowledgeButton } from "./acknowledge-button";
+import { MarkFueledButton } from "./fueled-button";
 import { SupplierStatusFilter } from "./status-filter";
 
 /**
@@ -179,6 +180,12 @@ function SupplierOrderTable({ orders }: { orders: FuelOrderResponse[] }) {
               <td className="px-3 py-2">
                 {o.status === "ordered" ? (
                   <AcknowledgeButton orderId={o.id} tail={o.n_number} />
+                ) : o.status === "confirmed" ? (
+                  <MarkFueledButton
+                    orderId={o.id}
+                    tail={o.n_number}
+                    requestedGallons={o.requested_quantity_gallons}
+                  />
                 ) : (
                   <span className="text-[0.65rem] text-muted-foreground">
                     —

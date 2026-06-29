@@ -526,6 +526,29 @@ export async function acknowledgeSupplierFuelOrder(
   );
 }
 
+export interface SupplierFueledPayload {
+  fueled_by_name: string;
+  actual_quantity_gallons: number;
+  discrepancy_reason?: string | null;
+  invoice_pending?: boolean;
+}
+
+/** Supplier-side closeout — confirmed → fueled (or 'discrepancy' on
+ *  >5% actuals delta from requested gallons, or when the supplier
+ *  supplies an explicit discrepancy_reason). */
+export async function markSupplierFuelOrderFueled(
+  orderId: string,
+  payload: SupplierFueledPayload,
+): Promise<FuelOrderResponse> {
+  return apiFetch<FuelOrderResponse>(
+    `/ground/fuel/supplier/orders/${orderId}/fueled`,
+    {
+      method: "POST",
+      body: JSON.stringify(payload),
+    },
+  );
+}
+
 export interface FuelOrderFueledPayload {
   fueled_by_name: string;
   actual_quantity_gallons: number;
