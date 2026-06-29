@@ -93,6 +93,26 @@ export function SummaryTab({
           ifr_simulated_minutes: log.ifr_simulated_minutes ?? null,
         }}
       />
+
+      {/* SIC counter section only when a SIC pilot is assigned on
+          Tab 1. Hiding it for single-pilot flights keeps the page
+          uncluttered. */}
+      {log.sic_user && (
+        <CurrencyCountersField
+          logId={log.id}
+          readOnly={readOnly}
+          variant="sic"
+          title={`SIC Entries — ${log.sic_user.full_name}`}
+          initial={{
+            night_takeoffs: log.sic_night_takeoffs ?? null,
+            approach_precision: log.sic_approach_precision ?? null,
+            approach_non_precision: log.sic_approach_non_precision ?? null,
+            holds: log.sic_holds ?? null,
+            ifr_actual_minutes: log.sic_ifr_actual_minutes ?? null,
+            ifr_simulated_minutes: log.sic_ifr_simulated_minutes ?? null,
+          }}
+        />
+      )}
     </div>
   );
 }

@@ -31,7 +31,9 @@ export interface CurrencyCounters {
   ifr_simulated_minutes: number | null;
 }
 
-const FIELDS: ReadonlyArray<{
+export type CurrencyCountersVariant = "pic" | "sic";
+
+const BASE_FIELDS: ReadonlyArray<{
   key: keyof CurrencyCounters;
   label: string;
   hint?: string;
@@ -48,21 +50,42 @@ const FIELDS: ReadonlyArray<{
   { key: "ifr_simulated_minutes", label: "IFR Simulated", hint: "minutes" },
 ];
 
+/** Map a base counter key + variant onto the actual FlightLogUpdateRequest
+ *  field name. PIC variant uses the base key; SIC prepends "sic_". */
+function payloadKey(
+  baseKey: keyof CurrencyCounters,
+  variant: CurrencyCountersVariant,
+): keyof FlightLogUpdateRequest {
+  return (
+    variant === "sic" ? `sic_${baseKey}` : baseKey
+  ) as keyof FlightLogUpdateRequest;
+}
+
 export function CurrencyCountersField({
   logId,
   initial,
   readOnly,
+  variant = "pic",
+  title,
+  footnote,
 }: {
   logId: string;
   initial: CurrencyCounters;
   readOnly: boolean;
+  /** "pic" (default) writes to night_takeoffs / approach_* / etc.;
+   *  "sic" writes to sic_night_takeoffs / sic_approach_* / etc. */
+  variant?: CurrencyCountersVariant;
+  /** Override the panel heading. Defaults to a variant-aware label. */
+  title?: string;
+  /** Override the footnote. Defaults to a variant-aware blurb. */
+  footnote?: string;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [values, setValues] = useState<Record<string, string>>(() => {
     const seed: Record<string, string> = {};
-    for (const f of FIELDS) {
+    for (const f of BASE_FIELDS) {
       const v = initial[f.key];
       seed[f.key] = v === null || v === undefined ? "" : String(v);
     }
@@ -92,7 +115,9 @@ export function CurrencyCountersField({
 
     startTransition(async () => {
       setError(null);
-      const body: FlightLogUpdateRequest = { [key]: payload };
+      const body: FlightLogUpdateRequest = {
+        [payloadKey(key, variant)]: payload,
+      };
       const result = await updateSummaryAction(logId, body);
       if (result.status === "error") {
         setError(result.message);
@@ -103,11 +128,22 @@ export function CurrencyCountersField({
     });
   }
 
+  const heading =
+    title ??
+    (variant === "sic"
+      ? "SIC Entries — Currency Counters"
+      : "Pilot Entries — Currency Counters");
+  const blurb =
+    footnote ??
+    (variant === "sic"
+      ? "Mirrors the PIC counters above for the SIC pilot — feeds SIC IFR currency on submit."
+      : "Approaches, holds, and IFR time feed Spec 5 IFR currency. Leave blank if not flown / not yet entered.");
+
   return (
     <div className="rounded-lg border border-border bg-card p-4">
       <div className="mb-2 flex items-baseline justify-between">
         <div className="text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
-          Pilot Entries — Currency Counters
+          {heading}
         </div>
         {pending && (
           <span className="inline-flex items-center gap-1.5 text-[0.65rem] text-muted-foreground">
@@ -116,7 +152,7 @@ export function CurrencyCountersField({
         )}
       </div>
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-        {FIELDS.map((f) => (
+        {BASE_FIELDS.map((f) => (
           <label key={f.key} className="block">
             <div className="text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
               {f.label}
@@ -143,10 +179,7 @@ export function CurrencyCountersField({
           </label>
         ))}
       </div>
-      <p className="mt-2 text-[0.65rem] text-muted-foreground">
-        Approaches, holds, and IFR time feed Spec 5 IFR currency. Leave
-        blank if not flown / not yet entered.
-      </p>
+      <p className="mt-2 text-[0.65rem] text-muted-foreground">{blurb}</p>
       {error && (
         <p role="alert" className="mt-1 text-[0.65rem] text-status-red">
           {error}
