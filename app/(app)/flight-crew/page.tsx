@@ -140,7 +140,13 @@ export default async function FlightCrewPage() {
         <h2 className="mb-3 text-xs font-bold uppercase tracking-[0.08em] text-muted-foreground">
           Training currency
         </h2>
-        <TrainingCurrencySummary />
+        {session?.user?.id ? (
+          <TrainingCurrencySummary pilotUserId={session.user.id} />
+        ) : (
+          <div className="rounded-xl border border-dashed border-border bg-card/50 px-5 py-6 text-sm text-muted-foreground">
+            Sign in to see your currency.
+          </div>
+        )}
       </section>
 
       {/* 5. Quick links — Spec 4 §"Page layout / Quick links" */}
