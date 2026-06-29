@@ -130,6 +130,16 @@ export interface FlightLogResponse {
   holds?: number | null;
   ifr_actual_minutes?: number | null;
   ifr_simulated_minutes?: number | null;
+  /** SIC currency track. `sic_user` is the SIC pilot ref (null on
+   *  single-pilot flights); the sic_* counters mirror the PIC set
+   *  and feed sic_*_currency rolling-count records on submit. */
+  sic_user?: UserRef | null;
+  sic_night_takeoffs?: number | null;
+  sic_approach_precision?: number | null;
+  sic_approach_non_precision?: number | null;
+  sic_holds?: number | null;
+  sic_ifr_actual_minutes?: number | null;
+  sic_ifr_simulated_minutes?: number | null;
   /** M2-M-10 lifecycle anchors. `submitted_at` is set when status
    *  flips draft → submitted and anchors the 90-day reopen window
    *  the UI counts down from. `deleted_at` is always null on
@@ -217,6 +227,15 @@ export interface FlightLogUpdateRequest {
   holds?: number | null;
   ifr_actual_minutes?: number | null;
   ifr_simulated_minutes?: number | null;
+  /** SIC currency track. Sending null on `sic_user_id` clears the
+   *  SIC assignment on the log. */
+  sic_user_id?: string | null;
+  sic_night_takeoffs?: number | null;
+  sic_approach_precision?: number | null;
+  sic_approach_non_precision?: number | null;
+  sic_holds?: number | null;
+  sic_ifr_actual_minutes?: number | null;
+  sic_ifr_simulated_minutes?: number | null;
 }
 
 export interface FlightLogListResponse {
