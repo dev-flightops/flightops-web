@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 
 import { Spinner } from "@/components/ui/spinner";
 import type { AircraftListItem, FlightListItem } from "@/lib/api/types";
@@ -29,10 +29,10 @@ export function NewFlightLogForm({
   recentFlights,
 }: {
   aircraft: AircraftListItem[];
-  /** Released-but-not-completed flights the pilot can choose from.
-   *  Pulled by the page once; we present them in the dropdown but
-   *  don't filter by aircraft here — the backend rejects mismatches
-   *  with a clear error message. */
+  /** Released-but-not-completed flights pulled by the page. We
+   *  filter client-side to flights matching the selected aircraft
+   *  so the dropdown only shows compatible options — the server
+   *  still validates the (aircraft, flight) pairing on submit. */
   recentFlights: FlightListItem[];
 }) {
   const [state, action, pending] = useActionState<
@@ -40,8 +40,32 @@ export function NewFlightLogForm({
     FormData
   >(createFlightLogAction, { status: "idle" });
 
+  // Controlled aircraft + flight selection — drives both the filtered
+  // Flight dropdown and the disabled-until-picked submit button.
+  const [aircraftId, setAircraftId] = useState("");
+  const [flightId, setFlightId] = useState("");
+
   const fieldError = (key: string) =>
     state.status === "field-errors" ? state.errors[key] : undefined;
+
+  // Only show flights for the picked aircraft. With nothing selected,
+  // the dropdown still has the "Manual entry" option but no flights —
+  // the pilot picks an aircraft first.
+  const compatibleFlights = aircraftId
+    ? recentFlights.filter((f) => f.aircraft.id === aircraftId)
+    : [];
+
+  function handleAircraftChange(next: string) {
+    setAircraftId(next);
+    // Reset Flight if the previously-picked one belonged to a
+    // different aircraft (it just disappeared from the list).
+    if (
+      flightId &&
+      !recentFlights.some((f) => f.id === flightId && f.aircraft.id === next)
+    ) {
+      setFlightId("");
+    }
+  }
 
   return (
     <form action={action} className="rounded-lg border border-border bg-card p-4">
@@ -63,6 +87,8 @@ export function NewFlightLogForm({
           name="aircraft_id"
           label="Aircraft"
           required
+          value={aircraftId}
+          onChange={handleAircraftChange}
           error={fieldError("aircraft_id")}
         >
           <option value="">Select aircraft…</option>
@@ -76,13 +102,21 @@ export function NewFlightLogForm({
         <FieldSelect
           name="flight_id"
           label="Flight"
+          value={flightId}
+          onChange={setFlightId}
+          disabled={!aircraftId}
           error={fieldError("flight_id")}
         >
-          <option value="">Manual entry</option>
-          {recentFlights.map((f) => (
+          <option value="">
+            {aircraftId
+              ? compatibleFlights.length === 0
+                ? "Manual entry (no scheduled flights)"
+                : "Manual entry"
+              : "Select aircraft first"}
+          </option>
+          {compatibleFlights.map((f) => (
             <option key={f.id} value={f.id}>
-              {f.flight_number} · {f.aircraft.tail_number} · {f.origin}→
-              {f.destination}
+              {f.flight_number} · {f.origin}→{f.destination}
             </option>
           ))}
         </FieldSelect>
@@ -115,8 +149,10 @@ export function NewFlightLogForm({
       <div className="mt-4">
         <button
           type="submit"
-          disabled={pending}
-          className="inline-flex items-center gap-1.5 rounded-md bg-status-blue px-4 py-2 text-xs font-semibold text-white hover:brightness-110 disabled:opacity-50"
+          disabled={pending || !aircraftId}
+          aria-disabled={!aircraftId || pending}
+          className="inline-flex items-center gap-1.5 rounded-md bg-status-blue px-4 py-2 text-xs font-semibold text-white hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
+          title={!aircraftId ? "Pick an aircraft first" : undefined}
         >
           {pending && <Spinner size="xs" />}
           {pending ? "Starting…" : "Start Flight Log"}
@@ -180,6 +216,9 @@ function FieldSelect({
   error,
   required,
   defaultValue,
+  value,
+  onChange,
+  disabled,
   children,
 }: {
   name: string;
@@ -187,8 +226,14 @@ function FieldSelect({
   error?: string;
   required?: boolean;
   defaultValue?: string;
+  /** Optional controlled value (used by aircraft_id + flight_id so
+   *  the Flight dropdown can react to aircraft selection). */
+  value?: string;
+  onChange?: (next: string) => void;
+  disabled?: boolean;
   children: React.ReactNode;
 }) {
+  const controlled = value !== undefined;
   return (
     <div>
       <label
@@ -202,9 +247,12 @@ function FieldSelect({
         id={name}
         name={name}
         required={required}
-        defaultValue={defaultValue}
+        disabled={disabled}
+        defaultValue={controlled ? undefined : defaultValue}
+        value={controlled ? value : undefined}
+        onChange={onChange ? (e) => onChange(e.target.value) : undefined}
         aria-invalid={error ? "true" : undefined}
-        className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs text-foreground focus:border-status-blue focus:outline-none aria-[invalid=true]:border-status-red"
+        className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs text-foreground focus:border-status-blue focus:outline-none disabled:opacity-60 aria-[invalid=true]:border-status-red"
       >
         {children}
       </select>
