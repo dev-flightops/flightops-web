@@ -75,6 +75,7 @@ export const DEPARTMENTS: Department[] = [
     pathPrefixes: [
       "/dispatch",
       "/flight-following",
+      "/schedule",
       "/weather",
       "/crew",
       "/currency",
@@ -95,6 +96,7 @@ export const DEPARTMENTS: Department[] = [
     children: [
       { id: "dispatch",         label: "Dispatch",         href: "/dispatch", status: "live", department: "operations" },
       { id: "flight-following", label: "Flight Following", href: "/flight-following", status: "live", department: "operations" },
+      { id: "schedule",         label: "Schedule",         href: "/schedule", status: "live", department: "operations" },
       { id: "weather",          label: "Weather",          href: "/weather", status: "live", department: "operations" },
       { id: "crew",             label: "Crew",             status: "m3", department: "operations" },
       { id: "currency",         label: "Currency",         href: "/compliance/crew-currency", status: "live", department: "operations" },
@@ -137,7 +139,9 @@ export const DEPARTMENTS: Department[] = [
       { id: "dashboard-director-ops", label: "Dir. Ops",    href: "/dashboards/director-ops", status: "live", department: "admin" },
       { id: "dashboard-chief-pilot",  label: "Chief Pilot", href: "/dashboards/chief-pilot",  status: "live", department: "admin" },
       { id: "dashboard-dispatcher",   label: "Dispatch",    href: "/dashboards/dispatcher",   status: "live", department: "admin" },
+      { id: "dashboard-station",      label: "Station",     href: "/dashboards/station",      status: "live", department: "admin" },
       { id: "dashboard-ops-score",    label: "Ops Score",   href: "/dashboards/ops-score",    status: "live", department: "admin" },
+      { id: "dashboard-system",       label: "System",      href: "/dashboards/system-health", status: "live", department: "admin" },
       { id: "reports",                label: "Reports",     status: "m4", department: "admin" },
       { id: "reports-executive",      label: "Executive",   status: "m4", department: "admin" },
       { id: "reports-regulatory",     label: "Regulatory",  status: "m4", department: "admin" },
@@ -168,6 +172,7 @@ export const DEPARTMENTS: Department[] = [
       { id: "stations",       label: "Stations", href: "/stations", status: "live", department: "ground-ops" },
       { id: "equipment",      label: "Equipment", href: "/equipment", status: "live", department: "ground-ops" },
       { id: "fuel",           label: "Fuel", href: "/fuel", status: "live", department: "ground-ops" },
+      { id: "suppliers",      label: "Suppliers", href: "/fuel/suppliers", status: "live", department: "ground-ops" },
       { id: "ramper",         label: "Ramper", href: "/ramper", status: "live", department: "ground-ops" },
     ],
   },
