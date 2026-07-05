@@ -545,9 +545,17 @@ function CheckboxField({
   onChange: (v: boolean) => void;
   disabled?: boolean;
 }) {
+  // Stacked label + control matches the other grid cells' vertical
+  // rhythm so the checkbox row anchors to the same baseline. Before:
+  // `flex items-end` floated the checkbox at the bottom of an
+  // empty-topped cell, visually detaching it from Landings /
+  // Night Landings / Pilot Flying to its left.
   return (
-    <div className="flex items-end">
-      <label className="flex items-center gap-2 text-[0.7rem] text-muted-foreground">
+    <div>
+      <div className="mb-1 text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+        Overnight?
+      </div>
+      <label className="inline-flex h-9 cursor-pointer items-center gap-2 rounded-md border border-border bg-background px-3 text-xs text-foreground">
         <input
           type="checkbox"
           checked={checked}
