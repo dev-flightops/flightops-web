@@ -169,20 +169,20 @@ export default async function FlightCrewPage() {
             </Link>
           </li>
           <li>
-            <Link
-              href="/documents/"
-              className="hover:text-status-blue"
+            <span
+              title="Coming in M3"
+              className="cursor-not-allowed opacity-50"
             >
               My Documents
-            </Link>
+            </span>
           </li>
           <li>
-            <Link
-              href="/safety/report"
-              className="hover:text-status-blue"
+            <span
+              title="Coming in M3"
+              className="cursor-not-allowed opacity-50"
             >
               File Safety Report
-            </Link>
+            </span>
           </li>
         </ul>
       </section>

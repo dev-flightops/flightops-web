@@ -103,10 +103,6 @@ export default async function ChiefPilotDashboardPage() {
         <Panel
           title="Pilot Risk Profiles (90d)"
           milestone="M3"
-          headerLink={{
-            label: "full analytics →",
-            href: "/dispatch/risk-analytics",
-          }}
         >
           <p className="py-4 text-center text-xs text-muted-foreground/70">
             No pilot data in the last 90 days.

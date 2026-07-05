@@ -77,9 +77,15 @@ export default async function HomePage() {
   const hasAdminAccess = Boolean(
     (session as unknown as { admin_access?: boolean } | null)?.admin_access,
   );
-  const visibleModules = hasAdminAccess
-    ? HOME_MODULES
-    : HOME_MODULES.filter((m) => m.id !== "admin");
+  const roleSet = new Set(sessionRoles);
+  const visibleModules = HOME_MODULES.filter((m) => {
+    // Admin card is gated on the Admin Access boolean (M2-X-1).
+    if (m.id === "admin" && !hasAdminAccess) return false;
+    // Role-gated tiles (e.g. supplier portal) — hidden unless the user
+    // carries the exact role string on their session.
+    if (m.roleGate && !roleSet.has(m.roleGate)) return false;
+    return true;
+  });
 
   // Airborne pulls from the shared snapshot (released + actual_departure_at
   // set, not yet arrived). On-ground = today's flights minus the airborne
