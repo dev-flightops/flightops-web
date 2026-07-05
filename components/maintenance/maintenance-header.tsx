@@ -26,6 +26,8 @@ interface ActionButton {
 }
 
 const ACTIONS: ActionButton[] = [
+  { label: "Squawks", href: "/maintenance/squawks", status: "live" },
+  { label: "MEL", href: "/maintenance/mel", status: "live" },
   { label: "Due List", status: "m3" },
   { label: "Work Orders", status: "m3" },
   { label: "Inspections", status: "m3" },
