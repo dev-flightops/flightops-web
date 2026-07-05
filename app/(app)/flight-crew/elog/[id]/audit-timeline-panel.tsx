@@ -98,17 +98,20 @@ function KindBadge({ kind }: { kind: AuditTimelineKind }) {
     kind === "submit"
       ? "bg-status-green/15 text-status-green"
       : kind === "reopen"
-        ? "bg-status-yellow/15 text-status-yellow"
+        ? "bg-status-yellow"
         : kind === "delete"
-          ? "bg-status-red/15 text-status-red"
+          ? "bg-status-red"
           : kind === "cp_review_approved"
-            ? "bg-status-green/15 text-status-green"
+            ? "bg-status-green"
             : kind === "cp_review_declined"
-              ? "bg-status-yellow/15 text-status-yellow"
-              : "bg-status-blue/15 text-status-blue";
+              ? "bg-status-yellow"
+              : "bg-status-blue";
+  // Solid dot (was /15 tint — nearly invisible on the dark card).
+  // A small ring in the tone color keeps it visible against pale
+  // backgrounds too without needing per-theme adjustment.
   return (
     <span
-      className={`mt-0.5 inline-block w-[0.5rem] shrink-0 rounded-full ${tone}`}
+      className={`mt-1.5 inline-block w-2 shrink-0 rounded-full ring-1 ring-inset ring-white/20 ${tone}`}
       style={{ height: "0.5rem" }}
       aria-hidden="true"
     />

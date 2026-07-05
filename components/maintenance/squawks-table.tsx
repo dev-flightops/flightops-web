@@ -84,7 +84,14 @@ function SquawkRow({
           </div>
         </td>
       )}
-      <td className="px-3 py-2.5 text-foreground">{squawk.title}</td>
+      <td className="px-3 py-2.5 text-foreground">
+        <div>{squawk.title}</div>
+        {squawk.description && squawk.description !== squawk.title && (
+          <div className="mt-0.5 text-[0.65rem] text-muted-foreground line-clamp-2">
+            {squawk.description}
+          </div>
+        )}
+      </td>
       <td className="px-3 py-2.5">
         <SeverityPill severity={squawk.severity} />
       </td>
