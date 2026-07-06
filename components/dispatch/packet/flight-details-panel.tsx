@@ -35,7 +35,7 @@ function shortAircraftModel(model: string | null): string {
 export function FlightDetailsPanel({ flight }: { flight?: FlightDetail | null }) {
   return (
     <SectionPanel title="Flight Details">
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-4 lg:grid-cols-6">
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-6">
         <Field label="Flight #" hint="press Enter to load">
           <input
             type="text"
@@ -136,7 +136,7 @@ function Field({
 }) {
   return (
     <div>
-      <label className="mb-1.5 block text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+      <label className="mb-1.5 block whitespace-nowrap text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
         {label}
         {hint && (
           <span className="ml-1 text-muted-foreground/70">
