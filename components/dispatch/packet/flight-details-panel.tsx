@@ -21,17 +21,16 @@ function shortAircraftModel(model: string | null): string {
  * Flight Details grid — matches the legacy 6-column input row
  * (`templates/dispatch/form.html` lines 121-197).
  *
- * When `flight` is supplied (the user picked one from Load from Schedule),
- * the inputs are pre-populated read-only-style. Without a selection, all
- * inputs are empty placeholders with disabled state.
- *
- * Real direct entry (typing in Flight # to load a flight, choosing a
- * different aircraft, searching for a pilot) needs:
- *   - crew-service for the pilot search (M3)
- *   - maintenance-service for the N-Number airworthiness check (M2)
- *   - weather-service for the Area Forecast Region (M2)
- *
- * Until those land the page is read-only after a dropdown selection.
+ * All six controls are enabled for direct entry (legacy parity). When
+ * `flight` is supplied (dispatcher picked one from Load from Schedule),
+ * the inputs pre-populate but stay editable — matches how legacy handles
+ * overrides. Live behaviour behind each field:
+ *   - Flight # / N-Number: freeform today, live lookup lands with the
+ *     Flight # search API (backend exists; wiring pending)
+ *   - Aircraft / Area Forecast Region: static <select> options, submit
+ *     captures the selection
+ *   - PIC / SIC: freeform text; typeahead search ships with crew-service
+ *     in M3
  */
 export function FlightDetailsPanel({ flight }: { flight?: FlightDetail | null }) {
   return (
@@ -40,7 +39,6 @@ export function FlightDetailsPanel({ flight }: { flight?: FlightDetail | null })
         <Field label="Flight #" hint="press Enter to load">
           <input
             type="text"
-            disabled
             placeholder="GV306"
             defaultValue={flight?.flight_number ?? ""}
             // `key` forces a re-render with a new default when the
@@ -54,23 +52,20 @@ export function FlightDetailsPanel({ flight }: { flight?: FlightDetail | null })
 
         <Field label="Aircraft">
           <select
-            disabled
-            className="ff-input cursor-not-allowed"
+            className="ff-input"
             defaultValue={
               flight ? shortAircraftModel(flight.aircraft.model) : "208 (Caravan)"
             }
             key={`aircraft-${flight?.id ?? "none"}`}
           >
-            <option>
-              {flight ? shortAircraftModel(flight.aircraft.model) : "208 (Caravan)"}
-            </option>
+            <option>208 (Caravan)</option>
+            <option>1900D (Beech)</option>
           </select>
         </Field>
 
         <Field label="N-Number">
           <input
             type="text"
-            disabled
             placeholder="N12345"
             defaultValue={flight?.aircraft.tail_number ?? ""}
             key={`tail-${flight?.id ?? "none"}`}
@@ -81,24 +76,22 @@ export function FlightDetailsPanel({ flight }: { flight?: FlightDetail | null })
 
         <Field
           label="PIC"
-          help="Pilot search · Coming in M3 (crew-service)"
+          help="Pilot typeahead · Coming in M3 (crew-service)"
         >
           <input
             type="text"
-            disabled
             placeholder="Type to search pilots..."
             defaultValue={flight ? DEMO_PIC_NAME : ""}
             key={`pic-${flight?.id ?? "none"}`}
             className="ff-input"
             autoComplete="off"
-            title="Pilot search · Coming in M3 (crew-service)"
+            title="Freeform today · typeahead search ships in M3"
           />
         </Field>
 
         <Field label="SIC Name">
           <input
             type="text"
-            disabled
             placeholder="Last, First (optional)"
             className="ff-input"
             autoComplete="off"
@@ -106,7 +99,7 @@ export function FlightDetailsPanel({ flight }: { flight?: FlightDetail | null })
         </Field>
 
         <Field label="Area Forecast Region">
-          <select disabled className="ff-input cursor-not-allowed">
+          <select className="ff-input">
             {/* FAA Area Forecast Discussion regions covering AK ops. Codes
                 match legacy peregrineflight; "Southeast Alaska (fallback)"
                 is the legacy catch-all when no other region claims the
