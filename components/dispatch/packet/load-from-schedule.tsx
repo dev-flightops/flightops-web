@@ -41,18 +41,13 @@ export function LoadFromSchedule({
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
+  // Legacy parity: with no scheduled flights, the panel disappears
+  // entirely and the dispatcher goes straight to direct entry in the
+  // Flight Details section below. Prior copy said "Re-seed via docker
+  // compose..." which is a dev-only affordance leaking into a client
+  // demo surface.
   if (flights.length === 0) {
-    return (
-      <SectionPanel title="Load from Schedule" accent="blue">
-        <p className="text-xs text-muted-foreground">
-          No scheduled flights for today. Re-seed via{" "}
-          <code className="rounded bg-muted px-1 py-0.5 font-mono text-[0.7rem]">
-            docker compose run --rm seed
-          </code>{" "}
-          to refresh the demo.
-        </p>
-      </SectionPanel>
-    );
+    return null;
   }
 
   return (

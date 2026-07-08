@@ -28,11 +28,9 @@ const baseFlight = (overrides: Partial<FlightListItem> = {}): FlightListItem => 
 });
 
 describe("LoadFromSchedule", () => {
-  it("renders an empty-state hint when there are no flights", () => {
-    render(<LoadFromSchedule flights={[]} />);
-    expect(
-      screen.getByText(/No scheduled flights for today/i),
-    ).toBeInTheDocument();
+  it("renders nothing when there are no flights (legacy parity)", () => {
+    const { container } = render(<LoadFromSchedule flights={[]} />);
+    expect(container).toBeEmptyDOMElement();
   });
 
   it("renders one option per flight (plus the empty default)", () => {
