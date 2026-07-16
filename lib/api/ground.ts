@@ -453,7 +453,12 @@ export interface CreateFuelOrderPayload {
   base_code: string;
   supplier_id: string;
   fuel_type_id: string;
-  requested_quantity_gallons: number;
+  /** Total gallons. Optional when per-side is supplied — the
+   *  backend computes total = left + right in that case. Required
+   *  when per-side is omitted (legacy total-only path). */
+  requested_quantity_gallons?: number | null;
+  requested_left_gallons?: number | null;
+  requested_right_gallons?: number | null;
   requested_fuel_date: string;
   requested_fuel_time?: string | null;
   special_instructions?: string | null;

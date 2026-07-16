@@ -11,34 +11,50 @@ import { createFuelOrder } from "@/lib/api/ground";
  * POST /ground/fuel/orders, redirects to the new order's detail page.
  */
 
-const Schema = z.object({
-  n_number: z
-    .string()
-    .trim()
-    .min(1, "Tail number is required")
-    .max(20),
-  base_code: z
-    .string()
-    .trim()
-    .min(2, "Base code must be 2-10 characters")
-    .max(10),
-  supplier_id: z.string().uuid("Pick a supplier"),
-  fuel_type_id: z.string().uuid("Pick a fuel type"),
-  requested_quantity_gallons: z
-    .string()
-    .transform((v) => Number(v))
-    .refine((v) => Number.isFinite(v) && v > 0, {
-      message: "Gallons must be greater than 0",
-    }),
-  requested_fuel_date: z
-    .string()
-    .regex(/^\d{4}-\d{2}-\d{2}$/, "Requested date is required"),
-  special_instructions: z
-    .string()
-    .max(2000)
-    .optional()
-    .or(z.literal("").transform(() => undefined)),
-});
+// M2-C-3 — per-side gallons. The form always sends both left + right;
+// zod parses each independently, then we validate that at least one is
+// > 0 so the sum is a real order. Backend rejects any mismatch between
+// the sum and a caller-supplied total (we never send a total here
+// anymore — backend computes it).
+const nonNegativeGallons = z
+  .string()
+  .transform((v) => Number(v))
+  .refine((v) => Number.isFinite(v) && v >= 0, {
+    message: "Gallons must be 0 or more",
+  });
+
+const Schema = z
+  .object({
+    n_number: z
+      .string()
+      .trim()
+      .min(1, "Tail number is required")
+      .max(20),
+    base_code: z
+      .string()
+      .trim()
+      .min(2, "Base code must be 2-10 characters")
+      .max(10),
+    supplier_id: z.string().uuid("Pick a supplier"),
+    fuel_type_id: z.string().uuid("Pick a fuel type"),
+    requested_left_gallons: nonNegativeGallons,
+    requested_right_gallons: nonNegativeGallons,
+    requested_fuel_date: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/, "Requested date is required"),
+    special_instructions: z
+      .string()
+      .max(2000)
+      .optional()
+      .or(z.literal("").transform(() => undefined)),
+  })
+  .refine(
+    (v) => v.requested_left_gallons + v.requested_right_gallons > 0,
+    {
+      message: "Left + right gallons must sum to more than 0",
+      path: ["requested_left_gallons"],
+    },
+  );
 
 export type NewFuelOrderState =
   | { status: "idle" }
@@ -67,7 +83,8 @@ export async function createFuelOrderAction(
       base_code: parsed.data.base_code,
       supplier_id: parsed.data.supplier_id,
       fuel_type_id: parsed.data.fuel_type_id,
-      requested_quantity_gallons: parsed.data.requested_quantity_gallons,
+      requested_left_gallons: parsed.data.requested_left_gallons,
+      requested_right_gallons: parsed.data.requested_right_gallons,
       requested_fuel_date: parsed.data.requested_fuel_date,
       special_instructions: parsed.data.special_instructions ?? null,
     });

@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 
 import { Spinner } from "@/components/ui/spinner";
 import type {
@@ -30,6 +30,17 @@ export function NewFuelOrderForm({
     createFuelOrderAction,
     { status: "idle" },
   );
+
+  // M2-C-3 — live-total display next to the Left / Right inputs.
+  // Pilots type per side to manage lateral balance ("50 gal per side"
+  // is the common ask); the total is derived, not entered.
+  const [leftGal, setLeftGal] = useState<string>("");
+  const [rightGal, setRightGal] = useState<string>("");
+  const parseGal = (v: string) => {
+    const n = Number(v);
+    return Number.isFinite(n) && n >= 0 ? n : 0;
+  };
+  const totalGal = parseGal(leftGal) + parseGal(rightGal);
 
   const fieldError = (key: string) =>
     state.status === "field-errors" ? state.errors[key] : undefined;
@@ -95,26 +106,47 @@ export function NewFuelOrderForm({
         </FieldSelect>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
-        <Field
-          name="requested_quantity_gallons"
-          label="Gallons"
-          type="number"
-          step="0.1"
-          min={0}
-          placeholder="100"
-          required
-          error={fieldError("requested_quantity_gallons")}
-        />
-        <Field
-          name="requested_fuel_date"
-          label="Requested Date"
-          type="date"
-          defaultValue={todayLocalIsoDate()}
-          required
-          error={fieldError("requested_fuel_date")}
-        />
+      <div>
+        <div className="mb-1 flex items-baseline justify-between">
+          <span className="text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+            Gallons per side <span className="text-status-red">*</span>
+          </span>
+          <span
+            aria-live="polite"
+            className="text-[0.65rem] font-mono text-muted-foreground"
+          >
+            Total: <span className="font-semibold text-foreground">{totalGal.toFixed(1)}</span> gal
+          </span>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <SideInput
+            name="requested_left_gallons"
+            label="Left"
+            value={leftGal}
+            onChange={setLeftGal}
+            error={fieldError("requested_left_gallons")}
+          />
+          <SideInput
+            name="requested_right_gallons"
+            label="Right"
+            value={rightGal}
+            onChange={setRightGal}
+          />
+        </div>
+        <p className="mt-1 text-[0.6rem] text-muted-foreground">
+          Enter each wing tank separately — the total is calculated. Enter 0 on
+          one side if you only want to fill the other.
+        </p>
       </div>
+
+      <Field
+        name="requested_fuel_date"
+        label="Requested Date"
+        type="date"
+        defaultValue={todayLocalIsoDate()}
+        required
+        error={fieldError("requested_fuel_date")}
+      />
 
       <div>
         <label
@@ -179,6 +211,49 @@ function Field({
         aria-invalid={error ? "true" : undefined}
         className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-status-blue focus:outline-none aria-[invalid=true]:border-status-red"
         {...inputProps}
+      />
+      {error && (
+        <p role="alert" className="mt-1 text-[0.65rem] text-status-red">
+          {error}
+        </p>
+      )}
+    </div>
+  );
+}
+
+function SideInput({
+  name,
+  label,
+  value,
+  onChange,
+  error,
+}: {
+  name: string;
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  error?: string;
+}) {
+  return (
+    <div>
+      <label
+        htmlFor={name}
+        className="mb-1 block text-[0.55rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground"
+      >
+        {label}
+      </label>
+      <input
+        id={name}
+        name={name}
+        type="number"
+        step="0.1"
+        min={0}
+        placeholder="50"
+        required
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        aria-invalid={error ? "true" : undefined}
+        className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-status-blue focus:outline-none aria-[invalid=true]:border-status-red"
       />
       {error && (
         <p role="alert" className="mt-1 text-[0.65rem] text-status-red">
