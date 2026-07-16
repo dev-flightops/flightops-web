@@ -1,6 +1,7 @@
 import { ApiError } from "@/lib/api/client";
 import { getComplianceBoard } from "@/lib/api/ops";
 
+import { AddCurrencyItemDialog } from "./add-currency-item-dialog";
 import { ComplianceCalendar } from "./compliance-calendar";
 import { ComplianceGrid } from "./compliance-grid";
 import { ComplianceList } from "./compliance-list";
@@ -52,13 +53,16 @@ export default async function ComplianceCrewCurrencyPage({
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6">
-      <header className="mb-4">
-        <h1 className="text-xl font-bold tracking-tight sm:text-2xl">
-          Fleet Compliance
-        </h1>
-        <p className="mt-1 text-xs text-muted-foreground">
-          Every pilot, every currency item — Spec 5 single source of truth.
-        </p>
+      <header className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h1 className="text-xl font-bold tracking-tight sm:text-2xl">
+            Fleet Compliance
+          </h1>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Every pilot, every currency item — Spec 5 single source of truth.
+          </p>
+        </div>
+        <AddCurrencyItemDialog />
       </header>
 
       {loadError ? (

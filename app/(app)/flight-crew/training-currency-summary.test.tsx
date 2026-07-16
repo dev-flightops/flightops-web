@@ -38,6 +38,8 @@ function item(
     rolling_days: null,
     rolling_threshold: null,
     sort_order: 100,
+    is_default: true,
+    is_active: true,
     ...over,
   };
 }

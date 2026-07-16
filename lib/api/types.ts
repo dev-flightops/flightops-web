@@ -1351,6 +1351,31 @@ export interface CurrencyItemRef {
   rolling_days: number | null;
   rolling_threshold: number | null;
   sort_order: number;
+  /** M2-C-2 — global Part 135 defaults have is_default=true and
+   *  tenant_id=NULL on the backend. Set false on tenant-scoped
+   *  custom items; the admin UI greys defaults out for edit/delete. */
+  is_default: boolean;
+  is_active: boolean;
+}
+
+export interface CustomCurrencyItemCreateRequest {
+  code: string;
+  name: string;
+  regulation: string;
+  interval_type: CurrencyIntervalType;
+  rolling_days?: number | null;
+  rolling_threshold?: number | null;
+  requires_examiner?: boolean;
+  is_check_event?: boolean;
+  is_initial_only?: boolean;
+  sort_order?: number;
+}
+
+export interface CustomCurrencyItemUpdateRequest {
+  name?: string;
+  regulation?: string;
+  is_active?: boolean;
+  sort_order?: number;
 }
 
 export interface PilotCurrencyCell {

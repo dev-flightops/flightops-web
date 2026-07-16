@@ -12,7 +12,10 @@ import type {
   CpReviewListResponse,
   CpReviewResponse,
   CpReviewStatus,
+  CurrencyItemRef,
   CurrentDutyResponse,
+  CustomCurrencyItemCreateRequest,
+  CustomCurrencyItemUpdateRequest,
   LogCompletionRequest,
   LogCompletionResponse,
   OverrideRequest,
@@ -451,6 +454,36 @@ export async function getPilotComplianceProfile(
   return apiFetch<PilotProfileResponse>(
     `/ops/compliance/pilots/${pilotId}/profile`,
   );
+}
+
+/** M2-C-2 — create a tenant-scoped currency item. Chief pilot only. */
+export async function createCurrencyItem(
+  body: CustomCurrencyItemCreateRequest,
+): Promise<CurrencyItemRef> {
+  return apiFetch<CurrencyItemRef>("/ops/currency-items", {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+}
+
+/** M2-C-2 — patch a tenant-scoped currency item. Rejects with 403 on defaults. */
+export async function updateCurrencyItem(
+  itemId: string,
+  body: CustomCurrencyItemUpdateRequest,
+): Promise<CurrencyItemRef> {
+  return apiFetch<CurrencyItemRef>(`/ops/currency-items/${itemId}`, {
+    method: "PATCH",
+    body: JSON.stringify(body),
+  });
+}
+
+/** M2-C-2 — soft-deactivate a tenant-scoped currency item. */
+export async function deactivateCurrencyItem(
+  itemId: string,
+): Promise<CurrencyItemRef> {
+  return apiFetch<CurrencyItemRef>(`/ops/currency-items/${itemId}`, {
+    method: "DELETE",
+  });
 }
 
 /** Log a new currency completion. Backs the Log Completion modal. */
