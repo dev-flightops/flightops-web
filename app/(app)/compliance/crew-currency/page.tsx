@@ -26,11 +26,21 @@ import { isComplianceView, ViewSwitcher, type ComplianceView } from "./view-swit
 export default async function ComplianceCrewCurrencyPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string | string[]; view?: string | string[] }>;
+  searchParams: Promise<{
+    status?: string | string[];
+    view?: string | string[];
+    /** M2-G-3 tail — calendar drill-in on a single YYYY-MM. */
+    month?: string | string[];
+  }>;
 }) {
-  const { status: statusParam, view: viewParam } = await searchParams;
+  const {
+    status: statusParam,
+    view: viewParam,
+    month: monthParam,
+  } = await searchParams;
   const statusFilter = parseStatusFilter(statusParam);
   const view = parseView(viewParam);
+  const focusedMonth = parseMonth(monthParam);
 
   let board;
   let loadError: string | null = null;
@@ -102,6 +112,7 @@ export default async function ComplianceCrewCurrencyPage({
               items={board.items}
               rows={board.rows}
               statusFilter={statusFilter}
+              focusedMonth={focusedMonth}
             />
           )}
         </>
@@ -124,4 +135,12 @@ function parseView(
   if (!param) return "grid";
   const first = Array.isArray(param) ? param[0] : param;
   return isComplianceView(first) ? first : "grid";
+}
+
+const MONTH_KEY_RE = /^\d{4}-(0[1-9]|1[0-2])$/;
+
+function parseMonth(param: string | string[] | undefined): string | null {
+  if (!param) return null;
+  const first = Array.isArray(param) ? param[0] : param;
+  return MONTH_KEY_RE.test(first) ? first : null;
 }

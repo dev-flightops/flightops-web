@@ -132,7 +132,7 @@ describe("buildCalendarEntries", () => {
 });
 
 describe("ComplianceCalendar", () => {
-  it("renders 6 month cells with the current month leftmost", () => {
+  it("renders 12 month cells with the current month leftmost (Spec 5)", () => {
     render(
       <ComplianceCalendar
         items={[]}
@@ -142,9 +142,10 @@ describe("ComplianceCalendar", () => {
       />,
     );
     expect(screen.getByText("Jun 2026")).toBeInTheDocument();
-    expect(screen.getByText("Nov 2026")).toBeInTheDocument();
-    // 6 "Nothing scheduled" slots when there's no data.
-    expect(screen.getAllByText(/nothing scheduled/i)).toHaveLength(6);
+    // Now extends a full year — May 2027 is the final cell.
+    expect(screen.getByText("May 2027")).toBeInTheDocument();
+    // 12 "Nothing scheduled" slots when there's no data.
+    expect(screen.getAllByText(/nothing scheduled/i)).toHaveLength(12);
   });
 
   it("renders a pilot card in the right month cell", () => {
@@ -207,5 +208,71 @@ describe("ComplianceCalendar", () => {
       />,
     );
     expect(screen.getByText(/\+2 more/)).toBeInTheDocument();
+  });
+
+  it("month header links carry the ?view=calendar&month=YYYY-MM drill-in URL", () => {
+    render(
+      <ComplianceCalendar
+        items={[]}
+        rows={[]}
+        statusFilter={null}
+        today={new Date(Date.UTC(2026, 5, 15))}
+      />,
+    );
+    const jun = screen.getByText("Jun 2026").closest("a");
+    expect(jun).toBeTruthy();
+    expect(jun?.getAttribute("href")).toContain("view=calendar");
+    expect(jun?.getAttribute("href")).toContain("month=2026-06");
+  });
+
+  it("focused-month mode swaps for a full drill-in list", () => {
+    const items = [calItem({ id: "i-1", code: "ipc", name: "IPC" })];
+    const rows = [
+      row("p-1", "Alice", [
+        cell("i-1", "due_this_month", { base_month_due: "2026-09-01" }),
+      ]),
+      row("p-2", "Bob", [
+        cell("i-1", "grace_month", { grace_month_end: "2026-09-30" }),
+      ]),
+    ];
+    render(
+      <ComplianceCalendar
+        items={items}
+        rows={rows}
+        statusFilter={null}
+        focusedMonth="2026-09"
+        today={new Date(Date.UTC(2026, 5, 15))}
+      />,
+    );
+    // Header names the month + count.
+    expect(screen.getByRole("heading", { level: 2 })).toHaveTextContent(
+      /Sep 2026 — 2 findings/i,
+    );
+    // Both pilots appear.
+    expect(screen.getByText("Alice")).toBeInTheDocument();
+    expect(screen.getByText("Bob")).toBeInTheDocument();
+    // Back-link points to the 12-month view without the month param.
+    const back = screen.getByText(/Back to 12-month view/i).closest("a");
+    expect(back?.getAttribute("href")).toBe(
+      "/compliance/crew-currency?view=calendar",
+    );
+    // Confirm we are NOT rendering the calendar grid alongside.
+    expect(screen.queryByText(/nothing scheduled/i)).not.toBeInTheDocument();
+  });
+
+  it("focused-month with statusFilter preserves it on the back link", () => {
+    render(
+      <ComplianceCalendar
+        items={[]}
+        rows={[]}
+        statusFilter="non_current"
+        focusedMonth="2026-08"
+        today={new Date(Date.UTC(2026, 5, 15))}
+      />,
+    );
+    const back = screen.getByText(/Back to 12-month view/i).closest("a");
+    expect(back?.getAttribute("href")).toBe(
+      "/compliance/crew-currency?view=calendar&status=non_current",
+    );
   });
 });
