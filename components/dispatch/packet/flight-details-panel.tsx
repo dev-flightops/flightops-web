@@ -1,6 +1,6 @@
 import type { FlightDetail } from "@/lib/api/types";
 
-import { DEMO_PIC_NAME } from "./demo-placeholders";
+import { PicPicker, type PicOption } from "./pic-picker";
 import { SectionPanel } from "./section-panel";
 
 /**
@@ -32,7 +32,17 @@ function shortAircraftModel(model: string | null): string {
  *   - PIC / SIC: freeform text; typeahead search ships with crew-service
  *     in M3
  */
-export function FlightDetailsPanel({ flight }: { flight?: FlightDetail | null }) {
+export function FlightDetailsPanel({
+  flight,
+  picOptions,
+  currentPicId,
+}: {
+  flight?: FlightDetail | null;
+  /** Pilot roster + overall status for the PIC dropdown (M2-G-5). */
+  picOptions: PicOption[];
+  /** Currently-selected PIC from ?pic=<uuid>. */
+  currentPicId: string | null;
+}) {
   return (
     <SectionPanel title="Flight Details">
       <div className="grid grid-cols-2 gap-4 md:grid-cols-6">
@@ -74,20 +84,7 @@ export function FlightDetailsPanel({ flight }: { flight?: FlightDetail | null })
           />
         </Field>
 
-        <Field
-          label="PIC"
-          help="Pilot typeahead · Coming in M3 (crew-service)"
-        >
-          <input
-            type="text"
-            placeholder="Type to search pilots..."
-            defaultValue={flight ? DEMO_PIC_NAME : ""}
-            key={`pic-${flight?.id ?? "none"}`}
-            className="ff-input"
-            autoComplete="off"
-            title="Freeform today · typeahead search ships in M3"
-          />
-        </Field>
+        <PicPicker options={picOptions} currentPicId={currentPicId} />
 
         <Field label="SIC Name">
           <input

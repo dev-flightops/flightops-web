@@ -27,12 +27,17 @@ import { SectionPanel } from "./section-panel";
 export function RightColumn({
   flight,
   aircraft = [],
+  hardBlockReason = null,
 }: {
   flight?: FlightDetail | null;
   /** Aircraft list for the Edit dialog's tail-swap selector. Only needed
    *  when a scheduled flight is selected; an empty array is fine
    *  otherwise (the selector hides itself when the list is empty). */
   aircraft?: AircraftListItem[];
+  /** M2-G-5 — when set, the Generate PDF button is disabled and the
+   *  tooltip explains why (e.g. "PIC has 2 hard-block currency
+   *  items"). Null = no block, button behaves normally. */
+  hardBlockReason?: string | null;
 }) {
   return (
     <div className="space-y-5">
@@ -56,7 +61,10 @@ export function RightColumn({
             AI Review
           </button>
 
-          <GeneratePdfButton flight={flight ?? null} />
+          <GeneratePdfButton
+            flight={flight ?? null}
+            hardBlockReason={hardBlockReason}
+          />
         </div>
       </SectionPanel>
 

@@ -13,8 +13,19 @@ import { RightColumn } from "@/components/dispatch/packet/right-column";
 import { SelectedFlightSummary } from "@/components/dispatch/packet/selected-flight-summary";
 import { ApiError } from "@/lib/api/client";
 import { listMyTenants } from "@/lib/api/auth";
-import { getFlight, listAircraft, listFlights } from "@/lib/api/ops";
-import type { AircraftListItem, FlightDetail } from "@/lib/api/types";
+import {
+  getComplianceBoard,
+  getFlight,
+  getPicCompliance,
+  listAircraft,
+  listFlights,
+} from "@/lib/api/ops";
+import type {
+  AircraftListItem,
+  FlightDetail,
+  PicComplianceResponse,
+} from "@/lib/api/types";
+import type { PicOption } from "@/components/dispatch/packet/pic-picker";
 import { parseAckedIcaos } from "@/components/dispatch/packet/notam-acks";
 import { paramToRoute } from "@/lib/route";
 
@@ -71,12 +82,29 @@ export default async function DispatchPage({
   } = await searchParams;
   const today = todayUtc();
 
-  const [{ items: flights }, tenantsResponse, selectedFlight] =
-    await Promise.all([
-      listFlights({ onDate: today }).catch(() => ({ items: [], total: 0 })),
-      listMyTenants().catch(() => ({ tenants: [] })),
-      selectedId ? loadFlight(selectedId) : Promise.resolve(null),
-    ]);
+  const currentPicId = isUuid(picOverrideId) ? picOverrideId : null;
+
+  const [
+    { items: flights },
+    tenantsResponse,
+    selectedFlight,
+    picOptions,
+    picCompliance,
+  ] = await Promise.all([
+    listFlights({ onDate: today }).catch(() => ({ items: [], total: 0 })),
+    listMyTenants().catch(() => ({ tenants: [] })),
+    selectedId ? loadFlight(selectedId) : Promise.resolve(null),
+    loadPicRoster(),
+    currentPicId ? loadPicCompliance(currentPicId) : Promise.resolve(null),
+  ]);
+
+  // M2-G-5 — hard block on Generate PDF when the selected PIC has any
+  // dispatch-blocking currency findings. Reason string surfaces on
+  // hover so the dispatcher knows exactly what to clear.
+  const hardBlockReason: string | null =
+    picCompliance && picCompliance.dot_color === "red"
+      ? `PIC ${picCompliance.pilot.full_name} has ${picCompliance.hard_blocks.length} hard-block currency item${picCompliance.hard_blocks.length === 1 ? "" : "s"} — release blocked until cleared or overridden.`
+      : null;
 
   const currentTenant =
     tenantsResponse.tenants.find((t) => t.is_current) ??
@@ -120,18 +148,23 @@ export default async function DispatchPage({
           {selectedFlight && <SelectedFlightSummary flight={selectedFlight} />}
         </LoadFromSchedule>
 
-        <FlightDetailsPanel flight={selectedFlight} />
+        <FlightDetailsPanel
+          flight={selectedFlight}
+          picOptions={picOptions}
+          currentPicId={currentPicId}
+        />
 
         <CrewLegalityHints />
 
         {/* Crew-currency status only makes sense once a PIC is loaded.
-            Until the Flight model carries a PIC field (M3 crew-service),
-            we accept a `?pic=<uuid>` URL override for testing — the
-            gate renders the "Awaiting PIC" placeholder otherwise. The
-            live check goes to /compliance/pic-check (Spec 5). */}
+            The PIC selection lives in the URL as `?pic=<uuid>`; the
+            picker inside FlightDetailsPanel writes it. The compliance
+            data is fetched once at the page level and shared with the
+            gate + the Generate-PDF hard-block guard. */}
         {selectedFlight && (
           <DispatchComplianceGate
-            pilotUserId={isUuid(picOverrideId) ? picOverrideId : null}
+            pilotUserId={currentPicId}
+            prefetched={picCompliance}
           />
         )}
 
@@ -151,7 +184,11 @@ export default async function DispatchPage({
             icaos={icaos}
             notamAckedIcaos={notamAckedIcaos}
           />
-          <RightColumn flight={selectedFlight} aircraft={aircraft} />
+          <RightColumn
+            flight={selectedFlight}
+            aircraft={aircraft}
+            hardBlockReason={hardBlockReason}
+          />
         </div>
       </div>
     </div>
@@ -171,5 +208,39 @@ async function loadFlight(flightId: string): Promise<FlightDetail | null> {
       return null;
     }
     throw err;
+  }
+}
+
+/**
+ * M2-G-5 — load the pilot roster + per-pilot overall status for the
+ * PIC dropdown. Reuses the compliance board endpoint since it already
+ * returns `rows[].pilot` + `rows[].overall_status` in one call.
+ *
+ * Soft-fail on any error — the picker degrades to "No pilots on
+ * roster" rather than blocking the whole dispatch page. Non-chief-
+ * pilot users see the same shape (the endpoint doesn't gate by role
+ * for the pilot listing).
+ */
+async function loadPicRoster(): Promise<PicOption[]> {
+  try {
+    const board = await getComplianceBoard();
+    return board.rows.map((r) => ({
+      pilot: r.pilot,
+      status: r.overall_status,
+    }));
+  } catch {
+    return [];
+  }
+}
+
+/** M2-G-5 — soft-fail wrapper around getPicCompliance. Null on any
+ *  error so the compliance gate can render its friendly banner. */
+async function loadPicCompliance(
+  pilotId: string,
+): Promise<PicComplianceResponse | null> {
+  try {
+    return await getPicCompliance(pilotId);
+  } catch {
+    return null;
   }
 }

@@ -30,37 +30,45 @@ import type {
  */
 export async function DispatchComplianceGate({
   pilotUserId,
+  prefetched,
 }: {
   /** Pilot whose compliance to check. `null` renders the awaiting
-   *  state — there's no real PIC field on the M2 demo Flight model,
-   *  so the parent passes the tenant's first active pilot in dev. */
+   *  state. */
   pilotUserId: string | null;
+  /** M2-G-5 — when the page-level loader already fetched the response,
+   *  pass it here to skip the round-trip. Falls back to fetching if
+   *  undefined (older callers). */
+  prefetched?: PicComplianceResponse | null;
 }) {
   if (pilotUserId === null) {
     return (
       <div className="rounded-md border border-border bg-card/40 px-5 py-3.5 text-xs text-muted-foreground">
-        Awaiting PIC selection — compliance status will appear once a
-        pilot is assigned to this flight.
+        Awaiting PIC selection — pick a pilot in the Flight Details section
+        above to see compliance status.
       </div>
     );
   }
 
-  let data: PicComplianceResponse | null = null;
+  let data: PicComplianceResponse | null = prefetched ?? null;
   let loadError: string | null = null;
-  try {
-    data = await getPicCompliance(pilotUserId);
-  } catch (err) {
-    if (err instanceof ApiError) {
-      if (err.status === 401) {
-        loadError = "Sign in to see compliance status.";
-      } else if (err.status === 404) {
-        loadError = "PIC record not found.";
+  if (prefetched === undefined) {
+    try {
+      data = await getPicCompliance(pilotUserId);
+    } catch (err) {
+      if (err instanceof ApiError) {
+        if (err.status === 401) {
+          loadError = "Sign in to see compliance status.";
+        } else if (err.status === 404) {
+          loadError = "PIC record not found.";
+        } else {
+          loadError = `Compliance check failed (HTTP ${err.status}).`;
+        }
       } else {
-        loadError = `Compliance check failed (HTTP ${err.status}).`;
+        loadError = "Compliance check failed.";
       }
-    } else {
-      loadError = "Compliance check failed.";
     }
+  } else if (prefetched === null) {
+    loadError = "Compliance check unavailable — refresh to retry.";
   }
 
   if (loadError) {
