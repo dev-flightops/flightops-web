@@ -991,6 +991,11 @@ export interface FuelOrderResponse {
   fuel_type_label_snapshot: string;
   price_per_gallon: number | null;
   requested_quantity_gallons: number;
+  /** Per-side breakdown (M2-C-3). Null on legacy orders placed
+   *  before per-side landed, or when the pilot ordered a single
+   *  total. */
+  requested_left_gallons: number | null;
+  requested_right_gallons: number | null;
   special_instructions: string | null;
   status: FuelOrderStatus;
   confirmed_at: string | null;
@@ -999,6 +1004,8 @@ export interface FuelOrderResponse {
   fueled_at: string | null;
   fueled_by_name: string | null;
   actual_quantity_gallons: number | null;
+  actual_left_gallons: number | null;
+  actual_right_gallons: number | null;
   discrepancy_reason: string | null;
   closed_by_source: FuelOrderCloseSource | null;
   cancel_reason: string | null;

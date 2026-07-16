@@ -109,6 +109,12 @@ function Header({ order }: { order: FuelOrderResponse }) {
           <span className="font-mono">{order.base_code}</span> ·{" "}
           {order.supplier_name_snapshot} · {order.fuel_type_label_snapshot} ·{" "}
           {order.requested_quantity_gallons.toLocaleString()} gal
+          {order.requested_left_gallons !== null &&
+            order.requested_right_gallons !== null && (
+              <span className="ml-1 text-muted-foreground/70">
+                (L {order.requested_left_gallons} / R {order.requested_right_gallons})
+              </span>
+            )}
         </p>
       </div>
       <StatusChip status={order.status} large />
@@ -205,7 +211,10 @@ function MetaGrid({ order }: { order: FuelOrderResponse }) {
           label="Actual gallons"
           value={
             order.actual_quantity_gallons !== null
-              ? `${order.actual_quantity_gallons.toLocaleString()} gal`
+              ? order.actual_left_gallons !== null &&
+                order.actual_right_gallons !== null
+                ? `${order.actual_quantity_gallons.toLocaleString()} gal (L ${order.actual_left_gallons} / R ${order.actual_right_gallons})`
+                : `${order.actual_quantity_gallons.toLocaleString()} gal`
               : "—"
           }
         />
