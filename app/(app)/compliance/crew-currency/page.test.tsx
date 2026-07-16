@@ -16,6 +16,12 @@ const { getComplianceBoard, TestApiError } = vi.hoisted(() => {
 
 vi.mock("@/lib/api/client", () => ({ ApiError: TestApiError }));
 vi.mock("@/lib/api/ops", () => ({ getComplianceBoard }));
+// AddCurrencyItemDialog is a client component with useActionState
+// (React 19). Stub it in this vitest env so the page renders — the
+// dedicated actions test covers the dialog's behaviour.
+vi.mock("./add-currency-item-dialog", () => ({
+  AddCurrencyItemDialog: () => null,
+}));
 
 import ComplianceCrewCurrencyPage from "./page";
 import type {
@@ -37,6 +43,8 @@ function makeItem(over: Partial<CurrencyItemRef> & { id: string }): CurrencyItem
     rolling_days: null,
     rolling_threshold: null,
     sort_order: 10,
+    is_default: true,
+    is_active: true,
     ...over,
   };
 }

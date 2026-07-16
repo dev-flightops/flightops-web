@@ -46,6 +46,8 @@ function makeItem(over: Partial<CurrencyItemRef> & { id: string }): CurrencyItem
     rolling_days: null,
     rolling_threshold: null,
     sort_order: 10,
+    is_default: true,
+    is_active: true,
     ...over,
   };
 }

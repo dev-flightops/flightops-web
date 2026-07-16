@@ -26,6 +26,8 @@ function calItem(
     rolling_days: null,
     rolling_threshold: null,
     sort_order: 100,
+    is_default: true,
+    is_active: true,
     ...over,
   };
 }
@@ -43,6 +45,8 @@ function rollItem(
     rolling_days: 90,
     rolling_threshold: 3,
     sort_order: 200,
+    is_default: true,
+    is_active: true,
     ...over,
   };
 }
