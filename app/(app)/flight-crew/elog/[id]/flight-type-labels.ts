@@ -8,5 +8,9 @@ export const FLIGHT_TYPE_LABELS: Record<FlightType, string> = {
   charter: "Charter",
   training: "Training",
   ferry: "Ferry",
+  checkride: "Checkride",
+  scheduled: "Scheduled",
+  eas: "EAS",
+  mx_checkflight: "MX Checkflight",
   other: "Other",
 };

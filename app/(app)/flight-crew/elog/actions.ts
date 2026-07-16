@@ -39,6 +39,10 @@ const Schema = z.object({
     "charter",
     "training",
     "ferry",
+    "checkride",
+    "scheduled",
+    "eas",
+    "mx_checkflight",
     "other",
   ]),
 });

@@ -142,6 +142,10 @@ export function NewFlightLogForm({
           <option value="advisory">Advisory Flight</option>
           <option value="training">Training</option>
           <option value="ferry">Ferry</option>
+          <option value="checkride">Checkride</option>
+          <option value="scheduled">Scheduled</option>
+          <option value="eas">EAS</option>
+          <option value="mx_checkflight">MX Checkflight</option>
           <option value="other">Other</option>
         </FieldSelect>
       </div>

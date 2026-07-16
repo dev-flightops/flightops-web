@@ -64,7 +64,7 @@ export function SicPicker({
     <div>
       <div className="mb-1 flex items-baseline justify-between">
         <span className="text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
-          SIC Pilot
+          SIC / Check Airman / Instructor / Advisory
         </span>
         {pending && (
           <span className="inline-flex items-center gap-1.5 text-[0.6rem] text-muted-foreground">
@@ -73,7 +73,7 @@ export function SicPicker({
         )}
       </div>
       <select
-        aria-label="SIC pilot"
+        aria-label="SIC / Check Airman / Instructor / Advisory"
         value={value}
         disabled={readOnly || pending}
         onChange={(e) => {

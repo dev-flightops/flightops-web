@@ -84,6 +84,10 @@ export type FlightType =
   | "charter"
   | "training"
   | "ferry"
+  | "checkride"
+  | "scheduled"
+  | "eas"
+  | "mx_checkflight"
   | "other";
 
 export type VorCheckType = "ground" | "airborne" | "vot" | "dual";
