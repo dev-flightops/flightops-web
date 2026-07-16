@@ -40,7 +40,16 @@ const PdfIcon = () => (
   </svg>
 );
 
-export function GeneratePdfButton({ flight }: { flight: FlightDetail | null }) {
+export function GeneratePdfButton({
+  flight,
+  hardBlockReason = null,
+}: {
+  flight: FlightDetail | null;
+  /** M2-G-5 — when set, disable the button and surface the reason as
+   *  a tooltip. Compliance gate hard blocks route through here so
+   *  the dispatcher can't release a PIC who's non-current. */
+  hardBlockReason?: string | null;
+}) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -56,6 +65,24 @@ export function GeneratePdfButton({ flight }: { flight: FlightDetail | null }) {
       >
         <PdfIcon />
         Generate PDF
+      </button>
+    );
+  }
+
+  // Hard block takes precedence over released/scheduled state.
+  // The rule from Spec 5: a hard-blocked PIC cannot be released even
+  // if the flight was previously released (a downstream reopen +
+  // re-release would need to clear the block).
+  if (hardBlockReason) {
+    return (
+      <button
+        type="button"
+        disabled
+        title={hardBlockReason}
+        className={`${BUTTON_CLASS} cursor-not-allowed border border-status-red/40 bg-status-red/10 text-status-red opacity-90 hover:bg-status-red/10`}
+      >
+        <PdfIcon />
+        Generate PDF — blocked
       </button>
     );
   }
