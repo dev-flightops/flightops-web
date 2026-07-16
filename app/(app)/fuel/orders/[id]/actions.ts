@@ -136,10 +136,45 @@ function apiToState(err: unknown): ActionState {
         message: "Your session expired — please sign in again.",
       };
     }
-    if (err.status === 409) {
+    if (err.status === 404) {
       return {
         status: "api-error",
-        message: "This order is already in a terminal state.",
+        message: "Order not found — it may have been cancelled or deleted.",
+      };
+    }
+    if (err.status === 409) {
+      // Surface the backend's specific reason. The typical case:
+      // the supplier confirmed via the portal before the dispatcher
+      // could — status flipped to 'confirmed', current call 409s.
+      // Prior generic "already in a terminal state" copy was
+      // misleading (confirmed is mid-lifecycle, not terminal).
+      const detail = parseDetail(err.message);
+      if (detail.includes("'confirmed'")) {
+        return {
+          status: "api-error",
+          message: "The supplier already confirmed this order. Refresh to see the updated status.",
+        };
+      }
+      if (detail.includes("'fueled'") || detail.includes("'cancelled'")) {
+        return {
+          status: "api-error",
+          message: "This order is closed and can't be changed.",
+        };
+      }
+      return {
+        status: "api-error",
+        message: detail || "Can't run this action from the order's current status.",
+      };
+    }
+    if (err.status === 422) {
+      // Field validation failed at the backend (usually a mismatch
+      // between the zod schema and the Pydantic schema). Surface the
+      // first field message so the user has a chance of fixing it,
+      // rather than a bare "HTTP 422".
+      const field = parseFirstFieldError(err.message);
+      return {
+        status: "api-error",
+        message: field ? `Please fix: ${field}` : "Some fields failed validation.",
       };
     }
     return {
@@ -151,6 +186,31 @@ function apiToState(err: unknown): ActionState {
     status: "api-error",
     message: "Action failed. Try again in a moment.",
   };
+}
+
+function parseDetail(message: string): string {
+  try {
+    const parsed = JSON.parse(message) as { detail?: unknown };
+    return typeof parsed.detail === "string" ? parsed.detail : "";
+  } catch {
+    return "";
+  }
+}
+
+function parseFirstFieldError(message: string): string {
+  try {
+    const parsed = JSON.parse(message) as {
+      detail?: Array<{ loc?: unknown[]; msg?: string }>;
+    };
+    const first = Array.isArray(parsed.detail) ? parsed.detail[0] : undefined;
+    if (!first?.msg) return "";
+    const field = Array.isArray(first.loc)
+      ? first.loc.filter((p) => p !== "body").join(".")
+      : "";
+    return field ? `${field} — ${first.msg}` : first.msg;
+  } catch {
+    return "";
+  }
 }
 
 export type { ActionState as FuelOrderActionState };
