@@ -7,6 +7,9 @@ import type {
   PicComplianceResponse,
 } from "@/lib/api/types";
 
+import { OverrideDialog } from "./override-dialog";
+import { SoftWarningAckList } from "./soft-warning-ack-list";
+
 /**
  * Dispatch packet compliance gate — Spec 5 §"How currency feeds
  * dispatch / Real-time compliance check on PIC selection".
@@ -31,14 +34,31 @@ import type {
 export async function DispatchComplianceGate({
   pilotUserId,
   prefetched,
+  ackedWarnCodes,
+  flightId,
+  overridesAcknowledged,
 }: {
   /** Pilot whose compliance to check. `null` renders the awaiting
    *  state. */
   pilotUserId: string | null;
   /** M2-G-5 — when the page-level loader already fetched the response,
-   *  pass it here to skip the round-trip. Falls back to fetching if
-   *  undefined (older callers). */
+   *  pass it here to skip the round-trip. */
   prefetched?: PicComplianceResponse | null;
+  /** M2-G-5 tail — currency-item codes the dispatcher already ack'd
+   *  via the URL. Consumed by SoftWarningAckList to render the
+   *  ticked checkbox state; parent page uses the "all acked" check
+   *  to enable Generate PDF. */
+  ackedWarnCodes?: ReadonlySet<string>;
+  /** M2-G-5 tail — passed to the override modal so the overrides
+   *  audit rows carry a flight reference. Null when no flight is
+   *  selected (the gate can render without one, but override
+   *  requires a flight context to be useful). */
+  flightId?: string | null;
+  /** M2-G-5 tail — true when ?overrides_ack=1 is set (supervisor has
+   *  already signed off). Hides the override button and swaps the
+   *  hard-block banner tone from red to muted-red so the dispatcher
+   *  knows the block was cleared. */
+  overridesAcknowledged?: boolean;
 }) {
   if (pilotUserId === null) {
     return (
@@ -84,11 +104,19 @@ export async function DispatchComplianceGate({
 
   if (!data) return null;
 
+  const acked = ackedWarnCodes ?? new Set<string>();
   if (data.dot_color === "red") {
-    return <HardBlockBanner data={data} />;
+    return (
+      <HardBlockBanner
+        data={data}
+        ackedCodes={acked}
+        flightId={flightId ?? null}
+        overridesAcknowledged={overridesAcknowledged ?? false}
+      />
+    );
   }
   if (data.dot_color === "yellow") {
-    return <SoftWarningBanner data={data} />;
+    return <SoftWarningBanner data={data} ackedCodes={acked} />;
   }
   return <ClearBanner data={data} />;
 }
@@ -110,52 +138,123 @@ function ClearBanner({ data }: { data: PicComplianceResponse }) {
   );
 }
 
-function SoftWarningBanner({ data }: { data: PicComplianceResponse }) {
+function SoftWarningBanner({
+  data,
+  ackedCodes,
+}: {
+  data: PicComplianceResponse;
+  ackedCodes: ReadonlySet<string>;
+}) {
+  const unackedCount = data.soft_warnings.filter(
+    (w) => !ackedCodes.has(w.code),
+  ).length;
+  const allAcked = unackedCount === 0;
   return (
-    <div className="rounded-md border border-status-yellow/40 bg-status-yellow/[0.08] px-5 py-4">
+    <div
+      className={
+        "rounded-md border px-5 py-4 " +
+        (allAcked
+          ? "border-status-green/40 bg-status-green/[0.06]"
+          : "border-status-yellow/40 bg-status-yellow/[0.08]")
+      }
+    >
       <div className="flex flex-wrap items-baseline gap-2 text-xs">
-        <Dot color="yellow" />
-        <span className="font-bold uppercase tracking-[0.06em] text-status-yellow">
-          Soft warning — ack required before release
+        <Dot color={allAcked ? "green" : "yellow"} />
+        <span
+          className={
+            "font-bold uppercase tracking-[0.06em] " +
+            (allAcked ? "text-status-green" : "text-status-yellow")
+          }
+        >
+          {allAcked
+            ? "All soft warnings acknowledged — release enabled"
+            : "Soft warning — ack required before release"}
         </span>
       </div>
       <div className="mt-3 flex flex-wrap items-baseline justify-between gap-3">
         <PilotLine
           pilot={data.pilot}
-          accent="text-status-yellow"
-          hint={`${data.soft_warnings.length} item${data.soft_warnings.length === 1 ? "" : "s"} need dispatcher ack`}
+          accent={allAcked ? "text-status-green" : "text-status-yellow"}
+          hint={
+            allAcked
+              ? "Cleared for release"
+              : `${unackedCount} of ${data.soft_warnings.length} still need ack`
+          }
         />
         <ViewProfileLink pilotId={data.pilot.id} />
       </div>
-      <FindingsList findings={data.soft_warnings} tone="soft" />
+      <SoftWarningAckList findings={data.soft_warnings} ackedCodes={ackedCodes} />
     </div>
   );
 }
 
-function HardBlockBanner({ data }: { data: PicComplianceResponse }) {
+function HardBlockBanner({
+  data,
+  ackedCodes,
+  flightId,
+  overridesAcknowledged,
+}: {
+  data: PicComplianceResponse;
+  ackedCodes: ReadonlySet<string>;
+  flightId: string | null;
+  overridesAcknowledged: boolean;
+}) {
   return (
-    <div className="rounded-md border border-status-red/40 bg-status-red/[0.08] px-5 py-4">
+    <div
+      className={
+        "rounded-md border px-5 py-4 " +
+        (overridesAcknowledged
+          ? "border-status-yellow/50 bg-status-yellow/[0.06]"
+          : "border-status-red/40 bg-status-red/[0.08]")
+      }
+    >
       <div className="flex flex-wrap items-baseline gap-2 text-xs">
-        <Dot color="red" />
-        <span className="font-bold uppercase tracking-[0.06em] text-status-red">
-          Hard block — pilot cannot fly Part 135
+        <Dot color={overridesAcknowledged ? "yellow" : "red"} />
+        <span
+          className={
+            "font-bold uppercase tracking-[0.06em] " +
+            (overridesAcknowledged
+              ? "text-status-yellow"
+              : "text-status-red")
+          }
+        >
+          {overridesAcknowledged
+            ? "Hard block — supervisor override recorded"
+            : "Hard block — pilot cannot fly Part 135"}
         </span>
       </div>
       <div className="mt-3 flex flex-wrap items-baseline justify-between gap-3">
         <PilotLine
           pilot={data.pilot}
-          accent="text-status-red"
-          hint="Supervisor override required to release"
+          accent={
+            overridesAcknowledged ? "text-status-yellow" : "text-status-red"
+          }
+          hint={
+            overridesAcknowledged
+              ? "Cleared for release with audit trail on record"
+              : "Supervisor override required to release"
+          }
         />
         <ViewProfileLink pilotId={data.pilot.id} />
       </div>
       <FindingsList findings={data.hard_blocks} tone="hard" />
+      {!overridesAcknowledged && (
+        <OverrideDialog
+          pilotUserId={data.pilot.id}
+          pilotName={data.pilot.full_name}
+          hardBlocks={data.hard_blocks}
+          flightId={flightId}
+        />
+      )}
       {data.soft_warnings.length > 0 && (
         <>
           <div className="mt-3 text-[0.65rem] font-semibold uppercase tracking-[0.06em] text-status-yellow">
             Also pending acknowledgment
           </div>
-          <FindingsList findings={data.soft_warnings} tone="soft" />
+          <SoftWarningAckList
+            findings={data.soft_warnings}
+            ackedCodes={ackedCodes}
+          />
         </>
       )}
     </div>

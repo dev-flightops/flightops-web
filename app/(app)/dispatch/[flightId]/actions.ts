@@ -21,9 +21,12 @@ export async function releaseFlightAction(
    *  backend so the compliance gate runs; omitted callers keep the
    *  legacy behaviour. */
   pilotUserId?: string | null,
+  /** M2-G-5 tail — supervisor override recorded already? When true,
+   *  release goes through even with hard blocks. */
+  overridesAcknowledged?: boolean,
 ): Promise<ActionResult> {
   try {
-    await releaseFlight(flightId, pilotUserId ?? null);
+    await releaseFlight(flightId, pilotUserId ?? null, overridesAcknowledged);
   } catch (err) {
     if (err instanceof ApiError) {
       // Map well-known backend detail strings to user-friendly messages
