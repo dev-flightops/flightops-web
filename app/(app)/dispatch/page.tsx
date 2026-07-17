@@ -188,6 +188,7 @@ export default async function DispatchPage({
             flight={selectedFlight}
             aircraft={aircraft}
             hardBlockReason={hardBlockReason}
+            pilotUserId={currentPicId}
           />
         </div>
       </div>
