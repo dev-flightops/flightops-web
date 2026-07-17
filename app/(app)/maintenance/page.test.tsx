@@ -40,6 +40,8 @@ function makeSummary(
     engine_tbo_hours: null,
     prop_time_hours: 0,
     prop_tbo_hours: null,
+    grounded_reason: null,
+    grounded_at: null,
     ...overrides,
   };
 }

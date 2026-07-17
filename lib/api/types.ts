@@ -563,6 +563,11 @@ export interface FleetAircraftSummary {
   engine_tbo_hours: number | null;
   prop_time_hours: number;
   prop_tbo_hours: number | null;
+  /** M2-M-15 — grounding provenance. `"mel_expired"` when auto-grounded
+   *  by the MEL expiry watcher; `"manual"` for admin-initiated; other
+   *  slugs (fuel_hold) land as they ship. Null on active aircraft. */
+  grounded_reason: string | null;
+  grounded_at: string | null;
 }
 
 export interface FleetAirworthinessResponse {

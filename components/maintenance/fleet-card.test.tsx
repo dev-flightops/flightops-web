@@ -25,6 +25,8 @@ function makeSummary(
     engine_tbo_hours: null,
     prop_time_hours: 0,
     prop_tbo_hours: null,
+    grounded_reason: null,
+    grounded_at: null,
     ...overrides,
   };
 }
@@ -173,9 +175,53 @@ describe("FleetCard (M2-G-22b legacy layout)", () => {
     expect(screen.queryByText(/all items current/i)).not.toBeInTheDocument();
   });
 
-  it("renders the Inactive chip on retired aircraft", () => {
+  it("renders the Inactive chip on retired aircraft (null grounded_reason)", () => {
     render(<FleetCard summary={makeSummary({ is_active: false })} />);
 
     expect(screen.getByText(/^inactive$/i)).toBeInTheDocument();
+  });
+
+  it("renders the yellow 'MEL Expired' chip when auto-grounded by the watcher (M2-M-15)", () => {
+    render(
+      <FleetCard
+        summary={makeSummary({
+          is_active: false,
+          grounded_reason: "mel_expired",
+          grounded_at: "2026-07-17T10:15:00Z",
+        })}
+      />,
+    );
+    const chip = screen.getByText(/MEL Expired/i);
+    expect(chip).toBeInTheDocument();
+    expect(chip).toHaveAttribute(
+      "title",
+      expect.stringContaining("2026-07-17 10:15"),
+    );
+  });
+
+  it("renders the yellow 'Fuel Hold' chip for Spec 6 fuel-quality holds", () => {
+    render(
+      <FleetCard
+        summary={makeSummary({
+          is_active: false,
+          grounded_reason: "fuel_hold",
+          grounded_at: "2026-07-17T10:15:00Z",
+        })}
+      />,
+    );
+    expect(screen.getByText(/Fuel Hold/i)).toBeInTheDocument();
+  });
+
+  it("renders the red 'Grounded' chip for admin-initiated grounds", () => {
+    render(
+      <FleetCard
+        summary={makeSummary({
+          is_active: false,
+          grounded_reason: "manual",
+          grounded_at: null,
+        })}
+      />,
+    );
+    expect(screen.getByText(/^grounded$/i)).toBeInTheDocument();
   });
 });

@@ -46,7 +46,12 @@ export function FleetCard({ summary }: { summary: FleetAircraftSummary }) {
               <AirframeChip airframeType={summary.airframe_type} />
             )}
             {summary.base && <BaseBadge base={summary.base} />}
-            {!summary.is_active && <InactiveChip />}
+            {!summary.is_active && (
+              <GroundingChip
+                reason={summary.grounded_reason}
+                groundedAt={summary.grounded_at}
+              />
+            )}
           </div>
           <p className="mt-1 truncate text-xs text-muted-foreground">
             {displayModel(summary.aircraft.model)}
@@ -166,12 +171,61 @@ function BaseBadge({ base }: { base: string }) {
   );
 }
 
-function InactiveChip() {
+/**
+ * M2-M-15 — the fleet card distinguishes the grounding source so CP
+ * and MX can triage at a glance:
+ *   mel_expired — auto-grounded by the watcher (yellow, "MEL EXPIRED")
+ *   fuel_hold   — Spec 6 fuel-quality cascade (yellow, "FUEL HOLD")
+ *   manual      — admin-initiated ground (muted, "GROUNDED")
+ *   null / other — legacy row from before the reason column was
+ *                  populated (muted, "INACTIVE")
+ */
+function GroundingChip({
+  reason,
+  groundedAt,
+}: {
+  reason: string | null;
+  groundedAt: string | null;
+}) {
+  const config = groundingChipConfig(reason);
+  const tooltip = groundedAt
+    ? `${config.label} at ${groundedAt.slice(0, 16).replace("T", " ")} UTC`
+    : config.label;
   return (
-    <span className="rounded bg-muted/40 px-1.5 py-0.5 text-[0.6rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-      Inactive
+    <span title={tooltip} className={config.className}>
+      {config.label}
     </span>
   );
+}
+
+function groundingChipConfig(reason: string | null): {
+  label: string;
+  className: string;
+} {
+  const base =
+    "rounded px-1.5 py-0.5 text-[0.6rem] font-semibold uppercase tracking-[0.08em]";
+  switch (reason) {
+    case "mel_expired":
+      return {
+        label: "MEL Expired",
+        className: `${base} bg-status-yellow/15 text-status-yellow border border-status-yellow/30`,
+      };
+    case "fuel_hold":
+      return {
+        label: "Fuel Hold",
+        className: `${base} bg-status-yellow/15 text-status-yellow border border-status-yellow/30`,
+      };
+    case "manual":
+      return {
+        label: "Grounded",
+        className: `${base} bg-status-red/15 text-status-red border border-status-red/30`,
+      };
+    default:
+      return {
+        label: "Inactive",
+        className: `${base} bg-muted/40 text-muted-foreground`,
+      };
+  }
 }
 
 function Stat({
