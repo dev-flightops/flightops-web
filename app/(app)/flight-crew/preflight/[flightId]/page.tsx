@@ -42,17 +42,16 @@ const DUTY_OFFLINE_DEFAULT: CurrentDutyResponse = {
  * renders the next-required step's UI; previous steps render as
  * collapsed "Completed at HH:MMZ" rows.
  *
- * What's in this PR:
+ * All 8 steps shipped (M2-G-7):
  *   - Step 1: Review Dispatch Release (scroll-to-bottom + ack checkbox)
  *   - Step 2: Weight and Balance Review (ack checkbox, no W&B math yet)
  *   - Step 3: Weather + NOTAM Review (one ack per routing airport)
- *
- * Deferred to follow-up PRs:
- *   - Step 4 FRAT scoring (own backend table, LOW/MED/HIGH/EXTREME)
- *   - Step 5 Duty In confirmation (reads /duty/current, already live)
- *   - Step 6 Accept or Deny Release (writes flight_pilot_acceptance)
- *   - Step 7 Position reports (during flight, optional)
- *   - Step 8 Post-Flight Log (opens elog after landing)
+ *   - Step 4: FRAT (LOW/MED/HIGH/EXTREME with dispatch / CP+DO
+ *             authorization gates)
+ *   - Step 5: Duty In confirmation (reads /duty/current)
+ *   - Step 6: Accept or Deny Release (writes flight_pilot_acceptance)
+ *   - Step 7: Flight Following Position Reports (ack + dispatch links)
+ *   - Step 8: Post-Flight Log (handoff to /flight-crew/elog)
  */
 export default async function PreflightPage({
   params,

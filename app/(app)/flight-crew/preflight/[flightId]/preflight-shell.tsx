@@ -12,6 +12,8 @@ import { WeatherAndNotamStep } from "./step-3-weather-notam";
 import { FlightRiskAssessmentStep } from "./step-4-frat";
 import { DutyInConfirmStep } from "./step-5-duty";
 import { AcceptOrDenyStep } from "./step-6-accept-deny";
+import { PositionReportsStep } from "./step-7-position-reports";
+import { PostFlightLogStep } from "./step-8-post-flight-log";
 
 interface Props {
   flight: FlightDetail;
@@ -169,6 +171,10 @@ function ActiveStep({
       return <DutyInConfirmStep flightId={flightId} duty={duty} />;
     case 6:
       return <AcceptOrDenyStep flightId={flightId} initial={acceptance} />;
+    case 7:
+      return <PositionReportsStep flightId={flightId} flight={flight} />;
+    case 8:
+      return <PostFlightLogStep flightId={flightId} flight={flight} />;
     default:
       return <StepStubPanel stepNumber={stepNumber} />;
   }
