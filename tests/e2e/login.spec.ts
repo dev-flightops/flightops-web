@@ -23,7 +23,7 @@ test.describe("login flow", () => {
     await page.goto("/login");
     await page.getByLabel(/email/i).fill(DEMO_EMAIL);
     await page.getByLabel(/password/i).fill("WRONG");
-    await page.getByRole("button", { name: /sign in/i }).click();
+    await page.getByRole("button", { name: /^sign in$/i }).click();
 
     await expect(page.getByText(/invalid email or password/i)).toBeVisible();
   });
@@ -32,7 +32,7 @@ test.describe("login flow", () => {
     await page.goto("/login");
     await page.getByLabel(/email/i).fill(DEMO_EMAIL);
     await page.getByLabel(/password/i).fill(DEMO_PASSWORD);
-    await page.getByRole("button", { name: /sign in/i }).click();
+    await page.getByRole("button", { name: /^sign in$/i }).click();
 
     await page.waitForURL("**/");
     await expect(page.getByText(DEMO_EMAIL)).toBeVisible();
@@ -44,7 +44,7 @@ test.describe("login flow", () => {
     await page.goto("/login");
     await page.getByLabel(/email/i).fill(DEMO_EMAIL);
     await page.getByLabel(/password/i).fill(DEMO_PASSWORD);
-    await page.getByRole("button", { name: /sign in/i }).click();
+    await page.getByRole("button", { name: /^sign in$/i }).click();
     await page.waitForURL("**/");
 
     // Then sign out

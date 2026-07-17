@@ -9,8 +9,12 @@
  *   test("...", async ({ loggedInPage }) => { ... });
  *
  * Requires the local stack to be running (docker compose up + npm run dev).
- * Skips automatically if NEXT_PUBLIC_API_URL or seed credentials are missing
- * — these tests are local/pre-merge, not CI.
+ * These specs are local/pre-merge, not CI.
+ *
+ * Running multiple auth-fixture specs in parallel occasionally flakes on
+ * Auth.js cookie contention (different workers logging in at once against
+ * a single Next.js dev server). Run with `--workers=1` for a stable pass:
+ *   npx playwright test --workers=1
  */
 
 import { test as base, expect, type Page } from "@playwright/test";
@@ -28,7 +32,8 @@ async function performLogin(page: Page): Promise<void> {
   await page.goto("/login");
   await page.getByLabel(/email/i).fill(DEMO_EMAIL);
   await page.getByLabel(/password/i).fill(DEMO_PASSWORD);
-  await page.getByRole("button", { name: /sign in/i }).click();
+  // Anchored regex — "Sign In" (credentials) not "Sign in with Google" etc.
+await page.getByRole("button", { name: /^sign in$/i }).click();
   await page.waitForURL((url) => !/\/login/.test(url.pathname));
 }
 
