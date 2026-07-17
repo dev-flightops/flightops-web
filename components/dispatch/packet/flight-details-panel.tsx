@@ -131,9 +131,22 @@ function Field({
   help?: string;
   children: React.ReactNode;
 }) {
+  // `min-w-0` on the grid item lets the label + input respect the
+  // column width (grid items default to `min-width: auto` which is
+  // content-width; without min-w-0 the label overflows into the
+  // neighboring column).
+  // Label uses `truncate` (overflow: hidden + ellipsis + nowrap) so
+  // long copy like "FLIGHT # (PRESS ENTER TO LOAD)" gets an
+  // ellipsis at narrow widths instead of bleeding through.
+  // `title` carries the full label + hint so hover reveals what's
+  // been truncated.
+  const fullTitle = hint ? `${label} (${hint})` : label;
   return (
-    <div>
-      <label className="mb-1.5 block whitespace-nowrap text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+    <div className="min-w-0">
+      <label
+        title={fullTitle}
+        className="mb-1.5 block truncate text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground"
+      >
         {label}
         {hint && (
           <span className="ml-1 text-muted-foreground/70">

@@ -82,7 +82,11 @@ export function PicPicker({
   }
 
   return (
-    <div>
+    // min-w-0 so the picker respects its grid column width — without
+    // it long option text (e.g. "🔴 Alice Chen — NON-CURRENT") can
+    // stretch the cell wider than its 1fr allotment and push the
+    // neighbouring cell offscreen.
+    <div className="min-w-0">
       <label
         htmlFor="pic-picker"
         className="mb-1.5 flex items-baseline gap-1.5 whitespace-nowrap text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground"
