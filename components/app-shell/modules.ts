@@ -225,9 +225,11 @@ export const DEPARTMENTS: Department[] = [
     status: "live",
     pathPrefixes: ["/safety"],
     children: [
-      { id: "sms",         label: "Safety SMS", href: "/safety",       status: "live", department: "safety" },
-      { id: "my-reports",  label: "My Reports", href: "/safety/mine",  status: "live", department: "safety" },
-      { id: "documents",   label: "Documents",                          status: "m3",   department: "safety" },
+      { id: "sms",         label: "Safety SMS",      href: "/safety",            status: "live", department: "safety" },
+      { id: "incidents",   label: "Incidents",       href: "/safety/incidents",  status: "live", department: "safety" },
+      { id: "actions",     label: "Corrective Actions", href: "/safety/actions", status: "live", department: "safety" },
+      { id: "my-reports",  label: "My Reports",      href: "/safety/mine",       status: "live", department: "safety" },
+      { id: "documents",   label: "Documents",                                    status: "m3",   department: "safety" },
     ],
   },
   {
