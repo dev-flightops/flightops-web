@@ -4,32 +4,20 @@ import { notFound, redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { ApiError } from "@/lib/api/client";
 import {
-  HAZARD_CATEGORY_LABELS,
   HAZARD_SEVERITY_LABELS,
   HAZARD_STATUS_LABELS,
-  type HazardReport,
-  getHazard,
+  INCIDENT_CATEGORY_LABELS,
+  type Incident,
+  getIncident,
   listCapasForSource,
 } from "@/lib/api/safety";
+import { IncidentTriageControls } from "./triage-controls";
 import { CorrectiveActionPanel } from "@/components/safety/corrective-action-panel";
-
-import { TriageControls } from "./triage-controls";
 
 const TRIAGE_ROLES = new Set(["safety_officer", "chief_pilot", "exec_admin"]);
 const MANAGE_ROLES = new Set(["safety_officer", "exec_admin"]);
 
-/**
- * /safety/[id] — Hazard detail + triage controls.
- *
- * Two audiences share the page:
- *   * Triage roles (Safety Officer, Chief Pilot, Exec Admin) see the
- *     status transition controls beneath the description.
- *   * The reporter themselves can see their own hazard read-only. If
- *     the current user is neither the reporter nor a triage role, the
- *     backend returns 403 and we render a bare "not found" — same
- *     surface as the URL not existing.
- */
-export default async function SafetyHazardDetailPage({
+export default async function IncidentDetailPage({
   params,
   searchParams,
 }: {
@@ -43,31 +31,24 @@ export default async function SafetyHazardDetailPage({
   const canTriage = [...roles].some((r) => TRIAGE_ROLES.has(r));
   const canManageCapas = [...roles].some((r) => MANAGE_ROLES.has(r));
 
-  let hazard: HazardReport;
+  let incident: Incident;
   try {
-    hazard = await getHazard(id);
+    incident = await getIncident(id);
   } catch (err) {
     if (err instanceof ApiError) {
-      if (err.status === 404 || err.status === 403) {
-        // Non-triage users hitting a hazard that isn't theirs land on
-        // notFound() so the URL doesn't disclose that a hazard exists.
-        // The reporter's own /mine feed remains the intended entry
-        // point for authored reports.
-        notFound();
-      }
-      if (err.status === 401) {
-        redirect("/login");
-      }
+      if (err.status === 404 || err.status === 403) notFound();
+      if (err.status === 401) redirect("/login");
     }
     throw err;
   }
 
-  // CAPAs are board-role-gated; only fetch when we can render the
-  // panel. Reporters see the hazard detail without it.
+  // CAPAs are board-role-gated on the backend, so only try when we
+  // have a triage role. Reporters see the incident detail without
+  // the CAPA panel.
   let linkedCapas: Awaited<ReturnType<typeof listCapasForSource>> | null = null;
   if (canTriage) {
     try {
-      linkedCapas = await listCapasForSource("hazard", id);
+      linkedCapas = await listCapasForSource("incident", id);
     } catch {
       linkedCapas = null;
     }
@@ -78,23 +59,23 @@ export default async function SafetyHazardDetailPage({
       <header className="mb-6">
         <p className="text-xs font-semibold uppercase tracking-[0.06em] text-muted-foreground">
           <Link
-            href={canTriage ? "/safety" : "/safety/mine"}
+            href={canTriage ? "/safety/incidents" : "/safety/incidents/mine"}
             className="hover:text-foreground"
           >
-            ← {canTriage ? "Safety SMS" : "My Reports"}
+            ← {canTriage ? "Incidents" : "My Incident Reports"}
           </Link>
         </p>
         <h1 className="mt-2 flex flex-wrap items-baseline gap-3 text-2xl font-bold tracking-tight">
-          Hazard {HAZARD_SEVERITY_LABELS[hazard.severity]}
+          Incident {HAZARD_SEVERITY_LABELS[incident.severity]}
           <span className="text-sm font-normal text-muted-foreground">
-            {HAZARD_CATEGORY_LABELS[hazard.category]}
+            {INCIDENT_CATEGORY_LABELS[incident.category]}
           </span>
         </h1>
         <p className="mt-1 text-xs text-muted-foreground">
-          Filed {new Date(hazard.created_at).toLocaleString()} —{" "}
-          {hazard.is_anonymous && !hazard.reporter
+          Occurred {new Date(incident.occurred_at).toLocaleString()} —{" "}
+          {incident.is_anonymous && !incident.reporter
             ? "Anonymous reporter"
-            : hazard.reporter?.full_name ?? "Unknown reporter"}
+            : incident.reporter?.full_name ?? "Unknown reporter"}
         </p>
       </header>
 
@@ -103,62 +84,65 @@ export default async function SafetyHazardDetailPage({
           role="status"
           className="mb-4 rounded-md border border-status-green/40 bg-status-green/10 px-3 py-2 text-xs text-status-green"
         >
-          Report filed. The Safety Officer has been notified.
+          Incident filed. The Safety Officer has been notified.
         </div>
       ) : null}
 
       <section className="mb-6 space-y-4 rounded-lg border border-border bg-card p-5">
-        <DetailRow label="Status" value={HAZARD_STATUS_LABELS[hazard.status]} />
-        {hazard.station ? (
+        <DetailRow label="Status" value={HAZARD_STATUS_LABELS[incident.status]} />
+        {incident.aircraft ? (
           <DetailRow
-            label="Station"
-            value={`${hazard.station.icao_code} — ${hazard.station.name}`}
+            label="Aircraft"
+            value={`${incident.aircraft.tail_number}${incident.aircraft.model ? ` (${incident.aircraft.model})` : ""}`}
           />
         ) : null}
-        {hazard.location_free_text ? (
-          <DetailRow label="Location" value={hazard.location_free_text} />
+        {incident.flight ? (
+          <DetailRow
+            label="Flight"
+            value={incident.flight.flight_number ?? "—"}
+          />
         ) : null}
-        <div>
-          <div className="text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
-            Description
-          </div>
-          <p className="mt-1 whitespace-pre-wrap text-sm text-foreground/90">
-            {hazard.description}
-          </p>
-        </div>
-        {hazard.immediate_action_taken ? (
-          <div>
-            <div className="text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
-              Immediate action taken
-            </div>
-            <p className="mt-1 whitespace-pre-wrap text-sm text-foreground/90">
-              {hazard.immediate_action_taken}
-            </p>
-          </div>
+        {incident.station ? (
+          <DetailRow
+            label="Station"
+            value={`${incident.station.icao_code} — ${incident.station.name}`}
+          />
+        ) : null}
+        {incident.location_free_text ? (
+          <DetailRow label="Location" value={incident.location_free_text} />
+        ) : null}
+        <TextBlock label="Description" body={incident.description} />
+        <TextBlock label="Injury summary" body={incident.injury_summary} />
+        <TextBlock label="Damage summary" body={incident.damage_summary} />
+        {incident.immediate_action_taken ? (
+          <TextBlock
+            label="Immediate action taken"
+            body={incident.immediate_action_taken}
+          />
         ) : null}
       </section>
 
-      {hazard.triaged_at || hazard.closed_at ? (
+      {incident.triaged_at || incident.closed_at ? (
         <section className="mb-6 rounded-lg border border-border bg-card p-5">
           <h2 className="mb-3 text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
             Triage history
           </h2>
           <ul className="space-y-2 text-xs">
-            {hazard.triaged_at ? (
+            {incident.triaged_at ? (
               <li>
                 <span className="font-semibold">Triaged</span> —{" "}
-                {new Date(hazard.triaged_at).toLocaleString()} by{" "}
-                {hazard.triaged_by?.full_name ?? "unknown"}
+                {new Date(incident.triaged_at).toLocaleString()} by{" "}
+                {incident.triaged_by?.full_name ?? "unknown"}
               </li>
             ) : null}
-            {hazard.closed_at ? (
+            {incident.closed_at ? (
               <li>
                 <span className="font-semibold">Closed</span> —{" "}
-                {new Date(hazard.closed_at).toLocaleString()} by{" "}
-                {hazard.closed_by?.full_name ?? "unknown"}
-                {hazard.closed_reason ? (
+                {new Date(incident.closed_at).toLocaleString()} by{" "}
+                {incident.closed_by?.full_name ?? "unknown"}
+                {incident.closed_reason ? (
                   <p className="mt-1 whitespace-pre-wrap text-muted-foreground">
-                    {hazard.closed_reason}
+                    {incident.closed_reason}
                   </p>
                 ) : null}
               </li>
@@ -169,15 +153,18 @@ export default async function SafetyHazardDetailPage({
 
       {canTriage && linkedCapas ? (
         <CorrectiveActionPanel
-          sourceType="hazard"
-          sourceId={hazard.id}
+          sourceType="incident"
+          sourceId={incident.id}
           items={linkedCapas.items}
           canOpen={canManageCapas}
         />
       ) : null}
 
-      {canTriage && hazard.status !== "closed" ? (
-        <TriageControls hazardId={hazard.id} currentStatus={hazard.status} />
+      {canTriage && incident.status !== "closed" ? (
+        <IncidentTriageControls
+          incidentId={incident.id}
+          currentStatus={incident.status}
+        />
       ) : null}
     </div>
   );
@@ -190,6 +177,19 @@ function DetailRow({ label, value }: { label: string; value: string }) {
         {label}
       </span>
       <span>{value}</span>
+    </div>
+  );
+}
+
+function TextBlock({ label, body }: { label: string; body: string }) {
+  return (
+    <div>
+      <div className="text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+        {label}
+      </div>
+      <p className="mt-1 whitespace-pre-wrap text-sm text-foreground/90">
+        {body}
+      </p>
     </div>
   );
 }
