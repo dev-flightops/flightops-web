@@ -28,6 +28,7 @@ export function RightColumn({
   flight,
   aircraft = [],
   hardBlockReason = null,
+  pilotUserId = null,
 }: {
   flight?: FlightDetail | null;
   /** Aircraft list for the Edit dialog's tail-swap selector. Only needed
@@ -38,6 +39,9 @@ export function RightColumn({
    *  tooltip explains why (e.g. "PIC has 2 hard-block currency
    *  items"). Null = no block, button behaves normally. */
   hardBlockReason?: string | null;
+  /** M2-M-5 — currently-selected PIC; passed to the release action so
+   *  the server-side compliance gate runs. */
+  pilotUserId?: string | null;
 }) {
   return (
     <div className="space-y-5">
@@ -64,6 +68,7 @@ export function RightColumn({
           <GeneratePdfButton
             flight={flight ?? null}
             hardBlockReason={hardBlockReason}
+            pilotUserId={pilotUserId}
           />
         </div>
       </SectionPanel>

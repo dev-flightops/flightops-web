@@ -15,9 +15,15 @@ export type ActionResult =
   | { ok: true }
   | { ok: false; error: string };
 
-export async function releaseFlightAction(flightId: string): Promise<ActionResult> {
+export async function releaseFlightAction(
+  flightId: string,
+  /** M2-M-5 — currently-selected PIC from ?pic=<uuid>. Passed to the
+   *  backend so the compliance gate runs; omitted callers keep the
+   *  legacy behaviour. */
+  pilotUserId?: string | null,
+): Promise<ActionResult> {
   try {
-    await releaseFlight(flightId);
+    await releaseFlight(flightId, pilotUserId ?? null);
   } catch (err) {
     if (err instanceof ApiError) {
       // Map well-known backend detail strings to user-friendly messages
@@ -32,9 +38,6 @@ export async function releaseFlightAction(flightId: string): Promise<ActionResul
       }
       // M2-M-8b airworthiness gate. Backend sends a structured detail:
       //   {"error": "aircraft_not_airworthy", "blocking_issues": [...]}
-      // We map to a plain-English error that points at the Maintenance
-      // & Airworthiness panel where the dispatcher can see the full
-      // list of blocking issues.
       if (err.message.includes("aircraft_not_airworthy")) {
         const summary = extractBlockingSummary(err.message);
         return {
@@ -42,6 +45,22 @@ export async function releaseFlightAction(flightId: string): Promise<ActionResul
           error: summary
             ? `Release blocked — aircraft is not airworthy: ${summary}. See the Maintenance & Airworthiness panel for full details.`
             : "Release blocked — aircraft is not airworthy. See the Maintenance & Airworthiness panel.",
+        };
+      }
+      // M2-M-5 PIC compliance gate. Backend sends:
+      //   {"error": "pic_hard_blocked", "pilot": {...}, "hard_blocks": [...]}
+      if (err.message.includes("pic_hard_blocked")) {
+        return {
+          ok: false,
+          error:
+            "Release blocked — the assigned PIC has hard-block currency items. Clear them on the compliance board, or record a supervisor override, and try again.",
+        };
+      }
+      if (err.message.includes("pilot_not_found")) {
+        return {
+          ok: false,
+          error:
+            "Selected PIC isn't on this tenant's roster. Refresh and pick again.",
         };
       }
       return { ok: false, error: `Release failed (HTTP ${err.status}).` };

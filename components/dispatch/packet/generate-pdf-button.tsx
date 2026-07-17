@@ -43,12 +43,17 @@ const PdfIcon = () => (
 export function GeneratePdfButton({
   flight,
   hardBlockReason = null,
+  pilotUserId = null,
 }: {
   flight: FlightDetail | null;
   /** M2-G-5 — when set, disable the button and surface the reason as
    *  a tooltip. Compliance gate hard blocks route through here so
    *  the dispatcher can't release a PIC who's non-current. */
   hardBlockReason?: string | null;
+  /** M2-M-5 — currently-selected PIC (?pic=<uuid>). Passed through to
+   *  releaseFlightAction so the backend runs the compliance gate; if
+   *  the UI guard is bypassed the server still blocks the release. */
+  pilotUserId?: string | null;
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -111,7 +116,7 @@ export function GeneratePdfButton({
   const handleConfirm = () => {
     setError(null);
     startTransition(async () => {
-      const result = await releaseFlightAction(flight.id);
+      const result = await releaseFlightAction(flight.id, pilotUserId);
       if (!result.ok) {
         setError(result.error);
         return;

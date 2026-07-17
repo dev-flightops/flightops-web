@@ -100,9 +100,18 @@ export async function getFlight(flightId: string): Promise<FlightDetail> {
   return apiFetch<FlightDetail>(`/ops/flights/${flightId}`);
 }
 
-export async function releaseFlight(flightId: string): Promise<ReleaseResponse> {
+export async function releaseFlight(
+  flightId: string,
+  /** M2-M-5 — when the dispatcher picked a PIC via ?pic=<uuid>,
+   *  pass it here so the backend runs the compliance gate. Legacy
+   *  callers without a PIC skip the check (M2 transitional). */
+  pilotUserId?: string | null,
+): Promise<ReleaseResponse> {
   return apiFetch<ReleaseResponse>(`/ops/flights/${flightId}/release`, {
     method: "POST",
+    body: JSON.stringify(
+      pilotUserId ? { pilot_user_id: pilotUserId } : {},
+    ),
   });
 }
 
