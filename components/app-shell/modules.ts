@@ -222,11 +222,12 @@ export const DEPARTMENTS: Department[] = [
   {
     id: "safety",
     label: "Safety",
-    status: "m3",
+    status: "live",
     pathPrefixes: ["/safety"],
     children: [
-      { id: "sms",       label: "Safety SMS", status: "m3", department: "safety" },
-      { id: "documents", label: "Documents",  status: "m3", department: "safety" },
+      { id: "sms",         label: "Safety SMS", href: "/safety",       status: "live", department: "safety" },
+      { id: "my-reports",  label: "My Reports", href: "/safety/mine",  status: "live", department: "safety" },
+      { id: "documents",   label: "Documents",                          status: "m3",   department: "safety" },
     ],
   },
   {
