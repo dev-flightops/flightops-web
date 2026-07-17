@@ -169,7 +169,7 @@ function LoginInner({ providers }: { providers: ProviderSummary[] }) {
 
               <div className="mb-3 flex items-center gap-3">
                 <div className="h-px flex-1 bg-[#1e2d42]" />
-                <span className="text-[0.65rem] uppercase tracking-[0.08em] text-[#4a5568]">
+                <span className="text-[0.65rem] uppercase tracking-[0.08em] text-muted-foreground">
                   or use password
                 </span>
                 <div className="h-px flex-1 bg-[#1e2d42]" />
@@ -237,7 +237,7 @@ function LoginInner({ providers }: { providers: ProviderSummary[] }) {
         </div>
 
         {/* Footer */}
-        <p className="mt-6 text-center text-xs text-[#4a5568]">
+        <p className="mt-6 text-center text-xs text-muted-foreground">
           Authorized users only &mdash; contact your administrator for access.
         </p>
         <p className="mt-2 text-center text-xs">
