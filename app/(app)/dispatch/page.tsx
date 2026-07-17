@@ -26,6 +26,7 @@ import type {
   PicComplianceResponse,
 } from "@/lib/api/types";
 import type { PicOption } from "@/components/dispatch/packet/pic-picker";
+import { parseAckedWarns } from "@/components/dispatch/packet/soft-warning-ack-list";
 import { parseAckedIcaos } from "@/components/dispatch/packet/notam-acks";
 import { paramToRoute } from "@/lib/route";
 
@@ -52,10 +53,15 @@ interface SearchParams {
    *  packet (Spec 7). Mirrors the NOTAM-ack pattern — URL-driven so
    *  state survives reload + can be shared. */
   mels_acked?: string;
-  /** Pilot UUID to render the Spec 5 compliance gate against. There's
-   *  no real PIC field on the Flight yet (M3 crew-service); this is
-   *  the manual-override knob for demos + verification. */
+  /** Pilot UUID to render the Spec 5 compliance gate against. */
   pic?: string;
+  /** M2-G-5 tail — comma-separated currency-item codes the dispatcher
+   *  has ack'd (soft warnings). URL-driven so state persists reload. */
+  warns_acked?: string;
+  /** M2-G-5 tail — set to "1" after the supervisor override modal
+   *  submits successfully. Signals the page to let Generate PDF fire
+   *  even though hard blocks are on the pilot's currency record. */
+  overrides_ack?: string;
 }
 
 /**
@@ -79,6 +85,8 @@ export default async function DispatchPage({
     notams_acked: notamsAckedParam,
     mels_acked: melsAckedParam,
     pic: picOverrideId,
+    warns_acked: warnsAckedParam,
+    overrides_ack: overridesAckParam,
   } = await searchParams;
   const today = todayUtc();
 
@@ -98,13 +106,27 @@ export default async function DispatchPage({
     currentPicId ? loadPicCompliance(currentPicId) : Promise.resolve(null),
   ]);
 
-  // M2-G-5 — hard block on Generate PDF when the selected PIC has any
-  // dispatch-blocking currency findings. Reason string surfaces on
-  // hover so the dispatcher knows exactly what to clear.
-  const hardBlockReason: string | null =
-    picCompliance && picCompliance.dot_color === "red"
-      ? `PIC ${picCompliance.pilot.full_name} has ${picCompliance.hard_blocks.length} hard-block currency item${picCompliance.hard_blocks.length === 1 ? "" : "s"} — release blocked until cleared or overridden.`
-      : null;
+  // M2-G-5 tail — parse ack state from URL. `warns_acked` is
+  // comma-separated currency-item codes; `overrides_ack=1` means the
+  // supervisor override modal already ran successfully.
+  const ackedWarnCodes = parseAckedWarns(warnsAckedParam);
+  const overridesAcknowledged = overridesAckParam === "1";
+
+  // M2-G-5 — Generate PDF disable rules:
+  //   RED   → block unless supervisor override was recorded (?overrides_ack=1)
+  //   YELLOW → block until every soft warning is ack'd (?warns_acked=...)
+  //   GREEN → no block
+  let hardBlockReason: string | null = null;
+  if (picCompliance && picCompliance.dot_color === "red" && !overridesAcknowledged) {
+    hardBlockReason = `PIC ${picCompliance.pilot.full_name} has ${picCompliance.hard_blocks.length} hard-block currency item${picCompliance.hard_blocks.length === 1 ? "" : "s"} — release blocked until cleared or overridden.`;
+  } else if (picCompliance && picCompliance.dot_color === "yellow") {
+    const unacked = picCompliance.soft_warnings.filter(
+      (w) => !ackedWarnCodes.has(w.code),
+    );
+    if (unacked.length > 0) {
+      hardBlockReason = `${unacked.length} of ${picCompliance.soft_warnings.length} soft warnings still need dispatcher acknowledgment.`;
+    }
+  }
 
   const currentTenant =
     tenantsResponse.tenants.find((t) => t.is_current) ??
@@ -165,6 +187,9 @@ export default async function DispatchPage({
           <DispatchComplianceGate
             pilotUserId={currentPicId}
             prefetched={picCompliance}
+            ackedWarnCodes={ackedWarnCodes}
+            flightId={selectedFlight.id}
+            overridesAcknowledged={overridesAcknowledged}
           />
         )}
 
@@ -189,6 +214,7 @@ export default async function DispatchPage({
             aircraft={aircraft}
             hardBlockReason={hardBlockReason}
             pilotUserId={currentPicId}
+            overridesAcknowledged={overridesAcknowledged}
           />
         </div>
       </div>

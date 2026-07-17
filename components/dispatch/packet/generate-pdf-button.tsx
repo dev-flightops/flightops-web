@@ -44,6 +44,7 @@ export function GeneratePdfButton({
   flight,
   hardBlockReason = null,
   pilotUserId = null,
+  overridesAcknowledged = false,
 }: {
   flight: FlightDetail | null;
   /** M2-G-5 — when set, disable the button and surface the reason as
@@ -54,6 +55,11 @@ export function GeneratePdfButton({
    *  releaseFlightAction so the backend runs the compliance gate; if
    *  the UI guard is bypassed the server still blocks the release. */
   pilotUserId?: string | null;
+  /** M2-G-5 tail — set when the supervisor override modal has
+   *  recorded overrides for this PIC's hard-block items. Passed to
+   *  releaseFlightAction which forwards to the backend
+   *  overrides_acknowledged flag. */
+  overridesAcknowledged?: boolean;
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -116,7 +122,11 @@ export function GeneratePdfButton({
   const handleConfirm = () => {
     setError(null);
     startTransition(async () => {
-      const result = await releaseFlightAction(flight.id, pilotUserId);
+      const result = await releaseFlightAction(
+        flight.id,
+        pilotUserId,
+        overridesAcknowledged,
+      );
       if (!result.ok) {
         setError(result.error);
         return;

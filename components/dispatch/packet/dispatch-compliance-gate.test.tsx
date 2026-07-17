@@ -16,6 +16,12 @@ const { getPicCompliance, TestApiError } = vi.hoisted(() => {
 
 vi.mock("@/lib/api/client", () => ({ ApiError: TestApiError }));
 vi.mock("@/lib/api/ops", () => ({ getPicCompliance }));
+// SoftWarningAckList + OverrideDialog use next/navigation hooks (M2-G-5
+// tail). Stub the router surface so the banners can render in this test.
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push: vi.fn() }),
+  useSearchParams: () => new URLSearchParams(""),
+}));
 
 import { DispatchComplianceGate } from "./dispatch-compliance-gate";
 import type {

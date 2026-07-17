@@ -106,12 +106,17 @@ export async function releaseFlight(
    *  pass it here so the backend runs the compliance gate. Legacy
    *  callers without a PIC skip the check (M2 transitional). */
   pilotUserId?: string | null,
+  /** M2-G-5 tail — when true, backend skips the pic_hard_blocked
+   *  gate because the caller has already recorded currency_overrides
+   *  rows (audit trail lives there). */
+  overridesAcknowledged?: boolean,
 ): Promise<ReleaseResponse> {
+  const body: Record<string, unknown> = {};
+  if (pilotUserId) body.pilot_user_id = pilotUserId;
+  if (overridesAcknowledged) body.overrides_acknowledged = true;
   return apiFetch<ReleaseResponse>(`/ops/flights/${flightId}/release`, {
     method: "POST",
-    body: JSON.stringify(
-      pilotUserId ? { pilot_user_id: pilotUserId } : {},
-    ),
+    body: JSON.stringify(body),
   });
 }
 

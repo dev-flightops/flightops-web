@@ -29,6 +29,7 @@ export function RightColumn({
   aircraft = [],
   hardBlockReason = null,
   pilotUserId = null,
+  overridesAcknowledged = false,
 }: {
   flight?: FlightDetail | null;
   /** Aircraft list for the Edit dialog's tail-swap selector. Only needed
@@ -42,6 +43,10 @@ export function RightColumn({
   /** M2-M-5 — currently-selected PIC; passed to the release action so
    *  the server-side compliance gate runs. */
   pilotUserId?: string | null;
+  /** M2-G-5 tail — true when ?overrides_ack=1 (supervisor override
+   *  modal ran). Passed to Generate PDF so release goes through even
+   *  with hard blocks. */
+  overridesAcknowledged?: boolean;
 }) {
   return (
     <div className="space-y-5">
@@ -69,6 +74,7 @@ export function RightColumn({
             flight={flight ?? null}
             hardBlockReason={hardBlockReason}
             pilotUserId={pilotUserId}
+            overridesAcknowledged={overridesAcknowledged}
           />
         </div>
       </SectionPanel>
