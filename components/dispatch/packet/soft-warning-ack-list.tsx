@@ -98,22 +98,8 @@ export function SoftWarningAckList({
   );
 }
 
-export function parseAckedWarns(
-  param: string | string[] | undefined,
-): Set<string> {
-  if (!param) return new Set();
-  const raw = Array.isArray(param) ? param[0] : param;
-  return new Set(
-    raw
-      .split(",")
-      .map((s) => s.trim())
-      .filter((s) => s.length > 0),
-  );
-}
-
-export function allSoftAcked(
-  findings: ComplianceFinding[],
-  ackedCodes: ReadonlySet<string>,
-): boolean {
-  return findings.every((f) => ackedCodes.has(f.code));
-}
+// parseAckedWarns + allSoftAcked live in ./soft-warning-ack-parser
+// (a plain, server-safe module) so page.tsx can call parseAckedWarns
+// during server rendering. Re-export here for callers that already
+// import from this file.
+export { allSoftAcked, parseAckedWarns } from "./soft-warning-ack-parser";

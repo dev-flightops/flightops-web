@@ -26,7 +26,7 @@ import type {
   PicComplianceResponse,
 } from "@/lib/api/types";
 import type { PicOption } from "@/components/dispatch/packet/pic-picker";
-import { parseAckedWarns } from "@/components/dispatch/packet/soft-warning-ack-list";
+import { parseAckedWarns } from "@/components/dispatch/packet/soft-warning-ack-parser";
 import { parseAckedIcaos } from "@/components/dispatch/packet/notam-acks";
 import { paramToRoute } from "@/lib/route";
 
