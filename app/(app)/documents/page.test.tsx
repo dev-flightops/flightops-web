@@ -38,6 +38,16 @@ describe("/documents (empty-state shell)", () => {
     }
   });
 
+  it("uses '+ Upload Document' in the header and 'Upload Document' in the empty state (matches legacy)", () => {
+    render(<DocumentsPage />);
+    expect(
+      screen.getByRole("button", { name: "+ Upload Document" }),
+    ).toBeDefined();
+    expect(
+      screen.getByRole("button", { name: "Upload Document" }),
+    ).toBeDefined();
+  });
+
   it("shows the empty-state copy from legacy", () => {
     render(<DocumentsPage />);
     expect(

@@ -53,19 +53,24 @@ export default function DocumentsPage() {
   );
 }
 
-function UploadButton({ block }: { block?: boolean } = {}) {
+/**
+ * Legacy renders both Upload buttons in full-saturation blue — no
+ * dimming — even though the flow needs a backend. We match that
+ * exactly so the shell is visually indistinguishable, and rely on the
+ * `disabled` attribute + `title` tooltip (rather than opacity) to
+ * communicate the milestone gap. The header button prefixes with `+`;
+ * the in-panel empty-state button does not (matches legacy).
+ */
+function UploadButton({ withPrefix = true }: { withPrefix?: boolean } = {}) {
   return (
     <button
       type="button"
       disabled
       aria-disabled="true"
       title="Document uploads ship with the documents-service (M3 backend)"
-      className={
-        (block ? "" : "flex-shrink-0 ") +
-        "cursor-not-allowed rounded-md bg-status-blue px-4 py-2 text-sm font-semibold text-white opacity-60"
-      }
+      className="flex-shrink-0 cursor-not-allowed rounded-md bg-status-blue px-4 py-2 text-sm font-semibold text-white opacity-100 disabled:opacity-100"
     >
-      + Upload Document
+      {withPrefix ? "+ Upload Document" : "Upload Document"}
     </button>
   );
 }
@@ -88,7 +93,7 @@ function EmptyState() {
         No documents yet. Upload your first document to get started.
       </p>
       <div className="mt-4 inline-flex">
-        <UploadButton block />
+        <UploadButton withPrefix={false} />
       </div>
     </div>
   );
