@@ -166,7 +166,7 @@ export const HOME_MODULES: HomeModule[] = [
     label: "Housing",
     sub: "Crew housing, rooms, assignments",
     href: "/housing/",
-    status: "m3",
+    status: "live",
     color: "#a78bfa",
     iconPath: "M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z",
   },
