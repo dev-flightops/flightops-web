@@ -39,6 +39,7 @@ export interface ModuleEntry {
 
 export type DepartmentId =
   | "operations"
+  | "reservations"
   | "ground-ops"
   | "maintenance"
   | "crew"
@@ -153,6 +154,23 @@ export const DEPARTMENTS: Department[] = [
       { id: "fleetbrain",             label: "Fleet Brain",    status: "m4", department: "admin", accent: "purple", dividerBefore: true },
       { id: "ops-brief",              label: "Ops Brief",   status: "m4", department: "admin", accent: "purple" },
       { id: "ai-query",               label: "AI Query",    status: "m4", department: "admin", accent: "purple" },
+    ],
+  },
+  {
+    id: "reservations",
+    label: "Reservations",
+    status: "live",
+    /**
+     * M3 Reservations module — fleet-board style booking surface +
+     * customer directory. `sim-export` under /reservations/ still lives
+     * under the Admin dept per legacy grouping; we exclude it from the
+     * pathPrefixes here so the sub-nav renders correctly on both surfaces.
+     */
+    pathPrefixes: ["/reservations"],
+    children: [
+      { id: "reservations-board", label: "Fleet Board", href: "/reservations", status: "live", department: "reservations" },
+      { id: "reservations-new", label: "New Booking", href: "/reservations/bookings/new", status: "live", department: "reservations" },
+      { id: "reservations-customers", label: "Customers", href: "/reservations/customers", status: "live", department: "reservations" },
     ],
   },
   {
