@@ -27,11 +27,25 @@ export default function DocumentsPage() {
   const total: number = 0;
   return (
     <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6">
-      <nav aria-label="Breadcrumb" className="mb-4 text-xs">
-        <Link href="/home" className="text-muted-foreground hover:text-foreground">
-          Home
+      <nav aria-label="Breadcrumb" className="mb-4 flex items-center text-xs">
+        <Link
+          href="/home"
+          aria-label="Home"
+          className="inline-flex items-center text-muted-foreground hover:text-foreground"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="currentColor"
+            className="h-3.5 w-3.5"
+            aria-hidden
+          >
+            <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" />
+          </svg>
         </Link>
-        <span className="px-1.5 text-muted-foreground">/</span>
+        <span aria-hidden className="px-1.5 text-muted-foreground">
+          ›
+        </span>
         <span className="font-semibold text-status-blue">Documents</span>
       </nav>
 
@@ -53,19 +67,24 @@ export default function DocumentsPage() {
   );
 }
 
-function UploadButton({ block }: { block?: boolean } = {}) {
+/**
+ * Legacy renders both Upload buttons in full-saturation blue — no
+ * dimming — even though the flow needs a backend. We match that
+ * exactly so the shell is visually indistinguishable, and rely on the
+ * `disabled` attribute + `title` tooltip (rather than opacity) to
+ * communicate the milestone gap. The header button prefixes with `+`;
+ * the in-panel empty-state button does not (matches legacy).
+ */
+function UploadButton({ withPrefix = true }: { withPrefix?: boolean } = {}) {
   return (
     <button
       type="button"
       disabled
       aria-disabled="true"
       title="Document uploads ship with the documents-service (M3 backend)"
-      className={
-        (block ? "" : "flex-shrink-0 ") +
-        "cursor-not-allowed rounded-md bg-status-blue px-4 py-2 text-sm font-semibold text-white opacity-60"
-      }
+      className="flex-shrink-0 cursor-not-allowed rounded-md bg-status-blue px-4 py-2 text-sm font-semibold text-white opacity-100 disabled:opacity-100"
     >
-      + Upload Document
+      {withPrefix ? "+ Upload Document" : "Upload Document"}
     </button>
   );
 }
@@ -88,7 +107,7 @@ function EmptyState() {
         No documents yet. Upload your first document to get started.
       </p>
       <div className="mt-4 inline-flex">
-        <UploadButton block />
+        <UploadButton withPrefix={false} />
       </div>
     </div>
   );
