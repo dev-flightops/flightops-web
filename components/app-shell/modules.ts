@@ -40,6 +40,7 @@ export interface ModuleEntry {
 export type DepartmentId =
   | "operations"
   | "reservations"
+  | "academy"
   | "ground-ops"
   | "maintenance"
   | "crew"
@@ -154,6 +155,22 @@ export const DEPARTMENTS: Department[] = [
       { id: "fleetbrain",             label: "Fleet Brain",    status: "m4", department: "admin", accent: "purple", dividerBefore: true },
       { id: "ops-brief",              label: "Ops Brief",   status: "m4", department: "admin", accent: "purple" },
       { id: "ai-query",               label: "AI Query",    status: "m4", department: "admin", accent: "purple" },
+    ],
+  },
+  {
+    id: "academy",
+    label: "Academy",
+    status: "live",
+    /**
+     * M3 Academy — course catalog + enrolment + lesson player. Admin
+     * screens (Manage) sit under the same dept prefix so chief pilots
+     * don't context-switch to a separate area.
+     */
+    pathPrefixes: ["/academy"],
+    children: [
+      { id: "academy-catalog", label: "Catalog", href: "/academy", status: "live", department: "academy" },
+      { id: "academy-mine", label: "My Enrollments", href: "/academy/mine", status: "live", department: "academy" },
+      { id: "academy-manage", label: "Manage", href: "/academy/manage", status: "live", department: "academy" },
     ],
   },
   {
