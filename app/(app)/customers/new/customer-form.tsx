@@ -3,6 +3,11 @@
 import { useActionState } from "react";
 
 import {
+  CUSTOMER_TYPES,
+  CUSTOMER_TYPE_LABELS,
+} from "@/lib/api/reservations";
+
+import {
   createCustomerAction,
   type NewCustomerFormState,
 } from "./actions";
@@ -48,6 +53,21 @@ export function CustomerForm() {
           className="ff"
           autoComplete="organization"
         />
+      </Field>
+
+      <Field label="Type" name="customer_type" error={state.fieldErrors?.customer_type}>
+        <select
+          id="customer_type"
+          name="customer_type"
+          defaultValue="individual"
+          className="ff"
+        >
+          {CUSTOMER_TYPES.map((t) => (
+            <option key={t} value={t}>
+              {CUSTOMER_TYPE_LABELS[t]}
+            </option>
+          ))}
+        </select>
       </Field>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">

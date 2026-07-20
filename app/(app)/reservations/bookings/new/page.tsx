@@ -58,7 +58,7 @@ export default async function NewBookingPage({
         <div className="mb-4 rounded-md border border-status-yellow/40 bg-status-yellow/10 px-3 py-2 text-xs text-status-yellow">
           No customers yet.{" "}
           <Link
-            href="/reservations/customers/new"
+            href="/customers/new"
             className="font-semibold underline"
           >
             Create one first

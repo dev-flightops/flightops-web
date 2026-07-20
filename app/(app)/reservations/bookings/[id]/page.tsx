@@ -79,7 +79,7 @@ export default async function BookingDetailPage({
               ? `${booking.customer.full_name} — ${booking.customer.company_name}`
               : booking.customer.full_name
           }
-          href={`/reservations/customers/${booking.customer.id}`}
+          href={`/customers/${booking.customer.id}`}
         />
         <DetailRow
           label="Route"
