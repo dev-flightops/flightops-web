@@ -34,7 +34,10 @@ export default function HousingPage() {
   const stats = { houses: 0, rooms: 0, available: 0, occupied: 0 };
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6">
+    // Legacy runs edge-to-edge — no max-width constraint. The calendar
+    // grid eventually renders wide + horizontally scrollable, so any
+    // container here would clip it. Just page-level padding.
+    <div className="w-full px-4 py-6 sm:px-6">
       <header className="mb-4 flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Housing Management</h1>
@@ -69,7 +72,7 @@ function HeaderActions() {
           disabled
           aria-disabled="true"
           title={HOUSING_BACKEND_HINT}
-          className="cursor-not-allowed rounded-md border border-border bg-card px-3 py-2 text-xs font-semibold text-foreground/70 opacity-70"
+          className="cursor-not-allowed rounded-md border border-border bg-card px-3 py-2 text-xs font-semibold text-foreground disabled:opacity-100"
         >
           {label}
         </button>
@@ -79,7 +82,7 @@ function HeaderActions() {
         disabled
         aria-disabled="true"
         title={HOUSING_BACKEND_HINT}
-        className="cursor-not-allowed rounded-md bg-status-blue px-3 py-2 text-xs font-semibold text-white opacity-70"
+        className="cursor-not-allowed rounded-md bg-status-blue px-3 py-2 text-xs font-semibold text-white disabled:opacity-100"
       >
         + New House
       </button>
@@ -88,7 +91,7 @@ function HeaderActions() {
         disabled
         aria-disabled="true"
         title="AI Assistant · Coming in M4"
-        className="cursor-not-allowed rounded-md border border-status-purple/40 bg-status-purple/15 px-3 py-2 text-xs font-semibold text-status-purple opacity-80"
+        className="cursor-not-allowed rounded-md border border-status-purple/40 bg-status-purple/15 px-3 py-2 text-xs font-semibold text-status-purple disabled:opacity-100"
       >
         ✨ AI Assistant
       </button>
@@ -119,10 +122,10 @@ function CalendarNav() {
           aria-pressed={"active" in btn ? btn.active : undefined}
           title={HOUSING_BACKEND_HINT}
           className={
-            "cursor-not-allowed rounded-md px-3 py-1.5 text-xs font-semibold opacity-80 " +
+            "cursor-not-allowed rounded-md px-3 py-1.5 text-xs font-semibold disabled:opacity-100 " +
             ("active" in btn && btn.active
               ? "bg-status-blue text-white"
-              : "border border-border bg-card text-foreground/70")
+              : "border border-border bg-card text-foreground")
           }
         >
           {btn.label}
@@ -145,8 +148,11 @@ const _TAG_COLOR_MAP: Record<
 };
 
 function TagLegend() {
+  // Legacy renders the tag row inline on the page background — no
+  // card wrapper — with Title Case pill labels. The hint text floats
+  // to the right edge.
   return (
-    <div className="mb-3 flex flex-wrap items-center gap-3 rounded-lg border border-border bg-card px-3 py-2">
+    <div className="mb-3 flex flex-wrap items-center gap-3">
       <span className="text-[0.65rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
         Tags:
       </span>
@@ -155,7 +161,7 @@ function TagLegend() {
           <li key={t.id}>
             <span
               className={
-                "rounded-md border px-2 py-1 text-[0.65rem] font-semibold uppercase tracking-wider " +
+                "rounded-md border px-2 py-0.5 text-[0.7rem] font-semibold " +
                 _TAG_COLOR_MAP[t.color]
               }
             >
@@ -169,7 +175,7 @@ function TagLegend() {
             disabled
             aria-disabled="true"
             title={HOUSING_BACKEND_HINT}
-            className="cursor-not-allowed rounded-md border border-dashed border-border px-2 py-1 text-[0.65rem] font-semibold uppercase tracking-wider text-status-blue opacity-70"
+            className="cursor-not-allowed rounded-md border border-dashed border-border px-2 py-0.5 text-[0.7rem] font-semibold text-status-blue disabled:opacity-100"
           >
             + Tag
           </button>
