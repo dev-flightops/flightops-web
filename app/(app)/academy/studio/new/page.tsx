@@ -18,8 +18,8 @@ export default async function NewCoursePage() {
     <div className="mx-auto max-w-2xl px-4 py-8 sm:px-6">
       <header className="mb-6">
         <p className="text-xs font-semibold uppercase tracking-[0.06em] text-muted-foreground">
-          <Link href="/academy/manage" className="hover:text-foreground">
-            ← Manage courses
+          <Link href="/academy/studio" className="hover:text-foreground">
+            ← Studio
           </Link>
         </p>
         <h1 className="mt-2 text-2xl font-bold tracking-tight">
