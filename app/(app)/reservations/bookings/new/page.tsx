@@ -9,7 +9,13 @@ import { BookingForm } from "./booking-form";
 export default async function NewBookingPage({
   searchParams,
 }: {
-  searchParams: Promise<{ customer?: string }>;
+  searchParams: Promise<{
+    customer?: string;
+    origin?: string;
+    destination?: string;
+    date?: string;
+    pax?: string;
+  }>;
 }) {
   const params = await searchParams;
   // Server-side prefetch: customers (searchable but a short seed list
@@ -64,6 +70,12 @@ export default async function NewBookingPage({
           customers={customers}
           aircraft={aircraft}
           preselectCustomerId={params.customer ?? null}
+          prefill={{
+            origin: params.origin ?? null,
+            destination: params.destination ?? null,
+            date: params.date ?? null,
+            pax: params.pax ? Number(params.pax) || null : null,
+          }}
         />
       )}
     </div>

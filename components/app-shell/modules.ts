@@ -184,10 +184,21 @@ export const DEPARTMENTS: Department[] = [
      * pathPrefixes here so the sub-nav renders correctly on both surfaces.
      */
     pathPrefixes: ["/reservations"],
+    /**
+     * Sub-nav order matches legacy peregrineflight.com/reservations/:
+     *   New Booking · Fleet Board · Customers · Charter
+     *
+     * "New Booking" is the search-flights landing (mirrors the legacy
+     * shopping-style form); "Fleet Board" is the day-grouped bookings
+     * list (dispatcher view). Quyana / Fares / Scripts from legacy are
+     * queued for M3 follow-up (loyalty + fare-class inventory + saved
+     * scripts).
+     */
     children: [
-      { id: "reservations-board", label: "Fleet Board", href: "/reservations", status: "live", department: "reservations" },
-      { id: "reservations-new", label: "New Booking", href: "/reservations/bookings/new", status: "live", department: "reservations" },
+      { id: "reservations-search", label: "New Booking", href: "/reservations", status: "live", department: "reservations" },
+      { id: "reservations-board", label: "Fleet Board", href: "/reservations/fleet-board", status: "live", department: "reservations" },
       { id: "reservations-customers", label: "Customers", href: "/reservations/customers", status: "live", department: "reservations" },
+      { id: "reservations-charter", label: "Charter", href: "/reservations/charter", status: "live", department: "reservations" },
     ],
   },
   {
