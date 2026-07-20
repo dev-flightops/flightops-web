@@ -4,13 +4,14 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import { ApiError } from "@/lib/api/client";
-import { createCustomer } from "@/lib/api/reservations";
+import { CUSTOMER_TYPES, type CustomerType, createCustomer } from "@/lib/api/reservations";
 
 const _schema = z.object({
   full_name: z.string().trim().min(1, "Name is required.").max(200),
   company_name: z.string().trim().max(200).optional(),
   email: z.string().trim().email("Invalid email.").optional().or(z.literal("")),
   phone: z.string().trim().max(40).optional(),
+  customer_type: z.enum(CUSTOMER_TYPES as unknown as [string, ...string[]]),
   notes: z.string().trim().max(4000).optional(),
 });
 
@@ -29,6 +30,7 @@ export async function createCustomerAction(
     company_name: formData.get("company_name") ?? "",
     email: formData.get("email") ?? "",
     phone: formData.get("phone") ?? "",
+    customer_type: formData.get("customer_type") ?? "individual",
     notes: formData.get("notes") ?? "",
   });
   if (!parsed.success) {
@@ -52,6 +54,7 @@ export async function createCustomerAction(
       company_name: v.company_name || null,
       email: v.email || null,
       phone: v.phone || null,
+      customer_type: v.customer_type as CustomerType,
       notes: v.notes || null,
     });
     newId = created.id;
@@ -75,5 +78,5 @@ export async function createCustomerAction(
     };
   }
 
-  redirect(`/reservations/customers/${newId}?created=1`);
+  redirect(`/customers/${newId}?created=1`);
 }

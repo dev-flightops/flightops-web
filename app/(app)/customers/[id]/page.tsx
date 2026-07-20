@@ -4,6 +4,7 @@ import { notFound, redirect } from "next/navigation";
 import { ApiError } from "@/lib/api/client";
 import {
   BOOKING_STATUS_LABELS,
+  CUSTOMER_TYPE_LABELS,
   type Booking,
   type Customer,
   getCustomer,
@@ -42,7 +43,7 @@ export default async function CustomerDetailPage({
     <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
       <header className="mb-6">
         <p className="text-xs font-semibold uppercase tracking-[0.06em] text-muted-foreground">
-          <Link href="/reservations/customers" className="hover:text-foreground">
+          <Link href="/customers" className="hover:text-foreground">
             ← Customers
           </Link>
         </p>
@@ -71,6 +72,10 @@ export default async function CustomerDetailPage({
       ) : null}
 
       <section className="mb-6 space-y-3 rounded-lg border border-border bg-card p-5">
+        <DetailRow
+          label="Type"
+          value={CUSTOMER_TYPE_LABELS[customer.customer_type]}
+        />
         <DetailRow label="Email" value={customer.email ?? "—"} />
         <DetailRow label="Phone" value={customer.phone ?? "—"} />
         {customer.notes ? (

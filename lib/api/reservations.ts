@@ -10,12 +10,33 @@ import { apiFetch } from "./client";
 // Customers
 // ============================================================================
 
+export type CustomerType =
+  | "individual"
+  | "corporate"
+  | "government"
+  | "non_profit";
+
+export const CUSTOMER_TYPES: readonly CustomerType[] = [
+  "individual",
+  "corporate",
+  "government",
+  "non_profit",
+] as const;
+
+export const CUSTOMER_TYPE_LABELS: Record<CustomerType, string> = {
+  individual: "Individual",
+  corporate: "Corporate",
+  government: "Government",
+  non_profit: "Non-Profit",
+};
+
 export interface Customer {
   id: string;
   full_name: string;
   company_name: string | null;
   email: string | null;
   phone: string | null;
+  customer_type: CustomerType;
   notes: string | null;
   archived_at: string | null;
   created_at: string;
@@ -29,6 +50,7 @@ export interface CustomerListResponse {
 
 export interface ListCustomersParams {
   q?: string;
+  customer_type?: CustomerType;
   include_archived?: boolean;
   limit?: number;
   offset?: number;
@@ -37,6 +59,7 @@ export interface ListCustomersParams {
 function _customersQs(p: ListCustomersParams): string {
   const s = new URLSearchParams();
   if (p.q) s.set("q", p.q);
+  if (p.customer_type) s.set("customer_type", p.customer_type);
   if (p.include_archived) s.set("include_archived", "true");
   if (p.limit !== undefined) s.set("limit", String(p.limit));
   if (p.offset !== undefined) s.set("offset", String(p.offset));
@@ -61,6 +84,7 @@ export interface CreateCustomerInput {
   company_name?: string | null;
   email?: string | null;
   phone?: string | null;
+  customer_type?: CustomerType;
   notes?: string | null;
 }
 
@@ -78,6 +102,7 @@ export interface UpdateCustomerInput {
   company_name?: string | null;
   email?: string | null;
   phone?: string | null;
+  customer_type?: CustomerType;
   notes?: string | null;
   archived?: boolean;
 }
