@@ -16,14 +16,23 @@ function _defaultDeparture(): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
+export interface BookingPrefill {
+  origin: string | null;
+  destination: string | null;
+  date: string | null;
+  pax: number | null;
+}
+
 export function BookingForm({
   customers,
   aircraft,
   preselectCustomerId,
+  prefill,
 }: {
   customers: Customer[];
   aircraft: Array<{ id: string; tail_number: string; model: string | null }>;
   preselectCustomerId: string | null;
+  prefill?: BookingPrefill;
 }) {
   const [state, formAction, pending] = useActionState(
     createBookingAction,
@@ -78,6 +87,7 @@ export function BookingForm({
             required
             maxLength={10}
             placeholder="PANC"
+            defaultValue={prefill?.origin ?? ""}
             className="ff-input uppercase"
             autoComplete="off"
           />
@@ -94,6 +104,7 @@ export function BookingForm({
             required
             maxLength={10}
             placeholder="PABE"
+            defaultValue={prefill?.destination ?? ""}
             className="ff-input uppercase"
             autoComplete="off"
           />
@@ -112,7 +123,7 @@ export function BookingForm({
             name="requested_departure_at_local"
             type="datetime-local"
             required
-            defaultValue={_defaultDeparture()}
+            defaultValue={prefill?.date ?? _defaultDeparture()}
             className="ff-input"
           />
         </Field>
@@ -128,7 +139,7 @@ export function BookingForm({
             min={0}
             max={999}
             required
-            defaultValue={1}
+            defaultValue={prefill?.pax ?? 1}
             className="ff-input"
           />
         </Field>
