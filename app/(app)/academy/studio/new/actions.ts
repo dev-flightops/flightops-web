@@ -5,7 +5,9 @@ import { z } from "zod";
 
 import {
   COURSE_CATEGORIES,
+  COURSE_PUBLISH_STATUSES,
   type CourseCategory,
+  type CoursePublishStatus,
   createCourse,
 } from "@/lib/api/academy";
 import { ApiError } from "@/lib/api/client";
@@ -21,7 +23,9 @@ const _schema = z.object({
       (n) => Number.isFinite(n) && n >= 0 && n <= 3650,
       "Cert valid days must be 0-3650.",
     ),
-  is_active: z.string().optional(),
+  publish_status: z.enum(
+    COURSE_PUBLISH_STATUSES as unknown as [string, ...string[]],
+  ),
 });
 
 export interface NewCourseFormState {
@@ -39,7 +43,7 @@ export async function createCourseAction(
     description: formData.get("description") ?? "",
     category: formData.get("category") ?? "",
     cert_valid_days: formData.get("cert_valid_days") ?? "365",
-    is_active: formData.get("is_active") ?? "",
+    publish_status: formData.get("publish_status") ?? "draft",
   });
   if (!parsed.success) {
     const fieldErrors: Record<string, string> = {};
@@ -62,7 +66,7 @@ export async function createCourseAction(
       description: v.description || null,
       category: v.category as CourseCategory,
       cert_valid_days: v.cert_valid_days,
-      is_active: v.is_active === "on",
+      publish_status: v.publish_status as CoursePublishStatus,
     });
     newId = created.id;
   } catch (err) {
@@ -77,5 +81,5 @@ export async function createCourseAction(
       message: "Could not reach academy-service.",
     };
   }
-  redirect(`/academy/manage/${newId}?created=1`);
+  redirect(`/academy/studio/${newId}?created=1`);
 }

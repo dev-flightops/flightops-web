@@ -4,14 +4,17 @@ import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import {
   COURSE_CATEGORY_LABELS,
+  COURSE_PUBLISH_STATUS_LABELS,
   type Course,
   listCourses,
 } from "@/lib/api/academy";
 import { ApiError } from "@/lib/api/client";
 
+import { AcademyHeader } from "../academy-header";
+
 const ADMIN_ROLES = new Set(["chief_pilot", "exec_admin"]);
 
-export default async function ManageCoursesPage() {
+export default async function StudioPage() {
   const session = await auth();
   const roles = new Set(session?.roles ?? []);
   if (![...roles].some((r) => ADMIN_ROLES.has(r))) {
@@ -23,7 +26,7 @@ export default async function ManageCoursesPage() {
   let loadError: string | null = null;
   try {
     const response = await listCourses({
-      include_inactive: true,
+      include_all_statuses: true,
       limit: 200,
     });
     courses = response.items;
@@ -37,30 +40,21 @@ export default async function ManageCoursesPage() {
   }
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
-      <header className="mb-6 flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.06em] text-muted-foreground">
-            <Link href="/academy" className="hover:text-foreground">
-              ← Academy
-            </Link>
-          </p>
-          <h1 className="mt-2 text-2xl font-bold tracking-tight">
-            Manage Courses
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Create courses + edit lessons. Toggle Active to hide a
-            course from the public catalog without breaking in-flight
-            enrollments.
-          </p>
-        </div>
+    <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6">
+      <AcademyHeader activeSection="studio" />
+
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <p className="text-sm text-muted-foreground">
+          Author + publish courses. Toggle Draft / Published / Archived
+          to control visibility without breaking in-flight enrollments.
+        </p>
         <Link
-          href="/academy/manage/new"
-          className="rounded-md border border-status-blue bg-status-blue/15 px-3 py-1.5 text-xs font-semibold text-status-blue hover:bg-status-blue/20"
+          href="/academy/studio/new"
+          className="rounded-md bg-status-blue px-4 py-2 text-sm font-semibold text-white hover:brightness-110"
         >
           + New Course
         </Link>
-      </header>
+      </div>
 
       {loadError ? (
         <div
@@ -76,7 +70,7 @@ export default async function ManageCoursesPage() {
           </p>
           <p className="mt-2 text-xs text-muted-foreground/70">
             <Link
-              href="/academy/manage/new"
+              href="/academy/studio/new"
               className="text-status-blue hover:underline"
             >
               Create the first course
@@ -131,17 +125,19 @@ export default async function ManageCoursesPage() {
                       <span
                         className={
                           "rounded border px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider " +
-                          (c.is_active
+                          (c.publish_status === "published"
                             ? "border-status-green/40 bg-status-green/10 text-status-green"
-                            : "border-border bg-muted/30 text-muted-foreground")
+                            : c.publish_status === "draft"
+                              ? "border-status-yellow/40 bg-status-yellow/10 text-status-yellow"
+                              : "border-border bg-muted/30 text-muted-foreground")
                         }
                       >
-                        {c.is_active ? "Active" : "Inactive"}
+                        {COURSE_PUBLISH_STATUS_LABELS[c.publish_status]}
                       </span>
                     </td>
                     <td className="whitespace-nowrap px-4 py-3 text-right">
                       <Link
-                        href={`/academy/manage/${c.id}`}
+                        href={`/academy/studio/${c.id}`}
                         className="text-xs font-semibold text-status-blue hover:underline"
                       >
                         Edit →

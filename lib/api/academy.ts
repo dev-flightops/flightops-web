@@ -10,27 +10,62 @@ import { apiFetch } from "./client";
 // Types
 // ============================================================================
 
+/**
+ * 10 operational categories matching legacy peregrineflight's Course
+ * Library sidebar. Category order below is display order in the
+ * sidebar — legacy groups operational-first (Flight Ops / Dispatch /
+ * Maintenance) before broader ones (Records / Admin / General).
+ */
 export type CourseCategory =
-  | "recurrent"
-  | "new_hire"
-  | "elective"
-  | "regulatory"
-  | "safety";
+  | "flight_operations"
+  | "dispatch"
+  | "maintenance"
+  | "safety"
+  | "compliance"
+  | "ground_operations_ramp"
+  | "customer_service"
+  | "records"
+  | "administration"
+  | "general";
 
 export const COURSE_CATEGORIES: readonly CourseCategory[] = [
-  "recurrent",
-  "new_hire",
-  "elective",
-  "regulatory",
+  "flight_operations",
+  "dispatch",
+  "maintenance",
   "safety",
+  "compliance",
+  "ground_operations_ramp",
+  "customer_service",
+  "records",
+  "administration",
+  "general",
 ] as const;
 
 export const COURSE_CATEGORY_LABELS: Record<CourseCategory, string> = {
-  recurrent: "Recurrent",
-  new_hire: "New Hire",
-  elective: "Elective",
-  regulatory: "Regulatory",
+  flight_operations: "Flight Operations",
+  dispatch: "Dispatch",
+  maintenance: "Maintenance",
   safety: "Safety",
+  compliance: "Compliance",
+  ground_operations_ramp: "Ground Operations / Ramp",
+  customer_service: "Customer Service",
+  records: "Records",
+  administration: "Administration",
+  general: "General — Company Wide",
+};
+
+export type CoursePublishStatus = "draft" | "published" | "archived";
+
+export const COURSE_PUBLISH_STATUSES: readonly CoursePublishStatus[] = [
+  "draft",
+  "published",
+  "archived",
+] as const;
+
+export const COURSE_PUBLISH_STATUS_LABELS: Record<CoursePublishStatus, string> = {
+  draft: "Draft",
+  published: "Published",
+  archived: "Archived",
 };
 
 export type EnrollmentStatus = "in_progress" | "completed" | "expired";
@@ -56,6 +91,10 @@ export interface Course {
   title: string;
   description: string | null;
   category: CourseCategory;
+  publish_status: CoursePublishStatus;
+  // Convenience mirror of `publish_status === 'published'`. Backend
+  // computes + returns both so the catalog card can render a
+  // draft/archived badge without an extra client-side compare.
   is_active: boolean;
   cert_valid_days: number;
   lesson_count: number;
@@ -117,7 +156,8 @@ export interface EnrollmentListResponse {
 export interface ListCoursesParams {
   q?: string;
   category?: CourseCategory;
-  include_inactive?: boolean;
+  publish_status?: CoursePublishStatus;
+  include_all_statuses?: boolean;
   limit?: number;
   offset?: number;
 }
@@ -126,7 +166,8 @@ function _coursesQs(p: ListCoursesParams): string {
   const s = new URLSearchParams();
   if (p.q) s.set("q", p.q);
   if (p.category) s.set("category", p.category);
-  if (p.include_inactive) s.set("include_inactive", "true");
+  if (p.publish_status) s.set("publish_status", p.publish_status);
+  if (p.include_all_statuses) s.set("include_all_statuses", "true");
   if (p.limit !== undefined) s.set("limit", String(p.limit));
   if (p.offset !== undefined) s.set("offset", String(p.offset));
   const qs = s.toString();
@@ -148,7 +189,7 @@ export interface CreateCourseInput {
   description?: string | null;
   category?: CourseCategory;
   cert_valid_days?: number;
-  is_active?: boolean;
+  publish_status?: CoursePublishStatus;
 }
 
 export async function createCourse(input: CreateCourseInput): Promise<Course> {
@@ -163,7 +204,7 @@ export interface UpdateCourseInput {
   description?: string | null;
   category?: CourseCategory;
   cert_valid_days?: number;
-  is_active?: boolean;
+  publish_status?: CoursePublishStatus;
 }
 
 export async function updateCourse(

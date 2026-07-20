@@ -5,6 +5,8 @@ import { useActionState } from "react";
 import {
   COURSE_CATEGORIES,
   COURSE_CATEGORY_LABELS,
+  COURSE_PUBLISH_STATUSES,
+  COURSE_PUBLISH_STATUS_LABELS,
 } from "@/lib/api/academy";
 
 import {
@@ -99,18 +101,20 @@ export function NewCourseForm() {
         </Field>
       </div>
 
-      <label className="flex items-start gap-2 rounded-md border border-border bg-card/40 px-3 py-2.5">
-        <input
-          type="checkbox"
-          name="is_active"
-          defaultChecked
-          className="mt-0.5"
-        />
-        <span className="text-xs text-foreground/80">
-          <span className="font-semibold">Active</span> — appears in the
-          public catalog. Turn off to hide from learners while you draft.
-        </span>
-      </label>
+      <Field label="Publish status" name="publish_status">
+        <select
+          id="publish_status"
+          name="publish_status"
+          defaultValue="draft"
+          className="ff"
+        >
+          {COURSE_PUBLISH_STATUSES.map((s) => (
+            <option key={s} value={s}>
+              {COURSE_PUBLISH_STATUS_LABELS[s]}
+            </option>
+          ))}
+        </select>
+      </Field>
 
       <div className="flex items-center justify-end">
         <button

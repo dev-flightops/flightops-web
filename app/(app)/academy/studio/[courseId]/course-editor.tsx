@@ -2,13 +2,19 @@
 
 import { useActionState, useState } from "react";
 
-import type { CourseDetail, Lesson } from "@/lib/api/academy";
+import {
+  COURSE_PUBLISH_STATUSES,
+  COURSE_PUBLISH_STATUS_LABELS,
+  type CourseDetail,
+  type CoursePublishStatus,
+  type Lesson,
+} from "@/lib/api/academy";
 
 import {
   addLessonAction,
   type AdminActionState,
   deleteLessonAction,
-  toggleActiveAction,
+  updatePublishStatusAction,
   updateLessonAction,
 } from "./actions";
 
@@ -17,38 +23,52 @@ const _initial: AdminActionState = { status: "idle" };
 export function CourseEditor({ course }: { course: CourseDetail }) {
   return (
     <div className="space-y-6">
-      <ActiveToggle course={course} />
+      <PublishStatusPicker course={course} />
       <LessonList course={course} />
       <AddLessonForm courseId={course.id} />
     </div>
   );
 }
 
-function ActiveToggle({ course }: { course: CourseDetail }) {
+function PublishStatusPicker({ course }: { course: CourseDetail }) {
   const [state, formAction, pending] = useActionState(
-    toggleActiveAction,
+    updatePublishStatusAction,
     _initial,
   );
-  const [isActive, setIsActive] = useState(course.is_active);
+  const [status, setStatus] = useState<CoursePublishStatus>(
+    course.publish_status,
+  );
   return (
     <section className="rounded-lg border border-border bg-card p-4">
       <h2 className="mb-3 text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
-        Visibility
+        Publish status
       </h2>
       {state.status === "error" && state.message ? (
         <ErrorBanner message={state.message} />
       ) : null}
       <form action={formAction} className="flex flex-wrap items-center gap-3">
         <input type="hidden" name="course_id" value={course.id} />
-        <label className="flex items-center gap-2 text-sm">
-          <input
-            type="checkbox"
-            name="is_active"
-            checked={isActive}
-            onChange={(e) => setIsActive(e.target.checked)}
-          />
-          <span>Active — visible in the public catalog</span>
-        </label>
+        <select
+          name="publish_status"
+          value={status}
+          onChange={(e) =>
+            setStatus(e.target.value as CoursePublishStatus)
+          }
+          className="rounded-md border border-border bg-background px-3 py-1.5 text-xs outline-none focus:border-primary"
+        >
+          {COURSE_PUBLISH_STATUSES.map((s) => (
+            <option key={s} value={s}>
+              {COURSE_PUBLISH_STATUS_LABELS[s]}
+            </option>
+          ))}
+        </select>
+        <span className="text-xs text-muted-foreground">
+          {status === "draft"
+            ? "Hidden from learners while you edit."
+            : status === "published"
+              ? "Visible in the public catalog."
+              : "Hidden from the catalog; existing enrollments still work."}
+        </span>
         <button
           type="submit"
           disabled={pending}

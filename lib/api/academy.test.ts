@@ -25,11 +25,23 @@ const mockedApiFetch = vi.mocked(apiFetch);
 describe("academy API client", () => {
   // ---- Courses -----------------------------------------------------------
 
-  it("listCourses composes q + category filters", async () => {
+  it("listCourses composes q + category + status filters", async () => {
     mockedApiFetch.mockResolvedValueOnce({ items: [], total: 0 });
-    await listCourses({ q: "icing", category: "safety", include_inactive: true });
+    await listCourses({
+      q: "icing",
+      category: "safety",
+      publish_status: "published",
+    });
     expect(mockedApiFetch).toHaveBeenCalledWith(
-      "/academy/courses?q=icing&category=safety&include_inactive=true",
+      "/academy/courses?q=icing&category=safety&publish_status=published",
+    );
+  });
+
+  it("listCourses forwards include_all_statuses (Studio view)", async () => {
+    mockedApiFetch.mockResolvedValueOnce({ items: [], total: 0 });
+    await listCourses({ include_all_statuses: true });
+    expect(mockedApiFetch).toHaveBeenCalledWith(
+      "/academy/courses?include_all_statuses=true",
     );
   });
 
@@ -47,19 +59,22 @@ describe("academy API client", () => {
 
   it("createCourse POSTs the body", async () => {
     mockedApiFetch.mockResolvedValueOnce({} as never);
-    await createCourse({ title: "Refresher", category: "recurrent" });
+    await createCourse({ title: "Refresher", category: "flight_operations" });
     expect(mockedApiFetch).toHaveBeenCalledWith("/academy/courses", {
       method: "POST",
-      body: JSON.stringify({ title: "Refresher", category: "recurrent" }),
+      body: JSON.stringify({
+        title: "Refresher",
+        category: "flight_operations",
+      }),
     });
   });
 
-  it("updateCourse PATCHes", async () => {
+  it("updateCourse PATCHes publish_status", async () => {
     mockedApiFetch.mockResolvedValueOnce({} as never);
-    await updateCourse("c-1", { is_active: false });
+    await updateCourse("c-1", { publish_status: "archived" });
     expect(mockedApiFetch).toHaveBeenCalledWith("/academy/courses/c-1", {
       method: "PATCH",
-      body: JSON.stringify({ is_active: false }),
+      body: JSON.stringify({ publish_status: "archived" }),
     });
   });
 

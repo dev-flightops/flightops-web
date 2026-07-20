@@ -168,9 +168,11 @@ export const DEPARTMENTS: Department[] = [
      */
     pathPrefixes: ["/academy"],
     children: [
-      { id: "academy-catalog", label: "Catalog", href: "/academy", status: "live", department: "academy" },
-      { id: "academy-mine", label: "My Enrollments", href: "/academy/mine", status: "live", department: "academy" },
-      { id: "academy-manage", label: "Manage", href: "/academy/manage", status: "live", department: "academy" },
+      { id: "academy-dashboard",      label: "Dashboard",      href: "/academy/dashboard",   status: "live", department: "academy" },
+      { id: "academy-course-library", label: "Course Library", href: "/academy",             status: "live", department: "academy" },
+      { id: "academy-assignments",    label: "Assignments",    href: "/academy/assignments", status: "live", department: "academy" },
+      { id: "academy-reports",        label: "Reports",        href: "/academy/reports",     status: "live", department: "academy" },
+      { id: "academy-studio",         label: "Studio",         href: "/academy/studio",      status: "live", department: "academy" },
     ],
   },
   {

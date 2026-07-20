@@ -30,21 +30,24 @@ async function _wrap(
     }
     return { status: "error", message: "Could not reach academy-service." };
   }
-  revalidatePath(`/academy/manage/${courseId}`);
-  revalidatePath("/academy/manage");
+  revalidatePath(`/academy/studio/${courseId}`);
+  revalidatePath("/academy/studio");
   revalidatePath("/academy");
   return { status: "ok" };
 }
 
-export async function toggleActiveAction(
+export async function updatePublishStatusAction(
   _prev: AdminActionState,
   formData: FormData,
 ): Promise<AdminActionState> {
   const courseId = String(formData.get("course_id") ?? "");
-  const isActive = formData.get("is_active") === "on";
+  const raw = String(formData.get("publish_status") ?? "");
   if (!courseId) return { status: "error", message: "Missing course id." };
+  if (raw !== "draft" && raw !== "published" && raw !== "archived") {
+    return { status: "error", message: "Invalid publish status." };
+  }
   return _wrap(courseId, () =>
-    updateCourse(courseId, { is_active: isActive }),
+    updateCourse(courseId, { publish_status: raw }),
   );
 }
 

@@ -1,29 +1,42 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 
 import { auth } from "@/auth";
 import {
   COURSE_CATEGORIES,
   COURSE_CATEGORY_LABELS,
+  COURSE_PUBLISH_STATUSES,
+  COURSE_PUBLISH_STATUS_LABELS,
   type Course,
   type CourseCategory,
+  type CoursePublishStatus,
   listCourses,
 } from "@/lib/api/academy";
 import { ApiError } from "@/lib/api/client";
 
+import { AcademyHeader } from "./academy-header";
+
 const ADMIN_ROLES = new Set(["chief_pilot", "exec_admin"]);
 
 /**
- * /academy — Public catalog.
+ * /academy — Peregrine Academy / Course Library.
  *
- * Any authenticated user can browse. Chief Pilot / Exec Admin see a
- * "Manage" affordance in the header + can view inactive courses via
- * ?include_inactive=1. Non-admin users always get the is_active=true
- * filter regardless of the URL param.
+ * Layout matches legacy peregrineflight.com/academy/:
+ *   * "Peregrine Academy" header with the graduation-cap glyph
+ *   * Section sub-nav (Dashboard | Course Library | Assignments | Reports | Studio)
+ *   * Search + status filter chips (All / Published / Draft / Archived) + Create Course
+ *   * Two-column body: category sidebar (10 legacy buckets + total) on the left,
+ *     course grid on the right
+ *
+ * Legacy shows courses regardless of publish_status for admins on this
+ * page (Course Library = admin surface), so we default to
+ * ?include_all_statuses=true when the caller is an admin. Learners
+ * default to Published only and skip the status chips.
  */
-export default async function AcademyCatalogPage({
+export default async function CourseLibraryPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; category?: string; include_inactive?: string }>;
+  searchParams: Promise<{ q?: string; category?: string; status?: string }>;
 }) {
   const session = await auth();
   const roles = new Set(session?.roles ?? []);
@@ -31,21 +44,22 @@ export default async function AcademyCatalogPage({
 
   const params = await searchParams;
   const q = params.q?.trim() ?? "";
-  const category = _validCategory(params.category);
-  const includeInactive = isAdmin && params.include_inactive === "1";
+  const activeCategory = _validCategory(params.category);
+  const publishStatus = _validStatus(params.status);
 
+  // Admins see draft + archived + published on Course Library; learners
+  // only see published (Studio is where drafts live for them anyway).
   let courses: Course[] = [];
-  let total = 0;
   let loadError: string | null = null;
   try {
     const response = await listCourses({
       q: q || undefined,
-      category,
-      include_inactive: includeInactive,
+      category: activeCategory,
+      publish_status: publishStatus ?? undefined,
+      include_all_statuses: isAdmin && !publishStatus,
       limit: 200,
     });
     courses = response.items;
-    total = response.total;
   } catch (err) {
     const status = err instanceof ApiError ? err.status : 0;
     loadError =
@@ -54,152 +68,298 @@ export default async function AcademyCatalogPage({
         : "Course catalog unavailable. Try refreshing in a moment.";
   }
 
-  const grouped = _groupByCategory(courses);
+  // Sidebar counts. Compute across the fetched set — small enough
+  // (≤200 rows) that a separate aggregate query isn't worth it.
+  const categoryCounts = new Map<CourseCategory, number>();
+  for (const c of courses) {
+    categoryCounts.set(c.category, (categoryCounts.get(c.category) ?? 0) + 1);
+  }
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
-      <header className="mb-6 flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Academy</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Training courses — recurrent, new-hire, and elective. Enrol in
-            anything relevant to your role.
-          </p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <Link
-            href="/academy/mine"
+    <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6">
+      <AcademyHeader activeSection="course-library" />
+
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <form
+          method="GET"
+          className="flex flex-wrap items-center gap-2"
+        >
+          {activeCategory ? (
+            <input type="hidden" name="category" value={activeCategory} />
+          ) : null}
+          {publishStatus ? (
+            <input type="hidden" name="status" value={publishStatus} />
+          ) : null}
+          <input
+            type="search"
+            name="q"
+            defaultValue={q}
+            placeholder="Search courses…"
+            className="rounded-md border border-border bg-background px-3 py-1.5 text-xs outline-none focus:border-primary"
+          />
+          <button
+            type="submit"
             className="rounded-md border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground/80 hover:bg-muted/20"
           >
-            My Enrollments
-          </Link>
+            Search
+          </button>
+        </form>
+
+        <div className="flex flex-wrap items-center gap-2">
+          {isAdmin ? (
+            <nav
+              aria-label="Filter by status"
+              className="flex flex-wrap items-center gap-1"
+            >
+              <StatusChip
+                href={_href({ q, category: activeCategory, status: null })}
+                label="All"
+                active={!publishStatus}
+              />
+              {/* Legacy chip order: All · Published · Draft · Archived. */}
+              {(["published", "draft", "archived"] as const).map((s) => (
+                <StatusChip
+                  key={s}
+                  href={_href({ q, category: activeCategory, status: s })}
+                  label={COURSE_PUBLISH_STATUS_LABELS[s]}
+                  active={publishStatus === s}
+                />
+              ))}
+            </nav>
+          ) : null}
           {isAdmin ? (
             <Link
-              href="/academy/manage"
-              className="rounded-md border border-status-blue bg-status-blue/15 px-3 py-1.5 text-xs font-semibold text-status-blue hover:bg-status-blue/20"
+              href="/academy/studio/new"
+              className="rounded-md bg-status-blue px-4 py-2 text-sm font-semibold text-white hover:brightness-110"
             >
-              Manage
+              + Create Course
             </Link>
           ) : null}
         </div>
-      </header>
+      </div>
 
-      <form method="GET" className="mb-4 flex flex-wrap items-center gap-2">
-        <input
-          type="search"
-          name="q"
-          defaultValue={q}
-          placeholder="Search course titles or descriptions…"
-          className="flex-1 min-w-0 rounded-md border border-border bg-background px-3 py-1.5 text-xs outline-none focus:border-primary"
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[16rem_1fr]">
+        <CategorySidebar
+          courses={courses}
+          activeCategory={activeCategory}
+          currentQ={q}
+          currentStatus={publishStatus}
+          categoryCounts={categoryCounts}
         />
-        <select
-          name="category"
-          defaultValue={category ?? ""}
-          className="rounded-md border border-border bg-background px-3 py-1.5 text-xs outline-none focus:border-primary"
-        >
-          <option value="">All categories</option>
-          {COURSE_CATEGORIES.map((c) => (
-            <option key={c} value={c}>
-              {COURSE_CATEGORY_LABELS[c]}
-            </option>
-          ))}
-        </select>
-        {isAdmin ? (
-          <label className="flex items-center gap-1 text-xs text-muted-foreground">
-            <input
-              type="checkbox"
-              name="include_inactive"
-              value="1"
-              defaultChecked={includeInactive}
+
+        <main>
+          {loadError ? (
+            <div
+              role="alert"
+              className="rounded-lg border border-border bg-card px-4 py-6 text-center text-sm text-muted-foreground"
+            >
+              {loadError}
+            </div>
+          ) : courses.length === 0 ? (
+            <EmptyState isAdmin={isAdmin} />
+          ) : (
+            <CourseGrid
+              courses={
+                activeCategory
+                  ? courses.filter((c) => c.category === activeCategory)
+                  : courses
+              }
+              isAdmin={isAdmin}
             />
-            Show inactive
-          </label>
-        ) : null}
-        <button
-          type="submit"
-          className="rounded-md border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground/80 hover:bg-muted/20"
-        >
-          Filter
-        </button>
-      </form>
-
-      {loadError ? (
-        <div
-          role="alert"
-          className="rounded-lg border border-border bg-card px-4 py-6 text-center text-sm text-muted-foreground"
-        >
-          {loadError}
-        </div>
-      ) : courses.length === 0 ? (
-        <div className="rounded-lg border border-border bg-card px-4 py-16 text-center">
-          <p className="text-sm text-muted-foreground">
-            {q || category
-              ? "No courses match those filters."
-              : "No courses yet."}
-          </p>
-          {isAdmin && !q && !category ? (
-            <p className="mt-2 text-xs text-muted-foreground/70">
-              <Link href="/academy/manage/new" className="text-status-blue hover:underline">
-                Create the first course
-              </Link>{" "}
-              to get started.
-            </p>
-          ) : null}
-        </div>
-      ) : (
-        <div className="space-y-6">
-          {grouped.map(({ category, items }) => (
-            <section key={category}>
-              <h2 className="mb-2 text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
-                {COURSE_CATEGORY_LABELS[category]}
-              </h2>
-              <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                {items.map((c) => (
-                  <CourseCard key={c.id} course={c} />
-                ))}
-              </ul>
-            </section>
-          ))}
-        </div>
-      )}
-
-      <p className="mt-6 text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
-        {total} course{total === 1 ? "" : "s"}
-      </p>
+          )}
+        </main>
+      </div>
     </div>
   );
 }
 
-function CourseCard({ course }: { course: Course }) {
+function _href(opts: {
+  q: string;
+  category: CourseCategory | undefined;
+  status: CoursePublishStatus | null;
+}): string {
+  const p = new URLSearchParams();
+  if (opts.q) p.set("q", opts.q);
+  if (opts.category) p.set("category", opts.category);
+  if (opts.status) p.set("status", opts.status);
+  const qs = p.toString();
+  return qs ? `/academy?${qs}` : "/academy";
+}
+
+function StatusChip({
+  href,
+  label,
+  active,
+}: {
+  href: string;
+  label: string;
+  active: boolean;
+}) {
   return (
-    <li>
-      <Link
-        href={`/academy/${course.id}`}
-        className="flex h-full min-w-0 flex-col rounded-lg border border-border bg-card p-4 hover:bg-muted/5"
+    <Link
+      href={href}
+      aria-current={active ? "page" : undefined}
+      className={
+        "rounded-md border px-2.5 py-1 text-xs font-semibold transition " +
+        (active
+          ? "border-status-blue bg-status-blue/15 text-status-blue"
+          : "border-border bg-card text-muted-foreground hover:text-foreground")
+      }
+    >
+      {label}
+    </Link>
+  );
+}
+
+function CategorySidebar({
+  courses,
+  activeCategory,
+  currentQ,
+  currentStatus,
+  categoryCounts,
+}: {
+  courses: Course[];
+  activeCategory: CourseCategory | undefined;
+  currentQ: string;
+  currentStatus: CoursePublishStatus | null;
+  categoryCounts: Map<CourseCategory, number>;
+}) {
+  return (
+    <aside className="self-start rounded-lg border border-border bg-card p-3 text-xs">
+      <SidebarItem
+        href={_href({ q: currentQ, category: undefined, status: currentStatus })}
+        label="All Courses"
+        count={courses.length}
+        active={!activeCategory}
+        bold
+      />
+      {COURSE_CATEGORIES.map((cat) => (
+        <SidebarItem
+          key={cat}
+          href={_href({ q: currentQ, category: cat, status: currentStatus })}
+          label={COURSE_CATEGORY_LABELS[cat]}
+          count={categoryCounts.get(cat) ?? 0}
+          active={activeCategory === cat}
+        />
+      ))}
+    </aside>
+  );
+}
+
+function SidebarItem({
+  href,
+  label,
+  count,
+  active,
+  bold,
+}: {
+  href: string;
+  label: string;
+  count: number;
+  active: boolean;
+  bold?: boolean;
+}) {
+  return (
+    <Link
+      href={href}
+      aria-current={active ? "page" : undefined}
+      className={
+        "flex items-baseline justify-between gap-2 rounded-md px-2 py-1.5 transition " +
+        (active
+          ? "bg-status-blue/15 text-status-blue"
+          : "text-muted-foreground hover:bg-muted/20 hover:text-foreground") +
+        (bold ? " font-semibold text-foreground" : "")
+      }
+    >
+      <span>{label}</span>
+      <span
+        className={
+          "tabular-nums text-[0.7rem] " +
+          (active ? "" : "text-muted-foreground/60")
+        }
       >
-        <div className="mb-1 flex items-baseline justify-between gap-2">
-          <span className="line-clamp-1 text-sm font-semibold">
-            {course.title}
-          </span>
-          {!course.is_active ? (
-            <span className="rounded border border-border bg-muted/30 px-1.5 py-0.5 text-[0.6rem] font-semibold uppercase tracking-wider text-muted-foreground">
-              Inactive
-            </span>
-          ) : null}
+        {count}
+      </span>
+    </Link>
+  );
+}
+
+function EmptyState({ isAdmin }: { isAdmin: boolean }) {
+  return (
+    <div className="rounded-lg border border-border bg-card px-4 py-16 text-center">
+      <p className="text-sm text-muted-foreground">No courses yet</p>
+      {isAdmin ? (
+        <div className="mt-4">
+          <Link
+            href="/academy/studio/new"
+            className="rounded-md bg-status-blue px-4 py-2 text-sm font-semibold text-white hover:brightness-110"
+          >
+            + Create Course
+          </Link>
         </div>
-        {course.description ? (
-          <p className="line-clamp-2 text-xs text-muted-foreground">
-            {course.description}
-          </p>
-        ) : null}
-        <p className="mt-2 text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
-          {course.lesson_count} lesson{course.lesson_count === 1 ? "" : "s"}
-          {course.cert_valid_days > 0
-            ? ` · Cert ${course.cert_valid_days}d`
-            : " · Cert never expires"}
-        </p>
-      </Link>
-    </li>
+      ) : null}
+    </div>
+  );
+}
+
+function CourseGrid({
+  courses,
+  isAdmin,
+}: {
+  courses: Course[];
+  isAdmin: boolean;
+}) {
+  if (courses.length === 0) {
+    return <EmptyState isAdmin={isAdmin} />;
+  }
+  return (
+    <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+      {courses.map((c) => (
+        <li key={c.id}>
+          <Link
+            href={`/academy/${c.id}`}
+            className="flex h-full min-w-0 flex-col rounded-lg border border-border bg-card p-4 hover:bg-muted/5"
+          >
+            <div className="mb-1 flex items-baseline justify-between gap-2">
+              <span className="line-clamp-1 text-sm font-semibold">
+                {c.title}
+              </span>
+              <PublishBadge status={c.publish_status} />
+            </div>
+            {c.description ? (
+              <p className="line-clamp-2 text-xs text-muted-foreground">
+                {c.description}
+              </p>
+            ) : null}
+            <p className="mt-2 text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
+              {COURSE_CATEGORY_LABELS[c.category]} · {c.lesson_count} lesson
+              {c.lesson_count === 1 ? "" : "s"}
+              {c.cert_valid_days > 0
+                ? ` · Cert ${c.cert_valid_days}d`
+                : " · Cert never expires"}
+            </p>
+          </Link>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function PublishBadge({ status }: { status: CoursePublishStatus }) {
+  if (status === "published") return null; // Common case — no badge.
+  const cls =
+    status === "draft"
+      ? "border-status-yellow/40 bg-status-yellow/10 text-status-yellow"
+      : "border-border bg-muted/30 text-muted-foreground";
+  return (
+    <span
+      className={
+        "rounded border px-1.5 py-0.5 text-[0.6rem] font-semibold uppercase tracking-wider " +
+        cls
+      }
+    >
+      {COURSE_PUBLISH_STATUS_LABELS[status]}
+    </span>
   );
 }
 
@@ -210,22 +370,9 @@ function _validCategory(raw: string | undefined): CourseCategory | undefined {
     : undefined;
 }
 
-function _groupByCategory(
-  items: Course[],
-): Array<{ category: CourseCategory; items: Course[] }> {
-  const groups = new Map<CourseCategory, Course[]>();
-  for (const c of items) {
-    if (!groups.has(c.category)) groups.set(c.category, []);
-    groups.get(c.category)!.push(c);
-  }
-  const order: CourseCategory[] = [
-    "recurrent",
-    "safety",
-    "regulatory",
-    "new_hire",
-    "elective",
-  ];
-  return order
-    .filter((cat) => groups.has(cat))
-    .map((cat) => ({ category: cat, items: groups.get(cat)! }));
+function _validStatus(raw: string | undefined): CoursePublishStatus | null {
+  if (!raw) return null;
+  return (COURSE_PUBLISH_STATUSES as readonly string[]).includes(raw)
+    ? (raw as CoursePublishStatus)
+    : null;
 }
