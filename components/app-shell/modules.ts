@@ -44,6 +44,7 @@ export type DepartmentId =
   | "ground-ops"
   | "maintenance"
   | "crew"
+  | "hr"
   | "safety"
   | "admin"
   | "settings"
@@ -265,6 +266,27 @@ export const DEPARTMENTS: Department[] = [
       { id: "duty-rest",     label: "Duty & Rest", status: "m3", department: "crew" },
       { id: "training",      label: "Training",    status: "m3", department: "crew" },
       { id: "crew-payroll",  label: "Payroll",     status: "m3", department: "crew" },
+    ],
+  },
+  {
+    id: "hr",
+    label: "HR",
+    status: "live",
+    /**
+     * Mirrors legacy `peregrineflight.com/employees/` sub-nav:
+     *   HR (active) · Payroll · Time Clock · Records
+     *
+     * HR = employee directory. Payroll + Time Clock are Marc's M3
+     * backend stories; Records points to the existing compliance
+     * surface (records-and-compliance overlaps operationally with
+     * employee training records).
+     */
+    pathPrefixes: ["/employees", "/payroll", "/time-clock"],
+    children: [
+      { id: "hr-employees",  label: "HR",        href: "/employees", status: "live", department: "hr" },
+      { id: "hr-payroll",    label: "Payroll",                       status: "m3",   department: "hr" },
+      { id: "hr-time-clock", label: "Time Clock",                    status: "m3",   department: "hr" },
+      { id: "hr-records",    label: "Records",   href: "/compliance", status: "live", department: "hr" },
     ],
   },
   {
