@@ -285,7 +285,7 @@ export const DEPARTMENTS: Department[] = [
     children: [
       { id: "hr-employees",  label: "HR",        href: "/employees", status: "live", department: "hr" },
       { id: "hr-payroll",    label: "Payroll",   href: "/payroll",   status: "live", department: "hr" },
-      { id: "hr-time-clock", label: "Time Clock",                    status: "m3",   department: "hr" },
+      { id: "hr-time-clock", label: "Time Clock", href: "/time-clock", status: "live", department: "hr" },
       { id: "hr-records",    label: "Records",   href: "/compliance", status: "live", department: "hr" },
     ],
   },
