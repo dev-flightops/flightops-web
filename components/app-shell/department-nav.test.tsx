@@ -102,16 +102,27 @@ describe("DepartmentNav", () => {
     expect(screen.queryByTestId("dept-nav-mel")).not.toBeInTheDocument();
     expect(screen.queryByTestId("dept-nav-squawks")).not.toBeInTheDocument();
 
-    // Fleet is the only live chip — it should be a real link.
-    expect(screen.getByTestId("dept-nav-fleet").tagName).toBe("A");
-    // Everything else is a disabled span with a milestone hint.
-    expect(screen.getByTestId("dept-nav-rts").tagName).toBe("SPAN");
-    expect(screen.getByTestId("dept-nav-rts")).toHaveAttribute(
-      "title",
-      "Coming in M3",
-    );
-    // MX Intel is M4 (AI-tier) — matches Fleet Brain / Intelligence
+    // Fleet + the 7 sub-pages shipped in #172 (Work Orders, RTS,
+    // Inventory, Expiration, Batch Trace, MX Clock, Availability) are
+    // all live — each should be a real link with a matching href.
+    for (const [id, href] of [
+      ["fleet", "/maintenance"],
+      ["work-orders", "/maintenance/work-orders"],
+      ["rts", "/maintenance/rts"],
+      ["inventory", "/maintenance/inventory"],
+      ["expiration", "/maintenance/expiration"],
+      ["batch-trace", "/maintenance/batch-trace"],
+      ["mx-clock", "/maintenance/mx-clock"],
+      ["availability", "/maintenance/availability"],
+    ] as const) {
+      const chip = screen.getByTestId(`dept-nav-${id}`);
+      expect(chip.tagName).toBe("A");
+      expect(chip).toHaveAttribute("href", href);
+    }
+    // MX Intel is still M4 (AI-tier) — renders as a disabled span with
+    // the milestone tooltip, matches Fleet Brain / Intelligence
     // accents in other depts.
+    expect(screen.getByTestId("dept-nav-mx-intel").tagName).toBe("SPAN");
     expect(screen.getByTestId("dept-nav-mx-intel")).toHaveAttribute(
       "title",
       "Coming in M4",
