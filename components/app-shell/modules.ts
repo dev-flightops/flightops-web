@@ -186,7 +186,7 @@ export const DEPARTMENTS: Department[] = [
      * under the Admin dept per legacy grouping; we exclude it from the
      * pathPrefixes here so the sub-nav renders correctly on both surfaces.
      */
-    pathPrefixes: ["/reservations", "/customers"],
+    pathPrefixes: ["/reservations", "/customers", "/manifest"],
     /**
      * Sub-nav order matches legacy peregrineflight.com/reservations/:
      *   New Booking · Fleet Board · Customers · Charter · Quyana ·
@@ -200,6 +200,7 @@ export const DEPARTMENTS: Department[] = [
     children: [
       { id: "reservations-search", label: "New Booking", href: "/reservations", status: "live", department: "reservations" },
       { id: "reservations-board", label: "Fleet Board", href: "/reservations/fleet-board", status: "live", department: "reservations" },
+      { id: "reservations-manifest", label: "Manifest", href: "/manifest", status: "live", department: "reservations" },
       { id: "reservations-customers", label: "Customers", href: "/customers", status: "live", department: "reservations" },
       { id: "reservations-charter", label: "Charter", href: "/reservations/charter", status: "live", department: "reservations" },
       { id: "reservations-quyana", label: "Quyana", href: "/reservations/quyana", status: "live", department: "reservations" },
