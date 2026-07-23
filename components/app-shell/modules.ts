@@ -245,14 +245,14 @@ export const DEPARTMENTS: Department[] = [
      * preserving legacy parity.
      */
     children: [
-      { id: "fleet",         label: "Fleet",         href: "/maintenance", status: "live", department: "maintenance" },
-      { id: "work-orders",   label: "Work Orders",   status: "m3", department: "maintenance" },
-      { id: "rts",           label: "RTS",           status: "m3", department: "maintenance" },
-      { id: "inventory",     label: "Inventory",     status: "m3", department: "maintenance" },
-      { id: "expiration",    label: "Expiration",    status: "m3", department: "maintenance" },
-      { id: "batch-trace",   label: "Batch Trace",   status: "m3", department: "maintenance" },
-      { id: "mx-clock",      label: "MX Clock",      status: "m3", department: "maintenance" },
-      { id: "availability",  label: "Availability",  status: "m3", department: "maintenance" },
+      { id: "fleet",         label: "Fleet",         href: "/maintenance",              status: "live", department: "maintenance" },
+      { id: "work-orders",   label: "Work Orders",   href: "/maintenance/work-orders",  status: "live", department: "maintenance" },
+      { id: "rts",           label: "RTS",           href: "/maintenance/rts",          status: "live", department: "maintenance" },
+      { id: "inventory",     label: "Inventory",     href: "/maintenance/inventory",    status: "live", department: "maintenance" },
+      { id: "expiration",    label: "Expiration",    href: "/maintenance/expiration",   status: "live", department: "maintenance" },
+      { id: "batch-trace",   label: "Batch Trace",   href: "/maintenance/batch-trace",  status: "live", department: "maintenance" },
+      { id: "mx-clock",      label: "MX Clock",      href: "/maintenance/mx-clock",     status: "live", department: "maintenance" },
+      { id: "availability",  label: "Availability",  href: "/maintenance/availability", status: "live", department: "maintenance" },
       { id: "mx-intel",      label: "MX Intel",      status: "m4", department: "maintenance", accent: "purple" },
     ],
   },
