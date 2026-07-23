@@ -35,6 +35,12 @@ function makeUser(overrides: Partial<UserResponse>): UserResponse {
     has_password: true,
     last_login_at: null,
     created_at: "2024-01-15T00:00:00Z",
+    emp_number: null,
+    title: null,
+    station: null,
+    employment_type: null,
+    hire_date: null,
+    termination_date: null,
     ...overrides,
   };
 }
@@ -110,6 +116,82 @@ describe("/employees", () => {
     expect(
       screen.getByRole("link", { name: "Active" }).getAttribute("aria-pressed"),
     ).toBe("true");
+  });
+
+  it("populates real employee columns from the backend when set", async () => {
+    listUsers.mockResolvedValue({
+      items: [
+        makeUser({
+          id: "u-1",
+          full_name: "Mark Chiklak",
+          emp_number: "PGRN-203",
+          title: "A&P",
+          station: "BET",
+          employment_type: "full_time",
+          hire_date: "2024-01-15",
+        }),
+      ],
+      total: 1,
+    });
+
+    await renderPage();
+
+    // Real emp_number wins over the derived fallback.
+    expect(screen.getByText("PGRN-203")).toBeDefined();
+    expect(screen.queryByText("PEREGRINE-DEMO-200")).toBeNull();
+    expect(screen.getByText("A&P")).toBeDefined();
+    expect(screen.getByText("BET")).toBeDefined();
+    expect(screen.getByText("Full Time")).toBeDefined();
+  });
+
+  it("shows 'Inactive' when is_active=false but no termination_date is set", async () => {
+    listUsers.mockResolvedValue({
+      items: [
+        makeUser({
+          id: "u-1",
+          full_name: "Leave Larry",
+          is_active: false,
+          termination_date: null,
+        }),
+      ],
+      total: 1,
+    });
+
+    await renderPage({ status: "all" });
+
+    // Row status badge shows Inactive. The "Terminated" filter chip is
+    // always in the DOM as a link, so scope the row-status assertion to
+    // <span> only.
+    const badge = screen
+      .getAllByText("Inactive")
+      .find((el) => el.tagName === "SPAN");
+    expect(badge).toBeDefined();
+    const terminatedSpan = screen
+      .queryAllByText("Terminated")
+      .find((el) => el.tagName === "SPAN");
+    expect(terminatedSpan).toBeUndefined();
+  });
+
+  it("shows 'Terminated' when is_active=false AND termination_date is set", async () => {
+    listUsers.mockResolvedValue({
+      items: [
+        makeUser({
+          id: "u-1",
+          full_name: "Left Bob",
+          is_active: false,
+          termination_date: "2026-06-30",
+        }),
+      ],
+      total: 1,
+    });
+
+    await renderPage({ status: "all" });
+
+    // Row-status badge only (filter chip is a link, not a span).
+    const badge = screen
+      .getAllByText("Terminated")
+      .find((el) => el.tagName === "SPAN");
+    expect(badge).toBeDefined();
   });
 
   it("terminated filter shows only inactive users + empty-state when none", async () => {
