@@ -63,6 +63,12 @@ function makeUser(overrides: Partial<UserResponse>): UserResponse {
     has_password: true,
     last_login_at: null,
     created_at: "2026-01-01T00:00:00Z",
+    emp_number: null,
+    title: null,
+    station: null,
+    employment_type: null,
+    hire_date: null,
+    termination_date: null,
     ...overrides,
   };
 }

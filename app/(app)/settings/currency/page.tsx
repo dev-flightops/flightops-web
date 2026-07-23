@@ -1,27 +1,54 @@
 import Link from "next/link";
 
+import { listCurrencyItems } from "@/lib/api/ops";
+import { ApiError } from "@/lib/api/client";
+import type { CurrencyItemRef } from "@/lib/api/types";
+
 /**
- * /settings/currency — legacy `templates/currency/item_manager.html`
- * (legacy path /currency/items).
+ * /settings/currency — legacy `templates/currency/item_manager.html`.
  *
- * Per-company currency item catalog. Header + New Custom Item CTA +
- * Default Training Package panel (auto-assign to new pilots) + item
- * list with per-item Edit / Deactivate / Archive. Interval types:
- * calendar month · rolling days · hard expiry · initial only. Item
- * flags: grace month · check event · examiner required · initial
- * only · aircraft-type specific.
+ * Per-tenant currency item catalog. Reads live from `/ops/currency-items`
+ * (M2 backend tail — includes both the 14 Part 135 defaults with
+ * tenant_id=NULL and any tenant-scoped customs). Defaults render with
+ * a "DEFAULT" badge and Edit/Deactivate disabled — the endpoint
+ * rejects mutations on them with 403.
  *
- * Backend not shipped in this route — the /compliance/crew-currency
- * page (M2-M-2/3) uses the pilot_currency_records table with 14
- * default Part 135 items, but the per-tenant catalog editor endpoints
- * are still Marc's M2 work. All CTAs disabled with milestone
- * tooltips.
+ * Add-item flow uses the existing `createCurrencyItem` API wrapper;
+ * this page ships as a list-first view — the modal / edit-row UI
+ * lands with an M3 follow-up now that the read path is live.
  */
 
-const BACKEND_HINT =
-  "Currency-item catalog editor ships with the crew-service (M2 backend)";
+const BACKEND_HINT_WRITE =
+  "Add / Edit is next up — the read side is live against /ops/currency-items";
 
-export default function SettingsCurrencyPage() {
+const INTERVAL_LABELS: Record<string, string> = {
+  calendar_month: "Calendar Mo.",
+  rolling_days: "Rolling Days",
+  hard_expiry: "Hard Expiry",
+  initial_only: "Initial Only",
+};
+
+export const dynamic = "force-dynamic";
+
+export default async function SettingsCurrencyPage() {
+  let items: CurrencyItemRef[] = [];
+  let loadError: string | null = null;
+  try {
+    const response = await listCurrencyItems({ include_inactive: true });
+    items = response.items;
+  } catch (err) {
+    const status = err instanceof ApiError ? err.status : 0;
+    loadError =
+      status === 401
+        ? "Your session expired — please sign in again."
+        : status === 403
+          ? "Chief Pilot or Exec Admin role required to view the currency-item catalog."
+          : "Currency items unavailable. Try refreshing in a moment.";
+  }
+
+  const defaults = items.filter((i) => i.is_default);
+  const customs = items.filter((i) => !i.is_default);
+
   return (
     <div className="mx-auto max-w-6xl px-4 py-6">
       <nav aria-label="Breadcrumb" className="mb-4 text-xs">
@@ -51,7 +78,7 @@ export default function SettingsCurrencyPage() {
             type="button"
             disabled
             aria-disabled="true"
-            title={BACKEND_HINT}
+            title={BACKEND_HINT_WRITE}
             className="cursor-not-allowed rounded-md bg-status-blue px-3 py-2 text-xs font-semibold text-white disabled:opacity-100"
           >
             + New Custom Item
@@ -59,45 +86,125 @@ export default function SettingsCurrencyPage() {
         </div>
       </header>
 
-      <section className="mb-5 rounded-lg border border-status-blue/30 bg-status-blue/5 px-4 py-4">
-        <div className="mb-3 flex items-center justify-between gap-3">
-          <div>
-            <h2 className="text-sm font-bold">Default Training Package</h2>
-            <p className="mt-0.5 text-xs text-muted-foreground">
-              These items are automatically assigned to every new pilot.
-            </p>
-          </div>
-          <button
-            type="button"
-            disabled
-            aria-disabled="true"
-            title={BACKEND_HINT}
-            className="cursor-not-allowed rounded-md bg-status-blue px-3 py-2 text-xs font-semibold text-white disabled:opacity-100"
-          >
-            Save Package
-          </button>
+      {loadError ? (
+        <div
+          role="alert"
+          className="rounded-md border border-status-yellow/40 bg-status-yellow/10 px-3 py-3 text-xs text-status-yellow"
+        >
+          {loadError}
         </div>
-        <p className="text-xs text-muted-foreground">
-          The 14 default Part 135 currency items ship with the{" "}
-          <Link href="/compliance/crew-currency" className="text-status-blue hover:underline">
-            /compliance/crew-currency
-          </Link>{" "}
-          board. Editing this default package requires the per-tenant catalog endpoints from Marc's M2 crew-service backend.
-        </p>
-      </section>
+      ) : (
+        <>
+          <ItemsList
+            label={`Part 135 Defaults (${defaults.length})`}
+            items={defaults}
+            immutable
+          />
+          <ItemsList
+            label={`Custom Items (${customs.length})`}
+            items={customs}
+          />
+        </>
+      )}
+    </div>
+  );
+}
 
-      <div className="mb-3 text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
-        All Items (0)
-      </div>
-      <div className="rounded-lg border border-border bg-card px-4 py-8 text-center">
-        <p className="text-sm text-muted-foreground">
-          No custom currency items yet. Use{" "}
-          <Link href="/compliance/crew-currency" className="text-status-blue hover:underline">
-            /compliance/crew-currency
-          </Link>{" "}
-          to view the 14 default Part 135 items backed by the M2 schema.
-        </p>
-      </div>
+function ItemsList({
+  label,
+  items,
+  immutable,
+}: {
+  label: string;
+  items: CurrencyItemRef[];
+  immutable?: boolean;
+}) {
+  return (
+    <section className="mb-5">
+      <h2 className="mb-3 text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+        {label}
+      </h2>
+      {items.length === 0 ? (
+        <div className="rounded-lg border border-border bg-card px-4 py-6 text-center">
+          <p className="text-sm text-muted-foreground">
+            {immutable
+              ? "The 14 Part 135 defaults seed on tenant create. If missing, run the seed script."
+              : "No tenant-scoped custom items yet. Add company-specific requirements (fire drills, quarterly trainings) with + New Custom Item."}
+          </p>
+        </div>
+      ) : (
+        <div className="overflow-hidden rounded-lg border border-border bg-card">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="border-b border-border bg-muted/10 text-left text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
+                <tr>
+                  <th scope="col" className="px-4 py-2.5 font-semibold">Code</th>
+                  <th scope="col" className="px-4 py-2.5 font-semibold">Name</th>
+                  <th scope="col" className="px-4 py-2.5 font-semibold">Regulation</th>
+                  <th scope="col" className="px-4 py-2.5 font-semibold">Interval</th>
+                  <th scope="col" className="px-4 py-2.5 font-semibold">Flags</th>
+                  <th scope="col" className="px-4 py-2.5 font-semibold">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {items.map((i) => (
+                  <tr key={i.id} className="hover:bg-muted/5">
+                    <td className="whitespace-nowrap px-4 py-3 font-mono text-xs">
+                      {i.code}
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-3 text-xs font-semibold">
+                      {i.name}
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-3 text-xs text-muted-foreground">
+                      {i.regulation || "—"}
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-3 text-xs text-muted-foreground">
+                      {INTERVAL_LABELS[i.interval_type] ?? i.interval_type}
+                      {i.rolling_days && ` · ${i.rolling_days}d`}
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-3">
+                      <FlagPills item={i} />
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-3">
+                      <span
+                        className={
+                          "rounded border px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider " +
+                          (i.is_active
+                            ? "border-status-green/40 bg-status-green/10 text-status-green"
+                            : "border-border bg-muted/30 text-muted-foreground")
+                        }
+                      >
+                        {i.is_active ? "Active" : "Inactive"}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+    </section>
+  );
+}
+
+function FlagPills({ item }: { item: CurrencyItemRef }) {
+  const pills: string[] = [];
+  if (item.is_default) pills.push("Default");
+  if (item.requires_examiner) pills.push("Examiner");
+  if (item.is_check_event) pills.push("Check");
+  if (item.is_initial_only) pills.push("Initial");
+  if (pills.length === 0) return <span className="text-xs text-muted-foreground">—</span>;
+  return (
+    <div className="flex flex-wrap gap-1">
+      {pills.map((p) => (
+        <span
+          key={p}
+          className="rounded border border-border bg-muted/20 px-1.5 py-0.5 text-[0.6rem] font-semibold uppercase tracking-wider text-muted-foreground"
+        >
+          {p}
+        </span>
+      ))}
     </div>
   );
 }

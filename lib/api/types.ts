@@ -1434,6 +1434,12 @@ export interface ComplianceBoardResponse {
   chips: ComplianceChips;
 }
 
+/** GET /ops/currency-items — drives /settings/currency editor. */
+export interface CurrencyItemListResponse {
+  items: CurrencyItemRef[];
+  total: number;
+}
+
 export interface PilotProfileResponse {
   pilot: UserRef;
   overall_status: CurrencyStatus;
