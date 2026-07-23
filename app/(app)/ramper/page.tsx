@@ -164,10 +164,15 @@ export default async function RamperPage() {
         {departingSoon.slice(0, 10).map((f) => (
           <TaskRow
             key={f.id}
-            href={`/dispatch/${f.id}`}
+            // Photo-capture is the ramp-staff entry point per flight
+            // (mirrors legacy /ramper/flight/{id}/). Full turnaround
+            // view (checklist + timers + notes) lands with Marc's M2
+            // ramp backend.
+            href={`/ramper/${f.id}/photos`}
             primary={`${f.flight_number} • ${f.origin} → ${f.destination}`}
             secondary={`${f.aircraft.tail_number} • ${f.pax_count} pax • ${formatTime(f.scheduled_departure_at)}`}
-            cta="Pre-flight"
+            cta="📷 Photos"
+            tone="blue"
           />
         ))}
       </Section>
