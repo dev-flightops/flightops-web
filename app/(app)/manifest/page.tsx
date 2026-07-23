@@ -26,7 +26,6 @@ const BACKEND_HINT =
   "Passenger Manifests ship with the reservations-service (M2 backend)";
 
 export default function ManifestListPage() {
-  const total = 0;
   return (
     <div className="mx-auto max-w-5xl px-4 py-10">
       <header className="mb-8 flex items-center justify-between gap-3">
