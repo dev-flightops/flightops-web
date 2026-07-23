@@ -141,7 +141,7 @@ function EmployeesTable({
             {users.map((u, i) => (
               <tr key={u.id} className="hover:bg-muted/5">
                 <td className="whitespace-nowrap px-4 py-3 font-mono text-[0.7rem] text-muted-foreground">
-                  {empNumber(tenantSlug, u, i)}
+                  {u.emp_number ?? empNumber(tenantSlug, i)}
                 </td>
                 <td className="whitespace-nowrap px-4 py-3 text-xs font-semibold">
                   <Link
@@ -155,16 +155,18 @@ function EmployeesTable({
                   {roleToDepartment(u.roles[0]) ?? "—"}
                 </td>
                 <td className="whitespace-nowrap px-4 py-3 text-xs text-muted-foreground">
-                  —
+                  {u.title ?? "—"}
                 </td>
                 <td className="whitespace-nowrap px-4 py-3 text-xs text-muted-foreground">
-                  —
+                  {u.station ?? "—"}
                 </td>
                 <td className="whitespace-nowrap px-4 py-3 text-xs text-muted-foreground">
-                  Full Time
+                  {formatEmploymentType(u.employment_type)}
                 </td>
                 <td className="whitespace-nowrap px-4 py-3 text-xs text-muted-foreground">
-                  {formatHireDate(u.created_at)}
+                  {u.hire_date
+                    ? formatHireDate(u.hire_date)
+                    : formatHireDate(u.created_at)}
                 </td>
                 <td className="whitespace-nowrap px-4 py-3">
                   <span
@@ -175,7 +177,11 @@ function EmployeesTable({
                         : "border-border bg-muted/30 text-muted-foreground")
                     }
                   >
-                    {u.is_active ? "Active" : "Terminated"}
+                    {u.is_active
+                      ? "Active"
+                      : u.termination_date
+                        ? "Terminated"
+                        : "Inactive"}
                   </span>
                 </td>
               </tr>
@@ -187,11 +193,10 @@ function EmployeesTable({
   );
 }
 
-// Legacy shows "DEMO-200" through "DEMO-208" — a tenant-scoped serial.
-// Until a real emp_number column exists, derive one from the row index
-// (stable per response) prefixed with the tenant slug so demo data
-// looks like legacy without pretending it's authoritative.
-function empNumber(tenantSlug: string, _u: UserResponse, i: number): string {
+// Fallback for rows where the operator hasn't set emp_number yet
+// (migration 0054 columns are nullable). Row-index-derived so demo
+// data still reads like the legacy DEMO-200 numbering.
+function empNumber(tenantSlug: string, i: number): string {
   return `${tenantSlug}-${(200 + i).toString().padStart(3, "0")}`;
 }
 
@@ -209,6 +214,18 @@ const _ROLE_TO_DEPT: Record<string, string> = {
 function roleToDepartment(role: string | undefined): string | null {
   if (!role) return null;
   return _ROLE_TO_DEPT[role] ?? role;
+}
+
+const _EMPLOYMENT_TYPE_LABELS: Record<string, string> = {
+  full_time: "Full Time",
+  part_time: "Part Time",
+  contract: "Contract",
+  seasonal: "Seasonal",
+};
+
+function formatEmploymentType(t: string | null): string {
+  if (!t) return "—";
+  return _EMPLOYMENT_TYPE_LABELS[t] ?? t;
 }
 
 function formatHireDate(iso: string): string {

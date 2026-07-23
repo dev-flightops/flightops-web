@@ -1169,6 +1169,9 @@ export interface FlightTrackingConfigUpdateRequest {
 
 // Users + Permissions — M2-M-28b / M2-G-48
 
+/** M2 tail (migration 0054) — matches auth-service `EMPLOYMENT_TYPES`. */
+export type EmploymentType = "full_time" | "part_time" | "contract" | "seasonal";
+
 export interface UserResponse {
   id: string;
   email: string;
@@ -1178,6 +1181,13 @@ export interface UserResponse {
   has_password: boolean;
   last_login_at: string | null;
   created_at: string;
+  // M2 tail — employee columns (all nullable).
+  emp_number: string | null;
+  title: string | null;
+  station: string | null;
+  employment_type: EmploymentType | null;
+  hire_date: string | null; // ISO YYYY-MM-DD
+  termination_date: string | null; // ISO YYYY-MM-DD
 }
 
 export interface UserListResponse {
@@ -1191,12 +1201,25 @@ export interface UserCreateRequest {
   roles?: string[];
   password?: string | null;
   is_active?: boolean;
+  // M2 tail — optional employee columns on create.
+  emp_number?: string | null;
+  title?: string | null;
+  station?: string | null;
+  employment_type?: EmploymentType | null;
+  hire_date?: string | null;
 }
 
 export interface UserUpdateRequest {
   full_name?: string;
   roles?: string[];
   is_active?: boolean;
+  // M2 tail — send "" to explicitly clear a string field.
+  emp_number?: string | null;
+  title?: string | null;
+  station?: string | null;
+  employment_type?: EmploymentType | null;
+  hire_date?: string | null;
+  termination_date?: string | null;
 }
 
 export interface UserSetPasswordRequest {
