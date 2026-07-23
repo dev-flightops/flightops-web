@@ -327,10 +327,10 @@ export const DEPARTMENTS: Department[] = [
       { id: "settings-sso",      label: "SSO",             href: "/settings/sso",              status: "live", department: "settings" },
       // M3+ — placeholders matching the legacy sub-nav order. Each
       // becomes a real link once its surface ships.
-      { id: "settings-costs",     label: "Costs",         status: "m4", department: "settings" },
-      { id: "settings-load",      label: "Load Teams",    status: "m3", department: "settings" },
-      { id: "settings-pilotpay",  label: "Pilot Pay",     status: "m3", department: "settings" },
-      { id: "settings-currency",  label: "Currency",      status: "m3", department: "settings" },
+      { id: "settings-costs",     label: "Costs",         href: "/settings/costs",       status: "live", department: "settings" },
+      { id: "settings-load",      label: "Load Teams",    href: "/settings/load-teams",  status: "live", department: "settings" },
+      { id: "settings-pilotpay",  label: "Pilot Pay",     href: "/settings/pilot-pay",   status: "live", department: "settings" },
+      { id: "settings-currency",  label: "Currency",      href: "/settings/currency",    status: "live", department: "settings" },
       { id: "settings-billing",   label: "Billing",       status: "m3", department: "settings" },
     ],
   },
