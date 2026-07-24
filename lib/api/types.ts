@@ -1440,6 +1440,37 @@ export interface CurrencyItemListResponse {
   total: number;
 }
 
+/** GET /ops/accounting-export?start=&end= — one completed-flight row. */
+export interface AccountingExportRow {
+  id: string;
+  date: string;            // ISO YYYY-MM-DD
+  flight_number: string;
+  flight_type: string | null;
+  origin: string;
+  destination: string;
+  aircraft_tail: string | null;
+  pic_name: string | null;
+  customer: string | null; // Populated once bookings link to flights.
+  revenue_pax: number;
+  cargo_lbs: number;
+  mail_lbs: number | null; // Populated once mail vs cargo is split.
+  notes: string | null;
+}
+
+export interface AccountingExportTotals {
+  flights: number;
+  revenue_pax: number;
+  cargo_lbs: number;
+  mail_lbs: number;
+}
+
+export interface AccountingExportResponse {
+  start: string;  // ISO YYYY-MM-DD
+  end: string;    // ISO YYYY-MM-DD
+  rows: AccountingExportRow[];
+  totals: AccountingExportTotals;
+}
+
 export interface PilotProfileResponse {
   pilot: UserRef;
   overall_status: CurrencyStatus;
