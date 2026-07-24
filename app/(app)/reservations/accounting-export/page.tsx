@@ -64,7 +64,7 @@ export default async function AccountingExportPage({
             accounting software.
           </p>
         </div>
-        <ExportCsvButton rows={rows} />
+        {rows.length > 0 ? <ExportCsvButton rows={rows} /> : null}
       </header>
 
       <AcctExportFilterBar />
@@ -91,6 +91,17 @@ export default async function AccountingExportPage({
         />
       </div>
 
+      {rows.length === 0 ? (
+        <div className="rounded-lg border border-border bg-card py-8 text-center">
+          <p className="text-sm text-muted-foreground">
+            No completed flights in this date range.
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground/70">
+            Adjust the date range or check that flights have been marked as
+            landed.
+          </p>
+        </div>
+      ) : (
       <div className="overflow-hidden rounded-lg border border-border bg-card">
         <div className="flex items-center justify-between border-b border-border px-4 py-2">
           <h2 className="text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
@@ -119,18 +130,7 @@ export default async function AccountingExportPage({
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
-              {rows.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan={11}
-                    className="px-4 py-16 text-center text-sm text-muted-foreground"
-                  >
-                    No completed flights in this date range. Adjust the date
-                    range or check that flights have been marked as landed.
-                  </td>
-                </tr>
-              ) : (
-                rows.map((r) => (
+              {rows.map((r) => (
                   <tr key={r.id} className="hover:bg-muted/5">
                     <td className="whitespace-nowrap px-4 py-3 font-mono text-xs text-muted-foreground">
                       {r.date}
@@ -174,12 +174,12 @@ export default async function AccountingExportPage({
                       {r.notes ?? ""}
                     </td>
                   </tr>
-                ))
-              )}
+                ))}
             </tbody>
           </table>
         </div>
       </div>
+      )}
 
       <div className="mt-4 rounded-lg border border-border bg-card px-4 py-3">
         <p className="text-xs text-muted-foreground">
@@ -201,31 +201,36 @@ function ExportCsvButton({
   rows: AccountingExportResponse["rows"];
 }) {
   const total = rows.length;
-  const disabled = total === 0;
-  const csvHref = disabled
-    ? undefined
-    : `data:text/csv;charset=utf-8,${encodeURIComponent(rowsToCsv(rows))}`;
+  const icon = (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      className="h-3.5 w-3.5"
+      aria-hidden
+    >
+      <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z" />
+    </svg>
+  );
+  if (total === 0) {
+    return (
+      <span
+        aria-disabled
+        className="flex cursor-not-allowed items-center gap-2 rounded-md bg-status-blue px-4 py-2 text-sm font-semibold text-white opacity-60"
+      >
+        {icon}
+        Export CSV (0 rows)
+      </span>
+    );
+  }
+  const csvHref = `data:text/csv;charset=utf-8,${encodeURIComponent(rowsToCsv(rows))}`;
   return (
     <a
-      href={csvHref ?? "#"}
-      download={disabled ? undefined : "accounting-export.csv"}
-      aria-disabled={disabled}
-      role={disabled ? undefined : "button"}
-      onClick={disabled ? (e) => e.preventDefault() : undefined}
-      className={
-        "flex items-center gap-2 rounded-md bg-status-blue px-4 py-2 text-sm font-semibold text-white disabled:opacity-100 " +
-        (disabled ? "cursor-not-allowed opacity-60" : "hover:brightness-110")
-      }
+      href={csvHref}
+      download="accounting-export.csv"
+      className="flex items-center gap-2 rounded-md bg-status-blue px-4 py-2 text-sm font-semibold text-white hover:brightness-110"
     >
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 24 24"
-        fill="currentColor"
-        className="h-3.5 w-3.5"
-        aria-hidden
-      >
-        <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z" />
-      </svg>
+      {icon}
       Export CSV ({total} rows)
     </a>
   );

@@ -305,6 +305,12 @@ export function NewBookingSearchForm({
           border-color: hsl(var(--primary));
           box-shadow: 0 0 0 3px hsl(var(--primary) / 0.12);
         }
+        /* Keep user-typed ICAO values uppercase but render the
+         * placeholder in Title Case so it reads like a hint, not a
+         * shouted label — matches legacy peregrineflight.com. */
+        .ff.uppercase::placeholder {
+          text-transform: none;
+        }
       `}</style>
     </form>
   );

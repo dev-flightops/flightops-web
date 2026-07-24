@@ -202,8 +202,8 @@ function CustomerTable({
                 <td className="whitespace-nowrap px-4 py-3 text-xs text-muted-foreground">
                   {c.company_name ?? "—"}
                 </td>
-                <td className="whitespace-nowrap px-4 py-3 text-xs text-muted-foreground">
-                  {CUSTOMER_TYPE_LABELS[c.customer_type]}
+                <td className="whitespace-nowrap px-4 py-3">
+                  <CustomerTypePill type={c.customer_type} />
                 </td>
                 <td className="whitespace-nowrap px-4 py-3 text-xs text-muted-foreground">
                   {c.email ?? c.phone ?? "—"}
@@ -236,6 +236,27 @@ function CustomerTable({
         {total} customer{total === 1 ? "" : "s"}
       </footer>
     </div>
+  );
+}
+
+function CustomerTypePill({ type }: { type: CustomerType }) {
+  const cls =
+    type === "corporate"
+      ? "border-status-blue/40 bg-status-blue/10 text-status-blue"
+      : type === "government"
+        ? "border-purple-500/40 bg-purple-500/10 text-purple-300"
+        : type === "non_profit"
+          ? "border-status-green/40 bg-status-green/10 text-status-green"
+          : "border-border bg-muted/20 text-muted-foreground";
+  return (
+    <span
+      className={
+        "rounded border px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider " +
+        cls
+      }
+    >
+      {CUSTOMER_TYPE_LABELS[type]}
+    </span>
   );
 }
 
