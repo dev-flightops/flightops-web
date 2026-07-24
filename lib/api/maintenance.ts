@@ -120,3 +120,47 @@ export async function resolveSquawk(
     },
   );
 }
+
+// ---- Work Orders (M2 tail — flightops-services PR #113) --------------------
+
+export type WorkOrderStatus =
+  | "open"
+  | "in_progress"
+  | "awaiting_parts"
+  | "completed"
+  | "closed";
+
+export type WorkOrderPriority = "normal" | "high" | "aog";
+
+export interface WorkOrderRow {
+  id: string;
+  wo_number: string;
+  aircraft_id: string;
+  aircraft_tail: string | null;
+  squawk_id: string | null;
+  title: string;
+  description: string | null;
+  wo_type: string;
+  priority: WorkOrderPriority;
+  status: WorkOrderStatus;
+  opened_date: string;
+  due_date: string | null;
+  closed_date: string | null;
+  opened_by_user_id: string;
+  opened_by_name: string | null;
+}
+
+export interface WorkOrderListResponse {
+  items: WorkOrderRow[];
+  total: number;
+}
+
+export async function listWorkOrders(
+  params: { status?: WorkOrderStatus; aircraftId?: string } = {},
+): Promise<WorkOrderListResponse> {
+  const qs = new URLSearchParams();
+  if (params.status) qs.set("status", params.status);
+  if (params.aircraftId) qs.set("aircraft_id", params.aircraftId);
+  const tail = qs.toString() ? `?${qs.toString()}` : "";
+  return apiFetch<WorkOrderListResponse>(`/maintenance/work-orders${tail}`);
+}
