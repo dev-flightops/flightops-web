@@ -12,6 +12,7 @@ import type {
   CpReviewListResponse,
   CpReviewResponse,
   CpReviewStatus,
+  CurrencyItemListResponse,
   CurrencyItemRef,
   CurrentDutyResponse,
   CustomCurrencyItemCreateRequest,
@@ -468,6 +469,17 @@ export async function getPilotComplianceProfile(
   return apiFetch<PilotProfileResponse>(
     `/ops/compliance/pilots/${pilotId}/profile`,
   );
+}
+
+/** M2 tail — list every currency item visible to the caller's tenant
+ * (14 Part 135 defaults + tenant customs). Drives /settings/currency
+ * editor. Pass `include_inactive: true` to show deactivated rows for
+ * reactivation UI. Chief pilot / exec admin only. */
+export async function listCurrencyItems(
+  params: { include_inactive?: boolean } = {},
+): Promise<CurrencyItemListResponse> {
+  const qs = params.include_inactive ? "?include_inactive=true" : "";
+  return apiFetch<CurrencyItemListResponse>(`/ops/currency-items${qs}`);
 }
 
 /** M2-C-2 — create a tenant-scoped currency item. Chief pilot only. */
