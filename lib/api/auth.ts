@@ -224,6 +224,40 @@ export async function updateFlightTrackingConfig(
   );
 }
 
+// ---- Pilot Pay (M2 tail — /settings/pilot-pay) ----
+
+export type PayRateType = "daily" | "flight_hourly";
+export type PayModifierType = "flat" | "multiplier" | "per_hour";
+
+export interface PayRateRow {
+  id: string;
+  rate_type: PayRateType;
+  crew_member_id: string | null;
+  airframe_type: string | null;
+  year_of_service_min: number | null;
+  year_of_service_max: number | null;
+  rate_amount: string;
+  effective_date: string;
+  end_date: string | null;
+}
+
+export interface PayModifierRow {
+  id: string;
+  modifier_name: string;
+  display_label: string;
+  modifier_type: PayModifierType;
+  modifier_value: string;
+}
+
+export interface PilotPayBundleResponse {
+  rates: PayRateRow[];
+  modifiers: PayModifierRow[];
+}
+
+export async function getPilotPay(): Promise<PilotPayBundleResponse> {
+  return apiFetch<PilotPayBundleResponse>("/auth/settings/pilot-pay");
+}
+
 // ---- Users + Permissions (M2-M-28b) ----
 
 export async function listUsers(): Promise<UserListResponse> {
