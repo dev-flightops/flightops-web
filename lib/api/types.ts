@@ -1062,6 +1062,34 @@ export interface LoadTeamListResponse {
   total: number;
 }
 
+// Ramp turnaround photos (M2 tail — flightops-services PR #111)
+
+export type RampPhotoType =
+  | "secured_load"
+  | "hazmat_placard"
+  | "damage_documentation"
+  | "general";
+
+export interface RampPhotoResponse {
+  id: string;
+  flight_id: string;
+  photo_type: RampPhotoType;
+  file_key: string;
+  original_filename: string | null;
+  content_type: string | null;
+  notes: string | null;
+  uploaded_by_user_id: string;
+  uploaded_by_name: string | null;
+  /** Client-usable URL — /uploads/ramp_photos/{tenant}/{name} today,
+   *  can switch to R2 presigned URL later without shape change. */
+  url: string;
+}
+
+export interface RampPhotoListResponse {
+  items: RampPhotoResponse[];
+  total: number;
+}
+
 // Settings — M2-M-28a / M2-G-46+47+53
 
 export interface CompanyProfileResponse {

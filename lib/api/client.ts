@@ -68,10 +68,18 @@ export async function apiFetch<T>(
     init.cache ?? (hasTags ? undefined : "no-store");
 
   const url = `${apiBaseUrl()}${path}`;
+  // FormData bodies must NOT carry an explicit Content-Type — the
+  // browser (or undici under Node) sets one with the multipart
+  // boundary. Setting application/json breaks the upload.
+  const isFormData =
+    typeof FormData !== "undefined" && init.body instanceof FormData;
+  const baseHeaders: Record<string, string> = isFormData
+    ? {}
+    : { "Content-Type": "application/json" };
   const response = await fetch(url, {
     ...init,
     headers: {
-      "Content-Type": "application/json",
+      ...baseHeaders,
       ...init.headers,
       Authorization: `Bearer ${session.access_token}`,
     },
