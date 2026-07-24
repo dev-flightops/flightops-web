@@ -1,46 +1,101 @@
 import Link from "next/link";
 
 /**
- * /reservations/charter — Charter quote builder placeholder.
+ * /reservations/charter — legacy `templates/charter/board.html`.
+ * Charter Pipeline — status-tabbed list of CharterRequest rows
+ * (separate from Booking in legacy dispatch-platform).
  *
- * Legacy has an itemized quote builder here (base rate + block time
- * + fuel + ferry + fees + discount). Landed as its own M3 follow-up
- * story once the reservations-service picks up a `charter_quote_lines`
- * table. For now we route dispatchers to the direct booking form,
- * which accepts a `quoted_total_cents` top-line as a placeholder.
+ * The CharterRequest table + its 6-status state machine
+ * (request → quoted → confirmed → dispatched → completed → invoiced,
+ * or → cancelled at any point) aren't ported yet. Marc's M3
+ * reservations-service extension owns this. The page renders the
+ * legacy shell (title + New Charter Request + status tabs + empty
+ * state) so the URL is correct + the layout is ready to wire when
+ * the endpoints land.
  */
-export default function CharterPage() {
+
+const STATUS_TABS = [
+  { id: "all", label: "All" },
+  { id: "request", label: "Request" },
+  { id: "quoted", label: "Quoted" },
+  { id: "confirmed", label: "Confirmed" },
+  { id: "dispatched", label: "Dispatched" },
+  { id: "completed", label: "Completed" },
+  { id: "cancelled", label: "Cancelled" },
+] as const;
+
+const BACKEND_HINT =
+  "Charter Pipeline ships with the reservations-service charter_requests table (M3 tail)";
+
+type StatusId = (typeof STATUS_TABS)[number]["id"];
+
+function parseStatus(v: string | string[] | undefined): StatusId {
+  const s = Array.isArray(v) ? v[0] : v;
+  if (
+    s === "request" ||
+    s === "quoted" ||
+    s === "confirmed" ||
+    s === "dispatched" ||
+    s === "completed" ||
+    s === "cancelled"
+  ) {
+    return s;
+  }
+  return "all";
+}
+
+export default async function CharterPipelinePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ status?: string | string[] }>;
+}) {
+  const params = await searchParams;
+  const active = parseStatus(params.status);
+
   return (
-    <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
-      <header className="mb-6">
-        <h1 className="text-2xl font-bold tracking-tight">Charter</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Quote builder for charter bookings.
-        </p>
+    <div className="mx-auto max-w-6xl px-4 py-10">
+      <header className="mb-6 flex items-center justify-between gap-3">
+        <h1 className="text-2xl font-bold">Charter Pipeline</h1>
+        <button
+          type="button"
+          disabled
+          aria-disabled="true"
+          title={BACKEND_HINT}
+          className="cursor-not-allowed rounded-md bg-status-blue px-4 py-2 text-sm font-semibold text-white disabled:opacity-100"
+        >
+          + New Charter Request
+        </button>
       </header>
 
-      <section className="rounded-lg border border-status-yellow/40 bg-status-yellow/10 p-5 text-sm">
-        <p className="font-semibold text-status-yellow">
-          Charter quote builder — coming in an M3 follow-up.
+      <div className="mb-5 flex flex-wrap gap-2">
+        {STATUS_TABS.map((t) => {
+          const isActive = t.id === active;
+          const href =
+            t.id === "all"
+              ? "/reservations/charter"
+              : `/reservations/charter?status=${t.id}`;
+          return (
+            <Link
+              key={t.id}
+              href={href}
+              className={
+                "rounded-lg border border-border px-3 py-1.5 text-xs " +
+                (isActive
+                  ? "bg-muted/40 font-bold text-foreground"
+                  : "text-muted-foreground hover:text-foreground")
+              }
+            >
+              {t.label}
+            </Link>
+          );
+        })}
+      </div>
+
+      <div className="rounded-lg border border-border bg-card">
+        <p className="py-8 text-center text-sm text-muted-foreground">
+          No charter requests found.
         </p>
-        <p className="mt-2 text-foreground/80">
-          The itemized quote builder (base rate · block time · fuel ·
-          ferry · fees · discount) lands with the{" "}
-          <code className="rounded bg-muted/30 px-1 font-mono text-[0.85em]">
-            charter_quote_lines
-          </code>{" "}
-          table in the next reservations-service PR. Until then, you can
-          record a top-line quote on the direct booking form.
-        </p>
-        <p className="mt-3">
-          <Link
-            href="/reservations/bookings/new"
-            className="rounded-md border border-status-blue bg-status-blue/15 px-3 py-1.5 text-xs font-semibold text-status-blue hover:bg-status-blue/20"
-          >
-            + File a Charter Booking
-          </Link>
-        </p>
-      </section>
+      </div>
     </div>
   );
 }
