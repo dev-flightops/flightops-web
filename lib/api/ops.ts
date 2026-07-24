@@ -12,6 +12,7 @@ import type {
   CpReviewListResponse,
   CpReviewResponse,
   CpReviewStatus,
+  AccountingExportResponse,
   CurrencyItemListResponse,
   CurrencyItemRef,
   CurrentDutyResponse,
@@ -469,6 +470,18 @@ export async function getPilotComplianceProfile(
   return apiFetch<PilotProfileResponse>(
     `/ops/compliance/pilots/${pilotId}/profile`,
   );
+}
+
+/** M2 tail — completed flights aggregate for /reservations/accounting-export.
+ *  Both dates optional; backend defaults to last 30 days. */
+export async function getAccountingExport(
+  params: { start?: string; end?: string } = {},
+): Promise<AccountingExportResponse> {
+  const qs = new URLSearchParams();
+  if (params.start) qs.set("start", params.start);
+  if (params.end) qs.set("end", params.end);
+  const tail = qs.toString() ? `?${qs.toString()}` : "";
+  return apiFetch<AccountingExportResponse>(`/ops/accounting-export${tail}`);
 }
 
 /** M2 tail — list every currency item visible to the caller's tenant
