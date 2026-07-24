@@ -1,9 +1,9 @@
 import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { FlightDetail } from "@/lib/api/types";
+import type { FlightDetail, RampPhotoResponse } from "@/lib/api/types";
 
-const { TestApiError, getFlight } = vi.hoisted(() => {
+const { TestApiError, getFlight, listRampPhotos } = vi.hoisted(() => {
   class TestApiError extends Error {
     constructor(
       public status: number,
@@ -13,13 +13,29 @@ const { TestApiError, getFlight } = vi.hoisted(() => {
       super(message);
     }
   }
-  return { TestApiError, getFlight: vi.fn() };
+  return {
+    TestApiError,
+    getFlight: vi.fn(),
+    listRampPhotos: vi.fn(),
+  };
 });
 
 vi.mock("@/lib/api/client", () => ({ ApiError: TestApiError }));
 vi.mock("@/lib/api/ops", () => ({ getFlight }));
+vi.mock("@/lib/api/ground", () => ({ listRampPhotos }));
 
-const { notFoundMock } = vi.hoisted(() => ({ notFoundMock: vi.fn(() => { throw new Error("NEXT_NOT_FOUND"); }) }));
+// Mock the client-side upload form so useActionState (React 19) doesn't
+// blow up in the jsdom env — we cover the server-render pieces here and
+// exercise the upload flow end-to-end in the browser.
+vi.mock("./upload-form", () => ({
+  UploadRampPhotoForm: () => <div data-testid="upload-form-stub" />,
+}));
+
+const { notFoundMock } = vi.hoisted(() => ({
+  notFoundMock: vi.fn(() => {
+    throw new Error("NEXT_NOT_FOUND");
+  }),
+}));
 vi.mock("next/navigation", () => ({ notFound: notFoundMock }));
 
 import RamperPhotosPage from "./page";
@@ -51,46 +67,99 @@ function makeFlight(overrides: Partial<FlightDetail> = {}): FlightDetail {
   } as FlightDetail;
 }
 
+function makePhoto(
+  overrides: Partial<RampPhotoResponse> = {},
+): RampPhotoResponse {
+  return {
+    id: "p-1",
+    flight_id: "f-1",
+    photo_type: "secured_load",
+    file_key: "t-1/abc.jpg",
+    original_filename: "abc.jpg",
+    content_type: "image/jpeg",
+    notes: null,
+    uploaded_by_user_id: "u-1",
+    uploaded_by_name: "Ramp Rita",
+    url: "/uploads/ramp_photos/t-1/abc.jpg",
+    ...overrides,
+  };
+}
+
 beforeEach(() => {
   getFlight.mockReset();
+  listRampPhotos.mockReset();
   notFoundMock.mockReset().mockImplementation(() => {
     throw new Error("NEXT_NOT_FOUND");
   });
 });
 
 async function renderPage(flightId = "f-1") {
-  const page = await RamperPhotosPage({ params: Promise.resolve({ flightId }) });
+  const page = await RamperPhotosPage({
+    params: Promise.resolve({ flightId }),
+  });
   render(page);
 }
 
 describe("/ramper/[flightId]/photos", () => {
-  it("renders flight header + Photos (0) + upload form + required-photo checklist", async () => {
+  it("renders flight header + Photos(0) + required-photo checklist all red", async () => {
     getFlight.mockResolvedValue(makeFlight());
+    listRampPhotos.mockResolvedValue({ items: [], total: 0 });
+
     await renderPage();
 
     expect(screen.getByRole("heading", { name: "GRT201" })).toBeDefined();
     expect(screen.getByText(/N207GE · C208B/)).toBeDefined();
     expect(screen.getByText(/Photos \(0\)/)).toBeDefined();
     expect(screen.getByText("No photos yet")).toBeDefined();
-    expect(screen.getByRole("combobox")).toBeDefined();
-    expect(screen.getByText("Photo Type")).toBeDefined();
     for (const label of ["Secured Load", "Hazmat Placard", "Damage Documentation"]) {
-      // Appears twice — once in the <select> option, once in the
-      // required-photos checklist.
-      expect(screen.getAllByText(label).length).toBeGreaterThanOrEqual(2);
+      expect(screen.getByText(label)).toBeDefined();
     }
+    // Upload form is rendered as a mocked stub.
+    expect(screen.getByTestId("upload-form-stub")).toBeDefined();
   });
 
-  it("upload controls render disabled with milestone tooltip", async () => {
+  it("renders uploaded photos + flips checklist to green for covered types", async () => {
     getFlight.mockResolvedValue(makeFlight());
+    listRampPhotos.mockResolvedValue({
+      items: [
+        makePhoto({ id: "p-1", photo_type: "secured_load" }),
+        makePhoto({ id: "p-2", photo_type: "hazmat_placard", url: "/uploads/x.jpg" }),
+      ],
+      total: 2,
+    });
+
     await renderPage();
-    const btn = screen.getByRole("button", { name: /Upload photo/i });
-    expect(btn.getAttribute("aria-disabled")).toBe("true");
-    expect(btn.getAttribute("title") ?? "").toMatch(/ramp-photos backend/);
+
+    expect(screen.getByText(/Photos \(2\)/)).toBeDefined();
+    // "damage_documentation" was not uploaded — still red.
+    const damageEl = screen.getByText("Damage Documentation");
+    expect(damageEl.className).toMatch(/status-red/);
+    // Secured Load appears in the checklist as green.
+    const securedEls = screen.getAllByText(/Secured Load|secured load/i);
+    const green = securedEls.find((el) =>
+      /status-green/.test(el.className),
+    );
+    expect(green).toBeDefined();
+  });
+
+  it("surfaces a yellow warning banner when photo list errors", async () => {
+    getFlight.mockResolvedValue(makeFlight());
+    listRampPhotos.mockRejectedValue(
+      new TestApiError(403, "/ground/flights/f-1/photos", "Forbidden"),
+    );
+
+    await renderPage();
+
+    expect(
+      screen.getByText(/don't have permission to view ramp photos/),
+    ).toBeDefined();
   });
 
   it("triggers notFound when the flight id 404s", async () => {
-    getFlight.mockRejectedValue(new TestApiError(404, "/ops/flights/x", "Not Found"));
+    getFlight.mockRejectedValue(
+      new TestApiError(404, "/ops/flights/x", "Not Found"),
+    );
+    listRampPhotos.mockResolvedValue({ items: [], total: 0 });
     await expect(renderPage("does-not-exist")).rejects.toThrow(/NEXT_NOT_FOUND/);
     expect(notFoundMock).toHaveBeenCalled();
   });

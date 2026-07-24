@@ -34,6 +34,8 @@ import type {
   FlightAssignmentListResponse,
   FlightAssignmentResponse,
   LoadTeamListResponse,
+  RampPhotoListResponse,
+  RampPhotoResponse,
   StationIssueCategory,
   StationIssueListResponse,
   StationIssuePriority,
@@ -679,4 +681,32 @@ export async function createFuelQualityTest(
     `/ground/fuel/quality-tests`,
     { method: "POST", body: JSON.stringify(body) },
   );
+}
+
+// ---- Ramp turnaround photos (M2 tail) --------------------------------------
+
+/** List every photo attached to a turnaround, newest first. */
+export async function listRampPhotos(
+  flightId: string,
+): Promise<RampPhotoListResponse> {
+  return apiFetch<RampPhotoListResponse>(
+    `/ground/flights/${flightId}/photos`,
+  );
+}
+
+/** Multipart upload — accepts a FormData with fields photo_type +
+ *  photo (File) + optional notes. apiFetch drops Content-Type when
+ *  the body is a FormData so the browser sets the multipart boundary. */
+export async function uploadRampPhoto(
+  flightId: string,
+  form: FormData,
+): Promise<RampPhotoResponse> {
+  return apiFetch<RampPhotoResponse>(
+    `/ground/flights/${flightId}/photos`,
+    { method: "POST", body: form },
+  );
+}
+
+export async function deleteRampPhoto(photoId: string): Promise<void> {
+  await apiFetch<void>(`/ground/photos/${photoId}`, { method: "DELETE" });
 }
