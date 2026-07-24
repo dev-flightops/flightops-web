@@ -138,6 +138,58 @@ export async function createCompanyBase(
   });
 }
 
+// ---- Operating Costs (M2 tail) ----
+// All four resources under /auth/settings/costs.
+
+export interface AircraftCostRow {
+  id: string;
+  aircraft_type: string;
+  fuel_burn_gph: string | null;
+  engine_reserve_hr: string | null;
+  prop_reserve_hr: string | null;
+  maintenance_hr: string | null;
+  oil_consumables_hr: string | null;
+  pilot_daily_rate: string | null;
+  avg_duty_hrs: string | null;
+  insurance_hr: string | null;
+}
+
+export interface FuelPriceRow {
+  id: string;
+  icao_code: string;
+  price_per_gal: string;
+  fuel_type: string;
+}
+
+export interface LandingFeeRow {
+  id: string;
+  icao_code: string;
+  fee_amount: string;
+  notes: string | null;
+}
+
+export interface RouteFlightTimeRow {
+  id: string;
+  origin_icao: string;
+  dest_icao: string;
+  est_flight_hrs: string;
+}
+
+export interface OperatingCostsResponse {
+  aircraft_costs: AircraftCostRow[];
+  fuel_prices: FuelPriceRow[];
+  landing_fees: LandingFeeRow[];
+  routes: RouteFlightTimeRow[];
+}
+
+export async function getOperatingCosts(): Promise<OperatingCostsResponse> {
+  return apiFetch<OperatingCostsResponse>("/auth/settings/costs");
+}
+
+// Upserts + deletes reuse the same endpoints legacy defined at
+// /settings/costs/{aircraft-type,fuel-price,landing-fee,route}.
+// Not wired to UI yet — the Add/Edit dialogs land in a follow-up.
+
 export async function updateCompanyBase(
   baseId: string,
   body: CompanyBaseUpdateRequest,
