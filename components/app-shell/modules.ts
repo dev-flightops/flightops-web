@@ -203,7 +203,12 @@ export const DEPARTMENTS: Department[] = [
       { id: "reservations-manifest", label: "Manifest", href: "/manifest", status: "live", department: "reservations" },
       { id: "reservations-customers", label: "Customers", href: "/customers", status: "live", department: "reservations" },
       { id: "reservations-charter", label: "Charter", href: "/reservations/charter", status: "live", department: "reservations" },
-      { id: "reservations-quyana", label: "Quyana", href: "/reservations/quyana", status: "live", department: "reservations" },
+      // Label is generic ("Rewards") in the shared nav; the page
+      // itself reads the per-tenant `rewards_program_name` off the
+      // company profile and swaps it in. Per-tenant nav-label
+      // rendering is deferred until the client-side session
+      // hydrates with the profile.
+      { id: "reservations-quyana", label: "Rewards", href: "/reservations/quyana", status: "live", department: "reservations" },
       { id: "reservations-acct-export", label: "Accounting Export", href: "/reservations/accounting-export", status: "live", department: "reservations" },
     ],
   },

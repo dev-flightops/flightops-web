@@ -1109,6 +1109,9 @@ export interface CompanyProfileResponse {
   ops_email: string | null;
   part_135_certificate: string | null;
   fiscal_year_end: string | null; // ISO date (yyyy-mm-dd)
+  /** Per-tenant display name for the loyalty program. Grant sets this
+   *  to "Quyana Rewards"; a fresh tenant sees "Rewards Program". */
+  rewards_program_name: string;
   notes: string | null;
 }
 
@@ -1128,6 +1131,7 @@ export interface CompanyProfileUpdateRequest {
   ops_email?: string | null;
   part_135_certificate?: string | null;
   fiscal_year_end?: string | null;
+  rewards_program_name?: string;
   notes?: string | null;
 }
 
