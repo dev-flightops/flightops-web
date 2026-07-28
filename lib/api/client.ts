@@ -46,6 +46,11 @@ const apiBaseUrl = () => {
 // propagates via revalidateTag (Spec 6 stations is the M2 case).
 type NextFetchInit = RequestInit & {
   next?: { tags?: string[]; revalidate?: number | false };
+  /** Response body parser. Defaults to `json` for JSON APIs. Use
+   *  `"text"` for endpoints that stream CSV / plain text (payroll
+   *  export). The generic `T` is not narrowed — callers should
+   *  annotate the return type as `string` when using `"text"`. */
+  parseAs?: "json" | "text";
 };
 
 export async function apiFetch<T>(
@@ -104,6 +109,9 @@ export async function apiFetch<T>(
   // 204 No Content (e.g. DELETE soft-delete endpoints) — no body to parse.
   if (response.status === 204) {
     return undefined as T;
+  }
+  if (init.parseAs === "text") {
+    return (await response.text()) as T;
   }
   return (await response.json()) as T;
 }
