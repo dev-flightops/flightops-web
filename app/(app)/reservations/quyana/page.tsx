@@ -1,28 +1,43 @@
+import { ApiError } from "@/lib/api/client";
+import { getCompanyProfile } from "@/lib/api/auth";
+
 /**
- * /reservations/quyana — legacy `templates/quyana/members.html`.
+ * /reservations/quyana — Rewards Program members list.
  *
- * Quyana Rewards loyalty members list. Columns: Member # · Customer
- * · Tier · Balance (green, thousands-formatted) · Lifetime · Enrolled
- * (Mon DD, YYYY). Tier badges: Elite/Gold yellow · Silver blue ·
- * Standard gray.
+ * Legacy peregrineflight.com calls this "Quyana Rewards" (Grant's
+ * branded loyalty program name). To keep the page demoable to
+ * other operators, the display name is per-tenant: read
+ * `rewards_program_name` off the company profile and swap it in
+ * wherever the label appears. Grant sets theirs to "Quyana
+ * Rewards"; a fresh tenant sees "Rewards Program".
  *
- * No Quyana backend exists yet — the reservations-service currently
- * covers customers + bookings, not the loyalty subsystem. Renders the
- * shell with the full column set so the layout is complete for the
- * empty state; swap to `listQuyanaMembers()` once the endpoints land
- * (part of Marc's Reservations M2 story).
+ * Backend wiring lands with the sibling PR that fills in members +
+ * transactions; this page currently renders the shell against the
+ * shipped label + the empty state.
  */
 
-const BACKEND_HINT =
-  "Quyana Rewards ships with the reservations-service (M2 backend)";
+export const dynamic = "force-dynamic";
 
-export default function QuyanaMembersPage() {
+export default async function RewardsMembersPage() {
+  let programName = "Rewards Program";
+  try {
+    const profile = await getCompanyProfile();
+    if (profile.rewards_program_name) {
+      programName = profile.rewards_program_name;
+    }
+  } catch (err) {
+    if (err instanceof ApiError && err.status === 401) throw err;
+    // Any other failure: fall back to the generic label — the page
+    // stays useful even if the settings endpoint is briefly down.
+  }
+
   const total: number = 0;
+
   return (
     <div className="mx-auto max-w-6xl px-4 py-10">
       <header className="mb-6 flex items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold">Quyana Rewards</h1>
+          <h1 className="text-2xl font-bold">{programName}</h1>
           <p className="mt-0.5 text-sm text-muted-foreground">
             {total} active member{total === 1 ? "" : "s"}
           </p>
@@ -31,7 +46,7 @@ export default function QuyanaMembersPage() {
           type="button"
           disabled
           aria-disabled="true"
-          title={BACKEND_HINT}
+          title="Enrollment wires up in the sibling frontend PR"
           className="cursor-not-allowed rounded-md bg-status-blue px-4 py-2 text-sm font-semibold text-white disabled:opacity-100"
         >
           + Enroll Member
@@ -54,7 +69,7 @@ export default function QuyanaMembersPage() {
             <tbody>
               <tr>
                 <td colSpan={6} className="px-4 py-16 text-center text-sm text-muted-foreground">
-                  No Quyana Rewards members yet.
+                  No {programName.toLowerCase()} members yet.
                 </td>
               </tr>
             </tbody>
