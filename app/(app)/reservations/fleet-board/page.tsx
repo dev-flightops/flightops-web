@@ -9,6 +9,9 @@ import {
 } from "@/lib/api/reservations";
 import type { AircraftListItem } from "@/lib/api/types";
 
+import { BookingClickable } from "./booking-clickable";
+import { BookingDrawerContent } from "./booking-drawer-content";
+import { BookingDrawerShell } from "./booking-drawer-shell";
 import { FleetBoardChrome } from "./fleet-board-chrome";
 
 /**
@@ -45,13 +48,14 @@ function _isoDate(d: Date): string {
 export default async function FleetBoardPage({
   searchParams,
 }: {
-  searchParams: Promise<{ view?: string; d?: string }>;
+  searchParams: Promise<{ view?: string; d?: string; booking?: string }>;
 }) {
   const params = await searchParams;
   const view = _parseView(params.view);
   const day = _parseDate(params.d);
   const dayEnd = new Date(day);
   dayEnd.setDate(dayEnd.getDate() + 1);
+  const drawerBookingId = params.booking ?? null;
 
   let bookings: Booking[] = [];
   let aircraft: AircraftListItem[] = [];
@@ -127,6 +131,12 @@ export default async function FleetBoardPage({
           day={day}
         />
       )}
+
+      {drawerBookingId ? (
+        <BookingDrawerShell>
+          <BookingDrawerContent bookingId={drawerBookingId} />
+        </BookingDrawerShell>
+      ) : null}
     </div>
   );
 }
@@ -174,9 +184,9 @@ function ListView({
         const payload = _estimatedPayloadLbs(b.pax_count);
         return (
           <li key={b.id}>
-            <Link
-              href={`/reservations/bookings/${b.id}`}
-              className="flex flex-wrap items-baseline justify-between gap-3 rounded-lg border border-border bg-card px-4 py-3 text-sm hover:bg-muted/5"
+            <BookingClickable
+              bookingId={b.id}
+              className="flex w-full flex-wrap items-baseline justify-between gap-3 rounded-lg border border-border bg-card px-4 py-3 text-left text-sm hover:bg-muted/5"
             >
               <div className="min-w-0 flex-1">
                 <div className="mb-1 flex flex-wrap items-baseline gap-2">
@@ -213,7 +223,7 @@ function ListView({
                 </p>
               </div>
               <StatusChip status={b.status} />
-            </Link>
+            </BookingClickable>
           </li>
         );
       })}
@@ -396,8 +406,8 @@ function BookingBlock({
     seats == null ? `${b.pax_count} pax` : `${b.pax_count}/${seats} seats`;
 
   return (
-    <Link
-      href={`/reservations/bookings/${b.id}`}
+    <BookingClickable
+      bookingId={b.id}
       style={{ left: `${leftPct}%`, width: `${widthPct}%` }}
       className={
         "absolute top-1 bottom-1 flex items-center gap-1 overflow-hidden rounded border px-1.5 text-[0.65rem] font-semibold whitespace-nowrap hover:z-10 hover:brightness-125 " +
@@ -415,7 +425,7 @@ function BookingBlock({
       <span className="tabular-nums opacity-80">
         ·&nbsp;~{_kLbs(payload)}
       </span>
-    </Link>
+    </BookingClickable>
   );
 }
 
