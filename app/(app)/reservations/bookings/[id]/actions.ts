@@ -41,6 +41,7 @@ async function _wrap(
   }
   revalidatePath(`/reservations/bookings/${bookingId}`);
   revalidatePath("/reservations");
+  revalidatePath("/reservations/fleet-board");
   return { status: "ok" };
 }
 
