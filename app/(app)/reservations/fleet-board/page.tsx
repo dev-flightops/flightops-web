@@ -79,10 +79,10 @@ export default async function FleetBoardPage({
   const openBookings = bookings.filter((b) => b.status !== "cancelled");
   const flightsCount = openBookings.length;
   const bookedSeats = openBookings.reduce((sum, b) => sum + b.pax_count, 0);
+  const aircraftById = new Map(aircraft.map((a) => [a.id, a]));
   const totalSeatsUsed = openBookings.reduce((sum, b) => {
     if (!b.aircraft) return sum;
-    const ac = aircraft.find((a) => a.id === b.aircraft?.id);
-    return sum + (ac?.seats ?? 0);
+    return sum + (aircraftById.get(b.aircraft.id)?.seats ?? 0);
   }, 0);
 
   return (
@@ -108,14 +108,24 @@ export default async function FleetBoardPage({
           No aircraft. Adjust filters.
         </div>
       ) : view === "list" ? (
-        <ListView bookings={bookings} />
+        <ListView bookings={bookings} aircraftById={aircraftById} />
       ) : view === "split" ? (
         <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
-          <ListView bookings={bookings} />
-          <BoardView aircraft={aircraft} bookings={bookings} day={day} />
+          <ListView bookings={bookings} aircraftById={aircraftById} />
+          <BoardView
+            aircraft={aircraft}
+            bookings={bookings}
+            aircraftById={aircraftById}
+            day={day}
+          />
         </div>
       ) : (
-        <BoardView aircraft={aircraft} bookings={bookings} day={day} />
+        <BoardView
+          aircraft={aircraft}
+          bookings={bookings}
+          aircraftById={aircraftById}
+          day={day}
+        />
       )}
     </div>
   );
@@ -125,7 +135,13 @@ export default async function FleetBoardPage({
 // List view
 // ============================================================================
 
-function ListView({ bookings }: { bookings: Booking[] }) {
+function ListView({
+  bookings,
+  aircraftById,
+}: {
+  bookings: Booking[];
+  aircraftById: Map<string, AircraftListItem>;
+}) {
   const sorted = [...bookings].sort(
     (a, b) =>
       new Date(a.requested_departure_at).getTime() -
@@ -151,38 +167,56 @@ function ListView({ bookings }: { bookings: Booking[] }) {
   }
   return (
     <ul className="mt-4 space-y-2">
-      {sorted.map((b) => (
-        <li key={b.id}>
-          <Link
-            href={`/reservations/bookings/${b.id}`}
-            className="flex flex-wrap items-baseline justify-between gap-3 rounded-lg border border-border bg-card px-4 py-3 text-sm hover:bg-muted/5"
-          >
-            <div className="min-w-0 flex-1">
-              <div className="mb-1 flex flex-wrap items-baseline gap-2">
-                <span className="font-semibold tabular-nums">
-                  {_timeOnly(b.requested_departure_at)}
-                </span>
-                <span className="text-muted-foreground">
-                  {b.origin_icao} → {b.destination_icao}
-                </span>
-                {b.aircraft ? (
-                  <span className="rounded border border-border bg-muted/20 px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider text-muted-foreground">
-                    {b.aircraft.tail_number}
+      {sorted.map((b) => {
+        const seats = b.aircraft
+          ? (aircraftById.get(b.aircraft.id)?.seats ?? null)
+          : null;
+        const payload = _estimatedPayloadLbs(b.pax_count);
+        return (
+          <li key={b.id}>
+            <Link
+              href={`/reservations/bookings/${b.id}`}
+              className="flex flex-wrap items-baseline justify-between gap-3 rounded-lg border border-border bg-card px-4 py-3 text-sm hover:bg-muted/5"
+            >
+              <div className="min-w-0 flex-1">
+                <div className="mb-1 flex flex-wrap items-baseline gap-2">
+                  <span className="font-semibold tabular-nums">
+                    {_timeOnly(b.requested_departure_at)}
                   </span>
-                ) : null}
+                  <span className="text-muted-foreground">
+                    {b.origin_icao} → {b.destination_icao}
+                  </span>
+                  {b.aircraft ? (
+                    <span className="rounded border border-border bg-muted/20 px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider text-muted-foreground">
+                      {b.aircraft.tail_number}
+                    </span>
+                  ) : null}
+                </div>
+                <p className="line-clamp-1 text-xs text-muted-foreground">
+                  {b.customer.full_name}
+                  {b.customer.company_name
+                    ? ` · ${b.customer.company_name}`
+                    : ""}{" "}
+                  ·{" "}
+                  <span className="tabular-nums">
+                    {seats == null
+                      ? `${b.pax_count} pax`
+                      : `${b.pax_count}/${seats} seats`}
+                  </span>{" "}
+                  ·{" "}
+                  <span
+                    className="tabular-nums"
+                    title="Estimated payload — pax × 190 lbs FAA standard"
+                  >
+                    ~{payload.toLocaleString("en-US")} lbs est.
+                  </span>
+                </p>
               </div>
-              <p className="line-clamp-1 text-xs text-muted-foreground">
-                {b.customer.full_name}
-                {b.customer.company_name
-                  ? ` · ${b.customer.company_name}`
-                  : ""}{" "}
-                · {b.pax_count} pax
-              </p>
-            </div>
-            <StatusChip status={b.status} />
-          </Link>
-        </li>
-      ))}
+              <StatusChip status={b.status} />
+            </Link>
+          </li>
+        );
+      })}
     </ul>
   );
 }
@@ -194,10 +228,12 @@ function ListView({ bookings }: { bookings: Booking[] }) {
 function BoardView({
   aircraft,
   bookings,
+  aircraftById,
   day,
 }: {
   aircraft: AircraftListItem[];
   bookings: Booking[];
+  aircraftById: Map<string, AircraftListItem>;
   day: Date;
 }) {
   return (
@@ -224,12 +260,14 @@ function BoardView({
               key={a.id}
               aircraft={a}
               bookings={bookings.filter((b) => b.aircraft?.id === a.id)}
+              aircraftById={aircraftById}
               day={day}
             />
           ))}
 
           <UnassignedRow
             bookings={bookings.filter((b) => !b.aircraft)}
+            aircraftById={aircraftById}
             day={day}
           />
         </div>
@@ -241,10 +279,12 @@ function BoardView({
 function AircraftRow({
   aircraft,
   bookings,
+  aircraftById,
   day,
 }: {
   aircraft: AircraftListItem;
   bookings: Booking[];
+  aircraftById: Map<string, AircraftListItem>;
   day: Date;
 }) {
   return (
@@ -260,16 +300,18 @@ function AircraftRow({
           {aircraft.seats} seats
         </div>
       </div>
-      <TimelineTrack bookings={bookings} day={day} />
+      <TimelineTrack bookings={bookings} aircraftById={aircraftById} day={day} />
     </div>
   );
 }
 
 function UnassignedRow({
   bookings,
+  aircraftById,
   day,
 }: {
   bookings: Booking[];
+  aircraftById: Map<string, AircraftListItem>;
   day: Date;
 }) {
   if (bookings.length === 0) return null;
@@ -281,16 +323,18 @@ function UnassignedRow({
           Needs aircraft
         </div>
       </div>
-      <TimelineTrack bookings={bookings} day={day} />
+      <TimelineTrack bookings={bookings} aircraftById={aircraftById} day={day} />
     </div>
   );
 }
 
 function TimelineTrack({
   bookings,
+  aircraftById,
   day,
 }: {
   bookings: Booking[];
+  aircraftById: Map<string, AircraftListItem>;
   day: Date;
 }) {
   return (
@@ -304,13 +348,21 @@ function TimelineTrack({
         />
       ))}
       {bookings.map((b) => (
-        <BookingBlock key={b.id} b={b} day={day} />
+        <BookingBlock key={b.id} b={b} aircraftById={aircraftById} day={day} />
       ))}
     </div>
   );
 }
 
-function BookingBlock({ b, day }: { b: Booking; day: Date }) {
+function BookingBlock({
+  b,
+  aircraftById,
+  day,
+}: {
+  b: Booking;
+  aircraftById: Map<string, AircraftListItem>;
+  day: Date;
+}) {
   const dep = new Date(b.requested_departure_at);
   const arr = b.estimated_arrival_at ? new Date(b.estimated_arrival_at) : null;
   const dayStart = day.getTime();
@@ -336,6 +388,13 @@ function BookingBlock({ b, day }: { b: Booking; day: Date }) {
             ? "border-border bg-muted/40 text-muted-foreground"
             : "border-status-blue/60 bg-status-blue/25 text-status-blue";
 
+  const seats = b.aircraft
+    ? (aircraftById.get(b.aircraft.id)?.seats ?? null)
+    : null;
+  const payload = _estimatedPayloadLbs(b.pax_count);
+  const seatsText =
+    seats == null ? `${b.pax_count} pax` : `${b.pax_count}/${seats} seats`;
+
   return (
     <Link
       href={`/reservations/bookings/${b.id}`}
@@ -344,13 +403,17 @@ function BookingBlock({ b, day }: { b: Booking; day: Date }) {
         "absolute top-1 bottom-1 flex items-center gap-1 overflow-hidden rounded border px-1.5 text-[0.65rem] font-semibold whitespace-nowrap hover:z-10 hover:brightness-125 " +
         bg
       }
-      title={`${b.origin_icao} → ${b.destination_icao} · ${b.customer.full_name} · ${b.pax_count} pax · ${BOOKING_STATUS_LABELS[b.status]}`}
+      title={`${b.origin_icao} → ${b.destination_icao} · ${b.customer.full_name} · ${seatsText} · ~${payload.toLocaleString("en-US")} lbs payload (est.) · ${BOOKING_STATUS_LABELS[b.status]}`}
     >
       <span className="tabular-nums">
         {_timeOnly(b.requested_departure_at)}
       </span>
       <span className="truncate">
         {b.origin_icao}→{b.destination_icao}
+      </span>
+      <span className="tabular-nums opacity-80">·&nbsp;{seatsText}</span>
+      <span className="tabular-nums opacity-80">
+        ·&nbsp;~{_kLbs(payload)}
       </span>
     </Link>
   );
@@ -365,6 +428,22 @@ function _timeOnly(iso: string): string {
     hour: "numeric",
     minute: "2-digit",
   });
+}
+
+// FAA average passenger weight (summer, adult, incl. 30 lbs baggage) — used
+// as a demo-time payload estimate until Booking→Flight→Manifest linkage
+// lands and we can sum real ManifestPax + ManifestCargo weights.
+const AVG_PAX_LBS = 190;
+
+function _estimatedPayloadLbs(paxCount: number): number {
+  return paxCount * AVG_PAX_LBS;
+}
+
+// Compact "1.5k" style for very narrow blocks; full number under 1000.
+function _kLbs(lbs: number): string {
+  if (lbs < 1000) return `${lbs} lbs`;
+  const k = lbs / 1000;
+  return `${k >= 10 ? k.toFixed(0) : k.toFixed(1)}k lbs`;
 }
 
 function StatusChip({ status }: { status: Booking["status"] }) {
