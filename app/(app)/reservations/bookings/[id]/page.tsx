@@ -174,6 +174,7 @@ export default async function BookingDetailPage({
           bookingId={booking.id}
           currentStatus={booking.status}
           currentQuoteCents={booking.quoted_total_cents}
+          cancelConfirmToken={`${booking.origin_icao}-${booking.destination_icao}`}
         />
       ) : null}
     </div>
