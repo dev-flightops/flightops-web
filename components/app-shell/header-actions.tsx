@@ -4,6 +4,8 @@ import { LogOut, Sparkles } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
+import { SpotlightSearch } from "./spotlight-search";
+
 /**
  * The right-side cluster of the top nav. Pixel-match for the legacy
  * `dispatch-platform-main/templates/base.html` header (lines 273-380):
@@ -39,6 +41,8 @@ export function HeaderActions({
 
   return (
     <div className="flex flex-shrink-0 items-center gap-2">
+      <SpotlightSearch />
+
       <IconButton
         title="Notifications · Coming in M3"
         disabled
