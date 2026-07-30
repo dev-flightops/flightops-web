@@ -120,5 +120,15 @@ export async function createBookingAction(
     };
   }
 
+  // Optional redirect override — used by the Fleet Board's
+  // "book from empty cell" flow so success lands back on the
+  // board with the new booking's drawer open, instead of the
+  // standalone detail page. Callers pass a URL template where
+  // %NEWID% is replaced by the created booking's id.
+  const redirectTemplate = formData.get("redirect_url");
+  if (typeof redirectTemplate === "string" && redirectTemplate.trim() !== "") {
+    redirect(redirectTemplate.replace("%NEWID%", newId));
+  }
+
   redirect(`/reservations/bookings/${newId}?filed=1`);
 }

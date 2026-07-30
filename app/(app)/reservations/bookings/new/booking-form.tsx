@@ -27,12 +27,16 @@ export function BookingForm({
   customers,
   aircraft,
   preselectCustomerId,
+  preselectAircraftId,
   prefill,
+  redirectUrlTemplate,
 }: {
   customers: Customer[];
   aircraft: Array<{ id: string; tail_number: string; model: string | null }>;
   preselectCustomerId: string | null;
+  preselectAircraftId?: string | null;
   prefill?: BookingPrefill;
+  redirectUrlTemplate?: string;
 }) {
   const [state, formAction, pending] = useActionState(
     createBookingAction,
@@ -41,6 +45,13 @@ export function BookingForm({
 
   return (
     <form action={formAction} className="space-y-6">
+      {redirectUrlTemplate ? (
+        <input
+          type="hidden"
+          name="redirect_url"
+          value={redirectUrlTemplate}
+        />
+      ) : null}
       {state.status === "error" && state.message ? (
         <div
           role="alert"
@@ -155,7 +166,7 @@ export function BookingForm({
             id="aircraft_id"
             name="aircraft_id"
             className="ff-input"
-            defaultValue=""
+            defaultValue={preselectAircraftId ?? ""}
           >
             <option value="">— None —</option>
             {aircraft.map((a) => (
