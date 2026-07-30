@@ -9,6 +9,11 @@ vi.mock("next/navigation", () => ({
   usePathname: vi.fn().mockReturnValue("/dispatch"),
 }));
 
+// Stub the spotlight component — see header-actions.test.tsx for why.
+vi.mock("@/components/app-shell/spotlight-search", () => ({
+  SpotlightSearch: () => null,
+}));
+
 import { AppShell } from "./app-shell";
 import { HeaderActions } from "./header-actions";
 
