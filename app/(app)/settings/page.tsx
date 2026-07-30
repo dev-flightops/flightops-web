@@ -2,6 +2,7 @@ import {
   Building2,
   KeyRound,
   MapPin,
+  Plane,
   Satellite,
   Users,
   Wallet,
@@ -17,6 +18,7 @@ import {
   listSsoProviders,
   listUsers,
 } from "@/lib/api/auth";
+import { listAircraft } from "@/lib/api/ops";
 
 /**
  * /settings — Settings landing.
@@ -36,6 +38,7 @@ export default async function SettingsLandingPage() {
   let overdueMinutes: number | null = null;
   let simMode: boolean | null = null;
   let usersTotal: number | null = null;
+  let activeAircraft = 0;
   let loadError: string | null = null;
 
   try {
@@ -54,6 +57,14 @@ export default async function SettingsLandingPage() {
       status === 401
         ? "Your session expired — please sign in again."
         : "Settings data unavailable. Try refreshing in a moment.";
+  }
+
+  try {
+    activeAircraft = (await listAircraft()).items.filter(
+      (a) => a.is_active,
+    ).length;
+  } catch {
+    // Non-fatal — leave the tile at 0 if the fleet endpoint is unreachable.
   }
 
   try {
@@ -134,6 +145,18 @@ export default async function SettingsLandingPage() {
               label: "Manage Bases",
               sublabel: `${basesCount} active`,
               href: "/settings/bases",
+            },
+          ]}
+        />
+        <SectionCard
+          icon={Plane}
+          title="Fleet"
+          blurb="Add, edit, and retire aircraft. Seats and useful load feed the Fleet Board and load planning."
+          links={[
+            {
+              label: "Manage Fleet",
+              sublabel: `${activeAircraft} active`,
+              href: "/settings/fleet",
             },
           ]}
         />

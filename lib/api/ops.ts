@@ -4,6 +4,7 @@
 
 import { apiFetch } from "./client";
 import type {
+  AircraftListItem,
   AircraftListResponse,
   AuditTimelineResponse,
   ComplianceBoardResponse,
@@ -176,6 +177,49 @@ export async function getFlightStats(): Promise<FlightStats> {
 
 export async function listAircraft(): Promise<AircraftListResponse> {
   return apiFetch<AircraftListResponse>("/ops/aircraft");
+}
+
+export interface AircraftCreatePayload {
+  tail_number: string;
+  seats: number;
+  model?: string | null;
+  max_payload_lbs?: number | null;
+  airframe_type?: string | null;
+  base?: string | null;
+  special_notes?: string | null;
+}
+
+export interface AircraftUpdatePayload {
+  seats?: number;
+  model?: string | null;
+  max_payload_lbs?: number | null;
+  airframe_type?: string | null;
+  base?: string | null;
+  special_notes?: string | null;
+  is_active?: boolean;
+}
+
+export async function createAircraft(payload: AircraftCreatePayload) {
+  return apiFetch<AircraftListItem>("/ops/aircraft", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function updateAircraft(
+  aircraftId: string,
+  patch: AircraftUpdatePayload,
+) {
+  return apiFetch<AircraftListItem>(`/ops/aircraft/${aircraftId}`, {
+    method: "PATCH",
+    body: JSON.stringify(patch),
+  });
+}
+
+export async function retireAircraft(aircraftId: string): Promise<void> {
+  await apiFetch<void>(`/ops/aircraft/${aircraftId}`, {
+    method: "DELETE",
+  });
 }
 
 // ---- Electronic Flight Log (M2-M-21 / M2-G-26b) ----------------------------
