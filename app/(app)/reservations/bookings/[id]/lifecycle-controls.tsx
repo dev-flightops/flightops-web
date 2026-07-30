@@ -2,6 +2,7 @@
 
 import { useActionState, useState } from "react";
 
+import { useTypeToConfirm } from "@/components/ui/type-to-confirm";
 import type { BookingStatus } from "@/lib/api/reservations";
 
 import {
@@ -36,10 +37,15 @@ export function LifecycleControls({
   bookingId,
   currentStatus,
   currentQuoteCents,
+  cancelConfirmToken,
 }: {
   bookingId: string;
   currentStatus: BookingStatus;
   currentQuoteCents: number | null;
+  /** Text the user must retype to enable Cancel — usually the route
+   *  ("PANC-PABE"). Passed by the caller since we don't have the full
+   *  booking here. When null, falls back to the booking short id. */
+  cancelConfirmToken?: string | null;
 }) {
   const actions = ALLOWED[currentStatus];
   if (actions.length === 0) return null;
@@ -63,7 +69,10 @@ export function LifecycleControls({
         <CompleteForm bookingId={bookingId} />
       ) : null}
       {actions.includes("cancel") ? (
-        <CancelForm bookingId={bookingId} />
+        <CancelForm
+          bookingId={bookingId}
+          confirmToken={cancelConfirmToken ?? bookingId.slice(0, 8)}
+        />
       ) : null}
     </section>
   );
@@ -159,15 +168,26 @@ function CompleteForm({ bookingId }: { bookingId: string }) {
   );
 }
 
-function CancelForm({ bookingId }: { bookingId: string }) {
+function CancelForm({
+  bookingId,
+  confirmToken,
+}: {
+  bookingId: string;
+  confirmToken: string;
+}) {
   const [state, formAction, pending] = useActionState(cancelAction, _initial);
   const [reason, setReason] = useState("");
+  const { input: confirmInput, isConfirmed } = useTypeToConfirm({
+    expected: confirmToken,
+    label: "Type to confirm",
+    placeholder: confirmToken,
+  });
   return (
     <ActionCard title="Cancel booking" tone="danger">
       {state.status === "error" && state.message ? (
         <ErrorBanner message={state.message} />
       ) : null}
-      <form action={formAction} className="space-y-2">
+      <form action={formAction} className="space-y-3">
         <input type="hidden" name="booking_id" value={bookingId} />
         <label className="block">
           <span className="mb-1.5 block text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
@@ -184,10 +204,11 @@ function CancelForm({ bookingId }: { bookingId: string }) {
             placeholder="Customer weather no-go, aircraft unavailable, etc."
           />
         </label>
+        {confirmInput}
         <div className="flex justify-end">
           <button
             type="submit"
-            disabled={pending || reason.trim() === ""}
+            disabled={pending || reason.trim() === "" || !isConfirmed}
             className="rounded-md border border-status-red/60 bg-status-red/15 px-3 py-2 text-xs font-semibold text-status-red hover:bg-status-red/20 disabled:opacity-60"
           >
             {pending ? "Cancelling…" : "Cancel Booking"}
