@@ -4,6 +4,15 @@ import { describe, expect, it, vi } from "vitest";
 
 import { expectNoA11yViolations } from "@/tests/a11y";
 
+// Stub the spotlight component wholesale. Its server action transitively
+// imports lib/api/client.ts → @/auth → next-auth (breaks Vitest's ESM
+// resolver), and its runtime needs Next's router context. HeaderActions
+// just mounts <SpotlightSearch /> as a JSX child; tests here don't
+// exercise its behavior.
+vi.mock("./spotlight-search", () => ({
+  SpotlightSearch: () => null,
+}));
+
 import { HeaderActions } from "./header-actions";
 
 describe("HeaderActions", () => {
