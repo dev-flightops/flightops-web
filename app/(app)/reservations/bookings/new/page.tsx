@@ -15,6 +15,7 @@ export default async function NewBookingPage({
     destination?: string;
     date?: string;
     pax?: string;
+    aircraft?: string;
   }>;
 }) {
   const params = await searchParams;
@@ -24,7 +25,7 @@ export default async function NewBookingPage({
   let aircraft: Array<{ id: string; tail_number: string; model: string | null }> =
     [];
   try {
-    customers = (await listCustomers({ limit: 500 })).items;
+    customers = (await listCustomers({ limit: 200 })).items;
   } catch (err) {
     if (err instanceof ApiError && err.status === 401) throw err;
   }
@@ -70,6 +71,7 @@ export default async function NewBookingPage({
           customers={customers}
           aircraft={aircraft}
           preselectCustomerId={params.customer ?? null}
+          preselectAircraftId={params.aircraft ?? null}
           prefill={{
             origin: params.origin ?? null,
             destination: params.destination ?? null,

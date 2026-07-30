@@ -13,6 +13,9 @@ import { BookingClickable } from "./booking-clickable";
 import { BookingDrawerContent } from "./booking-drawer-content";
 import { BookingDrawerShell } from "./booking-drawer-shell";
 import { FleetBoardChrome } from "./fleet-board-chrome";
+import { NewBookingDrawerContent } from "./new-booking-drawer-content";
+import { NewBookingDrawerShell } from "./new-booking-drawer-shell";
+import { TimelineClickable } from "./timeline-clickable";
 
 /**
  * /reservations/fleet-board — Fleet board.
@@ -45,10 +48,30 @@ function _isoDate(d: Date): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
 
+// Accepts "HH:MM" (24h). Returns the string on success or null on
+// anything malformed — the empty-cell click always sends "HH:00" but
+// we take the safe path for hand-typed URLs too.
+function _validHour(raw: string | undefined): string | null {
+  if (!raw) return null;
+  const m = /^(\d{1,2}):(\d{2})$/.exec(raw);
+  if (!m) return null;
+  const h = Number(m[1]);
+  const mm = Number(m[2]);
+  if (h < 0 || h > 23 || mm < 0 || mm > 59) return null;
+  return `${String(h).padStart(2, "0")}:${String(mm).padStart(2, "0")}`;
+}
+
 export default async function FleetBoardPage({
   searchParams,
 }: {
-  searchParams: Promise<{ view?: string; d?: string; booking?: string }>;
+  searchParams: Promise<{
+    view?: string;
+    d?: string;
+    booking?: string;
+    new?: string;
+    aircraft_id?: string;
+    t?: string;
+  }>;
 }) {
   const params = await searchParams;
   const view = _parseView(params.view);
@@ -56,6 +79,10 @@ export default async function FleetBoardPage({
   const dayEnd = new Date(day);
   dayEnd.setDate(dayEnd.getDate() + 1);
   const drawerBookingId = params.booking ?? null;
+  const isoDay = _isoDate(day);
+  const newDrawerOpen = params.new === "1";
+  const newDrawerAircraftId = params.aircraft_id ?? null;
+  const newDrawerHour = _validHour(params.t) ?? "09:00";
 
   let bookings: Booking[] = [];
   let aircraft: AircraftListItem[] = [];
@@ -94,7 +121,7 @@ export default async function FleetBoardPage({
       <FleetBoardChrome
         view={view}
         day={day}
-        isoDay={_isoDate(day)}
+        isoDay={isoDay}
         flightsCount={flightsCount}
         bookedSeats={bookedSeats}
         totalSeats={totalSeatsUsed}
@@ -121,6 +148,7 @@ export default async function FleetBoardPage({
             bookings={bookings}
             aircraftById={aircraftById}
             day={day}
+            isoDay={isoDay}
           />
         </div>
       ) : (
@@ -129,6 +157,7 @@ export default async function FleetBoardPage({
           bookings={bookings}
           aircraftById={aircraftById}
           day={day}
+          isoDay={isoDay}
         />
       )}
 
@@ -136,6 +165,16 @@ export default async function FleetBoardPage({
         <BookingDrawerShell>
           <BookingDrawerContent bookingId={drawerBookingId} />
         </BookingDrawerShell>
+      ) : null}
+
+      {newDrawerOpen ? (
+        <NewBookingDrawerShell>
+          <NewBookingDrawerContent
+            isoDay={isoDay}
+            hourText={newDrawerHour}
+            aircraftId={newDrawerAircraftId}
+          />
+        </NewBookingDrawerShell>
       ) : null}
     </div>
   );
@@ -240,11 +279,13 @@ function BoardView({
   bookings,
   aircraftById,
   day,
+  isoDay,
 }: {
   aircraft: AircraftListItem[];
   bookings: Booking[];
   aircraftById: Map<string, AircraftListItem>;
   day: Date;
+  isoDay: string;
 }) {
   return (
     <div className="mt-4 overflow-hidden rounded-lg border border-border bg-card">
@@ -272,6 +313,7 @@ function BoardView({
               bookings={bookings.filter((b) => b.aircraft?.id === a.id)}
               aircraftById={aircraftById}
               day={day}
+              isoDay={isoDay}
             />
           ))}
 
@@ -279,6 +321,7 @@ function BoardView({
             bookings={bookings.filter((b) => !b.aircraft)}
             aircraftById={aircraftById}
             day={day}
+            isoDay={isoDay}
           />
         </div>
       </div>
@@ -291,11 +334,13 @@ function AircraftRow({
   bookings,
   aircraftById,
   day,
+  isoDay,
 }: {
   aircraft: AircraftListItem;
   bookings: Booking[];
   aircraftById: Map<string, AircraftListItem>;
   day: Date;
+  isoDay: string;
 }) {
   return (
     <div className="grid grid-cols-[8rem_1fr] items-stretch border-b border-border/50 last:border-b-0">
@@ -310,7 +355,13 @@ function AircraftRow({
           {aircraft.seats} seats
         </div>
       </div>
-      <TimelineTrack bookings={bookings} aircraftById={aircraftById} day={day} />
+      <TimelineTrack
+        bookings={bookings}
+        aircraftById={aircraftById}
+        day={day}
+        aircraftId={aircraft.id}
+        isoDay={isoDay}
+      />
     </div>
   );
 }
@@ -319,10 +370,12 @@ function UnassignedRow({
   bookings,
   aircraftById,
   day,
+  isoDay,
 }: {
   bookings: Booking[];
   aircraftById: Map<string, AircraftListItem>;
   day: Date;
+  isoDay: string;
 }) {
   if (bookings.length === 0) return null;
   return (
@@ -333,7 +386,13 @@ function UnassignedRow({
           Needs aircraft
         </div>
       </div>
-      <TimelineTrack bookings={bookings} aircraftById={aircraftById} day={day} />
+      <TimelineTrack
+        bookings={bookings}
+        aircraftById={aircraftById}
+        day={day}
+        aircraftId={null}
+        isoDay={isoDay}
+      />
     </div>
   );
 }
@@ -342,13 +401,17 @@ function TimelineTrack({
   bookings,
   aircraftById,
   day,
+  aircraftId,
+  isoDay,
 }: {
   bookings: Booking[];
   aircraftById: Map<string, AircraftListItem>;
   day: Date;
+  aircraftId: string | null;
+  isoDay: string;
 }) {
   return (
-    <div className="relative h-14">
+    <TimelineClickable aircraftId={aircraftId} isoDay={isoDay}>
       {/* Faint hourly gridlines (23 = between hours) */}
       {Array.from({ length: 23 }, (_, i) => (
         <div
@@ -360,7 +423,7 @@ function TimelineTrack({
       {bookings.map((b) => (
         <BookingBlock key={b.id} b={b} aircraftById={aircraftById} day={day} />
       ))}
-    </div>
+    </TimelineClickable>
   );
 }
 
