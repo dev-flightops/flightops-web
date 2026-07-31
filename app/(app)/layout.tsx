@@ -6,12 +6,7 @@ import { listMyTenants } from "@/lib/api/auth";
 import { SessionExpiredError } from "@/lib/api/client";
 import { TenantProvider } from "@/lib/tenant";
 
-import { switchTenantAction } from "./actions";
-
-async function signOutAction(): Promise<void> {
-  "use server";
-  await signOut({ redirectTo: "/login" });
-}
+import { signOutAction, switchTenantAction } from "./actions";
 
 /**
  * Layout for the (app) route group — wraps every in-app page (home,

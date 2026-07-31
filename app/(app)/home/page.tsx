@@ -1,12 +1,15 @@
 import { auth } from "@/auth";
+import { signOutAction } from "@/app/(app)/actions";
+import { HeaderActions } from "@/components/app-shell/header-actions";
 import { ActiveAlertsPanel } from "@/components/home/active-alerts-panel";
+import { HomeHero } from "@/components/home/home-hero";
+import { HomeModuleCard } from "@/components/home/home-module-card";
+import { HomeTopBar } from "@/components/home/home-topbar";
 import {
   HOME_QUICK_LINKS,
   QuickLinks,
 } from "@/components/home/quick-links";
-import { ModuleCard } from "@/components/home/module-card";
 import { HOME_MODULES } from "@/components/home/module-catalog";
-import { StatusStrip, type StatusItem } from "@/components/home/status-strip";
 import { listMyTenants } from "@/lib/api/auth";
 import { getFlightStats } from "@/lib/api/ops";
 import { loadOperationalSnapshot } from "@/lib/dashboards/operational-snapshot";
@@ -24,34 +27,28 @@ const ALERT_VIEWING_ROLES = new Set([
   "chief_pilot",
   "dispatcher",
   "safety_officer",
-  // The demo user comes through as "admin" in the seeded data; treat
-  // that as the SA equivalent so the panel is visible in QA.
   "admin",
 ]);
 
 /**
- * Home page — pixel-match for `dispatch-platform-main/templates/home.html`.
+ * /home — pitch landing.
  *
- * Layout:
- *   1. Centered greeting (company name + "Good morning, {firstName}")
- *   2. Status strip — 4 inline counters
- *   3. Module grid (3-col) — 15 cards, role-gated in legacy but here all
- *      visible with future-milestone modules disabled per project policy
- *   4. Quick links footer — role-gated shortcuts, also all disabled until
- *      their underlying modules ship
+ * Owns its own top chrome (the app-shell hides its default header on this
+ * route). Layout:
  *
- * Lives inside the (app) route group so it inherits the AppShell (top nav
- * + tenant switcher + user menu + department sub-nav).
+ *   1. HomeTopBar        — dark black bar with a red primary chip, brand
+ *                          wordmark, phone, and the default HeaderActions
+ *                          cluster re-tinted for the dark background
+ *   2. HomeHero          — light-gray secondary header + photo hero
+ *                          (dark overlay) + ops-line strip with a red CTA
+ *   3. Active Alerts     — unchanged, role-gated (M2 spec)
+ *   4. Departments       — white surface with HomeModuleCard tiles
+ *   5. Quick links       — unchanged footer strip
  */
 export default async function HomePage() {
-  // Pull everything in parallel. listMyTenants is also fetched by the (app)
-  // layout for the tenant switcher; the duplicate call is the price of
-  // keeping the home page self-contained.
   const [session, tenantsResponse, stats, snapshot] = await Promise.all([
     auth(),
     listMyTenants().catch(() => ({ tenants: [] })),
-    // Stats degrade to zeros if the backend hiccups — the demo audience
-    // sees a working layout instead of a 500.
     getFlightStats().catch(() => null),
     loadOperationalSnapshot(),
   ]);
@@ -69,27 +66,16 @@ export default async function HomePage() {
     (session as unknown as { roles?: string[] } | null)?.roles ?? [];
   const canSeeAlerts = sessionRoles.some((r) => ALERT_VIEWING_ROLES.has(r));
 
-  // M2-X-1: hide the Admin card from users whose roles don't have the
-  // per-tenant Admin Access toggle. session.admin_access is the union of
-  // `tenant_role_admin_access.admin_access` across the user's roles —
-  // the same boolean the backend uses to gate /dashboards/*-like
-  // endpoints.
   const hasAdminAccess = Boolean(
     (session as unknown as { admin_access?: boolean } | null)?.admin_access,
   );
   const roleSet = new Set(sessionRoles);
   const visibleModules = HOME_MODULES.filter((m) => {
-    // Admin card is gated on the Admin Access boolean (M2-X-1).
     if (m.id === "admin" && !hasAdminAccess) return false;
-    // Role-gated tiles (e.g. supplier portal) — hidden unless the user
-    // carries the exact role string on their session.
     if (m.roleGate && !roleSet.has(m.roleGate)) return false;
     return true;
   });
 
-  // Airborne pulls from the shared snapshot (released + actual_departure_at
-  // set, not yet arrived). On-ground = today's flights minus the airborne
-  // count — released-but-not-yet-departed counts as on ground.
   const airborne = snapshot.airborneCount;
   const todayTotal = stats
     ? stats.today.scheduled + stats.today.released
@@ -99,39 +85,68 @@ export default async function HomePage() {
     ? Math.max(0, stats.aircraft_total - stats.aircraft_active)
     : 0;
 
-  const statusItems: StatusItem[] = [
-    { value: airborne, label: "airborne", color: "#34d399" },
-    { value: onGround, label: "on ground", color: "#fbbf24" },
-  ];
-  if (acftHold > 0) {
-    statusItems.push({ value: acftHold, label: "acft hold", color: "#f87171" });
-  }
+  // Default HeaderActions cluster — same items as the rest of the app.
+  // Only the surrounding dark bar re-skins the container.
+  const actionsSlot = userEmail ? (
+    <HeaderActions
+      email={userEmail}
+      fullName={session?.user?.name ?? null}
+      signOutAction={signOutAction}
+    />
+  ) : null;
 
   return (
-    <div className="mx-auto max-w-[820px] px-5 pb-12 pt-10">
-      {/* Greeting */}
-      <div className="mb-1 text-center">
-        <h1 className="text-xl font-bold text-foreground">
-          {currentTenant?.name ?? "FlightOps"}
-        </h1>
-        <p className="mt-1.5 text-xs text-muted-foreground">
-          {greeting}
-          {firstName ? `, ${firstName}` : ""}
-        </p>
+    // Full-bleed white surface so /home owns the entire viewport — the
+    // standard app-shell dark chrome is hidden for this route (see
+    // AppShellHeader) and our HomeTopBar / HomeHero render at the top.
+    <div className="min-h-screen bg-white">
+      <HomeTopBar
+        brand={currentTenant?.name ?? "FlightOps"}
+        phone="+1 (555) 000-0000"
+        actionsSlot={actionsSlot}
+      />
+      <HomeHero
+        tenantName={currentTenant?.name ?? "FlightOps"}
+        greeting={greeting}
+        firstName={firstName}
+        airborne={airborne}
+        onGround={onGround}
+        acftHold={acftHold}
+      />
+
+      <div className="mx-auto max-w-6xl px-4 pb-16 sm:px-8">
+        {canSeeAlerts && (
+          <div className="pt-8">
+            <ActiveAlertsPanel />
+          </div>
+        )}
+
+        {/* Departments — clean white content block */}
+        <section className="pt-10">
+          <div className="mb-6 flex items-baseline justify-between border-b border-black/10 pb-4">
+            <div>
+              <h2 className="text-2xl font-bold tracking-tight text-neutral-900">
+                Departments
+              </h2>
+              <p className="mt-1 text-sm text-neutral-500">
+                Every module in the platform, one click away.
+              </p>
+            </div>
+            <span className="text-[0.7rem] font-semibold uppercase tracking-[0.14em] text-neutral-500">
+              {visibleModules.filter((m) => m.status === "live").length} live ·{" "}
+              {visibleModules.filter((m) => m.status !== "live").length} coming
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {visibleModules.map((module) => (
+              <HomeModuleCard key={module.id} module={module} />
+            ))}
+          </div>
+        </section>
+
+        <QuickLinks links={HOME_QUICK_LINKS} />
       </div>
-
-      <StatusStrip items={statusItems} />
-
-      {canSeeAlerts && <ActiveAlertsPanel />}
-
-      {/* Module grid */}
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
-        {visibleModules.map((module) => (
-          <ModuleCard key={module.id} module={module} />
-        ))}
-      </div>
-
-      <QuickLinks links={HOME_QUICK_LINKS} />
     </div>
   );
 }
