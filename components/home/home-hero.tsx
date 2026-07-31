@@ -1,4 +1,4 @@
-import { HomeBrandMark, HomeWordmark } from "./home-brand";
+import { HomeWordmark } from "./home-brand";
 
 /** Hero surface for the /home landing.
  *
