@@ -1,7 +1,6 @@
-import Link from "next/link";
 import { type ReactNode } from "react";
 
-import { DepartmentNav } from "./department-nav";
+import { AppShellHeader } from "./app-shell-header";
 
 /**
  * Two-row app chrome matching the legacy `dispatch-platform-main` base.html
@@ -34,27 +33,10 @@ export function AppShell({
 }: AppShellProps) {
   return (
     <div className="flex min-h-screen flex-col">
-      <header className="sticky top-0 z-40 border-b border-border bg-muted/95 backdrop-blur supports-[backdrop-filter]:bg-muted/60">
-        <div className="flex h-[50px] items-center justify-between px-4 sm:px-5">
-          {/* Left: brand — links to /home to match legacy. */}
-          <div className="flex min-w-0 flex-shrink-0 items-center gap-1 overflow-hidden">
-            <Link
-              href="/home/"
-              className="mr-3 flex flex-shrink-0 items-center gap-2"
-            >
-              <span className="truncate text-sm font-semibold tracking-tight text-foreground">
-                {brand}
-              </span>
-            </Link>
-          </div>
-
-          {/* Right: notifications + AI + clock + users + owner + help + user + settings + sign out */}
-          {actionsSlot}
-        </div>
-
-        <DepartmentNav />
-      </header>
-
+      {/* AppShellHeader hides itself on /home so that page can render its
+       *  own Grant Aviation-themed top bar for the pitch skin. Every other
+       *  route keeps the standard Peregrine chrome. */}
+      <AppShellHeader brand={brand} actionsSlot={actionsSlot} />
       <main className="flex-1">{children}</main>
     </div>
   );

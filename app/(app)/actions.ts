@@ -2,7 +2,14 @@
 
 import { revalidatePath } from "next/cache";
 
+import { signOut } from "@/auth";
 import { switchTenant as switchTenantApi } from "@/lib/api/auth";
+
+/** Shared sign-out server action. Used by the standard app-shell
+ *  HeaderActions AND by the Grant top bar on /home. */
+export async function signOutAction(): Promise<void> {
+  await signOut({ redirectTo: "/login" });
+}
 
 /**
  * Server action that re-issues the session JWT scoped to `tenantId`.
