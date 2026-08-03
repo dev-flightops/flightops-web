@@ -1112,6 +1112,10 @@ export interface CompanyProfileResponse {
   /** Per-tenant display name for the loyalty program. Grant sets this
    *  to "Quyana Rewards"; a fresh tenant sees "Rewards Program". */
   rewards_program_name: string;
+  /** Hex color override for the platform's primary accent — null means
+   *  "use the default". Set via /settings/branding. */
+  brand_primary_color: string | null;
+  brand_primary_dark_color: string | null;
   notes: string | null;
 }
 
@@ -1132,6 +1136,9 @@ export interface CompanyProfileUpdateRequest {
   part_135_certificate?: string | null;
   fiscal_year_end?: string | null;
   rewards_program_name?: string;
+  /** #RRGGBB or #RRGGBBAA. Empty string clears the override. */
+  brand_primary_color?: string | null;
+  brand_primary_dark_color?: string | null;
   notes?: string | null;
 }
 
