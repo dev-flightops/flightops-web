@@ -4,7 +4,10 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 import { ApiError } from "@/lib/api/client";
-import { updateCompanyProfile } from "@/lib/api/auth";
+import {
+  extractBrandingFromUrl,
+  updateCompanyProfile,
+} from "@/lib/api/auth";
 
 /**
  * /settings/branding server action. Validates hex colors, PATCHes the
@@ -76,4 +79,52 @@ export async function updateBrandingAction(
   // fetch, so revalidate the layout scope.
   revalidatePath("/", "layout");
   return { status: "saved" };
+}
+
+// ---- Suggest palette from URL --------------------------------------------
+
+export type ExtractBrandingState =
+  | { status: "idle" }
+  | { status: "ok"; primary: string; primaryDark: string }
+  | { status: "error"; message: string };
+
+export async function extractBrandingAction(
+  _prev: ExtractBrandingState,
+  formData: FormData,
+): Promise<ExtractBrandingState> {
+  const url = String(formData.get("url") ?? "").trim();
+  if (!url) {
+    return { status: "error", message: "Enter a website URL." };
+  }
+  try {
+    const result = await extractBrandingFromUrl(url);
+    return {
+      status: "ok",
+      primary: result.suggested_primary,
+      primaryDark: result.suggested_primary_dark,
+    };
+  } catch (err) {
+    if (err instanceof ApiError) {
+      if (err.status === 422) {
+        return {
+          status: "error",
+          message: err.message || "Couldn't extract a color from that URL.",
+        };
+      }
+      if (err.status === 401) {
+        return {
+          status: "error",
+          message: "Your session expired — please sign in again.",
+        };
+      }
+      return {
+        status: "error",
+        message: `Couldn't reach the extractor (HTTP ${err.status}).`,
+      };
+    }
+    return {
+      status: "error",
+      message: "Couldn't reach the extractor. Try again in a moment.",
+    };
+  }
 }

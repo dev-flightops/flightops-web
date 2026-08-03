@@ -122,6 +122,22 @@ export async function updateCompanyProfile(
   });
 }
 
+export interface BrandingExtractResponse {
+  suggested_primary: string;
+  suggested_primary_dark: string;
+}
+
+/** POST /auth/settings/branding/extract — take a URL, return a suggested
+ *  brand palette pulled from the site's favicon. */
+export async function extractBrandingFromUrl(
+  url: string,
+): Promise<BrandingExtractResponse> {
+  return apiFetch<BrandingExtractResponse>("/auth/settings/branding/extract", {
+    method: "POST",
+    body: JSON.stringify({ url }),
+  });
+}
+
 export async function listCompanyBases(
   options: { includeInactive?: boolean } = {},
 ): Promise<CompanyBaseListResponse> {
