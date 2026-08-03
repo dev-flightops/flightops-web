@@ -1,11 +1,13 @@
 "use client";
 
-import { useActionState, useMemo, useState } from "react";
+import { useActionState, useEffect, useMemo, useState } from "react";
 
 import { Spinner } from "@/components/ui/spinner";
 
 import {
+  extractBrandingAction,
   updateBrandingAction,
+  type ExtractBrandingState,
   type UpdateBrandingState,
 } from "./actions";
 
@@ -25,9 +27,22 @@ export function BrandingForm({
     updateBrandingAction,
     { status: "idle" },
   );
+  const [extractState, extractAction, extractPending] = useActionState<
+    ExtractBrandingState,
+    FormData
+  >(extractBrandingAction, { status: "idle" });
 
   const [primary, setPrimary] = useState(initialPrimary ?? "");
   const [primaryDark, setPrimaryDark] = useState(initialPrimaryDark ?? "");
+
+  // When an extract succeeds, pipe the suggested palette into the color
+  // inputs. The user can then tweak before hitting Save.
+  useEffect(() => {
+    if (extractState.status === "ok") {
+      setPrimary(extractState.primary);
+      setPrimaryDark(extractState.primaryDark);
+    }
+  }, [extractState]);
 
   const previewPrimary = useMemo(() => _validHex(primary) ?? "#0a84ff", [primary]);
   const previewDark = useMemo(
@@ -39,23 +54,65 @@ export function BrandingForm({
     state.status === "field-errors" ? state.errors[k] : undefined;
 
   return (
-    <form action={action} className="space-y-6">
-      {state.status === "api-error" && (
-        <div
-          role="alert"
-          className="rounded-md border border-status-red/40 bg-status-red/10 px-3 py-2 text-xs text-status-red"
-        >
-          {state.message}
+    <div className="space-y-6">
+      {/* Suggest-from-URL form — separate <form> because it targets a
+       *  different action than Save. Colors flow into the inputs below
+       *  via useEffect, then the user hits Save when they're happy. */}
+      <form
+        action={extractAction}
+        className="rounded-lg border border-border bg-card p-4"
+      >
+        <div className="mb-2 text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+          Suggest from your website
         </div>
-      )}
-      {state.status === "saved" && (
-        <div
-          role="status"
-          className="rounded-md border border-status-green/40 bg-status-green/10 px-3 py-2 text-xs text-status-green"
-        >
-          Brand theme saved. Applied across the app.
+        <div className="flex flex-wrap items-center gap-2">
+          <input
+            type="text"
+            name="url"
+            placeholder="e.g. flygrant.com"
+            spellCheck={false}
+            autoComplete="off"
+            className="min-w-0 flex-1 rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-status-blue focus:outline-none"
+          />
+          <button
+            type="submit"
+            disabled={extractPending}
+            className="inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-3 py-2 text-xs font-semibold text-foreground hover:bg-muted/40 disabled:opacity-60"
+          >
+            {extractPending && <Spinner size="xs" />}
+            {extractPending ? "Extracting…" : "Suggest colors"}
+          </button>
         </div>
-      )}
+        {extractState.status === "error" && (
+          <p role="alert" className="mt-2 text-[0.7rem] text-status-red">
+            {extractState.message}
+          </p>
+        )}
+        {extractState.status === "ok" && (
+          <p role="status" className="mt-2 text-[0.7rem] text-status-green">
+            Suggested {extractState.primary} — review below and Save when
+            ready.
+          </p>
+        )}
+      </form>
+
+      <form action={action} className="space-y-6">
+        {state.status === "api-error" && (
+          <div
+            role="alert"
+            className="rounded-md border border-status-red/40 bg-status-red/10 px-3 py-2 text-xs text-status-red"
+          >
+            {state.message}
+          </div>
+        )}
+        {state.status === "saved" && (
+          <div
+            role="status"
+            className="rounded-md border border-status-green/40 bg-status-green/10 px-3 py-2 text-xs text-status-green"
+          >
+            Brand theme saved. Applied across the app.
+          </div>
+        )}
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <ColorField
@@ -126,7 +183,8 @@ export function BrandingForm({
           {pending ? "Saving…" : "Save brand theme"}
         </button>
       </div>
-    </form>
+      </form>
+    </div>
   );
 }
 
