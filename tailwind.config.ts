@@ -57,6 +57,16 @@ const config: Config = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        // Per-tenant brand color — driven by CSS custom properties on
+        // :root, injected by <BrandThemeStyle> in the (app) layout when
+        // a tenant sets an override. Consumers use `bg-brand-primary`,
+        // `text-brand-primary`, `hover:bg-brand-primary-dark`, etc.
+        // Defaults to the platform accent (#0a84ff / #0070e0) when the
+        // tenant hasn't set anything — see globals.css :root block.
+        brand: {
+          primary: "var(--brand-primary)",
+          "primary-dark": "var(--brand-primary-dark)",
+        },
         // Legacy badge / aviation-status colors used by the Badge primitive
         // and the risk / weather indicators.
         status: {
