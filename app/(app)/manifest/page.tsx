@@ -366,7 +366,7 @@ function DayBlock({
                 >
                   <td className="whitespace-nowrap px-4 py-3 font-mono text-xs font-semibold">
                     <Link
-                      href={`/dispatch/${f.id}`}
+                      href={`/manifest/${f.id}`}
                       className="text-status-blue hover:underline"
                     >
                       {f.flight_number}
@@ -386,10 +386,10 @@ function DayBlock({
                   </td>
                   <td className="whitespace-nowrap px-4 py-3 text-right">
                     <Link
-                      href={`/dispatch/${f.id}`}
+                      href={`/manifest/${f.id}`}
                       className="text-xs font-semibold text-status-blue hover:underline"
                     >
-                      Open →
+                      Manifest →
                     </Link>
                   </td>
                 </tr>
