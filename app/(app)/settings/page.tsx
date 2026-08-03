@@ -2,6 +2,7 @@ import {
   Building2,
   KeyRound,
   MapPin,
+  Palette,
   Plane,
   Satellite,
   Users,
@@ -157,6 +158,18 @@ export default async function SettingsLandingPage() {
               label: "Manage Fleet",
               sublabel: `${activeAircraft} active`,
               href: "/settings/fleet",
+            },
+          ]}
+        />
+        <SectionCard
+          icon={Palette}
+          title="Branding"
+          blurb="Your brand colors, applied across every module. Buttons, links, and accents pick up your primary hex."
+          links={[
+            {
+              label: "Brand Theme",
+              sublabel: "Primary + hover colors",
+              href: "/settings/branding",
             },
           ]}
         />

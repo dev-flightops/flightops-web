@@ -42,6 +42,13 @@
     --destructive-foreground: 0 0% 100%;
     --ring: 210 100% 52%;
     --radius: 0.5rem;
+
+    /* Per-tenant brand override tokens (M3 branding). Consumed as
+     * `var(--brand-primary)` for primary buttons, accents, etc. Values
+     * are hex strings (not HSL triples) so a tenant setting comes
+     * through as-is. Defaults fall back to the platform accent. */
+    --brand-primary: #0a84ff;
+    --brand-primary-dark: #0070e0;
   }
 
   .dark {
@@ -66,6 +73,10 @@
     --destructive: 0 75% 24%;
     --destructive-foreground: 0 93% 82%;
     --ring: 210 100% 52%;
+
+    /* Brand override tokens — same defaults in dark mode. */
+    --brand-primary: #0a84ff;
+    --brand-primary-dark: #0070e0;
   }
 }
 

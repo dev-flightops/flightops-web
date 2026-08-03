@@ -209,7 +209,7 @@ export function BookingForm({
         <button
           type="submit"
           disabled={pending}
-          className="rounded-md bg-status-blue px-4 py-2 text-sm font-semibold text-white hover:brightness-110 disabled:opacity-60"
+          className="rounded-md bg-brand-primary px-4 py-2 text-sm font-semibold text-white hover:bg-brand-primary-dark disabled:opacity-60"
         >
           {pending ? "Filing…" : "File Booking"}
         </button>

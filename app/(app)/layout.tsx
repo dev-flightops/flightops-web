@@ -1,8 +1,9 @@
 import { auth, signOut } from "@/auth";
 import { AppShell } from "@/components/app-shell/app-shell";
 import { HeaderActions } from "@/components/app-shell/header-actions";
+import { BrandThemeStyle } from "@/components/app-shell/brand-theme-style";
 import { SafetyReportButton } from "@/components/safety/safety-report-button";
-import { listMyTenants } from "@/lib/api/auth";
+import { getCompanyProfile, listMyTenants } from "@/lib/api/auth";
 import { SessionExpiredError } from "@/lib/api/client";
 import { TenantProvider } from "@/lib/tenant";
 
@@ -48,6 +49,24 @@ export default async function AppGroupLayout({
   const currentTenant = tenants.find((t) => t.is_current) ?? tenants[0];
   const brand = currentTenant?.name ?? "Peregrine Flight Ops";
 
+  // Per-tenant brand color overrides (M3 branding). Fetched here so every
+  // authenticated page inherits the tenant theme without each route
+  // re-fetching. Soft-fails to defaults if the auth service is briefly
+  // unreachable — the app still renders with platform colors.
+  let brandTheme: {
+    brand_primary_color: string | null;
+    brand_primary_dark_color: string | null;
+  } = { brand_primary_color: null, brand_primary_dark_color: null };
+  try {
+    const profile = await getCompanyProfile();
+    brandTheme = {
+      brand_primary_color: profile.brand_primary_color,
+      brand_primary_dark_color: profile.brand_primary_dark_color,
+    };
+  } catch {
+    // Non-fatal: fall through to defaults.
+  }
+
   const actionsSlot = session?.user?.email ? (
     <HeaderActions
       email={session.user.email}
@@ -61,6 +80,10 @@ export default async function AppGroupLayout({
       tenants={tenants}
       switchTenantAction={switchTenantAction}
     >
+      <BrandThemeStyle
+        primary={brandTheme.brand_primary_color}
+        primaryDark={brandTheme.brand_primary_dark_color}
+      />
       <AppShell brand={brand} actionsSlot={actionsSlot}>
         {children}
         {/* Spec: global Safety Report button, fixed bottom-right on every
