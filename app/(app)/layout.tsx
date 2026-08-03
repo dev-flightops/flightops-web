@@ -5,6 +5,8 @@ import { BrandThemeStyle } from "@/components/app-shell/brand-theme-style";
 import { SafetyReportButton } from "@/components/safety/safety-report-button";
 import { getCompanyProfile, listMyTenants } from "@/lib/api/auth";
 import { SessionExpiredError } from "@/lib/api/client";
+import { getCurrentDuty } from "@/lib/api/ops";
+import type { CurrentDutyResponse } from "@/lib/api/types";
 import { TenantProvider } from "@/lib/tenant";
 
 import { signOutAction, switchTenantAction } from "./actions";
@@ -67,11 +69,22 @@ export default async function AppGroupLayout({
     // Non-fatal: fall through to defaults.
   }
 
+  // Pilot duty state seeds the top-bar Clock In/Out pill. Soft-fails so
+  // brief ops-service blips don't break every in-app page — the pill
+  // just falls back to its disabled placeholder in that case.
+  let initialDuty: CurrentDutyResponse | null = null;
+  try {
+    initialDuty = await getCurrentDuty();
+  } catch {
+    initialDuty = null;
+  }
+
   const actionsSlot = session?.user?.email ? (
     <HeaderActions
       email={session.user.email}
       fullName={session.user.name ?? null}
       signOutAction={signOutAction}
+      initialDuty={initialDuty}
     />
   ) : null;
 
