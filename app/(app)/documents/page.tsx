@@ -1,30 +1,81 @@
 import Link from "next/link";
 
+import { ApiError } from "@/lib/api/client";
+import { listDocuments, type DocumentRow } from "@/lib/api/documents";
+
 import { DocumentsFilterBar, DOCUMENT_CATEGORIES } from "./filter-bar";
+import { UploadDocumentDrawer } from "./upload-document-drawer";
 
 /**
  * /documents — Document Library.
  *
- * Matches legacy peregrineflight.com/documents/:
- *   Breadcrumb: Home > Documents
- *   Header:     "Document Library" + subtitle "Company manuals,
- *               regulations, safety bulletins, and compliance references
- *               — N documents"  |  + Upload Document
- *   Filter:     Search (title, tags, filename) · Category dropdown ·
- *               Compliance sources only checkbox · Filter button
- *   Empty:      File glyph + "No documents yet. Upload your first
- *               document to get started." + Upload Document button
+ * Legacy peregrineflight.com/documents/ shape, backed by the shipped
+ * documents-service:
  *
- * There is no documents-service yet — Marc's HR/Documents M3 backend
- * story owns that. This page renders the shell so the home-tile can go
- * live, the URL stops 404-ing, and the layout is ready to wire up when
- * the API lands. Upload buttons render disabled with a milestone
- * tooltip until then; the filter bar's state is client-local (no
- * server round-trip) so search/category/compliance-only still respond
- * visually.
+ *   Breadcrumb: Home > Documents
+ *   Header:     "Document Library" + subtitle + doc count
+ *               | [+ Upload Document] drawer
+ *   Filter:     Search (client-only for now) + Category + Compliance-only
+ *   List:       Grouped by category, one row per document, link to detail
+ *   Empty:      File glyph + "No documents yet" + Upload CTA
+ *
+ * Data comes from `GET /documents?category=...`. Search is client-only
+ * (URL captures the search string but we filter the returned list
+ * in-process); the backend endpoint doesn't yet support search by
+ * title / tags / filename, and pushing a full-text search there is
+ * its own follow-up story.
  */
-export default function DocumentsPage() {
-  const total: number = 0;
+export const dynamic = "force-dynamic";
+
+export default async function DocumentsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{
+    category?: string;
+    q?: string;
+    compliance?: string;
+  }>;
+}) {
+  const params = await searchParams;
+  const categoryFilter = (params.category ?? "").trim();
+  const search = (params.q ?? "").trim().toLowerCase();
+  const complianceOnly = params.compliance === "true";
+
+  let items: DocumentRow[] = [];
+  let backendCategories: string[] = [];
+  let loadError: string | null = null;
+  try {
+    const resp = await listDocuments({
+      category: categoryFilter || undefined,
+    });
+    items = resp.items;
+    backendCategories = resp.categories;
+  } catch (err) {
+    const status = err instanceof ApiError ? err.status : 0;
+    loadError =
+      status === 401
+        ? "Your session expired — please sign in again."
+        : "Document library unavailable. Try refreshing in a moment.";
+  }
+
+  // Client-side filters that the backend doesn't cover yet.
+  const filtered = items.filter((d) => {
+    if (
+      complianceOnly &&
+      !isComplianceCategory(d.category)
+    ) {
+      return false;
+    }
+    if (search) {
+      const hay = `${d.title} ${d.category} ${d.description ?? ""}`.toLowerCase();
+      if (!hay.includes(search)) return false;
+    }
+    return true;
+  });
+
+  const total = filtered.length;
+  const grouped = groupByCategory(filtered);
+
   return (
     <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6">
       <nav aria-label="Breadcrumb" className="mb-4 flex items-center text-xs">
@@ -49,68 +100,171 @@ export default function DocumentsPage() {
         <span className="font-semibold text-status-blue">Documents</span>
       </nav>
 
-      <header className="mb-5 flex flex-wrap items-start justify-between gap-3">
+      <header className="mb-4 flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Document Library</h1>
+          <h1 className="text-2xl font-bold tracking-tight">
+            Document Library
+          </h1>
           <p className="mt-0.5 text-xs text-muted-foreground">
             Company manuals, regulations, safety bulletins, and compliance
             references — {total} document{total === 1 ? "" : "s"}
+            {backendCategories.length > 0 && (
+              <span className="text-muted-foreground/70">
+                {" "}
+                · {backendCategories.length} categor
+                {backendCategories.length === 1 ? "y" : "ies"}
+              </span>
+            )}
           </p>
         </div>
-        <UploadButton />
+        <UploadDocumentDrawer variant="primary" />
       </header>
 
-      <DocumentsFilterBar />
+      <div className="mb-4">
+        <DocumentsFilterBar
+          initialSearch={search}
+          initialCategory={categoryFilter}
+          initialComplianceOnly={complianceOnly}
+        />
+      </div>
 
-      <EmptyState />
-    </div>
-  );
-}
-
-/**
- * Legacy renders both Upload buttons in full-saturation blue — no
- * dimming — even though the flow needs a backend. We match that
- * exactly so the shell is visually indistinguishable, and rely on the
- * `disabled` attribute + `title` tooltip (rather than opacity) to
- * communicate the milestone gap. The header button prefixes with `+`;
- * the in-panel empty-state button does not (matches legacy).
- */
-function UploadButton({ withPrefix = true }: { withPrefix?: boolean } = {}) {
-  return (
-    <button
-      type="button"
-      disabled
-      aria-disabled="true"
-      title="Document uploads ship with the documents-service (M3 backend)"
-      className="flex-shrink-0 cursor-not-allowed rounded-md bg-status-blue px-4 py-2 text-sm font-semibold text-white opacity-100 disabled:opacity-100"
-    >
-      {withPrefix ? "+ Upload Document" : "Upload Document"}
-    </button>
-  );
-}
-
-function EmptyState() {
-  return (
-    <div className="mt-4 rounded-lg border border-border bg-card px-4 py-16 text-center">
-      <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-muted/20">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 24 24"
-          fill="currentColor"
-          className="h-8 w-8 text-muted-foreground/60"
-          aria-hidden
+      {loadError ? (
+        <div
+          role="alert"
+          className="rounded-md border border-status-yellow/40 bg-status-yellow/10 px-3 py-3 text-xs text-status-yellow"
         >
-          <path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z" />
-        </svg>
-      </div>
-      <p className="text-sm text-muted-foreground">
-        No documents yet. Upload your first document to get started.
-      </p>
-      <div className="mt-4 inline-flex">
-        <UploadButton withPrefix={false} />
-      </div>
+          {loadError}
+        </div>
+      ) : filtered.length === 0 ? (
+        <EmptyState hasAnyDocuments={items.length > 0} />
+      ) : (
+        <div className="space-y-6">
+          {grouped.map(({ category, docs }) => (
+            <CategorySection key={category} category={category} docs={docs} />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
 
-export { DOCUMENT_CATEGORIES };
+function CategorySection({
+  category,
+  docs,
+}: {
+  category: string;
+  docs: DocumentRow[];
+}) {
+  return (
+    <section>
+      <h2 className="mb-2 text-[0.65rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+        {category} · {docs.length}
+      </h2>
+      <ul className="divide-y divide-border overflow-hidden rounded-lg border border-border bg-card">
+        {docs.map((d) => (
+          <li key={d.id}>
+            <Link
+              href={`/documents/${d.id}`}
+              className="flex items-baseline justify-between gap-3 px-4 py-3 text-sm hover:bg-muted/5"
+            >
+              <div className="min-w-0">
+                <div className="truncate font-semibold text-foreground">
+                  {d.title}
+                </div>
+                {d.description && (
+                  <p className="mt-0.5 line-clamp-1 text-[0.7rem] text-muted-foreground">
+                    {d.description}
+                  </p>
+                )}
+              </div>
+              <div className="flex flex-shrink-0 items-baseline gap-3 text-[0.7rem] text-muted-foreground">
+                <span className="hidden font-mono sm:inline">
+                  v{d.current_version_number}
+                </span>
+                <span className="hidden sm:inline">{fmtDate(d.updated_at)}</span>
+                <span className="font-semibold text-status-blue">Open →</span>
+              </div>
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+function EmptyState({ hasAnyDocuments }: { hasAnyDocuments: boolean }) {
+  return (
+    <div className="rounded-lg border border-border bg-card px-4 py-16 text-center">
+      <FileGlyph />
+      <p className="mt-3 text-sm font-medium text-foreground">
+        {hasAnyDocuments
+          ? "No documents match your filters."
+          : "No documents yet. Upload your first document to get started."}
+      </p>
+      {!hasAnyDocuments && (
+        <div className="mt-4">
+          <UploadDocumentDrawer variant="secondary" />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function FileGlyph() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      className="mx-auto h-10 w-10 text-muted-foreground"
+      aria-hidden
+    >
+      <path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z" />
+      <polyline points="14 3 14 9 20 9" />
+    </svg>
+  );
+}
+
+function fmtDate(iso: string): string {
+  const d = new Date(iso);
+  if (!Number.isFinite(d.getTime())) return "—";
+  return d.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    timeZone: "UTC",
+  });
+}
+
+function groupByCategory(
+  docs: DocumentRow[],
+): { category: string; docs: DocumentRow[] }[] {
+  const by = new Map<string, DocumentRow[]>();
+  for (const d of docs) {
+    const list = by.get(d.category) ?? [];
+    list.push(d);
+    by.set(d.category, list);
+  }
+  return Array.from(by.entries())
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([category, list]) => ({
+      category,
+      docs: list.sort((a, b) => a.title.localeCompare(b.title)),
+    }));
+}
+
+const COMPLIANCE_CATEGORIES: ReadonlySet<string> = new Set<string>([
+  ...DOCUMENT_CATEGORIES.filter((c) => {
+    const v = c.value;
+    return v === "regulations" || v === "compliance";
+  }).map((c) => c.label),
+  // Also accept the short slugs an operator might have typed by hand.
+  "regulations",
+  "compliance",
+]);
+
+function isComplianceCategory(category: string): boolean {
+  return COMPLIANCE_CATEGORIES.has(category);
+}
