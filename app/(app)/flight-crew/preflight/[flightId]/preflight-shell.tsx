@@ -1,3 +1,7 @@
+"use client";
+
+import { useEffect, useState } from "react";
+
 import type {
   CurrentDutyResponse,
   FlightDetail,
@@ -48,22 +52,77 @@ export function PreflightShell({
   const nextStep = progress.next_step;
   const allDone = nextStep === null;
 
+  // Phil #6 (Aug 2026) — Edit link on completed steps. When the pilot
+  // clicks Edit on step N (already completed), swap the active-step
+  // slot to render N's editor instead of `nextStep`. Backend upserts,
+  // so submitting from an edit re-writes the row without cascading
+  // invalidation.
+  const [editingStep, setEditingStep] = useState<number | null>(null);
+
+  // Clear edit state once the server confirms the save. `progress.completed`
+  // is fresh on every re-render (server revalidatePath) so the
+  // edited step's completed_at timestamp shifts — key the effect on
+  // that so we don't get stuck on the editor after a successful save.
+  const editedRowKey = editingStep
+    ? progress.completed.find((s) => s.step_number === editingStep)?.completed_at
+    : null;
+  useEffect(() => {
+    if (editingStep === null) return;
+    // First render after entering edit mode: baseline captured.
+    // Subsequent renders where `editedRowKey` changed → save landed.
+    // We can't distinguish "just entered edit mode" from "just saved"
+    // without a baseline snapshot, so stash the initial value in a
+    // ref-like closure via a nested effect. Simplest: track the
+    // baseline in state.
+  }, [editingStep, editedRowKey]);
+
+  // Ref-in-state baseline pattern: capture completed_at at edit-open,
+  // clear editing when it changes.
+  const [editBaseline, setEditBaseline] = useState<string | null>(null);
+  useEffect(() => {
+    if (editingStep === null) {
+      setEditBaseline(null);
+      return;
+    }
+    const current = progress.completed.find(
+      (s) => s.step_number === editingStep,
+    )?.completed_at ?? null;
+    if (editBaseline === null) {
+      setEditBaseline(current);
+    } else if (current !== null && current !== editBaseline) {
+      // Save landed — exit edit mode.
+      setEditingStep(null);
+      setEditBaseline(null);
+    }
+  }, [editingStep, editBaseline, progress.completed]);
+
+  const activeSlotStep = editingStep ?? nextStep;
+
   return (
     <>
       <FlightContextBar flight={flight} />
       <ProgressIndicator
         completedNumbers={completedNumbers}
         nextStep={nextStep}
+        editingStep={editingStep}
         totalSteps={progress.total_steps}
       />
 
-      {allDone ? (
+      {editingStep !== null && (
+        <EditingBanner
+          stepNumber={editingStep}
+          onCancel={() => setEditingStep(null)}
+        />
+      )}
+
+      {editingStep === null && allDone ? (
         <AllDonePanel flightId={flight.id} />
       ) : (
         <ActiveStep
+          key={`step-${activeSlotStep}`}
           flightId={flight.id}
           flight={flight}
-          stepNumber={nextStep}
+          stepNumber={activeSlotStep as number}
           duty={duty}
           frat={frat}
           acceptance={acceptance}
@@ -71,9 +130,43 @@ export function PreflightShell({
       )}
 
       {progress.completed.length > 0 && (
-        <CompletedSummary completed={progress.completed} />
+        <CompletedSummary
+          completed={progress.completed}
+          editingStep={editingStep}
+          onEdit={setEditingStep}
+        />
       )}
     </>
+  );
+}
+
+function EditingBanner({
+  stepNumber,
+  onCancel,
+}: {
+  stepNumber: number;
+  onCancel: () => void;
+}) {
+  const label = STEP_LABELS_BY_NUMBER[stepNumber] ?? `Step ${stepNumber}`;
+  return (
+    <div
+      role="status"
+      className="mb-3 flex items-center justify-between gap-2 rounded-md border border-status-blue/40 bg-status-blue/10 px-3 py-2 text-xs"
+    >
+      <span className="text-status-blue">
+        <span className="font-semibold uppercase tracking-[0.06em]">
+          Editing Step {stepNumber}
+        </span>
+        <span className="ml-2 text-foreground/80">{label}</span>
+      </span>
+      <button
+        type="button"
+        onClick={onCancel}
+        className="rounded border border-border bg-background px-2 py-0.5 text-[0.7rem] font-semibold text-foreground/80 hover:bg-muted/20"
+      >
+        Cancel edit
+      </button>
+    </div>
   );
 }
 
@@ -102,19 +195,22 @@ function FlightContextBar({ flight }: { flight: FlightDetail }) {
 function ProgressIndicator({
   completedNumbers,
   nextStep,
+  editingStep,
   totalSteps,
 }: {
   completedNumbers: Set<number>;
   nextStep: number | null;
+  editingStep: number | null;
   totalSteps: number;
 }) {
   const doneCount = completedNumbers.size;
-  const currentStep = nextStep ?? totalSteps;
+  const currentStep = editingStep ?? nextStep ?? totalSteps;
   return (
     <section className="mb-6">
       <div className="mb-2 flex items-baseline justify-between text-xs text-muted-foreground">
         <span className="font-semibold uppercase tracking-[0.06em]">
-          Step {currentStep} of {totalSteps}
+          {editingStep !== null ? "Editing step" : "Step"} {currentStep} of{" "}
+          {totalSteps}
         </span>
         <span>{doneCount} complete</span>
       </div>
@@ -124,16 +220,19 @@ function ProgressIndicator({
           const n = i + 1;
           const isDone = completedNumbers.has(n);
           const isNext = n === nextStep;
+          const isEditing = n === editingStep;
           return (
             <span
               key={n}
-              aria-label={`Step ${n}${isDone ? " — complete" : isNext ? " — active" : ""}`}
+              aria-label={`Step ${n}${isEditing ? " — editing" : isDone ? " — complete" : isNext ? " — active" : ""}`}
               className={
-                isDone
-                  ? "h-1.5 flex-1 rounded-full bg-status-green"
-                  : isNext
-                    ? "h-1.5 flex-1 rounded-full bg-status-blue"
-                    : "h-1.5 flex-1 rounded-full bg-muted-foreground/20"
+                isEditing
+                  ? "h-1.5 flex-1 rounded-full bg-status-blue"
+                  : isDone
+                    ? "h-1.5 flex-1 rounded-full bg-status-green"
+                    : isNext
+                      ? "h-1.5 flex-1 rounded-full bg-status-blue"
+                      : "h-1.5 flex-1 rounded-full bg-muted-foreground/20"
               }
             />
           );
@@ -211,8 +310,12 @@ function StepStubPanel({ stepNumber }: { stepNumber: number }) {
 
 function CompletedSummary({
   completed,
+  editingStep,
+  onEdit,
 }: {
   completed: PreflightProgressResponse["completed"];
+  editingStep: number | null;
+  onEdit: (stepNumber: number) => void;
 }) {
   return (
     <section className="mt-8">
@@ -220,23 +323,48 @@ function CompletedSummary({
         Completed
       </h2>
       <ul className="space-y-1.5">
-        {completed.map((s) => (
-          <li
-            key={s.id}
-            className="flex items-baseline justify-between gap-2 rounded-md border border-border bg-card/40 px-3 py-2 text-xs"
-          >
-            <span className="flex items-baseline gap-2">
-              <CheckIcon />
-              <span className="font-semibold text-foreground">
-                Step {s.step_number}
+        {completed.map((s) => {
+          const isEditing = editingStep === s.step_number;
+          return (
+            <li
+              key={s.id}
+              className={
+                "flex items-baseline justify-between gap-2 rounded-md border px-3 py-2 text-xs " +
+                (isEditing
+                  ? "border-status-blue/40 bg-status-blue/5"
+                  : "border-border bg-card/40")
+              }
+            >
+              <span className="flex items-baseline gap-2">
+                <CheckIcon />
+                <span className="font-semibold text-foreground">
+                  Step {s.step_number}
+                </span>
+                <span className="text-muted-foreground">{s.label}</span>
               </span>
-              <span className="text-muted-foreground">{s.label}</span>
-            </span>
-            <span className="font-mono text-[0.65rem] text-muted-foreground">
-              {formatUtcTime(s.completed_at)}
-            </span>
-          </li>
-        ))}
+              <span className="flex items-baseline gap-3">
+                <span className="font-mono text-[0.65rem] text-muted-foreground">
+                  {formatUtcTime(s.completed_at)}
+                </span>
+                {isEditing ? (
+                  <span className="text-[0.7rem] font-semibold text-status-blue">
+                    Editing…
+                  </span>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => onEdit(s.step_number)}
+                    disabled={editingStep !== null}
+                    className="text-[0.7rem] font-semibold text-status-blue hover:underline disabled:cursor-not-allowed disabled:opacity-40 disabled:no-underline"
+                    aria-label={`Edit step ${s.step_number}`}
+                  >
+                    Edit
+                  </button>
+                )}
+              </span>
+            </li>
+          );
+        })}
       </ul>
     </section>
   );
