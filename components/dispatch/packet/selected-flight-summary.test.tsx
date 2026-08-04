@@ -41,7 +41,7 @@ describe("SelectedFlightSummary", () => {
 
   it("includes the demo cert id chip in the green confirmation row", () => {
     render(<SelectedFlightSummary flight={baseFlight()} />);
-    expect(screen.getByText("DEMO-CERT-1-005")).toBeInTheDocument();
+    expect(screen.getByText("ATP-CFI-0058291")).toBeInTheDocument();
   });
 
   it("warns when pax_count and cargo_lbs are both zero", () => {
@@ -78,7 +78,7 @@ describe("SelectedFlightSummary", () => {
 
   it("shows the demo PIC name in the green confirmation + scheduled-PIC rows", () => {
     render(<SelectedFlightSummary flight={baseFlight()} />);
-    const matches = screen.getAllByText(/Brian Larson/);
+    const matches = screen.getAllByText(/Sarah Kessler/);
     expect(matches.length).toBeGreaterThanOrEqual(2);
   });
 

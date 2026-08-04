@@ -41,12 +41,12 @@ describe("HeaderActions", () => {
         signOutAction={vi.fn()}
       />,
     );
-    // Settings shipped in M2 and is no longer on the disabled list —
-    // see the next test for its live-link assertion.
+    // Settings shipped in M2, Time Clock ships but has an
+    // "unavailable" fallback state when initialDuty is absent —
+    // both are asserted separately below.
     for (const label of [
       "Notifications",
       "AI Assistant",
-      "Time Clock",
       "Users",
       "Owner Admin",
       "Help",
@@ -55,6 +55,18 @@ describe("HeaderActions", () => {
       expect(el).toBeDisabled();
       expect(el.getAttribute("title")).toMatch(/Coming in M[234]/);
     }
+  });
+
+  it("Time Clock falls back to a disabled 'unavailable' pill when initialDuty is absent", () => {
+    render(
+      <HeaderActions
+        email="admin@flightops.local"
+        signOutAction={vi.fn()}
+      />,
+    );
+    const el = screen.getByLabelText("Time Clock");
+    expect(el).toBeDisabled();
+    expect(el.getAttribute("title")).toMatch(/unavailable/i);
   });
 
   it("Settings is a live link to /settings (shipped M2)", () => {

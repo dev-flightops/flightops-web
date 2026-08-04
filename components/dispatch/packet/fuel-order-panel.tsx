@@ -52,8 +52,13 @@ export async function FuelOrderPanel({
     const result = await listSupplierBases({ baseCode });
     // Filter by the auto-selected fuel type on the client; the backend
     // filter is by fuel_type_id (uuid) but we only have a code here.
+    // Backend stores codes with underscores (`jet_a`, `av_gas_100ll`)
+    // while `fuelTypeForAircraft` returns dash form (`JET-A`, `100LL`);
+    // normalize both by stripping separators so we don't miss matches.
+    const norm = (code: string) => code.toUpperCase().replace(/[-_]/g, "");
+    const wanted = norm(fuelTypeCode);
     supplierBases = result.items.filter(
-      (sb) => sb.fuel_type_code.toUpperCase() === fuelTypeCode,
+      (sb) => norm(sb.fuel_type_code) === wanted,
     );
   } catch (err) {
     const status = err instanceof ApiError ? err.status : 0;
