@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 
 import type { DutyActionResult } from "@/app/(app)/duty-actions";
 import type { CurrentDutyResponse } from "@/lib/api/types";
@@ -40,6 +40,21 @@ export function TopBarClockButton({ initial, clockIn, clockOut }: Props) {
   const [duty, setDuty] = useState<CurrentDutyResponse>(initial);
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  // Tick every 30s so the "Clock Out · Xh Ym" pill advances without
+  // requiring a route change. State value is unused — we just need
+  // React to re-render so the label recomputes from `now`.
+  const [, setTick] = useState(0);
+  useEffect(() => {
+    const id = window.setInterval(() => setTick((n) => n + 1), 30_000);
+    return () => window.clearInterval(id);
+  }, []);
+  // React's useState(initial) doesn't reset when `initial` prop changes,
+  // so a `revalidatePath("/", "layout")` after clock-in/out would leave
+  // our local snapshot stale (e.g., temp id, elapsed_hours=0). Sync
+  // whenever the server passes down a new snapshot.
+  useEffect(() => {
+    setDuty(initial);
+  }, [initial]);
 
   const isOnDuty = duty.open !== null;
 
@@ -84,8 +99,15 @@ export function TopBarClockButton({ initial, clockIn, clockOut }: Props) {
     });
   };
 
+  // Compute elapsed live from clock_in_at so the pill ticks forward
+  // between renders. `duty.open.elapsed_hours` is only the value at
+  // fetch time; using it directly would freeze the label at whatever
+  // it read when the page loaded.
+  const elapsedHours = duty.open
+    ? Math.max(0, (Date.now() - Date.parse(duty.open.clock_in_at)) / 3_600_000)
+    : 0;
   const label = isOnDuty
-    ? `Clock Out · ${formatElapsed(duty.open?.elapsed_hours ?? 0)}`
+    ? `Clock Out · ${formatElapsed(elapsedHours)}`
     : "Clock In";
   const title = error ?? (isOnDuty ? "Currently on duty — click to clock out" : "Click to clock in");
   const tone = isOnDuty
