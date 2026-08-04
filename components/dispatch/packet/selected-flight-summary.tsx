@@ -8,7 +8,7 @@ import { DEMO_PIC_CERT, DEMO_PIC_NAME } from "./demo-placeholders";
  * post-selection state from the screenshot:
  *
  *   ✓ GV785  PAAN → PABE
- *   N207GC  ·  PIC: Sam Kameroff · DEMO-CERT-1-005 · 0 pax · 0 lbs cargo
+ *   N207GC  ·  PIC: Sarah Kessler · ATP-CFI-0058291 · 0 pax · 0 lbs cargo
  *   ──────────────────────────────────────────────
  *   Scheduled PIC: Sam Kameroff       (blue tint)
  *   ──────────────────────────────────────────────

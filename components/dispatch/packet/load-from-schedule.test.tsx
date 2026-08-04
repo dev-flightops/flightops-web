@@ -54,7 +54,7 @@ describe("LoadFromSchedule", () => {
     expect(opt?.textContent).toMatch(/GV101/);
     expect(opt?.textContent).toMatch(/PADU → PANC/);
     expect(opt?.textContent).toMatch(/N207GE/);
-    expect(opt?.textContent).toMatch(/Brian Larson/);
+    expect(opt?.textContent).toMatch(/Sarah Kessler/);
   });
 
   it("updates the URL to /dispatch/?flight={id} when a flight is selected", async () => {
