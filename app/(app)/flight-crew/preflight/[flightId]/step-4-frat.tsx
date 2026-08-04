@@ -19,7 +19,7 @@ interface Props {
   flightId: string;
   /** Latest server-side assessment if any (returned by /frat/{id}/latest).
    *  When null, render the questionnaire; when present, render the
-   *  result + (for HIGH/EXTREME) the authorization sub-form. */
+   *  result + (for EXTREME) the CP/DO authorization sub-form. */
   initial: FratAssessmentResponse | null;
 }
 
@@ -34,9 +34,12 @@ interface Props {
  *   - Submit posts to /ops/frat/{flight_id} (server re-computes)
  *
  * Once an assessment exists for this flight + pilot:
- *   - LOW / MEDIUM   — Continue button enables immediately
- *   - HIGH           — must record a `dispatch_contact` auth row first
- *   - EXTREME        — must record a `cp_do_authorization` auth row first
+ *   - LOW / MEDIUM   — Continue enables immediately
+ *   - HIGH           — Continue enables immediately, with a soft note
+ *                      reminding the pilot dispatch may hold the
+ *                      release (no in-app authorization row required)
+ *   - EXTREME        — must record a `cp_do_authorization` auth row
+ *                      before Continue enables
  *
  * Continue calls `completeStepAction(flightId, 4, ...)` once gating is
  * cleared, advancing the preflight to Step 5.
@@ -302,9 +305,14 @@ function anchorFor(anchors: Record<number, string>, value: number): string {
 }
 
 function scoreToRiskLevel(score: number): FratRiskLevel {
-  if (score < 10) return "low";
-  if (score < 20) return "medium";
-  if (score < 30) return "high";
+  // Thresholds shifted +5 (Phil, Aug 2026) so the recalibrated bands
+  // are: LOW <15 · MEDIUM 15–24 · HIGH 25–34 · EXTREME 35+.
+  // Backend `score_to_risk_level` in services/ops/app/routes/frat.py
+  // must stay in lockstep — the server re-computes on submit and
+  // rejects mismatches.
+  if (score < 15) return "low";
+  if (score < 25) return "medium";
+  if (score < 35) return "high";
   return "extreme";
 }
 
@@ -322,10 +330,25 @@ const RISK_LABEL: Record<FratRiskLevel, string> = {
 };
 
 export function FlightRiskAssessmentStep({ flightId, initial }: Props) {
-  return initial ? (
-    <FratResultPanel flightId={flightId} assessment={initial} />
-  ) : (
-    <FratQuestionnaire flightId={flightId} />
+  // Pilots reach this component in two modes:
+  //   1. First-time — no assessment yet, render the questionnaire.
+  //   2. Post-submit — assessment exists, render the result + Continue.
+  // Phil #6 (Aug 2026) added an Edit link to completed steps in the
+  // preflight shell. For FRAT specifically, "editing" means retaking
+  // the questionnaire — a new assessment row is written and becomes
+  // the latest. The result panel exposes a "Retake questionnaire"
+  // link that flips this local override so we re-render the empty
+  // questionnaire without needing a route change.
+  const [override, setOverride] = useState(false);
+  if (!initial || override) {
+    return <FratQuestionnaire flightId={flightId} />;
+  }
+  return (
+    <FratResultPanel
+      flightId={flightId}
+      assessment={initial}
+      onRetake={() => setOverride(true)}
+    />
   );
 }
 
@@ -371,8 +394,8 @@ function FratQuestionnaire({ flightId }: { flightId: string }) {
           Flight Risk Assessment Tool (FRAT)
         </h2>
         <p className="mt-1 text-xs text-muted-foreground">
-          Score each factor 0–5. Total determines risk level: LOW &lt;10 ·
-          MEDIUM 10–19 · HIGH 20–29 · EXTREME 30+.
+          Score each factor 0–5. Total determines risk level: LOW &lt;15 ·
+          MEDIUM 15–24 · HIGH 25–34 · EXTREME 35+.
         </p>
       </header>
 
@@ -555,17 +578,21 @@ function Tile({
 function FratResultPanel({
   flightId,
   assessment,
+  onRetake,
 }: {
   flightId: string;
   assessment: FratAssessmentResponse;
+  onRetake: () => void;
 }) {
   const risk = assessment.risk_level;
+  // Only EXTREME hard-gates the pilot behind an authorization row.
+  // HIGH used to require a `dispatch_contact` gate on this screen —
+  // Phil (Aug 2026) removed it: dispatch controls whether the packet
+  // is released, and a pilot can still call to discuss. HIGH pilots
+  // continue immediately; dispatch pulls the release if they don't
+  // want the flight to fly. See PR #205 for the change rationale.
   const requiredKind: FratAuthorizationKind | null =
-    risk === "high"
-      ? "dispatch_contact"
-      : risk === "extreme"
-        ? "cp_do_authorization"
-        : null;
+    risk === "extreme" ? "cp_do_authorization" : null;
   const hasRequiredAuth =
     requiredKind === null ||
     assessment.authorizations.some((a) => a.kind === requiredKind);
@@ -613,19 +640,40 @@ function FratResultPanel({
           <Tile
             label="Approval"
             value={
-              requiredKind === null
-                ? "Not required"
-                : hasRequiredAuth
+              risk === "extreme"
+                ? hasRequiredAuth
                   ? "Cleared"
                   : "Pending"
+                : risk === "high"
+                  ? "Dispatch reviews"
+                  : "Not required"
             }
             valueClass={
-              hasRequiredAuth
-                ? "text-status-green text-sm"
-                : "text-status-yellow text-sm"
+              risk === "extreme"
+                ? hasRequiredAuth
+                  ? "text-status-green text-sm"
+                  : "text-status-yellow text-sm"
+                : risk === "high"
+                  ? "text-status-yellow text-sm"
+                  : "text-muted-foreground text-sm"
             }
           />
         </div>
+
+        {risk === "high" && (
+          <p
+            role="note"
+            className="rounded-md border border-status-yellow/40 bg-status-yellow/10 px-3 py-2 text-xs text-status-yellow"
+          >
+            <span className="font-semibold uppercase tracking-[0.06em]">
+              High risk —{" "}
+            </span>
+            <span className="text-foreground/90">
+              Dispatch will review this packet and may hold the release. Feel
+              free to call dispatch to discuss before you continue.
+            </span>
+          </p>
+        )}
 
         {assessment.mitigations && (
           <div className="rounded-md border border-border bg-background px-3 py-2 text-xs">
@@ -680,6 +728,14 @@ function FratResultPanel({
           className="inline-flex w-full items-center justify-center rounded-md bg-status-blue px-4 py-2.5 text-sm font-semibold text-white transition-opacity hover:brightness-110 disabled:opacity-50"
         >
           {pending ? "Saving…" : "Continue to Step 5 →"}
+        </button>
+
+        <button
+          type="button"
+          onClick={onRetake}
+          className="w-full text-center text-[0.7rem] font-semibold text-status-blue hover:underline"
+        >
+          ↻ Retake questionnaire
         </button>
 
         {error && (
