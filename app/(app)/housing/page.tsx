@@ -1,44 +1,69 @@
 import Link from "next/link";
 
+import { ApiError } from "@/lib/api/client";
+import {
+  listHousingBookings,
+  listHousingUnits,
+  type HousingBooking,
+  type HousingUnit,
+} from "@/lib/api/housing";
+
+import { NewUnitDrawer } from "./new-unit-form";
+
 /**
  * /housing — Housing Management.
  *
- * Matches legacy peregrineflight.com/housing/ shell:
- *   Header: "Housing Management" + "N houses · N rooms · N available
- *   · N occupied"  |  Assignments · Maintenance · Reports · + New
- *   House · AI Assistant
- *   Calendar sub-nav: ← Month · ← Week · Today · Week → · Month →
- *   Tag legend row: Pilots · Mechanics · Dispatch · Management ·
- *   Training · VIP · + Tag       right hint: "Drag a tag across room
- *   cells to book. Release to open the booking form."
- *   Empty: "No housing units available. Create a house to get started."
+ * Mirrors the legacy peregrineflight.com/housing/ shell, now backed by
+ * the shipped housing-service. Renders:
  *
- * There is no housing-service yet — Marc's HR/Housing M3 backend
- * story owns the calendar grid + tag/booking model. This page renders
- * the shell so the home tile can go live and the layout is ready to
- * wire up when the API lands. All action buttons render disabled with
- * milestone tooltips.
+ *   Header: "Housing Management" + rollup counts (houses / rooms /
+ *   available / occupied) · [+ New House]
+ *   Units grid — one card per building/dorm with station badge,
+ *   contact person, and a "N rooms" hint plus "Open →" link
+ *   Empty state when the tenant has no units yet.
+ *
+ * "Assignments" (the calendar grid Marc's housing-service will expand
+ * to feed) is deferred to a follow-up story; today the unit detail
+ * page (/housing/[unitId]) handles per-room bookings.
  */
+export const dynamic = "force-dynamic";
 
-const HOUSING_BACKEND_HINT =
-  "Housing bookings ship with the housing-service (M3 backend)";
+export default async function HousingPage() {
+  let units: HousingUnit[] = [];
+  let bookings: HousingBooking[] = [];
+  let loadError: string | null = null;
 
-const TAG_COLORS = [
-  { id: "pilots", label: "Pilots", color: "blue" },
-  { id: "mechanics", label: "Mechanics", color: "green" },
-  { id: "dispatch", label: "Dispatch", color: "orange" },
-  { id: "management", label: "Management", color: "purple" },
-  { id: "training", label: "Training", color: "teal" },
-  { id: "vip", label: "VIP", color: "yellow" },
-] as const;
+  try {
+    const [unitsResp, bookingsResp] = await Promise.all([
+      listHousingUnits(),
+      // Today's bookings — used to compute the "occupied" rollup.
+      listHousingBookings({ from: isoDateToday() }),
+    ]);
+    units = unitsResp.items;
+    bookings = bookingsResp.items;
+  } catch (err) {
+    const status = err instanceof ApiError ? err.status : 0;
+    loadError =
+      status === 401
+        ? "Your session expired — please sign in again."
+        : "Housing unavailable. Try refreshing in a moment.";
+  }
 
-export default function HousingPage() {
-  const stats = { houses: 0, rooms: 0, available: 0, occupied: 0 };
+  const today = isoDateToday();
+  const activeBookings = bookings.filter(
+    (b) =>
+      !b.is_cancelled &&
+      b.check_in <= today &&
+      (b.check_out === null || b.check_out >= today),
+  );
+
+  const stats = {
+    houses: units.filter((u) => u.is_active).length,
+    inactive: units.filter((u) => !u.is_active).length,
+    occupied: activeBookings.length,
+  };
 
   return (
-    // Legacy runs edge-to-edge — no max-width constraint. The calendar
-    // grid eventually renders wide + horizontally scrollable, so any
-    // container here would clip it. Just page-level padding.
     <div className="w-full px-4 py-6 sm:px-6">
       <nav aria-label="Breadcrumb" className="mb-4 flex items-center text-xs">
         <Link
@@ -64,160 +89,204 @@ export default function HousingPage() {
 
       <header className="mb-4 flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Housing Management</h1>
+          <h1 className="text-2xl font-bold tracking-tight">
+            Housing Management
+          </h1>
           <p className="mt-0.5 text-xs text-muted-foreground">
-            {stats.houses} houses · {stats.rooms} rooms ·{" "}
-            <span className="text-status-green">
-              {stats.available} available
-            </span>{" "}
-            ·{" "}
-            <span className="text-status-yellow">
-              {stats.occupied} occupied
+            {stats.houses} active house{stats.houses === 1 ? "" : "s"}
+            {stats.inactive > 0 && (
+              <span className="text-muted-foreground/70">
+                {" "}
+                · {stats.inactive} inactive
+              </span>
+            )}
+            {" · "}
+            <span
+              className={
+                stats.occupied > 0
+                  ? "text-status-yellow"
+                  : "text-status-green"
+              }
+            >
+              {stats.occupied} occupied today
             </span>
           </p>
         </div>
-        <HeaderActions />
+        <NewUnitDrawer />
       </header>
 
-      <CalendarNav />
-      <TagLegend />
-      <EmptyState />
-    </div>
-  );
-}
-
-function HeaderActions() {
-  return (
-    <div className="flex flex-wrap items-center gap-2">
-      {(["Assignments", "Maintenance", "Reports"] as const).map((label) => (
-        <button
-          key={label}
-          type="button"
-          disabled
-          aria-disabled="true"
-          title={HOUSING_BACKEND_HINT}
-          className="cursor-not-allowed rounded-md border border-border bg-card px-3 py-2 text-xs font-semibold text-foreground disabled:opacity-100"
+      {loadError ? (
+        <div
+          role="alert"
+          className="rounded-md border border-status-yellow/40 bg-status-yellow/10 px-3 py-3 text-xs text-status-yellow"
         >
-          {label}
-        </button>
-      ))}
-      <button
-        type="button"
-        disabled
-        aria-disabled="true"
-        title={HOUSING_BACKEND_HINT}
-        className="cursor-not-allowed rounded-md bg-status-blue px-3 py-2 text-xs font-semibold text-white disabled:opacity-100"
-      >
-        + New House
-      </button>
-      <button
-        type="button"
-        disabled
-        aria-disabled="true"
-        title="AI Assistant · Coming in M4"
-        className="cursor-not-allowed rounded-md border border-status-purple/40 bg-status-purple/15 px-3 py-2 text-xs font-semibold text-status-purple disabled:opacity-100"
-      >
-        ✨ AI Assistant
-      </button>
+          {loadError}
+        </div>
+      ) : units.length === 0 ? (
+        <EmptyState />
+      ) : (
+        <UnitsGrid units={units} bookings={activeBookings} />
+      )}
     </div>
   );
 }
 
-function CalendarNav() {
+function UnitsGrid({
+  units,
+  bookings,
+}: {
+  units: HousingUnit[];
+  bookings: HousingBooking[];
+}) {
+  const bookingsByUnit = new Map<string, number>();
+  for (const b of bookings) {
+    if (!b.unit_id) continue;
+    bookingsByUnit.set(b.unit_id, (bookingsByUnit.get(b.unit_id) ?? 0) + 1);
+  }
+
+  const active = units.filter((u) => u.is_active);
+  const inactive = units.filter((u) => !u.is_active);
+
   return (
-    <nav
-      aria-label="Calendar navigation"
-      className="mb-3 flex flex-wrap items-center gap-2"
+    <div className="space-y-6">
+      <UnitsSection
+        title="Active"
+        units={active}
+        bookingsByUnit={bookingsByUnit}
+      />
+      {inactive.length > 0 && (
+        <UnitsSection
+          title="Inactive"
+          units={inactive}
+          bookingsByUnit={bookingsByUnit}
+          muted
+        />
+      )}
+    </div>
+  );
+}
+
+function UnitsSection({
+  title,
+  units,
+  bookingsByUnit,
+  muted = false,
+}: {
+  title: string;
+  units: HousingUnit[];
+  bookingsByUnit: Map<string, number>;
+  muted?: boolean;
+}) {
+  if (units.length === 0) return null;
+  return (
+    <section>
+      <h2 className="mb-2 text-[0.65rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+        {title} · {units.length}
+      </h2>
+      <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {units.map((u) => (
+          <UnitCard
+            key={u.id}
+            unit={u}
+            occupiedToday={bookingsByUnit.get(u.id) ?? 0}
+            muted={muted}
+          />
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+function UnitCard({
+  unit,
+  occupiedToday,
+  muted,
+}: {
+  unit: HousingUnit;
+  occupiedToday: number;
+  muted?: boolean;
+}) {
+  return (
+    <li
+      className={
+        "flex flex-col justify-between rounded-lg border border-border bg-card p-4 " +
+        (muted ? "opacity-70" : "")
+      }
     >
-      {(
-        [
-          { label: "← Month", key: "prev-month" },
-          { label: "← Week", key: "prev-week" },
-          { label: "Today", key: "today", active: true },
-          { label: "Week →", key: "next-week" },
-          { label: "Month →", key: "next-month" },
-        ] as const
-      ).map((btn) => (
-        <button
-          key={btn.key}
-          type="button"
-          disabled
-          aria-disabled="true"
-          aria-pressed={"active" in btn ? btn.active : undefined}
-          title={HOUSING_BACKEND_HINT}
+      <div>
+        <div className="mb-2 flex items-start justify-between gap-2">
+          <div className="min-w-0">
+            <h3 className="truncate text-sm font-semibold">{unit.name}</h3>
+            <p className="mt-0.5 font-mono text-[0.7rem] text-muted-foreground">
+              {unit.station}
+            </p>
+          </div>
+          {unit.color_accent && (
+            <span
+              aria-hidden
+              className="mt-1 inline-block h-4 w-4 rounded-full border border-border"
+              style={{ backgroundColor: unit.color_accent }}
+              title={unit.color_accent}
+            />
+          )}
+        </div>
+        {unit.contact_person && (
+          <p className="text-[0.7rem] text-muted-foreground">
+            <span className="text-muted-foreground/70">Contact: </span>
+            {unit.contact_person}
+            {unit.contact_phone && (
+              <span className="ml-1 text-muted-foreground/70">
+                · {unit.contact_phone}
+              </span>
+            )}
+          </p>
+        )}
+        {unit.address && (
+          <p className="mt-0.5 truncate text-[0.7rem] text-muted-foreground">
+            {unit.address}
+          </p>
+        )}
+      </div>
+      <div className="mt-3 flex items-center justify-between border-t border-border pt-3 text-xs">
+        <span
           className={
-            "cursor-not-allowed rounded-md px-3 py-1.5 text-xs font-semibold disabled:opacity-100 " +
-            ("active" in btn && btn.active
-              ? "bg-status-blue text-white"
-              : "border border-border bg-card text-foreground")
+            occupiedToday > 0
+              ? "font-medium text-status-yellow"
+              : "text-muted-foreground"
           }
         >
-          {btn.label}
-        </button>
-      ))}
-    </nav>
-  );
-}
-
-const _TAG_COLOR_MAP: Record<
-  (typeof TAG_COLORS)[number]["color"],
-  string
-> = {
-  blue: "border-status-blue/40 bg-status-blue/15 text-status-blue",
-  green: "border-status-green/40 bg-status-green/15 text-status-green",
-  orange: "border-status-orange/40 bg-status-orange/15 text-status-orange",
-  purple: "border-status-purple/40 bg-status-purple/15 text-status-purple",
-  teal: "border-status-teal/40 bg-status-teal/15 text-status-teal",
-  yellow: "border-status-yellow/40 bg-status-yellow/15 text-status-yellow",
-};
-
-function TagLegend() {
-  // Legacy renders the tag row inline on the page background — no
-  // card wrapper — with Title Case pill labels. The hint text floats
-  // to the right edge.
-  return (
-    <div className="mb-3 flex flex-wrap items-center gap-3">
-      <span className="text-[0.65rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-        Tags:
-      </span>
-      <ul className="flex flex-wrap items-center gap-2">
-        {TAG_COLORS.map((t) => (
-          <li key={t.id}>
-            <span
-              className={
-                "rounded-md border px-2 py-0.5 text-[0.7rem] font-semibold " +
-                _TAG_COLOR_MAP[t.color]
-              }
-            >
-              {t.label}
-            </span>
-          </li>
-        ))}
-        <li>
-          <button
-            type="button"
-            disabled
-            aria-disabled="true"
-            title={HOUSING_BACKEND_HINT}
-            className="cursor-not-allowed rounded-md border border-dashed border-border px-2 py-0.5 text-[0.7rem] font-semibold text-status-blue disabled:opacity-100"
-          >
-            + Tag
-          </button>
-        </li>
-      </ul>
-      <p className="ml-auto text-[0.7rem] text-muted-foreground">
-        Drag a tag across room cells to book. Release to open the booking form.
-      </p>
-    </div>
+          {occupiedToday} occupied today
+        </span>
+        <Link
+          href={`/housing/${unit.id}`}
+          className="font-semibold text-status-blue hover:underline"
+        >
+          Open →
+        </Link>
+      </div>
+    </li>
   );
 }
 
 function EmptyState() {
   return (
     <div className="rounded-lg border border-border bg-card px-4 py-16 text-center">
-      <p className="text-sm text-muted-foreground">
-        No housing units available. Create a house to get started.
+      <p className="mb-2 text-sm text-foreground">
+        No housing units yet.
+      </p>
+      <p className="mx-auto max-w-md text-xs text-muted-foreground">
+        Create your first house or dorm to start tracking rooms and crew
+        assignments. Use the <span className="font-semibold">+ New House</span>{" "}
+        button above.
       </p>
     </div>
   );
+}
+
+function isoDateToday(): string {
+  const d = new Date();
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(
+    2,
+    "0",
+  )}-${String(d.getUTCDate()).padStart(2, "0")}`;
 }
