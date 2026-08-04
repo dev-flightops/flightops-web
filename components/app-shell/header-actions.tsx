@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { LogOut, Sparkles } from "lucide-react";
 
+import type { DutyActionResult } from "@/app/(app)/duty-actions";
 import type { CurrentDutyResponse } from "@/lib/api/types";
 import { cn } from "@/lib/utils";
 
@@ -35,6 +36,14 @@ export interface HeaderActionsProps {
    *  ops service is unreachable — the pill falls back to the disabled
    *  placeholder rather than rendering as "Clock In" against a dead API. */
   initialDuty?: CurrentDutyResponse | null;
+  /** Duty server actions plumbed from the (app) layout so this
+   *  component's import graph stays free of "use server" modules
+   *  (keeps Vitest happy — otherwise header-actions.test.tsx transitively
+   *  loads next-auth). Required when initialDuty is present. */
+  clockInAction?: (args?: {
+    rest_acknowledged?: boolean;
+  }) => Promise<DutyActionResult>;
+  clockOutAction?: (args?: { reason?: string }) => Promise<DutyActionResult>;
 }
 
 export function HeaderActions({
@@ -42,6 +51,8 @@ export function HeaderActions({
   fullName,
   signOutAction,
   initialDuty,
+  clockInAction,
+  clockOutAction,
 }: HeaderActionsProps) {
   const displayName = fullName?.trim() || email;
   const initial = (displayName[0] ?? "U").toUpperCase();
@@ -76,8 +87,12 @@ export function HeaderActions({
           "Clock Out · Xh Ym". Falls back to the disabled placeholder
           when the ops service is briefly unreachable. Hidden below sm
           because clock-in is a desktop/tablet workflow. */}
-      {initialDuty ? (
-        <TopBarClockButton initial={initialDuty} />
+      {initialDuty && clockInAction && clockOutAction ? (
+        <TopBarClockButton
+          initial={initialDuty}
+          clockIn={clockInAction}
+          clockOut={clockOutAction}
+        />
       ) : (
         <button
           type="button"

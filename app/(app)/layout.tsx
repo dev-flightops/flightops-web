@@ -10,6 +10,7 @@ import type { CurrentDutyResponse } from "@/lib/api/types";
 import { TenantProvider } from "@/lib/tenant";
 
 import { signOutAction, switchTenantAction } from "./actions";
+import { clockInAction, clockOutAction } from "./duty-actions";
 
 /**
  * Layout for the (app) route group — wraps every in-app page (home,
@@ -85,6 +86,8 @@ export default async function AppGroupLayout({
       fullName={session.user.name ?? null}
       signOutAction={signOutAction}
       initialDuty={initialDuty}
+      clockInAction={clockInAction}
+      clockOutAction={clockOutAction}
     />
   ) : null;
 

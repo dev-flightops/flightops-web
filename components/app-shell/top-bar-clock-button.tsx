@@ -2,11 +2,19 @@
 
 import { useState, useTransition } from "react";
 
-import { clockInAction, clockOutAction } from "@/app/(app)/duty-actions";
+import type { DutyActionResult } from "@/app/(app)/duty-actions";
 import type { CurrentDutyResponse } from "@/lib/api/types";
 
 interface Props {
   initial: CurrentDutyResponse;
+  /** Server actions passed down from the (app) layout so this
+   *  client component doesn't statically import a "use server"
+   *  module — keeps the import graph friendly to test envs that
+   *  don't want next-auth pulled in transitively. */
+  clockIn: (args?: {
+    rest_acknowledged?: boolean;
+  }) => Promise<DutyActionResult>;
+  clockOut: (args?: { reason?: string }) => Promise<DutyActionResult>;
 }
 
 /**
@@ -28,7 +36,7 @@ interface Props {
  * through with `rest_acknowledged: true` implied, matching how the
  * legacy header behaved.
  */
-export function TopBarClockButton({ initial }: Props) {
+export function TopBarClockButton({ initial, clockIn, clockOut }: Props) {
   const [duty, setDuty] = useState<CurrentDutyResponse>(initial);
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -47,7 +55,7 @@ export function TopBarClockButton({ initial }: Props) {
         warnings: [],
       });
       startTransition(async () => {
-        const result = await clockOutAction();
+        const result = await clockOut();
         if (!result.ok) {
           setDuty(previous);
           setError(result.error ?? "Couldn't clock out.");
@@ -68,7 +76,7 @@ export function TopBarClockButton({ initial }: Props) {
       },
     });
     startTransition(async () => {
-      const result = await clockInAction({ rest_acknowledged: true });
+      const result = await clockIn({ rest_acknowledged: true });
       if (!result.ok) {
         setDuty(previous);
         setError(result.error ?? "Couldn't clock in.");
