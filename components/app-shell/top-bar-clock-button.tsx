@@ -44,7 +44,13 @@ export function TopBarClockButton({ initial, clockIn, clockOut }: Props) {
   // requiring a route change. State value is unused — we just need
   // React to re-render so the label recomputes from `now`.
   const [, setTick] = useState(0);
+  // Track post-mount so we can render the server-fetched elapsed_hours
+  // on first paint (matches SSR) and switch to live `Date.now()` after
+  // hydration. Otherwise the server's "12h 35m" and the client's
+  // "12h 36m" a minute later trigger a hydration mismatch warning.
+  const [mounted, setMounted] = useState(false);
   useEffect(() => {
+    setMounted(true);
     const id = window.setInterval(() => setTick((n) => n + 1), 30_000);
     return () => window.clearInterval(id);
   }, []);
@@ -99,12 +105,20 @@ export function TopBarClockButton({ initial, clockIn, clockOut }: Props) {
     });
   };
 
-  // Compute elapsed live from clock_in_at so the pill ticks forward
-  // between renders. `duty.open.elapsed_hours` is only the value at
-  // fetch time; using it directly would freeze the label at whatever
-  // it read when the page loaded.
+  // Elapsed: on the server (and on the first client render before
+  // hydration completes) use the snapshot the layout fetched so the
+  // rendered HTML matches. Once mounted, switch to a live
+  // `Date.now()` compute so the label ticks forward without a route
+  // change. Without this two-phase read, the server would render
+  // "12h 35m" and the client a minute later "12h 36m" — React would
+  // throw a hydration-mismatch warning and regenerate the tree.
   const elapsedHours = duty.open
-    ? Math.max(0, (Date.now() - Date.parse(duty.open.clock_in_at)) / 3_600_000)
+    ? mounted
+      ? Math.max(
+          0,
+          (Date.now() - Date.parse(duty.open.clock_in_at)) / 3_600_000,
+        )
+      : duty.open.elapsed_hours
     : 0;
   const label = isOnDuty
     ? `Clock Out · ${formatElapsed(elapsedHours)}`
