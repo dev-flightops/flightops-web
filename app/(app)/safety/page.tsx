@@ -101,6 +101,12 @@ export default async function SafetyInboxPage({
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Link
+            href="/safety/dashboard"
+            className="rounded-md border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground/80 hover:bg-muted/20"
+          >
+            Dashboard
+          </Link>
+          <Link
             href="/safety/mine"
             className="rounded-md border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground/80 hover:bg-muted/20"
           >
