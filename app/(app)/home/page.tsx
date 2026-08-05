@@ -1,5 +1,9 @@
 import { auth } from "@/auth";
 import { signOutAction } from "@/app/(app)/actions";
+import {
+  clockInAction,
+  clockOutAction,
+} from "@/app/(app)/duty-actions";
 import { HeaderActions } from "@/components/app-shell/header-actions";
 import { ActiveAlertsPanel } from "@/components/home/active-alerts-panel";
 import { HomeHero } from "@/components/home/home-hero";
@@ -11,7 +15,8 @@ import {
 } from "@/components/home/quick-links";
 import { HOME_MODULES } from "@/components/home/module-catalog";
 import { listMyTenants } from "@/lib/api/auth";
-import { getFlightStats } from "@/lib/api/ops";
+import { getCurrentDuty, getFlightStats } from "@/lib/api/ops";
+import type { CurrentDutyResponse } from "@/lib/api/types";
 import { loadOperationalSnapshot } from "@/lib/dashboards/operational-snapshot";
 import { currentGreeting, firstNameFrom } from "@/lib/greeting";
 
@@ -87,11 +92,27 @@ export default async function HomePage() {
 
   // Default HeaderActions cluster — same items as the rest of the app.
   // Only the surrounding dark bar re-skins the container.
+  //
+  // /home renders its own top bar instead of using the (app) layout's
+  // AppShellHeader, so the duty seed + server actions the layout
+  // otherwise pipes into HeaderActions have to be sourced here too.
+  // Without them the top-bar Clock In pill falls back to the disabled
+  // "unavailable" placeholder for /home only.
+  let initialDuty: CurrentDutyResponse | null = null;
+  try {
+    initialDuty = await getCurrentDuty();
+  } catch {
+    initialDuty = null;
+  }
+
   const actionsSlot = userEmail ? (
     <HeaderActions
       email={userEmail}
       fullName={session?.user?.name ?? null}
       signOutAction={signOutAction}
+      initialDuty={initialDuty}
+      clockInAction={clockInAction}
+      clockOutAction={clockOutAction}
     />
   ) : null;
 
