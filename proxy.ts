@@ -16,8 +16,20 @@ export default auth((req) => {
   const isLoggedIn = !!req.auth;
   const path = req.nextUrl.pathname;
   const isLoginPage = path === "/login" || path === "/login/";
+  // Server Actions POST to their host page with a `next-action` header
+  // and a serialised argument stream — a 302 to /login here would come
+  // back to the client as a naked redirect, and Next.js's action layer
+  // has no way to interpret it, so it throws
+  // "An unexpected response was received from the server". Let those
+  // POSTs through when unauthenticated: the action itself hits
+  // `apiFetch`, throws SessionExpiredError, is caught in its own
+  // try/catch, and returns a serialisable "please sign in again" error
+  // the caller can render. router.refresh() from the caller then does
+  // the bounce through a normal GET, which this same middleware
+  // handles cleanly.
+  const isServerAction = req.headers.get("next-action") !== null;
 
-  if (!isLoggedIn && !isLoginPage) {
+  if (!isLoggedIn && !isLoginPage && !isServerAction) {
     return Response.redirect(new URL("/login", req.url));
   }
 
