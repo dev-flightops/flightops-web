@@ -45,3 +45,7 @@ next-env.d.ts
 /playwright/.cache/
 /blob-report/
 .env*
+
+# Playwright global setup generates this per-run; contains a session
+# cookie for Vercel Deployment Protection bypass. Do not commit.
+tests/e2e/.vercel-bypass-state.json
