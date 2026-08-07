@@ -64,6 +64,14 @@ jobs:
           # Vercel's deployment_status.target_url is the preview URL,
           # e.g. https://flightops-web-abc123.vercel.app
           E2E_BASE_URL: ${{ github.event.deployment_status.target_url }}
+          # Vercel Deployment Protection blocks previews behind an SSO
+          # screen — Playwright never sees the app without a bypass
+          # token. Enable "Protection Bypass for Automation" in the
+          # Vercel project settings, then store the generated secret
+          # as a repo secret named VERCEL_AUTOMATION_BYPASS_SECRET.
+          # When unset, tests will time out on every assertion (the
+          # symptom is 30s timeouts on every getByRole/getByText).
+          VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
         run: npx playwright test tests/e2e/demo-happy-path.spec.ts --workers=1
 
       - name: Upload Playwright report on failure

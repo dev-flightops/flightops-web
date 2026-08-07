@@ -2,6 +2,17 @@ import { defineConfig, devices } from "@playwright/test";
 
 const baseURL = process.env.E2E_BASE_URL ?? "http://localhost:3000";
 
+// Vercel Deployment Protection sits in front of preview URLs and 302s
+// every unauthenticated request to a Vercel SSO screen. To let CI reach
+// the actual app, set VERCEL_AUTOMATION_BYPASS_SECRET (in the Vercel
+// project's "Protection Bypass for Automation" section) as a GH secret
+// and pass it in. When unset (local runs / prod URL), the header is
+// simply omitted.
+const vercelBypass = process.env.VERCEL_AUTOMATION_BYPASS_SECRET;
+const extraHTTPHeaders = vercelBypass
+  ? { "x-vercel-protection-bypass": vercelBypass }
+  : undefined;
+
 export default defineConfig({
   testDir: "./tests/e2e",
   fullyParallel: true,
@@ -11,6 +22,7 @@ export default defineConfig({
   reporter: "list",
   use: {
     baseURL,
+    extraHTTPHeaders,
     trace: "on-first-retry",
     screenshot: "only-on-failure",
   },
