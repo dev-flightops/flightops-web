@@ -39,27 +39,41 @@ export default async function globalSetup(): Promise<void> {
   }
 
   const url = new URL(baseURL);
-  url.searchParams.set("x-vercel-set-bypass-cookie", "true");
+  // "samesitenone" is more reliable across Vercel's SSO redirect chain
+  // than "true" — the resulting cookie has SameSite=None so it's sent
+  // on the cross-origin bounce back to the preview host.
+  url.searchParams.set("x-vercel-set-bypass-cookie", "samesitenone");
   url.searchParams.set("x-vercel-protection-bypass", secret);
 
   const browser = await chromium.launch();
   const context = await browser.newContext();
   const page = await context.newPage();
-  const response = await page.goto(url.toString(), { waitUntil: "load" });
-  if (!response) {
-    throw new Error("Vercel bypass: no response from preview URL");
+
+  // Don't assert on response status — the bypass URL 302s through
+  // Vercel's edge, then hits the app, and the app's own middleware
+  // may return a redirect / 404 depending on the path. What matters
+  // is whether the `_vercel_jwt` cookie landed. Ignore load failures.
+  try {
+    await page.goto(url.toString(), { waitUntil: "load", timeout: 30_000 });
+  } catch {
+    // Continue — the cookie may still be set even if load timed out.
   }
-  if (response.status() >= 400) {
+
+  const cookies = await context.cookies();
+  const bypassCookie = cookies.find((c) => c.name === "_vercel_jwt");
+  if (!bypassCookie) {
     throw new Error(
-      `Vercel bypass: preview URL returned ${response.status()} — ` +
-        "check VERCEL_AUTOMATION_BYPASS_SECRET matches the Vercel " +
-        "project's 'Protection Bypass for Automation' secret exactly.",
+      "Vercel bypass: no _vercel_jwt cookie was set — the " +
+        "VERCEL_AUTOMATION_BYPASS_SECRET GH secret probably doesn't " +
+        "match the Vercel project's 'Protection Bypass for Automation' " +
+        "secret. Regenerate on Vercel side and copy the new value into " +
+        "the GH secret.",
     );
   }
-  // Persist the _vercel_jwt cookie the visit above just set.
+
   await context.storageState({ path: VERCEL_BYPASS_STATE_PATH });
   await browser.close();
 
-  // Silence "unused" lint in an env where request is future-proofing.
+  // Silence "unused" lint — reserved for future direct-API bypass.
   void request;
 }
