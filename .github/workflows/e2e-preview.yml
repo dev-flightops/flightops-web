@@ -17,6 +17,18 @@ name: e2e-preview
 on:
   deployment_status:
 
+# Least-privilege default. Bump if a step later needs write access
+# (e.g. posting a PR comment with the report).
+permissions:
+  contents: read
+
+# Rapid pushes to a PR fire multiple deployment_status events; keep
+# only the latest per SHA so we don't queue overlapping runs against
+# the same preview URL.
+concurrency:
+  group: e2e-preview-${{ github.event.deployment.sha }}
+  cancel-in-progress: true
+
 jobs:
   demo-happy-path:
     # Only run for successful Vercel preview deploys — skip production,
@@ -35,7 +47,10 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          # Node 20 hit end-of-support on GitHub-hosted runners
+          # (deprecation warning in the job log). 22 is the current
+          # active LTS.
+          node-version: "22"
           cache: "npm"
 
       - name: Install dependencies
