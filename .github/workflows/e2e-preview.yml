@@ -1,0 +1,83 @@
+name: e2e-preview
+
+# Runs the demo-happy-path Playwright spec against the Vercel preview
+# deployment every time a preview goes live. Fires ONLY on Vercel's
+# deployment_status success event — that means we're not blocking the
+# main `ci` job and we're testing against the actual preview URL a
+# reviewer would click, not a locally-built approximation.
+#
+# The demo-happy-path spec is read-only (no writes / no seed side-
+# effects) so parallel PRs pointing at the same backend don't stomp
+# on each other.
+#
+# If Vercel isn't configured with the `deployment_status` webhook to
+# GitHub, this job will silently never fire. Verify in the Vercel
+# project settings under "Git / Deployment Status".
+
+on:
+  deployment_status:
+
+# Least-privilege default. Bump if a step later needs write access
+# (e.g. posting a PR comment with the report).
+permissions:
+  contents: read
+
+# Rapid pushes to a PR fire multiple deployment_status events; keep
+# only the latest per SHA so we don't queue overlapping runs against
+# the same preview URL.
+concurrency:
+  group: e2e-preview-${{ github.event.deployment.sha }}
+  cancel-in-progress: true
+
+jobs:
+  demo-happy-path:
+    # Only run for successful Vercel preview deploys — skip production,
+    # skip failures, skip any non-Vercel deploys.
+    if: >-
+      github.event.deployment_status.state == 'success' &&
+      github.event.deployment_status.environment != 'Production' &&
+      contains(github.event.deployment_status.target_url, 'vercel.app')
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.deployment.sha }}
+
+      - uses: actions/setup-node@v4
+        with:
+          # Node 20 hit end-of-support on GitHub-hosted runners
+          # (deprecation warning in the job log). 22 is the current
+          # active LTS.
+          node-version: "22"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
+
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
+
+      - name: Run demo-happy-path against preview
+        env:
+          # Vercel's deployment_status.target_url is the preview URL,
+          # e.g. https://flightops-web-abc123.vercel.app
+          E2E_BASE_URL: ${{ github.event.deployment_status.target_url }}
+          # Vercel Deployment Protection blocks previews behind an SSO
+          # screen — Playwright never sees the app without a bypass
+          # token. Enable "Protection Bypass for Automation" in the
+          # Vercel project settings, then store the generated secret
+          # as a repo secret named VERCEL_AUTOMATION_BYPASS_SECRET.
+          # When unset, tests will time out on every assertion (the
+          # symptom is 30s timeouts on every getByRole/getByText).
+          VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+        run: npx playwright test tests/e2e/demo-happy-path.spec.ts --workers=1
+
+      - name: Upload Playwright report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7

@@ -18,9 +18,34 @@
  */
 
 import { test as base, expect, type Page } from "@playwright/test";
-import { mkdirSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
+
+// Written by tests/e2e/global-setup.ts when
+// VERCEL_AUTOMATION_BYPASS_SECRET is set — contains the _vercel_jwt
+// cookie that Vercel Deployment Protection accepts. Empty when running
+// against localhost.
+const vercelBypassStatePath = resolve(
+  __dirname,
+  "..",
+  ".vercel-bypass-state.json",
+);
+
+function loadVercelBypassState():
+  | { cookies?: unknown[]; origins?: unknown[] }
+  | undefined {
+  if (!existsSync(vercelBypassStatePath)) return undefined;
+  try {
+    const state = JSON.parse(readFileSync(vercelBypassStatePath, "utf-8"));
+    if (Array.isArray(state.cookies) && state.cookies.length === 0) {
+      return undefined;
+    }
+    return state;
+  } catch {
+    return undefined;
+  }
+}
 
 const DEMO_EMAIL = "admin@flightops.local";
 const DEMO_PASSWORD = "flightops-dev";
@@ -44,9 +69,15 @@ export const test = base.extend<{ loggedInPage: Page }>({
       `worker-${testInfo.parallelIndex}.json`,
     );
 
+    // Seed the login-context with the Vercel bypass cookie if global
+    // setup produced one; otherwise start clean.
+    const bypassState = loadVercelBypassState();
+
     // First test in a worker: log in and persist cookies. Subsequent tests
     // reuse them.
-    let context = await browser.newContext();
+    let context = await browser.newContext(
+      bypassState ? { storageState: bypassState as never } : undefined,
+    );
     let page = await context.newPage();
     try {
       await performLogin(page);
