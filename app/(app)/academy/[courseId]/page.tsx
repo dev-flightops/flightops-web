@@ -66,6 +66,14 @@ export default async function CourseDetailPage({
               Inactive
             </span>
           ) : null}
+          {course.linked_currency_item_id ? (
+            <span
+              className="rounded border border-status-blue/40 bg-status-blue/10 px-1.5 py-0.5 text-[0.6rem] font-semibold uppercase tracking-wider text-status-blue"
+              title="Completing this course files a currency completion on your compliance record."
+            >
+              Compliance-linked
+            </span>
+          ) : null}
         </h1>
         {course.description ? (
           <p className="mt-2 text-sm text-muted-foreground whitespace-pre-wrap">

@@ -97,6 +97,11 @@ export interface Course {
   // draft/archived badge without an extra client-side compare.
   is_active: boolean;
   cert_valid_days: number;
+  /** Compliance-link (Spec 5). When set, completing the course auto-
+   *  files a currency completion for this item via the shared
+   *  writeback helper. Backend rejects rolling-days + check-event
+   *  items on link — only calendar-month items are eligible. */
+  linked_currency_item_id: string | null;
   lesson_count: number;
   created_at: string;
   updated_at: string;
@@ -190,6 +195,7 @@ export interface CreateCourseInput {
   category?: CourseCategory;
   cert_valid_days?: number;
   publish_status?: CoursePublishStatus;
+  linked_currency_item_id?: string | null;
 }
 
 export async function createCourse(input: CreateCourseInput): Promise<Course> {
@@ -205,6 +211,9 @@ export interface UpdateCourseInput {
   category?: CourseCategory;
   cert_valid_days?: number;
   publish_status?: CoursePublishStatus;
+  /** Pass `null` to unlink; pass an item id to bind. Backend 4xxs
+   *  if the item is rolling-days, a check event, or inactive. */
+  linked_currency_item_id?: string | null;
 }
 
 export async function updateCourse(
