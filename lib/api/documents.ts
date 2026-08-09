@@ -25,12 +25,51 @@ export interface DocumentRow {
   category: string;
   description: string | null;
   is_archived: boolean;
+  requires_acknowledgment: boolean;
   current_version_id: string | null;
   current_version_number: number;
   created_by_user_id: string;
   created_by_name: string | null;
   created_at: string;
   updated_at: string;
+}
+
+export interface MyAcknowledgmentStatus {
+  document_id: string;
+  current_version_id: string | null;
+  current_version_number: number;
+  requires_acknowledgment: boolean;
+  acknowledged: boolean;
+  acknowledged_at: string | null;
+  acknowledged_version_number: number | null;
+}
+
+export interface RequiredReadingRow {
+  document: DocumentRow;
+  status: MyAcknowledgmentStatus;
+}
+
+export interface RequiredReadingResponse {
+  items: RequiredReadingRow[];
+  pending: number;
+  total: number;
+}
+
+export interface DocumentAcknowledgmentRow {
+  id: string;
+  document_id: string;
+  document_version_id: string;
+  document_version_number: number;
+  user_id: string;
+  user_full_name: string | null;
+  user_email: string | null;
+  acknowledged_at: string;
+  notes: string | null;
+}
+
+export interface DocumentAcknowledgmentListResponse {
+  items: DocumentAcknowledgmentRow[];
+  total: number;
 }
 
 export interface DocumentListResponse {
@@ -47,12 +86,14 @@ export interface DocumentCreatePayload {
   title: string;
   category?: string;
   description?: string | null;
+  requires_acknowledgment?: boolean;
 }
 
 export interface DocumentUpdatePayload {
   title?: string;
   category?: string;
   description?: string | null;
+  requires_acknowledgment?: boolean;
 }
 
 export interface ListDocumentsParams {
@@ -130,4 +171,49 @@ export function versionDownloadUrl(
   versionNumber: number,
 ): string {
   return `/api/documents/${documentId}/versions/${versionNumber}/download`;
+}
+
+/** Required-reading feed for the calling user — every doc flagged
+ *  requires_acknowledgment=true across the tenant, paired with the
+ *  caller's current ack status. Backend: GET /documents/my-required-reading. */
+export async function myRequiredReading(): Promise<RequiredReadingResponse> {
+  return apiFetch<RequiredReadingResponse>("/documents/my-required-reading");
+}
+
+/** Caller's ack status for a single document. Returns the same
+ *  MyAcknowledgmentStatus shape used by the required-reading feed.
+ *  Backend: GET /documents/{id}/acknowledgments/mine. */
+export async function myAcknowledgment(
+  documentId: string,
+): Promise<MyAcknowledgmentStatus> {
+  return apiFetch<MyAcknowledgmentStatus>(
+    `/documents/${documentId}/acknowledgments/mine`,
+  );
+}
+
+/** Ack the CURRENT version of a document for the calling user.
+ *  Idempotent — repeat calls return the existing row instead of
+ *  producing a duplicate. Backend: POST /documents/{id}/acknowledgments. */
+export async function acknowledgeDocument(
+  documentId: string,
+  notes?: string,
+): Promise<DocumentAcknowledgmentRow> {
+  return apiFetch<DocumentAcknowledgmentRow>(
+    `/documents/${documentId}/acknowledgments`,
+    {
+      method: "POST",
+      body: JSON.stringify({ notes: notes ?? null }),
+    },
+  );
+}
+
+/** Admin roster of every ack on the document (including on prior
+ *  versions). Backend gates on exec_admin role; regular callers 403.
+ *  Backend: GET /documents/{id}/acknowledgments. */
+export async function listAcknowledgments(
+  documentId: string,
+): Promise<DocumentAcknowledgmentListResponse> {
+  return apiFetch<DocumentAcknowledgmentListResponse>(
+    `/documents/${documentId}/acknowledgments`,
+  );
 }
