@@ -8,6 +8,8 @@ import {
   getCourse,
 } from "@/lib/api/academy";
 import { ApiError } from "@/lib/api/client";
+import { listCurrencyItems } from "@/lib/api/ops";
+import type { CurrencyItemRef } from "@/lib/api/types";
 
 import { CourseEditor } from "./course-editor";
 
@@ -30,8 +32,20 @@ export default async function ManageCoursePage({
   }
 
   let course: CourseDetail;
+  let eligibleCurrencyItems: CurrencyItemRef[] = [];
   try {
-    course = await getCourse(courseId);
+    // Kick off both fetches in parallel — the currency-items list
+    // isn't strictly required to render the page, so its failure
+    // downgrades the compliance picker to a linked-only view
+    // rather than blocking the whole editor.
+    const [courseResp, itemsResp] = await Promise.all([
+      getCourse(courseId),
+      listCurrencyItems().catch(() => null),
+    ]);
+    course = courseResp;
+    if (itemsResp) {
+      eligibleCurrencyItems = itemsResp.items.filter(_isEligibleForLink);
+    }
   } catch (err) {
     if (err instanceof ApiError) {
       if (err.status === 404) notFound();
@@ -65,7 +79,21 @@ export default async function ManageCoursePage({
         </div>
       ) : null}
 
-      <CourseEditor course={course} />
+      <CourseEditor
+        course={course}
+        eligibleCurrencyItems={eligibleCurrencyItems}
+      />
     </div>
   );
+}
+
+// Mirrors the backend guard in services/academy/app/routes/courses.py::
+// _validate_linked_currency — a course can only bind to an active,
+// calendar-month, non-check-event item. The picker enforces this
+// client-side so the option list matches what the backend will accept.
+function _isEligibleForLink(item: CurrencyItemRef): boolean {
+  if (!item.is_active) return false;
+  if (item.is_check_event) return false;
+  if (item.interval_type === "rolling_days") return false;
+  return true;
 }

@@ -9,25 +9,175 @@ import {
   type CoursePublishStatus,
   type Lesson,
 } from "@/lib/api/academy";
+import type { CurrencyItemRef } from "@/lib/api/types";
 
 import {
   addLessonAction,
   type AdminActionState,
   deleteLessonAction,
+  updateComplianceLinkAction,
   updatePublishStatusAction,
   updateLessonAction,
 } from "./actions";
 
 const _initial: AdminActionState = { status: "idle" };
 
-export function CourseEditor({ course }: { course: CourseDetail }) {
+export function CourseEditor({
+  course,
+  eligibleCurrencyItems,
+}: {
+  course: CourseDetail;
+  eligibleCurrencyItems: CurrencyItemRef[];
+}) {
   return (
     <div className="space-y-6">
       <PublishStatusPicker course={course} />
+      {/* Key on the persisted link id so a successful save (which
+          revalidates + re-passes course from the RSC) remounts the
+          picker with fresh useState-initial values. Without the key
+          the <select> holds its pre-save DOM value even after the
+          badge above it flips to reflect the new state on disk. */}
+      <ComplianceLinkPicker
+        key={course.linked_currency_item_id ?? "unlinked"}
+        course={course}
+        eligibleItems={eligibleCurrencyItems}
+      />
       <LessonList course={course} />
       <AddLessonForm courseId={course.id} />
     </div>
   );
+}
+
+function ComplianceLinkPicker({
+  course,
+  eligibleItems,
+}: {
+  course: CourseDetail;
+  eligibleItems: CurrencyItemRef[];
+}) {
+  const [state, formAction, pending] = useActionState(
+    updateComplianceLinkAction,
+    _initial,
+  );
+  const persistedId = course.linked_currency_item_id ?? "";
+  // Parent remounts this component via `key={persistedId}` when the
+  // server-persisted link changes, so useState's initial value is
+  // always the current backend state — no useEffect sync needed.
+  const [selectedId, setSelectedId] = useState<string>(persistedId);
+
+  // Show the currently-linked item even if it slipped out of the
+  // eligible list (e.g. an admin flipped it to is_active=false
+  // after the link was set). Without this the picker would silently
+  // "forget" the current binding when the user opens the page.
+  const displayed: CurrencyItemRef[] = (() => {
+    const linkedId = course.linked_currency_item_id;
+    if (!linkedId) return eligibleItems;
+    if (eligibleItems.some((i) => i.id === linkedId)) return eligibleItems;
+    // Synthesize a placeholder ref so the option still renders. The
+    // real ref is unavailable from this component's server payload;
+    // the label makes the drift visible so an operator investigates.
+    const placeholder: CurrencyItemRef = {
+      id: linkedId,
+      code: "(unavailable)",
+      name: "Linked item no longer eligible",
+      regulation: "",
+      interval_type: "annual",
+      requires_examiner: false,
+      is_check_event: false,
+      is_initial_only: false,
+      rolling_days: null,
+      rolling_threshold: null,
+      sort_order: 0,
+      is_default: false,
+      is_active: false,
+    };
+    return [placeholder, ...eligibleItems];
+  })();
+
+  const grouped = groupByRegulation(displayed);
+  const linkedItem = displayed.find(
+    (i) => i.id === course.linked_currency_item_id,
+  );
+
+  return (
+    <section className="rounded-lg border border-border bg-card p-4">
+      <div className="mb-2 flex items-center justify-between gap-3">
+        <h2 className="text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+          Compliance link
+        </h2>
+        {linkedItem ? (
+          <span className="rounded border border-status-blue/40 bg-status-blue/10 px-2 py-0.5 text-[0.6rem] font-semibold uppercase tracking-wider text-status-blue">
+            Fires {linkedItem.code || linkedItem.regulation || "linked item"}
+          </span>
+        ) : null}
+      </div>
+      <p className="mb-3 text-xs text-muted-foreground">
+        When a pilot completes this course, we auto-file a currency
+        completion against the linked regulation. Only calendar-month
+        items are eligible — rolling-window and check-event items are
+        excluded.
+      </p>
+      {state.status === "error" && state.message ? (
+        <ErrorBanner message={state.message} />
+      ) : null}
+      <form
+        action={formAction}
+        className="flex flex-wrap items-center gap-3"
+      >
+        <input type="hidden" name="course_id" value={course.id} />
+        <select
+          name="linked_currency_item_id"
+          value={selectedId}
+          onChange={(e) => setSelectedId(e.target.value)}
+          className="min-w-[16rem] rounded-md border border-border bg-background px-3 py-1.5 text-xs outline-none focus:border-primary"
+          aria-label="Linked currency item"
+        >
+          <option value="">— No link —</option>
+          {grouped.map(({ regulation, items }) => (
+            <optgroup
+              key={regulation || "unclassified"}
+              label={regulation || "Other"}
+            >
+              {items.map((i) => (
+                <option key={i.id} value={i.id}>
+                  {i.code ? `${i.code} · ${i.name}` : i.name}
+                </option>
+              ))}
+            </optgroup>
+          ))}
+        </select>
+        <button
+          type="submit"
+          disabled={pending || selectedId === (course.linked_currency_item_id ?? "")}
+          className="rounded-md border border-border bg-muted/30 px-3 py-1.5 text-xs font-semibold hover:bg-muted/40 disabled:opacity-60"
+        >
+          {pending ? "Saving…" : "Save"}
+        </button>
+      </form>
+    </section>
+  );
+}
+
+function groupByRegulation(items: CurrencyItemRef[]): Array<{
+  regulation: string;
+  items: CurrencyItemRef[];
+}> {
+  const map = new Map<string, CurrencyItemRef[]>();
+  for (const i of items) {
+    const key = i.regulation ?? "";
+    const bucket = map.get(key);
+    if (bucket) {
+      bucket.push(i);
+    } else {
+      map.set(key, [i]);
+    }
+  }
+  return [...map.entries()]
+    .map(([regulation, items]) => ({
+      regulation,
+      items: [...items].sort((a, b) => a.sort_order - b.sort_order),
+    }))
+    .sort((a, b) => a.regulation.localeCompare(b.regulation));
 }
 
 function PublishStatusPicker({ course }: { course: CourseDetail }) {
