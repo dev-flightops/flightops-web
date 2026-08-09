@@ -20,11 +20,11 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? 1 : undefined,
   reporter: "list",
-  // Global setup pre-visits the preview URL with Vercel's bypass query
-  // params so the _vercel_jwt cookie is set + persisted before any
-  // test starts. See tests/e2e/global-setup.ts. No-op when
-  // VERCEL_AUTOMATION_BYPASS_SECRET is unset (local dev / prod URL).
-  globalSetup: "./tests/e2e/global-setup.ts",
+  // Vercel Deployment Protection bypass is handled inside the auth
+  // fixture (tests/e2e/fixtures/auth.ts → primeVercelBypass) — done in
+  // the same browser context that runs the login, so no cross-context
+  // cookie-transfer race. When VERCEL_AUTOMATION_BYPASS_SECRET is
+  // unset, primeVercelBypass no-ops.
   use: {
     baseURL,
     extraHTTPHeaders,
