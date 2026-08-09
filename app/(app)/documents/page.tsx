@@ -1,7 +1,11 @@
 import Link from "next/link";
 
 import { ApiError } from "@/lib/api/client";
-import { listDocuments, type DocumentRow } from "@/lib/api/documents";
+import {
+  listDocuments,
+  myRequiredReading,
+  type DocumentRow,
+} from "@/lib/api/documents";
 
 import { DocumentsFilterBar, DOCUMENT_CATEGORIES } from "./filter-bar";
 import { UploadDocumentDrawer } from "./upload-document-drawer";
@@ -44,12 +48,24 @@ export default async function DocumentsPage({
   let items: DocumentRow[] = [];
   let backendCategories: string[] = [];
   let loadError: string | null = null;
+  // Pending-ack count for the "Required reading" pill in the header.
+  // Fetched in parallel with the list; feed failure is non-fatal —
+  // the pill just hides when we can't count.
+  let requiredReadingPending = 0;
+  let requiredReadingTotal = 0;
   try {
-    const resp = await listDocuments({
-      category: categoryFilter || undefined,
-    });
-    items = resp.items;
-    backendCategories = resp.categories;
+    const [listResp, feedResp] = await Promise.all([
+      listDocuments({
+        category: categoryFilter || undefined,
+      }),
+      myRequiredReading().catch(() => null),
+    ]);
+    items = listResp.items;
+    backendCategories = listResp.categories;
+    if (feedResp) {
+      requiredReadingPending = feedResp.pending;
+      requiredReadingTotal = feedResp.total;
+    }
   } catch (err) {
     const status = err instanceof ApiError ? err.status : 0;
     loadError =
@@ -117,7 +133,27 @@ export default async function DocumentsPage({
             )}
           </p>
         </div>
-        <UploadDocumentDrawer variant="primary" />
+        <div className="flex items-center gap-2">
+          {requiredReadingTotal > 0 && (
+            <Link
+              href="/documents/ack"
+              className={
+                "inline-flex items-center gap-2 rounded-md border px-3 py-1.5 text-xs font-semibold transition " +
+                (requiredReadingPending > 0
+                  ? "border-status-blue/40 bg-status-blue/10 text-status-blue hover:bg-status-blue/20"
+                  : "border-border bg-card text-muted-foreground hover:bg-muted/10")
+              }
+            >
+              Required reading
+              {requiredReadingPending > 0 && (
+                <span className="inline-flex min-w-[1.25rem] items-center justify-center rounded-full bg-status-blue px-1.5 text-[0.65rem] font-bold text-white">
+                  {requiredReadingPending}
+                </span>
+              )}
+            </Link>
+          )}
+          <UploadDocumentDrawer variant="primary" />
+        </div>
       </header>
 
       <div className="mb-4">

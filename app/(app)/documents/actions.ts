@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 
 import { ApiError } from "@/lib/api/client";
 import {
+  acknowledgeDocument,
   archiveDocument,
   createDocument,
   updateDocument,
@@ -89,6 +90,26 @@ export async function updateDocumentAction(
     return { ok: true };
   } catch (err) {
     return { ok: false, error: mapError(err, "Couldn't update document.") };
+  }
+}
+
+/** Mark the CURRENT version of a document as read for the caller.
+ *  Wraps POST /documents/{id}/acknowledgments — idempotent, so
+ *  double-submits from a slow network are harmless. Revalidates the
+ *  required-reading feed + doc detail so the ack shows up on the
+ *  next render without a hard refresh. */
+export async function acknowledgeDocumentAction(
+  documentId: string,
+  notes?: string,
+): Promise<ActionResult> {
+  try {
+    await acknowledgeDocument(documentId, notes);
+    revalidatePath("/documents/ack");
+    revalidatePath(`/documents/${documentId}`);
+    revalidatePath("/documents");
+    return { ok: true };
+  } catch (err) {
+    return { ok: false, error: mapError(err, "Couldn't record acknowledgment.") };
   }
 }
 

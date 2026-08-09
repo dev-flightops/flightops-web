@@ -5,11 +5,14 @@ import { ApiError } from "@/lib/api/client";
 import {
   downloadUrl,
   getDocument,
+  myAcknowledgment,
   versionDownloadUrl,
   type DocumentDetailResponse,
   type DocumentVersion,
+  type MyAcknowledgmentStatus,
 } from "@/lib/api/documents";
 
+import { AckPanel } from "./ack-panel";
 import { UploadVersionDrawer } from "./upload-version-drawer";
 
 /**
@@ -41,6 +44,20 @@ export default async function DocumentDetailPage({
   const currentVersion = versions.find(
     (v) => v.id === doc.current_version_id,
   );
+
+  // Fetch the caller's ack status only when the doc actually
+  // requires one — no reason to hit the endpoint on every plain
+  // reference doc.
+  let ackStatus: MyAcknowledgmentStatus | null = null;
+  if (doc.requires_acknowledgment) {
+    try {
+      ackStatus = await myAcknowledgment(doc.id);
+    } catch {
+      // Non-fatal: the panel just won't render. Ack surface should
+      // never gate the rest of the doc detail page.
+      ackStatus = null;
+    }
+  }
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6">
@@ -108,6 +125,18 @@ export default async function DocumentDetailPage({
           <UploadVersionDrawer documentId={doc.id} />
         </div>
       </header>
+
+      {ackStatus && (
+        <AckPanel
+          documentId={doc.id}
+          currentVersionNumber={ackStatus.current_version_number}
+          initialAcknowledged={ackStatus.acknowledged}
+          initialAcknowledgedAt={ackStatus.acknowledged_at}
+          initialAcknowledgedVersionNumber={
+            ackStatus.acknowledged_version_number
+          }
+        />
+      )}
 
       <MetaStrip doc={doc} versionCount={versions.length} />
 
