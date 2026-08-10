@@ -9,12 +9,14 @@ import {
   getLatestPilotAcceptance,
   getPreflightProgress,
 } from "@/lib/api/ops";
+import { batchWeather } from "@/lib/api/weather";
 import type {
   CurrentDutyResponse,
   FlightDetail,
   FratAssessmentResponse,
   PilotAcceptanceResponse,
   PreflightProgressResponse,
+  WeatherBatchResponse,
 } from "@/lib/api/types";
 
 import { PreflightShell } from "./preflight-shell";
@@ -65,6 +67,7 @@ export default async function PreflightPage({
   let duty: CurrentDutyResponse = DUTY_OFFLINE_DEFAULT;
   let frat: FratAssessmentResponse | null = null;
   let acceptance: PilotAcceptanceResponse | null = null;
+  let weather: WeatherBatchResponse | null = null;
   let loadError: string | null = null;
 
   try {
@@ -91,6 +94,20 @@ export default async function PreflightPage({
     duty = dutyResult;
     frat = fratResult;
     acceptance = acceptanceResult;
+    // Step 3 weather — depends on the flight's routing airports, so
+    // it fires after the flight fetch. Non-fatal: if the
+    // weather-service is unreachable, Step 3 renders the ack
+    // surface with a warning banner and per-airport "data
+    // unavailable" copy so the pilot can still confirm they
+    // reviewed weather in their usual source (ForeFlight, etc.).
+    const routeIcaos = _routingAirports(flightResult);
+    if (routeIcaos.length > 0) {
+      const reqs = routeIcaos.flatMap((icao) => [
+        { icao, kind: "metar" as const },
+        { icao, kind: "taf" as const },
+      ]);
+      weather = await batchWeather(reqs).catch(() => null);
+    }
   } catch (err) {
     if (err instanceof ApiError && err.status === 404) {
       notFound();
@@ -126,6 +143,7 @@ export default async function PreflightPage({
         duty={duty}
         frat={frat}
         acceptance={acceptance}
+        weather={weather}
       />
     </div>
   );
@@ -140,4 +158,19 @@ function BackLink() {
       ← Flight Crew
     </Link>
   );
+}
+
+/** Deduped origin → destination list for the Step 3 weather batch.
+ *  Multi-leg routes ship with the elog Tab 2 work; today the Flight
+ *  row only carries origin + destination. */
+function _routingAirports(flight: FlightDetail): string[] {
+  const seen = new Set<string>();
+  const list: string[] = [];
+  for (const icao of [flight.origin, flight.destination]) {
+    if (icao && !seen.has(icao)) {
+      seen.add(icao);
+      list.push(icao);
+    }
+  }
+  return list;
 }
