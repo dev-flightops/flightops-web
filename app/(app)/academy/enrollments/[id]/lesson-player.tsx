@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState } from "react";
 
 import type { Lesson } from "@/lib/api/academy";
@@ -23,11 +24,16 @@ export function LessonPlayer({
   lesson,
   isDone,
   locked,
+  quizPassed,
 }: {
   enrollmentId: string;
   lesson: Lesson;
   isDone: boolean;
   locked: boolean;
+  /** True when the lesson has a quiz AND the learner already has a
+   *  passing attempt. Only meaningful when lesson.quiz_id !== null;
+   *  drives whether we show "Take Quiz" or "Mark Complete". */
+  quizPassed: boolean;
 }) {
   const [state, formAction, pending] = useActionState(
     completeLessonAction,
@@ -73,8 +79,29 @@ export function LessonPlayer({
           <span className="text-xs text-muted-foreground">
             Enrollment is not in progress — lessons can no longer be marked.
           </span>
+        ) : lesson.quiz_id && !quizPassed ? (
+          // Quiz-gated lesson: send the learner to the runner
+          // first. Mark Complete is intentionally hidden — the
+          // backend would 409 anyway (quiz_not_passed) and the
+          // clearer path is to take the quiz.
+          <div className="flex flex-col items-end gap-1">
+            <Link
+              href={`/academy/enrollments/${enrollmentId}/quiz/${lesson.id ? lesson.quiz_id : ""}?lesson=${lesson.id}`}
+              className="rounded-md bg-status-blue px-4 py-2 text-sm font-semibold text-white hover:brightness-110"
+            >
+              Take Quiz →
+            </Link>
+            <span className="text-[0.65rem] text-muted-foreground">
+              A quiz gates this lesson — pass it to unlock Mark Complete.
+            </span>
+          </div>
         ) : (
           <form action={formAction} className="flex items-center gap-2">
+            {lesson.quiz_id ? (
+              <span className="text-[0.65rem] font-semibold uppercase tracking-wider text-status-green">
+                ✓ Quiz passed
+              </span>
+            ) : null}
             <input type="hidden" name="enrollment_id" value={enrollmentId} />
             <input type="hidden" name="lesson_id" value={lesson.id} />
             <button

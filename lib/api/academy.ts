@@ -82,6 +82,11 @@ export interface Lesson {
   ordinal: number;
   title: string;
   body_markdown: string;
+  /** Backend surfaces the quiz attached to this lesson (or null).
+   *  When set, complete-lesson is quiz-gated — the frontend Quiz
+   *  Runner has to hand the enrollee through a passing attempt
+   *  before Mark Complete succeeds. */
+  quiz_id: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -333,5 +338,97 @@ export async function completeLesson(
       method: "POST",
       body: JSON.stringify({ lesson_id: lessonId }),
     },
+  );
+}
+
+// ============================================================================
+// Quizzes — learner-facing
+// ============================================================================
+
+/** Question shape a learner sees. The backend intentionally hides
+ *  `correct_option_index` on this view so a learner can't inspect
+ *  the answer via the network tab before submitting. */
+export interface QuizQuestionLearner {
+  id: string;
+  ordinal: number;
+  prompt: string;
+  options: string[];
+}
+
+export interface QuizLearnerResponse {
+  id: string;
+  lesson_id: string;
+  title: string;
+  instructions: string | null;
+  pass_threshold: number;
+  questions: QuizQuestionLearner[];
+}
+
+/** Per-question detail returned after a submitted attempt. `explanation`
+ *  is the teaching material the author left; renders under each
+ *  question in the result view. */
+export interface QuizAttemptPerQuestion {
+  question_id: string;
+  ordinal: number;
+  chosen_index: number;
+  correct_index: number;
+  is_correct: boolean;
+  explanation: string | null;
+}
+
+export interface QuizAttemptResponse {
+  id: string;
+  quiz_id: string;
+  enrollment_id: string;
+  user_id: string;
+  answers: number[];
+  score: number;
+  question_count: number;
+  is_pass: boolean;
+  submitted_at: string;
+  per_question: QuizAttemptPerQuestion[];
+}
+
+/** Quiz routes live under an extra `/academy/` prefix inside the
+ *  academy-service (`services/academy/app/routes/quizzes.py` uses
+ *  `@router.get("/academy/enrollments/…")`), which combined with
+ *  the nginx gateway's `/academy → /` rewrite produces the doubled
+ *  segment below. Courses + lessons + enrollments live at plain
+ *  `/…` inside the service and only need the single-prefix gateway
+ *  form. Router-prefix cleanup is a follow-up. */
+const QUIZ_GATEWAY_PREFIX = "/academy/academy";
+
+export async function getLearnerQuiz(
+  enrollmentId: string,
+  quizId: string,
+): Promise<QuizLearnerResponse> {
+  return apiFetch<QuizLearnerResponse>(
+    `${QUIZ_GATEWAY_PREFIX}/enrollments/${enrollmentId}/quizzes/${quizId}`,
+  );
+}
+
+export async function submitQuizAttempt(
+  enrollmentId: string,
+  quizId: string,
+  answers: number[],
+): Promise<QuizAttemptResponse> {
+  return apiFetch<QuizAttemptResponse>(
+    `${QUIZ_GATEWAY_PREFIX}/enrollments/${enrollmentId}/quizzes/${quizId}/attempts`,
+    {
+      method: "POST",
+      body: JSON.stringify({ answers }),
+    },
+  );
+}
+
+/** Every attempt this learner has made against this quiz under this
+ *  enrollment (newest first). Used by the lesson-player gate: if
+ *  any attempt has `is_pass=true`, Mark Complete is unlocked. */
+export async function listMyQuizAttempts(
+  enrollmentId: string,
+  quizId: string,
+): Promise<QuizAttemptResponse[]> {
+  return apiFetch<QuizAttemptResponse[]>(
+    `${QUIZ_GATEWAY_PREFIX}/enrollments/${enrollmentId}/quizzes/${quizId}/attempts`,
   );
 }
