@@ -86,7 +86,7 @@ export function LessonPlayer({
           // clearer path is to take the quiz.
           <div className="flex flex-col items-end gap-1">
             <Link
-              href={`/academy/enrollments/${enrollmentId}/quiz/${lesson.id ? lesson.quiz_id : ""}?lesson=${lesson.id}`}
+              href={`/academy/enrollments/${enrollmentId}/quiz/${lesson.quiz_id}?lesson=${lesson.id}`}
               className="rounded-md bg-status-blue px-4 py-2 text-sm font-semibold text-white hover:brightness-110"
             >
               Take Quiz →

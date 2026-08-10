@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
 import type {
@@ -37,7 +36,6 @@ type LocalAttempt = Pick<
  * view will re-query listMyQuizAttempts on next navigation.
  */
 export function QuizRunner({ enrollmentId, quiz, backToLessonHref }: Props) {
-  const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [answers, setAnswers] = useState<Array<number | null>>(
     () => quiz.questions.map(() => null),
@@ -72,10 +70,9 @@ export function QuizRunner({ enrollmentId, quiz, backToLessonHref }: Props) {
         is_pass: outcome.attempt.is_pass,
         per_question: outcome.attempt.per_question,
       });
-      // Server action already revalidated the parent lesson view;
-      // refresh the router so navigating back picks up the newly
-      // inserted attempt without a hard reload.
-      router.refresh();
+      // Parent lesson-player's client cache is invalidated by the
+      // server action's revalidatePath — when the user clicks Back
+      // to lesson, Next re-fetches fresh data with the new attempt.
     });
   }
 

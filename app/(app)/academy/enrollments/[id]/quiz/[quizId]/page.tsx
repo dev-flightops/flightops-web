@@ -5,7 +5,6 @@ import {
   getEnrollment,
   getLearnerQuiz,
   listMyQuizAttempts,
-  type Enrollment,
   type QuizAttemptResponse,
   type QuizLearnerResponse,
 } from "@/lib/api/academy";
@@ -33,9 +32,11 @@ export default async function QuizPage({
   const { id: enrollmentId, quizId } = await params;
   const { lesson: lessonParam } = await searchParams;
 
-  let enrollment: Enrollment;
+  // Fetch only to enforce the 404/401 boundary — an unknown or
+  // cross-tenant enrollment id should surface as Not Found before
+  // we render the quiz.
   try {
-    enrollment = await getEnrollment(enrollmentId);
+    await getEnrollment(enrollmentId);
   } catch (err) {
     if (err instanceof ApiError) {
       if (err.status === 404) notFound();
@@ -115,8 +116,17 @@ export default async function QuizPage({
           <p className="font-semibold">
             {priorAttempts.length} prior attempt{priorAttempts.length === 1 ? "" : "s"}
             {" — highest score "}
-            {Math.max(...priorAttempts.map((a) => a.score))}/
-            {priorAttempts[0].question_count}. Not passing yet — try again.
+            {(() => {
+              // Pick the attempt with the highest score and quote
+              // its own question_count. Using priorAttempts[0]'s
+              // count would drift if the author edited the quiz
+              // between attempts (question count changes).
+              const best = priorAttempts.reduce((a, b) =>
+                a.score >= b.score ? a : b,
+              );
+              return `${best.score}/${best.question_count}`;
+            })()}
+            . Not passing yet — try again.
           </p>
         </div>
       ) : null}
