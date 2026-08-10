@@ -39,9 +39,14 @@ describe("SelectedFlightSummary", () => {
     expect(screen.getByText("450 lbs cargo")).toBeInTheDocument();
   });
 
-  it("includes the demo cert id chip in the green confirmation row", () => {
+  it("does not surface a placeholder PIC name in the green confirmation row", () => {
+    // Flight.pilot_id doesn't exist yet (crew-service ships M3);
+    // showing a hardcoded chief-pilot name here misled dispatchers
+    // into skipping the PIC picker. Confirmation strip is now
+    // tail + load only.
     render(<SelectedFlightSummary flight={baseFlight()} />);
-    expect(screen.getByText("ATP-CFI-0058291")).toBeInTheDocument();
+    expect(screen.queryByText("ATP-CFI-0058291")).not.toBeInTheDocument();
+    expect(screen.queryByText(/^PIC: /)).not.toBeInTheDocument();
   });
 
   it("warns when pax_count and cargo_lbs are both zero", () => {
@@ -71,15 +76,15 @@ describe("SelectedFlightSummary", () => {
     expect(screen.queryByText(/Needs attention/i)).not.toBeInTheDocument();
   });
 
-  it("always shows the scheduled-PIC row with the demo PIC name", () => {
+  it("shows a muted 'not assigned yet' placeholder in the scheduled-PIC row", () => {
     render(<SelectedFlightSummary flight={baseFlight()} />);
     expect(screen.getByText(/Scheduled PIC:/i)).toBeInTheDocument();
-  });
-
-  it("shows the demo PIC name in the green confirmation + scheduled-PIC rows", () => {
-    render(<SelectedFlightSummary flight={baseFlight()} />);
-    const matches = screen.getAllByText(/Sarah Kessler/);
-    expect(matches.length).toBeGreaterThanOrEqual(2);
+    expect(
+      screen.getByText(/not assigned yet — pick in Flight Details below/i),
+    ).toBeInTheDocument();
+    // Regression guard: the old fallback shipped a real chief-pilot
+    // name here even though nothing was persisted on the flight row.
+    expect(screen.queryByText(/Sarah Kessler/)).not.toBeInTheDocument();
   });
 
   it("has no WCAG A/AA violations", async () => {

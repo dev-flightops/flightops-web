@@ -4,7 +4,6 @@ import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useTransition, type ReactNode } from "react";
 
-import { DEMO_PIC_NAME } from "./demo-placeholders";
 import { SectionPanel } from "./section-panel";
 import type { FlightListItem } from "@/lib/api/types";
 
@@ -89,7 +88,7 @@ export function LoadFromSchedule({
           return (
             <option key={f.id} value={f.id}>
               {dep} · {f.flight_number} · {f.origin} → {f.destination} ·{" "}
-              {f.aircraft.tail_number} · {DEMO_PIC_NAME}
+              {f.aircraft.tail_number}
             </option>
           );
         })}

@@ -100,7 +100,10 @@ function TrackedAircraftRow({ row }: { row: TrackedAircraft }) {
       </td>
       <td className="px-2.5 py-2 align-top">
         <div className="flex flex-wrap items-center gap-1">
-          <StatusBadge status={flight.status} />
+          <StatusBadge
+            status={flight.status}
+            actualDepartureAt={flight.actual_departure_at}
+          />
           {flight.is_overdue && <OverdueBadge />}
         </div>
       </td>

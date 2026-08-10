@@ -1,24 +1,27 @@
 import type { FlightDetail } from "@/lib/api/types";
 
-import { DEMO_PIC_CERT, DEMO_PIC_NAME } from "./demo-placeholders";
-
 /**
  * Inline summary rows shown directly below the Load-from-Schedule dropdown
  * once a flight is selected — mirrors the legacy `templates/dispatch/form.html`
  * post-selection state from the screenshot:
  *
  *   ✓ GV785  PAAN → PABE
- *   N207GC  ·  PIC: Sarah Kessler · ATP-CFI-0058291 · 0 pax · 0 lbs cargo
+ *   N207GC  ·  0 pax · 0 lbs cargo
  *   ──────────────────────────────────────────────
- *   Scheduled PIC: Sam Kameroff       (blue tint)
+ *   Scheduled PIC: not assigned (M3)   (muted; select in Flight Details below)
  *   ──────────────────────────────────────────────
  *   Needs attention: No passengers or cargo on manifest   (orange tint)
  *
  * Three rows:
- *   1. Green confirmation strip — always rendered when a flight is loaded
- *   2. Scheduled PIC row — placeholder today (crew-service lands M3); we
- *      render it as a muted "Scheduled PIC: not assigned (M3)" row so the
- *      layout matches the legacy
+ *   1. Green confirmation strip — always rendered when a flight is loaded.
+ *      The Flight model has no `pilot_id` yet (crew-service lands M3), so
+ *      we deliberately do NOT surface a PIC name here — the picker below
+ *      is where the dispatcher assigns one, and rendering a placeholder
+ *      name has misled dispatchers into skipping the picker (see the
+ *      dispatch-workflow verify report).
+ *   2. Scheduled PIC row — muted "not assigned (M3)" placeholder. Real
+ *      persisted pilot lands with the M3 flight_assignments story;
+ *      once Flight.pilot_id is on the response, wire the pilot name here.
  *   3. Warnings row — appears if pax_count == 0 OR cargo_lbs == 0,
  *      matching the legacy's pre-release validation hints
  */
@@ -38,18 +41,13 @@ export function SelectedFlightSummary({ flight }: { flight: FlightDetail }) {
             {flight.origin} → {flight.destination}
           </span>
         </div>
-        {/* Legacy pattern: large spaces between the three groups
-            (tail · PIC-group · load-group), bullets only inside the
-            PIC group (name · cert) and the load group (pax · cargo). */}
+        {/* Legacy pattern shows a tail · PIC-group · load-group
+            layout; we omit the PIC group here because the Flight
+            row has no persisted pilot until the M3 crew-service
+            ships, and rendering a placeholder pilot in bold has
+            misled dispatchers into skipping the PIC picker below. */}
         <div className="mt-1 flex flex-wrap items-baseline gap-x-6 gap-y-1 font-mono text-[0.7rem] text-muted-foreground">
           <span>{flight.aircraft.tail_number}</span>
-          <span className="flex flex-wrap items-baseline gap-x-2">
-            <span>
-              PIC: <span className="font-semibold text-foreground">{DEMO_PIC_NAME}</span>
-            </span>
-            <Sep />
-            <span>{DEMO_PIC_CERT}</span>
-          </span>
           <span className="flex flex-wrap items-baseline gap-x-2">
             <span>{flight.pax_count} pax</span>
             <Sep />
@@ -58,13 +56,18 @@ export function SelectedFlightSummary({ flight }: { flight: FlightDetail }) {
         </div>
       </div>
 
-      {/* Scheduled PIC row — blue */}
+      {/* Scheduled PIC row — muted placeholder until Flight.pilot_id
+          ships (M3 crew-service). Reading "not assigned" instead of a
+          hardcoded name nudges the dispatcher to actually pick one in
+          the PIC picker down in Flight Details. */}
       <div
-        className="rounded-md border border-status-blue/40 bg-status-blue/[0.08] px-4 py-2.5 text-xs"
-        title="Crew-service ships in M3 — value shown is the demo placeholder"
+        className="rounded-md border border-border/60 bg-muted/[0.06] px-4 py-2.5 text-xs"
+        title="No PIC persisted on this flight — pick one below."
       >
-        <span className="font-bold text-status-blue">Scheduled PIC:</span>{" "}
-        <span className="font-semibold text-foreground">{DEMO_PIC_NAME}</span>
+        <span className="font-bold text-muted-foreground">Scheduled PIC:</span>{" "}
+        <span className="italic text-muted-foreground">
+          not assigned yet — pick in Flight Details below
+        </span>
       </div>
 
       {/* Warnings row — listed when any spec check trips. Spec lists:
