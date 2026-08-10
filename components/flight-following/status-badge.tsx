@@ -29,16 +29,17 @@ export function StatusBadge({
   actualDepartureAt,
 }: {
   status: FlightStatus;
-  /** Present the pill as RELEASED (yellow) when the flight is
-   *  released but hasn't actually departed yet. Callers that don't
-   *  have this field (e.g. the older aircraft-detail panel) can
-   *  omit it and get the legacy AIRBORNE label for any released
-   *  row — safe fallback, since those surfaces don't render
-   *  released-not-departed flights anyway. */
+  /** Explicit `null` = "known to have no actual_departure_at yet";
+   *  the pill renders RELEASED (yellow) instead of AIRBORNE. Omit
+   *  the prop entirely (undefined) when the caller doesn't have
+   *  the field on its row shape — the pill falls back to the
+   *  legacy AIRBORNE label. `/history` (completed+cancelled) and
+   *  `/eod` (scheduled-only) don't render released rows at all,
+   *  so the fallback is invisible there in practice. */
   actualDepartureAt?: string | null;
 }) {
   const config =
-    status === "released" && !actualDepartureAt
+    status === "released" && actualDepartureAt === null
       ? RELEASED_ON_GROUND
       : STATUS_LABELS[status];
   return (

@@ -46,7 +46,11 @@ describe("LoadFromSchedule", () => {
     expect(screen.getAllByRole("option")).toHaveLength(3); // placeholder + 2
   });
 
-  it("includes the demo PIC name in each option text", () => {
+  it("includes date, flight number, route, and tail in each option text", () => {
+    // Option label used to append a placeholder chief-pilot name too;
+    // dropped because Flight has no pilot_id column yet and rendering
+    // a hardcoded pilot misled dispatchers into skipping the PIC
+    // picker on the packet itself.
     render(<LoadFromSchedule flights={[baseFlight()]} />);
     const opt = screen
       .getAllByRole("option")
@@ -54,7 +58,7 @@ describe("LoadFromSchedule", () => {
     expect(opt?.textContent).toMatch(/GV101/);
     expect(opt?.textContent).toMatch(/PADU → PANC/);
     expect(opt?.textContent).toMatch(/N207GE/);
-    expect(opt?.textContent).toMatch(/Sarah Kessler/);
+    expect(opt?.textContent).not.toMatch(/Sarah Kessler/);
   });
 
   it("updates the URL to /dispatch/?flight={id} when a flight is selected", async () => {

@@ -76,10 +76,12 @@ describe("SelectedFlightSummary", () => {
     expect(screen.queryByText(/Needs attention/i)).not.toBeInTheDocument();
   });
 
-  it("shows a muted 'not assigned (M3)' placeholder in the scheduled-PIC row", () => {
+  it("shows a muted 'not assigned yet' placeholder in the scheduled-PIC row", () => {
     render(<SelectedFlightSummary flight={baseFlight()} />);
     expect(screen.getByText(/Scheduled PIC:/i)).toBeInTheDocument();
-    expect(screen.getByText(/not assigned \(M3\)/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/not assigned yet — pick in Flight Details below/i),
+    ).toBeInTheDocument();
     // Regression guard: the old fallback shipped a real chief-pilot
     // name here even though nothing was persisted on the flight row.
     expect(screen.queryByText(/Sarah Kessler/)).not.toBeInTheDocument();

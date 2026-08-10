@@ -57,16 +57,16 @@ export function SelectedFlightSummary({ flight }: { flight: FlightDetail }) {
       </div>
 
       {/* Scheduled PIC row — muted placeholder until Flight.pilot_id
-          ships. Reading "not assigned" instead of a hardcoded name
-          nudges the dispatcher to actually pick one in the PIC
-          picker down in Flight Details. */}
+          ships (M3 crew-service). Reading "not assigned" instead of a
+          hardcoded name nudges the dispatcher to actually pick one in
+          the PIC picker down in Flight Details. */}
       <div
         className="rounded-md border border-border/60 bg-muted/[0.06] px-4 py-2.5 text-xs"
-        title="Crew-service ships in M3 — no PIC is persisted on the flight row yet. Pick one in the Flight Details section below."
+        title="No PIC persisted on this flight — pick one below."
       >
         <span className="font-bold text-muted-foreground">Scheduled PIC:</span>{" "}
         <span className="italic text-muted-foreground">
-          not assigned (M3) — pick in Flight Details below
+          not assigned yet — pick in Flight Details below
         </span>
       </div>
 
