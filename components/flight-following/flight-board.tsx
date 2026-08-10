@@ -122,7 +122,10 @@ function FlightBoardRow({ flight }: { flight: BoardFlightItem }) {
       />
       <td className="px-3 py-2.5">
         <div className="flex flex-wrap items-center gap-1">
-          <StatusBadge status={flight.status} />
+          <StatusBadge
+            status={flight.status}
+            actualDepartureAt={flight.actual_departure_at}
+          />
           {flight.is_overdue && <OverdueBadge />}
         </div>
       </td>
