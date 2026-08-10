@@ -8,6 +8,7 @@ import type {
   FratAssessmentResponse,
   PilotAcceptanceResponse,
   PreflightProgressResponse,
+  WeatherBatchResponse,
 } from "@/lib/api/types";
 
 import { ReviewDispatchReleaseStep } from "./step-1-dispatch-release";
@@ -27,6 +28,11 @@ interface Props {
   frat: FratAssessmentResponse | null;
   /** Latest pilot Accept/Deny if any — null when no submission yet. */
   acceptance: PilotAcceptanceResponse | null;
+  /** METAR + TAF for the routing airports, fetched server-side. Null
+   *  when the weather-service failed — Step 3 falls back to a
+   *  "data unavailable" state and still lets the pilot ack that
+   *  they reviewed weather in their usual source. */
+  weather: WeatherBatchResponse | null;
 }
 
 /**
@@ -47,6 +53,7 @@ export function PreflightShell({
   duty,
   frat,
   acceptance,
+  weather,
 }: Props) {
   const completedNumbers = new Set(progress.completed.map((s) => s.step_number));
   const nextStep = progress.next_step;
@@ -126,6 +133,7 @@ export function PreflightShell({
           duty={duty}
           frat={frat}
           acceptance={acceptance}
+          weather={weather}
         />
       )}
 
@@ -249,6 +257,7 @@ function ActiveStep({
   duty,
   frat,
   acceptance,
+  weather,
 }: {
   flightId: string;
   flight: FlightDetail;
@@ -256,6 +265,7 @@ function ActiveStep({
   duty: CurrentDutyResponse;
   frat: FratAssessmentResponse | null;
   acceptance: PilotAcceptanceResponse | null;
+  weather: WeatherBatchResponse | null;
 }) {
   switch (stepNumber) {
     case 1:
@@ -263,7 +273,13 @@ function ActiveStep({
     case 2:
       return <WeightAndBalanceStep flightId={flightId} flight={flight} />;
     case 3:
-      return <WeatherAndNotamStep flightId={flightId} flight={flight} />;
+      return (
+        <WeatherAndNotamStep
+          flightId={flightId}
+          flight={flight}
+          weather={weather}
+        />
+      );
     case 4:
       return <FlightRiskAssessmentStep flightId={flightId} initial={frat} />;
     case 5:
