@@ -9,6 +9,7 @@ import {
   type Lesson,
   getCourse,
   getEnrollment,
+  listMyQuizAttempts,
 } from "@/lib/api/academy";
 import { ApiError } from "@/lib/api/client";
 
@@ -59,6 +60,24 @@ export default async function EnrollmentLessonPage({
     completedLessonIds,
     lessonParam,
   );
+
+  // If the active lesson is quiz-gated, check whether the learner
+  // already has a passing attempt. If not, the LessonPlayer swaps
+  // the "Mark Complete" button for a "Take Quiz" CTA. Failure of
+  // the attempts fetch is non-fatal — the player will show Mark
+  // Complete and the backend will 409 with a translated message.
+  let quizPassed = false;
+  if (activeLesson?.quiz_id) {
+    try {
+      const attempts = await listMyQuizAttempts(
+        enrollment.id,
+        activeLesson.quiz_id,
+      );
+      quizPassed = attempts.some((a) => a.is_pass);
+    } catch {
+      quizPassed = false;
+    }
+  }
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
@@ -137,6 +156,7 @@ export default async function EnrollmentLessonPage({
               lesson={activeLesson}
               isDone={completedLessonIds.has(activeLesson.id)}
               locked={enrollment.status !== "in_progress"}
+              quizPassed={quizPassed}
             />
           ) : (
             <div className="text-sm text-muted-foreground">
