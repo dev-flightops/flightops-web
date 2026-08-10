@@ -7,7 +7,7 @@ import Link from "next/link";
  *   🎓 Peregrine Academy
  *      Training courses, assignments, and certification
  *
- *   Dashboard | Course Library (yellow) | Assignments | Reports | Studio (purple)
+ *   Dashboard | Course Library (yellow) | Assignments | Certificates | Reports | Studio (purple)
  */
 export function AcademyHeader({
   activeSection,
@@ -16,6 +16,7 @@ export function AcademyHeader({
     | "dashboard"
     | "course-library"
     | "assignments"
+    | "certificates"
     | "reports"
     | "studio";
 }) {
@@ -62,6 +63,11 @@ export function AcademyHeader({
           href="/academy/assignments"
           label="Assignments"
           active={activeSection === "assignments"}
+        />
+        <SectionTab
+          href="/academy/certificates"
+          label="Certificates"
+          active={activeSection === "certificates"}
         />
         <SectionTab
           href="/academy/reports"

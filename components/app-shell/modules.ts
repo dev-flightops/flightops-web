@@ -169,11 +169,12 @@ export const DEPARTMENTS: Department[] = [
      */
     pathPrefixes: ["/academy"],
     children: [
-      { id: "academy-dashboard",      label: "Dashboard",      href: "/academy/dashboard",   status: "live", department: "academy" },
-      { id: "academy-course-library", label: "Course Library", href: "/academy",             status: "live", department: "academy" },
-      { id: "academy-assignments",    label: "Assignments",    href: "/academy/assignments", status: "live", department: "academy" },
-      { id: "academy-reports",        label: "Reports",        href: "/academy/reports",     status: "live", department: "academy" },
-      { id: "academy-studio",         label: "Studio",         href: "/academy/studio",      status: "live", department: "academy" },
+      { id: "academy-dashboard",      label: "Dashboard",      href: "/academy/dashboard",    status: "live", department: "academy" },
+      { id: "academy-course-library", label: "Course Library", href: "/academy",              status: "live", department: "academy" },
+      { id: "academy-assignments",    label: "Assignments",    href: "/academy/assignments",  status: "live", department: "academy" },
+      { id: "academy-certificates",   label: "Certificates",   href: "/academy/certificates", status: "live", department: "academy" },
+      { id: "academy-reports",        label: "Reports",        href: "/academy/reports",      status: "live", department: "academy" },
+      { id: "academy-studio",         label: "Studio",         href: "/academy/studio",       status: "live", department: "academy" },
     ],
   },
   {

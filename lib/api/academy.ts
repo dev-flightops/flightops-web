@@ -432,3 +432,75 @@ export async function listMyQuizAttempts(
     `${QUIZ_GATEWAY_PREFIX}/enrollments/${enrollmentId}/quizzes/${quizId}/attempts`,
   );
 }
+
+// ============================================================================
+// Certificates
+// ============================================================================
+
+export interface Certificate {
+  id: string;
+  enrollment_id: string;
+  course: CourseRef;
+  user: UserRef;
+  cert_number: string;
+  issued_at: string;
+  expires_at: string | null;
+}
+
+export interface CertificateListResponse {
+  items: Certificate[];
+  total: number;
+}
+
+export interface ListCertificatesParams {
+  user_id?: string;
+  course_id?: string;
+  limit?: number;
+  offset?: number;
+}
+
+function _certificatesQs(p: ListCertificatesParams = {}): string {
+  const s = new URLSearchParams();
+  if (p.user_id) s.set("user_id", p.user_id);
+  if (p.course_id) s.set("course_id", p.course_id);
+  if (p.limit !== undefined) s.set("limit", String(p.limit));
+  if (p.offset !== undefined) s.set("offset", String(p.offset));
+  const qs = s.toString();
+  return qs ? `?${qs}` : "";
+}
+
+/** Certificates the caller has earned. Backend: GET
+ *  /academy/certificates/mine. Router sits under the doubled
+ *  gateway prefix — same reason as the quiz endpoints. */
+export async function listMyCertificates(
+  params: { limit?: number; offset?: number } = {},
+): Promise<CertificateListResponse> {
+  const s = new URLSearchParams();
+  if (params.limit !== undefined) s.set("limit", String(params.limit));
+  if (params.offset !== undefined) s.set("offset", String(params.offset));
+  const qs = s.toString();
+  return apiFetch<CertificateListResponse>(
+    `${QUIZ_GATEWAY_PREFIX}/certificates/mine${qs ? `?${qs}` : ""}`,
+  );
+}
+
+/** Admin roster of certificates (chief_pilot / exec_admin only).
+ *  Backend 403s for pilots. Filter by user_id or course_id. */
+export async function listCertificates(
+  params: ListCertificatesParams = {},
+): Promise<CertificateListResponse> {
+  return apiFetch<CertificateListResponse>(
+    `${QUIZ_GATEWAY_PREFIX}/certificates${_certificatesQs(params)}`,
+  );
+}
+
+/** Single-certificate detail. Backend: GET
+ *  /academy/certificates/{id}. Any authenticated user can fetch
+ *  their own cert; admins can fetch anyone's. */
+export async function getCertificate(
+  certificateId: string,
+): Promise<Certificate> {
+  return apiFetch<Certificate>(
+    `${QUIZ_GATEWAY_PREFIX}/certificates/${certificateId}`,
+  );
+}
