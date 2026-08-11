@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState, useState } from "react";
 
 import {
@@ -14,6 +15,7 @@ import type { CurrencyItemRef } from "@/lib/api/types";
 import {
   addLessonAction,
   type AdminActionState,
+  attachQuizAction,
   deleteLessonAction,
   updateComplianceLinkAction,
   updatePublishStatusAction,
@@ -257,6 +259,61 @@ function LessonList({ course }: { course: CourseDetail }) {
   );
 }
 
+/**
+ * Per-lesson quiz affordance shown next to Edit/Delete on the lesson
+ * row. Two states:
+ *   - lesson.quiz_id set → "Edit Quiz" link to the dedicated editor
+ *   - lesson.quiz_id null → "Attach Quiz" form that POSTs to
+ *     `/academy/lessons/{id}/quiz`, then the server action revalidates
+ *     the studio page + redirects into the new quiz editor.
+ *
+ * Kept as a distinct component so the attach-quiz useActionState hook
+ * doesn't clutter LessonRow and rerender its edit-body form on every
+ * attach attempt.
+ */
+function QuizAffordance({
+  courseId,
+  lesson,
+}: {
+  courseId: string;
+  lesson: Lesson;
+}) {
+  const [state, formAction, pending] = useActionState(
+    attachQuizAction,
+    _initial,
+  );
+
+  if (lesson.quiz_id) {
+    return (
+      <Link
+        href={`/academy/studio/quizzes/${lesson.quiz_id}`}
+        className="rounded-md border border-status-purple/40 bg-status-purple/10 px-2 py-1 text-[0.6875rem] font-semibold text-status-purple hover:bg-status-purple/15"
+      >
+        Edit Quiz
+      </Link>
+    );
+  }
+  return (
+    <form action={formAction} className="inline-flex items-center gap-1">
+      <input type="hidden" name="course_id" value={courseId} />
+      <input type="hidden" name="lesson_id" value={lesson.id} />
+      <button
+        type="submit"
+        disabled={pending}
+        title={
+          state.status === "error" && state.message
+            ? state.message
+            : "Create a quiz on this lesson"
+        }
+        className="rounded-md border border-border bg-muted/20 px-2 py-1 text-[0.6875rem] font-semibold hover:bg-muted/40 disabled:opacity-60"
+      >
+        {pending ? "…" : "Attach Quiz"}
+      </button>
+    </form>
+  );
+}
+
+
 function LessonRow({
   courseId,
   lesson,
@@ -286,6 +343,7 @@ function LessonRow({
           {lesson.title}
         </span>
         <div className="flex items-center gap-1">
+          <QuizAffordance courseId={courseId} lesson={lesson} />
           <button
             type="button"
             onClick={() => setEditing((v) => !v)}
