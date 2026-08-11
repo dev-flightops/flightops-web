@@ -1,9 +1,11 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 
 import {
   createLesson,
+  createLessonQuiz,
   deleteLesson,
   updateCourse,
   updateLesson,
@@ -59,6 +61,10 @@ function _mapAcademyError(err: ApiError): string {
       return "Check events can't be linked — they require examiner sign-off outside the academy.";
     case "rolling_items_cannot_be_linked_to_courses":
       return "Rolling-window items can't be linked — they auto-fire from the elog instead.";
+    case "lesson_already_has_quiz":
+      return "This lesson already has a quiz — refresh to see the Edit Quiz link.";
+    case "lesson_not_found":
+      return "Lesson not found — it may have been deleted in another tab.";
   }
   return `Backend returned HTTP ${err.status}.`;
 }
@@ -139,4 +145,37 @@ export async function deleteLessonAction(
     return { status: "error", message: "Missing ids." };
   }
   return _wrap(courseId, () => deleteLesson(lessonId));
+}
+
+/** POST /academy/lessons/{id}/quiz — attach a fresh quiz to a lesson,
+ *  then redirect the author straight into the quiz editor so they can
+ *  start adding questions. Uses a minimal default title (`Quiz — {n}`
+ *  set by the backend if we send just placeholder text) and the
+ *  service's default pass_threshold of 80. */
+export async function attachQuizAction(
+  _prev: AdminActionState,
+  formData: FormData,
+): Promise<AdminActionState> {
+  const courseId = String(formData.get("course_id") ?? "");
+  const lessonId = String(formData.get("lesson_id") ?? "");
+  if (!courseId || !lessonId) {
+    return { status: "error", message: "Missing ids." };
+  }
+  let quizId: string | null = null;
+  try {
+    const quiz = await createLessonQuiz(lessonId, {
+      title: "New Quiz",
+      instructions: null,
+    });
+    quizId = quiz.id;
+  } catch (err) {
+    if (err instanceof ApiError) {
+      return { status: "error", message: _mapAcademyError(err) };
+    }
+    return { status: "error", message: "Could not reach academy-service." };
+  }
+  // Revalidate the studio page so lesson.quiz_id shows on the next
+  // paint even if the user clicks Back from the editor.
+  revalidatePath(`/academy/studio/${courseId}`);
+  redirect(`/academy/studio/quizzes/${quizId}`);
 }

@@ -434,6 +434,143 @@ export async function listMyQuizAttempts(
 }
 
 // ============================================================================
+// Admin quiz authoring (Studio)
+// ============================================================================
+
+/** Admin-facing question shape. Includes the correct-option index +
+ *  explanation so authors can see + edit what they wrote. Server sorts
+ *  by `ordinal` on the read path. */
+export interface QuizQuestionAdmin {
+  id: string;
+  ordinal: number;
+  prompt: string;
+  options: string[];
+  correct_option_index: number;
+  explanation: string | null;
+}
+
+/** Full admin view of a quiz: everything the learner sees PLUS the
+ *  correct-answer indices + author notes. */
+export interface QuizAdminResponse {
+  id: string;
+  lesson_id: string;
+  title: string;
+  instructions: string | null;
+  pass_threshold: number;
+  questions: QuizQuestionAdmin[];
+}
+
+export interface QuizCreateInput {
+  title: string;
+  instructions?: string | null;
+  /** Percentage 0–100. Server default is 80 if omitted. */
+  pass_threshold?: number;
+}
+
+export interface QuizUpdateInput {
+  title?: string;
+  instructions?: string | null;
+  pass_threshold?: number;
+}
+
+export interface QuizQuestionCreateInput {
+  prompt: string;
+  /** 2–6 answer choices. */
+  options: string[];
+  /** Index into `options` of the correct choice. */
+  correct_option_index: number;
+  explanation?: string | null;
+  /** 1-based insert position; omitted → append at end. */
+  ordinal?: number;
+}
+
+export interface QuizQuestionUpdateInput {
+  prompt?: string;
+  options?: string[];
+  correct_option_index?: number;
+  explanation?: string | null;
+  ordinal?: number;
+}
+
+/** Create a quiz on the given lesson. Rejects (409) if the lesson
+ *  already has a quiz — one quiz per lesson today. */
+export async function createLessonQuiz(
+  lessonId: string,
+  input: QuizCreateInput,
+): Promise<QuizAdminResponse> {
+  return apiFetch<QuizAdminResponse>(
+    `${QUIZ_GATEWAY_PREFIX}/lessons/${lessonId}/quiz`,
+    {
+      method: "POST",
+      body: JSON.stringify(input),
+    },
+  );
+}
+
+/** Admin read — includes correct-option indices, so 403 for pilots. */
+export async function getAdminQuiz(quizId: string): Promise<QuizAdminResponse> {
+  return apiFetch<QuizAdminResponse>(
+    `${QUIZ_GATEWAY_PREFIX}/quizzes/${quizId}`,
+  );
+}
+
+export async function updateQuiz(
+  quizId: string,
+  input: QuizUpdateInput,
+): Promise<QuizAdminResponse> {
+  return apiFetch<QuizAdminResponse>(
+    `${QUIZ_GATEWAY_PREFIX}/quizzes/${quizId}`,
+    {
+      method: "PATCH",
+      body: JSON.stringify(input),
+    },
+  );
+}
+
+export async function deleteQuiz(quizId: string): Promise<void> {
+  await apiFetch<void>(`${QUIZ_GATEWAY_PREFIX}/quizzes/${quizId}`, {
+    method: "DELETE",
+  });
+}
+
+export async function addQuizQuestion(
+  quizId: string,
+  input: QuizQuestionCreateInput,
+): Promise<QuizQuestionAdmin> {
+  return apiFetch<QuizQuestionAdmin>(
+    `${QUIZ_GATEWAY_PREFIX}/quizzes/${quizId}/questions`,
+    {
+      method: "POST",
+      body: JSON.stringify(input),
+    },
+  );
+}
+
+export async function updateQuizQuestion(
+  quizId: string,
+  questionId: string,
+  input: QuizQuestionUpdateInput,
+): Promise<QuizQuestionAdmin> {
+  return apiFetch<QuizQuestionAdmin>(
+    `${QUIZ_GATEWAY_PREFIX}/quizzes/${quizId}/questions/${questionId}`,
+    {
+      method: "PATCH",
+      body: JSON.stringify(input),
+    },
+  );
+}
+
+export async function deleteQuizQuestion(
+  quizId: string,
+  questionId: string,
+): Promise<void> {
+  await apiFetch<void>(
+    `${QUIZ_GATEWAY_PREFIX}/quizzes/${quizId}/questions/${questionId}`,
+    { method: "DELETE" },
+  );
+}
+
+// ============================================================================
 // Certificates
 // ============================================================================
 
