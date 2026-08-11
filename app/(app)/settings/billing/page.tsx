@@ -9,6 +9,9 @@ import {
   getBillingOverview,
 } from "@/lib/api/billing";
 
+import { ChooseCheckoutButton } from "./checkout-button";
+import { ManagePaymentButton } from "./portal-button";
+
 /**
  * /settings/billing — Billing & Subscription reader (Slice 1).
  *
@@ -162,6 +165,13 @@ function CurrentSubscriptionCard({
           generated after {_fmtDate(subscription.current_period_end)}.
         </div>
       )}
+      <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-border pt-3">
+        <ManagePaymentButton />
+        <span className="text-[0.65rem] text-muted-foreground">
+          Update card, change seat count, or cancel via the Stripe
+          Customer Portal.
+        </span>
+      </div>
     </section>
   );
 }
@@ -316,9 +326,17 @@ function PlanCatalogCard({
                   {plan.description}
                 </p>
               )}
+              {!isCurrent && plan.checkout_available && (
+                <ChooseCheckoutButton
+                  planCode={plan.code as "starter" | "growth" | "scale"}
+                  defaultSeatCount={1}
+                  seatLimit={plan.seat_limit}
+                />
+              )}
               {!isCurrent && !plan.checkout_available && (
                 <p className="mt-2 text-[0.6rem] italic text-muted-foreground/70">
-                  Checkout not yet wired for this plan — coming in Slice 2.
+                  Checkout not yet wired for this plan — Stripe price
+                  id missing.
                 </p>
               )}
             </div>

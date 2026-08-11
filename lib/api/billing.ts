@@ -100,3 +100,48 @@ export async function listInvoices(
 export async function listPlans(): Promise<PlanListResponse> {
   return apiFetch<PlanListResponse>("/billing/plans");
 }
+
+// ---- Stripe write path (Slice 2) --------------------------------------------
+
+export type PlanChoiceCode = "starter" | "growth" | "scale";
+
+export interface CheckoutSessionRequest {
+  plan_code: PlanChoiceCode;
+  seat_count: number;
+  success_url: string;
+  cancel_url: string;
+}
+
+export interface CheckoutSessionResponse {
+  session_id: string;
+  url: string;
+}
+
+export interface PortalSessionResponse {
+  url: string;
+}
+
+/** Create a Stripe Checkout Session and return the hosted URL. The
+ *  frontend redirects the browser to that URL; Stripe handles the
+ *  card entry + subscription lifecycle and the webhook (Slice 3)
+ *  writes the TenantSubscription row on completion. */
+export async function createCheckoutSession(
+  body: CheckoutSessionRequest,
+): Promise<CheckoutSessionResponse> {
+  return apiFetch<CheckoutSessionResponse>("/billing/checkout-session", {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+}
+
+/** Create a Stripe Customer Portal Session for the tenant's existing
+ *  subscription. Return URL is where Stripe redirects when the user
+ *  clicks Back / Done in the portal. */
+export async function createPortalSession(
+  returnUrl: string,
+): Promise<PortalSessionResponse> {
+  return apiFetch<PortalSessionResponse>("/billing/portal-session", {
+    method: "POST",
+    body: JSON.stringify({ return_url: returnUrl }),
+  });
+}
