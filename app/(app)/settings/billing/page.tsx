@@ -10,6 +10,7 @@ import {
 } from "@/lib/api/billing";
 
 import { ChooseCheckoutButton } from "./checkout-button";
+import { DunningBanner } from "./dunning-banner";
 import { ManagePaymentButton } from "./portal-button";
 
 /**
@@ -98,6 +99,12 @@ export default async function SettingsBillingPage({
 
       {overview && (
         <div className="space-y-6">
+          {overview.subscription && (
+            <DunningBanner
+              subscription={overview.subscription}
+              managePaymentSlot={<ManagePaymentButton />}
+            />
+          )}
           <CurrentSubscriptionCard
             subscription={overview.subscription}
             plans={overview.plans}
