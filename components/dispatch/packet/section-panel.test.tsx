@@ -45,7 +45,7 @@ describe("SectionPanel", () => {
 });
 
 describe("DisabledPanel", () => {
-  it("renders the milestone tag + hint", () => {
+  it("renders the user-facing SOON pill (milestone stays in the tooltip)", () => {
     render(
       <DisabledPanel
         title="Weather & ATIS"
@@ -54,7 +54,9 @@ describe("DisabledPanel", () => {
       />,
     );
     expect(screen.getByText("Weather & ATIS")).toBeInTheDocument();
-    expect(screen.getByText("M2")).toBeInTheDocument();
+    const pill = screen.getByText("Soon");
+    expect(pill).toBeInTheDocument();
+    expect(pill).toHaveAttribute("title", "Coming in M2");
     expect(
       screen.getByText(/Enter routing to pull METAR\/TAF/),
     ).toBeInTheDocument();

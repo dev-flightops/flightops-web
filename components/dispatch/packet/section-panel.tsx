@@ -101,11 +101,15 @@ export function DisabledPanel({
       accent={accent}
       className={className}
       titleAction={
+        // Pill shows a user-facing "SOON" so the dispatcher isn't
+        // asked to interpret internal milestone codes (M2/M3/M4).
+        // The tooltip retains the milestone tag so ops + dev can
+        // still hover to see which release cycle unlocks the panel.
         <span
           className="rounded-md bg-muted px-1.5 py-0.5 text-[0.6rem] font-bold uppercase tracking-[0.06em] text-muted-foreground"
           title={`Coming in ${milestone}`}
         >
-          {milestone}
+          Soon
         </span>
       }
     >

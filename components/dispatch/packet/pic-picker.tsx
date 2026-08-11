@@ -83,7 +83,7 @@ export function PicPicker({
 
   return (
     // min-w-0 so the picker respects its grid column width — without
-    // it long option text (e.g. "🔴 Alice Chen — NON-CURRENT") can
+    // it long option text (e.g. "● Alice Chen — NON-CURRENT") can
     // stretch the cell wider than its 1fr allotment and push the
     // neighbouring cell offscreen.
     <div className="min-w-0">
@@ -125,8 +125,7 @@ export function PicPicker({
         </option>
         {options.map((opt) => (
           <option key={opt.pilot.id} value={opt.pilot.id}>
-            {dotChar(STATUS_TO_DOT[opt.status])} {opt.pilot.full_name} —{" "}
-            {STATUS_LABEL[opt.status]}
+            ● {opt.pilot.full_name} — {STATUS_LABEL[opt.status]}
           </option>
         ))}
       </select>
@@ -134,10 +133,10 @@ export function PicPicker({
   );
 }
 
-// Unicode filled circle — plain <option> elements can't hold JSX, so
-// the color-coded dot in the list is a text glyph. The visible label
-// above the select shows a real color-swatched dot for the current
-// selection.
-function dotChar(color: "green" | "yellow" | "red"): string {
-  return color === "red" ? "🔴" : color === "yellow" ? "🟡" : "🟢";
-}
+// Unicode BLACK CIRCLE (U+25CF) is used in the option labels above —
+// it ships with every font. The colored 🔴/🟡/🟢 emoji fall back to
+// missing-glyph boxes on systems without a color emoji font
+// (common on Linux desktops + kiosks). Compliance colour still
+// signals through the label-swatched dot rendered above the select
+// for the currently-selected pilot, plus the trailing status word
+// ("NON-CURRENT" / "Grace month" / "Not started").
