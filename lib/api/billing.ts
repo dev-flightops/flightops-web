@@ -44,6 +44,13 @@ export interface Subscription {
   current_period_end: string | null;
   cancel_at_period_end: boolean;
   canceled_at: string | null;
+  /** Running count of invoice.payment_failed events since the last
+   *  successful charge. 0 on a healthy subscription; non-zero drives
+   *  the dunning banner on /settings/billing. */
+  dunning_attempts: number;
+  /** Stripe's next retry timestamp when a charge failed. Null on a
+   *  healthy subscription. */
+  next_payment_attempt_at: string | null;
 }
 
 export interface Invoice {
