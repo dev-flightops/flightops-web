@@ -9,6 +9,9 @@ import {
   getBillingOverview,
 } from "@/lib/api/billing";
 
+import { ChooseCheckoutButton } from "./checkout-button";
+import { ManagePaymentButton } from "./portal-button";
+
 /**
  * /settings/billing — Billing & Subscription reader (Slice 1).
  *
@@ -28,7 +31,24 @@ import {
  */
 export const dynamic = "force-dynamic";
 
-export default async function SettingsBillingPage() {
+/** Query-string signals set by our own success_url / cancel_url on the
+ *  checkout POST. Reading them here lets the page render a banner
+ *  after the Stripe round-trip so the user has a visible confirmation
+ *  they aren't stuck on the same page with no acknowledgement. */
+type CheckoutOutcome = "success" | "cancel";
+type PortalOutcome = "return";
+
+export default async function SettingsBillingPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ checkout?: string; portal?: string }>;
+}) {
+  const { checkout, portal } = await searchParams;
+  const checkoutOutcome: CheckoutOutcome | null =
+    checkout === "success" || checkout === "cancel" ? checkout : null;
+  const portalOutcome: PortalOutcome | null =
+    portal === "return" ? "return" : null;
+
   let overview: BillingOverviewResponse | null = null;
   let loadError: string | null = null;
   let unauthorized = false;
@@ -61,6 +81,9 @@ export default async function SettingsBillingPage() {
           tenant. Plan changes + payment method land in the next slice.
         </p>
       </header>
+
+      {checkoutOutcome && <CheckoutOutcomeBanner outcome={checkoutOutcome} />}
+      {portalOutcome && <PortalReturnBanner />}
 
       {unauthorized && <AdminOnlyPanel />}
 
@@ -162,6 +185,13 @@ function CurrentSubscriptionCard({
           generated after {_fmtDate(subscription.current_period_end)}.
         </div>
       )}
+      <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-border pt-3">
+        <ManagePaymentButton />
+        <span className="text-[0.65rem] text-muted-foreground">
+          Update card, change seat count, or cancel via the Stripe
+          Customer Portal.
+        </span>
+      </div>
     </section>
   );
 }
@@ -316,9 +346,17 @@ function PlanCatalogCard({
                   {plan.description}
                 </p>
               )}
+              {!isCurrent && plan.checkout_available && (
+                <ChooseCheckoutButton
+                  planCode={plan.code as "starter" | "growth" | "scale"}
+                  defaultSeatCount={1}
+                  seatLimit={plan.seat_limit}
+                />
+              )}
               {!isCurrent && !plan.checkout_available && (
                 <p className="mt-2 text-[0.6rem] italic text-muted-foreground/70">
-                  Checkout not yet wired for this plan — coming in Slice 2.
+                  Checkout not yet wired for this plan — Stripe price
+                  id missing.
                 </p>
               )}
             </div>
@@ -326,6 +364,50 @@ function PlanCatalogCard({
         })}
       </div>
     </section>
+  );
+}
+
+function CheckoutOutcomeBanner({ outcome }: { outcome: CheckoutOutcome }) {
+  // Post-Stripe-redirect signal set by our own success_url /
+  // cancel_url. The subscription row itself is written by the
+  // Slice 3 webhook, so on `success` we say "processing" instead
+  // of "confirmed" — the page will show the real subscription
+  // once the webhook lands and the next reload picks it up.
+  if (outcome === "success") {
+    return (
+      <div
+        role="status"
+        className="mb-4 rounded-md border border-status-green/40 bg-status-green/10 px-4 py-3 text-sm text-status-green"
+      >
+        <p className="font-semibold">Checkout complete — processing your subscription.</p>
+        <p className="mt-0.5 text-xs text-foreground/80">
+          Stripe is notifying us; refresh this page in a few seconds
+          to see the new plan on your Current subscription card.
+        </p>
+      </div>
+    );
+  }
+  return (
+    <div
+      role="status"
+      className="mb-4 rounded-md border border-border/60 bg-muted/10 px-4 py-3 text-sm text-muted-foreground"
+    >
+      Checkout was cancelled — nothing charged. Pick a plan below when
+      you&rsquo;re ready.
+    </div>
+  );
+}
+
+function PortalReturnBanner() {
+  return (
+    <div
+      role="status"
+      className="mb-4 rounded-md border border-border/60 bg-muted/10 px-4 py-3 text-sm text-muted-foreground"
+    >
+      Welcome back from the Stripe portal. If you made a change, it
+      may take a few seconds for the update to reach this page —
+      refresh if the numbers look stale.
+    </div>
   );
 }
 
