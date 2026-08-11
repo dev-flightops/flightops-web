@@ -35,6 +35,24 @@ const ALERT_VIEWING_ROLES = new Set([
   "admin",
 ]);
 
+/** Split a tenant's display name into wordmark + subtitle for the
+ *  logo band. First word becomes the wordmark, the rest joined
+ *  becomes the subtitle. Falls back to the neutral product wordmark
+ *  when the tenant name is missing or single-word. */
+function wordmarkFromName(
+  name: string | undefined,
+): { wordmark: string | undefined; subtitle: string | undefined } {
+  if (!name) return { wordmark: undefined, subtitle: undefined };
+  const parts = name.trim().split(/\s+/);
+  if (parts.length === 1) {
+    return { wordmark: parts[0].toUpperCase(), subtitle: undefined };
+  }
+  return {
+    wordmark: parts[0].toUpperCase(),
+    subtitle: parts.slice(1).join(" ").toUpperCase(),
+  };
+}
+
 /**
  * /home — pitch landing.
  *
@@ -128,6 +146,8 @@ export default async function HomePage() {
       />
       <HomeHero
         tenantName={currentTenant?.name ?? "FlightOps"}
+        wordmark={wordmarkFromName(currentTenant?.name).wordmark}
+        wordmarkSubtitle={wordmarkFromName(currentTenant?.name).subtitle}
         greeting={greeting}
         firstName={firstName}
         airborne={airborne}

@@ -34,8 +34,8 @@ export function AppShell({
   return (
     <div className="flex min-h-screen flex-col">
       {/* AppShellHeader hides itself on /home so that page can render its
-       *  own Grant Aviation-themed top bar for the pitch skin. Every other
-       *  route keeps the standard Peregrine chrome. */}
+       *  own light-themed HomeTopBar for the pitch skin. Every other
+       *  route keeps the standard dark Peregrine chrome. */}
       <AppShellHeader brand={brand} actionsSlot={actionsSlot} />
       <main className="flex-1">{children}</main>
     </div>

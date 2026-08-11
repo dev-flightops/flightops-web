@@ -6,7 +6,7 @@ import { signOut } from "@/auth";
 import { switchTenant as switchTenantApi } from "@/lib/api/auth";
 
 /** Shared sign-out server action. Used by the standard app-shell
- *  HeaderActions AND by the Grant top bar on /home. */
+ *  HeaderActions AND by the /home top bar. */
 export async function signOutAction(): Promise<void> {
   await signOut({ redirectTo: "/login" });
 }
