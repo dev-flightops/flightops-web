@@ -17,6 +17,8 @@ import { HomeWordmark } from "./home-brand";
  */
 export function HomeHero({
   tenantName,
+  wordmark,
+  wordmarkSubtitle,
   greeting,
   firstName,
   airborne,
@@ -24,6 +26,13 @@ export function HomeHero({
   acftHold,
 }: {
   tenantName: string;
+  /** First segment of the tenant's name, uppercased — feeds the top
+   *  wordmark next to the logo. Falls back to the neutral product
+   *  wordmark when the caller hasn't derived one. */
+  wordmark?: string;
+  /** Rest of the tenant's name, uppercased — sits below the wordmark
+   *  in smaller type. */
+  wordmarkSubtitle?: string;
   greeting: string;
   firstName?: string | null;
   airborne: number;
@@ -35,7 +44,11 @@ export function HomeHero({
       {/* Light-gray secondary header — full width */}
       <div className="border-b border-black/[0.06] bg-[#f2f2f2]">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-5 sm:px-8">
-          <HomeWordmark size={40} />
+          <HomeWordmark
+            size={40}
+            wordmark={wordmark}
+            subtitle={wordmarkSubtitle}
+          />
           <div className="hidden text-right sm:block">
             <div className="text-[0.7rem] font-semibold uppercase tracking-[0.24em] text-[#AB2429]">
               Flight Operations
@@ -71,9 +84,6 @@ export function HomeHero({
               <h1 className="mt-3 max-w-xl text-4xl font-bold leading-[1.05] tracking-tight text-white drop-shadow-md sm:text-[3rem]">
                 {tenantName}
               </h1>
-              <p className="mt-4 text-sm font-medium italic text-white/70">
-                &ldquo;Fly Easy, Fly Grant&rdquo;
-              </p>
               <p className="mt-6 max-w-md text-sm leading-relaxed text-white/80">
                 Here&apos;s your fleet right now. Every module below is one click
                 away — Reservations, Dispatch, Maintenance, Flight Following,

@@ -52,12 +52,14 @@ export function HomeBrandMark({
 }
 
 /** Full wordmark (mark + typography) — used in the secondary logo band.
- *  Wordmark and subtitle strings default to the current pitch skin but
- *  are prop-driven for reuse. */
+ *  Wordmark and subtitle strings are prop-driven; callers derive them
+ *  from the tenant's own name (typically first word / rest). Defaults
+ *  are the product wordmark for use in previews / storybook / anywhere
+ *  no tenant context exists. */
 export function HomeWordmark({
   size = 40,
-  wordmark = "GRANT",
-  subtitle = "AVIATION",
+  wordmark = "FLIGHTOPS",
+  subtitle = "PLATFORM",
   accent = "#AB2429",
   className = "",
 }: {

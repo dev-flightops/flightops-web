@@ -7,9 +7,9 @@ import { type ReactNode } from "react";
 import { DepartmentNav } from "./department-nav";
 
 /** Client wrapper around the app-shell's dark top header + department nav.
- *  Hides itself when on /home — that page renders its own Grant Aviation-
- *  themed top bar for the pitch skin. All other routes keep the standard
- *  Peregrine chrome. */
+ *  Hides itself when on /home — that page renders its own light-themed
+ *  top bar (HomeTopBar) for the pitch skin. All other routes keep the
+ *  standard dark Peregrine chrome. */
 export function AppShellHeader({
   brand,
   actionsSlot,

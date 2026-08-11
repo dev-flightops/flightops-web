@@ -12,8 +12,9 @@ import { type HomeModule, moduleStatusHint } from "./module-catalog";
  *    - Hover: red border ring + tiny shadow, no lift so the layout
  *      stays rock-solid during pointer movement
  *
- *  Unbuilt cards get a small "M3" / "M4" chip and 70% opacity so the
- *  future roadmap reads cleanly on the pitch. */
+ *  Unbuilt cards get a small "SOON" chip and 70% opacity — the
+ *  underlying milestone (M2/M3/M4) still tags the tooltip so ops +
+ *  dev can hover for the internal roadmap. */
 export function HomeModuleCard({ module }: { module: HomeModule }) {
   const isLive = module.status === "live";
   const hint = moduleStatusHint(module.status);
@@ -23,9 +24,9 @@ export function HomeModuleCard({ module }: { module: HomeModule }) {
     isLive
       ? "cursor-pointer border-black/10 hover:border-[#AB2429] hover:shadow-[0_6px_20px_-12px_rgba(171,36,41,0.5)]"
       : "cursor-not-allowed border-black/[0.08] opacity-70",
-    // Highlighted cards get a solid red left-stripe (4px) like Grant's
-    // active-tab treatment. Using pl-6 above so the stripe replaces
-    // the padding cleanly.
+    // Highlighted cards get a solid red left-stripe (4px) to match
+    // the pitch skin's active-tab treatment. Using pl-6 above so the
+    // stripe replaces the padding cleanly.
     module.highlight && "border-l-4 border-l-[#AB2429] pl-5",
   );
 
@@ -62,7 +63,7 @@ export function HomeModuleCard({ module }: { module: HomeModule }) {
         </div>
       </div>
 
-      {/* Right-side affordance: M3/M4 chip for unbuilt, chevron for live */}
+      {/* Right-side affordance: SOON chip for unbuilt, chevron for live */}
       {isLive ? (
         <span
           className="flex-shrink-0 text-neutral-300 transition-all group-hover:translate-x-0.5 group-hover:text-[#AB2429]"
@@ -71,8 +72,11 @@ export function HomeModuleCard({ module }: { module: HomeModule }) {
           <ChevronRight />
         </span>
       ) : (
-        <span className="flex-shrink-0 rounded-md border border-neutral-300 bg-neutral-100 px-1.5 py-0.5 text-[0.6rem] font-semibold uppercase tracking-wider text-neutral-500">
-          {module.status.toUpperCase()}
+        <span
+          className="flex-shrink-0 rounded-md border border-neutral-300 bg-neutral-100 px-1.5 py-0.5 text-[0.6rem] font-semibold uppercase tracking-wider text-neutral-500"
+          title={`Coming in ${module.status.toUpperCase()}`}
+        >
+          Soon
         </span>
       )}
     </>

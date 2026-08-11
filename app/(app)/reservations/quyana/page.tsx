@@ -16,9 +16,9 @@ import { EnrollMemberToggle } from "./enroll-toggle";
  * /reservations/quyana — Rewards Program members list.
  *
  * Program name is per-tenant (company_profile.rewards_program_name).
- * Grant sets theirs to "Quyana Rewards"; a fresh tenant sees
- * "Rewards Program". Empty-state copy and the enroll-button label
- * both read the same value.
+ * A fresh tenant sees the generic "Rewards Program" label; tenants
+ * that configure a custom name see that instead. Empty-state copy
+ * and the enroll-button label both read the same value.
  *
  * Backed by flightops-services PR #119 (/reservations/quyana).
  */
