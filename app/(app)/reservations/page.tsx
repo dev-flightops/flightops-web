@@ -1,5 +1,7 @@
 import { ApiError } from "@/lib/api/client";
+import { listStations } from "@/lib/api/ground";
 import { listCustomers } from "@/lib/api/reservations";
+import type { StationListItem } from "@/lib/api/types";
 
 import { NewBookingSearchForm } from "./new-booking-search-form";
 
@@ -28,6 +30,17 @@ export default async function NewBookingLandingPage() {
     customers = [];
   }
 
+  // Station list backs the From/To/Via ICAO typeahead (legacy
+  // booking_search.html's `<datalist id="station-list">`). Soft-fail: the
+  // inputs stay free-text if ground-service is unreachable, so a station
+  // outage can't block booking creation.
+  let stations: StationListItem[] = [];
+  try {
+    stations = (await listStations({ limit: 500 })).items;
+  } catch {
+    stations = [];
+  }
+
   return (
     <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6">
       <header className="mb-5">
@@ -36,7 +49,7 @@ export default async function NewBookingLandingPage() {
           Search trip type, route, and passengers to start a booking.
         </p>
       </header>
-      <NewBookingSearchForm customers={customers} />
+      <NewBookingSearchForm customers={customers} stations={stations} />
     </div>
   );
 }
