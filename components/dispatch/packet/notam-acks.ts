@@ -22,3 +22,27 @@ export function parseAckedIcaos(raw: string | undefined | null): string[] {
     ),
   ];
 }
+
+/**
+ * Which routed ICAOs still lack a NOTAM acknowledgment.
+ *
+ * The single source of truth for the release gate: the NOTAM panel
+ * promises "all boxes must be checked before Generate PDF unlocks," and
+ * the dispatch page blocks release when this returns a non-empty list.
+ * Matching is case-insensitive, and an ack only counts if the ICAO is
+ * still in the current route (mirrors the panel filtering a removed
+ * stop's ack). Empty route → [] (nothing to acknowledge, no block).
+ */
+export function unacknowledgedNotamIcaos(
+  icaos: string[],
+  ackedFromUrl: string[],
+): string[] {
+  if (icaos.length === 0) return [];
+  const route = icaos.map((s) => s.trim().toUpperCase());
+  const acked = new Set(
+    ackedFromUrl
+      .map((s) => s.trim().toUpperCase())
+      .filter((s) => route.includes(s)),
+  );
+  return route.filter((i) => !acked.has(i));
+}

@@ -28,6 +28,7 @@ import type {
 import type { PicOption } from "@/components/dispatch/packet/pic-picker";
 import { parseAckedWarns } from "@/components/dispatch/packet/soft-warning-ack-parser";
 import { parseAckedIcaos } from "@/components/dispatch/packet/notam-acks";
+import { computeHardBlockReason } from "@/components/dispatch/packet/release-gate";
 import { paramToRoute } from "@/lib/route";
 
 function todayUtc(): string {
@@ -112,22 +113,6 @@ export default async function DispatchPage({
   const ackedWarnCodes = parseAckedWarns(warnsAckedParam);
   const overridesAcknowledged = overridesAckParam === "1";
 
-  // M2-G-5 — Generate PDF disable rules:
-  //   RED   → block unless supervisor override was recorded (?overrides_ack=1)
-  //   YELLOW → block until every soft warning is ack'd (?warns_acked=...)
-  //   GREEN → no block
-  let hardBlockReason: string | null = null;
-  if (picCompliance && picCompliance.dot_color === "red" && !overridesAcknowledged) {
-    hardBlockReason = `PIC ${picCompliance.pilot.full_name} has ${picCompliance.hard_blocks.length} hard-block currency item${picCompliance.hard_blocks.length === 1 ? "" : "s"} — release blocked until cleared or overridden.`;
-  } else if (picCompliance && picCompliance.dot_color === "yellow") {
-    const unacked = picCompliance.soft_warnings.filter(
-      (w) => !ackedWarnCodes.has(w.code),
-    );
-    if (unacked.length > 0) {
-      hardBlockReason = `${unacked.length} of ${picCompliance.soft_warnings.length} soft warnings still need dispatcher acknowledgment.`;
-    }
-  }
-
   const currentTenant =
     tenantsResponse.tenants.find((t) => t.is_current) ??
     tenantsResponse.tenants[0];
@@ -159,6 +144,17 @@ export default async function DispatchPage({
       : selectedFlight
         ? [selectedFlight.origin, selectedFlight.destination]
         : [];
+
+  // The Generate-PDF release gate (PIC currency + NOTAM acks) lives in
+  // one pure, unit-tested function so the precedence rules can't drift.
+  const hardBlockReason = computeHardBlockReason({
+    picCompliance,
+    ackedWarnCodes,
+    overridesAcknowledged,
+    hasSelectedFlight: selectedFlight !== null,
+    icaos,
+    notamAckedIcaos,
+  });
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6">
