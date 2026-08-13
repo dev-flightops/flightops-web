@@ -49,11 +49,24 @@ export function GeneratePdfButton({
   flight: FlightDetail | null;
   /** M2-G-5 — when set, disable the button and surface the reason as
    *  a tooltip. Compliance gate hard blocks route through here so
-   *  the dispatcher can't release a PIC who's non-current. */
+   *  the dispatcher can't release a PIC who's non-current.
+   *
+   *  Enforcement depth differs by block — do NOT assume every reason
+   *  here is server-backed:
+   *    - PIC currency + aircraft airworthiness → ALSO enforced by the
+   *      backend release endpoint (409 pic_hard_blocked /
+   *      aircraft_not_airworthy), so bypassing this button still fails.
+   *    - NOTAM acknowledgment → UI-ONLY today. Ack state lives in the
+   *      URL (?notams_acked=) and is never sent to the release call, so
+   *      a direct POST bypasses it. Backend enforcement is a tracked
+   *      follow-up; until it lands this gate is a dispatcher-workflow
+   *      guard, not a server-side control. */
   hardBlockReason?: string | null;
   /** M2-M-5 — currently-selected PIC (?pic=<uuid>). Passed through to
    *  releaseFlightAction so the backend runs the compliance gate; if
-   *  the UI guard is bypassed the server still blocks the release. */
+   *  the UI guard is bypassed the server still blocks the release
+   *  (true for the PIC gate specifically — see hardBlockReason above
+   *  for which blocks are and aren't server-backed). */
   pilotUserId?: string | null;
   /** M2-G-5 tail — set when the supervisor override modal has
    *  recorded overrides for this PIC's hard-block items. Passed to
