@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 
 import type { Customer } from "@/lib/api/reservations";
+import type { StationListItem } from "@/lib/api/types";
 
 /**
  * New Booking search form — mirrors legacy peregrineflight.com's
@@ -41,10 +42,17 @@ function _todayIso(): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
 
+/** id of the shared <datalist> the three ICAO inputs point at. */
+const STATION_LIST_ID = "station-list";
+
 export function NewBookingSearchForm({
   customers,
+  stations = [],
 }: {
   customers: Customer[];
+  /** Configured stations, for the From/To/Via ICAO typeahead. Empty when
+   *  ground-service is unreachable — inputs stay plain free-text. */
+  stations?: StationListItem[];
 }) {
   const router = useRouter();
   const [tripType, setTripType] = useState<TripType>("one_way");
@@ -236,6 +244,7 @@ export function NewBookingSearchForm({
             maxLength={10}
             className="ff uppercase"
             autoComplete="off"
+            list={STATION_LIST_ID}
           />
         </Field>
         <Field label="To">
@@ -247,6 +256,7 @@ export function NewBookingSearchForm({
             maxLength={10}
             className="ff uppercase"
             autoComplete="off"
+            list={STATION_LIST_ID}
           />
         </Field>
         <Field label="Via (optional)">
@@ -258,9 +268,27 @@ export function NewBookingSearchForm({
             maxLength={10}
             className="ff uppercase"
             autoComplete="off"
+            list={STATION_LIST_ID}
           />
         </Field>
       </div>
+
+      {/* Shared ICAO typeahead for From/To/Via — mirrors legacy
+          booking_search.html's <datalist id="station-list">. The option
+          VALUE is the bare ICAO (what the input commits + what we put in
+          the query string); the label adds the station name/city so the
+          dispatcher can find a field by name. Omitted entirely when no
+          stations loaded, so the inputs degrade to plain free-text. */}
+      {stations.length > 0 && (
+        <datalist id={STATION_LIST_ID}>
+          {stations.map((s) => (
+            <option key={s.id} value={s.icao_code}>
+              {s.icao_code}
+              {s.name || s.city ? ` — ${s.name || s.city}` : ""}
+            </option>
+          ))}
+        </datalist>
+      )}
 
       {/* Row 3 — Checkboxes */}
       <div className="mt-4 flex flex-wrap items-center gap-4 text-xs text-foreground/80">
