@@ -27,7 +27,10 @@ import type {
 } from "@/lib/api/types";
 import type { PicOption } from "@/components/dispatch/packet/pic-picker";
 import { parseAckedWarns } from "@/components/dispatch/packet/soft-warning-ack-parser";
-import { parseAckedIcaos } from "@/components/dispatch/packet/notam-acks";
+import {
+  parseAckedIcaos,
+  unacknowledgedNotamIcaos,
+} from "@/components/dispatch/packet/notam-acks";
 import { paramToRoute } from "@/lib/route";
 
 function todayUtc(): string {
@@ -159,6 +162,20 @@ export default async function DispatchPage({
       : selectedFlight
         ? [selectedFlight.origin, selectedFlight.destination]
         : [];
+
+  // NOTAM gate — enforce the promise the NOTAM panel makes ("all boxes
+  // must be checked before Generate PDF unlocks"). Every routed ICAO must
+  // be acknowledged before release. Layered AFTER the PIC checks so a PIC
+  // hard-block keeps tooltip precedence, but an unacknowledged NOTAM
+  // independently blocks Generate PDF. Mirrors the panel's all-acked rule
+  // (notam-acknowledgment-panel.tsx): acks are matched case-insensitively
+  // and only count for ICAOs still in the current route.
+  if (hardBlockReason === null && selectedFlight && icaos.length > 0) {
+    const unackedIcaos = unacknowledgedNotamIcaos(icaos, notamAckedIcaos);
+    if (unackedIcaos.length > 0) {
+      hardBlockReason = `NOTAMs not acknowledged for ${unackedIcaos.join(", ")} — review each stop and check the box before release.`;
+    }
+  }
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6">
