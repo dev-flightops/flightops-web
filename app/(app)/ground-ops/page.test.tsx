@@ -8,6 +8,8 @@ const {
   listStations,
   listOpenStationIssues,
   listGseUnits,
+  listFuelOrders,
+  getFlightStats,
 } = vi.hoisted(() => {
   class TestApiError extends Error {
     constructor(
@@ -23,6 +25,8 @@ const {
     listStations: vi.fn(),
     listOpenStationIssues: vi.fn(),
     listGseUnits: vi.fn(),
+    listFuelOrders: vi.fn(),
+    getFlightStats: vi.fn(),
   };
 });
 vi.mock("@/lib/api/client", () => ({ ApiError: TestApiError }));
@@ -30,7 +34,23 @@ vi.mock("@/lib/api/ground", () => ({
   listStations,
   listOpenStationIssues,
   listGseUnits,
+  listFuelOrders,
 }));
+vi.mock("@/lib/api/ops", () => ({ getFlightStats }));
+
+function mockFlightStats(scheduled = 0, released = 0) {
+  getFlightStats.mockResolvedValueOnce({
+    today: { scheduled, released, cancelled: 0, completed: 0, total: scheduled + released },
+    this_week: { scheduled: 0, released: 0, cancelled: 0, completed: 0, total: 0 },
+    aircraft_total: 0,
+    aircraft_active: 0,
+    last_release_at: null,
+  });
+}
+
+function mockPendingFuel(total = 0) {
+  listFuelOrders.mockResolvedValueOnce({ items: [], total });
+}
 
 import GroundOpsHubPage from "./page";
 
@@ -65,6 +85,18 @@ beforeEach(() => {
   listStations.mockReset();
   listOpenStationIssues.mockReset();
   listGseUnits.mockReset();
+  listFuelOrders.mockReset();
+  getFlightStats.mockReset();
+  // Additive tiles default to healthy-zero (persistent); a test can queue
+  // a mockResolvedValueOnce/mockRejectedValueOnce to override its call.
+  getFlightStats.mockResolvedValue({
+    today: { scheduled: 0, released: 0, cancelled: 0, completed: 0, total: 0 },
+    this_week: { scheduled: 0, released: 0, cancelled: 0, completed: 0, total: 0 },
+    aircraft_total: 0,
+    aircraft_active: 0,
+    last_release_at: null,
+  });
+  listFuelOrders.mockResolvedValue({ items: [], total: 0 });
 });
 
 async function renderPage() {
@@ -97,7 +129,7 @@ describe("GroundOpsHubPage", () => {
     ).toBeInTheDocument();
   });
 
-  it("renders the six stat tiles with real and placeholder values", async () => {
+  it("renders the six stat tiles with real values incl. flights + fuel", async () => {
     listStations.mockResolvedValueOnce({ items: [], total: 14 });
     listOpenStationIssues.mockResolvedValueOnce({ items: [], total: 3 });
     listGseUnits.mockResolvedValueOnce({
@@ -108,6 +140,9 @@ describe("GroundOpsHubPage", () => {
       ],
       total: 3,
     });
+    // Flights Today = scheduled 6 + released 1 = 7; Pending Fuel = 5.
+    mockFlightStats(6, 1);
+    mockPendingFuel(5);
 
     await renderPage();
 
@@ -115,6 +150,38 @@ describe("GroundOpsHubPage", () => {
     expect(screen.getByText("3 open")).toBeInTheDocument();
     expect(screen.getAllByText("3").length).toBeGreaterThan(0);
     expect(screen.getAllByText("2").length).toBeGreaterThan(0);
+    expect(screen.getByText(/^flights today$/i)).toBeInTheDocument();
+    expect(screen.getByText(/^pending fuel$/i)).toBeInTheDocument();
+    // The two previously-hardcoded tiles now reflect real API values.
+    expect(screen.getByText("7")).toBeInTheDocument();
+    expect(screen.getByText("5")).toBeInTheDocument();
+  });
+
+  it("degrades the additive tiles to 0 without blanking the hub when ops/fuel fail", async () => {
+    // Core station/GSE/issue calls are healthy...
+    listStations.mockResolvedValueOnce({ items: [], total: 14 });
+    listOpenStationIssues.mockResolvedValueOnce({ items: [], total: 0 });
+    listGseUnits.mockResolvedValueOnce({ items: [], total: 0 });
+    // ...but flight-stats + fuel both 5xx. The hub must still render its
+    // real counts, NOT the "data unavailable" banner. Regression guard for
+    // the Promise.all all-or-nothing resilience issue.
+    getFlightStats.mockReset();
+    listFuelOrders.mockReset();
+    getFlightStats.mockRejectedValue(
+      new TestApiError(502, "/ops/flights/stats", "Bad Gateway"),
+    );
+    listFuelOrders.mockRejectedValue(
+      new TestApiError(502, "/ground/fuel/orders", "Bad Gateway"),
+    );
+
+    await renderPage();
+
+    // Hub renders normally — no error banner — and Stations count is intact.
+    expect(
+      screen.queryByText(/ground ops data unavailable/i),
+    ).not.toBeInTheDocument();
+    expect(screen.getByText("14")).toBeInTheDocument();
+    // Additive tiles fell back to 0.
     expect(screen.getByText(/^flights today$/i)).toBeInTheDocument();
     expect(screen.getByText(/^pending fuel$/i)).toBeInTheDocument();
   });
