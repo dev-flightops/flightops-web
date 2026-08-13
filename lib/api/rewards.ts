@@ -1,11 +1,13 @@
 /**
- * Quyana Rewards API — wraps reservations-service /quyana/*
- * (flightops-services PR #119).
+ * Rewards program API — wraps the reservations-service /rewards/*
+ * endpoints. (Type/model names still carry the legacy internal `Quyana*`
+ * identifier; a full internal rename incl. the DB table is a separate
+ * follow-up — see the rename PR description.)
  *
- *   GET  /reservations/quyana                       list (?tier=)
- *   POST /reservations/quyana                       enroll a customer
- *   GET  /reservations/quyana/{id}                  detail + transactions
- *   POST /reservations/quyana/{id}/transactions    ledger update
+ *   GET  /reservations/rewards                       list (?tier=)
+ *   POST /reservations/rewards                       enroll a customer
+ *   GET  /reservations/rewards/{id}                  detail + transactions
+ *   POST /reservations/rewards/{id}/transactions    ledger update
  *
  * Tier ladder (backend enforces on lifetime_points):
  *   standard (0) → silver (5k) → gold (15k) → elite (40k)
@@ -111,13 +113,13 @@ export async function listQuyanaMembers(
   if (params.tier) qs.set("tier", params.tier);
   if (params.include_inactive) qs.set("include_inactive", "true");
   const suffix = qs.toString() ? `?${qs.toString()}` : "";
-  return apiFetch<QuyanaMemberListResponse>(`/reservations/quyana${suffix}`);
+  return apiFetch<QuyanaMemberListResponse>(`/reservations/rewards${suffix}`);
 }
 
 export async function enrollQuyanaMember(
   body: QuyanaEnrollRequest,
 ): Promise<QuyanaMemberRow> {
-  return apiFetch<QuyanaMemberRow>("/reservations/quyana", {
+  return apiFetch<QuyanaMemberRow>("/reservations/rewards", {
     method: "POST",
     body: JSON.stringify(body),
   });
@@ -127,7 +129,7 @@ export async function getQuyanaMember(
   memberId: string,
 ): Promise<QuyanaMemberDetailResponse> {
   return apiFetch<QuyanaMemberDetailResponse>(
-    `/reservations/quyana/${memberId}`,
+    `/reservations/rewards/${memberId}`,
   );
 }
 
@@ -136,7 +138,7 @@ export async function createQuyanaTransaction(
   body: QuyanaTransactionCreateRequest,
 ): Promise<QuyanaMemberRow> {
   return apiFetch<QuyanaMemberRow>(
-    `/reservations/quyana/${memberId}/transactions`,
+    `/reservations/rewards/${memberId}/transactions`,
     {
       method: "POST",
       body: JSON.stringify(body),

@@ -8,7 +8,7 @@ import {
   enrollQuyanaMember,
   QUYANA_TRANSACTION_TYPES,
   type QuyanaTransactionType,
-} from "@/lib/api/quyana";
+} from "@/lib/api/rewards";
 
 export type QuyanaActionState = {
   status: "idle" | "ok" | "error";
@@ -34,7 +34,7 @@ export async function enrollMemberAction(
       enrolled_station: enrolled_station || undefined,
       notes: notes || undefined,
     });
-    revalidatePath("/reservations/quyana");
+    revalidatePath("/reservations/rewards");
     return { status: "ok", message: "Member enrolled." };
   } catch (err) {
     if (err instanceof ApiError) {
@@ -79,8 +79,8 @@ export async function createTransactionAction(
       points,
       description: description || undefined,
     });
-    revalidatePath(`/reservations/quyana/${memberId}`);
-    revalidatePath("/reservations/quyana");
+    revalidatePath(`/reservations/rewards/${memberId}`);
+    revalidatePath("/reservations/rewards");
     return { status: "ok", message: "Transaction recorded." };
   } catch (err) {
     if (err instanceof ApiError) {

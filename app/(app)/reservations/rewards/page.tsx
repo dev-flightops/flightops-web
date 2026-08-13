@@ -7,20 +7,20 @@ import {
   QUYANA_TIER_LABELS,
   type QuyanaMemberRow,
   type QuyanaTier,
-} from "@/lib/api/quyana";
+} from "@/lib/api/rewards";
 import { listCustomers, type Customer } from "@/lib/api/reservations";
 
 import { EnrollMemberToggle } from "./enroll-toggle";
 
 /**
- * /reservations/quyana — Rewards Program members list.
+ * /reservations/rewards — Rewards Program members list.
  *
  * Program name is per-tenant (company_profile.rewards_program_name).
  * A fresh tenant sees the generic "Rewards Program" label; tenants
  * that configure a custom name see that instead. Empty-state copy
  * and the enroll-button label both read the same value.
  *
- * Backed by flightops-services PR #119 (/reservations/quyana).
+ * Backed by flightops-services PR #119 (/reservations/rewards).
  */
 
 export const dynamic = "force-dynamic";
@@ -131,7 +131,7 @@ export default async function RewardsMembersPage() {
                     </td>
                     <td className="whitespace-nowrap px-4 py-3 text-right">
                       <Link
-                        href={`/reservations/quyana/${m.id}`}
+                        href={`/reservations/rewards/${m.id}`}
                         className="text-xs font-semibold text-status-blue hover:underline"
                       >
                         Open →

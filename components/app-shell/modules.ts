@@ -209,7 +209,7 @@ export const DEPARTMENTS: Department[] = [
       // company profile and swaps it in. Per-tenant nav-label
       // rendering is deferred until the client-side session
       // hydrates with the profile.
-      { id: "reservations-quyana", label: "Rewards", href: "/reservations/quyana", status: "live", department: "reservations" },
+      { id: "reservations-quyana", label: "Rewards", href: "/reservations/rewards", status: "live", department: "reservations" },
       { id: "reservations-acct-export", label: "Accounting Export", href: "/reservations/accounting-export", status: "live", department: "reservations" },
     ],
   },
