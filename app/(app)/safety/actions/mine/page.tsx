@@ -78,7 +78,7 @@ export default async function MyCapasPage() {
                       ) : null}
                     </div>
                     <p className="line-clamp-1 text-xs text-muted-foreground">
-                      Due {dueDate.toLocaleDateString()} · Opened by{" "}
+                      Due {dueDate.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" })} · Opened by{" "}
                       {c.opened_by.full_name}
                     </p>
                   </div>

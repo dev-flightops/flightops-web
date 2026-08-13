@@ -15,6 +15,7 @@ export function AcademyHeader({
   activeSection:
     | "dashboard"
     | "course-library"
+    | "my-training"
     | "assignments"
     | "certificates"
     | "reports"
@@ -58,6 +59,11 @@ export function AcademyHeader({
           label="Course Library"
           active={activeSection === "course-library"}
           accent="yellow"
+        />
+        <SectionTab
+          href="/academy/mine"
+          label="My Training"
+          active={activeSection === "my-training"}
         />
         <SectionTab
           href="/academy/assignments"

@@ -75,7 +75,7 @@ export default async function MyIncidentsPage() {
                       {INCIDENT_CATEGORY_LABELS[i.category]}
                     </span>
                     <span className="text-[0.6875rem] text-muted-foreground/70">
-                      Occurred {new Date(i.occurred_at).toLocaleDateString()}
+                      Occurred {new Date(i.occurred_at).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" })}
                     </span>
                   </div>
                   <p className="line-clamp-2 text-foreground/90">

@@ -463,7 +463,7 @@ export interface QuizAdminResponse {
 export interface QuizCreateInput {
   title: string;
   instructions?: string | null;
-  /** Percentage 0–100. Server default is 80 if omitted. */
+  /** Percentage 0–100. Server default is 70 if omitted. */
   pass_threshold?: number;
 }
 
