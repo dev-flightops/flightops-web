@@ -9,11 +9,11 @@ import {
   QUYANA_TRANSACTION_TYPE_LABELS,
   type QuyanaMemberDetailResponse,
   type QuyanaTier,
-} from "@/lib/api/quyana";
+} from "@/lib/api/rewards";
 
 import { TransactionForm } from "./transaction-form";
 
-/** /reservations/quyana/[memberId] — rewards member detail.
+/** /reservations/rewards/[memberId] — rewards member detail.
  *
  *   Header  = member number + customer + tier badge + balance/lifetime pillsels
  *   Body    = manual transaction form + reverse-chron ledger table
@@ -81,7 +81,7 @@ export default async function RewardsMemberDetailPage({
     <div className="mx-auto max-w-5xl px-4 py-8">
       <nav aria-label="Breadcrumb" className="mb-4 text-xs">
         <Link
-          href="/reservations/quyana"
+          href="/reservations/rewards"
           className="text-muted-foreground hover:text-foreground"
         >
           {programName}

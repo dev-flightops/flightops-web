@@ -7,7 +7,7 @@ import {
   QUYANA_TRANSACTION_TYPE_LABELS,
   QUYANA_TRANSACTION_TYPES,
   type QuyanaTransactionType,
-} from "@/lib/api/quyana";
+} from "@/lib/api/rewards";
 
 import { createTransactionAction, type QuyanaActionState } from "../actions";
 
