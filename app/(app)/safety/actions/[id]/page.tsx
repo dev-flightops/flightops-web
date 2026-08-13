@@ -83,7 +83,7 @@ export default async function CapaDetailPage({
           </span>
         </h1>
         <p className="mt-1 text-xs text-muted-foreground">
-          Opened {new Date(capa.created_at).toLocaleDateString()} by{" "}
+          Opened {new Date(capa.created_at).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" })} by{" "}
           {capa.opened_by.full_name} — linked to a{" "}
           <Link href={sourceHref} className="text-status-blue hover:underline">
             {capa.source_type}
@@ -105,7 +105,7 @@ export default async function CapaDetailPage({
           label="Owner"
           value={`${capa.owner.full_name} (${capa.owner.email})`}
         />
-        <DetailRow label="Due" value={dueDate.toLocaleDateString()} />
+        <DetailRow label="Due" value={dueDate.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" })} />
         <DetailRow label="Status" value={CAPA_STATUS_LABELS[capa.status]} />
         <div>
           <div className="text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">

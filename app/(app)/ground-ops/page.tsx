@@ -3,10 +3,12 @@ import Link from "next/link";
 
 import { ApiError } from "@/lib/api/client";
 import {
+  listFuelOrders,
   listGseUnits,
   listOpenStationIssues,
   listStations,
 } from "@/lib/api/ground";
+import { getFlightStats } from "@/lib/api/ops";
 
 /**
  * /ground-ops — Ground Operations hub.
@@ -26,20 +28,29 @@ export default async function GroundOpsHubPage() {
   let openIssueCount = 0;
   let gseTotal = 0;
   let gseDown = 0;
+  let flightsToday = 0;
+  let pendingFuel = 0;
   let loadError: string | null = null;
 
   try {
-    const [stations, issues, gse] = await Promise.all([
-      listStations({ limit: 500 }),
-      listOpenStationIssues({ status: "open", limit: 1 }),
-      listGseUnits({ limit: 500 }),
-    ]);
+    // "Pending fuel" = orders still in the `ordered` state (placed, awaiting
+    // supplier confirmation) — the count the Ramp fuel badge signals.
+    const [stations, issues, gse, stats, pendingFuelOrders] =
+      await Promise.all([
+        listStations({ limit: 500 }),
+        listOpenStationIssues({ status: "open", limit: 1 }),
+        listGseUnits({ limit: 500 }),
+        getFlightStats(),
+        listFuelOrders({ status: "ordered", limit: 1 }),
+      ]);
     stationCount = stations.total;
     openIssueCount = issues.total;
     gseTotal = gse.total;
     gseDown = gse.items.filter(
       (u) => u.status === "maintenance" || u.status === "out_of_service",
     ).length;
+    flightsToday = stats.today.scheduled + stats.today.released;
+    pendingFuel = pendingFuelOrders.total;
   } catch (err) {
     const status = err instanceof ApiError ? err.status : 0;
     loadError =
@@ -69,9 +80,13 @@ export default async function GroundOpsHubPage() {
       )}
 
       <section className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-        <StatTile label="Flights Today" value={0} />
+        <StatTile label="Flights Today" value={flightsToday} />
         <StatTile label="Stations" value={stationCount} />
-        <StatTile label="Pending Fuel" value={0} />
+        <StatTile
+          label="Pending Fuel"
+          value={pendingFuel}
+          accent={pendingFuel > 0 ? "yellow" : undefined}
+        />
         <StatTile label="GSE Units" value={gseTotal} />
         <StatTile
           label="GSE Down"
@@ -102,6 +117,10 @@ export default async function GroundOpsHubPage() {
               sublabel: "Confirm and complete fuel deliveries",
               href: "/fuel/orders",
               status: "live",
+              badge:
+                pendingFuel > 0
+                  ? { text: `${pendingFuel} pending`, tone: "yellow" }
+                  : undefined,
             },
             {
               label: "Ramp Messages",

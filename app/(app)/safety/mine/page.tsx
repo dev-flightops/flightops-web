@@ -86,7 +86,7 @@ export default async function MySafetyReportsPage() {
                       {HAZARD_CATEGORY_LABELS[h.category]}
                     </span>
                     <span className="text-[0.6875rem] text-muted-foreground/70">
-                      Filed {new Date(h.created_at).toLocaleDateString()}
+                      Filed {new Date(h.created_at).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" })}
                     </span>
                   </div>
                   <p className="line-clamp-2 text-foreground/90">
