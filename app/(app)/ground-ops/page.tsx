@@ -32,25 +32,31 @@ export default async function GroundOpsHubPage() {
   let pendingFuel = 0;
   let loadError: string | null = null;
 
+  // "Flights Today" + "Pending Fuel" are additive/decorative tiles. Fetch
+  // them with their OWN error handling so a degraded ops-stats or fuel
+  // service can't blank the whole hub — they fall back to 0 while the
+  // core station/GSE/issue counts (which gate loadError) still render.
+  // ("Pending fuel" = orders still in `ordered` — awaiting supplier
+  // confirmation — the count the Ramp fuel badge signals.)
+  const flightsTodayPromise = getFlightStats()
+    .then((s) => s.today.scheduled + s.today.released)
+    .catch(() => 0);
+  const pendingFuelPromise = listFuelOrders({ status: "ordered", limit: 1 })
+    .then((r) => r.total)
+    .catch(() => 0);
+
   try {
-    // "Pending fuel" = orders still in the `ordered` state (placed, awaiting
-    // supplier confirmation) — the count the Ramp fuel badge signals.
-    const [stations, issues, gse, stats, pendingFuelOrders] =
-      await Promise.all([
-        listStations({ limit: 500 }),
-        listOpenStationIssues({ status: "open", limit: 1 }),
-        listGseUnits({ limit: 500 }),
-        getFlightStats(),
-        listFuelOrders({ status: "ordered", limit: 1 }),
-      ]);
+    const [stations, issues, gse] = await Promise.all([
+      listStations({ limit: 500 }),
+      listOpenStationIssues({ status: "open", limit: 1 }),
+      listGseUnits({ limit: 500 }),
+    ]);
     stationCount = stations.total;
     openIssueCount = issues.total;
     gseTotal = gse.total;
     gseDown = gse.items.filter(
       (u) => u.status === "maintenance" || u.status === "out_of_service",
     ).length;
-    flightsToday = stats.today.scheduled + stats.today.released;
-    pendingFuel = pendingFuelOrders.total;
   } catch (err) {
     const status = err instanceof ApiError ? err.status : 0;
     loadError =
@@ -58,6 +64,9 @@ export default async function GroundOpsHubPage() {
         ? "Your session expired — please sign in again."
         : "Ground Ops data unavailable. Try refreshing in a moment.";
   }
+
+  flightsToday = await flightsTodayPromise;
+  pendingFuel = await pendingFuelPromise;
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">

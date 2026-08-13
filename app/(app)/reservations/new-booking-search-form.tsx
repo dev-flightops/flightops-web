@@ -30,7 +30,7 @@ const TRIP_TYPES: Array<{
     id: "return",
     label: "Return",
     disabled: true,
-    disabledReason: "Round trips ship with the fares engine (M4)",
+    disabledReason: "Round-trip booking is coming soon",
   },
   { id: "freight_only", label: "Freight Only" },
 ];
