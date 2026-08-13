@@ -235,7 +235,7 @@ function CapaTable({
                           : "text-muted-foreground"
                       }
                     >
-                      {dueDate.toLocaleDateString()}
+                      {dueDate.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" })}
                     </span>
                   </td>
                   <td className="max-w-md px-4 py-3 text-xs">

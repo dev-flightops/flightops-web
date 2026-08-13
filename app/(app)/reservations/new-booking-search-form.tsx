@@ -14,9 +14,24 @@ import type { Customer } from "@/lib/api/reservations";
 
 type TripType = "one_way" | "return" | "freight_only";
 
-const TRIP_TYPES: Array<{ id: TripType; label: string }> = [
+const TRIP_TYPES: Array<{
+  id: TripType;
+  label: string;
+  disabled?: boolean;
+  disabledReason?: string;
+}> = [
   { id: "one_way", label: "One Way" },
-  { id: "return", label: "Return" },
+  // Return is disabled rather than shown-but-broken: a round trip needs a
+  // second-leg date + the fares/inventory engine (deferred to the fares
+  // vertical, M4) to price and create it. Offering it here previously set
+  // trip_type=return with no return-date input — an option that captured
+  // nothing. Re-enable once the engine + return-date field ship together.
+  {
+    id: "return",
+    label: "Return",
+    disabled: true,
+    disabledReason: "Round-trip booking is coming soon",
+  },
   { id: "freight_only", label: "Freight Only" },
 ];
 
@@ -98,13 +113,17 @@ export function NewBookingSearchForm({
               <button
                 key={t.id}
                 type="button"
-                onClick={() => setTripType(t.id)}
+                onClick={() => !t.disabled && setTripType(t.id)}
+                disabled={t.disabled}
                 aria-pressed={tripType === t.id}
+                title={t.disabledReason}
                 className={
                   "rounded-md border px-3 py-1.5 text-xs font-semibold transition " +
-                  (tripType === t.id
-                    ? "border-status-blue bg-status-blue/15 text-status-blue"
-                    : "border-border bg-background text-muted-foreground hover:text-foreground")
+                  (t.disabled
+                    ? "cursor-not-allowed border-border bg-background text-muted-foreground/50"
+                    : tripType === t.id
+                      ? "border-status-blue bg-status-blue/15 text-status-blue"
+                      : "border-border bg-background text-muted-foreground hover:text-foreground")
                 }
               >
                 {t.label}
