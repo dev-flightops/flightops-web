@@ -118,11 +118,18 @@ export async function releaseFlight(
    *  actually has stale or missing weather, so sending it on a clean
    *  route is harmless and is not recorded as an acknowledgment. */
   staleWeatherAcknowledged?: boolean,
+  /** Audit finding C1 — one entry per routed airport. The backend
+   *  refuses the release if any routed stop is missing, and persists
+   *  these as the release's audit trail. */
+  notamAcknowledgments?: { icao: string }[],
 ): Promise<ReleaseResponse> {
   const body: Record<string, unknown> = {};
   if (pilotUserId) body.pilot_user_id = pilotUserId;
   if (overridesAcknowledged) body.overrides_acknowledged = true;
   if (staleWeatherAcknowledged) body.stale_weather_acknowledged = true;
+  if (notamAcknowledgments?.length) {
+    body.notam_acknowledgments = notamAcknowledgments;
+  }
   return apiFetch<ReleaseResponse>(`/ops/flights/${flightId}/release`, {
     method: "POST",
     body: JSON.stringify(body),

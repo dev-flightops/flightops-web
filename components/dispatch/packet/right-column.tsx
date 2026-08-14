@@ -30,6 +30,8 @@ export function RightColumn({
   hardBlockReason = null,
   pilotUserId = null,
   overridesAcknowledged = false,
+  notamAckedIcaos = [],
+  staleWeatherAcknowledged = false,
 }: {
   flight?: FlightDetail | null;
   /** Aircraft list for the Edit dialog's tail-swap selector. Only needed
@@ -47,6 +49,10 @@ export function RightColumn({
    *  modal ran). Passed to Generate PDF so release goes through even
    *  with hard blocks. */
   overridesAcknowledged?: boolean;
+  /** Forwarded to the release call — the backend requires one entry per
+   *  routed stop and stores them as the release audit trail. */
+  notamAckedIcaos?: string[];
+  staleWeatherAcknowledged?: boolean;
 }) {
   return (
     <div className="space-y-5">
@@ -75,6 +81,8 @@ export function RightColumn({
             hardBlockReason={hardBlockReason}
             pilotUserId={pilotUserId}
             overridesAcknowledged={overridesAcknowledged}
+            notamAckedIcaos={notamAckedIcaos}
+            staleWeatherAcknowledged={staleWeatherAcknowledged}
           />
         </div>
       </SectionPanel>

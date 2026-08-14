@@ -225,6 +225,8 @@ export default async function DispatchPage({
             flight={selectedFlight}
             icaos={icaos}
             notamAckedIcaos={notamAckedIcaos}
+            weatherFreshness={weatherFreshness}
+            staleWeatherAcknowledged={staleWeatherAcknowledged}
           />
           <RightColumn
             flight={selectedFlight}
@@ -232,6 +234,8 @@ export default async function DispatchPage({
             hardBlockReason={hardBlockReason}
             pilotUserId={currentPicId}
             overridesAcknowledged={overridesAcknowledged}
+            notamAckedIcaos={notamAckedIcaos}
+            staleWeatherAcknowledged={staleWeatherAcknowledged}
           />
         </div>
       </div>
