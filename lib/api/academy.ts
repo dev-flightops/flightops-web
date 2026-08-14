@@ -108,6 +108,16 @@ export interface Course {
    *  items on link — only calendar-month items are eligible. */
   linked_currency_item_id: string | null;
   lesson_count: number;
+  /** HALT-2 card metadata. `duration_minutes` is stored; the other two
+   *  are derived server-side.
+   *
+   *  `passing_score` is null both when a course has no quizzes AND when
+   *  its quizzes disagree on a threshold — we grade per quiz, so there
+   *  is no single honest number to show. Render nothing in that case
+   *  rather than substituting a default. */
+  duration_minutes: number | null;
+  passing_score: number | null;
+  enrollment_count: number;
   created_at: string;
   updated_at: string;
 }

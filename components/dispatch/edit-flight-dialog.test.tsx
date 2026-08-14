@@ -25,6 +25,9 @@ const aircraft207: AircraftListItem = {
   model: "Cessna 208 Caravan",
   seats: 9,
   max_payload_lbs: 3000,
+  make: null,
+  serial_number: null,
+  year: null,
   is_active: true,
 };
 
@@ -34,6 +37,9 @@ const aircraft510: AircraftListItem = {
   model: "Beechcraft 1900D",
   seats: 19,
   max_payload_lbs: 4500,
+  make: null,
+  serial_number: null,
+  year: null,
   is_active: true,
 };
 

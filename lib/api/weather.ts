@@ -21,11 +21,25 @@ import type {
   WeatherBriefingCreateRequest,
   WeatherBriefingListResponse,
   WeatherBriefingResponse,
+  RouteFreshness,
   WeatherReportResponse,
 } from "./types";
 
 export async function getMetar(icao: string): Promise<WeatherReportResponse> {
   return apiFetch<WeatherReportResponse>(`/weather/metar/${icao}`);
+}
+
+/**
+ * HALT-2 — staleness verdict for a route, from weather already on file.
+ *
+ * Read-only: this never triggers an upstream AWC fetch, so calling it on
+ * every dispatch render is cheap and cannot change what it reports.
+ */
+export async function getRouteFreshness(
+  icaos: string[],
+): Promise<RouteFreshness> {
+  const query = encodeURIComponent(icaos.join(","));
+  return apiFetch<RouteFreshness>(`/weather/route-freshness?icaos=${query}`);
 }
 
 export async function getTaf(icao: string): Promise<WeatherReportResponse> {

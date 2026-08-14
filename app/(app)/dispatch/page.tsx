@@ -20,10 +20,12 @@ import {
   listAircraft,
   listFlights,
 } from "@/lib/api/ops";
+import { getRouteFreshness } from "@/lib/api/weather";
 import type {
   AircraftListItem,
   FlightDetail,
   PicComplianceResponse,
+  RouteFreshness,
 } from "@/lib/api/types";
 import type { PicOption } from "@/components/dispatch/packet/pic-picker";
 import { parseAckedWarns } from "@/components/dispatch/packet/soft-warning-ack-parser";
@@ -63,6 +65,11 @@ interface SearchParams {
    *  submits successfully. Signals the page to let Generate PDF fire
    *  even though hard blocks are on the pilot's currency record. */
   overrides_ack?: string;
+  /** HALT-2 — set to "1" once the dispatcher acknowledges stale or
+   *  missing route weather. URL-driven like the other acks so the state
+   *  survives a reload. The release endpoint re-checks server-side, so
+   *  hand-editing this only skips the button hint, not the gate. */
+  stale_wx_ack?: string;
 }
 
 /**
@@ -88,6 +95,7 @@ export default async function DispatchPage({
     pic: picOverrideId,
     warns_acked: warnsAckedParam,
     overrides_ack: overridesAckParam,
+    stale_wx_ack: staleWxAckParam,
   } = await searchParams;
   const today = todayUtc();
 
@@ -112,6 +120,7 @@ export default async function DispatchPage({
   // supervisor override modal already ran successfully.
   const ackedWarnCodes = parseAckedWarns(warnsAckedParam);
   const overridesAcknowledged = overridesAckParam === "1";
+  const staleWeatherAcknowledged = staleWxAckParam === "1";
 
   const currentTenant =
     tenantsResponse.tenants.find((t) => t.is_current) ??
@@ -145,8 +154,18 @@ export default async function DispatchPage({
         ? [selectedFlight.origin, selectedFlight.destination]
         : [];
 
-  // The Generate-PDF release gate (PIC currency + NOTAM acks) lives in
-  // one pure, unit-tested function so the precedence rules can't drift.
+  // HALT-2 — weather staleness for the routed stops. Soft-fails to null:
+  // the release endpoint runs the same evaluator server-side, so a
+  // weather-service blip degrades the button hint rather than stranding
+  // every release. `computeHardBlockReason` documents that contract.
+  let weatherFreshness: RouteFreshness | null = null;
+  if (selectedFlight && icaos.length > 0) {
+    weatherFreshness = await getRouteFreshness(icaos).catch(() => null);
+  }
+
+  // The Generate-PDF release gate (PIC currency, NOTAM acks, stale
+  // weather) lives in one pure, unit-tested function so the precedence
+  // rules can't drift.
   const hardBlockReason = computeHardBlockReason({
     picCompliance,
     ackedWarnCodes,
@@ -154,6 +173,8 @@ export default async function DispatchPage({
     hasSelectedFlight: selectedFlight !== null,
     icaos,
     notamAckedIcaos,
+    weatherFreshness,
+    staleWeatherAcknowledged,
   });
 
   return (

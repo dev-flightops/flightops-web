@@ -45,6 +45,25 @@ const nullableIntMax = (max: number) =>
     )
     .transform((v) => (v === null ? null : Number(v)));
 
+/** Like `nullableIntMax` but with a lower bound too, and a caller-supplied
+ *  message — "between 1903 and 2,100" reads as a payload figure rather
+ *  than a year. */
+const nullableIntRange = (min: number, max: number, message: string) =>
+  z
+    .string()
+    .trim()
+    .transform((v) => (v === "" ? null : v))
+    .nullable()
+    .refine(
+      (v) => {
+        if (v === null) return true;
+        const n = Number(v);
+        return Number.isInteger(n) && n >= min && n <= max;
+      },
+      { message },
+    )
+    .transform((v) => (v === null ? null : Number(v)));
+
 const CreateSchema = z.object({
   tail_number: z
     .string()
@@ -78,6 +97,12 @@ const CreateSchema = z.object({
       { message: "Base ICAO must be 3-4 characters." },
     ),
   special_notes: nullableTrimmed(200),
+  // HALT-2 — airframe identity. Bounds mirror the API's Field() limits
+  // and, for year, the ck_aircraft_year_range check in migration 0070,
+  // so a typo is a readable field error instead of a 422 round trip.
+  make: nullableTrimmed(100),
+  serial_number: nullableTrimmed(100),
+  year: nullableIntRange(1903, 2100, "Enter a 4-digit year (1903-2100)."),
 });
 
 const UpdateSchema = CreateSchema.omit({ tail_number: true }).extend({

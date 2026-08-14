@@ -1,4 +1,4 @@
-import type { PicComplianceResponse } from "@/lib/api/types";
+import type { PicComplianceResponse, RouteFreshness } from "@/lib/api/types";
 
 import { unacknowledgedNotamIcaos } from "./notam-acks";
 
@@ -19,12 +19,22 @@ import { unacknowledgedNotamIcaos } from "./notam-acks";
  *   3. NOTAMs              → block until every routed ICAO is ack'd
  *                           (?notams_acked=...), enforcing the promise
  *                           the NOTAM panel makes on screen.
+ *   4. Stale / missing weather → block until acknowledged
+ *                           (?stale_wx_ack=1). Legacy orders this last
+ *                           too (modules/dispatch/form.html), so a
+ *                           dispatcher clears currency, then NOTAMs,
+ *                           then weather.
  *
- * Enforcement depth differs: (1) and (2) are also enforced by the backend
- * release endpoint, so bypassing the UI still fails. (3) is UI-only today
- * — NOTAM ack state never reaches the release call — so it is a
- * dispatcher-workflow guard, not a server-side control. Backend NOTAM
- * enforcement is a tracked follow-up.
+ * Enforcement depth differs, and it matters which is which:
+ *
+ *   (1), (2) and (4) are ALSO enforced by the backend release endpoint,
+ *   so bypassing the UI still fails. For (4) the server runs the same
+ *   shared evaluator this gate's input came from, so the two cannot
+ *   disagree about whether an ack is needed.
+ *
+ *   (3) is UI-only today — NOTAM ack state never reaches the release
+ *   call — so it is a dispatcher-workflow guard, not a server-side
+ *   control. Backend NOTAM enforcement is a tracked follow-up.
  */
 export function computeHardBlockReason(input: {
   picCompliance: PicComplianceResponse | null;
@@ -35,6 +45,11 @@ export function computeHardBlockReason(input: {
   /** Routed ICAOs (explicit ?route= or the flight's origin+destination). */
   icaos: string[];
   notamAckedIcaos: string[];
+  /** Verdict from weather-service `GET /route-freshness`. Null when the
+   *  call failed — see the handling at the bottom of this function. */
+  weatherFreshness: RouteFreshness | null;
+  /** `?stale_wx_ack=1` — dispatcher ticked the weather acknowledgment. */
+  staleWeatherAcknowledged: boolean;
 }): string | null {
   const {
     picCompliance,
@@ -43,6 +58,8 @@ export function computeHardBlockReason(input: {
     hasSelectedFlight,
     icaos,
     notamAckedIcaos,
+    weatherFreshness,
+    staleWeatherAcknowledged,
   } = input;
 
   if (
@@ -70,5 +87,22 @@ export function computeHardBlockReason(input: {
     }
   }
 
+  if (
+    hasSelectedFlight &&
+    weatherFreshness !== null &&
+    weatherFreshness.acknowledgment_required &&
+    !staleWeatherAcknowledged
+  ) {
+    const stations = weatherFreshness.stations_requiring_acknowledgment;
+    const where = stations.length > 0 ? ` for ${stations.join(", ")}` : "";
+    return `Stale or missing weather${where} — review it and acknowledge before release.`;
+  }
+
+  // A null verdict means the freshness call failed. We do NOT block on
+  // it: this gate is the convenience half, and the release endpoint runs
+  // the same evaluator server-side, so a dispatcher who proceeds gets a
+  // 409 with the real reason rather than a silent bypass. Blocking here
+  // instead would strand every release whenever weather-service blips,
+  // for a check the server is already making.
   return null;
 }

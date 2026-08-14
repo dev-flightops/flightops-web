@@ -42,6 +42,9 @@ function makeSummary(
     prop_tbo_hours: null,
     grounded_reason: null,
     grounded_at: null,
+    make: null,
+    serial_number: null,
+    year: null,
     ...overrides,
   };
 }

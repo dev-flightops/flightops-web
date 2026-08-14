@@ -29,6 +29,10 @@ export interface AircraftListItem {
   seats: number;
   max_payload_lbs: number | null;
   is_active: boolean;
+  /** HALT-2 — airframe identity, editable from Settings → Fleet. */
+  make: string | null;
+  serial_number: string | null;
+  year: number | null;
 }
 
 export interface AircraftListResponse {
@@ -568,6 +572,11 @@ export interface FleetAircraftSummary {
    *  slugs (fuel_hold) land as they ship. Null on active aircraft. */
   grounded_reason: string | null;
   grounded_at: string | null;
+  /** HALT-2 — airframe identity. Independently nullable: the card joins
+   *  whichever parts are present, exactly as legacy's fleet panel does. */
+  make: string | null;
+  serial_number: string | null;
+  year: number | null;
 }
 
 export interface FleetAirworthinessResponse {
@@ -1822,4 +1831,32 @@ export interface FuelQualityTestCreateRequest {
   ambient_temp_c?: number | null;
   notes?: string | null;
   tested_at?: string | null;
+}
+
+/** HALT-2 — staleness verdict for one routed stop. */
+export interface StationFreshness {
+  icao: string;
+  metar_age_minutes: number | null;
+  metar_stale: boolean;
+  field_report_age_minutes: number | null;
+  field_report_stale: boolean;
+  has_any_weather: boolean;
+  requires_acknowledgment: boolean;
+}
+
+/**
+ * HALT-2 — weather freshness across a whole route.
+ *
+ * The dispatch page renders staleness badges from this and feeds
+ * `acknowledgment_required` into the release gate. The ops-service runs
+ * the identical evaluator inside POST /flights/{id}/release, so the
+ * button state and the server's answer cannot disagree.
+ */
+export interface RouteFreshness {
+  stations: StationFreshness[];
+  any_stale_metar: boolean;
+  any_stale_field_report: boolean;
+  any_missing_weather: boolean;
+  acknowledgment_required: boolean;
+  stations_requiring_acknowledgment: string[];
 }

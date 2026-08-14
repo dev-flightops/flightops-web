@@ -113,10 +113,16 @@ export async function releaseFlight(
    *  gate because the caller has already recorded currency_overrides
    *  rows (audit trail lives there). */
   overridesAcknowledged?: boolean,
+  /** HALT-2 — dispatcher acknowledged stale / missing route weather
+   *  (?stale_wx_ack=1). The backend only consults it when the route
+   *  actually has stale or missing weather, so sending it on a clean
+   *  route is harmless and is not recorded as an acknowledgment. */
+  staleWeatherAcknowledged?: boolean,
 ): Promise<ReleaseResponse> {
   const body: Record<string, unknown> = {};
   if (pilotUserId) body.pilot_user_id = pilotUserId;
   if (overridesAcknowledged) body.overrides_acknowledged = true;
+  if (staleWeatherAcknowledged) body.stale_weather_acknowledged = true;
   return apiFetch<ReleaseResponse>(`/ops/flights/${flightId}/release`, {
     method: "POST",
     body: JSON.stringify(body),

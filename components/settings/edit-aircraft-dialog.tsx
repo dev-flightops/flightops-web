@@ -98,6 +98,37 @@ export function EditAircraftDialog({ aircraft }: { aircraft: AircraftListItem })
               />
             </div>
 
+            {/* HALT-2 — airframe identity, grouped as its own row because
+                these read together on the fleet card. */}
+            <div className="grid gap-4 sm:grid-cols-3">
+              <Field
+                name="year"
+                label="Year"
+                type="number"
+                min={1903}
+                max={2100}
+                placeholder="2019"
+                defaultValue={aircraft.year ?? ""}
+                error={fieldError("year")}
+              />
+              <Field
+                name="make"
+                label="Make"
+                placeholder="Cessna"
+                defaultValue={aircraft.make ?? ""}
+                error={fieldError("make")}
+              />
+              <Field
+                name="serial_number"
+                label="Serial number"
+                placeholder="208B1234"
+                autoCapitalize="characters"
+                spellCheck={false}
+                defaultValue={aircraft.serial_number ?? ""}
+                error={fieldError("serial_number")}
+              />
+            </div>
+
             <Field
               name="airframe_type"
               label="Airframe slug"
