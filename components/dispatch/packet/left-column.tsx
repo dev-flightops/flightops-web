@@ -1,4 +1,4 @@
-import type { FlightDetail } from "@/lib/api/types";
+import type { FlightDetail, RouteFreshness } from "@/lib/api/types";
 
 import { AlternateReviewPanel } from "./alternate-review-panel";
 import { FuelOrderPanel } from "./fuel-order-panel";
@@ -6,6 +6,7 @@ import { MaintenancePanel } from "./maintenance-panel";
 import { NotamAcknowledgmentPanel } from "./notam-acknowledgment-panel";
 import { RouteInput } from "./route-input";
 import { DisabledPanel, SectionPanel } from "./section-panel";
+import { StaleWeatherAck } from "./stale-weather-ack";
 import { WeatherPanel } from "./weather-panel";
 
 /**
@@ -36,12 +37,19 @@ export async function LeftColumn({
   flight,
   icaos,
   notamAckedIcaos,
+  weatherFreshness,
+  staleWeatherAcknowledged,
 }: {
   flight: FlightDetail | null;
   icaos: string[];
   /** ICAOs the dispatcher has manually acknowledged NOTAMs for (from
    *  the `?notams_acked=` query param). Empty when no acks yet. */
   notamAckedIcaos: string[];
+  /** Staleness verdict for the route. Null when the freshness call
+   *  failed — the ack control hides, matching the release gate, which
+   *  also declines to block on a verdict it could not obtain. */
+  weatherFreshness: RouteFreshness | null;
+  staleWeatherAcknowledged: boolean;
 }) {
   return (
     <div className="space-y-5">
@@ -54,6 +62,15 @@ export async function LeftColumn({
       </SectionPanel>
 
       <WeatherPanel icaos={icaos} />
+
+      {/* Sits directly under the weather it refers to — the dispatcher
+          reads the stale METAR, then ticks the box, without hunting for
+          a control somewhere else on the page. Renders nothing when the
+          route's weather is current. */}
+      <StaleWeatherAck
+        freshness={weatherFreshness}
+        acknowledged={staleWeatherAcknowledged}
+      />
 
       <AlternateReviewPanel icaos={icaos} />
 

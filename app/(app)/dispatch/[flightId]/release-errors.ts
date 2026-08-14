@@ -36,3 +36,28 @@ export function extractBlockingSummary(body: string): string | null {
     return null;
   }
 }
+
+/** Pull `missing_icaos[]` out of the structured 409 the release endpoint
+ *  returns when a routed stop has no NOTAM acknowledgment (audit finding
+ *  C1), formatted for the inline error.
+ *
+ *  Naming the stops matters: the dispatcher's next action is to tick
+ *  specific boxes, and "NOTAMs not acknowledged" without saying which
+ *  airport sends them checking every one.
+ *
+ *  Returns null when the body isn't the expected shape, so the caller
+ *  can fall back to generic text rather than rendering "undefined".
+ */
+export function extractMissingIcaos(body: string): string | null {
+  try {
+    const parsed = JSON.parse(body) as {
+      detail?: { error?: string; missing_icaos?: string[] };
+    };
+    const icaos = (parsed.detail?.missing_icaos ?? []).filter(
+      (s): s is string => Boolean(s),
+    );
+    return icaos.length > 0 ? icaos.join(", ") : null;
+  } catch {
+    return null;
+  }
+}

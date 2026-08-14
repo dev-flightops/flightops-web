@@ -45,6 +45,8 @@ export function GeneratePdfButton({
   hardBlockReason = null,
   pilotUserId = null,
   overridesAcknowledged = false,
+  notamAckedIcaos = [],
+  staleWeatherAcknowledged = false,
 }: {
   flight: FlightDetail | null;
   /** M2-G-5 — when set, disable the button and surface the reason as
@@ -56,11 +58,17 @@ export function GeneratePdfButton({
    *    - PIC currency + aircraft airworthiness → ALSO enforced by the
    *      backend release endpoint (409 pic_hard_blocked /
    *      aircraft_not_airworthy), so bypassing this button still fails.
-   *    - NOTAM acknowledgment → UI-ONLY today. Ack state lives in the
-   *      URL (?notams_acked=) and is never sent to the release call, so
-   *      a direct POST bypasses it. Backend enforcement is a tracked
-   *      follow-up; until it lands this gate is a dispatcher-workflow
-   *      guard, not a server-side control. */
+   *    - NOTAM acknowledgment → ALSO enforced by the backend
+   *      (409 notam_ack_required, audit finding C1). The acks are sent
+   *      with the release and persisted as its audit trail, so a direct
+   *      POST that skips them is refused.
+   *    - Stale / missing weather → ALSO enforced by the backend
+   *      (409 stale_weather_not_acknowledged), which re-derives
+   *      staleness from the same shared evaluator this gate read.
+   *
+   *  Every block listed here is now server-backed. Keep this comment
+   *  honest if that changes: it was wrong once (#229) and a reader has
+   *  no other way to tell which guarantees are real. */
   hardBlockReason?: string | null;
   /** M2-M-5 — currently-selected PIC (?pic=<uuid>). Passed through to
    *  releaseFlightAction so the backend runs the compliance gate; if
@@ -73,6 +81,14 @@ export function GeneratePdfButton({
    *  releaseFlightAction which forwards to the backend
    *  overrides_acknowledged flag. */
   overridesAcknowledged?: boolean;
+  /** Routed ICAOs the dispatcher has acknowledged NOTAMs for. Sent with
+   *  the release: the backend refuses any stop that is missing and
+   *  persists the rest as the release's audit trail. */
+  notamAckedIcaos?: string[];
+  /** ?stale_wx_ack=1 — forwarded so the backend's weather gate can pass.
+   *  Without this the UI would clear its own block and the server would
+   *  then refuse the release, which reads as a broken button. */
+  staleWeatherAcknowledged?: boolean;
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -139,6 +155,8 @@ export function GeneratePdfButton({
         flight.id,
         pilotUserId,
         overridesAcknowledged,
+        staleWeatherAcknowledged,
+        notamAckedIcaos,
       );
       if (!result.ok) {
         setError(result.error);

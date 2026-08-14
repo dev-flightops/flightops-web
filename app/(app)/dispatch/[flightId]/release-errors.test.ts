@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { extractBlockingSummary } from "./release-errors";
+import { extractBlockingSummary, extractMissingIcaos } from "./release-errors";
 
 describe("extractBlockingSummary", () => {
   it("returns a single description when there is one blocking issue", () => {
@@ -71,5 +71,42 @@ describe("extractBlockingSummary", () => {
   it("returns null for invalid JSON (e.g. plain-text error body)", () => {
     expect(extractBlockingSummary("aircraft_not_airworthy")).toBeNull();
     expect(extractBlockingSummary("")).toBeNull();
+  });
+});
+
+describe("extractMissingIcaos", () => {
+  it("names every stop the backend refused", () => {
+    const body = JSON.stringify({
+      detail: { error: "notam_ack_required", missing_icaos: ["PANC", "PABE"] },
+    });
+    expect(extractMissingIcaos(body)).toBe("PANC, PABE");
+  });
+
+  it("handles a single stop", () => {
+    const body = JSON.stringify({
+      detail: { error: "notam_ack_required", missing_icaos: ["PADU"] },
+    });
+    expect(extractMissingIcaos(body)).toBe("PADU");
+  });
+
+  it("returns null for an empty list so the caller uses generic text", () => {
+    const body = JSON.stringify({
+      detail: { error: "notam_ack_required", missing_icaos: [] },
+    });
+    expect(extractMissingIcaos(body)).toBeNull();
+  });
+
+  it("returns null when the body is not the expected shape", () => {
+    // Guards against rendering "undefined" at the dispatcher.
+    expect(extractMissingIcaos("not json")).toBeNull();
+    expect(extractMissingIcaos(JSON.stringify({ detail: {} }))).toBeNull();
+    expect(extractMissingIcaos(JSON.stringify({}))).toBeNull();
+  });
+
+  it("drops empty strings rather than rendering a stray comma", () => {
+    const body = JSON.stringify({
+      detail: { missing_icaos: ["PANC", "", "PABE"] },
+    });
+    expect(extractMissingIcaos(body)).toBe("PANC, PABE");
   });
 });

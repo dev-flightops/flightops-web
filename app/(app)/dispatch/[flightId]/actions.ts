@@ -9,7 +9,7 @@ import {
   type FlightUpdatePayload,
 } from "@/lib/api/ops";
 
-import { extractBlockingSummary } from "./release-errors";
+import { extractBlockingSummary, extractMissingIcaos } from "./release-errors";
 
 export type ActionResult =
   | { ok: true }
@@ -26,6 +26,11 @@ export async function releaseFlightAction(
   overridesAcknowledged?: boolean,
   /** HALT-2 — dispatcher acknowledged stale / missing route weather. */
   staleWeatherAcknowledged?: boolean,
+  /** Routed ICAOs the dispatcher acknowledged NOTAMs for. Converted to
+   *  the backend's per-airport shape here; the richer notam_numbers /
+   *  notam_count fields land when the NOTAM feed (M2-M-4) ships and the
+   *  panel actually has a list to report. */
+  notamAckedIcaos?: string[],
 ): Promise<ActionResult> {
   try {
     await releaseFlight(
@@ -33,6 +38,7 @@ export async function releaseFlightAction(
       pilotUserId ?? null,
       overridesAcknowledged,
       staleWeatherAcknowledged,
+      (notamAckedIcaos ?? []).map((icao) => ({ icao })),
     );
   } catch (err) {
     if (err instanceof ApiError) {
@@ -64,6 +70,19 @@ export async function releaseFlightAction(
           ok: false,
           error:
             "Release blocked — the assigned PIC has hard-block currency items. Clear them on the compliance board, or record a supervisor override, and try again.",
+        };
+      }
+      // Audit finding C1 NOTAM gate. Backend sends:
+      //   {"error": "notam_ack_required", "missing_icaos": [...]}
+      // Reaching this means the route changed after the boxes were
+      // ticked, or the UI was bypassed — either way name the stops.
+      if (err.message.includes("notam_ack_required")) {
+        const missing = extractMissingIcaos(err.message);
+        return {
+          ok: false,
+          error: missing
+            ? `Release blocked — NOTAMs not acknowledged for ${missing}. Check the box for each stop and try again.`
+            : "Release blocked — every stop needs a NOTAM acknowledgment before release.",
         };
       }
       // HALT-2 stale-weather gate. Backend sends:
