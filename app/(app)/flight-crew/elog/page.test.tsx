@@ -61,6 +61,9 @@ function makeAircraft(
     model: "C208",
     seats: 9,
     max_payload_lbs: 3000,
+    make: null,
+    serial_number: null,
+    year: null,
     is_active: true,
     ...overrides,
   };

@@ -107,6 +107,35 @@ export function AddAircraftDialog() {
               />
             </div>
 
+            {/* HALT-2 — airframe identity. Grouped as its own row because
+                these three read together on the fleet card:
+                "2019 Cessna 208 Caravan · S/N 208B1234". */}
+            <div className="grid gap-4 sm:grid-cols-3">
+              <Field
+                name="year"
+                label="Year"
+                type="number"
+                min={1903}
+                max={2100}
+                placeholder="2019"
+                error={fieldError("year")}
+              />
+              <Field
+                name="make"
+                label="Make"
+                placeholder="Cessna"
+                error={fieldError("make")}
+              />
+              <Field
+                name="serial_number"
+                label="Serial number"
+                placeholder="208B1234"
+                autoCapitalize="characters"
+                spellCheck={false}
+                error={fieldError("serial_number")}
+              />
+            </div>
+
             <Field
               name="airframe_type"
               label="Airframe slug (optional)"

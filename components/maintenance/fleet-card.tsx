@@ -54,7 +54,17 @@ export function FleetCard({ summary }: { summary: FleetAircraftSummary }) {
             )}
           </div>
           <p className="mt-1 truncate text-xs text-muted-foreground">
-            {displayModel(summary.aircraft.model)}
+            {formatIdentityLine({
+              year: summary.year,
+              make: summary.make,
+              model: summary.aircraft.model,
+            })}
+            {summary.serial_number && (
+              <span className="text-muted-foreground/70">
+                {" · S/N "}
+                <span className="font-mono">{summary.serial_number}</span>
+              </span>
+            )}
           </p>
           {summary.special_notes && (
             <p className="mt-1 flex items-center gap-1 text-xs text-status-yellow">
@@ -111,6 +121,43 @@ function displayModel(rawModel: string | null): string {
   if (!rawModel) return "No details";
   if (rawModel.toLowerCase() === "unknown") return "No details";
   return rawModel;
+}
+
+/**
+ * The airframe identity line: "2019 Cessna 208 Caravan".
+ *
+ * Mirrors legacy `templates/maintenance/dashboard.html`, which joins
+ * whichever of year / make / model are set and falls back to "No
+ * details" when none are:
+ *
+ *   {{ [ac.year, ac.make, ac.model] | select | join(" ") or "No details" }}
+ *
+ * Exported for tests — every combination of the three being absent is a
+ * real state (spreadsheet imports routinely carry only a tail number),
+ * and getting the fallback wrong renders a bare or ragged line.
+ *
+ * S/N is deliberately NOT part of this string: legacy separates it with
+ * a middot and the card renders it in its own styled span.
+ */
+export function formatIdentityLine({
+  year,
+  make,
+  model,
+}: {
+  year: number | null;
+  make: string | null;
+  model: string | null;
+}): string {
+  const modelText = displayModel(model);
+  const parts = [
+    year != null ? String(year) : null,
+    make?.trim() || null,
+    // displayModel() returns the "No details" placeholder, which is a
+    // fallback for the whole line rather than a part of it.
+    modelText === "No details" ? null : modelText,
+  ].filter((part): part is string => Boolean(part));
+
+  return parts.length > 0 ? parts.join(" ") : "No details";
 }
 
 /** Six known airframe slugs map to a colored chip; anything else

@@ -337,10 +337,55 @@ function CourseGrid({
                 ? ` · Cert ${c.cert_valid_days}d`
                 : " · Cert never expires"}
             </p>
+            <CourseMetaChips course={c} />
           </Link>
         </li>
       ))}
     </ul>
+  );
+}
+
+/**
+ * HALT-2 — the metadata chips legacy renders under a course title
+ * (`templates/lms/academy.html`): estimated duration, passing score, and
+ * an assignment count. Each is omitted when absent, exactly as legacy's
+ * `{% if %}` guards do, so a course with none of them shows no empty row.
+ *
+ * Recurrence is NOT here: the line above already carries it as
+ * "Cert {n}d". Legacy labels the same fact "Every {n}d", but our field
+ * is `cert_valid_days` and drives certificate expiry, so the existing
+ * wording describes what we actually store more accurately.
+ *
+ * A null `passing_score` means either "no quizzes" or "quizzes disagree"
+ * — see the Course type. Both render as no chip; inventing a number
+ * would misstate what a learner is graded against.
+ */
+function CourseMetaChips({ course }: { course: Course }) {
+  const chips: string[] = [];
+  if (course.duration_minutes != null) {
+    chips.push(`${course.duration_minutes} min`);
+  }
+  if (course.passing_score != null) {
+    chips.push(`Pass ${course.passing_score}%`);
+  }
+  if (course.enrollment_count > 0) {
+    chips.push(
+      `${course.enrollment_count} enrolled`,
+    );
+  }
+  if (chips.length === 0) return null;
+
+  return (
+    <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+      {chips.map((chip) => (
+        <span
+          key={chip}
+          className="rounded bg-muted/40 px-1.5 py-0.5 text-[0.6rem] font-semibold text-muted-foreground"
+        >
+          {chip}
+        </span>
+      ))}
+    </div>
   );
 }
 

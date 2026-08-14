@@ -24,9 +24,16 @@ export async function releaseFlightAction(
   /** M2-G-5 tail — supervisor override recorded already? When true,
    *  release goes through even with hard blocks. */
   overridesAcknowledged?: boolean,
+  /** HALT-2 — dispatcher acknowledged stale / missing route weather. */
+  staleWeatherAcknowledged?: boolean,
 ): Promise<ActionResult> {
   try {
-    await releaseFlight(flightId, pilotUserId ?? null, overridesAcknowledged);
+    await releaseFlight(
+      flightId,
+      pilotUserId ?? null,
+      overridesAcknowledged,
+      staleWeatherAcknowledged,
+    );
   } catch (err) {
     if (err instanceof ApiError) {
       // Map well-known backend detail strings to user-friendly messages
@@ -57,6 +64,17 @@ export async function releaseFlightAction(
           ok: false,
           error:
             "Release blocked — the assigned PIC has hard-block currency items. Clear them on the compliance board, or record a supervisor override, and try again.",
+        };
+      }
+      // HALT-2 stale-weather gate. Backend sends:
+      //   {"error": "stale_weather_not_acknowledged", "stations": [...]}
+      // Reaching this means the UI gate was bypassed or the weather aged
+      // out between page render and release, so name the fix explicitly.
+      if (err.message.includes("stale_weather_not_acknowledged")) {
+        return {
+          ok: false,
+          error:
+            "Release blocked — the route has stale or missing weather. Review the Weather panel and acknowledge it, then try again.",
         };
       }
       if (err.message.includes("pilot_not_found")) {

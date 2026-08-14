@@ -4,6 +4,7 @@ import type {
   ComplianceFinding,
   PicComplianceResponse,
   PicDotColor,
+  RouteFreshness,
 } from "@/lib/api/types";
 
 import { computeHardBlockReason } from "./release-gate";
@@ -36,6 +37,21 @@ function pic(
   };
 }
 
+/** A route-freshness verdict. Defaults to "everything current". */
+function freshness(
+  overrides: Partial<RouteFreshness> = {},
+): RouteFreshness {
+  return {
+    stations: [],
+    any_stale_metar: false,
+    any_stale_field_report: false,
+    any_missing_weather: false,
+    acknowledgment_required: false,
+    stations_requiring_acknowledgment: [],
+    ...overrides,
+  };
+}
+
 /** Baseline: everything satisfied → release allowed. */
 const CLEAR = {
   picCompliance: null,
@@ -44,6 +60,8 @@ const CLEAR = {
   hasSelectedFlight: true,
   icaos: ["PANC", "PABE"],
   notamAckedIcaos: ["PANC", "PABE"],
+  weatherFreshness: freshness(),
+  staleWeatherAcknowledged: false,
 };
 
 describe("computeHardBlockReason", () => {
@@ -157,5 +175,84 @@ describe("computeHardBlockReason", () => {
     expect(
       computeHardBlockReason({ ...CLEAR, picCompliance: pic("green") }),
     ).toBeNull();
+  });
+});
+
+// ---- HALT-2: stale / missing weather ---------------------------------------
+//
+// Legacy orders this last (modules/dispatch/form.html): currency, then
+// NOTAMs, then weather. Unlike the NOTAM tier this one IS enforced
+// server-side too — the release endpoint runs the same evaluator.
+
+describe("computeHardBlockReason — stale weather", () => {
+  it("blocks when the route needs a weather acknowledgment", () => {
+    const reason = computeHardBlockReason({
+      ...CLEAR,
+      weatherFreshness: freshness({
+        acknowledgment_required: true,
+        any_stale_metar: true,
+        stations_requiring_acknowledgment: ["PANC"],
+      }),
+    });
+    expect(reason).toMatch(/stale or missing weather/i);
+  });
+
+  it("names the offending stations so the dispatcher isn't left hunting", () => {
+    const reason = computeHardBlockReason({
+      ...CLEAR,
+      weatherFreshness: freshness({
+        acknowledgment_required: true,
+        stations_requiring_acknowledgment: ["PANC", "PABE"],
+      }),
+    });
+    expect(reason).toContain("PANC, PABE");
+  });
+
+  it("clears once the dispatcher acknowledges", () => {
+    const reason = computeHardBlockReason({
+      ...CLEAR,
+      weatherFreshness: freshness({
+        acknowledgment_required: true,
+        stations_requiring_acknowledgment: ["PANC"],
+      }),
+      staleWeatherAcknowledged: true,
+    });
+    expect(reason).toBeNull();
+  });
+
+  it("does not block when weather is current", () => {
+    expect(computeHardBlockReason({ ...CLEAR })).toBeNull();
+  });
+
+  it("does not block a route with no flight selected", () => {
+    const reason = computeHardBlockReason({
+      ...CLEAR,
+      hasSelectedFlight: false,
+      weatherFreshness: freshness({ acknowledgment_required: true }),
+    });
+    expect(reason).toBeNull();
+  });
+
+  it("does not block when the freshness call failed", () => {
+    // Soft-fail: the release endpoint runs the same check server-side, so
+    // a weather-service blip degrades the hint rather than stranding
+    // every release behind a check we could not make.
+    const reason = computeHardBlockReason({
+      ...CLEAR,
+      weatherFreshness: null,
+    });
+    expect(reason).toBeNull();
+  });
+
+  it("yields to NOTAMs — legacy orders weather last", () => {
+    const reason = computeHardBlockReason({
+      ...CLEAR,
+      notamAckedIcaos: [],
+      weatherFreshness: freshness({
+        acknowledgment_required: true,
+        stations_requiring_acknowledgment: ["PANC"],
+      }),
+    });
+    expect(reason).toMatch(/notam/i);
   });
 });

@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 
 import type { FleetAircraftSummary } from "@/lib/api/types";
 
-import { FleetCard } from "./fleet-card";
+import { FleetCard, formatIdentityLine } from "./fleet-card";
 
 function makeSummary(
   overrides: Partial<FleetAircraftSummary> = {},
@@ -27,6 +27,9 @@ function makeSummary(
     prop_tbo_hours: null,
     grounded_reason: null,
     grounded_at: null,
+    make: null,
+    serial_number: null,
+    year: null,
     ...overrides,
   };
 }
@@ -223,5 +226,82 @@ describe("FleetCard (M2-G-22b legacy layout)", () => {
       />,
     );
     expect(screen.getByText(/^grounded$/i)).toBeInTheDocument();
+  });
+});
+
+// ---- HALT-2: airframe identity line ---------------------------------------
+//
+// Legacy joins whichever of year / make / model are set and appends
+// "· S/N ..." only when a serial exists. Every "absent" combination is a
+// real state — spreadsheet imports routinely carry only a tail number.
+
+describe("formatIdentityLine (HALT-2 legacy fidelity)", () => {
+  it("joins year, make and model in legacy order", () => {
+    expect(
+      formatIdentityLine({ year: 2019, make: "Cessna", model: "208 Caravan" }),
+    ).toBe("2019 Cessna 208 Caravan");
+  });
+
+  it("omits the parts that are missing rather than leaving gaps", () => {
+    expect(
+      formatIdentityLine({ year: null, make: "Cessna", model: "208 Caravan" }),
+    ).toBe("Cessna 208 Caravan");
+    expect(
+      formatIdentityLine({ year: 2019, make: null, model: "208 Caravan" }),
+    ).toBe("2019 208 Caravan");
+    expect(formatIdentityLine({ year: 2019, make: "Cessna", model: null })).toBe(
+      "2019 Cessna",
+    );
+  });
+
+  it("falls back to 'No details' only when all three are absent", () => {
+    expect(formatIdentityLine({ year: null, make: null, model: null })).toBe(
+      "No details",
+    );
+  });
+
+  it("treats the 'Unknown' model placeholder as absent", () => {
+    // The maintenance service stamps this on imports with no airframe.
+    expect(
+      formatIdentityLine({ year: 2019, make: "Cessna", model: "Unknown" }),
+    ).toBe("2019 Cessna");
+    expect(formatIdentityLine({ year: null, make: null, model: "Unknown" })).toBe(
+      "No details",
+    );
+  });
+
+  it("ignores a whitespace-only make", () => {
+    expect(
+      formatIdentityLine({ year: 2019, make: "   ", model: "208 Caravan" }),
+    ).toBe("2019 208 Caravan");
+  });
+});
+
+describe("FleetCard identity line (HALT-2)", () => {
+  it("renders year / make / model and the serial number", () => {
+    render(
+      <FleetCard
+        summary={makeSummary({
+          aircraft: { id: "ac-1", tail_number: "N207GE", model: "208 Caravan" },
+          year: 2019,
+          make: "Cessna",
+          serial_number: "208B1234",
+        })}
+      />,
+    );
+
+    expect(screen.getByText(/2019 Cessna 208 Caravan/)).toBeInTheDocument();
+    expect(screen.getByText("208B1234")).toBeInTheDocument();
+  });
+
+  it("omits the S/N segment entirely when there is no serial", () => {
+    render(
+      <FleetCard
+        summary={makeSummary({ year: 2019, make: "Cessna", serial_number: null })}
+      />,
+    );
+
+    // A bare trailing middot is the failure this guards against.
+    expect(screen.queryByText(/S\/N/)).not.toBeInTheDocument();
   });
 });
