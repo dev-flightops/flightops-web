@@ -90,3 +90,95 @@ describe("NewBookingSearchForm — station ICAO typeahead", () => {
     expect(container.querySelector("datalist#station-list")).toBeNull();
   });
 });
+
+// ---- Validation + honest empty state ---------------------------------------
+//
+// This form cannot search: there is no flight-search endpoint yet. It
+// used to router.push() to the create-booking form on submit, which
+// reads as a broken search — you click Search, no results appear, and
+// you are on a different page with no explanation. Legacy blocks a blank
+// submit with "Enter origin, destination, and date"; we do the same and
+// then say plainly why there are no results.
+
+import { fireEvent } from "@testing-library/react";
+
+function fillRoute(origin: string, destination: string) {
+  fireEvent.change(screen.getByPlaceholderText("Origin ICAO"), {
+    target: { value: origin },
+  });
+  fireEvent.change(screen.getByPlaceholderText("Destination ICAO"), {
+    target: { value: destination },
+  });
+}
+
+describe("NewBookingSearchForm — search behaviour", () => {
+  it("blocks a blank submit and names every missing field", () => {
+    render(<NewBookingSearchForm customers={[]} stations={STATIONS} />);
+    fireEvent.click(screen.getByRole("button", { name: /search flights/i }));
+
+    expect(screen.getByText(/origin is required/i)).toBeInTheDocument();
+    expect(screen.getByText(/destination is required/i)).toBeInTheDocument();
+  });
+
+  it("never navigates away — the old behaviour that looked broken", () => {
+    render(<NewBookingSearchForm customers={[]} stations={STATIONS} />);
+    fireEvent.click(screen.getByRole("button", { name: /search flights/i }));
+    fillRoute("PANC", "PABE");
+    fireEvent.click(screen.getByRole("button", { name: /search flights/i }));
+
+    expect(push).not.toHaveBeenCalled();
+  });
+
+  it("rejects a route whose destination equals its origin", () => {
+    render(<NewBookingSearchForm customers={[]} stations={STATIONS} />);
+    fillRoute("PANC", "panc");
+    fireEvent.click(screen.getByRole("button", { name: /search flights/i }));
+
+    expect(
+      screen.getByText(/destination must differ from origin/i),
+    ).toBeInTheDocument();
+  });
+
+  it("explains that search is unavailable rather than showing zero results", () => {
+    // "No flights found" would be a lie — it would read as "this route
+    // is empty on this date" when nothing was actually searched.
+    render(<NewBookingSearchForm customers={[]} stations={STATIONS} />);
+    fillRoute("PANC", "PABE");
+    fireEvent.click(screen.getByRole("button", { name: /search flights/i }));
+
+    expect(screen.getByRole("status")).toHaveTextContent(
+      /flight search isn't available yet/i,
+    );
+    expect(screen.getByRole("status")).toHaveTextContent(
+      /does not mean there are no flights/i,
+    );
+  });
+
+  it("carries the typed details into the booking link", () => {
+    render(<NewBookingSearchForm customers={[]} stations={STATIONS} />);
+    fillRoute("panc", "pabe");
+    fireEvent.click(screen.getByRole("button", { name: /search flights/i }));
+
+    const link = screen.getByRole("link", { name: /continue to new booking/i });
+    const href = link.getAttribute("href") ?? "";
+    expect(href).toContain("/reservations/bookings/new?");
+    // Uppercased on the way through, so the create form gets canonical ICAOs.
+    expect(href).toContain("origin=PANC");
+    expect(href).toContain("destination=PABE");
+    expect(href).toContain("pax=1");
+  });
+
+  it("clears the panel when a later submit is invalid", () => {
+    render(<NewBookingSearchForm customers={[]} stations={STATIONS} />);
+    fillRoute("PANC", "PABE");
+    fireEvent.click(screen.getByRole("button", { name: /search flights/i }));
+    expect(screen.getByRole("status")).toBeInTheDocument();
+
+    fireEvent.change(screen.getByPlaceholderText("Destination ICAO"), {
+      target: { value: "" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /search flights/i }));
+
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+  });
+});

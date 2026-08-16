@@ -1,6 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 
 import type { Customer } from "@/lib/api/reservations";
@@ -8,9 +7,25 @@ import type { StationListItem } from "@/lib/api/types";
 
 /**
  * New Booking search form — mirrors legacy peregrineflight.com's
- * shopping-style search. All fields feed into a redirect to
- * /reservations/bookings/new with query params, since we don't have
- * a scheduled-flight inventory to search yet.
+ * shopping-style search.
+ *
+ * IMPORTANT: this does not search anything yet. Legacy calls
+ * `/reservations/api/flight-search`, which filters scheduled flights by
+ * date + route, computes seats available, and renders a selectable fare
+ * table. We have the flight inventory now but not that endpoint, so
+ * "Search Flights" cannot return results.
+ *
+ * What it used to do was silently `router.push` to the create-booking
+ * form. That reads as a broken search: you click Search, results never
+ * appear, and you are on a different page with no explanation. It also
+ * accepted a completely blank submit, where legacy blocks with "Enter
+ * origin, destination, and date".
+ *
+ * So now it validates like legacy, then says plainly that flight search
+ * is not wired up and offers to carry the details into a manual
+ * booking. Continuing is a deliberate click, not a redirect that
+ * happens to you. Replace this panel with the real results table when
+ * the search endpoint lands.
  */
 
 type TripType = "one_way" | "return" | "freight_only";
@@ -54,7 +69,6 @@ export function NewBookingSearchForm({
    *  ground-service is unreachable — inputs stay plain free-text. */
   stations?: StationListItem[];
 }) {
-  const router = useRouter();
   const [tripType, setTripType] = useState<TripType>("one_way");
   const [adults, setAdults] = useState(1);
   const [children, setChildren] = useState(0);
@@ -68,6 +82,11 @@ export function NewBookingSearchForm({
   const [warnIfDeparted, setWarnIfDeparted] = useState(true);
   const [hideUnavailable, setHideUnavailable] = useState(false);
   const [showAllFareClasses, setShowAllFareClasses] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  // Set once a valid search is submitted. Holds the querystring the
+  // create-booking form needs, so continuing carries every field the
+  // dispatcher already typed rather than making them retype it.
+  const [searched, setSearched] = useState<string | null>(null);
 
   const filteredCustomers = useMemo(() => {
     if (!customerQuery.trim()) return [];
@@ -85,6 +104,30 @@ export function NewBookingSearchForm({
 
   function onSubmit(e: React.FormEvent) {
     e.preventDefault();
+
+    // Same three required fields legacy enforces before it will search
+    // (booking_search.html: "Enter origin, destination, and date").
+    // Surfaced per-field rather than in an alert() so the dispatcher can
+    // see which one is missing.
+    const nextErrors: Record<string, string> = {};
+    if (!origin.trim()) nextErrors.origin = "Origin is required.";
+    if (!destination.trim()) {
+      nextErrors.destination = "Destination is required.";
+    }
+    if (!date) nextErrors.date = "Date is required.";
+    if (
+      origin.trim() &&
+      destination.trim() &&
+      origin.trim().toUpperCase() === destination.trim().toUpperCase()
+    ) {
+      nextErrors.destination = "Destination must differ from origin.";
+    }
+    setErrors(nextErrors);
+    if (Object.keys(nextErrors).length > 0) {
+      setSearched(null);
+      return;
+    }
+
     // Total pax = adults + children (legacy carries them separately for
     // fare-class pricing; we collapse to a single pax_count on the
     // create-booking form until fare classes ship).
@@ -105,7 +148,10 @@ export function NewBookingSearchForm({
     if (couponCode.trim()) params.set("coupon", couponCode.trim());
     if (tripType !== "one_way") params.set("trip_type", tripType);
 
-    router.push(`/reservations/bookings/new?${params.toString()}`);
+    // Deliberately NOT a redirect. See the component docstring: there is
+    // no search endpoint yet, and navigating away silently is what made
+    // this look broken.
+    setSearched(params.toString());
   }
 
   return (
@@ -226,7 +272,7 @@ export function NewBookingSearchForm({
 
       {/* Row 2 — Date / From / To / Via */}
       <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-[10rem_1fr_1fr_10rem]">
-        <Field label="Date">
+        <Field label="Date" error={errors.date}>
           <input
             type="date"
             value={date}
@@ -235,7 +281,7 @@ export function NewBookingSearchForm({
             className="ff"
           />
         </Field>
-        <Field label="From">
+        <Field label="From" error={errors.origin}>
           <input
             type="text"
             value={origin}
@@ -247,7 +293,7 @@ export function NewBookingSearchForm({
             list={STATION_LIST_ID}
           />
         </Field>
-        <Field label="To">
+        <Field label="To" error={errors.destination}>
           <input
             type="text"
             value={destination}
@@ -336,6 +382,34 @@ export function NewBookingSearchForm({
         </button>
       </div>
 
+      {searched && (
+        <div
+          role="status"
+          className="mt-4 rounded-lg border border-status-yellow/40 bg-status-yellow/5 p-4"
+        >
+          <p className="text-sm font-semibold text-status-yellow">
+            No scheduled-flight results — flight search isn&apos;t
+            available yet
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Searching published flights by route and fare is still being
+            built. Nothing is wrong with your search, and this does not
+            mean there are no flights on this date — the results table
+            simply isn&apos;t wired up yet.
+          </p>
+          <p className="mt-2 text-xs text-muted-foreground">
+            You can still take these details straight into a booking and
+            assign the aircraft and quote yourself.
+          </p>
+          <a
+            href={`/reservations/bookings/new?${searched}`}
+            className="mt-3 inline-flex rounded-md bg-status-blue px-4 py-2 text-xs font-semibold text-white hover:brightness-110"
+          >
+            Continue to new booking →
+          </a>
+        </div>
+      )}
+
       <style>{`
         .ff {
           width: 100%;
@@ -366,9 +440,13 @@ export function NewBookingSearchForm({
 function Field({
   label,
   children,
+  error,
 }: {
   label: string;
   children: React.ReactNode;
+  /** Validation message shown under the control. Legacy raises these in
+   *  a single alert(); per-field is clearer about which one is missing. */
+  error?: string;
 }) {
   return (
     <div className="min-w-0">
@@ -376,6 +454,11 @@ function Field({
         {label}
       </label>
       {children}
+      {error && (
+        <p role="alert" className="mt-1 text-[0.6875rem] text-status-red">
+          {error}
+        </p>
+      )}
     </div>
   );
 }
