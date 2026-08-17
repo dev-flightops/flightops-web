@@ -223,6 +223,18 @@ export default async function SettingsLandingPage() {
           ]}
         />
         <SectionCard
+          icon={KeyRound}
+          title="Public API"
+          blurb="Issue and revoke keys for partner access to the read-only Public API."
+          links={[
+            {
+              label: "API Keys",
+              sublabel: "Issue, review, revoke",
+              href: "/settings/api-keys",
+            },
+          ]}
+        />
+        <SectionCard
           icon={Wallet}
           title="Pilot Pay & Currency"
           blurb="Pay rates, per-diem, currency items + due-date catalog."
