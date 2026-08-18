@@ -6,16 +6,26 @@ vi.mock("./client", () => ({
 
 import { apiFetch } from "./client";
 import {
+  addQuizQuestion,
   completeLesson,
   createCourse,
   createLesson,
+  createLessonQuiz,
   deleteLesson,
+  deleteQuiz,
   enrol,
+  getAdminQuiz,
+  getCertificate,
   getCourse,
   getEnrollment,
+  getLearnerQuiz,
+  listCertificates,
   listCourses,
   listEnrollments,
+  listMyCertificates,
   listMyEnrollments,
+  listMyQuizAttempts,
+  submitQuizAttempt,
   updateCourse,
   updateLesson,
 } from "./academy";
@@ -150,5 +160,104 @@ describe("academy API client", () => {
         body: JSON.stringify({ lesson_id: "l-2" }),
       },
     );
+  });
+
+  // ---- Quizzes + certificates --------------------------------------------
+  //
+  // These paths carried a doubled `/academy/academy` until
+  // flightops-services#166 moved the routers off their redundant prefix.
+  // Nothing here asserted a quiz or certificate path at all, which is
+  // how the doubled form survived as long as it did — every existing
+  // test above covers courses, lessons or enrollments, all of which sat
+  // at the correct single prefix and so looked fine.
+  //
+  // The point of these is the prefix, not the interpolation.
+
+  it("getLearnerQuiz uses a single /academy prefix", async () => {
+    mockedApiFetch.mockResolvedValueOnce({});
+    await getLearnerQuiz("e-1", "q-1");
+    expect(mockedApiFetch).toHaveBeenCalledWith(
+      "/academy/enrollments/e-1/quizzes/q-1",
+    );
+  });
+
+  it("submitQuizAttempt POSTs the answers to the single-prefix path", async () => {
+    mockedApiFetch.mockResolvedValueOnce({});
+    await submitQuizAttempt("e-1", "q-1", [0, 2]);
+    expect(mockedApiFetch).toHaveBeenCalledWith(
+      "/academy/enrollments/e-1/quizzes/q-1/attempts",
+      { method: "POST", body: JSON.stringify({ answers: [0, 2] }) },
+    );
+  });
+
+  it("listMyQuizAttempts GETs the same path it posts to", async () => {
+    mockedApiFetch.mockResolvedValueOnce([]);
+    await listMyQuizAttempts("e-1", "q-1");
+    expect(mockedApiFetch).toHaveBeenCalledWith(
+      "/academy/enrollments/e-1/quizzes/q-1/attempts",
+    );
+  });
+
+  it("createLessonQuiz posts under the lesson", async () => {
+    mockedApiFetch.mockResolvedValueOnce({});
+    await createLessonQuiz("l-1", { title: "SMS Basics", pass_threshold: 70 });
+    expect(mockedApiFetch).toHaveBeenCalledWith(
+      "/academy/lessons/l-1/quiz",
+      expect.objectContaining({ method: "POST" }),
+    );
+  });
+
+  it("getAdminQuiz / deleteQuiz / addQuizQuestion all sit under /academy/quizzes", async () => {
+    mockedApiFetch.mockResolvedValue({});
+    await getAdminQuiz("q-1");
+    expect(mockedApiFetch).toHaveBeenLastCalledWith("/academy/quizzes/q-1");
+
+    await deleteQuiz("q-1");
+    expect(mockedApiFetch).toHaveBeenLastCalledWith("/academy/quizzes/q-1", {
+      method: "DELETE",
+    });
+
+    await addQuizQuestion("q-1", {
+      prompt: "p",
+      options: ["a", "b"],
+      correct_option_index: 0,
+    });
+    expect(mockedApiFetch).toHaveBeenLastCalledWith(
+      "/academy/quizzes/q-1/questions",
+      expect.objectContaining({ method: "POST" }),
+    );
+  });
+
+  it("certificate reads use a single /academy prefix", async () => {
+    mockedApiFetch.mockResolvedValue({ items: [], total: 0 });
+    await listMyCertificates();
+    expect(mockedApiFetch).toHaveBeenLastCalledWith("/academy/certificates/mine");
+
+    await listCertificates();
+    expect(mockedApiFetch).toHaveBeenLastCalledWith("/academy/certificates");
+
+    mockedApiFetch.mockResolvedValueOnce({});
+    await getCertificate("cert-1");
+    expect(mockedApiFetch).toHaveBeenLastCalledWith("/academy/certificates/cert-1");
+  });
+
+  it("no academy path is ever doubled", async () => {
+    // A guard over the whole module rather than one call: the doubled
+    // form is what someone reaches for first when debugging a 404 here.
+    mockedApiFetch.mockResolvedValue({ items: [], total: 0 });
+    mockedApiFetch.mockClear();
+
+    await listCourses();
+    await listMyEnrollments();
+    await getLearnerQuiz("e-1", "q-1");
+    await getAdminQuiz("q-1");
+    await listMyCertificates();
+
+    const paths = mockedApiFetch.mock.calls.map((c) => String(c[0]));
+    expect(paths.length).toBe(5);
+    for (const path of paths) {
+      expect(path.startsWith("/academy/")).toBe(true);
+      expect(path).not.toContain("/academy/academy");
+    }
   });
 });
