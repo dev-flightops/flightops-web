@@ -4,11 +4,11 @@ import { notFound } from "next/navigation";
 import { getCompanyProfile } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
 import {
-  getQuyanaMember,
+  getRewardsMember,
   QUYANA_TIER_LABELS,
   QUYANA_TRANSACTION_TYPE_LABELS,
-  type QuyanaMemberDetailResponse,
-  type QuyanaTier,
+  type RewardsMemberDetailResponse,
+  type RewardsTier,
 } from "@/lib/api/rewards";
 
 import { TransactionForm } from "./transaction-form";
@@ -55,11 +55,11 @@ export default async function RewardsMemberDetailPage({
   const { memberId } = await params;
 
   let programName = "Rewards Program";
-  let detail: QuyanaMemberDetailResponse | null = null;
+  let detail: RewardsMemberDetailResponse | null = null;
   try {
     const [profile, d] = await Promise.all([
       getCompanyProfile(),
-      getQuyanaMember(memberId),
+      getRewardsMember(memberId),
     ]);
     if (profile.rewards_program_name) {
       programName = profile.rewards_program_name;
@@ -209,7 +209,7 @@ export default async function RewardsMemberDetailPage({
   );
 }
 
-function TierBadge({ tier }: { tier: QuyanaTier }) {
+function TierBadge({ tier }: { tier: RewardsTier }) {
   const cls =
     tier === "elite"
       ? "border-status-red/40 bg-status-red/10 text-status-red"

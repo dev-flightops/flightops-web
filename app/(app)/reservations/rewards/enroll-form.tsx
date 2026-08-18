@@ -5,9 +5,9 @@ import { useRouter } from "next/navigation";
 
 import type { Customer } from "@/lib/api/reservations";
 
-import { enrollMemberAction, type QuyanaActionState } from "./actions";
+import { enrollMemberAction, type RewardsActionState } from "./actions";
 
-const INITIAL: QuyanaActionState = { status: "idle" };
+const INITIAL: RewardsActionState = { status: "idle" };
 
 /** Enroll a customer in the rewards program. Customer autocomplete
  *  filters over the tenant list; enrolled_station is optional
