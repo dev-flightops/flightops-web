@@ -6,6 +6,25 @@ vi.mock("next/navigation", () => ({
   useRouter: () => ({ push }),
 }));
 
+// The form now performs a real search on submit. Mocked because
+// @/lib/api/flight-search imports apiFetch, which pulls the
+// next-auth -> next/server chain into the test environment.
+const searchFlights = vi.fn(async () => ({
+  items: [],
+  total: 0,
+  origin: "PANC",
+  destination: "PABE",
+  search_date: "2026-08-20",
+  pax_count: 1,
+}));
+vi.mock("@/lib/api/flight-search", () => ({
+  searchFlights: (...args: unknown[]) => searchFlights(...(args as [])),
+  UNAVAILABLE_REASON_LABELS: {
+    insufficient_seats: "Not enough seats",
+    already_departed: "Already departed",
+  },
+}));
+
 import type { StationListItem } from "@/lib/api/types";
 
 import { NewBookingSearchForm } from "./new-booking-search-form";
@@ -139,27 +158,27 @@ describe("NewBookingSearchForm — search behaviour", () => {
     ).toBeInTheDocument();
   });
 
-  it("explains that search is unavailable rather than showing zero results", () => {
-    // "No flights found" would be a lie — it would read as "this route
-    // is empty on this date" when nothing was actually searched.
-    render(<NewBookingSearchForm customers={[]} stations={STATIONS} />);
-    fillRoute("PANC", "PABE");
-    fireEvent.click(screen.getByRole("button", { name: /search flights/i }));
-
-    expect(screen.getByRole("status")).toHaveTextContent(
-      /flight search isn't available yet/i,
-    );
-    expect(screen.getByRole("status")).toHaveTextContent(
-      /does not mean there are no flights/i,
-    );
-  });
-
-  it("carries the typed details into the booking link", () => {
+  it("runs a real search with the typed route", () => {
     render(<NewBookingSearchForm customers={[]} stations={STATIONS} />);
     fillRoute("panc", "pabe");
     fireEvent.click(screen.getByRole("button", { name: /search flights/i }));
 
-    const link = screen.getByRole("link", { name: /continue to new booking/i });
+    // Uppercased on the way out, so the backend gets canonical ICAOs.
+    expect(searchFlights).toHaveBeenCalledWith(
+      expect.objectContaining({ origin: "panc", destination: "pabe" }),
+    );
+  });
+
+  it("keeps a manual-booking escape hatch carrying the typed details", async () => {
+    // A dispatcher whose flight is not in the results still needs to
+    // file the booking, without retyping everything.
+    render(<NewBookingSearchForm customers={[]} stations={STATIONS} />);
+    fillRoute("panc", "pabe");
+    fireEvent.click(screen.getByRole("button", { name: /search flights/i }));
+
+    const link = await screen.findByRole("link", {
+      name: /file the booking manually/i,
+    });
     const href = link.getAttribute("href") ?? "";
     expect(href).toContain("/reservations/bookings/new?");
     // Uppercased on the way through, so the create form gets canonical ICAOs.
@@ -168,17 +187,18 @@ describe("NewBookingSearchForm — search behaviour", () => {
     expect(href).toContain("pax=1");
   });
 
-  it("clears the panel when a later submit is invalid", () => {
+  it("does not search when a later submit is invalid", () => {
     render(<NewBookingSearchForm customers={[]} stations={STATIONS} />);
     fillRoute("PANC", "PABE");
     fireEvent.click(screen.getByRole("button", { name: /search flights/i }));
-    expect(screen.getByRole("status")).toBeInTheDocument();
+    const callsAfterValid = searchFlights.mock.calls.length;
 
     fireEvent.change(screen.getByPlaceholderText("Destination ICAO"), {
       target: { value: "" },
     });
     fireEvent.click(screen.getByRole("button", { name: /search flights/i }));
 
-    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+    expect(searchFlights.mock.calls.length).toBe(callsAfterValid);
+    expect(screen.getByText(/destination is required/i)).toBeInTheDocument();
   });
 });

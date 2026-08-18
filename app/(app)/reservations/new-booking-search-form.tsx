@@ -2,30 +2,35 @@
 
 import { useMemo, useState } from "react";
 
+import {
+  searchFlights,
+  type FlightSearchResponse,
+} from "@/lib/api/flight-search";
 import type { Customer } from "@/lib/api/reservations";
+
+import { FlightResults } from "./flight-results";
 import type { StationListItem } from "@/lib/api/types";
 
 /**
  * New Booking search form — mirrors legacy peregrineflight.com's
  * shopping-style search.
  *
- * IMPORTANT: this does not search anything yet. Legacy calls
- * `/reservations/api/flight-search`, which filters scheduled flights by
- * date + route, computes seats available, and renders a selectable fare
- * table. We have the flight inventory now but not that endpoint, so
- * "Search Flights" cannot return results.
+ * Searches scheduled flights on the route and date and renders the
+ * matches with real seat availability, mirroring legacy's shopping
+ * flow.
  *
- * What it used to do was silently `router.push` to the create-booking
- * form. That reads as a broken search: you click Search, results never
- * appear, and you are on a different page with no explanation. It also
- * accepted a completely blank submit, where legacy blocks with "Enter
- * origin, destination, and date".
+ * Bookability comes from the backend's `is_available`. This form never
+ * re-derives it from the seat numbers: two implementations of one rule
+ * drift, and only the server's is enforced.
  *
- * So now it validates like legacy, then says plainly that flight search
- * is not wired up and offers to carry the details into a manual
- * booking. Continuing is a deliberate click, not a redirect that
- * happens to you. Replace this panel with the real results table when
- * the search endpoint lands.
+ * Validation matches legacy's three required fields (origin,
+ * destination, date) rather than the blank submit this form used to
+ * accept — which, combined with a silent redirect to the create form,
+ * is what made the search look broken.
+ *
+ * Fares are still absent. Legacy prices with route-fare load-factor
+ * tiers and promotional fares; neither exists here, so results show
+ * availability and no price.
  */
 
 type TripType = "one_way" | "return" | "freight_only";
@@ -83,10 +88,12 @@ export function NewBookingSearchForm({
   const [hideUnavailable, setHideUnavailable] = useState(false);
   const [showAllFareClasses, setShowAllFareClasses] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  // Set once a valid search is submitted. Holds the querystring the
-  // create-booking form needs, so continuing carries every field the
-  // dispatcher already typed rather than making them retype it.
+  // Querystring carried into the create-booking form, so continuing
+  // keeps every field the dispatcher already typed.
   const [searched, setSearched] = useState<string | null>(null);
+  const [results, setResults] = useState<FlightSearchResponse | null>(null);
+  const [searching, setSearching] = useState(false);
+  const [searchError, setSearchError] = useState<string | null>(null);
 
   const filteredCustomers = useMemo(() => {
     if (!customerQuery.trim()) return [];
@@ -148,10 +155,39 @@ export function NewBookingSearchForm({
     if (couponCode.trim()) params.set("coupon", couponCode.trim());
     if (tripType !== "one_way") params.set("trip_type", tripType);
 
-    // Deliberately NOT a redirect. See the component docstring: there is
-    // no search endpoint yet, and navigating away silently is what made
-    // this look broken.
     setSearched(params.toString());
+    void runSearch(origin.trim(), destination.trim(), date, pax);
+  }
+
+  async function runSearch(
+    o: string,
+    d: string,
+    on: string,
+    pax: number,
+  ) {
+    setSearching(true);
+    setSearchError(null);
+    setResults(null);
+    try {
+      setResults(
+        await searchFlights({
+          origin: o,
+          destination: d,
+          date: on,
+          paxCount: pax,
+          // Show what cannot be booked, with the reason. A dispatcher
+          // looking for somewhere to move a passenger needs to see the
+          // full picture, not a silently shorter list.
+          showUnavailable: true,
+        }),
+      );
+    } catch {
+      setSearchError(
+        "Couldn't search flights just now. You can still file the booking manually.",
+      );
+    } finally {
+      setSearching(false);
+    }
   }
 
   return (
@@ -382,32 +418,39 @@ export function NewBookingSearchForm({
         </button>
       </div>
 
-      {searched && (
-        <div
+      {searching && (
+        <p className="mt-4 text-sm text-muted-foreground">Searching…</p>
+      )}
+
+      {searchError && (
+        <p
           role="status"
-          className="mt-4 rounded-lg border border-status-yellow/40 bg-status-yellow/5 p-4"
+          className="mt-4 rounded-lg border border-status-yellow/40 bg-status-yellow/5 p-3 text-sm text-status-yellow"
         >
-          <p className="text-sm font-semibold text-status-yellow">
-            No scheduled-flight results — flight search isn&apos;t
-            available yet
-          </p>
-          <p className="mt-1 text-xs text-muted-foreground">
-            Searching published flights by route and fare is still being
-            built. Nothing is wrong with your search, and this does not
-            mean there are no flights on this date — the results table
-            simply isn&apos;t wired up yet.
-          </p>
-          <p className="mt-2 text-xs text-muted-foreground">
-            You can still take these details straight into a booking and
-            assign the aircraft and quote yourself.
-          </p>
+          {searchError}
+        </p>
+      )}
+
+      {results && (
+        <FlightResults
+          results={results}
+          bookingHref={(f) =>
+            `/reservations/bookings/new?${searched ?? ""}&flight=${f.flight_id}`
+          }
+        />
+      )}
+
+      {searched && !searching && (
+        <p className="mt-3 text-xs text-muted-foreground">
+          Not seeing the right flight?{" "}
           <a
             href={`/reservations/bookings/new?${searched}`}
-            className="mt-3 inline-flex rounded-md bg-status-blue px-4 py-2 text-xs font-semibold text-white hover:brightness-110"
+            className="text-status-blue hover:underline"
           >
-            Continue to new booking →
-          </a>
-        </div>
+            File the booking manually
+          </a>{" "}
+          and assign a flight later.
+        </p>
       )}
 
       <style>{`
