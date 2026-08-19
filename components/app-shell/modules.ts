@@ -190,8 +190,12 @@ export const DEPARTMENTS: Department[] = [
     pathPrefixes: ["/reservations", "/customers", "/manifest"],
     /**
      * Sub-nav order matches legacy peregrineflight.com/reservations/:
-     *   New Booking · Fleet Board · Customers · Charter · Quyana ·
+     *   New Booking · Fleet Board · Customers · Charter · Rewards ·
      *   Accounting Export
+     *
+     * Legacy labelled the rewards tab with the operator's own program
+     * name. Ours reads company_profile.rewards_program_name instead, so
+     * the tab says whatever that tenant calls it.
      *
      * "New Booking" is the search-flights landing (mirrors the legacy
      * shopping-style form); "Fleet Board" is the day-grouped bookings
@@ -209,7 +213,7 @@ export const DEPARTMENTS: Department[] = [
       // company profile and swaps it in. Per-tenant nav-label
       // rendering is deferred until the client-side session
       // hydrates with the profile.
-      { id: "reservations-quyana", label: "Rewards", href: "/reservations/rewards", status: "live", department: "reservations" },
+      { id: "reservations-rewards", label: "Rewards", href: "/reservations/rewards", status: "live", department: "reservations" },
       { id: "reservations-acct-export", label: "Accounting Export", href: "/reservations/accounting-export", status: "live", department: "reservations" },
     ],
   },

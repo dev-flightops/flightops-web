@@ -6,12 +6,12 @@ import { useRouter } from "next/navigation";
 import {
   QUYANA_TRANSACTION_TYPE_LABELS,
   QUYANA_TRANSACTION_TYPES,
-  type QuyanaTransactionType,
+  type RewardsTransactionType,
 } from "@/lib/api/rewards";
 
-import { createTransactionAction, type QuyanaActionState } from "../actions";
+import { createTransactionAction, type RewardsActionState } from "../actions";
 
-const INITIAL: QuyanaActionState = { status: "idle" };
+const INITIAL: RewardsActionState = { status: "idle" };
 
 /** Manual points ledger update. Positive for earn/adjustment,
  *  negative for redeem/expire. Backend enforces balance never
@@ -46,7 +46,7 @@ export function TransactionForm({ memberId }: { memberId: string }) {
           <option value="" disabled>
             Select…
           </option>
-          {(QUYANA_TRANSACTION_TYPES as readonly QuyanaTransactionType[]).map(
+          {(QUYANA_TRANSACTION_TYPES as readonly RewardsTransactionType[]).map(
             (t) => (
               <option key={t} value={t}>
                 {QUYANA_TRANSACTION_TYPE_LABELS[t]}

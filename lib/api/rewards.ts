@@ -1,8 +1,11 @@
 /**
  * Rewards program API — wraps the reservations-service /rewards/*
- * endpoints. (Type/model names still carry the legacy internal `Quyana*`
- * identifier; a full internal rename incl. the DB table is a separate
- * follow-up — see the rename PR description.)
+ * endpoints.
+ *
+ * "Rewards" is the product concept. What each operator CALLS their
+ * program is per-tenant data, read from
+ * company_profile.rewards_program_name — so nothing in this file, or
+ * any type it exports, should be named after one operator's branding.
  *
  *   GET  /reservations/rewards                       list (?tier=)
  *   POST /reservations/rewards                       enroll a customer
@@ -20,30 +23,30 @@
 
 import { apiFetch } from "./client";
 
-export type QuyanaTier = "standard" | "silver" | "gold" | "elite";
+export type RewardsTier = "standard" | "silver" | "gold" | "elite";
 
-export const QUYANA_TIERS: readonly QuyanaTier[] = [
+export const QUYANA_TIERS: readonly RewardsTier[] = [
   "standard",
   "silver",
   "gold",
   "elite",
 ];
 
-export const QUYANA_TIER_LABELS: Record<QuyanaTier, string> = {
+export const QUYANA_TIER_LABELS: Record<RewardsTier, string> = {
   standard: "Standard",
   silver: "Silver",
   gold: "Gold",
   elite: "Elite",
 };
 
-export type QuyanaTransactionType =
+export type RewardsTransactionType =
   | "earn_flight"
   | "earn_bonus"
   | "redeem"
   | "expire"
   | "adjustment";
 
-export const QUYANA_TRANSACTION_TYPES: readonly QuyanaTransactionType[] = [
+export const QUYANA_TRANSACTION_TYPES: readonly RewardsTransactionType[] = [
   "earn_flight",
   "earn_bonus",
   "redeem",
@@ -52,7 +55,7 @@ export const QUYANA_TRANSACTION_TYPES: readonly QuyanaTransactionType[] = [
 ];
 
 export const QUYANA_TRANSACTION_TYPE_LABELS: Record<
-  QuyanaTransactionType,
+  RewardsTransactionType,
   string
 > = {
   earn_flight: "Flight Earn",
@@ -62,82 +65,82 @@ export const QUYANA_TRANSACTION_TYPE_LABELS: Record<
   adjustment: "Manual Adjustment",
 };
 
-export interface QuyanaMemberRow {
+export interface RewardsMemberRow {
   id: string;
   customer_id: string;
   customer_name: string | null;
   member_number: string;
   enrollment_date: string; // YYYY-MM-DD
   enrolled_station: string | null;
-  tier: QuyanaTier;
+  tier: RewardsTier;
   points_balance: number;
   lifetime_points: number;
   is_active: boolean;
   notes: string | null;
 }
 
-export interface QuyanaTransactionRow {
+export interface RewardsTransactionRow {
   id: string;
   member_id: string;
-  transaction_type: QuyanaTransactionType;
+  transaction_type: RewardsTransactionType;
   points: number;
   description: string | null;
   created_at: string; // ISO 8601
 }
 
-export interface QuyanaMemberListResponse {
-  items: QuyanaMemberRow[];
+export interface RewardsMemberListResponse {
+  items: RewardsMemberRow[];
 }
 
-export interface QuyanaMemberDetailResponse {
-  member: QuyanaMemberRow;
-  transactions: QuyanaTransactionRow[];
+export interface RewardsMemberDetailResponse {
+  member: RewardsMemberRow;
+  transactions: RewardsTransactionRow[];
 }
 
-export interface QuyanaEnrollRequest {
+export interface RewardsEnrollRequest {
   customer_id: string;
   enrolled_station?: string;
   notes?: string;
 }
 
-export interface QuyanaTransactionCreateRequest {
-  transaction_type: QuyanaTransactionType;
+export interface RewardsTransactionCreateRequest {
+  transaction_type: RewardsTransactionType;
   points: number;
   description?: string;
 }
 
-export async function listQuyanaMembers(
-  params: { tier?: QuyanaTier; include_inactive?: boolean } = {},
-): Promise<QuyanaMemberListResponse> {
+export async function listRewardsMembers(
+  params: { tier?: RewardsTier; include_inactive?: boolean } = {},
+): Promise<RewardsMemberListResponse> {
   const qs = new URLSearchParams();
   if (params.tier) qs.set("tier", params.tier);
   if (params.include_inactive) qs.set("include_inactive", "true");
   const suffix = qs.toString() ? `?${qs.toString()}` : "";
-  return apiFetch<QuyanaMemberListResponse>(`/reservations/rewards${suffix}`);
+  return apiFetch<RewardsMemberListResponse>(`/reservations/rewards${suffix}`);
 }
 
-export async function enrollQuyanaMember(
-  body: QuyanaEnrollRequest,
-): Promise<QuyanaMemberRow> {
-  return apiFetch<QuyanaMemberRow>("/reservations/rewards", {
+export async function enrollRewardsMember(
+  body: RewardsEnrollRequest,
+): Promise<RewardsMemberRow> {
+  return apiFetch<RewardsMemberRow>("/reservations/rewards", {
     method: "POST",
     body: JSON.stringify(body),
   });
 }
 
-export async function getQuyanaMember(
+export async function getRewardsMember(
   memberId: string,
-): Promise<QuyanaMemberDetailResponse> {
-  return apiFetch<QuyanaMemberDetailResponse>(
+): Promise<RewardsMemberDetailResponse> {
+  return apiFetch<RewardsMemberDetailResponse>(
     `/reservations/rewards/${memberId}`,
   );
 }
 
-export async function createQuyanaTransaction(
+export async function createRewardsTransaction(
   memberId: string,
-  body: QuyanaTransactionCreateRequest,
-): Promise<QuyanaMemberRow> {
-  return apiFetch<QuyanaMemberRow>(
+  body: RewardsTransactionCreateRequest,
+): Promise<RewardsMemberRow> {
+  return apiFetch<RewardsMemberRow>(
     `/reservations/rewards/${memberId}/transactions`,
     {
       method: "POST",

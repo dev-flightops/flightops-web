@@ -4,21 +4,21 @@ import { revalidatePath } from "next/cache";
 
 import { ApiError } from "@/lib/api/client";
 import {
-  createQuyanaTransaction,
-  enrollQuyanaMember,
+  createRewardsTransaction,
+  enrollRewardsMember,
   QUYANA_TRANSACTION_TYPES,
-  type QuyanaTransactionType,
+  type RewardsTransactionType,
 } from "@/lib/api/rewards";
 
-export type QuyanaActionState = {
+export type RewardsActionState = {
   status: "idle" | "ok" | "error";
   message?: string;
 };
 
 export async function enrollMemberAction(
-  _prev: QuyanaActionState,
+  _prev: RewardsActionState,
   form: FormData,
-): Promise<QuyanaActionState> {
+): Promise<RewardsActionState> {
   const customer_id = String(form.get("customer_id") ?? "").trim();
   const enrolled_station = String(form.get("enrolled_station") ?? "")
     .trim()
@@ -29,7 +29,7 @@ export async function enrollMemberAction(
     return { status: "error", message: "Pick a customer." };
   }
   try {
-    await enrollQuyanaMember({
+    await enrollRewardsMember({
       customer_id,
       enrolled_station: enrolled_station || undefined,
       notes: notes || undefined,
@@ -55,9 +55,9 @@ export async function enrollMemberAction(
 
 export async function createTransactionAction(
   memberId: string,
-  _prev: QuyanaActionState,
+  _prev: RewardsActionState,
   form: FormData,
-): Promise<QuyanaActionState> {
+): Promise<RewardsActionState> {
   const type_raw = String(form.get("transaction_type") ?? "").trim();
   const points_raw = String(form.get("points") ?? "").trim();
   const description = String(form.get("description") ?? "").trim();
@@ -74,8 +74,8 @@ export async function createTransactionAction(
   }
 
   try {
-    await createQuyanaTransaction(memberId, {
-      transaction_type: type_raw as QuyanaTransactionType,
+    await createRewardsTransaction(memberId, {
+      transaction_type: type_raw as RewardsTransactionType,
       points,
       description: description || undefined,
     });

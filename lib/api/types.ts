@@ -1118,8 +1118,10 @@ export interface CompanyProfileResponse {
   ops_email: string | null;
   part_135_certificate: string | null;
   fiscal_year_end: string | null; // ISO date (yyyy-mm-dd)
-  /** Per-tenant display name for the loyalty program. Grant sets this
-   *  to "Quyana Rewards"; a fresh tenant sees "Rewards Program". */
+  /** Per-tenant display name for the loyalty program. Operators brand
+   *  it themselves — "Miles", "Frequent Flyer", a name in their own
+   *  language — and a fresh tenant sees "Rewards Program" until they
+   *  set one. Never hardcode a customer's wording here. */
   rewards_program_name: string;
   /** Hex color override for the platform's primary accent — null means
    *  "use the default". Set via /settings/branding. */

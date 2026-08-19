@@ -3,10 +3,10 @@ import Link from "next/link";
 import { getCompanyProfile } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
 import {
-  listQuyanaMembers,
+  listRewardsMembers,
   QUYANA_TIER_LABELS,
-  type QuyanaMemberRow,
-  type QuyanaTier,
+  type RewardsMemberRow,
+  type RewardsTier,
 } from "@/lib/api/rewards";
 import { listCustomers, type Customer } from "@/lib/api/reservations";
 
@@ -41,14 +41,14 @@ function formatPoints(n: number): string {
 
 export default async function RewardsMembersPage() {
   let programName = "Rewards Program";
-  let members: QuyanaMemberRow[] = [];
+  let members: RewardsMemberRow[] = [];
   let customers: Customer[] = [];
   let loadError: string | null = null;
 
   try {
     const [profile, memberList, custList] = await Promise.all([
       getCompanyProfile(),
-      listQuyanaMembers(),
+      listRewardsMembers(),
       listCustomers({ limit: 200 }),
     ]);
     if (profile.rewards_program_name) {
@@ -148,7 +148,7 @@ export default async function RewardsMembersPage() {
   );
 }
 
-function TierBadge({ tier }: { tier: QuyanaTier }) {
+function TierBadge({ tier }: { tier: RewardsTier }) {
   const cls =
     tier === "elite"
       ? "border-status-red/40 bg-status-red/10 text-status-red"
