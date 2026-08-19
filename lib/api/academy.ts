@@ -399,14 +399,17 @@ export interface QuizAttemptResponse {
   per_question: QuizAttemptPerQuestion[];
 }
 
-/** Quiz routes live under an extra `/academy/` prefix inside the
- *  academy-service (`services/academy/app/routes/quizzes.py` uses
- *  `@router.get("/academy/enrollments/…")`), which combined with
- *  the nginx gateway's `/academy → /` rewrite produces the doubled
- *  segment below. Courses + lessons + enrollments live at plain
- *  `/…` inside the service and only need the single-prefix gateway
- *  form. Router-prefix cleanup is a follow-up. */
-const QUIZ_GATEWAY_PREFIX = "/academy/academy";
+/** Quiz and certificate routes used to need a doubled `/academy/academy`
+ *  here: the routers inside academy-service carried their own `/academy`
+ *  prefix on top of the one the nginx gateway rewrites away. Fixed in
+ *  flightops-services#166 — they now sit at the same plain paths as
+ *  courses, lessons and enrollments, so this is just the gateway prefix
+ *  like everything else in this file.
+ *
+ *  Kept as a named constant rather than inlined because the doubled form
+ *  is exactly the kind of thing that gets "helpfully" restored by anyone
+ *  debugging a 404 here; the name is where the explanation lives. */
+const QUIZ_GATEWAY_PREFIX = "/academy";
 
 export async function getLearnerQuiz(
   enrollmentId: string,
