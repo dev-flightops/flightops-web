@@ -33,11 +33,17 @@ const DUTY_OFFLINE_DEFAULT: CurrentDutyResponse = {
  *      pilots can't edit currency from this view.
  *   5. Quick links footer — My Flight History, My Duty History, etc.
  *
- * Where the data comes from in M2:
- *   - Today's flights: `listFlights({ onDate: today })`. Spec ultimately
- *     wants per-PIC filtering; M3 adds flight_assignments. For now we
- *     show every scheduled/released flight today so the panel is
- *     non-empty in demos and pilots have a working preflight CTA.
+ * Where the data comes from:
+ *   - Today's flights: `listFlights({ onDate: today, assignedToMe: true })`
+ *     — the flights this pilot is actually rostered on.
+ *
+ *     This panel used to pass no filter and show every flight in the
+ *     tenant, because there was nothing to filter on: `flights` did not
+ *     record its crew. The heading still said "My Flights today", and
+ *     every row carried a Begin Preflight button, so a pilot could file
+ *     a preflight against a flight someone else was flying.
+ *     flight_crew_assignments (flightops-services#171) is the table that
+ *     was missing; this is the other half.
  *   - Duty In/Out: stub button for this PR. Backend (timeclock table +
  *     endpoints, Spec 4 §"Duty time tracking") lands in the next PR.
  *   - Training currency: placeholder card. Spec 5's
@@ -66,6 +72,7 @@ export default async function FlightCrewPage() {
       listFlights({
         onDate: today,
         status: ["scheduled", "released"],
+        assignedToMe: true,
         limit: 50,
       }),
       getCurrentDuty().catch(() => DUTY_OFFLINE_DEFAULT),

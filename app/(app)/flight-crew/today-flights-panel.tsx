@@ -18,16 +18,24 @@ interface Props {
  */
 export function TodayFlightsPanel({ flights }: Props) {
   if (flights.length === 0) {
+    // This used to mean "no flights in the tenant today", because the
+    // panel showed all of them. It now means "dispatch has not rostered
+    // you onto anything", which is a different thing and worth saying
+    // out loud: a pilot who expects to be flying should ring dispatch
+    // rather than assume the page is broken.
     return (
       <div className="rounded-xl border border-dashed border-border bg-card/50 px-5 py-8 text-center text-sm text-muted-foreground">
-        Nothing on your schedule today.{" "}
-        <Link
-          href="/flight-crew/elog"
-          className="font-semibold text-status-blue hover:underline"
-        >
-          Create a manual log
-        </Link>{" "}
-        for off-schedule flying.
+        You&apos;re not rostered on any flights today.{" "}
+        <span className="block pt-1 text-xs">
+          If you&apos;re expecting to fly, check with dispatch — or{" "}
+          <Link
+            href="/flight-crew/elog"
+            className="font-semibold text-status-blue hover:underline"
+          >
+            create a manual log
+          </Link>{" "}
+          for off-schedule flying.
+        </span>
       </div>
     );
   }

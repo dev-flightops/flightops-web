@@ -58,6 +58,14 @@ export interface ListFlightsParams {
   /** Single or multiple statuses. Multi-value lands as repeated
    *  `?status=` params, which FastAPI delivers as a list (M2-M-15). */
   status?: FlightStatus | FlightStatus[];
+  /** Only flights the calling user is rostered on
+   *  (`flight_crew_assignments`, flightops-services#171).
+   *
+   *  Without it "My Flights today" was every flight in the tenant, with
+   *  a Begin Preflight button on each — a pilot could file a preflight
+   *  against someone else's flight. There was nothing to filter on
+   *  until the assignment table existed. */
+  assignedToMe?: boolean;
   limit?: number;
   offset?: number;
 }
@@ -71,6 +79,11 @@ export async function listFlights(
     const values = Array.isArray(params.status) ? params.status : [params.status];
     for (const s of values) search.append("status", s);
   }
+  // Only sent when true — an explicit `assigned_to_me=false` would be
+  // the same as omitting it, and a bare `?assigned_to_me=false` in a
+  // server log reads like someone deliberately asked for everyone's
+  // flights.
+  if (params.assignedToMe) search.set("assigned_to_me", "true");
   if (params.limit !== undefined) search.set("limit", String(params.limit));
   if (params.offset !== undefined) search.set("offset", String(params.offset));
 
