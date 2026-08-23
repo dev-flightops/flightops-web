@@ -7,12 +7,14 @@ import {
   PacketStyles,
 } from "@/components/dispatch/packet/flight-details-panel";
 import { LeftColumn } from "@/components/dispatch/packet/left-column";
+import { CrewPanel } from "@/components/dispatch/packet/crew-panel";
 import { LoadFromSchedule } from "@/components/dispatch/packet/load-from-schedule";
 import { PacketHeader } from "@/components/dispatch/packet/packet-header";
 import { RightColumn } from "@/components/dispatch/packet/right-column";
 import { SelectedFlightSummary } from "@/components/dispatch/packet/selected-flight-summary";
 import { ApiError } from "@/lib/api/client";
 import { listMyTenants } from "@/lib/api/auth";
+import { listFlightCrew } from "@/lib/api/crew-assignments";
 import {
   getComplianceBoard,
   getFlight,
@@ -107,17 +109,33 @@ export default async function DispatchPage({
     selectedFlight,
     picOptions,
     picCompliance,
+    crew,
   ] = await Promise.all([
     listFlights({ onDate: today }).catch(() => ({ items: [], total: 0 })),
     listMyTenants().catch(() => ({ tenants: [] })),
     selectedId ? loadFlight(selectedId) : Promise.resolve(null),
     loadPicRoster(),
     currentPicId ? loadPicCompliance(currentPicId) : Promise.resolve(null),
+    // Soft-fail: a crew roster that will not load should cost the
+    // dispatcher the crew panel, not the whole packet. Everything else
+    // on this page still works without it.
+    selectedId
+      ? listFlightCrew(selectedId).catch(() => ({ items: [], has_pic: false }))
+      : Promise.resolve({ items: [], has_pic: false }),
   ]);
 
   // M2-G-5 tail — parse ack state from URL. `warns_acked` is
   // comma-separated currency-item codes; `overrides_ack=1` means the
   // supervisor override modal already ran successfully.
+  // The assigned PIC is the PIC. `?pic=` stays as a fallback so a
+  // hand-filled packet (no flight loaded, nothing to assign to) and old
+  // shared links keep pre-screening, but where a real assignment exists
+  // it wins — otherwise a stale link could have the compliance gate
+  // describing someone who is not on the flight.
+  const assignedPicId =
+    crew.items.find((a) => a.crew_role === "pic")?.user.id ?? null;
+  const effectivePicId = assignedPicId ?? currentPicId;
+
   const ackedWarnCodes = parseAckedWarns(warnsAckedParam);
   const overridesAcknowledged = overridesAckParam === "1";
   const staleWeatherAcknowledged = staleWxAckParam === "1";
@@ -184,14 +202,36 @@ export default async function DispatchPage({
 
       <div className="space-y-4">
         <LoadFromSchedule flights={flights} selectedFlightId={selectedId ?? null}>
-          {selectedFlight && <SelectedFlightSummary flight={selectedFlight} />}
+          {selectedFlight && (
+            <SelectedFlightSummary
+              flight={selectedFlight}
+              picName={
+                crew.items.find((a) => a.crew_role === "pic")?.user
+                  .full_name ?? null
+              }
+            />
+          )}
         </LoadFromSchedule>
 
         <FlightDetailsPanel
           flight={selectedFlight}
           picOptions={picOptions}
-          currentPicId={currentPicId}
+          currentPicId={effectivePicId}
+          flightId={selectedFlight?.id ?? null}
         />
+
+        {/* Crew for this flight. Sits directly under Flight Details
+            because the PIC dropdown up there is what a dispatcher
+            reaches for first — this is where that choice becomes a row
+            someone else can see. Only meaningful once a flight is
+            selected; there is nothing to crew otherwise. */}
+        {selectedFlight && (
+          <CrewPanel
+            flightId={selectedFlight.id}
+            assignments={crew.items}
+            candidates={picOptions}
+          />
+        )}
 
         <CrewLegalityHints />
 
@@ -202,7 +242,7 @@ export default async function DispatchPage({
             gate + the Generate-PDF hard-block guard. */}
         {selectedFlight && (
           <DispatchComplianceGate
-            pilotUserId={currentPicId}
+            pilotUserId={effectivePicId}
             prefetched={picCompliance}
             ackedWarnCodes={ackedWarnCodes}
             flightId={selectedFlight.id}
@@ -232,7 +272,7 @@ export default async function DispatchPage({
             flight={selectedFlight}
             aircraft={aircraft}
             hardBlockReason={hardBlockReason}
-            pilotUserId={currentPicId}
+            pilotUserId={effectivePicId}
             overridesAcknowledged={overridesAcknowledged}
             notamAckedIcaos={notamAckedIcaos}
             staleWeatherAcknowledged={staleWeatherAcknowledged}

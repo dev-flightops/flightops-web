@@ -19,13 +19,24 @@ import type { FlightDetail } from "@/lib/api/types";
  *      is where the dispatcher assigns one, and rendering a placeholder
  *      name has misled dispatchers into skipping the picker (see the
  *      dispatch-workflow verify report).
- *   2. Scheduled PIC row — muted "not assigned (M3)" placeholder. Real
- *      persisted pilot lands with the M3 flight_assignments story;
- *      once Flight.pilot_id is on the response, wire the pilot name here.
+ *   2. Scheduled PIC row — the pilot actually rostered on this flight,
+ *      read from flight_crew_assignments (flightops-services#171). This
+ *      is the story the old "not assigned (M3)" placeholder was waiting
+ *      for. It stays honest when there is no PIC: the note above about
+ *      placeholder names having misled dispatchers into skipping the
+ *      picker is why it says "not assigned yet" rather than inventing
+ *      anything.
  *   3. Warnings row — appears if pax_count == 0 OR cargo_lbs == 0,
  *      matching the legacy's pre-release validation hints
  */
-export function SelectedFlightSummary({ flight }: { flight: FlightDetail }) {
+export function SelectedFlightSummary({
+  flight,
+  picName,
+}: {
+  flight: FlightDetail;
+  /** Rostered PIC, or null when nobody is assigned yet. */
+  picName?: string | null;
+}) {
   const warnings = warningsFor(flight);
 
   return (
@@ -56,18 +67,27 @@ export function SelectedFlightSummary({ flight }: { flight: FlightDetail }) {
         </div>
       </div>
 
-      {/* Scheduled PIC row — muted placeholder until Flight.pilot_id
-          ships (M3 crew-service). Reading "not assigned" instead of a
-          hardcoded name nudges the dispatcher to actually pick one in
-          the PIC picker down in Flight Details. */}
+      {/* Scheduled PIC row — the real rostered pilot now that
+          flight_crew_assignments exists. Still says "not assigned yet"
+          when nobody is, rather than showing a plausible name: a
+          placeholder here previously led dispatchers to skip the picker
+          entirely. */}
       <div
         className="rounded-md border border-border/60 bg-muted/[0.06] px-4 py-2.5 text-xs"
-        title="No PIC persisted on this flight — pick one below."
+        title={
+          picName
+            ? `${picName} is rostered as PIC on this flight.`
+            : "No PIC assigned to this flight — pick one below."
+        }
       >
         <span className="font-bold text-muted-foreground">Scheduled PIC:</span>{" "}
-        <span className="italic text-muted-foreground">
-          not assigned yet — pick in Flight Details below
-        </span>
+        {picName ? (
+          <span className="font-semibold text-foreground">{picName}</span>
+        ) : (
+          <span className="italic text-muted-foreground">
+            not assigned yet — pick in Flight Details below
+          </span>
+        )}
       </div>
 
       {/* Warnings row — listed when any spec check trips. Spec lists:
