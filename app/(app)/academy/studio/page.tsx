@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { hasAnyRole, roleGate } from "@/lib/roles";
 import { redirect } from "next/navigation";
 
 import { auth } from "@/auth";
@@ -12,7 +13,7 @@ import { ApiError } from "@/lib/api/client";
 
 import { AcademyHeader } from "../academy-header";
 
-const ADMIN_ROLES = new Set(["chief_pilot", "exec_admin"]);
+const ADMIN_ROLES = roleGate("chief_pilot", "exec_admin");
 
 /**
  * /academy/studio — Course Studio.
@@ -35,7 +36,7 @@ const ADMIN_ROLES = new Set(["chief_pilot", "exec_admin"]);
 export default async function StudioPage() {
   const session = await auth();
   const roles = new Set(session?.roles ?? []);
-  if (![...roles].some((r) => ADMIN_ROLES.has(r))) {
+  if (!hasAnyRole([...roles], ADMIN_ROLES)) {
     redirect("/academy");
   }
 

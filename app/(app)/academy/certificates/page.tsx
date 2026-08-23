@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { hasAnyRole, roleGate } from "@/lib/roles";
 
 import { auth } from "@/auth";
 import {
@@ -11,7 +12,7 @@ import { ApiError } from "@/lib/api/client";
 
 import { AcademyHeader } from "../academy-header";
 
-const ADMIN_ROLES = new Set(["chief_pilot", "exec_admin"]);
+const ADMIN_ROLES = roleGate("chief_pilot", "exec_admin");
 
 /**
  * /academy/certificates — Certificate list.
@@ -35,7 +36,7 @@ export default async function CertificatesPage({
   const { scope } = await searchParams;
   const session = await auth();
   const roles = new Set(session?.roles ?? []);
-  const isAdmin = [...roles].some((r) => ADMIN_ROLES.has(r));
+  const isAdmin = hasAnyRole([...roles], ADMIN_ROLES);
   const wantAll = isAdmin && scope === "all";
 
   let certs: Certificate[] = [];
