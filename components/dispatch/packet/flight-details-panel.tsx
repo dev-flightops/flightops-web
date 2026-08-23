@@ -36,12 +36,17 @@ export function FlightDetailsPanel({
   flight,
   picOptions,
   currentPicId,
+  flightId,
 }: {
   flight?: FlightDetail | null;
   /** Pilot roster + overall status for the PIC dropdown (M2-G-5). */
   picOptions: PicOption[];
-  /** Currently-selected PIC from ?pic=<uuid>. */
+  /** The PIC in effect — the assigned one where a flight is loaded,
+   *  otherwise the ?pic=<uuid> pre-screen selection. */
   currentPicId: string | null;
+  /** Flight to assign against. Null on a hand-filled packet, where the
+   *  picker stays a pre-screen. */
+  flightId?: string | null;
 }) {
   return (
     <SectionPanel title="Flight Details">
@@ -84,7 +89,11 @@ export function FlightDetailsPanel({
           />
         </Field>
 
-        <PicPicker options={picOptions} currentPicId={currentPicId} />
+        <PicPicker
+          options={picOptions}
+          currentPicId={currentPicId}
+          flightId={flightId}
+        />
 
         <Field label="SIC Name">
           <input
