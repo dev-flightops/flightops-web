@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { hasAnyRole, roleGate } from "@/lib/roles";
 import { redirect } from "next/navigation";
 
 import { auth } from "@/auth";
@@ -10,7 +11,7 @@ import {
   listCapas,
 } from "@/lib/api/safety";
 
-const BOARD_ROLES = new Set(["safety_officer", "chief_pilot", "exec_admin"]);
+const BOARD_ROLES = roleGate("safety_officer", "chief_pilot", "exec_admin");
 
 const STATUS_FILTERS: Array<{ key: string; label: string; status?: CapaStatus }> = [
   { key: "open", label: "Open (default)" },
@@ -37,7 +38,7 @@ export default async function CapaBoardPage({
 }) {
   const session = await auth();
   const roles = new Set(session?.roles ?? []);
-  const canRead = [...roles].some((r) => BOARD_ROLES.has(r));
+  const canRead = hasAnyRole([...roles], BOARD_ROLES);
   if (!canRead) redirect("/safety/actions/mine");
 
   const params = await searchParams;

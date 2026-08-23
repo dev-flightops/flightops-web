@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { hasAnyRole, roleGate } from "@/lib/roles";
 import { redirect } from "next/navigation";
 
 import { auth } from "@/auth";
@@ -11,7 +12,7 @@ import {
   listIncidents,
 } from "@/lib/api/safety";
 
-const TRIAGE_ROLES = new Set(["safety_officer", "chief_pilot", "exec_admin"]);
+const TRIAGE_ROLES = roleGate("safety_officer", "chief_pilot", "exec_admin");
 
 const STATUS_FILTERS: Array<{ key: string; label: string; status?: string }> = [
   { key: "open", label: "Open" },
@@ -36,7 +37,7 @@ export default async function IncidentsInboxPage({
 }) {
   const session = await auth();
   const roles = new Set(session?.roles ?? []);
-  const canTriage = [...roles].some((r) => TRIAGE_ROLES.has(r));
+  const canTriage = hasAnyRole([...roles], TRIAGE_ROLES);
   if (!canTriage) {
     redirect("/safety/incidents/mine");
   }

@@ -19,21 +19,29 @@ import { getCurrentDuty, getFlightStats } from "@/lib/api/ops";
 import type { CurrentDutyResponse } from "@/lib/api/types";
 import { loadOperationalSnapshot } from "@/lib/dashboards/operational-snapshot";
 import { currentGreeting, firstNameFrom } from "@/lib/greeting";
+import { hasAnyRole, roleGate } from "@/lib/roles";
 
 /**
  * Roles permitted to see the Active Alerts panel per the Home Page
- * spec, Component 5: Super Admin, Director of Operations, Chief Pilot,
- * Dispatcher, Safety Officer. Other roles get the standard tile grid
- * without the alerts section.
+ * spec, Component 5. Other roles get the tile grid without it.
+ *
+ * The spec names "Super Admin" and "Director of Operations"; this
+ * platform's equivalent is the single `exec_admin` role. The set used to
+ * carry the spec's wording literally — "super_admin",
+ * "director_of_operations", "admin" — none of which are roles anyone
+ * holds, so the most privileged account on the system silently failed
+ * the check while Chief Pilot, Dispatcher and Safety Officer passed it.
+ * Half-working is why it went unnoticed.
+ *
+ * Typed via roleGate(), so a name that is not a real role now fails to
+ * compile rather than quietly never matching.
  */
-const ALERT_VIEWING_ROLES = new Set([
-  "super_admin",
-  "director_of_operations",
+const ALERT_VIEWING_ROLES = roleGate(
+  "exec_admin",
   "chief_pilot",
   "dispatcher",
   "safety_officer",
-  "admin",
-]);
+);
 
 /** Split a tenant's display name into wordmark + subtitle for the
  *  logo band. First word becomes the wordmark, the rest joined
@@ -87,7 +95,7 @@ export default async function HomePage() {
 
   const sessionRoles =
     (session as unknown as { roles?: string[] } | null)?.roles ?? [];
-  const canSeeAlerts = sessionRoles.some((r) => ALERT_VIEWING_ROLES.has(r));
+  const canSeeAlerts = hasAnyRole(sessionRoles, ALERT_VIEWING_ROLES);
 
   const hasAdminAccess = Boolean(
     (session as unknown as { admin_access?: boolean } | null)?.admin_access,

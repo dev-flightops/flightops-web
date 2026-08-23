@@ -1,16 +1,17 @@
 import Link from "next/link";
+import { hasAnyRole, roleGate } from "@/lib/roles";
 import { redirect } from "next/navigation";
 
 import { auth } from "@/auth";
 
 import { NewCourseForm } from "./new-course-form";
 
-const ADMIN_ROLES = new Set(["chief_pilot", "exec_admin"]);
+const ADMIN_ROLES = roleGate("chief_pilot", "exec_admin");
 
 export default async function NewCoursePage() {
   const session = await auth();
   const roles = new Set(session?.roles ?? []);
-  if (![...roles].some((r) => ADMIN_ROLES.has(r))) {
+  if (!hasAnyRole([...roles], ADMIN_ROLES)) {
     redirect("/academy");
   }
 
