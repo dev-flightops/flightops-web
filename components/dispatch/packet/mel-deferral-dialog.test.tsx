@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -73,8 +73,7 @@ describe("MelDeferralDialog", () => {
 
     // User manually edits due_at → from now on, category changes should NOT
     // overwrite it.
-    await user.clear(due);
-    await user.type(due, "2026-12-31T00:00");
+    fireEvent.change(due, { target: { value: "2026-12-31T00:00" } });
 
     await user.selectOptions(categorySelect, "D");
     expect(due.value).toBe("2026-12-31T00:00");
@@ -177,10 +176,8 @@ describe("MelDeferralDialog", () => {
 
     const deferred = screen.getByLabelText(/Deferred at \(UTC\)/i);
     const due = screen.getByLabelText(/Due by \(UTC\)/i);
-    await user.clear(deferred);
-    await user.type(deferred, "2026-12-31T00:00");
-    await user.clear(due);
-    await user.type(due, "2026-12-01T00:00"); // before deferred
+    fireEvent.change(deferred, { target: { value: "2026-12-31T00:00" } });
+    fireEvent.change(due, { target: { value: "2026-12-01T00:00" } }); // before deferred
 
     await user.click(screen.getByRole("button", { name: /file deferral/i }));
 
