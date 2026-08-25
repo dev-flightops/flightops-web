@@ -57,7 +57,7 @@ function apiBaseUrl(): string {
  * the backend reports at `GET /auth/providers` — so a provider missing
  * server-side won't render a sign-in button on the login page either.
  *
- * When Phil drops the OAuth client IDs into the Vercel/Render env vars,
+ * When someone drops the OAuth client IDs into the Vercel/Render env vars,
  * the providers below activate automatically — no code changes.
  */
 function buildProviders(): Provider[] {

@@ -53,8 +53,8 @@ function makeTest(
     ambient_temp_c: -5,
     notes: null,
     tested_at: "2026-06-15T18:00:00Z",
-    tested_by: { id: "u-1", full_name: "Phil B.", email: "phil@x" },
-    tested_by_name: "Phil B.",
+    tested_by: { id: "u-1", full_name: "Dana B.", email: "dana@example.test" },
+    tested_by_name: "Dana B.",
     created_at: "2026-06-15T18:00:00Z",
     ...overrides,
   };

@@ -305,7 +305,7 @@ function anchorFor(anchors: Record<number, string>, value: number): string {
 }
 
 function scoreToRiskLevel(score: number): FratRiskLevel {
-  // Thresholds shifted +5 (Phil, Aug 2026) so the recalibrated bands
+  // Thresholds shifted +5 (Aug 2026 recalibration) so the recalibrated bands
   // are: LOW <15 · MEDIUM 15–24 · HIGH 25–34 · EXTREME 35+.
   // Backend `score_to_risk_level` in services/ops/app/routes/frat.py
   // must stay in lockstep — the server re-computes on submit and
@@ -333,7 +333,7 @@ export function FlightRiskAssessmentStep({ flightId, initial }: Props) {
   // Pilots reach this component in two modes:
   //   1. First-time — no assessment yet, render the questionnaire.
   //   2. Post-submit — assessment exists, render the result + Continue.
-  // Phil #6 (Aug 2026) added an Edit link to completed steps in the
+  // Review item #6 (Aug 2026) added an Edit link to completed steps in the
   // preflight shell. For FRAT specifically, "editing" means retaking
   // the questionnaire — a new assessment row is written and becomes
   // the latest. The result panel exposes a "Retake questionnaire"
@@ -587,7 +587,7 @@ function FratResultPanel({
   const risk = assessment.risk_level;
   // Only EXTREME hard-gates the pilot behind an authorization row.
   // HIGH used to require a `dispatch_contact` gate on this screen —
-  // Phil (Aug 2026) removed it: dispatch controls whether the packet
+  // The Aug 2026 review removed it: dispatch controls whether the packet
   // is released, and a pilot can still call to discuss. HIGH pilots
   // continue immediately; dispatch pulls the release if they don't
   // want the flight to fly. See PR #205 for the change rationale.
@@ -800,7 +800,7 @@ function FratAuthorizationForm({
         value={name}
         onChange={setName}
         placeholder={
-          kind === "dispatch_contact" ? "Sarah Dispatcher" : "Phil Bass"
+          kind === "dispatch_contact" ? "Sarah Dispatcher" : "Dana Chief-Pilot"
         }
       />
       <Field

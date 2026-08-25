@@ -28,7 +28,7 @@ interface Props {
  * responsive; on action failure we roll back to the original value
  * and surface a context-specific inline message.
  *
- * exec_admin stays locked on regardless of what's passed in. Phil's
+ * exec_admin stays locked on regardless of what's passed in. The
  * review was explicit that Admin is Admin; turning the toggle off for
  * exec_admin would leave a tenant unable to reach Settings at all.
  */
