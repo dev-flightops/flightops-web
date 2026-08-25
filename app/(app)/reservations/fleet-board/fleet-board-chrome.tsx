@@ -2,7 +2,14 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+
+import {
+  describeIsoDay,
+  formatIsoDay,
+  shiftIsoDay,
+  todayIsoDay,
+} from "@/lib/iso-day";
 
 /**
  * Fleet-board chrome — title, view toggle, per-day navigator, metrics
@@ -17,14 +24,12 @@ import { useState } from "react";
  */
 export function FleetBoardChrome({
   view,
-  day,
   isoDay,
   flightsCount,
   bookedSeats,
   totalSeats,
 }: {
   view: "list" | "board" | "split";
-  day: Date;
   isoDay: string;
   flightsCount: number;
   bookedSeats: number;
@@ -33,31 +38,22 @@ export function FleetBoardChrome({
   const router = useRouter();
   const [search, setSearch] = useState("");
 
-  function pushDay(d: Date) {
-    const pad = (n: number) => String(n).padStart(2, "0");
-    const iso = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  // "Today" is the viewer's today, which the server cannot know — so it is
+  // resolved after mount. Rendering it during SSR would label the same day
+  // "Today" on the server and "Tomorrow" in the browser whenever the two
+  // zones straddle midnight, which is a hydration mismatch. Until then the
+  // label is the plain date, which is correct everywhere.
+  const [today, setToday] = useState<string | null>(null);
+  useEffect(() => setToday(todayIsoDay()), []);
+
+  // The day is taken from the URL string, never from a Date handed down by
+  // the server: those disagree by a day for any viewer west of Greenwich,
+  // which used to make the → arrow push the URL it was already on. See
+  // lib/iso-day.ts.
+  function pushDay(iso: string) {
     const params = new URLSearchParams({ d: iso });
     if (view !== "board") params.set("view", view);
     router.push(`/reservations/fleet-board?${params.toString()}`);
-  }
-
-  function todayLabel(): string {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const dNorm = new Date(day);
-    dNorm.setHours(0, 0, 0, 0);
-    const diff = Math.round(
-      (dNorm.getTime() - today.getTime()) / (24 * 60 * 60 * 1000),
-    );
-    const dayName = day.toLocaleDateString(undefined, {
-      weekday: "short",
-      month: "short",
-      day: "numeric",
-    });
-    if (diff === 0) return `Today — ${dayName}`;
-    if (diff === 1) return `Tomorrow — ${dayName}`;
-    if (diff === -1) return `Yesterday — ${dayName}`;
-    return dayName;
   }
 
   return (
@@ -91,26 +87,18 @@ export function FleetBoardChrome({
         <div className="flex items-center gap-2">
           <button
             type="button"
-            onClick={() => {
-              const d = new Date(day);
-              d.setDate(d.getDate() - 1);
-              pushDay(d);
-            }}
+            onClick={() => pushDay(shiftIsoDay(isoDay, -1))}
             className="rounded-md border border-border bg-card px-2.5 py-1.5 text-xs text-muted-foreground hover:text-foreground"
             aria-label="Previous day"
           >
             ←
           </button>
           <div className="rounded-md border border-border bg-card px-3 py-1.5 text-xs font-semibold text-status-green">
-            {todayLabel()}
+            {today ? describeIsoDay(isoDay, today) : formatIsoDay(isoDay)}
           </div>
           <button
             type="button"
-            onClick={() => {
-              const d = new Date(day);
-              d.setDate(d.getDate() + 1);
-              pushDay(d);
-            }}
+            onClick={() => pushDay(shiftIsoDay(isoDay, 1))}
             className="rounded-md border border-border bg-card px-2.5 py-1.5 text-xs text-muted-foreground hover:text-foreground"
             aria-label="Next day"
           >

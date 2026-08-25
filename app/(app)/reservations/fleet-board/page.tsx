@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import { isValidIsoDay } from "@/lib/iso-day";
+
 import { ApiError } from "@/lib/api/client";
 import { listAircraft } from "@/lib/api/ops";
 import {
@@ -35,12 +37,14 @@ function _parseView(raw: string | undefined): BoardView {
   return raw === "list" || raw === "split" ? raw : "board";
 }
 
+// The board's day window. Note this is midnight in the *server's* zone,
+// which is what the booking query is filtered on. The day the viewer sees
+// in the navigator comes from the URL string instead — see lib/iso-day.ts.
 function _parseDate(raw: string | undefined): Date {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  if (!raw) return today;
-  const parsed = new Date(`${raw}T00:00:00`);
-  return Number.isFinite(parsed.getTime()) ? parsed : today;
+  if (!isValidIsoDay(raw)) return today;
+  return new Date(`${raw}T00:00:00`);
 }
 
 function _isoDate(d: Date): string {
@@ -120,7 +124,6 @@ export default async function FleetBoardPage({
     <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6">
       <FleetBoardChrome
         view={view}
-        day={day}
         isoDay={isoDay}
         flightsCount={flightsCount}
         bookedSeats={bookedSeats}
