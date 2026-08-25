@@ -24,6 +24,10 @@ declare module "next-auth" {
      * jwt callback can clear the session when the FlightOps token has
      * expired. */
     access_token_exp: number;
+    /** Opaque rotating refresh token (flightops-services#176). Null on
+     * sessions with no refresh path — SSO, tenant-switch, and anything
+     * signed in before that shipped — which fall back to expiring. */
+    refresh_token?: string | null;
   }
 }
 
@@ -35,7 +39,12 @@ declare module "next-auth/jwt" {
     admin_access: boolean;
     /** See `User.access_token_exp` above — copied here at sign-in by the
      * jwt callback, then read on every subsequent invocation to decide
-     * whether to invalidate the Auth.js session. */
+     * whether to refresh, keep, or invalidate the Auth.js session. */
     access_token_exp: number;
+    /** Rotating refresh token. Replaced on every successful refresh —
+     * the previous one is dead the moment the new one is issued, so
+     * carrying a stale value here would trip reuse detection on the
+     * next attempt. */
+    refresh_token?: string | null;
   }
 }

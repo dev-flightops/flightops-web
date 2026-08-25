@@ -1,4 +1,9 @@
 import NextAuth from "next-auth";
+
+import {
+  decideSessionAction,
+  refreshAccessToken,
+} from "@/lib/session-refresh";
 import type { Provider } from "next-auth/providers";
 import Credentials from "next-auth/providers/credentials";
 import Google from "next-auth/providers/google";
@@ -9,6 +14,12 @@ interface AuthServiceLoginResponse {
   access_token: string;
   token_type: string;
   expires_in: number;
+  /** Present since flightops-services#176. Optional because the SSO and
+   *  tenant-switch paths reuse this shape and do not mint one yet — a
+   *  session without it simply has no refresh path and behaves the way
+   *  everything did before. */
+  refresh_token?: string | null;
+  refresh_expires_in?: number | null;
 }
 
 interface AccessTokenClaims {
@@ -83,6 +94,7 @@ function buildProviders(): Provider[] {
           admin_access: claims.admin_access ?? false,
           access_token: body.access_token,
           access_token_exp: claims.exp,
+          refresh_token: body.refresh_token ?? null,
         };
       },
     }),
@@ -177,24 +189,46 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         token.roles = user.roles;
         token.admin_access = user.admin_access;
         token.access_token_exp = user.access_token_exp;
+        token.refresh_token = user.refresh_token ?? null;
       }
-      // Subsequent calls: if the backend JWT has expired, returning null
-      // tells Auth.js to clear its own session cookie. Without this the
-      // Auth.js cookie stays valid for its own (much longer) lifetime
-      // even though every backend API call returns 401 — which leaves
-      // the user in a wedged "logged in but nothing works" state where
-      // the only fix is to delete cookies in DevTools.
+      // Subsequent calls. Three outcomes, decided in lib/session-refresh.ts:
       //
-      // The `exp` claim is unix-seconds; we compare against now-in-seconds.
-      // A small grace window would be wrong here — the backend already
-      // honours its own `exp`, so a token even one second past expiry
-      // gets rejected with 401.
+      //   keep     still comfortably valid
+      //   refresh  inside the margin — swap it before anything 401s
+      //   expire   nothing left to do, so clear the Auth.js cookie too
+      //
+      // That last one matters as much as the refresh. The Auth.js cookie
+      // has its own, much longer lifetime; leaving it in place once the
+      // backend token is dead puts the user in a wedged "logged in but
+      // nothing works" state with no fix short of clearing cookies.
+      //
+      // Refreshing on a margin rather than after expiry is deliberate:
+      // waiting for the token to actually die means every request in
+      // flight at that moment gets a 401. This comment previously said a
+      // grace window would be wrong, which was true when there was no
+      // refresh path to use it — the margin is the whole point now.
+      const action = decideSessionAction({
+        exp: token.access_token_exp as number | undefined,
+        hasRefreshToken: Boolean(token.refresh_token),
+      });
+
+      if (action === "keep") return token;
+      if (action === "expire") return null;
+
+      const refreshed = await refreshAccessToken(
+        token.refresh_token as string,
+        { decode: decodeJwtPayload },
+      );
+      if (refreshed) return { ...token, ...refreshed };
+
+      // The refresh failed. If the token still has life left, carry on —
+      // one failed attempt inside the margin should not end a working
+      // session, and the next request tries again. Once it is genuinely
+      // expired there is nothing left to keep.
       const exp = token.access_token_exp as number | undefined;
-      if (exp && Date.now() / 1000 >= exp) {
-        return null;
-      }
-      return token;
+      return exp && Date.now() / 1000 >= exp ? null : token;
     },
+
     async session({ session, token }) {
       if (token.sub) session.user.id = token.sub;
       session.access_token = token.access_token as string;
