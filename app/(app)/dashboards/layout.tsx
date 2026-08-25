@@ -5,7 +5,7 @@ import { auth } from "@/auth";
 /**
  * Admin-portal gate (M2-X-1).
  *
- * Per Phil's review: any role whose Admin Access toggle is on can reach
+ * Per the M1 review: any role whose Admin Access toggle is on can reach
  * `/dashboards/*`. Anyone else gets bounced back to `/home`. The toggle
  * UI lives at `/settings/permissions`; the gate value rides in the JWT
  * as `session.admin_access`, minted server-side at login time so a

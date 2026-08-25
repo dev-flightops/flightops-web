@@ -59,7 +59,7 @@ export function PreflightShell({
   const nextStep = progress.next_step;
   const allDone = nextStep === null;
 
-  // Phil #6 (Aug 2026) — Edit link on completed steps. When the pilot
+  // Review item #6 (Aug 2026) — Edit link on completed steps. When the pilot
   // clicks Edit on step N (already completed), swap the active-step
   // slot to render N's editor instead of `nextStep`. Backend upserts,
   // so submitting from an edit re-writes the row without cascading

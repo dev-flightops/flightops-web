@@ -10,7 +10,7 @@ import { AdminAccessToggle } from "./admin-access-toggle";
  * /settings/permissions — Role catalog + per-tenant Admin Access toggle
  * (M2-G-48 + M2-X-1).
  *
- * Per Phil's M1 demo review (Jun 18 2026): every role gets an Admin
+ * Per the M1 demo review (Jun 18 2026): every role gets an Admin
  * Access on/off switch so operators can decide which roles can see
  * /dashboards/*. The toggle writes to `tenant_role_admin_access` on the
  * backend; the JWT mints the union of those flags as `admin_access`

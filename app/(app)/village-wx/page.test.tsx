@@ -75,8 +75,8 @@ function makeReport(
   return {
     id: "r-1",
     village_airport_id: "a-1",
-    reported_by: { id: "u-1", full_name: "Phil B." },
-    reported_by_name: "Phil B.",
+    reported_by: { id: "u-1", full_name: "Dana B." },
+    reported_by_name: "Dana B.",
     reported_at: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
     cloud_cover: "OVC",
     ceiling_ft: 800,
@@ -184,7 +184,7 @@ describe("VillageWxPage (M2-G-village-wx-redesign)", () => {
 
     // "IFR" appears in both the legend and the badge — assert at least one.
     expect(screen.getAllByText("IFR").length).toBeGreaterThan(0);
-    expect(screen.getByText(/by Phil B\./)).toBeInTheDocument();
+    expect(screen.getByText(/by Dana B\./)).toBeInTheDocument();
   });
 
   it("flags a > 4hr report as STALE", async () => {
