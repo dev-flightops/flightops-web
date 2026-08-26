@@ -107,7 +107,7 @@ export const DEPARTMENTS: Department[] = [
       { id: "currency",         label: "Currency",         href: "/compliance/crew-currency", status: "live", department: "operations" },
       { id: "flight-log",       label: "Flight Log",       href: "/flight-crew/elog", status: "live", department: "operations" },
       { id: "roster",           label: "Roster",           status: "m3", department: "operations" },
-      { id: "pilot-history",    label: "Pilot History",    status: "m3", department: "operations" },
+      { id: "pilot-history",    label: "Pilot History",    href: "/flight-crew/history", status: "live", department: "operations" },
       { id: "village-wx",       label: "Village Wx",       href: "/village-wx", status: "live", department: "operations" },
       { id: "ramp-ops",         label: "Ramp Ops",         href: "/ramp-ops", status: "live", department: "operations" },
       { id: "eod",              label: "EOD",              href: "/eod", status: "live", department: "operations" },
@@ -308,13 +308,16 @@ export const DEPARTMENTS: Department[] = [
     id: "safety",
     label: "Safety",
     status: "live",
-    pathPrefixes: ["/safety"],
+    // /documents is the Document Library (GOM, bulletins, FAR/AIM), which
+    // hangs off Safety in the nav. Without it here the chip navigates
+    // fine but the department row vanishes on arrival.
+    pathPrefixes: ["/safety", "/documents"],
     children: [
       { id: "sms",         label: "Safety SMS",      href: "/safety",            status: "live", department: "safety" },
       { id: "incidents",   label: "Incidents",       href: "/safety/incidents",  status: "live", department: "safety" },
       { id: "actions",     label: "Corrective Actions", href: "/safety/actions", status: "live", department: "safety" },
       { id: "my-reports",  label: "My Reports",      href: "/safety/mine",       status: "live", department: "safety" },
-      { id: "documents",   label: "Documents",                                    status: "m3",   department: "safety" },
+      { id: "documents",   label: "Documents",   href: "/documents",              status: "live", department: "safety" },
     ],
   },
   {
@@ -344,7 +347,7 @@ export const DEPARTMENTS: Department[] = [
       { id: "settings-load",      label: "Load Teams",    href: "/settings/load-teams",  status: "live", department: "settings" },
       { id: "settings-pilotpay",  label: "Pilot Pay",     href: "/settings/pilot-pay",   status: "live", department: "settings" },
       { id: "settings-currency",  label: "Currency",      href: "/settings/currency",    status: "live", department: "settings" },
-      { id: "settings-billing",   label: "Billing",       status: "m3", department: "settings" },
+      { id: "settings-billing",   label: "Billing",       href: "/settings/billing", status: "live", department: "settings" },
     ],
   },
   {
