@@ -49,17 +49,27 @@ export const HOME_QUICK_LINKS: QuickLink[] = [
     status: "m4",
     roles: ["exec_admin"],
   },
+  // "My" anything — a logbook, a duty history — only means something to
+  // someone who flies. Kept in step with the flight-log and currency
+  // entries in MODULE_ROLES.
   {
     label: "My Flight History",
     href: "/flight-crew/history?tab=flight",
     status: "live",
+    roles: ["exec_admin", "chief_pilot", "pilot", "crew_member"],
   },
   {
     label: "My Duty History",
     href: "/flight-crew/history?tab=duty",
     status: "live",
+    roles: ["exec_admin", "chief_pilot", "pilot", "crew_member"],
   },
-  { label: "Flight Log", href: "/flight-crew/elog", status: "live" },
+  {
+    label: "Flight Log",
+    href: "/flight-crew/elog",
+    status: "live",
+    roles: ["exec_admin", "chief_pilot", "pilot", "crew_member", "dispatcher"],
+  },
   // Settings is entirely company configuration — users, SSO, billing,
   // branding, fleet. There is no personal-profile page behind it, so
   // restricting it strands nobody.
