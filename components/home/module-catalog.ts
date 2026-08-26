@@ -1,3 +1,5 @@
+import type { Role } from "@/lib/roles";
+
 /**
  * Module catalogue for the home grid — one entry per legacy `mod-card`
  * from `dispatch-platform-main/templates/home.html`.
@@ -208,3 +210,46 @@ export function moduleStatusHint(status: ModuleStatus): string | null {
   if (status === "live") return null;
   return `Coming in ${status.toUpperCase()}`;
 }
+
+/**
+ * Which roles see which home tile.
+ *
+ * Same intent as DEPARTMENT_ROLES in components/app-shell/modules.ts —
+ * client request 8/25, "each role should only have a view of the modules
+ * that applies to their role" — but keyed by home-tile id, because the
+ * home grid and the department nav do not have the same entries.
+ *
+ * Decluttering, not authorization: every page behind these tiles enforces
+ * its own access server-side. Tiles absent from this map are visible to
+ * everyone; `roleGate` on an individual module still applies on top.
+ */
+export const HOME_MODULE_ROLES: Record<string, readonly Role[]> = {
+  "flight-crew": [
+    "exec_admin",
+    "chief_pilot",
+    "pilot",
+    "crew_member",
+    "dispatcher",
+  ],
+  // The client's own example: pilots don't need reservations.
+  reservations: ["exec_admin", "dispatcher"],
+  dispatch: ["exec_admin", "dispatcher", "chief_pilot"],
+  "flight-following": ["exec_admin", "dispatcher", "chief_pilot", "pilot"],
+  maintenance: ["exec_admin", "chief_pilot", "maintenance", "safety_officer"],
+  "ground-ops": ["exec_admin", "dispatcher", "ground_ops"],
+  hr: ["exec_admin"],
+  housing: ["exec_admin", "ground_ops"],
+  invoicing: ["exec_admin"],
+  compliance: ["exec_admin", "chief_pilot", "safety_officer", "dispatcher"],
+  documents: [
+    "exec_admin",
+    "chief_pilot",
+    "safety_officer",
+    "maintenance",
+    "dispatcher",
+  ],
+  fleetbrain: ["exec_admin"],
+  // academy and safety are deliberately absent: training applies to
+  // everyone, and hazard reporting must be reachable by whoever saw the
+  // hazard. See the note in components/app-shell/modules.ts.
+};

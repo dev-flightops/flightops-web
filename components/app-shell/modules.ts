@@ -1,3 +1,5 @@
+import { ROLES, type Role } from "@/lib/roles";
+
 /**
  * Module catalogue — drives the AppShell's two-level navigation.
  *
@@ -375,4 +377,128 @@ export function departmentForPath(pathname: string): Department | null {
 /** Human-readable status hint for tooltips on disabled modules. */
 export function moduleStatusHint(status: ModuleStatus): string {
   return ms(status);
+}
+
+// ---------------------------------------------------------------------------
+// Role visibility
+// ---------------------------------------------------------------------------
+
+/**
+ * Which roles see which department.
+ *
+ * Client request 8/25: "Each role should only have a view of the modules
+ * that applies to their role. Pilots don't need to see reservations.
+ * Reservations don't need to see flight ops."
+ *
+ * IMPORTANT — this is decluttering, not authorization. The backend's
+ * require_role on every endpoint is the actual gate; hiding a nav chip
+ * only stops someone tripping over a module that is not their job. Do not
+ * add anything here and consider it secured.
+ *
+ * The two examples in the request map onto this table as follows:
+ *   - pilots not seeing reservations: `reservations` omits pilot and
+ *     crew_member, so the whole department disappears for them.
+ *   - "reservations don't need to see flight ops": there is no
+ *     reservations-agent role in the backend catalog today, only
+ *     `dispatcher` — and a dispatcher unquestionably needs flight ops.
+ *     So this half is NOT expressible yet. Raised with the operator; it
+ *     needs a new role rather than a guess here.
+ *
+ * Departments not listed are visible to everyone.
+ */
+export const DEPARTMENT_ROLES: Partial<Record<DepartmentId, readonly Role[]>> = {
+  // Dispatch, flight following, schedule, weather, currency, elog.
+  // ground_ops is here for Ramp Ops and EOD, which live in this
+  // department but are station work — see MODULE_ROLES below.
+  operations: [
+    "exec_admin",
+    "dispatcher",
+    "chief_pilot",
+    "pilot",
+    "crew_member",
+    "safety_officer",
+    "ground_ops",
+  ],
+  // Booking, manifests, customers, charter, rewards. Explicitly not
+  // pilots or crew — the client's own example.
+  reservations: ["exec_admin", "dispatcher"],
+  "ground-ops": ["exec_admin", "dispatcher", "ground_ops"],
+  maintenance: ["exec_admin", "chief_pilot", "maintenance", "safety_officer"],
+  crew: ["exec_admin", "chief_pilot", "pilot", "crew_member"],
+  // Deliberately everyone: training and checkrides apply to every role,
+  // and a mechanic or ramper who cannot find their assigned course is a
+  // compliance problem, not a tidier nav.
+  academy: [...ROLES],
+  // Also deliberately everyone. Hazard reporting has to be reachable by
+  // whoever saw the hazard — gating SMS by job title is how near-misses
+  // go unreported.
+  safety: [...ROLES],
+  hr: ["exec_admin"],
+  admin: ["exec_admin", "dispatcher", "chief_pilot"],
+  settings: ["exec_admin"],
+  ai: ["exec_admin"],
+};
+
+/**
+ * Per-module exceptions, for modules whose audience differs from their
+ * department's. Anything absent inherits the department.
+ */
+export const MODULE_ROLES: Record<string, readonly Role[]> = {
+  // Station-side work that happens to live under Operations.
+  "ramp-ops": ["exec_admin", "dispatcher", "ground_ops", "chief_pilot"],
+  eod: ["exec_admin", "dispatcher", "ground_ops", "chief_pilot"],
+  // Release authority — not something a ramper or a crew member acts on.
+  dispatch: ["exec_admin", "dispatcher", "chief_pilot"],
+  schedule: ["exec_admin", "dispatcher", "chief_pilot"],
+  // A pilot's own logbook and currency; ground_ops has no use for these.
+  "flight-log": [
+    "exec_admin",
+    "chief_pilot",
+    "pilot",
+    "crew_member",
+    "dispatcher",
+  ],
+  currency: [
+    "exec_admin",
+    "chief_pilot",
+    "pilot",
+    "crew_member",
+    "dispatcher",
+  ],
+};
+
+/**
+ * True when a user holding `roles` should see `allowed`.
+ *
+ * Fails OPEN on an empty role list. A user whose roles failed to load
+ * should get a cluttered nav, not an empty one — the backend still
+ * refuses anything they may click, and stranding someone with no
+ * navigation is a worse failure than showing them a module they cannot
+ * use.
+ */
+function _permits(allowed: readonly Role[] | undefined, roles: readonly string[]): boolean {
+  if (!allowed) return true;
+  if (roles.length === 0) return true;
+  return roles.some((r) => (allowed as readonly string[]).includes(r));
+}
+
+/** Departments this user should see, in catalogue order. */
+export function visibleDepartments(roles: readonly string[]): Department[] {
+  return DEPARTMENTS.filter((d) => _permits(DEPARTMENT_ROLES[d.id], roles));
+}
+
+/** The modules within a department this user should see. */
+export function visibleModules(
+  dept: Department,
+  roles: readonly string[],
+): ModuleEntry[] {
+  return dept.children.filter((m) => _permits(MODULE_ROLES[m.id], roles));
+}
+
+/** Whether this user should see the department a path belongs to. */
+export function canSeeDepartment(
+  dept: Department,
+  roles: readonly string[],
+): boolean {
+  return _permits(DEPARTMENT_ROLES[dept.id], roles);
 }

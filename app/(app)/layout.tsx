@@ -49,6 +49,10 @@ export default async function AppGroupLayout({
   }
 
   const session = await auth();
+  // Drives which department modules appear in the nav. Decluttering only
+  // — every endpoint behind these links enforces its own require_role.
+  const sessionRoles =
+    (session as unknown as { roles?: string[] } | null)?.roles ?? [];
   const currentTenant = tenants.find((t) => t.is_current) ?? tenants[0];
   const brand = currentTenant?.name ?? "Peregrine Flight Ops";
 
@@ -84,6 +88,9 @@ export default async function AppGroupLayout({
     <HeaderActions
       email={session.user.email}
       fullName={session.user.name ?? null}
+      showSettings={
+        sessionRoles.length === 0 || sessionRoles.includes("exec_admin")
+      }
       signOutAction={signOutAction}
       initialDuty={initialDuty}
       clockInAction={clockInAction}
@@ -100,7 +107,7 @@ export default async function AppGroupLayout({
         primary={brandTheme.brand_primary_color}
         primaryDark={brandTheme.brand_primary_dark_color}
       />
-      <AppShell brand={brand} actionsSlot={actionsSlot}>
+      <AppShell brand={brand} actionsSlot={actionsSlot} roles={sessionRoles}>
         {children}
         {/* Spec: global Safety Report button, fixed bottom-right on every
             page. Mounted at the layout so it survives client-side
