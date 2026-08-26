@@ -7,6 +7,7 @@ import {
   getFlight,
   getLatestFratAssessment,
   getLatestPilotAcceptance,
+  getWeightReturn,
   getPreflightProgress,
 } from "@/lib/api/ops";
 import { batchWeather } from "@/lib/api/weather";
@@ -15,6 +16,7 @@ import type {
   FlightDetail,
   FratAssessmentResponse,
   PilotAcceptanceResponse,
+  WeightReturn,
   PreflightProgressResponse,
   WeatherBatchResponse,
 } from "@/lib/api/types";
@@ -67,6 +69,7 @@ export default async function PreflightPage({
   let duty: CurrentDutyResponse = DUTY_OFFLINE_DEFAULT;
   let frat: FratAssessmentResponse | null = null;
   let acceptance: PilotAcceptanceResponse | null = null;
+  let weightReturn: WeightReturn | null = null;
   let weather: WeatherBatchResponse | null = null;
   let loadError: string | null = null;
 
@@ -74,8 +77,14 @@ export default async function PreflightPage({
     // Fan-out: flight + progress are required; duty + latest FRAT +
     // latest pilot acceptance are best-effort (404 / missing data is
     // normal and the step UIs handle the empty case gracefully).
-    const [flightResult, progressResult, dutyResult, fratResult, acceptanceResult] =
-      await Promise.all([
+    const [
+      flightResult,
+      progressResult,
+      dutyResult,
+      fratResult,
+      acceptanceResult,
+      weightReturnResult,
+    ] = await Promise.all([
         getFlight(flightId),
         getPreflightProgress(flightId),
         getCurrentDuty().catch(() => DUTY_OFFLINE_DEFAULT),
@@ -88,12 +97,18 @@ export default async function PreflightPage({
           if (err instanceof ApiError && err.status === 404) return null;
           throw err;
         }),
+        // Step 2 — null is the normal "within limits" answer, so only a
+        // real failure should surface. Best-effort like the rest: the
+        // server-side step-2 gate is what actually enforces this, so a
+        // failed read here cannot let an over-weight flight through.
+        getWeightReturn(flightId).catch(() => null),
       ]);
     flight = flightResult;
     progress = progressResult;
     duty = dutyResult;
     frat = fratResult;
     acceptance = acceptanceResult;
+    weightReturn = weightReturnResult;
     // Step 3 weather — depends on the flight's routing airports, so
     // it fires after the flight fetch. Non-fatal: if the
     // weather-service is unreachable, Step 3 renders the ack
@@ -143,6 +158,7 @@ export default async function PreflightPage({
         duty={duty}
         frat={frat}
         acceptance={acceptance}
+        weightReturn={weightReturn}
         weather={weather}
       />
     </div>

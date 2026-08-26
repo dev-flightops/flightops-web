@@ -5,12 +5,15 @@ import { revalidatePath } from "next/cache";
 import { ApiError } from "@/lib/api/client";
 import {
   completePreflightStep,
+  openWeightReturn,
   recordFratAuthorization,
   submitFratAssessment,
   submitPilotAcceptance,
 } from "@/lib/api/ops";
 import type {
   FratAssessmentResponse,
+  WeightReturn,
+  WeightReturnCreateRequest,
   FratAuthorizeRequest,
   FratSubmitRequest,
   PilotAcceptanceRequest,
@@ -57,6 +60,16 @@ export async function completeStepAction(
       }
       if (err.status === 400) {
         return { ok: false, error: "Invalid step." };
+      }
+      if (err.status === 422) {
+        // The retired weight-override payload. A stale tab can still be
+        // holding the old form; say what happened rather than "invalid".
+        return {
+          ok: false,
+          error:
+            "The weight override was removed — refresh, then return the " +
+            "flight to dispatch if it's over limits.",
+        };
       }
       return { ok: false, error: `Couldn't save (HTTP ${err.status}).` };
     }
@@ -169,5 +182,60 @@ export async function submitPilotAcceptanceAction(
       return { ok: false, error: `Couldn't save (HTTP ${err.status}).` };
     }
     return { ok: false, error: "Couldn't save — try again." };
+  }
+}
+
+/** Pull the human half out of "weight_return_held_by_another_pilot: Pat
+ *  Pilot already returned this flight at 1400 lbs". Falls back to a
+ *  generic line if the body isn't the shape we expect — an error path is
+ *  the wrong place to throw a second error. */
+function _holderMessage(raw: string): string {
+  const marker = "weight_return_held_by_another_pilot:";
+  const at = raw.indexOf(marker);
+  if (at === -1) return "Another pilot already returned this flight.";
+  const tail = raw.slice(at + marker.length).replace(/"\}?\s*$/, "").trim();
+  return tail.length > 0
+    ? tail.charAt(0).toUpperCase() + tail.slice(1)
+    : "Another pilot already returned this flight.";
+}
+
+export type WeightReturnActionResult =
+  | { ok: true; weightReturn: WeightReturn }
+  | { ok: false; error: string };
+
+/**
+ * Preflight step 2 — hand an over-weight flight back to dispatch.
+ *
+ * This is what replaced the supervisor override. There is no path here
+ * that lets an over-weight flight continue; the pilot states the payload
+ * they can accept and dispatch re-plans. The step-2 gate that blocks
+ * completion while the return is open lives server-side as well, so this
+ * action failing does not leave a way around it.
+ */
+export async function returnFlightOverWeightAction(
+  flightId: string,
+  body: WeightReturnCreateRequest,
+): Promise<WeightReturnActionResult> {
+  try {
+    const weightReturn = await openWeightReturn(flightId, body);
+    revalidatePath(`/flight-crew/preflight/${flightId}`);
+    return { ok: true, weightReturn };
+  } catch (err) {
+    if (err instanceof ApiError) {
+      if (err.status === 401) {
+        return { ok: false, error: "Your session expired — sign in again." };
+      }
+      if (err.status === 409) {
+        // Another pilot already returned this flight. The backend puts
+        // their name and figure after the error code, which is the useful
+        // part on a ramp — surface it rather than a generic message.
+        return { ok: false, error: _holderMessage(err.message) };
+      }
+      if (err.status === 422) {
+        return { ok: false, error: "Enter a payload figure above zero." };
+      }
+      return { ok: false, error: `Couldn't send (HTTP ${err.status}).` };
+    }
+    return { ok: false, error: "Couldn't send — try again." };
   }
 }

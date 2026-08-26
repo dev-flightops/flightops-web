@@ -2,59 +2,84 @@
 
 import { useState, useTransition } from "react";
 
-import type { FlightDetail } from "@/lib/api/types";
+import type { FlightDetail, WeightReturn } from "@/lib/api/types";
 
-import { completeStepAction } from "./actions";
+import { completeStepAction, returnFlightOverWeightAction } from "./actions";
 
 interface Props {
   flightId: string;
   flight: FlightDetail;
+  /** An existing open return, if the pilot already handed this back. */
+  openReturn: WeightReturn | null;
 }
 
+type Verdict = "within" | "over";
+
 /**
- * Step 2 — Weight and Balance Review (Spec 4 §"The 8 steps / 2").
+ * Step 2 — Weight and Balance Review.
  *
- * Spec gate: pilot checks "I confirm the aircraft is within limits
- * for this flight." If any value exceeds limits the spec calls for
- * a RED WARNING + supervisor acknowledgment. For this MVP we don't
- * yet have the W&B math (lives with the elog Tab 3 logic), so we
- * render a placeholder W&B summary using the flight + aircraft
- * payload values that ARE on hand, and surface an "Over limits?"
- * toggle that switches the ack flow to require a supervisor name
- * + override note.
+ * Pass/fail. There is deliberately no override.
  *
- * The full W&B math (CG calc, fuel weight conversion, APE III gross
- * weight, ramp/takeoff/landing/zero-fuel limit checking) lands
- * alongside Spec 4 §"ELECTRONIC FLIGHT LOG / Tab 3 — Weight and
- * Balance" because the calculation engine + envelope graph is
- * shared between this step and the elog.
+ * This step used to offer an "over limits" toggle that collected a
+ * supervisor name and a justification note and then let the flight
+ * continue. The operator asked for that to go (bug report 8/24, restated
+ * 8/25) and they are right: nothing signs an aircraft above max gross
+ * weight into compliance under Part 135 — the weight comes off, or the
+ * flight doesn't go. Spec 4 called for supervisor acknowledgment; that
+ * part of the spec is wrong and the deviation is deliberate.
+ *
+ * On fail the pilot states the payload they CAN take, which is the number
+ * dispatch needs to re-plan the load, and the flight goes back to them.
+ * Step 2 stays open until dispatch resolves it — enforced server-side too,
+ * so a stale tab can't walk past it.
+ *
+ * The full W&B math (CG calc, fuel weight conversion, gross weight,
+ * ramp/takeoff/landing/zero-fuel limits) still lands with the electronic
+ * flight log Tab 3, which shares the calculation engine. Until then the
+ * pilot runs the numbers and records the verdict.
  */
-export function WeightAndBalanceStep({ flightId, flight }: Props) {
-  const [confirmed, setConfirmed] = useState(false);
-  const [overLimits, setOverLimits] = useState(false);
-  const [supervisorName, setSupervisorName] = useState("");
-  const [supervisorNote, setSupervisorNote] = useState("");
+export function WeightAndBalanceStep({ flightId, flight, openReturn }: Props) {
+  const [verdict, setVerdict] = useState<Verdict | null>(
+    openReturn ? "over" : null,
+  );
+  const [maxPayload, setMaxPayload] = useState(
+    openReturn ? String(Number(openReturn.max_payload_lbs)) : "",
+  );
+  const [note, setNote] = useState(openReturn?.note ?? "");
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [returned, setReturned] = useState<WeightReturn | null>(openReturn);
 
-  const overrideOk =
-    !overLimits ||
-    (supervisorName.trim().length > 0 && supervisorNote.trim().length > 10);
-  const canSubmit = confirmed && overrideOk && !pending;
+  const payloadLbs = Number(maxPayload);
+  const payloadValid =
+    maxPayload.trim() !== "" && Number.isFinite(payloadLbs) && payloadLbs > 0;
 
-  const handleSubmit = () => {
+  const canContinue = verdict === "within" && !pending;
+  const canReturn = verdict === "over" && payloadValid && !pending;
+
+  const handleContinue = () => {
     setError(null);
     startTransition(async () => {
       const result = await completeStepAction(flightId, 2, {
-        confirmed_within_limits: confirmed && !overLimits,
-        over_limits: overLimits,
-        supervisor_name: overLimits ? supervisorName.trim() : null,
-        supervisor_note: overLimits ? supervisorNote.trim() : null,
+        confirmed_within_limits: true,
         acknowledged_at: new Date().toISOString(),
       });
+      if (!result.ok) setError(result.error ?? "Couldn't save — try again.");
+    });
+  };
+
+  const handleReturn = () => {
+    setError(null);
+    startTransition(async () => {
+      const result = await returnFlightOverWeightAction(flightId, {
+        max_payload_lbs: payloadLbs,
+        note: note.trim() || null,
+      });
       if (!result.ok) {
-        setError(result.error ?? "Couldn't save — try again.");
+        setError(result.error ?? "Couldn't send — try again.");
+        return;
       }
+      setReturned(result.weightReturn ?? null);
     });
   };
 
@@ -71,11 +96,9 @@ export function WeightAndBalanceStep({ flightId, flight }: Props) {
 
       <div className="space-y-4 px-5 py-4 text-sm">
         <p className="text-muted-foreground">
-          Confirm the aircraft is within weight + balance limits for
-          this flight. The full W&amp;B calculation engine lands with
-          the electronic flight log (Tab 3); for now this step
-          surfaces the planned payload and asks for your
-          acknowledgment.
+          Run the weight &amp; balance for this flight and record the
+          result. If the aircraft is over limits it goes back to dispatch
+          to be re-planned — there is no override.
         </p>
 
         <div className="rounded-lg border border-border bg-background px-4 py-3 text-xs">
@@ -97,65 +120,101 @@ export function WeightAndBalanceStep({ flightId, flight }: Props) {
           </dl>
         </div>
 
-        <label className="flex items-start gap-2 rounded-md border border-border bg-card/40 px-3 py-2 text-xs text-foreground">
-          <input
-            type="checkbox"
-            checked={confirmed}
-            onChange={(e) => setConfirmed(e.target.checked)}
-            className="mt-0.5 h-4 w-4 cursor-pointer accent-status-blue"
+        {returned ? (
+          <ReturnedNotice
+            weightReturn={returned}
+            onRevise={() => setReturned(null)}
           />
-          <span>
-            I confirm the aircraft is within limits for this flight.
-          </span>
-        </label>
+        ) : (
+          <>
+            <fieldset className="space-y-2">
+              <legend className="mb-2 text-xs font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+                Weight &amp; balance result
+              </legend>
 
-        {/* Over-limits switch — when on, supervisor name + note required.
-            Spec 4: "If any value exceeds limits: RED WARNING — weight
-            exceeds limits. Contact dispatch. Over limits needs
-            supervisor acknowledgment." */}
-        <div className="rounded-md border border-status-yellow/40 bg-status-yellow/5 px-3 py-2 text-xs">
-          <label className="flex items-center gap-2 text-status-yellow">
-            <input
-              type="checkbox"
-              checked={overLimits}
-              onChange={(e) => setOverLimits(e.target.checked)}
-              className="h-4 w-4 cursor-pointer accent-status-yellow"
-            />
-            <span>
-              <strong className="uppercase tracking-[0.04em]">
-                Over limits
-              </strong>{" "}
-              — supervisor acknowledgment required
-            </span>
-          </label>
-
-          {overLimits && (
-            <div className="mt-3 space-y-2 border-t border-status-yellow/20 pt-3">
-              <Field
-                label="Supervisor name"
-                value={supervisorName}
-                onChange={setSupervisorName}
-                placeholder="Director of Ops or Chief Pilot"
+              <VerdictOption
+                name="wb-verdict"
+                checked={verdict === "within"}
+                onSelect={() => setVerdict("within")}
+                tone="green"
+                title="Within limits"
+                detail="The aircraft is within weight and balance for this flight as loaded."
               />
-              <Field
-                label="Override note (min 10 chars)"
-                value={supervisorNote}
-                onChange={setSupervisorNote}
-                placeholder="Why this exceedance is acceptable for the flight"
-                multiline
+              <VerdictOption
+                name="wb-verdict"
+                checked={verdict === "over"}
+                onSelect={() => setVerdict("over")}
+                tone="red"
+                title="Over limits — weight must come off"
+                detail="Return the flight to dispatch with the payload you can accept."
               />
-            </div>
-          )}
-        </div>
+            </fieldset>
 
-        <button
-          type="button"
-          disabled={!canSubmit}
-          onClick={handleSubmit}
-          className="inline-flex w-full items-center justify-center rounded-md bg-status-blue px-4 py-2.5 text-sm font-semibold text-white transition-opacity hover:brightness-110 disabled:opacity-50"
-        >
-          {pending ? "Saving…" : "Continue to Step 3 →"}
-        </button>
+            {verdict === "over" && (
+              <div className="space-y-3 rounded-md border border-status-red/40 bg-status-red/5 px-3 py-3">
+                <p className="text-xs text-status-red">
+                  This flight cannot depart as loaded. Dispatch will
+                  re-plan against the figure you give here.
+                </p>
+                <div>
+                  <label
+                    htmlFor="max-payload"
+                    className="mb-1 block text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground"
+                  >
+                    Max payload you can accept (lbs)
+                  </label>
+                  <input
+                    id="max-payload"
+                    type="number"
+                    inputMode="decimal"
+                    min="1"
+                    step="0.1"
+                    value={maxPayload}
+                    onChange={(e) => setMaxPayload(e.target.value)}
+                    placeholder="e.g. 1750"
+                    className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm text-foreground focus:border-status-red focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label
+                    htmlFor="wb-note"
+                    className="mb-1 block text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground"
+                  >
+                    Note for dispatch (optional)
+                  </label>
+                  <textarea
+                    id="wb-note"
+                    rows={2}
+                    value={note}
+                    onChange={(e) => setNote(e.target.value)}
+                    placeholder="Anything dispatch needs to know about the load"
+                    className="w-full rounded-md border border-border bg-background px-2 py-1 text-xs text-foreground focus:border-status-red focus:outline-none"
+                  />
+                </div>
+              </div>
+            )}
+
+            {verdict === "over" ? (
+              <button
+                type="button"
+                disabled={!canReturn}
+                onClick={handleReturn}
+                className="inline-flex w-full items-center justify-center rounded-md bg-status-red px-4 py-2.5 text-sm font-semibold text-white transition-opacity hover:brightness-110 disabled:opacity-50"
+              >
+                {pending ? "Sending…" : "Send back to dispatch"}
+              </button>
+            ) : (
+              <button
+                type="button"
+                disabled={!canContinue}
+                onClick={handleContinue}
+                className="inline-flex w-full items-center justify-center rounded-md bg-status-blue px-4 py-2.5 text-sm font-semibold text-white transition-opacity hover:brightness-110 disabled:opacity-50"
+              >
+                {pending ? "Saving…" : "Continue to Step 3 →"}
+              </button>
+            )}
+          </>
+        )}
 
         {error && (
           <p role="alert" className="text-xs text-status-red">
@@ -167,6 +226,88 @@ export function WeightAndBalanceStep({ flightId, flight }: Props) {
   );
 }
 
+function ReturnedNotice({
+  weightReturn,
+  onRevise,
+}: {
+  weightReturn: WeightReturn;
+  onRevise: () => void;
+}) {
+  return (
+    <div className="space-y-3 rounded-md border border-status-red/40 bg-status-red/5 px-4 py-3">
+      <p className="text-xs font-semibold uppercase tracking-[0.06em] text-status-red">
+        Returned to dispatch
+      </p>
+      <p className="text-sm text-foreground">
+        You can accept{" "}
+        <strong className="font-mono">
+          {Number(weightReturn.max_payload_lbs).toLocaleString()} lbs
+        </strong>
+        . Dispatch has to re-plan the load before this flight can continue.
+      </p>
+      {weightReturn.note && (
+        <p className="text-xs italic text-muted-foreground">
+          “{weightReturn.note}”
+        </p>
+      )}
+      <button
+        type="button"
+        onClick={onRevise}
+        className="text-xs font-semibold text-status-blue underline underline-offset-2 hover:brightness-110"
+      >
+        Revise the figure
+      </button>
+    </div>
+  );
+}
+
+function VerdictOption({
+  name,
+  checked,
+  onSelect,
+  tone,
+  title,
+  detail,
+}: {
+  name: string;
+  checked: boolean;
+  onSelect: () => void;
+  tone: "green" | "red";
+  title: string;
+  detail: string;
+}) {
+  const ring = checked
+    ? tone === "green"
+      ? "border-status-green/60 bg-status-green/5"
+      : "border-status-red/60 bg-status-red/5"
+    : "border-border bg-card/40";
+  return (
+    <label
+      className={`flex cursor-pointer items-start gap-3 rounded-md border px-3 py-2.5 transition ${ring}`}
+    >
+      <input
+        type="radio"
+        name={name}
+        checked={checked}
+        onChange={onSelect}
+        className={`mt-0.5 h-4 w-4 cursor-pointer ${
+          tone === "green" ? "accent-status-green" : "accent-status-red"
+        }`}
+      />
+      <span>
+        <span
+          className={`block text-xs font-semibold ${
+            tone === "green" ? "text-status-green" : "text-status-red"
+          }`}
+        >
+          {title}
+        </span>
+        <span className="block text-xs text-muted-foreground">{detail}</span>
+      </span>
+    </label>
+  );
+}
+
 function Item({ label, value }: { label: string; value: string }) {
   return (
     <div>
@@ -174,45 +315,6 @@ function Item({ label, value }: { label: string; value: string }) {
         {label}
       </dt>
       <dd className="m-0 font-mono text-foreground">{value}</dd>
-    </div>
-  );
-}
-
-function Field({
-  label,
-  value,
-  onChange,
-  placeholder,
-  multiline,
-}: {
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-  placeholder: string;
-  multiline?: boolean;
-}) {
-  return (
-    <div>
-      <label className="mb-1 block text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
-        {label}
-      </label>
-      {multiline ? (
-        <textarea
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          rows={2}
-          placeholder={placeholder}
-          className="w-full rounded-md border border-border bg-background px-2 py-1 text-xs text-foreground focus:border-status-yellow focus:outline-none"
-        />
-      ) : (
-        <input
-          type="text"
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder={placeholder}
-          className="w-full rounded-md border border-border bg-background px-2 py-1 text-xs text-foreground focus:border-status-yellow focus:outline-none"
-        />
-      )}
     </div>
   );
 }

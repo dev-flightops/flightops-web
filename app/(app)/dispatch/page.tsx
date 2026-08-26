@@ -2,6 +2,7 @@ import { CrewLegalityHints } from "@/components/dispatch/packet/crew-status-rows
 import { DispatchComplianceGate } from "@/components/dispatch/packet/dispatch-compliance-gate";
 import { parseAckedMelIds } from "@/components/dispatch/packet/mel-acks";
 import { OpenMelPanel } from "@/components/dispatch/packet/open-mel-panel";
+import { WeightReturnsPanel } from "@/components/dispatch/packet/weight-returns-panel";
 import {
   FlightDetailsPanel,
   PacketStyles,
@@ -21,6 +22,7 @@ import {
   getPicCompliance,
   listAircraft,
   listFlights,
+  listWeightReturns,
 } from "@/lib/api/ops";
 import { getRouteFreshness } from "@/lib/api/weather";
 import type {
@@ -110,6 +112,7 @@ export default async function DispatchPage({
     picOptions,
     picCompliance,
     crew,
+    weightReturns,
   ] = await Promise.all([
     listFlights({ onDate: today }).catch(() => ({ items: [], total: 0 })),
     listMyTenants().catch(() => ({ tenants: [] })),
@@ -122,6 +125,12 @@ export default async function DispatchPage({
     selectedId
       ? listFlightCrew(selectedId).catch(() => ({ items: [], has_pic: false }))
       : Promise.resolve({ items: [], has_pic: false }),
+    // Flights handed back over weight. Soft-fail like the crew roster —
+    // but note the consequence differs: a failure here hides flights that
+    // are already blocked server-side at preflight step 2, so nothing
+    // becomes dispatchable that shouldn't be. It just means dispatch has
+    // to hear about it by radio, as they do today.
+    listWeightReturns().catch(() => ({ items: [] })),
   ]);
 
   // M2-G-5 tail — parse ack state from URL. `warns_acked` is
@@ -198,6 +207,12 @@ export default async function DispatchPage({
   return (
     <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6">
       <PacketHeader tenantName={tenantName} flight={selectedFlight} />
+
+        {/* Held-back flights sit above the packet on purpose: each one is
+            already blocked at preflight step 2 and stays blocked until
+            dispatch re-plans the load. Renders nothing when the list is
+            empty. */}
+        <WeightReturnsPanel returns={weightReturns.items} />
       <PacketStyles />
 
       <div className="space-y-4">

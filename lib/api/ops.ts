@@ -51,6 +51,9 @@ import type {
   ReleaseResponse,
   StepCompletionRequest,
   StepCompletionResponse,
+  WeightReturn,
+  WeightReturnCreateRequest,
+  WeightReturnListResponse,
 } from "./types";
 
 export interface ListFlightsParams {
@@ -671,4 +674,40 @@ export async function deleteFlightLogLeg(
     `/ops/flight-logs/${logId}/legs/${legId}`,
     { method: "DELETE" },
   );
+}
+
+/** The flight's open weight return, or null when it is within limits. */
+export async function getWeightReturn(
+  flightId: string,
+): Promise<WeightReturn | null> {
+  return apiFetch<WeightReturn | null>(
+    `/ops/flights/${flightId}/weight-return`,
+  );
+}
+
+/** Hand a flight back to dispatch as loaded. Re-submitting revises the
+ *  figure rather than opening a second return. */
+export async function openWeightReturn(
+  flightId: string,
+  body: WeightReturnCreateRequest,
+): Promise<WeightReturn> {
+  return apiFetch<WeightReturn>(`/ops/flights/${flightId}/weight-return`, {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+}
+
+/** Dispatch has re-planned the load. Dispatcher/chief pilot/exec only. */
+export async function resolveWeightReturn(
+  flightId: string,
+): Promise<WeightReturn> {
+  return apiFetch<WeightReturn>(
+    `/ops/flights/${flightId}/weight-return/resolve`,
+    { method: "POST" },
+  );
+}
+
+/** Every flight currently held back over weight — dispatch's queue. */
+export async function listWeightReturns(): Promise<WeightReturnListResponse> {
+  return apiFetch<WeightReturnListResponse>("/ops/weight-returns");
 }

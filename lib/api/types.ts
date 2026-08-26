@@ -1862,3 +1862,29 @@ export interface RouteFreshness {
   acknowledgment_required: boolean;
   stations_requiring_acknowledgment: string[];
 }
+
+/** Preflight step 2 — a flight handed back to dispatch over weight.
+ *  Replaces the retired supervisor-override path; see the ops service
+ *  routes/weight_returns.py. */
+export interface WeightReturn {
+  id: string;
+  flight_id: string;
+  pilot_user_id: string;
+  pilot_name: string | null;
+  /** The payload the pilot CAN accept, in lbs — dispatch plans to this. */
+  max_payload_lbs: string;
+  note: string | null;
+  created_at: string;
+  resolved_at: string | null;
+  resolved_by_user_id: string | null;
+  is_open: boolean;
+}
+
+export interface WeightReturnCreateRequest {
+  max_payload_lbs: number;
+  note?: string | null;
+}
+
+export interface WeightReturnListResponse {
+  items: WeightReturn[];
+}
