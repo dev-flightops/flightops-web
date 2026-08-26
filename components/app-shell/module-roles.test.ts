@@ -32,12 +32,76 @@ describe("the client's two examples", () => {
     expect(idsFor(["exec_admin"])).toContain("reservations");
   });
 
-  // The second example — "reservations don't need to see flight ops" —
-  // is not expressible: there is no reservations-agent role, only
-  // dispatcher, and a dispatcher needs flight ops. This test pins the
-  // current (correct) behaviour so the gap stays visible.
   it("keeps operations visible to dispatchers", () => {
     expect(idsFor(["dispatcher"])).toContain("operations");
+  });
+});
+
+describe("reservations_agent — the second half of the request", () => {
+  // "Reservations don't need to see flight ops." Previously unbuildable:
+  // the nearest role was dispatcher, who needs flight ops. Now it has its
+  // own role, and these tests are what "don't need to see flight ops"
+  // actually means in the nav.
+  const AGENT = ["reservations_agent"];
+
+  it("sees reservations", () => {
+    expect(idsFor(AGENT)).toContain("reservations");
+  });
+
+  it("sees every module inside reservations", () => {
+    const dept = deptById("reservations");
+    expect(visibleModules(dept, AGENT)).toHaveLength(dept.children.length);
+  });
+
+  it("gets Flight Following and nothing else from operations", () => {
+    const ops = deptById("operations");
+    const ids = visibleModules(ops, AGENT).map((m) => m.id);
+    expect(ids).toEqual(["flight-following"]);
+  });
+
+  it("cannot reach the release desk, crew or currency", () => {
+    const ops = deptById("operations");
+    const ids = visibleModules(ops, AGENT).map((m) => m.id);
+    for (const closed of [
+      "dispatch",
+      "schedule",
+      "weather",
+      "crew",
+      "currency",
+      "flight-log",
+      "roster",
+      "pilot-history",
+      "ramp-ops",
+      "eod",
+    ]) {
+      expect(ids, `agent can see ${closed}`).not.toContain(closed);
+    }
+  });
+
+  it("sees no maintenance, ground ops, HR, admin or settings", () => {
+    const ids = idsFor(AGENT);
+    for (const closed of ["maintenance", "ground-ops", "hr", "admin", "settings", "crew"]) {
+      expect(ids, `agent can see ${closed}`).not.toContain(closed);
+    }
+  });
+
+  it("still gets safety and academy like everyone else", () => {
+    expect(idsFor(AGENT)).toContain("safety");
+    expect(idsFor(AGENT)).toContain("academy");
+  });
+});
+
+describe("operations is exhaustively listed", () => {
+  // Once reservations_agent joined the department for Flight Following
+  // alone, any module without its own entry would have been handed to
+  // them by inheritance. This makes that omission impossible.
+  it("names every operations module in MODULE_ROLES", () => {
+    for (const mod of deptById("operations").children) {
+      expect(
+        MODULE_ROLES[mod.id],
+        `operations module ${mod.id} has no explicit roles`,
+      ).toBeDefined();
+    }
   });
 });
 

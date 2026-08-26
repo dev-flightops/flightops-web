@@ -418,10 +418,14 @@ export const DEPARTMENT_ROLES: Partial<Record<DepartmentId, readonly Role[]>> = 
     "crew_member",
     "safety_officer",
     "ground_ops",
+    // Admitted to the department for Flight Following ONLY — every other
+    // module below names its own roles and leaves the agent out. See the
+    // note above MODULE_ROLES.
+    "reservations_agent",
   ],
   // Booking, manifests, customers, charter, rewards. Explicitly not
   // pilots or crew — the client's own example.
-  reservations: ["exec_admin", "dispatcher"],
+  reservations: ["exec_admin", "dispatcher", "reservations_agent"],
   "ground-ops": ["exec_admin", "dispatcher", "ground_ops"],
   maintenance: ["exec_admin", "chief_pilot", "maintenance", "safety_officer"],
   crew: ["exec_admin", "chief_pilot", "pilot", "crew_member"],
@@ -444,6 +448,46 @@ export const DEPARTMENT_ROLES: Partial<Record<DepartmentId, readonly Role[]>> = 
  * department's. Anything absent inherits the department.
  */
 export const MODULE_ROLES: Record<string, readonly Role[]> = {
+  // Operations is listed exhaustively rather than half-explicit. A module
+  // with no entry here inherits its department, and once reservations_agent
+  // was admitted to Operations for Flight Following, inheritance would have
+  // handed them Weather, Crew, Roster and the rest by omission. Naming every
+  // module makes the omission impossible.
+  //
+  // The one thing the agent gets: a read-only board, so "where is my
+  // flight?" does not become a phone call to dispatch. Everything else in
+  // flight ops stays closed to them, per the client's 8/25 request.
+  "flight-following": [
+    "exec_admin",
+    "dispatcher",
+    "chief_pilot",
+    "pilot",
+    "crew_member",
+    "safety_officer",
+    "ground_ops",
+    "reservations_agent",
+  ],
+  weather: [
+    "exec_admin",
+    "dispatcher",
+    "chief_pilot",
+    "pilot",
+    "crew_member",
+    "safety_officer",
+    "ground_ops",
+  ],
+  crew: ["exec_admin", "dispatcher", "chief_pilot", "pilot", "crew_member"],
+  roster: ["exec_admin", "dispatcher", "chief_pilot", "pilot", "crew_member"],
+  "pilot-history": ["exec_admin", "chief_pilot", "pilot", "crew_member"],
+  "village-wx": [
+    "exec_admin",
+    "dispatcher",
+    "chief_pilot",
+    "pilot",
+    "crew_member",
+    "ground_ops",
+  ],
+  intelligence: ["exec_admin", "dispatcher", "chief_pilot"],
   // Station-side work that happens to live under Operations.
   "ramp-ops": ["exec_admin", "dispatcher", "ground_ops", "chief_pilot"],
   eod: ["exec_admin", "dispatcher", "ground_ops", "chief_pilot"],

@@ -40,11 +40,49 @@ describe("the three home surfaces agree", () => {
     expect(settings?.roles).toEqual(["exec_admin"]);
   });
 
+  it("keeps \"my\" links to people who actually fly", () => {
+    // A reservations agent has no logbook, no duty history and no flight
+    // history. These leaked through on the first pass because the tiles
+    // were gated and the shortcut strip was not.
+    for (const label of ["My Flight History", "My Duty History", "Flight Log"]) {
+      expect(
+        seesLink(label, "reservations_agent"),
+        `${label} offered to a reservations agent`,
+      ).toBe(false);
+      expect(seesLink(label, "pilot"), `${label} hidden from a pilot`).toBe(true);
+    }
+  });
+
   it("keeps EOD consistent with the operations nav", () => {
     const eod = HOME_QUICK_LINKS.find((l) => l.href === "/eod");
     expect(eod?.roles).toContain("ground_ops");
     expect(eod?.roles).toContain("dispatcher");
     expect(eod?.roles).not.toContain("pilot");
+  });
+});
+
+describe("reservations_agent tiles", () => {
+  const AGENT = "reservations_agent";
+
+  it("gets reservations and the read-only board", () => {
+    expect(seesTile("reservations", AGENT)).toBe(true);
+    expect(seesTile("flight-following", AGENT)).toBe(true);
+  });
+
+  it("gets nothing else from flight ops or the back office", () => {
+    for (const closed of [
+      "dispatch",
+      "flight-crew",
+      "maintenance",
+      "ground-ops",
+      "hr",
+      "invoicing",
+      "housing",
+      "compliance",
+      "fleetbrain",
+    ]) {
+      expect(seesTile(closed, AGENT), `agent sees ${closed}`).toBe(false);
+    }
   });
 });
 

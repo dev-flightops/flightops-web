@@ -27,6 +27,7 @@
 export const ROLES = [
   "exec_admin",
   "dispatcher",
+  "reservations_agent",
   "chief_pilot",
   "maintenance",
   "ground_ops",

@@ -18,6 +18,7 @@ describe("roles", () => {
         "ground_ops",
         "maintenance",
         "pilot",
+        "reservations_agent",
         "safety_officer",
       ].sort(),
     );

@@ -232,9 +232,17 @@ export const HOME_MODULE_ROLES: Record<string, readonly Role[]> = {
     "dispatcher",
   ],
   // The client's own example: pilots don't need reservations.
-  reservations: ["exec_admin", "dispatcher"],
+  reservations: ["exec_admin", "dispatcher", "reservations_agent"],
   dispatch: ["exec_admin", "dispatcher", "chief_pilot"],
-  "flight-following": ["exec_admin", "dispatcher", "chief_pilot", "pilot"],
+  // Read-only board so an agent can answer "where is my flight?" without
+  // interrupting dispatch. The tile is the only flight-ops surface they get.
+  "flight-following": [
+    "exec_admin",
+    "dispatcher",
+    "chief_pilot",
+    "pilot",
+    "reservations_agent",
+  ],
   maintenance: ["exec_admin", "chief_pilot", "maintenance", "safety_officer"],
   "ground-ops": ["exec_admin", "dispatcher", "ground_ops"],
   hr: ["exec_admin"],
