@@ -7,8 +7,10 @@ import { ChevronRight, Home } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 import {
+  canSeeDepartment,
   departmentForPath,
   moduleStatusHint,
+  visibleModules,
   type ModuleEntry,
 } from "./modules";
 
@@ -20,10 +22,17 @@ import {
  * a leading Home breadcrumb chevron, then sibling-module chips for the
  * department the user is currently inside.
  */
-export function DepartmentNav() {
+export function DepartmentNav({ roles = [] }: { roles?: readonly string[] }) {
   const pathname = usePathname() ?? "/";
   const dept = departmentForPath(pathname);
   if (!dept) return null;
+  // A user who reached a department they shouldn't see gets no sibling
+  // nav rather than a filtered one — the page itself is the backend's
+  // problem, but we should not offer to take them further in.
+  if (!canSeeDepartment(dept, roles)) return null;
+
+  const modules = visibleModules(dept, roles);
+  if (modules.length === 0) return null;
 
   return (
     <div className="border-t border-border bg-muted">
@@ -47,7 +56,7 @@ export function DepartmentNav() {
           aria-label={`${dept.label} modules`}
           className="flex flex-1 items-center gap-0.5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         >
-          {dept.children.map((module) => (
+          {modules.map((module) => (
             <DepartmentNavItem
               key={module.id}
               module={module}

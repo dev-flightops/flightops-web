@@ -31,6 +31,12 @@ import { TopBarClockButton } from "./top-bar-clock-button";
 export interface HeaderActionsProps {
   email: string;
   fullName?: string | null;
+  /** When false the gear is hidden. /settings is entirely company
+   *  configuration — users, SSO, billing, branding, fleet — with no
+   *  personal-profile page behind it, so most roles have nothing to do
+   *  there (client request 8/25). Defaults true so callers that have not
+   *  been updated keep the old behaviour. */
+  showSettings?: boolean;
   signOutAction: () => Promise<void>;
   /** Initial duty state for the top-bar Clock In/Out pill. Null when the
    *  ops service is unreachable — the pill falls back to the disabled
@@ -49,6 +55,7 @@ export interface HeaderActionsProps {
 export function HeaderActions({
   email,
   fullName,
+  showSettings = true,
   signOutAction,
   initialDuty,
   clockInAction,
@@ -161,6 +168,7 @@ export function HeaderActions({
           old disabled placeholder is now a real link to the /settings
           landing. Matches legacy where the gear is the always-visible
           way back to tenant config from anywhere in the app. */}
+      {showSettings && (
       <Link
         href="/settings"
         title="Settings"
@@ -172,6 +180,7 @@ export function HeaderActions({
         </svg>
         <span className="hidden sm:inline">Settings</span>
       </Link>
+      )}
 
       {/* Sign out — the only fully wired action in the cluster today. */}
       <form action={signOutAction}>
