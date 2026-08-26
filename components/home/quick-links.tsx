@@ -12,6 +12,8 @@ import { cn } from "@/lib/utils";
  * legacy is highlighted gold — preserved here via `accent: "gold"`.
  */
 
+import type { Role } from "@/lib/roles";
+
 import type { ModuleStatus } from "./module-catalog";
 import { moduleStatusHint } from "./module-catalog";
 
@@ -21,13 +23,32 @@ export interface QuickLink {
   status: ModuleStatus;
   /** Optional color emphasis. Currently only "gold" used (for Settings). */
   accent?: "gold";
+  /** Roles that see this link. Absent means everyone. Kept in step with
+   *  DEPARTMENT_ROLES / MODULE_ROLES in components/app-shell/modules.ts —
+   *  a shortcut into a module the nav hides is the same bug twice. */
+  roles?: readonly Role[];
 }
 
 // Order matches legacy peregrineflight's /home dash-strip verbatim.
 export const HOME_QUICK_LINKS: QuickLink[] = [
-  { label: "EOD Closeout", href: "/eod", status: "live" },
-  { label: "Business Intelligence", href: "/reports/executive/bi", status: "m4" },
-  { label: "Invoices", href: "/invoicing/", status: "m4" },
+  {
+    label: "EOD Closeout",
+    href: "/eod",
+    status: "live",
+    roles: ["exec_admin", "dispatcher", "ground_ops", "chief_pilot"],
+  },
+  {
+    label: "Business Intelligence",
+    href: "/reports/executive/bi",
+    status: "m4",
+    roles: ["exec_admin"],
+  },
+  {
+    label: "Invoices",
+    href: "/invoicing/",
+    status: "m4",
+    roles: ["exec_admin"],
+  },
   {
     label: "My Flight History",
     href: "/flight-crew/history?tab=flight",
@@ -39,7 +60,16 @@ export const HOME_QUICK_LINKS: QuickLink[] = [
     status: "live",
   },
   { label: "Flight Log", href: "/flight-crew/elog", status: "live" },
-  { label: "Settings", href: "/settings", status: "live", accent: "gold" },
+  // Settings is entirely company configuration — users, SSO, billing,
+  // branding, fleet. There is no personal-profile page behind it, so
+  // restricting it strands nobody.
+  {
+    label: "Settings",
+    href: "/settings",
+    status: "live",
+    accent: "gold",
+    roles: ["exec_admin"],
+  },
 ];
 
 export function QuickLinks({ links }: { links: QuickLink[] }) {

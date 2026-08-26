@@ -13,9 +13,14 @@ import { DepartmentNav } from "./department-nav";
 export function AppShellHeader({
   brand,
   actionsSlot,
+  roles = [],
 }: {
   brand: string;
   actionsSlot?: ReactNode;
+  /** Session roles, threaded from the server layout. Passed as a prop
+   *  rather than read here: importing next-auth into a presentational
+   *  component drags next/server in and breaks the vitest run. */
+  roles?: readonly string[];
 }) {
   const pathname = usePathname();
   const isHome = pathname === "/home" || pathname === "/home/";
@@ -37,7 +42,7 @@ export function AppShellHeader({
         {actionsSlot}
       </div>
 
-      <DepartmentNav />
+      <DepartmentNav roles={roles} />
     </header>
   );
 }

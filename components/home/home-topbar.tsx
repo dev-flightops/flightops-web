@@ -18,24 +18,33 @@ export function HomeTopBar({
   brand,
   phone,
   actionsSlot,
+  showOpsChip = true,
 }: {
   brand: string;
   /** Display phone number (e.g. "1 (555) 000-0000"). Hidden below lg. */
   phone?: string;
   /** Right-side actions cluster — pass the default HeaderActions here. */
   actionsSlot?: ReactNode;
+  /** When false the red "Ops" chip is hidden. It deep-links into
+   *  Reservations, which most roles do not have (client request 8/25) —
+   *  offering it to a pilot sends them straight into the one module we
+   *  just took off their home grid. */
+  showOpsChip?: boolean;
 }) {
   return (
     <div className="bg-[#0a0a0a] text-white">
       <div className="mx-auto flex h-[52px] max-w-[100rem] items-stretch">
-        {/* Primary red chip — "Book"-style placement. Clicks into ops. */}
-        <Link
-          href="/reservations/"
-          className="flex items-center gap-2 bg-[#AB2429] px-4 text-[0.8rem] font-semibold text-white transition-colors hover:bg-[#8f1e22] sm:px-6"
-        >
-          <SearchIcon />
-          <span>Ops</span>
-        </Link>
+        {/* Primary red chip — "Book"-style placement. Clicks into
+         *  Reservations, so it only renders for roles that have it. */}
+        {showOpsChip && (
+          <Link
+            href="/reservations/"
+            className="flex items-center gap-2 bg-[#AB2429] px-4 text-[0.8rem] font-semibold text-white transition-colors hover:bg-[#8f1e22] sm:px-6"
+          >
+            <SearchIcon />
+            <span>Ops</span>
+          </Link>
+        )}
 
         {/* Brand text — links back to /home, matches the app-shell's usual
          *  brand affordance so the click target stays consistent. */}

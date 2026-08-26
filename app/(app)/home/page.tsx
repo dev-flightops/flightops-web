@@ -13,7 +13,10 @@ import {
   HOME_QUICK_LINKS,
   QuickLinks,
 } from "@/components/home/quick-links";
-import { HOME_MODULES } from "@/components/home/module-catalog";
+import {
+  HOME_MODULES,
+  HOME_MODULE_ROLES,
+} from "@/components/home/module-catalog";
 import { listMyTenants } from "@/lib/api/auth";
 import { getCurrentDuty, getFlightStats } from "@/lib/api/ops";
 import type { CurrentDutyResponse } from "@/lib/api/types";
@@ -104,7 +107,22 @@ export default async function HomePage() {
   const visibleModules = HOME_MODULES.filter((m) => {
     if (m.id === "admin" && !hasAdminAccess) return false;
     if (m.roleGate && !roleSet.has(m.roleGate)) return false;
+    // Role-scoped tiles (client request 8/25). Fails open on an empty
+    // role list so a session that failed to carry roles shows a cluttered
+    // home rather than an empty one; the pages themselves still gate.
+    const allowed = HOME_MODULE_ROLES[m.id];
+    if (allowed && sessionRoles.length > 0) {
+      if (!sessionRoles.some((r) => (allowed as readonly string[]).includes(r)))
+        return false;
+    }
     return true;
+  });
+
+  // Shortcuts follow the same matrix as the tiles and the nav. Fails
+  // open on an empty role list for the same reason.
+  const visibleQuickLinks = HOME_QUICK_LINKS.filter((l) => {
+    if (!l.roles || sessionRoles.length === 0) return true;
+    return sessionRoles.some((r) => (l.roles as readonly string[]).includes(r));
   });
 
   const airborne = snapshot.airborneCount;
@@ -135,6 +153,9 @@ export default async function HomePage() {
     <HeaderActions
       email={userEmail}
       fullName={session?.user?.name ?? null}
+      showSettings={
+        sessionRoles.length === 0 || sessionRoles.includes("exec_admin")
+      }
       signOutAction={signOutAction}
       initialDuty={initialDuty}
       clockInAction={clockInAction}
@@ -151,6 +172,7 @@ export default async function HomePage() {
         brand={currentTenant?.name ?? "FlightOps"}
         phone="+1 (555) 000-0000"
         actionsSlot={actionsSlot}
+        showOpsChip={visibleModules.some((m) => m.id === "reservations")}
       />
       <HomeHero
         tenantName={currentTenant?.name ?? "FlightOps"}
@@ -194,7 +216,7 @@ export default async function HomePage() {
           </div>
         </section>
 
-        <QuickLinks links={HOME_QUICK_LINKS} />
+        <QuickLinks links={visibleQuickLinks} />
       </div>
     </div>
   );
