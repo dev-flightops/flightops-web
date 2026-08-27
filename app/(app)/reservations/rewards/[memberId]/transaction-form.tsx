@@ -4,8 +4,8 @@ import { useActionState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 import {
-  QUYANA_TRANSACTION_TYPE_LABELS,
-  QUYANA_TRANSACTION_TYPES,
+  REWARDS_TRANSACTION_TYPE_LABELS,
+  REWARDS_TRANSACTION_TYPES,
   type RewardsTransactionType,
 } from "@/lib/api/rewards";
 
@@ -46,10 +46,10 @@ export function TransactionForm({ memberId }: { memberId: string }) {
           <option value="" disabled>
             Select…
           </option>
-          {(QUYANA_TRANSACTION_TYPES as readonly RewardsTransactionType[]).map(
+          {(REWARDS_TRANSACTION_TYPES as readonly RewardsTransactionType[]).map(
             (t) => (
               <option key={t} value={t}>
-                {QUYANA_TRANSACTION_TYPE_LABELS[t]}
+                {REWARDS_TRANSACTION_TYPE_LABELS[t]}
               </option>
             ),
           )}

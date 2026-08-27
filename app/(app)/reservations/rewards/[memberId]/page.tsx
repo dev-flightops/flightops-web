@@ -5,8 +5,8 @@ import { getCompanyProfile } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
 import {
   getRewardsMember,
-  QUYANA_TIER_LABELS,
-  QUYANA_TRANSACTION_TYPE_LABELS,
+  REWARDS_TIER_LABELS,
+  REWARDS_TRANSACTION_TYPE_LABELS,
   type RewardsMemberDetailResponse,
   type RewardsTier,
 } from "@/lib/api/rewards";
@@ -182,7 +182,7 @@ export default async function RewardsMemberDetailPage({
                         {formatTimestamp(t.created_at)}
                       </td>
                       <td className="whitespace-nowrap px-4 py-3 text-xs">
-                        {QUYANA_TRANSACTION_TYPE_LABELS[t.transaction_type]}
+                        {REWARDS_TRANSACTION_TYPE_LABELS[t.transaction_type]}
                       </td>
                       <td
                         className={
@@ -225,7 +225,7 @@ function TierBadge({ tier }: { tier: RewardsTier }) {
         cls
       }
     >
-      {QUYANA_TIER_LABELS[tier]}
+      {REWARDS_TIER_LABELS[tier]}
     </span>
   );
 }

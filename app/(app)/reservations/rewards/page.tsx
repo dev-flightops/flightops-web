@@ -4,7 +4,7 @@ import { getCompanyProfile } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
 import {
   listRewardsMembers,
-  QUYANA_TIER_LABELS,
+  REWARDS_TIER_LABELS,
   type RewardsMemberRow,
   type RewardsTier,
 } from "@/lib/api/rewards";
@@ -164,7 +164,7 @@ function TierBadge({ tier }: { tier: RewardsTier }) {
         cls
       }
     >
-      {QUYANA_TIER_LABELS[tier]}
+      {REWARDS_TIER_LABELS[tier]}
     </span>
   );
 }
