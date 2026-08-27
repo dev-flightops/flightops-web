@@ -129,7 +129,11 @@ export function SpotlightSearch() {
         >
           <DialogTitle className="sr-only">Spotlight search</DialogTitle>
 
-          <div className="flex items-center gap-2 border-b border-border px-4 py-3">
+          {/* pr-12 reserves the corner for DialogContent's own close button,
+              which is absolutely positioned at right-4 top-4 and so takes no
+              flex space. Without it the input text and the "Searching…"
+              indicator run underneath the X. */}
+          <div className="flex items-center gap-2 border-b border-border py-3 pl-4 pr-12">
             <SearchIcon className="text-muted-foreground" />
             <input
               ref={inputRef}
@@ -147,9 +151,12 @@ export function SpotlightSearch() {
                 Searching…
               </span>
             ) : null}
-            <kbd className="rounded border border-border bg-card px-1.5 py-0.5 font-mono text-[0.6rem] text-muted-foreground">
-              ESC
-            </kbd>
+            {/* No ESC badge here. The dialog already renders a close button
+                in this exact corner, so the two sat on top of each other —
+                and the footer below already says "Esc close", which made
+                three ways to be told the same thing. The X stays because it
+                is the only one of the three a mouse user can actually
+                click. */}
           </div>
 
           <div className="max-h-[60vh] overflow-y-auto">
