@@ -59,3 +59,17 @@ export function formatZuluDateTime(iso: string): string {
   });
   return `${date}, ${formatZulu(iso)}`;
 }
+
+/** "Aug 7, 2026" — a UTC calendar date, for record dates that carry no
+ *  meaningful time of day. Pinned so the day does not shift with the
+ *  host's zone. */
+export function formatZuluDate(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  return d.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    timeZone: "UTC",
+  });
+}

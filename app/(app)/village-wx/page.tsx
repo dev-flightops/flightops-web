@@ -1,4 +1,5 @@
 import { AddAirportDialog } from "@/components/village-wx/add-airport-dialog";
+import { formatZuluDateTime } from "@/lib/format/flight-time";
 import { AddReportDialog } from "@/components/village-wx/add-report-dialog";
 import { ApiError } from "@/lib/api/client";
 import type {
@@ -398,18 +399,12 @@ function formatWind(r: VillageWeatherReportResponse): string | null {
   return `Wind ${dir}/${speed}${gust}`;
 }
 
-function formatStamp(iso: string): string {
-  try {
-    return new Date(iso).toLocaleString(undefined, {
-      month: "2-digit",
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  } catch {
-    return iso;
-  }
-}
+// Observation times are Zulu. That is the convention every METAR and TAF
+// on this page is already published in, and a weather stamp rendered in
+// some other clock — silently, with no suffix — is the one thing on a
+// weather board you cannot afford. The version this replaced passed no
+// timeZone, so on a server component it rendered in the host's.
+const formatStamp = formatZuluDateTime;
 
 function formatAge(ms: number): string {
   if (ms < 60_000) return "<1m";

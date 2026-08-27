@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { formatBoth, formatLocal, formatZulu, formatZuluDateTime } from "./flight-time";
+import { formatBoth, formatLocal, formatZulu, formatZuluDateTime, formatZuluDate } from "./flight-time";
 
 describe("formatZulu", () => {
   it("formats midday UTC as HH:MMz", () => {
@@ -58,5 +58,25 @@ describe("formatZuluDateTime", () => {
 
   it("returns the input rather than 'Invalid Date' on junk", () => {
     expect(formatZuluDateTime("nonsense")).toBe("nonsense");
+  });
+});
+
+describe("formatZuluDate", () => {
+  it("names the UTC calendar day", () => {
+    expect(formatZuluDate("2026-08-07T09:00:00Z")).toBe("Aug 7, 2026");
+  });
+
+  it("does not slip to the previous day near midnight UTC", () => {
+    // 00:13Z is still Aug 25 in Anchorage. A certificate expiry has to
+    // name the day it actually expires, not the reader's day.
+    expect(formatZuluDate("2026-08-26T00:13:00Z")).toBe("Aug 26, 2026");
+  });
+
+  it("does not slip forward from the other side either", () => {
+    expect(formatZuluDate("2026-08-26T23:47:00Z")).toBe("Aug 26, 2026");
+  });
+
+  it("returns the input rather than 'Invalid Date' on junk", () => {
+    expect(formatZuluDate("nonsense")).toBe("nonsense");
   });
 });

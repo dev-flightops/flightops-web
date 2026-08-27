@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { formatZuluDate } from "@/lib/format/flight-time";
 import { hasAnyRole, roleGate } from "@/lib/roles";
 
 import { auth } from "@/auth";
@@ -232,10 +233,7 @@ function _expiryClass(
   };
 }
 
-function _fmtDate(iso: string): string {
-  return new Date(iso).toLocaleDateString(undefined, {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-}
+// A certificate's valid-until date is a compliance fact. Pinned to UTC so
+// it names the same day whatever host renders it — the version this
+// replaced took the host's zone.
+const _fmtDate = formatZuluDate;

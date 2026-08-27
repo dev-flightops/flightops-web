@@ -182,9 +182,12 @@ function _certStatus(
 }
 
 function _fmtDate(iso: string): string {
-  return new Date(iso).toLocaleDateString(undefined, {
+  // Pinned to UTC: a certificate's dates are compliance facts and must
+  // name the same day whatever host renders them.
+  return new Date(iso).toLocaleDateString("en-US", {
     month: "long",
     day: "numeric",
     year: "numeric",
+    timeZone: "UTC",
   });
 }
