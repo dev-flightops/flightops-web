@@ -5,6 +5,7 @@ import {
   formatIsoDay,
   isValidIsoDay,
   isoDayDiff,
+  isoDayToUtcDate,
   shiftIsoDay,
   todayIsoDay,
 } from "../iso-day";
@@ -126,5 +127,49 @@ describe("todayIsoDay", () => {
     if (instant.getTimezoneOffset() > 0) {
       expect(todayIsoDay(instant)).toBe("2026-08-19");
     }
+  });
+});
+
+describe("isoDayToUtcDate", () => {
+  it("anchors the day at UTC midnight", () => {
+    const d = isoDayToUtcDate("2026-08-26")!;
+    expect(d.toISOString()).toBe("2026-08-26T00:00:00.000Z");
+  });
+
+  it("renders the day it was given, in every host zone", () => {
+    // The bug this exists to prevent: `new Date("2026-08-26T00:00:00")`
+    // parses in the host's zone, and the pages then format with
+    // timeZone: "UTC". Parsed local, rendered UTC — so a host east of
+    // Greenwich rendered the day before. A pay event dated the 26th
+    // displayed as the 25th.
+    const rendered = isoDayToUtcDate("2026-08-26")!.toLocaleDateString(
+      "en-US",
+      { month: "short", day: "2-digit", year: "numeric", timeZone: "UTC" },
+    );
+    expect(rendered).toBe("Aug 26, 2026");
+  });
+
+  it("round-trips every day of a month", () => {
+    for (let day = 1; day <= 31; day += 1) {
+      const iso = `2026-01-${String(day).padStart(2, "0")}`;
+      expect(isoDayToUtcDate(iso)!.toISOString().slice(0, 10)).toBe(iso);
+    }
+  });
+
+  it("survives the DST boundaries that trip local parsing", () => {
+    for (const iso of ["2026-03-08", "2026-11-01", "2026-10-31"]) {
+      expect(isoDayToUtcDate(iso)!.toISOString().slice(0, 10)).toBe(iso);
+    }
+  });
+
+  it("returns null rather than an Invalid Date", () => {
+    // Callers render a dash on null. Returning an invalid Date would
+    // print "Invalid Date" into a payroll table.
+    expect(isoDayToUtcDate(undefined)).toBeNull();
+    expect(isoDayToUtcDate(null)).toBeNull();
+    expect(isoDayToUtcDate("")).toBeNull();
+    expect(isoDayToUtcDate("2026-02-30")).toBeNull();
+    expect(isoDayToUtcDate("not-a-date")).toBeNull();
+    expect(isoDayToUtcDate("2026-08-26T00:00:00")).toBeNull();
   });
 });

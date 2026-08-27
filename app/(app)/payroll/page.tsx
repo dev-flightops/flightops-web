@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { isoDayToUtcDate } from "@/lib/iso-day";
 
 import { ApiError } from "@/lib/api/client";
 import {
@@ -61,7 +62,11 @@ function formatHours(hours: string | null): string {
 }
 
 function formatEventDate(iso: string): string {
-  const d = new Date(`${iso}T00:00:00`);
+  // Parsed as UTC to match the UTC formatter below. Without that the
+  // string parses in the host's zone and a date east of Greenwich
+  // renders as the day before — see lib/iso-day.ts.
+  const d = isoDayToUtcDate(iso);
+  if (!d) return "—";
   return d.toLocaleDateString("en-US", {
     month: "short",
     day: "2-digit",

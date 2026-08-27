@@ -103,3 +103,26 @@ export function describeIsoDay(iso: string, todayIso: string): string {
       return label;
   }
 }
+
+/**
+ * Turn a "YYYY-MM-DD" into a Date anchored at UTC midnight.
+ *
+ * For callers that need a Date to hand to toLocaleDateString with their
+ * own format options. Pair it with `timeZone: "UTC"` on the formatter and
+ * the calendar date survives end to end.
+ *
+ * The reason this exists: `new Date("2026-08-26T00:00:00")` — no trailing
+ * Z — parses in the RUNTIME's zone, and several pages then formatted the
+ * result with `timeZone: "UTC"`. Parsed local, rendered UTC. On a server
+ * east of Greenwich that renders the day before: a pay event dated the
+ * 26th displayed as the 25th. It happens to be correct on a UTC host,
+ * which is why it survived.
+ *
+ * Returns null on anything that is not a real calendar date, so callers
+ * can render a dash rather than "Invalid Date".
+ */
+export function isoDayToUtcDate(iso: string | null | undefined): Date | null {
+  if (!isValidIsoDay(iso)) return null;
+  const m = ISO_DAY.exec(iso)!;
+  return new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3])));
+}
