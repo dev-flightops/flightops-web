@@ -3,22 +3,14 @@
 import { useActionState, useState } from "react";
 
 import type { HazardStatus } from "@/lib/api/safety";
+import {
+  NEXT_STATUS_OPTIONS,
+  defaultNextStatus,
+} from "@/lib/safety/hazard-transitions";
 
 import { triageHazardAction, type TriageActionState } from "./actions";
 
 const _initial: TriageActionState = { status: "idle" };
-
-/**
- * Which transitions the UI offers from each current status. Mirrors
- * `_STATUS_TRANSITIONS` in services/safety/app/routes/hazards.py — if
- * you widen the backend map, widen this one to match.
- */
-const NEXT_STATUS_OPTIONS: Record<HazardStatus, HazardStatus[]> = {
-  submitted: ["triaged", "closed"],
-  triaged: ["in_progress", "closed"],
-  in_progress: ["closed"],
-  closed: [],
-};
 
 const STATUS_ACTION_LABELS: Record<HazardStatus, string> = {
   submitted: "Move back to Submitted",
@@ -39,7 +31,7 @@ export function TriageControls({
     _initial,
   );
   const [nextStatus, setNextStatus] = useState<HazardStatus>(
-    NEXT_STATUS_OPTIONS[currentStatus][0] ?? currentStatus,
+    defaultNextStatus(currentStatus),
   );
   const options = NEXT_STATUS_OPTIONS[currentStatus];
   if (options.length === 0) return null;

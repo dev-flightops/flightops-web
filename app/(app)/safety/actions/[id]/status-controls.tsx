@@ -3,16 +3,15 @@
 import { useActionState, useState } from "react";
 
 import { type CapaStatus } from "@/lib/api/safety";
+import {
+  NEXT_STATUS_OPTIONS,
+  defaultNextStatus,
+  requiresClosureReason,
+} from "@/lib/safety/capa-transitions";
 
 import { type StatusFormState, updateStatusAction } from "./actions";
 
 const _initial: StatusFormState = { status: "idle" };
-
-const NEXT_STATUS_OPTIONS: Record<CapaStatus, CapaStatus[]> = {
-  open: ["in_progress", "closed"],
-  in_progress: ["closed"],
-  closed: [],
-};
 
 const STATUS_ACTION_LABELS: Record<CapaStatus, string> = {
   open: "Back to Open",
@@ -33,7 +32,7 @@ export function StatusControls({
   );
   const options = NEXT_STATUS_OPTIONS[currentStatus];
   const [nextStatus, setNextStatus] = useState<CapaStatus>(
-    options[0] ?? currentStatus,
+    defaultNextStatus(currentStatus),
   );
   if (options.length === 0) return null;
 
@@ -72,7 +71,7 @@ export function StatusControls({
           </select>
         </label>
 
-        {nextStatus === "closed" ? (
+        {requiresClosureReason(nextStatus) ? (
           <label className="block">
             <span className="mb-1.5 block text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
               Closure reason (required)
