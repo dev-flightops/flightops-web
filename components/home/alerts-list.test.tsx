@@ -68,8 +68,9 @@ describe("AlertsList", () => {
     // The group heading already says it. Repeating "Aircraft grounded —"
     // five times is what made this read as a wall of red.
     render(<AlertsList alerts={[grounded("N200PA"), grounded("N301PA")]} />);
-    expect(screen.getByText("N200PA")).toBeInTheDocument();
-    expect(screen.getByText("N301PA")).toBeInTheDocument();
+    const rows = screen.getAllByRole("listitem");
+    expect(within(rows[0]).getByText("N200PA")).toBeInTheDocument();
+    expect(within(rows[1]).getByText("N301PA")).toBeInTheDocument();
     expect(
       screen.queryByText(/Aircraft grounded — N200PA/),
     ).not.toBeInTheDocument();
@@ -115,12 +116,92 @@ describe("AlertsList", () => {
 
   it("renders an unexpected title shape rather than dropping it", () => {
     // stripCategoryPrefix splits on an em-dash separator. A title
-    // without one should still show something.
+    // without one should still show something — in the row and in the
+    // collapsed summary, which both go through the same helper.
     render(
       <AlertsList
         alerts={[{ ...grounded("N200PA"), title: "Something unusual" }]}
       />,
     );
-    expect(screen.getByText("Something unusual")).toBeInTheDocument();
+    expect(screen.getAllByText("Something unusual").length).toBeGreaterThan(0);
+    expect(
+      within(screen.getByRole("listitem")).getByText("Something unusual"),
+    ).toBeInTheDocument();
+  });
+});
+
+describe("collapsing", () => {
+  const summaryOf = (container: HTMLElement) =>
+    container.querySelector("summary") as HTMLElement;
+
+  it("makes every group a collapsible section", () => {
+    const { container } = render(
+      <AlertsList alerts={[grounded("N200PA"), melExpiring("N301PA")]} />,
+    );
+    expect(container.querySelectorAll("details")).toHaveLength(2);
+    expect(container.querySelectorAll("summary")).toHaveLength(2);
+  });
+
+  it("starts collapsed", () => {
+    const { container } = render(<AlertsList alerts={[grounded("N200PA")]} />);
+    for (const d of container.querySelectorAll("details")) {
+      expect((d as HTMLDetailsElement).open).toBe(false);
+    }
+  });
+
+  it("keeps the count and the category on the closed row", () => {
+    // Collapsed must still answer "how many, and of what" without a
+    // click, or the panel is just hiding the problem.
+    const { container } = render(
+      <AlertsList alerts={[grounded("N200PA"), grounded("N301PA")]} />,
+    );
+    const summary = summaryOf(container);
+    expect(within(summary).getByText("2")).toBeInTheDocument();
+    expect(within(summary).getByText(/Aircraft grounded/)).toBeInTheDocument();
+  });
+
+  it("names the affected aircraft on the closed row", () => {
+    // The point of collapsing is to hide the detail, not the answer to
+    // "which ones?". A dispatcher should not have to open a group to
+    // find out whether their aircraft is in it.
+    const { container } = render(
+      <AlertsList alerts={[grounded("N200PA"), grounded("N301PA")]} />,
+    );
+    expect(summaryOf(container).textContent).toContain("N200PA");
+    expect(summaryOf(container).textContent).toContain("N301PA");
+  });
+
+  it("caps a long list and says how many more", () => {
+    const { container } = render(
+      <AlertsList
+        alerts={["N1", "N2", "N3", "N4", "N5"].map(grounded)}
+      />,
+    );
+    const text = summaryOf(container).textContent ?? "";
+    expect(text).toContain("N1, N2, N3");
+    expect(text).toContain("+2 more");
+    // The tails past the cap stay out of the closed row — that is the
+    // wall the cap exists to prevent.
+    expect(text).not.toContain("N4");
+  });
+
+  it("does not say +N more when everything fits", () => {
+    const { container } = render(
+      <AlertsList alerts={[grounded("N200PA"), grounded("N301PA")]} />,
+    );
+    expect(summaryOf(container).textContent).not.toMatch(/\+\d+ more/);
+  });
+
+  it("still renders every item inside the group", () => {
+    // Collapsed is a display state, not a filter. All five are in the
+    // DOM and reachable by keyboard and screen reader.
+    render(<AlertsList alerts={["N1", "N2", "N3", "N4", "N5"].map(grounded)} />);
+    expect(screen.getAllByRole("listitem")).toHaveLength(5);
+    expect(screen.getAllByRole("link")).toHaveLength(5);
+  });
+
+  it("renders no collapsible section when there is nothing to show", () => {
+    const { container } = render(<AlertsList alerts={[]} />);
+    expect(container.querySelectorAll("details")).toHaveLength(0);
   });
 });

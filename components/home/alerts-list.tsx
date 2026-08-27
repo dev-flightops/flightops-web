@@ -29,13 +29,24 @@ import type { OperationalAlert } from "@/lib/dashboards/operational-snapshot";
  * not exist, so no admin ever saw it in place. The gate was fixed first;
  * this is the half that only became visible afterwards.
  *
- * GROUPING
+ * GROUPING + COLLAPSE
  *
- * Alerts group by category rather than listing flat. Five grounded
- * aircraft as five near-identical red rows is a wall — the eye cannot
- * tell "five aircraft with one problem each" from "one aircraft with
- * five", and a genuinely urgent single alert lower down disappears into
- * the texture. The count carries the weight; the rows stay quiet.
+ * Alerts group by category rather than listing flat, and each group
+ * collapses. Five grounded aircraft as five near-identical red rows is a
+ * wall — the eye cannot tell "five aircraft with one problem each" from
+ * "one aircraft with five", and a genuinely urgent single alert lower
+ * down disappears into the texture.
+ *
+ * Collapsed is the default, but the summary is written so that collapsing
+ * hides no information anyone needs to triage: the count, the category,
+ * and the affected tails right there on the closed row. Opening a group
+ * gets you the per-item detail and the links, not the news that a problem
+ * exists. Hiding "which aircraft" behind a click would just move the wall
+ * rather than remove it.
+ *
+ * Built on <details>/<summary> rather than useState so this stays a
+ * server component — no hydration, keyboard and screen-reader behaviour
+ * for free, and it still works if JS never arrives.
  */
 
 const CATEGORY_LABEL: Record<OperationalAlert["category"], string> = {
@@ -97,8 +108,8 @@ function AlertGroup({
   const red = items.some((a) => a.severity === "red");
 
   return (
-    <div className="px-5 py-4">
-      <div className="mb-2.5 flex items-center gap-2">
+    <details className="group/disc px-5 py-3.5">
+      <summary className="flex cursor-pointer list-none items-center gap-2 rounded-lg py-0.5 outline-none [&::-webkit-details-marker]:hidden focus-visible:ring-2 focus-visible:ring-neutral-400">
         <span
           className={`inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[0.7rem] font-bold tabular-nums ${
             red ? "bg-red-600 text-white" : "bg-amber-500 text-white"
@@ -109,9 +120,20 @@ function AlertGroup({
         <h3 className="text-sm font-semibold text-neutral-900">
           {CATEGORY_LABEL[category]}
         </h3>
-      </div>
+        {/* The affected tails, on the closed row. Collapsing should hide
+            the detail, not the answer to "which ones?". */}
+        <span className="min-w-0 flex-1 truncate text-xs text-neutral-500">
+          {summarise(items)}
+        </span>
+        <span
+          aria-hidden
+          className="shrink-0 text-neutral-400 transition-transform duration-150 group-open/disc:rotate-90"
+        >
+          ›
+        </span>
+      </summary>
 
-      <ul className="space-y-1">
+      <ul className="mt-2.5 space-y-1">
         {items.map((a) => (
           <li key={a.id}>
             <Link
@@ -138,8 +160,20 @@ function AlertGroup({
           </li>
         ))}
       </ul>
-    </div>
+    </details>
   );
+}
+
+/** "N200PA, N301PA, N402PA +2 more" — the identifiers, capped so a long
+ *  group still fits on one line. Three is what fits at the narrowest
+ *  width the Home panel renders at without the row wrapping. */
+const SUMMARY_CAP = 3;
+
+function summarise(items: OperationalAlert[]): string {
+  const names = items.map((a) => stripCategoryPrefix(a.title));
+  const shown = names.slice(0, SUMMARY_CAP).join(", ");
+  const rest = names.length - SUMMARY_CAP;
+  return rest > 0 ? `${shown} +${rest} more` : shown;
 }
 
 /** "Aircraft grounded — N200PA" → "N200PA". The group heading already
