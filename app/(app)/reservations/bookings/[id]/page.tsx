@@ -1,4 +1,8 @@
 import Link from "next/link";
+import {
+  formatZuluDate,
+  formatZuluDateTime,
+} from "@/lib/format/flight-time";
 import { notFound, redirect } from "next/navigation";
 
 import { ApiError } from "@/lib/api/client";
@@ -42,12 +46,12 @@ export default async function BookingDetailPage({
         <h1 className="mt-2 flex flex-wrap items-baseline gap-3 text-2xl font-bold tracking-tight">
           {booking.origin_icao} → {booking.destination_icao}
           <span className="text-sm font-normal text-muted-foreground">
-            {new Date(booking.requested_departure_at).toLocaleString()}
+            {formatZuluDateTime(booking.requested_departure_at)}
           </span>
         </h1>
         <p className="mt-1 text-xs text-muted-foreground">
           {BOOKING_STATUS_LABELS[booking.status]} · Filed{" "}
-          {new Date(booking.created_at).toLocaleDateString()} · Booking id{" "}
+          {formatZuluDate(booking.created_at)} · Booking id{" "}
           <code className="rounded bg-muted/30 px-1 font-mono text-[0.7em]">
             {booking.id.slice(0, 8)}
           </code>
@@ -87,12 +91,12 @@ export default async function BookingDetailPage({
         />
         <DetailRow
           label="Departure"
-          value={new Date(booking.requested_departure_at).toLocaleString()}
+          value={formatZuluDateTime(booking.requested_departure_at)}
         />
         {booking.estimated_arrival_at ? (
           <DetailRow
             label="Est. arrival"
-            value={new Date(booking.estimated_arrival_at).toLocaleString()}
+            value={formatZuluDateTime(booking.estimated_arrival_at)}
           />
         ) : null}
         {booking.aircraft ? (
@@ -136,26 +140,26 @@ export default async function BookingDetailPage({
             {booking.quoted_at ? (
               <li>
                 <span className="font-semibold">Quoted</span> —{" "}
-                {new Date(booking.quoted_at).toLocaleString()}
+                {formatZuluDateTime(booking.quoted_at)}
               </li>
             ) : null}
             {booking.confirmed_at ? (
               <li>
                 <span className="font-semibold">Confirmed</span> —{" "}
-                {new Date(booking.confirmed_at).toLocaleString()} by{" "}
+                {formatZuluDateTime(booking.confirmed_at)} by{" "}
                 {booking.confirmed_by?.full_name ?? "unknown"}
               </li>
             ) : null}
             {booking.completed_at ? (
               <li>
                 <span className="font-semibold">Completed</span> —{" "}
-                {new Date(booking.completed_at).toLocaleString()}
+                {formatZuluDateTime(booking.completed_at)}
               </li>
             ) : null}
             {booking.cancelled_at ? (
               <li>
                 <span className="font-semibold">Cancelled</span> —{" "}
-                {new Date(booking.cancelled_at).toLocaleString()} by{" "}
+                {formatZuluDateTime(booking.cancelled_at)} by{" "}
                 {booking.cancelled_by?.full_name ?? "unknown"}
                 {booking.cancelled_reason ? (
                   <p className="mt-1 whitespace-pre-wrap text-muted-foreground">
