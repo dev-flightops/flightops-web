@@ -6,7 +6,7 @@ import { ApiError } from "@/lib/api/client";
 import {
   createRewardsTransaction,
   enrollRewardsMember,
-  QUYANA_TRANSACTION_TYPES,
+  REWARDS_TRANSACTION_TYPES,
   type RewardsTransactionType,
 } from "@/lib/api/rewards";
 
@@ -62,7 +62,7 @@ export async function createTransactionAction(
   const points_raw = String(form.get("points") ?? "").trim();
   const description = String(form.get("description") ?? "").trim();
 
-  if (!(QUYANA_TRANSACTION_TYPES as readonly string[]).includes(type_raw)) {
+  if (!(REWARDS_TRANSACTION_TYPES as readonly string[]).includes(type_raw)) {
     return { status: "error", message: "Pick a transaction type." };
   }
   const points = parseInt(points_raw, 10);

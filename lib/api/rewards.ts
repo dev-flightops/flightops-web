@@ -25,14 +25,14 @@ import { apiFetch } from "./client";
 
 export type RewardsTier = "standard" | "silver" | "gold" | "elite";
 
-export const QUYANA_TIERS: readonly RewardsTier[] = [
+export const REWARDS_TIERS: readonly RewardsTier[] = [
   "standard",
   "silver",
   "gold",
   "elite",
 ];
 
-export const QUYANA_TIER_LABELS: Record<RewardsTier, string> = {
+export const REWARDS_TIER_LABELS: Record<RewardsTier, string> = {
   standard: "Standard",
   silver: "Silver",
   gold: "Gold",
@@ -46,7 +46,7 @@ export type RewardsTransactionType =
   | "expire"
   | "adjustment";
 
-export const QUYANA_TRANSACTION_TYPES: readonly RewardsTransactionType[] = [
+export const REWARDS_TRANSACTION_TYPES: readonly RewardsTransactionType[] = [
   "earn_flight",
   "earn_bonus",
   "redeem",
@@ -54,7 +54,7 @@ export const QUYANA_TRANSACTION_TYPES: readonly RewardsTransactionType[] = [
   "adjustment",
 ];
 
-export const QUYANA_TRANSACTION_TYPE_LABELS: Record<
+export const REWARDS_TRANSACTION_TYPE_LABELS: Record<
   RewardsTransactionType,
   string
 > = {
