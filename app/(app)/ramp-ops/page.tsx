@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { formatZulu } from "@/lib/format/flight-time";
 
 import { listCompanyBases } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
@@ -398,13 +399,7 @@ function StatusChip({ status }: { status: string }) {
   );
 }
 
-function formatTime(iso: string): string {
-  try {
-    return new Date(iso).toLocaleTimeString(undefined, {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  } catch {
-    return iso;
-  }
-}
+// Zulu, via the shared helper. The hand-rolled version this replaced
+// passed no timeZone, so on a server component it rendered in the host's
+// zone and carried no suffix to say which clock it was.
+const formatTime = formatZulu;

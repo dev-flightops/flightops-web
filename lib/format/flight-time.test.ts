@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { formatBoth, formatLocal, formatZulu } from "./flight-time";
+import { formatBoth, formatLocal, formatZulu, formatZuluDateTime } from "./flight-time";
 
 describe("formatZulu", () => {
   it("formats midday UTC as HH:MMz", () => {
@@ -35,5 +35,28 @@ describe("formatBoth", () => {
     const result = formatBoth("2026-06-15T20:00:00Z");
     expect(result.local).toBe("12:00 AKD");
     expect(result.zulu).toBe("20:00z");
+  });
+});
+
+describe("formatZuluDateTime", () => {
+  it("carries the date and the zulu suffix", () => {
+    expect(formatZuluDateTime("2026-08-26T00:13:57Z")).toBe("Aug 26, 00:13z");
+  });
+
+  it("reports the UTC calendar day, not the host's", () => {
+    // 2026-08-26T00:13Z is still Aug 25 in Anchorage. A duty record has
+    // to name the day the clock actually says, not the reader's.
+    expect(formatZuluDateTime("2026-08-26T00:13:57Z")).toContain("Aug 26");
+  });
+
+  it("does not drift with the host zone", () => {
+    // The bug this replaces: toLocaleString with no timeZone rendered in
+    // whatever zone the process happened to run in.
+    const out = formatZuluDateTime("2026-08-26T17:15:00Z");
+    expect(out).toBe("Aug 26, 17:15z");
+  });
+
+  it("returns the input rather than 'Invalid Date' on junk", () => {
+    expect(formatZuluDateTime("nonsense")).toBe("nonsense");
   });
 });

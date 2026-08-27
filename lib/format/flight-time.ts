@@ -37,3 +37,25 @@ export function formatZulu(iso: string): string {
 export function formatBoth(iso: string): { local: string; zulu: string } {
   return { local: formatLocal(iso), zulu: formatZulu(iso) };
 }
+
+/**
+ * "Aug 26, 00:13z" — a Zulu timestamp with the date, for lists where a
+ * bare time would be ambiguous across midnight.
+ *
+ * Exists because three pages hand-rolled
+ * `toLocaleTimeString(undefined, { hour, minute })` instead of reaching
+ * for the helpers above. With no timeZone that renders in the *runtime's*
+ * zone — the server's, on a server component — and with no suffix the
+ * reader has no way to tell which clock they are looking at. Ramp Ops was
+ * showing "05:15 PM" for what the rest of the app calls 17:15z.
+ */
+export function formatZuluDateTime(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  const date = d.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    timeZone: "UTC",
+  });
+  return `${date}, ${formatZulu(iso)}`;
+}
