@@ -54,6 +54,7 @@ import type {
   WeightReturn,
   WeightReturnCreateRequest,
   WeightReturnListResponse,
+  PilotRosterResponse,
 } from "./types";
 
 export interface ListFlightsParams {
@@ -527,6 +528,15 @@ export interface ListComplianceBoardParams {
 }
 
 /** Fleet compliance board — pilot × currency-item grid + summary chips. */
+/** The FAR 135 pilot roster — currency and flight-time position per
+ *  crew member, grouped by station. */
+export async function getPilotRoster(
+  station?: string,
+): Promise<PilotRosterResponse> {
+  const tail = station ? `?station=${encodeURIComponent(station)}` : "";
+  return apiFetch<PilotRosterResponse>(`/ops/compliance/roster${tail}`);
+}
+
 export async function getComplianceBoard(
   params: ListComplianceBoardParams = {},
 ): Promise<ComplianceBoardResponse> {
