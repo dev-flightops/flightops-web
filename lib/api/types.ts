@@ -1484,6 +1484,52 @@ export interface ComplianceBoardResponse {
   chips: ComplianceChips;
 }
 
+/** One FAR 135.265 flight-time window for a pilot.
+ *
+ *  `exceeded` is a hard stop — 135.265 carries no override path, unlike
+ *  a currency item where a Director of Operations may authorise a
+ *  documented deviation. `approaching` is the 85% courtesy warning.
+ *
+ *  hours/limit/remaining arrive as decimal STRINGS, not numbers — they
+ *  are Numeric server-side and rounding them through a float on the way
+ *  to a compliance figure is not worth the convenience. */
+export interface FlightTimeWindow {
+  window: "h24" | "d7" | "month" | "year";
+  label: string;
+  citation: string;
+  hours: string;
+  limit: string;
+  remaining: string;
+  exceeded: boolean;
+  approaching: boolean;
+}
+
+export interface PilotRosterRow {
+  pilot: UserRef;
+  station: string | null;
+  title: string | null;
+  emp_number: string | null;
+  overall_status: CurrencyStatus;
+  cells: PilotCurrencyCell[];
+  flight_time: FlightTimeWindow[];
+  /** Kept separate from overall_status, which means "worst currency
+   *  status". A flight-time breach is not a currency status. */
+  flight_time_exceeded: boolean;
+}
+
+export interface PilotRosterGroup {
+  station: string | null;
+  label: string;
+  rows: PilotRosterRow[];
+}
+
+/** GET /ops/compliance/roster — the FAR 135 pilot roster. */
+export interface PilotRosterResponse {
+  items: CurrencyItemRef[];
+  groups: PilotRosterGroup[];
+  generated_at: string;
+}
+
 /** GET /ops/currency-items — drives /settings/currency editor. */
 export interface CurrencyItemListResponse {
   items: CurrencyItemRef[];
