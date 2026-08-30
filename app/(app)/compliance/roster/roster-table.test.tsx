@@ -120,6 +120,52 @@ describe("layout", () => {
     expect(screen.getByText(/No active pilots/i)).toBeInTheDocument();
   });
 
+  it("puts the flight-time columns ahead of the currency matrix", () => {
+    // Legacy had the hours last, after five currency columns. Our matrix
+    // is the operator's whole catalogue — seventeen items on the demo
+    // tenant — which pushed all four hours columns outside the scroll
+    // container at 1440px. The banner would announce a pilot was out of
+    // hours while the figures needed sideways scrolling to reach.
+    render(<RosterTable items={ITEMS} groups={[group("PANC", [row()])]} />);
+    const heads = screen
+      .getAllByRole("columnheader")
+      .map((th) => th.textContent?.trim());
+    expect(heads.slice(0, 6)).toEqual(["Name", "Role", "24h", "7d", "Mo", "Yr"]);
+  });
+
+  it("aligns each hours figure under its own heading", () => {
+    // Header and body render from two separate loops, so moving one
+    // without the other prints currency pills under "24h". Distinct
+    // values per window: a misalignment cannot coincide with a pass.
+    render(
+      <RosterTable
+        items={ITEMS}
+        groups={[
+          group("PANC", [
+            row({
+              flight_time: [
+                win({ window: "h24", hours: "5.00" }),
+                win({ window: "d7", hours: "12.00", limit: "30" }),
+                win({ window: "month", hours: "40.00", limit: "100" }),
+                win({ window: "year", hours: "300.00", limit: "1000" }),
+              ],
+            }),
+          ]),
+        ]}
+      />,
+    );
+    const heads = screen
+      .getAllByRole("columnheader")
+      .map((th) => th.textContent?.trim());
+    const cells = within(rowFor("Alice Pilot"))
+      .getAllByRole("cell")
+      .map((td) => td.textContent?.trim());
+    expect(cells[heads.indexOf("24h")]).toBe("5.00");
+    expect(cells[heads.indexOf("7d")]).toBe("12.00");
+    expect(cells[heads.indexOf("Mo")]).toBe("40.00");
+    expect(cells[heads.indexOf("Yr")]).toBe("300.00");
+  });
+
   it("keeps the wide table in its own scroll container", () => {
     // The currency columns grow with the operator's catalogue. Without
     // this the page itself scrolls sideways.
