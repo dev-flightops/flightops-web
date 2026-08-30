@@ -20,10 +20,23 @@ import { STATUS_TOKENS } from "../crew-currency/status-tokens";
  *
  * LAYOUT
  *
- * Mirrors the legacy /crew/roster: crew rows grouped by base, currency
- * columns, then the flight-time totals. Legacy's columns were Name /
- * Role / Cert / Medical / Flt Review / IFR / Recurrent / Aircraft /
- * 24h / 7d / Mo. Certificate and aircraft qualification are not stored
+ * Mirrors the legacy /crew/roster: crew rows grouped by base, a currency
+ * matrix, and the flight-time totals. Legacy's columns were Name / Role /
+ * Cert / Medical / Flt Review / IFR / Recurrent / Aircraft / 24h / 7d / Mo,
+ * in that order.
+ *
+ * COLUMN ORDER — deliberate deviation from legacy.
+ *
+ * Legacy put the hours last, after five currency columns. Our currency
+ * matrix is the operator's whole catalogue: the demo tenant alone has
+ * seventeen items, and it grows per operator. With the hours last, all
+ * four flight-time columns sat outside the scroll container at 1440px —
+ * the page would report "1 pilot is out of flight-time hours" in a banner
+ * while the figures backing it needed 295px of sideways scrolling to
+ * reach. The hours are also the only column here backed by a hard gate
+ * (135.265 refuses the release, with no supervisor override), so they now
+ * lead. The currency matrix is what scrolls, because it is the part whose
+ * width is unbounded. Certificate and aircraft qualification are not stored
  * yet — see the 135.63 recordkeeping gaps — so those two columns are
  * absent rather than rendered empty. A column of dashes reads as "we
  * checked and there is nothing", which is not what is true.
@@ -76,14 +89,14 @@ export function RosterTable({
                 <tr className="border-b border-border">
                   <Th className="text-left">Name</Th>
                   <Th className="text-left">Role</Th>
-                  {items.map((item) => (
-                    <Th key={item.id} title={item.name}>
-                      {abbreviate(item)}
-                    </Th>
-                  ))}
                   {WINDOW_HEADS.map((w) => (
                     <Th key={w.key} className="tabular-nums">
                       {w.head}
+                    </Th>
+                  ))}
+                  {items.map((item) => (
+                    <Th key={item.id} title={item.name}>
+                      {abbreviate(item)}
                     </Th>
                   ))}
                 </tr>
@@ -138,19 +151,6 @@ function Row({
         {row.title ?? "—"}
       </td>
 
-      {items.map((item) => {
-        const cell = byItem.get(item.id);
-        if (!cell) return <Td key={item.id}>—</Td>;
-        const token = STATUS_TOKENS[cell.status];
-        return (
-          <Td key={item.id}>
-            <span className={token.pill} title={token.label}>
-              {token.label}
-            </span>
-          </Td>
-        );
-      })}
-
       {WINDOW_HEADS.map(({ key }) => {
         const w = windows.get(key);
         if (!w) return <Td key={key}>—</Td>;
@@ -170,6 +170,19 @@ function Row({
               title={`${w.hours} of ${w.limit} h — ${w.label} (${w.citation})`}
             >
               {w.hours}
+            </span>
+          </Td>
+        );
+      })}
+
+      {items.map((item) => {
+        const cell = byItem.get(item.id);
+        if (!cell) return <Td key={item.id}>—</Td>;
+        const token = STATUS_TOKENS[cell.status];
+        return (
+          <Td key={item.id}>
+            <span className={token.pill} title={token.label}>
+              {token.label}
             </span>
           </Td>
         );
