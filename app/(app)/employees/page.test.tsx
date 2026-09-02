@@ -23,7 +23,7 @@ const { TestApiError, listUsers, listMyTenants } = vi.hoisted(() => {
 vi.mock("@/lib/api/client", () => ({ ApiError: TestApiError }));
 vi.mock("@/lib/api/auth", () => ({ listUsers, listMyTenants }));
 
-import EmployeesPage from "./page";
+import EmployeesPage, { formatHireDate } from "./page";
 
 function makeUser(overrides: Partial<UserResponse>): UserResponse {
   return {
@@ -249,5 +249,66 @@ describe("/employees", () => {
     await renderPage();
 
     expect(screen.getByText("EMP-200")).toBeDefined();
+  });
+});
+
+/**
+ * The hire-date column reads from two sources — `hire_date`, a plain
+ * calendar day, and `created_at`, a real instant — and renders both in
+ * one column. They have to land on the same day for every reader.
+ */
+
+function inZone<T>(tz: string, fn: () => T): T {
+  const previous = process.env.TZ;
+  process.env.TZ = tz;
+  try {
+    return fn();
+  } finally {
+    process.env.TZ = previous;
+  }
+}
+
+// Tokyo is +9, Anchorage -8. A calendar day parsed in the host zone
+// breaks going east; a UTC instant formatted in the host zone breaks
+// going west. Running only in UTC, as CI does, hides both.
+const ZONES = ["UTC", "Asia/Tokyo", "America/Anchorage"];
+
+describe("formatHireDate", () => {
+  it("renders a plain calendar day as that day, in every zone", () => {
+    for (const tz of ZONES) {
+      expect(
+        inZone(tz, () => formatHireDate("2026-08-15")),
+        `hire_date shifted under TZ=${tz}`,
+      ).toBe("Aug 15, 2026");
+    }
+  });
+
+  it("holds at the start of a month, where a shift changes the month too", () => {
+    for (const tz of ZONES) {
+      expect(
+        inZone(tz, () => formatHireDate("2026-08-01")),
+        `hire_date shifted under TZ=${tz}`,
+      ).toBe("Aug 1, 2026");
+    }
+  });
+
+  it("renders the created_at fallback in UTC, in every zone", () => {
+    // 23:00Z rolls forward in Tokyo, 02:00Z rolls back in Anchorage. A
+    // midday instant lands on the same day everywhere and proves nothing.
+    for (const [tz, iso] of [
+      ["UTC", "2026-08-15T12:00:00Z"],
+      ["Asia/Tokyo", "2026-08-15T23:00:00Z"],
+      ["America/Anchorage", "2026-08-15T02:00:00Z"],
+    ] as const) {
+      expect(
+        inZone(tz, () => formatHireDate(iso)),
+        `created_at shifted under TZ=${tz}`,
+      ).toBe("Aug 15, 2026");
+    }
+  });
+
+  it("returns the raw value rather than printing Invalid Date", () => {
+    expect(formatHireDate("not-a-date")).toBe("not-a-date");
+    expect(formatHireDate("")).toBe("");
   });
 });

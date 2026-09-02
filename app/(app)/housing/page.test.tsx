@@ -335,18 +335,20 @@ describe("empty and error states", () => {
     expect(screen.queryByRole("link", { name: /Open →/ })).not.toBeInTheDocument();
   });
 
-  it("still prints a zero rollup in the header on a failed load", async () => {
-    // Documenting current behaviour, not endorsing it: the header sits
-    // outside the error branch, so a failed load renders "0 active
-    // houses · 0 occupied today" beside the alert. Those zeros are the
-    // initial values, not a reading — the same confusion the empty-state
-    // tests exist to prevent elsewhere on this page. Raised separately.
+  it("withholds the header rollup on a failed load", async () => {
+    // The counters start at zero, so rendering them beside the alert
+    // reads as "no houses, none occupied" rather than "we could not find
+    // out" — the same confusion the empty-state tests prevent elsewhere
+    // on this page.
     listHousingUnits.mockRejectedValueOnce(
       new TestApiError(500, "/housing/units", "nope"),
     );
     await renderPage();
     expect(screen.getByRole("alert")).toBeInTheDocument();
-    expect(within(header()).getByText(/0 occupied today/)).toBeInTheDocument();
+    expect(within(header()).queryByText(/occupied today/)).not.toBeInTheDocument();
+    expect(within(header()).queryByText(/active house/)).not.toBeInTheDocument();
+    // The title stays — the page is still the housing page.
+    expect(within(header()).getByRole("heading", { level: 1 })).toBeInTheDocument();
   });
 });
 
