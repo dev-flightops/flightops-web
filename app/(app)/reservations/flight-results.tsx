@@ -159,6 +159,10 @@ export function formatDay(iso: string): string {
     month: "short",
     day: "numeric",
     year: "numeric",
+    // The parse above is already UTC; without this the UTC-midnight
+    // instant is then rendered in the host's zone and rolls back a day
+    // anywhere west of Greenwich — Anchorage included.
+    timeZone: "UTC",
   });
 }
 
