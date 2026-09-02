@@ -138,6 +138,16 @@ describe("FlightResults", () => {
 
 describe("formatDay", () => {
   it("renders a plain calendar date, not a shifted timestamp", () => {
-    expect(formatDay("2026-08-20")).toBe("Aug 20, 2026");
+    // Both zones, because neither alone is sufficient: parsing the
+    // string in the host zone breaks east of Greenwich, and formatting
+    // the UTC instant without timeZone:UTC breaks west of it. Run only
+    // in UTC — as CI does — this assertion passes against either bug.
+    for (const tz of ["Asia/Tokyo", "America/Anchorage"]) {
+      process.env.TZ = tz;
+      expect(formatDay("2026-08-20"), `shifted under TZ=${tz}`).toBe(
+        "Aug 20, 2026",
+      );
+    }
+    process.env.TZ = "UTC";
   });
 });
