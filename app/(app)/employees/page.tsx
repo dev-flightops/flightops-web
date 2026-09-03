@@ -228,14 +228,26 @@ function formatEmploymentType(t: string | null): string {
   return _EMPLOYMENT_TYPE_LABELS[t] ?? t;
 }
 
-function formatHireDate(iso: string): string {
-  try {
-    return new Date(iso).toLocaleDateString(undefined, {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    });
-  } catch {
-    return iso;
-  }
+/**
+ * The hire-date column carries two kinds of value: `hire_date` is a
+ * plain calendar day (YYYY-MM-DD) and `created_at`, its fallback, is a
+ * real instant. Both have to land on the same day for every reader.
+ *
+ * A bare YYYY-MM-DD already parses as UTC midnight per the spec, so the
+ * parse was never the problem — what was missing is `timeZone: "UTC"` on
+ * the way out. Without it that UTC instant renders in local time and
+ * rolls back a day anywhere west of Greenwich, Alaska included.
+ *
+ * The locale is pinned because this renders on the server: unpinned, it
+ * follows the host's configuration rather than the reader's.
+ */
+export function formatHireDate(iso: string): string {
+  const d = new Date(iso);
+  if (!Number.isFinite(d.getTime())) return iso;
+  return d.toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    timeZone: "UTC",
+  });
 }

@@ -92,6 +92,10 @@ export default async function HousingPage() {
           <h1 className="text-2xl font-bold tracking-tight">
             Housing Management
           </h1>
+          {/* Withheld on a failed load: these counters start at zero, so
+              rendering them beside the error reads as "no houses, none
+              occupied" rather than "we could not find out". */}
+          {loadError ? null : (
           <p className="mt-0.5 text-xs text-muted-foreground">
             {stats.houses} active house{stats.houses === 1 ? "" : "s"}
             {stats.inactive > 0 && (
@@ -111,6 +115,7 @@ export default async function HousingPage() {
               {stats.occupied} occupied today
             </span>
           </p>
+          )}
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Link
