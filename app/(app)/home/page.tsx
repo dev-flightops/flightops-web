@@ -1,18 +1,12 @@
 import { auth } from "@/auth";
 import { signOutAction } from "@/app/(app)/actions";
-import {
-  clockInAction,
-  clockOutAction,
-} from "@/app/(app)/duty-actions";
+import { clockInAction, clockOutAction } from "@/app/(app)/duty-actions";
 import { HeaderActions } from "@/components/app-shell/header-actions";
 import { ActiveAlertsPanel } from "@/components/home/active-alerts-panel";
 import { HomeHero } from "@/components/home/home-hero";
 import { HomeModuleCard } from "@/components/home/home-module-card";
 import { HomeTopBar } from "@/components/home/home-topbar";
-import {
-  HOME_QUICK_LINKS,
-  QuickLinks,
-} from "@/components/home/quick-links";
+import { HOME_QUICK_LINKS, QuickLinks } from "@/components/home/quick-links";
 import {
   HOME_MODULES,
   HOME_MODULE_ROLES,
@@ -42,6 +36,7 @@ import { hasAnyRole, roleGate } from "@/lib/roles";
 const ALERT_VIEWING_ROLES = roleGate(
   "exec_admin",
   "chief_pilot",
+  "director_of_operations",
   "dispatcher",
   "safety_officer",
 );
@@ -50,9 +45,10 @@ const ALERT_VIEWING_ROLES = roleGate(
  *  logo band. First word becomes the wordmark, the rest joined
  *  becomes the subtitle. Falls back to the neutral product wordmark
  *  when the tenant name is missing or single-word. */
-function wordmarkFromName(
-  name: string | undefined,
-): { wordmark: string | undefined; subtitle: string | undefined } {
+function wordmarkFromName(name: string | undefined): {
+  wordmark: string | undefined;
+  subtitle: string | undefined;
+} {
   if (!name) return { wordmark: undefined, subtitle: undefined };
   const parts = name.trim().split(/\s+/);
   if (parts.length === 1) {
@@ -93,7 +89,8 @@ export default async function HomePage() {
 
   const userEmail = session?.user?.email ?? "";
   const firstName =
-    firstNameFrom(session?.user?.name) || firstNameFrom(userEmail.split("@")[0]);
+    firstNameFrom(session?.user?.name) ||
+    firstNameFrom(userEmail.split("@")[0]);
   const greeting = currentGreeting();
 
   const sessionRoles =
@@ -126,9 +123,7 @@ export default async function HomePage() {
   });
 
   const airborne = snapshot.airborneCount;
-  const todayTotal = stats
-    ? stats.today.scheduled + stats.today.released
-    : 0;
+  const todayTotal = stats ? stats.today.scheduled + stats.today.released : 0;
   const onGround = Math.max(0, todayTotal - airborne);
   const acftHold = stats
     ? Math.max(0, stats.aircraft_total - stats.aircraft_active)

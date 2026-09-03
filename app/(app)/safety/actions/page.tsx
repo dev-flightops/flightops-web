@@ -11,9 +11,18 @@ import {
   listCapas,
 } from "@/lib/api/safety";
 
-const BOARD_ROLES = roleGate("safety_officer", "chief_pilot", "exec_admin");
+const BOARD_ROLES = roleGate(
+  "safety_officer",
+  "chief_pilot",
+  "director_of_operations",
+  "exec_admin",
+);
 
-const STATUS_FILTERS: Array<{ key: string; label: string; status?: CapaStatus }> = [
+const STATUS_FILTERS: Array<{
+  key: string;
+  label: string;
+  status?: CapaStatus;
+}> = [
   { key: "open", label: "Open (default)" },
   { key: "in_progress", label: "In Progress", status: "in_progress" },
   { key: "closed", label: "Closed", status: "closed" },
@@ -53,11 +62,17 @@ export default async function CapaBoardPage({
   try {
     if (activeFilter.key === "open") {
       // Synthesize "open" as everything except closed.
-      const response = await listCapas({ limit: 200, overdue_only: overdueOnly });
+      const response = await listCapas({
+        limit: 200,
+        overdue_only: overdueOnly,
+      });
       items = response.items.filter((c) => c.status !== "closed");
       total = items.length;
     } else if (activeFilter.key === "all") {
-      const response = await listCapas({ limit: 200, overdue_only: overdueOnly });
+      const response = await listCapas({
+        limit: 200,
+        overdue_only: overdueOnly,
+      });
       items = response.items;
       total = response.total;
     } else {
@@ -236,7 +251,11 @@ function CapaTable({
                           : "text-muted-foreground"
                       }
                     >
-                      {dueDate.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" })}
+                      {dueDate.toLocaleDateString(undefined, {
+                        year: "numeric",
+                        month: "short",
+                        day: "numeric",
+                      })}
                     </span>
                   </td>
                   <td className="max-w-md px-4 py-3 text-xs">

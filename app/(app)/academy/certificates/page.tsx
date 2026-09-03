@@ -13,7 +13,11 @@ import { ApiError } from "@/lib/api/client";
 
 import { AcademyHeader } from "../academy-header";
 
-const ADMIN_ROLES = roleGate("chief_pilot", "exec_admin");
+const ADMIN_ROLES = roleGate(
+  "chief_pilot",
+  "director_of_operations",
+  "exec_admin",
+);
 
 /**
  * /academy/certificates — Certificate list.
@@ -86,7 +90,11 @@ export default async function CertificatesPage({
           aria-label="Certificate scope"
           className="mb-4 flex flex-wrap items-center gap-2"
         >
-          <ScopeTab href="/academy/certificates" label="Mine" active={!wantAll} />
+          <ScopeTab
+            href="/academy/certificates"
+            label="Mine"
+            active={!wantAll}
+          />
           <ScopeTab
             href="/academy/certificates?scope=all"
             label="All (tenant)"

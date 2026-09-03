@@ -29,7 +29,12 @@ import {
  * the real name (enforced by the backend response shape).
  */
 
-const TRIAGE_ROLES = roleGate("safety_officer", "chief_pilot", "exec_admin");
+const TRIAGE_ROLES = roleGate(
+  "safety_officer",
+  "chief_pilot",
+  "director_of_operations",
+  "exec_admin",
+);
 
 const STATUS_FILTERS: Array<{ key: string; label: string; status?: string }> = [
   { key: "open", label: "Open" },

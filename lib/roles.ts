@@ -17,6 +17,14 @@
  * Typing the gates against this union turns that class of mistake into
  * a compile error.
  *
+ * "director_of_operations" is real as of M4 — see the GOM access tiers
+ * the operator sent on 2 September. The gate above was written for a
+ * role that did not exist yet; it exists now, and the three additions
+ * (Director of Operations, Director of Maintenance, Check Airman) are
+ * the post-holders a Part 135 certificate names. Order mirrors
+ * ROLE_CATALOG, including its quirk of listing the dispatcher above the
+ * chief pilot.
+ *
  * NOT the source of truth for anything the user picks. Settings → Users
  * renders the role list served by /auth/settings/users, so adding a role
  * backend-side shows up there without touching this file. This exists so
@@ -26,9 +34,12 @@
 
 export const ROLES = [
   "exec_admin",
+  "director_of_operations",
   "dispatcher",
   "reservations_agent",
   "chief_pilot",
+  "director_of_maintenance",
+  "check_airman",
   "maintenance",
   "ground_ops",
   "safety_officer",

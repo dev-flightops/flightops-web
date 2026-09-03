@@ -14,7 +14,11 @@ import type { CurrencyItemRef } from "@/lib/api/types";
 
 import { CourseEditor } from "./course-editor";
 
-const ADMIN_ROLES = roleGate("chief_pilot", "exec_admin");
+const ADMIN_ROLES = roleGate(
+  "chief_pilot",
+  "director_of_operations",
+  "exec_admin",
+);
 
 export default async function ManageCoursePage({
   params,
