@@ -12,7 +12,12 @@ import {
   listIncidents,
 } from "@/lib/api/safety";
 
-const TRIAGE_ROLES = roleGate("safety_officer", "chief_pilot", "exec_admin");
+const TRIAGE_ROLES = roleGate(
+  "safety_officer",
+  "chief_pilot",
+  "director_of_operations",
+  "exec_admin",
+);
 
 const STATUS_FILTERS: Array<{ key: string; label: string; status?: string }> = [
   { key: "open", label: "Open" },
@@ -86,8 +91,8 @@ export default async function IncidentsInboxPage({
           </p>
           <h1 className="mt-2 text-2xl font-bold tracking-tight">Incidents</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Events that have occurred — bird strikes, near-misses, gear
-            events, spills. File one below or triage the inbox.
+            Events that have occurred — bird strikes, near-misses, gear events,
+            spills. File one below or triage the inbox.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">

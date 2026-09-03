@@ -16,7 +16,11 @@ import { ApiError } from "@/lib/api/client";
 
 import { AcademyHeader } from "./academy-header";
 
-const ADMIN_ROLES = roleGate("chief_pilot", "exec_admin");
+const ADMIN_ROLES = roleGate(
+  "chief_pilot",
+  "director_of_operations",
+  "exec_admin",
+);
 
 /**
  * /academy — Peregrine Academy / Course Library.
@@ -80,10 +84,7 @@ export default async function CourseLibraryPage({
       <AcademyHeader activeSection="course-library" />
 
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <form
-          method="GET"
-          className="flex flex-wrap items-center gap-2"
-        >
+        <form method="GET" className="flex flex-wrap items-center gap-2">
           {activeCategory ? (
             <input type="hidden" name="category" value={activeCategory} />
           ) : null}
@@ -227,7 +228,11 @@ function CategorySidebar({
   return (
     <aside className="self-start rounded-lg border border-border bg-card p-3 text-xs">
       <SidebarItem
-        href={_href({ q: currentQ, category: undefined, status: currentStatus })}
+        href={_href({
+          q: currentQ,
+          category: undefined,
+          status: currentStatus,
+        })}
         label="All Courses"
         count={courses.length}
         active={!activeCategory}
@@ -370,9 +375,7 @@ function CourseMetaChips({ course }: { course: Course }) {
     chips.push(`Pass ${course.passing_score}%`);
   }
   if (course.enrollment_count > 0) {
-    chips.push(
-      `${course.enrollment_count} enrolled`,
-    );
+    chips.push(`${course.enrollment_count} enrolled`);
   }
   if (chips.length === 0) return null;
 

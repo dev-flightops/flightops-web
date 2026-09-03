@@ -80,7 +80,14 @@ describe("reservations_agent — the second half of the request", () => {
 
   it("sees no maintenance, ground ops, HR, admin or settings", () => {
     const ids = idsFor(AGENT);
-    for (const closed of ["maintenance", "ground-ops", "hr", "admin", "settings", "crew"]) {
+    for (const closed of [
+      "maintenance",
+      "ground-ops",
+      "hr",
+      "admin",
+      "settings",
+      "crew",
+    ]) {
       expect(ids, `agent can see ${closed}`).not.toContain(closed);
     }
   });
@@ -110,14 +117,17 @@ describe("every role gets a usable nav", () => {
     expect(idsFor([role]).length).toBeGreaterThan(0);
   });
 
-  it.each(ROLES)("%s sees at least one module in each of its departments", (role) => {
-    for (const dept of visibleDepartments([role])) {
-      expect(
-        visibleModules(dept, [role]).length,
-        `${role} sees ${dept.id} but none of its modules`,
-      ).toBeGreaterThan(0);
-    }
-  });
+  it.each(ROLES)(
+    "%s sees at least one module in each of its departments",
+    (role) => {
+      for (const dept of visibleDepartments([role])) {
+        expect(
+          visibleModules(dept, [role]).length,
+          `${role} sees ${dept.id} but none of its modules`,
+        ).toBeGreaterThan(0);
+      }
+    },
+  );
 });
 
 describe("universal departments", () => {
@@ -149,11 +159,45 @@ describe("exec_admin", () => {
 });
 
 describe("restricted departments", () => {
-  it("keeps HR and settings to exec_admin", () => {
-    for (const role of ROLES.filter((r) => r !== "exec_admin")) {
-      expect(idsFor([role])).not.toContain("hr");
-      expect(idsFor([role])).not.toContain("settings");
+  // Widened in M4 from exec_admin alone. The operator's GOM puts full
+  // system administration — adding and archiving users and aircraft — at
+  // Level 1, and names the Director of Operations there. It also names
+  // the Chief Pilot and Director of Maintenance at that level, which we
+  // deliberately do not follow: that is one operator's own policy rather
+  // than a regulation, and the narrower default is the safer one to ship.
+  // An operator wanting the GOM's exact tiers grants exec_admin alongside.
+  const ADMIN_DEPARTMENTS = ["hr", "settings"] as const;
+  const MAY_SEE_ADMIN: readonly Role[] = [
+    "exec_admin",
+    "director_of_operations",
+  ];
+
+  it("keeps HR and settings to exec_admin and the Director of Operations", () => {
+    for (const role of ROLES.filter((r) => !MAY_SEE_ADMIN.includes(r))) {
+      for (const dept of ADMIN_DEPARTMENTS) {
+        expect(idsFor([role]), `${role} should not see ${dept}`).not.toContain(
+          dept,
+        );
+      }
     }
+  });
+
+  it("does admit both of the roles that may", () => {
+    // The negative test above passes trivially if the allow-list is
+    // wrong in the other direction, so assert the positive too.
+    for (const role of MAY_SEE_ADMIN) {
+      for (const dept of ADMIN_DEPARTMENTS) {
+        expect(idsFor([role]), `${role} should see ${dept}`).toContain(dept);
+      }
+    }
+  });
+
+  it("does not give the Chief Pilot or DOM company settings", () => {
+    // Named explicitly because the GOM does put them at Level 1, so a
+    // future reader comparing the two will wonder whether this is an
+    // oversight. It is a choice.
+    expect(idsFor(["chief_pilot"])).not.toContain("settings");
+    expect(idsFor(["director_of_maintenance"])).not.toContain("settings");
   });
 
   it("keeps maintenance away from pilots and reservations work", () => {
@@ -222,7 +266,9 @@ describe("the matrix itself", () => {
   });
 
   it("only names modules that exist", () => {
-    const known = new Set(DEPARTMENTS.flatMap((d) => d.children.map((m) => m.id)));
+    const known = new Set(
+      DEPARTMENTS.flatMap((d) => d.children.map((m) => m.id)),
+    );
     for (const id of Object.keys(MODULE_ROLES)) {
       expect(known.has(id), `unknown module ${id}`).toBe(true);
     }
@@ -245,5 +291,110 @@ describe("the matrix itself", () => {
         }
       }
     }
+  });
+});
+
+describe("the M4 post-holder roles", () => {
+  // A role absent from this matrix is admitted almost nowhere: _permits
+  // opens only when one of the caller's roles is named. Adding the three
+  // to lib/roles.ts without matrix entries would have given a Director
+  // of Operations less of the app than a dispatcher.
+  //
+  // The existing "every role gets a usable nav" checks cannot catch that,
+  // because academy and safety are [...ROLES] — every role sees those two
+  // for free, so "at least one department" is satisfied by a role that
+  // sees nothing else. Hence the invariant below.
+  const UNIVERSAL = ["academy", "safety"];
+
+  it.each(ROLES)("%s sees a department beyond the universal two", (role) => {
+    const beyond = idsFor([role]).filter((id) => !UNIVERSAL.includes(id));
+    expect(
+      beyond.length,
+      `${role} sees only ${UNIVERSAL.join(" and ")} — it is missing from the matrix`,
+    ).toBeGreaterThan(0);
+  });
+
+  describe("director_of_operations", () => {
+    it("sees everything a dispatcher sees", () => {
+      // Accountable for the operation, so being shown less than the
+      // people reporting to them is the failure mode worth pinning.
+      const dispatcher = idsFor(["dispatcher"]);
+      const director = idsFor(["director_of_operations"]);
+      for (const dept of dispatcher) {
+        expect(
+          director,
+          `DO cannot see ${dept} but a dispatcher can`,
+        ).toContain(dept);
+      }
+    });
+
+    it("sees everything a chief pilot sees", () => {
+      const chief = idsFor(["chief_pilot"]);
+      const director = idsFor(["director_of_operations"]);
+      for (const dept of chief) {
+        expect(
+          director,
+          `DO cannot see ${dept} but a chief pilot can`,
+        ).toContain(dept);
+      }
+    });
+
+    it("is named in every operations module, not just the department", () => {
+      // Operations is listed exhaustively, so department membership alone
+      // grants nothing.
+      const ops = deptById("operations");
+      const visible = visibleModules(ops, ["director_of_operations"]).map(
+        (m) => m.id,
+      );
+      expect(visible.sort()).toEqual(ops.children.map((m) => m.id).sort());
+    });
+  });
+
+  describe("director_of_maintenance", () => {
+    it("sees maintenance and ground equipment", () => {
+      const ids = idsFor(["director_of_maintenance"]);
+      expect(ids).toContain("maintenance");
+      expect(ids).toContain("ground-ops");
+    });
+
+    it("does not get crew records or reservations", () => {
+      const ids = idsFor(["director_of_maintenance"]);
+      expect(ids).not.toContain("crew");
+      expect(ids).not.toContain("reservations");
+    });
+
+    it("gets reporting, which the GOM puts at Level 2", () => {
+      expect(idsFor(["director_of_maintenance"])).toContain("admin");
+    });
+  });
+
+  describe("check_airman", () => {
+    it("sees the records a check needs", () => {
+      const ops = deptById("operations");
+      const visible = visibleModules(ops, ["check_airman"]).map((m) => m.id);
+      for (const mod of [
+        "crew",
+        "roster",
+        "currency",
+        "flight-log",
+        "pilot-history",
+      ]) {
+        expect(visible, `check airman cannot reach ${mod}`).toContain(mod);
+      }
+    });
+
+    it("has no release authority", () => {
+      // Checking a pilot and dispatching a flight are different jobs.
+      // This is the assertion that stops the role drifting into a second
+      // chief_pilot as modules get added.
+      const ops = deptById("operations");
+      const visible = visibleModules(ops, ["check_airman"]).map((m) => m.id);
+      expect(visible).not.toContain("dispatch");
+      expect(visible).not.toContain("schedule");
+    });
+
+    it("does not get company settings", () => {
+      expect(idsFor(["check_airman"])).not.toContain("settings");
+    });
   });
 });

@@ -13,7 +13,11 @@ import { ApiError } from "@/lib/api/client";
 
 import { AcademyHeader } from "../academy-header";
 
-const ADMIN_ROLES = roleGate("chief_pilot", "exec_admin");
+const ADMIN_ROLES = roleGate(
+  "chief_pilot",
+  "director_of_operations",
+  "exec_admin",
+);
 
 /**
  * /academy/studio — Course Studio.
@@ -142,13 +146,7 @@ function EmptyState() {
   );
 }
 
-function CourseTable({
-  courses,
-  total,
-}: {
-  courses: Course[];
-  total: number;
-}) {
+function CourseTable({ courses, total }: { courses: Course[]; total: number }) {
   return (
     <div className="overflow-hidden rounded-lg border border-border bg-card">
       <div className="overflow-x-auto">
@@ -188,9 +186,7 @@ function CourseTable({
                   {c.lesson_count}
                 </td>
                 <td className="whitespace-nowrap px-4 py-3 text-xs text-muted-foreground">
-                  {c.cert_valid_days > 0
-                    ? `${c.cert_valid_days} d`
-                    : "Never"}
+                  {c.cert_valid_days > 0 ? `${c.cert_valid_days} d` : "Never"}
                 </td>
                 <td className="whitespace-nowrap px-4 py-3">
                   <span
