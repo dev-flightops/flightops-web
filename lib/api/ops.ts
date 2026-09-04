@@ -4,8 +4,10 @@
 
 import { apiFetch } from "./client";
 import type {
+  AccountingExportResponse,
   AircraftListItem,
   AircraftListResponse,
+  AirmanRecordResponse,
   AuditTimelineResponse,
   ComplianceBoardResponse,
   CpReviewCreateRequest,
@@ -13,29 +15,23 @@ import type {
   CpReviewListResponse,
   CpReviewResponse,
   CpReviewStatus,
-  AccountingExportResponse,
   CurrencyItemListResponse,
   CurrencyItemRef,
   CurrentDutyResponse,
   CustomCurrencyItemCreateRequest,
   CustomCurrencyItemUpdateRequest,
-  LogCompletionRequest,
-  LogCompletionResponse,
-  OverrideRequest,
-  OverrideResponse,
-  PicComplianceResponse,
-  PilotProfileResponse,
+  DisqualificationListResponse,
   DutyHistoryResponse,
   DutyPeriodSummary,
   FlightDetail,
   FlightListResponse,
   FlightLogCreateRequest,
-  FlightLogListResponse,
   FlightLogLeg,
   FlightLogLegCreateRequest,
   FlightLogLegListResponse,
   FlightLogLegUpdateRequest,
   FlightLogLifecycleRequest,
+  FlightLogListResponse,
   FlightLogResponse,
   FlightLogStatus,
   FlightLogSubmitResponse,
@@ -45,8 +41,15 @@ import type {
   FratAssessmentResponse,
   FratAuthorizeRequest,
   FratSubmitRequest,
+  LogCompletionRequest,
+  LogCompletionResponse,
+  OverrideRequest,
+  OverrideResponse,
+  PicComplianceResponse,
   PilotAcceptanceRequest,
   PilotAcceptanceResponse,
+  PilotProfileResponse,
+  PilotRosterResponse,
   PreflightProgressResponse,
   ReleaseResponse,
   StepCompletionRequest,
@@ -54,7 +57,6 @@ import type {
   WeightReturn,
   WeightReturnCreateRequest,
   WeightReturnListResponse,
-  PilotRosterResponse,
 } from "./types";
 
 export interface ListFlightsParams {
@@ -80,7 +82,9 @@ export async function listFlights(
   const search = new URLSearchParams();
   if (params.onDate) search.set("on_date", params.onDate);
   if (params.status) {
-    const values = Array.isArray(params.status) ? params.status : [params.status];
+    const values = Array.isArray(params.status)
+      ? params.status
+      : [params.status];
     for (const s of values) search.append("status", s);
   }
   // Only sent when true — an explicit `assigned_to_me=false` would be
@@ -100,7 +104,7 @@ export interface FlightCreatePayload {
   aircraft_id: string;
   origin: string;
   destination: string;
-  scheduled_departure_at: string;  // ISO 8601 UTC
+  scheduled_departure_at: string; // ISO 8601 UTC
   scheduled_arrival_at: string;
   pax_count?: number;
   cargo_lbs?: number;
@@ -276,7 +280,9 @@ export async function listFlightLogs(
 ): Promise<FlightLogListResponse> {
   const search = new URLSearchParams();
   if (params.status) {
-    const values = Array.isArray(params.status) ? params.status : [params.status];
+    const values = Array.isArray(params.status)
+      ? params.status
+      : [params.status];
     for (const s of values) search.append("status", s);
   }
   if (params.aircraftId) search.set("aircraft_id", params.aircraftId);
@@ -309,10 +315,9 @@ export async function getFlightLog(id: string): Promise<FlightLogResponse> {
 export async function submitFlightLog(
   id: string,
 ): Promise<FlightLogSubmitResponse> {
-  return apiFetch<FlightLogSubmitResponse>(
-    `/ops/flight-logs/${id}/submit`,
-    { method: "POST" },
-  );
+  return apiFetch<FlightLogSubmitResponse>(`/ops/flight-logs/${id}/submit`, {
+    method: "POST",
+  });
 }
 
 /** Partial PATCH of a flight log. Today carries Spec 4 Tab 6 VOR
@@ -488,13 +493,10 @@ export async function recordFratAuthorization(
   flightId: string,
   body: FratAuthorizeRequest,
 ): Promise<FratAssessmentResponse> {
-  return apiFetch<FratAssessmentResponse>(
-    `/ops/frat/${flightId}/authorize`,
-    {
-      method: "POST",
-      body: JSON.stringify(body),
-    },
-  );
+  return apiFetch<FratAssessmentResponse>(`/ops/frat/${flightId}/authorize`, {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
 }
 
 // ---- Pilot Accept/Deny release (Spec 4 §"The 8 steps / 6") ----
@@ -646,9 +648,7 @@ export async function createComplianceOverride(
 export async function listFlightLogLegs(
   logId: string,
 ): Promise<FlightLogLegListResponse> {
-  return apiFetch<FlightLogLegListResponse>(
-    `/ops/flight-logs/${logId}/legs`,
-  );
+  return apiFetch<FlightLogLegListResponse>(`/ops/flight-logs/${logId}/legs`);
 }
 
 /** Append a new leg. Server assigns leg_number = max + 1. */
@@ -668,10 +668,10 @@ export async function updateFlightLogLeg(
   legId: string,
   body: FlightLogLegUpdateRequest,
 ): Promise<FlightLogLeg> {
-  return apiFetch<FlightLogLeg>(
-    `/ops/flight-logs/${logId}/legs/${legId}`,
-    { method: "PATCH", body: JSON.stringify(body) },
-  );
+  return apiFetch<FlightLogLeg>(`/ops/flight-logs/${logId}/legs/${legId}`, {
+    method: "PATCH",
+    body: JSON.stringify(body),
+  });
 }
 
 /** Remove a leg. Backend returns 204; apiFetch handles the no-body
@@ -680,10 +680,9 @@ export async function deleteFlightLogLeg(
   logId: string,
   legId: string,
 ): Promise<void> {
-  await apiFetch<void>(
-    `/ops/flight-logs/${logId}/legs/${legId}`,
-    { method: "DELETE" },
-  );
+  await apiFetch<void>(`/ops/flight-logs/${logId}/legs/${legId}`, {
+    method: "DELETE",
+  });
 }
 
 /** The flight's open weight return, or null when it is within limits. */
@@ -720,4 +719,25 @@ export async function resolveWeightReturn(
 /** Every flight currently held back over weight — dispatch's queue. */
 export async function listWeightReturns(): Promise<WeightReturnListResponse> {
   return apiFetch<WeightReturnListResponse>("/ops/weight-returns");
+}
+
+/** Airman record — the 135.63(a)(4) certificate, medical class and
+ *  aeronautical experience. A pilot with nothing recorded returns empty
+ *  fields rather than a 404: not filled in yet is the starting state. */
+export async function getAirmanRecord(
+  pilotId: string,
+): Promise<AirmanRecordResponse> {
+  return apiFetch<AirmanRecordResponse>(
+    `/ops/compliance/pilots/${pilotId}/airman-record`,
+  );
+}
+
+/** Whole disqualification history, open and released. Released rows are
+ *  returned deliberately — the rule asks for the release date. */
+export async function listDisqualifications(
+  pilotId: string,
+): Promise<DisqualificationListResponse> {
+  return apiFetch<DisqualificationListResponse>(
+    `/ops/compliance/pilots/${pilotId}/disqualifications`,
+  );
 }

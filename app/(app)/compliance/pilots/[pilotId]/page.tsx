@@ -2,10 +2,15 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 
 import { ApiError } from "@/lib/api/client";
-import { getPilotComplianceProfile } from "@/lib/api/ops";
+import {
+  getAirmanRecord,
+  getPilotComplianceProfile,
+  listDisqualifications,
+} from "@/lib/api/ops";
 
 import { STATUS_TOKENS } from "../../crew-currency/status-tokens";
 import { CurrencyItemCard } from "./currency-item-card";
+import { AirmanRecordCard } from "./airman-record-card";
 import { ProfileHeader } from "./profile-header";
 
 /**
@@ -53,6 +58,14 @@ export default async function PilotComplianceProfilePage({
     );
   }
 
+  // Soft-failed on purpose, and fetched in parallel with each other.
+  // Currency is what this page is primarily for; losing the airman
+  // record should cost the reader that section, not the whole page.
+  const [airman, disqualifications] = await Promise.all([
+    getAirmanRecord(pilotId).catch(() => null),
+    listDisqualifications(pilotId).catch(() => null),
+  ]);
+
   const overallToken = STATUS_TOKENS[profile.overall_status];
 
   return (
@@ -92,6 +105,13 @@ export default async function PilotComplianceProfilePage({
           );
         })}
       </div>
+
+      {airman && disqualifications ? (
+        <AirmanRecordCard
+          record={airman}
+          disqualifications={disqualifications}
+        />
+      ) : null}
     </div>
   );
 }

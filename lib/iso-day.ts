@@ -75,13 +75,36 @@ export function isoDayDiff(from: string, to: string): number {
 export function formatIsoDay(iso: string): string {
   const m = ISO_DAY.exec(iso);
   if (!m) return iso;
-  const at = new Date(
-    Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3])),
-  );
+  const at = new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3])));
   return at.toLocaleDateString(undefined, {
     weekday: "short",
     month: "short",
     day: "numeric",
+    timeZone: "UTC",
+  });
+}
+
+/**
+ * "Aug 1, 2026" — a record date rather than a board date.
+ *
+ * Same UTC-safe construction as formatIsoDay: a bare YYYY-MM-DD parsed in
+ * the host zone and rendered without timeZone:"UTC" shifts by a day in
+ * one direction or the other depending on which half of the world you
+ * are in. The locale is pinned rather than left to the host because this
+ * renders server-side, where "the host" is a container.
+ *
+ * No weekday, and the year is always shown: this is used for things like
+ * the date a pilot's aeronautical experience was last established, where
+ * "which year" is the question and "which weekday" never is.
+ */
+export function formatIsoDayLong(iso: string): string {
+  const m = ISO_DAY.exec(iso);
+  if (!m) return iso;
+  const at = new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3])));
+  return at.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
     timeZone: "UTC",
   });
 }
