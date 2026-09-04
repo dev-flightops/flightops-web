@@ -20,7 +20,9 @@ import { AirmanRecordCard } from "./airman-record-card";
  * words.
  */
 
-function record(over: Partial<AirmanRecordResponse> = {}): AirmanRecordResponse {
+function record(
+  over: Partial<AirmanRecordResponse> = {},
+): AirmanRecordResponse {
   return {
     pilot: { id: "p-1", full_name: "Alice Chen", email: "a@x.test" },
     certificate_type: null,
@@ -69,7 +71,9 @@ describe("zero is not the same as absent", () => {
     renderCard();
     // Five hour fields, plus certificate type, number, ratings and
     // medical class.
-    expect(screen.getAllByText("Not recorded").length).toBeGreaterThanOrEqual(9);
+    expect(screen.getAllByText("Not recorded").length).toBeGreaterThanOrEqual(
+      9,
+    );
     expect(screen.queryByText("—")).not.toBeInTheDocument();
   });
 
@@ -78,13 +82,19 @@ describe("zero is not the same as absent", () => {
     // with zero night hours are different claims, and this screen is
     // where somebody acts on the difference.
     renderCard(
-      record({ night_hours: "0", total_time_hours: "0.0", experience_as_of: "2026-08-01" }),
+      record({
+        night_hours: "0",
+        total_time_hours: "0.0",
+        experience_as_of: "2026-08-01",
+      }),
     );
     expect(screen.getAllByText("0.0").length).toBe(2);
   });
 
   it("formats hours to a single decimal", () => {
-    renderCard(record({ total_time_hours: "5210.4", experience_as_of: "2026-08-01" }));
+    renderCard(
+      record({ total_time_hours: "5210.4", experience_as_of: "2026-08-01" }),
+    );
     expect(screen.getByText("5210.4")).toBeInTheDocument();
   });
 });
@@ -117,6 +127,28 @@ describe("certificate", () => {
       "Certificated Flight Instructor — Instrument",
     );
   });
+
+  it("does not print a snake_case slug on a multi-word rating", () => {
+    // Found by looking at the page. AMEL and CFII are the abbreviations
+    // the certificate itself prints, so rendering the code raw reads
+    // correctly for them — and the earlier tests only used those two.
+    // `instrument_airplane` is a slug, and beside two real abbreviations
+    // it read as a database value that had leaked onto the screen.
+    renderCard(
+      record({ ratings: ["instrument_airplane", "rotorcraft_helicopter"] }),
+    );
+    expect(screen.getByText("instrument airplane")).toBeInTheDocument();
+    expect(screen.getByText("rotorcraft helicopter")).toBeInTheDocument();
+    expect(screen.queryByText(/_/)).not.toBeInTheDocument();
+  });
+
+  it("keeps the full expansion on the tooltip either way", () => {
+    renderCard(record({ ratings: ["instrument_airplane"] }));
+    expect(screen.getByText("instrument airplane")).toHaveAttribute(
+      "title",
+      "Instrument — Airplane",
+    );
+  });
 });
 
 describe("aeronautical experience", () => {
@@ -133,7 +165,9 @@ describe("aeronautical experience", () => {
     for (const tz of ["UTC", "Asia/Tokyo", "America/Anchorage"]) {
       const previous = process.env.TZ;
       process.env.TZ = tz;
-      const { unmount } = renderCard(record({ experience_as_of: "2026-08-01" }));
+      const { unmount } = renderCard(
+        record({ experience_as_of: "2026-08-01" }),
+      );
       expect(
         screen.getByText("As of Aug 1, 2026"),
         `date shifted under TZ=${tz}`,
@@ -193,7 +227,11 @@ describe("disqualifications", () => {
     renderCard(
       record(),
       list([
-        disqualification({ id: "d-1", released_on: "2026-07-15", released_by: null }),
+        disqualification({
+          id: "d-1",
+          released_on: "2026-07-15",
+          released_by: null,
+        }),
       ]),
     );
     const row = screen.getByRole("listitem");

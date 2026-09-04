@@ -84,7 +84,7 @@ export function AirmanRecordCard({
                     title={RATING_LABELS[r] ?? r}
                     className="rounded border border-border bg-muted/20 px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider"
                   >
-                    {r}
+                    {ratingChipText(r)}
                   </span>
                 ))}
               </span>
@@ -233,6 +233,24 @@ function Hours({ label, value }: { label: string; value: string | null }) {
       )}
     </Field>
   );
+}
+
+/**
+ * Chip text for a rating code.
+ *
+ * Some codes are the abbreviation printed on the certificate — AMEL,
+ * CFII — and read correctly as-is. Others are snake_case slugs
+ * (`instrument_airplane`), and rendering those raw put a database value
+ * on screen beside two real abbreviations. Underscores become spaces so
+ * the chip reads as a rating rather than a column name; the full
+ * expansion stays on the tooltip.
+ *
+ * No abbreviation is invented here. "INSTRUMENT AIRPLANE" is longer than
+ * "AMEL" but it is what the certificate says, and a made-up short form
+ * would be worse than a long true one.
+ */
+function ratingChipText(code: string): string {
+  return code.replace(/_/g, " ");
 }
 
 /** Said in words rather than punctuation — see the note at the top. */
