@@ -43,18 +43,25 @@ describe("HeaderActions", () => {
     );
     // Settings shipped in M2, Time Clock ships but has an
     // "unavailable" fallback state when initialDuty is absent —
-    // both are asserted separately below.
-    for (const label of [
-      "Notifications",
-      "AI Assistant",
-      "Users",
-      "Owner Admin",
-      "Help",
-    ]) {
+    // both are asserted separately below. AI Assistant left this list
+    // when FleetBrain landed.
+    for (const label of ["Notifications", "Users", "Owner Admin", "Help"]) {
       const el = screen.getByLabelText(label);
       expect(el).toBeDisabled();
       expect(el.getAttribute("title")).toMatch(/Coming in M[234]/);
     }
+  });
+
+  it("points the AI Assistant button at FleetBrain", () => {
+    // It was a disabled 'Coming in M4' placeholder until the service
+    // shipped. A button that stays disabled after its feature exists
+    // is the drift the module-status tests were added to catch.
+    render(
+      <HeaderActions email="admin@flightops.local" signOutAction={vi.fn()} />,
+    );
+    const el = screen.getByLabelText("AI Assistant");
+    expect(el).toHaveAttribute("href", "/fleetbrain");
+    expect(el).not.toBeDisabled();
   });
 
   it("Time Clock falls back to a disabled 'unavailable' pill when initialDuty is absent", () => {
