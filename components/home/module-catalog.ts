@@ -226,37 +226,68 @@ export function moduleStatusHint(status: ModuleStatus): string | null {
 export const HOME_MODULE_ROLES: Record<string, readonly Role[]> = {
   "flight-crew": [
     "exec_admin",
+    "director_of_operations",
     "chief_pilot",
+    "check_airman",
     "pilot",
     "crew_member",
     "dispatcher",
   ],
   // The client's own example: pilots don't need reservations.
-  reservations: ["exec_admin", "dispatcher", "reservations_agent"],
-  dispatch: ["exec_admin", "dispatcher", "chief_pilot"],
+  reservations: [
+    "exec_admin",
+    "director_of_operations",
+    "dispatcher",
+    "reservations_agent",
+  ],
+  dispatch: ["exec_admin", "director_of_operations", "dispatcher", "chief_pilot"],
   // Read-only board so an agent can answer "where is my flight?" without
   // interrupting dispatch. The tile is the only flight-ops surface they get.
   "flight-following": [
     "exec_admin",
+    "director_of_operations",
+    "director_of_maintenance",
     "dispatcher",
     "chief_pilot",
     "pilot",
     "reservations_agent",
   ],
-  maintenance: ["exec_admin", "chief_pilot", "maintenance", "safety_officer"],
-  "ground-ops": ["exec_admin", "dispatcher", "ground_ops"],
-  hr: ["exec_admin"],
-  housing: ["exec_admin", "ground_ops"],
-  invoicing: ["exec_admin"],
-  compliance: ["exec_admin", "chief_pilot", "safety_officer", "dispatcher"],
+  maintenance: [
+    "exec_admin",
+    "director_of_operations",
+    "director_of_maintenance",
+    "chief_pilot",
+    "maintenance",
+    "safety_officer",
+  ],
+  "ground-ops": [
+    "exec_admin",
+    "director_of_operations",
+    "director_of_maintenance",
+    "dispatcher",
+    "ground_ops",
+  ],
+  hr: ["exec_admin", "director_of_operations"],
+  housing: ["exec_admin", "director_of_operations", "ground_ops"],
+  invoicing: ["exec_admin", "director_of_operations"],
+  compliance: [
+    "exec_admin",
+    "director_of_operations",
+    "chief_pilot",
+    "check_airman",
+    "safety_officer",
+    "dispatcher",
+  ],
   documents: [
     "exec_admin",
+    "director_of_operations",
+    "director_of_maintenance",
     "chief_pilot",
     "safety_officer",
     "maintenance",
     "dispatcher",
   ],
-  fleetbrain: ["exec_admin"],
+  fleetbrain: ["exec_admin", "director_of_operations"],
   // academy and safety are deliberately absent: training applies to
   // everyone, and hazard reporting must be reachable by whoever saw the
   // hazard. See the note in components/app-shell/modules.ts.
