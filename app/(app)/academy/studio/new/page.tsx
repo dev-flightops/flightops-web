@@ -6,7 +6,11 @@ import { auth } from "@/auth";
 
 import { NewCourseForm } from "./new-course-form";
 
-const ADMIN_ROLES = roleGate("chief_pilot", "exec_admin");
+const ADMIN_ROLES = roleGate(
+  "chief_pilot",
+  "director_of_operations",
+  "exec_admin",
+);
 
 export default async function NewCoursePage() {
   const session = await auth();
