@@ -669,7 +669,10 @@ export const DEPARTMENTS: Department[] = [
       {
         id: "hr-records",
         label: "Records",
-        href: "/compliance",
+        // Not "/compliance" — there is no index page there, only the
+        // board, the roster and a per-pilot profile. This was a live
+        // link to a 404.
+        href: "/compliance/crew-currency",
         status: "live",
         department: "hr",
       },
