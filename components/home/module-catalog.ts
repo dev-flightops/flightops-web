@@ -28,7 +28,7 @@ export interface HomeModule {
   sub: string;
   href: string;
   status: ModuleStatus;
-  color: string;       // hex for icon fill
+  color: string; // hex for icon fill
   /** Optional accent treatment — blue glow on the card */
   highlight?: boolean;
   /** Raw `<path d="...">` payload for the icon SVG */
@@ -98,7 +98,7 @@ export const HOME_MODULES: HomeModule[] = [
     label: "HR",
     sub: "Employees & payroll",
     href: "/employees/",
-    status: "m3",
+    status: "live",
     color: "#a78bfa",
     iconPath:
       "M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z",
@@ -117,8 +117,8 @@ export const HOME_MODULES: HomeModule[] = [
     id: "compliance",
     label: "Records and Compliance",
     sub: "FAR, safety, regulatory checks",
-    href: "/compliance/",
-    status: "m3",
+    href: "/compliance/crew-currency",
+    status: "live",
     color: "#34d399",
     iconPath:
       "M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z",
@@ -240,7 +240,12 @@ export const HOME_MODULE_ROLES: Record<string, readonly Role[]> = {
     "dispatcher",
     "reservations_agent",
   ],
-  dispatch: ["exec_admin", "director_of_operations", "dispatcher", "chief_pilot"],
+  dispatch: [
+    "exec_admin",
+    "director_of_operations",
+    "dispatcher",
+    "chief_pilot",
+  ],
   // Read-only board so an agent can answer "where is my flight?" without
   // interrupting dispatch. The tile is the only flight-ops surface they get.
   "flight-following": [
