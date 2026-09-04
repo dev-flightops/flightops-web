@@ -59,3 +59,51 @@ export async function getFleetBrainExamples(): Promise<string[]> {
   const data = await apiFetch<{ examples: string[] }>("/ai/fleetbrain/examples");
   return data.examples;
 }
+
+// ── Morning brief ────────────────────────────────────────────────────
+
+export interface BriefSegment {
+  label: string;
+  count: number;
+}
+
+export interface BriefAlert {
+  text: string;
+  severity: "critical" | "warning";
+}
+
+export interface MaintenanceDueItem {
+  tail: string;
+  item: string;
+  due: string;
+  overdue: boolean;
+}
+
+export interface MorningBrief {
+  generated_for: string;
+  flights: { total: number; active: number; segments: BriefSegment[] };
+  fleet: { total: number; segments: BriefSegment[] };
+  load_factor: { percent: number; pax: number; seats: number };
+  on_time: {
+    percent: number;
+    completed: number;
+    total: number;
+    /** Null when there is no prior day to compare against — an arrow
+     *  with no history behind it invites a reading the data does not
+     *  support. */
+    trend: "up" | "down" | "flat" | null;
+  };
+  revenue: { booked_cents: number; bookings: number };
+  crew: { total: number; on_duty: number; non_current: number; grace: number };
+  squawks: { open: number; by_severity: Record<string, number> };
+  safety: { open: number; by_severity: Record<string, number> };
+  maintenance_due: MaintenanceDueItem[];
+  alerts: BriefAlert[];
+}
+
+export async function getMorningBrief(
+  timezone?: string,
+): Promise<MorningBrief> {
+  const qs = timezone ? `?timezone=${encodeURIComponent(timezone)}` : "";
+  return apiFetch<MorningBrief>(`/ai/brief${qs}`, { cache: "no-store" });
+}
