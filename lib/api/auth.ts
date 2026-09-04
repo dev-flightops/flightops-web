@@ -289,6 +289,12 @@ export async function createUser(
   });
 }
 
+/** One employee's full record, for /employees/{id}. Exec-admin gated —
+ *  it carries a date of birth, home address and emergency contact. */
+export async function getUser(userId: string): Promise<UserResponse> {
+  return apiFetch<UserResponse>(`/auth/settings/users/${userId}`);
+}
+
 export async function updateUser(
   userId: string,
   body: UserUpdateRequest,
@@ -329,14 +335,11 @@ export async function setAdminAccess(
   role: string,
   body: AdminAccessToggleRequest,
 ): Promise<AdminAccessRoleRow> {
-  return apiFetch<AdminAccessRoleRow>(
-    `/auth/settings/admin-access/${role}`,
-    {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    },
-  );
+  return apiFetch<AdminAccessRoleRow>(`/auth/settings/admin-access/${role}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
 }
 
 // ---- Per-tenant SSO providers (M2-M-28c) ----
