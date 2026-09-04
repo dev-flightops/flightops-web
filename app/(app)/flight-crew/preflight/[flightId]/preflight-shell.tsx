@@ -58,7 +58,9 @@ export function PreflightShell({
   weightReturn,
   weather,
 }: Props) {
-  const completedNumbers = new Set(progress.completed.map((s) => s.step_number));
+  const completedNumbers = new Set(
+    progress.completed.map((s) => s.step_number),
+  );
   const nextStep = progress.next_step;
   const allDone = nextStep === null;
 
@@ -74,7 +76,8 @@ export function PreflightShell({
   // edited step's completed_at timestamp shifts — key the effect on
   // that so we don't get stuck on the editor after a successful save.
   const editedRowKey = editingStep
-    ? progress.completed.find((s) => s.step_number === editingStep)?.completed_at
+    ? progress.completed.find((s) => s.step_number === editingStep)
+        ?.completed_at
     : null;
   useEffect(() => {
     if (editingStep === null) return;
@@ -94,9 +97,9 @@ export function PreflightShell({
       setEditBaseline(null);
       return;
     }
-    const current = progress.completed.find(
-      (s) => s.step_number === editingStep,
-    )?.completed_at ?? null;
+    const current =
+      progress.completed.find((s) => s.step_number === editingStep)
+        ?.completed_at ?? null;
     if (editBaseline === null) {
       setEditBaseline(current);
     } else if (current !== null && current !== editBaseline) {
@@ -293,7 +296,13 @@ function ActiveStep({
         />
       );
     case 4:
-      return <FlightRiskAssessmentStep flightId={flightId} initial={frat} />;
+      return (
+        <FlightRiskAssessmentStep
+          flightId={flightId}
+          initial={frat}
+          crosswindLimitKt={flight.aircraft.max_demonstrated_crosswind_kt}
+        />
+      );
     case 5:
       return <DutyInConfirmStep flightId={flightId} duty={duty} />;
     case 6:
@@ -327,10 +336,9 @@ function StepStubPanel({ stepNumber }: { stepNumber: number }) {
       </p>
       <h2 className="mt-1 text-base font-semibold text-foreground">{label}</h2>
       <p className="mt-3 text-sm text-muted-foreground">
-        This step's UI ships in a follow-up PR. The backend gate
-        accepts a completion POST today; for now this surface
-        documents what's coming so the progress indicator stays
-        accurate.
+        This step's UI ships in a follow-up PR. The backend gate accepts a
+        completion POST today; for now this surface documents what's coming so
+        the progress indicator stays accurate.
       </p>
     </section>
   );
