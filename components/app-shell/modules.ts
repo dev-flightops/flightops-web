@@ -311,7 +311,8 @@ export const DEPARTMENTS: Department[] = [
       {
         id: "ops-brief",
         label: "Ops Brief",
-        status: "m4",
+        href: "/ai/morning-brief",
+        status: "live",
         department: "admin",
         accent: "purple",
       },
@@ -843,7 +844,8 @@ export const DEPARTMENTS: Department[] = [
       {
         id: "ai-morning-brief",
         label: "Morning Brief",
-        status: "m4",
+        href: "/ai/morning-brief",
+        status: "live",
         department: "ai",
       },
       {
