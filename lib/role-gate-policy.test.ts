@@ -3,6 +3,12 @@ import { join } from "node:path";
 
 import { describe, expect, it } from "vitest";
 
+import {
+  DEPARTMENT_ROLES,
+  MODULE_ROLES,
+} from "@/components/app-shell/modules";
+import { HOME_MODULE_ROLES } from "@/components/home/module-catalog";
+
 import { ROLES } from "./roles";
 
 /**
@@ -100,6 +106,96 @@ describe("role gate policy", () => {
     expect(
       offenders,
       "these gates admit a chief pilot but not a Director of Operations, who outranks them",
+    ).toEqual([]);
+  });
+});
+
+/**
+ * The same policy, over the role *matrices* rather than the gate calls.
+ *
+ * This section exists because the scan above missed a real bug. It looks
+ * for `roleGate(...)` calls, and the home page does not gate that way —
+ * it filters its department tiles through HOME_MODULE_ROLES, a plain
+ * object. So when the post-holder roles were added to the nav matrix and
+ * to every page gate, the home tiles were left behind, and a Director of
+ * Operations logged in to a dashboard showing two departments out of
+ * fourteen. Every test passed.
+ *
+ * There are three matrices. The count is asserted, so a fourth cannot be
+ * added without this failing and someone deciding whether the policy
+ * applies to it.
+ */
+
+const MATRICES: Record<string, Record<string, readonly string[]>> = {
+  DEPARTMENT_ROLES: DEPARTMENT_ROLES as Record<string, readonly string[]>,
+  MODULE_ROLES: MODULE_ROLES as Record<string, readonly string[]>,
+  HOME_MODULE_ROLES: HOME_MODULE_ROLES as Record<string, readonly string[]>,
+};
+
+// Entries where a chief pilot is admitted and a Director of Operations
+// deliberately is not. Empty; anything added needs a reason.
+const MATRIX_EXCEPTIONS = new Set<string>();
+
+describe("role matrix policy", () => {
+  it("knows about every matrix in the app", () => {
+    // Guards the guard, and this is the one that would have caught the
+    // home-tile bug: a matrix nobody enumerated is a matrix nobody
+    // checks. Bump this deliberately when adding one.
+    const declared = Object.keys(MATRICES).length;
+    expect(
+      declared,
+      "a role matrix was added or removed — decide whether the policy applies to it",
+    ).toBe(3);
+  });
+
+  it("only ever names roles that exist", () => {
+    for (const [matrix, entries] of Object.entries(MATRICES)) {
+      for (const [key, roles] of Object.entries(entries)) {
+        const unknown = roles.filter(
+          (r) => !(ROLES as readonly string[]).includes(r),
+        );
+        expect(unknown, `${matrix}.${key} names roles that do not exist`).toEqual(
+          [],
+        );
+      }
+    }
+  });
+
+  it("admits the Director of Operations wherever it admits a Chief Pilot", () => {
+    const offenders: string[] = [];
+    for (const [matrix, entries] of Object.entries(MATRICES)) {
+      for (const [key, roles] of Object.entries(entries)) {
+        if (MATRIX_EXCEPTIONS.has(`${matrix}.${key}`)) continue;
+        if (
+          roles.includes("chief_pilot") &&
+          !roles.includes("director_of_operations")
+        ) {
+          offenders.push(`${matrix}.${key}: ${JSON.stringify(roles)}`);
+        }
+      }
+    }
+    expect(
+      offenders,
+      "these entries admit a chief pilot but not a Director of Operations",
+    ).toEqual([]);
+  });
+
+  it("admits the Director of Maintenance wherever it admits maintenance", () => {
+    const offenders: string[] = [];
+    for (const [matrix, entries] of Object.entries(MATRICES)) {
+      for (const [key, roles] of Object.entries(entries)) {
+        if (MATRIX_EXCEPTIONS.has(`${matrix}.${key}`)) continue;
+        if (
+          roles.includes("maintenance") &&
+          !roles.includes("director_of_maintenance")
+        ) {
+          offenders.push(`${matrix}.${key}: ${JSON.stringify(roles)}`);
+        }
+      }
+    }
+    expect(
+      offenders,
+      "these entries admit maintenance but not the Director of Maintenance",
     ).toEqual([]);
   });
 });
