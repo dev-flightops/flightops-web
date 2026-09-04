@@ -98,19 +98,19 @@ export type VorCheckType = "ground" | "airborne" | "vot" | "dual";
 
 export interface FlightLogResponse {
   id: string;
-  log_number: string;          // LOG-YYYYMMDD-HHMMSS
+  log_number: string; // LOG-YYYYMMDD-HHMMSS
   aircraft: AircraftRef;
   flight_id: string | null;
   flight_number: string | null;
   flight_type: FlightType;
-  flight_date: string;         // YYYY-MM-DD
+  flight_date: string; // YYYY-MM-DD
   status: FlightLogStatus;
   /** Permanent flag — true when the pilot started this log without a
    *  dispatch packet (ferry, training, historical entry). Drives the
    *  amber MANUAL ENTRY badge on Tab 1 + the flight history row. */
   is_manual_entry: boolean;
   created_by: UserRef;
-  created_at: string;          // ISO 8601 UTC
+  created_at: string; // ISO 8601 UTC
   // Spec 4 Tab 6 — VOR 30-day check (FAA 91.171). All optional —
   // non-IFR flights leave the form empty.
   vor_identifier?: string | null;
@@ -377,8 +377,8 @@ export interface SwitchTenantResponse {
 // SSO scaffolding (M1-M-5 / M1-G-5)
 
 export interface ProviderSummary {
-  id: string;       // "google" | "microsoft-entra-id" | "okta" — matches Auth.js provider id
-  label: string;    // human-readable, e.g. "Google"
+  id: string; // "google" | "microsoft-entra-id" | "okta" — matches Auth.js provider id
+  label: string; // human-readable, e.g. "Google"
 }
 
 export interface ProvidersResponse {
@@ -397,9 +397,9 @@ export interface WeatherReportResponse {
   icao: string;
   kind: WeatherKind;
   raw: string;
-  parsed_at: string;   // ISO 8601 UTC — when we last fetched from AWC
+  parsed_at: string; // ISO 8601 UTC — when we last fetched from AWC
   valid_until: string; // ISO 8601 UTC — cache TTL boundary
-  cache_hit: boolean;  // true if served from weather_reports, false if AWC was hit
+  cache_hit: boolean; // true if served from weather_reports, false if AWC was hit
   flight_category: FlightCategory | null;
   /** True when the current METAR is below the FAR 91.169 alternate
    *  threshold (ceiling < 2000 ft OR vis < 3 SM). Only set for METAR;
@@ -431,7 +431,7 @@ export interface WeatherBatchRequestItem {
 export interface WeatherBatchItemError {
   icao: string;
   kind: string;
-  status: number;  // 400 | 404 | 502 — matches GET-route status code
+  status: number; // 400 | 404 | 502 — matches GET-route status code
   detail: string;
 }
 
@@ -465,7 +465,7 @@ export interface WeatherBriefingListItem {
   aircraft: WeatherBriefingAircraftRef | null;
   worst_flight_category: FlightCategory | null;
   briefed_by: WeatherBriefingUserRef;
-  created_at: string;  // ISO 8601 UTC
+  created_at: string; // ISO 8601 UTC
 }
 
 export interface WeatherBriefingResponse extends WeatherBriefingListItem {
@@ -492,10 +492,7 @@ export interface WeatherBriefingCreateRequest {
 export type SquawkSeverity = "minor" | "major" | "grounding";
 
 export type IssueKind =
-  | "expired_mel"
-  | "open_mel"
-  | "grounding_squawk"
-  | "major_squawk";
+  "expired_mel" | "open_mel" | "grounding_squawk" | "major_squawk";
 
 /**
  * Discriminated union by `kind` — backend returns a single shape with
@@ -608,8 +605,8 @@ export interface MelItemCreateRequest {
   ata_chapter: string;
   description: string;
   category: MelCategory;
-  deferred_at: string;   // ISO 8601 UTC
-  due_at: string;        // ISO 8601 UTC
+  deferred_at: string; // ISO 8601 UTC
+  due_at: string; // ISO 8601 UTC
   notes?: string | null;
 }
 
@@ -645,7 +642,7 @@ export interface SquawkResponse {
 
 export interface SquawkCreateRequest {
   aircraft_id: string;
-  reported_at: string;  // ISO 8601 UTC
+  reported_at: string; // ISO 8601 UTC
   title: string;
   description: string;
   severity: SquawkSeverity;
@@ -682,8 +679,8 @@ export interface PositionResponse {
   groundspeed_kt: number | null;
   heading_deg: number | null;
   source: PositionSource;
-  reported_at: string;  // ISO 8601 UTC — observation time (track ordering)
-  received_at: string;  // ISO 8601 UTC — ingest time
+  reported_at: string; // ISO 8601 UTC — observation time (track ordering)
+  received_at: string; // ISO 8601 UTC — ingest time
 }
 
 export interface PositionListResponse {
@@ -701,7 +698,7 @@ export interface BoardFlightItem {
   aircraft: AircraftRef;
   origin: string;
   destination: string;
-  scheduled_departure_at: string;        // ISO 8601 UTC
+  scheduled_departure_at: string; // ISO 8601 UTC
   scheduled_arrival_at: string;
   /** Reserved for M2-M-14b (Check-In flow) — always null at M2-G-11. */
   actual_departure_at: string | null;
@@ -729,11 +726,7 @@ export type StationRunwaySource = "faa_api" | "manual" | "seeded";
 
 // Spec 6 §"Add Station form / Station type" catalog.
 export type StationType =
-  | "hub_base"
-  | "spoke_base"
-  | "village_airport"
-  | "maintenance_base"
-  | "custom";
+  "hub_base" | "spoke_base" | "village_airport" | "maintenance_base" | "custom";
 
 // Spec 6 §"Add Station form / Fuel types available".
 export type FuelTypeName = "Jet A" | "100LL";
@@ -783,11 +776,7 @@ export type StationIssueCategory =
 
 export type StationIssuePriority = "low" | "normal" | "high" | "critical";
 
-export type StationIssueStatus =
-  | "open"
-  | "in_progress"
-  | "resolved"
-  | "closed";
+export type StationIssueStatus = "open" | "in_progress" | "resolved" | "closed";
 
 export interface StationIssueStationRef {
   id: string;
@@ -804,7 +793,7 @@ export interface StationIssueResponse {
   title: string;
   description: string;
   submitted_by: UserRef | null;
-  submitted_date: string;     // YYYY-MM-DD
+  submitted_date: string; // YYYY-MM-DD
   assigned_to: string | null;
   resolution_notes: string | null;
   resolved_date: string | null;
@@ -832,11 +821,7 @@ export type GSEEquipmentType =
 export type GSEUnitStatus = "operational" | "maintenance" | "out_of_service";
 
 export type GSEMxItemType =
-  | "service"
-  | "inspection"
-  | "calibration"
-  | "certification"
-  | "custom";
+  "service" | "inspection" | "calibration" | "certification" | "custom";
 
 export type GSEMxStatus = "current" | "due_soon" | "overdue";
 
@@ -974,11 +959,7 @@ export interface FuelSupplierBaseListResponse {
 // Fuel orders (M2-M-27b backend / M2-G-40 frontend) -------------------------
 
 export type FuelOrderStatus =
-  | "ordered"
-  | "confirmed"
-  | "fueled"
-  | "discrepancy"
-  | "cancelled";
+  "ordered" | "confirmed" | "fueled" | "discrepancy" | "cancelled";
 
 export type FuelOrderCloseSource = "supplier" | "ramp" | "dispatch";
 
@@ -1074,10 +1055,7 @@ export interface LoadTeamListResponse {
 // Ramp turnaround photos (M2 tail — flightops-services PR #111)
 
 export type RampPhotoType =
-  | "secured_load"
-  | "hazmat_placard"
-  | "damage_documentation"
-  | "general";
+  "secured_load" | "hazmat_placard" | "damage_documentation" | "general";
 
 export interface RampPhotoResponse {
   id: string;
@@ -1220,7 +1198,8 @@ export interface FlightTrackingConfigUpdateRequest {
 // Users + Permissions — M2-M-28b / M2-G-48
 
 /** M2 tail (migration 0054) — matches auth-service `EMPLOYMENT_TYPES`. */
-export type EmploymentType = "full_time" | "part_time" | "contract" | "seasonal";
+export type EmploymentType =
+  "full_time" | "part_time" | "contract" | "seasonal";
 
 export interface UserResponse {
   id: string;
@@ -1307,9 +1286,7 @@ export interface PilotAcceptanceRequest {
 // Backend in services/ops/app/routes/frat.py (migration 0028).
 
 export type FratRiskLevel = "low" | "medium" | "high" | "extreme";
-export type FratAuthorizationKind =
-  | "dispatch_contact"
-  | "cp_do_authorization";
+export type FratAuthorizationKind = "dispatch_contact" | "cp_do_authorization";
 
 export interface FratAuthorizationResponse {
   id: string;
@@ -1412,10 +1389,7 @@ export type CurrencyStatus =
   | "non_current";
 
 export type CurrencyIntervalType =
-  | "annual"
-  | "semi_annual"
-  | "medical_hard_expiry"
-  | "rolling_days";
+  "annual" | "semi_annual" | "medical_hard_expiry" | "rolling_days";
 
 export interface CurrencyItemRef {
   id: string;
@@ -1539,7 +1513,7 @@ export interface CurrencyItemListResponse {
 /** GET /ops/accounting-export?start=&end= — one completed-flight row. */
 export interface AccountingExportRow {
   id: string;
-  date: string;            // ISO YYYY-MM-DD
+  date: string; // ISO YYYY-MM-DD
   flight_number: string;
   flight_type: string | null;
   origin: string;
@@ -1561,8 +1535,8 @@ export interface AccountingExportTotals {
 }
 
 export interface AccountingExportResponse {
-  start: string;  // ISO YYYY-MM-DD
-  end: string;    // ISO YYYY-MM-DD
+  start: string; // ISO YYYY-MM-DD
+  end: string; // ISO YYYY-MM-DD
   rows: AccountingExportRow[];
   totals: AccountingExportTotals;
 }
@@ -1827,16 +1801,10 @@ export interface SsoResolveResponse {
 // Fuel quality test log — M2-M-30 / M2-G-fuel-quality-log
 
 export type FuelQualityTestKind =
-  | "sump"
-  | "supplier_bulk"
-  | "tank_calibration"
-  | "other";
+  "sump" | "supplier_bulk" | "tank_calibration" | "other";
 
 export type FuelQualityResult =
-  | "pass"
-  | "fail"
-  | "contamination_water"
-  | "contamination_particulate";
+  "pass" | "fail" | "contamination_water" | "contamination_particulate";
 
 export interface FuelTypeRef {
   id: string;
@@ -1933,4 +1901,72 @@ export interface WeightReturnCreateRequest {
 
 export interface WeightReturnListResponse {
   items: WeightReturn[];
+}
+
+// --- Airman records — 14 CFR 135.63(a)(4) (M4-B-7) -------------------------
+
+/** Certificate levels, least to most privileged. */
+export const CERTIFICATE_TYPE_LABELS: Record<string, string> = {
+  student: "Student",
+  sport: "Sport",
+  recreational: "Recreational",
+  private: "Private",
+  commercial: "Commercial",
+  airline_transport: "Airline Transport",
+};
+
+export const MEDICAL_CLASS_LABELS: Record<string, string> = {
+  first: "First Class",
+  second: "Second Class",
+  third: "Third Class",
+  basicmed: "BasicMed",
+};
+
+/** Mirrors RATING_CATALOG in
+ *  flightops-services/shared/flightops_shared/compliance/ratings.py.
+ *  Abbreviations are what the certificate itself prints. */
+export const RATING_LABELS: Record<string, string> = {
+  asel: "Airplane Single-Engine Land",
+  amel: "Airplane Multi-Engine Land",
+  ases: "Airplane Single-Engine Sea",
+  ames: "Airplane Multi-Engine Sea",
+  rotorcraft_helicopter: "Rotorcraft — Helicopter",
+  instrument_airplane: "Instrument — Airplane",
+  instrument_helicopter: "Instrument — Helicopter",
+  cfi: "Certificated Flight Instructor",
+  cfii: "Certificated Flight Instructor — Instrument",
+  mei: "Multi-Engine Instructor",
+};
+
+export interface AirmanRecordResponse {
+  pilot: UserRef;
+  certificate_type: string | null;
+  certificate_number: string | null;
+  ratings: string[];
+  medical_class: string | null;
+  /** Decimals arrive as strings from Pydantic. */
+  total_time_hours: string | null;
+  pic_time_hours: string | null;
+  cross_country_hours: string | null;
+  night_hours: string | null;
+  instrument_hours: string | null;
+  /** ISO YYYY-MM-DD. Hours without this are refused server-side. */
+  experience_as_of: string | null;
+  notes: string | null;
+}
+
+export interface DisqualificationResponse {
+  id: string;
+  kind: string;
+  reason: string;
+  disqualified_on: string;
+  /** Null while still disqualified. This is the field 135.63 is about. */
+  released_on: string | null;
+  released_by: UserRef | null;
+  notes: string | null;
+}
+
+export interface DisqualificationListResponse {
+  items: DisqualificationResponse[];
+  open_count: number;
 }

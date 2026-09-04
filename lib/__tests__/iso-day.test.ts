@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   describeIsoDay,
   formatIsoDay,
+  formatIsoDayLong,
   isValidIsoDay,
   isoDayDiff,
   isoDayToUtcDate,
@@ -171,5 +172,40 @@ describe("isoDayToUtcDate", () => {
     expect(isoDayToUtcDate("2026-02-30")).toBeNull();
     expect(isoDayToUtcDate("not-a-date")).toBeNull();
     expect(isoDayToUtcDate("2026-08-26T00:00:00")).toBeNull();
+  });
+});
+
+describe("formatIsoDayLong", () => {
+  const inZone = <T>(tz: string, fn: () => T): T => {
+    const previous = process.env.TZ;
+    process.env.TZ = tz;
+    try {
+      return fn();
+    } finally {
+      process.env.TZ = previous;
+    }
+  };
+
+  it("renders the day it was given, in every zone", () => {
+    // Tokyo is +9 and Anchorage -8. Parsing a bare YYYY-MM-DD in the host
+    // zone breaks going east; rendering a UTC instant without
+    // timeZone:"UTC" breaks going west. Running only in UTC hides both.
+    for (const tz of ["UTC", "Asia/Tokyo", "America/Anchorage"]) {
+      expect(
+        inZone(tz, () => formatIsoDayLong("2026-08-01")),
+        `shifted under TZ=${tz}`,
+      ).toBe("Aug 1, 2026");
+    }
+  });
+
+  it("keeps the year, which is the point of the long form", () => {
+    expect(formatIsoDayLong("2019-12-31")).toBe("Dec 31, 2019");
+  });
+
+  it("returns the input unchanged when it is not a plain day", () => {
+    expect(formatIsoDayLong("2026-08-01T12:00:00Z")).toBe(
+      "2026-08-01T12:00:00Z",
+    );
+    expect(formatIsoDayLong("nonsense")).toBe("nonsense");
   });
 });
