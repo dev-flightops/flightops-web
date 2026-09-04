@@ -127,14 +127,30 @@ function EmployeesTable({
         <table className="w-full text-sm">
           <thead className="border-b border-border bg-muted/10 text-left text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
             <tr>
-              <th scope="col" className="px-4 py-2.5 font-semibold">Emp #</th>
-              <th scope="col" className="px-4 py-2.5 font-semibold">Name</th>
-              <th scope="col" className="px-4 py-2.5 font-semibold">Department</th>
-              <th scope="col" className="px-4 py-2.5 font-semibold">Title</th>
-              <th scope="col" className="px-4 py-2.5 font-semibold">Station</th>
-              <th scope="col" className="px-4 py-2.5 font-semibold">Type</th>
-              <th scope="col" className="px-4 py-2.5 font-semibold">Hire date</th>
-              <th scope="col" className="px-4 py-2.5 font-semibold">Status</th>
+              <th scope="col" className="px-4 py-2.5 font-semibold">
+                Emp #
+              </th>
+              <th scope="col" className="px-4 py-2.5 font-semibold">
+                Name
+              </th>
+              <th scope="col" className="px-4 py-2.5 font-semibold">
+                Department
+              </th>
+              <th scope="col" className="px-4 py-2.5 font-semibold">
+                Title
+              </th>
+              <th scope="col" className="px-4 py-2.5 font-semibold">
+                Station
+              </th>
+              <th scope="col" className="px-4 py-2.5 font-semibold">
+                Type
+              </th>
+              <th scope="col" className="px-4 py-2.5 font-semibold">
+                Hire date
+              </th>
+              <th scope="col" className="px-4 py-2.5 font-semibold">
+                Status
+              </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
@@ -144,8 +160,11 @@ function EmployeesTable({
                   {u.emp_number ?? empNumber(tenantSlug, i)}
                 </td>
                 <td className="whitespace-nowrap px-4 py-3 text-xs font-semibold">
+                  {/* Was "/settings/users" for every row — the same page
+                      for everyone, so the name looked like a link to that
+                      person's record and was not. */}
                   <Link
-                    href="/settings/users"
+                    href={`/employees/${u.id}`}
                     className="text-status-blue hover:underline"
                   >
                     {u.full_name}

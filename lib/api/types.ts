@@ -1224,6 +1224,20 @@ export interface UserResponse {
   employment_type: EmploymentType | null;
   hire_date: string | null; // ISO YYYY-MM-DD
   termination_date: string | null; // ISO YYYY-MM-DD
+  // M4-B-8 tail — the rest of the employee record, behind /employees/{id}.
+  // All nullable: a half-filled record is the normal state during
+  // onboarding, and the page says "Not recorded" rather than guessing.
+  first_name?: string | null;
+  last_name?: string | null;
+  preferred_name?: string | null;
+  date_of_birth?: string | null; // ISO YYYY-MM-DD
+  department?: string | null;
+  phone?: string | null;
+  address?: string | null;
+  emergency_contact_name?: string | null;
+  emergency_contact_phone?: string | null;
+  emergency_contact_relation?: string | null;
+  notes?: string | null;
 }
 
 export interface UserListResponse {
@@ -1256,6 +1270,17 @@ export interface UserUpdateRequest {
   employment_type?: EmploymentType | null;
   hire_date?: string | null;
   termination_date?: string | null;
+  first_name?: string | null;
+  last_name?: string | null;
+  preferred_name?: string | null;
+  date_of_birth?: string | null;
+  department?: string | null;
+  phone?: string | null;
+  address?: string | null;
+  emergency_contact_name?: string | null;
+  emergency_contact_phone?: string | null;
+  emergency_contact_relation?: string | null;
+  notes?: string | null;
 }
 
 export interface UserSetPasswordRequest {
