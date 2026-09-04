@@ -21,6 +21,11 @@ interface Props {
    *  When null, render the questionnaire; when present, render the
    *  result + (for EXTREME) the CP/DO authorization sub-form. */
   initial: FratAssessmentResponse | null;
+  /** AFM maximum demonstrated crosswind for the aircraft on this flight,
+   *  in knots. Null or absent means it has not been recorded — the wind
+   *  factor says so rather than implying a number, because the FARs do
+   *  not supply one to fall back on. */
+  crosswindLimitKt?: number | null;
 }
 
 /**
@@ -329,7 +334,11 @@ const RISK_LABEL: Record<FratRiskLevel, string> = {
   extreme: "EXTREME",
 };
 
-export function FlightRiskAssessmentStep({ flightId, initial }: Props) {
+export function FlightRiskAssessmentStep({
+  flightId,
+  initial,
+  crosswindLimitKt,
+}: Props) {
   // Pilots reach this component in two modes:
   //   1. First-time — no assessment yet, render the questionnaire.
   //   2. Post-submit — assessment exists, render the result + Continue.
@@ -341,7 +350,12 @@ export function FlightRiskAssessmentStep({ flightId, initial }: Props) {
   // questionnaire without needing a route change.
   const [override, setOverride] = useState(false);
   if (!initial || override) {
-    return <FratQuestionnaire flightId={flightId} />;
+    return (
+      <FratQuestionnaire
+        flightId={flightId}
+        crosswindLimitKt={crosswindLimitKt}
+      />
+    );
   }
   return (
     <FratResultPanel
@@ -356,7 +370,13 @@ export function FlightRiskAssessmentStep({ flightId, initial }: Props) {
 // Questionnaire (no assessment yet)
 // ---------------------------------------------------------------------------
 
-function FratQuestionnaire({ flightId }: { flightId: string }) {
+function FratQuestionnaire({
+  flightId,
+  crosswindLimitKt,
+}: {
+  flightId: string;
+  crosswindLimitKt?: number | null;
+}) {
   const [answers, setAnswers] = useState<Record<string, number>>(() => {
     const init: Record<string, number> = {};
     for (const group of FACTOR_GROUPS)
@@ -410,6 +430,7 @@ function FratQuestionnaire({ flightId }: { flightId: string }) {
                 <FactorRow
                   key={f.code}
                   factor={f}
+                  crosswindLimitKt={crosswindLimitKt}
                   value={answers[f.code]}
                   onChange={(v) =>
                     setAnswers((prev) => ({ ...prev, [f.code]: v }))
@@ -489,10 +510,12 @@ function FactorRow({
   factor,
   value,
   onChange,
+  crosswindLimitKt,
 }: {
   factor: FratFactor;
   value: number;
   onChange: (v: number) => void;
+  crosswindLimitKt?: number | null;
 }) {
   const anchor = anchorFor(factor.anchors, value);
   // Value tone follows the risk palette so pilots can see at a glance
@@ -516,6 +539,29 @@ function FactorRow({
         <p className="text-[0.65rem] leading-snug text-muted-foreground">
           {factor.hint}
         </p>
+        {/* The wind anchors are written in terms of "the aircraft's
+            crosswind limit". Until this was stored, the pilot had to
+            supply that number from memory while scoring against it. */}
+        {factor.code === "wx_wind" ? (
+          <p className="mt-0.5 text-[0.65rem] leading-snug">
+            {crosswindLimitKt != null ? (
+              <span className="text-foreground">
+                This aircraft:{" "}
+                <span className="font-semibold tabular-nums">
+                  {crosswindLimitKt} kt
+                </span>{" "}
+                <span className="text-muted-foreground">
+                  max demonstrated crosswind
+                </span>
+              </span>
+            ) : (
+              <span className="italic text-status-yellow">
+                Max demonstrated crosswind not recorded for this aircraft —
+                score against the AFM figure.
+              </span>
+            )}
+          </p>
+        ) : null}
       </div>
       <div className="col-span-4 flex flex-col items-stretch gap-1">
         <div className="flex items-center gap-2">
@@ -766,7 +812,8 @@ function FratAuthorizationForm({
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
-  const canSubmit = name.trim().length > 0 && role.trim().length > 0 && !pending;
+  const canSubmit =
+    name.trim().length > 0 && role.trim().length > 0 && !pending;
 
   const handleSubmit = () => {
     setError(null);

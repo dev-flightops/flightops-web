@@ -20,6 +20,13 @@ export interface AircraftRef {
    *  right input set. Nullable for aircraft imported without the
    *  airframe metadata set. */
   airframe_type?: string | null;
+  /** AFM maximum demonstrated crosswind component, in knots.
+   *
+   *  Null means not recorded, not zero. The FARs do not set a crosswind
+   *  limit — it comes from the aircraft's own flight manual — so there is
+   *  no default to fall back on, and any surface showing this has to say
+   *  "not recorded" rather than imply a number nobody entered. */
+  max_demonstrated_crosswind_kt?: number | null;
 }
 
 export interface AircraftListItem {
