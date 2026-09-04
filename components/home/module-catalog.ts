@@ -197,8 +197,8 @@ export const HOME_MODULES: HomeModule[] = [
     id: "fleetbrain",
     label: "Fleet Brain",
     sub: "AI ops assistant — ask anything",
-    href: "/fleetbrain/",
-    status: "m4",
+    href: "/fleetbrain",
+    status: "live",
     color: "#0a84ff",
     highlight: true,
     iconPath:
@@ -292,7 +292,22 @@ export const HOME_MODULE_ROLES: Record<string, readonly Role[]> = {
     "maintenance",
     "dispatcher",
   ],
-  fleetbrain: ["exec_admin", "director_of_operations"],
+  // FleetBrain answers across crew, maintenance, flights and weather,
+  // so the tile goes to everyone who would act on any of those. It is
+  // a shortcut, not a gate: the page itself is open to any signed-in
+  // user, matching the service, which in turn matches the endpoints it
+  // reads — /compliance/board carries no role dependency either. There
+  // is nothing here the asker could not already read off a dashboard.
+  fleetbrain: [
+    "exec_admin",
+    "director_of_operations",
+    "director_of_maintenance",
+    "chief_pilot",
+    "check_airman",
+    "safety_officer",
+    "dispatcher",
+    "maintenance",
+  ],
   // academy and safety are deliberately absent: training applies to
   // everyone, and hazard reporting must be reachable by whoever saw the
   // hazard. See the note in components/app-shell/modules.ts.

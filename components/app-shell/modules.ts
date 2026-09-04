@@ -302,7 +302,8 @@ export const DEPARTMENTS: Department[] = [
       {
         id: "fleetbrain",
         label: "Fleet Brain",
-        status: "m4",
+        href: "/fleetbrain",
+        status: "live",
         department: "admin",
         accent: "purple",
         dividerBefore: true,
@@ -835,7 +836,8 @@ export const DEPARTMENTS: Department[] = [
       {
         id: "ai-fleetbrain",
         label: "Fleet Brain",
-        status: "m4",
+        href: "/fleetbrain",
+        status: "live",
         department: "ai",
       },
       {

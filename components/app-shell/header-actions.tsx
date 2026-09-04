@@ -79,14 +79,17 @@ export function HeaderActions({
         </svg>
       </IconButton>
 
-      <IconButton
-        title="AI Assistant · Coming in M4"
-        disabled
-        srLabel="AI Assistant"
-        className="hidden text-status-purple sm:inline-flex"
+      {/* FleetBrain. A link rather than an IconButton because it
+          navigates — the placeholder here was a disabled button
+          labelled "Coming in M4" until the service landed. */}
+      <Link
+        href="/fleetbrain"
+        title="FleetBrain — ask about your operation"
+        aria-label="AI Assistant"
+        className="hidden items-center justify-center rounded-md bg-transparent p-2 text-status-purple hover:bg-primary/8 sm:inline-flex"
       >
         <Sparkles className="h-4 w-4" aria-hidden />
-      </IconButton>
+      </Link>
 
       {/* Clock button — its own pill, not an IconButton. Wired to the
           /ops/duty endpoints via TopBarClockButton (client). Off-duty
