@@ -261,11 +261,18 @@ export const DEPARTMENTS: Department[] = [
         status: "live",
         department: "admin",
       },
-      { id: "reports", label: "Reports", status: "m4", department: "admin" },
+      {
+        id: "reports",
+        label: "Reports",
+        href: "/reports",
+        status: "live",
+        department: "admin",
+      },
       {
         id: "reports-executive",
         label: "Executive",
-        status: "m4",
+        href: "/reports/executive/summary",
+        status: "live",
         department: "admin",
       },
       {
