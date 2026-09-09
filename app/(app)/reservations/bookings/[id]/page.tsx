@@ -12,6 +12,9 @@ import {
   getBooking,
 } from "@/lib/api/reservations";
 
+import { searchFlights, type FlightSearchResult } from "@/lib/api/flight-search";
+
+import { AssignFlightPanel } from "./assign-flight-panel";
 import { LifecycleControls } from "./lifecycle-controls";
 
 export default async function BookingDetailPage({
@@ -33,6 +36,25 @@ export default async function BookingDetailPage({
       if (err.status === 401) redirect("/login");
     }
     throw err;
+  }
+
+  // Candidate flights on the booking's own route and day. Full ones
+  // are included on purpose — a dispatcher looking at an unserviced
+  // booking needs to see that the 09:15 exists and is full, which is a
+  // different problem from there being no flight at all.
+  let candidates: FlightSearchResult[] = [];
+  if (booking.status !== "cancelled") {
+    candidates = await searchFlights({
+      origin: booking.origin_icao,
+      destination: booking.destination_icao,
+      date: booking.requested_departure_at.slice(0, 10),
+      paxCount: booking.pax_count,
+      showUnavailable: true,
+    })
+      .then((r) => r.items)
+      // A search that fails should not take the page with it; the rest
+      // of the booking is still worth reading.
+      .catch(() => []);
   }
 
   return (
@@ -170,6 +192,18 @@ export default async function BookingDetailPage({
             ) : null}
           </ul>
         </section>
+      ) : null}
+
+      {/* Shown for a completed booking too, read-only in effect —
+          which flight carried it is part of the record. Hidden only
+          for a cancelled one, where there is nothing to service. */}
+      {booking.status !== "cancelled" ? (
+        <AssignFlightPanel
+          bookingId={booking.id}
+          candidates={candidates}
+          assignedFlightNumber={booking.flight?.flight_number ?? null}
+          paxCount={booking.pax_count}
+        />
       ) : null}
 
       {booking.status !== "completed" &&

@@ -2,6 +2,7 @@ import { CrewLegalityHints } from "@/components/dispatch/packet/crew-status-rows
 import { DispatchComplianceGate } from "@/components/dispatch/packet/dispatch-compliance-gate";
 import { parseAckedMelIds } from "@/components/dispatch/packet/mel-acks";
 import { OpenMelPanel } from "@/components/dispatch/packet/open-mel-panel";
+import { BookingsAwaitingFlightPanel } from "@/components/dispatch/packet/bookings-awaiting-flight-panel";
 import { WeightReturnsPanel } from "@/components/dispatch/packet/weight-returns-panel";
 import {
   FlightDetailsPanel,
@@ -24,6 +25,7 @@ import {
   listFlights,
   listWeightReturns,
 } from "@/lib/api/ops";
+import { listBookings } from "@/lib/api/reservations";
 import { getRouteFreshness } from "@/lib/api/weather";
 import type {
   AircraftListItem,
@@ -113,6 +115,7 @@ export default async function DispatchPage({
     picCompliance,
     crew,
     weightReturns,
+    awaitingFlight,
   ] = await Promise.all([
     listFlights({ onDate: today }).catch(() => ({ items: [], total: 0 })),
     listMyTenants().catch(() => ({ tenants: [] })),
@@ -131,6 +134,13 @@ export default async function DispatchPage({
     // becomes dispatchable that shouldn't be. It just means dispatch has
     // to hear about it by radio, as they do today.
     listWeightReturns().catch(() => ({ items: [] })),
+    // Reservations nobody has put on a flight yet. Soft-fail like the
+    // others: losing this panel costs dispatch the queue, not the
+    // packet they are working on.
+    listBookings({ awaiting_flight: true, limit: 25 }).catch(() => ({
+      items: [],
+      total: 0,
+    })),
   ]);
 
   // M2-G-5 tail — parse ack state from URL. `warns_acked` is
@@ -213,6 +223,10 @@ export default async function DispatchPage({
             dispatch re-plans the load. Renders nothing when the list is
             empty. */}
         <WeightReturnsPanel returns={weightReturns.items} />
+
+        {/* Behind, not blocked — see the panel for why it is amber
+            rather than red. */}
+        <BookingsAwaitingFlightPanel bookings={awaitingFlight.items} />
       <PacketStyles />
 
       <div className="space-y-4">

@@ -154,9 +154,28 @@ export interface UserRef {
   email: string;
 }
 
+/** The scheduled flight carrying a booking, when one is assigned. */
+export interface BookingFlightRef {
+  id: string;
+  flight_number: string;
+  origin: string;
+  destination: string;
+  scheduled_departure_at: string;
+  status: string;
+}
+
 export interface Booking {
   id: string;
   customer: CustomerRef;
+  /**
+   * Null until a dispatcher puts the booking on a flight.
+   *
+   * The API has returned this since M3 and this type did not declare
+   * it, so every screen was blind to data it was already being sent —
+   * which is part of why a reservation could sit unserviced with
+   * nothing saying so.
+   */
+  flight: BookingFlightRef | null;
   origin_icao: string;
   destination_icao: string;
   requested_departure_at: string;
@@ -191,6 +210,8 @@ export interface ListBookingsParams {
   customer_id?: string;
   limit?: number;
   offset?: number;
+  /** Only bookings with no flight assigned — the dispatch queue. */
+  awaiting_flight?: boolean;
 }
 
 function _bookingsQs(p: ListBookingsParams): string {
@@ -200,6 +221,7 @@ function _bookingsQs(p: ListBookingsParams): string {
   if (p.status) s.set("status", p.status);
   if (p.aircraft_id) s.set("aircraft_id", p.aircraft_id);
   if (p.customer_id) s.set("customer_id", p.customer_id);
+  if (p.awaiting_flight) s.set("awaiting_flight", "true");
   if (p.limit !== undefined) s.set("limit", String(p.limit));
   if (p.offset !== undefined) s.set("offset", String(p.offset));
   const qs = s.toString();
@@ -292,4 +314,26 @@ export async function cancelBooking(
     method: "POST",
     body: JSON.stringify({ reason }),
   });
+}
+
+
+/**
+ * Put a booking on a flight, or move it to a different one.
+ *
+ * The endpoint has existed since M3 with nothing calling it, which is
+ * the whole of the 8/28 report: a reservation could be built and then
+ * had no route onward.
+ */
+export async function assignBookingToFlight(
+  bookingId: string,
+  flightId: string,
+): Promise<Booking> {
+  return apiFetch<Booking>(
+    `/reservations/bookings/${bookingId}/assign-flight`,
+    {
+      method: "POST",
+      body: JSON.stringify({ flight_id: flightId }),
+      headers: { "Content-Type": "application/json" },
+    },
+  );
 }
