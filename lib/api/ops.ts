@@ -741,3 +741,31 @@ export async function listDisqualifications(
     `/ops/compliance/pilots/${pilotId}/disqualifications`,
   );
 }
+
+export interface AmendDutyInput {
+  clock_in_at?: string;
+  clock_out_at?: string;
+  reason: string;
+}
+
+/**
+ * Correct the times on one of your own duty periods.
+ *
+ * Client bug report 8/28: a pilot who forgets to clock out has a
+ * period running until somebody notices, and nobody could fix it.
+ *
+ * Every amendment is recorded server-side with what the record said
+ * before, what it says now, and the stated reason — a duty period
+ * feeds the 135.267 limits and the release gate, so shortening one
+ * turns a pilot who was illegal into one who is legal.
+ */
+export async function amendDutyPeriod(
+  periodId: string,
+  input: AmendDutyInput,
+): Promise<DutyPeriodSummary> {
+  return apiFetch<DutyPeriodSummary>(`/ops/duty/${periodId}`, {
+    method: "PATCH",
+    body: JSON.stringify(input),
+    headers: { "Content-Type": "application/json" },
+  });
+}

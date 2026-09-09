@@ -2,6 +2,8 @@ import Link from "next/link";
 import { formatZulu, formatZuluDateTime } from "@/lib/format/flight-time";
 
 import { getCurrentDuty, listDutyHistory } from "@/lib/api/ops";
+
+import { CorrectDuty } from "./correct-duty";
 import { ApiError } from "@/lib/api/client";
 import type {
   CurrentDutyResponse,
@@ -201,6 +203,11 @@ function RecentPunches({ history }: { history: DutyPeriodSummary[] }) {
               <th scope="col" className="px-4 py-2.5 font-semibold">Clock out</th>
               <th scope="col" className="px-4 py-2.5 font-semibold">Elapsed</th>
               <th scope="col" className="px-4 py-2.5 font-semibold">Status</th>
+              {/* The manual clock/date function the 8/28 report asked
+                  for, underneath the button rather than beside it. */}
+              <th scope="col" className="px-4 py-2.5 font-semibold">
+                <span className="sr-only">Correct</span>
+              </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
@@ -215,7 +222,7 @@ function RecentPunches({ history }: { history: DutyPeriodSummary[] }) {
                 <td className="whitespace-nowrap px-4 py-3 text-xs text-muted-foreground">
                   {p.elapsed_hours.toFixed(1)}h
                 </td>
-                <td className="whitespace-nowrap px-4 py-3">
+                <td className="whitespace-nowrap px-4 py-3 align-top">
                   <span
                     className={
                       "rounded border px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider " +
@@ -226,6 +233,9 @@ function RecentPunches({ history }: { history: DutyPeriodSummary[] }) {
                   >
                     {p.is_open ? "Open" : "Closed"}
                   </span>
+                </td>
+                <td className="px-4 py-3 align-top">
+                  <CorrectDuty period={p} />
                 </td>
               </tr>
             ))}
