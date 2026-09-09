@@ -137,7 +137,14 @@ export function NewCharterForm({
             type="text"
             name="origin_icao"
             required
-            maxLength={10}
+            // Three or four letters and digits: ICAO indicators (PABE)
+            // and the FAA designators the village strips are known by
+            // (A61). The old maxLength={10} with no shape let "PANC`"
+            // through, and a charter filed against an airport that does
+            // not exist can never be matched to a flight.
+            pattern="[A-Za-z0-9]{3,4}"
+            title="An airport code like PANC or A61"
+            maxLength={4}
             placeholder="e.g. PANC"
             className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm uppercase"
           />
@@ -151,7 +158,9 @@ export function NewCharterForm({
             type="text"
             name="destination_icao"
             required
-            maxLength={10}
+            pattern="[A-Za-z0-9]{3,4}"
+            title="An airport code like PANC or A61"
+            maxLength={4}
             placeholder="e.g. PABE"
             className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm uppercase"
           />

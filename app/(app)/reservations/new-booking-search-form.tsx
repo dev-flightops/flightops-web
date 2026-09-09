@@ -2,12 +2,10 @@
 
 import { useMemo, useState } from "react";
 
-import {
-  searchFlights,
-  type FlightSearchResponse,
-} from "@/lib/api/flight-search";
+import type { FlightSearchResponse } from "@/lib/api/flight-search";
 import type { Customer } from "@/lib/api/reservations";
 
+import { searchFlightsAction } from "./actions";
 import { FlightResults } from "./flight-results";
 import type { StationListItem } from "@/lib/api/types";
 
@@ -65,6 +63,35 @@ function _todayIso(): string {
 /** id of the shared <datalist> the three ICAO inputs point at. */
 const STATION_LIST_ID = "station-list";
 
+/**
+ * An airport identifier, as somebody types it.
+ *
+ * Three or four letters and digits: ICAO indicators (PABE) and the FAA
+ * designators the village strips are known by (A61), which is why the
+ * floor is three rather than four.
+ *
+ * The datalist below suggests known stations but does not confine the
+ * field to them, so a typo goes through as an airport. That matters
+ * more than it looks: origin and destination are what a booking is
+ * matched to a flight on, so "PANC`" produces a booking that can never
+ * be put on one. It sits in the dispatch queue reading "no flights
+ * scheduled on this route that day" for ever, which reads as dispatch
+ * being broken. One did reach the live data that way.
+ *
+ * The server refuses the same shapes. This check exists so the message
+ * is a sentence rather than the framework's "String should match
+ * pattern '^[A-Z0-9]{3,4}$'".
+ */
+const AIRPORT_ID = /^[A-Z0-9]{3,4}$/;
+
+function airportError(value: string, label: string): string | null {
+  if (!value.trim()) return `${label} is required.`;
+  if (!AIRPORT_ID.test(value.trim().toUpperCase())) {
+    return `${label} should be an airport code like PANC or A61.`;
+  }
+  return null;
+}
+
 export function NewBookingSearchForm({
   customers,
   stations = [],
@@ -117,9 +144,14 @@ export function NewBookingSearchForm({
     // Surfaced per-field rather than in an alert() so the dispatcher can
     // see which one is missing.
     const nextErrors: Record<string, string> = {};
-    if (!origin.trim()) nextErrors.origin = "Origin is required.";
-    if (!destination.trim()) {
-      nextErrors.destination = "Destination is required.";
+    const originError = airportError(origin, "Origin");
+    if (originError) nextErrors.origin = originError;
+    const destinationError = airportError(destination, "Destination");
+    if (destinationError) nextErrors.destination = destinationError;
+    // Via is optional, so only its shape is checked, and only when the
+    // dispatcher has actually put something there.
+    if (via.trim() && !AIRPORT_ID.test(via.trim().toUpperCase())) {
+      nextErrors.via = "Via should be an airport code like PANC or A61.";
     }
     if (!date) nextErrors.date = "Date is required.";
     if (
@@ -169,18 +201,31 @@ export function NewBookingSearchForm({
     setSearchError(null);
     setResults(null);
     try {
-      setResults(
-        await searchFlights({
-          origin: o,
-          destination: d,
-          date: on,
-          paxCount: pax,
-          // Show what cannot be booked, with the reason. A dispatcher
-          // looking for somewhere to move a passenger needs to see the
-          // full picture, not a silently shorter list.
-          showUnavailable: true,
-        }),
-      );
+      // Through a server action rather than calling the API client
+      // here. That client begins with `await auth()` to attach the
+      // session's bearer token, which only works on the server — so
+      // every search from this form used to throw and land in the
+      // catch below. Nobody had ever seen a result from it.
+      const result = await searchFlightsAction({
+        origin: o,
+        destination: d,
+        date: on,
+        paxCount: pax,
+        // Show what cannot be booked, with the reason. A dispatcher
+        // looking for somewhere to move a passenger needs to see the
+        // full picture, not a silently shorter list.
+        showUnavailable: true,
+      });
+      if (result.status === "ok") {
+        setResults(result.data);
+      } else {
+        // The action says which kind of wrong it was. "Your session
+        // expired" and "reservations is not answering" need different
+        // things from the person reading them.
+        setSearchError(
+          `${result.message} You can still file the booking manually.`,
+        );
+      }
     } catch {
       setSearchError(
         "Couldn't search flights just now. You can still file the booking manually.",
@@ -323,7 +368,9 @@ export function NewBookingSearchForm({
             value={origin}
             onChange={(e) => setOrigin(e.target.value)}
             placeholder="Origin ICAO"
-            maxLength={10}
+            // Four, because no airport identifier is longer. The old 10
+            // let a stray character ride along unnoticed.
+            maxLength={4}
             className="ff uppercase"
             autoComplete="off"
             list={STATION_LIST_ID}
@@ -335,19 +382,19 @@ export function NewBookingSearchForm({
             value={destination}
             onChange={(e) => setDestination(e.target.value)}
             placeholder="Destination ICAO"
-            maxLength={10}
+            maxLength={4}
             className="ff uppercase"
             autoComplete="off"
             list={STATION_LIST_ID}
           />
         </Field>
-        <Field label="Via (optional)">
+        <Field label="Via (optional)" error={errors.via}>
           <input
             type="text"
             value={via}
             onChange={(e) => setVia(e.target.value)}
             placeholder="Stop"
-            maxLength={10}
+            maxLength={4}
             className="ff uppercase"
             autoComplete="off"
             list={STATION_LIST_ID}

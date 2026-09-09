@@ -6,20 +6,39 @@ import { z } from "zod";
 import { ApiError } from "@/lib/api/client";
 import { createBooking } from "@/lib/api/reservations";
 
+/**
+ * An airport identifier on a new booking.
+ *
+ * This was `min(2).max(10)` with no shape, which accepted "PANC`" —
+ * and one reached the live data. Origin and destination are what a
+ * booking is matched to a flight on, so a booking filed against an
+ * airport that cannot exist can never be put on one: it sits in the
+ * dispatch queue reading "no flights scheduled on this route that day"
+ * for ever, and the fault reads as dispatch being broken.
+ *
+ * Three characters is the floor rather than four because plenty of the
+ * strips this operation serves have no ICAO indicator and go by their
+ * FAA designator (A61, 5KE).
+ *
+ * Trim and upper-case first, then check — so " panc " is a booking for
+ * PANC rather than an error message.
+ */
+function airportId(label: string) {
+  return z
+    .string()
+    .trim()
+    .transform((s) => s.toUpperCase())
+    .refine((s) => s.length > 0, `${label} required.`)
+    .refine(
+      (s) => s.length === 0 || /^[A-Z0-9]{3,4}$/.test(s),
+      `${label} should be an airport code like PANC or A61.`,
+    );
+}
+
 const _schema = z.object({
   customer_id: z.string().uuid("Pick a customer."),
-  origin_icao: z
-    .string()
-    .trim()
-    .min(2, "Origin ICAO required.")
-    .max(10)
-    .transform((s) => s.toUpperCase()),
-  destination_icao: z
-    .string()
-    .trim()
-    .min(2, "Destination ICAO required.")
-    .max(10)
-    .transform((s) => s.toUpperCase()),
+  origin_icao: airportId("Origin"),
+  destination_icao: airportId("Destination"),
   requested_departure_at_local: z
     .string()
     .min(1, "Departure time required."),
