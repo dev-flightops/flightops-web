@@ -170,3 +170,83 @@ export async function getQueryEntities(): Promise<QueryEntity[]> {
   );
   return data.entities;
 }
+
+// ── Safety Intelligence ──────────────────────────────────────────────
+
+export type SafetyRiskLevel = "low" | "medium" | "high";
+export type SafetyTrend = "rising" | "stable" | "declining";
+
+export interface SafetyRiskCategory {
+  category: string;
+  count: number;
+  trend: SafetyTrend;
+}
+
+/** A place reports cluster — station or route. Never a person: the
+ *  corpus the analysis reads carries no people to name. */
+export interface SafetyHotspot {
+  location: string;
+  report_count: number;
+  primary_concern: string;
+}
+
+export interface SafetyTrendingIssue {
+  issue: string;
+  frequency: string;
+  risk_level: SafetyRiskLevel;
+}
+
+export interface SafetyCorrectiveFocus {
+  area: string;
+  recommendation: string;
+  priority: SafetyRiskLevel;
+}
+
+export interface SafetyAnalysis {
+  executive_summary: string;
+  risk_categories: SafetyRiskCategory[];
+  hotspots: SafetyHotspot[];
+  trending_issues: SafetyTrendingIssue[];
+  corrective_focus: SafetyCorrectiveFocus[];
+  positive_trends: string[];
+}
+
+export interface SafetyIntelligence {
+  window_start: string;
+  window_end: string;
+  hazard_count: number;
+  incident_count: number;
+  /** Non-zero means the analysis read a sample of the window, not all
+   *  of it. The service sends it so a partial read never passes for a
+   *  complete one; the page has to show it. */
+  reports_omitted: number;
+  analysis: SafetyAnalysis | null;
+  /** Set when there was nothing to analyse, or the model could not
+   *  produce an analysis. Distinct from an analysis finding nothing. */
+  note: string | null;
+  /** Advisory text, carried in the payload rather than written into
+   *  the page — the service's own comment says it travels this way so
+   *  a client cannot render the analysis without it. Render what
+   *  arrives; do not substitute a local string. */
+  advisory: string;
+}
+
+/**
+ * Run the analysis. POST because it spends a model call — the service
+ * refuses to expose it as a GET so that a browser, a prefetch or a
+ * proxy cannot repeat it by accident.
+ *
+ * Slow by nature: it reads the window, de-identifies it and waits on
+ * the model. Measured at ~48s against a small demo corpus, and it
+ * grows with the number of reports.
+ */
+export async function analyseSafety(
+  timezone?: string,
+): Promise<SafetyIntelligence> {
+  return apiFetch<SafetyIntelligence>("/ai/safety-intelligence", {
+    method: "POST",
+    body: JSON.stringify({ timezone: timezone ?? null }),
+    headers: { "Content-Type": "application/json" },
+    cache: "no-store",
+  });
+}
