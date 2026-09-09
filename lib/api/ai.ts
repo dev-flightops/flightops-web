@@ -107,3 +107,66 @@ export async function getMorningBrief(
   const qs = timezone ? `?timezone=${encodeURIComponent(timezone)}` : "";
   return apiFetch<MorningBrief>(`/ai/brief${qs}`, { cache: "no-store" });
 }
+
+// ── AI Query ─────────────────────────────────────────────────────────
+
+export interface QueryFilter {
+  field: string;
+  op: string;
+  value: unknown;
+}
+
+export interface QueryAggregate {
+  fn: string;
+  field?: string | null;
+  label?: string | null;
+}
+
+/**
+ * What the model decided to fetch. Returned with the answer for the
+ * same reason FleetBrain returns its intent, and the same reason
+ * legacy prints the SQL it generated: a wrong answer is only
+ * debuggable if the reading behind it is visible.
+ */
+export interface QuerySpec {
+  entity: string;
+  select: string[];
+  filters: QueryFilter[];
+  group_by: string[];
+  aggregates: QueryAggregate[];
+  order_by: string | null;
+  order_desc: boolean;
+  limit: number;
+}
+
+export interface AiQueryResult {
+  spec: QuerySpec | null;
+  columns: string[];
+  rows: Array<Record<string, unknown>>;
+  /** Set when the question could not be answered from the catalogue. */
+  refusal: string | null;
+}
+
+export interface QueryEntity {
+  name: string;
+  description: string;
+  fields: string[];
+}
+
+export async function askAiQuery(
+  question: string,
+  timezone?: string,
+): Promise<AiQueryResult> {
+  return apiFetch<AiQueryResult>("/ai/query", {
+    method: "POST",
+    body: JSON.stringify({ question, timezone: timezone ?? null }),
+    headers: { "Content-Type": "application/json" },
+  });
+}
+
+export async function getQueryEntities(): Promise<QueryEntity[]> {
+  const data = await apiFetch<{ entities: QueryEntity[] }>(
+    "/ai/query/entities",
+  );
+  return data.entities;
+}

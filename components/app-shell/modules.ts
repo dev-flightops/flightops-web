@@ -326,7 +326,8 @@ export const DEPARTMENTS: Department[] = [
       {
         id: "ai-query",
         label: "AI Query",
-        status: "m4",
+        href: "/ai/query",
+        status: "live",
         department: "admin",
         accent: "purple",
       },
