@@ -103,6 +103,18 @@ export default async function SchedulePage({
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <DatePicker defaultValue={date} statuses={statusesParam ?? ""} />
+          {/* The form lives under Flight Following and is called "Open
+              Flight", which is where nobody looks for it: the client
+              reported being "mostly unsuccessful in building flight"
+              on 9/9. The schedule is the page you are on when you
+              notice a flight is missing, so the way to add one belongs
+              here. One form still, linked from where the need arises. */}
+          <Link
+            href="/flight-following/new"
+            className="rounded-md bg-status-blue px-3 py-1.5 text-xs font-semibold text-white hover:brightness-110"
+          >
+            + New Flight
+          </Link>
           <Link
             href="/flight-following"
             className="rounded-md border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-muted/40"

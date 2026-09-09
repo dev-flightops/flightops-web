@@ -52,6 +52,13 @@ function isUuid(value: string | undefined): value is string {
 
 interface SearchParams {
   flight?: string;
+  /** Day of the schedule to work, `YYYY-MM-DD` UTC. Defaults to today.
+   *
+   *  The packet used to be pinned to today with no way to move, so a
+   *  flight built for tomorrow could not be selected, crewed or
+   *  released from here at all — the client's 9/9 report. Dispatch
+   *  plans ahead; the day has to be a control. */
+  date?: string;
   /** Comma-separated ICAOs that override [origin, destination] for the
    *  Weather panel. Set by the Route input on blur. */
   route?: string;
@@ -95,6 +102,7 @@ export default async function DispatchPage({
 }) {
   const {
     flight: selectedId,
+    date: dateParam,
     route: routeParam,
     notams_acked: notamsAckedParam,
     mels_acked: melsAckedParam,
@@ -103,9 +111,42 @@ export default async function DispatchPage({
     overrides_ack: overridesAckParam,
     stale_wx_ack: staleWxAckParam,
   } = await searchParams;
-  const today = todayUtc();
+  // Validate rather than trust: a malformed ?date= would otherwise be
+  // passed to the API as a filter and quietly return nothing, which
+  // reads as "no flights" rather than "bad date".
+  const scheduleDate =
+    dateParam && /^\d{4}-\d{2}-\d{2}$/.test(dateParam) ? dateParam : todayUtc();
 
   const currentPicId = isUuid(picOverrideId) ? picOverrideId : null;
+
+  // The crew roster is loaded before the compliance check, because the
+  // check has to run against whoever is actually assigned. Everything
+  // else still loads in parallel below.
+  //
+  // Soft-fail: a roster that will not load should cost the dispatcher
+  // the crew panel, not the whole packet.
+  const crew = selectedId
+    ? await listFlightCrew(selectedId).catch(() => ({
+        items: [],
+        has_pic: false,
+      }))
+    : { items: [], has_pic: false };
+
+  // The assigned PIC is the PIC. `?pic=` stays as a fallback so a
+  // hand-filled packet (no flight loaded, nothing to assign to) and old
+  // shared links keep pre-screening, but where a real assignment exists
+  // it wins — otherwise a stale link could have the compliance gate
+  // describing someone who is not on the flight.
+  //
+  // This used to be computed *after* the fetch below, which then ran
+  // against `currentPicId` — the URL parameter alone. So assigning a
+  // PIC properly and reloading the page left the gate reporting
+  // "Compliance check unavailable" about a pilot it could see on the
+  // roster, and the release could not be evaluated. The comment above
+  // described the intent; the fetch did not implement it.
+  const assignedPicId =
+    crew.items.find((a) => a.crew_role === "pic")?.user.id ?? null;
+  const effectivePicId = assignedPicId ?? currentPicId;
 
   const [
     { items: flights },
@@ -113,21 +154,20 @@ export default async function DispatchPage({
     selectedFlight,
     picOptions,
     picCompliance,
-    crew,
     weightReturns,
     awaitingFlight,
   ] = await Promise.all([
-    listFlights({ onDate: today }).catch(() => ({ items: [], total: 0 })),
+    listFlights({ onDate: scheduleDate }).catch(() => ({
+      items: [],
+      total: 0,
+    })),
     listMyTenants().catch(() => ({ tenants: [] })),
     selectedId ? loadFlight(selectedId) : Promise.resolve(null),
     loadPicRoster(),
-    currentPicId ? loadPicCompliance(currentPicId) : Promise.resolve(null),
-    // Soft-fail: a crew roster that will not load should cost the
-    // dispatcher the crew panel, not the whole packet. Everything else
-    // on this page still works without it.
-    selectedId
-      ? listFlightCrew(selectedId).catch(() => ({ items: [], has_pic: false }))
-      : Promise.resolve({ items: [], has_pic: false }),
+    // Against whoever is actually flying it, not whoever the URL says.
+    effectivePicId
+      ? loadPicCompliance(effectivePicId)
+      : Promise.resolve(null),
     // Flights handed back over weight. Soft-fail like the crew roster —
     // but note the consequence differs: a failure here hides flights that
     // are already blocked server-side at preflight step 2, so nothing
@@ -146,15 +186,6 @@ export default async function DispatchPage({
   // M2-G-5 tail — parse ack state from URL. `warns_acked` is
   // comma-separated currency-item codes; `overrides_ack=1` means the
   // supervisor override modal already ran successfully.
-  // The assigned PIC is the PIC. `?pic=` stays as a fallback so a
-  // hand-filled packet (no flight loaded, nothing to assign to) and old
-  // shared links keep pre-screening, but where a real assignment exists
-  // it wins — otherwise a stale link could have the compliance gate
-  // describing someone who is not on the flight.
-  const assignedPicId =
-    crew.items.find((a) => a.crew_role === "pic")?.user.id ?? null;
-  const effectivePicId = assignedPicId ?? currentPicId;
-
   const ackedWarnCodes = parseAckedWarns(warnsAckedParam);
   const overridesAcknowledged = overridesAckParam === "1";
   const staleWeatherAcknowledged = staleWxAckParam === "1";
@@ -230,7 +261,11 @@ export default async function DispatchPage({
       <PacketStyles />
 
       <div className="space-y-4">
-        <LoadFromSchedule flights={flights} selectedFlightId={selectedId ?? null}>
+        <LoadFromSchedule
+          flights={flights}
+          selectedFlightId={selectedId ?? null}
+          date={scheduleDate}
+        >
           {selectedFlight && (
             <SelectedFlightSummary
               flight={selectedFlight}
