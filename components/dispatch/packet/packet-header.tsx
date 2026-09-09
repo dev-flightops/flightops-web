@@ -1,4 +1,5 @@
 import { Sparkles } from "lucide-react";
+import Link from "next/link";
 
 import type { FlightDetail } from "@/lib/api/types";
 
@@ -58,6 +59,19 @@ export function PacketHeader({
             Planning Mode
           </span>
         )}
+
+        {/* Building a flight was only reachable from Flight Following,
+            under the label "Open Flight". Dispatch is where a
+            dispatcher goes to work a flight, so it is also where they
+            go when the flight does not exist yet — the client reported
+            being "mostly unsuccessful in building flight" on 9/9. Same
+            single form, linked from where the need arises. */}
+        <Link
+          href="/flight-following/new"
+          className="inline-flex items-center gap-1 rounded-md bg-status-blue px-3 py-1.5 text-[0.72rem] font-semibold text-white hover:brightness-110"
+        >
+          + New Flight
+        </Link>
 
         {/* AI Assistant — disabled, M4 (ai-service). */}
         <button
