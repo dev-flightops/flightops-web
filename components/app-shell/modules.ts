@@ -332,6 +332,14 @@ export const DEPARTMENTS: Department[] = [
         accent: "purple",
       },
       {
+        id: "admin-safety-intelligence",
+        label: "Safety Intelligence",
+        href: "/ai/safety-intelligence",
+        status: "live",
+        department: "admin",
+        accent: "purple",
+      },
+      {
         id: "admin-delay-alerts",
         label: "Delay Alerts",
         href: "/ai/delay-alerts",
@@ -867,7 +875,8 @@ export const DEPARTMENTS: Department[] = [
       {
         id: "ai-safety-intelligence",
         label: "Safety Intelligence",
-        status: "m4",
+        href: "/ai/safety-intelligence",
+        status: "live",
         department: "ai",
       },
     ],
@@ -1125,6 +1134,55 @@ export const MODULE_ROLES: Record<string, readonly Role[]> = {
     "check_airman",
     "pilot",
     "crew_member",
+    "dispatcher",
+  ],
+
+  // Matches the service exactly (services/ai/app/routes/safety.py):
+  // safety officer, chief pilot, director of operations, exec admin.
+  //
+  // Without its own entry this inherits the Admin department, which
+  // would put the link in front of the dispatcher, the DOM and the
+  // check airman — all three of whom the service refuses. A nav link
+  // that leads to a refusal is worse than no link: it reads as
+  // something broken rather than something not theirs.
+  //
+  // KNOWN GAP, and deliberately left as one: safety_officer is NOT
+  // listed here, even though the service admits them and its own
+  // comment says "a safety officer is the point of this tool, so they
+  // lead". They are not admitted to the Admin department, and
+  // department visibility gates before module visibility — so listing
+  // them here would change nothing while reading as though it did.
+  // The role-matrix test refuses that config, correctly.
+  //
+  // A safety officer can still use the page from a direct link; they
+  // just will not find it in the nav. Closing that properly is a
+  // policy call, not a drive-by: either admit safety officers to the
+  // Admin department, which also hands them the executive and
+  // chief-pilot dashboards, or move the route under /safety, which
+  // gives up the legacy URL. Both belong to whoever owns the role
+  // model — the 8/25 role work was decided deliberately and this
+  // should be too.
+  "admin-safety-intelligence": [
+    "exec_admin",
+    "director_of_operations",
+    "chief_pilot",
+  ],
+
+  // Matches the delay service exactly (services/ai/app/routes/delay.py),
+  // which is wider than the safety one on purpose: it reads one
+  // flight's operational risk, not the business, and its own comment
+  // says "dispatchers act on this, so they lead".
+  //
+  // Without this entry the module inherits the Admin department, which
+  // would also hand it to the DOM and the check airman — both of whom
+  // the service refuses. Unlike Safety Intelligence there is no gap
+  // here: every role the service admits is already admitted to Admin,
+  // so this list is the whole truth rather than as much of it as the
+  // department allows.
+  "admin-delay-alerts": [
+    "exec_admin",
+    "director_of_operations",
+    "chief_pilot",
     "dispatcher",
   ],
 };
