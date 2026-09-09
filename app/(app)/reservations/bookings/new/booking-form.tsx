@@ -96,7 +96,12 @@ export function BookingForm({
             name="origin_icao"
             type="text"
             required
-            maxLength={10}
+            // Three or four letters and digits — ICAO indicators and
+            // the FAA designators the village strips go by. The action
+            // checks the same shape; this stops the round trip.
+            pattern="[A-Za-z0-9]{3,4}"
+            title="An airport code like PANC or A61"
+            maxLength={4}
             placeholder="PANC"
             defaultValue={prefill?.origin ?? ""}
             className="ff-input uppercase"
@@ -113,7 +118,9 @@ export function BookingForm({
             name="destination_icao"
             type="text"
             required
-            maxLength={10}
+            pattern="[A-Za-z0-9]{3,4}"
+            title="An airport code like PANC or A61"
+            maxLength={4}
             placeholder="PABE"
             defaultValue={prefill?.destination ?? ""}
             className="ff-input uppercase"

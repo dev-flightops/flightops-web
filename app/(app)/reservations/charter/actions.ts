@@ -15,6 +15,10 @@ export type CharterActionState = {
   message?: string;
 };
 
+/** ICAO indicators (PABE) and FAA designators (A61), already trimmed
+ *  and upper-cased by the caller. */
+const AIRPORT_ID = /^[A-Z0-9]{3,4}$/;
+
 export async function createCharterAction(
   _prev: CharterActionState,
   form: FormData,
@@ -34,11 +38,21 @@ export async function createCharterAction(
   const notes = String(form.get("notes") ?? "").trim();
 
   if (!customer_id) return { status: "error", message: "Pick a customer." };
-  if (origin_icao.length < 3 || origin_icao.length > 10) {
-    return { status: "error", message: "Origin ICAO looks wrong." };
+  // A length check let "PANC`" through, and an airport that cannot
+  // exist is one the charter can never be matched to a flight at.
+  // Three or four letters and digits covers ICAO indicators and the FAA
+  // designators the village strips go by.
+  if (!AIRPORT_ID.test(origin_icao)) {
+    return {
+      status: "error",
+      message: "Origin should be an airport code like PANC or A61.",
+    };
   }
-  if (destination_icao.length < 3 || destination_icao.length > 10) {
-    return { status: "error", message: "Destination ICAO looks wrong." };
+  if (!AIRPORT_ID.test(destination_icao)) {
+    return {
+      status: "error",
+      message: "Destination should be an airport code like PANC or A61.",
+    };
   }
   if (!requested_date) {
     return { status: "error", message: "Pick a requested date." };

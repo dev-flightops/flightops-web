@@ -1,24 +1,29 @@
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const push = vi.fn();
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push }),
 }));
 
-// The form now performs a real search on submit. Mocked because
-// @/lib/api/flight-search imports apiFetch, which pulls the
-// next-auth -> next/server chain into the test environment.
+// The search runs through a server action. Mocked because the action
+// reaches @/lib/api/client, which pulls the next-auth -> next/server
+// chain into the test environment.
 const searchFlights = vi.fn(async () => ({
-  items: [],
-  total: 0,
-  origin: "PANC",
-  destination: "PABE",
-  search_date: "2026-08-20",
-  pax_count: 1,
+  status: "ok" as const,
+  data: {
+    items: [],
+    total: 0,
+    origin: "PANC",
+    destination: "PABE",
+    search_date: "2026-08-20",
+    pax_count: 1,
+  },
+}));
+vi.mock("./actions", () => ({
+  searchFlightsAction: (...args: unknown[]) => searchFlights(...(args as [])),
 }));
 vi.mock("@/lib/api/flight-search", () => ({
-  searchFlights: (...args: unknown[]) => searchFlights(...(args as [])),
   UNAVAILABLE_REASON_LABELS: {
     insufficient_seats: "Not enough seats",
     already_departed: "Already departed",
@@ -200,5 +205,134 @@ describe("NewBookingSearchForm — search behaviour", () => {
 
     expect(searchFlights.mock.calls.length).toBe(callsAfterValid);
     expect(screen.getByText(/destination is required/i)).toBeInTheDocument();
+  });
+});
+
+// ---- Airport identifiers ----------------------------------------------------
+//
+// The datalist suggests stations but does not confine the field to
+// them, so a typo goes through as an airport. That is not cosmetic:
+// origin and destination are what a booking is matched to a flight on,
+// so "PANC`" produces a booking that can never be put on one — it sits
+// in the dispatch queue reading "no flights scheduled on this route
+// that day" for ever. One reached the live data that way.
+
+describe("NewBookingSearchForm — airport identifiers", () => {
+  // The mock is module-level and the suite above leaves calls on it.
+  beforeEach(() => searchFlights.mockClear());
+
+  function submitWith(origin: string, destination = "PABE") {
+    render(<NewBookingSearchForm customers={[]} stations={STATIONS} />);
+    fillRoute(origin, destination);
+    fireEvent.click(screen.getByRole("button", { name: /search flights/i }));
+  }
+
+  it.each(["PANC`", "PA", "PANCX", "PA-C", "P@NC"])(
+    "refuses %s as an origin",
+    (bad) => {
+      submitWith(bad);
+      expect(
+        screen.getByText(/origin should be an airport code/i),
+      ).toBeInTheDocument();
+      expect(searchFlights).not.toHaveBeenCalled();
+    },
+  );
+
+  it("refuses a malformed destination too", () => {
+    submitWith("PANC", "PABE`");
+    expect(
+      screen.getByText(/destination should be an airport code/i),
+    ).toBeInTheDocument();
+  });
+
+  it.each(["PANC", "A61", "5KE", "BET"])("accepts %s", (good) => {
+    // Three characters is the floor rather than four: plenty of the
+    // strips this operation serves have no ICAO indicator and go by
+    // their FAA designator, which can lead with a digit.
+    submitWith(good);
+    expect(
+      screen.queryByText(/should be an airport code/i),
+    ).not.toBeInTheDocument();
+    expect(searchFlights).toHaveBeenCalled();
+  });
+
+  it("checks Via only when something is typed there", () => {
+    render(<NewBookingSearchForm customers={[]} stations={STATIONS} />);
+    fillRoute("PANC", "PABE");
+    fireEvent.click(screen.getByRole("button", { name: /search flights/i }));
+    expect(
+      screen.queryByText(/via should be an airport code/i),
+    ).not.toBeInTheDocument();
+
+    fireEvent.change(screen.getByPlaceholderText("Stop"), {
+      target: { value: "PA-C" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /search flights/i }));
+    expect(
+      screen.getByText(/via should be an airport code/i),
+    ).toBeInTheDocument();
+  });
+
+  it("caps every route field at four characters in the browser too", () => {
+    // The JS check is the one that produces a sentence; this stops the
+    // stray character being typed in the first place. The old cap was
+    // ten, which is longer than any airport identifier.
+    render(<NewBookingSearchForm customers={[]} stations={STATIONS} />);
+    for (const placeholder of ["Origin ICAO", "Destination ICAO", "Stop"]) {
+      expect(screen.getByPlaceholderText(placeholder)).toHaveAttribute(
+        "maxlength",
+        "4",
+      );
+    }
+  });
+});
+
+// ---- When the search itself fails ------------------------------------------
+//
+// It always did. The form imported searchFlights straight from
+// @/lib/api/flight-search, which goes through apiFetch — and apiFetch
+// starts with `await auth()`, a server-only call. Every search a
+// reservations agent ran threw and rendered "Couldn't search flights
+// just now"; not one ever returned a result. It goes through a server
+// action now, and the action says which kind of wrong it was.
+
+describe("NewBookingSearchForm — when the search fails", () => {
+  beforeEach(() => searchFlights.mockClear());
+
+  function submit() {
+    render(<NewBookingSearchForm customers={[]} stations={STATIONS} />);
+    fillRoute("PANC", "PABE");
+    fireEvent.click(screen.getByRole("button", { name: /search flights/i }));
+  }
+
+  it("says the session expired when that is what happened", async () => {
+    searchFlights.mockResolvedValueOnce({
+      status: "session_expired",
+      message: "Your session has expired. Sign in again to search.",
+    } as never);
+    submit();
+    expect(await screen.findByText(/session has expired/i)).toBeInTheDocument();
+  });
+
+  it("distinguishes a refusal from an unreachable service", async () => {
+    searchFlights.mockResolvedValueOnce({
+      status: "error",
+      message: "Reservations refused the search (HTTP 422).",
+    } as never);
+    submit();
+    expect(await screen.findByText(/HTTP 422/)).toBeInTheDocument();
+  });
+
+  it("still offers the manual route whichever way it failed", async () => {
+    // The escape hatch is the whole reason a failed search is not a
+    // dead end for the agent on the phone.
+    searchFlights.mockResolvedValueOnce({
+      status: "error",
+      message: "Could not reach reservations-service.",
+    } as never);
+    submit();
+    expect(
+      await screen.findByText(/you can still file the booking manually/i),
+    ).toBeInTheDocument();
   });
 });
