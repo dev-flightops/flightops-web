@@ -331,6 +331,14 @@ export const DEPARTMENTS: Department[] = [
         department: "admin",
         accent: "purple",
       },
+      {
+        id: "admin-delay-alerts",
+        label: "Delay Alerts",
+        href: "/ai/delay-alerts",
+        status: "live",
+        department: "admin",
+        accent: "purple",
+      },
     ],
   },
   {
