@@ -63,3 +63,61 @@ export async function getExecutiveSummary(
     cache: "no-store",
   });
 }
+
+// ── Regulatory: T-100 ────────────────────────────────────────────────
+
+export interface T100Row {
+  origin: string;
+  destination: string;
+  mail_class: string;
+  mail_class_label: string;
+  /** Distinct flights, not cargo lines. One flight carrying two bypass
+   *  lines is one departure. */
+  departures: number;
+  weight_lbs: number;
+  pieces: number;
+}
+
+export interface T100Report {
+  year: number;
+  month: number;
+  period_label: string;
+  rows: T100Row[];
+  total_weight_lbs: number;
+  total_pieces: number;
+  /** Distinct flights across the month — deliberately not the sum of
+   *  the per-row departures, which counts a flight once per class. */
+  total_departures: number;
+  /** Manifests still in draft for flights in this month, whose cargo
+   *  is excluded. Shown so a filer knows the report is provisional. */
+  draft_manifests_excluded: number;
+  advisory: string;
+}
+
+/** Both or neither: the service fills in the month just gone when
+ *  neither is given, and half a period would report a month nobody
+ *  asked for. */
+export async function getT100Report(
+  year?: number,
+  month?: number,
+): Promise<T100Report> {
+  const qs =
+    year !== undefined && month !== undefined
+      ? `?year=${year}&month=${month}`
+      : "";
+  return apiFetch<T100Report>(`/reports/regulatory/t100${qs}`, {
+    cache: "no-store",
+  });
+}
+
+/** The CSV as text, built server-side from the same report the table
+ *  renders so the filed file and the reviewed figures cannot differ. */
+export async function getT100Csv(
+  year: number,
+  month: number,
+): Promise<string> {
+  return apiFetch<string>(
+    `/reports/regulatory/t100.csv?year=${year}&month=${month}`,
+    { parseAs: "text", cache: "no-store" },
+  );
+}
