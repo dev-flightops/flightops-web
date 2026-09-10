@@ -2,86 +2,72 @@ import { Activity, Clock, Plane, Shield, Stethoscope, Users } from "lucide-react
 import Link from "next/link";
 
 import { DashboardNav } from "@/components/dashboards/dashboard-nav";
+import { getOpsScore, type OpsScorePillar } from "@/lib/api/reports";
 import { PillarBar } from "@/components/dashboards/pillar-bar";
 import { ScorePill } from "@/components/dashboards/score-pill";
-import { getFlightStats } from "@/lib/api/ops";
-import { loadOperationalSnapshot } from "@/lib/dashboards/operational-snapshot";
 
-export default async function OpsScoreDashboardPage() {
-  const [stats, snapshot] = await Promise.all([
-    getFlightStats().catch(() => null),
-    loadOperationalSnapshot(),
-  ]);
-  // Pillar model matches the executive dashboard exactly: default-full-
-  // credit for Completion + On-Time, subtract per failure; fleet pillar
-  // scales linearly with airworthy count; Crew + Safety stay 0 until
-  // their M3 services ship.
-  const fleetTotal =
-    snapshot.fleetTotal > 0 ? snapshot.fleetTotal : stats?.aircraft_total ?? 0;
-  const fleetActive =
-    snapshot.fleetTotal > 0
-      ? snapshot.fleetAirworthy
-      : stats?.aircraft_active ?? 0;
-  const fleetPillar =
-    fleetTotal > 0 ? Math.round((fleetActive / fleetTotal) * 200) / 10 : 0;
+/** Icon per pillar, keyed by the service's `key`. Unknown keys get no
+ *  icon rather than a wrong one — a pillar the service adds later
+ *  should appear unadorned, not mislabelled. */
+function pillarIcon(key: string) {
+  const cls = "h-3.5 w-3.5 text-muted-foreground";
+  if (key === "completion") return <Plane className={cls} aria-hidden />;
+  if (key === "on_time") return <Clock className={cls} aria-hidden />;
+  if (key === "crew") return <Users className={cls} aria-hidden />;
+  if (key === "fleet") return <Activity className={cls} aria-hidden />;
+  if (key === "safety") return <Shield className={cls} aria-hidden />;
+  return undefined;
+}
 
-  const cancelledOrOverdue = snapshot.board.filter(
-    (f) => f.status === "cancelled" || f.is_overdue,
-  ).length;
-  const completionPillar = Math.max(0, 25 - cancelledOrOverdue * 5);
-
-  const FIFTEEN_MIN_MS = 15 * 60 * 1000;
-  const delayedDepartures = snapshot.board.filter((f) => {
-    if (!f.actual_departure_at) return false;
-    const delta =
-      new Date(f.actual_departure_at).getTime() -
-      new Date(f.scheduled_departure_at).getTime();
-    return delta > FIFTEEN_MIN_MS;
-  }).length;
-  const onTimePillar = Math.max(0, 25 - delayedDepartures * 5);
-
-  const opsScore =
-    Math.round((completionPillar + onTimePillar + fleetPillar) * 10) / 10;
+export default async function OpsScoreDashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ tz?: string }>;
+}) {
+  // Which day is scored is the operator's question, not the server's.
+  // A dial headed Thursday that covers Wednesday's flights because the
+  // server runs on UTC is worse than no heading. Rides in as a search
+  // param because a server component cannot read the browser zone.
+  const { tz } = await searchParams;
+  // The operational snapshot and flight stats used to feed the local
+  // pillar computation. The service owns that now, so neither is
+  // fetched here — two round trips saved and one less place for the
+  // numbers to disagree.
+  // The score comes from reports-service. It used to be computed here
+  // — three pillars locally and two rendered as a literal 0 — which is
+  // how 30 of 100 points sat unreachable for a milestone without a
+  // single test failing.
+  //
+  // Soft-fail: a score that will not load should cost the dial, not the
+  // page. The alerts and board below it are separately sourced.
+  let opsScore = 0;
+  let maxAchievable = 100;
+  let band: string | null = null;
+  let pillars: OpsScorePillar[] = [];
+  let asOf = new Date().toISOString().slice(0, 10);
+  let scoreError: string | null = null;
+  try {
+    const result = await getOpsScore(tz);
+    opsScore = result.score;
+    maxAchievable = result.max_achievable;
+    band = result.band;
+    pillars = result.pillars;
+    asOf = result.as_of;
+  } catch {
+    scoreError = "Score unavailable — reports-service did not answer.";
+  }
 
   // Human-readable date heading — legacy peregrineflight uses
-  // "Wednesday, June 17, 2026" rather than the bare ISO.
-  const today = new Date();
-  const longDate = today.toLocaleDateString("en-US", {
+  // "Wednesday, June 17, 2026" rather than the bare ISO. Rendered in
+  // the same zone the score was computed for, so the heading and the
+  // number agree about which day this is.
+  const longDate = new Date(`${asOf}T00:00:00Z`).toLocaleDateString("en-US", {
     weekday: "long",
     month: "long",
     day: "numeric",
     year: "numeric",
     timeZone: "UTC",
   });
-
-  // Per-pillar context line — explains *why* the pillar scored as it
-  // did. Real values where we have data, M3-blocked placeholders where
-  // the source services haven't shipped (Crew, partial Safety).
-  const boardCount = snapshot.board.length;
-  const departedCount = snapshot.board.filter(
-    (f) => f.actual_departure_at,
-  ).length;
-  const completionContext =
-    boardCount === 0
-      ? "No flights scheduled today"
-      : cancelledOrOverdue === 0
-        ? `${boardCount} flights tracking nominal`
-        : `${boardCount} flights · ${cancelledOrOverdue} cancelled or overdue`;
-  const onTimeContext =
-    departedCount === 0
-      ? "No outcomes recorded today yet"
-      : delayedDepartures === 0
-        ? `${departedCount} departed on time`
-        : `${departedCount} departed · ${delayedDepartures} >15 min late`;
-  const crewContext = "Crew currency tracking ships with crew-service (M3)";
-  const fleetContext = `${fleetActive}/${fleetTotal} airworthy`;
-  const overdueCount = snapshot.alerts.filter(
-    (a) => a.category === "flight_overdue",
-  ).length;
-  const safetyContext =
-    overdueCount === 0
-      ? "No diversions or overdue flights · SMS feed ships with M3"
-      : `${overdueCount} overdue flight${overdueCount === 1 ? "" : "s"} · SMS feed ships with M3`;
 
   return (
     <div className="container py-6">
@@ -108,17 +94,41 @@ export default async function OpsScoreDashboardPage() {
         <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
           Today&apos;s Ops Score
         </p>
+        {scoreError && (
+          <p
+            role="alert"
+            className="mx-auto mt-3 max-w-md rounded-md border border-status-red/30 bg-status-red/10 px-3 py-2 text-xs text-status-red"
+          >
+            {scoreError}
+          </p>
+        )}
         <div className="mt-4 flex justify-center">
-          <ScorePill score={opsScore} size="large" />
+          <ScorePill score={opsScore} size="large" band={band} />
         </div>
         <p className="mt-4 text-xs text-muted-foreground">
-          out of 100 · {longDate}
+          {/* Out of what is achievable, not a flat 100. Two pillars
+              used to be hardcoded to zero, so a flawless day scored 70
+              and read "Fair" — printing "out of 100" while 30 points
+              were unreachable told the operator something false about
+              their operation. */}
+          out of {maxAchievable} · {longDate}
         </p>
+        {maxAchievable < 100 && (
+          <p className="mt-1 text-[0.65rem] text-status-yellow">
+            {100 - maxAchievable} point
+            {100 - maxAchievable === 1 ? "" : "s"} cannot be measured yet — see
+            the breakdown below.
+          </p>
+        )}
         <div className="mt-4 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-[0.65rem] text-muted-foreground/80">
-          <ScoreBand label="90–100 Excellent" tone="green" />
-          <ScoreBand label="75–89 Good" tone="green-soft" />
-          <ScoreBand label="60–74 Fair" tone="orange" />
-          <ScoreBand label="<60 Needs Attention" tone="red" />
+          {/* Percentages, not absolute points. While any pillar is
+              unmeasurable the total is out of less than 100, and
+              "90–100 Excellent" beside a score out of 97 reads as an
+              absolute cut-off nobody can reach. */}
+          <ScoreBand label="90%+ Excellent" tone="green" />
+          <ScoreBand label="75–89% Good" tone="green-soft" />
+          <ScoreBand label="60–74% Fair" tone="orange" />
+          <ScoreBand label="<60% Needs Attention" tone="red" />
         </div>
       </section>
 
@@ -128,41 +138,21 @@ export default async function OpsScoreDashboardPage() {
           Score Breakdown
         </h2>
         <div className="space-y-5">
-          <PillarBar
-            label="Completion Factor"
-            score={completionPillar}
-            max={25}
-            icon={<Plane className="h-3.5 w-3.5 text-muted-foreground" aria-hidden />}
-            context={completionContext}
-          />
-          <PillarBar
-            label="On-Time Performance"
-            score={onTimePillar}
-            max={25}
-            icon={<Clock className="h-3.5 w-3.5 text-muted-foreground" aria-hidden />}
-            context={onTimeContext}
-          />
-          <PillarBar
-            label="Crew Compliance"
-            score={0}
-            max={20}
-            icon={<Users className="h-3.5 w-3.5 text-muted-foreground" aria-hidden />}
-            context={crewContext}
-          />
-          <PillarBar
-            label="Fleet Airworthiness"
-            score={fleetPillar}
-            max={20}
-            icon={<Activity className="h-3.5 w-3.5 text-muted-foreground" aria-hidden />}
-            context={fleetContext}
-          />
-          <PillarBar
-            label="Safety Indicators"
-            score={0}
-            max={10}
-            icon={<Shield className="h-3.5 w-3.5 text-muted-foreground" aria-hidden />}
-            context={safetyContext}
-          />
+          {/* Rendered from the service rather than assembled here. The
+              two pillars that sat at a literal 0 for a milestone did so
+              because this list was hand-wired and nothing failed when a
+              score never moved. */}
+          {pillars.map((p) => (
+            <PillarBar
+              key={p.key}
+              label={p.label}
+              score={p.score}
+              max={p.max}
+              icon={pillarIcon(p.key)}
+              context={p.context}
+              notMeasured={p.not_measured}
+            />
+          ))}
         </div>
       </section>
 
@@ -185,7 +175,7 @@ export default async function OpsScoreDashboardPage() {
           <Methodology
             icon={<Users className="h-3.5 w-3.5" aria-hidden />}
             title="Crew Compliance (20 pts)"
-            body="Starts at 20. Deducts 2 pts per expired medical certificate, 0.5 pts per certificate expiring within 30 days. Floors at 0."
+            body="Starts at 20. Deducts 2 pts per expired medical certificate, 0.5 pts per certificate expiring within 30 days. An expired certificate that is not a medical also counts at the 0.5 tier — it cannot be cheaper than one merely approaching. Floors at 0."
           />
           <Methodology
             icon={<Activity className="h-3.5 w-3.5" aria-hidden />}
@@ -195,7 +185,7 @@ export default async function OpsScoreDashboardPage() {
           <Methodology
             icon={<Shield className="h-3.5 w-3.5" aria-hidden />}
             title="Safety Indicators (10 pts)"
-            body="Starts at 10. Deducts 3 pts per diversion or return-to-departure today, 2 pts per currently overdue flight. This is not a safety compliance score — it is a signal of unusual events that warrant leadership attention."
+            body="Starts at 10. Deducts 2 pts per currently overdue flight. The 3 pts allocated to diversions and returns-to-departure are withheld rather than awarded: a flight record has no actual destination, so a diversion cannot be detected, and scoring it as clean would assert something we cannot see. This is not a safety compliance score — it is a signal of unusual events that warrant leadership attention."
           />
         </div>
         <div className="mt-4 space-y-1 border-t border-border pt-3 text-[0.7rem] text-muted-foreground/80">
