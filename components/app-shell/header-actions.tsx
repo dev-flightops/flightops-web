@@ -1,11 +1,13 @@
 import Link from "next/link";
 
-import { LogOut, Sparkles } from "lucide-react";
+import { LogOut } from "lucide-react";
 
 import type { DutyActionResult } from "@/app/(app)/duty-actions";
 import type { CurrentDutyResponse } from "@/lib/api/types";
 import { cn } from "@/lib/utils";
 
+import { AiToolsMenu } from "./ai-tools-menu";
+import type { AiTool } from "./modules";
 import { SpotlightSearch } from "./spotlight-search";
 import { TopBarClockButton } from "./top-bar-clock-button";
 
@@ -50,6 +52,15 @@ export interface HeaderActionsProps {
     rest_acknowledged?: boolean;
   }) => Promise<DutyActionResult>;
   clockOutAction?: (args?: { reason?: string }) => Promise<DutyActionResult>;
+  /** AI tools this user's roles can use, already filtered by the
+   *  caller. Legacy exposes these from a top-bar dropdown on every
+   *  page rather than from a department nav — which is what makes
+   *  Safety Intelligence reachable by a safety officer, who is not
+   *  admitted to the Admin department where /ai/* resolves.
+   *
+   *  Defaults to FleetBrain alone so a caller that has not been
+   *  updated keeps the previous single-link behaviour. */
+  aiTools?: AiTool[];
 }
 
 export function HeaderActions({
@@ -60,6 +71,7 @@ export function HeaderActions({
   initialDuty,
   clockInAction,
   clockOutAction,
+  aiTools,
 }: HeaderActionsProps) {
   const displayName = fullName?.trim() || email;
   const initial = (displayName[0] ?? "U").toUpperCase();
@@ -79,17 +91,22 @@ export function HeaderActions({
         </svg>
       </IconButton>
 
-      {/* FleetBrain. A link rather than an IconButton because it
-          navigates — the placeholder here was a disabled button
-          labelled "Coming in M4" until the service landed. */}
-      <Link
-        href="/fleetbrain"
-        title="FleetBrain — ask about your operation"
-        aria-label="AI Assistant"
-        className="hidden items-center justify-center rounded-md bg-transparent p-2 text-status-purple hover:bg-primary/8 sm:inline-flex"
-      >
-        <Sparkles className="h-4 w-4" aria-hidden />
-      </Link>
+      {/* AI tools. Legacy opens a dropdown here listing all of them
+          (base.html:287-294); ours linked straight to FleetBrain,
+          leaving the rest reachable only from the Admin department
+          nav — which hid Safety Intelligence from safety officers. */}
+      <AiToolsMenu
+        tools={
+          aiTools ?? [
+            {
+              id: "fleetbrain",
+              label: "Fleet Brain",
+              href: "/fleetbrain",
+              roles: [],
+            },
+          ]
+        }
+      />
 
       {/* Clock button — its own pill, not an IconButton. Wired to the
           /ops/duty endpoints via TopBarClockButton (client). Off-duty
