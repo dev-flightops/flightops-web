@@ -309,7 +309,8 @@ export const DEPARTMENTS: Department[] = [
       {
         id: "invoicing",
         label: "Invoicing",
-        status: "m4",
+        href: "/invoicing",
+        status: "live",
         department: "admin",
       },
       {
@@ -1276,6 +1277,15 @@ export const MODULE_ROLES: Record<string, readonly Role[]> = {
   // airman — four roles the service refuses. Both roles named here are
   // admitted to Admin, so this list is the whole truth.
   "reports-t100": ["exec_admin", "director_of_operations"],
+
+  // Matches billing-service's customer-invoice routes. A reservations
+  // agent takes the booking; raising and sending the invoice is the
+  // office's job, and voiding one is a financial correction.
+  //
+  // Without this entry it inherits the Admin department and the link
+  // appears for the DOM, the dispatcher, the chief pilot and the check
+  // airman — four roles the service refuses.
+  invoicing: ["exec_admin", "director_of_operations"],
 };
 
 /**

@@ -45,9 +45,12 @@ export const HOME_QUICK_LINKS: QuickLink[] = [
   },
   {
     label: "Invoices",
-    href: "/invoicing/",
-    status: "m4",
-    roles: ["exec_admin"],
+    href: "/invoicing",
+    status: "live",
+    // Same audience as the nav entry and the service: raising and
+    // sending an invoice is the office's job. The DO is admitted here
+    // as well as the exec admin, matching MODULE_ROLES.invoicing.
+    roles: ["exec_admin", "director_of_operations"],
   },
   // "My" anything — a logbook, a duty history — only means something to
   // someone who flies. Kept in step with the flight-log and currency

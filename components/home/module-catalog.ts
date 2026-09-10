@@ -176,8 +176,8 @@ export const HOME_MODULES: HomeModule[] = [
     id: "invoicing",
     label: "Invoicing",
     sub: "Flight invoices, billing, AR",
-    href: "/invoicing/",
-    status: "m4",
+    href: "/invoicing",
+    status: "live",
     color: "#34d399",
     iconPath:
       "M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm-1 7V3.5L18.5 9H13zM8 13h8v2H8v-2zm0 4h8v2H8v-2z",
@@ -224,6 +224,7 @@ export function moduleStatusHint(status: ModuleStatus): string | null {
  * everyone; `roleGate` on an individual module still applies on top.
  */
 export const HOME_MODULE_ROLES: Record<string, readonly Role[]> = {
+
   "flight-crew": [
     "exec_admin",
     "director_of_operations",
@@ -274,6 +275,10 @@ export const HOME_MODULE_ROLES: Record<string, readonly Role[]> = {
   ],
   hr: ["exec_admin", "director_of_operations"],
   housing: ["exec_admin", "director_of_operations", "ground_ops"],
+  // Already the right pair, and it matches billing-service's
+  // customer-invoice routes plus MODULE_ROLES.invoicing. Raising and
+  // sending an invoice is the office's job; voiding one is a financial
+  // correction.
   invoicing: ["exec_admin", "director_of_operations"],
   compliance: [
     "exec_admin",
