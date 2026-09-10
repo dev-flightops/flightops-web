@@ -339,6 +339,14 @@ export const DEPARTMENTS: Department[] = [
         department: "admin",
         accent: "purple",
       },
+      {
+        id: "admin-delay-alerts",
+        label: "Delay Alerts",
+        href: "/ai/delay-alerts",
+        status: "live",
+        department: "admin",
+        accent: "purple",
+      },
     ],
   },
   {
@@ -1158,6 +1166,24 @@ export const MODULE_ROLES: Record<string, readonly Role[]> = {
     "exec_admin",
     "director_of_operations",
     "chief_pilot",
+  ],
+
+  // Matches the delay service exactly (services/ai/app/routes/delay.py),
+  // which is wider than the safety one on purpose: it reads one
+  // flight's operational risk, not the business, and its own comment
+  // says "dispatchers act on this, so they lead".
+  //
+  // Without this entry the module inherits the Admin department, which
+  // would also hand it to the DOM and the check airman — both of whom
+  // the service refuses. Unlike Safety Intelligence there is no gap
+  // here: every role the service admits is already admitted to Admin,
+  // so this list is the whole truth rather than as much of it as the
+  // department allows.
+  "admin-delay-alerts": [
+    "exec_admin",
+    "director_of_operations",
+    "chief_pilot",
+    "dispatcher",
   ],
 };
 

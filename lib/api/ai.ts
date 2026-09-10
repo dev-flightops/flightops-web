@@ -250,3 +250,94 @@ export async function analyseSafety(
     cache: "no-store",
   });
 }
+
+// ── Delay Alerts ─────────────────────────────────────────────────────
+
+/** Low / medium / high, as the delay service bands it. Deliberately
+ *  its own type rather than shared with any other risk scale — the
+ *  services define them separately, and a shared alias would imply the
+ *  two mean the same thing and move together. They do not. */
+export type DelayRiskBand = "low" | "medium" | "high";
+
+export interface DelayContributingFactor {
+  factor: string;
+  detail: string;
+}
+
+/**
+ * What the model contributes — a band, never a score.
+ *
+ * The service's own schema explains the refusal: legacy asks for a
+ * `delay_risk_score` of 0-100 from a handful of aggregate counts, and
+ * there is no calculation that lands on 73 rather than 68. A two-digit
+ * number sitting beside figures that were actually measured borrows
+ * their authority. So there is nothing here to render as a percentage,
+ * and nothing should be invented to fill the gap.
+ */
+export interface DelayJudgement {
+  risk_band: DelayRiskBand;
+  contributing_factors: DelayContributingFactor[];
+  historical_context: string;
+  recommendation: string;
+}
+
+/** Measured from flight history. These are the operator's own numbers,
+ *  not the model's. */
+export interface DelayRouteStats {
+  origin: string;
+  destination: string;
+  flights: number;
+  completed: number;
+  cancelled: number;
+  late: number;
+  /** Null when there were too few prior flights for a percentage to
+   *  mean anything. Rendering a null as "0%" would turn "we do not
+   *  know" into "it never happens". */
+  cancellation_rate: number | null;
+  late_rate: number | null;
+  enough_history: boolean;
+}
+
+export interface DelayAircraftStats {
+  tail: string | null;
+  flights: number;
+  late: number;
+  open_squawks: number;
+  grounding_squawks: number;
+  open_mels: number;
+  is_grounded: boolean;
+}
+
+export interface DelayAssessment {
+  flight_id: string;
+  flight_number: string;
+  route: DelayRouteStats;
+  aircraft: DelayAircraftStats;
+  window_days: number;
+  /** Absent when the model could not be reached or would not answer.
+   *  That does not invalidate the measured figures above it. */
+  judgement: DelayJudgement | null;
+  note: string | null;
+  /** Carried in the payload rather than written into the page, so a
+   *  client cannot render the assessment without it. */
+  advisory: string;
+}
+
+/**
+ * Assess one flight. POST because it spends a model call.
+ *
+ * Per flight rather than per day on purpose: the assessment reads that
+ * flight's route history and that tail's squawk and MEL state, so
+ * there is no batch form of it that would mean the same thing.
+ */
+export async function assessDelayRisk(
+  flightId: string,
+  timezone?: string,
+): Promise<DelayAssessment> {
+  return apiFetch<DelayAssessment>("/ai/delay-risk", {
+    method: "POST",
+    body: JSON.stringify({ flight_id: flightId, timezone: timezone ?? null }),
+    headers: { "Content-Type": "application/json" },
+    cache: "no-store",
+  });
+}
