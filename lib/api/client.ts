@@ -50,7 +50,11 @@ type NextFetchInit = RequestInit & {
    *  `"text"` for endpoints that stream CSV / plain text (payroll
    *  export). The generic `T` is not narrowed — callers should
    *  annotate the return type as `string` when using `"text"`. */
-  parseAs?: "json" | "text";
+  /** Response body parser. Defaults to `json`. `"text"` for endpoints
+   *  that stream CSV or plain text; `"base64"` for binary — a PDF has
+   *  to cross a server-action boundary as a string, and base64 is what
+   *  survives that intact. */
+  parseAs?: "json" | "text" | "base64";
 };
 
 export async function apiFetch<T>(
@@ -112,6 +116,13 @@ export async function apiFetch<T>(
   }
   if (init.parseAs === "text") {
     return (await response.text()) as T;
+  }
+  if (init.parseAs === "base64") {
+    // Buffer rather than btoa: this only ever runs on the server (see
+    // the auth() call above), and btoa on a large binary string is both
+    // slower and easy to get wrong on multi-byte values.
+    const bytes = Buffer.from(await response.arrayBuffer());
+    return bytes.toString("base64") as T;
   }
   return (await response.json()) as T;
 }
