@@ -16,11 +16,17 @@ import { cn } from "@/lib/utils";
 export function ScorePill({
   score,
   size = "default",
+  band,
 }: {
   score: number;
   size?: "default" | "large";
+  /** Band decided by the caller. Pass it when the score is not out of
+   *  100 — the ops score has unmeasurable pillars, so its service
+   *  bands against the achievable maximum. Omit it and the thresholds
+   *  below apply, which is correct for any true percentage. */
+  band?: string | null;
 }) {
-  const rating = ratingFor(score);
+  const rating = band ? ratingForBand(band) : ratingFor(score);
   return (
     <div
       className={cn(
@@ -50,6 +56,22 @@ export function ScorePill({
       </span>
     </div>
   );
+}
+
+/**
+ * Tone for a band the caller already decided.
+ *
+ * The thresholds below read the score against a flat 100, which is
+ * right only while 100 is achievable. The ops score has pillars it
+ * cannot measure, so its service bands against the achievable maximum
+ * instead — and a perfect day scoring 97 of 97 must read "Excellent",
+ * not be re-judged here against 100.
+ */
+function ratingForBand(band: string) {
+  if (band === "Excellent") return ratingFor(95);
+  if (band === "Good") return ratingFor(80);
+  if (band === "Fair") return ratingFor(65);
+  return ratingFor(0);
 }
 
 function ratingFor(score: number) {

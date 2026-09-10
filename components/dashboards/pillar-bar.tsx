@@ -22,12 +22,18 @@ export function PillarBar({
   max,
   icon,
   context,
+  notMeasured,
 }: {
   label: string;
   score: number;
   max: number;
   icon?: React.ReactNode;
   context?: string;
+  /** What this pillar could not measure. Rendered in warning colour
+   *  rather than as another muted line: a pillar showing full marks
+   *  for something it cannot see is the failure this guards against,
+   *  and it should not read like ordinary context. */
+  notMeasured?: string | null;
 }) {
   const pct = max > 0 ? Math.min(100, Math.round((score / max) * 100)) : 0;
   const tone =
@@ -66,6 +72,9 @@ export function PillarBar({
       </div>
       {context && (
         <p className="text-[0.7rem] text-muted-foreground/80">{context}</p>
+      )}
+      {notMeasured && (
+        <p className="text-[0.7rem] text-status-yellow">{notMeasured}</p>
       )}
     </div>
   );

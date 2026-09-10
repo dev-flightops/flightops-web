@@ -121,3 +121,49 @@ export async function getT100Csv(
     { parseAs: "text", cache: "no-store" },
   );
 }
+
+// ── Daily ops score ─────────────────────────────────────────────────
+
+export interface OpsScorePillar {
+  key: string;
+  label: string;
+  score: number;
+  max: number;
+  /** Why it scored as it did, built from the counts. */
+  context: string;
+  /** What this pillar could not measure. Rendered, so a partial
+   *  measurement never passes for a complete one. */
+  not_measured: string | null;
+}
+
+export interface OpsScoreResponse {
+  as_of: string;
+  score: number;
+  /** The best score achievable given what can currently be measured.
+   *  Less than 100 while any pillar has an unmeasurable share — shown
+   *  so a reader can tell "we scored badly" from "we cannot score
+   *  this". */
+  max_achievable: number;
+  band: string;
+  pillars: OpsScorePillar[];
+  advisory: string;
+}
+
+/**
+ * The day's score, computed server-side.
+ *
+ * The page used to compute three pillars itself and render the other
+ * two as a hardcoded 0 — 30 of 100 points nothing could move, so a
+ * flawless day scored 70 and read "Fair". One formula, one place.
+ *
+ * `timezone` decides which day is scored: the operator's, not the
+ * server's.
+ */
+export async function getOpsScore(
+  timezone?: string,
+): Promise<OpsScoreResponse> {
+  const qs = timezone ? `?timezone=${encodeURIComponent(timezone)}` : "";
+  return apiFetch<OpsScoreResponse>(`/reports/ops-score${qs}`, {
+    cache: "no-store",
+  });
+}
