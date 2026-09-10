@@ -1017,6 +1017,74 @@ export const DEPARTMENT_ROLES: Partial<Record<DepartmentId, readonly Role[]>> =
  * Per-module exceptions, for modules whose audience differs from their
  * department's. Anything absent inherits the department.
  */
+/**
+ * The AI tools, as legacy presents them.
+ *
+ * Legacy puts these in an "AI Tools" dropdown in the top bar
+ * (`templates/base.html:287-294`) — Fleet Brain, Morning Ops Brief, AI
+ * Query, Safety Intelligence, Delay Predictions — reachable from
+ * anywhere, with no department involved.
+ *
+ * That placement is the answer to a problem our department nav created.
+ * `/ai/*` resolves to the Admin department, and a safety officer is not
+ * admitted to Admin — so Safety Intelligence, whose service says "a
+ * safety officer is the point of this tool, so they lead", could not be
+ * found by the role it was built for. The department entries stay for
+ * the people who already live in Admin; this menu is how everyone else
+ * reaches them.
+ *
+ * `roles` mirrors each endpoint's own gate exactly, so the menu never
+ * offers a tool the service will refuse. An empty list means the
+ * service gates nothing.
+ */
+export interface AiTool {
+  id: string;
+  label: string;
+  href: string;
+  /** Empty = no service-side gate. */
+  roles: readonly Role[];
+}
+
+export const AI_TOOLS: readonly AiTool[] = [
+  // No gate on the service, same as the brief.
+  { id: "fleetbrain", label: "Fleet Brain", href: "/fleetbrain", roles: [] },
+  { id: "ops-brief", label: "Ops Brief", href: "/ai/morning-brief", roles: [] },
+  {
+    id: "ai-query",
+    label: "AI Query",
+    href: "/ai/query",
+    roles: ["exec_admin", "director_of_operations", "chief_pilot"],
+  },
+  {
+    id: "safety-intelligence",
+    label: "Safety Intelligence",
+    href: "/ai/safety-intelligence",
+    roles: [
+      "exec_admin",
+      "director_of_operations",
+      "chief_pilot",
+      "safety_officer",
+    ],
+  },
+  {
+    id: "delay-alerts",
+    label: "Delay Alerts",
+    href: "/ai/delay-alerts",
+    roles: [
+      "exec_admin",
+      "director_of_operations",
+      "chief_pilot",
+      "dispatcher",
+    ],
+  },
+];
+
+/** The AI tools this user's roles can actually use. Fails open on an
+ *  empty role list, like the department and module checks. */
+export function visibleAiTools(roles: readonly string[]): AiTool[] {
+  return AI_TOOLS.filter((t) => _permits(t.roles.length ? t.roles : undefined, roles));
+}
+
 export const MODULE_ROLES: Record<string, readonly Role[]> = {
   // Operations is listed exhaustively rather than half-explicit. A module
   // with no entry here inherits its department, and once reservations_agent

@@ -2,6 +2,7 @@ import { auth } from "@/auth";
 import { signOutAction } from "@/app/(app)/actions";
 import { clockInAction, clockOutAction } from "@/app/(app)/duty-actions";
 import { HeaderActions } from "@/components/app-shell/header-actions";
+import { visibleAiTools } from "@/components/app-shell/modules";
 import { ActiveAlertsPanel } from "@/components/home/active-alerts-panel";
 import { HomeHero } from "@/components/home/home-hero";
 import { HomeModuleCard } from "@/components/home/home-module-card";
@@ -155,6 +156,11 @@ export default async function HomePage() {
       initialDuty={initialDuty}
       clockInAction={clockInAction}
       clockOutAction={clockOutAction}
+      // /home renders its own top bar rather than the (app) layout's,
+      // so the AI tools have to be sourced here too. Missed on the
+      // first pass, and the symptom was the menu collapsing to a
+      // single FleetBrain link on /home alone.
+      aiTools={visibleAiTools(sessionRoles)}
     />
   ) : null;
 

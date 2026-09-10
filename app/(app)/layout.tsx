@@ -1,6 +1,7 @@
 import { auth, signOut } from "@/auth";
 import { AppShell } from "@/components/app-shell/app-shell";
 import { HeaderActions } from "@/components/app-shell/header-actions";
+import { visibleAiTools } from "@/components/app-shell/modules";
 import { BrandThemeStyle } from "@/components/app-shell/brand-theme-style";
 import { SafetyReportButton } from "@/components/safety/safety-report-button";
 import { getCompanyProfile, listMyTenants } from "@/lib/api/auth";
@@ -88,6 +89,7 @@ export default async function AppGroupLayout({
     <HeaderActions
       email={session.user.email}
       fullName={session.user.name ?? null}
+      aiTools={visibleAiTools(sessionRoles)}
       showSettings={
         sessionRoles.length === 0 || sessionRoles.includes("exec_admin")
       }
