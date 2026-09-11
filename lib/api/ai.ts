@@ -341,3 +341,36 @@ export async function assessDelayRisk(
     cache: "no-store",
   });
 }
+
+// ── MX Intelligence ──────────────────────────────────────────────────
+
+/** What the model was shown, so the answer can be read against its
+ *  evidence. Legacy shows none of this and caps silently. */
+export interface MxContextSummary {
+  aircraft: number;
+  aircraft_grounded: number;
+  squawks_shown: number;
+  squawks_omitted: number;
+  work_orders_shown: number;
+  work_orders_omitted: number;
+  mel_items_shown: number;
+  mel_items_omitted: number;
+}
+
+export interface MxAnswer {
+  answer: string;
+  context: MxContextSummary;
+  model: string;
+  advisory: string;
+}
+
+export async function askMxIntelligence(
+  prompt: string,
+  tailNumber?: string | null,
+): Promise<MxAnswer> {
+  return apiFetch<MxAnswer>("/ai/mx-intelligence", {
+    method: "POST",
+    body: JSON.stringify({ prompt, tail_number: tailNumber ?? null }),
+    headers: { "Content-Type": "application/json" },
+  });
+}

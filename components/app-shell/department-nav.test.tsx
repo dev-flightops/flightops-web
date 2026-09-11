@@ -80,7 +80,7 @@ describe("DepartmentNav", () => {
     expect(weather).toHaveAttribute("href", "/weather");
   });
 
-  it("renders the legacy Maintenance subnav on /maintenance (Fleet + 7 future chips + MX Intel)", () => {
+  it("renders the legacy Maintenance subnav on /maintenance (Fleet + 7 sub-pages + MX Intel)", () => {
     // Parity check against legacy templates/maintenance/dashboard.html
     // sub-nav: Fleet | Work Orders | RTS | Inventory | Expiration |
     // Batch Trace | MX Clock | Availability | ✨ MX Intel.
@@ -114,18 +114,19 @@ describe("DepartmentNav", () => {
       ["batch-trace", "/maintenance/batch-trace"],
       ["mx-clock", "/maintenance/mx-clock"],
       ["availability", "/maintenance/availability"],
+      // MX Intel shipped in M4. It was a disabled span with a "Coming
+      // in M4" tooltip, and this assertion is what caught the flip —
+      // the nav entry changed and nothing else in the suite noticed.
+      ["mx-intel", "/maintenance/mx-intelligence"],
     ] as const) {
       const chip = screen.getByTestId(`dept-nav-${id}`);
       expect(chip.tagName).toBe("A");
       expect(chip).toHaveAttribute("href", href);
     }
-    // MX Intel is still M4 (AI-tier) — renders as a disabled span with
-    // the milestone tooltip, matches Fleet Brain / Intelligence
-    // accents in other depts.
-    expect(screen.getByTestId("dept-nav-mx-intel").tagName).toBe("SPAN");
-    expect(screen.getByTestId("dept-nav-mx-intel")).toHaveAttribute(
-      "title",
-      "Coming in M4",
+    // The AI accent survives going live. It is what tells a mechanic
+    // this chip opens a model rather than a record.
+    expect(screen.getByTestId("dept-nav-mx-intel").className).toContain(
+      "purple",
     );
   });
 });
