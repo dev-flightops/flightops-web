@@ -103,3 +103,78 @@ describe("module status matches what is actually built", () => {
     ).toEqual([]);
   });
 });
+
+/**
+ * The two registries have to agree about the modules they share.
+ *
+ * HOME_MODULES is a department grid — sixteen tiles — and DEPARTMENTS is
+ * the sidebar, ninety children. They are not mirrors, and most sidebar
+ * entries rightly have no tile. But five ids appear in both, and when
+ * those two copies disagree the home page tells a different story from
+ * the sidebar. Invoicing shipped that way: `live` in the sidebar, `soon`
+ * on home, so the tile rendered greyed out and unclickable while the
+ * same module worked from the sidebar. It was reported as "Invoicing on
+ * the home page is disabled, I can't access".
+ *
+ * WHAT THIS ADDS OVER THE CHECKS ABOVE — worth being exact about,
+ * because the two overlap and it would be easy to claim more than is
+ * true. The filesystem checks above would also have failed on that
+ * Invoicing bug, and did: a `soon` entry whose page.tsx exists trips
+ * "does not advertise Soon for something that already ships". They
+ * catch most status drift, but only ever indirectly — via whether a
+ * page happens to exist on disk.
+ *
+ * The href check is the one they genuinely cannot make. hasPage() strips
+ * the slashes off a route before testing it, so /documents/ and
+ * /documents both resolve to the same page.tsx and both pass. Two
+ * registries naming one route two different ways is invisible to every
+ * assertion above it. That is a live defect this found.
+ *
+ * The status check earns its place on the pairs the filesystem cannot
+ * arbitrate — two non-live statuses that disagree with each other
+ * (`m4` here, `soon` there) on a route with no page yet. Cheap, and it
+ * states the invariant directly instead of inferring it from disk.
+ */
+describe("the home grid and the sidebar agree", () => {
+  function sharedIds() {
+    const sidebar = new Map<string, { status?: string; href?: string }>();
+    for (const dept of DEPARTMENTS) {
+      for (const child of dept.children) {
+        sidebar.set(child.id, { status: child.status, href: child.href });
+      }
+    }
+    return HOME_MODULES.filter((m) => sidebar.has(m.id)).map((m) => ({
+      id: m.id,
+      home: { status: m.status, href: m.href },
+      side: sidebar.get(m.id)!,
+    }));
+  }
+
+  it("finds shared ids to check", () => {
+    // Guards the guard: if the ids ever stop overlapping, the assertions
+    // below pass vacuously and this notices instead.
+    expect(sharedIds().length).toBeGreaterThanOrEqual(5);
+  });
+
+  it("never shows a module as live in one place and coming soon in the other", () => {
+    const disagree = sharedIds()
+      .filter((e) => e.home.status !== e.side.status)
+      .map((e) => `${e.id}: home=${e.home.status} sidebar=${e.side.status}`);
+
+    expect(
+      disagree,
+      "the home tile and the sidebar entry disagree about whether this ships",
+    ).toEqual([]);
+  });
+
+  it("points both copies at the same route", () => {
+    // Trailing slashes count. /documents/ and /documents resolve to the
+    // same page only because Next redirects; two registries naming one
+    // route two ways is drift whether or not it currently costs a 404.
+    const disagree = sharedIds()
+      .filter((e) => e.home.href !== e.side.href)
+      .map((e) => `${e.id}: home=${e.home.href} sidebar=${e.side.href}`);
+
+    expect(disagree, "same module, two different hrefs").toEqual([]);
+  });
+});

@@ -167,3 +167,54 @@ export async function getOpsScore(
     cache: "no-store",
   });
 }
+
+// ── Monthly accounting summary ───────────────────────────────────────
+
+export interface CostConfidence {
+  flights: number;
+  /** Flights with no operating cost configured for their aircraft. */
+  unpriced_flights: number;
+  /** Flights whose hours were inferred from the schedule rather than
+   *  measured or route-estimated. */
+  unhoured_flights: number;
+}
+
+export interface AccountingSummary {
+  year: number;
+  month: number;
+  period_label: string;
+  period_start: string;
+  period_end: string;
+  /** What was sold — quoted totals on the month's bookings. */
+  booked_cents: number;
+  /** What was billed — invoices raised in the month, voids excluded. */
+  invoiced_cents: number;
+  /** What arrived — payments received in the month, by the date the
+   *  money landed rather than the invoice's date. */
+  collected_cents: number;
+  cost_cents: number;
+  profit_cents: number;
+  margin_pct: number | null;
+  /** Booked less invoiced: flights flown with no invoice raised. The
+   *  number somebody acts on at month end. */
+  uninvoiced_cents: number;
+  block_hours: number;
+  confidence: CostConfidence;
+  note: string;
+}
+
+/** Both or neither — the service fills in the month just gone when
+ *  neither is given, and half a period would report a month nobody
+ *  asked for. */
+export async function getAccountingSummary(
+  year?: number,
+  month?: number,
+): Promise<AccountingSummary> {
+  const qs =
+    year !== undefined && month !== undefined
+      ? `?year=${year}&month=${month}`
+      : "";
+  return apiFetch<AccountingSummary>(`/reports/accounting/summary${qs}`, {
+    cache: "no-store",
+  });
+}

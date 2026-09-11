@@ -147,7 +147,7 @@ export const HOME_MODULES: HomeModule[] = [
     id: "documents",
     label: "Documents",
     sub: "GOM, bulletins, FAR/AIM",
-    href: "/documents/",
+    href: "/documents",
     status: "live",
     color: "#7e8ea0",
     iconPath:

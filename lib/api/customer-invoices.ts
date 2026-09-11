@@ -174,3 +174,47 @@ export async function getCustomerInvoicePdfBase64(
     { parseAs: "base64", cache: "no-store" },
   );
 }
+
+// ── AR aging ─────────────────────────────────────────────────────────
+
+export interface AgingBucket {
+  key: string;
+  label: string;
+  outstanding_cents: number;
+}
+
+export interface AgedInvoice {
+  invoice_id: string;
+  invoice_number: string;
+  customer_id: string | null;
+  customer_name: string | null;
+  invoice_date: string;
+  due_date: string;
+  total_cents: number;
+  paid_cents: number;
+  outstanding_cents: number;
+  days_past_due: number;
+  bucket: string;
+}
+
+export interface AgingReport {
+  as_of: string;
+  /** Every bucket present even at zero, so a client rendering columns
+   *  cannot silently omit one. */
+  buckets: AgingBucket[];
+  invoices: AgedInvoice[];
+  total_outstanding_cents: number;
+  /** Sent invoices with no due date. They cannot be aged, so they are
+   *  reported separately rather than dropped or called current. */
+  undated_count: number;
+  undated_cents: number;
+  note: string;
+}
+
+export async function getAgingReport(asOf?: string): Promise<AgingReport> {
+  const qs = asOf ? `?as_of=${asOf}` : "";
+  return apiFetch<AgingReport>(
+    `/billing/customer-invoices/reports/aging${qs}`,
+    { cache: "no-store" },
+  );
+}
