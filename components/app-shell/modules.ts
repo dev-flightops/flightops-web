@@ -636,7 +636,8 @@ export const DEPARTMENTS: Department[] = [
       {
         id: "mx-intel",
         label: "MX Intel",
-        status: "m4",
+        href: "/maintenance/mx-intelligence",
+        status: "live",
         department: "maintenance",
         accent: "purple",
       },
@@ -1271,6 +1272,21 @@ export const MODULE_ROLES: Record<string, readonly Role[]> = {
   // appears for the DOM, the dispatcher, the chief pilot and the check
   // airman — four roles the service refuses. Both roles named here are
   // admitted to Admin, so this list is the whole truth.
+  // Matches ai-service's mx-intelligence route exactly. Troubleshooting
+  // advice addressed to a mechanic is not advice for a dispatcher to
+  // act on, and a dispatcher can already see that an aircraft is down
+  // from Flight Following.
+  //
+  // Without this entry it inherits the Maintenance department, which
+  // is wider than the service allows — the link would appear and
+  // answer 403.
+  "mx-intel": [
+    "maintenance",
+    "director_of_maintenance",
+    "director_of_operations",
+    "exec_admin",
+  ],
+
   "reports-regulatory": ["exec_admin", "director_of_operations"],
 
   // Matches billing-service's customer-invoice routes. A reservations
