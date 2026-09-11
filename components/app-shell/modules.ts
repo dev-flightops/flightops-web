@@ -316,7 +316,8 @@ export const DEPARTMENTS: Department[] = [
       {
         id: "accounting",
         label: "Accounting",
-        status: "m4",
+        href: "/accounting",
+        status: "live",
         department: "admin",
       },
       {
@@ -1286,6 +1287,12 @@ export const MODULE_ROLES: Record<string, readonly Role[]> = {
   // appears for the DOM, the dispatcher, the chief pilot and the check
   // airman — four roles the service refuses.
   invoicing: ["exec_admin", "director_of_operations"],
+
+  // Matches reports-service's accounting summary and billing-service's
+  // aging report. This page carries revenue, cost and margin, which an
+  // operator does not necessarily share with the whole roster — the
+  // same reason the executive summary is gated this way.
+  accounting: ["exec_admin", "director_of_operations"],
 };
 
 /**
