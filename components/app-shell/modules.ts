@@ -275,22 +275,16 @@ export const DEPARTMENTS: Department[] = [
         status: "live",
         department: "admin",
       },
-      {
-        id: "reports-t100",
-        label: "T-100",
-        href: "/reports/regulatory/t100",
-        status: "live",
-        department: "admin",
-      },
-      // Stays greyed on purpose. "Regulatory" means the whole suite —
-      // T-100, PS Form 5500, CAM, USPS Form 5394 and DOT Form 41 — and
-      // one of the five exists. Pointing this label at T-100 would
-      // read as "the returns are done". When the rest land, they
-      // collapse into a hub here and T-100 moves under it.
+      // All five returns now exist, so this is the hub the note here
+      // used to promise and T-100 has collapsed under it. One nav
+      // entry rather than five: the department nav is already long,
+      // and a filer picking a return is a deliberate act that can
+      // afford one more click.
       {
         id: "reports-regulatory",
         label: "Regulatory",
-        status: "m4",
+        href: "/reports/regulatory",
+        status: "live",
         department: "admin",
       },
       {
@@ -1277,7 +1271,7 @@ export const MODULE_ROLES: Record<string, readonly Role[]> = {
   // appears for the DOM, the dispatcher, the chief pilot and the check
   // airman — four roles the service refuses. Both roles named here are
   // admitted to Admin, so this list is the whole truth.
-  "reports-t100": ["exec_admin", "director_of_operations"],
+  "reports-regulatory": ["exec_admin", "director_of_operations"],
 
   // Matches billing-service's customer-invoice routes. A reservations
   // agent takes the booking; raising and sending the invoice is the

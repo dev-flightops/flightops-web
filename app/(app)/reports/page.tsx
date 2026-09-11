@@ -36,12 +36,50 @@ const EXECUTIVE: Entry[] = [
   { label: "Efficiency", detail: "Load factor, utilisation, empty legs" },
 ];
 
+// All five are built now, so all five link. Four of the details were
+// also wrong, written before the returns existed:
+//
+//   PS-5500 was "FAA operations report". It is a USPS air contract
+//   report; the FAA is not involved.
+//
+//   CAM was "Continuous airworthiness maintenance", which is what CAM
+//   means in a maintenance context and not what this report is. Here
+//   it is Contract Air Mail — route performance against a mail
+//   contract. A filer looking for maintenance records would have
+//   opened it, and a filer looking for mail performance would not.
+//
+//   Form 5394 was "Aircraft utilisation". It is mail transport
+//   documentation, one row per flight that carried mail.
+//
+//   DOT 41 was "Financial reporting schedule". Ours reports operating
+//   statistics — traffic, block hours and fleet — with quoted revenue
+//   alongside, not a financial schedule.
 const REGULATORY: Entry[] = [
-  { label: "T-100", detail: "DOT segment and market traffic" },
-  { label: "PS-5500", detail: "FAA operations report" },
-  { label: "CAM", detail: "Continuous airworthiness maintenance" },
-  { label: "Form 5394", detail: "Aircraft utilisation" },
-  { label: "DOT 41", detail: "Financial reporting schedule" },
+  {
+    label: "T-100",
+    detail: "Mail traffic by route and class, monthly",
+    href: "/reports/regulatory/t100",
+  },
+  {
+    label: "PS Form 5500",
+    detail: "USPS air contract — trips flown against trips scheduled",
+    href: "/reports/regulatory/ps5500",
+  },
+  {
+    label: "CAM",
+    detail: "Contract Air Mail — on-time and completion by route",
+    href: "/reports/regulatory/cam",
+  },
+  {
+    label: "USPS Form 5394",
+    detail: "Mail transport records, one row per flight",
+    href: "/reports/regulatory/form5394",
+  },
+  {
+    label: "DOT Form 41",
+    detail: "Quarterly operating statistics, traffic and fleet",
+    href: "/reports/regulatory/dot41",
+  },
 ];
 
 function Section({ title, entries }: { title: string; entries: Entry[] }) {
