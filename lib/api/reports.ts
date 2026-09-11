@@ -218,3 +218,242 @@ export async function getAccountingSummary(
     cache: "no-store",
   });
 }
+
+// ── PS Form 5500 ─────────────────────────────────────────────────────
+
+export interface PS5500Row {
+  route: string;
+  origin: string;
+  destination: string;
+  /** Cancellations included, unlike legacy — which filtered them out
+   *  before counting and made completion read better than it was. */
+  trips_scheduled: number;
+  trips_flown: number;
+  trips_cancelled: number;
+  /** null when nothing was scheduled. 0% would read as "we flew none
+   *  of them", which is a different statement. */
+  completion_pct: number | null;
+  mail_weight_lbs: number;
+  mail_pieces: number;
+}
+
+export interface PS5500Report {
+  year: number;
+  month: number;
+  period_label: string;
+  rows: PS5500Row[];
+  total_trips_scheduled: number;
+  total_trips_flown: number;
+  total_trips_cancelled: number;
+  total_completion_pct: number | null;
+  total_mail_weight_lbs: number;
+  total_mail_pieces: number;
+  draft_manifests_excluded: number;
+  advisory: string;
+}
+
+// ── CAM ──────────────────────────────────────────────────────────────
+
+export interface CamRow {
+  route: string;
+  origin: string;
+  destination: string;
+  scheduled: number;
+  completed: number;
+  cancelled: number;
+  on_time: number;
+  late: number;
+  /** Completed flights with no recorded arrival. Not on time and not
+   *  late — out of the ratio entirely. Legacy counts these as on
+   *  time, which awards full marks for flights it never tracked. */
+  not_measured: number;
+  /** null when nothing on the route could be measured. */
+  on_time_pct: number | null;
+  completion_pct: number | null;
+  mail_weight_lbs: number;
+  mail_pieces: number;
+}
+
+export interface CamReport {
+  year: number;
+  month: number;
+  period_label: string;
+  on_time_threshold_minutes: number;
+  rows: CamRow[];
+  total_scheduled: number;
+  total_completed: number;
+  total_cancelled: number;
+  total_on_time: number;
+  total_late: number;
+  total_not_measured: number;
+  total_on_time_pct: number | null;
+  total_completion_pct: number | null;
+  total_mail_weight_lbs: number;
+  total_mail_pieces: number;
+  draft_manifests_excluded: number;
+  advisory: string;
+}
+
+// ── USPS Form 5394 ───────────────────────────────────────────────────
+
+export interface Form5394Record {
+  flight_date: string;
+  flight_number: string;
+  tail_number: string;
+  origin: string;
+  destination: string;
+  scheduled_departure: string;
+  actual_departure: string | null;
+  scheduled_arrival: string;
+  actual_arrival: string | null;
+  /** Sorted by the service, so two runs of a month agree. */
+  mail_classes: string[];
+  mail_class_labels: string;
+  weight_lbs: number;
+  pieces: number;
+  status: string;
+}
+
+export interface Form5394Report {
+  year: number;
+  month: number;
+  period_label: string;
+  records: Form5394Record[];
+  total_weight_lbs: number;
+  total_pieces: number;
+  total_flights: number;
+  draft_manifests_excluded: number;
+  advisory: string;
+}
+
+// ── DOT Form 41 ──────────────────────────────────────────────────────
+
+export interface Dot41AircraftType {
+  aircraft_type: string;
+  aircraft_count: number;
+  flights: number;
+  completed: number;
+  block_hours: number;
+}
+
+export interface Dot41Report {
+  year: number;
+  quarter: number;
+  period_label: string;
+  total_flights: number;
+  completed: number;
+  cancelled: number;
+  completion_pct: number | null;
+  /** From the flight's own actual times. Legacy sums crew duty
+   *  records, so a two-crew leg counts twice. */
+  block_hours: number;
+  flights_without_times: number;
+  /** Times that give an impossible leg — over 24 hours, or arriving
+   *  before departing. Excluded from block_hours and counted here,
+   *  because one bad timestamp can dominate a quarter. */
+  flights_with_implausible_times: number;
+  revenue_passengers: number;
+  total_passengers: number;
+  passenger_weight_lbs: number;
+  baggage_weight_lbs: number;
+  cargo_weight_lbs: number;
+  mail_weight_lbs: number;
+  mail_pieces: number;
+  /** Integer cents, and quoted rather than invoiced or collected. */
+  quoted_revenue_cents: number;
+  aircraft_in_fleet: number;
+  /** Reported beside the fleet rather than folded into it: a grounded
+   *  airframe is still in the fleet for a filing, just not airworthy
+   *  today, and one number cannot say both. */
+  aircraft_grounded: number;
+  aircraft_types: Dot41AircraftType[];
+  advisory: string;
+}
+
+/** Monthly returns all take the same both-or-neither period. */
+function monthQuery(year?: number, month?: number): string {
+  return year !== undefined && month !== undefined
+    ? `?year=${year}&month=${month}`
+    : "";
+}
+
+export async function getPS5500Report(
+  year?: number,
+  month?: number,
+): Promise<PS5500Report> {
+  return apiFetch<PS5500Report>(
+    `/reports/regulatory/ps5500${monthQuery(year, month)}`,
+    { cache: "no-store" },
+  );
+}
+
+export async function getPS5500Csv(
+  year: number,
+  month: number,
+): Promise<string> {
+  return apiFetch<string>(
+    `/reports/regulatory/ps5500.csv?year=${year}&month=${month}`,
+    { parseAs: "text", cache: "no-store" },
+  );
+}
+
+export async function getCamReport(
+  year?: number,
+  month?: number,
+): Promise<CamReport> {
+  return apiFetch<CamReport>(
+    `/reports/regulatory/cam${monthQuery(year, month)}`,
+    { cache: "no-store" },
+  );
+}
+
+export async function getCamCsv(year: number, month: number): Promise<string> {
+  return apiFetch<string>(
+    `/reports/regulatory/cam.csv?year=${year}&month=${month}`,
+    { parseAs: "text", cache: "no-store" },
+  );
+}
+
+export async function getForm5394Report(
+  year?: number,
+  month?: number,
+): Promise<Form5394Report> {
+  return apiFetch<Form5394Report>(
+    `/reports/regulatory/form5394${monthQuery(year, month)}`,
+    { cache: "no-store" },
+  );
+}
+
+export async function getForm5394Csv(
+  year: number,
+  month: number,
+): Promise<string> {
+  return apiFetch<string>(
+    `/reports/regulatory/form5394.csv?year=${year}&month=${month}`,
+    { parseAs: "text", cache: "no-store" },
+  );
+}
+
+/** Quarterly, not monthly — so its own both-or-neither pair. */
+export async function getDot41Report(
+  year?: number,
+  quarter?: number,
+): Promise<Dot41Report> {
+  const qs =
+    year !== undefined && quarter !== undefined
+      ? `?year=${year}&quarter=${quarter}`
+      : "";
+  return apiFetch<Dot41Report>(`/reports/regulatory/dot41${qs}`, {
+    cache: "no-store",
+  });
+}
+
+export async function getDot41Csv(
+  year: number,
+  quarter: number,
+): Promise<string> {
+  return apiFetch<string>(
+    `/reports/regulatory/dot41.csv?year=${year}&quarter=${quarter}`,
+    { parseAs: "text", cache: "no-store" },
+  );
+}

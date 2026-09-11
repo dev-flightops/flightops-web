@@ -3,7 +3,9 @@ import Link from "next/link";
 import { ApiError } from "@/lib/api/client";
 import { getT100Report, type T100Report } from "@/lib/api/reports";
 
-import { PeriodControls } from "./period-controls";
+import { MonthlyFilingControls } from "@/components/reports/filing-controls";
+
+import { downloadT100CsvAction } from "../actions";
 
 /**
  * /reports/regulatory/t100 — mail traffic by route and class.
@@ -82,10 +84,13 @@ export default async function T100Page({
           )}
         </div>
         {report && (
-          <PeriodControls
+          <MonthlyFilingControls
+            basePath="/reports/regulatory/t100"
+            filePrefix="t100"
             year={report.year}
             month={report.month}
             hasRows={report.rows.length > 0}
+            downloadAction={downloadT100CsvAction}
           />
         )}
       </header>
