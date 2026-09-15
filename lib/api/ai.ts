@@ -37,6 +37,17 @@ export interface FleetBrainAnswer {
   /** Understood, but we hold no data to answer it. Distinct from not
    *  understanding, and shown differently. */
   unsupported: boolean;
+  /**
+   * What shape the answer is.
+   *
+   *   data           a real answer from the operator's records
+   *   conversational a greeting, or a question about the tool itself
+   *   refusal        understood, and outside what FleetBrain covers
+   *
+   * The service defaults it to "data", so an older response with the
+   * field absent reads as data rather than as undefined.
+   */
+  kind?: "data" | "conversational" | "refusal";
 }
 
 export interface FleetBrainReply {

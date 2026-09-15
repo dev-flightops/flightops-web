@@ -278,16 +278,24 @@ function Answer({
 
       {/* What it understood. Legacy shows the same line, and it is the
           only thing that makes a wrong answer diagnosable without
-          reading the server log. */}
-      <p className="mt-1.5 text-[0.65rem] text-muted-foreground/60">
-        {answer.unsupported
-          ? "not tracked here"
-          : `intent: ${intent.intent_type}`}
-        {intent.confidence > 0
-          ? ` (${Math.round(intent.confidence * 100)}%)`
-          : ""}{" "}
-        · {at}
-      </p>
+          reading the server log.
+
+          Suppressed on a greeting or a refusal: there is no reading to
+          check, and "intent: unknown (0%)" under "Hello — what do you
+          need?" reads as a failure when nothing failed. */}
+      {answer.kind === "conversational" || answer.kind === "refusal" ? (
+        <p className="mt-1.5 text-[0.65rem] text-muted-foreground/60">{at}</p>
+      ) : (
+        <p className="mt-1.5 text-[0.65rem] text-muted-foreground/60">
+          {answer.unsupported
+            ? "not tracked here"
+            : `intent: ${intent.intent_type}`}
+          {intent.confidence > 0
+            ? ` (${Math.round(intent.confidence * 100)}%)`
+            : ""}{" "}
+          · {at}
+        </p>
+      )}
     </>
   );
 }

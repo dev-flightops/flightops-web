@@ -244,6 +244,56 @@ describe("understood but not held", () => {
   });
 });
 
+describe("what shape the answer is", () => {
+  it("renders a greeting as prose, with no intent line", () => {
+    // "intent: unknown (0%)" under "Hello — what do you need?" reads
+    // as a failure when nothing failed.
+    renderTranscript([
+      {
+        id: 1,
+        query: "hello",
+        at: "14:02",
+        reply: reply({
+          summary: "Hello — what do you need?",
+          kind: "conversational",
+          intent_type: "unknown",
+        }),
+      },
+    ]);
+    expect(screen.getByText("Hello — what do you need?")).toBeInTheDocument();
+    expect(screen.queryByText(/intent:/)).not.toBeInTheDocument();
+  });
+
+  it("renders a refusal as prose too", () => {
+    renderTranscript([
+      {
+        id: 1,
+        query: "who is the president",
+        at: "14:02",
+        reply: reply({
+          summary: "That's outside what I cover here.",
+          kind: "refusal",
+          intent_type: "unknown",
+        }),
+      },
+    ]);
+    expect(
+      screen.getByText("That's outside what I cover here."),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/intent:/)).not.toBeInTheDocument();
+  });
+
+  it("still shows the intent line on a real answer", () => {
+    // The inverse, so suppressing it on prose cannot creep into the
+    // data path — that line is the only thing making a wrong answer
+    // diagnosable without the server log.
+    renderTranscript([
+      { id: 1, query: "fleet status", at: "14:02", reply: reply() },
+    ]);
+    expect(screen.getByText(/intent: aircraft_status/)).toBeInTheDocument();
+  });
+});
+
 describe("a failed turn", () => {
   it("reports the failure without losing the question", () => {
     renderTranscript([
