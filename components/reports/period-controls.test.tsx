@@ -17,18 +17,33 @@ beforeEach(() => push.mockReset());
 
 describe("stepping the period", () => {
   it("shows the month being read", () => {
-    render(<PeriodControls year={2026} month={8} />);
+    render(<PeriodControls
+      basePath="/accounting"
+      label="Accounting period"
+      year={2026}
+      month={8}
+    />);
     expect(screen.getByLabelText(/accounting period/i)).toHaveValue("2026-08");
   });
 
   it("rolls December into the next January", async () => {
-    render(<PeriodControls year={2026} month={12} />);
+    render(<PeriodControls
+      basePath="/accounting"
+      label="Accounting period"
+      year={2026}
+      month={12}
+    />);
     await userEvent.setup().click(screen.getByRole("button", { name: /next month/i }));
     expect(push).toHaveBeenCalledWith("/accounting?year=2027&month=1");
   });
 
   it("rolls January back into the previous December", async () => {
-    render(<PeriodControls year={2026} month={1} />);
+    render(<PeriodControls
+      basePath="/accounting"
+      label="Accounting period"
+      year={2026}
+      month={1}
+    />);
     await userEvent
       .setup()
       .click(screen.getByRole("button", { name: /previous month/i }));
@@ -36,7 +51,12 @@ describe("stepping the period", () => {
   });
 
   it("never produces a thirteenth month", async () => {
-    render(<PeriodControls year={2026} month={12} />);
+    render(<PeriodControls
+      basePath="/accounting"
+      label="Accounting period"
+      year={2026}
+      month={12}
+    />);
     await userEvent.setup().click(screen.getByRole("button", { name: /next month/i }));
     const url = new URL(push.mock.calls[0][0] as string, "http://x");
     const m = Number(url.searchParams.get("month"));
@@ -45,7 +65,12 @@ describe("stepping the period", () => {
   });
 
   it("goes to a month picked from the field", () => {
-    render(<PeriodControls year={2026} month={8} />);
+    render(<PeriodControls
+      basePath="/accounting"
+      label="Accounting period"
+      year={2026}
+      month={8}
+    />);
     fireEvent.change(screen.getByLabelText(/accounting period/i), {
       target: { value: "2026-02" },
     });
@@ -53,7 +78,12 @@ describe("stepping the period", () => {
   });
 
   it("ignores a cleared field", () => {
-    render(<PeriodControls year={2026} month={8} />);
+    render(<PeriodControls
+      basePath="/accounting"
+      label="Accounting period"
+      year={2026}
+      month={8}
+    />);
     fireEvent.change(screen.getByLabelText(/accounting period/i), {
       target: { value: "" },
     });

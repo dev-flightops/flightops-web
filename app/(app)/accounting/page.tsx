@@ -11,7 +11,7 @@ import {
 } from "@/lib/api/reports";
 
 import { money } from "../invoicing/money";
-import { PeriodControls } from "./period-controls";
+import { PeriodControls } from "@/components/reports/period-controls";
 
 /**
  * /accounting — one month's money, and what is still owed.
@@ -102,7 +102,12 @@ export default async function AccountingPage({
           )}
         </div>
         {summary && (
-          <PeriodControls year={summary.year} month={summary.month} />
+          <PeriodControls
+            basePath="/accounting"
+            label="Accounting period"
+            year={summary.year}
+            month={summary.month}
+          />
         )}
       </header>
 

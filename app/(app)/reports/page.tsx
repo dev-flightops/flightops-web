@@ -30,7 +30,11 @@ const EXECUTIVE: Entry[] = [
     detail: "Revenue, cost, margin and unit economics, month to date",
     href: "/reports/executive/summary",
   },
-  { label: "Profitability", detail: "By route and by aircraft" },
+  {
+    label: "Profitability",
+    detail: "Revenue against cost, by route and by aircraft",
+    href: "/profitability",
+  },
   { label: "Trending", detail: "Twelve-month revenue and volume" },
   { label: "Customers", detail: "Revenue concentration and repeat business" },
   { label: "Efficiency", detail: "Load factor, utilisation, empty legs" },

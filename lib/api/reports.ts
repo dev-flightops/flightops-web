@@ -457,3 +457,67 @@ export async function getDot41Csv(
     { parseAs: "text", cache: "no-store" },
   );
 }
+
+// ── Profitability ────────────────────────────────────────────────────
+
+/** What the figures rest on. Legacy's profitability page reports cost
+ *  and nothing about where it came from — with no rates configured its
+ *  numbers come from constants compiled into the source, and the page
+ *  reads identically either way. */
+export interface ProfitBasis {
+  flights: number;
+  flights_without_hours: number;
+  flights_unpriced: number;
+  cost_factors_on_file: number;
+  hours_from_actual: number;
+  hours_from_scheduled: number;
+  hours_from_route_estimate: number;
+  /** Legs whose recorded times could not be true, so the schedule was
+   *  used. One such leg was inflating three reports five-fold. */
+  flights_with_impossible_times: number;
+}
+
+export interface ProfitRow {
+  label: string;
+  flights: number;
+  completed: number;
+  block_hours: number;
+  /** Quoted on the bookings — not invoiced and not collected. */
+  revenue_cents: number;
+  cost_cents: number;
+  profit_cents: number;
+  /** null when there is no revenue to take a margin of. Zero revenue
+   *  with real cost is a loss, not a 0% margin. */
+  margin_pct: number | null;
+  unpriced: number;
+  without_hours: number;
+}
+
+export interface ProfitabilityReport {
+  year: number;
+  month: number;
+  period_label: string;
+  revenue_cents: number;
+  cost_cents: number;
+  profit_cents: number;
+  margin_pct: number | null;
+  block_hours: number;
+  cost_per_hour_cents: number | null;
+  by_route: ProfitRow[];
+  by_aircraft: ProfitRow[];
+  basis: ProfitBasis;
+  advisory: string;
+}
+
+export async function getProfitability(
+  year?: number,
+  month?: number,
+): Promise<ProfitabilityReport> {
+  const qs =
+    year !== undefined && month !== undefined
+      ? `?year=${year}&month=${month}`
+      : "";
+  return apiFetch<ProfitabilityReport>(`/reports/profitability${qs}`, {
+    cache: "no-store",
+  });
+}
