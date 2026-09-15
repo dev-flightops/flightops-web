@@ -178,3 +178,39 @@ describe("the home grid and the sidebar agree", () => {
     expect(disagree, "same module, two different hrefs").toEqual([]);
   });
 });
+
+/**
+ * A department cannot be unbuilt while everything in it ships.
+ *
+ * The AI department carried `status: "m4"` over seven live children —
+ * FleetBrain, Ops Brief, AI Query, Safety Intelligence, Delay Alerts,
+ * MX Intelligence and Dispatch Intelligence — so the home grid
+ * advertised the whole group as coming soon while every page inside it
+ * worked.
+ *
+ * None of the checks above could see it. They test an entry's status
+ * against whether its href has a page on disk, and a department has
+ * no href — so a stale parent is invisible to every one of them. This
+ * looks at the children instead.
+ */
+describe("a department's status matches what is inside it", () => {
+  it("finds departments with children to check", () => {
+    // Guards the guard.
+    const withChildren = DEPARTMENTS.filter((d) => d.children.length > 0);
+    expect(withChildren.length).toBeGreaterThanOrEqual(5);
+  });
+
+  it("never marks a department unbuilt when every child is live", () => {
+    const stale = DEPARTMENTS.filter(
+      (d) =>
+        d.status !== "live" &&
+        d.children.length > 0 &&
+        d.children.every((c) => c.status === "live"),
+    ).map((d) => `${d.id} (status: ${d.status}, ${d.children.length} live children)`);
+
+    expect(
+      stale,
+      "these departments are marked coming soon over a full set of shipped pages",
+    ).toEqual([]);
+  });
+});

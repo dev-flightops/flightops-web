@@ -521,3 +521,71 @@ export async function getProfitability(
     cache: "no-store",
   });
 }
+
+// ── Business intelligence ────────────────────────────────────────────
+
+export interface LoadFactorRow {
+  route: string;
+  flights: number;
+  /** Of `flights`, how many filed a locked manifest. The load factor
+   *  is over these only — a flight with no manifest has seats and no
+   *  passenger list, so counting it reports an empty aircraft where
+   *  the truth is missing paperwork. */
+  flights_with_manifest: number;
+  seats: number;
+  pax: number;
+  /** null when no flight on the pair filed a manifest. */
+  load_factor_pct: number | null;
+  avg_pax_per_flight: number | null;
+}
+
+export interface RevenuePerHourRow {
+  aircraft_type: string;
+  flights: number;
+  block_hours: number;
+  revenue_cents: number;
+  cost_cents: number;
+  revenue_per_hour_cents: number | null;
+  cost_per_hour_cents: number | null;
+  margin_pct: number | null;
+  unpriced: number;
+  without_hours: number;
+}
+
+export interface SeasonalMonth {
+  year: number;
+  month: number;
+  label: string;
+  flights: number;
+  flights_with_manifest: number;
+  pax: number;
+  revenue_cents: number;
+  load_factor_pct: number | null;
+}
+
+export interface TopCustomer {
+  customer_id: string;
+  name: string;
+  revenue_cents: number;
+  bookings: number;
+  avg_fare_cents: number | null;
+}
+
+export interface BiDashboard {
+  window_start: string;
+  window_end: string;
+  months: number;
+  load_factor_by_route: LoadFactorRow[];
+  revenue_per_hour_by_type: RevenuePerHourRow[];
+  seasonal: SeasonalMonth[];
+  top_customers: TopCustomer[];
+  /** Where route-level margin lives, rather than recomputed here. */
+  profitability_path: string;
+  advisory: string;
+}
+
+/** No period arguments: seasonal demand over one month is not a
+ *  pattern, so the service reads a fixed trailing twelve months. */
+export async function getBiDashboard(): Promise<BiDashboard> {
+  return apiFetch<BiDashboard>("/reports/bi", { cache: "no-store" });
+}
