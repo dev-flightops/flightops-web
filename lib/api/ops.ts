@@ -769,3 +769,92 @@ export async function amendDutyPeriod(
     headers: { "Content-Type": "application/json" },
   });
 }
+
+// ── Dispatch AI ──────────────────────────────────────────────────────
+
+/** One reason an option cannot be flown. Not a score penalty — see the
+ *  service's dispatch_ai/eligibility.py for why that distinction is
+ *  the whole point of the feature. */
+export interface DispatchBlocker {
+  code: string;
+  detail: string;
+  /** "aircraft" or "crew". The two go to different people: a crew
+   *  block is fixed by assigning someone else, an aircraft block goes
+   *  to maintenance. */
+  source: string;
+}
+
+/** Something that made an option better or worse, in words rather than
+ *  as a weight. */
+export interface DispatchFactor {
+  detail: string;
+  /** "favourable" | "caution" */
+  tone: string;
+}
+
+export interface DispatchCost {
+  configured: boolean;
+  fuel_cents: number | null;
+  direct_cents: number | null;
+  landing_fee_cents: number | null;
+  total_cents: number | null;
+  /** What was missing, when it was not configured. */
+  missing: string[];
+}
+
+export interface DispatchOption {
+  option_id: string;
+  kind: string;
+  origin: string;
+  destination: string;
+  proposed_etd: string | null;
+  summary: string;
+  reason: string;
+  pax_count: number;
+  cargo_lbs: number;
+  source_flight_id: string | null;
+  /** Empty means dispatchable. Non-empty means shown and explained,
+   *  but carrying no rank. */
+  blockers: DispatchBlocker[];
+  factors: DispatchFactor[];
+  cost: DispatchCost;
+  /** 1-based position among the dispatchable options. null when
+   *  blocked — an unflyable leg has no place in an ordering of what to
+   *  fly. */
+  rank: number | null;
+}
+
+export interface DispatchInboundAircraft {
+  flight_id: string;
+  flight_number: string;
+  tail_number: string;
+  aircraft_type: string | null;
+  origin: string;
+  destination: string;
+  scheduled_arrival: string;
+  actual_departure: string | null;
+  /** Still airborne past its scheduled arrival. The turn is measured
+   *  from now instead, so proposals stay in the future. */
+  arrival_overdue: boolean;
+  pic_name: string | null;
+  /** Blockers on the aircraft itself, stated once rather than repeated
+   *  on every option. */
+  aircraft_blockers: DispatchBlocker[];
+  options: DispatchOption[];
+}
+
+export interface DispatchSuggestions {
+  generated_at: string;
+  turn_minutes: number;
+  inbound: DispatchInboundAircraft[];
+  /** Set when there is nothing to suggest for — an empty board should
+   *  say why rather than look broken. */
+  note: string | null;
+  advisory: string;
+}
+
+export async function getDispatchSuggestions(): Promise<DispatchSuggestions> {
+  return apiFetch<DispatchSuggestions>("/ops/dispatch-ai/inbound", {
+    cache: "no-store",
+  });
+}

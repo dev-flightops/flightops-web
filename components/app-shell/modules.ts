@@ -180,7 +180,8 @@ export const DEPARTMENTS: Department[] = [
       {
         id: "intelligence",
         label: "Intelligence",
-        status: "m4",
+        href: "/dispatch/intelligence",
+        status: "live",
         department: "operations",
         accent: "purple",
       },
@@ -1160,6 +1161,11 @@ export const MODULE_ROLES: Record<string, readonly Role[]> = {
     "crew_member",
     "ground_ops",
   ],
+  // Now guards a live route rather than a greyed chip, and already
+  // matched ops-service's dispatch-ai gate exactly — checked rather
+  // than assumed when the page landed. A reservations agent is
+  // admitted to Operations for the flight-following board, so without
+  // this entry inheritance would hand them the next-leg board too.
   intelligence: [
     "exec_admin",
     "director_of_operations",
