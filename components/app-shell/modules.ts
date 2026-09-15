@@ -298,7 +298,8 @@ export const DEPARTMENTS: Department[] = [
       {
         id: "profitability",
         label: "Profitability",
-        status: "m4",
+        href: "/profitability",
+        status: "live",
         department: "admin",
       },
       {
@@ -1303,6 +1304,13 @@ export const MODULE_ROLES: Record<string, readonly Role[]> = {
   // appears for the DOM, the dispatcher, the chief pilot and the check
   // airman — four roles the service refuses.
   invoicing: ["exec_admin", "director_of_operations"],
+
+  // Matches reports-service's profitability route. Margin by route is
+  // a commercial figure, so the same two roles the accounting summary
+  // admits — checked against the service rather than assumed, after
+  // TypeScript caught a duplicate MODULE_ROLES key on the last page
+  // that turned out to be gated already.
+  profitability: ["exec_admin", "director_of_operations"],
 
   // Matches reports-service's accounting summary and billing-service's
   // aging report. This page carries revenue, cost and margin, which an

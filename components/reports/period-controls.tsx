@@ -12,12 +12,29 @@ import { useTransition } from "react";
  *
  * Arithmetic on year and month integers, never by adding to a Date.
  * 31 January plus one month lands on 3 March, and no accounting period
- * skips February. Same helper shape as the T-100 filing controls.
+ * skips February.
+ *
+ * Moved out of the accounting page when Profitability needed the same
+ * control. `basePath` is the only difference between the two, and a
+ * second copy would have been a second chance to get the December
+ * rollover wrong.
+ *
+ * Not the same component as `MonthlyFilingControls`: that one carries
+ * a CSV export, because a filing is a file that leaves the building.
+ * These two pages are read on screen.
  */
 export function PeriodControls({
+  basePath,
+  label,
   year,
   month,
 }: {
+  /** Route to push when the period changes. */
+  basePath: string;
+  /** What the field is called, for the screen reader. "Accounting
+   *  period" and "Reporting period" are different enough to be worth
+   *  saying. */
+  label: string;
   year: number;
   month: number;
 }) {
@@ -25,7 +42,7 @@ export function PeriodControls({
   const [isPending, startTransition] = useTransition();
 
   const goTo = (y: number, m: number) => {
-    startTransition(() => router.push(`/accounting?year=${y}&month=${m}`));
+    startTransition(() => router.push(`${basePath}?year=${y}&month=${m}`));
   };
 
   const shiftMonths = (delta: number) => {
@@ -48,7 +65,7 @@ export function PeriodControls({
       </button>
       <input
         type="month"
-        aria-label="Accounting period"
+        aria-label={label}
         value={`${year}-${String(month).padStart(2, "0")}`}
         onChange={(e) => {
           const v = e.target.value;
