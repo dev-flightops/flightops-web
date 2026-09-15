@@ -149,6 +149,18 @@ export const DEPARTMENTS: Department[] = [
         status: "live",
         department: "operations",
       },
+      // Operations rather than Admin, even though reports-service
+      // serves it: `/compliance` is in this department's pathPrefixes,
+      // so an entry here under an Admin department would leave the nav
+      // highlighting nothing on its own page. Currency and Roster are
+      // post-holder surfaces sitting in this department already.
+      {
+        id: "data-integrity",
+        label: "Data Integrity",
+        href: "/compliance/data-integrity",
+        status: "live",
+        department: "operations",
+      },
       {
         id: "pilot-history",
         label: "Pilot History",
@@ -976,6 +988,17 @@ export const DEPARTMENT_ROLES: Partial<Record<DepartmentId, readonly Role[]>> =
       // module below names its own roles and leaves the agent out. See the
       // note above MODULE_ROLES.
       "reservations_agent",
+      // Admitted to the department for Data Integrity ONLY. Half of what
+      // that review finds is maintenance data — aircraft with no cost
+      // factors, completed flights with no log to count airframe hours
+      // from — so the DOM reads it even though the DO signs it.
+      //
+      // Granted here rather than left off the module: module-roles.test.ts
+      // caught the module admitting a role its department did not, which
+      // would have been a nav entry the DOM could never reach. Safe
+      // because every other Operations module names its own roles and
+      // leaves the DOM out.
+      "director_of_maintenance",
     ],
     // Booking, manifests, customers, charter, rewards. Explicitly not
     // pilots or crew — the client's own example.
@@ -1326,6 +1349,20 @@ export const MODULE_ROLES: Record<string, readonly Role[]> = {
   // the operator's carrier code, which makes it a published statement
   // about what the certificate holder will fly.
   "reports-sim-export": ["exec_admin", "director_of_operations"],
+
+  // Matches reports-service's integrity route. Wider than the filings
+  // deliberately: the GOM makes the Director of Operations responsible
+  // for signing the review, but a chief pilot, DOM or safety officer
+  // looking at what needs correcting should not need permission to
+  // sign it. The signing control is absent for the three who cannot,
+  // rather than present and refused.
+  "data-integrity": [
+    "exec_admin",
+    "director_of_operations",
+    "chief_pilot",
+    "director_of_maintenance",
+    "safety_officer",
+  ],
 
   // Matches reports-service's profitability route. Margin by route is
   // a commercial figure, so the same two roles the accounting summary
