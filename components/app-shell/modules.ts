@@ -294,7 +294,13 @@ export const DEPARTMENTS: Department[] = [
         status: "m4",
         department: "admin",
       },
-      { id: "reports-bi", label: "BI", status: "m4", department: "admin" },
+      {
+        id: "reports-bi",
+        label: "BI",
+        href: "/reports/bi",
+        status: "live",
+        department: "admin",
+      },
       {
         id: "profitability",
         label: "Profitability",
@@ -865,8 +871,12 @@ export const DEPARTMENTS: Department[] = [
   },
   {
     id: "ai",
+    // Was "m4" while all seven of its children were live — a
+    // department advertising itself as unbuilt over a full set of
+    // shipped pages. A parent carries no href, so the module-status
+    // check could not see it; there is a test for the shape now.
     label: "AI",
-    status: "m4",
+    status: "live",
     pathPrefixes: ["/ai-tools"],
     children: [
       {
@@ -1304,6 +1314,11 @@ export const MODULE_ROLES: Record<string, readonly Role[]> = {
   // appears for the DOM, the dispatcher, the chief pilot and the check
   // airman — four roles the service refuses.
   invoicing: ["exec_admin", "director_of_operations"],
+
+  // Matches reports-service's bi route. Revenue by customer and
+  // margin by airframe are commercial figures, so the same two roles
+  // accounting and profitability admit.
+  "reports-bi": ["exec_admin", "director_of_operations"],
 
   // Matches reports-service's profitability route. Margin by route is
   // a commercial figure, so the same two roles the accounting summary

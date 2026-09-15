@@ -35,9 +35,18 @@ const EXECUTIVE: Entry[] = [
     detail: "Revenue against cost, by route and by aircraft",
     href: "/profitability",
   },
-  { label: "Trending", detail: "Twelve-month revenue and volume" },
-  { label: "Customers", detail: "Revenue concentration and repeat business" },
-  { label: "Efficiency", detail: "Load factor, utilisation, empty legs" },
+  {
+    label: "Business Intelligence",
+    detail: "Load factor, revenue per hour, seasonal demand, top customers",
+    href: "/reports/bi",
+  },
+  // Trending, Customers and Efficiency used to sit here marked "Not
+  // built", and their descriptions were "twelve-month revenue and
+  // volume", "revenue concentration" and "load factor, utilisation".
+  // Those are the four panels of the Business Intelligence report
+  // above, so leaving them would claim three reports are missing whose
+  // content shipped. Removed rather than relabelled: three cards
+  // pointing at one page is a hub that has lost track of itself.
 ];
 
 // All five are built now, so all five link. Four of the details were
