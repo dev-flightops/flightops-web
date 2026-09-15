@@ -95,6 +95,22 @@ const REGULATORY: Entry[] = [
   },
 ];
 
+// Its own section rather than a fourth Executive card or a sixth
+// Regulatory one. It is neither: the three Executive entries are
+// analytics read on screen, and the five Regulatory entries are
+// government returns. This is an interchange file — a schedule
+// published to OAG, or a departure list handed to an accounting
+// system. Filing it under either heading would tell a reader it is
+// something it is not, and one card in an honest section beats four in
+// a misleading one.
+const INTERCHANGE: Entry[] = [
+  {
+    label: "Schedule Export",
+    detail: "SIM / OAG schedule data, and a per-departure extract",
+    href: "/reports/sim",
+  },
+];
+
 function Section({ title, entries }: { title: string; entries: Entry[] }) {
   return (
     <section aria-label={title} className="mb-6">
@@ -145,6 +161,7 @@ export default function ReportsHubPage() {
       </header>
       <Section title="Executive" entries={EXECUTIVE} />
       <Section title="Regulatory" entries={REGULATORY} />
+      <Section title="Interchange" entries={INTERCHANGE} />
     </div>
   );
 }

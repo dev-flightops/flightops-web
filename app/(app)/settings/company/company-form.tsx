@@ -68,6 +68,19 @@ export function CompanyForm({ profile }: { profile: CompanyProfileResponse }) {
             error={fieldError("fiscal_year_end")}
           />
         </div>
+        <div className="grid gap-4 sm:grid-cols-2">
+          {/* The schedule export is filed under this code and refuses
+              to run without it, rather than substituting one — so the
+              hint says what it is for. */}
+          <Field
+            name="carrier_code"
+            label="Carrier Code"
+            placeholder="PG"
+            hint="IATA (2 letters) or ICAO (3). Used by the schedule export, which will not run without it."
+            defaultValue={profile.carrier_code ?? ""}
+            error={fieldError("carrier_code")}
+          />
+        </div>
         <Field
           name="logo_url"
           label="Logo URL"
@@ -195,13 +208,21 @@ function Field({
   name,
   label,
   error,
+  hint,
   type = "text",
   ...inputProps
 }: React.InputHTMLAttributes<HTMLInputElement> & {
   name: string;
   label: string;
   error?: string;
+  /** Standing note under the field — what it is for, not what went
+   *  wrong. Destructured out rather than spread, or it would reach the
+   *  input as an invalid DOM attribute. Tied to the input by
+   *  aria-describedby so a screen reader reads it with the label
+   *  rather than after the whole form. */
+  hint?: string;
 }) {
+  const hintId = hint ? `${name}-hint` : undefined;
   return (
     <div>
       <label
@@ -215,9 +236,15 @@ function Field({
         name={name}
         type={type}
         aria-invalid={error ? "true" : undefined}
+        aria-describedby={hintId}
         className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-status-blue focus:outline-none aria-[invalid=true]:border-status-red"
         {...inputProps}
       />
+      {hint && (
+        <p id={hintId} className="mt-1 text-[0.65rem] text-muted-foreground">
+          {hint}
+        </p>
+      )}
       {error && (
         <p role="alert" className="mt-1 text-[0.65rem] text-status-red">
           {error}

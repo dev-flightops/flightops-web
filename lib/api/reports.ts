@@ -589,3 +589,107 @@ export interface BiDashboard {
 export async function getBiDashboard(): Promise<BiDashboard> {
   return apiFetch<BiDashboard>("/reports/bi", { cache: "no-store" });
 }
+
+// ── Schedule export (SIM / OAG) ────────────────────────────────────
+
+/** What the records *are*, which is what legacy's `target` parameter
+ *  was pretending to be. `schedule` is deduplicated recurring services;
+ *  `flights` is one row per departure with actuals. */
+export type SimBasis = "schedule" | "flights";
+
+export type SimFormat = "csv" | "fixed" | "xml";
+
+export interface SimScheduleRecord {
+  carrier: string;
+  flight_number: string;
+  service_type: string;
+  /** The service's own first and last operating date inside the
+   *  window — not the window itself. A one-off reports the same date
+   *  twice. */
+  effective_from: string;
+  effective_to: string;
+  /** Seven characters, Monday first: the digit on an operating day and
+   *  "." otherwise, so position means the day. */
+  frequency: string;
+  /** Departures backing this record. One means the weekly pattern is
+   *  an inference from a single event. */
+  operates: number;
+  origin: string;
+  destination: string;
+  departure_time: string;
+  arrival_time: string;
+  aircraft_type: string | null;
+  registration: string;
+  seats: number;
+}
+
+export interface SimFlightRecord {
+  carrier: string;
+  flight_number: string;
+  service_type: string;
+  flight_date: string;
+  origin: string;
+  destination: string;
+  scheduled_departure: string;
+  scheduled_arrival: string;
+  /** null when the flight has not departed or arrived — not the
+   *  scheduled time, which would report a departure that may not have
+   *  happened. */
+  actual_departure: string | null;
+  actual_arrival: string | null;
+  aircraft_type: string | null;
+  registration: string;
+  seats: number;
+  /** What was sold — null when no booking row references the flight
+   *  at all, which is not a sale of zero. The demo tenant holds eleven
+   *  live bookings and none carry a flight_id, so every flight would
+   *  otherwise have reported 0 booked. */
+  pax_booked: number | null;
+  /** Who the captain signed for — null when no manifest was locked,
+   *  which is not the same as nobody aboard. */
+  pax_manifested: number | null;
+  cargo_lbs: number;
+  mail_lbs: number;
+  status: string;
+}
+
+export interface SimExport {
+  basis: SimBasis;
+  carrier: string;
+  start: string;
+  end: string;
+  schedule: SimScheduleRecord[];
+  flights: SimFlightRecord[];
+  /** Departures read before deduplication, so the reader can see that
+   *  43 flights became 9 services rather than wonder where 34 went. */
+  departures: number;
+  cancelled: number;
+  without_aircraft_type: number;
+  /** Flights a booking points at. Zero against a non-empty export is a
+   *  data-integration gap, not an empty aircraft. */
+  flights_with_booking: number;
+  carrying_mail: number;
+  truncated_fields: number;
+}
+
+export async function getSimExport(
+  start: string,
+  end: string,
+  basis: SimBasis,
+): Promise<SimExport> {
+  const q = new URLSearchParams({ start, end, basis });
+  return apiFetch<SimExport>(`/reports/sim?${q}`, { cache: "no-store" });
+}
+
+export async function getSimFile(
+  start: string,
+  end: string,
+  basis: SimBasis,
+  format: SimFormat,
+): Promise<string> {
+  const q = new URLSearchParams({ start, end, basis, format });
+  return apiFetch<string>(`/reports/sim/download?${q}`, {
+    parseAs: "text",
+    cache: "no-store",
+  });
+}

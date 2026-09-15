@@ -39,6 +39,21 @@ const Schema = z.object({
   main_email: nullableTrimmed(200),
   ops_email: nullableTrimmed(200),
   part_135_certificate: nullableTrimmed(50),
+  // Two or three letters/digits, or empty to clear. Checked here so
+  // the form says what is wrong with the value rather than the save
+  // coming back as a 422 from auth-service — and worth saying because
+  // clearing it stops the schedule export rather than defaulting it.
+  carrier_code: z
+    .string()
+    .trim()
+    .toUpperCase()
+    .transform((v) => (v === "" ? null : v))
+    .nullable()
+    .optional()
+    .refine(
+      (v) => v == null || /^[A-Z0-9]{2,3}$/.test(v),
+      "Use the 2-letter IATA or 3-letter ICAO designator",
+    ),
   fiscal_year_end: z
     .string()
     .trim()
