@@ -3,11 +3,18 @@
  * /documents/ filter bar: SEARCH text input + CATEGORY dropdown +
  * "Compliance sources only" checkbox + Filter button.
  *
+ * The Clear link matches legacy, which renders one only while a
+ * filter is active. It matters most for the compliance checkbox: that
+ * filter can empty the list, and without a way out an operator is
+ * left unticking a box and pressing Filter to get their library back.
+ *
  * Plain HTML `<form method="get">` so submitting writes to the URL
  * query — Next.js re-renders the server component with the new
  * `searchParams` and the list re-filters. No client-side state, no
  * hydration required.
  */
+
+import Link from "next/link";
 
 export const DOCUMENT_CATEGORIES = [
   { value: "", label: "All Categories" },
@@ -28,6 +35,13 @@ export function DocumentsFilterBar({
   initialCategory?: string;
   initialComplianceOnly?: boolean;
 } = {}) {
+  // Shown only when something is actually filtered, as legacy does —
+  // a permanent Clear next to Filter reads as a second action rather
+  // than a way back.
+  const filtersActive = Boolean(
+    initialSearch || initialCategory || initialComplianceOnly,
+  );
+
   return (
     <form
       role="search"
@@ -82,6 +96,14 @@ export function DocumentsFilterBar({
           >
             Filter
           </button>
+          {filtersActive && (
+            <Link
+              href="/documents"
+              className="rounded-md border border-border px-3 py-2 text-sm font-semibold text-status-red hover:bg-status-red/10"
+            >
+              Clear
+            </Link>
+          )}
         </div>
       </div>
     </form>
