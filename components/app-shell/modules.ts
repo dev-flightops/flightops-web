@@ -837,6 +837,13 @@ export const DEPARTMENTS: Department[] = [
         department: "settings",
       },
       {
+        id: "settings-frat",
+        label: "Flight Risk",
+        href: "/settings/frat",
+        status: "live",
+        department: "settings",
+      },
+      {
         id: "settings-perms",
         label: "Permissions",
         href: "/settings/permissions",
