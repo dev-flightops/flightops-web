@@ -157,6 +157,20 @@ export interface HousingRoomCreatePayload {
   notes?: string | null;
 }
 
+export interface HousingRoomUpdatePayload {
+  room_number?: string;
+  room_type?: RoomType;
+  capacity?: number;
+  status?: RoomStatus;
+  amenities?: string | null;
+  cost_per_night?: string | number | null;
+  has_wifi?: boolean;
+  has_kitchen?: boolean;
+  has_private_bath?: boolean;
+  has_laundry?: boolean;
+  notes?: string | null;
+}
+
 export interface HousingBookingCreatePayload {
   room_id: string;
   employee_user_id: string;
@@ -195,6 +209,19 @@ export async function updateHousingUnit(
   patch: HousingUnitUpdatePayload,
 ): Promise<HousingUnit> {
   return apiFetch<HousingUnit>(`/housing/units/${unitId}`, {
+    method: "PATCH",
+    body: JSON.stringify(patch),
+  });
+}
+
+/** PATCH one room. The service applies only the fields present in the
+ *  body (`model_fields_set`), so omitting a field leaves it alone
+ *  rather than nulling it. */
+export async function updateHousingRoom(
+  roomId: string,
+  patch: HousingRoomUpdatePayload,
+): Promise<HousingRoom> {
+  return apiFetch<HousingRoom>(`/housing/rooms/${roomId}`, {
     method: "PATCH",
     body: JSON.stringify(patch),
   });

@@ -14,6 +14,8 @@ import {
 } from "@/lib/api/housing";
 
 import { AddRoomDrawer } from "./add-room-form";
+import { EditRoomDrawer } from "./edit-room-form";
+import { EditUnitDrawer } from "./edit-unit-form";
 
 /**
  * /housing/[unitId] — Housing unit detail.
@@ -130,10 +132,15 @@ export default async function HousingUnitDetailPage({
             </p>
           )}
         </div>
+        <EditUnitDrawer unit={unit} />
         <AddRoomDrawer unitId={unit.id} />
       </header>
 
-      <RoomsCard rooms={rooms} occupiedRoomIds={occupiedRoomIds} />
+      <RoomsCard
+        unitId={unit.id}
+        rooms={rooms}
+        occupiedRoomIds={occupiedRoomIds}
+      />
 
       <BookingsCard bookings={bookings} rooms={rooms} />
 
@@ -150,9 +157,11 @@ export default async function HousingUnitDetailPage({
 }
 
 function RoomsCard({
+  unitId,
   rooms,
   occupiedRoomIds,
 }: {
+  unitId: string;
   rooms: HousingRoom[];
   occupiedRoomIds: Set<string>;
 }) {
@@ -195,6 +204,9 @@ function RoomsCard({
                   <th className="px-3 py-2.5 text-right font-semibold">
                     Cost / night
                   </th>
+                  <th className="px-3 py-2.5 text-right font-semibold">
+                    <span className="sr-only">Edit</span>
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
@@ -222,6 +234,9 @@ function RoomsCard({
                     </td>
                     <td className="whitespace-nowrap px-3 py-2.5 text-right font-mono text-xs text-muted-foreground">
                       {fmtCost(r.cost_per_night)}
+                    </td>
+                    <td className="whitespace-nowrap px-3 py-2.5 text-right">
+                      <EditRoomDrawer unitId={unitId} room={r} />
                     </td>
                   </tr>
                 ))}
