@@ -7,7 +7,7 @@ import {
   type DocumentRow,
 } from "@/lib/api/documents";
 
-import { DocumentsFilterBar, DOCUMENT_CATEGORIES } from "./filter-bar";
+import { DocumentsFilterBar } from "./filter-bar";
 import { UploadDocumentDrawer } from "./upload-document-drawer";
 
 /**
@@ -20,10 +20,15 @@ import { UploadDocumentDrawer } from "./upload-document-drawer";
  *   Header:     "Document Library" + subtitle + doc count
  *               | [+ Upload Document] drawer
  *   Filter:     Search (client-only for now) + Category + Compliance-only
+ *               (Compliance-only filters on the per-document
+ *               `is_compliance_source` flag, server-side. It used to
+ *               approximate it from the category, which excluded the
+ *               GOM — see migration 0096.)
  *   List:       Grouped by category, one row per document, link to detail
  *   Empty:      File glyph + "No documents yet" + Upload CTA
  *
- * Data comes from `GET /documents?category=...`. Search is client-only
+ * Data comes from `GET /documents?category=...&compliance_only=...`.
+ * Search is client-only
  * (URL captures the search string but we filter the returned list
  * in-process); the backend endpoint doesn't yet support search by
  * title / tags / filename, and pushing a full-text search there is
@@ -46,7 +51,6 @@ export default async function DocumentsPage({
   const complianceOnly = params.compliance === "true";
 
   let items: DocumentRow[] = [];
-  let backendCategories: string[] = [];
   let loadError: string | null = null;
   // Pending-ack count for the "Required reading" pill in the header.
   // Fetched in parallel with the list; feed failure is non-fatal —
@@ -57,11 +61,11 @@ export default async function DocumentsPage({
     const [listResp, feedResp] = await Promise.all([
       listDocuments({
         category: categoryFilter || undefined,
+        complianceOnly: complianceOnly || undefined,
       }),
       myRequiredReading().catch(() => null),
     ]);
     items = listResp.items;
-    backendCategories = listResp.categories;
     if (feedResp) {
       requiredReadingPending = feedResp.pending;
       requiredReadingTotal = feedResp.total;
@@ -74,14 +78,9 @@ export default async function DocumentsPage({
         : "Document library unavailable. Try refreshing in a moment.";
   }
 
-  // Client-side filters that the backend doesn't cover yet.
+  // Search is the only filter still applied in-process; category and
+  // compliance_only are both server-side.
   const filtered = items.filter((d) => {
-    if (
-      complianceOnly &&
-      !isComplianceCategory(d.category)
-    ) {
-      return false;
-    }
     if (search) {
       const hay = `${d.title} ${d.category} ${d.description ?? ""}`.toLowerCase();
       if (!hay.includes(search)) return false;
@@ -124,11 +123,18 @@ export default async function DocumentsPage({
           <p className="mt-0.5 text-xs text-muted-foreground">
             Company manuals, regulations, safety bulletins, and compliance
             references — {total} document{total === 1 ? "" : "s"}
-            {backendCategories.length > 0 && (
+            {/* The category count has to describe the same set the
+                document count does. It used listResp.categories, which
+                reflects only the backend's `category` filter — so with
+                "Compliance sources only" ticked on a library with no
+                compliance documents the line read "0 documents · 2
+                categories". Zero documents cannot occupy two
+                categories. */}
+            {grouped.length > 0 && (
               <span className="text-muted-foreground/70">
                 {" "}
-                · {backendCategories.length} categor
-                {backendCategories.length === 1 ? "y" : "ies"}
+                · {grouped.length} categor
+                {grouped.length === 1 ? "y" : "ies"}
               </span>
             )}
           </p>
@@ -172,7 +178,10 @@ export default async function DocumentsPage({
           {loadError}
         </div>
       ) : filtered.length === 0 ? (
-        <EmptyState hasAnyDocuments={items.length > 0} />
+        <EmptyState
+          filtersActive={Boolean(categoryFilter || search || complianceOnly)}
+          complianceOnly={complianceOnly}
+        />
       ) : (
         <div className="space-y-6">
           {grouped.map(({ category, docs }) => (
@@ -212,6 +221,11 @@ function CategorySection({
                     {d.description}
                   </p>
                 )}
+                {d.is_compliance_source && (
+                  <span className="mt-1 inline-block rounded bg-status-orange/10 px-1.5 py-0.5 text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-status-orange">
+                    Compliance Source
+                  </span>
+                )}
               </div>
               <div className="flex flex-shrink-0 items-baseline gap-3 text-[0.7rem] text-muted-foreground">
                 <span className="hidden font-mono sm:inline">
@@ -228,16 +242,43 @@ function CategorySection({
   );
 }
 
-function EmptyState({ hasAnyDocuments }: { hasAnyDocuments: boolean }) {
+/**
+ * Three different empty results, which need three different sentences.
+ *
+ * `compliance_only` is now a server-side filter, so an empty `items`
+ * no longer means an empty library — it means whatever the operator
+ * asked for returned nothing. Deciding the message by counting rows
+ * would tell an operator with ten documents that they have none and
+ * offer them an upload button, which is the wrong next step.
+ *
+ * The compliance case gets its own sentence because "no matches" does
+ * not tell an operator what to do about it: the flag is set per
+ * document, and nobody has set it yet.
+ */
+function EmptyState({
+  filtersActive,
+  complianceOnly,
+}: {
+  filtersActive: boolean;
+  complianceOnly: boolean;
+}) {
   return (
     <div className="rounded-lg border border-border bg-card px-4 py-16 text-center">
       <FileGlyph />
       <p className="mt-3 text-sm font-medium text-foreground">
-        {hasAnyDocuments
-          ? "No documents match your filters."
-          : "No documents yet. Upload your first document to get started."}
+        {!filtersActive
+          ? "No documents yet. Upload your first document to get started."
+          : complianceOnly
+            ? "No documents are marked as compliance sources."
+            : "No documents match your filters."}
       </p>
-      {!hasAnyDocuments && (
+      {filtersActive && complianceOnly && (
+        <p className="mx-auto mt-1.5 max-w-md text-xs leading-relaxed text-muted-foreground">
+          A compliance source is set per document — open a document and
+          mark it to have it show here and feed the compliance checks.
+        </p>
+      )}
+      {!filtersActive && (
         <div className="mt-4">
           <UploadDocumentDrawer variant="secondary" />
         </div>
@@ -291,16 +332,3 @@ function groupByCategory(
     }));
 }
 
-const COMPLIANCE_CATEGORIES: ReadonlySet<string> = new Set<string>([
-  ...DOCUMENT_CATEGORIES.filter((c) => {
-    const v = c.value;
-    return v === "regulations" || v === "compliance";
-  }).map((c) => c.label),
-  // Also accept the short slugs an operator might have typed by hand.
-  "regulations",
-  "compliance",
-]);
-
-function isComplianceCategory(category: string): boolean {
-  return COMPLIANCE_CATEGORIES.has(category);
-}

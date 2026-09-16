@@ -118,6 +118,24 @@ export function UploadDocumentDrawer({
                 </p>
               </Field>
 
+              <label className="flex items-start gap-2.5 rounded-md border border-border bg-background px-3 py-2">
+                <input
+                  name="is_compliance_source"
+                  type="checkbox"
+                  value="true"
+                  className="mt-0.5 h-3.5 w-3.5 rounded border-border"
+                />
+                <span className="min-w-0">
+                  <span className="block text-xs font-semibold text-foreground">
+                    Compliance source
+                  </span>
+                  <span className="mt-0.5 block text-[0.65rem] leading-relaxed text-muted-foreground">
+                    States a company limitation a dispatcher has to
+                    follow. Can be changed later on the document.
+                  </span>
+                </span>
+              </label>
+
               <Field label="Upload notes (optional)">
                 <input
                   name="upload_notes"

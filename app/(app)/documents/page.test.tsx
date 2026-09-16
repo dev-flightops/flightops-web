@@ -6,11 +6,17 @@ import type { DocumentRow } from "@/lib/api/documents";
 /**
  * /documents — the Document Library.
  *
- * Two filters run in different places: category is a backend query,
- * search and compliance-only are applied in-process because the endpoint
- * does not support them yet. That split is the main thing worth pinning —
+ * Two filters run in different places: category and compliance-only are
+ * backend queries, search is applied in-process because the endpoint
+ * does not support it yet. That split is the main thing worth pinning —
  * a filter silently moving to the wrong side changes which documents a
  * crew member is shown.
+ *
+ * Compliance-only used to run in-process, deciding from the category
+ * whether a document was a compliance source. It excluded the GOM. It
+ * now filters on the per-document `is_compliance_source` flag in the
+ * backend, so what is pinned here is that the page ASKS for that and
+ * does not second-guess the answer.
  */
 
 const { TestApiError, listDocuments, myRequiredReading } = vi.hoisted(() => {
@@ -32,9 +38,8 @@ const { TestApiError, listDocuments, myRequiredReading } = vi.hoisted(() => {
 
 vi.mock("@/lib/api/client", () => ({ ApiError: TestApiError }));
 vi.mock("@/lib/api/documents", () => ({ listDocuments, myRequiredReading }));
-// useActionState drawer. filter-bar is left real — it has no imports and
-// the page reads DOCUMENT_CATEGORIES from it to decide what counts as a
-// compliance category, which a stub would quietly change.
+// useActionState drawer. filter-bar is left real — it has no imports,
+// and it renders the checkbox whose state the page reads back.
 vi.mock("./upload-document-drawer", () => ({
   UploadDocumentDrawer: ({ variant }: { variant: string }) => (
     <div data-testid="upload-drawer" data-variant={variant} />
@@ -51,6 +56,7 @@ function doc(over: Partial<DocumentRow> & { id: string }): DocumentRow {
     description: null,
     is_archived: false,
     requires_acknowledgment: false,
+    is_compliance_source: false,
     current_version_id: "v-1",
     current_version_number: 3,
     created_by_user_id: "u-1",
@@ -83,19 +89,28 @@ beforeEach(() => {
 describe("category filter goes to the backend", () => {
   it("sends a chosen category as a query", async () => {
     await renderPage({ category: "manuals" });
-    expect(listDocuments).toHaveBeenCalledWith({ category: "manuals" });
+    expect(listDocuments).toHaveBeenCalledWith({
+      category: "manuals",
+      complianceOnly: undefined,
+    });
   });
 
   it("sends undefined rather than an empty string when unset", async () => {
     // An empty `category=` would filter to documents whose category is
     // literally "", which is every document in no category — not "all".
     await renderPage();
-    expect(listDocuments).toHaveBeenCalledWith({ category: undefined });
+    expect(listDocuments).toHaveBeenCalledWith({
+      category: undefined,
+      complianceOnly: undefined,
+    });
   });
 
   it("ignores surrounding whitespace in the param", async () => {
     await renderPage({ category: "  manuals  " });
-    expect(listDocuments).toHaveBeenCalledWith({ category: "manuals" });
+    expect(listDocuments).toHaveBeenCalledWith({
+      category: "manuals",
+      complianceOnly: undefined,
+    });
   });
 });
 
@@ -146,32 +161,104 @@ describe("search filters in-process", () => {
   });
 });
 
-describe("compliance-only filter", () => {
-  beforeEach(() => {
-    listDocuments.mockResolvedValue({
-      items: [
-        doc({ id: "d-1", title: "GOM", category: "Company Manuals (GOM, OPM)" }),
-        doc({ id: "d-2", title: "FAR Part 135", category: "Regulations (FAR/AIM)" }),
-        doc({ id: "d-3", title: "Hazmat Ref", category: "Compliance References" }),
-        doc({ id: "d-4", title: "Hand-typed", category: "compliance" }),
-      ],
-      categories: [],
+describe("compliance-only filter goes to the backend", () => {
+  it("asks the backend for compliance sources when ticked", async () => {
+    await renderPage({ compliance: "true" });
+    expect(listDocuments).toHaveBeenCalledWith({
+      category: undefined,
+      complianceOnly: true,
     });
-  });
-
-  it("keeps only regulations and compliance when asked", async () => {
-    await renderPage({ compliance: "true" });
-    expect(titles().sort()).toEqual(["FAR Part 135", "Hand-typed", "Hazmat Ref"]);
-  });
-
-  it("accepts the short slug an operator may have typed by hand", async () => {
-    await renderPage({ compliance: "true" });
-    expect(titles()).toContain("Hand-typed");
   });
 
   it("treats any value other than the literal true as off", async () => {
     await renderPage({ compliance: "1" });
-    expect(titles()).toHaveLength(4);
+    expect(listDocuments).toHaveBeenCalledWith({
+      category: undefined,
+      complianceOnly: undefined,
+    });
+  });
+
+  it("does not re-filter the rows the backend already narrowed", async () => {
+    // The bug this replaces: the page decided for itself which
+    // categories counted as compliance sources, and dropped a GOM the
+    // operator had explicitly designated. Whatever comes back for
+    // compliance_only=true is the answer.
+    listDocuments.mockResolvedValueOnce({
+      items: [
+        doc({
+          id: "d-1",
+          title: "General Operations Manual",
+          category: "Company Manuals (GOM, OPM)",
+          is_compliance_source: true,
+        }),
+      ],
+      categories: ["Company Manuals (GOM, OPM)"],
+    });
+    await renderPage({ compliance: "true" });
+    expect(titles()).toEqual(["General Operations Manual"]);
+  });
+
+  it("keeps the checkbox ticked so the filter is visibly on", async () => {
+    await renderPage({ compliance: "true" });
+    expect(
+      screen.getByRole("checkbox", { name: /Compliance sources only/i }),
+    ).toBeChecked();
+  });
+
+  it("leaves the checkbox clear when the filter is off", async () => {
+    await renderPage();
+    expect(
+      screen.getByRole("checkbox", { name: /Compliance sources only/i }),
+    ).not.toBeChecked();
+  });
+
+  it("badges a designated document in the list", async () => {
+    listDocuments.mockResolvedValueOnce({
+      items: [
+        doc({ id: "d-1", title: "GOM", is_compliance_source: true }),
+        doc({ id: "d-2", title: "Holiday Schedule" }),
+      ],
+      categories: ["Company Manuals (GOM, OPM)"],
+    });
+    await renderPage();
+    // One badge, on the designated document only — a badge on every
+    // row would make the label meaningless.
+    expect(screen.getAllByText("Compliance Source")).toHaveLength(1);
+  });
+});
+
+describe("nothing matches the compliance filter", () => {
+  it("says no documents are marked rather than that there are none", async () => {
+    // `compliance_only` is a backend filter now, so an empty result is
+    // not an empty library. Telling an operator with ten documents
+    // that they have none, and offering an upload button, sends them
+    // to the wrong place.
+    await renderPage({ compliance: "true" });
+    expect(
+      screen.getByText(/No documents are marked as compliance sources/i),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/No documents yet/i)).not.toBeInTheDocument();
+  });
+
+  it("says how a document gets marked", async () => {
+    await renderPage({ compliance: "true" });
+    expect(screen.getByText(/set per document/i)).toBeInTheDocument();
+  });
+
+  it("does not offer the upload CTA", async () => {
+    await renderPage({ compliance: "true" });
+    expect(screen.getAllByTestId("upload-drawer")).toHaveLength(1);
+  });
+
+  it("still says match-your-filters for a plain search miss", async () => {
+    listDocuments.mockResolvedValueOnce({
+      items: [doc({ id: "d-1" })],
+      categories: ["Company Manuals (GOM, OPM)"],
+    });
+    await renderPage({ q: "zzz" });
+    expect(
+      screen.getByText(/No documents match your filters/i),
+    ).toBeInTheDocument();
   });
 });
 
@@ -355,8 +442,11 @@ describe("header counts", () => {
 
   it("pluralises documents and categories", async () => {
     listDocuments.mockResolvedValueOnce({
-      items: [doc({ id: "d-1" }), doc({ id: "d-2", title: "Second" })],
-      categories: ["a", "b"],
+      items: [
+        doc({ id: "d-1", category: "Company Manuals (GOM, OPM)" }),
+        doc({ id: "d-2", title: "Second", category: "Safety Bulletins" }),
+      ],
+      categories: ["Company Manuals (GOM, OPM)", "Safety Bulletins"],
     });
     await renderPage();
     expect(screen.getByText(/2 documents/)).toBeInTheDocument();
@@ -370,5 +460,67 @@ describe("header counts", () => {
     });
     await renderPage();
     expect(screen.getByText(/1 category/)).toBeInTheDocument();
+  });
+
+  it("counts the categories on screen, not the tenant's whole taxonomy", async () => {
+    // The reported bug. `categories` from the backend is deliberately
+    // the tenant's full list — it populates the picker, and stays
+    // stable as filters narrow. Reading the header count off it put
+    // two halves of one sentence on different sets, so ticking
+    // compliance-only on a library with none produced
+    // "0 documents · 2 categories". Zero documents cannot occupy two
+    // categories.
+    listDocuments.mockResolvedValueOnce({
+      items: [
+        doc({ id: "d-1", title: "Keep Me", category: "Safety Bulletins" }),
+        doc({
+          id: "d-2",
+          title: "Filter Me Out",
+          category: "Company Manuals (GOM, OPM)",
+        }),
+      ],
+      categories: ["Company Manuals (GOM, OPM)", "Safety Bulletins"],
+    });
+    await renderPage({ q: "keep" });
+    expect(screen.getByText(/1 document(?!s)/)).toBeInTheDocument();
+    expect(screen.getByText(/1 category(?!\w)/)).toBeInTheDocument();
+    expect(screen.queryByText(/2 categories/)).not.toBeInTheDocument();
+  });
+
+  it("drops the category clause entirely when nothing is shown", async () => {
+    // Rather than "0 documents · 0 categories", which reads like a
+    // broken counter next to an empty-state message that already
+    // explains itself.
+    listDocuments.mockResolvedValueOnce({
+      items: [doc({ id: "d-1" })],
+      categories: ["Company Manuals (GOM, OPM)"],
+    });
+    await renderPage({ q: "zzz" });
+    expect(screen.getByText(/0 documents/)).toBeInTheDocument();
+    expect(screen.queryByText(/categor/)).not.toBeInTheDocument();
+  });
+});
+
+describe("clearing the filters", () => {
+  // Legacy renders a Clear link only while a filter is active. It
+  // matters most for the compliance checkbox, which can empty the
+  // list — without it the way back is to untick and press Filter.
+  it("offers no Clear link when nothing is filtered", async () => {
+    await renderPage();
+    expect(
+      screen.queryByRole("link", { name: "Clear" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it.each([
+    ["the compliance checkbox", { compliance: "true" }],
+    ["a search term", { q: "gom" }],
+    ["a category", { category: "Safety Bulletins" }],
+  ])("offers one when %s is set", async (_label, params) => {
+    await renderPage(params);
+    expect(screen.getByRole("link", { name: "Clear" })).toHaveAttribute(
+      "href",
+      "/documents",
+    );
   });
 });

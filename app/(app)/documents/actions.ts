@@ -35,6 +35,9 @@ export async function createDocumentAction(
       title,
       category: category || "General",
       description,
+      // An unchecked checkbox is absent from FormData entirely, so
+      // this reads as false rather than undefined.
+      is_compliance_source: formData.get("is_compliance_source") === "true",
     });
     // Optional inline upload: if the drawer also passed a `file`,
     // POST the first version so the document lands with content
@@ -81,7 +84,12 @@ export async function uploadVersionAction(
 
 export async function updateDocumentAction(
   documentId: string,
-  patch: { title?: string; category?: string; description?: string | null },
+  patch: {
+    title?: string;
+    category?: string;
+    description?: string | null;
+    is_compliance_source?: boolean;
+  },
 ): Promise<ActionResult> {
   try {
     await updateDocument(documentId, patch);
