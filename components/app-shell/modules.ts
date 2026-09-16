@@ -162,6 +162,13 @@ export const DEPARTMENTS: Department[] = [
         department: "operations",
       },
       {
+        id: "records-request",
+        label: "Records Request",
+        href: "/compliance/records-request",
+        status: "live",
+        department: "operations",
+      },
+      {
         id: "pilot-history",
         label: "Pilot History",
         href: "/flight-crew/history",
@@ -1363,6 +1370,14 @@ export const MODULE_ROLES: Record<string, readonly Role[]> = {
     "director_of_maintenance",
     "safety_officer",
   ],
+
+  // Matches reports-service's disclosure route, and narrower than the
+  // integrity audit next to it. Producing a bundle hands operational
+  // records, passenger names and safety reports to an outside party
+  // under the operator's certificate — that is the two accountable
+  // post-holders, not everybody who can read the same data in order
+  // to correct it.
+  "records-request": ["exec_admin", "director_of_operations"],
 
   // Matches reports-service's profitability route. Margin by route is
   // a commercial figure, so the same two roles the accounting summary

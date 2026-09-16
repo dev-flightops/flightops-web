@@ -777,3 +777,63 @@ export async function postIntegrityAttestation(
     cache: "no-store",
   });
 }
+
+// ── Regulatory records requests (48-hour disclosure) ───────────────
+
+export type RequestorAgency = "faa" | "ntsb" | "other";
+
+export interface DisclosureCategory {
+  key: string;
+  label: string;
+  /** What the file contains. Served rather than duplicated here, so
+   *  the form and the bundle's cover sheet cannot disagree. */
+  detail: string;
+  filename: string;
+}
+
+export interface DisclosureExclusion {
+  title: string;
+  reason: string;
+}
+
+export interface DisclosureRecord {
+  id: string;
+  requestor_name: string;
+  requestor_title: string | null;
+  requestor_agency: string;
+  request_reference: string | null;
+  reason: string;
+  request_received_at: string;
+  period_start: string;
+  period_end: string;
+  aircraft_tail: string | null;
+  categories: string[];
+  record_counts: Record<string, number>;
+  total_records: number;
+  bundle_sha256: string;
+  bundle_bytes: number;
+  produced_at: string;
+  produced_by_name: string;
+  produced_by_role: string;
+  /** Receipt to production. The compliance fact the 48-hour
+   *  commitment is about. */
+  hours_to_produce: number;
+  within_deadline: boolean;
+  notes: string | null;
+}
+
+export interface DisclosureCatalogue {
+  categories: DisclosureCategory[];
+  /** Named on every cover sheet, and on the page, so their absence is
+   *  not mistaken for their non-existence. */
+  excluded: DisclosureExclusion[];
+  deadline_hours: number;
+  max_rows: number;
+  recent: DisclosureRecord[];
+}
+
+export async function getDisclosureCatalogue(): Promise<DisclosureCatalogue> {
+  return apiFetch<DisclosureCatalogue>("/reports/disclosure", {
+    cache: "no-store",
+  });
+}
