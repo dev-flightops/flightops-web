@@ -85,13 +85,33 @@ function sourceFiles(dir: string, out: string[] = []): string[] {
   return out;
 }
 
+/**
+ * Comments are stripped before scanning, and that is not cosmetic.
+ *
+ * The gate pattern stops at the first `)`. A comment inside a
+ * `roleGate(...)` call that happens to contain one — a CFR citation
+ * like `135.63(a)(4)`, say — truncates the match, so the roles after
+ * the comment are never seen. That happened: a gate listing four roles
+ * was read as three, and this test failed for a role that was in fact
+ * present. Worse than the false positive is the shape it could take
+ * the other way, where a gate quietly drops out of the policy
+ * altogether.
+ *
+ * Cheap and good enough for source we control: block comments, then
+ * line comments. It does not try to respect strings containing `//`,
+ * which do not appear inside a role gate.
+ */
+function stripComments(src: string): string {
+  return src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/[^\n]*/g, "");
+}
+
 function collectGates(): Gate[] {
   // Source files only — test files gate on made-up roles on purpose.
   const files = ["app", "components", "lib"].flatMap((d) => sourceFiles(d));
 
   const gates: Gate[] = [];
   for (const file of files) {
-    const src = readFileSync(file, "utf8");
+    const src = stripComments(readFileSync(file, "utf8"));
     for (const match of src.matchAll(GATE)) {
       const roles = [...match[1].matchAll(ROLE_LITERAL)].map((m) => m[1]);
       if (roles.length > 0) gates.push({ file, roles });
@@ -120,6 +140,45 @@ describe("role gate policy", () => {
     // version of the services-side scan reported green while checking
     // one gate in five.
     expect(collectGates().length).toBeGreaterThanOrEqual(8);
+  });
+
+  it("is not truncated by a comment inside a gate", () => {
+    // The pattern stops at the first `)`. A CFR citation in a comment
+    // inside a roleGate(...) call — `135.63(a)(4)` — used to cut the
+    // match short, so roles listed after the comment were invisible.
+    // A gate that silently reads as fewer roles than it has is the one
+    // failure this whole file exists to prevent.
+    const withComment = [
+      "const G = roleGate(",
+      '  "pilot",',
+      "  // 119.71 and 135.63(a)(4) both matter here",
+      '  "director_of_operations",',
+      ");",
+    ].join("\n");
+    const roles = [
+      ...stripComments(withComment).matchAll(GATE),
+    ].flatMap((m) => [...m[1].matchAll(ROLE_LITERAL)].map((r) => r[1]));
+    expect(roles).toEqual(["pilot", "director_of_operations"]);
+  });
+
+  it("reads a real multi-role gate in full", () => {
+    // Pins the OUTCOME of the comment stripping rather than the helper.
+    // FLIGHT_CREW on the employee record admits four roles and sits
+    // directly under a comment block citing 119.71 and 135.63. If that
+    // comment — or any other containing a `)` — moves inside the
+    // roleGate(...) call, the scan silently reads fewer roles than the
+    // gate has, and this fails instead of the policy check passing on
+    // an under-read gate.
+    const gate = collectGates().find((g) =>
+      g.file.includes("employee-record-form"),
+    );
+    expect(gate, "FLIGHT_CREW gate not found at all").toBeDefined();
+    expect(gate!.roles.sort()).toEqual([
+      "check_airman",
+      "chief_pilot",
+      "director_of_operations",
+      "pilot",
+    ]);
   });
 
   it("only gates on roles that exist", () => {

@@ -10,7 +10,7 @@ import {
 
 import { STATUS_TOKENS } from "../../crew-currency/status-tokens";
 import { CurrencyItemCard } from "./currency-item-card";
-import { AirmanRecordCard } from "./airman-record-card";
+import { AirmanRecordCard } from "@/components/compliance/airman-record-card";
 import { ProfileHeader } from "./profile-header";
 
 /**

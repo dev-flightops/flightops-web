@@ -3,7 +3,13 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
-import type { UserResponse } from "@/lib/api/types";
+import { AirmanRecordCard } from "@/components/compliance/airman-record-card";
+import { hasAnyRole, roleGate } from "@/lib/roles";
+import type {
+  AirmanRecordResponse,
+  DisqualificationListResponse,
+  UserResponse,
+} from "@/lib/api/types";
 
 import type { SaveEmployeeState } from "./actions";
 
@@ -107,13 +113,42 @@ function toValues(employee: UserResponse): Values {
   ) as Values;
 }
 
+/**
+ * Roles for whom a 14 CFR 135.63 certificate record is expected. Used
+ * only to decide between "no record on file yet" and leaving the
+ * section out: a ramper has no airman certificate, and an empty
+ * Certifications card on their record would read as missing data
+ * rather than as not applicable.
+ */
+// 119.71 requires the Director of Operations to hold an airman
+// certificate, so their record has one to show. Left out on the first
+// pass and `role-gate-policy.test.ts` caught it, which is the policy
+// holding on the merits rather than as a convention.
+//
+// The DOM is deliberately absent: 119.71 wants a mechanic certificate
+// from them, which is not the 135.63 pilot record this section shows.
+// Flight attendants likewise.
+//
+// Kept OUTSIDE the roleGate() call on purpose — see the note in
+// role-gate-policy.test.ts about comments and the scanner.
+const FLIGHT_CREW = roleGate(
+  "pilot",
+  "chief_pilot",
+  "check_airman",
+  "director_of_operations",
+);
+
 export function EmployeeRecordForm({
   employee,
+  airman = null,
+  disqualifications = null,
   state,
   action,
   pending,
 }: {
   employee: UserResponse;
+  airman?: AirmanRecordResponse | null;
+  disqualifications?: DisqualificationListResponse | null;
   state: SaveEmployeeState;
   /** The bound action from useActionState, or a stub under test. */
   action: (formData: FormData) => void;
@@ -214,15 +249,22 @@ export function EmployeeRecordForm({
         >
           Profile
         </span>
+        {/* "Soon" was a commitment nothing backs: none of these three is
+            in M4's story list, and each is a subsystem rather than a
+            screen — legacy carries 3 tables behind Documents, 5 behind
+            Onboarding and 9 behind Drug & Alcohol, including the
+            14 CFR 120.217 annual MIS summary. Saying "not built" is
+            true; saying "soon" invites a reader to wait for a date
+            nobody has set. */}
         {["Documents", "Onboarding", "Drug & Alcohol"].map((label) => (
           <span
             key={label}
-            title="Not built yet"
+            title={`${label} is not built yet and is not currently scheduled`}
             className="-mb-px cursor-not-allowed px-3 py-2 text-xs font-semibold text-muted-foreground/50"
           >
             {label}
             <span className="ml-1.5 rounded border border-border px-1 py-0.5 text-[0.55rem] uppercase tracking-wider">
-              Soon
+              Not built
             </span>
           </span>
         ))}
@@ -331,6 +373,12 @@ export function EmployeeRecordForm({
           </Link>
         </div>
       </form>
+
+      <Certifications
+        employee={employee}
+        airman={airman}
+        disqualifications={disqualifications}
+      />
     </div>
   );
 }
@@ -511,5 +559,103 @@ function Select({
         ))}
       </select>
     </div>
+  );
+}
+
+/**
+ * The 135.63 certificate record, on the employee it belongs to.
+ *
+ * It was only ever rendered under /compliance/pilots/{id}, so an HR
+ * reader opening an employee record saw no certifications at all — for
+ * a pilot whose certificate, ratings and medical class were already on
+ * file two clicks away. The card is the same component the compliance
+ * page uses; this is a second place to read it, not a second copy of
+ * the data, and it stays read-only here because currency and
+ * disqualification release belong on the compliance surface.
+ *
+ * Three states, deliberately distinguished:
+ *   a record exists         -> render it, plus a link to the full profile
+ *   flight crew, no record  -> say it is not on file yet
+ *   everyone else           -> render nothing
+ *
+ * That last case is the point of FLIGHT_CREW. A ramp agent has no
+ * airman certificate, and an empty Certifications card on their record
+ * would read as missing data rather than as not applicable.
+ */
+function Certifications({
+  employee,
+  airman,
+  disqualifications,
+}: {
+  employee: UserResponse;
+  airman: AirmanRecordResponse | null;
+  disqualifications: DisqualificationListResponse | null;
+}) {
+  // Role first, because the endpoint never 404s. `get_airman_record`
+  // documents that "a pilot with none yet returns empty fields rather
+  // than a 404 — not having filled it in is the starting state", so an
+  // empty shell comes back for ANY user id, ground agents included.
+  // Gating on the response would have put a 14 CFR 135.63 card on a
+  // ramper's record, which it did on the first attempt at this.
+  if (!hasAnyRole(employee.roles ?? [], FLIGHT_CREW)) return null;
+
+  // An entirely blank record is "nothing recorded yet", not a record.
+  // Rendering the card for it gives eight rows reading "Not recorded",
+  // which looks like the system lost something it was holding.
+  const hasDetail = Boolean(
+    airman &&
+      (airman.certificate_type ||
+        airman.certificate_number ||
+        airman.medical_class ||
+        airman.ratings.length > 0 ||
+        airman.total_time_hours ||
+        airman.experience_as_of ||
+        airman.notes),
+  );
+
+  // Both or neither, matching the compliance page. The card counts open
+  // disqualifications, and a fabricated empty list would render "none"
+  // for a feed that simply did not load — which is a different claim
+  // about a person's eligibility to fly.
+  if (!airman || !hasDetail || !disqualifications) {
+    return (
+      <section aria-labelledby="certifications-heading" className="mb-5">
+        <h2
+          id="certifications-heading"
+          className="mb-2 text-xs font-bold uppercase tracking-[0.08em] text-muted-foreground"
+        >
+          Certifications
+        </h2>
+        <p className="rounded-lg border border-border bg-card px-4 py-3 text-sm text-muted-foreground">
+          {hasDetail
+            ? "Certificate details are on file but the disqualification history could not be loaded, so the record is not shown here."
+            : "No certificate or medical details recorded for this employee yet."}{" "}
+          <Link
+            href={`/compliance/pilots/${employee.id}`}
+            className="font-semibold text-status-blue hover:underline"
+          >
+            Open their compliance profile
+          </Link>
+          {hasDetail ? "." : " to add them."}
+        </p>
+      </section>
+    );
+  }
+
+  return (
+    <section className="mb-5">
+      {/* The card renders its own heading, so this wrapper only adds the
+          way through to currency — which is the question a reader asks
+          next and which this page does not answer. */}
+      <AirmanRecordCard record={airman} disqualifications={disqualifications} />
+      <p className="mt-2 text-xs text-muted-foreground">
+        <Link
+          href={`/compliance/pilots/${employee.id}`}
+          className="font-semibold text-status-blue hover:underline"
+        >
+          Currency and disqualifications →
+        </Link>
+      </p>
+    </section>
   );
 }

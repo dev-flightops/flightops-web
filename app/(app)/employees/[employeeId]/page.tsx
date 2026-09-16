@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 
 import { getUser } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
+import { getAirmanRecord, listDisqualifications } from "@/lib/api/ops";
 
 import { EmployeeRecord } from "./employee-record";
 
@@ -49,5 +50,26 @@ export default async function EmployeeDetailPage({
     );
   }
 
-  return <EmployeeRecord employee={employee} />;
+  // The 135.63 certificate record lives on the ops-service and was only
+  // ever surfaced under /compliance/pilots/{id}, so an HR reader opening
+  // an employee saw no certifications at all — even for a pilot whose
+  // record existed two clicks away.
+  //
+  // Soft-failed and fetched in parallel, the same way the compliance
+  // page does it: losing the record should cost this reader that
+  // section, not the whole employee record. A non-pilot has no record
+  // to fetch, and the 404 that returns is the expected answer rather
+  // than an error.
+  const [airman, disqualifications] = await Promise.all([
+    getAirmanRecord(employeeId).catch(() => null),
+    listDisqualifications(employeeId).catch(() => null),
+  ]);
+
+  return (
+    <EmployeeRecord
+      employee={employee}
+      airman={airman}
+      disqualifications={disqualifications}
+    />
+  );
 }
