@@ -1,7 +1,11 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
-import type { UserResponse } from "@/lib/api/types";
+import type {
+  AirmanRecordResponse,
+  DisqualificationListResponse,
+  UserResponse,
+} from "@/lib/api/types";
 
 import type { SaveEmployeeState } from "./actions";
 import { EmployeeRecordForm } from "./employee-record-form";
@@ -167,7 +171,19 @@ describe("the tab bar", () => {
     for (const label of ["Documents", "Onboarding", "Drug & Alcohol"]) {
       expect(screen.getByText(label)).toBeInTheDocument();
     }
-    expect(screen.getAllByText("Soon")).toHaveLength(3);
+    // "Not built", not "Soon". None of the three is on M4's story list,
+    // and each is a subsystem rather than a screen, so "Soon" was a
+    // commitment nothing backs.
+    expect(screen.getAllByText("Not built")).toHaveLength(3);
+    expect(screen.queryByText("Soon")).not.toBeInTheDocument();
+  });
+
+  it("says in the tooltip that they are not scheduled either", () => {
+    renderForm();
+    expect(screen.getByText("Documents").closest("span")).toHaveAttribute(
+      "title",
+      expect.stringContaining("not currently scheduled"),
+    );
   });
 
   it("does not make the unbuilt tabs clickable", () => {
@@ -446,5 +462,130 @@ describe("the form is remounted when a save completes", () => {
     expect(
       (screen.getByLabelText(/Department/) as HTMLSelectElement).value,
     ).toBe("Training");
+  });
+});
+
+describe("certifications on the employee record", () => {
+  /**
+   * The 135.63 certificate record existed but was only rendered under
+   * /compliance/pilots/{id}, so an HR reader opening an employee saw no
+   * certifications at all — for a pilot whose certificate and medical
+   * class were on file two clicks away.
+   *
+   * Three states, and the third is the one worth pinning: a ramp agent
+   * has no airman certificate, and an empty Certifications card on
+   * their record would read as missing data rather than as not
+   * applicable.
+   */
+  function airmanRecord(
+    over: Partial<AirmanRecordResponse> = {},
+  ): AirmanRecordResponse {
+    return {
+      pilot: { id: "u-1", full_name: "Dawn Whitfield", email: "d@x.test" },
+      certificate_type: "commercial",
+      certificate_number: "1234567",
+      ratings: [],
+      medical_class: "second",
+      total_time_hours: null,
+      pic_time_hours: null,
+      cross_country_hours: null,
+      night_hours: null,
+      instrument_hours: null,
+      experience_as_of: null,
+      notes: null,
+      ...over,
+    };
+  }
+
+  const noDisqualifications: DisqualificationListResponse = {
+    items: [],
+    open_count: 0,
+  };
+
+  function renderWith(
+    over: Partial<UserResponse>,
+    airman: AirmanRecordResponse | null,
+    disqualifications: DisqualificationListResponse | null = noDisqualifications,
+  ) {
+    return render(
+      <EmployeeRecordForm
+        employee={employee(over)}
+        airman={airman}
+        disqualifications={disqualifications}
+        state={{ status: "idle" }}
+        action={noop}
+        pending={false}
+      />,
+    );
+  }
+
+  it("shows the certificate on a pilot who has a record", () => {
+    renderWith({ roles: ["pilot"] }, airmanRecord());
+    expect(screen.getByText("1234567")).toBeInTheDocument();
+  });
+
+  it("offers the way through to currency, which this page does not answer", () => {
+    renderWith({ roles: ["pilot"] }, airmanRecord());
+    expect(
+      screen.getByRole("link", { name: /Currency and disqualifications/ }),
+    ).toHaveAttribute("href", "/compliance/pilots/u-1");
+  });
+
+  it("says a pilot has no record yet rather than showing an empty card", () => {
+    renderWith({ roles: ["pilot"] }, null);
+    expect(screen.getByText(/No certificate or medical details recorded/)).toBeInTheDocument();
+  });
+
+  it("treats the empty shell the API returns as nothing on file", () => {
+    // `get_airman_record` never 404s — it documents that "a pilot with
+    // none yet returns empty fields rather than a 404". Rendering the
+    // card for that shell gives eight rows reading "Not recorded",
+    // which looks like the system lost something it was holding.
+    renderWith(
+      { roles: ["pilot"] },
+      airmanRecord({
+        certificate_type: null,
+        certificate_number: null,
+        medical_class: null,
+      }),
+    );
+    expect(
+      screen.getByText(/No certificate or medical details recorded/),
+    ).toBeInTheDocument();
+  });
+
+  it("renders nothing at all for someone who holds no flight-crew role", () => {
+    // A ramp agent has no airman certificate. An empty Certifications
+    // section on their record would read as missing data.
+    // The API returns a shell for any user id, so this is the realistic
+    // input — gating on the response rather than the role put a
+    // 14 CFR 135.63 card on a ramp agent's record.
+    renderWith({ roles: ["ground_ops"] }, airmanRecord());
+    expect(screen.queryByText(/airman record/i)).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { name: "Certifications" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("covers a chief pilot and a check airman, not just pilot", () => {
+    for (const role of ["chief_pilot", "check_airman"]) {
+      const { unmount } = renderWith({ roles: [role] }, null);
+      expect(
+        screen.getByText(/No certificate or medical details recorded/),
+        role,
+      ).toBeInTheDocument();
+      unmount();
+    }
+  });
+
+  it("withholds the card when the disqualification feed failed", () => {
+    // The card counts open disqualifications. Rendering it with a
+    // fabricated empty list would report "none" for a feed that did not
+    // load, which is a different claim about eligibility to fly.
+    renderWith({ roles: ["pilot"] }, airmanRecord(), null);
+    expect(
+      screen.getByText(/disqualification history could not be loaded/),
+    ).toBeInTheDocument();
+    expect(screen.queryByText("1234567")).not.toBeInTheDocument();
   });
 });
