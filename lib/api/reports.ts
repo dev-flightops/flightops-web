@@ -693,3 +693,87 @@ export async function getSimFile(
     cache: "no-store",
   });
 }
+
+// ── Data integrity audit ───────────────────────────────────────────
+
+/** A contradiction is records disagreeing with each other or with
+ *  physical reality, so at least one is wrong and somebody has to
+ *  decide which. An omission is something required that is absent.
+ *  The remedy differs — correct versus complete — which is why they
+ *  are counted separately. */
+export type FindingKind = "contradiction" | "omission";
+
+/** What a finding was computed over. Contradictions are not windowed:
+ *  a wrong record does not stop being wrong as it ages, and a review
+ *  that only looks at 30 days never looks at anything twice. */
+export type FindingScope = "window" | "all_time" | "fleet";
+
+export type CycleStatus = "current" | "due" | "overdue";
+
+export interface IntegrityFinding {
+  key: string;
+  kind: FindingKind;
+  scope: FindingScope;
+  label: string;
+  /** What it means and what to do about it. Rendered: a count with no
+   *  explanation is not reviewable, and the person signing is
+   *  accountable for having understood it. */
+  detail: string;
+  count: number;
+  examples: string[];
+}
+
+export interface IntegrityAttestation {
+  id: string;
+  window_start: string;
+  window_end: string;
+  computed_at: string;
+  attested_at: string;
+  attested_by_name: string;
+  attested_by_role: string;
+  /** What was still open at signing. Signing records the review; it
+   *  does not clear anything. */
+  contradictions_open: number;
+  omissions_open: number;
+  notes: string;
+  findings_hash: string;
+}
+
+export interface IntegrityAudit {
+  window_start: string;
+  window_end: string;
+  computed_at: string;
+  findings: IntegrityFinding[];
+  contradictions: number;
+  omissions: number;
+  /** Sent back with the signature, so a review signed against a stale
+   *  page is refused rather than recorded against figures the reviewer
+   *  never saw. */
+  findings_hash: string;
+  cycle_status: CycleStatus;
+  cycle_days: number;
+  max_interval_days: number;
+  /** Null when no review has ever been recorded — an absence of a
+   *  review, not a review at the epoch. */
+  last_attested_at: string | null;
+  next_due_at: string | null;
+  compliance_deadline: string | null;
+  days_since_last: number | null;
+  recent: IntegrityAttestation[];
+  advisory: string;
+}
+
+export async function getIntegrityAudit(): Promise<IntegrityAudit> {
+  return apiFetch<IntegrityAudit>("/reports/integrity", { cache: "no-store" });
+}
+
+export async function postIntegrityAttestation(
+  findingsHash: string,
+  notes: string,
+): Promise<IntegrityAttestation> {
+  return apiFetch<IntegrityAttestation>("/reports/integrity/attest", {
+    method: "POST",
+    body: JSON.stringify({ findings_hash: findingsHash, notes }),
+    cache: "no-store",
+  });
+}
