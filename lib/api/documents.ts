@@ -26,6 +26,7 @@ export interface DocumentRow {
   description: string | null;
   is_archived: boolean;
   requires_acknowledgment: boolean;
+  is_compliance_source: boolean;
   current_version_id: string | null;
   current_version_number: number;
   created_by_user_id: string;
@@ -87,6 +88,7 @@ export interface DocumentCreatePayload {
   category?: string;
   description?: string | null;
   requires_acknowledgment?: boolean;
+  is_compliance_source?: boolean;
 }
 
 export interface DocumentUpdatePayload {
@@ -94,11 +96,17 @@ export interface DocumentUpdatePayload {
   category?: string;
   description?: string | null;
   requires_acknowledgment?: boolean;
+  is_compliance_source?: boolean;
 }
 
 export interface ListDocumentsParams {
   category?: string;
   includeArchived?: boolean;
+  /** Narrow to documents an operator designated as stating a company
+   *  limitation. Filtered server-side on `is_compliance_source` — the
+   *  library used to approximate this from the category, which
+   *  excluded the GOM. */
+  complianceOnly?: boolean;
 }
 
 export async function listDocuments(
@@ -107,6 +115,7 @@ export async function listDocuments(
   const qs = new URLSearchParams();
   if (params.category) qs.set("category", params.category);
   if (params.includeArchived) qs.set("include_archived", "true");
+  if (params.complianceOnly) qs.set("compliance_only", "true");
   const tail = qs.toString() ? `?${qs.toString()}` : "";
   // Trailing slash required — the nginx gateway's `location /documents/`
   // block only matches paths that begin with `/documents/`; a bare

@@ -13,6 +13,7 @@ import {
 } from "@/lib/api/documents";
 
 import { AckPanel } from "./ack-panel";
+import { ComplianceSourceToggle } from "./compliance-source-toggle";
 import { UploadVersionDrawer } from "./upload-version-drawer";
 
 /**
@@ -137,6 +138,13 @@ export default async function DocumentDetailPage({
           }
         />
       )}
+
+      <div className="mt-4">
+        <ComplianceSourceToggle
+          documentId={doc.id}
+          initialValue={doc.is_compliance_source}
+        />
+      </div>
 
       <MetaStrip doc={doc} versionCount={versions.length} />
 

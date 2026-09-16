@@ -49,7 +49,14 @@ const {
 });
 
 vi.mock("@/lib/api/client", () => ({ ApiError: TestApiError }));
-vi.mock("next/navigation", () => ({ notFound }));
+// `useRouter` is here for the compliance-source toggle, which calls
+// router.refresh() after a successful PATCH. Left as a real mock
+// rather than stubbing the toggle out, so the detail page's own tests
+// cover that it renders with the document's current flag.
+vi.mock("next/navigation", () => ({
+  notFound,
+  useRouter: () => ({ refresh: vi.fn() }),
+}));
 vi.mock("@/lib/api/documents", () => ({
   getDocument,
   myAcknowledgment,
@@ -105,6 +112,7 @@ function documentRow(over: Partial<DocumentRow> = {}): DocumentRow {
     description: null,
     is_archived: false,
     requires_acknowledgment: false,
+    is_compliance_source: false,
     current_version_id: "v-2",
     current_version_number: 2,
     created_by_user_id: "u-1",
@@ -446,5 +454,29 @@ describe("header", () => {
     });
     await renderPage();
     expect(screen.getByText("Current version").previousSibling).toHaveTextContent("—");
+  });
+});
+
+describe("compliance source toggle", () => {
+  it("reflects a document that is not a compliance source", async () => {
+    getDocument.mockResolvedValueOnce({
+      document: documentRow({ is_compliance_source: false }),
+      versions: [],
+    });
+    await renderPage();
+    expect(
+      screen.getByRole("checkbox", { name: /Compliance source/i }),
+    ).not.toBeChecked();
+  });
+
+  it("reflects a document that is one", async () => {
+    getDocument.mockResolvedValueOnce({
+      document: documentRow({ is_compliance_source: true }),
+      versions: [],
+    });
+    await renderPage();
+    expect(
+      screen.getByRole("checkbox", { name: /Compliance source/i }),
+    ).toBeChecked();
   });
 });
