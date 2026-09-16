@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type {
@@ -43,10 +43,27 @@ const {
 });
 
 vi.mock("@/lib/api/client", () => ({ ApiError: TestApiError }));
-vi.mock("next/navigation", () => ({ notFound }));
+// `useRouter` is here for the Edit House and Edit Room drawers, which
+// call router.refresh() after a successful PATCH. Left real rather
+// than stubbing the drawers out, so this page's own tests cover that
+// the edit affordances render with each room's current values.
+vi.mock("next/navigation", () => ({
+  notFound,
+  useRouter: () => ({ refresh: vi.fn() }),
+}));
 vi.mock("@/lib/api/housing", () => ({
   getHousingUnit,
   listHousingBookings,
+  // The edit-room drawer builds its pickers from these, so the mock
+  // has to carry them or the drawer throws on open.
+  ROOM_TYPES: [
+    "single",
+    "double",
+    "bunk",
+    "supervisor_suite",
+    "crew_house",
+  ],
+  ROOM_STATUSES: ["available", "occupied", "maintenance", "offline"],
   ROOM_TYPE_LABELS: {
     single: "Single",
     double: "Double",
@@ -539,5 +556,54 @@ describe("unit header", () => {
   it("hands the add-room drawer this unit's id", async () => {
     await renderPage();
     expect(screen.getByTestId("add-room")).toHaveAttribute("data-unit-id", UNIT_ID);
+  });
+});
+
+describe("editing", () => {
+  it("offers an Edit House control", async () => {
+    // There was no way to change a house once created, though the
+    // service has always accepted PATCH /housing/units/{id}.
+    await renderPage();
+    expect(
+      screen.getByRole("button", { name: "Edit House" }),
+    ).toBeInTheDocument();
+  });
+
+  it("offers an Edit control on every room", async () => {
+    getHousingUnit.mockResolvedValueOnce({
+      unit: unit(),
+      rooms: [
+        room({ id: "r1", room_number: "01" }),
+        room({ id: "r2", room_number: "02" }),
+      ],
+    });
+    await renderPage();
+    expect(screen.getAllByRole("button", { name: "Edit" })).toHaveLength(2);
+  });
+
+  it("opens the room drawer on the room that was clicked", async () => {
+    // Naming the room in the dialog label matters: two drawers that
+    // both say "Edit Room" give no way to tell which one is open.
+    getHousingUnit.mockResolvedValueOnce({
+      unit: unit(),
+      rooms: [room({ id: "r1", room_number: "1B" })],
+    });
+    await renderPage();
+    fireEvent.click(screen.getByRole("button", { name: "Edit" }));
+    expect(
+      screen.getByRole("dialog", { name: "Edit room 1B" }),
+    ).toBeInTheDocument();
+  });
+
+  it("shows a room's current rate in the drawer, and blank when unpriced", async () => {
+    getHousingUnit.mockResolvedValueOnce({
+      unit: unit(),
+      rooms: [room({ id: "r1", room_number: "01", cost_per_night: null })],
+    });
+    await renderPage();
+    fireEvent.click(screen.getByRole("button", { name: "Edit" }));
+    const cost = screen.getByLabelText(/Cost per night/i) as HTMLInputElement;
+    // Blank, not 0 — the cost report distinguishes "no rate" from free.
+    expect(cost.value).toBe("");
   });
 });
