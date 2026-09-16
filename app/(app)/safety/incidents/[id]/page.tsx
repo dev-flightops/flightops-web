@@ -2,6 +2,8 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
 import { auth } from "@/auth";
+import { hasAnyRole } from "@/lib/roles";
+import { MANAGE_ROLES, TRIAGE_ROLES } from "@/lib/safety-roles";
 import { ApiError } from "@/lib/api/client";
 import {
   HAZARD_SEVERITY_LABELS,
@@ -14,8 +16,6 @@ import {
 import { IncidentTriageControls } from "./triage-controls";
 import { CorrectiveActionPanel } from "@/components/safety/corrective-action-panel";
 
-const TRIAGE_ROLES = new Set(["safety_officer", "chief_pilot", "exec_admin"]);
-const MANAGE_ROLES = new Set(["safety_officer", "exec_admin"]);
 
 export default async function IncidentDetailPage({
   params,
@@ -28,8 +28,8 @@ export default async function IncidentDetailPage({
   const { filed } = await searchParams;
   const session = await auth();
   const roles = new Set(session?.roles ?? []);
-  const canTriage = [...roles].some((r) => TRIAGE_ROLES.has(r));
-  const canManageCapas = [...roles].some((r) => MANAGE_ROLES.has(r));
+  const canTriage = hasAnyRole([...roles], TRIAGE_ROLES);
+  const canManageCapas = hasAnyRole([...roles], MANAGE_ROLES);
 
   let incident: Incident;
   try {

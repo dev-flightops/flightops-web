@@ -2,6 +2,8 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
 import { auth } from "@/auth";
+import { hasAnyRole } from "@/lib/roles";
+import { BOARD_ROLES, MANAGE_ROLES } from "@/lib/safety-roles";
 import { ApiError } from "@/lib/api/client";
 import {
   CAPA_STATUS_LABELS,
@@ -12,8 +14,6 @@ import {
 import { NotesForm } from "./notes-form";
 import { StatusControls } from "./status-controls";
 
-const BOARD_ROLES = new Set(["safety_officer", "chief_pilot", "exec_admin"]);
-const MANAGE_ROLES = new Set(["safety_officer", "exec_admin"]);
 
 /**
  * /safety/actions/[id] — CAPA detail.
@@ -35,7 +35,7 @@ export default async function CapaDetailPage({
   const { opened } = await searchParams;
   const session = await auth();
   const roles = new Set(session?.roles ?? []);
-  const canManage = [...roles].some((r) => MANAGE_ROLES.has(r));
+  const canManage = hasAnyRole([...roles], MANAGE_ROLES);
 
   let capa: CorrectiveAction;
   try {
@@ -50,7 +50,7 @@ export default async function CapaDetailPage({
 
   const isOwner = capa.owner.id === session?.user?.id;
   const canRead =
-    isOwner || [...roles].some((r) => BOARD_ROLES.has(r));
+    isOwner || hasAnyRole([...roles], BOARD_ROLES);
   if (!canRead) notFound();
 
   const sourceHref =

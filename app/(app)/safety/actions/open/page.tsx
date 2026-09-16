@@ -2,12 +2,12 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
 import { auth } from "@/auth";
+import { hasAnyRole } from "@/lib/roles";
+import { MANAGE_ROLES } from "@/lib/safety-roles";
 import { listUsers } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
 
 import { OpenCapaForm } from "./open-form";
-
-const MANAGE_ROLES = new Set(["safety_officer", "exec_admin"]);
 
 /**
  * /safety/actions/open — Open a CAPA against a hazard or incident.
@@ -28,7 +28,7 @@ export default async function OpenCapaPage({
 }) {
   const session = await auth();
   const roles = new Set(session?.roles ?? []);
-  if (![...roles].some((r) => MANAGE_ROLES.has(r))) {
+  if (!hasAnyRole([...roles], MANAGE_ROLES)) {
     redirect("/safety/actions/mine");
   }
 
