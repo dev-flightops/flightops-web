@@ -500,3 +500,27 @@ describe("header counts", () => {
     expect(screen.queryByText(/categor/)).not.toBeInTheDocument();
   });
 });
+
+describe("clearing the filters", () => {
+  // Legacy renders a Clear link only while a filter is active. It
+  // matters most for the compliance checkbox, which can empty the
+  // list — without it the way back is to untick and press Filter.
+  it("offers no Clear link when nothing is filtered", async () => {
+    await renderPage();
+    expect(
+      screen.queryByRole("link", { name: "Clear" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it.each([
+    ["the compliance checkbox", { compliance: "true" }],
+    ["a search term", { q: "gom" }],
+    ["a category", { category: "Safety Bulletins" }],
+  ])("offers one when %s is set", async (_label, params) => {
+    await renderPage(params);
+    expect(screen.getByRole("link", { name: "Clear" })).toHaveAttribute(
+      "href",
+      "/documents",
+    );
+  });
+});
