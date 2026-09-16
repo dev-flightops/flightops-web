@@ -1,8 +1,6 @@
 import { auth } from "@/auth";
-import { signOutAction } from "@/app/(app)/actions";
-import { clockInAction, clockOutAction } from "@/app/(app)/duty-actions";
+import { buildHeaderActionsData } from "@/app/(app)/header-actions-props";
 import { HeaderActions } from "@/components/app-shell/header-actions";
-import { visibleAiTools } from "@/components/app-shell/modules";
 import { ActiveAlertsPanel } from "@/components/home/active-alerts-panel";
 import { HomeHero } from "@/components/home/home-hero";
 import { HomeModuleCard } from "@/components/home/home-module-card";
@@ -13,8 +11,7 @@ import {
   HOME_MODULE_ROLES,
 } from "@/components/home/module-catalog";
 import { listMyTenants } from "@/lib/api/auth";
-import { getCurrentDuty, getFlightStats } from "@/lib/api/ops";
-import type { CurrentDutyResponse } from "@/lib/api/types";
+import { getFlightStats } from "@/lib/api/ops";
 import { loadOperationalSnapshot } from "@/lib/dashboards/operational-snapshot";
 import { currentGreeting, firstNameFrom } from "@/lib/greeting";
 import { hasAnyRole, roleGate } from "@/lib/roles";
@@ -130,39 +127,23 @@ export default async function HomePage() {
     ? Math.max(0, stats.aircraft_total - stats.aircraft_active)
     : 0;
 
-  // Default HeaderActions cluster — same items as the rest of the app.
-  // Only the surrounding dark bar re-skins the container.
+  // The same top-bar cluster the rest of the app gets. This page
+  // renders its own top bar rather than the (app) layout's, so every
+  // prop has to be sourced here too — and three of them were missed
+  // one at a time: the AI tools menu, the duty seed, and the
+  // notification bell, each showing a degraded state on /home alone.
   //
-  // /home renders its own top bar instead of using the (app) layout's
-  // AppShellHeader, so the duty seed + server actions the layout
-  // otherwise pipes into HeaderActions have to be sourced here too.
-  // Without them the top-bar Clock In pill falls back to the disabled
-  // "unavailable" placeholder for /home only.
-  let initialDuty: CurrentDutyResponse | null = null;
-  try {
-    initialDuty = await getCurrentDuty();
-  } catch {
-    initialDuty = null;
-  }
+  // buildHeaderActionsData assembles all of them in one place, so a
+  // fourth cannot be missed. See app/(app)/header-actions-props.ts.
+  const headerData = userEmail
+    ? await buildHeaderActionsData(
+        userEmail,
+        session?.user?.name ?? null,
+        sessionRoles,
+      )
+    : null;
 
-  const actionsSlot = userEmail ? (
-    <HeaderActions
-      email={userEmail}
-      fullName={session?.user?.name ?? null}
-      showSettings={
-        sessionRoles.length === 0 || sessionRoles.includes("exec_admin")
-      }
-      signOutAction={signOutAction}
-      initialDuty={initialDuty}
-      clockInAction={clockInAction}
-      clockOutAction={clockOutAction}
-      // /home renders its own top bar rather than the (app) layout's,
-      // so the AI tools have to be sourced here too. Missed on the
-      // first pass, and the symptom was the menu collapsing to a
-      // single FleetBrain link on /home alone.
-      aiTools={visibleAiTools(sessionRoles)}
-    />
-  ) : null;
+  const actionsSlot = headerData ? <HeaderActions {...headerData} /> : null;
 
   return (
     // Full-bleed white surface so /home owns the entire viewport — the
