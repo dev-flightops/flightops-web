@@ -35,12 +35,17 @@ export interface Turn {
  * the app actually defines.
  *
  * Not a pass-through, and the difference bit: the service says "amber"
- * and this app's token is `status-yellow`. Writing `text-status-amber`
+ * and this app's token is `status-yellow`. Asking for an amber one
  * emits no class at all — Tailwind has nothing to generate — so the
  * badge rendered unstyled and nothing failed. Caught by looking at the
  * page, not by the tests, which only exercised red and green.
- * badge-palette.test.ts now checks every one of these against the
- * config.
+ * badge-palette.test.ts checks every one of these against the config,
+ * and lib/palette-tokens.test.ts scans the whole app for the same
+ * mistake, after it recurred on the schedule export.
+ *
+ * The utility prefix is deliberately not written out above: that scan
+ * reads source text, and a file cannot ask it to distinguish a wrong
+ * class from prose quoting one.
  */
 export const BADGE_CLASS: Record<string, string> = {
   green: "border-status-green/40 bg-status-green/10 text-status-green",

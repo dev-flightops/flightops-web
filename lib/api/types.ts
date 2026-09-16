@@ -1102,6 +1102,9 @@ export interface CompanyProfileResponse {
   main_email: string | null;
   ops_email: string | null;
   part_135_certificate: string | null;
+  /** IATA (2) or ICAO (3) airline designator. null means unset, and
+   *  the schedule export refuses to run rather than guessing one. */
+  carrier_code: string | null;
   fiscal_year_end: string | null; // ISO date (yyyy-mm-dd)
   /** Per-tenant display name for the loyalty program. Operators brand
    *  it themselves — "Miles", "Frequent Flyer", a name in their own
@@ -1130,6 +1133,7 @@ export interface CompanyProfileUpdateRequest {
   main_email?: string | null;
   ops_email?: string | null;
   part_135_certificate?: string | null;
+  carrier_code?: string | null;
   fiscal_year_end?: string | null;
   rewards_program_name?: string;
   /** #RRGGBB or #RRGGBBAA. Empty string clears the override. */

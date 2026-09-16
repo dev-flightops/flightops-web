@@ -290,8 +290,9 @@ export const DEPARTMENTS: Department[] = [
       },
       {
         id: "reports-sim-export",
-        label: "SIM Export",
-        status: "m4",
+        label: "Schedule Export",
+        href: "/reports/sim",
+        status: "live",
         department: "admin",
       },
       {
@@ -1319,6 +1320,12 @@ export const MODULE_ROLES: Record<string, readonly Role[]> = {
   // margin by airframe are commercial figures, so the same two roles
   // accounting and profitability admit.
   "reports-bi": ["exec_admin", "director_of_operations"],
+
+  // Matches reports-service's sim route, which gates on the same two
+  // roles as the regulatory filings: a schedule export goes out under
+  // the operator's carrier code, which makes it a published statement
+  // about what the certificate holder will fly.
+  "reports-sim-export": ["exec_admin", "director_of_operations"],
 
   // Matches reports-service's profitability route. Margin by route is
   // a commercial figure, so the same two roles the accounting summary
