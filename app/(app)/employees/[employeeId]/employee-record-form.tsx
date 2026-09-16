@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import type { UserResponse } from "@/lib/api/types";
 
@@ -138,6 +138,38 @@ export function EmployeeRecordForm({
     onChange: (e) => setValues((v) => ({ ...v, [name]: e.target.value })),
   });
 
+  // WHY THE FORM IS REMOUNTED AFTER EVERY SAVE
+  //
+  // React resets the form's DOM once the action completes. Controlled
+  // text inputs survive that — React restores their value — but a
+  // controlled `<select>` does not: the reset leaves the DOM on the
+  // first option while React's own value is unchanged, so React sees
+  // nothing to patch and the box stays blank.
+  //
+  // That was data loss, not cosmetics. Department and Employment type
+  // are the only two selects here. Setting Department on a record that
+  // had none saved correctly and then showed an empty box; because the
+  // action sends every field it owns and treats blank as "clear", the
+  // next Save wiped both from a record that had just been filled in.
+  //
+  // Keyed on the completed-save count and not just on the stored
+  // record: saving a record whose values did not change leaves the
+  // record identical, so a key derived from content alone would not
+  // change and the blanked selects would survive into the next submit.
+  // That is the case that still lost data after the first attempt at
+  // this fix.
+  const [saveCount, setSaveCount] = useState(0);
+  const wasPending = useRef(pending);
+  useEffect(() => {
+    if (wasPending.current && !pending) setSaveCount((n) => n + 1);
+    wasPending.current = pending;
+  }, [pending]);
+
+  // Remounting re-initialises every DOM node from `values`, which
+  // still holds the operator's edits — so this is also correct after a
+  // REJECTED save, where the point is not to make them retype.
+  const formKey = `${syncedFrom}::${saveCount}`;
+
   const displayName = employee.preferred_name?.trim() || employee.full_name;
   const subtitle =
     [employee.emp_number, employee.department, employee.title]
@@ -196,7 +228,7 @@ export function EmployeeRecordForm({
         ))}
       </nav>
 
-      <form action={action} className="space-y-4">
+      <form key={formKey} action={action} className="space-y-4">
         <input type="hidden" name="employee_id" value={employee.id} />
 
         {state.status === "error" ? (

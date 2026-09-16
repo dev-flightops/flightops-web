@@ -348,3 +348,103 @@ describe("layout follows the legacy page", () => {
     expect(notes.parentElement?.className).toMatch(/col-span-3/);
   });
 });
+
+describe("the form is remounted when a save completes", () => {
+  /**
+   * WHAT THIS GUARDS, AND WHY IT IS NOT THE OBVIOUS TEST
+   *
+   * The bug: React resets the form's DOM once a real action completes.
+   * Controlled text inputs survive it — React restores their value —
+   * but the two `<select>`s here went blank while the record still
+   * held values. Because the action sends every field it owns and
+   * treats blank as "clear", the next Save wiped Department and
+   * Employment type from a record that had just been filled in.
+   *
+   * That reset cannot be reproduced here: the harness passes a plain
+   * function as `action`, which React 18 does not treat as a form
+   * action at all (it warns about the prop), so no reset happens and
+   * a test that drifts a select's value then re-renders passes with or
+   * without the fix. It was written that way first and did not
+   * discriminate — the incomplete version of this fix passed it.
+   *
+   * So what is asserted is the mechanism the browser fix relies on:
+   * the form is a NEW DOM node after a save completes, which is what
+   * re-initialises every field — selects included — from state.
+   * Browser verification of the effect itself is in the PR.
+   */
+  const formNode = () =>
+    document.querySelector('form[class*="space-y"]') as HTMLFormElement;
+
+  function finishSave(
+    rerender: (ui: React.ReactElement) => void,
+    over: Partial<UserResponse>,
+    state: SaveEmployeeState = { status: "idle" },
+  ) {
+    const props = (pending: boolean) => (
+      <EmployeeRecordForm
+        employee={employee(over)}
+        state={state}
+        action={noop}
+        pending={pending}
+      />
+    );
+    rerender(props(true));
+    rerender(props(false));
+  }
+
+  it("remounts the form", () => {
+    const over = { department: "Operations" };
+    const { rerender } = renderForm(over);
+    const first = formNode();
+    finishSave(rerender, over);
+    expect(formNode()).not.toBe(first);
+  });
+
+  it("remounts again on a second save of an unchanged record", () => {
+    // The case the first attempt at this fix missed. Saving a record
+    // whose values did not change leaves the stored record identical,
+    // so a key derived from the record alone does not change, the form
+    // is not remounted, and a blanked select survives into the next
+    // submit.
+    const over = { department: "Maintenance" };
+    const { rerender } = renderForm(over);
+    let node = formNode();
+    for (const pass of [1, 2, 3]) {
+      finishSave(rerender, over);
+      const next = formNode();
+      expect(next, `pass ${pass}`).not.toBe(node);
+      node = next;
+    }
+  });
+
+  it("does not remount while the save is still in flight", () => {
+    // Remounting mid-submit would throw away the pending form.
+    const over = { department: "Operations" };
+    const { rerender } = renderForm(over);
+    const first = formNode();
+    rerender(
+      <EmployeeRecordForm
+        employee={employee(over)}
+        state={{ status: "idle" }}
+        action={noop}
+        pending={true}
+      />,
+    );
+    expect(formNode()).toBe(first);
+  });
+
+  it("keeps an in-progress edit across the remount", () => {
+    // The remount re-initialises from state, which still holds what
+    // the operator chose. A rejected save is something to correct, not
+    // something to retype.
+    const over = { department: "Operations" };
+    const { rerender } = renderForm(over);
+    fireEvent.change(screen.getByLabelText(/Department/), {
+      target: { value: "Training" },
+    });
+    finishSave(rerender, over, { status: "error", error: "nope" });
+    expect(
+      (screen.getByLabelText(/Department/) as HTMLSelectElement).value,
+    ).toBe("Training");
+  });
+});
