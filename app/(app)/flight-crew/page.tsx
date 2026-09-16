@@ -44,7 +44,9 @@ const DUTY_OFFLINE_DEFAULT: CurrentDutyResponse = {
  *     a preflight against a flight someone else was flying.
  *     flight_crew_assignments (flightops-services#171) is the table that
  *     was missing; this is the other half.
- *   - Duty In/Out: stub button for this PR. Backend (timeclock table +
+ *   - Duty In/Out: live. DutyClockButton calls clockInAction /
+ *     clockOutAction, which write duty periods. Described here as a
+ *     stub awaiting a backend (timeclock table +
  *     endpoints, Spec 4 §"Duty time tracking") lands in the next PR.
  *   - Training currency: placeholder card. Spec 5's
  *     `calculate_currency_status()` + `pilot_currency_records` are the

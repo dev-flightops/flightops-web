@@ -200,10 +200,10 @@ export default async function DirectorOpsDashboardPage() {
               8-Week Completion Trend
             </h2>
             <span className="text-[0.65rem] text-muted-foreground/70">
-              flight-following · M2
+              not computed
             </span>
           </div>
-          <CompletionTrendStub />
+          <CompletionTrendNotMeasured />
         </section>
       </div>
 
@@ -344,44 +344,31 @@ function FlightStatusBadge({ flight }: { flight: FlightListItem }) {
   );
 }
 
-function CompletionTrendStub() {
-  // Show 8 week-start dates ending with the most recent Monday — labels
-  // "W{MM}/{DD}" match legacy peregrineflight's trend axis. Bars stay
-  // at a thin placeholder height until DispatchOutcomes aggregation
-  // lands (M2 follow-up). Styling mirrors the sibling chart on
-  // /dashboards/ops-score (PR #85): percent label above each bar,
-  // status-blue bar fill at 60% alpha, gap-2 between columns — so
-  // both dashboards read the same vibe.
-  const labels: string[] = [];
-  const now = new Date();
-  // Find this week's Monday (UTC). getUTCDay: Sun=0, Mon=1 ... Sat=6.
-  const monday = new Date(
-    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()),
-  );
-  const day = monday.getUTCDay();
-  const daysSinceMon = day === 0 ? 6 : day - 1;
-  monday.setUTCDate(monday.getUTCDate() - daysSinceMon);
-  for (let i = 7; i >= 0; i--) {
-    const d = new Date(monday);
-    d.setUTCDate(d.getUTCDate() - i * 7);
-    const mm = String(d.getUTCMonth() + 1).padStart(2, "0");
-    const dd = String(d.getUTCDate()).padStart(2, "0");
-    labels.push(`W${mm}/${dd}`);
-  }
+function CompletionTrendNotMeasured() {
+  // This drew eight bars, each labelled "0%" at a 2% height, under the
+  // heading "8-Week Completion Trend" with a data-source caption. An
+  // operator reading it saw a completion rate of zero for two months.
+  //
+  // It is the `or 0` pattern in chart form, and the same mistake the
+  // reports were built to avoid: a rate of zero is a different claim
+  // from a rate nobody computed. Eight weeks of 0% says the operation
+  // completed no flights.
+  //
+  // So it says what is true. The figure is computable — PS Form 5500
+  // already derives trips flown against trips scheduled per route, and
+  // BI buckets flights across a trailing window — but nothing computes
+  // it weekly yet, and a chart is not the place to imply otherwise.
   return (
-    <div className="flex h-32 items-end justify-between gap-2">
-      {labels.map((label) => (
-        <div key={label} className="flex flex-1 flex-col items-center gap-1">
-          <span className="text-[0.6rem] text-muted-foreground/60">0%</span>
-          <div
-            className="w-full rounded-t bg-status-blue/60"
-            style={{ height: "2%" }}
-          />
-          <span className="font-mono text-[0.6rem] text-muted-foreground/60">
-            {label}
-          </span>
-        </div>
-      ))}
+    <div className="flex h-32 flex-col items-center justify-center gap-1.5 text-center">
+      <p className="text-xs font-semibold text-muted-foreground">
+        Not computed yet
+      </p>
+      <p className="max-w-xs text-[0.68rem] leading-relaxed text-muted-foreground/80">
+        Weekly completion is not aggregated anywhere yet. It is
+        derivable — flights flown against flights scheduled, the same
+        arithmetic PS Form 5500 does per route — and this panel will
+        draw it once something computes it.
+      </p>
     </div>
   );
 }
