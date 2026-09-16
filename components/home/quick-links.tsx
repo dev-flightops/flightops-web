@@ -38,10 +38,13 @@ export const HOME_QUICK_LINKS: QuickLink[] = [
     roles: ["exec_admin", "dispatcher", "ground_ops", "chief_pilot"],
   },
   {
+    // Shipped as /reports/bi. This entry carried both an "m4" status
+    // and an href at /reports/executive/bi that never existed — so
+    // even once the status was corrected the link would have 404'd.
     label: "Business Intelligence",
-    href: "/reports/executive/bi",
-    status: "m4",
-    roles: ["exec_admin"],
+    href: "/reports/bi",
+    status: "live",
+    roles: ["exec_admin", "director_of_operations"],
   },
   {
     label: "Invoices",

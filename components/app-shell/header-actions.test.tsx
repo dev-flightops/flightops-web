@@ -44,12 +44,25 @@ describe("HeaderActions", () => {
     // Settings shipped in M2, Time Clock ships but has an
     // "unavailable" fallback state when initialDuty is absent —
     // both are asserted separately below. AI Assistant left this list
-    // when FleetBrain landed.
-    for (const label of ["Notifications", "Users", "Owner Admin", "Help"]) {
+    // when FleetBrain landed, and Users left it when it turned out
+    // /settings/users had been live the whole time.
+    for (const label of ["Notifications", "Owner Admin", "Help"]) {
       const el = screen.getByLabelText(label);
       expect(el).toBeDisabled();
-      expect(el.getAttribute("title")).toMatch(/Coming in M[234]/);
     }
+  });
+
+  it("points Users at the page that was already live", () => {
+    // It sat here as a disabled "Coming in M4" placeholder while
+    // /settings/users shipped, was linked from the Settings nav, and
+    // had its own tests. Third instance of this staleness in one
+    // session — see nav-freshness.test.ts, which now sweeps for it.
+    render(
+      <HeaderActions email="admin@flightops.local" signOutAction={vi.fn()} />,
+    );
+    const el = screen.getByLabelText("Users");
+    expect(el).toHaveAttribute("href", "/settings/users");
+    expect(el).not.toBeDisabled();
   });
 
   it("points the AI Assistant button at FleetBrain", () => {

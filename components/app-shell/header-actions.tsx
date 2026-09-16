@@ -135,18 +135,22 @@ export function HeaderActions({
         </button>
       )}
 
-      <IconButton
-        title="User Management · Coming in M4"
-        disabled
-        srLabel="Users"
-        className="hidden text-xs sm:inline-flex"
-        inlineText
+{/* Users. Was a disabled "Coming in M4" placeholder while
+          /settings/users was already live — the same staleness that hid
+          the whole AI department behind a "coming soon" chip. A button
+          that stays disabled after its page ships understates the
+          product to the person using it. */}
+      <Link
+        href="/settings/users"
+        title="User Management"
+        aria-label="Users"
+        className="hidden items-center gap-1 rounded-md p-2 text-xs font-medium text-muted-foreground hover:bg-primary/8 hover:text-foreground sm:inline-flex"
       >
         <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
           <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z" />
         </svg>
         <span className="hidden lg:inline">Users</span>
-      </IconButton>
+      </Link>
 
       <IconButton
         title="Owner Admin · Coming in M4"

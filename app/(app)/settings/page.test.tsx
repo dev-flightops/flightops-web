@@ -110,7 +110,7 @@ describe("SettingsLandingPage (M2-G-46)", () => {
     ).toHaveAttribute("href", "/settings/flight-tracking");
   });
 
-  it("links Users + Permissions + SSO live; Pilot Pay stays disabled", async () => {
+  it("links Users, Permissions, SSO, Pilot Pay and Currency Items", async () => {
     getCompanyProfile.mockResolvedValueOnce({
       id: "cp-1",
       legal_name: null,
@@ -145,9 +145,16 @@ describe("SettingsLandingPage (M2-G-46)", () => {
     expect(
       screen.getByRole("link", { name: /^sso providers/i }),
     ).toHaveAttribute("href", "/settings/sso");
-    // Pilot Pay still disabled
-    expect(screen.getByText("Pilot Pay").closest("[aria-disabled]"))
-      .toHaveAttribute("aria-disabled", "true");
+    // Pilot Pay and Currency Items were dimmed "Coming in M3" rows on
+    // this hub while both pages were live and linked from the Settings
+    // nav. This assertion is what pinned them that way — the settings
+    // hub advertising two of its own pages as unbuilt.
+    expect(
+      screen.getByRole("link", { name: /^pilot pay/i }),
+    ).toHaveAttribute("href", "/settings/pilot-pay");
+    expect(
+      screen.getByRole("link", { name: /^currency items/i }),
+    ).toHaveAttribute("href", "/settings/currency");
   });
 
   it("soft-falls back when /users is forbidden (non-exec_admin)", async () => {

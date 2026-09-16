@@ -18,23 +18,49 @@ import { cn } from "@/lib/utils";
  * route also lands in M3, so it stays disabled too until the
  * aircraft-create form ships.
  */
-interface ActionButton {
+export interface ActionButton {
   label: string;
   href?: string;
   primary?: boolean;
   status: "live" | "m3";
 }
 
-const ACTIONS: ActionButton[] = [
+// Five of these shipped and stayed dimmed here. The department nav
+// links them; this header, which is what somebody standing on
+// /maintenance actually reaches for, still said "Coming in M3".
+//
+// "Due List" is /maintenance/expiration — that page IS the due list,
+// under the name the nav gives it. Relabelled rather than left
+// pointing at nothing, because two names for one page is how a hub
+// ends up with a dead entry beside a live one.
+//
+// Inspections, Vendors and Roster have no page and stay dimmed.
+// Exported for components/home/module-status.test.ts, which sweeps
+// every catalogue in the app for a status that disagrees with what
+// is on disk. This one sat outside that sweep, which is how five
+// shipped pages stayed dimmed here.
+export const MAINTENANCE_ACTIONS: ActionButton[] = [
   { label: "Squawks", href: "/maintenance/squawks", status: "live" },
   { label: "MEL", href: "/maintenance/mel", status: "live" },
-  { label: "Due List", status: "m3" },
-  { label: "Work Orders", status: "m3" },
+  // Legacy's "Due List" is the maintenance-due list, which is our
+  // Maintenance Clock — "track aircraft maintenance time with
+  // milestones". Pointed at /maintenance/expiration first, which is
+  // the *parts* shelf-life report and a different question
+  // altogether; the route existed so the guard was satisfied, and
+  // only opening the page showed it. The department nav calls this
+  // same page "MX Clock" — one page, two labels, because this header
+  // mirrors legacy's wording.
+  { label: "Due List", href: "/maintenance/mx-clock", status: "live" },
+  { label: "Work Orders", href: "/maintenance/work-orders", status: "live" },
+  { label: "Inventory", href: "/maintenance/inventory", status: "live" },
+  { label: "RTS Queue", href: "/maintenance/rts", status: "live" },
   { label: "Inspections", status: "m3" },
-  { label: "Inventory", status: "m3" },
   { label: "Vendors", status: "m3" },
-  { label: "RTS Queue", status: "m3" },
   { label: "Roster", status: "m3" },
+  // No index page — /maintenance/aircraft is only [id]/. Legacy's
+  // "+ Aircraft" is an add form we never built, and linking it here
+  // would 404. Caught by module-status.test.ts the moment this
+  // catalogue came inside its sweep.
   { label: "+ Aircraft", status: "m3", primary: true },
 ];
 
@@ -50,7 +76,7 @@ export function MaintenanceHeader() {
         </p>
       </div>
       <div className="flex flex-wrap gap-2">
-        {ACTIONS.map((action) => (
+        {MAINTENANCE_ACTIONS.map((action) => (
           <ActionLink key={action.label} action={action} />
         ))}
       </div>

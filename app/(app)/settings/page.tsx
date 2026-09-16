@@ -239,8 +239,19 @@ export default async function SettingsLandingPage() {
           title="Pilot Pay & Currency"
           blurb="Pay rates, per-diem, currency items + due-date catalog."
           links={[
-            { label: "Pilot Pay", sublabel: "Coming in M3", disabled: true },
-            { label: "Currency Items", sublabel: "Coming in M3", disabled: true },
+            // Both shipped in M2's tail and sat here as disabled
+            // "Coming in M3" rows afterwards — the settings hub
+            // advertising two of its own live pages as unbuilt.
+            {
+              label: "Pilot Pay",
+              sublabel: "Pay rates and per-diem",
+              href: "/settings/pilot-pay",
+            },
+            {
+              label: "Currency Items",
+              sublabel: "Currency catalogue and due-date rules",
+              href: "/settings/currency",
+            },
           ]}
         />
       </section>
