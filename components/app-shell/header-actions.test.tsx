@@ -41,15 +41,33 @@ describe("HeaderActions", () => {
         signOutAction={vi.fn()}
       />,
     );
-    // Settings shipped in M2, Time Clock ships but has an
-    // "unavailable" fallback state when initialDuty is absent —
-    // both are asserted separately below. AI Assistant left this list
-    // when FleetBrain landed, and Users left it when it turned out
-    // /settings/users had been live the whole time.
-    for (const label of ["Notifications", "Owner Admin", "Help"]) {
+    // This list keeps shrinking, which is the point of it. Settings
+    // shipped in M2; AI Assistant left when FleetBrain landed; Users
+    // left when /settings/users turned out to have been live the whole
+    // time; Notifications left when the bell shipped; Help left when
+    // the panel did.
+    //
+    // Owner Admin is the last one, and it is not waiting on work —
+    // admin-service deliberately serves nothing but /health until the
+    // platform-administrator question is settled, because a role on an
+    // ordinary tenant user would make compromising one account in one
+    // operator a compromise of every operator.
+    for (const label of ["Owner Admin"]) {
       const el = screen.getByLabelText(label);
       expect(el).toBeDisabled();
     }
+  });
+
+  it("opens help on the article for the current route", () => {
+    // It sat here as a disabled "Coming in M4" placeholder. The
+    // question somebody presses ? to ask is about the page in front of
+    // them, so the button's own tooltip names the article it will
+    // open.
+    render(
+      <HeaderActions email="admin@flightops.local" signOutAction={vi.fn()} />,
+    );
+    const el = screen.getByLabelText("Help");
+    expect(el).not.toBeDisabled();
   });
 
   it("points Users at the page that was already live", () => {
