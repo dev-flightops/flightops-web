@@ -33,6 +33,30 @@ import { ROLES } from "./roles";
 const GATE = /roleGate\(([^)]*)\)/gs;
 const ROLE_LITERAL = /"([a-z_]+)"/g;
 
+/**
+ * A gate written as a bare `new Set([...])` rather than `roleGate(...)`.
+ *
+ * This pattern exists because the scan above missed a real bug for the
+ * second time. Three safety DETAIL pages gated on
+ * `new Set(["safety_officer", "chief_pilot", "exec_admin"])` — untyped,
+ * and invisible to a scan for `roleGate`. The three matching LIST pages
+ * used `roleGate` and were updated with the Director of Operations; the
+ * detail pages were not. A DO could open the hazard list as a triager,
+ * click into a report, and find the triage controls gone from a record
+ * the API would have accepted their triage for.
+ *
+ * So the scan now recognises both spellings. `roleGate` is still the
+ * form to write — it is typed, so a misspelled role fails to compile —
+ * but writing the other one no longer buys an exemption from the
+ * policy.
+ */
+const BARE_SET_GATE = /new Set\(\s*\[([^\]]*)\]\s*\)/gs;
+
+/** Role names that exist, for telling a role gate apart from any other
+ *  `new Set([...])` of strings — a set of statuses, category labels or
+ *  test ids is not a gate and must not be policed as one. */
+const KNOWN_ROLES: ReadonlySet<string> = new Set(ROLES as readonly string[]);
+
 interface Gate {
   file: string;
   roles: string[];
@@ -71,6 +95,19 @@ function collectGates(): Gate[] {
     for (const match of src.matchAll(GATE)) {
       const roles = [...match[1].matchAll(ROLE_LITERAL)].map((m) => m[1]);
       if (roles.length > 0) gates.push({ file, roles });
+    }
+    // Bare `new Set([...])`. Counted as a gate only when every string
+    // in it is a real role — otherwise a set of flight statuses or
+    // category labels would be dragged into the role policy and fail
+    // for admitting no chief pilot.
+    for (const match of src.matchAll(BARE_SET_GATE)) {
+      const literals = [...match[1].matchAll(ROLE_LITERAL)].map((m) => m[1]);
+      if (
+        literals.length > 0 &&
+        literals.every((r) => KNOWN_ROLES.has(r))
+      ) {
+        gates.push({ file, roles: literals });
+      }
     }
   }
   return gates;
