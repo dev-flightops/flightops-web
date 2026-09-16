@@ -186,7 +186,7 @@ describe("GroundOpsHubPage", () => {
     expect(screen.getByText(/^pending fuel$/i)).toBeInTheDocument();
   });
 
-  it("Station Management has live All Stations + Station Issues + dimmed Add Station", async () => {
+  it("Station Management links All Stations, Station Issues and Add Station", async () => {
     listStations.mockResolvedValueOnce({ items: [], total: 7 });
     listOpenStationIssues.mockResolvedValueOnce({ items: [], total: 0 });
     listGseUnits.mockResolvedValueOnce({ items: [], total: 0 });
@@ -196,11 +196,12 @@ describe("GroundOpsHubPage", () => {
     const allStations = screen.getByRole("link", { name: /all stations/i });
     expect(allStations).toHaveAttribute("href", "/stations");
 
-    // Add Station is dimmed (rendered as a <div>, not a <Link>) until M2-G-38b.
+    // Add Station was dimmed here, marked "m2", long after
+    // /stations/new shipped — so the hub greyed out its own live page.
+    // This assertion was what pinned it that way.
     expect(
-      screen.queryByRole("link", { name: /add station/i }),
-    ).not.toBeInTheDocument();
-    expect(screen.getByText(/add station/i)).toBeInTheDocument();
+      screen.getByRole("link", { name: /add station/i }),
+    ).toHaveAttribute("href", "/stations/new");
   });
 
   it("Equipment Dashboard is live and Add Equipment is dimmed", async () => {

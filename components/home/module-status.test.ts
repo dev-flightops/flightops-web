@@ -4,8 +4,10 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
 import { DEPARTMENTS } from "@/components/app-shell/modules";
+import { MAINTENANCE_ACTIONS } from "@/components/maintenance/maintenance-header";
 
 import { HOME_MODULES } from "./module-catalog";
+import { HOME_QUICK_LINKS } from "./quick-links";
 
 /**
  * A module's `status` and the route it points at have to agree.
@@ -27,21 +29,49 @@ import { HOME_MODULES } from "./module-catalog";
  * different files from the page they describe. Both were found by
  * looking at the running app, which is not a repeatable check.
  *
+ * WHAT THIS SWEEPS, AND WHY IT GREW
+ *
+ * It started on HOME_MODULES and DEPARTMENTS, and both checks below
+ * would have caught the home page's Business Intelligence shortcut —
+ * marked `m4` after BI shipped, AND pointing at /reports/executive/bi,
+ * a route that never existed. It was outside the sweep, so it was
+ * outside the guard.
+ *
+ * Same for the maintenance header, where five shipped pages stayed
+ * dimmed: Work Orders, Inventory, RTS Queue, the due list and
+ * + Aircraft. The department nav linked them; the header a mechanic
+ * actually reaches for did not.
+ *
+ * So the rule is now: a catalogue of (href, status) pairs anywhere in
+ * this app belongs in `allEntries()`. Adding one here is cheaper than
+ * finding out from a screenshot.
+ *
  * WHAT THIS CANNOT SEE
  *
  * Routes with dynamic segments, and any page that renders but then
  * notFound()s on its own. The existence of page.tsx is the floor, not
  * proof the page is useful.
+ *
+ * Also invisible: disabled buttons with no href at all — the top bar's
+ * Notifications, Owner Admin and Help, and the dispatch packet's AI
+ * buttons. Nothing links them to a route, so nothing here can tell
+ * whether their feature exists. Those need reading, which is how the
+ * top bar's Users button was found still disabled over a live page.
  */
 
 const APP_DIR = "app/(app)";
 
-/** Does a concrete (non-dynamic) route have a page? */
+/** Does a concrete (non-dynamic) route have a page?
+ *
+ *  A query string or hash is not part of the path — the quick links use
+ *  `/flight-crew/history?tab=duty`, and treating that whole string as a
+ *  directory reported a live page as a 404. */
 function hasPage(href: string): boolean | null {
-  if (!href.startsWith("/") || href.startsWith("/api") || href.includes("[")) {
+  const path = href.split(/[?#]/)[0];
+  if (!path.startsWith("/") || path.startsWith("/api") || path.includes("[")) {
     return null; // not statically checkable
   }
-  const segments = href.replace(/^\/+|\/+$/g, "");
+  const segments = path.replace(/^\/+|\/+$/g, "");
   if (!segments) return null;
   return existsSync(join(APP_DIR, segments, "page.tsx"));
 }
@@ -60,6 +90,22 @@ function allEntries(): Entry[] {
     href: m.href,
     status: m.status,
   }));
+  for (const link of HOME_QUICK_LINKS) {
+    out.push({
+      where: "HOME_QUICK_LINKS",
+      id: link.label,
+      href: link.href,
+      status: link.status,
+    });
+  }
+  for (const action of MAINTENANCE_ACTIONS) {
+    out.push({
+      where: "MAINTENANCE_ACTIONS",
+      id: action.label,
+      href: action.href,
+      status: action.status,
+    });
+  }
   for (const dept of DEPARTMENTS) {
     for (const child of dept.children) {
       out.push({

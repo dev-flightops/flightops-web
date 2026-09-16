@@ -32,13 +32,41 @@ describe("MaintenanceHeader", () => {
     }
   });
 
-  it("disables every action until the M3 sub-modules ship", () => {
-    // None of the sub-modules are built yet — verify they render as
-    // role=button + aria-disabled with the milestone tooltip, not as
-    // real <a href> links that would 404.
+  it("links the actions whose pages exist", () => {
+    // This assertion used to be "disables every action until the M3
+    // sub-modules ship", and that premise is what went wrong: five of
+    // them shipped and the header kept rendering them dimmed. The
+    // department nav linked them; this header — which is what somebody
+    // standing on /maintenance actually reaches for — did not.
     render(<MaintenanceHeader />);
 
-    for (const label of ["Due List", "Work Orders", "+ Aircraft"]) {
+    const expected: Record<string, string> = {
+      Squawks: "/maintenance/squawks",
+      MEL: "/maintenance/mel",
+      // Not /maintenance/expiration — that is the parts shelf-life
+      // report. The due list is the Maintenance Clock.
+      "Due List": "/maintenance/mx-clock",
+      "Work Orders": "/maintenance/work-orders",
+      Inventory: "/maintenance/inventory",
+      "RTS Queue": "/maintenance/rts",
+    };
+    for (const [label, href] of Object.entries(expected)) {
+      const action = screen.getByText(label);
+      expect(action.tagName, `${label} should be a link`).toBe("A");
+      expect(action).toHaveAttribute("href", href);
+    }
+  });
+
+  it("still dims the three with no page behind them", () => {
+    // Inspections, Vendors and Roster genuinely have no route. Dimmed
+    // is right for those — the failure mode this file now guards
+    // against is the opposite one.
+    render(<MaintenanceHeader />);
+
+    // + Aircraft is here rather than above because /maintenance/aircraft
+    // has only [id]/ — no index page. Legacy's version is an add form we
+    // never built, and linking it would 404.
+    for (const label of ["Inspections", "Vendors", "Roster", "+ Aircraft"]) {
       const action = screen.getByText(label);
       expect(action.tagName).toBe("SPAN");
       expect(action).toHaveAttribute("aria-disabled", "true");

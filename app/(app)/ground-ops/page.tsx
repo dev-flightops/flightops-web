@@ -164,7 +164,9 @@ export default async function GroundOpsHubPage() {
               label: "Add Station",
               sublabel: "Register a new ICAO station",
               href: "/stations/new",
-              status: "m2",
+              // Shipped in M2 and left marked "m2", so the hub dimmed
+              // its own live page.
+              status: "live",
             },
           ]}
         />

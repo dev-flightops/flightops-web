@@ -175,21 +175,27 @@ export default async function FlightCrewPage() {
               My Duty History
             </Link>
           </li>
+          {/* Both of these shipped and stayed dimmed here. Documents
+              has had its own department since M3; filing a safety
+              report is the floating button on every page in the app,
+              so this entry was telling a pilot they could not do
+              something they could do from where they were standing. */}
           <li>
-            <span
-              title="Coming in M3"
-              className="cursor-not-allowed opacity-50"
-            >
+            <Link href="/documents" className="hover:text-status-blue">
               My Documents
-            </span>
+            </Link>
           </li>
+          {/* Labelled for what the page is. It was "File Safety Report"
+              and dimmed; /safety/report files a hazard specifically,
+              while the floating button on every page — including this
+              one — covers all five types: safety concern, hazard, near
+              miss, ASAP and incident. A link promising the broader
+              surface and delivering the narrower one is the same
+              overclaim as a dimmed link that works. */}
           <li>
-            <span
-              title="Coming in M3"
-              className="cursor-not-allowed opacity-50"
-            >
-              File Safety Report
-            </span>
+            <Link href="/safety/report" className="hover:text-status-blue">
+              File a Hazard
+            </Link>
           </li>
         </ul>
       </section>
