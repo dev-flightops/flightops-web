@@ -8,6 +8,7 @@ import {
   createHousingBooking,
   createHousingUnit,
   cancelHousingBooking,
+  updateHousingRoom,
   updateHousingUnit,
   type BookingPurpose,
   type RoomStatus,
@@ -185,4 +186,122 @@ function mapError(err: unknown, fallback: string): string {
     }
   }
   return fallback;
+}
+
+/**
+ * Edit a house. Legacy has an Edit House panel on the unit detail page
+ * (`templates/housing/unit_detail.html`); we had no way to change a
+ * house at all once created, though the service has always accepted
+ * PATCH /housing/units/{id}.
+ *
+ * Directly callable rather than a `useActionState` form action: the
+ * `useActionState` hook is React 19 and this app is on 18.3.1, so a
+ * component using it is stubbed out under jsdom and its logic goes
+ * untested. This shape is callable from a test.
+ *
+ * Only the fields the caller passes are sent, matching the service,
+ * which applies `model_fields_set` — so a blank optional field means
+ * "clear it" only when the caller explicitly sends null.
+ */
+export async function updateHousingUnitAction(
+  unitId: string,
+  patch: {
+    name?: string;
+    station?: string;
+    address?: string | null;
+    contact_person?: string | null;
+    contact_phone?: string | null;
+    color_accent?: string | null;
+    notes?: string | null;
+  },
+): Promise<ActionResult> {
+  if (patch.name !== undefined && !patch.name.trim()) {
+    return { ok: false, error: "House name is required." };
+  }
+  if (patch.station !== undefined && !patch.station.trim()) {
+    return { ok: false, error: "Station is required." };
+  }
+  try {
+    await updateHousingUnit(unitId, {
+      ...patch,
+      ...(patch.name !== undefined ? { name: patch.name.trim() } : {}),
+      ...(patch.station !== undefined
+        ? { station: patch.station.trim() }
+        : {}),
+    });
+    revalidatePath(`/housing/${unitId}`);
+    revalidatePath("/housing");
+    revalidatePath("/housing/calendar");
+    revalidatePath("/housing/reports");
+    return { ok: true };
+  } catch (err) {
+    return { ok: false, error: mapError(err, "Couldn't save the house.") };
+  }
+}
+
+/**
+ * Edit a room. Legacy has room edit plus a separate status setter;
+ * ours is one PATCH.
+ *
+ * Capacity and cost are validated here rather than relying on the
+ * CHECK constraint, so the message names the field instead of
+ * surfacing a database error. Cost is sent as a string because the
+ * column is NUMERIC and a float round-trip can lose a cent.
+ */
+export async function updateHousingRoomAction(
+  unitId: string,
+  roomId: string,
+  patch: {
+    room_number?: string;
+    room_type?: RoomType;
+    capacity?: number;
+    status?: RoomStatus;
+    amenities?: string | null;
+    cost_per_night?: string | null;
+    has_wifi?: boolean;
+    has_kitchen?: boolean;
+    has_private_bath?: boolean;
+    has_laundry?: boolean;
+    notes?: string | null;
+  },
+): Promise<ActionResult> {
+  if (patch.room_number !== undefined && !patch.room_number.trim()) {
+    return { ok: false, error: "Room number is required." };
+  }
+  if (
+    patch.capacity !== undefined &&
+    (!Number.isFinite(patch.capacity) || patch.capacity < 1)
+  ) {
+    return { ok: false, error: "Capacity must be at least 1." };
+  }
+  if (
+    patch.cost_per_night !== undefined &&
+    patch.cost_per_night !== null &&
+    patch.cost_per_night !== ""
+  ) {
+    const n = Number(patch.cost_per_night);
+    if (!Number.isFinite(n) || n < 0) {
+      return { ok: false, error: "Cost per night must be a positive number." };
+    }
+  }
+  try {
+    await updateHousingRoom(roomId, {
+      ...patch,
+      ...(patch.room_number !== undefined
+        ? { room_number: patch.room_number.trim() }
+        : {}),
+      // An empty cost field means "no nightly rate", which the report
+      // shows as not-computable rather than $0.
+      ...(patch.cost_per_night === ""
+        ? { cost_per_night: null }
+        : {}),
+    });
+    revalidatePath(`/housing/${unitId}`);
+    revalidatePath("/housing");
+    revalidatePath("/housing/calendar");
+    revalidatePath("/housing/reports");
+    return { ok: true };
+  } catch (err) {
+    return { ok: false, error: mapError(err, "Couldn't save the room.") };
+  }
 }
