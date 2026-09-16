@@ -24,12 +24,17 @@ import { WeightBalanceTab } from "./wb-tab";
  *
  * Layout mirrors legacy `templates/elog/log_page.html`:
  *   1. Flight Info  ← wired up here
- *   2. Legs         ← stub
- *   3. W&B          ← stub
- *   4. Flight Summary ← stub
- *   5. Trends       ← stub
- *   6. VOR          ← stub
- *   7. Misc         ← stub
+ *   2. Legs
+ *   3. W&B
+ *   4. Flight Summary
+ *   5. Trends
+ *   6. VOR
+ *   7. Misc
+ *
+ * All seven are built — each has its own component, server actions and
+ * tests in this directory. They were marked "← stub" here long after
+ * they shipped, which is a docstring telling the next reader six tabs
+ * still need writing.
  *
  * Tab state lives in the URL `?tab=info|legs|wb|times|trends|vor|misc`
  * so server-rendered tabs work with Next 16's RSC by default — no

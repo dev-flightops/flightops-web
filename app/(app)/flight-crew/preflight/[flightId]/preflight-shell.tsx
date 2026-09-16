@@ -46,6 +46,9 @@ interface Props {
  *   - The active step's content area
  *
  * Steps 4–8 land in follow-up PRs; for now they render as a
+ * StepStubPanel is the switch's `default:` branch and is unreachable
+ * for steps 1-8, every one of which is a real component. It stays as
+ * the answer to a step number nobody defined rather than as a
  * "Coming in M2 (follow-up)" stub so the progress indicator
  * remains accurate (next_step still advances correctly).
  */

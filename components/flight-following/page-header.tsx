@@ -14,9 +14,10 @@ import { AutoClock } from "./auto-clock";
  * components (FleetMap polls every 30 s; the upcoming list view
  * will poll every 60 s to match the legacy board).
  *
- * "+ Open Flight" and "History" point at stub routes that ship in
- * M2-G-14. Until then they render a "Coming soon" placeholder rather
- * than a 404 — keeps the chrome usable end-to-end during M2.
+ * Schedule, History and "+ Open Flight" are real links —
+ * /schedule, /flight-following/history and /flight-following/new all
+ * have pages. This said they pointed at stub routes "until M2-G-14"
+ * for a long time after those shipped.
  */
 export function PageHeader() {
   return (

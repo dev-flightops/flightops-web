@@ -22,7 +22,9 @@ interface MilestonePlaceholderProps {
  * link from legacy peregrineflight). A bare Next.js 404 here would be
  * confusing — the placeholder explains *what* the page is for and
  * *when* it ships, matching the same pattern used by
- * `components/dashboards/placeholder-dashboard.tsx`.
+ * the dashboards' own not-measured panels. There used to be a
+ * `components/dashboards/placeholder-dashboard.tsx` alongside this
+ * one; nothing imported it, so it was deleted.
  *
  * Once the underlying feature lands, swap the page from this stub to
  * the real implementation — the route stays the same so any bookmarks
