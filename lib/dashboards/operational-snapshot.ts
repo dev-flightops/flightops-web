@@ -42,6 +42,17 @@ export interface OperationalAlert {
   detail: string;
   /** Permalink to the source record. */
   href: string;
+  /** When this occurrence began — `grounded_at` for a grounding, the
+   *  scheduled departure for an overdue flight, `deferred_at` for a
+   *  MEL.
+   *
+   *  Exists for the notification bell. Alert ids are stable per record,
+   *  which is what makes them dismissable and also a trap: ground an
+   *  aircraft, dismiss the alert, return it to service, ground it
+   *  again, and the id is identical. A dismissal records which
+   *  occurrence it covered, so the second grounding is not swallowed
+   *  by the first dismissal. */
+  occurredAt: string;
   /** Optional ICAO scope — used by Station dashboard to filter to base. */
   scopedToIcao?: string;
 }
@@ -87,6 +98,12 @@ export async function loadOperationalSnapshot(): Promise<OperationalSnapshot> {
             row.blocking_count === 1 ? "" : "s"
           } open. Cannot dispatch.`,
           href: `/maintenance/aircraft/${row.aircraft.id}`,
+          // grounded_at is null on an aircraft that is airworthy but
+          // has blocking issues open, so this falls back to the
+          // airworthiness check that produced the row. Never "now":
+          // an onset that moves on every request would make a
+          // dismissal last exactly until the next page load.
+          occurredAt: row.grounded_at ?? row.checked_at,
         });
       }
     }
@@ -104,6 +121,7 @@ export async function loadOperationalSnapshot(): Promise<OperationalSnapshot> {
           detail: `${row.aircraft.tail_number} · ${row.origin} → ${row.destination} · no contact 20+ min`,
           href: "/flight-following",
           scopedToIcao: row.origin,
+          occurredAt: row.scheduled_departure_at,
         });
       }
     }
@@ -123,6 +141,11 @@ export async function loadOperationalSnapshot(): Promise<OperationalSnapshot> {
           title: `MEL expiring — ${mel.aircraft.tail_number} · ATA ${mel.ata_chapter}`,
           detail: `${hours}h remaining · ${mel.description}`,
           href: `/maintenance/aircraft/${mel.aircraft.id}`,
+          // deferred_at, not due_at: the deferral is the event, and it
+          // does not move. due_at is a deadline, and a MEL whose due
+          // date is extended would otherwise re-alert as if it were a
+          // new deferral.
+          occurredAt: mel.deferred_at,
         });
       }
     }

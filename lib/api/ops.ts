@@ -858,3 +858,45 @@ export async function getDispatchSuggestions(): Promise<DispatchSuggestions> {
     cache: "no-store",
   });
 }
+
+// ── Alert acknowledgments (notification bell) ──────────────────────
+
+export interface AlertAcknowledgment {
+  alert_key: string;
+  /** Which occurrence was dismissed. An alert is hidden only while
+   *  this is at or after the alert's own onset, so a fresh occurrence
+   *  of the same condition surfaces again. */
+  occurrence_at: string;
+  acknowledged_at: string;
+}
+
+export async function listAlertAcknowledgments(): Promise<
+  AlertAcknowledgment[]
+> {
+  return apiFetch<AlertAcknowledgment[]>("/ops/alerts/acknowledgments", {
+    cache: "no-store",
+  });
+}
+
+export async function acknowledgeAlert(
+  alertKey: string,
+  occurrenceAt: string,
+): Promise<AlertAcknowledgment> {
+  return apiFetch<AlertAcknowledgment>("/ops/alerts/acknowledge", {
+    method: "POST",
+    body: JSON.stringify({
+      alert_key: alertKey,
+      occurrence_at: occurrenceAt,
+    }),
+    cache: "no-store",
+  });
+}
+
+export async function undoAlertAcknowledgment(
+  alertKey: string,
+): Promise<void> {
+  await apiFetch<void>(
+    `/ops/alerts/acknowledge/${encodeURIComponent(alertKey)}`,
+    { method: "DELETE", parseAs: "text", cache: "no-store" },
+  );
+}

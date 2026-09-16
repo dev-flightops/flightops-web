@@ -6,7 +6,11 @@ import type { DutyActionResult } from "@/app/(app)/duty-actions";
 import type { CurrentDutyResponse } from "@/lib/api/types";
 import { cn } from "@/lib/utils";
 
+import type { UnacknowledgedAlerts } from "@/lib/dashboards/unacknowledged-alerts";
+
 import { AiToolsMenu } from "./ai-tools-menu";
+import type { DismissResult } from "./notifications-actions";
+import { NotificationsBell } from "./notifications-bell";
 import type { AiTool } from "./modules";
 import { SpotlightSearch } from "./spotlight-search";
 import { TopBarClockButton } from "./top-bar-clock-button";
@@ -52,6 +56,16 @@ export interface HeaderActionsProps {
     rest_acknowledged?: boolean;
   }) => Promise<DutyActionResult>;
   clockOutAction?: (args?: { reason?: string }) => Promise<DutyActionResult>;
+  /** Outstanding alerts for the bell, already filtered to this user's
+   *  dismissals. Null when they could not be read — the bell then
+   *  renders disabled rather than showing zero. */
+  bellAlerts?: UnacknowledgedAlerts | null;
+  /** Passed down because it goes through apiFetch, which is
+   *  server-only. Same reason the duty actions are props. */
+  dismissAlertAction?: (
+    alertKey: string,
+    occurrenceAt: string,
+  ) => Promise<DismissResult>;
   /** AI tools this user's roles can use, already filtered by the
    *  caller. Legacy exposes these from a top-bar dropdown on every
    *  page rather than from a department nav — which is what makes
@@ -72,6 +86,8 @@ export function HeaderActions({
   clockInAction,
   clockOutAction,
   aiTools,
+  bellAlerts,
+  dismissAlertAction,
 }: HeaderActionsProps) {
   const displayName = fullName?.trim() || email;
   const initial = (displayName[0] ?? "U").toUpperCase();
@@ -80,16 +96,35 @@ export function HeaderActions({
     <div className="flex flex-shrink-0 items-center gap-2">
       <SpotlightSearch />
 
-      <IconButton
-        title="Notifications · Coming in M3"
-        disabled
-        srLabel="Notifications"
-        className="hidden sm:inline-flex"
-      >
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z" />
-        </svg>
-      </IconButton>
+{/* The bell. It showed "Coming in M3" until the alerts it needed
+          turned out to already exist — loadOperationalSnapshot() has
+          been deriving grounded aircraft, overdue flights and expiring
+          MELs for the home page and four dashboards all along. All the
+          bell needed was per-user dismissal.
+
+          Null alerts means we could not read them, and the bell
+          disables rather than showing a zero: a count of nothing is a
+          claim the operation is clear, and "we could not look" is a
+          different statement. */}
+      {bellAlerts && dismissAlertAction ? (
+        <NotificationsBell
+          alerts={bellAlerts.alerts}
+          dismissedCount={bellAlerts.dismissedCount}
+          filterUnavailable={bellAlerts.filterUnavailable}
+          dismissAction={dismissAlertAction}
+        />
+      ) : (
+        <IconButton
+          title="Notifications · unavailable"
+          disabled
+          srLabel="Notifications"
+          className="hidden sm:inline-flex"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z" />
+          </svg>
+        </IconButton>
+      )}
 
       {/* AI tools. Legacy opens a dropdown here listing all of them
           (base.html:287-294); ours linked straight to FleetBrain,

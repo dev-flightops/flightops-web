@@ -1,17 +1,14 @@
 import { auth, signOut } from "@/auth";
 import { AppShell } from "@/components/app-shell/app-shell";
 import { HeaderActions } from "@/components/app-shell/header-actions";
-import { visibleAiTools } from "@/components/app-shell/modules";
 import { BrandThemeStyle } from "@/components/app-shell/brand-theme-style";
 import { SafetyReportButton } from "@/components/safety/safety-report-button";
 import { getCompanyProfile, listMyTenants } from "@/lib/api/auth";
 import { SessionExpiredError } from "@/lib/api/client";
-import { getCurrentDuty } from "@/lib/api/ops";
-import type { CurrentDutyResponse } from "@/lib/api/types";
 import { TenantProvider } from "@/lib/tenant";
 
-import { signOutAction, switchTenantAction } from "./actions";
-import { clockInAction, clockOutAction } from "./duty-actions";
+import { switchTenantAction } from "./actions";
+import { buildHeaderActionsData } from "./header-actions-props";
 
 /**
  * Layout for the (app) route group — wraps every in-app page (home,
@@ -75,28 +72,20 @@ export default async function AppGroupLayout({
     // Non-fatal: fall through to defaults.
   }
 
-  // Pilot duty state seeds the top-bar Clock In/Out pill. Soft-fails so
-  // brief ops-service blips don't break every in-app page — the pill
-  // just falls back to its disabled placeholder in that case.
-  let initialDuty: CurrentDutyResponse | null = null;
-  try {
-    initialDuty = await getCurrentDuty();
-  } catch {
-    initialDuty = null;
-  }
+  // Every prop the top bar needs, assembled in one place — see
+  // header-actions-props.ts for why. /home builds its own top bar and
+  // calls the same helper.
+  const headerData = session?.user?.email
+    ? await buildHeaderActionsData(
+        session.user.email,
+        session.user.name ?? null,
+        sessionRoles,
+      )
+    : null;
 
-  const actionsSlot = session?.user?.email ? (
+  const actionsSlot = headerData ? (
     <HeaderActions
-      email={session.user.email}
-      fullName={session.user.name ?? null}
-      aiTools={visibleAiTools(sessionRoles)}
-      showSettings={
-        sessionRoles.length === 0 || sessionRoles.includes("exec_admin")
-      }
-      signOutAction={signOutAction}
-      initialDuty={initialDuty}
-      clockInAction={clockInAction}
-      clockOutAction={clockOutAction}
+      {...headerData}
     />
   ) : null;
 
