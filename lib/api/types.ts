@@ -1198,6 +1198,42 @@ export interface FlightTrackingConfigResponse {
   spider_tracks_aff_endpoint: string | null;
 }
 
+/** One operator's FRAT risk bands (M4-B-2).
+ *
+ *  No FAR prescribes these numbers — Part 135 does not require a FRAT
+ *  at all — so what ships is a starting point rather than a
+ *  regulatory baseline, and the page says so. */
+export interface FratThresholdConfigResponse {
+  id: string;
+  /** Lowest total that scores MEDIUM. Below it is LOW. */
+  medium_entry_score: number;
+  high_entry_score: number;
+  /** Lowest total that scores EXTREME — the band that cannot depart
+   *  without chief pilot or DO authorisation. */
+  extreme_entry_score: number;
+  /** null until somebody saves. A tenant sitting on the shipped
+   *  numbers and one that reviewed them and chose the same numbers
+   *  hold identical values and are not the same thing. */
+  adopted_at: string | null;
+  adopted_by_name: string | null;
+  rationale: string | null;
+  /** 18 factors at 5 each. Served rather than hardcoded so the form's
+   *  bounds cannot drift from the questionnaire. */
+  max_total_score: number;
+  default_medium_entry_score: number;
+  default_high_entry_score: number;
+  default_extreme_entry_score: number;
+}
+
+/** All three together: they are one policy and only mean anything
+ *  ordered, so there is no coherent partial update. */
+export interface FratThresholdConfigUpdateRequest {
+  medium_entry_score: number;
+  high_entry_score: number;
+  extreme_entry_score: number;
+  rationale?: string | null;
+}
+
 export interface FlightTrackingConfigUpdateRequest {
   overdue_threshold_minutes?: number;
   position_polling_seconds?: number;

@@ -15,6 +15,8 @@ import type {
   CompanyProfileResponse,
   CompanyProfileUpdateRequest,
   FlightTrackingConfigResponse,
+  FratThresholdConfigResponse,
+  FratThresholdConfigUpdateRequest,
   FlightTrackingConfigUpdateRequest,
   ProviderCatalogResponse,
   ProvidersResponse,
@@ -238,6 +240,20 @@ export async function updateFlightTrackingConfig(
       body: JSON.stringify(body),
     },
   );
+}
+
+export async function getFratThresholds(): Promise<FratThresholdConfigResponse> {
+  return apiFetch<FratThresholdConfigResponse>("/auth/settings/frat");
+}
+
+/** PUT, not PATCH — the three thresholds are one policy. */
+export async function setFratThresholds(
+  body: FratThresholdConfigUpdateRequest,
+): Promise<FratThresholdConfigResponse> {
+  return apiFetch<FratThresholdConfigResponse>("/auth/settings/frat", {
+    method: "PUT",
+    body: JSON.stringify(body),
+  });
 }
 
 // ---- Pilot Pay (M2 tail — /settings/pilot-pay) ----
