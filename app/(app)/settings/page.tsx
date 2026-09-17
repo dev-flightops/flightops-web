@@ -205,6 +205,11 @@ export default async function SettingsLandingPage() {
               sublabel: "Role catalog",
               href: "/settings/permissions",
             },
+            {
+              label: "Document requirements",
+              sublabel: "What staff must file",
+              href: "/settings/document-requirements",
+            },
           ]}
         />
         <SectionCard
