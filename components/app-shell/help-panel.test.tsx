@@ -20,6 +20,16 @@ import { HelpPanel } from "./help-panel";
  * dropping twelve links.
  */
 
+/**
+ * A path no module owns, for the no-article state.
+ *
+ * These tests used "/housing", which acquired an article when the
+ * catalogue was built out — a fixture whose premise any new content
+ * can invalidate is one that has to be edited every time the
+ * catalogue grows.
+ */
+const UNDOCUMENTED = "/no-such-module";
+
 function open(route: string) {
   pathname = route;
   render(<HelpPanel />);
@@ -68,15 +78,15 @@ describe("a page with no article", () => {
   it("says so and names the route", async () => {
     // Rather than a blank panel or a generic paragraph that reads like
     // help and contains nothing.
-    const user = open("/housing");
+    const user = open(UNDOCUMENTED);
     await user.click(screen.getByRole("button", { name: "Help" }));
     const panel = screen.getByTestId("help-no-article");
     expect(panel).toHaveTextContent("No help written for");
-    expect(panel).toHaveTextContent("/housing");
+    expect(panel).toHaveTextContent(UNDOCUMENTED);
   });
 
   it("says how many pages do have articles", async () => {
-    const user = open("/housing");
+    const user = open(UNDOCUMENTED);
     await user.click(screen.getByRole("button", { name: "Help" }));
     expect(
       screen.getByTestId("help-no-article"),
@@ -84,7 +94,7 @@ describe("a page with no article", () => {
   });
 
   it("offers every article as a starting point", async () => {
-    const user = open("/housing");
+    const user = open(UNDOCUMENTED);
     await user.click(screen.getByRole("button", { name: "Help" }));
     expect(
       screen.getByRole("link", { name: "Business Intelligence" }),
@@ -224,5 +234,59 @@ describe("clicking outside", () => {
     expect(
       screen.getByTestId("help-result-/reports/sim"),
     ).toBeInTheDocument();
+  });
+});
+
+describe("the richer article fields", () => {
+  /**
+   * Legacy's articles carry three things our first shape dropped:
+   * who the page is written for, one concrete example, and deep-dive
+   * sections. They are the parts an operator actually reads, so the
+   * panel has to render them rather than the catalogue merely holding
+   * them.
+   */
+  it("renders a deep-dive section's heading and steps", async () => {
+    const user = open("/maintenance/mel");
+    await user.click(screen.getByRole("button", { name: "Help" }));
+    expect(
+      screen.getByText("The categories, and why the clock differs"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/ten consecutive calendar days/i),
+    ).toBeInTheDocument();
+  });
+
+  it("renders a section that is prose rather than steps", async () => {
+    const user = open("/documents");
+    await user.click(screen.getByRole("button", { name: "Help" }));
+    expect(
+      screen.getByText(/a category is a shelf/i),
+    ).toBeInTheDocument();
+  });
+
+  it("renders the worked example", async () => {
+    const user = open("/eod");
+    await user.click(screen.getByRole("button", { name: "Help" }));
+    expect(screen.getByText("For example")).toBeInTheDocument();
+    expect(screen.getByText(/still airborne from the afternoon/)).toBeInTheDocument();
+  });
+
+  it("names the audience in readable role names", async () => {
+    // "director_of_operations" has to read as "Director of
+    // Operations", not "Director Of Operations".
+    const user = open("/housing/reports");
+    await user.click(screen.getByRole("button", { name: "Help" }));
+    expect(screen.getByText("Written for")).toBeInTheDocument();
+    expect(
+      screen.getByText(/Director of Operations/),
+    ).toBeInTheDocument();
+  });
+
+  it("omits the audience line on an article that does not name one", async () => {
+    // Personal pages are for whoever is reading them, so they carry no
+    // audience — and an empty "Written for" heading would be noise.
+    const user = open("/safety/mine");
+    await user.click(screen.getByRole("button", { name: "Help" }));
+    expect(screen.queryByText("Written for")).not.toBeInTheDocument();
   });
 });

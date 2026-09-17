@@ -6,6 +6,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
 import { DEPARTMENTS } from "@/components/app-shell/modules";
+import { formatRole } from "@/lib/roles";
 import {
   HELP_ENTRIES,
   helpFor,
@@ -120,6 +121,35 @@ function Article({
         </ol>
       </Section>
 
+      {/* Deep-dive sections. Legacy calls these `extras` and uses them
+          for the things a paragraph cannot carry: what each MEL
+          category obliges, how a scoring band is built, a tab-by-tab
+          walkthrough. */}
+      {entry.sections?.map((section) => (
+        <Section key={section.heading} heading={section.heading}>
+          {section.body && (
+            <p className="mb-1.5 text-xs leading-relaxed text-muted-foreground">
+              {section.body}
+            </p>
+          )}
+          {section.steps && section.steps.length > 0 && (
+            <ul className="space-y-1.5">
+              {section.steps.map((step) => (
+                <li
+                  key={step}
+                  className="flex gap-2 text-xs leading-relaxed text-muted-foreground"
+                >
+                  <span aria-hidden className="shrink-0 text-muted-foreground/60">
+                    •
+                  </span>
+                  <span>{step}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Section>
+      ))}
+
       {entry.connectsTo && (
         <Section heading="Where the numbers come from">
           <p className="text-xs leading-relaxed text-muted-foreground">
@@ -140,6 +170,28 @@ function Article({
               </li>
             ))}
           </ul>
+        </Section>
+      )}
+
+      {/* One concrete situation. These are the most useful part of
+          legacy's articles — an operator recognises their own Tuesday
+          in one faster than they parse a feature description. */}
+      {entry.example && (
+        <Section heading="For example">
+          <p className="border-l-2 border-status-blue/40 pl-2 text-xs leading-relaxed text-muted-foreground">
+            {entry.example}
+          </p>
+        </Section>
+      )}
+
+      {entry.whoCanUse && entry.whoCanUse.length > 0 && (
+        <Section heading="Written for">
+          {/* Descriptive, not a gate — the page's own server-side check
+              decides access. This says whether the article is aimed at
+              the reader. */}
+          <p className="text-xs leading-relaxed text-muted-foreground">
+            {entry.whoCanUse.map(formatRole).join(", ")}
+          </p>
         </Section>
       )}
 

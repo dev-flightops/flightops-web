@@ -70,3 +70,29 @@ export function hasAnyRole(
 ): boolean {
   return callerRoles.some((r) => isRole(r) && gate.has(r));
 }
+
+/**
+ * Human-readable form of a role id, for DISPLAYING a role the code
+ * already hardcodes — a help article's audience line, say.
+ *
+ * Not a label source for anything the user picks: those lists come
+ * from /auth/settings/roles, per the note at the top of this file, so
+ * that a role added backend-side appears without a web change. This is
+ * the other direction — a constant in the source that has to be shown
+ * to somebody.
+ *
+ * Small words stay lowercase so "director_of_operations" reads as
+ * "Director of Operations" rather than "Director Of Operations".
+ */
+const MINOR_WORDS = new Set(["of", "and", "the"]);
+
+export function formatRole(role: string): string {
+  return role
+    .split("_")
+    .map((word, i) =>
+      i > 0 && MINOR_WORDS.has(word)
+        ? word
+        : word.charAt(0).toUpperCase() + word.slice(1),
+    )
+    .join(" ");
+}

@@ -140,7 +140,11 @@ describe("helpFor", () => {
   });
 
   it("returns null for a page with no article", () => {
-    expect(helpFor("/housing")).toBeNull();
+    // Deliberately a path no module owns. This used to assert on
+    // /housing, which acquired an article — an assertion whose premise
+    // any new content can invalidate is a test that has to be edited
+    // every time the catalogue grows.
+    expect(helpFor("/no-such-module")).toBeNull();
   });
 });
 
@@ -164,18 +168,47 @@ describe("searchHelp", () => {
     );
   });
 
-  it("ranks a title match above a body match", () => {
-    // Somebody typing "reports" wants the Reports article, not the
-    // first article that happens to mention reports.
+  it("ranks every title match above every body-only match", () => {
+    // Somebody typing "reports" wants an article with reports in its
+    // title, not the first one that happens to mention them.
     //
-    // This assertion used "dispatch" first, which does not
-    // discriminate: with flat scoring the alphabetical tie-break puts
-    // Dispatch first anyway, so a mutation that removed the title
-    // weighting passed. "reports" and "settings" both separate the
-    // two — under flat scoring these would lead with Business
-    // Intelligence and Flight Following respectively.
-    expect(searchHelp("reports")[0].title).toBe("Reports");
-    expect(searchHelp("settings")[0].title).toBe("Settings");
+    // Asserted as the RULE rather than as a named winner. It used to
+    // name "Reports", which stopped being the top hit the moment
+    // "Housing reports" was added — two title matches, so the old
+    // assertion was really pinning the tie-break. An earlier version
+    // used "dispatch", which did not discriminate at all: the
+    // alphabetical tie-break put Dispatch first even with flat
+    // scoring, so removing the title weighting passed.
+    for (const query of ["reports", "settings", "housing", "safety"]) {
+      const results = searchHelp(query);
+      expect(results.length, query).toBeGreaterThan(1);
+      const inTitle = results.map((e) =>
+        e.title.toLowerCase().includes(query),
+      );
+      const lastTitleMatch = inTitle.lastIndexOf(true);
+      const firstBodyOnly = inTitle.indexOf(false);
+      if (lastTitleMatch !== -1 && firstBodyOnly !== -1) {
+        expect(lastTitleMatch, query).toBeLessThan(firstBodyOnly);
+      }
+    }
+  });
+
+  it("searches the real-world example", () => {
+    // The examples carry station names and specifics an operator is
+    // likely to type. Leaving them out of the index made the most
+    // recognisable language in an article unfindable.
+    expect(searchHelp("Dutch Harbor").length).toBeGreaterThan(0);
+  });
+
+  it("searches the deep-dive sections", () => {
+    // "half-open" appears only in a section on the housing reports
+    // article, and "Category C" only in the MEL one.
+    expect(searchHelp("half-open").map((e) => e.route)).toContain(
+      "/housing/reports",
+    );
+    expect(searchHelp("Category C").map((e) => e.route)).toContain(
+      "/maintenance/mel",
+    );
   });
 
   it("is case insensitive", () => {
