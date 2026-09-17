@@ -20,10 +20,12 @@ export function EmployeeRecord({
   employee,
   airman,
   disqualifications,
+  tabs,
 }: {
   employee: UserResponse;
   airman: AirmanRecordResponse | null;
   disqualifications: DisqualificationListResponse | null;
+  tabs?: React.ReactNode;
 }) {
   const [state, action, pending] = useActionState<SaveEmployeeState, FormData>(
     saveEmployeeAction,
@@ -35,6 +37,7 @@ export function EmployeeRecord({
       employee={employee}
       airman={airman}
       disqualifications={disqualifications}
+      tabs={tabs}
       state={state}
       action={action}
       pending={pending}

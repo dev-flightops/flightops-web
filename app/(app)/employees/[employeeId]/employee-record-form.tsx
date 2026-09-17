@@ -145,6 +145,7 @@ export function EmployeeRecordForm({
   state,
   action,
   pending,
+  tabs = null,
 }: {
   employee: UserResponse;
   airman?: AirmanRecordResponse | null;
@@ -153,6 +154,9 @@ export function EmployeeRecordForm({
   /** The bound action from useActionState, or a stub under test. */
   action: (formData: FormData) => void;
   pending: boolean;
+  /** The record's tab bar, rendered by the page so both panels share
+   *  one copy rather than each owning one that can drift. */
+  tabs?: React.ReactNode;
 }) {
   const [values, setValues] = useState(() => toValues(employee));
 
@@ -239,36 +243,7 @@ export function EmployeeRecordForm({
         </span>
       </header>
 
-      <nav
-        aria-label="Employee record sections"
-        className="mb-5 flex flex-wrap items-center gap-1 border-b border-border"
-      >
-        <span
-          aria-current="page"
-          className="-mb-px border-b-2 border-status-blue px-3 py-2 text-xs font-semibold text-status-blue"
-        >
-          Profile
-        </span>
-        {/* "Soon" was a commitment nothing backs: none of these three is
-            in M4's story list, and each is a subsystem rather than a
-            screen — legacy carries 3 tables behind Documents, 5 behind
-            Onboarding and 9 behind Drug & Alcohol, including the
-            14 CFR 120.217 annual MIS summary. Saying "not built" is
-            true; saying "soon" invites a reader to wait for a date
-            nobody has set. */}
-        {["Documents", "Onboarding", "Drug & Alcohol"].map((label) => (
-          <span
-            key={label}
-            title={`${label} is not built yet and is not currently scheduled`}
-            className="-mb-px cursor-not-allowed px-3 py-2 text-xs font-semibold text-muted-foreground/50"
-          >
-            {label}
-            <span className="ml-1.5 rounded border border-border px-1 py-0.5 text-[0.55rem] uppercase tracking-wider">
-              Not built
-            </span>
-          </span>
-        ))}
-      </nav>
+      {tabs}
 
       <form key={formKey} action={action} className="space-y-4">
         <input type="hidden" name="employee_id" value={employee.id} />
