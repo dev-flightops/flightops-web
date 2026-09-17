@@ -158,41 +158,22 @@ describe("what is deliberately not editable", () => {
 });
 
 describe("the tab bar", () => {
-  it("marks Profile as the page you are on", () => {
-    renderForm();
-    expect(screen.getByText("Profile")).toHaveAttribute("aria-current", "page");
-  });
-
-  it("shows the other three as not built rather than hiding them", () => {
-    // Dropping them would hide that the record has more to it; linking
-    // them would give three 404s, since they belong to modules we have
-    // not built.
-    renderForm();
-    for (const label of ["Documents", "Onboarding", "Drug & Alcohol"]) {
-      expect(screen.getByText(label)).toBeInTheDocument();
-    }
-    // "Not built", not "Soon". None of the three is on M4's story list,
-    // and each is a subsystem rather than a screen, so "Soon" was a
-    // commitment nothing backs.
-    expect(screen.getAllByText("Not built")).toHaveLength(3);
-    expect(screen.queryByText("Soon")).not.toBeInTheDocument();
-  });
-
-  it("says in the tooltip that they are not scheduled either", () => {
-    renderForm();
-    expect(screen.getByText("Documents").closest("span")).toHaveAttribute(
-      "title",
-      expect.stringContaining("not currently scheduled"),
+  it("renders whatever the page hands it", () => {
+    // The bar itself moved to record-tabs.tsx once Documents became a
+    // real tab, so both panels share one copy rather than each owning
+    // one that can drift. Its own behaviour is covered in
+    // record-tabs.test.tsx; what this file still owns is that the
+    // form renders the slot at all.
+    render(
+      <EmployeeRecordForm
+        employee={employee()}
+        state={{ status: "idle" }}
+        action={noop}
+        pending={false}
+        tabs={<nav aria-label="stand-in tabs" />}
+      />,
     );
-  });
-
-  it("does not make the unbuilt tabs clickable", () => {
-    renderForm();
-    for (const label of ["Documents", "Onboarding", "Drug & Alcohol"]) {
-      expect(
-        screen.queryByRole("link", { name: label }),
-      ).not.toBeInTheDocument();
-    }
+    expect(screen.getByLabelText("stand-in tabs")).toBeInTheDocument();
   });
 });
 

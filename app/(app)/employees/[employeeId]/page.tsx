@@ -1,10 +1,18 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { auth } from "@/auth";
 import { getUser } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
+import {
+  getEmployeeChecklist,
+  type ChecklistResponse,
+} from "@/lib/api/employee-documents";
 import { getAirmanRecord, listDisqualifications } from "@/lib/api/ops";
 
+import { DocumentsPanel } from "./documents-panel";
 import { EmployeeRecord } from "./employee-record";
+import { RecordTabs, type RecordTab } from "./record-tabs";
 
 /**
  * /employees/{id} — one employee's record.
@@ -23,10 +31,14 @@ export const dynamic = "force-dynamic";
 
 export default async function EmployeeDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ employeeId: string }>;
+  searchParams: Promise<{ tab?: string }>;
 }) {
   const { employeeId } = await params;
+  const { tab: tabParam } = await searchParams;
+  const tab: RecordTab = tabParam === "documents" ? "documents" : "profile";
 
   let employee;
   try {
@@ -65,11 +77,67 @@ export default async function EmployeeDetailPage({
     listDisqualifications(employeeId).catch(() => null),
   ]);
 
+  // The checklist is fetched for BOTH tabs, not just the documents one,
+  // so the tab can carry an outstanding count. Somebody's expired
+  // medical should be visible from the profile rather than only once
+  // they think to look.
+  let checklist: ChecklistResponse | null = null;
+  let checklistError: string | null = null;
+  try {
+    checklist = await getEmployeeChecklist(employeeId);
+  } catch (err) {
+    const status = err instanceof ApiError ? err.status : 0;
+    checklistError =
+      status === 403
+        ? "You do not have access to this employee's documents."
+        : "Document checklist unavailable. Try refreshing in a moment.";
+  }
+
+  // Uploading is exec-admin on the service — reading your own file does
+  // not let you file your own medical. Asked here so the control is not
+  // offered to somebody the API would refuse.
+  const session = await auth();
+  const canUpload = (session?.roles ?? []).includes("exec_admin");
+
+  const tabs = (
+    <RecordTabs
+      employeeId={employeeId}
+      active={tab}
+      outstanding={checklist?.outstanding}
+    />
+  );
+
+  if (tab === "documents") {
+    return (
+      <div className="mx-auto max-w-4xl px-4 py-6 sm:px-6">
+        <Link
+          href="/employees"
+          className="mb-3 inline-block text-xs font-semibold text-status-blue hover:underline"
+        >
+          ← Employees
+        </Link>
+        <header className="mb-4">
+          <h1 className="truncate text-2xl font-bold sm:text-3xl">
+            {employee.preferred_name?.trim() || employee.full_name}
+          </h1>
+        </header>
+        {tabs}
+        <DocumentsPanel
+          employeeId={employeeId}
+          checklist={checklist}
+          canUpload={canUpload}
+          loadError={checklistError}
+        />
+      </div>
+    );
+  }
+
   return (
     <EmployeeRecord
       employee={employee}
       airman={airman}
       disqualifications={disqualifications}
+      tabs={tabs}
     />
   );
 }
