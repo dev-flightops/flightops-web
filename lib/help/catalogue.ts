@@ -1332,14 +1332,15 @@ export const HELP_ENTRIES: HelpEntry[] = [
       "Search the directory for the person.",
       "Edit the profile fields and save — the record is one form rather than several.",
       "Certifications appear on the record for anyone holding an airman certificate.",
+      "Use the Documents tab for the documents required of them, and to file one.",
     ],
     worthKnowing: [
       "Exec Admin only, and deliberately: the record carries a date of birth, a home address and an emergency contact. That is also why an employee cannot currently open their own record.",
-      "Documents, Onboarding and Drug & Alcohol are shown as tabs and marked not built. Each is a subsystem rather than a screen, and none is scheduled as of writing.",
+      "Onboarding and Drug & Alcohol are shown as tabs and marked not built. Each is a subsystem rather than a screen — legacy carries five tables behind one and nine behind the other, the second including the 14 CFR 120.217 annual summary — and neither is scheduled.",
     ],
     connectsTo:
-      "The certificate record is the same 135.63 record the compliance profile shows.",
-    related: ["/compliance/crew-currency", "/payroll", "/documents"],
+      "The certificate record is the same 135.63 record the compliance profile shows. Required documents are defined once in Settings and appear on everyone they apply to.",
+    related: ["/settings/document-requirements", "/compliance/crew-currency", "/payroll"],
   },
   {
     route: "/time-clock",
@@ -1681,6 +1682,44 @@ export const HELP_ENTRIES: HelpEntry[] = [
     ],
     connectsTo: "Reads today's flights at your station; records attach to the flight.",
     related: ["/ramp-ops", "/ground-ops", "/safety/report"],
+  },
+  {
+    route: "/settings/document-requirements",
+    title: "Document requirements",
+    whoCanUse: ["exec_admin"],
+    whatItDoes:
+      "The documents the operation requires of its staff, and of whom. Defined once here; each one then appears on the Documents tab of every employee it applies to. Distinct from the document library, which is the company's own documents that people read.",
+    howToUse: [
+      "Create a requirement and name it as the document is known to the people filing it.",
+      "Scope it to roles, or leave the roles empty to require it of everyone.",
+      "Say whether it carries an expiry, and how far ahead to start warning.",
+      "Retire one when it no longer applies — retiring keeps the documents already filed against it.",
+    ],
+    sections: [
+      {
+        heading: "Why the expiry setting matters more than it looks",
+        body: "Turning it on makes an expiry date mandatory on upload. A certificate whose expiry nobody recorded is worse than one nobody uploaded, because it reads as current forever — so the checklist gives that case its own state, \"no expiry recorded\", rather than calling it on file.",
+      },
+      {
+        heading: "What the states on an employee's checklist mean",
+        steps: [
+          "Missing — the requirement applies and nothing is on file.",
+          "On file — filed, and either it does not expire or it is comfortably ahead of doing so.",
+          "Expiring — filed, with the expiry inside the warning window set here.",
+          "Expired — filed, and the expiry has passed.",
+          "No expiry recorded — filed, this requirement wants an expiry, and none was captured. It cannot be checked.",
+        ],
+      },
+    ],
+    worthKnowing: [
+      "\"Required on hire\" is recorded and shown on the checklist, and does not block activating a new hire. Legacy's equivalent does. Letting a document requirement lock a real person out of the system is an enforcement decision rather than a side effect of ticking a box here.",
+      "Retiring a requirement deactivates it rather than deleting it. A certificate somebody filed is a record even after the operator stops asking for it.",
+    ],
+    connectsTo:
+      "Every employee's Documents tab is built from this list, filtered to the roles they hold. The warning window set here is what decides when an item starts reading as expiring.",
+    example:
+      "An operator requires a medical certificate of pilots with a 30-day warning, and a driving licence of everyone with no expiry. A pilot's record then shows two rows; a ramp agent's shows one.",
+    related: ["/employees", "/settings", "/documents"],
   },
 ];
 
