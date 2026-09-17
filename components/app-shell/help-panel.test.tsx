@@ -160,3 +160,69 @@ describe("closing", () => {
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 });
+
+describe("escaping the header's containing block", () => {
+  /**
+   * The bug: the app shell's header is `sticky ... backdrop-blur`, and
+   * `backdrop-filter` makes an element a containing block for its
+   * fixed-position descendants. Rendered in place, this drawer's
+   * `fixed h-full` resolved against the 84px header rather than the
+   * viewport, so it opened as an 83px strip with the article clipped
+   * away — on every page except /home, which renders its own
+   * HeaderActions outside that header and so looked correct.
+   *
+   * jsdom computes no layout, so the height cannot be asserted here.
+   * What can be asserted is the invariant the fix rests on: the dialog
+   * is portalled to document.body and is therefore NOT inside the
+   * component's own DOM position. Without the portal it is, and these
+   * fail.
+   */
+  it("portals the dialog to the body, not into the trigger's wrapper", async () => {
+    const user = open("/reports/bi");
+    const trigger = screen.getByRole("button", { name: "Help" });
+    const wrapper = trigger.parentElement!;
+    await user.click(trigger);
+
+    const dialog = screen.getByRole("dialog", { name: "Help" });
+    expect(wrapper.contains(dialog)).toBe(false);
+    expect(dialog.parentElement).toBe(document.body);
+  });
+
+  it("keeps the trigger where it is", () => {
+    // Only the dialog moves. Portalling the button too would take it
+    // out of the header.
+    open("/reports/bi");
+    const trigger = screen.getByRole("button", { name: "Help" });
+    expect(trigger.parentElement).not.toBe(document.body);
+  });
+});
+
+describe("clicking outside", () => {
+  it("closes on a click elsewhere on the page", async () => {
+    const user = open("/reports/bi");
+    await user.click(screen.getByRole("button", { name: "Help" }));
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+    await user.click(document.body);
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it("does NOT close on a click inside the panel", async () => {
+    // The portal means the dialog is outside the trigger's wrapper, so
+    // an outside-click check written against that wrapper alone treats
+    // every click in the panel — the search box included — as outside.
+    const user = open("/reports/bi");
+    await user.click(screen.getByRole("button", { name: "Help" }));
+    await user.click(screen.getByLabelText("Search help"));
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+  });
+
+  it("still lets the search box be typed into", async () => {
+    const user = open("/reports/bi");
+    await user.click(screen.getByRole("button", { name: "Help" }));
+    await user.type(screen.getByLabelText("Search help"), "carrier");
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+    expect(
+      screen.getByTestId("help-result-/reports/sim"),
+    ).toBeInTheDocument();
+  });
+});
