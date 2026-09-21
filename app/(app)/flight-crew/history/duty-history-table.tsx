@@ -1,3 +1,4 @@
+import { CorrectDuty } from "@/components/duty/correct-duty";
 import type { DutyPeriodSummary } from "@/lib/api/types";
 
 /**
@@ -9,6 +10,19 @@ import type { DutyPeriodSummary } from "@/lib/api/types";
  * legacy "Violation / Short Rest / Normal" classification needs the
  * tenant's configured limits + a rest-since calc per row; both ship
  * in a follow-up so this MVP stays a clean viewer.
+ *
+ * No longer only a viewer: it carries the Correct control, per 9/17.
+ *
+ *   Individual pilot role doesn't see the HR portal and isn't able to
+ *   change their duty time. Ideally, it would be under the flight crew
+ *   duty module, pilot history, duty time. Pilots should be able to
+ *   correct their own duty/flight times.
+ *
+ * Which is this table. The rows are the caller's own periods —
+ * listDutyHistory is self-scoped — and ops-service has always allowed
+ * a pilot to amend their own. The control existed from 8/28 but only
+ * on /time-clock, an HR-department page a pilot cannot navigate to, so
+ * the pilot it was built for could not reach it.
  */
 export function DutyHistoryTable({
   periods,
@@ -36,6 +50,7 @@ export function DutyHistoryTable({
             <th className="px-3 py-2">Duty Out</th>
             <th className="px-3 py-2">Elapsed</th>
             <th className="px-3 py-2">Status</th>
+            <th className="px-3 py-2 text-right">Correct</th>
           </tr>
         </thead>
         <tbody>
@@ -56,6 +71,9 @@ export function DutyHistoryTable({
               </td>
               <td className="px-3 py-2">
                 <StatusBadge isOpen={p.is_open} />
+              </td>
+              <td className="px-3 py-2 text-right align-top">
+                <CorrectDuty period={p} />
               </td>
             </tr>
           ))}
