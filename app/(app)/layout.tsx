@@ -2,6 +2,7 @@ import { auth, signOut } from "@/auth";
 import { AppShell } from "@/components/app-shell/app-shell";
 import { HeaderActions } from "@/components/app-shell/header-actions";
 import { BrandThemeStyle } from "@/components/app-shell/brand-theme-style";
+import { DatePickerAffordance } from "@/components/app-shell/date-picker-affordance";
 import { SafetyReportButton } from "@/components/safety/safety-report-button";
 import { getCompanyProfile, listMyTenants } from "@/lib/api/auth";
 import { SessionExpiredError } from "@/lib/api/client";
@@ -104,6 +105,7 @@ export default async function AppGroupLayout({
             page. Mounted at the layout so it survives client-side
             navigation between routes inside the (app) group. */}
         <SafetyReportButton />
+        <DatePickerAffordance />
       </AppShell>
     </TenantProvider>
   );
