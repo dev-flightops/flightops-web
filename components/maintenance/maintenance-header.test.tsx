@@ -49,6 +49,9 @@ describe("MaintenanceHeader", () => {
       "Work Orders": "/maintenance/work-orders",
       Inventory: "/maintenance/inventory",
       "RTS Queue": "/maintenance/rts",
+      // Adding a tail ships under Settings, not /maintenance — which is
+      // exactly why it was missed. See below.
+      "+ Aircraft": "/settings/fleet",
     };
     for (const [label, href] of Object.entries(expected)) {
       const action = screen.getByText(label);
@@ -61,12 +64,17 @@ describe("MaintenanceHeader", () => {
     // Inspections, Vendors and Roster genuinely have no route. Dimmed
     // is right for those — the failure mode this file now guards
     // against is the opposite one.
+    //
+    // "+ Aircraft" used to be in this list, asserted to be a dimmed
+    // SPAN, on the stated grounds that it was "an add form we never
+    // built". It was built: /settings/fleet has rendered
+    // AddAircraftDialog against createAircraftAction since M2. The
+    // belief was wrong, so the test passed while the button stayed
+    // dead — a mechanic on /maintenance had no way to reach it. Only
+    // the /maintenance prefix was ever checked.
     render(<MaintenanceHeader />);
 
-    // + Aircraft is here rather than above because /maintenance/aircraft
-    // has only [id]/ — no index page. Legacy's version is an add form we
-    // never built, and linking it would 404.
-    for (const label of ["Inspections", "Vendors", "Roster", "+ Aircraft"]) {
+    for (const label of ["Inspections", "Vendors", "Roster"]) {
       const action = screen.getByText(label);
       expect(action.tagName).toBe("SPAN");
       expect(action).toHaveAttribute("aria-disabled", "true");

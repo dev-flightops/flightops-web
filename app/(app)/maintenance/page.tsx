@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import { FleetCard } from "@/components/maintenance/fleet-card";
 import { MaintenanceHeader } from "@/components/maintenance/maintenance-header";
 import { ApiError } from "@/lib/api/client";
@@ -52,8 +54,11 @@ export default async function MaintenanceLandingPage() {
             No aircraft in this tenant&apos;s fleet yet.
           </p>
           <p className="mt-2 text-xs text-muted-foreground/70">
-            Add the first one through the &ldquo;+ Aircraft&rdquo; action
-            once the create form ships in M3.
+            Add the first one from{" "}
+            <Link href="/settings/fleet" className="underline">
+              Settings &rarr; Fleet
+            </Link>
+            , or with the &ldquo;+ Aircraft&rdquo; action above.
           </p>
         </div>
       ) : (
