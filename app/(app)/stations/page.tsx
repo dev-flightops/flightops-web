@@ -64,8 +64,7 @@ export default async function StationsPage() {
         <div className="rounded-lg border border-border bg-card px-4 py-16 text-center">
           <p className="text-sm text-muted-foreground">No stations yet.</p>
           <p className="mt-1 text-xs text-muted-foreground/70">
-            Adding stations from the UI lands in M2-G-38b. Use the API or
-            seed-loader to populate for now.
+            Use &ldquo;+ Add Station&rdquo; above to create the first one.
           </p>
         </div>
       ) : (
