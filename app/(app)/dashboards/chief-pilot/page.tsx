@@ -4,6 +4,7 @@ import { DashboardNav } from "@/components/dashboards/dashboard-nav";
 import { AlertList } from "@/components/dashboards/alert-list";
 import { StatTile } from "@/components/dashboards/stat-tile";
 import { loadOperationalSnapshot } from "@/lib/dashboards/operational-snapshot";
+import { snapshotAlertsToList } from "@/lib/dashboards/snapshot-to-alerts";
 
 export default async function ChiefPilotDashboardPage() {
   // Almost everything on this page is crew-service data (M3); we only
@@ -46,10 +47,19 @@ export default async function ChiefPilotDashboardPage() {
 
       {/* Row 2 — 2-col: Crew alerts + Duty periods */}
       <div className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2">
+        {/* The panel is titled "Crew & Ops Alerts" — legacy's wording,
+            and legacy means it: its chief pilot dashboard renders
+            alert_list(alerts) under that heading. Ours passed [] while
+            the same page already had the snapshot in hand for the
+            Airborne Now tile, so a chief pilot read "No active alerts"
+            with an aircraft grounded or a flight overdue, and the
+            executive and director-ops dashboards showed both from the
+            identical source. The Ops half is now wired the way they
+            are; the Crew half genuinely has nowhere to come from. */}
         <Panel title="Crew & Ops Alerts" milestone="M3">
           <AlertList
-            alerts={[]}
-            emptyHint="No active alerts. Medical certificate expirations, recurrent due dates, and crew legality violations populate here once the crew-service ships in M3."
+            alerts={snapshotAlertsToList(snapshot.alerts)}
+            emptyHint="No grounded aircraft, overdue flights or MELs expiring in the next two days. Medical certificate expirations, recurrent due dates and crew legality violations are not wired — no crew-service exists to supply them."
           />
         </Panel>
 
@@ -58,17 +68,34 @@ export default async function ChiefPilotDashboardPage() {
           milestone="M3"
           headerLink={{ label: "pilot roster →", href: "/compliance/roster" }}
         >
+          {/* Not "0 pilots on duty" — that asserted a count with
+              nothing behind it. /ops/duty/current returns the caller's
+              own duty status; there is no tenant-wide endpoint for who
+              is on duty, so this panel cannot know the number is zero. */}
           <p className="py-4 text-center text-xs text-muted-foreground/70">
-            0 pilots on duty. Active duty periods with FAR 117 rest progress
-            bars appear here once the crew-service ships in M3.
+            Tenant-wide duty periods with FAR 117 rest progress are not
+            built — /ops/duty/current reports only your own status.
           </p>
         </Panel>
       </div>
 
       {/* Row 3 — Crew Currency Matrix.
           Columns mirror legacy verbatim: NAME / ROLE / BASE / MEDICAL EXP /
-          STATUS / ISSUES. Rows populate from crew-service in M3. */}
-      <Panel title="Crew Currency Matrix" milestone="M3" className="mt-5">
+          STATUS / ISSUES. The rows are not wired, but the data is not
+          missing: /compliance/crew-currency has been live since M3 and
+          shows per-pilot medical and currency status. The panel used to
+          say the rows arrive "when crew-service ships", which sent a
+          chief pilot away from a page that already had the answer, so
+          it now links there. */}
+      <Panel
+        title="Crew Currency Matrix"
+        milestone="M3"
+        className="mt-5"
+        headerLink={{
+          label: "fleet compliance →",
+          href: "/compliance/crew-currency",
+        }}
+      >
         <div className="overflow-x-auto">
           <table className="w-full text-xs">
             <thead>
@@ -87,8 +114,8 @@ export default async function ChiefPilotDashboardPage() {
                   colSpan={6}
                   className="py-6 text-center text-muted-foreground/70"
                 >
-                  0 pilots tracked. Per-PIC currency rows populate here when
-                  crew-service ships.
+                  Not wired here yet — per-pilot medical and currency
+                  status is on Fleet Compliance.
                 </td>
               </tr>
             </tbody>
