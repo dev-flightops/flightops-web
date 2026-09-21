@@ -3,7 +3,7 @@ import { formatZulu, formatZuluDateTime } from "@/lib/format/flight-time";
 
 import { getCurrentDuty, listDutyHistory } from "@/lib/api/ops";
 
-import { CorrectDuty } from "./correct-duty";
+import { CorrectDuty } from "@/components/duty/correct-duty";
 import { ApiError } from "@/lib/api/client";
 import type {
   CurrentDutyResponse,

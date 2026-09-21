@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { DutyPeriodSummary } from "@/lib/api/types";
 
 const amendDutyAction = vi.fn();
-vi.mock("./actions", () => ({
+vi.mock("@/app/(app)/time-clock/actions", () => ({
   amendDutyAction: (...args: unknown[]) => amendDutyAction(...args),
 }));
 

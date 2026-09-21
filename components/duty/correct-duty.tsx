@@ -4,7 +4,10 @@ import { useState } from "react";
 
 import type { DutyPeriodSummary } from "@/lib/api/types";
 
-import { amendDutyAction, type AmendState } from "./actions";
+import {
+  amendDutyAction,
+  type AmendState,
+} from "@/app/(app)/time-clock/actions";
 
 /**
  * Correcting a duty period by hand.
@@ -30,6 +33,22 @@ import { amendDutyAction, type AmendState } from "./actions";
  * limits are computed from, and one with no stated reason is the one
  * an inspector asks about. The server requires it too; this asks
  * first so the round trip is not wasted.
+ *
+ * Shared rather than owned by /time-clock, because of the follow-up on
+ * 9/17:
+ *
+ *   Manual duty time history works on admin side. Individual pilot
+ *   role doesn't see the HR portal and isn't able to change their duty
+ *   time. Ideally, it would be under the flight crew duty module,
+ *   pilot history, duty time.
+ *
+ * The control was only ever rendered on /time-clock, which sits in the
+ * HR department and is not in a pilot's navigation. So the one person
+ * the 8/28 change was built for — a pilot who forgot to clock out —
+ * could not reach it. The backend was never the problem: ops-service
+ * has scoped amendments to `DutyPeriod.user_id == current_user_id()`
+ * from the start, with the docstring "A pilot may amend their own
+ * periods". Only the UI was missing from where a pilot stands.
  */
 
 /** A UTC instant as the value a datetime-local input wants — local
