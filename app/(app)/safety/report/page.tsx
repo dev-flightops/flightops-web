@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ApiError } from "@/lib/api/client";
 import { listStations } from "@/lib/api/ground";
 import type { StationListItem } from "@/lib/api/types";
+import { safeReturnPath } from "@/lib/safety/return-path";
 
 import { ReportForm } from "./report-form";
 
@@ -15,8 +16,19 @@ import { ReportForm } from "./report-form";
  *
  * The station list is fetched server-side + passed as a prop so the
  * client form has zero data-fetching responsibility.
+ *
+ * `return_url` is set by the global red Safety button so the reporter
+ * can get back to the page they were pulled off — legacy passes the
+ * same param from its FAB. It only ever labels the back link; filing
+ * still redirects to the new hazard so the reporter sees its status.
  */
-export default async function SafetyReportPage() {
+export default async function SafetyReportPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ return_url?: string }>;
+}) {
+  const returnTo = safeReturnPath((await searchParams).return_url);
+
   let stations: StationListItem[] = [];
   try {
     stations = (await listStations({ limit: 200 })).items;
@@ -32,8 +44,11 @@ export default async function SafetyReportPage() {
     <div className="mx-auto max-w-2xl px-4 py-8 sm:px-6">
       <header className="mb-6">
         <p className="text-xs font-semibold uppercase tracking-[0.06em] text-muted-foreground">
-          <Link href="/safety" className="hover:text-foreground">
-            ← Safety SMS
+          <Link
+            href={returnTo ?? "/safety"}
+            className="hover:text-foreground"
+          >
+            {returnTo ? "← Back" : "← Safety SMS"}
           </Link>
         </p>
         <h1 className="mt-2 text-2xl font-bold tracking-tight">
