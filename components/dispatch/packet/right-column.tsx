@@ -58,7 +58,14 @@ export function RightColumn({
     <div className="space-y-5">
       {flight && (
         <div id="release-actions">
-          <FlightActionsRow flight={flight} aircraft={aircraft} />
+          <FlightActionsRow
+            flight={flight}
+            aircraft={aircraft}
+            pilotUserId={pilotUserId}
+            overridesAcknowledged={overridesAcknowledged}
+            notamAckedIcaos={notamAckedIcaos}
+            staleWeatherAcknowledged={staleWeatherAcknowledged}
+          />
         </div>
       )}
 
@@ -120,9 +127,21 @@ export function RightColumn({
 function FlightActionsRow({
   flight,
   aircraft,
+  pilotUserId = null,
+  overridesAcknowledged = false,
+  notamAckedIcaos = [],
+  staleWeatherAcknowledged = false,
 }: {
   flight: FlightDetail;
   aircraft: AircraftListItem[];
+  /** Release arguments, forwarded straight to ReleaseButton. This row
+   *  took only flight + aircraft, so the release path below had no way
+   *  to reach the NOTAM acks the column already held — see the note on
+   *  ReleaseButton. */
+  pilotUserId?: string | null;
+  overridesAcknowledged?: boolean;
+  notamAckedIcaos?: string[];
+  staleWeatherAcknowledged?: boolean;
 }) {
   if (flight.status === "scheduled") {
     return (
@@ -134,6 +153,10 @@ function FlightActionsRow({
           flightNumber={flight.flight_number}
           origin={flight.origin}
           destination={flight.destination}
+          pilotUserId={pilotUserId}
+          overridesAcknowledged={overridesAcknowledged}
+          notamAckedIcaos={notamAckedIcaos}
+          staleWeatherAcknowledged={staleWeatherAcknowledged}
         />
       </div>
     );

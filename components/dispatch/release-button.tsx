@@ -20,13 +20,42 @@ interface ReleaseButtonProps {
   flightNumber: string;
   origin: string;
   destination: string;
+  /** M2-M-5 — currently-selected PIC, so the server compliance gate
+   *  runs against the pilot the dispatcher is actually releasing. */
+  pilotUserId?: string | null;
+  /** M2-G-5 tail — supervisor override already recorded. */
+  overridesAcknowledged?: boolean;
+  /** Routed ICAOs the dispatcher ticked in the NOTAM panel. The backend
+   *  refuses the release unless every routed stop is present, so
+   *  omitting these makes the button fail every time. */
+  notamAckedIcaos?: string[];
+  /** Dispatcher acknowledged stale / missing route weather. */
+  staleWeatherAcknowledged?: boolean;
 }
 
+/**
+ * "Release dispatch" — the release path on a scheduled flight.
+ *
+ * Every argument below has to be forwarded. This button used to call
+ * `releaseFlightAction(flightId)` and nothing else, which meant the
+ * action's `notamAckedIcaos ?? []` sent an empty list on every press.
+ * The backend then refused with `notam_ack_required` naming every stop
+ * on the route — so a dispatcher could tick all the boxes, see
+ * "2/2 acknowledged", press Release, and be told the NOTAMs were not
+ * acknowledged. There was no way through it from this button at all.
+ *
+ * GeneratePdfButton, the other release path in the same column, always
+ * passed all five. Same server action, same flight, one worked.
+ */
 export function ReleaseButton({
   flightId,
   flightNumber,
   origin,
   destination,
+  pilotUserId = null,
+  overridesAcknowledged = false,
+  notamAckedIcaos = [],
+  staleWeatherAcknowledged = false,
 }: ReleaseButtonProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -36,7 +65,13 @@ export function ReleaseButton({
   const handleRelease = () => {
     setError(null);
     startTransition(async () => {
-      const result = await releaseFlightAction(flightId);
+      const result = await releaseFlightAction(
+        flightId,
+        pilotUserId,
+        overridesAcknowledged,
+        staleWeatherAcknowledged,
+        notamAckedIcaos,
+      );
       if (result.ok) {
         setOpen(false);
         router.refresh();
