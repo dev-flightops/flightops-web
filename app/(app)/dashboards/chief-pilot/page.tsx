@@ -56,7 +56,7 @@ export default async function ChiefPilotDashboardPage() {
         <Panel
           title="Open Duty Periods"
           milestone="M3"
-          headerLink={{ label: "crew records →", href: "/crew" }}
+          headerLink={{ label: "pilot roster →", href: "/compliance/roster" }}
         >
           <p className="py-4 text-center text-xs text-muted-foreground/70">
             0 pilots on duty. Active duty periods with FAR 117 rest progress
@@ -127,7 +127,6 @@ export default async function ChiefPilotDashboardPage() {
         <Panel
           title="Pilot Recognition"
           milestone="M3"
-          headerLink={{ label: "all →", href: "/recognition/pilots" }}
         >
           <p className="py-4 text-center text-xs text-muted-foreground/70">
             No achievements yet.
