@@ -738,7 +738,7 @@ export const HELP_ENTRIES: HelpEntry[] = [
     title: "Filing a safety report",
     whoCanUse: ["pilot", "crew_member", "maintenance", "ground_ops", "dispatcher", "reservations_agent", "safety_officer", "chief_pilot", "check_airman", "director_of_maintenance", "director_of_operations", "exec_admin"],
     whatItDoes:
-      "Reports a hazard. The red Safety button in the corner of every page opens the same form, so a report can be filed from wherever the thing was noticed rather than by navigating here first.",
+      "Reports a hazard. The red Safety button in the corner of every page comes straight here and remembers where you were, so a report can be filed from wherever the thing was noticed.",
     howToUse: [
       "Describe what you saw, not what you concluded — the assessment is somebody else's job.",
       "Say where and when.",
