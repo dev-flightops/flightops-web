@@ -308,8 +308,13 @@ export default async function BiPage() {
                       className="border-b border-border last:border-0"
                     >
                       <td className="px-4 py-2.5 text-foreground">
+                        {/* /reservations/customers does not exist —
+                            customer records are at /customers/[id].
+                            This linked every name in the top-customers
+                            table to a 404, invisible on the demo
+                            tenant because the table is empty there. */}
                         <Link
-                          href={`/reservations/customers/${c.customer_id}`}
+                          href={`/customers/${c.customer_id}`}
                           className="text-status-blue hover:underline"
                         >
                           {c.name}

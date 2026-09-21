@@ -507,3 +507,52 @@ describe("FlightFollowingPage split view (M2-G-12)", () => {
     ).toBeInTheDocument();
   });
 });
+
+describe("the per-flight Docs affordance", () => {
+  /**
+   * It was a link to `/flight-following/{id}/docs` on every row, and
+   * that route does not exist — legacy has the page, backed by a
+   * FlightDocument model and per-category upload permissions, and none
+   * of that was ported. So every row offered a 404.
+   *
+   * Dimmed rather than dropped while the decision about building the
+   * subsystem is open. `lib/__tests__/link-targets.test.ts` is what
+   * stops it coming back as a link.
+   */
+  function seedOneRow() {
+    getFlightBoard.mockResolvedValueOnce({
+      items: [makeBoardItem({ flight_number: "GV303", status: "released" })],
+      view: "today",
+      total: 1,
+    });
+  }
+
+  it("is present but not a link", async () => {
+    seedOneRow();
+    await renderPage({ display: "list" });
+    const docs = screen.queryAllByText("Docs");
+    expect(docs.length).toBeGreaterThan(0);
+    for (const el of docs) {
+      expect(el.tagName).not.toBe("A");
+      expect(el.closest("a")).toBeNull();
+    }
+  });
+
+  it("says why it is dimmed", async () => {
+    seedOneRow();
+    await renderPage({ display: "list" });
+    expect(screen.getAllByText("Docs")[0]).toHaveAttribute(
+      "title",
+      expect.stringContaining("not built"),
+    );
+  });
+
+  it("leaves the Update link working beside it", async () => {
+    // The row still has a way through to the flight. Dimming one
+    // affordance should not strand the other.
+    seedOneRow();
+    await renderPage({ display: "list" });
+    const update = screen.getAllByRole("link", { name: /Update/ })[0];
+    expect(update.getAttribute("href")).toMatch(/^\/dispatch\?flight=/);
+  });
+});
