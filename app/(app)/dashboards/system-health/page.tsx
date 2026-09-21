@@ -13,6 +13,7 @@ import Link from "next/link";
 
 import { DashboardNav } from "@/components/dashboards/dashboard-nav";
 import { getCompanyProfile } from "@/lib/api/auth";
+import { PLATFORM_SERVICES, healthPath } from "@/lib/platform-services";
 import { listFlights } from "@/lib/api/ops";
 import { loadOperationalSnapshot } from "@/lib/dashboards/operational-snapshot";
 
@@ -21,18 +22,9 @@ import packageJson from "@/package.json" with { type: "json" };
 export const dynamic = "force-dynamic";
 
 const GATEWAY_TIMEOUT_MS = 1500;
-// Services this app talks to. Each exposes a /<svc>/health endpoint at
-// the gateway, returning {status:"ok", service:"<name>"}; the gateway
-// itself exposes /health. Used both as the Enabled Modules count and
-// to determine overall status. Mirrors flightops-services/gateway.
-const SERVICES = [
-  "auth",
-  "ops",
-  "maintenance",
-  "flight-following",
-  "weather",
-  "ground",
-] as const;
+// The list lives in lib/platform-services.ts so it can be checked
+// by a test — this page reaches apiFetch, so nothing could import it
+// from here, which is how it came to name six of sixteen services.
 
 interface CheckResult {
   ok: boolean;
@@ -69,7 +61,10 @@ async function checkServices(): Promise<{
   failing: string[];
 }> {
   const results = await Promise.all(
-    SERVICES.map(async (svc) => ({ svc, ok: await pingPath(`/${svc}/health`) })),
+    PLATFORM_SERVICES.map(async (svc) => ({
+      svc,
+      ok: await pingPath(healthPath(svc)),
+    })),
   );
   const failing = results.filter((r) => !r.ok).map((r) => r.svc);
   return { okCount: results.length - failing.length, total: results.length, failing };
@@ -118,9 +113,14 @@ export default async function SystemHealthDashboardPage() {
     {
       title: "AI / Compliance Engine",
       state: aiKeyConfigured ? "ok" : "info",
+      // "Not configured" is about THIS environment's key, and stays.
+      // What went was "ship with M3": the ai-service shipped, and the
+      // five AI tools are in the nav. Telling an operator that a
+      // feature they can click on is coming in a past milestone is the
+      // same overclaim in reverse.
       detail: aiKeyConfigured
         ? "API key configured"
-        : "Not configured — risk-analytics + compliance ship with M3",
+        : "No API key set for this environment — the AI tools will not answer",
     },
     {
       title: "Active Flights",
@@ -140,7 +140,11 @@ export default async function SystemHealthDashboardPage() {
     {
       title: "PDF Cache",
       state: "info",
-      detail: "0 cached dispatch PDF(s) — packet rendering ships with M3",
+      // Packet rendering shipped — /api/dispatch/{id}/release.pdf
+      // serves it. Nothing is cached because it renders on demand,
+      // which is a design choice rather than a missing feature, so the
+      // card says that instead of naming a milestone that has passed.
+      detail: "Dispatch packets render on demand; nothing is cached",
     },
   ];
 
