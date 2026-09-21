@@ -57,9 +57,54 @@ import { HOME_QUICK_LINKS } from "./quick-links";
  * buttons. Nothing links them to a route, so nothing here can tell
  * whether their feature exists. Those need reading, which is how the
  * top bar's Users button was found still disabled over a live page.
+ *
+ * That blind spot had already cost something. The maintenance header's
+ * "+ Aircraft" stayed dimmed as `m3`, annotated "an add form we never
+ * built", while /settings/fleet had been calling createAircraftAction
+ * through AddAircraftDialog since M2. Four of the five dimmed entries in
+ * that catalogue were caught here; that one was not, purely because it
+ * carried no href for hasPage() to test. Being unreachable by the guard
+ * is what let it stay wrong.
+ *
+ * So a non-live entry now has to carry an href, which is what puts it
+ * inside the sweep. NON_LIVE_WITHOUT_HREF is for the genuine cases —
+ * something with no route to point at yet — and naming a reason there is
+ * the price of leaving the guard's reach.
  */
 
 const APP_DIR = "app/(app)";
+
+/**
+ * Non-live catalogue entries with nothing to point at yet.
+ * `where.id` -> why there is no route.
+ */
+const NON_LIVE_WITHOUT_HREF: Record<string, string> = {
+  "MAINTENANCE_ACTIONS.Inspections": "No inspections module in any milestone yet.",
+  "MAINTENANCE_ACTIONS.Vendors": "No vendors module in any milestone yet.",
+  "MAINTENANCE_ACTIONS.Roster": "Mechanic roster is unscheduled.",
+
+  // Legacy puts Crew inside the Operations nav (`/crew/`, base.html
+  // line 407), not in a department of its own. We never built it.
+  "DEPARTMENTS.operations.crew": "Legacy /crew/ under Operations; not built.",
+
+  // The Crew department is unreachable dead config, not a dimmed
+  // feature. Its pathPrefixes are ["/crew-admin"], and no /crew-admin
+  // page exists, so nothing can put a user inside the department —
+  // department-nav only ever renders the current department's children,
+  // and the help panel skips children with no href. Every feature it
+  // names already ships somewhere a user can actually get to, which is
+  // why nobody noticed: Roster at /compliance/roster, Duty & Rest at
+  // /time-clock, Training in the Academy department, Payroll at
+  // /payroll — the last two duplicating HR's own live children.
+  // Removing the department is cleanup for Greg to call, not a fix to
+  // smuggle in here; wiring the four to those routes would put Payroll
+  // and Time Clock in the sidebar twice and hand /academy's own
+  // pathPrefix to a second department.
+  "DEPARTMENTS.crew.crew-roster": "Unreachable dept; ships at /compliance/roster.",
+  "DEPARTMENTS.crew.duty-rest": "Unreachable dept; ships at /time-clock.",
+  "DEPARTMENTS.crew.training": "Unreachable dept; ships as the Academy department.",
+  "DEPARTMENTS.crew.crew-payroll": "Unreachable dept; ships at /payroll (also HR's).",
+};
 
 /** Does a concrete (non-dynamic) route have a page?
  *
@@ -146,6 +191,18 @@ describe("module status matches what is actually built", () => {
     expect(
       stale,
       "these have shipped but are still marked as coming soon",
+    ).toEqual([]);
+  });
+
+  it("gives every unbuilt entry a route, so it stays inside this sweep", () => {
+    const unreachable = allEntries()
+      .filter((e) => e.status !== undefined && e.status !== "live" && !e.href)
+      .filter((e) => !(`${e.where}.${e.id}` in NON_LIVE_WITHOUT_HREF))
+      .map((e) => `${e.where}.${e.id} (status: ${e.status})`);
+
+    expect(
+      unreachable,
+      "no href means no check — declare these in NON_LIVE_WITHOUT_HREF with a reason",
     ).toEqual([]);
   });
 });

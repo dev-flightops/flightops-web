@@ -57,11 +57,12 @@ export const MAINTENANCE_ACTIONS: ActionButton[] = [
   { label: "Inspections", status: "m3" },
   { label: "Vendors", status: "m3" },
   { label: "Roster", status: "m3" },
-  // No index page — /maintenance/aircraft is only [id]/. Legacy's
-  // "+ Aircraft" is an add form we never built, and linking it here
-  // would 404. Caught by module-status.test.ts the moment this
-  // catalogue came inside its sweep.
-  { label: "+ Aircraft", status: "m3", primary: true },
+  // Adding a tail lives under Settings -> Fleet, where AddAircraftDialog
+  // has called createAircraftAction since M2. This entry sat dimmed as
+  // `m3` with the note "an add form we never built" — it was built, just
+  // not at a /maintenance route, and having no href kept it outside
+  // module-status.test.ts, which can only check a status against a route.
+  { label: "+ Aircraft", href: "/settings/fleet", status: "live", primary: true },
 ];
 
 export function MaintenanceHeader() {

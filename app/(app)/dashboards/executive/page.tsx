@@ -173,7 +173,7 @@ export default async function ExecutiveDashboardPage() {
           </div>
           <AlertList
             alerts={snapshotAlertsToList(snapshot.alerts)}
-            emptyHint="No active alerts from the wired sources. Pilot currency / NOTAM / safety report alerts populate here once their services ship in M3."
+            emptyHint="No grounded aircraft, overdue flights or MELs expiring in the next two days. Pilot currency, NOTAM and safety alerts are not fed into this list — safety-service ships hazards but nothing routes them here."
           />
         </section>
 
