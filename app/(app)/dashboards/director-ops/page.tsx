@@ -145,7 +145,7 @@ export default async function DirectorOpsDashboardPage() {
           </h2>
           <AlertList
             alerts={snapshotAlertsToList(snapshot.alerts)}
-            emptyHint="No active alerts from the wired sources. NOTAM / compliance / safety alerts populate here once their services ship in M3."
+            emptyHint="No grounded aircraft, overdue flights or MELs expiring in the next two days. NOTAM, compliance and safety alerts are not fed into this list — safety-service ships hazards but nothing routes them here."
           />
         </section>
 

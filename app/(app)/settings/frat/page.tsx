@@ -195,7 +195,7 @@ export default async function FratThresholdsPage() {
               Director of Operations authorisation recorded against it —
               see{" "}
               <Link
-                href="/flight-crew/preflight"
+                href="/flight-crew"
                 className="text-status-blue hover:underline"
               >
                 the preflight sequence

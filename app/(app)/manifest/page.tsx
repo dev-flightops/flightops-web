@@ -180,7 +180,7 @@ export default async function FlightSchedulePage({
             Templates
           </button>
           <Link
-            href="/dispatch/new"
+            href="/flight-following/new"
             className="rounded-md bg-status-blue px-3 py-2 text-sm font-semibold text-white hover:brightness-110"
           >
             + New Flight
@@ -265,7 +265,7 @@ export default async function FlightSchedulePage({
             No flights found.
           </p>
           <Link
-            href="/dispatch/new"
+            href="/flight-following/new"
             className="inline-block rounded-md bg-status-blue px-4 py-2 text-sm font-semibold text-white hover:brightness-110"
           >
             Schedule First Flight
