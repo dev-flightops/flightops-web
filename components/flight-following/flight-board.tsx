@@ -146,12 +146,21 @@ function FlightBoardRow({ flight }: { flight: BoardFlightItem }) {
         {flight.status === "released" && flight.actual_departure_at !== null && (
           <CheckInButton flightId={flight.id} event="arrive" />
         )}
-        <Link
-          href={`/flight-following/${flight.id}/docs`}
-          className="mr-3 text-[0.7rem] font-medium text-muted-foreground hover:underline"
+        {/* Dimmed rather than linked. There is no per-flight document
+            page: legacy has one at `/following/{id}/docs`, backed by a
+            FlightDocument model, per-category upload permissions and a
+            download route, and none of that exists here — so this link
+            404'd on every row of the board.
+            Dimming is the reversible half of an open decision about
+            whether to build the subsystem or drop the affordance. What
+            is not in question is that a link to a 404 is worse than
+            either. */}
+        <span
+          title="Per-flight documents are not built yet"
+          className="mr-3 cursor-not-allowed text-[0.7rem] font-medium text-muted-foreground/40"
         >
           Docs
-        </Link>
+        </span>
         <Link
           href={`/dispatch?flight=${flight.id}`}
           className="text-[0.7rem] font-medium text-status-blue hover:underline"
