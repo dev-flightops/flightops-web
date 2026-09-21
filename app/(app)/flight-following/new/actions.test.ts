@@ -170,3 +170,68 @@ describe("createFlightAction", () => {
     }
   });
 });
+
+/**
+ * A failed submit has to hand the values back.
+ *
+ * Client bug report 9/17: "all the data drops from whatever you are
+ * inputting and you need to reenter it all. It should just give you a
+ * notice that a field is wrong."
+ *
+ * The notice was already there; the data loss was React resetting an
+ * uncontrolled form once its action resolved. Nothing in the returned
+ * state could seed a defaultValue, so one mistyped ICAO cost the whole
+ * form. These assert the echo exists on both failure shapes — without
+ * it the form has nothing to restore from.
+ */
+describe("createFlightAction returns what was submitted", () => {
+  function formOf(overrides: Record<string, string> = {}): FormData {
+    const fd = new FormData();
+    const base: Record<string, string> = {
+      flight_number: "TEST999",
+      aircraft_id: "11111111-1111-1111-1111-111111111111",
+      origin: "PANC",
+      destination: "PABE",
+      scheduled_departure_at: "2026-10-01T18:00",
+      scheduled_arrival_at: "2026-10-01T20:30",
+      pax_count: "3",
+      cargo_lbs: "250",
+      notes: "Typed this out once and would rather not again.",
+      ...overrides,
+    };
+    for (const [k, v] of Object.entries(base)) fd.set(k, v);
+    return fd;
+  }
+
+  it("echoes every field back on a validation failure", async () => {
+    // Origin too short — trips the schema, not the API.
+    const state = await createFlightAction(
+      { status: "idle" },
+      formOf({ origin: "PA" }),
+    );
+
+    expect(state.status).toBe("field-errors");
+    if (state.status === "idle") throw new Error("expected a failure");
+    expect(state.values.flight_number).toBe("TEST999");
+    expect(state.values.destination).toBe("PABE");
+    expect(state.values.scheduled_departure_at).toBe("2026-10-01T18:00");
+    expect(state.values.pax_count).toBe("3");
+    expect(state.values.cargo_lbs).toBe("250");
+    expect(state.values.notes).toContain("Typed this out once");
+    // The select is the field that reads as "nothing was picked" when
+    // it is lost, so it matters most that it comes back.
+    expect(state.values.aircraft_id).toBe(
+      "11111111-1111-1111-1111-111111111111",
+    );
+  });
+
+  it("does not echo React's internal action fields", async () => {
+    const fd = formOf({ origin: "PA" });
+    fd.set("$ACTION_ID_abc", "internal");
+    const state = await createFlightAction({ status: "idle" }, fd);
+    if (state.status === "idle") throw new Error("expected a failure");
+    expect(Object.keys(state.values).some((k) => k.startsWith("$ACTION"))).toBe(
+      false,
+    );
+  });
+});

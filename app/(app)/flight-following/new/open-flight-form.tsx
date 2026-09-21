@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 
 import { Spinner } from "@/components/ui/spinner";
 import type { AircraftListItem } from "@/lib/api/types";
@@ -36,6 +36,42 @@ export function OpenFlightForm({
   const fieldError = (field: string): string | undefined =>
     state.status === "field-errors" ? state.errors[field] : undefined;
 
+  /**
+   * What the field should show after a failed submit.
+   *
+   * Client bug report 9/17: "all the data drops from whatever you are
+   * inputting and you need to reenter it all." These inputs are
+   * uncontrolled, and React resets a form's DOM once the action on it
+   * resolves — so without a defaultValue to restore from, one mistyped
+   * ICAO cost the dispatcher the whole form: flight number, both
+   * airports, both datetimes, pax, cargo and the notes.
+   *
+   * The action echoes the submitted values back on every failure, and
+   * `submitted` is keyed by field name so each input reads its own
+   * back. Success redirects, so there is nothing to restore then.
+   */
+  const submitted = (field: string, fallback = ""): string =>
+    state.status === "idle" ? fallback : (state.values[field] ?? fallback);
+
+  /**
+   * Counts completed submissions, to key the aircraft select on.
+   *
+   * Restoring the text inputs needed nothing but a defaultValue. The
+   * select needed this: React applies defaultValue on mount only, and
+   * the DOM reset it performs after an action leaves a select showing
+   * its first option again — "Select aircraft…", as if nothing had been
+   * picked. Re-keying forces a remount so the echoed value is applied.
+   *
+   * Same shape as the fix on the employee record form, where two
+   * selects silently blanked on save for the same reason.
+   */
+  const [submitCount, setSubmitCount] = useState(0);
+  const wasPending = useRef(false);
+  useEffect(() => {
+    if (wasPending.current && !pending) setSubmitCount((n) => n + 1);
+    wasPending.current = pending;
+  }, [pending]);
+
   return (
     <form action={action} className="space-y-5">
       {state.status === "api-error" && (
@@ -53,12 +89,15 @@ export function OpenFlightForm({
           label="Flight number"
           required
           placeholder="GV101"
+          defaultValue={submitted("flight_number")}
           error={fieldError("flight_number")}
         />
         <FieldSelect
+          key={`aircraft_id-${submitCount}`}
           name="aircraft_id"
           label="Aircraft"
           required
+          defaultValue={submitted("aircraft_id")}
           error={fieldError("aircraft_id")}
         >
           <option value="">Select aircraft…</option>
@@ -73,6 +112,7 @@ export function OpenFlightForm({
           label="Origin ICAO"
           required
           placeholder="PANC"
+          defaultValue={submitted("origin")}
           maxLength={4}
           autoCapitalize="characters"
           spellCheck={false}
@@ -83,6 +123,7 @@ export function OpenFlightForm({
           label="Destination ICAO"
           required
           placeholder="PAEN"
+          defaultValue={submitted("destination")}
           maxLength={4}
           autoCapitalize="characters"
           spellCheck={false}
@@ -93,6 +134,7 @@ export function OpenFlightForm({
           label="ETD (UTC)"
           type="datetime-local"
           required
+          defaultValue={submitted("scheduled_departure_at")}
           error={fieldError("scheduled_departure_at")}
         />
         <Field
@@ -100,6 +142,7 @@ export function OpenFlightForm({
           label="ETA (UTC)"
           type="datetime-local"
           required
+          defaultValue={submitted("scheduled_arrival_at")}
           error={fieldError("scheduled_arrival_at")}
         />
         <Field
@@ -107,7 +150,7 @@ export function OpenFlightForm({
           label="Passengers"
           type="number"
           min={0}
-          defaultValue={0}
+          defaultValue={submitted("pax_count", "0")}
           error={fieldError("pax_count")}
         />
         <Field
@@ -115,7 +158,7 @@ export function OpenFlightForm({
           label="Cargo (lbs)"
           type="number"
           min={0}
-          defaultValue={0}
+          defaultValue={submitted("cargo_lbs", "0")}
           error={fieldError("cargo_lbs")}
         />
       </div>
@@ -132,6 +175,7 @@ export function OpenFlightForm({
           name="notes"
           rows={3}
           maxLength={500}
+          defaultValue={submitted("notes")}
           className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs text-foreground focus:border-status-blue focus:outline-none"
         />
       </div>
@@ -199,12 +243,17 @@ function FieldSelect({
   label,
   error,
   required,
+  defaultValue,
   children,
 }: {
   name: string;
   label: string;
   error?: string;
   required?: boolean;
+  /** Restores the picked option after a failed submit. A select is the
+   *  field this matters most on: a wiped text input is visibly empty,
+   *  a wiped select silently reads "Select aircraft…" again. */
+  defaultValue?: string;
   children: React.ReactNode;
 }) {
   return (
@@ -220,6 +269,7 @@ function FieldSelect({
         id={name}
         name={name}
         required={required}
+        defaultValue={defaultValue}
         aria-invalid={error ? "true" : undefined}
         className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs text-foreground focus:border-status-blue focus:outline-none aria-[invalid=true]:border-status-red"
       >
