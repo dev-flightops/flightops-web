@@ -130,11 +130,21 @@ export default async function SystemHealthDashboardPage() {
         : "Board snapshot unavailable",
     },
     {
-      title: "Enabled Modules",
+      // Titled "Enabled Modules" until now, which is a different thing
+      // entirely: this card is the result of probing every service's
+      // /health. Two services down rendered as "Enabled Modules: ERROR",
+      // which reads as a licensing problem on the one page somebody
+      // opens during an outage.
+      //
+      // The healthy branch also dropped the denominator — "16 modules
+      // active" cannot be told apart from 16 of a longer list, which is
+      // exactly the state this page was in when it silently checked six
+      // of sixteen. Both branches now show n/total.
+      title: "Backend Services",
       state: services.failing.length === 0 ? "ok" : "error",
       detail:
         services.failing.length === 0
-          ? `${services.okCount} module${services.okCount === 1 ? "" : "s"} active`
+          ? `${services.okCount}/${services.total} responding`
           : `${services.okCount}/${services.total} responding · failing: ${services.failing.join(", ")}`,
     },
     {
@@ -216,10 +226,11 @@ export default async function SystemHealthDashboardPage() {
             }
           />
           <Meta label="Type" value="Part 135 Air Taxi & On-Demand" />
-          <Meta
-            label="App version"
-            value={`v${packageJson.version} · M2 build`}
-          />
+          {/* No milestone suffix. This said "M2 build" through all of
+              M3 and most of M4, because a hand-maintained label next to
+              a generated version number only ever drifts one way.
+              package.json is the version; nothing else claims to be. */}
+          <Meta label="App version" value={`v${packageJson.version}`} />
           <Meta
             label="Refresh"
             value="This page reflects a point-in-time snapshot. Reload to refresh."
@@ -227,10 +238,12 @@ export default async function SystemHealthDashboardPage() {
         </dl>
       </section>
 
-      {/* M4 affordance — what still ships later */}
+      {/* Says what is absent, without naming a milestone. "Ships with
+          M4" was written during M2; read during M4 it promises the
+          reader something the page they are looking at does not have. */}
       <p className="mt-4 text-center text-[0.65rem] text-muted-foreground/60">
         Deeper observability — request latency p50/p95/p99, deploy history, job
-        queue depth, and per-route error rates — ships with M4.
+        queue depth, and per-route error rates — is not built.
       </p>
     </div>
   );
