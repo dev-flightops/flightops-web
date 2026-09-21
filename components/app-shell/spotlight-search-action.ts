@@ -132,7 +132,14 @@ async function _flights(lower: string): Promise<SpotlightGroup> {
       id: f.id,
       label: `${f.flight_number} · ${f.origin} → ${f.destination}`,
       sublabel: `${f.aircraft.tail_number} · ${new Date(f.scheduled_departure_at).toLocaleDateString()}`,
-      href: `/flight-following/${f.id}`,
+      // /flight-following has no [id] route — there is no per-flight
+      // page under it, so this used to send every flight result to a
+      // 404. The flight's working detail surface is the dispatch
+      // packet, which is also where the board's own "Update →" link
+      // goes. Legacy did have `/following/{id}`; we do not, and
+      // pointing at the page that exists beats linking the one that
+      // doesn't.
+      href: `/dispatch?flight=${f.id}`,
     }));
     return { key: "flights", label: "Flights", items: hits };
   } catch {
