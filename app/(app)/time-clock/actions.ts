@@ -62,5 +62,9 @@ export async function amendDutyAction(
 
   revalidatePath("/time-clock");
   revalidatePath("/flight-crew");
+  // The duty tab of Pilot History renders the same control, and
+  // revalidating the parent does not cover a nested route — without
+  // this the corrected times stay stale until a hard reload.
+  revalidatePath("/flight-crew/history");
   return { status: "ok", message: "Corrected." };
 }
