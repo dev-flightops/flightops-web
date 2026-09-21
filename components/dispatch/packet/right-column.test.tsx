@@ -13,6 +13,7 @@ vi.mock("@/app/(app)/dispatch/[flightId]/actions", () => ({
 }));
 
 import { RightColumn } from "./right-column";
+import { releaseFlightAction } from "@/app/(app)/dispatch/[flightId]/actions";
 
 const baseFlight = (overrides: Partial<FlightDetail> = {}): FlightDetail => ({
   id: "flight-uuid-1",
@@ -161,5 +162,71 @@ describe("RightColumn / flight-actions row", () => {
     expect(
       screen.getByText(/This flight is cancelled — no actions available/i),
     ).toBeInTheDocument();
+  });
+});
+
+/**
+ * The release path has to carry what the column was given.
+ *
+ * "Release dispatch" called `releaseFlightAction(flightId)` and stopped
+ * there. The action signature is
+ * (flightId, pilotUserId, overridesAcknowledged,
+ *  staleWeatherAcknowledged, notamAckedIcaos) — so every omitted
+ * argument defaulted, and `notamAckedIcaos ?? []` sent an empty list.
+ * The backend then refused with notam_ack_required listing every routed
+ * stop.
+ *
+ * What that looked like to a dispatcher: tick both boxes, see
+ * "2/2 acknowledged", press Release, get told the NOTAMs for both stops
+ * are not acknowledged. Reproduced on MM001 PABE -> PAVA before the fix
+ * and it released immediately after, with both acks persisted as the
+ * release audit trail.
+ *
+ * This file already mocked releaseFlightAction, but never looked at what
+ * it was called with, so the mock absorbed the bug in silence. Asserting
+ * the arguments is the whole point.
+ */
+describe("RightColumn / Release dispatch forwards the release arguments", () => {
+  it("sends the NOTAM acks, PIC, overrides and weather ack", async () => {
+    vi.mocked(releaseFlightAction).mockResolvedValue({ ok: true });
+    const user = userEvent.setup();
+
+    render(
+      <RightColumn
+        flight={baseFlight()}
+        pilotUserId="pilot-uuid-9"
+        overridesAcknowledged
+        notamAckedIcaos={["PADU", "PANC"]}
+        staleWeatherAcknowledged
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: /Release dispatch/i }));
+    await user.click(screen.getByRole("button", { name: /^Release$/i }));
+
+    expect(releaseFlightAction).toHaveBeenCalledWith(
+      "flight-uuid-1",
+      "pilot-uuid-9",
+      true,
+      true,
+      ["PADU", "PANC"],
+    );
+  });
+
+  it("never sends an empty ack list when the column has acks", async () => {
+    // The specific failure: acks present on the column, absent from the
+    // call. A test that only checked flightId passed throughout.
+    vi.mocked(releaseFlightAction).mockResolvedValue({ ok: true });
+    const user = userEvent.setup();
+
+    render(
+      <RightColumn flight={baseFlight()} notamAckedIcaos={["PADU", "PANC"]} />,
+    );
+
+    await user.click(screen.getByRole("button", { name: /Release dispatch/i }));
+    await user.click(screen.getByRole("button", { name: /^Release$/i }));
+
+    const acks = vi.mocked(releaseFlightAction).mock.calls.at(-1)?.[4];
+    expect(acks).toEqual(["PADU", "PANC"]);
   });
 });
