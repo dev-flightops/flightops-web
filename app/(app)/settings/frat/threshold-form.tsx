@@ -5,7 +5,7 @@ import { useState } from "react";
 
 import type { FratThresholdConfigResponse } from "@/lib/api/types";
 
-import type { SaveThresholdsState } from "./actions";
+import type { FratPolicyInput, SaveThresholdsState } from "./actions";
 
 /**
  * The three numbers, with a live picture of what they do.
@@ -36,6 +36,8 @@ function Field({
   hint,
   value,
   max,
+  min = 1,
+  step,
   onChange,
 }: {
   name: string;
@@ -43,6 +45,12 @@ function Field({
   hint: string;
   value: number;
   max: number;
+  /** The near-limit margin is legitimately 0 — no margin means only a
+   *  wind over the limit scores the top band — so min is not always 1. */
+  min?: number;
+  /** Visibility is in miles and reads in halves; everything else is
+   *  whole units. */
+  step?: number;
   onChange: (next: number) => void;
 }) {
   return (
@@ -57,8 +65,9 @@ function Field({
         id={name}
         name={name}
         type="number"
-        min={1}
+        min={min}
         max={max}
+        step={step}
         value={value}
         onChange={(e) => onChange(Number(e.target.value))}
         className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm tabular-nums text-foreground focus:border-status-blue focus:outline-none"
@@ -73,12 +82,7 @@ export function ThresholdForm({
   saveAction,
 }: {
   config: FratThresholdConfigResponse;
-  saveAction: (
-    medium: number,
-    high: number,
-    extreme: number,
-    rationale: string,
-  ) => Promise<SaveThresholdsState>;
+  saveAction: (input: FratPolicyInput) => Promise<SaveThresholdsState>;
 }) {
   const router = useRouter();
   const [state, setState] = useState<SaveThresholdsState | null>(null);
@@ -87,15 +91,49 @@ export function ThresholdForm({
   const [medium, setMedium] = useState(config.medium_entry_score);
   const [high, setHigh] = useState(config.high_entry_score);
   const [extreme, setExtreme] = useState(config.extreme_entry_score);
+  const [crosswindSingleKt, setCrosswindSingleKt] = useState(
+    config.crosswind_single_engine_kt,
+  );
+  const [crosswindMultiKt, setCrosswindMultiKt] = useState(
+    config.crosswind_multi_engine_kt,
+  );
+  const [nearMarginKt, setNearMarginKt] = useState(
+    config.crosswind_near_margin_kt,
+  );
+  const [vfrMinCeilingFt, setVfrMinCeilingFt] = useState(
+    config.vfr_min_ceiling_ft,
+  );
+  const [vfrMinVisibilitySm, setVfrMinVisibilitySm] = useState(
+    config.vfr_min_visibility_sm,
+  );
   const [rationale, setRationale] = useState(config.rationale ?? "");
 
   const max = config.max_total_score;
   const ordered = medium >= 1 && medium < high && high < extreme && extreme <= max;
 
+  // One margin serves both limits, so it has to clear the tighter one.
+  const tighterLimit = Math.min(crosswindSingleKt, crosswindMultiKt);
+  const marginFits = nearMarginKt >= 0 && nearMarginKt < tighterLimit;
+  const limitsInRange =
+    crosswindSingleKt >= 1 &&
+    crosswindSingleKt <= 60 &&
+    crosswindMultiKt >= 1 &&
+    crosswindMultiKt <= 60 &&
+    vfrMinCeilingFt >= 0 &&
+    vfrMinCeilingFt <= 10000 &&
+    vfrMinVisibilitySm >= 0 &&
+    vfrMinVisibilitySm <= 10;
+  const savable = ordered && marginFits && limitsInRange;
+
   const isDefault =
     medium === config.default_medium_entry_score &&
     high === config.default_high_entry_score &&
-    extreme === config.default_extreme_entry_score;
+    extreme === config.default_extreme_entry_score &&
+    crosswindSingleKt === config.default_crosswind_single_engine_kt &&
+    crosswindMultiKt === config.default_crosswind_multi_engine_kt &&
+    nearMarginKt === config.default_crosswind_near_margin_kt &&
+    vfrMinCeilingFt === config.default_vfr_min_ceiling_ft &&
+    vfrMinVisibilitySm === config.default_vfr_min_visibility_sm;
 
   // Widths as percentages of the reachable maximum, so the bar is to
   // scale rather than four equal blocks.
@@ -109,7 +147,17 @@ export function ThresholdForm({
   const submit = async () => {
     setPending(true);
     setState(null);
-    const next = await saveAction(medium, high, extreme, rationale);
+    const next = await saveAction({
+      medium,
+      high,
+      extreme,
+      crosswindSingleKt,
+      crosswindMultiKt,
+      nearMarginKt,
+      vfrMinCeilingFt,
+      vfrMinVisibilitySm,
+      rationale,
+    });
     setPending(false);
     setState(next);
     if (next.status === "saved") router.refresh();
@@ -182,6 +230,118 @@ export function ThresholdForm({
         )}
       </div>
 
+      {/* Company operating limits.
+          These are a different kind of number from the bands above: a
+          band scores the total, a limit scores one factor. They sit on
+          the same screen because they are one operator policy with one
+          adoption record, and the server takes them in one save.
+
+          The operator, 22 Sep 2026: "demonstrated does not limit us...
+          Our single engine x wind limits are 30kts multi engines are
+          35kts. That's a company limit." */}
+      <div className="border-t border-border pt-5">
+        <p className="text-[0.6rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+          Company operating limits
+        </p>
+        <p className="mt-1 text-[0.68rem] text-muted-foreground">
+          What individual factors are scored against. These are your
+          limits, not the aircraft&rsquo;s demonstrated figures &mdash;
+          a demonstrated crosswind is what a test pilot showed in
+          certification, not a ceiling you are bound by.
+        </p>
+
+        <div className="mt-4 grid gap-4 sm:grid-cols-3">
+          <Field
+            name="crosswind_single_engine_kt"
+            label="Single-engine crosswind (kt)"
+            hint="Your company limit for single-engine aircraft."
+            value={crosswindSingleKt}
+            min={1}
+            max={60}
+            onChange={setCrosswindSingleKt}
+          />
+          <Field
+            name="crosswind_multi_engine_kt"
+            label="Multi-engine crosswind (kt)"
+            hint="Applies to anything with more than one engine."
+            value={crosswindMultiKt}
+            min={1}
+            max={60}
+            onChange={setCrosswindMultiKt}
+          />
+          <Field
+            name="crosswind_near_margin_kt"
+            label="&ldquo;Near the limit&rdquo; margin (kt)"
+            hint="How close to the limit counts as near."
+            value={nearMarginKt}
+            min={0}
+            max={59}
+            onChange={setNearMarginKt}
+          />
+        </div>
+
+        {marginFits && limitsInRange ? (
+          <p className="mt-2 text-[0.68rem] text-muted-foreground">
+            A single-engine flight scores near the limit from{" "}
+            <span className="font-semibold tabular-nums text-foreground">
+              {crosswindSingleKt - nearMarginKt} kt
+            </span>{" "}
+            and over it above{" "}
+            <span className="font-semibold tabular-nums text-foreground">
+              {crosswindSingleKt} kt
+            </span>
+            ; multi-engine from{" "}
+            <span className="font-semibold tabular-nums text-foreground">
+              {crosswindMultiKt - nearMarginKt} kt
+            </span>{" "}
+            and above{" "}
+            <span className="font-semibold tabular-nums text-foreground">
+              {crosswindMultiKt} kt
+            </span>
+            .
+          </p>
+        ) : (
+          <p className="mt-2 text-[0.7rem] text-status-red">
+            The margin has to be smaller than the lower crosswind limit
+            ({tighterLimit} kt). Subtracting it from the limit is what
+            finds where &ldquo;near&rdquo; begins, so a margin that big
+            would make every wind &mdash; calm included &mdash; count as
+            near the limit.
+          </p>
+        )}
+
+        <div className="mt-4 grid gap-4 sm:grid-cols-2">
+          <Field
+            name="vfr_min_ceiling_ft"
+            label="VFR ceiling floor (ft)"
+            hint="Below this, a VFR flight is elevated risk."
+            value={vfrMinCeilingFt}
+            min={0}
+            max={10000}
+            step={100}
+            onChange={setVfrMinCeilingFt}
+          />
+          <Field
+            name="vfr_min_visibility_sm"
+            label="VFR visibility floor (sm)"
+            hint="Either one alone is enough to elevate it."
+            value={vfrMinVisibilitySm}
+            min={0}
+            max={10}
+            step={0.5}
+            onChange={setVfrMinVisibilitySm}
+          />
+        </div>
+
+        <p className="mt-2 text-[0.65rem] text-muted-foreground/80">
+          IFR flights below approach minimums are elevated risk too, and
+          are not scored here: approach minima are per airport and per
+          procedure from your ops specs, and the system holds none. A
+          single company-wide number would be wrong at every airport it
+          was applied to.
+        </p>
+      </div>
+
       <div>
         <label
           htmlFor="rationale"
@@ -209,14 +369,14 @@ export function ThresholdForm({
         <button
           type="button"
           onClick={submit}
-          disabled={pending || !ordered}
+          disabled={pending || !savable}
           className="rounded-md bg-status-blue px-3 py-1.5 text-xs font-semibold text-white hover:brightness-110 disabled:opacity-40"
         >
           {pending
             ? "Saving…"
             : config.adopted_at
-              ? "Save thresholds"
-              : "Adopt these thresholds"}
+              ? "Save FRAT policy"
+              : "Adopt this FRAT policy"}
         </button>
         {!config.adopted_at && isDefault && (
           <p className="text-[0.7rem] text-muted-foreground">

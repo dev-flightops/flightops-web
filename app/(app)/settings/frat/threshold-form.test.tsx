@@ -34,6 +34,17 @@ function config(over: Partial<FratThresholdConfigResponse> = {}) {
     default_medium_entry_score: 15,
     default_high_entry_score: 25,
     default_extreme_entry_score: 35,
+    // The operator's own company limits, which ship as the defaults.
+    crosswind_single_engine_kt: 30,
+    crosswind_multi_engine_kt: 35,
+    crosswind_near_margin_kt: 10,
+    vfr_min_ceiling_ft: 1000,
+    vfr_min_visibility_sm: 3,
+    default_crosswind_single_engine_kt: 30,
+    default_crosswind_multi_engine_kt: 35,
+    default_crosswind_near_margin_kt: 10,
+    default_vfr_min_ceiling_ft: 1000,
+    default_vfr_min_visibility_sm: 3,
     ...over,
   } satisfies FratThresholdConfigResponse;
 }
@@ -97,7 +108,7 @@ describe("the ordering rule", () => {
     await user.clear(field);
     await user.type(field, "40");
     expect(
-      screen.getByRole("button", { name: /threshold/i }),
+      screen.getByRole("button", { name: /FRAT policy/i }),
     ).toBeDisabled();
     expect(screen.getByText(/never fires/)).toBeInTheDocument();
   });
@@ -110,7 +121,7 @@ describe("the ordering rule", () => {
     await user.clear(field);
     await user.type(field, "95");
     expect(
-      screen.getByRole("button", { name: /threshold/i }),
+      screen.getByRole("button", { name: /FRAT policy/i }),
     ).toBeDisabled();
   });
 
@@ -125,7 +136,7 @@ describe("the ordering rule", () => {
 });
 
 describe("saving", () => {
-  it("sends the three numbers and the rationale", async () => {
+  it("sends the whole policy, not only what was touched", async () => {
     const user = userEvent.setup();
     const action = vi.fn(
       async (): Promise<SaveThresholdsState> => ({ status: "saved" }),
@@ -139,9 +150,20 @@ describe("saving", () => {
       screen.getByLabelText(/Why these numbers/i),
       "Tightened after review.",
     );
-    await user.click(screen.getByRole("button", { name: /threshold/i }));
+    await user.click(screen.getByRole("button", { name: /FRAT policy/i }));
 
-    expect(action).toHaveBeenCalledWith(15, 25, 30, "Tightened after review.");
+    expect(action).toHaveBeenCalledWith({
+      medium: 15,
+      high: 25,
+      extreme: 30,
+      // Untouched, so they arrive as the operator's shipped limits.
+      crosswindSingleKt: 30,
+      crosswindMultiKt: 35,
+      nearMarginKt: 10,
+      vfrMinCeilingFt: 1000,
+      vfrMinVisibilitySm: 3,
+      rationale: "Tightened after review.",
+    });
     expect(await screen.findByRole("status")).toHaveTextContent("Saved");
     expect(refresh).toHaveBeenCalled();
   });
@@ -155,7 +177,7 @@ describe("saving", () => {
       }),
     );
     render(<ThresholdForm config={config()} saveAction={action} />);
-    await user.click(screen.getByRole("button", { name: /threshold/i }));
+    await user.click(screen.getByRole("button", { name: /FRAT policy/i }));
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "Only the Chief Pilot",
     );
@@ -166,7 +188,7 @@ describe("adoption", () => {
   it("asks an operator who has never chosen to adopt", () => {
     form({ adopted_at: null });
     expect(
-      screen.getByRole("button", { name: "Adopt these thresholds" }),
+      screen.getByRole("button", { name: "Adopt this FRAT policy" }),
     ).toBeInTheDocument();
     expect(
       screen.getByText(/Saving unchanged still records/),
@@ -176,7 +198,7 @@ describe("adoption", () => {
   it("says save once somebody has", () => {
     form({ adopted_at: "2026-09-16T10:00:00Z", adopted_by_name: "S. Kessler" });
     expect(
-      screen.getByRole("button", { name: "Save thresholds" }),
+      screen.getByRole("button", { name: "Save FRAT policy" }),
     ).toBeInTheDocument();
     expect(
       screen.queryByText(/Saving unchanged still records/),
@@ -190,6 +212,101 @@ describe("adoption", () => {
     const field = screen.getByLabelText(/Medium starts at/i);
     await user.clear(field);
     await user.type(field, "12");
+    expect(
+      screen.queryByText(/Saving unchanged still records/),
+    ).not.toBeInTheDocument();
+  });
+});
+
+/**
+ * The company operating limits, added 22 Sep 2026.
+ *
+ * These are the numbers the operator gave when asked what "near the
+ * aircraft crosswind limit" should mean, having first corrected the
+ * premise: "demonstrated does not limit us... Our single engine x wind
+ * limits are 30kts multi engines are 35kts. That's a company limit."
+ */
+describe("company operating limits", () => {
+  it("shows where near and over fall, for both engine counts", () => {
+    // The point of the readout: 30 and 10 are two numbers, and what
+    // they mean together — near from 20, over above 30 — is the thing
+    // a chief pilot is actually deciding.
+    form();
+    const readout = screen.getByText(/scores near the limit from/i);
+    expect(readout).toHaveTextContent("20 kt");
+    expect(readout).toHaveTextContent("30 kt");
+    expect(readout).toHaveTextContent("25 kt");
+    expect(readout).toHaveTextContent("35 kt");
+  });
+
+  it("moves the boundary when the margin changes", async () => {
+    const user = userEvent.setup();
+    form();
+    const field = screen.getByLabelText(/near the limit.*margin/i);
+    await user.clear(field);
+    await user.type(field, "5");
+    expect(
+      screen.getByText(/scores near the limit from/i),
+    ).toHaveTextContent("25 kt");
+  });
+
+  it("refuses a margin that would make calm air near the limit", async () => {
+    // A 30 kt margin on a 30 kt limit puts the boundary at zero.
+    const user = userEvent.setup();
+    form();
+    const field = screen.getByLabelText(/near the limit.*margin/i);
+    await user.clear(field);
+    await user.type(field, "30");
+    expect(
+      screen.getByRole("button", { name: /FRAT policy/i }),
+    ).toBeDisabled();
+    expect(screen.getByText(/calm included/)).toBeInTheDocument();
+  });
+
+  it("sends changed limits", async () => {
+    const user = userEvent.setup();
+    const action = vi.fn(
+      async (): Promise<SaveThresholdsState> => ({ status: "saved" }),
+    );
+    render(<ThresholdForm config={config()} saveAction={action} />);
+
+    const single = screen.getByLabelText(/Single-engine crosswind/i);
+    await user.clear(single);
+    await user.type(single, "25");
+    await user.click(screen.getByRole("button", { name: /FRAT policy/i }));
+
+    expect(action).toHaveBeenCalledWith(
+      expect.objectContaining({ crosswindSingleKt: 25 }),
+    );
+  });
+
+  it("says plainly that IFR approach minima are not scored", () => {
+    // The other half of the operator's answer, which we cannot
+    // implement: approach minima are per airport and per procedure and
+    // we hold none. Saying so on the screen beats a number that looks
+    // like an answer.
+    form();
+    expect(
+      screen.getByText(/approach minima are per airport/i),
+    ).toBeInTheDocument();
+  });
+
+  it("treats an unchanged policy as still on the defaults", () => {
+    // The adoption prompt only makes sense while every number is still
+    // shipped — including the five limits, which is why isDefault
+    // covers all eight.
+    form({ adopted_at: null });
+    expect(
+      screen.getByText(/Saving unchanged still records/),
+    ).toBeInTheDocument();
+  });
+
+  it("drops the adoption prompt once a limit is changed", async () => {
+    const user = userEvent.setup();
+    form({ adopted_at: null });
+    const field = screen.getByLabelText(/Multi-engine crosswind/i);
+    await user.clear(field);
+    await user.type(field, "40");
     expect(
       screen.queryByText(/Saving unchanged still records/),
     ).not.toBeInTheDocument();
