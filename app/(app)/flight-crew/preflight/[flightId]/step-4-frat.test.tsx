@@ -1,11 +1,14 @@
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
 vi.mock("./actions", () => ({
   completeStepAction: vi.fn(),
   recordFratAuthorizationAction: vi.fn(),
-  submitFratAction: vi.fn(),
+  submitFratAction: vi.fn(async () => ({ ok: true })),
 }));
+
+import { submitFratAction } from "./actions";
 
 import { FlightRiskAssessmentStep } from "./step-4-frat";
 
@@ -158,5 +161,113 @@ describe("the wind factor's crosswind reference", () => {
     expect(screen.getByText("Wind & gusts")).toBeInTheDocument();
     expect(screen.getByText("Ceiling")).toBeInTheDocument();
     expect(screen.getByText("Visibility")).toBeInTheDocument();
+  });
+});
+
+/**
+ * An untouched FRAT files as LOW with approval "not required".
+ *
+ * Every factor starts at 0, so submitting without touching anything
+ * scores 0 and files a clean-looking record of an assessment nobody
+ * made. Walking the preflight as a pilot on 23 September confirmed it:
+ * "Submit assessment" was enabled with all eighteen sliders at zero.
+ *
+ * Not blocked — the operator asked for a FRAT that takes seconds, and
+ * refusing to submit would fight that. What these cover is that it can
+ * no longer happen *silently*.
+ */
+describe("factors nobody assessed", () => {
+  it("says how many are unassessed before submitting", () => {
+    renderStep({});
+    expect(
+      screen.getByText(/have not been assessed/i),
+    ).toBeInTheDocument();
+  });
+
+  it("asks for confirmation instead of filing silently", async () => {
+    const user = userEvent.setup();
+    renderStep({});
+    await user.click(
+      screen.getByRole("button", { name: /submit assessment/i }),
+    );
+    const dialog = screen.getByRole("alertdialog");
+    expect(dialog).toHaveTextContent(/not assessed/i);
+    // The distinction the copy has to make: zero because nobody
+    // answered, not zero because the risk is zero.
+    expect(dialog).toHaveTextContent(/not because the risk is zero/i);
+  });
+
+  it("offers going back to score them, and going back clears the prompt", async () => {
+    const user = userEvent.setup();
+    renderStep({});
+    await user.click(
+      screen.getByRole("button", { name: /submit assessment/i }),
+    );
+    await user.click(
+      screen.getByRole("button", { name: /go back and score them/i }),
+    );
+    expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /submit assessment/i }),
+    ).toBeInTheDocument();
+  });
+
+  it("records the confirmation in the filed assessment", async () => {
+    // The backend has no field for this yet, so it goes in the
+    // mitigations text where an auditor will see it. Losing the fact
+    // while waiting for a dedicated column would be worse.
+    const user = userEvent.setup();
+    renderStep({});
+    await user.click(
+      screen.getByRole("button", { name: /submit assessment/i }),
+    );
+    await user.click(
+      screen.getByRole("button", { name: /genuinely zero/i }),
+    );
+    const call = vi.mocked(submitFratAction).mock.calls.at(-1);
+    expect(call?.[1].mitigations).toMatch(/confirmed 18 factor/i);
+  });
+
+  it("counts a prefilled factor as assessed", async () => {
+    // A prefilled value the pilot leaves alone is one they have seen
+    // and accepted — which is what showing its provenance is for.
+    renderStep({
+      fratPrefill: {
+        flight_id: "f-1",
+        suggestions: [
+          { factor: "wx_wind", score: 4, source: "33 kt at PANC" },
+          { factor: "wx_ceiling", score: 0, source: "3500 ft" },
+        ],
+        crosswind_limit_kt: 30,
+        near_limit_entry_kt: 20,
+        vfr_min_ceiling_ft: 1000,
+        vfr_min_visibility_sm: 3,
+      },
+    });
+    // 18 factors, 2 of them prefilled — so 16 remain unassessed.
+    expect(screen.getByText("16")).toBeInTheDocument();
+  });
+
+  it("does not count a factor the prefill could not score", () => {
+    // score: null means the system had no input. That is not an
+    // assessment, and treating it as one would restore the silent path.
+    renderStep({
+      fratPrefill: {
+        flight_id: "f-1",
+        suggestions: [
+          {
+            factor: "wx_wind",
+            score: null,
+            source: "company crosswind limit",
+            unavailable_reason: "No wind observation.",
+          },
+        ],
+        crosswind_limit_kt: null,
+        near_limit_entry_kt: null,
+        vfr_min_ceiling_ft: 1000,
+        vfr_min_visibility_sm: 3,
+      },
+    });
+    expect(screen.getByText("18")).toBeInTheDocument();
   });
 });
