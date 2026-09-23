@@ -2,9 +2,14 @@
 
 import { useEffect, useState } from "react";
 
+import {
+  companyCrosswindLimitKt,
+  nearLimitEntryKt,
+} from "@/lib/frat/company-limits";
 import type {
   CurrentDutyResponse,
   FlightDetail,
+  FratThresholdConfigResponse,
   FratAssessmentResponse,
   PilotAcceptanceResponse,
   WeightReturn,
@@ -35,6 +40,12 @@ interface Props {
    *  "data unavailable" state and still lets the pilot ack that
    *  they reviewed weather in their usual source. */
   weather: WeatherBatchResponse | null;
+  /** The operator's own FRAT policy, for the company crosswind limit
+   *  the wind factor is scored against. Null when the settings read
+   *  failed — the wind factor then says the limit is unavailable and
+   *  the pilot scores it by hand, which is what happened before any of
+   *  this existed. */
+  fratConfig: FratThresholdConfigResponse | null;
 }
 
 /**
@@ -60,6 +71,7 @@ export function PreflightShell({
   acceptance,
   weightReturn,
   weather,
+  fratConfig,
 }: Props) {
   const completedNumbers = new Set(
     progress.completed.map((s) => s.step_number),
@@ -144,6 +156,7 @@ export function PreflightShell({
           acceptance={acceptance}
           weightReturn={weightReturn}
           weather={weather}
+          fratConfig={fratConfig}
         />
       )}
 
@@ -269,6 +282,7 @@ function ActiveStep({
   acceptance,
   weightReturn,
   weather,
+  fratConfig,
 }: {
   flightId: string;
   flight: FlightDetail;
@@ -278,6 +292,7 @@ function ActiveStep({
   acceptance: PilotAcceptanceResponse | null;
   weightReturn: WeightReturn | null;
   weather: WeatherBatchResponse | null;
+  fratConfig: FratThresholdConfigResponse | null;
 }) {
   switch (stepNumber) {
     case 1:
@@ -303,7 +318,24 @@ function ActiveStep({
         <FlightRiskAssessmentStep
           flightId={flightId}
           initial={frat}
-          crosswindLimitKt={flight.aircraft.max_demonstrated_crosswind_kt}
+          companyCrosswindLimitKt={
+            fratConfig
+              ? companyCrosswindLimitKt(
+                  fratConfig,
+                  flight.aircraft.engine_count,
+                )
+              : null
+          }
+          nearLimitEntryKt={
+            fratConfig
+              ? nearLimitEntryKt(fratConfig, flight.aircraft.engine_count)
+              : null
+          }
+          demonstratedCrosswindKt={
+            flight.aircraft.max_demonstrated_crosswind_kt
+          }
+          engineCount={flight.aircraft.engine_count}
+          hasCompanyLimits={fratConfig != null}
         />
       );
     case 5:

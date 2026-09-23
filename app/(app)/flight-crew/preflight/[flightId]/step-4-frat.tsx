@@ -21,11 +21,33 @@ interface Props {
    *  When null, render the questionnaire; when present, render the
    *  result + (for EXTREME) the CP/DO authorization sub-form. */
   initial: FratAssessmentResponse | null;
-  /** AFM maximum demonstrated crosswind for the aircraft on this flight,
-   *  in knots. Null or absent means it has not been recorded — the wind
-   *  factor says so rather than implying a number, because the FARs do
-   *  not supply one to fall back on. */
-  crosswindLimitKt?: number | null;
+  /** The operator's own crosswind limit for this aircraft, in knots,
+   *  selected by engine count.
+   *
+   *  This replaced the AFM demonstrated figure on 22 Sep 2026, when the
+   *  operator corrected the premise the wind anchors were built on:
+   *  "demonstrated does not limit us... Our single engine x wind limits
+   *  are 30kts multi engines are 35kts. That's a company limit. And
+   *  many companies operate above the demonstrated limit."
+   *
+   *  Null when the settings read failed or the aircraft's engine count
+   *  is not recorded — either way no limit can be named, and the factor
+   *  says which rather than implying a number. */
+  companyCrosswindLimitKt?: number | null;
+  /** Where "near the limit" begins: the limit less the operator's
+   *  margin. "Within 10 knots of a limit is near." */
+  nearLimitEntryKt?: number | null;
+  /** The AFM figure, shown as context beside the company limit. Worth
+   *  seeing — it is a true fact about the airframe — but it is not what
+   *  the factor is scored against. */
+  demonstratedCrosswindKt?: number | null;
+  /** Which limit applies. Null means unrecorded, which is the reason a
+   *  company limit cannot be named even when one is configured. */
+  engineCount?: number | null;
+  /** False when the operator's FRAT policy could not be read at all,
+   *  which is a different problem from an unrecorded engine count and
+   *  gets a different sentence. */
+  hasCompanyLimits?: boolean;
 }
 
 /**
@@ -337,7 +359,11 @@ const RISK_LABEL: Record<FratRiskLevel, string> = {
 export function FlightRiskAssessmentStep({
   flightId,
   initial,
-  crosswindLimitKt,
+  companyCrosswindLimitKt,
+  nearLimitEntryKt,
+  demonstratedCrosswindKt,
+  engineCount,
+  hasCompanyLimits = true,
 }: Props) {
   // Pilots reach this component in two modes:
   //   1. First-time — no assessment yet, render the questionnaire.
@@ -353,7 +379,11 @@ export function FlightRiskAssessmentStep({
     return (
       <FratQuestionnaire
         flightId={flightId}
-        crosswindLimitKt={crosswindLimitKt}
+        companyCrosswindLimitKt={companyCrosswindLimitKt}
+        nearLimitEntryKt={nearLimitEntryKt}
+        demonstratedCrosswindKt={demonstratedCrosswindKt}
+        engineCount={engineCount}
+        hasCompanyLimits={hasCompanyLimits}
       />
     );
   }
@@ -372,10 +402,18 @@ export function FlightRiskAssessmentStep({
 
 function FratQuestionnaire({
   flightId,
-  crosswindLimitKt,
+  companyCrosswindLimitKt,
+  nearLimitEntryKt,
+  demonstratedCrosswindKt,
+  engineCount,
+  hasCompanyLimits,
 }: {
   flightId: string;
-  crosswindLimitKt?: number | null;
+  companyCrosswindLimitKt?: number | null;
+  nearLimitEntryKt?: number | null;
+  demonstratedCrosswindKt?: number | null;
+  engineCount?: number | null;
+  hasCompanyLimits?: boolean;
 }) {
   const [answers, setAnswers] = useState<Record<string, number>>(() => {
     const init: Record<string, number> = {};
@@ -430,7 +468,11 @@ function FratQuestionnaire({
                 <FactorRow
                   key={f.code}
                   factor={f}
-                  crosswindLimitKt={crosswindLimitKt}
+                  companyCrosswindLimitKt={companyCrosswindLimitKt}
+                  nearLimitEntryKt={nearLimitEntryKt}
+                  demonstratedCrosswindKt={demonstratedCrosswindKt}
+                  engineCount={engineCount}
+                  hasCompanyLimits={hasCompanyLimits}
                   value={answers[f.code]}
                   onChange={(v) =>
                     setAnswers((prev) => ({ ...prev, [f.code]: v }))
@@ -510,12 +552,20 @@ function FactorRow({
   factor,
   value,
   onChange,
-  crosswindLimitKt,
+  companyCrosswindLimitKt,
+  nearLimitEntryKt,
+  demonstratedCrosswindKt,
+  engineCount,
+  hasCompanyLimits,
 }: {
   factor: FratFactor;
   value: number;
   onChange: (v: number) => void;
-  crosswindLimitKt?: number | null;
+  companyCrosswindLimitKt?: number | null;
+  nearLimitEntryKt?: number | null;
+  demonstratedCrosswindKt?: number | null;
+  engineCount?: number | null;
+  hasCompanyLimits?: boolean;
 }) {
   const anchor = anchorFor(factor.anchors, value);
   // Value tone follows the risk palette so pilots can see at a glance
@@ -544,20 +594,44 @@ function FactorRow({
             supply that number from memory while scoring against it. */}
         {factor.code === "wx_wind" ? (
           <p className="mt-0.5 text-[0.65rem] leading-snug">
-            {crosswindLimitKt != null ? (
+            {companyCrosswindLimitKt != null ? (
               <span className="text-foreground">
-                This aircraft:{" "}
+                Company limit:{" "}
                 <span className="font-semibold tabular-nums">
-                  {crosswindLimitKt} kt
+                  {companyCrosswindLimitKt} kt
                 </span>{" "}
                 <span className="text-muted-foreground">
-                  max demonstrated crosswind
+                  {engineCount === 1 ? "single-engine" : "multi-engine"}
+                  {nearLimitEntryKt != null && nearLimitEntryKt > 0 ? (
+                    <>
+                      {" "}
+                      &middot; near from{" "}
+                      <span className="tabular-nums">
+                        {nearLimitEntryKt} kt
+                      </span>
+                    </>
+                  ) : null}
                 </span>
+                {demonstratedCrosswindKt != null ? (
+                  <span className="text-muted-foreground/70">
+                    {" "}
+                    &middot; AFM demonstrated{" "}
+                    <span className="tabular-nums">
+                      {demonstratedCrosswindKt} kt
+                    </span>
+                  </span>
+                ) : null}
+              </span>
+            ) : hasCompanyLimits === false ? (
+              <span className="italic text-status-yellow">
+                Company crosswind limits could not be loaded — score
+                against your GOM limit.
               </span>
             ) : (
               <span className="italic text-status-yellow">
-                Max demonstrated crosswind not recorded for this aircraft —
-                score against the AFM figure.
+                Engine count not recorded for this aircraft, so no company
+                crosswind limit applies to it yet — score against your GOM
+                limit. An admin can set it under Settings &rarr; Fleet.
               </span>
             )}
           </p>

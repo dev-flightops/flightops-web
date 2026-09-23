@@ -22,11 +22,24 @@ export interface AircraftRef {
   airframe_type?: string | null;
   /** AFM maximum demonstrated crosswind component, in knots.
    *
+   *  Context, NOT the number the FRAT scores against. The operator, 22
+   *  Sep 2026: "demonstrated does not limit us... many companies
+   *  operate above the demonstrated limit." What the wind factor reads
+   *  is the company limit on the FRAT config, selected by
+   *  `engine_count`.
+   *
    *  Null means not recorded, not zero. The FARs do not set a crosswind
    *  limit — it comes from the aircraft's own flight manual — so there is
    *  no default to fall back on, and any surface showing this has to say
    *  "not recorded" rather than imply a number nobody entered. */
   max_demonstrated_crosswind_kt?: number | null;
+  /** How many engines, which selects the company crosswind limit —
+   *  30 kt single, 35 kt multi on this operator's numbers.
+   *
+   *  Null means not recorded, and it is never inferred from the model
+   *  name: a wrong engine count picks the wrong limit silently, and the
+   *  FRAT would then score a flight against a number nobody chose. */
+  engine_count?: number | null;
 }
 
 export interface AircraftListItem {
@@ -1223,14 +1236,46 @@ export interface FratThresholdConfigResponse {
   default_medium_entry_score: number;
   default_high_entry_score: number;
   default_extreme_entry_score: number;
+
+  /** Company operating limits — what a single factor is scored
+   *  against, as distinct from the bands above, which score the total.
+   *
+   *  The operator, 22 Sep 2026: "demonstrated does not limit us... Our
+   *  single engine x wind limits are 30kts multi engines are 35kts.
+   *  That's a company limit." So this is the number the wind factor
+   *  reads, not `aircraft.max_demonstrated_crosswind_kt`. */
+  crosswind_single_engine_kt: number;
+  crosswind_multi_engine_kt: number;
+  /** How close to the limit counts as "near": "Within 10 knots of a
+   *  limit is near." */
+  crosswind_near_margin_kt: number;
+  /** "Anything vfr under 1000 ft or 3 miles should be elevated risk."
+   *  An OR — either one alone is enough. */
+  vfr_min_ceiling_ft: number;
+  vfr_min_visibility_sm: number;
+
+  default_crosswind_single_engine_kt: number;
+  default_crosswind_multi_engine_kt: number;
+  default_crosswind_near_margin_kt: number;
+  default_vfr_min_ceiling_ft: number;
+  default_vfr_min_visibility_sm: number;
 }
 
-/** All three together: they are one policy and only mean anything
- *  ordered, so there is no coherent partial update. */
+/** The whole policy at once. The bands only mean anything ordered, and
+ *  the near-margin only means anything against the limits it sits
+ *  under, so there is no coherent partial update — the server requires
+ *  all eight. Sending a subset is a 422, deliberately: an optional
+ *  limit would either reset a tenant's own number to the default or
+ *  push the margin check out of the schema. */
 export interface FratThresholdConfigUpdateRequest {
   medium_entry_score: number;
   high_entry_score: number;
   extreme_entry_score: number;
+  crosswind_single_engine_kt: number;
+  crosswind_multi_engine_kt: number;
+  crosswind_near_margin_kt: number;
+  vfr_min_ceiling_ft: number;
+  vfr_min_visibility_sm: number;
   rationale?: string | null;
 }
 

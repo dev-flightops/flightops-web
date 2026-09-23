@@ -10,8 +10,10 @@ import {
   getWeightReturn,
   getPreflightProgress,
 } from "@/lib/api/ops";
+import { getFratThresholds } from "@/lib/api/auth";
 import { batchWeather } from "@/lib/api/weather";
 import type {
+  FratThresholdConfigResponse,
   CurrentDutyResponse,
   FlightDetail,
   FratAssessmentResponse,
@@ -71,6 +73,7 @@ export default async function PreflightPage({
   let acceptance: PilotAcceptanceResponse | null = null;
   let weightReturn: WeightReturn | null = null;
   let weather: WeatherBatchResponse | null = null;
+  let fratConfig: FratThresholdConfigResponse | null = null;
   let loadError: string | null = null;
 
   try {
@@ -84,6 +87,7 @@ export default async function PreflightPage({
       fratResult,
       acceptanceResult,
       weightReturnResult,
+      fratConfigResult,
     ] = await Promise.all([
         getFlight(flightId),
         getPreflightProgress(flightId),
@@ -102,6 +106,10 @@ export default async function PreflightPage({
         // server-side step-2 gate is what actually enforces this, so a
         // failed read here cannot let an over-weight flight through.
         getWeightReturn(flightId).catch(() => null),
+        // Company operating limits. Best-effort: without them the wind
+        // factor says the limit is unavailable and the pilot scores it
+        // by hand, which is what they did before any of this existed.
+        getFratThresholds().catch(() => null),
       ]);
     flight = flightResult;
     progress = progressResult;
@@ -109,6 +117,7 @@ export default async function PreflightPage({
     frat = fratResult;
     acceptance = acceptanceResult;
     weightReturn = weightReturnResult;
+    fratConfig = fratConfigResult;
     // Step 3 weather — depends on the flight's routing airports, so
     // it fires after the flight fetch. Non-fatal: if the
     // weather-service is unreachable, Step 3 renders the ack
@@ -160,6 +169,7 @@ export default async function PreflightPage({
         acceptance={acceptance}
         weightReturn={weightReturn}
         weather={weather}
+        fratConfig={fratConfig}
       />
     </div>
   );
