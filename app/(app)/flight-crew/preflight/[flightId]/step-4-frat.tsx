@@ -5,6 +5,8 @@ import { useMemo, useState, useTransition } from "react";
 import type {
   FratAssessmentResponse,
   FratAuthorizationKind,
+  FratFactorSuggestion,
+  FratPrefillResponse,
   FratRiskLevel,
 } from "@/lib/api/types";
 import { cn } from "@/lib/utils";
@@ -48,6 +50,11 @@ interface Props {
    *  which is a different problem from an unrecorded engine count and
    *  gets a different sentence. */
   hasCompanyLimits?: boolean;
+  /** Suggested scores for this flight, from data the system already
+   *  holds. Null when the weather was unreachable or the prefill call
+   *  failed, in which case the questionnaire behaves as it always
+   *  did. */
+  fratPrefill?: FratPrefillResponse | null;
 }
 
 /**
@@ -364,6 +371,7 @@ export function FlightRiskAssessmentStep({
   demonstratedCrosswindKt,
   engineCount,
   hasCompanyLimits = true,
+  fratPrefill,
 }: Props) {
   // Pilots reach this component in two modes:
   //   1. First-time — no assessment yet, render the questionnaire.
@@ -384,6 +392,7 @@ export function FlightRiskAssessmentStep({
         demonstratedCrosswindKt={demonstratedCrosswindKt}
         engineCount={engineCount}
         hasCompanyLimits={hasCompanyLimits}
+        fratPrefill={fratPrefill}
       />
     );
   }
@@ -402,6 +411,7 @@ export function FlightRiskAssessmentStep({
 
 function FratQuestionnaire({
   flightId,
+  fratPrefill,
   companyCrosswindLimitKt,
   nearLimitEntryKt,
   demonstratedCrosswindKt,
@@ -409,16 +419,35 @@ function FratQuestionnaire({
   hasCompanyLimits,
 }: {
   flightId: string;
+  fratPrefill?: FratPrefillResponse | null;
   companyCrosswindLimitKt?: number | null;
   nearLimitEntryKt?: number | null;
   demonstratedCrosswindKt?: number | null;
   engineCount?: number | null;
   hasCompanyLimits?: boolean;
 }) {
+  /** Suggestions keyed by factor, for seeding and for the provenance
+   *  line under each one. */
+  const suggested = new Map(
+    (fratPrefill?.suggestions ?? []).map((s) => [s.factor, s]),
+  );
+
   const [answers, setAnswers] = useState<Record<string, number>>(() => {
     const init: Record<string, number> = {};
     for (const group of FACTOR_GROUPS)
-      for (const f of group.factors) init[f.code] = 0;
+      for (const f of group.factors) {
+        // Seeded from the prefill where there is one, 0 otherwise.
+        //
+        // Note what this does NOT fix: a factor with no suggestion
+        // still starts at 0, and a pilot can still submit the form
+        // untouched. Prefilling makes the fast path accurate for the
+        // factors the system knows; it does not stop an unscored
+        // submission, which is a separate change.
+        const hint = (fratPrefill?.suggestions ?? []).find(
+          (x) => x.factor === f.code,
+        );
+        init[f.code] = hint?.score ?? 0;
+      }
     return init;
   });
   const [mitigations, setMitigations] = useState("");
@@ -468,6 +497,7 @@ function FratQuestionnaire({
                 <FactorRow
                   key={f.code}
                   factor={f}
+                  suggestion={suggested.get(f.code)}
                   companyCrosswindLimitKt={companyCrosswindLimitKt}
                   nearLimitEntryKt={nearLimitEntryKt}
                   demonstratedCrosswindKt={demonstratedCrosswindKt}
@@ -552,6 +582,7 @@ function FactorRow({
   factor,
   value,
   onChange,
+  suggestion,
   companyCrosswindLimitKt,
   nearLimitEntryKt,
   demonstratedCrosswindKt,
@@ -561,6 +592,7 @@ function FactorRow({
   factor: FratFactor;
   value: number;
   onChange: (v: number) => void;
+  suggestion?: FratFactorSuggestion;
   companyCrosswindLimitKt?: number | null;
   nearLimitEntryKt?: number | null;
   demonstratedCrosswindKt?: number | null;
@@ -592,6 +624,35 @@ function FactorRow({
         {/* The wind anchors are written in terms of "the aircraft's
             crosswind limit". Until this was stored, the pilot had to
             supply that number from memory while scoring against it. */}
+        {/* Where a prefilled number came from.
+            A suggested score with no provenance is worse than an empty
+            field: it looks authoritative and the pilot cannot check
+            it. So every seeded factor says what it was derived from,
+            and a factor the system could not score says which input
+            was missing rather than sitting silently at 0. */}
+        {suggestion ? (
+          <p
+            className={cn(
+              "mt-0.5 text-[0.65rem] leading-snug",
+              suggestion.score != null
+                ? "text-status-blue"
+                : "text-status-yellow",
+            )}
+          >
+            {suggestion.score != null ? (
+              <>
+                Prefilled from{" "}
+                <span className="text-muted-foreground">
+                  {suggestion.source}
+                </span>
+                . Change it if you disagree.
+              </>
+            ) : (
+              <>Not prefilled — {suggestion.unavailable_reason}</>
+            )}
+          </p>
+        ) : null}
+
         {factor.code === "wx_wind" ? (
           <p className="mt-0.5 text-[0.65rem] leading-snug">
             {companyCrosswindLimitKt != null ? (

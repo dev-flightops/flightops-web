@@ -5,14 +5,20 @@ import { ApiError } from "@/lib/api/client";
 import {
   getCurrentDuty,
   getFlight,
+  getFratPrefill,
   getLatestFratAssessment,
   getLatestPilotAcceptance,
   getWeightReturn,
   getPreflightProgress,
 } from "@/lib/api/ops";
 import { getFratThresholds } from "@/lib/api/auth";
+import {
+  isIfrPlanned,
+  observationsFromWeather,
+} from "@/lib/frat/observations";
 import { batchWeather } from "@/lib/api/weather";
 import type {
+  FratPrefillResponse,
   FratThresholdConfigResponse,
   CurrentDutyResponse,
   FlightDetail,
@@ -74,6 +80,7 @@ export default async function PreflightPage({
   let weightReturn: WeightReturn | null = null;
   let weather: WeatherBatchResponse | null = null;
   let fratConfig: FratThresholdConfigResponse | null = null;
+  let fratPrefill: FratPrefillResponse | null = null;
   let loadError: string | null = null;
 
   try {
@@ -131,6 +138,19 @@ export default async function PreflightPage({
         { icao, kind: "taf" as const },
       ]);
       weather = await batchWeather(reqs).catch(() => null);
+
+      // The FRAT prefill needs the observations, so it follows the
+      // weather rather than joining the fan-out above. Best-effort: a
+      // failure means step 4 renders the questionnaire as it always
+      // did, with nothing prefilled, which is the status quo rather
+      // than a regression.
+      const observations = observationsFromWeather(weather);
+      if (observations.length > 0) {
+        fratPrefill = await getFratPrefill(flightId, {
+          observations,
+          is_ifr: isIfrPlanned(),
+        }).catch(() => null);
+      }
     }
   } catch (err) {
     if (err instanceof ApiError && err.status === 404) {
@@ -170,6 +190,7 @@ export default async function PreflightPage({
         weightReturn={weightReturn}
         weather={weather}
         fratConfig={fratConfig}
+        fratPrefill={fratPrefill}
       />
     </div>
   );
