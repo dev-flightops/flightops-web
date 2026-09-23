@@ -9,6 +9,7 @@ import {
 import type {
   CurrentDutyResponse,
   FlightDetail,
+  FratPrefillResponse,
   FratThresholdConfigResponse,
   FratAssessmentResponse,
   PilotAcceptanceResponse,
@@ -46,6 +47,11 @@ interface Props {
    *  the pilot scores it by hand, which is what happened before any of
    *  this existed. */
   fratConfig: FratThresholdConfigResponse | null;
+  /** Suggested factor scores for step 4, from data the system already
+   *  holds. Null when the weather was unreachable or the prefill call
+   *  failed — step 4 then renders the questionnaire as it always did,
+   *  which is the status quo rather than a regression. */
+  fratPrefill: FratPrefillResponse | null;
 }
 
 /**
@@ -72,6 +78,7 @@ export function PreflightShell({
   weightReturn,
   weather,
   fratConfig,
+  fratPrefill,
 }: Props) {
   const completedNumbers = new Set(
     progress.completed.map((s) => s.step_number),
@@ -157,6 +164,7 @@ export function PreflightShell({
           weightReturn={weightReturn}
           weather={weather}
           fratConfig={fratConfig}
+          fratPrefill={fratPrefill}
         />
       )}
 
@@ -283,6 +291,7 @@ function ActiveStep({
   weightReturn,
   weather,
   fratConfig,
+  fratPrefill,
 }: {
   flightId: string;
   flight: FlightDetail;
@@ -293,6 +302,7 @@ function ActiveStep({
   weightReturn: WeightReturn | null;
   weather: WeatherBatchResponse | null;
   fratConfig: FratThresholdConfigResponse | null;
+  fratPrefill: FratPrefillResponse | null;
 }) {
   switch (stepNumber) {
     case 1:
@@ -336,6 +346,7 @@ function ActiveStep({
           }
           engineCount={flight.aircraft.engine_count}
           hasCompanyLimits={fratConfig != null}
+          fratPrefill={fratPrefill}
         />
       );
     case 5:

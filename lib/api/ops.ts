@@ -39,6 +39,8 @@ import type {
   FlightStats,
   FlightStatus,
   FratAssessmentResponse,
+  FratPrefillRequest,
+  FratPrefillResponse,
   FratAuthorizeRequest,
   FratSubmitRequest,
   LogCompletionRequest,
@@ -487,6 +489,19 @@ export async function getLatestFratAssessment(
   flightId: string,
 ): Promise<FratAssessmentResponse> {
   return apiFetch<FratAssessmentResponse>(`/ops/frat/${flightId}/latest`);
+}
+
+/** Suggested factor scores for a flight, from data the system already
+ *  holds. A POST because the caller sends the observations — see
+ *  FratObservation. Writes nothing. */
+export async function getFratPrefill(
+  flightId: string,
+  body: FratPrefillRequest,
+): Promise<FratPrefillResponse> {
+  return apiFetch<FratPrefillResponse>(`/ops/frat/${flightId}/prefill`, {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
 }
 
 export async function recordFratAuthorization(

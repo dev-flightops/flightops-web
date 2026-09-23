@@ -2087,3 +2087,50 @@ export interface DisqualificationListResponse {
   items: DisqualificationResponse[];
   open_count: number;
 }
+
+/** One routing airport's observation, sent to the FRAT prefill.
+ *
+ *  The caller supplies these because the web layer is the only place
+ *  the data meets: ops-service makes no cross-service calls, the METAR
+ *  comes from weather-service, and the operator's limits live on
+ *  ops-service. So the browser sends what it saw and the backend
+ *  applies the rules — which keeps the thresholds in one place instead
+ *  of a second copy here that would drift. */
+export interface FratObservation {
+  icao: string;
+  /** Null for a clear sky, which is an unlimited ceiling rather than a
+   *  missing value. */
+  ceiling_ft?: number | null;
+  visibility_sm?: number | null;
+  wind_kt?: number | null;
+  gust_kt?: number | null;
+}
+
+export interface FratPrefillRequest {
+  observations: FratObservation[];
+  /** IFR flights get no weather suggestion: the operator's rule is
+   *  "below approach mins" and approach minima are per airport and per
+   *  procedure from their ops specs, which the system does not hold. */
+  is_ifr?: boolean;
+}
+
+/** One suggested score, and where it came from.
+ *
+ *  `score` is null when no suggestion could be made, with
+ *  `unavailable_reason` naming the missing input. It is never 0 for a
+ *  missing input — 0 is a real answer meaning "no risk". */
+export interface FratFactorSuggestion {
+  factor: string;
+  score: number | null;
+  source: string;
+  unavailable_reason?: string | null;
+}
+
+export interface FratPrefillResponse {
+  flight_id: string;
+  suggestions: FratFactorSuggestion[];
+  crosswind_limit_kt: number | null;
+  near_limit_entry_kt: number | null;
+  vfr_min_ceiling_ft: number;
+  vfr_min_visibility_sm: number;
+}
