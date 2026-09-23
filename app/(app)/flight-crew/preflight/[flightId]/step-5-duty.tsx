@@ -1,10 +1,12 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
 import type { CurrentDutyResponse } from "@/lib/api/types";
 import { cn } from "@/lib/utils";
 
+import { clockInAction } from "../../actions";
 import { completeStepAction } from "./actions";
 
 interface Props {
@@ -18,10 +20,19 @@ interface Props {
  * Reads the already-live /ops/duty/current — no new backend. Surfaces
  * the same warning math the dispatcher sees on the packet:
  *
- *   - If pilot is NOT clocked in: shows "Clock in first" callout +
- *     a link back to /flight-crew/ to use the Duty In hero button
- *     (we can't duplicate the duty button here without a separate
- *     refresh flow).
+ *   - If pilot is NOT clocked in: a Duty In button, here on the step.
+ *
+ *     This used to be a link to /flight-crew plus "then refresh this
+ *     page to continue", on the stated grounds that "we can't duplicate
+ *     the duty button here without a separate refresh flow". Walking
+ *     the sequence on 23 Sep showed what that cost: step 5 is a dead
+ *     stop in the middle of a preflight that sends the pilot to another
+ *     page and asks them to reload. Both halves of the instruction were
+ *     also wrong by then — the top bar's Clock In works from this
+ *     screen, and the step updates itself when it succeeds.
+ *
+ *     router.refresh() is the separate refresh flow, and it is one
+ *     line. The pilot clocks in without leaving the step.
  *   - If clocked in with no warnings: green check + Continue.
  *   - If clocked in but warnings[] is non-empty: render each warning
  *     + require a rest_acknowledged checkbox before Continue.
@@ -38,6 +49,31 @@ export function DutyInConfirmStep({ flightId, duty }: Props) {
   const [acknowledged, setAcknowledged] = useState(false);
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+
+  const router = useRouter();
+  const [clockingIn, setClockingIn] = useState(false);
+  const [clockInError, setClockInError] = useState<string | null>(null);
+
+  /** Clock in from the step, then re-render it with the open period.
+   *
+   *  clockInAction revalidates /flight-crew, not this route, so the
+   *  refresh is what brings the new duty state back here. That gap is
+   *  the whole reason the step used to tell the pilot to reload. */
+  const handleClockIn = () => {
+    setClockInError(null);
+    setClockingIn(true);
+    startTransition(async () => {
+      const result = await clockInAction();
+      setClockingIn(false);
+      if (result.ok) {
+        router.refresh();
+      } else {
+        // DutyActionResult.error is optional; a failure with no message
+        // still has to say something rather than render blank.
+        setClockInError(result.error ?? "Couldn't clock in. Try again.");
+      }
+    });
+  };
 
   const canSubmit =
     isClockedIn && (!hasWarnings || acknowledged) && !pending;
@@ -78,16 +114,27 @@ export function DutyInConfirmStep({ flightId, duty }: Props) {
               Not clocked in
             </p>
             <p className="mt-1 text-foreground">
-              Tap{" "}
-              <a
-                href="/flight-crew"
-                className="font-semibold text-status-blue hover:underline"
-              >
-                DUTY IN
-              </a>{" "}
-              on the Flight Crew home page first, then refresh this page to
-              continue.
+              A duty period has to be open before this leg can be
+              signed off — it is what the 135.267 limits are measured
+              against.
             </p>
+            <button
+              type="button"
+              onClick={handleClockIn}
+              disabled={clockingIn}
+              className="mt-2.5 rounded-md bg-status-blue px-3 py-1.5 text-xs font-semibold text-white hover:brightness-110 disabled:opacity-50"
+            >
+              {clockingIn ? "Clocking in…" : "Duty in"}
+            </button>
+            {/* No role="alert" of its own — the callout around it is
+                already one, and nesting two makes the page announce
+                twice and breaks getByRole("alert") for anything trying
+                to read a single message. */}
+            {clockInError ? (
+              <p className="mt-2 font-semibold text-foreground">
+                {clockInError}
+              </p>
+            ) : null}
           </div>
         ) : (
           <>

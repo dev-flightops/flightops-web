@@ -132,7 +132,7 @@ export function PreflightShell({
       )}
 
       {editingStep === null && allDone ? (
-        <AllDonePanel flightId={flight.id} />
+        <AllDonePanel flight={flight} />
       ) : (
         <ActiveStep
           key={`step-${activeSlotStep}`}
@@ -409,7 +409,12 @@ function CompletedSummary({
   );
 }
 
-function AllDonePanel({ flightId }: { flightId: string }) {
+function AllDonePanel({ flight }: { flight: FlightDetail }) {
+  const {
+    flight_number: flightNumber,
+    origin,
+    destination,
+  } = flight;
   return (
     <section className="rounded-xl border border-status-green/40 bg-status-green/10 px-5 py-8 text-center">
       <CheckBigIcon />
@@ -421,7 +426,20 @@ function AllDonePanel({ flightId }: { flightId: string }) {
         post-flight log are managed from the flight following + electronic
         flight log surfaces once you're airborne / landed.
       </p>
-      <p className="mt-4 text-xs text-muted-foreground">Flight ID {flightId}</p>
+      {/* The flight, not its primary key. This printed the raw UUID at
+          a pilot who has just finished a preflight — it identifies
+          nothing they recognise and nothing they could read back over a
+          radio. The flight number and route are what the leg is called
+          everywhere else in the app. */}
+      <p className="mt-4 text-xs text-muted-foreground">
+        <span className="font-mono font-semibold text-foreground">
+          {flightNumber}
+        </span>
+        {" · "}
+        <span className="font-mono">
+          {origin} → {destination}
+        </span>
+      </p>
     </section>
   );
 }

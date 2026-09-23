@@ -50,6 +50,27 @@ export function AcceptOrDenyStep({ flightId, initial }: Props) {
   const isAccepted = latest?.accepted === true;
   const isDenied = latest && latest.accepted === false;
 
+  /** Complete step 6 against an acceptance that is already recorded.
+   *
+   *  Used by the normal accept path and by the Continue button on the
+   *  accepted panel, which is what recovers a half-written accept. */
+  const advanceAfterAccept = (acceptance = latest) => {
+    if (!acceptance) return;
+    setError(null);
+    startTransition(async () => {
+      const stepResult = await completeStepAction(flightId, 6, {
+        acceptance_id: acceptance.id,
+        accepted_at: acceptance.created_at,
+      });
+      if (!stepResult.ok) {
+        setError(
+          stepResult.error ??
+            "Couldn't record this step. Try Continue again.",
+        );
+      }
+    });
+  };
+
   const submit = (accepted: boolean, reason?: string) => {
     setError(null);
     startTransition(async () => {
@@ -70,7 +91,12 @@ export function AcceptOrDenyStep({ flightId, initial }: Props) {
           accepted_at: result.acceptance.created_at,
         });
         if (!stepResult.ok) {
-          setError(stepResult.error ?? "Recorded accept but couldn't advance step — refresh.");
+          // Not "refresh": refreshing lands back on the accepted panel.
+          // Continue there retries this same write.
+          setError(
+            stepResult.error ??
+              "Your accept is recorded but the step didn't advance. Press Continue to finish it.",
+          );
         }
       } else {
         setMode("choose");
@@ -103,6 +129,35 @@ export function AcceptOrDenyStep({ flightId, initial }: Props) {
               Logged at {formatUtcDate(latest!.created_at)}. Dispatcher has
               been notified.
             </p>
+            {/* Recovery for a half-written accept, and the only way out
+                of it.
+
+                Accepting is two writes that are not atomic: record the
+                acceptance, then complete step 6. If the second fails —
+                a blip, a 500, a session expiring in between — the
+                acceptance exists and the step does not, and the code
+                said "Recorded accept but couldn't advance step —
+                refresh." Refreshing cannot fix it: on reload the
+                acceptance is found, this accepted panel renders, and
+                before this button there was nothing on it to press. No
+                Continue, no retry, no Edit (step 6 was never completed,
+                so it never appeared in the completed list). The
+                preflight was bricked and the advice was the one thing
+                that does not work.
+
+                Reaching this panel as the ACTIVE step means step 6 is
+                not complete — the shell would render step 7 otherwise —
+                so the button is always the right thing to offer here.
+                In the normal flow accepting advances on its own and
+                this is never seen. */}
+            <button
+              type="button"
+              onClick={() => advanceAfterAccept()}
+              disabled={pending}
+              className="mt-2.5 rounded-md bg-status-blue px-3 py-1.5 text-xs font-semibold text-white hover:brightness-110 disabled:opacity-50"
+            >
+              {pending ? "Recording…" : "Continue to Step 7 →"}
+            </button>
           </div>
         )}
 
