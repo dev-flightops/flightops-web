@@ -7,10 +7,30 @@ interface Props {
 }
 
 /**
- * "My Flights today" panel (Spec 4 §"Page layout / My Flights today").
+ * "My Flights" panel (Spec 4 §"Page layout / My Flights today").
  *
- * One card per flight: flight number, route, aircraft, scheduled
- * departure (UTC short), status badge, Begin Preflight CTA.
+ * One card per flight: flight number, route, aircraft, the date and
+ * scheduled times in UTC, status badge, Begin Preflight CTA.
+ *
+ * WHY EVERY CARD CARRIES A DATE, AND WHY NOTHING SAYS "TODAY"
+ *
+ * The page used to ask the server for one UTC day and call it today.
+ * The server cannot know the viewer's time zone, so that day is wrong
+ * for anybody off UTC — at 16:00 in Alaska it is already tomorrow in
+ * UTC, which hid a pilot's own evening flight behind "You're not
+ * rostered on any flights today" with no other route to a preflight on
+ * the page. Same fault as the fleet-board calendar arrows on 8/24: a
+ * point in time used as a calendar date across a zone boundary.
+ *
+ * The page now fetches a three-UTC-day window, and this panel does no
+ * calendar arithmetic at all — it lists what it was given, in time
+ * order, with each card's date on it. Re-deriving a local "today" here
+ * would put the same class of bug back, one layer down, and would make
+ * this component's server and client renders disagree.
+ *
+ * So a pilot reads dates instead of being told which day is theirs.
+ * Spec 4's heading said "today"; showing them their next flights and
+ * letting them see when is the same intent without the guess.
  *
  * Status badges in M2 reuse the existing flight status enum
  * (`scheduled` / `released` / etc.); Spec 4's preflight-job-flow status
@@ -25,7 +45,7 @@ export function TodayFlightsPanel({ flights }: Props) {
     // rather than assume the page is broken.
     return (
       <div className="rounded-xl border border-dashed border-border bg-card/50 px-5 py-8 text-center text-sm text-muted-foreground">
-        You&apos;re not rostered on any flights today.{" "}
+        You&apos;re not rostered on any flights just now.{" "}
         <span className="block pt-1 text-xs">
           If you&apos;re expecting to fly, check with dispatch — or{" "}
           <Link
@@ -75,7 +95,13 @@ function FlightCard({ flight }: { flight: FlightListItem }) {
             </span>
           </div>
           <div className="mt-1 text-[0.7rem] text-muted-foreground">
-            ETD {formatUtcTime(flight.scheduled_departure_at)}
+            {/* The date is not decoration. Without it a pilot looking
+                at two cards cannot tell which one is tonight. */}
+            <span className="font-semibold text-foreground/80">
+              {formatUtcDate(flight.scheduled_departure_at)}
+            </span>
+            {" · ETD "}
+            {formatUtcTime(flight.scheduled_departure_at)}
             {" · ETA "}
             {formatUtcTime(flight.scheduled_arrival_at)}
           </div>
@@ -126,4 +152,14 @@ function StatusBadge({ status }: { status: string }) {
 function formatUtcTime(iso: string): string {
   // 14:25Z shape — matches the dispatch + flight-following convention.
   return `${iso.slice(11, 16)}Z`;
+}
+
+function formatUtcDate(iso: string): string {
+  // Sliced out of the ISO string rather than parsed through Date.
+  // new Date(iso).toLocaleDateString() would re-introduce exactly the
+  // bug this panel exists to avoid: it renders in the server's zone on
+  // the server and the browser's on the client, so the two disagree and
+  // the date shifts under the reader on hydration. The times beside it
+  // are already UTC and marked Z; the date matches them.
+  return `${iso.slice(5, 7)}-${iso.slice(8, 10)}`;
 }

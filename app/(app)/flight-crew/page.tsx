@@ -34,8 +34,11 @@ const DUTY_OFFLINE_DEFAULT: CurrentDutyResponse = {
  *   5. Quick links footer — My Flight History, My Duty History, etc.
  *
  * Where the data comes from:
- *   - Today's flights: `listFlights({ onDate: today, assignedToMe: true })`
- *     — the flights this pilot is actually rostered on.
+ *   - Flights: `listFlights({ onDate, assignedToMe: true })` over a
+ *     three-UTC-day window — the flights this pilot is actually
+ *     rostered on. Three days because the server's UTC date is not the
+ *     viewer's calendar day, and a single `onDate` hid a pilot's own
+ *     evening flight from them; see the note at the fetch.
  *
  *     This panel used to pass no filter and show every flight in the
  *     tenant, because there was nothing to filter on: `flights` did not
@@ -66,21 +69,53 @@ export default async function FlightCrewPage() {
   let duty: CurrentDutyResponse = DUTY_OFFLINE_DEFAULT;
 
   try {
-    const today = new Date().toISOString().slice(0, 10);
-    // Fetch in parallel: today's flights + current duty state. Duty
-    // failure degrades the button to its default off-duty shape rather
-    // than blocking the whole page.
-    const [flightsResult, dutyResult] = await Promise.all([
-      listFlights({
-        onDate: today,
-        status: ["scheduled", "released"],
-        assignedToMe: true,
-        limit: 50,
-      }),
+    // Three UTC days, not one, and the browser decides which of them
+    // is "today".
+    //
+    // This used to be `onDate: new Date().toISOString().slice(0, 10)`,
+    // which is the server's UTC date. The server cannot know the
+    // viewer's time zone, so that date is wrong for anybody not on UTC
+    // — and wrong in the direction that hides work. At 16:00 in
+    // Alaska it is already tomorrow in UTC, so a pilot's evening flight
+    // dropped off the page and the next day's appeared a day early,
+    // with "You're not rostered on any flights today" in between and no
+    // other route to a preflight anywhere on the page.
+    //
+    // Same fault as the fleet-board calendar arrows reported on 8/24,
+    // for the same reason: a point in time used as a calendar date
+    // across a time-zone boundary.
+    //
+    // A three-day window brackets every offset from UTC-12 to UTC+14,
+    // so whatever the viewer's local day is, it is inside these
+    // results. Grouping happens in TodayFlightsPanel, in the browser,
+    // where the local day is actually known.
+    const utcDayOffsets = [-1, 0, 1];
+    const windowDates = utcDayOffsets.map((offset) => {
+      const d = new Date();
+      d.setUTCDate(d.getUTCDate() + offset);
+      return d.toISOString().slice(0, 10);
+    });
+
+    // Duty failure degrades the button to its default off-duty shape
+    // rather than blocking the whole page.
+    const [dutyResult, ...dayResults] = await Promise.all([
       getCurrentDuty().catch(() => DUTY_OFFLINE_DEFAULT),
+      ...windowDates.map((onDate) =>
+        listFlights({
+          onDate,
+          status: ["scheduled", "released"],
+          assignedToMe: true,
+          limit: 50,
+        }),
+      ),
     ]);
-    // Sort by ETD ascending per Spec 4.
-    flights = [...flightsResult.items].sort((a, b) =>
+    // Sort by ETD ascending per Spec 4. De-duplicated by id: a flight
+    // cannot appear on two UTC days, but a retry or an overlapping
+    // window should not be able to double a card either.
+    const byId = new Map(
+      dayResults.flatMap((r) => r.items).map((f) => [f.id, f]),
+    );
+    flights = [...byId.values()].sort((a, b) =>
       a.scheduled_departure_at.localeCompare(b.scheduled_departure_at),
     );
     duty = dutyResult;
@@ -90,7 +125,7 @@ export default async function FlightCrewPage() {
     } else if (err instanceof ApiError && err.status === 403) {
       unauthorized = true;
     } else {
-      loadError = "Today's schedule isn't reachable. Try refreshing.";
+      loadError = "Your schedule isn't reachable. Try refreshing.";
     }
   }
 
@@ -116,7 +151,7 @@ export default async function FlightCrewPage() {
       <section className="mb-8">
         <div className="mb-3 flex items-baseline justify-between">
           <h2 className="text-xs font-bold uppercase tracking-[0.08em] text-muted-foreground">
-            My Flights today
+            My Flights
           </h2>
           <Link
             href="/flight-crew/elog"
