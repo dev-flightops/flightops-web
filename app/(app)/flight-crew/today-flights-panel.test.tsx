@@ -46,7 +46,9 @@ describe("TodayFlightsPanel", () => {
     // get silently, because a pilot who IS expected to fly should ring
     // dispatch rather than assume the page is broken.
     const { container } = render(<TodayFlightsPanel flights={[]} />);
-    expect(screen.getByText(/not rostered on any flights today/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/not rostered on any flights just now/i),
+    ).toBeInTheDocument();
     expect(screen.getByText(/check with dispatch/i)).toBeInTheDocument();
     expect(container.textContent).not.toMatch(/no flights (today|scheduled)/i);
   });
@@ -71,5 +73,54 @@ describe("TodayFlightsPanel", () => {
       />,
     );
     expect(screen.getAllByRole("link", { name: /Begin Preflight/i })).toHaveLength(2);
+  });
+});
+
+/**
+ * The time-zone fault this panel was changed to avoid.
+ *
+ * The page asked the server for one UTC day and called it today. At
+ * 16:00 in Alaska it is already tomorrow in UTC, so a pilot's own
+ * evening flight vanished behind "not rostered on any flights today"
+ * and the page offered no other way to reach a preflight. Same fault as
+ * the fleet-board calendar arrows on 8/24.
+ *
+ * The panel's half of the fix is to do no calendar arithmetic: list
+ * what it was given, in order, with each card's date on it.
+ */
+describe("dates on the cards", () => {
+  it("puts a date on every card", () => {
+    // Without it, two cards are indistinguishable as to which is
+    // tonight's flight.
+    render(<TodayFlightsPanel flights={[flight()]} />);
+    expect(screen.getByText("08-21")).toBeInTheDocument();
+  });
+
+  it("takes the date from the ISO string rather than a local render", () => {
+    // 23:30Z on the 1st is still the 2nd in UTC+1 and the 1st in
+    // Alaska. Slicing the ISO string keeps the date matched to the Z
+    // times beside it, and keeps the server and client renders the
+    // same — parsing through Date would shift it under the reader on
+    // hydration.
+    render(
+      <TodayFlightsPanel
+        flights={[
+          flight({
+            scheduled_departure_at: "2026-06-01T23:30:00Z",
+            scheduled_arrival_at: "2026-06-02T01:00:00Z",
+          }),
+        ]}
+      />,
+    );
+    expect(screen.getByText("06-01")).toBeInTheDocument();
+    expect(screen.getByText(/ETD 23:30Z/)).toBeInTheDocument();
+  });
+
+  it("says nothing about which day is today", () => {
+    // The panel cannot know, and saying so wrongly is what hid a
+    // pilot's flight from them.
+    const { container } = render(<TodayFlightsPanel flights={[flight()]} />);
+    expect(container.textContent).not.toMatch(/\btoday\b/i);
+    expect(container.textContent).not.toMatch(/\btomorrow\b/i);
   });
 });

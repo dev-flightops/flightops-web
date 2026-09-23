@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 
 import type { FlightDetail, WeightReturn } from "@/lib/api/types";
+import { payloadAllowance } from "@/lib/preflight/payload-allowance";
 
 import { completeStepAction, returnFlightOverWeightAction } from "./actions";
 
@@ -39,6 +40,13 @@ type Verdict = "within" | "over";
  * pilot runs the numbers and records the verdict.
  */
 export function WeightAndBalanceStep({ flightId, flight, openReturn }: Props) {
+  // What the operator's payload limit leaves for passengers, once the
+  // cargo is off it. Null when the aircraft has no recorded limit.
+  const allowance = payloadAllowance({
+    maxPayloadLbs: flight.max_payload_lbs,
+    paxCount: flight.pax_count,
+    cargoLbs: flight.cargo_lbs,
+  });
   const [verdict, setVerdict] = useState<Verdict | null>(
     openReturn ? "over" : null,
   );
@@ -118,6 +126,53 @@ export function WeightAndBalanceStep({ flightId, flight, openReturn }: Props) {
               value={`${(flight.cargo_lbs ?? 0).toLocaleString()} lbs`}
             />
           </dl>
+
+          {/* The arithmetic, done. These four numbers were shown and
+              the pilot was left to combine them on a ramp. What is NOT
+              done is totalling the load: that needs a weight per
+              passenger, and the only honest sources are a manifest
+              (none on most flights) or the operator's standard weight
+              from their ops specs (which we do not hold). Inventing
+              190 lb inside a weight-and-balance decision is the trade
+              the manifest model already refuses — "default weights are
+              legacy behavior we skip in favor of explicit-only". */}
+          {allowance ? (
+            <p className="mt-3 border-t border-border pt-2 text-[0.7rem] leading-relaxed">
+              {allowance.cargoAloneExceedsPayload ? (
+                <span className="text-status-red">
+                  Cargo alone is{" "}
+                  <span className="font-semibold tabular-nums">
+                    {Math.abs(allowance.remainingForPaxLbs).toLocaleString()} lbs
+                  </span>{" "}
+                  over the payload, before any passengers.
+                </span>
+              ) : (
+                <span className="text-muted-foreground">
+                  Leaves{" "}
+                  <span className="font-semibold tabular-nums text-foreground">
+                    {allowance.remainingForPaxLbs.toLocaleString()} lbs
+                  </span>{" "}
+                  for passengers
+                  {allowance.perPassengerLbs != null ? (
+                    <>
+                      {" — "}
+                      <span className="font-semibold tabular-nums text-foreground">
+                        {allowance.perPassengerLbs} lbs
+                      </span>{" "}
+                      average each across {flight.pax_count}.
+                    </>
+                  ) : (
+                    "."
+                  )}{" "}
+                  <span className="text-muted-foreground/70">
+                    Actual weights come from the manifest or your
+                    loading schedule — this is what your payload limit
+                    leaves room for, not a verdict.
+                  </span>
+                </span>
+              )}
+            </p>
+          ) : null}
         </div>
 
         {returned ? (
