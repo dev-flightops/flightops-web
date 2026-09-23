@@ -451,6 +451,11 @@ function FratQuestionnaire({
     return init;
   });
   const [mitigations, setMitigations] = useState("");
+  /** Factors the pilot has moved. Distinct from "not zero": moving a
+   *  slider to 0 deliberately is an assessment, and leaving it at 0
+   *  untouched is not. */
+  const [touched, setTouched] = useState<Set<string>>(new Set());
+  const [confirming, setConfirming] = useState(false);
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
@@ -460,15 +465,68 @@ function FratQuestionnaire({
   );
   const risk = scoreToRiskLevel(total);
 
-  const handleSubmit = () => {
+  /**
+   * Factors sitting at 0 that nobody has actually assessed.
+   *
+   * Every factor starts at 0, so an untouched form scores 0 and files
+   * as LOW with approval "not required". Walking the preflight on 23
+   * September confirmed a pilot can submit all eighteen that way: the
+   * fast path was an unscored assessment that looked scored, and
+   * nothing on the screen said so.
+   *
+   * A factor counts as assessed if the pilot moved it, or if the
+   * prefill scored it — a prefilled value the pilot leaves alone is
+   * one they have seen and accepted, which is the whole point of
+   * showing its provenance. What is left is the set nobody has
+   * answered, and 0 is being read as their answer.
+   *
+   * Prefilling shrinks this set; it does not empty it. Seven more
+   * factors are auto-fillable and eight are not, so this stays
+   * relevant even when the prefill is finished.
+   */
+  const unassessed = FACTOR_GROUPS.flatMap((g) => g.factors)
+    .map((f) => f.code)
+    .filter(
+      (code) =>
+        answers[code] === 0 &&
+        !touched.has(code) &&
+        suggested.get(code)?.score == null,
+    );
+
+  const submit = (affirmed: boolean) => {
     setError(null);
+    setConfirming(false);
     startTransition(async () => {
       const result = await submitFratAction(flightId, {
         answers,
-        mitigations: mitigations.trim() || undefined,
+        mitigations:
+          [
+            mitigations.trim(),
+            // Recorded in the pilot's own words on the assessment,
+            // because the backend has nowhere else to put it yet. A
+            // dedicated field is the follow-up; losing the fact
+            // entirely while waiting for one would be worse.
+            affirmed && unassessed.length > 0
+              ? `Pilot confirmed ${unassessed.length} factor(s) as genuinely zero: ${unassessed.join(", ")}.`
+              : "",
+          ]
+            .filter(Boolean)
+            .join(" ") || undefined,
       });
       if (!result.ok) setError(result.error);
     });
+  };
+
+  const handleSubmit = () => {
+    // Not a block. The operator asked for a FRAT that takes seconds,
+    // and refusing to submit would fight that. What it stops is doing
+    // it *silently*: the count is named, and confirming turns a
+    // default into a deliberate answer.
+    if (unassessed.length > 0) {
+      setConfirming(true);
+      return;
+    }
+    submit(false);
   };
 
   return (
@@ -504,9 +562,12 @@ function FratQuestionnaire({
                   engineCount={engineCount}
                   hasCompanyLimits={hasCompanyLimits}
                   value={answers[f.code]}
-                  onChange={(v) =>
-                    setAnswers((prev) => ({ ...prev, [f.code]: v }))
-                  }
+                  onChange={(v) => {
+                    setAnswers((prev) => ({ ...prev, [f.code]: v }));
+                    // Moving it counts even when it lands on 0 — a
+                    // deliberate zero is an assessment.
+                    setTouched((prev) => new Set(prev).add(f.code));
+                  }}
                 />
               ))}
             </div>
@@ -559,14 +620,78 @@ function FratQuestionnaire({
           />
         </div>
 
-        <button
-          type="button"
-          disabled={pending}
-          onClick={handleSubmit}
-          className="inline-flex w-full items-center justify-center rounded-md bg-status-blue px-4 py-2.5 text-sm font-semibold text-white transition-opacity hover:brightness-110 disabled:opacity-50"
-        >
-          {pending ? "Submitting…" : "Submit assessment"}
-        </button>
+        {/* Named before it is filed, not blocked.
+            The operator asked for a FRAT that takes seconds, so
+            refusing to submit would fight the request. What this stops
+            is doing it silently: an untouched form scores 0 and files
+            as LOW with approval "not required", and before this there
+            was nothing on the screen to say the score was of nothing. */}
+        {unassessed.length > 0 && !confirming ? (
+          <p className="text-[0.7rem] text-status-yellow">
+            <span className="font-semibold tabular-nums">
+              {unassessed.length}
+            </span>{" "}
+            of {FACTOR_GROUPS.flatMap((g) => g.factors).length} factors
+            are still at zero and have not been assessed. Scoring them
+            makes the total mean something; submitting as-is will ask you
+            to confirm they are genuinely zero.
+          </p>
+        ) : null}
+
+        {confirming ? (
+          <div
+            role="alertdialog"
+            aria-label="Confirm unassessed factors"
+            className="space-y-2 rounded-md border border-status-yellow/50 bg-status-yellow/10 px-3 py-3 text-xs"
+          >
+            <p className="font-semibold uppercase tracking-[0.06em] text-status-yellow">
+              {unassessed.length} factor
+              {unassessed.length === 1 ? "" : "s"} not assessed
+            </p>
+            <p className="text-foreground">
+              These are still at zero because nobody has answered them,
+              not because the risk is zero. Filing now records them as
+              zero and the total as{" "}
+              <span className="font-semibold">{risk}</span>.
+            </p>
+            <p className="text-muted-foreground">
+              {unassessed
+                .map(
+                  (code) =>
+                    FACTOR_GROUPS.flatMap((g) => g.factors).find(
+                      (f) => f.code === code,
+                    )?.label ?? code,
+                )
+                .join(" · ")}
+            </p>
+            <div className="flex flex-wrap gap-2 pt-1">
+              <button
+                type="button"
+                onClick={() => setConfirming(false)}
+                className="rounded-md bg-status-blue px-3 py-1.5 font-semibold text-white hover:brightness-110"
+              >
+                Go back and score them
+              </button>
+              <button
+                type="button"
+                disabled={pending}
+                onClick={() => submit(true)}
+                className="rounded-md border border-border px-3 py-1.5 font-semibold text-foreground hover:bg-card disabled:opacity-50"
+              >
+                They are genuinely zero — file it
+              </button>
+            </div>
+          </div>
+        ) : (
+          <button
+            type="button"
+            disabled={pending}
+            onClick={handleSubmit}
+            className="inline-flex w-full items-center justify-center rounded-md bg-status-blue px-4 py-2.5 text-sm font-semibold text-white transition-opacity hover:brightness-110 disabled:opacity-50"
+          >
+            {pending ? "Submitting…" : "Submit assessment"}
+          </button>
+        )}
 
         {error && (
           <p role="alert" className="text-xs text-status-red">
