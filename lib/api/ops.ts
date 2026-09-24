@@ -39,6 +39,8 @@ import type {
   FlightStats,
   FlightStatus,
   FratAssessmentResponse,
+  FratBlockEligibilityRequest,
+  FratBlockEligibilityResponse,
   FratPrefillRequest,
   FratPrefillResponse,
   FratAuthorizeRequest,
@@ -502,6 +504,20 @@ export async function getFratPrefill(
     method: "POST",
     body: JSON.stringify(body),
   });
+}
+
+/** Whether a filed FRAT can be carried to this leg. Takes observations
+ *  for the same reason the prefill does — this service cannot reach
+ *  weather-service, and deciding whether conditions worsened means
+ *  scoring the new leg the way the carried assessment was scored. */
+export async function getFratBlockEligibility(
+  flightId: string,
+  body: FratBlockEligibilityRequest,
+): Promise<FratBlockEligibilityResponse> {
+  return apiFetch<FratBlockEligibilityResponse>(
+    `/ops/frat/${flightId}/block-eligibility`,
+    { method: "POST", body: JSON.stringify(body) },
+  );
 }
 
 export async function recordFratAuthorization(

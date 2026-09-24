@@ -9,6 +9,7 @@ import {
 import type {
   CurrentDutyResponse,
   FlightDetail,
+  FratBlockEligibilityResponse,
   FratPrefillResponse,
   FratThresholdConfigResponse,
   FratAssessmentResponse,
@@ -52,6 +53,9 @@ interface Props {
    *  failed — step 4 then renders the questionnaire as it always did,
    *  which is the status quo rather than a regression. */
   fratPrefill: FratPrefillResponse | null;
+  /** Whether a FRAT the pilot already filed can be carried to this
+   *  leg. Null when the weather was unreachable or the check failed. */
+  fratBlock: FratBlockEligibilityResponse | null;
 }
 
 /**
@@ -79,6 +83,7 @@ export function PreflightShell({
   weather,
   fratConfig,
   fratPrefill,
+  fratBlock,
 }: Props) {
   const completedNumbers = new Set(
     progress.completed.map((s) => s.step_number),
@@ -165,6 +170,7 @@ export function PreflightShell({
           weather={weather}
           fratConfig={fratConfig}
           fratPrefill={fratPrefill}
+          fratBlock={fratBlock}
         />
       )}
 
@@ -292,6 +298,7 @@ function ActiveStep({
   weather,
   fratConfig,
   fratPrefill,
+  fratBlock,
 }: {
   flightId: string;
   flight: FlightDetail;
@@ -303,6 +310,7 @@ function ActiveStep({
   weather: WeatherBatchResponse | null;
   fratConfig: FratThresholdConfigResponse | null;
   fratPrefill: FratPrefillResponse | null;
+  fratBlock: FratBlockEligibilityResponse | null;
 }) {
   switch (stepNumber) {
     case 1:
@@ -347,6 +355,7 @@ function ActiveStep({
           engineCount={flight.aircraft.engine_count}
           hasCompanyLimits={fratConfig != null}
           fratPrefill={fratPrefill}
+          fratBlock={fratBlock}
         />
       );
     case 5:

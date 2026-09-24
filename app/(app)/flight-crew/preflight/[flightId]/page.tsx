@@ -5,6 +5,7 @@ import { ApiError } from "@/lib/api/client";
 import {
   getCurrentDuty,
   getFlight,
+  getFratBlockEligibility,
   getFratPrefill,
   getLatestFratAssessment,
   getLatestPilotAcceptance,
@@ -18,6 +19,7 @@ import {
 } from "@/lib/frat/observations";
 import { batchWeather } from "@/lib/api/weather";
 import type {
+  FratBlockEligibilityResponse,
   FratPrefillResponse,
   FratThresholdConfigResponse,
   CurrentDutyResponse,
@@ -81,6 +83,7 @@ export default async function PreflightPage({
   let weather: WeatherBatchResponse | null = null;
   let fratConfig: FratThresholdConfigResponse | null = null;
   let fratPrefill: FratPrefillResponse | null = null;
+  let fratBlock: FratBlockEligibilityResponse | null = null;
   let loadError: string | null = null;
 
   try {
@@ -146,10 +149,21 @@ export default async function PreflightPage({
       // than a regression.
       const observations = observationsFromWeather(weather);
       if (observations.length > 0) {
-        fratPrefill = await getFratPrefill(flightId, {
-          observations,
-          is_ifr: isIfrPlanned(),
-        }).catch(() => null);
+        // Both take the same observations, and neither blocks the page:
+        // a failure on either means step 4 behaves as it did before it
+        // existed, which is the status quo rather than a regression.
+        const [prefillResult, blockResult] = await Promise.all([
+          getFratPrefill(flightId, {
+            observations,
+            is_ifr: isIfrPlanned(),
+          }).catch(() => null),
+          getFratBlockEligibility(flightId, {
+            observations,
+            is_ifr: isIfrPlanned(),
+          }).catch(() => null),
+        ]);
+        fratPrefill = prefillResult;
+        fratBlock = blockResult;
       }
     }
   } catch (err) {
@@ -191,6 +205,7 @@ export default async function PreflightPage({
         weather={weather}
         fratConfig={fratConfig}
         fratPrefill={fratPrefill}
+        fratBlock={fratBlock}
       />
     </div>
   );
