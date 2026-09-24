@@ -3,6 +3,7 @@
  */
 
 import { apiFetch } from "./client";
+import { asNumber } from "./decimal";
 import type {
   AccountingExportResponse,
   AircraftListItem,
@@ -500,10 +501,19 @@ export async function getFratPrefill(
   flightId: string,
   body: FratPrefillRequest,
 ): Promise<FratPrefillResponse> {
-  return apiFetch<FratPrefillResponse>(`/ops/frat/${flightId}/prefill`, {
-    method: "POST",
-    body: JSON.stringify(body),
-  });
+  const prefill = await apiFetch<FratPrefillResponse>(
+    `/ops/frat/${flightId}/prefill`,
+    {
+      method: "POST",
+      body: JSON.stringify(body),
+    },
+  );
+  // `vfr_min_visibility_sm` is a backend `Decimal`, so it arrives as a
+  // string despite the type saying number. See lib/api/decimal.ts.
+  return {
+    ...prefill,
+    vfr_min_visibility_sm: asNumber(prefill.vfr_min_visibility_sm),
+  };
 }
 
 /** Whether a filed FRAT can be carried to this leg. Takes observations

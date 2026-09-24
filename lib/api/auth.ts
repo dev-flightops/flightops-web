@@ -4,6 +4,7 @@
  */
 
 import { apiFetch } from "./client";
+import { asNumber } from "./decimal";
 import type {
   AdminAccessRoleRow,
   AdminAccessRolesResponse,
@@ -243,17 +244,36 @@ export async function updateFlightTrackingConfig(
 }
 
 export async function getFratThresholds(): Promise<FratThresholdConfigResponse> {
-  return apiFetch<FratThresholdConfigResponse>("/auth/settings/frat");
+  return normalizeFratConfig(
+    await apiFetch<FratThresholdConfigResponse>("/auth/settings/frat"),
+  );
+}
+
+/** The visibility floors are `Decimal` on the backend, so they arrive
+ *  as strings. See lib/api/decimal.ts — untouched, they made this
+ *  policy unsaveable. */
+function normalizeFratConfig(
+  config: FratThresholdConfigResponse,
+): FratThresholdConfigResponse {
+  return {
+    ...config,
+    vfr_min_visibility_sm: asNumber(config.vfr_min_visibility_sm),
+    default_vfr_min_visibility_sm: asNumber(
+      config.default_vfr_min_visibility_sm,
+    ),
+  };
 }
 
 /** PUT, not PATCH — the three thresholds are one policy. */
 export async function setFratThresholds(
   body: FratThresholdConfigUpdateRequest,
 ): Promise<FratThresholdConfigResponse> {
-  return apiFetch<FratThresholdConfigResponse>("/auth/settings/frat", {
-    method: "PUT",
-    body: JSON.stringify(body),
-  });
+  return normalizeFratConfig(
+    await apiFetch<FratThresholdConfigResponse>("/auth/settings/frat", {
+      method: "PUT",
+      body: JSON.stringify(body),
+    }),
+  );
 }
 
 // ---- Pilot Pay (M2 tail — /settings/pilot-pay) ----

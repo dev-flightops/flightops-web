@@ -1253,18 +1253,25 @@ export interface FratThresholdConfigResponse {
    *  An OR — either one alone is enough. */
   vfr_min_ceiling_ft: number;
   vfr_min_visibility_sm: number;
+  /** How long a filed FRAT can be carried to a later leg. The
+   *  operator, 22 Sep 2026, on what breaks a block: "4 hours or any
+   *  condition that increases risk." Zero switches blocks off — every
+   *  leg gets its own assessment — which is a policy an operator can
+   *  legitimately choose, not a missing value. */
+  block_validity_hours: number;
 
   default_crosswind_single_engine_kt: number;
   default_crosswind_multi_engine_kt: number;
   default_crosswind_near_margin_kt: number;
   default_vfr_min_ceiling_ft: number;
   default_vfr_min_visibility_sm: number;
+  default_block_validity_hours: number;
 }
 
 /** The whole policy at once. The bands only mean anything ordered, and
  *  the near-margin only means anything against the limits it sits
  *  under, so there is no coherent partial update — the server requires
- *  all eight. Sending a subset is a 422, deliberately: an optional
+ *  all of them. Sending a subset is a 422, deliberately: an optional
  *  limit would either reset a tenant's own number to the default or
  *  push the margin check out of the schema. */
 export interface FratThresholdConfigUpdateRequest {
@@ -1276,6 +1283,7 @@ export interface FratThresholdConfigUpdateRequest {
   crosswind_near_margin_kt: number;
   vfr_min_ceiling_ft: number;
   vfr_min_visibility_sm: number;
+  block_validity_hours: number;
   rationale?: string | null;
 }
 
