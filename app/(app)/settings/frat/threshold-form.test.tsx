@@ -45,6 +45,8 @@ function config(over: Partial<FratThresholdConfigResponse> = {}) {
     default_crosswind_near_margin_kt: 10,
     default_vfr_min_ceiling_ft: 1000,
     default_vfr_min_visibility_sm: 3,
+    block_validity_hours: 4,
+    default_block_validity_hours: 4,
     ...over,
   } satisfies FratThresholdConfigResponse;
 }
@@ -162,6 +164,7 @@ describe("saving", () => {
       nearMarginKt: 10,
       vfrMinCeilingFt: 1000,
       vfrMinVisibilitySm: 3,
+      blockValidityHours: 4,
       rationale: "Tightened after review.",
     });
     expect(await screen.findByRole("status")).toHaveTextContent("Saved");
@@ -312,3 +315,94 @@ describe("company operating limits", () => {
     ).not.toBeInTheDocument();
   });
 });
+
+
+/**
+ * Block validity — how long a filed FRAT can be carried to a later
+ * leg. ops-service has scored against this since services#233; until
+ * now the only way to change it was SQL, which is not a setting.
+ */
+describe("block validity", () => {
+  it("shows the operator's four hours", () => {
+    form();
+    expect(screen.getByLabelText(/Block validity/i)).toHaveValue(4);
+  });
+
+  it("says what the number means in the pilot's terms", () => {
+    form();
+    expect(
+      screen.getByText(/can be carried to a later leg for/i),
+    ).toHaveTextContent(/4 hours/);
+  });
+
+  it("says blocks are off at zero rather than showing '0 hours'", async () => {
+    // Zero is a policy an operator can legitimately choose, not an
+    // empty field, so it gets a sentence of its own.
+    const user = userEvent.setup();
+    form();
+    const input = screen.getByLabelText(/Block validity/i);
+    await user.clear(input);
+    await user.type(input, "0");
+    expect(screen.getByText(/Blocks are off/i)).toBeInTheDocument();
+    expect(screen.queryByText(/0 hours/)).not.toBeInTheDocument();
+  });
+
+  it("says hour, not hours, at one", async () => {
+    const user = userEvent.setup();
+    form();
+    const input = screen.getByLabelText(/Block validity/i);
+    await user.clear(input);
+    await user.type(input, "1");
+    expect(
+      screen.getByText(/can be carried to a later leg for/i),
+    ).toHaveTextContent(/1 hour(?!s)/);
+  });
+
+  it("saves it with the rest of the policy", async () => {
+    // One save, one adoption record: an operator who reviewed their
+    // FRAT policy reviewed all of it.
+    const user = userEvent.setup();
+    const action = form();
+    const input = screen.getByLabelText(/Block validity/i);
+    await user.clear(input);
+    await user.type(input, "2");
+    await user.click(screen.getByRole("button", { name: /FRAT policy/i }));
+    expect(action).toHaveBeenCalledWith(
+      expect.objectContaining({ blockValidityHours: 2 }),
+    );
+  });
+
+  it("will not save more than a day", async () => {
+    // A FRAT carried across more than a day is not an assessment of
+    // the flight any more. The server has the same bound; this is so
+    // the operator does not have to round-trip to find out.
+    const user = userEvent.setup();
+    form();
+    const input = screen.getByLabelText(/Block validity/i);
+    await user.clear(input);
+    await user.type(input, "25");
+    expect(
+      screen.getByRole("button", { name: /FRAT policy/i }),
+    ).toBeDisabled();
+  });
+
+  it("counts as departing from the shipped defaults", async () => {
+    // The "saving unchanged still records it" notice only shows while
+    // every number is still ours. A changed block length that did not
+    // count would leave the screen offering to record an unchanged
+    // review of a policy the operator had in fact changed.
+    const user = userEvent.setup();
+    form();
+    expect(
+      screen.getByText(/Saving unchanged still records/i),
+    ).toBeInTheDocument();
+
+    const input = screen.getByLabelText(/Block validity/i);
+    await user.clear(input);
+    await user.type(input, "8");
+    expect(
+      screen.queryByText(/Saving unchanged still records/i),
+    ).not.toBeInTheDocument();
+  });
+});
+

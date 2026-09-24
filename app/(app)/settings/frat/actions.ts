@@ -45,6 +45,9 @@ export interface FratPolicyInput {
   /** "Anything vfr under 1000 ft or 3 miles should be elevated risk." */
   vfrMinCeilingFt: number;
   vfrMinVisibilitySm: number;
+  /** "4 hours or any condition that increases risk." Zero turns blocks
+   *  off, which is a policy rather than a missing value. */
+  blockValidityHours: number;
   rationale: string;
 }
 
@@ -58,6 +61,7 @@ export async function saveFratThresholdsAction(
     crosswindSingleKt,
     crosswindMultiKt,
     nearMarginKt,
+    blockValidityHours,
     vfrMinCeilingFt,
     vfrMinVisibilitySm,
     rationale,
@@ -127,6 +131,21 @@ export async function saveFratThresholdsAction(
     };
   }
 
+  if (
+    !Number.isInteger(blockValidityHours) ||
+    blockValidityHours < 0 ||
+    blockValidityHours > 24
+  ) {
+    return {
+      status: "error",
+      // 24 is the ceiling because a FRAT carried across more than a
+      // day is not an assessment of the flight any more.
+      message:
+        "Block validity has to be a whole number of hours between 0 and 24. " +
+        "Use 0 to turn blocks off.",
+    };
+  }
+
   try {
     await setFratThresholds({
       medium_entry_score: medium,
@@ -137,6 +156,7 @@ export async function saveFratThresholdsAction(
       crosswind_near_margin_kt: nearMarginKt,
       vfr_min_ceiling_ft: vfrMinCeilingFt,
       vfr_min_visibility_sm: vfrMinVisibilitySm,
+      block_validity_hours: blockValidityHours,
       rationale: rationale.trim() || null,
     });
     revalidatePath("/settings/frat");
