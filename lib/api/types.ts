@@ -1428,6 +1428,9 @@ export interface FratAssessmentResponse {
    *  pilot accepted a block FRAT. Null for anything scored on its
    *  own, which is the normal case. */
   carried_from_assessment_id: string | null;
+  /** null means the assessment predates the column; `[]` means the
+   *  pilot was asked and affirmed nothing. */
+  affirmed_zero_factors: string[] | null;
   created_at: string;
   authorizations: FratAuthorizationResponse[];
 }
@@ -1441,6 +1444,13 @@ export interface FratSubmitRequest {
    *  holding the same numbers. The backend validates it is the
    *  caller's own and 422s an unknown one. */
   carried_from_assessment_id?: string;
+  /** Factor codes the pilot affirmed as genuinely zero when step 4
+   *  warned that untouched factors were still at zero. Omit entirely
+   *  when not reporting on it; `[]` means the pilot was asked and
+   *  affirmed nothing — the backend keeps those distinct. Every code
+   *  must be present in `answers` with a value of 0, or the submit is
+   *  a 422. */
+  affirmed_zero_factors?: string[];
 }
 
 export interface FratAuthorizeRequest {

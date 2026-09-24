@@ -506,19 +506,18 @@ function FratQuestionnaire({
     startTransition(async () => {
       const result = await submitFratAction(flightId, {
         answers,
-        mitigations:
-          [
-            mitigations.trim(),
-            // Recorded in the pilot's own words on the assessment,
-            // because the backend has nowhere else to put it yet. A
-            // dedicated field is the follow-up; losing the fact
-            // entirely while waiting for one would be worse.
-            affirmed && unassessed.length > 0
-              ? `Pilot confirmed ${unassessed.length} factor(s) as genuinely zero: ${unassessed.join(", ")}.`
-              : "",
-          ]
-            .filter(Boolean)
-            .join(" ") || undefined,
+        // The pilot's own words, and only theirs. This used to have the
+        // affirmation appended to it as a sentence, which mixed the
+        // record into their text, could not be queried, and was
+        // editable by the person it recorded. It has a column now.
+        mitigations: mitigations.trim() || undefined,
+        // Sent only when the question was actually put to them. An
+        // empty array would say "asked, affirmed nothing", which is a
+        // different claim from "never asked" — the backend keeps those
+        // apart, so the caller has to as well.
+        ...(affirmed && unassessed.length > 0
+          ? { affirmed_zero_factors: unassessed }
+          : {}),
       });
       if (!result.ok) setError(result.error);
     });
