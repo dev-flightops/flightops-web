@@ -106,6 +106,9 @@ export function ThresholdForm({
   const [vfrMinVisibilitySm, setVfrMinVisibilitySm] = useState(
     config.vfr_min_visibility_sm,
   );
+  const [blockValidityHours, setBlockValidityHours] = useState(
+    config.block_validity_hours,
+  );
   const [rationale, setRationale] = useState(config.rationale ?? "");
 
   const max = config.max_total_score;
@@ -122,7 +125,9 @@ export function ThresholdForm({
     vfrMinCeilingFt >= 0 &&
     vfrMinCeilingFt <= 10000 &&
     vfrMinVisibilitySm >= 0 &&
-    vfrMinVisibilitySm <= 10;
+    vfrMinVisibilitySm <= 10 &&
+    blockValidityHours >= 0 &&
+    blockValidityHours <= 24;
   const savable = ordered && marginFits && limitsInRange;
 
   const isDefault =
@@ -133,7 +138,8 @@ export function ThresholdForm({
     crosswindMultiKt === config.default_crosswind_multi_engine_kt &&
     nearMarginKt === config.default_crosswind_near_margin_kt &&
     vfrMinCeilingFt === config.default_vfr_min_ceiling_ft &&
-    vfrMinVisibilitySm === config.default_vfr_min_visibility_sm;
+    vfrMinVisibilitySm === config.default_vfr_min_visibility_sm &&
+    blockValidityHours === config.default_block_validity_hours;
 
   // Widths as percentages of the reachable maximum, so the bar is to
   // scale rather than four equal blocks.
@@ -156,6 +162,7 @@ export function ThresholdForm({
       nearMarginKt,
       vfrMinCeilingFt,
       vfrMinVisibilitySm,
+      blockValidityHours,
       rationale,
     });
     setPending(false);
@@ -339,6 +346,49 @@ export function ThresholdForm({
           procedure from your ops specs, and the system holds none. A
           single company-wide number would be wrong at every airport it
           was applied to.
+        </p>
+      </div>
+
+      {/* Block validity. Its own block rather than a sixth cell in the
+          limits grid: a limit scores one factor of one assessment,
+          this decides how long a whole assessment stays usable. */}
+      <div className="rounded-lg border border-border bg-background/40 px-4 py-3">
+        <p className="text-[0.6rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+          Carrying a FRAT across legs
+        </p>
+        <div className="mt-3 grid gap-4 sm:grid-cols-2">
+          <Field
+            name="block_validity_hours"
+            label="Block validity (hours)"
+            hint="0 turns blocks off — every leg gets its own."
+            value={blockValidityHours}
+            min={0}
+            max={24}
+            step={1}
+            onChange={setBlockValidityHours}
+          />
+          <p className="self-center text-[0.68rem] text-muted-foreground">
+            {blockValidityHours === 0 ? (
+              <>
+                Blocks are off. Every leg gets its own assessment, and
+                no pilot is offered a carry-forward.
+              </>
+            ) : (
+              <>
+                A filed FRAT can be carried to a later leg for{" "}
+                <span className="font-semibold tabular-nums text-foreground">
+                  {blockValidityHours}{" "}
+                  {blockValidityHours === 1 ? "hour" : "hours"}
+                </span>
+                , and only while nothing the system scores has worsened.
+              </>
+            )}
+          </p>
+        </div>
+        <p className="mt-2 text-[0.65rem] text-muted-foreground/80">
+          An aircraft swap, a crew change and new NOTAMs are not
+          checked &mdash; the system cannot score them yet, so the pilot
+          is told what was compared rather than told the block is safe.
         </p>
       </div>
 
