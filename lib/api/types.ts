@@ -1424,6 +1424,10 @@ export interface FratAssessmentResponse {
   total_score: number;
   risk_level: FratRiskLevel;
   mitigations: string | null;
+  /** The assessment this one's answers were carried from, when the
+   *  pilot accepted a block FRAT. Null for anything scored on its
+   *  own, which is the normal case. */
+  carried_from_assessment_id: string | null;
   created_at: string;
   authorizations: FratAuthorizationResponse[];
 }
@@ -1431,6 +1435,12 @@ export interface FratAssessmentResponse {
 export interface FratSubmitRequest {
   answers: Record<string, number>;
   mitigations?: string;
+  /** Set when the pilot accepted a block FRAT rather than re-scoring,
+   *  naming the assessment these answers came from. Provenance: it is
+   *  what distinguishes a carried record from a freshly-scored one
+   *  holding the same numbers. The backend validates it is the
+   *  caller's own and 422s an unknown one. */
+  carried_from_assessment_id?: string;
 }
 
 export interface FratAuthorizeRequest {
@@ -2104,6 +2114,43 @@ export interface FratObservation {
   visibility_sm?: number | null;
   wind_kt?: number | null;
   gust_kt?: number | null;
+}
+
+export interface FratBlockEligibilityRequest {
+  observations: FratObservation[];
+  is_ifr?: boolean;
+}
+
+/** Whether a FRAT the pilot already filed can be carried to this leg.
+ *
+ *  The operator asked for this: "bases that are launching flights every
+ *  15-30 minutes to the same locations... a pilot can press one button
+ *  like 'accept new weight and balance no other changes to flight risk
+ *  necessary'". Their rule for what breaks it: "4 hours or any
+ *  condition that increases risk."
+ *
+ *  Advisory. Nothing is filed or reused by asking — the pilot still
+ *  presses something, and retaking the FRAT is always available. */
+export interface FratBlockEligibilityResponse {
+  eligible: boolean;
+  source_assessment_id: string | null;
+  source_risk_level: string | null;
+  /** The carried assessment's own answers. Present only when the block
+   *  is intact — accepting one has to file *these* numbers, not the
+   *  questionnaire's current state, or every factor this leg's prefill
+   *  cannot reach is filed as a zero nobody assessed. */
+  source_answers: Record<string, number> | null;
+  /** When the block lapses, measured from the carried assessment. */
+  expires_at: string | null;
+  /** Why not, in sentences. Plural because two things can disqualify a
+   *  block at once, and a pilot told only the first would fix it and be
+   *  refused again. */
+  reasons: string[];
+  /** Factors whose score has risen since the carried assessment, named
+   *  so the pilot knows what changed rather than "conditions
+   *  worsened". */
+  worsened_factors: string[];
+  block_validity_hours: number;
 }
 
 export interface FratPrefillRequest {

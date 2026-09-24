@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("./actions", () => ({
   completeStepAction: vi.fn(),
@@ -10,7 +10,10 @@ vi.mock("./actions", () => ({
 
 import { submitFratAction } from "./actions";
 
-import type { FratPrefillResponse } from "@/lib/api/types";
+import type {
+  FratBlockEligibilityResponse,
+  FratPrefillResponse,
+} from "@/lib/api/types";
 
 import { FlightRiskAssessmentStep } from "./step-4-frat";
 
@@ -46,6 +49,7 @@ const renderStep = (props: {
   engineCount?: number | null;
   hasCompanyLimits?: boolean;
   fratPrefill?: FratPrefillResponse | null;
+  fratBlock?: FratBlockEligibilityResponse | null;
 }) =>
   render(
     <FlightRiskAssessmentStep flightId="f-1" initial={null} {...props} />,
@@ -272,5 +276,177 @@ describe("factors nobody assessed", () => {
       },
     });
     expect(screen.getByText("18")).toBeInTheDocument();
+  });
+});
+
+/**
+ * Carrying the last FRAT to the next leg.
+ *
+ * The operator, 25 August: "bases that are launching flights every
+ * 15-30 minutes to the same locations... a pilot can press one button
+ * like 'accept new weight and balance no other changes to flight risk
+ * necessary'". Their rule for what breaks it, 22 September: "4 hours or
+ * any condition that increases risk."
+ *
+ * The backend decides eligibility. What these cover is that the screen
+ * offers it when allowed, says why when not, and never hides the
+ * reason — an absent button tells a pilot nothing, while "your last
+ * FRAT is 5.2h old and the block lasts 4h" tells them what to do.
+ */
+const eligibleBlock = {
+  eligible: true,
+  source_assessment_id: "frat-1",
+  source_risk_level: "low",
+  expires_at: "2026-09-24T18:30:00Z",
+  // Deliberately not all zeros, and deliberately including factors
+  // this leg's prefill cannot reach. These are the numbers the pilot
+  // answered on the previous leg, and they are what "no other changes"
+  // has to file.
+  source_answers: {
+    pilot_rest: 1,
+    pilot_health: 3,
+    route_terrain: 4,
+    wx_wind: 2,
+  },
+  reasons: [],
+  worsened_factors: [],
+  block_validity_hours: 4,
+};
+
+describe("block FRAT carry-forward", () => {
+  // The setup file only calls cleanup(), so a call-count assertion
+  // would otherwise count presses from earlier tests in this block.
+  beforeEach(() => {
+    vi.mocked(submitFratAction).mockClear();
+  });
+
+  it("offers the operator's one button when eligible", () => {
+    renderStep({ fratBlock: eligibleBlock });
+    expect(
+      screen.getByRole("button", {
+        name: /accept new weight & balance/i,
+      }),
+    ).toBeInTheDocument();
+  });
+
+  it("shows when the block lapses", () => {
+    renderStep({ fratBlock: eligibleBlock });
+    expect(screen.getByText("18:30Z")).toBeInTheDocument();
+  });
+
+  it("says what was checked and what was not", () => {
+    // Aircraft swap, crew change and NOTAMs are in the operator's own
+    // question and none are checkable — NOTAMs are not wired at all.
+    // Claiming the block is safe would overstate what the system knows.
+    renderStep({ fratBlock: eligibleBlock });
+    expect(screen.getByText(/Not checked:/i)).toHaveTextContent(
+      /aircraft swap.*crew change.*NOTAM/i,
+    );
+  });
+
+  it("shows the reasons rather than hiding the button", async () => {
+    renderStep({
+      fratBlock: {
+        ...eligibleBlock,
+        eligible: false,
+        source_assessment_id: null,
+        source_risk_level: null,
+        reasons: [
+          "That assessment is 5.2h old and the block lasts 4h.",
+          "Conditions have worsened since that assessment: wx_wind.",
+        ],
+        worsened_factors: ["wx_wind"],
+      },
+    });
+    expect(
+      screen.queryByRole("button", { name: /accept new weight/i }),
+    ).not.toBeInTheDocument();
+    // Both reasons, because a pilot told only the first would fix it
+    // and be refused again. Asserted on the container: the heading is
+    // its own span, so matching that alone would miss the reasons
+    // beside it.
+    const notice = screen
+      .getByText(/A new assessment is needed/i)
+      .closest("div");
+    expect(notice).toHaveTextContent(/5\.2h old/);
+    expect(notice).toHaveTextContent(/wx_wind/);
+  });
+
+  it("offers nothing when the check could not run", () => {
+    // Null means the weather was unreachable or the call failed. No
+    // claim either way — the questionnaire is still there.
+    renderStep({ fratBlock: null });
+    expect(
+      screen.queryByRole("button", { name: /accept new weight/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/A new assessment is needed/i),
+    ).not.toBeInTheDocument();
+    expect(screen.getByText("Wind & gusts")).toBeInTheDocument();
+  });
+
+  it("files the carried answers, not the questionnaire's current state", async () => {
+    // The defect this replaced: the button submitted the form, which
+    // is seeded from *this* leg's prefill and zero everywhere else. So
+    // "no other changes" filed different numbers from the assessment
+    // it claimed to carry — IMSAFE 3 and terrain 4 becoming zeros
+    // nobody assessed, and the filed risk coming out lower than the
+    // real one.
+    const user = userEvent.setup();
+    renderStep({ fratBlock: eligibleBlock });
+    await user.click(
+      screen.getByRole("button", { name: /accept new weight & balance/i }),
+    );
+    expect(submitFratAction).toHaveBeenCalledWith(
+      "f-1",
+      expect.objectContaining({ answers: eligibleBlock.source_answers }),
+    );
+  });
+
+  it("records what the assessment was carried from", async () => {
+    // Provenance. Without it a carried record is indistinguishable
+    // from a freshly-scored one holding the same numbers, and for a
+    // Part 135 FRAT that difference is the audit trail.
+    const user = userEvent.setup();
+    renderStep({ fratBlock: eligibleBlock });
+    await user.click(
+      screen.getByRole("button", { name: /accept new weight & balance/i }),
+    );
+    expect(submitFratAction).toHaveBeenCalledWith(
+      "f-1",
+      expect.objectContaining({ carried_from_assessment_id: "frat-1" }),
+    );
+  });
+
+  it("is one press — no unassessed-factor confirmation", async () => {
+    // The operator asked for "one button". The unassessed guard exists
+    // to stop a pilot filing eighteen untouched zeros as LOW; a carried
+    // assessment is the opposite case, because those numbers came from
+    // a questionnaire this pilot answered. Worse, the confirmation
+    // renders at the bottom of the form, so from the top of the page
+    // the press looked like it did nothing at all.
+    const user = userEvent.setup();
+    renderStep({ fratBlock: eligibleBlock });
+    await user.click(
+      screen.getByRole("button", { name: /accept new weight & balance/i }),
+    );
+    expect(
+      screen.queryByRole("button", { name: /genuinely zero/i }),
+    ).not.toBeInTheDocument();
+    expect(submitFratAction).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not offer the button without the answers to file", () => {
+    // An eligible verdict with no answers cannot be honoured — the
+    // only thing left to submit would be the form state, which is the
+    // bug. Fall back to the questionnaire rather than offering a
+    // button that files the wrong numbers.
+    renderStep({
+      fratBlock: { ...eligibleBlock, source_answers: null },
+    });
+    expect(
+      screen.queryByRole("button", { name: /accept new weight/i }),
+    ).not.toBeInTheDocument();
+    expect(screen.getByText("Wind & gusts")).toBeInTheDocument();
   });
 });

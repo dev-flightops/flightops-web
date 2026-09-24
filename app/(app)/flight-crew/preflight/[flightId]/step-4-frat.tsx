@@ -5,6 +5,7 @@ import { useMemo, useState, useTransition } from "react";
 import type {
   FratAssessmentResponse,
   FratAuthorizationKind,
+  FratBlockEligibilityResponse,
   FratFactorSuggestion,
   FratPrefillResponse,
   FratRiskLevel,
@@ -55,6 +56,8 @@ interface Props {
    *  failed, in which case the questionnaire behaves as it always
    *  did. */
   fratPrefill?: FratPrefillResponse | null;
+  /** Whether a FRAT the pilot already filed can be carried here. */
+  fratBlock?: FratBlockEligibilityResponse | null;
 }
 
 /**
@@ -372,6 +375,7 @@ export function FlightRiskAssessmentStep({
   engineCount,
   hasCompanyLimits = true,
   fratPrefill,
+  fratBlock,
 }: Props) {
   // Pilots reach this component in two modes:
   //   1. First-time — no assessment yet, render the questionnaire.
@@ -393,6 +397,7 @@ export function FlightRiskAssessmentStep({
         engineCount={engineCount}
         hasCompanyLimits={hasCompanyLimits}
         fratPrefill={fratPrefill}
+        fratBlock={fratBlock}
       />
     );
   }
@@ -412,6 +417,7 @@ export function FlightRiskAssessmentStep({
 function FratQuestionnaire({
   flightId,
   fratPrefill,
+  fratBlock,
   companyCrosswindLimitKt,
   nearLimitEntryKt,
   demonstratedCrosswindKt,
@@ -420,6 +426,7 @@ function FratQuestionnaire({
 }: {
   flightId: string;
   fratPrefill?: FratPrefillResponse | null;
+  fratBlock?: FratBlockEligibilityResponse | null;
   companyCrosswindLimitKt?: number | null;
   nearLimitEntryKt?: number | null;
   demonstratedCrosswindKt?: number | null;
@@ -529,6 +536,43 @@ function FratQuestionnaire({
     submit(false);
   };
 
+  /**
+   * Accept the carried block. One press, as asked for.
+   *
+   * Files the *carried* answers, not the questionnaire's current state.
+   * The form is seeded from this leg's prefill and zero everywhere
+   * else, so submitting it would file different numbers from the
+   * assessment the panel says it is carrying — every factor the
+   * prefill cannot reach (IMSAFE, maintenance, terrain, remoteness)
+   * arriving as a zero nobody assessed, and the filed risk coming out
+   * lower than the real one.
+   *
+   * It also skips the unassessed-factor confirmation, deliberately.
+   * That guard exists to stop a pilot filing eighteen untouched zeros
+   * as LOW. A carried assessment is the opposite case: the numbers came
+   * from a questionnaire this pilot actually answered, which is what a
+   * block FRAT *is*. Making them confirm them again would turn the one
+   * button the operator asked for into two — and the confirmation
+   * renders at the bottom of the form, so from the top of the page the
+   * press looks like it did nothing at all.
+   */
+  const handleAcceptBlock = () => {
+    const carried = fratBlock?.source_answers;
+    const sourceId = fratBlock?.source_assessment_id;
+    if (!carried || !sourceId) return;
+
+    setError(null);
+    setConfirming(false);
+    startTransition(async () => {
+      const result = await submitFratAction(flightId, {
+        answers: carried,
+        mitigations: mitigations.trim() || undefined,
+        carried_from_assessment_id: sourceId,
+      });
+      if (!result.ok) setError(result.error);
+    });
+  };
+
   return (
     <section className="rounded-xl border border-border bg-card">
       <header className="border-b border-border px-5 py-3">
@@ -545,6 +589,69 @@ function FratQuestionnaire({
       </header>
 
       <div className="space-y-4 px-5 py-4 text-sm">
+        {/* Carry the last FRAT forward, which is what the operator
+            asked for:
+
+              bases that are launching flights every 15-30 minutes to
+              the same locations... a pilot can press one button like
+              "accept new weight and balance no other changes to flight
+              risk necessary"
+
+            Offered, never automatic. The button files a fresh
+            assessment with the carried answers rather than reusing the
+            old row, so every leg still has its own record with its own
+            timestamp — a block that made one assessment cover several
+            legs would leave the later ones with no record of their
+            own.
+
+            When it is not available the reasons are shown instead of
+            being hidden, because "your last FRAT is 5.2h old and the
+            block lasts 4h" tells a pilot something, and an absent
+            button tells them nothing. */}
+        {fratBlock?.eligible &&
+        fratBlock.source_assessment_id &&
+        fratBlock.source_answers ? (
+          <div className="rounded-md border border-status-green/40 bg-status-green/10 px-3 py-3 text-xs">
+            <p className="font-semibold uppercase tracking-[0.06em] text-status-green">
+              Your last FRAT can be carried to this leg
+            </p>
+            <p className="mt-1 text-foreground">
+              Filed at{" "}
+              <span className="font-semibold">
+                {fratBlock.source_risk_level?.toUpperCase()}
+              </span>
+              , valid for this block until{" "}
+              <span className="font-semibold tabular-nums">
+                {formatBlockExpiry(fratBlock.expires_at)}
+              </span>
+              . Nothing the system scores has worsened since.
+            </p>
+            <p className="mt-1 text-muted-foreground">
+              Checked: wind, ceiling, visibility, rest and duty against
+              your operator&rsquo;s limits. Not checked: aircraft swap,
+              crew change, NOTAMs. Retake it below if anything else has
+              changed.
+            </p>
+            <button
+              type="button"
+              disabled={pending}
+              onClick={handleAcceptBlock}
+              className="mt-2.5 rounded-md bg-status-green px-3 py-1.5 text-xs font-semibold text-white hover:brightness-110 disabled:opacity-50"
+            >
+              {pending
+                ? "Filing…"
+                : "Accept new weight & balance — no other changes"}
+            </button>
+          </div>
+        ) : fratBlock && fratBlock.reasons.length > 0 ? (
+          <div className="rounded-md border border-border bg-background px-3 py-2.5 text-[0.7rem] text-muted-foreground">
+            <span className="font-semibold text-foreground">
+              A new assessment is needed for this leg.
+            </span>{" "}
+            {fratBlock.reasons.join(" ")}
+          </div>
+        ) : null}
+
         {FACTOR_GROUPS.map((group) => (
           <div key={group.group}>
             <h3 className="mb-2 text-[0.65rem] font-bold uppercase tracking-[0.08em] text-status-blue">
@@ -1193,4 +1300,13 @@ function Field({
       )}
     </div>
   );
+}
+
+/** The block's expiry, in the same UTC shape the rest of the preflight
+ *  uses. Sliced out of the ISO string rather than parsed through Date:
+ *  this renders on the server and again in the browser, and a local
+ *  format would disagree between the two. */
+function formatBlockExpiry(iso: string | null): string {
+  if (!iso) return "—";
+  return `${iso.slice(11, 16)}Z`;
 }
