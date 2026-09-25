@@ -1,7 +1,6 @@
 "use client";
 
 import { Suspense, useEffect, useState } from "react";
-import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { useForm } from "react-hook-form";
@@ -13,23 +12,30 @@ import type {
   SsoResolveProvider,
 } from "@/lib/api/types";
 
+import { HomeWordmark } from "@/components/home/home-brand";
+import { Button } from "@/components/ui/button";
+
 import { resolveSsoAction } from "./actions";
 
 /**
- * Login page — pixel-match for `dispatch-platform-main/templates/login.html`:
+ * Login — the first screen of any pitch, in the home page's language.
  *
- *   - 380px max-width column, fully centered on the viewport
- *   - Brand block above the card ("Peregrine Flight Ops" + subtitle)
- *   - Card: 12px radius, panel bg, 2rem padding
- *   - Error banner (dark red panel with icon) at the top of the card when set
- *   - SSO buttons rendered ABOVE the form with a "or use password" divider
- *     (legacy puts the password form after SSO, not below)
- *   - Form labels: tiny uppercase tracked-wide
- *   - Form inputs: 7px radius, deeper-than-card bg, iOS-blue focus glow
- *   - Submit button: full-width iOS blue, semibold
- *   - "Authorized users only" helper + back link below the card
+ * Was a pixel-match of legacy login.html: dark navy card, iOS-blue
+ * button, its own system-font stack, and every colour a literal hex —
+ * the one page with arbitrary hex in its classes (15 of them). The
+ * operator asked for the app to look like one product, so this is a
+ * deliberate departure from legacy, recorded here.
  *
- * Colors are literal hex from the legacy stylesheet to ensure exact match.
+ * Split screen: the home page's aircraft photo as an ink panel on the
+ * left (hidden on phones), the form on the light ground on the right.
+ * Inputs are the app's one `.ff-input`; the submit is <Button>.
+ *
+ * Behaviour is unchanged: debounced per-tenant SSO resolution as the
+ * email is typed, zod validation, the `from` redirect, the SSO error
+ * param. The provider buttons keep their brand-mandated colours.
+ *
+ * Removed: "← Back to home". /home requires a session, so for anyone on
+ * this page it redirected straight back here — a link that looped.
  */
 
 const schema = z.object({
@@ -114,159 +120,163 @@ function LoginInner({ providers }: { providers: ProviderSummary[] }) {
   const isSubmitting = form.formState.isSubmitting;
 
   return (
-    // Legacy login.html uses a system-font stack (not Inter like the rest
-    // of the app) — the brand "Peregrine Flight Ops" renders visibly wider
-    // and heavier with SF Pro Display vs Inter. Scoping that override here
-    // keeps the rest of the app on Inter as intended.
-    <div
-      className="flex min-h-screen items-center justify-center px-4"
-      style={{
-        fontFamily:
-          '-apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", system-ui, sans-serif',
-      }}
-    >
-      <div className="w-full max-w-[380px]">
-        {/* Brand block */}
-        <div className="mb-8 text-center">
-          <h1 className="mb-4 text-xl font-bold text-foreground">
-            Peregrine Flight Ops
-          </h1>
-          <p className="text-sm text-[#8896a7]">Sign in to your account</p>
+    <div className="grid min-h-screen bg-background lg:grid-cols-2">
+      {/* The home page's hero, as an ink island. */}
+      <div
+        className="dark relative hidden overflow-hidden bg-cover text-foreground lg:flex lg:flex-col lg:justify-between lg:p-12"
+        style={{
+          backgroundImage:
+            // Dark at both ends: the headline sits at the bottom and the
+            // wordmark at the top, over what is bright sky in the photo.
+            "linear-gradient(to top, rgba(10,10,15,0.92) 0%, rgba(10,10,15,0.3) 45%, rgba(10,10,15,0.72) 100%), " +
+            "url('/images/home-hero.jpg'), " +
+            "linear-gradient(135deg, #2b1a1e 0%, #1a1214 50%, #0a0508 100%)",
+          backgroundColor: "#0a0508",
+          // The photo is landscape and this panel is portrait, so `cover`
+          // crops it hard; centred, the crop is dark tarmac and the
+          // aircraft (right of centre in the photo) is cut off.
+          backgroundPosition: "68% center",
+        }}
+      >
+        <HomeWordmark size={40} wordmark="PEREGRINE" subtitle="FLIGHT OPS" />
+        <div className="max-w-md">
+          <p className="text-[0.65rem] font-semibold uppercase tracking-[0.28em] text-brand-light">
+            Part 135 operations
+          </p>
+          <p className="mt-3 text-3xl font-bold leading-tight tracking-tight">
+            Dispatch, flight following and compliance, in one place.
+          </p>
+          <p className="mt-4 text-sm leading-relaxed text-foreground/75">
+            Releases, crew, weather, maintenance and the records an
+            inspector asks for — built for the way your bases fly.
+          </p>
         </div>
+      </div>
 
-        {/* Card */}
-        <div className="rounded-xl border border-[#1e2d42] bg-[#0f1520] p-8">
+      <div className="flex items-center justify-center px-6 py-12 sm:px-10">
+        <div className="w-full max-w-[380px]">
+          <div className="mb-8 lg:hidden">
+            <HomeWordmark size={36} wordmark="PEREGRINE" subtitle="FLIGHT OPS" />
+          </div>
+
+          <p className="text-[0.7rem] font-semibold uppercase tracking-[0.24em] text-primary">
+            Flight Operations
+          </p>
+          <h1 className="mt-2 text-2xl font-bold tracking-tight text-foreground">
+            Sign in
+          </h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Use your company account.
+          </p>
+
           {error && (
-            <div className="mb-5 flex items-center gap-2 rounded-md border border-[#5c1212] bg-[#1a0808] px-4 py-3 text-sm">
+            <div
+              className="mt-6 flex items-center gap-2 rounded-md border border-status-red/30 bg-status-red/10 px-4 py-3 text-sm text-status-red"
+              role="alert"
+            >
               <svg
                 width="14"
                 height="14"
                 viewBox="0 0 24 24"
-                fill="#f87171"
+                fill="currentColor"
                 className="flex-shrink-0"
                 aria-hidden
               >
                 <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" />
               </svg>
-              <span className="text-[#f87171]" role="alert">
-                {error}
-              </span>
+              <span>{error}</span>
             </div>
           )}
 
-          {visibleProviders.length > 0 && (
-            <>
-              <div className="mb-4 space-y-2">
-                {visibleProviders.map((p) => (
-                  <SsoButton
-                    key={p.id}
-                    provider={p}
-                    callbackUrl={from}
-                    disabled={isSubmitting}
-                  />
-                ))}
-              </div>
+          <div className="mt-6">
+            {visibleProviders.length > 0 && (
+              <>
+                <div className="mb-4 space-y-2">
+                  {visibleProviders.map((p) => (
+                    <SsoButton
+                      key={p.id}
+                      provider={p}
+                      callbackUrl={from}
+                      disabled={isSubmitting}
+                    />
+                  ))}
+                </div>
+                <div className="mb-4 flex items-center gap-3">
+                  <div className="h-px flex-1 bg-border" />
+                  <span className="text-[0.65rem] uppercase tracking-[0.08em] text-muted-foreground">
+                    or use password
+                  </span>
+                  <div className="h-px flex-1 bg-border" />
+                </div>
+              </>
+            )}
 
-              <div className="mb-3 flex items-center gap-3">
-                <div className="h-px flex-1 bg-[#1e2d42]" />
-                <span className="text-[0.65rem] uppercase tracking-[0.08em] text-muted-foreground">
-                  or use password
-                </span>
-                <div className="h-px flex-1 bg-[#1e2d42]" />
-              </div>
-            </>
-          )}
-
-          <form
-            onSubmit={form.handleSubmit(onSubmit)}
-            className="space-y-4"
-            noValidate
-          >
-            <div>
-              <label
-                htmlFor="login-email"
-                className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-[#8896a7]"
-              >
-                Email
-              </label>
-              <input
-                id="login-email"
-                type="email"
-                autoComplete="email"
-                placeholder="you@example.com"
-                className="ff-login-input"
-                {...form.register("email")}
-              />
-              {form.formState.errors.email && (
-                <p className="mt-1 text-xs text-[#f87171]" role="alert">
-                  {form.formState.errors.email.message}
-                </p>
-              )}
-            </div>
-
-            <div>
-              <label
-                htmlFor="login-password"
-                className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-[#8896a7]"
-              >
-                Password
-              </label>
-              <input
-                id="login-password"
-                type="password"
-                autoComplete="current-password"
-                placeholder="••••••••"
-                className="ff-login-input"
-                {...form.register("password")}
-              />
-              {form.formState.errors.password && (
-                <p className="mt-1 text-xs text-[#f87171]" role="alert">
-                  {form.formState.errors.password.message}
-                </p>
-              )}
-            </div>
-
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="mt-2 w-full cursor-pointer rounded-[7px] border-none bg-[#0a84ff] p-2.5 text-[0.9rem] font-semibold text-white transition-colors hover:bg-[#338dff] disabled:cursor-not-allowed disabled:opacity-60"
+            <form
+              onSubmit={form.handleSubmit(onSubmit)}
+              className="space-y-4"
+              noValidate
             >
-              {isSubmitting ? "Signing in…" : "Sign In"}
-            </button>
-          </form>
+              <div>
+                <label
+                  htmlFor="login-email"
+                  className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted-foreground"
+                >
+                  Email
+                </label>
+                <input
+                  id="login-email"
+                  type="email"
+                  autoComplete="email"
+                  placeholder="you@example.com"
+                  className="ff-input py-2.5 text-sm"
+                  {...form.register("email")}
+                />
+                {form.formState.errors.email && (
+                  <p className="mt-1 text-xs text-status-red" role="alert">
+                    {form.formState.errors.email.message}
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <label
+                  htmlFor="login-password"
+                  className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted-foreground"
+                >
+                  Password
+                </label>
+                <input
+                  id="login-password"
+                  type="password"
+                  autoComplete="current-password"
+                  placeholder="••••••••"
+                  className="ff-input py-2.5 text-sm"
+                  {...form.register("password")}
+                />
+                {form.formState.errors.password && (
+                  <p className="mt-1 text-xs text-status-red" role="alert">
+                    {form.formState.errors.password.message}
+                  </p>
+                )}
+              </div>
+
+              <Button
+                type="submit"
+                size="lg"
+                disabled={isSubmitting}
+                className="mt-2 w-full"
+              >
+                {isSubmitting ? "Signing in…" : "Sign In"}
+              </Button>
+            </form>
+          </div>
+
+          <p className="mt-8 text-xs text-muted-foreground">
+            Authorized users only &mdash; contact your administrator for
+            access.
+          </p>
         </div>
-
-        {/* Footer */}
-        <p className="mt-6 text-center text-xs text-muted-foreground">
-          Authorized users only &mdash; contact your administrator for access.
-        </p>
-        <p className="mt-2 text-center text-xs">
-          <Link href="/home/" className="text-[#8896a7] hover:underline">
-            &larr; Back to home
-          </Link>
-        </p>
       </div>
-
-      {/* Legacy `.ff-input` styling — scoped to login so we don't override
-          the global Input primitive used elsewhere. */}
-      <style>{`
-        .ff-login-input {
-          width: 100%;
-          background: #0a0e14;
-          color: #e8edf2;
-          border: 1px solid #1e2d42;
-          border-radius: 7px;
-          padding: 0.6rem 0.85rem;
-          font-size: 0.9rem;
-          outline: none;
-          transition: border-color .15s, box-shadow .15s;
-        }
-        .ff-login-input:focus {
-          border-color: #0a84ff;
-          box-shadow: 0 0 0 3px rgba(10,132,255,.15);
-        }
-        .ff-login-input::placeholder { color: #3a4a5c; }
-      `}</style>
     </div>
   );
 }
@@ -312,7 +322,7 @@ function SsoButton({
       type="button"
       disabled={disabled}
       onClick={() => signIn(provider.id, { callbackUrl })}
-      className="flex w-full cursor-pointer items-center justify-center gap-2.5 rounded-[7px] p-2.5 text-[0.9rem] font-semibold transition-opacity disabled:cursor-not-allowed disabled:opacity-60"
+      className="flex w-full cursor-pointer items-center justify-center gap-2.5 rounded-md p-2.5 text-sm font-semibold transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
       style={style}
     >
       <ProviderIcon providerId={provider.id} />

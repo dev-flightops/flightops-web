@@ -38,7 +38,18 @@ export default auth((req) => {
   }
 });
 
-// Match everything except Next.js internals, static assets, and the next-auth route.
+// Match everything except Next.js internals, the next-auth route, and
+// the public images.
+//
+// `images/` was missing, so every file in public/images was redirected
+// to /login for anyone signed out — including the photo on the login
+// page itself, which only ever showed when it happened to be cached from
+// a signed-in visit.
+//
+// Deliberately the one prefix and not the common "anything with a file
+// extension" exemption: /api/dispatch/[flightId]/release.pdf is a
+// protected route with an extension, and that pattern would serve every
+// dispatch release to an anonymous request.
 export const config = {
-  matcher: ["/((?!api/auth|_next/static|_next/image|favicon.ico).*)"],
+  matcher: ["/((?!api/auth|_next/static|_next/image|favicon.ico|images/).*)"],
 };

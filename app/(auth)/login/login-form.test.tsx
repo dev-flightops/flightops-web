@@ -31,22 +31,31 @@ describe("LoginForm", () => {
     refresh.mockReset();
   });
 
-  it("renders the brand block + form fields + sign-in button", () => {
+  it("renders the brand, the form fields and the sign-in button", () => {
     render(<LoginForm providers={[]} />);
-    expect(screen.getByText("Peregrine Flight Ops")).toBeInTheDocument();
-    expect(screen.getByText("Sign in to your account")).toBeInTheDocument();
+    // The wordmark appears twice — the photo panel on desktop, the
+    // compact block on phones — and CSS decides which one shows.
+    expect(screen.getAllByText("PEREGRINE").length).toBeGreaterThan(0);
+    expect(screen.getByRole("heading", { level: 1, name: "Sign in" })).toBeInTheDocument();
     expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/password/i)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /sign in$/i })).toBeInTheDocument();
+    // Exact label: the e2e fixtures and the page-crawl sign in by it.
+    expect(screen.getByRole("button", { name: /^sign in$/i })).toBeInTheDocument();
   });
 
-  it("renders the legacy footer copy + Back to home link", () => {
+  it("keeps the authorized-users notice", () => {
+    render(<LoginForm providers={[]} />);
+    expect(screen.getByText(/Authorized users only/i)).toBeInTheDocument();
+  });
+
+  it("does not offer a 'Back to home' link, because it looped", () => {
+    // Legacy had one. /home requires a session, so for anybody on this
+    // page it redirected straight back to /login — a link that went
+    // nowhere. Removed with the unified theme; this keeps it removed.
     render(<LoginForm providers={[]} />);
     expect(
-      screen.getByText(/Authorized users only/i),
-    ).toBeInTheDocument();
-    const back = screen.getByRole("link", { name: /back to home/i });
-    expect(back).toHaveAttribute("href", "/home");
+      screen.queryByRole("link", { name: /back to home/i }),
+    ).not.toBeInTheDocument();
   });
 
   it("does NOT render the SSO divider when no providers are enabled", () => {
