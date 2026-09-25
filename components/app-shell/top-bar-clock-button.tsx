@@ -3,6 +3,7 @@
 import { useEffect, useState, useTransition } from "react";
 
 import type { DutyActionResult } from "@/app/(app)/duty-actions";
+import { NEW_PERIOD_WARNING, useArmedConfirm } from "@/components/duty/confirm-duty-out";
 import type { CurrentDutyResponse } from "@/lib/api/types";
 
 interface Props {
@@ -63,12 +64,20 @@ export function TopBarClockButton({ initial, clockIn, clockOut }: Props) {
   }, [initial]);
 
   const isOnDuty = duty.open !== null;
+  const { armed, arm, disarm, ref } = useArmedConfirm();
 
   const handleClick = () => {
     setError(null);
     const previous = duty;
 
     if (isOnDuty) {
+      // Two presses, because this pill sits in the header of every
+      // page and a stray click used to end the duty day outright.
+      if (!armed) {
+        arm();
+        return;
+      }
+      disarm();
       setDuty({
         ...duty,
         open: null,
@@ -120,31 +129,53 @@ export function TopBarClockButton({ initial, clockIn, clockOut }: Props) {
         )
       : duty.open.elapsed_hours
     : 0;
-  const label = isOnDuty
-    ? `Clock Out · ${formatElapsed(elapsedHours)}`
-    : "Clock In";
-  const title = error ?? (isOnDuty ? "Currently on duty — click to clock out" : "Click to clock in");
-  const tone = isOnDuty
-    ? "border-status-green/40 bg-status-green/10 text-status-green hover:bg-status-green/15"
-    : "border-border bg-primary/8 text-primary hover:bg-primary/12";
+  const elapsedLabel = formatElapsed(elapsedHours);
+  const label = armed
+    ? `Confirm duty out · ${elapsedLabel}`
+    : isOnDuty
+      ? `Clock Out · ${elapsedLabel}`
+      : "Clock In";
+  const title =
+    error ??
+    (armed
+      ? `Press again to close this duty period. ${NEW_PERIOD_WARNING} Escape to cancel.`
+      : isOnDuty
+        ? "Currently on duty — click to clock out"
+        : "Click to clock in");
+  const tone = armed
+    ? "border-status-red/50 bg-status-red/15 text-status-red hover:bg-status-red/20"
+    : isOnDuty
+      ? "border-status-green/40 bg-status-green/10 text-status-green hover:bg-status-green/15"
+      : "border-border bg-primary/8 text-primary hover:bg-primary/12";
 
   return (
-    <button
-      type="button"
-      onClick={handleClick}
-      disabled={pending}
-      title={title}
-      aria-label={label}
-      className={
-        "hidden cursor-pointer items-center gap-1 rounded-md border p-1.5 text-xs font-semibold transition-colors disabled:opacity-60 sm:inline-flex " +
-        tone
-      }
-    >
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
-        <path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z" />
-      </svg>
-      <span>{label}</span>
-    </button>
+    <div ref={ref} className="hidden sm:inline-flex">
+      <button
+        type="button"
+        onClick={handleClick}
+        disabled={pending}
+        title={title}
+        aria-label={label}
+        // Announced rather than only coloured: a screen-reader user
+        // gets the same "this press will close your duty day" that the
+        // red pill gives everyone else.
+        aria-describedby={armed ? "duty-out-armed" : undefined}
+        className={
+          "inline-flex cursor-pointer items-center gap-1 rounded-md border p-1.5 text-xs font-semibold transition-colors disabled:opacity-60 " +
+          tone
+        }
+      >
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+          <path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z" />
+        </svg>
+        <span>{label}</span>
+      </button>
+      {armed && (
+        <span id="duty-out-armed" role="status" className="sr-only">
+          Press again to close this duty period. {NEW_PERIOD_WARNING}
+        </span>
+      )}
+    </div>
   );
 }
 
