@@ -18,7 +18,7 @@ import { NewFlightLogForm } from "./new-flight-log-form";
  *
  * Mirrors legacy `peregrineflight.com/elog/`:
  *   - Title "Electronic Flight Log" + today's local date subtitle
- *   - Active Logs (Draft) panel — yellow-tinted list of in-progress
+ *   - Active Logs (Draft) panel — list of in-progress
  *     logs (empty list collapses the panel, same as legacy)
  *   - New Flight Log form — Aircraft / Flight / Flight Number /
  *     Flight Type, submit creates a draft + redirects to the 7-tab
@@ -70,10 +70,10 @@ export default async function FlightLogPage() {
   return (
     <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
       <header className="mb-6">
-        <h1 className="text-xl font-bold tracking-tight sm:text-2xl">
+        <h1 className="text-2xl font-bold tracking-tight">
           Electronic Flight Log
         </h1>
-        <p className="mt-1 text-xs text-muted-foreground">{todayLong()}</p>
+        <p className="mt-1 text-sm text-muted-foreground">{todayLong()}</p>
       </header>
 
       {loadError ? (
@@ -91,7 +91,7 @@ export default async function FlightLogPage() {
               <p className="text-sm text-muted-foreground">
                 No active aircraft on this tenant.
               </p>
-              <p className="mt-1 text-xs text-muted-foreground/70">
+              <p className="mt-1 text-xs text-muted-foreground">
                 Activate one on the Maintenance page before starting a
                 flight log.
               </p>

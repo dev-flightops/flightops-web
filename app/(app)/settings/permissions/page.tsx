@@ -52,7 +52,7 @@ export default async function SettingsPermissionsPage() {
     users.filter((u) => u.is_active && u.roles.includes(roleId)).length;
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-6 sm:px-6">
+    <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6">
       <nav className="mb-4 text-xs text-muted-foreground">
         <Link href="/settings" className="hover:text-foreground">
           Settings
@@ -102,7 +102,7 @@ export default async function SettingsPermissionsPage() {
                       <h2 className="text-base font-semibold text-foreground">
                         {role.label}
                       </h2>
-                      <code className="rounded-sm border border-border bg-muted/20 px-1.5 py-0.5 font-mono text-[0.65rem] text-muted-foreground">
+                      <code className="rounded-sm border border-border bg-muted px-1.5 py-0.5 font-mono text-[0.65rem] text-muted-foreground">
                         {role.id}
                       </code>
                     </div>
@@ -131,12 +131,12 @@ export default async function SettingsPermissionsPage() {
           To assign roles, edit a user on the{" "}
           <Link
             href="/settings/users"
-            className="text-status-blue hover:underline"
+            className="text-primary hover:underline"
           >
             Users page
           </Link>
           . Granular per-action permissions (e.g. &quot;dispatcher can release
-          but not cancel&quot;) ship in M4. Users have to sign out and back in
+          but not cancel&quot;) aren&apos;t available yet. Users have to sign out and back in
           for an Admin Access change to take effect.
         </p>
       )}

@@ -139,7 +139,7 @@ function Article({
                   key={step}
                   className="flex gap-2 text-xs leading-relaxed text-muted-foreground"
                 >
-                  <span aria-hidden className="shrink-0 text-muted-foreground/60">
+                  <span aria-hidden className="shrink-0 text-muted-foreground">
                     •
                   </span>
                   <span>{step}</span>
@@ -164,7 +164,7 @@ function Article({
             {entry.worthKnowing.map((note) => (
               <li
                 key={note}
-                className="border-l-2 border-status-blue/40 pl-2 text-xs leading-relaxed text-muted-foreground"
+                className="border-l-2 border-primary/40 pl-2 text-xs leading-relaxed text-muted-foreground"
               >
                 {note}
               </li>
@@ -178,7 +178,7 @@ function Article({
           in one faster than they parse a feature description. */}
       {entry.example && (
         <Section heading="For example">
-          <p className="border-l-2 border-status-blue/40 pl-2 text-xs leading-relaxed text-muted-foreground">
+          <p className="border-l-2 border-primary/40 pl-2 text-xs leading-relaxed text-muted-foreground">
             {entry.example}
           </p>
         </Section>
@@ -203,7 +203,7 @@ function Article({
                 <Link
                   href={r.route}
                   onClick={onNavigate}
-                  className="text-xs text-status-blue hover:underline"
+                  className="text-xs text-primary hover:underline"
                 >
                   {r.label}
                 </Link>
@@ -268,7 +268,7 @@ export function HelpPanel() {
         aria-expanded={open}
         aria-label="Help"
         title={contextual ? `Help — ${contextual.title}` : "Help"}
-        className="hidden items-center rounded-md p-2 text-muted-foreground hover:bg-primary/8 hover:text-foreground sm:inline-flex"
+        className="hidden items-center rounded-md p-2 text-muted-foreground hover:bg-foreground/8 hover:text-foreground sm:inline-flex"
       >
         <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
           <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z" />
@@ -306,7 +306,7 @@ export function HelpPanel() {
                 type="button"
                 onClick={() => setOpen(false)}
                 aria-label="Close help"
-                className="rounded px-2 py-1 text-xs text-muted-foreground hover:bg-muted/40 hover:text-foreground"
+                className="rounded px-2 py-1 text-xs text-muted-foreground hover:bg-accent hover:text-foreground"
               >
                 Close
               </button>
@@ -319,7 +319,7 @@ export function HelpPanel() {
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Search help"
                 aria-label="Search help"
-                className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-xs text-foreground focus:border-status-blue focus:outline-none"
+                className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-xs text-foreground focus:border-primary focus:outline-none"
               />
             </div>
 
@@ -340,7 +340,7 @@ export function HelpPanel() {
                         <Link
                           href={entry.route}
                           onClick={() => setOpen(false)}
-                          className="text-xs font-semibold hover:text-status-blue"
+                          className="text-xs font-semibold hover:text-primary"
                         >
                           {entry.title}
                         </Link>
@@ -374,7 +374,7 @@ export function HelpPanel() {
                         <Link
                           href={entry.route}
                           onClick={() => setOpen(false)}
-                          className="text-xs text-status-blue hover:underline"
+                          className="text-xs text-primary hover:underline"
                         >
                           {entry.title}
                         </Link>

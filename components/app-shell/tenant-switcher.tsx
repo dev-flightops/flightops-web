@@ -67,7 +67,7 @@ export function TenantSwitcher() {
       {isMultiTenant && (
         <div
           role="menu"
-          className="absolute right-0 z-50 mt-1 min-w-[220px] rounded-md border border-border bg-popover p-1 text-sm shadow-md"
+          className="light absolute right-0 z-50 mt-1 min-w-[220px] rounded-md border border-border bg-popover p-1 text-sm text-popover-foreground shadow-md"
         >
           {tenants.map((tenant) => {
             const isCurrent = tenant.id === currentTenant.id;

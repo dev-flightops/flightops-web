@@ -24,7 +24,7 @@ export function ApproveRejectButtons({ eventId }: { eventId: string }) {
         type="button"
         disabled={pending}
         onClick={() => submit("approve")}
-        className="text-xs font-semibold text-status-green hover:text-status-green/80 disabled:opacity-50"
+        className="text-xs font-semibold text-status-green hover:underline disabled:opacity-50"
       >
         Approve
       </button>
@@ -32,7 +32,7 @@ export function ApproveRejectButtons({ eventId }: { eventId: string }) {
         type="button"
         disabled={pending}
         onClick={() => submit("reject")}
-        className="text-xs font-semibold text-status-red hover:text-status-red/80 disabled:opacity-50"
+        className="text-xs font-semibold text-status-red hover:underline disabled:opacity-50"
       >
         Reject
       </button>

@@ -64,7 +64,7 @@ export default async function CertificateDetailPage({
             <p className="text-[0.65rem] uppercase tracking-[0.1em] text-status-yellow">
               Peregrine Academy
             </p>
-            <h1 className="mt-1 text-xl font-bold tracking-tight sm:text-2xl">
+            <h1 className="mt-1 text-2xl font-bold tracking-tight">
               Certificate of Completion
             </h1>
           </div>
@@ -129,7 +129,7 @@ export default async function CertificateDetailPage({
             </div>
             <Link
               href={`/academy/enrollments/${cert.enrollment_id}`}
-              className="mt-0.5 font-mono text-xs text-status-blue hover:underline"
+              className="mt-0.5 font-mono text-xs text-primary hover:underline"
             >
               View progress →
             </Link>
@@ -156,7 +156,7 @@ function _certStatus(
   if (expiresAt === null) {
     return {
       label: "Never expires",
-      className: "border-border bg-muted/40 text-muted-foreground",
+      className: "border-border bg-muted text-muted-foreground",
     };
   }
   const ms = new Date(expiresAt).getTime() - now;

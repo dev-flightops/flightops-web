@@ -59,7 +59,7 @@ export function PeriodControls({
         onClick={() => shiftMonths(-1)}
         disabled={isPending}
         aria-label="Previous month"
-        className="rounded-md border border-border bg-card px-2 py-1.5 text-xs font-semibold text-foreground hover:bg-muted/40 disabled:opacity-60"
+        className="rounded-md border border-border bg-card px-2 py-1.5 text-xs font-semibold text-foreground hover:bg-accent disabled:opacity-60"
       >
         ←
       </button>
@@ -75,14 +75,14 @@ export function PeriodControls({
           goTo(y, m);
         }}
         disabled={isPending}
-        className="rounded-md border border-border bg-background px-2 py-1.5 text-xs text-foreground focus:border-status-blue focus:outline-none disabled:opacity-60"
+        className="rounded-md border border-border bg-background px-2 py-1.5 text-xs text-foreground focus:border-primary focus:outline-none disabled:opacity-60"
       />
       <button
         type="button"
         onClick={() => shiftMonths(1)}
         disabled={isPending}
         aria-label="Next month"
-        className="rounded-md border border-border bg-card px-2 py-1.5 text-xs font-semibold text-foreground hover:bg-muted/40 disabled:opacity-60"
+        className="rounded-md border border-border bg-card px-2 py-1.5 text-xs font-semibold text-foreground hover:bg-accent disabled:opacity-60"
       >
         →
       </button>

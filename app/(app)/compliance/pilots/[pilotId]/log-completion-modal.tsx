@@ -171,7 +171,7 @@ export function LogCompletionModal({
             <button
               type="submit"
               disabled={pending || state.status === "success"}
-              className="inline-flex items-center gap-1.5 rounded-md bg-status-blue px-4 py-2 text-xs font-semibold text-white hover:brightness-110 disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 rounded-md bg-primary px-4 py-2 text-xs font-semibold text-white hover:bg-brand-dark disabled:opacity-50"
             >
               {pending && <Spinner size="xs" />}
               {pending ? "Saving…" : "Save Completion"}
@@ -212,7 +212,7 @@ function Field({
         id={name}
         name={name}
         aria-invalid={error ? "true" : undefined}
-        className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs text-foreground focus:border-status-blue focus:outline-none aria-[invalid=true]:border-status-red"
+        className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs text-foreground focus:border-primary focus:outline-none aria-[invalid=true]:border-status-red"
         {...inputProps}
       />
       {error && (
@@ -250,7 +250,7 @@ function FieldSelect({
         name={name}
         required={required}
         aria-invalid={error ? "true" : undefined}
-        className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs text-foreground focus:border-status-blue focus:outline-none aria-[invalid=true]:border-status-red"
+        className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs text-foreground focus:border-primary focus:outline-none aria-[invalid=true]:border-status-red"
       >
         {children}
       </select>
@@ -287,7 +287,7 @@ function FieldTextarea({
         name={name}
         rows={rows}
         aria-invalid={error ? "true" : undefined}
-        className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs text-foreground focus:border-status-blue focus:outline-none aria-[invalid=true]:border-status-red"
+        className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs text-foreground focus:border-primary focus:outline-none aria-[invalid=true]:border-status-red"
       />
       {error && (
         <p role="alert" className="mt-1 text-[0.65rem] text-status-red">

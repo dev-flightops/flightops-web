@@ -90,8 +90,8 @@ export default async function ExecutiveDashboardPage() {
 
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-xl font-bold tracking-tight">Executive Overview</h1>
-          <p className="mt-0.5 text-xs text-muted-foreground">
+          <h1 className="text-2xl font-bold tracking-tight">Executive Overview</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
             {currentTenantName} — {currentTenantName}
           </p>
         </div>
@@ -167,8 +167,8 @@ export default async function ExecutiveDashboardPage() {
             <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
               Active Alerts
             </h2>
-            <span className="text-[0.65rem] text-muted-foreground/70">
-              {snapshot.alerts.length} live · 7 more land with M3 services
+            <span className="text-[0.65rem] text-muted-foreground">
+              {snapshot.alerts.length} live · 7 more alert types land with their services
             </span>
           </div>
           <AlertList
@@ -183,7 +183,7 @@ export default async function ExecutiveDashboardPage() {
               Daily Operations Score —{" "}
               <span className="text-foreground">{opsScore.toFixed(1)}/100</span>
             </h2>
-            <span className="text-[0.65rem] text-muted-foreground/70">
+            <span className="text-[0.65rem] text-muted-foreground">
               details →
             </span>
           </div>

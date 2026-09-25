@@ -56,7 +56,7 @@ export function FleetAirworthinessPanel({
         )}
       </div>
 
-      <div className="mt-3 flex items-baseline justify-between border-t border-border pt-3 text-[0.65rem] text-muted-foreground/70">
+      <div className="mt-3 flex items-baseline justify-between border-t border-border pt-3 text-[0.65rem] text-muted-foreground">
         <span>
           <span className="text-foreground">{openSquawks}</span> open squawks ·{" "}
           <span className="text-foreground">{pendingRts}</span> pending RTS ·{" "}
@@ -64,7 +64,7 @@ export function FleetAirworthinessPanel({
         </span>
         <Link
           href="/maintenance"
-          className="text-status-blue hover:underline"
+          className="text-primary hover:underline"
         >
           Maintenance →
         </Link>
@@ -103,9 +103,9 @@ function Row({ row }: { row: FleetAircraftSummary }) {
         {tail}
       </span>
       <span className="flex-1 truncate text-xs text-muted-foreground">
-        {model ?? <span className="text-muted-foreground/40">—</span>}
+        {model ?? <span className="text-muted-foreground">—</span>}
       </span>
-      <span className="text-xs text-muted-foreground/40">
+      <span className="text-xs text-muted-foreground">
         {row.base ?? "—"}
       </span>
       {badge}

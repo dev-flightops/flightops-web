@@ -44,7 +44,7 @@ export function SetPasswordDialog({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="rounded-md border border-border bg-card px-2.5 py-1 text-[0.7rem] font-semibold text-foreground hover:bg-muted/40"
+        className="rounded-md border border-border bg-card px-2.5 py-1 text-[0.7rem] font-semibold text-foreground hover:bg-accent"
       >
         {hasPassword ? "Reset password" : "Set password"}
       </button>
@@ -89,7 +89,7 @@ export function SetPasswordDialog({
                 minLength={8}
                 autoComplete="new-password"
                 aria-invalid={fieldError("password") ? "true" : undefined}
-                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-status-blue focus:outline-none aria-[invalid=true]:border-status-red"
+                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none aria-[invalid=true]:border-status-red"
               />
               {fieldError("password") && (
                 <p
@@ -106,14 +106,14 @@ export function SetPasswordDialog({
                 type="button"
                 onClick={() => setOpen(false)}
                 disabled={pending}
-                className="rounded-md border border-border bg-card px-3 py-2 text-xs font-semibold text-foreground hover:bg-muted/40"
+                className="rounded-md border border-border bg-card px-3 py-2 text-xs font-semibold text-foreground hover:bg-accent"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={pending}
-                className="inline-flex items-center gap-1.5 rounded-md bg-status-blue px-4 py-2 text-xs font-semibold text-white hover:brightness-110 disabled:opacity-60"
+                className="inline-flex items-center gap-1.5 rounded-md bg-primary px-4 py-2 text-xs font-semibold text-white hover:bg-brand-dark disabled:opacity-60"
               >
                 {pending && <Spinner size="xs" />}
                 {pending ? "Saving…" : "Save password"}

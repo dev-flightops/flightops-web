@@ -69,8 +69,8 @@ export function FleetBrainChat({ examples }: { examples: string[] }) {
       <header className="mb-5 flex items-center gap-3">
         <BrainMark size={36} />
         <div>
-          <h1 className="text-xl font-bold">FleetBrain</h1>
-          <p className="text-xs text-muted-foreground">
+          <h1 className="text-2xl font-bold tracking-tight">FleetBrain</h1>
+          <p className="text-sm text-muted-foreground">
             AI copilot — ask anything about your operation
           </p>
         </div>
@@ -98,12 +98,12 @@ export function FleetBrainChat({ examples }: { examples: string[] }) {
             autoComplete="off"
             maxLength={500}
             placeholder="Ask FleetBrain anything about your operation..."
-            className="flex-1 rounded-xl border border-border bg-card px-4 py-2.5 text-sm focus:border-status-blue focus:outline-none"
+            className="flex-1 rounded-xl border border-border bg-card px-4 py-2.5 text-sm focus:border-primary focus:outline-none"
           />
           <button
             type="submit"
             disabled={pending || !draft.trim()}
-            className="rounded-xl bg-status-blue px-5 py-2.5 text-white hover:brightness-110 disabled:opacity-40"
+            className="rounded-xl bg-primary px-5 py-2.5 text-white hover:bg-brand-dark disabled:opacity-40"
           >
             <span className="sr-only">{pending ? "Asking" : "Ask"}</span>
             <svg
@@ -117,7 +117,7 @@ export function FleetBrainChat({ examples }: { examples: string[] }) {
             </svg>
           </button>
         </form>
-        <p className="mt-1.5 text-center text-[0.65rem] text-muted-foreground/60">
+        <p className="mt-1.5 text-center text-[0.65rem] text-muted-foreground">
           FleetBrain queries live platform data. Results reflect current state
           as of query time.
         </p>

@@ -50,7 +50,7 @@ function QuizMetaCard({ quiz }: { quiz: QuizAdminResponse }) {
             defaultValue={quiz.title}
             required
             maxLength={200}
-            className="ff mt-1"
+            className="ff-input mt-1"
           />
         </label>
         <label className="block">
@@ -63,7 +63,7 @@ function QuizMetaCard({ quiz }: { quiz: QuizAdminResponse }) {
             rows={3}
             maxLength={4000}
             placeholder="Shown at the top of the quiz — e.g. 'Read each prompt carefully.'"
-            className="ff mt-1"
+            className="ff-input mt-1"
           />
         </label>
         <label className="block max-w-xs">
@@ -77,20 +77,19 @@ function QuizMetaCard({ quiz }: { quiz: QuizAdminResponse }) {
             max={100}
             step={1}
             defaultValue={quiz.pass_threshold}
-            className="ff mt-1"
+            className="ff-input mt-1"
           />
         </label>
         <div className="flex justify-end">
           <button
             type="submit"
             disabled={pending}
-            className="rounded-md border border-border bg-muted/30 px-3 py-1.5 text-xs font-semibold hover:bg-muted/40 disabled:opacity-60"
+            className="rounded-md border border-border bg-muted/60 px-3 py-1.5 text-xs font-semibold hover:bg-accent disabled:opacity-60"
           >
             {pending ? "Saving…" : "Save"}
           </button>
         </div>
       </form>
-      <FormStyles />
     </section>
   );
 }
@@ -142,7 +141,7 @@ function QuestionRow({
           <button
             type="button"
             onClick={() => setEditing((v) => !v)}
-            className="rounded-md border border-border bg-muted/20 px-2 py-1 text-[0.6875rem] font-semibold hover:bg-muted/40"
+            className="rounded-md border border-border bg-muted/60 px-2 py-1 text-[0.6875rem] font-semibold hover:bg-accent"
           >
             {editing ? "Close" : "Edit"}
           </button>
@@ -184,13 +183,12 @@ function QuestionRow({
             </li>
           ))}
           {question.explanation ? (
-            <li className="list-none pt-1 italic text-muted-foreground/80">
+            <li className="list-none pt-1 italic text-muted-foreground">
               Note: {question.explanation}
             </li>
           ) : null}
         </ul>
       )}
-      <FormStyles />
     </li>
   );
 }
@@ -271,7 +269,7 @@ function QuestionForm({
           rows={2}
           required
           maxLength={2000}
-          className="ff mt-1"
+          className="ff-input mt-1"
         />
       </label>
       <div>
@@ -283,7 +281,7 @@ function QuestionForm({
             type="button"
             onClick={addOption}
             disabled={options.length >= 6}
-            className="text-[0.6875rem] font-semibold text-status-blue hover:underline disabled:opacity-40"
+            className="text-[0.6875rem] font-semibold text-primary hover:underline disabled:opacity-40"
           >
             + Add option
           </button>
@@ -310,7 +308,7 @@ function QuestionForm({
                 required
                 maxLength={500}
                 placeholder={`Option ${idx + 1}`}
-                className="ff flex-1"
+                className="ff-input flex-1"
               />
               <button
                 type="button"
@@ -333,7 +331,7 @@ function QuestionForm({
           defaultValue={question?.explanation ?? ""}
           rows={2}
           maxLength={2000}
-          className="ff mt-1"
+          className="ff-input mt-1"
         />
       </label>
       <div className="flex justify-end gap-2">
@@ -341,7 +339,7 @@ function QuestionForm({
           <button
             type="button"
             onClick={onDone}
-            className="rounded-md border border-border bg-transparent px-3 py-1.5 text-xs font-semibold hover:bg-muted/20"
+            className="rounded-md border border-border bg-transparent px-3 py-1.5 text-xs font-semibold hover:bg-accent"
           >
             Cancel
           </button>
@@ -349,7 +347,7 @@ function QuestionForm({
         <button
           type="submit"
           disabled={pending}
-          className="rounded-md bg-status-blue px-3 py-1.5 text-xs font-semibold text-white hover:brightness-110 disabled:opacity-60"
+          className="rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-dark disabled:opacity-60"
         >
           {pending ? "Saving…" : isEdit ? "Save question" : "Add question"}
         </button>
@@ -365,7 +363,6 @@ function AddQuestionCard({ quizId }: { quizId: string }) {
         Add question
       </h2>
       <QuestionForm quizId={quizId} />
-      <FormStyles />
     </section>
   );
 }
@@ -404,22 +401,3 @@ function ErrorBanner({ message }: { message: string }) {
   );
 }
 
-function FormStyles() {
-  return (
-    <style>{`
-      .ff {
-        width: 100%;
-        padding: 0.5rem 0.75rem;
-        border: 1px solid hsl(var(--border));
-        border-radius: 0.375rem;
-        background: hsl(var(--background));
-        font-size: 0.8125rem;
-        color: hsl(var(--foreground));
-      }
-      .ff:focus {
-        outline: none;
-        border-color: hsl(var(--ring));
-      }
-    `}</style>
-  );
-}

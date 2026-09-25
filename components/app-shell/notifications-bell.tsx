@@ -112,16 +112,19 @@ export function NotificationsBell({
         }
         aria-expanded={open}
         title="Notifications"
-        className="relative inline-flex items-center rounded-md p-2 text-muted-foreground hover:bg-primary/8 hover:text-foreground"
+        className="relative inline-flex items-center rounded-md p-2 text-muted-foreground hover:bg-foreground/8 hover:text-foreground"
       >
         <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
           <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z" />
         </svg>
+        {/* `light`: the bell sits in the ink bar, where the status tones
+            are the pale on-ink ones and white numerals fail on them. The
+            badge takes the light ground's solid tones instead. */}
         {count > 0 && (
           <span
             data-testid="bell-count"
             className={
-              "absolute -right-0.5 -top-0.5 min-w-[1rem] rounded-full px-1 text-[0.6rem] font-bold leading-4 text-white " +
+              "light absolute -right-0.5 -top-0.5 min-w-[1rem] rounded-full px-1 text-[0.6rem] font-bold leading-4 text-white " +
               (worst === "red" ? "bg-status-red" : "bg-status-yellow")
             }
           >
@@ -134,7 +137,7 @@ export function NotificationsBell({
         <div
           role="dialog"
           aria-label="Notifications"
-          className="absolute right-0 z-50 mt-1 w-[22rem] overflow-hidden rounded-xl border border-border bg-card shadow-lg"
+          className="light absolute right-0 z-50 mt-1 w-[22rem] overflow-hidden rounded-xl border border-border bg-card text-card-foreground shadow-lg"
         >
           <div className="flex items-baseline justify-between border-b border-border px-3 py-2">
             <p className="text-xs font-semibold">
@@ -143,7 +146,7 @@ export function NotificationsBell({
             <Link
               href="/home"
               onClick={() => setOpen(false)}
-              className="text-[0.65rem] text-status-blue hover:underline"
+              className="text-[0.65rem] text-primary hover:underline"
             >
               All alerts
             </Link>
@@ -179,7 +182,7 @@ export function NotificationsBell({
                     <Link
                       href={alert.href}
                       onClick={() => setOpen(false)}
-                      className="block text-xs font-semibold hover:text-status-blue"
+                      className="block text-xs font-semibold hover:text-primary"
                     >
                       {alert.title}
                     </Link>
@@ -196,7 +199,7 @@ export function NotificationsBell({
                       )
                     }
                     aria-label={`Dismiss ${alert.title}`}
-                    className="shrink-0 rounded px-1.5 py-0.5 text-[0.65rem] text-muted-foreground hover:bg-muted/40 hover:text-foreground disabled:opacity-50"
+                    className="shrink-0 rounded px-1.5 py-0.5 text-[0.65rem] text-muted-foreground hover:bg-accent hover:text-foreground disabled:opacity-50"
                   >
                     {busy === alert.id ? "…" : "Dismiss"}
                   </button>
@@ -213,7 +216,7 @@ export function NotificationsBell({
                 <Link
                   href="/home"
                   onClick={() => setOpen(false)}
-                  className="text-status-blue hover:underline"
+                  className="text-primary hover:underline"
                 >
                   unfiltered list
                 </Link>

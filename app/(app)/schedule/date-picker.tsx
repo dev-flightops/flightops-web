@@ -34,7 +34,7 @@ export function DatePicker({
         type="button"
         onClick={() => shift(-1)}
         disabled={isPending}
-        className="rounded-md border border-border bg-card px-2 py-1.5 text-xs font-semibold text-foreground hover:bg-muted/40 disabled:opacity-60"
+        className="rounded-md border border-border bg-card px-2 py-1.5 text-xs font-semibold text-foreground hover:bg-accent disabled:opacity-60"
         aria-label="Previous day"
       >
         ←
@@ -44,13 +44,13 @@ export function DatePicker({
         value={defaultValue}
         onChange={(e) => navigateTo(e.target.value)}
         disabled={isPending}
-        className="rounded-md border border-border bg-background px-2 py-1.5 text-xs text-foreground focus:border-status-blue focus:outline-none"
+        className="rounded-md border border-border bg-background px-2 py-1.5 text-xs text-foreground focus:border-primary focus:outline-none"
       />
       <button
         type="button"
         onClick={() => shift(1)}
         disabled={isPending}
-        className="rounded-md border border-border bg-card px-2 py-1.5 text-xs font-semibold text-foreground hover:bg-muted/40 disabled:opacity-60"
+        className="rounded-md border border-border bg-card px-2 py-1.5 text-xs font-semibold text-foreground hover:bg-accent disabled:opacity-60"
         aria-label="Next day"
       >
         →

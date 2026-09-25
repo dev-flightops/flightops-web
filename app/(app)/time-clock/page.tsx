@@ -61,7 +61,7 @@ export default async function TimeClockPage() {
       <header className="mb-6 flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Time Clock</h1>
-          <p className="mt-0.5 text-xs text-muted-foreground">
+          <p className="mt-1 text-sm text-muted-foreground">
             {open
               ? `On duty since ${formatTime(open.clock_in_at)} — ${open.elapsed_hours.toFixed(1)}h`
               : "Not on duty"}
@@ -69,7 +69,7 @@ export default async function TimeClockPage() {
         </div>
         <Link
           href="/flight-crew/elog"
-          className="rounded-md bg-status-blue px-3 py-2 text-xs font-semibold text-white hover:brightness-110"
+          className="rounded-md bg-primary px-3 py-2 text-xs font-semibold text-white hover:bg-brand-dark"
         >
           Open Flight Log →
         </Link>
@@ -197,7 +197,7 @@ function RecentPunches({ history }: { history: DutyPeriodSummary[] }) {
       </div>
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
-          <thead className="border-b border-border bg-muted/10 text-left text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
+          <thead className="border-b border-border bg-muted/60 text-left text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
             <tr>
               <th scope="col" className="px-4 py-2.5 font-semibold">Clock in</th>
               <th scope="col" className="px-4 py-2.5 font-semibold">Clock out</th>
@@ -212,7 +212,7 @@ function RecentPunches({ history }: { history: DutyPeriodSummary[] }) {
           </thead>
           <tbody className="divide-y divide-border">
             {history.map((p) => (
-              <tr key={p.id} className="hover:bg-muted/5">
+              <tr key={p.id} className="hover:bg-accent">
                 <td className="whitespace-nowrap px-4 py-3 text-xs text-foreground">
                   {formatDateTime(p.clock_in_at)}
                 </td>
@@ -228,7 +228,7 @@ function RecentPunches({ history }: { history: DutyPeriodSummary[] }) {
                       "rounded border px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider " +
                       (p.is_open
                         ? "border-status-green/40 bg-status-green/10 text-status-green"
-                        : "border-border bg-muted/30 text-muted-foreground")
+                        : "border-border bg-muted text-muted-foreground")
                     }
                   >
                     {p.is_open ? "Open" : "Closed"}

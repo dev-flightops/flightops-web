@@ -49,7 +49,7 @@ export default async function InvoiceDetailPage({
     if (err instanceof ApiError && err.status === 404) notFound();
     if (err instanceof ApiError && err.status === 403) {
       return (
-        <div className="mx-auto max-w-3xl px-4 py-8">
+        <div className="mx-auto max-w-3xl px-4 sm:px-6 py-8">
           <p
             role="alert"
             className="rounded-md border border-status-red/30 bg-status-red/10 px-3 py-2 text-sm text-status-red"
@@ -74,7 +74,7 @@ export default async function InvoiceDetailPage({
   ].filter(Boolean);
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-8">
+    <div className="mx-auto max-w-4xl px-4 sm:px-6 py-8">
       <Link
         href="/invoicing"
         className="text-[0.65rem] font-semibold uppercase tracking-wider text-muted-foreground hover:text-foreground"

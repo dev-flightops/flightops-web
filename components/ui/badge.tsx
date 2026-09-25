@@ -3,26 +3,24 @@ import { cva, type VariantProps } from "class-variance-authority";
 
 import { cn } from "@/lib/utils";
 
-// Mirrors the legacy `.badge-*` family:
-//   - tiny 0.65rem font
-//   - dark-tinted background paired with a bright variant color
-//   - uppercase + heavy tracking + bold weight
-//   - 6px corner radius
+// The status chip: tiny uppercase label on a tint of its own colour.
 //
-// Backgrounds use literal hex (not Tailwind status-* tokens) because they're
-// always darker than the corresponding text color — they form a dual palette
-// that doesn't reduce cleanly to a single token per variant.
+// Used to be literal near-black backgrounds (#0a2e1a and friends) —
+// right for the old dark ground, and on the light theme a dark blob with
+// dark text on it. The tint pattern is theme-aware and was solved for
+// contrast: every status colour reaches 4.5:1 on its own tint. The inset
+// ring gives the chip an edge on white without a heavier fill.
 const badgeVariants = cva(
-  "inline-flex items-center rounded-md px-1.5 py-0.5 text-[0.65rem] font-bold uppercase tracking-[0.04em] leading-tight",
+  "inline-flex items-center rounded-md px-1.5 py-0.5 text-[0.65rem] font-bold uppercase tracking-[0.04em] leading-tight ring-1 ring-inset",
   {
     variants: {
       variant: {
-        green: "bg-[#0a2e1a] text-status-green",
-        yellow: "bg-[#2e2000] text-status-yellow",
-        red: "bg-[#2e0808] text-status-red",
-        blue: "bg-[#081a2e] text-status-blue",
-        gray: "bg-[#1a2535] text-status-gray",
-        orange: "bg-[#2e1800] text-status-orange",
+        green: "bg-status-green/10 text-status-green ring-status-green/25",
+        yellow: "bg-status-yellow/10 text-status-yellow ring-status-yellow/25",
+        red: "bg-status-red/10 text-status-red ring-status-red/25",
+        blue: "bg-status-blue/10 text-status-blue ring-status-blue/25",
+        gray: "bg-status-gray/10 text-status-gray ring-status-gray/25",
+        orange: "bg-status-orange/10 text-status-orange ring-status-orange/25",
       },
     },
     defaultVariants: {

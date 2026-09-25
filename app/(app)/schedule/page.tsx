@@ -90,7 +90,7 @@ export default async function SchedulePage({
   const totalCount = filtered.length;
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6">
+    <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
       <header className="mb-5 flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">
@@ -111,13 +111,13 @@ export default async function SchedulePage({
               here. One form still, linked from where the need arises. */}
           <Link
             href="/flight-following/new"
-            className="rounded-md bg-status-blue px-3 py-1.5 text-xs font-semibold text-white hover:brightness-110"
+            className="rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-dark"
           >
             + New Flight
           </Link>
           <Link
             href="/flight-following"
-            className="rounded-md border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-muted/40"
+            className="rounded-md border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-accent"
             title="Switch to live tracking view"
           >
             Live →
@@ -254,7 +254,7 @@ function FlightRow({ flight }: { flight: FlightListItem }) {
           href={`/schedule/${flight.id}/manifest`}
           target="_blank"
           rel="noopener noreferrer"
-          className="rounded-md border border-status-blue/40 bg-status-blue/10 px-2.5 py-1 text-xs font-semibold text-status-blue hover:bg-status-blue/20"
+          className="rounded-md border border-primary/40 bg-background px-2.5 py-1 text-xs font-semibold text-primary hover:bg-primary/5"
         >
           🖨 Print
         </Link>

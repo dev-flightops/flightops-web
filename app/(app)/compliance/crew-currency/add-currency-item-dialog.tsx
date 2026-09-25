@@ -60,7 +60,7 @@ export function AddCurrencyItemDialog() {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="inline-flex items-center gap-1.5 rounded-md border border-status-blue/40 bg-status-blue/10 px-3 py-1.5 text-xs font-semibold text-status-blue hover:bg-status-blue/20"
+        className="inline-flex items-center gap-1.5 rounded-md border border-primary/40 bg-background px-3 py-1.5 text-xs font-semibold text-primary hover:bg-primary/5"
       >
         + Add Currency Item
       </button>
@@ -134,7 +134,7 @@ export function AddCurrencyItemDialog() {
                       | "rolling_days",
                   )
                 }
-                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-status-blue focus:outline-none"
+                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
               >
                 <option value="annual">Annual (calendar-month)</option>
                 <option value="semi_annual">Semi-annual</option>
@@ -184,14 +184,14 @@ export function AddCurrencyItemDialog() {
                 type="button"
                 onClick={() => setOpen(false)}
                 disabled={pending}
-                className="rounded-md border border-border bg-card px-3 py-2 text-xs font-semibold text-foreground hover:bg-muted/40"
+                className="rounded-md border border-border bg-card px-3 py-2 text-xs font-semibold text-foreground hover:bg-accent"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={pending}
-                className="inline-flex items-center gap-1.5 rounded-md bg-status-blue px-4 py-2 text-xs font-semibold text-white hover:brightness-110 disabled:opacity-60"
+                className="inline-flex items-center gap-1.5 rounded-md bg-primary px-4 py-2 text-xs font-semibold text-white hover:bg-brand-dark disabled:opacity-60"
               >
                 {pending && <Spinner size="xs" />}
                 {pending ? "Adding…" : "Add currency item"}
@@ -229,7 +229,7 @@ function Field({
         name={name}
         type={type}
         aria-invalid={error ? "true" : undefined}
-        className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-status-blue focus:outline-none aria-[invalid=true]:border-status-red"
+        className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none aria-[invalid=true]:border-status-red"
         {...inputProps}
       />
       {error && (

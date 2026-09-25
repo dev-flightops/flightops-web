@@ -71,7 +71,7 @@ export default async function InvoicingPage({
   const today = todayUtc();
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-8">
+    <div className="mx-auto max-w-6xl px-4 sm:px-6 py-8">
       <header className="mb-6 flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-foreground">
@@ -149,12 +149,12 @@ export default async function InvoicingPage({
                     return (
                       <tr
                         key={inv.id}
-                        className="border-b border-border last:border-0 hover:bg-muted/20"
+                        className="border-b border-border last:border-0 hover:bg-accent"
                       >
                         <td className="px-4 py-2.5">
                           <Link
                             href={`/invoicing/${inv.id}`}
-                            className="font-mono font-semibold text-status-blue hover:underline"
+                            className="font-mono font-semibold text-primary hover:underline"
                           >
                             {inv.invoice_number}
                           </Link>
@@ -241,7 +241,7 @@ function FilterChip({
       className={
         "rounded-md border px-3 py-1.5 text-xs font-semibold transition " +
         (active
-          ? "border-status-blue bg-status-blue/15 text-status-blue"
+          ? "border-primary bg-primary/10 text-primary"
           : "border-border bg-background text-muted-foreground hover:text-foreground")
       }
     >

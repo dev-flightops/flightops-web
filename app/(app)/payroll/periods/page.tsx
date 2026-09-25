@@ -64,7 +64,7 @@ export default async function PayrollPeriodsPage() {
   }
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6">
+    <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
       <nav aria-label="Breadcrumb" className="mb-4 text-xs">
         <Link
           href="/payroll"
@@ -75,12 +75,12 @@ export default async function PayrollPeriodsPage() {
         <span aria-hidden className="px-1.5 text-muted-foreground">
           /
         </span>
-        <span className="font-semibold text-status-blue">Pay Periods</span>
+        <span className="font-semibold text-primary">Pay Periods</span>
       </nav>
 
       <header className="mb-5">
-        <h1 className="text-xl font-bold">Pay Periods</h1>
-        <p className="mt-0.5 text-xs text-muted-foreground">
+        <h1 className="text-2xl font-bold tracking-tight">Pay Periods</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
           Group approved pay events into a period, lock the period, then
           export a CSV for your payroll provider.
         </p>
@@ -105,7 +105,7 @@ export default async function PayrollPeriodsPage() {
         <div className="overflow-hidden rounded-lg border border-border bg-card">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="border-b border-border bg-muted/10 text-left text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
+              <thead className="border-b border-border bg-muted/60 text-left text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
                 <tr>
                   <th scope="col" className="px-4 py-2.5 font-semibold">Period</th>
                   <th scope="col" className="px-4 py-2.5 font-semibold">Status</th>
@@ -116,7 +116,7 @@ export default async function PayrollPeriodsPage() {
               </thead>
               <tbody className="divide-y divide-border">
                 {periods.map((p) => (
-                  <tr key={p.id} className="hover:bg-muted/5">
+                  <tr key={p.id} className="hover:bg-accent">
                     <td className="whitespace-nowrap px-4 py-3 text-xs font-semibold">
                       {formatDateOnly(p.period_start)} — {formatDateOnly(p.period_end)}
                     </td>
@@ -151,11 +151,11 @@ export default async function PayrollPeriodsPage() {
 function PeriodStatusBadge({ status }: { status: PayPeriodStatus }) {
   const map: Record<PayPeriodStatus, [string, string]> = {
     open: [
-      "border-border bg-muted/20 text-muted-foreground",
+      "border-border bg-muted text-muted-foreground",
       "Open",
     ],
     review: [
-      "border-border bg-muted/30 text-muted-foreground",
+      "border-border bg-muted text-muted-foreground",
       "Review",
     ],
     locked: [

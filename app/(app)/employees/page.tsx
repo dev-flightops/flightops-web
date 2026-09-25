@@ -71,11 +71,11 @@ export default async function EmployeesPage({
   });
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6">
+    <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
       <header className="mb-6 flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Employees</h1>
-          <p className="mt-0.5 text-xs text-muted-foreground">
+          <p className="mt-1 text-sm text-muted-foreground">
             {filtered.length} record{filtered.length === 1 ? "" : "s"}
           </p>
         </div>
@@ -83,7 +83,7 @@ export default async function EmployeesPage({
           <StatusFilter value={statusFilter} />
           <Link
             href="/settings/users"
-            className="rounded-md bg-status-blue px-4 py-2 text-sm font-semibold text-white hover:brightness-110"
+            className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-brand-dark"
           >
             + New Employee
           </Link>
@@ -125,7 +125,7 @@ function EmployeesTable({
     <div className="overflow-hidden rounded-lg border border-border bg-card">
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
-          <thead className="border-b border-border bg-muted/10 text-left text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
+          <thead className="border-b border-border bg-muted/60 text-left text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
             <tr>
               <th scope="col" className="px-4 py-2.5 font-semibold">
                 Emp #
@@ -155,7 +155,7 @@ function EmployeesTable({
           </thead>
           <tbody className="divide-y divide-border">
             {users.map((u, i) => (
-              <tr key={u.id} className="hover:bg-muted/5">
+              <tr key={u.id} className="hover:bg-accent">
                 <td className="whitespace-nowrap px-4 py-3 font-mono text-[0.7rem] text-muted-foreground">
                   {u.emp_number ?? empNumber(tenantSlug, i)}
                 </td>
@@ -165,7 +165,7 @@ function EmployeesTable({
                       person's record and was not. */}
                   <Link
                     href={`/employees/${u.id}`}
-                    className="text-status-blue hover:underline"
+                    className="text-primary hover:underline"
                   >
                     {u.full_name}
                   </Link>
@@ -193,7 +193,7 @@ function EmployeesTable({
                       "rounded border px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider " +
                       (u.is_active
                         ? "border-status-green/40 bg-status-green/10 text-status-green"
-                        : "border-border bg-muted/30 text-muted-foreground")
+                        : "border-border bg-muted text-muted-foreground")
                     }
                   >
                     {u.is_active

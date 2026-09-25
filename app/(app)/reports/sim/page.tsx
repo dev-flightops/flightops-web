@@ -150,7 +150,7 @@ function CarrierCodeMissing() {
         Set the two-character IATA or three-character ICAO designator on{" "}
         <Link
           href="/settings/company"
-          className="font-semibold text-status-blue hover:underline"
+          className="font-semibold text-primary hover:underline"
         >
           Settings → Company Profile
         </Link>
@@ -167,7 +167,7 @@ function ScheduleTable({ report }: { report: SimExport }) {
         <caption className="sr-only">
           Recurring services in the export window
         </caption>
-        <thead className="bg-muted/30">
+        <thead className="bg-muted/60">
           <tr>
             <th className={TH}>Flight</th>
             <th className={TH}>Service</th>
@@ -238,7 +238,7 @@ function FlightsTable({ report }: { report: SimExport }) {
     <div className="overflow-x-auto rounded-xl border border-border">
       <table className="w-full min-w-[58rem] border-collapse">
         <caption className="sr-only">Departures in the export window</caption>
-        <thead className="bg-muted/30">
+        <thead className="bg-muted/60">
           <tr>
             <th className={TH}>Date</th>
             <th className={TH}>Flight</th>
@@ -346,7 +346,7 @@ export default async function SimExportPage({
     : 0;
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6">
+    <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
       <Link
         href="/reports"
         className="mb-3 inline-block text-xs text-muted-foreground hover:text-foreground"
@@ -354,8 +354,8 @@ export default async function SimExportPage({
         ← Reports
       </Link>
       <header className="mb-4">
-        <h1 className="text-2xl font-bold">Schedule Export</h1>
-        <p className="mt-0.5 text-xs text-muted-foreground">
+        <h1 className="text-2xl font-bold tracking-tight">Schedule Export</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
           SIM / OAG schedule data, and a per-departure extract for
           accounting
           {report ? ` · carrier ${report.carrier}` : ""}
@@ -503,7 +503,7 @@ export default async function SimExportPage({
               travels in its own column, where the{" "}
               <Link
                 href="/reports"
-                className="text-status-blue hover:underline"
+                className="text-primary hover:underline"
               >
                 regulatory returns
               </Link>{" "}

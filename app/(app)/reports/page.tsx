@@ -123,7 +123,7 @@ function Section({ title, entries }: { title: string; entries: Entry[] }) {
             {entry.href ? (
               <Link
                 href={entry.href}
-                className="block rounded-xl border border-border bg-card p-4 transition-colors hover:border-status-blue/50"
+                className="block rounded-xl border border-border bg-card p-4 transition-colors hover:border-primary/50"
               >
                 <p className="text-sm font-semibold">{entry.label}</p>
                 <p className="mt-0.5 text-xs text-muted-foreground">
@@ -138,7 +138,7 @@ function Section({ title, entries }: { title: string; entries: Entry[] }) {
                     Not built
                   </span>
                 </p>
-                <p className="mt-0.5 text-xs text-muted-foreground/70">
+                <p className="mt-0.5 text-xs text-muted-foreground">
                   {entry.detail}
                 </p>
               </div>
@@ -152,10 +152,10 @@ function Section({ title, entries }: { title: string; entries: Entry[] }) {
 
 export default function ReportsHubPage() {
   return (
-    <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6">
+    <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
       <header className="mb-5">
-        <h1 className="text-2xl font-bold">Reports</h1>
-        <p className="mt-0.5 text-xs text-muted-foreground">
+        <h1 className="text-2xl font-bold tracking-tight">Reports</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
           Executive analytics and regulatory filings
         </p>
       </header>

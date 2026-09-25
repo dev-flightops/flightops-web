@@ -70,7 +70,7 @@ function Field({
         step={step}
         value={value}
         onChange={(e) => onChange(Number(e.target.value))}
-        className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm tabular-nums text-foreground focus:border-status-blue focus:outline-none"
+        className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm tabular-nums text-foreground focus:border-primary focus:outline-none"
       />
       <p className="mt-1 text-[0.65rem] text-muted-foreground">{hint}</p>
     </div>
@@ -340,7 +340,7 @@ export function ThresholdForm({
           />
         </div>
 
-        <p className="mt-2 text-[0.65rem] text-muted-foreground/80">
+        <p className="mt-2 text-[0.65rem] text-muted-foreground">
           IFR flights below approach minimums are elevated risk too, and
           are not scored here: approach minima are per airport and per
           procedure from your ops specs, and the system holds none. A
@@ -385,7 +385,7 @@ export function ThresholdForm({
             )}
           </p>
         </div>
-        <p className="mt-2 text-[0.65rem] text-muted-foreground/80">
+        <p className="mt-2 text-[0.65rem] text-muted-foreground">
           An aircraft swap, a crew change and new NOTAMs are not
           checked &mdash; the system cannot score them yet, so the pilot
           is told what was compared rather than told the block is safe.
@@ -406,7 +406,7 @@ export function ThresholdForm({
           value={rationale}
           onChange={(e) => setRationale(e.target.value)}
           placeholder="Chief Pilot review, September 2026 — tightened the Extreme band after two flights that should have routed to the DO."
-          className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs text-foreground focus:border-status-blue focus:outline-none"
+          className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs text-foreground focus:border-primary focus:outline-none"
         />
         <p className="mt-1 text-[0.65rem] text-muted-foreground">
           Optional. Recorded with your name and the date, because
@@ -420,7 +420,7 @@ export function ThresholdForm({
           type="button"
           onClick={submit}
           disabled={pending || !savable}
-          className="rounded-md bg-status-blue px-3 py-1.5 text-xs font-semibold text-white hover:brightness-110 disabled:opacity-40"
+          className="rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-dark disabled:opacity-40"
         >
           {pending
             ? "Saving…"

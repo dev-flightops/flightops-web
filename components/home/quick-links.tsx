@@ -105,10 +105,10 @@ function QuickLinkChip({ link }: { link: QuickLink }) {
   const className = cn(
     "rounded-md px-2.5 py-1.5 text-[0.68rem] font-semibold tracking-[0.02em] transition-colors",
     isLive
-      ? "text-muted-foreground hover:bg-primary/8 hover:text-status-blue"
+      ? "text-muted-foreground hover:bg-primary/8 hover:text-primary"
       : "cursor-not-allowed text-muted-foreground/50",
     link.accent === "gold" && isLive && "text-status-yellow",
-    link.accent === "gold" && !isLive && "text-status-yellow/40",
+    link.accent === "gold" && !isLive && "cursor-not-allowed text-status-yellow/40",
   );
 
   if (isLive) {

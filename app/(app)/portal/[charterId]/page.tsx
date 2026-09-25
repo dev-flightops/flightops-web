@@ -49,7 +49,7 @@ export default async function PortalCharterPage({
           <h1 className="font-mono text-2xl font-bold tracking-tight text-foreground">
             {charter.reference}
           </h1>
-          <p className="mt-0.5 text-sm text-muted-foreground">
+          <p className="mt-1 text-sm text-muted-foreground">
             {charter.origin_icao} → {charter.destination_icao} ·{" "}
             {formatDate(charter.requested_date)}
             {charter.requested_time ? ` · ${charter.requested_time}` : ""}

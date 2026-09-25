@@ -49,7 +49,7 @@ export function Breadcrumb({ segments, icon, className }: BreadcrumbProps) {
           {segment.href ? (
             <Link
               href={segment.href}
-              className="text-[0.65rem] font-bold uppercase tracking-[0.08em] hover:text-status-blue"
+              className="text-[0.65rem] font-bold uppercase tracking-[0.08em] hover:text-primary"
             >
               {segment.label}
             </Link>

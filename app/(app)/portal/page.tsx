@@ -82,7 +82,7 @@ export default async function PortalPage() {
                   <td className="px-4 py-3">
                     <Link
                       href={`/portal/${c.id}`}
-                      className="font-mono text-status-blue hover:underline"
+                      className="font-mono text-primary hover:underline"
                     >
                       {c.reference}
                     </Link>

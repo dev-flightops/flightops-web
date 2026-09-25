@@ -44,13 +44,13 @@ export default async function SupplierInboxPage() {
   const bindingCount = session.bindings.length;
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6">
+    <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
       <header className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-xl font-bold tracking-tight sm:text-2xl">
+          <h1 className="text-2xl font-bold tracking-tight">
             Fuel Supplier Portal
           </h1>
-          <p className="mt-1 text-xs text-muted-foreground">
+          <p className="mt-1 text-sm text-muted-foreground">
             Signed in as{" "}
             <span className="font-semibold text-foreground">
               {session.full_name}
@@ -134,7 +134,7 @@ function OrdersTable({
   return (
     <div className="overflow-hidden rounded-lg border border-border bg-card">
       <table className="w-full text-xs">
-        <thead className="bg-muted/40 text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+        <thead className="bg-muted/60 text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
           <tr>
             <th className="px-3 py-2 text-left">Operator / Supplier</th>
             <th className="px-3 py-2 text-left">Aircraft</th>
@@ -189,7 +189,7 @@ function OrdersTable({
 
 function TenantChip({ label }: { label: string }) {
   return (
-    <span className="inline-flex items-center rounded bg-status-blue/15 px-1.5 py-0.5 text-[0.6rem] font-semibold uppercase tracking-[0.05em] text-status-blue">
+    <span className="inline-flex items-center rounded bg-muted px-1.5 py-0.5 text-[0.6rem] font-semibold uppercase tracking-[0.05em] text-muted-foreground">
       {label}
     </span>
   );
@@ -205,7 +205,7 @@ function StatusPill({ status }: { status: string }) {
           ? "bg-status-green/15 text-status-green"
           : status === "discrepancy"
             ? "bg-status-red/15 text-status-red"
-            : "bg-muted/40 text-muted-foreground";
+            : "bg-muted text-muted-foreground";
   return (
     <span
       className={`inline-flex items-center rounded px-1.5 py-0.5 text-[0.6rem] font-semibold uppercase tracking-[0.05em] ${tone}`}

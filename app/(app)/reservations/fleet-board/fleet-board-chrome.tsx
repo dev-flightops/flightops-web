@@ -73,7 +73,7 @@ export function FleetBoardChrome({
                   className={
                     "px-2.5 py-1 text-xs font-semibold transition " +
                     (view === v
-                      ? "bg-status-blue/15 text-status-blue"
+                      ? "bg-primary/10 text-primary"
                       : "text-muted-foreground hover:text-foreground")
                   }
                 >
@@ -107,7 +107,7 @@ export function FleetBoardChrome({
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="rounded-md border border-status-blue/40 bg-status-blue/10 px-2.5 py-1 text-xs font-semibold text-status-blue">
+          <span className="rounded-md border border-border bg-muted px-2.5 py-1 text-xs font-semibold text-muted-foreground">
             {flightsCount} flight{flightsCount === 1 ? "" : "s"}
           </span>
           <span className="rounded-md border border-status-green/40 bg-status-green/10 px-2.5 py-1 text-xs font-semibold text-status-green">
@@ -118,7 +118,7 @@ export function FleetBoardChrome({
 
       <div className="mt-4 flex flex-wrap items-center gap-2">
         <div className="relative flex-1 min-w-[16rem]">
-          <span className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground/60">
+          <span className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground">
             🔍
           </span>
           <input
@@ -139,7 +139,7 @@ export function FleetBoardChrome({
         <FilterChip label="All Pilots" />
         <button
           type="button"
-          className="rounded-md border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground/80 hover:bg-muted/20"
+          className="rounded-md border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground/80 hover:bg-accent"
         >
           Go
         </button>
@@ -153,7 +153,7 @@ function FilterChip({ label }: { label: string }) {
     <button
       type="button"
       disabled
-      title="Filter fields ship with the base/type/pilot booking assignment story (M3 follow-up)"
+      title="Filters aren't built yet"
       className="rounded-md border border-border bg-card px-2.5 py-1 text-xs font-semibold text-muted-foreground/70 cursor-not-allowed"
     >
       {label}

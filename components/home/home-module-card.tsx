@@ -20,14 +20,14 @@ export function HomeModuleCard({ module }: { module: HomeModule }) {
   const hint = moduleStatusHint(module.status);
 
   const wrapperClass = cn(
-    "group relative flex items-center gap-4 rounded-xl border bg-white p-5 pl-6 transition-all",
+    "group relative flex items-center gap-4 rounded-xl border bg-card p-5 pl-6 transition-all",
     isLive
-      ? "cursor-pointer border-black/10 hover:border-[#AB2429] hover:shadow-[0_6px_20px_-12px_rgba(171,36,41,0.5)]"
-      : "cursor-not-allowed border-black/[0.08] opacity-70",
+      ? "cursor-pointer border-border hover:border-primary hover:shadow-[0_6px_20px_-12px_rgb(var(--brand-rgb)/0.5)]"
+      : "cursor-not-allowed border-border opacity-70",
     // Highlighted cards get a solid red left-stripe (4px) to match
     // the pitch skin's active-tab treatment. Using pl-6 above so the
     // stripe replaces the padding cleanly.
-    module.highlight && "border-l-4 border-l-[#AB2429] pl-5",
+    module.highlight && "border-l-4 border-l-primary pl-5",
   );
 
   const content = (
@@ -53,12 +53,12 @@ export function HomeModuleCard({ module }: { module: HomeModule }) {
         <div
           className={cn(
             "text-[0.95rem] font-semibold leading-tight",
-            module.highlight ? "text-[#AB2429]" : "text-neutral-900",
+            module.highlight ? "text-primary" : "text-foreground",
           )}
         >
           {module.label}
         </div>
-        <div className="mt-0.5 text-[0.72rem] leading-snug text-neutral-500">
+        <div className="mt-0.5 text-[0.72rem] leading-snug text-muted-foreground">
           {module.sub}
         </div>
       </div>
@@ -66,14 +66,14 @@ export function HomeModuleCard({ module }: { module: HomeModule }) {
       {/* Right-side affordance: SOON chip for unbuilt, chevron for live */}
       {isLive ? (
         <span
-          className="flex-shrink-0 text-neutral-300 transition-all group-hover:translate-x-0.5 group-hover:text-[#AB2429]"
+          className="flex-shrink-0 text-muted-foreground transition-all group-hover:translate-x-0.5 group-hover:text-primary"
           aria-hidden
         >
           <ChevronRight />
         </span>
       ) : (
         <span
-          className="flex-shrink-0 rounded-md border border-neutral-300 bg-neutral-100 px-1.5 py-0.5 text-[0.6rem] font-semibold uppercase tracking-wider text-neutral-500"
+          className="flex-shrink-0 rounded-md border border-border bg-muted px-1.5 py-0.5 text-[0.6rem] font-semibold uppercase tracking-wider text-muted-foreground"
           title={`Coming in ${module.status.toUpperCase()}`}
         >
           Soon

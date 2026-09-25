@@ -69,7 +69,7 @@ export async function WeatherPanel({ icaos }: { icaos: string[] }) {
     const status = err instanceof ApiError ? err.status : 0;
     return (
       <SectionPanel title="Weather & ATIS">
-        <p className="text-xs italic text-muted-foreground/70">
+        <p className="text-xs italic text-muted-foreground">
           Weather feed unavailable ({status || "error"}) — try Refresh Weather
           in a moment.
         </p>
@@ -110,7 +110,7 @@ export async function WeatherPanel({ icaos }: { icaos: string[] }) {
       title={
         <span className="flex items-baseline gap-2">
           Weather &amp; ATIS
-          <span className="text-[0.6rem] font-normal normal-case tracking-normal text-muted-foreground/70">
+          <span className="text-[0.6rem] font-normal normal-case tracking-normal text-muted-foreground">
             {`${stops.length} ${stops.length === 1 ? "airport" : "airports"}${pulledAt ? ` · pulled ${utcHm(pulledAt)}` : ""}`}
           </span>
         </span>
@@ -122,14 +122,14 @@ export async function WeatherPanel({ icaos }: { icaos: string[] }) {
         ))}
       </div>
       {truncated && (
-        <p className="mt-2 text-[0.65rem] italic text-status-yellow/90">
+        <p className="mt-2 text-[0.65rem] italic text-status-yellow">
           Showing first {MAX_STOPS} stops of {uniq.length}. Trim the route or
           break the trip into legs for full weather coverage.
         </p>
       )}
-      <p className="mt-3 text-[0.65rem] text-muted-foreground/70">
+      <p className="mt-3 text-[0.65rem] text-muted-foreground">
         Source: Aviation Weather Center via weather-service. METAR cached 5 min,
-        TAF cached 30 min. ATIS + PIREP land with M2-M-4.
+        TAF cached 30 min. ATIS and PIREPs are not shown yet.
       </p>
     </SectionPanel>
   );
@@ -201,12 +201,12 @@ function AirportHeader({
             size="lg"
           />
         )}
-        <span className="text-xs text-muted-foreground/70">
+        <span className="text-xs text-muted-foreground">
           Official METAR/TAF
         </span>
       </div>
       {metar.ok && (
-        <span className="text-xs text-muted-foreground/70">
+        <span className="text-xs text-muted-foreground">
           METAR age: {metarAge(metar.report.parsed_at)}
         </span>
       )}
@@ -262,7 +262,7 @@ function ReportBlock({
           {outcome.report.raw}
         </pre>
       ) : (
-        <p className="m-0 text-[0.7rem] italic text-muted-foreground/70">
+        <p className="m-0 text-[0.7rem] italic text-muted-foreground">
           {outcome.status === 404
             ? `No current ${label} for this airport.`
             : outcome.status === 502

@@ -56,7 +56,7 @@ export async function AlternateReviewPanel({ icaos }: { icaos: string[] }) {
     const status = err instanceof ApiError ? err.status : 0;
     return (
       <SectionPanel title="Alternate Review">
-        <p className="text-xs italic text-muted-foreground/70">
+        <p className="text-xs italic text-muted-foreground">
           Alternate check unavailable ({status || "error"}) — try Refresh
           Weather in a moment.
         </p>
@@ -80,7 +80,7 @@ export async function AlternateReviewPanel({ icaos }: { icaos: string[] }) {
           />
         ))}
       </ul>
-      <p className="mt-3 text-[0.65rem] text-muted-foreground/70">
+      <p className="mt-3 text-[0.65rem] text-muted-foreground">
         Verdict derived from the current METAR (ceiling &lt; 2000 ft OR vis
         &lt; 3 SM, per FAR 91.169). Forecast-based alternate review (TAF
         within ETA ± 1 hr) lands in a later story.
@@ -118,7 +118,7 @@ function AlternateRow({
       text: "No review needed",
     },
     unknown: {
-      strip: "border-l-muted bg-muted/20",
+      strip: "border-l-muted bg-muted/60",
       label: "text-muted-foreground",
       text: "Unable to determine",
     },

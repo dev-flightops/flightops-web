@@ -121,7 +121,7 @@ export default async function FleetBoardPage({
   }, 0);
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6">
+    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
       <FleetBoardChrome
         view={view}
         isoDay={isoDay}
@@ -205,10 +205,10 @@ function ListView({
         <p className="text-sm text-muted-foreground">
           No bookings on this date.
         </p>
-        <p className="mt-2 text-xs text-muted-foreground/70">
+        <p className="mt-2 text-xs text-muted-foreground">
           <Link
             href="/reservations/bookings/new"
-            className="text-status-blue hover:underline"
+            className="text-primary hover:underline"
           >
             File a new booking
           </Link>{" "}
@@ -228,7 +228,7 @@ function ListView({
           <li key={b.id}>
             <BookingClickable
               bookingId={b.id}
-              className="flex w-full flex-wrap items-baseline justify-between gap-3 rounded-lg border border-border bg-card px-4 py-3 text-left text-sm hover:bg-muted/5"
+              className="flex w-full flex-wrap items-baseline justify-between gap-3 rounded-lg border border-border bg-card px-4 py-3 text-left text-sm hover:bg-accent"
             >
               <div className="min-w-0 flex-1">
                 <div className="mb-1 flex flex-wrap items-baseline gap-2">
@@ -239,7 +239,7 @@ function ListView({
                     {b.origin_icao} → {b.destination_icao}
                   </span>
                   {b.aircraft ? (
-                    <span className="rounded border border-border bg-muted/20 px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider text-muted-foreground">
+                    <span className="rounded border border-border bg-muted px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider text-muted-foreground">
                       {b.aircraft.tail_number}
                     </span>
                   ) : null}
@@ -295,7 +295,7 @@ function BoardView({
       <div className="overflow-x-auto">
         <div className="min-w-[64rem]">
           {/* Hour header row */}
-          <div className="grid grid-cols-[8rem_repeat(24,minmax(0,1fr))] border-b border-border bg-muted/10 text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
+          <div className="grid grid-cols-[8rem_repeat(24,minmax(0,1fr))] border-b border-border bg-muted/60 text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
             <div className="border-r border-border px-3 py-2 font-semibold">
               Aircraft
             </div>
@@ -455,14 +455,14 @@ function BookingBlock({
 
   const bg =
     b.status === "confirmed"
-      ? "border-status-green/60 bg-status-green/25 text-status-green"
+      ? "border-status-green/60 bg-status-green/15 text-status-green"
       : b.status === "quoted"
-        ? "border-status-yellow/60 bg-status-yellow/25 text-status-yellow"
+        ? "border-status-yellow/60 bg-status-yellow/15 text-status-yellow"
         : b.status === "cancelled"
-          ? "border-status-red/40 bg-status-red/15 text-status-red line-through opacity-60"
+          ? "border-status-red/40 bg-status-red/15 text-status-red line-through"
           : b.status === "completed"
-            ? "border-border bg-muted/40 text-muted-foreground"
-            : "border-status-blue/60 bg-status-blue/25 text-status-blue";
+            ? "border-border bg-muted text-muted-foreground"
+            : "border-status-blue/60 bg-status-blue/15 text-status-blue";
 
   const seats = b.aircraft
     ? (aircraftById.get(b.aircraft.id)?.seats ?? null)
@@ -476,7 +476,7 @@ function BookingBlock({
       bookingId={b.id}
       style={{ left: `${leftPct}%`, width: `${widthPct}%` }}
       className={
-        "absolute top-1 bottom-1 flex items-center gap-1 overflow-hidden rounded border px-1.5 text-[0.65rem] font-semibold whitespace-nowrap hover:z-10 hover:brightness-125 " +
+        "absolute top-1 bottom-1 flex items-center gap-1 overflow-hidden rounded border px-1.5 text-[0.65rem] font-semibold whitespace-nowrap hover:z-10 hover:shadow-md hover:ring-1 hover:ring-foreground/20 " +
         bg
       }
       title={`${b.origin_icao} → ${b.destination_icao} · ${b.customer.full_name} · ${seatsText} · ~${payload.toLocaleString("en-US")} lbs payload (est.) · ${BOOKING_STATUS_LABELS[b.status]}`}
@@ -487,8 +487,8 @@ function BookingBlock({
       <span className="truncate">
         {b.origin_icao}→{b.destination_icao}
       </span>
-      <span className="tabular-nums opacity-80">·&nbsp;{seatsText}</span>
-      <span className="tabular-nums opacity-80">
+      <span className="tabular-nums">·&nbsp;{seatsText}</span>
+      <span className="tabular-nums">
         ·&nbsp;~{_kLbs(payload)}
       </span>
     </BookingClickable>
@@ -532,7 +532,7 @@ function StatusChip({ status }: { status: Booking["status"] }) {
           ? "border-status-green bg-status-green/15 text-status-green"
           : status === "cancelled"
             ? "border-status-red/40 bg-status-red/10 text-status-red"
-            : "border-border bg-muted/20 text-muted-foreground";
+            : "border-border bg-muted text-muted-foreground";
   return (
     <span
       className={

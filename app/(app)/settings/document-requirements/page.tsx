@@ -49,7 +49,7 @@ export default async function DocumentRequirementsPage() {
   }
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-6 sm:px-6">
+    <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6">
       <nav aria-label="Breadcrumb" className="mb-4 flex items-center text-xs">
         <Link
           href="/settings"
@@ -60,7 +60,7 @@ export default async function DocumentRequirementsPage() {
         <span aria-hidden className="px-1.5 text-muted-foreground">
           ›
         </span>
-        <span className="font-semibold text-status-blue">
+        <span className="font-semibold text-primary">
           Document requirements
         </span>
       </nav>
@@ -69,7 +69,7 @@ export default async function DocumentRequirementsPage() {
         <h1 className="text-2xl font-bold tracking-tight">
           Document requirements
         </h1>
-        <p className="mt-0.5 text-xs text-muted-foreground">
+        <p className="mt-1 text-sm text-muted-foreground">
           The documents your operation requires of its staff. Each one
           appears on the Documents tab of every employee it applies to.
         </p>

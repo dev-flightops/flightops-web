@@ -72,18 +72,18 @@ export default async function WorkOrdersPage({
   }
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-6">
+    <div className="mx-auto max-w-6xl px-4 sm:px-6 py-8">
       <header className="mb-5 flex items-center justify-between gap-3">
         <div>
-          <h1 className="text-lg font-bold">Work Orders</h1>
-          <p className="mt-0.5 text-xs text-muted-foreground">
+          <h1 className="text-2xl font-bold tracking-tight">Work Orders</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
             {orders.length} order{orders.length === 1 ? "" : "s"}
           </p>
         </div>
         <div className="flex gap-2">
           <Link
             href="/maintenance"
-            className="rounded-md border border-border bg-card px-3 py-2 text-xs font-semibold text-foreground hover:bg-muted/30"
+            className="rounded-md border border-border bg-card px-3 py-2 text-xs font-semibold text-foreground hover:bg-accent"
           >
             Fleet
           </Link>
@@ -92,7 +92,7 @@ export default async function WorkOrdersPage({
             disabled
             aria-disabled="true"
             title={BACKEND_HINT_ADD}
-            className="cursor-not-allowed rounded-md bg-status-blue px-3 py-2 text-xs font-semibold text-white disabled:opacity-100"
+            className="cursor-not-allowed rounded-md bg-primary px-3 py-2 text-xs font-semibold text-white disabled:opacity-100"
           >
             + New Work Order
           </button>
@@ -105,7 +105,7 @@ export default async function WorkOrdersPage({
           className={
             "rounded px-3 py-1.5 text-xs font-semibold " +
             (!filterStatus
-              ? "bg-status-blue text-white"
+              ? "bg-primary text-white"
               : "text-muted-foreground hover:text-foreground")
           }
         >
@@ -118,7 +118,7 @@ export default async function WorkOrdersPage({
             className={
               "rounded px-3 py-1.5 text-xs font-semibold " +
               (filterStatus === s.value
-                ? "bg-status-blue text-white"
+                ? "bg-primary text-white"
                 : "text-muted-foreground hover:text-foreground")
             }
           >
@@ -138,7 +138,7 @@ export default async function WorkOrdersPage({
         <div className="overflow-hidden rounded-lg border border-border bg-card">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="border-b border-border bg-muted/10 text-left text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
+              <thead className="border-b border-border bg-muted/60 text-left text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
                 <tr>
                   <th scope="col" className="px-4 py-2.5 font-semibold">WO #</th>
                   <th scope="col" className="px-4 py-2.5 font-semibold">Aircraft</th>
@@ -161,8 +161,8 @@ export default async function WorkOrdersPage({
                   </tr>
                 ) : (
                   orders.map((wo) => (
-                    <tr key={wo.id} className="hover:bg-muted/5">
-                      <td className="whitespace-nowrap px-4 py-3 font-mono text-xs font-semibold text-status-blue">
+                    <tr key={wo.id} className="hover:bg-accent">
+                      <td className="whitespace-nowrap px-4 py-3 font-mono text-xs font-semibold text-foreground">
                         {wo.wo_number}
                       </td>
                       <td className="whitespace-nowrap px-4 py-3 font-mono text-xs">
@@ -170,7 +170,7 @@ export default async function WorkOrdersPage({
                       </td>
                       <td className="px-4 py-3 text-xs">{wo.title}</td>
                       <td className="whitespace-nowrap px-4 py-3">
-                        <span className="rounded border border-border bg-muted/20 px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider text-muted-foreground">
+                        <span className="rounded border border-border bg-muted px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider text-muted-foreground">
                           {wo.wo_type.replace(/_/g, " ")}
                         </span>
                       </td>
@@ -214,7 +214,7 @@ function PriorityBadge({ priority }: { priority: string }) {
     );
   }
   return (
-    <span className="rounded border border-border bg-muted/20 px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider text-muted-foreground">
+    <span className="rounded border border-border bg-muted px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider text-muted-foreground">
       Normal
     </span>
   );
@@ -229,7 +229,7 @@ function StatusBadge({ status }: { status: string }) {
         : status === "awaiting_parts"
           ? "border-status-yellow/40 bg-status-yellow/10 text-status-yellow"
           : status === "closed"
-            ? "border-border bg-muted/30 text-muted-foreground"
+            ? "border-border bg-muted text-muted-foreground"
             : "border-status-blue/40 bg-status-blue/10 text-status-blue";
   const label =
     status === "in_progress"

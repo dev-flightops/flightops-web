@@ -58,7 +58,7 @@ export function DocumentsFilterBar({
             type="search"
             defaultValue={initialSearch}
             placeholder="Title, tags, filename…"
-            className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:border-status-blue focus:ring-2 focus:ring-status-blue/30"
+            className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/30"
           />
         </label>
 
@@ -69,7 +69,7 @@ export function DocumentsFilterBar({
           <select
             name="category"
             defaultValue={initialCategory}
-            className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:border-status-blue focus:ring-2 focus:ring-status-blue/30"
+            className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/30"
           >
             {DOCUMENT_CATEGORIES.map((c) => (
               <option key={c.value} value={c.label === "All Categories" ? "" : c.label}>
@@ -92,7 +92,7 @@ export function DocumentsFilterBar({
           </label>
           <button
             type="submit"
-            className="rounded-md border border-border bg-muted/30 px-4 py-2 text-sm font-semibold text-foreground hover:bg-muted/50"
+            className="rounded-md border border-border bg-muted/60 px-4 py-2 text-sm font-semibold text-foreground hover:bg-accent"
           >
             Filter
           </button>

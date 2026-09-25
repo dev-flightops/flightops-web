@@ -71,7 +71,7 @@ export function KeyManager({ keys }: { keys: ApiKeyRow[] }) {
             <input
               name="name"
               placeholder="Partner portal (read-only)"
-              className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-status-blue focus:outline-none"
+              className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
             />
             {fieldError("name") && (
               <span role="alert" className="mt-1 block text-[0.6875rem] text-status-red">
@@ -86,7 +86,7 @@ export function KeyManager({ keys }: { keys: ApiKeyRow[] }) {
             <input
               name="expires_at"
               type="date"
-              className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-status-blue focus:outline-none"
+              className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
             />
             {fieldError("expires_at") && (
               <span role="alert" className="mt-1 block text-[0.6875rem] text-status-red">
@@ -97,7 +97,7 @@ export function KeyManager({ keys }: { keys: ApiKeyRow[] }) {
           <button
             type="submit"
             disabled={creating}
-            className="rounded-md bg-status-blue px-4 py-2 text-sm font-semibold text-white hover:brightness-110 disabled:opacity-60 sm:mt-[1.35rem]"
+            className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-brand-dark disabled:opacity-60 sm:mt-[1.35rem]"
           >
             {creating ? "Issuing…" : "Issue key"}
           </button>
@@ -150,7 +150,7 @@ function NewKeyPanel({ plaintext, name }: { plaintext: string; name: string }) {
               () => setCopied(false),
             );
           }}
-          className="rounded-md bg-status-green px-3 py-2 text-xs font-semibold text-white hover:brightness-110"
+          className="rounded-md bg-status-green px-3 py-2 text-xs font-semibold text-white hover:brightness-95"
         >
           {copied ? "Copied" : "Copy"}
         </button>

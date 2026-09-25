@@ -50,7 +50,7 @@ export function TodayFlightsPanel({ flights }: Props) {
           If you&apos;re expecting to fly, check with dispatch — or{" "}
           <Link
             href="/flight-crew/elog"
-            className="font-semibold text-status-blue hover:underline"
+            className="font-semibold text-primary hover:underline"
           >
             create a manual log
           </Link>{" "}
@@ -87,7 +87,7 @@ function FlightCard({ flight }: { flight: FlightListItem }) {
             <span className="text-xs">
               {flight.aircraft.tail_number}
               {flight.aircraft.model ? (
-                <span className="text-muted-foreground/70">
+                <span className="text-muted-foreground">
                   {" · "}
                   {flight.aircraft.model}
                 </span>
@@ -108,7 +108,7 @@ function FlightCard({ flight }: { flight: FlightListItem }) {
         </div>
         <Link
           href={`/flight-crew/preflight/${flight.id}`}
-          className="shrink-0 rounded-md border border-status-blue/40 bg-status-blue/10 px-3 py-1.5 text-xs font-semibold text-status-blue transition-colors hover:bg-status-blue/15"
+          className="shrink-0 rounded-md border border-primary/40 bg-background px-3 py-1.5 text-xs font-semibold text-primary transition-colors hover:bg-primary/5"
         >
           Begin Preflight →
         </Link>
@@ -133,7 +133,7 @@ function StatusBadge({ status }: { status: string }) {
         ? "border-status-yellow/40 bg-status-yellow/10 text-status-yellow"
         : tone === "red"
           ? "border-status-red/40 bg-status-red/10 text-status-red"
-          : "border-border bg-muted/10 text-muted-foreground";
+          : "border-border bg-muted text-muted-foreground";
   const label =
     status === "released"
       ? "Released"

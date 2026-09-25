@@ -39,7 +39,7 @@ export default async function FuelLandingPage() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6">
+    <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
       <header className="mb-6">
         <h1 className="text-2xl font-bold tracking-tight">Fuel Management</h1>
         <p className="mt-1 text-sm text-muted-foreground">
@@ -66,7 +66,7 @@ export default async function FuelLandingPage() {
 
       <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <SectionCard
-          icon={<Fuel className="h-6 w-6 text-status-blue/80" strokeWidth={1.5} />}
+          icon={<Fuel className="h-6 w-6 text-primary" strokeWidth={1.5} />}
           title="Orders"
           blurb="Place fuel orders by aircraft + base; track status through confirm and fueled."
           links={[
@@ -75,7 +75,7 @@ export default async function FuelLandingPage() {
           ]}
         />
         <SectionCard
-          icon={<Building2 className="h-6 w-6 text-status-blue/80" strokeWidth={1.5} />}
+          icon={<Building2 className="h-6 w-6 text-primary" strokeWidth={1.5} />}
           title="Suppliers & Pricing"
           blurb="Vendor directory with contract pricing per base + fuel type."
           links={[
@@ -83,7 +83,7 @@ export default async function FuelLandingPage() {
           ]}
         />
         <SectionCard
-          icon={<Droplets className="h-6 w-6 text-status-blue/80" strokeWidth={1.5} />}
+          icon={<Droplets className="h-6 w-6 text-primary" strokeWidth={1.5} />}
           title="Fuel Types"
           blurb="Tenant's fuel catalog — Jet A, 100LL, mogas, etc."
           links={[
@@ -146,8 +146,8 @@ function SectionCard({
               href={link.href}
               className={
                 link.primary
-                  ? "flex items-center justify-between rounded-md border border-status-blue bg-status-blue/15 px-3 py-2.5 text-sm font-semibold text-status-blue hover:bg-status-blue/20"
-                  : "flex items-center justify-between rounded-md border border-border bg-card/40 px-3 py-2.5 text-sm text-foreground hover:border-status-blue/60 hover:bg-status-blue/5"
+                  ? "flex items-center justify-between rounded-md border border-primary/40 bg-background px-3 py-2.5 text-sm font-semibold text-primary hover:bg-primary/5"
+                  : "flex items-center justify-between rounded-md border border-border bg-card/40 px-3 py-2.5 text-sm text-foreground hover:border-primary/60 hover:bg-primary/5"
               }
             >
               <span>

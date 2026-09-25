@@ -105,7 +105,7 @@ export function AssignCourseDrawer({ courses, users }: Props) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="rounded-md bg-status-blue px-3 py-2 text-xs font-semibold text-white hover:brightness-110"
+        className="rounded-md bg-primary px-3 py-2 text-xs font-semibold text-white hover:bg-brand-dark"
       >
         + Assign Course
       </button>
@@ -133,7 +133,7 @@ export function AssignCourseDrawer({ courses, users }: Props) {
                 type="button"
                 onClick={handleClose}
                 aria-label="Close"
-                className="rounded p-1 text-muted-foreground hover:bg-muted/20"
+                className="rounded p-1 text-muted-foreground hover:bg-accent"
               >
                 ✕
               </button>
@@ -146,7 +146,7 @@ export function AssignCourseDrawer({ courses, users }: Props) {
               <select
                 value={courseId}
                 onChange={(e) => setCourseId(e.target.value)}
-                className="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-xs text-foreground focus:border-status-blue focus:outline-none"
+                className="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-xs text-foreground focus:border-primary focus:outline-none"
                 disabled={pending}
               >
                 <option value="">— Select a course —</option>
@@ -167,7 +167,7 @@ export function AssignCourseDrawer({ courses, users }: Props) {
                     <button
                       type="button"
                       onClick={selectAllVisible}
-                      className="text-status-blue hover:underline"
+                      className="text-primary hover:underline"
                       disabled={pending || visibleUsers.length === 0}
                     >
                       Select visible
@@ -190,13 +190,13 @@ export function AssignCourseDrawer({ courses, users }: Props) {
                     value={nameFilter}
                     onChange={(e) => setNameFilter(e.target.value)}
                     placeholder="Search by name or email"
-                    className="rounded-md border border-border bg-background px-3 py-1.5 text-xs text-foreground focus:border-status-blue focus:outline-none"
+                    className="rounded-md border border-border bg-background px-3 py-1.5 text-xs text-foreground focus:border-primary focus:outline-none"
                     disabled={pending}
                   />
                   <select
                     value={roleFilter}
                     onChange={(e) => setRoleFilter(e.target.value)}
-                    className="rounded-md border border-border bg-background px-3 py-1.5 text-xs text-foreground focus:border-status-blue focus:outline-none"
+                    className="rounded-md border border-border bg-background px-3 py-1.5 text-xs text-foreground focus:border-primary focus:outline-none"
                     disabled={pending}
                   >
                     <option value="">All roles</option>
@@ -219,7 +219,7 @@ export function AssignCourseDrawer({ courses, users }: Props) {
                         const checked = selectedIds.has(u.id);
                         return (
                           <li key={u.id}>
-                            <label className="flex cursor-pointer items-center gap-3 px-3 py-2 text-xs hover:bg-muted/10">
+                            <label className="flex cursor-pointer items-center gap-3 px-3 py-2 text-xs hover:bg-accent">
                               <input
                                 type="checkbox"
                                 checked={checked}
@@ -299,7 +299,7 @@ export function AssignCourseDrawer({ courses, users }: Props) {
               <button
                 type="button"
                 onClick={handleClose}
-                className="rounded-md border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground/80 hover:bg-muted/20"
+                className="rounded-md border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground/80 hover:bg-accent"
               >
                 {result?.assigned ? "Close" : "Cancel"}
               </button>
@@ -312,7 +312,7 @@ export function AssignCourseDrawer({ courses, users }: Props) {
                   selectedIds.size === 0 ||
                   Boolean(result?.assigned)
                 }
-                className="rounded-md bg-status-blue px-3 py-1.5 text-xs font-semibold text-white hover:brightness-110 disabled:opacity-60"
+                className="rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-dark disabled:opacity-60"
               >
                 {pending
                   ? `Assigning ${selectedIds.size}…`

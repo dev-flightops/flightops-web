@@ -56,8 +56,8 @@ export function StatusFilter({
             aria-pressed={on}
             className={`rounded-md border px-2.5 py-1 text-[0.7rem] font-semibold uppercase tracking-[0.06em] transition-colors ${
               on
-                ? "border-status-blue bg-status-blue/15 text-status-blue"
-                : "border-border bg-card text-muted-foreground hover:bg-muted/40"
+                ? "border-primary bg-primary/10 text-primary"
+                : "border-border bg-card text-muted-foreground hover:bg-accent"
             }`}
           >
             {o.label}

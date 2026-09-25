@@ -105,7 +105,7 @@ export default async function RampOpsPage({
   if (assignmentError) errors.push("Some team assignments unavailable.");
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6">
+    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
       <PageHeader bases={bases} baseFilter={baseFilter} flightCount={flights.length} />
 
       {errors.length > 0 && (
@@ -213,7 +213,7 @@ function FlightCard({
   const time = formatTime(f.scheduled_departure_at);
   return (
     <li>
-      <article className="rounded-md border border-border bg-card p-3 hover:border-status-blue/60">
+      <article className="rounded-md border border-border bg-card p-3 hover:border-primary/60">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <div className="flex items-center gap-2 text-sm">
@@ -271,7 +271,7 @@ function TeamsColumn({
           No teams.{" "}
           <Link
             href="/settings/load-teams"
-            className="font-semibold text-status-blue hover:underline"
+            className="font-semibold text-primary hover:underline"
             title="Load team management UI lands with a follow-up settings story"
           >
             Create teams →
@@ -333,7 +333,7 @@ function TeamCard({
               )}
             </div>
             {team.notes && (
-              <p className="mt-1 text-[0.7rem] text-muted-foreground/80">
+              <p className="mt-1 text-[0.7rem] text-muted-foreground">
                 {team.notes}
               </p>
             )}
@@ -381,17 +381,17 @@ function EmptyCard({ children }: { children: React.ReactNode }) {
 
 function StatusChip({ status }: { status: string }) {
   const palette: Record<string, string> = {
-    scheduled: "border-border bg-muted/30 text-muted-foreground",
+    scheduled: "border-border bg-muted text-muted-foreground",
     released:
       "border-status-blue/40 bg-status-blue/10 text-status-blue",
     completed:
       "border-status-green/40 bg-status-green/10 text-status-green",
-    cancelled: "border-border bg-muted/30 text-muted-foreground/70",
+    cancelled: "border-border bg-muted text-muted-foreground",
   };
   return (
     <span
       className={`shrink-0 rounded-sm border px-1.5 py-0.5 text-[0.55rem] font-semibold uppercase tracking-[0.08em] ${
-        palette[status] ?? "border-border bg-muted/30 text-muted-foreground"
+        palette[status] ?? "border-border bg-muted text-muted-foreground"
       }`}
     >
       {status}

@@ -148,7 +148,7 @@ export default async function FlightFollowingPage({
     .sort();
 
   return (
-    <div className="mx-auto flex min-h-[calc(100vh-9rem)] max-w-7xl flex-col px-4 py-6 sm:px-6">
+    <div className="mx-auto flex min-h-[calc(100vh-9rem)] max-w-7xl flex-col px-4 py-8 sm:px-6">
       <PageHeader />
 
       <div className="mb-4 flex items-center justify-between gap-4">
@@ -200,7 +200,7 @@ export default async function FlightFollowingPage({
         )}
       </div>
 
-      <p className="mt-3 text-xs text-muted-foreground/70">
+      <p className="mt-3 text-xs text-muted-foreground">
         {VIEW_HINTS[view as FlightFollowingView]}
       </p>
       {(display === "map" || display === "split") && <SourceLegend />}

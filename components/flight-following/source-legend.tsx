@@ -5,12 +5,12 @@
  */
 export function SourceLegend() {
   return (
-    <p className="mt-3 text-[0.65rem] text-muted-foreground/70">
+    <p className="mt-3 text-[0.65rem] text-muted-foreground">
       Source colour: <span className="text-status-green">green</span> = ADS-B
       · <span className="text-status-blue">blue</span> = GPS uplink ·{" "}
       <span className="text-status-yellow">amber</span> = manual radio relay ·{" "}
-      <span className="text-muted-foreground">grey</span> = simulated (demo
-      data, M3 ADS-B adapter replaces).
+      <span className="text-status-gray">grey</span> = simulated (demo
+      data).
     </p>
   );
 }

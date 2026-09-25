@@ -104,18 +104,17 @@ function QuoteForm({
             step="0.01"
             required
             defaultValue={defaultDollars}
-            className="ff-inline"
+            className="ff-input"
           />
         </label>
         <button
           type="submit"
           disabled={pending}
-          className="rounded-md bg-status-blue px-3 py-2 text-xs font-semibold text-white hover:brightness-110 disabled:opacity-60"
+          className="rounded-md bg-primary px-3 py-2 text-xs font-semibold text-white hover:bg-brand-dark disabled:opacity-60"
         >
           {pending ? "Saving…" : "Send Quote"}
         </button>
       </form>
-      <FormStyles />
     </ActionCard>
   );
 }
@@ -135,7 +134,7 @@ function ConfirmForm({ bookingId }: { bookingId: string }) {
         <button
           type="submit"
           disabled={pending}
-          className="rounded-md border border-status-green bg-status-green/15 px-3 py-2 text-xs font-semibold text-status-green hover:bg-status-green/20 disabled:opacity-60"
+          className="rounded-md border border-status-green bg-status-green/15 px-3 py-2 text-xs font-semibold text-status-green hover:bg-status-green/15 disabled:opacity-60"
         >
           {pending ? "Confirming…" : "Confirm"}
         </button>
@@ -159,7 +158,7 @@ function CompleteForm({ bookingId }: { bookingId: string }) {
         <button
           type="submit"
           disabled={pending}
-          className="rounded-md border border-border bg-muted/30 px-3 py-2 text-xs font-semibold text-foreground/80 hover:bg-muted/40 disabled:opacity-60"
+          className="rounded-md border border-border bg-muted/60 px-3 py-2 text-xs font-semibold text-foreground/80 hover:bg-accent disabled:opacity-60"
         >
           {pending ? "Saving…" : "Mark Completed"}
         </button>
@@ -200,7 +199,7 @@ function CancelForm({
             maxLength={4000}
             value={reason}
             onChange={(e) => setReason(e.target.value)}
-            className="ff-inline"
+            className="ff-input"
             placeholder="Customer weather no-go, aircraft unavailable, etc."
           />
         </label>
@@ -209,13 +208,12 @@ function CancelForm({
           <button
             type="submit"
             disabled={pending || reason.trim() === "" || !isConfirmed}
-            className="rounded-md border border-status-red/60 bg-status-red/15 px-3 py-2 text-xs font-semibold text-status-red hover:bg-status-red/20 disabled:opacity-60"
+            className="rounded-md border border-status-red/60 bg-status-red/15 px-3 py-2 text-xs font-semibold text-status-red hover:bg-status-red/15 disabled:opacity-60"
           >
             {pending ? "Cancelling…" : "Cancel Booking"}
           </button>
         </div>
       </form>
-      <FormStyles />
     </ActionCard>
   );
 }
@@ -255,24 +253,3 @@ function ErrorBanner({ message }: { message: string }) {
   );
 }
 
-function FormStyles() {
-  return (
-    <style>{`
-      .ff-inline {
-        width: 100%;
-        background: hsl(var(--background));
-        color: hsl(var(--foreground));
-        border: 1px solid hsl(var(--border));
-        border-radius: 8px;
-        padding: 0.5rem 0.75rem;
-        font-size: 0.8125rem;
-        outline: none;
-      }
-      .ff-inline:focus:not(:disabled) {
-        border-color: hsl(var(--primary));
-        box-shadow: 0 0 0 3px hsl(var(--primary) / 0.12);
-      }
-      textarea.ff-inline { resize: vertical; font-family: inherit; }
-    `}</style>
-  );
-}

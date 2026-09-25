@@ -40,7 +40,7 @@ export function StatusBadge({ status }: { status: CharterStatus }) {
         ? "bg-status-yellow/15 text-status-yellow"
         : status === "cancelled"
           ? "bg-status-red/15 text-status-red"
-          : "bg-muted/40 text-muted-foreground";
+          : "bg-muted text-muted-foreground";
   return (
     <span
       className={`inline-flex rounded px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-[0.06em] ${tone}`}

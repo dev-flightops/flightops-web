@@ -935,14 +935,26 @@ export const DEPARTMENTS: Department[] = [
  * Find the active department for a given URL pathname. Returns null when
  * the path doesn't belong to any department (e.g. the root home page or
  * the login page).
+ *
+ * Prefixes match whole path segments, and the longest wins. A raw
+ * `startsWith` filed /fuel-supplier under Ground Ops ("/fuel") and would
+ * file /crew-admin under Operations ("/crew") and /ai-tools under Admin
+ * ("/ai"); /reservations/sim-export only reached Admin because Admin is
+ * declared before Reservations. The department nav's chips had the same
+ * bug — see activeModuleId in department-nav.tsx.
  */
 export function departmentForPath(pathname: string): Department | null {
+  const path = pathname.split(/[?#]/)[0];
+  let best: { dept: Department; length: number } | null = null;
   for (const dept of DEPARTMENTS) {
-    if (dept.pathPrefixes.some((prefix) => pathname.startsWith(prefix))) {
-      return dept;
+    for (const prefix of dept.pathPrefixes) {
+      const matches = path === prefix || path.startsWith(`${prefix}/`);
+      if (matches && (!best || prefix.length > best.length)) {
+        best = { dept, length: prefix.length };
+      }
     }
   }
-  return null;
+  return best?.dept ?? null;
 }
 
 /** Human-readable status hint for tooltips on disabled modules. */

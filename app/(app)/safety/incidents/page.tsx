@@ -98,13 +98,13 @@ export default async function IncidentsInboxPage({
         <div className="flex flex-wrap items-center gap-2">
           <Link
             href="/safety/actions"
-            className="rounded-md border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground/80 hover:bg-muted/20"
+            className="rounded-md border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground/80 hover:bg-accent"
           >
             Corrective Actions
           </Link>
           <Link
             href="/safety/incidents/report"
-            className="rounded-md border border-status-blue bg-status-blue/15 px-3 py-1.5 text-xs font-semibold text-status-blue hover:bg-status-blue/20"
+            className="rounded-md border border-primary/40 bg-background px-3 py-1.5 text-xs font-semibold text-primary hover:bg-primary/5"
           >
             + File an Incident
           </Link>
@@ -129,7 +129,7 @@ export default async function IncidentsInboxPage({
               className={
                 "rounded-md border px-2.5 py-1 text-xs font-semibold transition " +
                 (isActive
-                  ? "border-status-blue bg-status-blue/15 text-status-blue"
+                  ? "border-primary bg-primary/10 text-primary"
                   : "border-border bg-card text-muted-foreground hover:text-foreground")
               }
             >
@@ -151,7 +151,7 @@ export default async function IncidentsInboxPage({
           <p className="text-sm text-muted-foreground">
             No incidents matching &ldquo;{activeFilter.label}&rdquo;.
           </p>
-          <p className="mt-2 text-xs text-muted-foreground/70">
+          <p className="mt-2 text-xs text-muted-foreground">
             A clean board is a good day.
           </p>
         </div>
@@ -173,7 +173,7 @@ function IncidentTable({
     <div className="overflow-hidden rounded-lg border border-border bg-card">
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
-          <thead className="border-b border-border bg-muted/10 text-left text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
+          <thead className="border-b border-border bg-muted/60 text-left text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
             <tr>
               <th scope="col" className="px-4 py-2.5 font-semibold">
                 Occurred
@@ -200,7 +200,7 @@ function IncidentTable({
           </thead>
           <tbody className="divide-y divide-border">
             {incidents.map((i) => (
-              <tr key={i.id} className="hover:bg-muted/5">
+              <tr key={i.id} className="hover:bg-accent">
                 <td className="whitespace-nowrap px-4 py-3 text-xs text-muted-foreground">
                   {new Date(i.occurred_at).toLocaleString(undefined, {
                     month: "short",
@@ -229,7 +229,7 @@ function IncidentTable({
                 <td className="whitespace-nowrap px-4 py-3 text-right">
                   <Link
                     href={`/safety/incidents/${i.id}`}
-                    className="text-xs font-semibold text-status-blue hover:underline"
+                    className="text-xs font-semibold text-primary hover:underline"
                   >
                     Open →
                   </Link>
@@ -254,7 +254,7 @@ function SeverityChip({ severity }: { severity: Incident["severity"] }) {
         ? "border-status-red/60 bg-status-red/10 text-status-red"
         : severity === "medium"
           ? "border-status-yellow bg-status-yellow/15 text-status-yellow"
-          : "border-border bg-muted/20 text-muted-foreground";
+          : "border-border bg-muted text-muted-foreground";
   return (
     <span
       className={
@@ -273,7 +273,7 @@ function StatusChip({ status }: { status: Incident["status"] }) {
       ? "border-status-blue bg-status-blue/15 text-status-blue"
       : status === "triaged" || status === "in_progress"
         ? "border-status-yellow bg-status-yellow/15 text-status-yellow"
-        : "border-border bg-muted/20 text-muted-foreground";
+        : "border-border bg-muted text-muted-foreground";
   return (
     <span
       className={

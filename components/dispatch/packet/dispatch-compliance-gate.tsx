@@ -285,7 +285,7 @@ function ViewProfileLink({ pilotId }: { pilotId: string }) {
   return (
     <Link
       href={`/compliance/pilots/${pilotId}`}
-      className="text-xs font-semibold text-status-blue hover:underline"
+      className="text-xs font-semibold text-primary hover:underline"
     >
       View profile →
     </Link>

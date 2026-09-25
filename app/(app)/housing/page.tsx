@@ -84,7 +84,7 @@ export default async function HousingPage() {
         <span aria-hidden className="px-1.5 text-muted-foreground">
           ›
         </span>
-        <span className="font-semibold text-status-blue">Housing</span>
+        <span className="font-semibold text-primary">Housing</span>
       </nav>
 
       <header className="mb-4 flex flex-wrap items-start justify-between gap-3">
@@ -99,7 +99,7 @@ export default async function HousingPage() {
           <p className="mt-0.5 text-xs text-muted-foreground">
             {stats.houses} active house{stats.houses === 1 ? "" : "s"}
             {stats.inactive > 0 && (
-              <span className="text-muted-foreground/70">
+              <span className="text-muted-foreground">
                 {" "}
                 · {stats.inactive} inactive
               </span>
@@ -120,13 +120,13 @@ export default async function HousingPage() {
         <div className="flex flex-wrap items-center gap-2">
           <Link
             href="/housing/reports"
-            className="rounded-md border border-border bg-card px-3 py-2 text-xs font-semibold text-foreground/80 hover:bg-muted/20"
+            className="rounded-md border border-border bg-card px-3 py-2 text-xs font-semibold text-foreground/80 hover:bg-accent"
           >
             Reports
           </Link>
           <Link
             href="/housing/calendar"
-            className="rounded-md border border-border bg-card px-3 py-2 text-xs font-semibold text-foreground/80 hover:bg-muted/20"
+            className="rounded-md border border-border bg-card px-3 py-2 text-xs font-semibold text-foreground/80 hover:bg-accent"
           >
             Calendar →
           </Link>
@@ -251,10 +251,10 @@ function UnitCard({
         </div>
         {unit.contact_person && (
           <p className="text-[0.7rem] text-muted-foreground">
-            <span className="text-muted-foreground/70">Contact: </span>
+            <span className="text-muted-foreground">Contact: </span>
             {unit.contact_person}
             {unit.contact_phone && (
-              <span className="ml-1 text-muted-foreground/70">
+              <span className="ml-1 text-muted-foreground">
                 · {unit.contact_phone}
               </span>
             )}
@@ -278,7 +278,7 @@ function UnitCard({
         </span>
         <Link
           href={`/housing/${unit.id}`}
-          className="font-semibold text-status-blue hover:underline"
+          className="font-semibold text-primary hover:underline"
         >
           Open →
         </Link>

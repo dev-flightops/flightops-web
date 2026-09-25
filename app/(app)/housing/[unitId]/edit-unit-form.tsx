@@ -6,6 +6,7 @@ import { useState, useTransition } from "react";
 import type { HousingUnit } from "@/lib/api/housing";
 
 import { updateHousingUnitAction } from "../actions";
+import { DEFAULT_UNIT_COLOR } from "@/lib/housing/unit-color";
 
 /**
  * Edit House drawer for /housing/[unitId].
@@ -70,7 +71,7 @@ export function EditUnitDrawer({ unit }: { unit: HousingUnit }) {
           setError(null);
           setOpen(true);
         }}
-        className="rounded-md border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground/80 hover:bg-muted/20"
+        className="rounded-md border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground/80 hover:bg-accent"
       >
         Edit House
       </button>
@@ -97,7 +98,7 @@ export function EditUnitDrawer({ unit }: { unit: HousingUnit }) {
                 type="button"
                 onClick={() => setOpen(false)}
                 aria-label="Close"
-                className="rounded px-2 py-1 text-xs text-muted-foreground hover:bg-muted/40 hover:text-foreground"
+                className="rounded px-2 py-1 text-xs text-muted-foreground hover:bg-accent hover:text-foreground"
               >
                 ✕
               </button>
@@ -159,7 +160,7 @@ export function EditUnitDrawer({ unit }: { unit: HousingUnit }) {
                 <input
                   name="color_accent"
                   type="color"
-                  defaultValue={unit.color_accent ?? "#3b82f6"}
+                  defaultValue={unit.color_accent ?? DEFAULT_UNIT_COLOR}
                   className="h-9 w-full rounded-md border border-border bg-background p-1"
                 />
               </Field>
@@ -182,14 +183,14 @@ export function EditUnitDrawer({ unit }: { unit: HousingUnit }) {
                 <button
                   type="submit"
                   disabled={pending}
-                  className="rounded-md bg-status-blue px-3 py-1.5 text-xs font-semibold text-white hover:brightness-110 disabled:opacity-50"
+                  className="rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-dark disabled:opacity-50"
                 >
                   {pending ? "Saving…" : "Save changes"}
                 </button>
                 <button
                   type="button"
                   onClick={() => setOpen(false)}
-                  className="rounded-md border border-border px-3 py-1.5 text-xs font-semibold text-foreground/80 hover:bg-muted/20"
+                  className="rounded-md border border-border px-3 py-1.5 text-xs font-semibold text-foreground/80 hover:bg-accent"
                 >
                   Cancel
                 </button>
@@ -203,7 +204,7 @@ export function EditUnitDrawer({ unit }: { unit: HousingUnit }) {
 }
 
 const INPUT =
-  "w-full rounded-md border border-border bg-background px-3 py-1.5 text-xs text-foreground focus:border-status-blue focus:outline-none";
+  "w-full rounded-md border border-border bg-background px-3 py-1.5 text-xs text-foreground focus:border-primary focus:outline-none";
 
 function Field({
   label,

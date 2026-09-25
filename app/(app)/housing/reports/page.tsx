@@ -132,7 +132,7 @@ export default async function HousingReportsPage({
   const cost = costByEmployee(bookings, rooms, from, to);
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6">
+    <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
       <nav aria-label="Breadcrumb" className="mb-4 flex items-center text-xs">
         <Link
           href="/home"
@@ -158,16 +158,16 @@ export default async function HousingReportsPage({
         <span aria-hidden className="px-1.5 text-muted-foreground">
           ›
         </span>
-        <span className="font-semibold text-status-blue">Reports</span>
+        <span className="font-semibold text-primary">Reports</span>
       </nav>
 
       <header className="mb-4">
         <h1 className="text-2xl font-bold tracking-tight">Housing Reports</h1>
-        <p className="mt-0.5 text-xs text-muted-foreground">
+        <p className="mt-1 text-sm text-muted-foreground">
           Occupancy, employee history and cost over a date range —{" "}
           {nights} night{nights === 1 ? "" : "s"}
           {units.length > 0 && (
-            <span className="text-muted-foreground/70">
+            <span className="text-muted-foreground">
               {" "}
               · {units.length} house{units.length === 1 ? "" : "s"} ·{" "}
               {rooms.length} room{rooms.length === 1 ? "" : "s"}
@@ -186,8 +186,8 @@ export default async function HousingReportsPage({
               aria-current={active ? "page" : undefined}
               className={
                 active
-                  ? "rounded-md bg-status-blue px-3 py-1.5 text-xs font-semibold text-white"
-                  : "rounded-md border border-border px-3 py-1.5 text-xs font-semibold text-muted-foreground hover:bg-muted/30 hover:text-foreground"
+                  ? "rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-white"
+                  : "rounded-md border border-border px-3 py-1.5 text-xs font-semibold text-muted-foreground hover:bg-accent hover:text-foreground"
               }
             >
               {t.label}
@@ -209,7 +209,7 @@ export default async function HousingReportsPage({
             type="date"
             name="from"
             defaultValue={from}
-            className="rounded-md border border-border bg-background px-3 py-1.5 text-sm text-foreground focus:border-status-blue focus:outline-none"
+            className="rounded-md border border-border bg-background px-3 py-1.5 text-sm text-foreground focus:border-primary focus:outline-none"
           />
         </label>
         <label className="block">
@@ -220,12 +220,12 @@ export default async function HousingReportsPage({
             type="date"
             name="to"
             defaultValue={to}
-            className="rounded-md border border-border bg-background px-3 py-1.5 text-sm text-foreground focus:border-status-blue focus:outline-none"
+            className="rounded-md border border-border bg-background px-3 py-1.5 text-sm text-foreground focus:border-primary focus:outline-none"
           />
         </label>
         <button
           type="submit"
-          className="rounded-md border border-border bg-muted/30 px-4 py-2 text-sm font-semibold text-foreground hover:bg-muted/50"
+          className="rounded-md border border-border bg-muted/60 px-4 py-2 text-sm font-semibold text-foreground hover:bg-accent"
         >
           Generate
         </button>

@@ -56,7 +56,7 @@ export async function MaintenancePanel({
     const status = err instanceof ApiError ? err.status : 0;
     return (
       <SectionPanel title="Maintenance & Airworthiness">
-        <p className="text-xs italic text-muted-foreground/70">
+        <p className="text-xs italic text-muted-foreground">
           {status === 404
             ? "Aircraft not found in the maintenance service."
             : "Maintenance check unavailable — try refreshing in a moment."}
@@ -109,9 +109,9 @@ export async function MaintenancePanel({
       )}
 
       <div className="mt-3 flex items-center justify-between gap-3">
-        <p className="text-[0.65rem] text-muted-foreground/70">
-          Source: maintenance-service. Release-gating against this verdict
-          ships in M2-M-8b.
+        <p className="text-[0.65rem] text-muted-foreground">
+          Source: maintenance-service. Release is refused while a blocking
+          issue is open.
         </p>
         <div className="flex shrink-0 gap-2">
           <SquawkDialog
@@ -212,7 +212,7 @@ function VerdictBadge({ isAirworthy }: { isAirworthy: boolean }) {
       title={
         isAirworthy
           ? "No blocking maintenance issues for this aircraft."
-          : "Blocking issues present — release will be refused (M2-M-8b)."
+          : "Blocking issues present — release will be refused."
       }
     >
       {isAirworthy ? "Airworthy" : "Not airworthy"}

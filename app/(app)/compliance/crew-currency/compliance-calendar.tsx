@@ -164,7 +164,7 @@ export function ComplianceCalendar({
               <div className="mb-2 flex items-baseline justify-between">
                 <Link
                   href={monthDrillHref(m.key, statusFilter)}
-                  className="text-[0.65rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground hover:text-status-blue"
+                  className="text-[0.65rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground hover:text-primary"
                   aria-label={
                     entries.length > 0
                       ? `See all ${entries.length} findings in ${m.label}`
@@ -176,14 +176,14 @@ export function ComplianceCalendar({
                 {entries.length > 0 && (
                   <Link
                     href={monthDrillHref(m.key, statusFilter)}
-                    className="text-[0.65rem] font-mono text-muted-foreground hover:text-status-blue"
+                    className="text-[0.65rem] font-mono text-muted-foreground hover:text-primary"
                   >
                     {entries.length}
                   </Link>
                 )}
               </div>
               {entries.length === 0 ? (
-                <div className="text-[0.65rem] text-muted-foreground/70">
+                <div className="text-[0.65rem] text-muted-foreground">
                   Nothing scheduled
                 </div>
               ) : (
@@ -195,7 +195,7 @@ export function ComplianceCalendar({
                     >
                       <Link
                         href={`/compliance/pilots/${e.pilot.id}`}
-                        className="block text-[0.7rem] font-semibold text-foreground hover:text-status-blue"
+                        className="block text-[0.7rem] font-semibold text-foreground hover:text-primary"
                       >
                         {e.pilot.full_name}
                       </Link>
@@ -213,7 +213,7 @@ export function ComplianceCalendar({
                     <li>
                       <Link
                         href={monthDrillHref(m.key, statusFilter)}
-                        className="text-[0.65rem] text-status-blue hover:underline"
+                        className="text-[0.65rem] text-primary hover:underline"
                       >
                         +{overflow} more
                       </Link>
@@ -239,7 +239,7 @@ export function ComplianceCalendar({
               >
                 <Link
                   href={`/compliance/pilots/${e.pilot.id}`}
-                  className="block text-[0.7rem] font-semibold text-foreground hover:text-status-blue"
+                  className="block text-[0.7rem] font-semibold text-foreground hover:text-primary"
                 >
                   {e.pilot.full_name}
                 </Link>
@@ -288,7 +288,7 @@ function FocusedMonthView({
         </div>
         <Link
           href={backHref}
-          className="rounded-md border border-border bg-card px-3 py-1.5 text-[0.7rem] font-semibold text-foreground hover:bg-muted/40"
+          className="rounded-md border border-border bg-card px-3 py-1.5 text-[0.7rem] font-semibold text-foreground hover:bg-accent"
         >
           ← Back to 12-month view
         </Link>
@@ -307,7 +307,7 @@ function FocusedMonthView({
               <div className="flex items-baseline justify-between gap-3">
                 <Link
                   href={`/compliance/pilots/${e.pilot.id}`}
-                  className="text-sm font-semibold text-foreground hover:text-status-blue"
+                  className="text-sm font-semibold text-foreground hover:text-primary"
                 >
                   {e.pilot.full_name}
                 </Link>

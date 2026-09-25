@@ -32,7 +32,7 @@ export function AcctExportFilterBar() {
           type="date"
           value={start}
           onChange={(e) => setStart(e.target.value)}
-          className="w-40 rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:border-status-blue focus:ring-2 focus:ring-status-blue/30"
+          className="w-40 rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/30"
         />
       </label>
       <label>
@@ -41,7 +41,7 @@ export function AcctExportFilterBar() {
           type="date"
           value={end}
           onChange={(e) => setEnd(e.target.value)}
-          className="w-40 rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:border-status-blue focus:ring-2 focus:ring-status-blue/30"
+          className="w-40 rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/30"
         />
       </label>
       <label>
@@ -49,14 +49,14 @@ export function AcctExportFilterBar() {
         <select
           value={customer}
           onChange={(e) => setCustomer(e.target.value)}
-          className="w-56 rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:border-status-blue focus:ring-2 focus:ring-status-blue/30"
+          className="w-56 rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/30"
         >
           <option value="">All Customers</option>
         </select>
       </label>
       <button
         type="submit"
-        className="rounded-md border border-border bg-muted/30 px-4 py-2 text-sm font-semibold text-foreground hover:bg-muted/50"
+        className="rounded-md border border-border bg-muted/60 px-4 py-2 text-sm font-semibold text-foreground hover:bg-accent"
       >
         Filter
       </button>

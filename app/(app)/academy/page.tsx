@@ -80,7 +80,7 @@ export default async function CourseLibraryPage({
   }
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6">
+    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
       <AcademyHeader activeSection="course-library" />
 
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
@@ -100,7 +100,7 @@ export default async function CourseLibraryPage({
           />
           <button
             type="submit"
-            className="rounded-md border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground/80 hover:bg-muted/20"
+            className="rounded-md border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground/80 hover:bg-accent"
           >
             Search
           </button>
@@ -131,7 +131,7 @@ export default async function CourseLibraryPage({
           {isAdmin ? (
             <Link
               href="/academy/studio/new"
-              className="rounded-md bg-status-blue px-4 py-2 text-sm font-semibold text-white hover:brightness-110"
+              className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-brand-dark"
             >
               + Create Course
             </Link>
@@ -203,7 +203,7 @@ function StatusChip({
       className={
         "rounded-md border px-2.5 py-1 text-xs font-semibold transition " +
         (active
-          ? "border-status-blue bg-status-blue/15 text-status-blue"
+          ? "border-primary bg-primary/10 text-primary"
           : "border-border bg-card text-muted-foreground hover:text-foreground")
       }
     >
@@ -271,8 +271,8 @@ function SidebarItem({
       className={
         "flex items-baseline justify-between gap-2 rounded-md px-2 py-1.5 transition " +
         (active
-          ? "bg-status-blue/15 text-status-blue"
-          : "text-muted-foreground hover:bg-muted/20 hover:text-foreground") +
+          ? "bg-primary/10 text-primary"
+          : "text-muted-foreground hover:bg-accent hover:text-foreground") +
         (bold ? " font-semibold text-foreground" : "")
       }
     >
@@ -280,7 +280,7 @@ function SidebarItem({
       <span
         className={
           "tabular-nums text-[0.7rem] " +
-          (active ? "" : "text-muted-foreground/60")
+          (active ? "" : "text-muted-foreground")
         }
       >
         {count}
@@ -297,7 +297,7 @@ function EmptyState({ isAdmin }: { isAdmin: boolean }) {
         <div className="mt-4">
           <Link
             href="/academy/studio/new"
-            className="rounded-md bg-status-blue px-4 py-2 text-sm font-semibold text-white hover:brightness-110"
+            className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-brand-dark"
           >
             + Create Course
           </Link>
@@ -323,7 +323,7 @@ function CourseGrid({
         <li key={c.id}>
           <Link
             href={`/academy/${c.id}`}
-            className="flex h-full min-w-0 flex-col rounded-lg border border-border bg-card p-4 hover:bg-muted/5"
+            className="flex h-full min-w-0 flex-col rounded-lg border border-border bg-card p-4 hover:bg-accent"
           >
             <div className="mb-1 flex items-baseline justify-between gap-2">
               <span className="line-clamp-1 text-sm font-semibold">
@@ -384,7 +384,7 @@ function CourseMetaChips({ course }: { course: Course }) {
       {chips.map((chip) => (
         <span
           key={chip}
-          className="rounded bg-muted/40 px-1.5 py-0.5 text-[0.6rem] font-semibold text-muted-foreground"
+          className="rounded bg-muted px-1.5 py-0.5 text-[0.6rem] font-semibold text-muted-foreground"
         >
           {chip}
         </span>
@@ -398,7 +398,7 @@ function PublishBadge({ status }: { status: CoursePublishStatus }) {
   const cls =
     status === "draft"
       ? "border-status-yellow/40 bg-status-yellow/10 text-status-yellow"
-      : "border-border bg-muted/30 text-muted-foreground";
+      : "border-border bg-muted text-muted-foreground";
   return (
     <span
       className={

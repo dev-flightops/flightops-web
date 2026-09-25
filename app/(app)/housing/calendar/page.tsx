@@ -11,6 +11,8 @@ import {
   type HousingRoom,
   type HousingUnit,
 } from "@/lib/api/housing";
+import { unitColor } from "@/lib/housing/unit-color";
+import { readableTextOn } from "@/lib/theme/contrast";
 
 /**
  * /housing/calendar — 7-day booking calendar.
@@ -107,7 +109,7 @@ export default async function HousingCalendarPage({
         <span aria-hidden className="px-1.5 text-muted-foreground">
           ›
         </span>
-        <span className="font-semibold text-status-blue">Calendar</span>
+        <span className="font-semibold text-primary">Calendar</span>
       </nav>
 
       <header className="mb-4 flex flex-wrap items-start justify-between gap-3">
@@ -115,7 +117,7 @@ export default async function HousingCalendarPage({
           <h1 className="text-2xl font-bold tracking-tight">
             Housing Calendar
           </h1>
-          <p className="mt-0.5 text-xs text-muted-foreground">
+          <p className="mt-1 text-sm text-muted-foreground">
             Week of {fmtDay(anchor, "long")} · rooms × days
           </p>
         </div>
@@ -169,7 +171,7 @@ function CalendarNav({
     >
       <Link
         href={`/housing/calendar?from=${isoDay(prevAnchor)}`}
-        className="rounded-md border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground/80 hover:bg-muted/20"
+        className="rounded-md border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground/80 hover:bg-accent"
       >
         ← Prev week
       </Link>
@@ -178,15 +180,15 @@ function CalendarNav({
         className={
           "rounded-md px-3 py-1.5 text-xs font-semibold " +
           (isToday
-            ? "bg-status-blue text-white"
-            : "border border-border bg-card text-foreground/80 hover:bg-muted/20")
+            ? "bg-primary text-white"
+            : "border border-border bg-card text-foreground/80 hover:bg-accent")
         }
       >
         Today
       </Link>
       <Link
         href={`/housing/calendar?from=${isoDay(nextAnchor)}`}
-        className="rounded-md border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground/80 hover:bg-muted/20"
+        className="rounded-md border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground/80 hover:bg-accent"
       >
         Next week →
       </Link>
@@ -218,14 +220,14 @@ function CalendarGrid({
     <div className="overflow-x-auto rounded-lg border border-border bg-card">
       <table className="w-full min-w-[900px] table-fixed text-xs">
         <thead>
-          <tr className="border-b border-border bg-muted/10 text-left text-[0.65rem] uppercase tracking-[0.06em] text-muted-foreground">
+          <tr className="border-b border-border bg-muted/60 text-left text-[0.65rem] uppercase tracking-[0.06em] text-muted-foreground">
             <th className="w-56 px-3 py-2.5 font-semibold">Unit / Room</th>
             {days.map((d) => (
               <th
                 key={d.toISOString()}
                 className={
                   "px-2 py-2.5 text-center font-semibold " +
-                  (isoDay(d) === todayIso ? "bg-status-blue/10 text-status-blue" : "")
+                  (isoDay(d) === todayIso ? "bg-primary/10 text-primary" : "")
                 }
               >
                 <div>{fmtDay(d, "short")}</div>
@@ -293,7 +295,7 @@ function UnitBlock({
   return (
     <>
       {rooms.map((r, i) => (
-        <tr key={r.id} className="hover:bg-muted/5">
+        <tr key={r.id} className="hover:bg-accent">
           <td className="border-l-4 px-3 py-2 align-top"
             style={{
               borderLeftColor:
@@ -309,7 +311,7 @@ function UnitBlock({
             ) : null}
             <Link
               href={`/housing/${unit.id}`}
-              className="block font-mono text-xs text-foreground hover:text-status-blue"
+              className="block font-mono text-xs text-foreground hover:text-primary"
             >
               {r.room_number}
               <span className="ml-1 text-[0.65rem] text-muted-foreground">
@@ -327,7 +329,7 @@ function UnitBlock({
                 key={dayIso}
                 className={
                   "px-1 py-1 align-top " +
-                  (dayIso === todayIso ? "bg-status-blue/[0.06]" : "")
+                  (dayIso === todayIso ? "bg-primary/[0.06]" : "")
                 }
               >
                 <div className="flex flex-col gap-1">
@@ -354,7 +356,7 @@ function UnitLabel({ unit }: { unit: HousingUnit }) {
       <span className="text-[0.65rem] font-bold uppercase tracking-wider text-muted-foreground">
         {unit.name}
       </span>
-      <span className="font-mono text-[0.6rem] text-muted-foreground/70">
+      <span className="font-mono text-[0.6rem] text-muted-foreground">
         {unit.station}
       </span>
     </div>
@@ -372,19 +374,17 @@ function BookingBlock({
   const purpose = (booking.purpose ?? "other") as BookingPurpose;
   const label = booking.employee_name ?? "Assigned";
   const purposeLabel = BOOKING_PURPOSE_LABELS[purpose] ?? "Other";
-  const bg =
-    unit.color_accent && /^#[0-9a-fA-F]{6}$/.test(unit.color_accent)
-      ? unit.color_accent
-      : "#3b82f6";
+  const bg = unitColor(unit.color_accent);
   return (
     <Link
       href={`/housing/${unit.id}`}
       title={`${label} · ${purposeLabel} · ${booking.check_in} → ${booking.check_out ?? "open"}`}
-      className="block truncate rounded px-1.5 py-0.5 text-[0.65rem] font-semibold text-white hover:brightness-110"
-      style={{ backgroundColor: bg }}
+      className="block truncate rounded px-1.5 py-0.5 text-[0.65rem] font-semibold hover:brightness-95"
+      // The fill is the operator's choice, so the text colour follows it.
+      style={{ backgroundColor: bg, color: readableTextOn(bg) }}
     >
       {initials}
-      <span className="ml-1 font-normal opacity-90">· {purposeLabel}</span>
+      <span className="ml-1 font-normal">· {purposeLabel}</span>
     </Link>
   );
 }
@@ -401,7 +401,7 @@ function PurposeLegend() {
           {BOOKING_PURPOSE_LABELS[p]}
         </span>
       ))}
-      <span className="ml-auto text-[0.65rem] text-muted-foreground/70">
+      <span className="ml-auto text-[0.65rem] text-muted-foreground">
         Block color = unit accent. Click any block to open the unit detail.
       </span>
     </div>
@@ -420,7 +420,7 @@ function EmptyState() {
       </p>
       <Link
         href="/housing"
-        className="mt-4 inline-block rounded-md border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground/80 hover:bg-muted/20"
+        className="mt-4 inline-block rounded-md border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground/80 hover:bg-accent"
       >
         Go to Housing
       </Link>

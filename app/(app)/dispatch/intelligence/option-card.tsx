@@ -67,7 +67,7 @@ export function OptionCard({ option }: { option: DispatchOption }) {
               Blocked
             </span>
           ) : (
-            <span className="rounded bg-status-blue px-1.5 py-0.5 text-[0.65rem] font-bold tabular-nums text-white">
+            <span className="rounded bg-primary px-1.5 py-0.5 text-[0.65rem] font-bold tabular-nums text-white">
               {option.rank}
             </span>
           )}

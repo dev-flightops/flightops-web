@@ -47,7 +47,7 @@ export default async function EmployeeDetailPage({
     if (err instanceof ApiError && err.status === 404) notFound();
     const status = err instanceof ApiError ? err.status : 0;
     return (
-      <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6">
+      <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
         <div
           role="alert"
           className="rounded-md border border-border bg-card px-4 py-6 text-center text-sm text-muted-foreground"
@@ -109,15 +109,15 @@ export default async function EmployeeDetailPage({
 
   if (tab === "documents") {
     return (
-      <div className="mx-auto max-w-4xl px-4 py-6 sm:px-6">
+      <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6">
         <Link
           href="/employees"
-          className="mb-3 inline-block text-xs font-semibold text-status-blue hover:underline"
+          className="mb-3 inline-block text-xs font-semibold text-primary hover:underline"
         >
           ← Employees
         </Link>
         <header className="mb-4">
-          <h1 className="truncate text-2xl font-bold sm:text-3xl">
+          <h1 className="truncate text-2xl font-bold tracking-tight">
             {employee.preferred_name?.trim() || employee.full_name}
           </h1>
         </header>

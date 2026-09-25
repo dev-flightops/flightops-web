@@ -70,7 +70,7 @@ export default async function BiPage() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-8">
+    <div className="mx-auto max-w-6xl px-4 sm:px-6 py-8">
       <Link
         href="/reports"
         className="text-[0.65rem] font-semibold uppercase tracking-wider text-muted-foreground hover:text-foreground"
@@ -315,7 +315,7 @@ export default async function BiPage() {
                             tenant because the table is empty there. */}
                         <Link
                           href={`/customers/${c.customer_id}`}
-                          className="text-status-blue hover:underline"
+                          className="text-primary hover:underline"
                         >
                           {c.name}
                         </Link>
@@ -342,7 +342,7 @@ export default async function BiPage() {
             Margin by route lives on{" "}
             <Link
               href={data.profitability_path}
-              className="text-status-blue hover:underline"
+              className="text-primary hover:underline"
             >
               Profitability
             </Link>{" "}

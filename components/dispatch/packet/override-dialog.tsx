@@ -102,7 +102,7 @@ export function OverrideDialog({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="mt-3 rounded-md border border-status-red bg-status-red/20 px-3 py-1.5 text-[0.7rem] font-semibold text-status-red hover:bg-status-red/30"
+        className="mt-3 rounded-md border border-status-red bg-status-red/15 px-3 py-1.5 text-[0.7rem] font-semibold text-status-red hover:bg-status-red/15"
       >
         Supervisor Override…
       </button>
@@ -160,7 +160,7 @@ export function OverrideDialog({
                 disabled={pending}
                 onChange={(e) => setCert(e.target.value)}
                 placeholder="CFI-123456"
-                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-status-blue focus:outline-none aria-[invalid=true]:border-status-red"
+                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none aria-[invalid=true]:border-status-red"
                 aria-invalid={fieldError("supervisor_cert_number") ? "true" : undefined}
               />
               {fieldError("supervisor_cert_number") && (
@@ -199,7 +199,7 @@ export function OverrideDialog({
                 disabled={pending}
                 onChange={(e) => setReason(e.target.value)}
                 placeholder="Why does this pilot need to fly despite the block? Spec 5 requires at least 50 characters of context."
-                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-status-blue focus:outline-none aria-[invalid=true]:border-status-red"
+                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none aria-[invalid=true]:border-status-red"
                 aria-invalid={fieldError("reason") ? "true" : undefined}
               />
               {fieldError("reason") && (
@@ -215,7 +215,7 @@ export function OverrideDialog({
               type="button"
               onClick={() => setOpen(false)}
               disabled={pending}
-              className="rounded-md border border-border bg-card px-3 py-2 text-xs font-semibold text-foreground hover:bg-muted/40"
+              className="rounded-md border border-border bg-card px-3 py-2 text-xs font-semibold text-foreground hover:bg-accent"
             >
               Cancel
             </button>
@@ -223,7 +223,7 @@ export function OverrideDialog({
               type="button"
               onClick={submit}
               disabled={pending}
-              className="inline-flex items-center gap-1.5 rounded-md bg-status-red px-4 py-2 text-xs font-semibold text-white hover:brightness-110 disabled:opacity-60"
+              className="inline-flex items-center gap-1.5 rounded-md bg-status-red px-4 py-2 text-xs font-semibold text-white hover:brightness-95 disabled:opacity-60"
             >
               {pending && <Spinner size="xs" />}
               {pending

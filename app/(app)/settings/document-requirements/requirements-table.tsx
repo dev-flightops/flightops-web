@@ -74,7 +74,7 @@ export function RequirementsTable({
         <p className="text-xs text-muted-foreground">
           {active.length} in use
           {retired.length > 0 && (
-            <span className="text-muted-foreground/70">
+            <span className="text-muted-foreground">
               {" "}
               · {retired.length} retired
             </span>
@@ -86,7 +86,7 @@ export function RequirementsTable({
             setError(null);
             setAdding((v) => !v);
           }}
-          className="rounded-md bg-status-blue px-3 py-1.5 text-xs font-semibold text-white hover:brightness-110"
+          className="rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-dark"
         >
           {adding ? "Cancel" : "+ New requirement"}
         </button>
@@ -185,7 +185,7 @@ export function RequirementsTable({
                   onClick={() =>
                     run(() => updateRequirementAction(r.id, { is_active: true }))
                   }
-                  className="font-semibold text-status-blue hover:underline disabled:opacity-50"
+                  className="font-semibold text-primary hover:underline disabled:opacity-50"
                 >
                   Put back in use
                 </button>
@@ -280,7 +280,7 @@ function RequirementForm({
           className="h-3.5 w-3.5 rounded border-border"
         />
         Required on hire
-        <span className="text-muted-foreground/70">
+        <span className="text-muted-foreground">
           (shown on the checklist; does not block activating a new hire)
         </span>
       </label>
@@ -317,7 +317,7 @@ function RequirementForm({
       <button
         type="submit"
         disabled={pending}
-        className="rounded-md bg-status-blue px-3 py-1.5 text-xs font-semibold text-white hover:brightness-110 disabled:opacity-50"
+        className="rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-dark disabled:opacity-50"
       >
         {pending ? "Saving…" : "Create requirement"}
       </button>
@@ -328,4 +328,4 @@ function RequirementForm({
 const LABEL =
   "mb-1 block text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground";
 const INPUT =
-  "w-full rounded-md border border-border bg-background px-3 py-1.5 text-xs text-foreground focus:border-status-blue focus:outline-none";
+  "w-full rounded-md border border-border bg-background px-3 py-1.5 text-xs text-foreground focus:border-primary focus:outline-none";

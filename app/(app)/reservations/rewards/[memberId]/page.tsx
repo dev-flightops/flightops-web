@@ -83,7 +83,7 @@ export default async function RewardsMemberDetailPage({
   const { member, transactions } = detail;
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-8">
+    <div className="mx-auto max-w-5xl px-4 sm:px-6 py-8">
       <nav aria-label="Breadcrumb" className="mb-4 text-xs">
         <Link
           href="/reservations/rewards"
@@ -92,7 +92,7 @@ export default async function RewardsMemberDetailPage({
           {programName}
         </Link>
         <span aria-hidden className="px-1.5 text-muted-foreground">/</span>
-        <span className="font-semibold text-status-blue">
+        <span className="font-semibold text-primary">
           {member.member_number}
         </span>
       </nav>
@@ -100,10 +100,10 @@ export default async function RewardsMemberDetailPage({
       <header className="mb-6 rounded-lg border border-border bg-card p-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <h1 className="text-xl font-bold">
+            <h1 className="text-2xl font-bold tracking-tight">
               {member.customer_name ?? "—"}
             </h1>
-            <p className="mt-0.5 text-xs text-muted-foreground">
+            <p className="mt-1 text-sm text-muted-foreground">
               {member.member_number} · enrolled{" "}
               {formatDate(member.enrollment_date)}
               {member.enrolled_station ? ` at ${member.enrolled_station}` : ""}
@@ -172,7 +172,7 @@ export default async function RewardsMemberDetailPage({
           <div className="overflow-hidden rounded-lg border border-border bg-card">
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
-                <thead className="border-b border-border bg-muted/10 text-left text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
+                <thead className="border-b border-border bg-muted/60 text-left text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
                   <tr>
                     <th scope="col" className="px-4 py-2.5 font-semibold">When</th>
                     <th scope="col" className="px-4 py-2.5 font-semibold">Type</th>
@@ -182,7 +182,7 @@ export default async function RewardsMemberDetailPage({
                 </thead>
                 <tbody className="divide-y divide-border">
                   {transactions.map((t) => (
-                    <tr key={t.id} className="hover:bg-muted/5">
+                    <tr key={t.id} className="hover:bg-accent">
                       <td className="whitespace-nowrap px-4 py-3 text-xs text-muted-foreground">
                         {formatTimestamp(t.created_at)}
                       </td>
@@ -222,7 +222,7 @@ function TierBadge({ tier }: { tier: RewardsTier }) {
         ? "border-status-yellow/40 bg-status-yellow/10 text-status-yellow"
         : tier === "silver"
           ? "border-status-blue/40 bg-status-blue/10 text-status-blue"
-          : "border-border bg-muted/20 text-muted-foreground";
+          : "border-border bg-muted text-muted-foreground";
   return (
     <span
       className={

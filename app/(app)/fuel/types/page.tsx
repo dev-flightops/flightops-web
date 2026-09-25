@@ -26,7 +26,7 @@ export default async function FuelTypesPage() {
   }
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-6 sm:px-6">
+    <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
       <header className="mb-5">
         <Link
           href="/fuel"
@@ -52,9 +52,9 @@ export default async function FuelTypesPage() {
           <p className="text-sm text-muted-foreground">
             No fuel types configured yet.
           </p>
-          <p className="mt-1 text-xs text-muted-foreground/70">
-            Add via the API: <code>POST /ground/fuel/types</code>. The UI for
-            this ships in M2-G-44b.
+          <p className="mt-1 text-xs text-muted-foreground">
+            Fuel types are added through the API for now:{" "}
+            <code>POST /ground/fuel/types</code>.
           </p>
         </div>
       ) : (

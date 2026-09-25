@@ -119,8 +119,8 @@ export function BriefView({
     <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6">
       <header className="mb-4 flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold">Morning Ops Brief</h1>
-          <p className="mt-0.5 text-xs text-muted-foreground">
+          <h1 className="text-2xl font-bold tracking-tight">Morning Ops Brief</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
             {heading} · {operator}
           </p>
         </div>
@@ -332,7 +332,7 @@ function CrewRow({
   return (
     <div className="flex items-center gap-2">
       <span className="w-20 flex-shrink-0 text-muted-foreground">{label}</span>
-      <span className="h-2 flex-1 overflow-hidden rounded-full bg-muted/25">
+      <span className="h-2 flex-1 overflow-hidden rounded-full bg-muted/60">
         <span
           className={"block h-full rounded-full " + tone}
           // Zero stays invisible rather than showing a hairline that

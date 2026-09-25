@@ -54,18 +54,18 @@ export default async function SettingsCostsPage() {
   const routes = data?.routes ?? [];
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-6">
+    <div className="mx-auto max-w-6xl px-4 sm:px-6 py-8">
       <nav aria-label="Breadcrumb" className="mb-4 text-xs">
         <Link href="/settings" className="text-muted-foreground hover:text-foreground">
           Settings
         </Link>
         <span aria-hidden className="px-1.5 text-muted-foreground">/</span>
-        <span className="font-semibold text-status-blue">Costs</span>
+        <span className="font-semibold text-primary">Costs</span>
       </nav>
 
       <header className="mb-5">
-        <h1 className="text-lg font-bold">Aircraft Operating Cost Configuration</h1>
-        <p className="mt-0.5 text-xs text-muted-foreground">
+        <h1 className="text-2xl font-bold tracking-tight">Aircraft Operating Cost Configuration</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
           Feeds directly into Dispatch AI Intelligence cost calculations
         </p>
       </header>
@@ -101,7 +101,7 @@ function AircraftCostsSection({ rows }: { rows: AircraftCostRow[] }) {
       <div className="overflow-hidden rounded-lg border border-border bg-card">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="border-b border-border bg-muted/10 text-left text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
+            <thead className="border-b border-border bg-muted/60 text-left text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
               <tr>
                 <th scope="col" className="px-4 py-2 font-semibold">Type</th>
                 <th scope="col" className="px-4 py-2 font-semibold">Fuel GPH</th>
@@ -127,7 +127,7 @@ function AircraftCostsSection({ rows }: { rows: AircraftCostRow[] }) {
                   const pilotHourly = pilotPerHour(r);
                   const directCost = directCostPerHour(r);
                   return (
-                    <tr key={r.id} className="hover:bg-muted/5">
+                    <tr key={r.id} className="hover:bg-accent">
                       <td className="whitespace-nowrap px-4 py-3 text-xs font-semibold">
                         {r.aircraft_type}
                       </td>
@@ -152,7 +152,7 @@ function AircraftCostsSection({ rows }: { rows: AircraftCostRow[] }) {
                       <td className="whitespace-nowrap px-4 py-3 font-mono text-xs">
                         {r.avg_duty_hrs ?? "—"}h
                       </td>
-                      <td className="whitespace-nowrap px-4 py-3 font-mono text-xs text-status-blue">
+                      <td className="whitespace-nowrap px-4 py-3 font-mono text-xs text-foreground">
                         {pilotHourly === null ? "—" : `$${pilotHourly.toFixed(0)}`}
                       </td>
                       <td className="whitespace-nowrap px-4 py-3 font-mono text-xs font-bold text-status-green">
@@ -319,7 +319,7 @@ function CalculatorSection({
       <div className="overflow-hidden rounded-lg border border-border bg-card">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="border-b border-border bg-muted/10 text-left text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
+            <thead className="border-b border-border bg-muted/60 text-left text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
               <tr>
                 <th scope="col" className="px-4 py-2 font-semibold">Aircraft</th>
                 {fuelPrices.map((fp) => (
@@ -330,7 +330,7 @@ function CalculatorSection({
                   >
                     {fp.icao_code}
                     <br />
-                    <span className="font-normal opacity-60">
+                    <span className="font-normal text-muted-foreground">
                       ${Number(fp.price_per_gal).toFixed(2)}
                     </span>
                   </th>
@@ -339,7 +339,7 @@ function CalculatorSection({
             </thead>
             <tbody className="divide-y divide-border">
               {aircraft.map((ac) => (
-                <tr key={ac.id} className="hover:bg-muted/5">
+                <tr key={ac.id} className="hover:bg-accent">
                   <td className="whitespace-nowrap px-4 py-3 text-xs font-semibold">
                     {ac.aircraft_type}
                   </td>
@@ -379,7 +379,7 @@ function DisabledAddDetails({
 }) {
   return (
     <details className="mt-3">
-      <summary className="cursor-pointer text-xs text-status-blue">{label}</summary>
+      <summary className="cursor-pointer text-xs text-primary">{label}</summary>
       <div className="mt-3 flex flex-wrap gap-2">
         {children.map((f) => (
           <label key={f.label} className="min-w-[120px]">
@@ -401,7 +401,7 @@ function DisabledAddDetails({
             disabled
             aria-disabled="true"
             title={hint}
-            className="cursor-not-allowed rounded-md bg-status-blue px-3 py-2 text-xs font-semibold text-white disabled:opacity-100"
+            className="cursor-not-allowed rounded-md bg-primary px-3 py-2 text-xs font-semibold text-white disabled:opacity-100"
           >
             Save
           </button>

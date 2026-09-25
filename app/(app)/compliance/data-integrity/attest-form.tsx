@@ -82,7 +82,7 @@ export function AttestForm({
         value={notes}
         onChange={(e) => setNotes(e.target.value)}
         placeholder="Reviewed the window. PGR319 block time referred to dispatch for correction; missing cost factors raised with the DO."
-        className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs text-foreground focus:border-status-blue focus:outline-none"
+        className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs text-foreground focus:border-primary focus:outline-none"
       />
       <div className="mt-2 flex flex-wrap items-center gap-3">
         <button
@@ -92,7 +92,7 @@ export function AttestForm({
           title={
             tooShort ? "Describe the review before signing it" : undefined
           }
-          className="rounded-md bg-status-blue px-3 py-1.5 text-xs font-semibold text-white hover:brightness-110 disabled:opacity-40"
+          className="rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-dark disabled:opacity-40"
         >
           {busy ? "Recording…" : "Record this review"}
         </button>

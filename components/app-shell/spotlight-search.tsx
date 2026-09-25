@@ -176,7 +176,7 @@ export function SpotlightSearch() {
               );
               return (
                 <section key={group.key}>
-                  <h3 className="border-b border-border/50 bg-muted/10 px-4 py-1.5 text-[0.6rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+                  <h3 className="border-b border-border/50 bg-muted/60 px-4 py-1.5 text-[0.6rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
                     {group.label}
                   </h3>
                   <ul>
@@ -192,8 +192,8 @@ export function SpotlightSearch() {
                             className={
                               "flex w-full flex-col items-start gap-0.5 border-b border-border/25 px-4 py-2.5 text-left transition-colors last:border-b-0 " +
                               (isSelected
-                                ? "bg-status-blue/15 text-foreground"
-                                : "text-foreground hover:bg-muted/20")
+                                ? "bg-primary/10 text-foreground"
+                                : "text-foreground hover:bg-accent")
                             }
                           >
                             <span className="text-sm font-semibold">

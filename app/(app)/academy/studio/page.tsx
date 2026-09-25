@@ -63,12 +63,15 @@ export default async function StudioPage() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6">
+    <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
       <AcademyHeader activeSection="studio" />
 
+      {/* The one working action is the solid one; the two unbuilt ones
+          are quiet. It was the other way round — the disabled buttons
+          carried purple and yellow, the live one was plain. */}
       <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight text-status-purple">
+          <h2 className="text-2xl font-bold tracking-tight text-foreground">
             Course Studio
           </h2>
           <p className="mt-1 text-sm text-muted-foreground">
@@ -79,22 +82,22 @@ export default async function StudioPage() {
           <button
             type="button"
             disabled
-            title="Course-template gallery ships with the Studio content pack (M4)"
-            className="cursor-not-allowed rounded-md border border-status-purple/40 bg-status-purple/20 px-4 py-2 text-sm font-semibold text-status-purple/80"
+            title="The course-template gallery isn't built yet"
+            className="cursor-not-allowed rounded-md border border-border bg-card px-4 py-2 text-sm font-semibold text-muted-foreground opacity-60"
           >
             Browse Templates
           </button>
           <Link
             href="/academy/studio/new"
-            className="rounded-md border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground/90 hover:bg-muted/20"
+            className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm hover:bg-brand-dark"
           >
             + Blank Course
           </Link>
           <button
             type="button"
             disabled
-            title="Full-page WYSIWYG Studio editor ships with the media-embed story (M4)"
-            className="cursor-not-allowed rounded-md border border-status-yellow bg-status-yellow/20 px-4 py-2 text-sm font-semibold text-status-yellow/80"
+            title="The full-page Studio editor isn't built yet"
+            className="cursor-not-allowed rounded-md border border-border bg-card px-4 py-2 text-sm font-semibold text-muted-foreground opacity-60"
           >
             Open Studio
           </button>
@@ -120,7 +123,7 @@ export default async function StudioPage() {
 function EmptyState() {
   return (
     <div className="rounded-xl border border-border bg-card px-4 py-16 text-center">
-      <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-muted/20">
+      <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-muted/60">
         <svg
           xmlns="http://www.w3.org/2000/svg"
           viewBox="0 0 24 24"
@@ -136,7 +139,7 @@ function EmptyState() {
         Click{" "}
         <Link
           href="/academy/studio/new"
-          className="text-status-blue hover:underline"
+          className="text-primary hover:underline"
         >
           + Blank Course
         </Link>{" "}
@@ -151,7 +154,7 @@ function CourseTable({ courses, total }: { courses: Course[]; total: number }) {
     <div className="overflow-hidden rounded-lg border border-border bg-card">
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
-          <thead className="border-b border-border bg-muted/10 text-left text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
+          <thead className="border-b border-border bg-muted/60 text-left text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
             <tr>
               <th scope="col" className="px-4 py-2.5 font-semibold">
                 Title
@@ -175,7 +178,7 @@ function CourseTable({ courses, total }: { courses: Course[]; total: number }) {
           </thead>
           <tbody className="divide-y divide-border">
             {courses.map((c) => (
-              <tr key={c.id} className="hover:bg-muted/5">
+              <tr key={c.id} className="hover:bg-accent">
                 <td className="whitespace-nowrap px-4 py-3 text-xs font-semibold">
                   {c.title}
                 </td>
@@ -196,7 +199,7 @@ function CourseTable({ courses, total }: { courses: Course[]; total: number }) {
                         ? "border-status-green/40 bg-status-green/10 text-status-green"
                         : c.publish_status === "draft"
                           ? "border-status-yellow/40 bg-status-yellow/10 text-status-yellow"
-                          : "border-border bg-muted/30 text-muted-foreground")
+                          : "border-border bg-muted text-muted-foreground")
                     }
                   >
                     {COURSE_PUBLISH_STATUS_LABELS[c.publish_status]}
@@ -205,7 +208,7 @@ function CourseTable({ courses, total }: { courses: Course[]; total: number }) {
                 <td className="whitespace-nowrap px-4 py-3 text-right">
                   <Link
                     href={`/academy/studio/${c.id}`}
-                    className="text-xs font-semibold text-status-blue hover:underline"
+                    className="text-xs font-semibold text-primary hover:underline"
                   >
                     Edit →
                   </Link>

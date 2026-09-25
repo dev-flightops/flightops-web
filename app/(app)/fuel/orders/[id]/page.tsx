@@ -51,7 +51,7 @@ export default async function FuelOrderDetailPage({
 
   if (loadError) {
     return (
-      <div className="mx-auto max-w-4xl px-4 py-10">
+      <div className="mx-auto max-w-4xl px-4 sm:px-6 py-8">
         <BackLink />
         <div
           role="alert"
@@ -70,7 +70,7 @@ export default async function FuelOrderDetailPage({
     order.status === "ordered" || order.status === "confirmed";
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-6 sm:px-6">
+    <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6">
       <BackLink />
       <Header order={order} />
       <ActionsRow
@@ -111,7 +111,7 @@ function Header({ order }: { order: FuelOrderResponse }) {
           {order.requested_quantity_gallons.toLocaleString()} gal
           {order.requested_left_gallons !== null &&
             order.requested_right_gallons !== null && (
-              <span className="ml-1 text-muted-foreground/70">
+              <span className="ml-1 text-muted-foreground">
                 (L {order.requested_left_gallons} / R {order.requested_right_gallons})
               </span>
             )}

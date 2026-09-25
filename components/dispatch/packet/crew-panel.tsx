@@ -222,7 +222,7 @@ export function CrewPanel({
                     e.target.value &&
                     run(() => assignCrewAction(flightId, e.target.value, role))
                   }
-                  className="flex-1 rounded-md border border-border bg-background px-3 py-1.5 text-sm text-foreground disabled:opacity-50"
+                  className="min-w-0 flex-1 rounded-md border border-border bg-background px-3 py-1.5 text-sm text-foreground disabled:opacity-50"
                 >
                   <option value="">
                     {required ? "Select a pilot…" : "Unassigned"}

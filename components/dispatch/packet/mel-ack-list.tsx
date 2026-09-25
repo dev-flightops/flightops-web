@@ -87,7 +87,7 @@ export function MelAckList({
                 checked={isAcked}
                 onChange={(e) => toggle(mel.id, e.target.checked)}
                 disabled={pending}
-                className="mt-1 h-4 w-4 cursor-pointer accent-status-blue"
+                className="mt-1 h-4 w-4 cursor-pointer accent-primary"
                 aria-label={`Acknowledge MEL ${mel.ata_chapter} — ${mel.description}`}
               />
               <label
@@ -126,7 +126,7 @@ function CategoryBadge({ category }: { category: string }) {
           ? "border-status-yellow/40 bg-status-yellow/15 text-status-yellow"
           : category === "D"
             ? "border-status-blue/40 bg-status-blue/15 text-status-blue"
-            : "border-border bg-muted/40 text-muted-foreground";
+            : "border-border bg-muted text-muted-foreground";
   return (
     <span
       className={`rounded border px-1.5 py-0.5 text-[0.6rem] font-semibold uppercase tracking-[0.08em] ${tone}`}

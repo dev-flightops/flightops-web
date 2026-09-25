@@ -72,7 +72,7 @@ export default async function StationDetailPage({
 
   if (loadError) {
     return (
-      <div className="mx-auto max-w-5xl px-4 py-10">
+      <div className="mx-auto max-w-5xl px-4 sm:px-6 py-8">
         <BackLink />
         <div
           role="alert"
@@ -93,7 +93,7 @@ export default async function StationDetailPage({
   );
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-10">
+    <div className="mx-auto max-w-5xl px-4 sm:px-6 py-8">
       <BackLink />
       <Header station={station} />
       <Meta station={station} />
@@ -130,7 +130,7 @@ function BackLink() {
 function Header({ station }: { station: StationListItem }) {
   const location = [station.city, station.state].filter(Boolean).join(", ");
   return (
-    <div className="mb-6 flex items-start justify-between gap-4">
+    <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
       <div>
         <div className="flex flex-wrap items-center gap-2">
           <h1 className="text-2xl font-bold tracking-tight">
@@ -146,7 +146,7 @@ function Header({ station }: { station: StationListItem }) {
           {station.is_hub && (
             <span
               title="Hub bases sort first in all dropdowns + render as larger markers on the flight following map."
-              className="rounded-md border border-status-blue/40 bg-status-blue/10 px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-[0.06em] text-status-blue"
+              className="rounded-md border border-border bg-muted px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground"
             >
               Hub
             </span>
@@ -161,7 +161,7 @@ function Header({ station }: { station: StationListItem }) {
           <p className="mt-1 text-sm text-muted-foreground">{location}</p>
         )}
       </div>
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         {station.has_reporting_function ? (
           <span className="rounded-md border border-status-green/40 bg-status-green/10 px-3 py-1 text-xs font-semibold text-status-green">
             Weather board

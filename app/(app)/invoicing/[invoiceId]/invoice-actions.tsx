@@ -87,7 +87,7 @@ export function InvoiceActions({
           type="button"
           onClick={() => void download()}
           disabled={pending !== null}
-          className="rounded-md border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-muted/40 disabled:opacity-50"
+          className="rounded-md border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-accent disabled:opacity-50"
         >
           {pending === "pdf" ? "Building…" : "Download PDF"}
         </button>
@@ -99,7 +99,7 @@ export function InvoiceActions({
               void run("send", () => sendInvoiceAction(invoiceId))
             }
             disabled={pending !== null}
-            className="rounded-md bg-status-blue px-3 py-1.5 text-xs font-semibold text-white hover:brightness-110 disabled:opacity-50"
+            className="rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-dark disabled:opacity-50"
           >
             {pending === "send" ? "Sending…" : "Send"}
           </button>
@@ -112,7 +112,7 @@ export function InvoiceActions({
               void run("paid", () => markPaidAction(invoiceId, ""))
             }
             disabled={pending !== null}
-            className="rounded-md bg-status-green px-3 py-1.5 text-xs font-semibold text-white hover:brightness-110 disabled:opacity-50"
+            className="rounded-md bg-status-green px-3 py-1.5 text-xs font-semibold text-white hover:brightness-95 disabled:opacity-50"
           >
             {pending === "paid" ? "Recording…" : "Mark paid"}
           </button>
@@ -166,7 +166,7 @@ export function InvoiceActions({
                 })
               }
               disabled={pending !== null || reason.trim().length < 3}
-              className="rounded-md bg-status-red px-3 py-1.5 text-xs font-semibold text-white hover:brightness-110 disabled:opacity-40"
+              className="rounded-md bg-status-red px-3 py-1.5 text-xs font-semibold text-white hover:brightness-95 disabled:opacity-40"
             >
               {pending === "void" ? "Voiding…" : "Confirm void"}
             </button>

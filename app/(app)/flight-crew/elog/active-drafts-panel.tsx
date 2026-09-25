@@ -6,7 +6,7 @@ import type { FlightLogResponse } from "@/lib/api/types";
  * "Active Logs (Draft)" panel on the elog landing (M2-G-26b).
  *
  * Mirrors the legacy peregrineflight.com/elog/ active-drafts list:
- * a yellow-tinted card per draft log with the LOG-… number, tail,
+ * a card per draft log with the LOG-… number, tail,
  * flight date, and a DRAFT pill. Empty list collapses the whole
  * panel — the legacy hides it entirely too.
  *
@@ -21,7 +21,10 @@ export function ActiveDraftsPanel({
   if (drafts.length === 0) return null;
 
   return (
-    <section className="rounded-lg border border-status-yellow/40 bg-status-yellow/[0.05] p-4">
+    // A card like every other list, as dispatch's queue became; the
+    // amber stays on the label and the Draft pills, where it means
+    // "not submitted yet".
+    <section className="rounded-lg border border-border bg-card p-4">
       <h2 className="mb-2 text-[0.7rem] font-semibold uppercase tracking-[0.08em] text-status-yellow">
         Active Logs (Draft)
       </h2>
@@ -30,13 +33,13 @@ export function ActiveDraftsPanel({
           <li key={log.id}>
             <Link
               href={`/flight-crew/elog/${log.id}`}
-              className="flex items-center justify-between gap-3 rounded-md border border-status-yellow/20 bg-card px-3 py-2 hover:border-status-yellow/40"
+              className="flex items-center justify-between gap-3 rounded-md border border-border bg-card px-3 py-2 hover:bg-accent"
             >
               <div className="min-w-0 flex-1 truncate">
                 <span className="font-mono text-sm font-bold text-foreground">
                   {log.log_number}
                 </span>
-                <span className="ml-2 font-mono text-xs text-status-blue">
+                <span className="ml-2 font-mono text-xs text-primary">
                   {log.aircraft.tail_number}
                 </span>
                 <span className="ml-2 text-[0.65rem] text-muted-foreground">

@@ -32,7 +32,7 @@ export function ManagePaymentButton() {
       <button
         type="submit"
         disabled={pending || origin === ""}
-        className="rounded-md border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground/80 hover:bg-muted/10 disabled:opacity-60"
+        className="rounded-md border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground/80 hover:bg-accent disabled:opacity-60"
       >
         {pending ? "Redirecting…" : "Manage payment →"}
       </button>

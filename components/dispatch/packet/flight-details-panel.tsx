@@ -202,7 +202,6 @@ export function FlightDetailsPanel({
         </Field>
       </div>
 
-      <PacketStyles />
     </SectionPanel>
   );
 }
@@ -239,13 +238,13 @@ function Field({
       >
         {label}
         {hint && (
-          <span className="ml-1 text-muted-foreground/70">
+          <span className="ml-1 text-muted-foreground">
             ({hint})
           </span>
         )}
         {help && (
           <span
-            className="ml-1 inline-flex h-3.5 w-3.5 cursor-help items-center justify-center rounded-full border border-muted-foreground/40 text-[0.55rem] font-bold text-muted-foreground/70"
+            className="ml-1 inline-flex h-3.5 w-3.5 cursor-help items-center justify-center rounded-full border border-muted-foreground/40 text-[0.55rem] font-bold text-muted-foreground"
             title={help}
             aria-label={help}
           >
@@ -258,35 +257,3 @@ function Field({
   );
 }
 
-/**
- * Reusable input styling for the packet form — matches legacy `.input`
- * exactly (deeper-than-card bg, 8px radius, iOS-blue focus). Scoped to
- * the packet so we don't override the global Input primitive.
- */
-export function PacketStyles() {
-  return (
-    <style>{`
-      .ff-input {
-        width: 100%;
-        background: hsl(var(--background));
-        color: hsl(var(--foreground));
-        border: 1px solid hsl(var(--border));
-        border-radius: 8px;
-        padding: .5rem .75rem;
-        font-size: .8125rem;
-        outline: none;
-        transition: border-color .15s, box-shadow .15s;
-      }
-      .ff-input:focus:not(:disabled) {
-        border-color: hsl(var(--primary));
-        box-shadow: 0 0 0 3px hsl(var(--primary) / 0.12);
-      }
-      .ff-input:disabled {
-        opacity: 0.55;
-        cursor: not-allowed;
-      }
-      .ff-input::placeholder { color: hsl(var(--muted-foreground) / 0.5); }
-      textarea.ff-input { resize: vertical; font-family: inherit; }
-    `}</style>
-  );
-}

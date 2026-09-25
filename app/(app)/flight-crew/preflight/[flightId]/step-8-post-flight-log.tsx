@@ -62,8 +62,8 @@ export function PostFlightLogStep({ flightId, flight }: Props) {
           is a separate workflow with its own submission audit.
         </p>
 
-        <div className="rounded-lg border border-status-blue/30 bg-status-blue/5 px-4 py-3">
-          <p className="text-xs font-semibold uppercase tracking-[0.06em] text-status-blue">
+        <div className="rounded-lg border border-primary/30 bg-primary/5 px-4 py-3">
+          <p className="text-xs font-semibold uppercase tracking-[0.06em] text-primary">
             File the elog
           </p>
           <p className="mt-1 text-xs text-foreground">
@@ -77,7 +77,7 @@ export function PostFlightLogStep({ flightId, flight }: Props) {
           </p>
           <Link
             href="/flight-crew/elog"
-            className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-status-blue hover:underline"
+            className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
           >
             Open Flight Log →
           </Link>
@@ -95,7 +95,7 @@ export function PostFlightLogStep({ flightId, flight }: Props) {
           type="button"
           disabled={pending}
           onClick={handleComplete}
-          className="inline-flex w-full items-center justify-center rounded-md bg-status-green px-4 py-2.5 text-sm font-semibold text-white transition-opacity hover:brightness-110 disabled:opacity-50"
+          className="inline-flex w-full items-center justify-center rounded-md bg-status-green px-4 py-2.5 text-sm font-semibold text-white transition-opacity hover:brightness-95 disabled:opacity-50"
         >
           {pending ? "Saving…" : "Mark preflight complete ✓"}
         </button>

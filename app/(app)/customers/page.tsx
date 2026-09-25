@@ -61,7 +61,7 @@ export default async function CustomersListPage({
         </div>
         <Link
           href="/customers/new"
-          className="rounded-md bg-status-blue px-4 py-2 text-sm font-semibold text-white hover:brightness-110"
+          className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-brand-dark"
         >
           + New Customer
         </Link>
@@ -74,11 +74,11 @@ export default async function CustomersListPage({
             name="q"
             defaultValue={q}
             placeholder="Name, company, email…"
-            className="ff"
+            className="ff-input"
           />
         </Field>
         <Field label="Type">
-          <select name="type" defaultValue={customerType ?? ""} className="ff">
+          <select name="type" defaultValue={customerType ?? ""} className="ff-input">
             <option value="">All types</option>
             {CUSTOMER_TYPES.map((t) => (
               <option key={t} value={t}>
@@ -99,7 +99,7 @@ export default async function CustomersListPage({
           </label>
           <button
             type="submit"
-            className="rounded-md border border-border bg-card px-3 py-2 text-xs font-semibold text-foreground/80 hover:bg-muted/20"
+            className="rounded-md border border-border bg-card px-3 py-2 text-xs font-semibold text-foreground/80 hover:bg-accent"
           >
             Filter
           </button>
@@ -123,22 +123,6 @@ export default async function CustomersListPage({
         <CustomerTable items={customers} total={total} />
       )}
 
-      <style>{`
-        .ff {
-          width: 100%;
-          background: hsl(var(--background));
-          color: hsl(var(--foreground));
-          border: 1px solid hsl(var(--border));
-          border-radius: 8px;
-          padding: 0.5rem 0.75rem;
-          font-size: 0.8125rem;
-          outline: none;
-        }
-        .ff:focus:not(:disabled) {
-          border-color: hsl(var(--primary));
-          box-shadow: 0 0 0 3px hsl(var(--primary) / 0.12);
-        }
-      `}</style>
     </div>
   );
 }
@@ -171,7 +155,7 @@ function CustomerTable({
     <div className="overflow-hidden rounded-lg border border-border bg-card">
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
-          <thead className="border-b border-border bg-muted/10 text-left text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
+          <thead className="border-b border-border bg-muted/60 text-left text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
             <tr>
               <th scope="col" className="px-4 py-2.5 font-semibold">
                 Name
@@ -195,7 +179,7 @@ function CustomerTable({
           </thead>
           <tbody className="divide-y divide-border">
             {items.map((c) => (
-              <tr key={c.id} className="hover:bg-muted/5">
+              <tr key={c.id} className="hover:bg-accent">
                 <td className="whitespace-nowrap px-4 py-3 text-xs font-semibold">
                   {c.full_name}
                 </td>
@@ -210,7 +194,7 @@ function CustomerTable({
                 </td>
                 <td className="whitespace-nowrap px-4 py-3">
                   {c.archived_at ? (
-                    <span className="rounded border border-border bg-muted/30 px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider text-muted-foreground">
+                    <span className="rounded border border-border bg-muted px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider text-muted-foreground">
                       Archived
                     </span>
                   ) : (
@@ -222,7 +206,7 @@ function CustomerTable({
                 <td className="whitespace-nowrap px-4 py-3 text-right">
                   <Link
                     href={`/customers/${c.id}`}
-                    className="text-xs font-semibold text-status-blue hover:underline"
+                    className="text-xs font-semibold text-primary hover:underline"
                   >
                     Open →
                   </Link>
@@ -244,10 +228,10 @@ function CustomerTypePill({ type }: { type: CustomerType }) {
     type === "corporate"
       ? "border-status-blue/40 bg-status-blue/10 text-status-blue"
       : type === "government"
-        ? "border-purple-500/40 bg-purple-500/10 text-purple-300"
+        ? "border-status-purple/40 bg-status-purple/10 text-status-purple"
         : type === "non_profit"
           ? "border-status-green/40 bg-status-green/10 text-status-green"
-          : "border-border bg-muted/20 text-muted-foreground";
+          : "border-border bg-muted text-muted-foreground";
   return (
     <span
       className={

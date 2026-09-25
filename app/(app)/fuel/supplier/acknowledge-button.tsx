@@ -34,7 +34,7 @@ export function AcknowledgeButton({
           setError(null);
           setOpen(true);
         }}
-        className="rounded-md border border-status-green/40 bg-status-green/10 px-3 py-1 text-[0.65rem] font-semibold text-status-green hover:bg-status-green/20"
+        className="rounded-md border border-status-green/40 bg-status-green/10 px-3 py-1 text-[0.65rem] font-semibold text-status-green hover:bg-status-green/15"
       >
         Acknowledge
       </button>
@@ -93,7 +93,7 @@ export function AcknowledgeButton({
               router.refresh();
             });
           }}
-          className="inline-flex items-center gap-1 rounded-md bg-status-green px-2.5 py-1 text-[0.65rem] font-semibold text-white hover:brightness-110 disabled:opacity-50"
+          className="inline-flex items-center gap-1 rounded-md bg-status-green px-2.5 py-1 text-[0.65rem] font-semibold text-white hover:brightness-95 disabled:opacity-50"
         >
           {pending && <Spinner size="xs" />}
           Confirm
@@ -107,7 +107,7 @@ export function AcknowledgeButton({
             setNote("");
             setError(null);
           }}
-          className="rounded-md border border-border bg-background px-2.5 py-1 text-[0.65rem] font-semibold text-foreground hover:bg-muted disabled:opacity-50"
+          className="rounded-md border border-border bg-background px-2.5 py-1 text-[0.65rem] font-semibold text-foreground hover:bg-accent disabled:opacity-50"
         >
           Cancel
         </button>

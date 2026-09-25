@@ -48,8 +48,8 @@ export default async function ExecutiveSummaryPage({
   } catch (err) {
     const status = err instanceof ApiError ? err.status : 0;
     return (
-      <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6">
-        <h1 className="text-2xl font-bold">Executive Summary</h1>
+      <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
+        <h1 className="text-2xl font-bold tracking-tight">Executive Summary</h1>
         <div
           role="alert"
           className="mt-4 rounded-xl border border-border bg-card px-4 py-8 text-center text-sm text-muted-foreground"

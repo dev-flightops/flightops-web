@@ -171,7 +171,7 @@ export async function LeftColumn({
           />
           Mgmt approval obtained
         </label>
-        <p className="mt-2 text-[0.7rem] text-muted-foreground/70">
+        <p className="mt-2 text-[0.7rem] text-muted-foreground">
           Yes/No flags are dispatcher-set today; automated management
           sign-off — triggered when risk inputs + crew legality combine to
           require it — is coming soon.

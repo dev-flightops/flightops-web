@@ -42,7 +42,7 @@ export default async function NewBriefingPage() {
   }
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-10">
+    <div className="mx-auto max-w-2xl px-4 sm:px-6 py-8">
       <Link
         href="/weather"
         className="mb-4 inline-block text-sm text-muted-foreground hover:text-foreground hover:underline"

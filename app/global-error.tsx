@@ -22,9 +22,11 @@
  * stylesheet backing them is not guaranteed to be there — so a
  * Tailwind-styled version of this screen risks rendering as unstyled
  * black-on-white text in exactly the situation it exists for. Hex
- * values below are the resolved dark-theme tokens from globals.css
- * (--background, --foreground, --brand-primary, --destructive); the
- * root layout hardcodes `dark`, so there is one palette to match.
+ * values below are the resolved LIGHT-theme tokens from globals.css
+ * (--background, --foreground, --muted-foreground, --border and the
+ * default brand) — the app's ground since the unified theme. A tenant's
+ * own brand colour cannot reach this page either: it arrives through
+ * the (app) layout, which is the thing that failed.
  *
  * It also cannot use <Button>, ErrorScreen, or anything that reaches
  * for router context: there is no layout mounted around it. A plain
@@ -48,8 +50,8 @@ export default function GlobalError({
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          background: "#080c12",
-          color: "#e1e8ef",
+          background: "#ffffff",
+          color: "#171717",
           fontFamily:
             "ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif",
           padding: "2rem 1rem",
@@ -63,7 +65,7 @@ export default function GlobalError({
               fontWeight: 600,
               letterSpacing: "0.18em",
               textTransform: "uppercase",
-              color: "#8b98a9",
+              color: "#63636b",
             }}
           >
             Peregrine Flight Ops
@@ -83,7 +85,7 @@ export default function GlobalError({
               margin: "0.75rem 0 0",
               fontSize: "0.875rem",
               lineHeight: 1.6,
-              color: "#8b98a9",
+              color: "#63636b",
             }}
           >
             Something failed before the page could load, so this is all we
@@ -107,7 +109,7 @@ export default function GlobalError({
               style={{
                 border: 0,
                 borderRadius: "0.375rem",
-                background: "#0a84ff",
+                background: "#ab2429",
                 color: "#fff",
                 padding: "0.55rem 1.1rem",
                 fontSize: "0.875rem",
@@ -124,8 +126,8 @@ export default function GlobalError({
               href="/login"
               style={{
                 borderRadius: "0.375rem",
-                border: "1px solid #1e2836",
-                color: "#e1e8ef",
+                border: "1px solid #d4d4d8",
+                color: "#171717",
                 padding: "0.55rem 1.1rem",
                 fontSize: "0.875rem",
                 fontWeight: 600,
@@ -149,7 +151,7 @@ export default function GlobalError({
                 border: 0,
                 background: "none",
                 padding: 0,
-                color: "#8b98a9",
+                color: "#63636b",
                 fontSize: "0.75rem",
                 textDecoration: "underline",
                 cursor: "pointer",
@@ -165,7 +167,7 @@ export default function GlobalError({
                 marginTop: "1.5rem",
                 fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
                 fontSize: "0.75rem",
-                color: "#8b98a9",
+                color: "#63636b",
               }}
             >
               Error ID: {error.digest}

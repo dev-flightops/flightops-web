@@ -65,7 +65,7 @@ export function IncidentTriageControls({
               name="next_status"
               value={nextStatus}
               onChange={(e) => setNextStatus(e.target.value as IncidentStatus)}
-              className="ff-input-inline"
+              className="ff-input"
             >
               {options.map((o) => (
                 <option key={o} value={o}>
@@ -86,7 +86,7 @@ export function IncidentTriageControls({
               rows={3}
               required
               maxLength={4000}
-              className="ff-input-inline"
+              className="ff-input"
               placeholder="Root cause + corrective actions taken, if any."
             />
           </label>
@@ -96,30 +96,13 @@ export function IncidentTriageControls({
           <button
             type="submit"
             disabled={pending}
-            className="rounded-md bg-status-blue px-4 py-2 text-sm font-semibold text-white hover:brightness-110 disabled:opacity-60"
+            className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-brand-dark disabled:opacity-60"
           >
             {pending ? "Saving…" : "Apply"}
           </button>
         </div>
       </form>
 
-      <style>{`
-        .ff-input-inline {
-          width: 100%;
-          background: hsl(var(--background));
-          color: hsl(var(--foreground));
-          border: 1px solid hsl(var(--border));
-          border-radius: 8px;
-          padding: 0.5rem 0.75rem;
-          font-size: 0.8125rem;
-          outline: none;
-        }
-        .ff-input-inline:focus:not(:disabled) {
-          border-color: hsl(var(--primary));
-          box-shadow: 0 0 0 3px hsl(var(--primary) / 0.12);
-        }
-        textarea.ff-input-inline { resize: vertical; font-family: inherit; }
-      `}</style>
     </section>
   );
 }

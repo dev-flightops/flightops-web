@@ -74,7 +74,7 @@ function Assessment({ data }: { data: DelayAssessment }) {
   const { route, aircraft, judgement } = data;
   return (
     <div className="mt-3 space-y-3 border-t border-border pt-3">
-      <p className="text-[0.65rem] text-status-blue">{data.advisory}</p>
+      <p className="text-[0.65rem] text-primary">{data.advisory}</p>
 
       <div>
         <h4 className="mb-1.5 text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
@@ -187,13 +187,13 @@ function FlightRow({ flight }: { flight: FlightListItem }) {
             <span className="font-mono font-bold text-foreground">
               {flight.flight_number}
             </span>
-            <span className="text-sm text-status-blue">
+            <span className="text-sm text-primary">
               {flight.origin} → {flight.destination}
             </span>
             <span className="text-xs tabular-nums text-muted-foreground">
               ETD {hhmmZ(flight.scheduled_departure_at)}
             </span>
-            <span className="rounded bg-muted/40 px-2 py-0.5 font-mono text-[0.65rem] text-muted-foreground">
+            <span className="rounded bg-muted px-2 py-0.5 font-mono text-[0.65rem] text-muted-foreground">
               {flight.aircraft.tail_number}
             </span>
           </div>
@@ -214,7 +214,7 @@ function FlightRow({ flight }: { flight: FlightListItem }) {
             type="button"
             onClick={() => void assess()}
             disabled={pending}
-            className="rounded-md border border-status-purple/40 bg-status-purple/10 px-3 py-1.5 text-xs font-semibold text-status-purple hover:bg-status-purple/20 disabled:opacity-50"
+            className="rounded-md border border-status-purple/40 bg-status-purple/10 px-3 py-1.5 text-xs font-semibold text-status-purple hover:bg-status-purple/15 disabled:opacity-50"
           >
             {pending ? "Assessing…" : data ? "Re-assess" : "Assess"}
           </button>

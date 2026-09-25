@@ -67,7 +67,7 @@ export function LiveOpsBoard({ board }: Props) {
       <div className="mt-3 flex justify-end border-t border-border pt-3 text-[0.65rem]">
         <Link
           href="/flight-following"
-          className="text-status-blue hover:underline"
+          className="text-primary hover:underline"
         >
           Full ops board →
         </Link>
@@ -84,7 +84,7 @@ function Row({ row }: { row: BoardFlightItem }) {
       <td className="py-1.5 pr-3 font-mono text-muted-foreground">
         {row.origin}→{row.destination}
       </td>
-      <td className="py-1.5 pr-3 text-muted-foreground/60">
+      <td className="py-1.5 pr-3 text-muted-foreground">
         {row.pic_name ?? "—"}
       </td>
       <td className="py-1.5 pr-3">
@@ -124,7 +124,7 @@ function StatusBadge({ row }: { row: BoardFlightItem }) {
   }
   if (row.status === "completed") {
     return (
-      <span className="inline-flex items-center rounded bg-muted/40 px-1.5 py-0.5 text-[0.65rem] font-semibold text-muted-foreground">
+      <span className="inline-flex items-center rounded bg-muted px-1.5 py-0.5 text-[0.65rem] font-semibold text-muted-foreground">
         Completed
       </span>
     );
@@ -137,7 +137,7 @@ function StatusBadge({ row }: { row: BoardFlightItem }) {
     );
   }
   return (
-    <span className="inline-flex items-center rounded bg-muted/30 px-1.5 py-0.5 text-[0.65rem] font-semibold text-muted-foreground">
+    <span className="inline-flex items-center rounded bg-muted px-1.5 py-0.5 text-[0.65rem] font-semibold text-muted-foreground">
       Planned
     </span>
   );

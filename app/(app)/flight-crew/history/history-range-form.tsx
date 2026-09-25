@@ -33,7 +33,7 @@ export function HistoryRangeForm({
           name="from"
           type="date"
           defaultValue={fromDate}
-          className="rounded-md border border-border bg-background px-3 py-1.5 text-xs text-foreground focus:border-status-blue focus:outline-none"
+          className="rounded-md border border-border bg-background px-3 py-1.5 text-xs text-foreground focus:border-primary focus:outline-none"
         />
       </div>
       <div>
@@ -48,12 +48,12 @@ export function HistoryRangeForm({
           name="to"
           type="date"
           defaultValue={toDate}
-          className="rounded-md border border-border bg-background px-3 py-1.5 text-xs text-foreground focus:border-status-blue focus:outline-none"
+          className="rounded-md border border-border bg-background px-3 py-1.5 text-xs text-foreground focus:border-primary focus:outline-none"
         />
       </div>
       <button
         type="submit"
-        className="rounded-md bg-status-blue px-4 py-1.5 text-xs font-semibold text-white hover:brightness-110"
+        className="rounded-md bg-primary px-4 py-1.5 text-xs font-semibold text-white hover:bg-brand-dark"
       >
         Apply
       </button>

@@ -74,7 +74,7 @@ const FILINGS: Filing[] = [
 
 export default function RegulatoryHubPage() {
   return (
-    <div className="mx-auto max-w-5xl px-4 py-8">
+    <div className="mx-auto max-w-5xl px-4 sm:px-6 py-8">
       <Link
         href="/reports"
         className="text-[0.65rem] font-semibold uppercase tracking-wider text-muted-foreground hover:text-foreground"
@@ -96,7 +96,7 @@ export default function RegulatoryHubPage() {
           <Link
             key={f.href}
             href={f.href}
-            className="rounded-lg border border-border bg-card p-5 transition-colors hover:border-status-blue"
+            className="rounded-lg border border-border bg-card p-5 transition-colors hover:border-primary"
           >
             <div className="flex items-baseline justify-between gap-2">
               <h2 className="font-semibold text-foreground">{f.name}</h2>

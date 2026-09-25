@@ -50,7 +50,7 @@ export default async function FlightManifestPage({
   }
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-6">
+    <div className="mx-auto max-w-7xl px-4 sm:px-6 py-8">
       <div className="mb-4 text-xs">
         <Link
           href="/manifest"
@@ -90,15 +90,15 @@ function FlightHeader({ flight }: { flight: FlightDetail }) {
         <div className="text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
           Passenger Manifest
         </div>
-        <h1 className="mt-0.5 text-2xl font-bold sm:text-3xl">
+        <h1 className="mt-0.5 text-2xl font-bold tracking-tight">
           {flight.flight_number}
         </h1>
         <div className="mt-1 font-mono text-sm text-muted-foreground">
           {flight.origin} → {flight.destination}
-          <span className="mx-2 text-muted-foreground/40">·</span>
+          <span className="mx-2 text-muted-foreground">·</span>
           {flight.aircraft.tail_number}
           {flight.aircraft.model ? (
-            <span className="text-muted-foreground/70"> · {flight.aircraft.model}</span>
+            <span className="text-muted-foreground"> · {flight.aircraft.model}</span>
           ) : null}
         </div>
       </div>
@@ -106,7 +106,7 @@ function FlightHeader({ flight }: { flight: FlightDetail }) {
         <FlightStatusBadge status={flight.status} />
         <Link
           href={`/dispatch?flight=${flight.id}`}
-          className="rounded-md border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground/80 hover:bg-muted/20"
+          className="rounded-md border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground/80 hover:bg-accent"
         >
           Open Dispatch Packet →
         </Link>
@@ -191,7 +191,7 @@ function Stat({
     <div
       className={
         "rounded-lg border bg-card px-3 py-2.5 " +
-        (emphasis ? "border-status-blue/40 bg-status-blue/5" : "border-border")
+        (emphasis ? "border-primary/40 bg-primary/5" : "border-border")
       }
     >
       <div
@@ -224,7 +224,7 @@ function PaxCard({ rows }: { rows: ManifestDetailResponse["pax"] }) {
         <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
           Passengers
         </h2>
-        <span className="text-xs text-muted-foreground/60">
+        <span className="text-xs text-muted-foreground">
           {rows.length} on board
         </span>
       </div>
@@ -236,7 +236,7 @@ function PaxCard({ rows }: { rows: ManifestDetailResponse["pax"] }) {
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="border-b border-border bg-muted/10 text-left text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
+              <thead className="border-b border-border bg-muted/60 text-left text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
                 <tr>
                   <th className="px-3 py-2.5 font-semibold">Seat</th>
                   <th className="px-3 py-2.5 font-semibold">Last</th>
@@ -254,7 +254,7 @@ function PaxCard({ rows }: { rows: ManifestDetailResponse["pax"] }) {
               </thead>
               <tbody className="divide-y divide-border">
                 {sorted.map((p) => (
-                  <tr key={p.id} className="hover:bg-muted/5">
+                  <tr key={p.id} className="hover:bg-accent">
                     <td className="whitespace-nowrap px-3 py-2.5 font-mono text-xs">
                       {p.seat_number ?? "—"}
                     </td>
@@ -302,7 +302,7 @@ function CargoCard({ rows }: { rows: ManifestDetailResponse["cargo"] }) {
         <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
           Cargo & Mail
         </h2>
-        <span className="text-xs text-muted-foreground/60">
+        <span className="text-xs text-muted-foreground">
           {rows.length} item{rows.length === 1 ? "" : "s"}
         </span>
       </div>
@@ -314,7 +314,7 @@ function CargoCard({ rows }: { rows: ManifestDetailResponse["cargo"] }) {
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="border-b border-border bg-muted/10 text-left text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
+              <thead className="border-b border-border bg-muted/60 text-left text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
                 <tr>
                   <th className="px-3 py-2.5 font-semibold">Description</th>
                   <th className="px-3 py-2.5 text-right font-semibold">
@@ -331,11 +331,11 @@ function CargoCard({ rows }: { rows: ManifestDetailResponse["cargo"] }) {
               </thead>
               <tbody className="divide-y divide-border">
                 {rows.map((c) => (
-                  <tr key={c.id} className="hover:bg-muted/5">
+                  <tr key={c.id} className="hover:bg-accent">
                     <td className="px-3 py-2.5">
                       <div className="font-medium">{c.description}</div>
                       {c.hazmat_notes && (
-                        <div className="mt-0.5 text-xs text-status-red/90">
+                        <div className="mt-0.5 text-xs text-status-red">
                           {c.hazmat_notes}
                         </div>
                       )}
@@ -416,7 +416,7 @@ function EmptyState({ flightId }: { flightId: string }) {
       </p>
       <Link
         href={`/dispatch?flight=${flightId}`}
-        className="inline-block rounded-md border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground/80 hover:bg-muted/20"
+        className="inline-block rounded-md border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground/80 hover:bg-accent"
       >
         Open Dispatch Packet →
       </Link>
@@ -429,11 +429,11 @@ function TicketBadge({ ticket }: { ticket: string }) {
     revenue: ["border-status-blue/40 bg-status-blue/10 text-status-blue", "Revenue"],
     comp: ["border-status-yellow/40 bg-status-yellow/10 text-status-yellow", "Comp"],
     employee: ["border-status-green/40 bg-status-green/10 text-status-green", "Employee"],
-    standby: ["border-border bg-muted/20 text-muted-foreground", "Standby"],
-    cargo_only: ["border-border bg-muted/20 text-muted-foreground", "Cargo Only"],
+    standby: ["border-border bg-muted text-muted-foreground", "Standby"],
+    cargo_only: ["border-border bg-muted text-muted-foreground", "Cargo Only"],
   };
   const [cls, label] = map[ticket] ?? [
-    "border-border bg-muted/20 text-muted-foreground",
+    "border-border bg-muted text-muted-foreground",
     ticket,
   ];
   return (
@@ -454,7 +454,7 @@ function MailBadge({ mailClass }: { mailClass: string }) {
     .map((s) => s.charAt(0).toUpperCase() + s.slice(1))
     .join(" ");
   return (
-    <span className="rounded border border-status-blue/40 bg-status-blue/10 px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider text-status-blue">
+    <span className="rounded border border-border bg-muted px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider text-muted-foreground">
       {label}
     </span>
   );
@@ -487,7 +487,7 @@ function Flag({
 
 function FlightStatusBadge({ status }: { status: FlightStatus }) {
   const map: Record<FlightStatus, [string, string]> = {
-    scheduled: ["border-border bg-muted/20 text-muted-foreground", "Scheduled"],
+    scheduled: ["border-border bg-muted text-muted-foreground", "Scheduled"],
     released: [
       "border-status-blue/40 bg-status-blue/10 text-status-blue",
       "Released",

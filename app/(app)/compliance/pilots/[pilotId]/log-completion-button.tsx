@@ -26,7 +26,7 @@ export function LogCompletionButton({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="inline-flex items-center gap-1.5 rounded-md border border-status-blue/40 bg-status-blue/10 px-3 py-1.5 text-xs font-semibold text-status-blue hover:bg-status-blue/15"
+        className="inline-flex items-center gap-1.5 rounded-md border border-primary/40 bg-background px-3 py-1.5 text-xs font-semibold text-primary hover:bg-primary/5"
       >
         Log Completion
       </button>

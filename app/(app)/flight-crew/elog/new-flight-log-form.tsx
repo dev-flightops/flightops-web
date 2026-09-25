@@ -155,7 +155,7 @@ export function NewFlightLogForm({
           type="submit"
           disabled={pending || !aircraftId}
           aria-disabled={!aircraftId || pending}
-          className="inline-flex items-center gap-1.5 rounded-md bg-status-blue px-4 py-2 text-xs font-semibold text-white hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
+          className="inline-flex items-center gap-1.5 rounded-md bg-primary px-4 py-2 text-xs font-semibold text-white hover:bg-brand-dark disabled:cursor-not-allowed disabled:opacity-50"
           title={!aircraftId ? "Pick an aircraft first" : undefined}
         >
           {pending && <Spinner size="xs" />}
@@ -202,7 +202,7 @@ function Field({
         id={name}
         name={name}
         aria-invalid={error ? "true" : undefined}
-        className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs text-foreground focus:border-status-blue focus:outline-none aria-[invalid=true]:border-status-red"
+        className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs text-foreground focus:border-primary focus:outline-none aria-[invalid=true]:border-status-red"
         {...inputProps}
       />
       {error && (
@@ -256,7 +256,7 @@ function FieldSelect({
         value={controlled ? value : undefined}
         onChange={onChange ? (e) => onChange(e.target.value) : undefined}
         aria-invalid={error ? "true" : undefined}
-        className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs text-foreground focus:border-status-blue focus:outline-none disabled:opacity-60 aria-[invalid=true]:border-status-red"
+        className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs text-foreground focus:border-primary focus:outline-none disabled:opacity-60 aria-[invalid=true]:border-status-red"
       >
         {children}
       </select>

@@ -1,5 +1,10 @@
 import type { Config } from "tailwindcss";
 
+/** A token held as HSL components, e.g. `--border: 240 6% 90%`. */
+const hsl = (v: string) => `hsl(var(${v}) / <alpha-value>)`;
+/** A token held as RGB channels, e.g. `--brand-rgb: 171 36 41`. */
+const rgb = (v: string) => `rgb(var(${v}) / <alpha-value>)`;
+
 const config: Config = {
   darkMode: ["class"],
   content: [
@@ -24,65 +29,82 @@ const config: Config = {
         ],
       },
       colors: {
-        border: "hsl(var(--border))",
-        input: "hsl(var(--input))",
-        ring: "hsl(var(--ring))",
-        background: "hsl(var(--background))",
-        foreground: "hsl(var(--foreground))",
+        // Every colour goes through a CSS variable declared with
+        // <alpha-value>, so opacity modifiers (`bg-primary/10`,
+        // `border-status-red/40`) work on all of them. See globals.css
+        // for why the brand and status colours are RGB channels.
+        border: hsl("--border"),
+        input: hsl("--input"),
+        ring: rgb("--brand-rgb"),
+        background: hsl("--background"),
+        foreground: hsl("--foreground"),
+        // The single accent: the tenant's brand.
         primary: {
-          DEFAULT: "hsl(var(--primary))",
-          foreground: "hsl(var(--primary-foreground))",
+          DEFAULT: rgb("--brand-rgb"),
+          foreground: hsl("--primary-foreground"),
         },
         secondary: {
-          DEFAULT: "hsl(var(--secondary))",
-          foreground: "hsl(var(--secondary-foreground))",
+          DEFAULT: hsl("--secondary"),
+          foreground: hsl("--secondary-foreground"),
         },
         destructive: {
-          DEFAULT: "hsl(var(--destructive))",
-          foreground: "hsl(var(--destructive-foreground))",
+          DEFAULT: hsl("--destructive"),
+          foreground: hsl("--destructive-foreground"),
         },
         muted: {
-          DEFAULT: "hsl(var(--muted))",
-          foreground: "hsl(var(--muted-foreground))",
+          DEFAULT: hsl("--muted"),
+          foreground: hsl("--muted-foreground"),
         },
         accent: {
-          DEFAULT: "hsl(var(--accent))",
-          foreground: "hsl(var(--accent-foreground))",
+          DEFAULT: hsl("--accent"),
+          foreground: hsl("--accent-foreground"),
         },
         popover: {
-          DEFAULT: "hsl(var(--popover))",
-          foreground: "hsl(var(--popover-foreground))",
+          DEFAULT: hsl("--popover"),
+          foreground: hsl("--popover-foreground"),
         },
         card: {
-          DEFAULT: "hsl(var(--card))",
-          foreground: "hsl(var(--card-foreground))",
+          DEFAULT: hsl("--card"),
+          foreground: hsl("--card-foreground"),
         },
-        // Per-tenant brand color — driven by CSS custom properties on
-        // :root, injected by <BrandThemeStyle> in the (app) layout when
-        // a tenant sets an override. Consumers use `bg-brand-primary`,
-        // `text-brand-primary`, `hover:bg-brand-primary-dark`, etc.
-        // Defaults to the platform accent (#0a84ff / #0070e0) when the
-        // tenant hasn't set anything — see globals.css :root block.
+        // Ink — the near-black of the top bar and hero, for the few
+        // places that need it outside a `.dark` island.
+        ink: hsl("--ink"),
+        // Brand tones. `brand-primary` / `brand-primary-dark` are the
+        // names the first branded buttons used; kept so they follow the
+        // tenant too.
         brand: {
-          primary: "var(--brand-primary)",
-          "primary-dark": "var(--brand-primary-dark)",
+          DEFAULT: rgb("--brand-rgb"),
+          dark: rgb("--brand-dark-rgb"),
+          // Brand-coloured text on ink. A deep brand as text on
+          // near-black fails contrast; this is the same hue at L71%.
+          light: rgb("--brand-light-rgb"),
+          primary: rgb("--brand-rgb"),
+          "primary-dark": rgb("--brand-dark-rgb"),
         },
-        // Legacy badge / aviation-status colors used by the Badge primitive
-        // and the risk / weather indicators.
+        // Aviation status. Theme-aware: light-ground values in :root,
+        // the original dark-tuned values inside `.dark` islands.
         status: {
-          green: "#34d399",
-          yellow: "#fbbf24",
-          red: "#f87171",
-          blue: "#60a5fa",
-          gray: "#8896a7",
-          orange: "#fb923c",
-          purple: "#c084fc",
-          // Spec 5 §"Cell badge colors" — teal cells render the
-          // EARLY MONTH window. Distinct from status-green
-          // (DUE THIS MONTH) so the grid clearly separates "in
-          // early window" from "in base window".
-          teal: "#5eead4",
+          green: rgb("--status-green"),
+          yellow: rgb("--status-yellow"),
+          red: rgb("--status-red"),
+          blue: rgb("--status-blue"),
+          gray: rgb("--status-gray"),
+          orange: rgb("--status-orange"),
+          purple: rgb("--status-purple"),
+          // Spec 5 §"Cell badge colors" — teal renders the EARLY MONTH
+          // window, distinct from green (DUE THIS MONTH).
+          teal: rgb("--status-teal"),
         },
+      },
+      // Tailwind 3's opacity scale moves in fives, and an off-scale
+      // modifier generates no CSS at all — silently. `/8` and `/12` were
+      // used 25 times, almost all for the top bar's and module nav's
+      // hover and active backgrounds, none of which ever rendered.
+      // Extending the scale makes them work as written.
+      opacity: {
+        8: "0.08",
+        12: "0.12",
       },
       borderRadius: {
         lg: "var(--radius)",

@@ -39,7 +39,7 @@ export default async function SettingsFleetPage() {
   const retired = aircraft.filter((a) => !a.is_active);
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6">
+    <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
       <nav className="mb-4 text-xs text-muted-foreground">
         <Link href="/settings" className="hover:text-foreground">
           Settings
@@ -87,7 +87,7 @@ export default async function SettingsFleetPage() {
           <h2 className="mb-2 text-[0.65rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
             Retired ({retired.length})
           </h2>
-          <div className="overflow-hidden rounded-lg border border-border bg-card/40 opacity-80">
+          <div className="overflow-hidden rounded-lg border border-border bg-muted/60">
             <FleetTable aircraft={retired} variant="retired" />
           </div>
         </section>
@@ -105,7 +105,7 @@ function FleetTable({
 }) {
   return (
     <table className="w-full text-sm">
-      <thead className="border-b border-border bg-muted/20 text-[0.6rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+      <thead className="border-b border-border bg-muted/60 text-[0.6rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
         <tr>
           <th scope="col" className="px-4 py-2 text-left">Tail</th>
           <th scope="col" className="px-4 py-2 text-left">Model</th>
@@ -118,7 +118,7 @@ function FleetTable({
         {aircraft.map((a) => (
           <tr
             key={a.id}
-            className="border-b border-border last:border-b-0 hover:bg-muted/10"
+            className="border-b border-border last:border-b-0 hover:bg-accent"
           >
             <td className="px-4 py-3">
               <span className="font-mono font-semibold tracking-tight text-foreground">

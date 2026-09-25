@@ -137,7 +137,7 @@ export function GeneratePdfButton({
         target="_blank"
         rel="noopener noreferrer"
         title={`Download the release PDF for ${flight.flight_number}`}
-        className={`${BUTTON_CLASS} hover:bg-primary/90`}
+        className={`${BUTTON_CLASS} hover:bg-brand-dark`}
       >
         <PdfIcon />
         Generate PDF
@@ -177,7 +177,7 @@ export function GeneratePdfButton({
         type="button"
         onClick={() => setOpen(true)}
         title={`Release ${flight.flight_number} and download the dispatch PDF`}
-        className={`${BUTTON_CLASS} hover:bg-primary/90`}
+        className={`${BUTTON_CLASS} hover:bg-brand-dark`}
       >
         <PdfIcon />
         Generate PDF
@@ -214,7 +214,7 @@ export function GeneratePdfButton({
               type="button"
               onClick={() => setOpen(false)}
               disabled={isPending}
-              className="inline-flex h-9 items-center rounded-md border border-border bg-transparent px-4 text-sm font-medium hover:bg-muted disabled:opacity-60"
+              className="inline-flex h-9 items-center rounded-md border border-border bg-transparent px-4 text-sm font-medium hover:bg-accent disabled:opacity-60"
             >
               Cancel
             </button>
@@ -222,7 +222,7 @@ export function GeneratePdfButton({
               type="button"
               onClick={handleConfirm}
               disabled={isPending}
-              className="inline-flex h-9 items-center rounded-md bg-primary px-4 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
+              className="inline-flex h-9 items-center rounded-md bg-primary px-4 text-sm font-semibold text-primary-foreground hover:bg-brand-dark disabled:opacity-60"
             >
               {isPending ? "Releasing…" : "Release & generate"}
             </button>

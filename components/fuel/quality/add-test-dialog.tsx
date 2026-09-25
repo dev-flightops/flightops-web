@@ -48,7 +48,7 @@ export function AddFuelQualityTestDialog({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="inline-flex items-center gap-1.5 rounded-md bg-status-blue px-3 py-2 text-xs font-semibold text-white hover:brightness-110"
+        className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-2 text-xs font-semibold text-white hover:bg-brand-dark"
       >
         + Log Test
       </button>
@@ -174,7 +174,7 @@ export function AddFuelQualityTestDialog({
                 rows={3}
                 maxLength={2000}
                 placeholder="e.g. clear sample, no findings; or describe contamination signs"
-                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-status-blue focus:outline-none"
+                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
               />
             </div>
 
@@ -183,14 +183,14 @@ export function AddFuelQualityTestDialog({
                 type="button"
                 onClick={() => setOpen(false)}
                 disabled={pending}
-                className="rounded-md border border-border bg-card px-3 py-2 text-xs font-semibold text-foreground hover:bg-muted/40"
+                className="rounded-md border border-border bg-card px-3 py-2 text-xs font-semibold text-foreground hover:bg-accent"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={pending}
-                className="inline-flex items-center gap-1.5 rounded-md bg-status-blue px-4 py-2 text-xs font-semibold text-white hover:brightness-110 disabled:opacity-60"
+                className="inline-flex items-center gap-1.5 rounded-md bg-primary px-4 py-2 text-xs font-semibold text-white hover:bg-brand-dark disabled:opacity-60"
               >
                 {pending && <Spinner size="xs" />}
                 {pending ? "Logging…" : "Log test"}
@@ -226,7 +226,7 @@ function Field({
         id={name}
         name={name}
         aria-invalid={error ? "true" : undefined}
-        className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-status-blue focus:outline-none aria-[invalid=true]:border-status-red"
+        className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none aria-[invalid=true]:border-status-red"
         {...inputProps}
       />
       {error && (
@@ -268,7 +268,7 @@ function Select({
         defaultValue={defaultValue}
         required={required}
         aria-invalid={error ? "true" : undefined}
-        className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-status-blue focus:outline-none aria-[invalid=true]:border-status-red"
+        className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none aria-[invalid=true]:border-status-red"
       >
         {options.map((o) => (
           <option key={o.value} value={o.value}>

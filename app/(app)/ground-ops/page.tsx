@@ -10,6 +10,8 @@ import {
 } from "@/lib/api/ground";
 import { getFlightStats } from "@/lib/api/ops";
 
+import { GROUND_OPS_LINKS as L, type GroundOpsLink } from "./links";
+
 /**
  * /ground-ops — Ground Operations hub.
  *
@@ -111,118 +113,58 @@ export default async function GroundOpsHubPage() {
 
       <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <SectionCard
-          icon={<Plane className="h-6 w-6 text-status-blue/80" strokeWidth={1.5} />}
+          icon={<Plane className="h-6 w-6 text-primary" strokeWidth={1.5} />}
           title="Ramp Operations"
           blurb="Mobile-optimized flight board for ramp agents. Track turnarounds, confirm loads, capture photos, manage fuel orders."
           links={[
+            L.rampDashboard,
             {
-              label: "Ramp Dashboard",
-              sublabel: "Flight board, turnaround timers",
-              href: "/ramper",
-              status: "live",
-            },
-            {
-              label: "Fuel Orders",
-              sublabel: "Confirm and complete fuel deliveries",
-              href: "/fuel/orders",
-              status: "live",
+              ...L.rampFuelOrders,
               badge:
                 pendingFuel > 0
                   ? { text: `${pendingFuel} pending`, tone: "yellow" }
                   : undefined,
             },
-            {
-              label: "Ramp Messages",
-              sublabel: "Base-level communication channel",
-              href: "/ramper/messages",
-              status: "m3",
-            },
+            L.rampMessages,
           ]}
         />
         <SectionCard
-          icon={<MapPin className="h-6 w-6 text-status-blue/80" strokeWidth={1.5} />}
+          icon={<MapPin className="h-6 w-6 text-primary" strokeWidth={1.5} />}
           title="Station Management"
           blurb="Airport and base master data. Runway information, station issues, and operational notes."
           links={[
+            { ...L.allStations, sublabel: `${stationCount} stations configured` },
             {
-              label: "All Stations",
-              sublabel: `${stationCount} stations configured`,
-              href: "/stations",
-              status: "live",
-            },
-            {
-              label: "Station Issues",
-              sublabel: "Runway, facility, and ops issues",
-              href: "/stations",
-              status: "live",
+              ...L.stationIssues,
               badge:
                 openIssueCount > 0
                   ? { text: `${openIssueCount} open`, tone: "red" }
                   : undefined,
             },
-            {
-              label: "Add Station",
-              sublabel: "Register a new ICAO station",
-              href: "/stations/new",
-              // Shipped in M2 and left marked "m2", so the hub dimmed
-              // its own live page.
-              status: "live",
-            },
+            L.addStation,
           ]}
         />
         <SectionCard
-          icon={<Truck className="h-6 w-6 text-status-blue/80" strokeWidth={1.5} />}
+          icon={<Truck className="h-6 w-6 text-primary" strokeWidth={1.5} />}
           title="Ground Support Equipment"
           blurb="Equipment inventory, service tracking, and squawk management for tugs, GPUs, fuel trucks, and more."
           links={[
             {
-              label: "Equipment Dashboard",
+              ...L.equipmentDashboard,
               sublabel: `${gseTotal} units${gseDown > 0 ? ` · ${gseDown} down` : ""}`,
-              href: "/equipment",
-              status: "live",
               badge:
                 gseDown > 0
                   ? { text: `${gseDown} down`, tone: "red" }
                   : undefined,
             },
-            {
-              label: "Add Equipment",
-              sublabel: "Register new GSE unit",
-              href: "/equipment/new",
-              status: "m2",
-            },
+            L.addEquipment,
           ]}
         />
         <SectionCard
-          icon={<Fuel className="h-6 w-6 text-status-blue/80" strokeWidth={1.5} />}
+          icon={<Fuel className="h-6 w-6 text-primary" strokeWidth={1.5} />}
           title="Fuel Management"
           blurb="Order fuel, manage suppliers, track pricing, and view fuel reports across all bases."
-          links={[
-            {
-              label: "Order Fuel",
-              sublabel: "New fuel order by aircraft and base",
-              href: "/fuel/orders/new",
-              status: "live",
-            },
-            {
-              label: "Fuel Orders",
-              sublabel: "All orders, status, and history",
-              href: "/fuel/orders",
-              status: "live",
-            },
-            {
-              label: "Suppliers & Pricing",
-              sublabel: "Manage fuel suppliers and base pricing",
-              href: "/fuel/suppliers",
-              status: "live",
-            },
-            {
-              label: "Fuel Quality Log",
-              sublabel: "Quality testing records and compliance",
-              href: "/fuel/quality",
-              status: "live",
-            },
-          ]}
+          links={[L.orderFuel, L.fuelOrders, L.suppliers, L.fuelQuality]}
         />
       </section>
     </div>
@@ -256,13 +198,7 @@ function StatTile({
   );
 }
 
-type LinkStatus = "live" | "m2" | "m3" | "m4";
-
-interface SectionLink {
-  label: string;
-  sublabel?: string;
-  href: string;
-  status: LinkStatus;
+interface SectionLink extends GroundOpsLink {
   badge?: { text: string; tone: "red" | "yellow" };
 }
 
@@ -333,7 +269,7 @@ function SectionLinkRow({ link }: { link: SectionLink }) {
     return (
       <Link
         href={link.href}
-        className={`${baseClass} hover:border-status-blue/60 hover:bg-status-blue/5`}
+        className={`${baseClass} hover:border-primary/60 hover:bg-primary/5`}
       >
         {inner}
       </Link>
@@ -342,6 +278,7 @@ function SectionLinkRow({ link }: { link: SectionLink }) {
   return (
     <div
       title={`Coming in ${link.status.toUpperCase()}`}
+      aria-disabled="true"
       className={`${baseClass} cursor-not-allowed opacity-50`}
     >
       {inner}

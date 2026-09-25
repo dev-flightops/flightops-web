@@ -40,7 +40,7 @@ export function TabNav({
             className={cn(
               "rounded-t-md border-b-2 px-3 py-1.5 text-xs font-semibold transition-colors whitespace-nowrap",
               isActive
-                ? "border-status-blue text-status-blue"
+                ? "border-primary text-primary"
                 : "border-transparent text-muted-foreground hover:text-foreground",
             )}
           >

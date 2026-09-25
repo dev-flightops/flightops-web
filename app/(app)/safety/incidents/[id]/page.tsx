@@ -71,7 +71,7 @@ export default async function IncidentDetailPage({
             {INCIDENT_CATEGORY_LABELS[incident.category]}
           </span>
         </h1>
-        <p className="mt-1 text-xs text-muted-foreground">
+        <p className="mt-1 text-sm text-muted-foreground">
           Occurred {new Date(incident.occurred_at).toLocaleString()} —{" "}
           {incident.is_anonymous && !incident.reporter
             ? "Anonymous reporter"

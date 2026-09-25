@@ -44,12 +44,12 @@ export default async function FlightCrewHistoryPage({
   const { fromDate, toDate } = resolveRange(from, to);
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6">
+    <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
       <header className="mb-4">
-        <h1 className="text-xl font-bold tracking-tight sm:text-2xl">
+        <h1 className="text-2xl font-bold tracking-tight">
           My History
         </h1>
-        <p className="mt-1 text-xs text-muted-foreground">
+        <p className="mt-1 text-sm text-muted-foreground">
           Your flight and duty records. Per-tab; defaults to the last 30 days.
         </p>
       </header>
@@ -136,7 +136,7 @@ function TabNav({
             replace
             className={
               isActive
-                ? "rounded-t-md border-b-2 border-status-blue px-3 py-1.5 text-xs font-semibold text-status-blue"
+                ? "rounded-t-md border-b-2 border-primary px-3 py-1.5 text-xs font-semibold text-primary"
                 : "rounded-t-md border-b-2 border-transparent px-3 py-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground"
             }
           >

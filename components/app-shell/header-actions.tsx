@@ -162,7 +162,7 @@ export function HeaderActions({
           disabled
           title="Time Clock · unavailable"
           aria-label="Time Clock"
-          className="hidden cursor-not-allowed items-center gap-1 rounded-md border border-border bg-primary/8 p-1.5 text-xs font-semibold text-primary opacity-50 sm:inline-flex"
+          className="hidden cursor-not-allowed items-center gap-1 rounded-md border border-primary/40 bg-primary/15 p-1.5 text-xs font-semibold text-brand-light opacity-50 sm:inline-flex"
         >
           <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
             <path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z" />
@@ -208,7 +208,7 @@ export function HeaderActions({
       {/* User identity cluster — 24×24 avatar + name, left-bordered like legacy. */}
       <div className="hidden items-center gap-2 border-l border-border pl-2 sm:flex">
         <div
-          className="flex h-6 w-6 items-center justify-center rounded-full border border-border bg-gradient-to-br from-[#1a2a3e] to-[#0a1f3d] text-[0.65rem] font-bold text-muted-foreground"
+          className="flex h-6 w-6 items-center justify-center rounded-full border border-foreground/15 bg-gradient-to-br from-primary to-brand-dark text-[0.65rem] font-bold text-primary-foreground"
           title={displayName}
           aria-hidden
         >
@@ -228,7 +228,7 @@ export function HeaderActions({
         href="/settings"
         title="Settings"
         aria-label="Settings"
-        className="inline-flex items-center gap-1 rounded-md p-2 text-xs font-medium text-status-yellow hover:bg-primary/8"
+        className="inline-flex items-center gap-1 rounded-md p-2 text-xs font-medium text-status-yellow hover:bg-foreground/8"
       >
         <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
           <path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 00.12-.61l-1.92-3.32a.488.488 0 00-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58a.49.49 0 00-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6A3.6 3.6 0 1115.6 12 3.61 3.61 0 0112 15.6z" />
@@ -241,7 +241,7 @@ export function HeaderActions({
       <form action={signOutAction}>
         <button
           type="submit"
-          className="inline-flex items-center gap-1 rounded-md p-2 text-xs font-medium text-muted-foreground hover:bg-primary/8 hover:text-status-blue"
+          className="inline-flex items-center gap-1 rounded-md p-2 text-xs font-medium text-muted-foreground hover:bg-foreground/8 hover:text-foreground"
           aria-label="Sign out"
         >
           <span className="hidden sm:inline">Sign out</span>
@@ -278,7 +278,7 @@ function IconButton({
     inlineText && "gap-1",
     disabled
       ? "cursor-not-allowed opacity-50"
-      : "cursor-pointer hover:bg-primary/8 hover:text-status-blue",
+      : "cursor-pointer hover:bg-foreground/8 hover:text-foreground",
     className,
   );
   return (

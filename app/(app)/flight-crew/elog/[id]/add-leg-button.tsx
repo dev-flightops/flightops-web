@@ -37,7 +37,7 @@ export function AddLegButton({ logId }: { logId: string }) {
       type="button"
       onClick={onClick}
       disabled={pending}
-      className="inline-flex items-center gap-1.5 rounded-md border border-status-blue/40 bg-status-blue/10 px-3 py-1.5 text-xs font-semibold text-status-blue hover:bg-status-blue/15 disabled:opacity-50"
+      className="inline-flex items-center gap-1.5 rounded-md border border-primary/40 bg-background px-3 py-1.5 text-xs font-semibold text-primary hover:bg-primary/5 disabled:opacity-50"
     >
       {pending && <Spinner size="xs" />}
       + Add Leg

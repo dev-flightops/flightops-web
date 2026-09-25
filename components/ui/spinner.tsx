@@ -54,7 +54,7 @@ export function LoadingPanel({
       role="status"
       aria-live="polite"
     >
-      <Spinner size="md" className="text-status-blue" />
+      <Spinner size="md" className="text-primary" />
       <span>{label}</span>
     </div>
   );

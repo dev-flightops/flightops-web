@@ -108,7 +108,7 @@ function ComplianceLinkPicker({
           Compliance link
         </h2>
         {linkedItem ? (
-          <span className="rounded border border-status-blue/40 bg-status-blue/10 px-2 py-0.5 text-[0.6rem] font-semibold uppercase tracking-wider text-status-blue">
+          <span className="rounded border border-border bg-muted px-2 py-0.5 text-[0.6rem] font-semibold uppercase tracking-wider text-muted-foreground">
             Fires {linkedItem.code || linkedItem.regulation || "linked item"}
           </span>
         ) : null}
@@ -151,7 +151,7 @@ function ComplianceLinkPicker({
         <button
           type="submit"
           disabled={pending || selectedId === (course.linked_currency_item_id ?? "")}
-          className="rounded-md border border-border bg-muted/30 px-3 py-1.5 text-xs font-semibold hover:bg-muted/40 disabled:opacity-60"
+          className="rounded-md border border-border bg-muted/60 px-3 py-1.5 text-xs font-semibold hover:bg-accent disabled:opacity-60"
         >
           {pending ? "Saving…" : "Save"}
         </button>
@@ -224,7 +224,7 @@ function PublishStatusPicker({ course }: { course: CourseDetail }) {
         <button
           type="submit"
           disabled={pending}
-          className="rounded-md border border-border bg-muted/30 px-3 py-1.5 text-xs font-semibold hover:bg-muted/40 disabled:opacity-60"
+          className="rounded-md border border-border bg-muted/60 px-3 py-1.5 text-xs font-semibold hover:bg-accent disabled:opacity-60"
         >
           {pending ? "Saving…" : "Save"}
         </button>
@@ -305,7 +305,7 @@ function QuizAffordance({
             ? state.message
             : "Create a quiz on this lesson"
         }
-        className="rounded-md border border-border bg-muted/20 px-2 py-1 text-[0.6875rem] font-semibold hover:bg-muted/40 disabled:opacity-60"
+        className="rounded-md border border-border bg-muted/60 px-2 py-1 text-[0.6875rem] font-semibold hover:bg-accent disabled:opacity-60"
       >
         {pending ? "…" : "Attach Quiz"}
       </button>
@@ -347,7 +347,7 @@ function LessonRow({
           <button
             type="button"
             onClick={() => setEditing((v) => !v)}
-            className="rounded-md border border-border bg-muted/20 px-2 py-1 text-[0.6875rem] font-semibold hover:bg-muted/40"
+            className="rounded-md border border-border bg-muted/60 px-2 py-1 text-[0.6875rem] font-semibold hover:bg-accent"
           >
             {editing ? "Close" : "Edit"}
           </button>
@@ -379,7 +379,7 @@ function LessonRow({
             defaultValue={lesson.title}
             required
             maxLength={200}
-            className="ff"
+            className="ff-input"
           />
           <textarea
             name="body_markdown"
@@ -387,13 +387,13 @@ function LessonRow({
             rows={6}
             maxLength={100_000}
             placeholder="Lesson body (markdown OK)"
-            className="ff"
+            className="ff-input"
           />
           <div className="flex justify-end">
             <button
               type="submit"
               disabled={pending}
-              className="rounded-md bg-status-blue px-3 py-1.5 text-xs font-semibold text-white hover:brightness-110 disabled:opacity-60"
+              className="rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-dark disabled:opacity-60"
             >
               {pending ? "Saving…" : "Save lesson"}
             </button>
@@ -408,7 +408,6 @@ function LessonRow({
           No body yet.
         </p>
       )}
-      <FormStyles />
     </li>
   );
 }
@@ -433,26 +432,25 @@ function AddLessonForm({ courseId }: { courseId: string }) {
           required
           maxLength={200}
           placeholder="Lesson title"
-          className="ff"
+          className="ff-input"
         />
         <textarea
           name="body_markdown"
           rows={5}
           maxLength={100_000}
           placeholder="Lesson body (markdown OK)"
-          className="ff"
+          className="ff-input"
         />
         <div className="flex justify-end">
           <button
             type="submit"
             disabled={pending}
-            className="rounded-md bg-status-blue px-4 py-2 text-sm font-semibold text-white hover:brightness-110 disabled:opacity-60"
+            className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-brand-dark disabled:opacity-60"
           >
             {pending ? "Adding…" : "Add lesson"}
           </button>
         </div>
       </form>
-      <FormStyles />
     </section>
   );
 }
@@ -468,24 +466,3 @@ function ErrorBanner({ message }: { message: string }) {
   );
 }
 
-function FormStyles() {
-  return (
-    <style>{`
-      .ff {
-        width: 100%;
-        background: hsl(var(--background));
-        color: hsl(var(--foreground));
-        border: 1px solid hsl(var(--border));
-        border-radius: 8px;
-        padding: 0.5rem 0.75rem;
-        font-size: 0.8125rem;
-        outline: none;
-      }
-      .ff:focus:not(:disabled) {
-        border-color: hsl(var(--primary));
-        box-shadow: 0 0 0 3px hsl(var(--primary) / 0.12);
-      }
-      textarea.ff { resize: vertical; font-family: inherit; }
-    `}</style>
-  );
-}

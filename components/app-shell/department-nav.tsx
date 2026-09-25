@@ -33,19 +33,20 @@ export function DepartmentNav({ roles = [] }: { roles?: readonly string[] }) {
 
   const modules = visibleModules(dept, roles);
   if (modules.length === 0) return null;
+  const activeId = activeModuleId(modules, pathname);
 
   return (
-    <div className="border-t border-border bg-muted">
-      <div className="container flex items-center gap-1 px-3 py-1">
+    <div className="border-b border-border bg-background">
+      <div className="container flex items-center gap-1 px-3 py-1.5">
         <Link
           href="/home/"
-          className="flex-shrink-0 rounded-md p-1 text-muted-foreground hover:bg-primary/8 hover:text-status-blue"
+          className="flex-shrink-0 rounded-md p-1 text-muted-foreground hover:bg-accent hover:text-primary"
           aria-label="Home"
         >
           <Home className="h-3 w-3 opacity-60" aria-hidden />
         </Link>
         <ChevronRight
-          className="h-3 w-3 flex-shrink-0 text-muted-foreground/40"
+          className="h-3 w-3 flex-shrink-0 text-muted-foreground"
           aria-hidden
         />
 
@@ -60,7 +61,7 @@ export function DepartmentNav({ roles = [] }: { roles?: readonly string[] }) {
             <DepartmentNavItem
               key={module.id}
               module={module}
-              pathname={pathname}
+              isActive={module.id === activeId}
             />
           ))}
         </nav>
@@ -69,29 +70,60 @@ export function DepartmentNav({ roles = [] }: { roles?: readonly string[] }) {
   );
 }
 
+/**
+ * The one module the current page belongs to: the live module whose href
+ * is the longest segment-wise prefix of the path.
+ *
+ * A plain `pathname.startsWith(href)` lit up two chips at once — the
+ * Academy's "Course Library" is /academy, which prefixes every academy
+ * page, so on /academy/assignments both it and Assignments showed as
+ * current. It would also let /fuel claim /fuel-supplier. Matching whole
+ * segments and keeping the most specific match fixes both.
+ */
+export function activeModuleId(
+  modules: readonly Pick<ModuleEntry, "id" | "href" | "status">[],
+  pathname: string,
+): string | null {
+  const trim = (p: string) => p.split(/[?#]/)[0].replace(/\/+$/, "") || "/";
+  const path = trim(pathname);
+  let best: { id: string; length: number } | null = null;
+  for (const m of modules) {
+    if (m.status !== "live" || !m.href) continue;
+    const href = trim(m.href);
+    const matches =
+      path === href || path.startsWith(href === "/" ? "/" : `${href}/`);
+    if (matches && (!best || href.length > best.length)) {
+      best = { id: m.id, length: href.length };
+    }
+  }
+  return best?.id ?? null;
+}
+
 function DepartmentNavItem({
   module,
-  pathname,
+  isActive,
 }: {
   module: ModuleEntry;
-  pathname: string;
+  isActive: boolean;
 }) {
   const isLive = module.status === "live";
-  const isActive = isLive && module.href ? pathname.startsWith(module.href) : false;
   const isPurple = module.accent === "purple";
 
-  // Default chip color: muted; active gets the blue tint; purple-accent AI
-  // items override to purple text. Disabled items dim to 40%.
+  // Muted by default; the active module takes the brand, as every other
+  // "you are here" in the app does. AI modules keep purple — the one
+  // accent besides the brand, and it means "AI" everywhere it appears.
+  // (The active background here was `bg-primary/12`, an off-scale opacity
+  // that generated no CSS, so the current module had no highlight at all.)
   const baseTone = isPurple
     ? isActive
-      ? "bg-primary/12 text-status-purple font-semibold"
-      : "text-status-purple hover:bg-primary/8"
+      ? "bg-status-purple/10 text-status-purple font-semibold"
+      : "text-status-purple hover:bg-status-purple/8"
     : isActive
-      ? "bg-primary/12 text-status-blue font-semibold"
-      : "text-muted-foreground hover:bg-primary/8 hover:text-status-blue";
+      ? "bg-primary/10 text-primary font-semibold"
+      : "text-muted-foreground hover:bg-accent hover:text-foreground";
 
   const className = cn(
-    "rounded-md px-1.5 py-1 text-[0.68rem] font-medium whitespace-nowrap transition-colors",
+    "rounded-md px-2 py-1 text-[0.72rem] font-medium whitespace-nowrap transition-colors",
     baseTone,
     !isLive && "opacity-40 cursor-not-allowed hover:bg-transparent",
   );

@@ -42,11 +42,11 @@ export function WeightBalanceTab({
             No legs to load yet.
           </p>
           {!readOnly && (
-            <p className="mt-2 text-[0.7rem] text-muted-foreground/80">
+            <p className="mt-2 text-[0.7rem] text-muted-foreground">
               Add a leg on{" "}
               <Link
                 href={`/flight-crew/elog/${logId}?tab=legs`}
-                className="font-semibold text-status-blue hover:underline"
+                className="font-semibold text-primary hover:underline"
               >
                 Tab 2
               </Link>{" "}
@@ -64,11 +64,11 @@ export function WeightBalanceTab({
         <h2 className="text-[0.7rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
           Weight &amp; Balance
         </h2>
-        <p className="mt-1 text-[0.7rem] text-muted-foreground/80">
+        <p className="mt-1 text-[0.7rem] text-muted-foreground">
           {initialLegs.length} leg{initialLegs.length === 1 ? "" : "s"} —
           enter the load profile for each. Ramp weight updates live;
-          takeoff &amp; landing weights + CG ship with the per-aircraft
-          moment-arm config in M3.
+          takeoff &amp; landing weights and CG need per-aircraft moment
+          arms, which aren&apos;t configured yet.
         </p>
       </div>
 

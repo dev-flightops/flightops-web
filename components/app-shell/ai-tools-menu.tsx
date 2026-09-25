@@ -54,7 +54,7 @@ export function AiToolsMenu({ tools }: { tools: AiTool[] }) {
         href={tools[0].href}
         title={tools[0].label}
         aria-label="AI Assistant"
-        className="hidden items-center justify-center rounded-md bg-transparent p-2 text-status-purple hover:bg-primary/8 sm:inline-flex"
+        className="hidden items-center justify-center rounded-md bg-transparent p-2 text-status-purple hover:bg-foreground/8 sm:inline-flex"
       >
         <Sparkles className="h-4 w-4" aria-hidden />
       </Link>
@@ -70,7 +70,7 @@ export function AiToolsMenu({ tools }: { tools: AiTool[] }) {
         aria-label="AI Assistant"
         aria-haspopup="menu"
         aria-expanded={open}
-        className="inline-flex items-center justify-center rounded-md bg-transparent p-2 text-status-purple hover:bg-primary/8"
+        className="inline-flex items-center justify-center rounded-md bg-transparent p-2 text-status-purple hover:bg-foreground/8"
       >
         <Sparkles className="h-4 w-4" aria-hidden />
       </button>
@@ -79,7 +79,7 @@ export function AiToolsMenu({ tools }: { tools: AiTool[] }) {
         <div
           role="menu"
           aria-label="AI tools"
-          className="absolute right-0 top-full z-50 mt-1 w-56 rounded-lg border border-status-purple/30 bg-card p-2 shadow-lg"
+          className="light absolute right-0 top-full z-50 mt-1 w-56 rounded-lg border border-status-purple/30 bg-card p-2 text-card-foreground shadow-lg"
         >
           <p className="px-2 py-1 text-[0.65rem] font-bold uppercase tracking-[0.06em] text-status-purple">
             AI Tools

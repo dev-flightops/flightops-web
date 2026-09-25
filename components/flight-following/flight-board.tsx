@@ -36,7 +36,7 @@ export function FlightBoard({ flights }: { flights: BoardFlightItem[] }) {
         <p className="text-sm text-muted-foreground">No active flights.</p>
         <Link
           href="/flight-following/new"
-          className="mt-4 rounded-md bg-status-blue px-3 py-1.5 text-xs font-semibold text-white hover:brightness-110"
+          className="mt-4 rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-dark"
         >
           + Open Flight
         </Link>
@@ -47,7 +47,7 @@ export function FlightBoard({ flights }: { flights: BoardFlightItem[] }) {
   return (
     <div className="overflow-hidden rounded-lg border border-border bg-card">
       <table className="w-full text-xs">
-        <thead className="bg-muted/30">
+        <thead className="bg-muted/60">
           <tr className="text-left text-[0.65rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
             <th className="px-3 py-2">Flight</th>
             <th className="px-3 py-2">Aircraft</th>
@@ -79,8 +79,8 @@ function FlightBoardRow({ flight }: { flight: BoardFlightItem }) {
     <tr
       className={
         flight.is_overdue
-          ? "border-t border-border bg-status-red/[0.06] hover:bg-status-red/[0.1]"
-          : "border-t border-border hover:bg-muted/20"
+          ? "border-t border-border bg-status-red/[0.06] hover:bg-status-red/[0.08]"
+          : "border-t border-border hover:bg-accent"
       }
     >
       <td className="px-3 py-2.5 font-semibold text-foreground">
@@ -157,13 +157,14 @@ function FlightBoardRow({ flight }: { flight: BoardFlightItem }) {
             either. */}
         <span
           title="Per-flight documents are not built yet"
+          aria-disabled="true"
           className="mr-3 cursor-not-allowed text-[0.7rem] font-medium text-muted-foreground/40"
         >
           Docs
         </span>
         <Link
           href={`/dispatch?flight=${flight.id}`}
-          className="text-[0.7rem] font-medium text-status-blue hover:underline"
+          className="text-[0.7rem] font-medium text-primary hover:underline"
         >
           Update →
         </Link>
@@ -246,14 +247,14 @@ function ScheduledActualCell({
     return (
       <td className="px-3 py-2.5 text-status-green">
         <div className="font-mono">{actual.local}</div>
-        <div className="font-mono text-[0.65rem] opacity-80">{actual.zulu}</div>
+        <div className="font-mono text-[0.65rem]">{actual.zulu}</div>
       </td>
     );
   }
   return (
     <td className="px-3 py-2.5 text-muted-foreground">
       <div className="font-mono">{scheduled.local}</div>
-      <div className="font-mono text-[0.65rem] opacity-80">
+      <div className="font-mono text-[0.65rem]">
         {scheduled.zulu}
       </div>
     </td>

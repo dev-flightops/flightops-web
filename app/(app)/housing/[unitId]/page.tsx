@@ -72,7 +72,7 @@ export default async function HousingUnitDetailPage({
   );
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6">
+    <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6">
       <nav aria-label="Breadcrumb" className="mb-4 flex items-center text-xs">
         <Link
           href="/home"
@@ -101,7 +101,7 @@ export default async function HousingUnitDetailPage({
         <span aria-hidden className="px-1.5 text-muted-foreground">
           ›
         </span>
-        <span className="font-semibold text-status-blue">{unit.name}</span>
+        <span className="font-semibold text-primary">{unit.name}</span>
       </nav>
 
       <header className="mb-5 flex flex-col gap-3 border-b border-border pb-4 sm:flex-row sm:items-end sm:justify-between">
@@ -109,12 +109,12 @@ export default async function HousingUnitDetailPage({
           <div className="text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
             Housing Unit
           </div>
-          <h1 className="mt-0.5 text-2xl font-bold sm:text-3xl">{unit.name}</h1>
+          <h1 className="mt-0.5 text-2xl font-bold tracking-tight">{unit.name}</h1>
           <div className="mt-1 flex flex-wrap items-baseline gap-2 text-sm text-muted-foreground">
             <span className="font-mono">{unit.station}</span>
             {unit.address && (
               <>
-                <span className="text-muted-foreground/40">·</span>
+                <span className="text-muted-foreground">·</span>
                 <span>{unit.address}</span>
               </>
             )}
@@ -178,7 +178,7 @@ function RoomsCard({
         <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
           Rooms
         </h2>
-        <span className="text-xs text-muted-foreground/60">
+        <span className="text-xs text-muted-foreground">
           {sorted.length} room{sorted.length === 1 ? "" : "s"} · {totalCapacity}{" "}
           beds
         </span>
@@ -192,7 +192,7 @@ function RoomsCard({
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="border-b border-border bg-muted/10 text-left text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
+              <thead className="border-b border-border bg-muted/60 text-left text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
                 <tr>
                   <th className="px-3 py-2.5 font-semibold">Room</th>
                   <th className="px-3 py-2.5 font-semibold">Type</th>
@@ -211,7 +211,7 @@ function RoomsCard({
               </thead>
               <tbody className="divide-y divide-border">
                 {sorted.map((r) => (
-                  <tr key={r.id} className="hover:bg-muted/5">
+                  <tr key={r.id} className="hover:bg-accent">
                     <td className="whitespace-nowrap px-3 py-2.5 font-mono text-xs font-semibold">
                       {r.room_number}
                     </td>
@@ -267,14 +267,14 @@ function BookingsCard({
         <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
           Bookings
         </h2>
-        <span className="text-xs text-muted-foreground/60">
+        <span className="text-xs text-muted-foreground">
           {sorted.length} upcoming / active
         </span>
       </div>
       <div className="overflow-hidden rounded-lg border border-border bg-card">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="border-b border-border bg-muted/10 text-left text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
+            <thead className="border-b border-border bg-muted/60 text-left text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
               <tr>
                 <th className="px-3 py-2.5 font-semibold">Room</th>
                 <th className="px-3 py-2.5 font-semibold">Employee</th>
@@ -291,7 +291,7 @@ function BookingsCard({
                   <tr
                     key={b.id}
                     className={
-                      "hover:bg-muted/5 " +
+                      "hover:bg-accent " +
                       (b.is_cancelled ? "opacity-50" : "")
                     }
                   >
@@ -312,7 +312,7 @@ function BookingsCard({
                     </td>
                     <td className="whitespace-nowrap px-3 py-2.5">
                       {b.is_cancelled ? (
-                        <span className="rounded border border-border bg-muted/20 px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider text-muted-foreground">
+                        <span className="rounded border border-border bg-muted px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider text-muted-foreground">
                           Cancelled
                         </span>
                       ) : (
@@ -339,14 +339,14 @@ function AmenityChips({ room }: { room: HousingRoom }) {
   if (room.has_private_bath) flags.push("Priv. bath");
   if (room.has_laundry) flags.push("Laundry");
   if (flags.length === 0 && !room.amenities) {
-    return <span className="text-muted-foreground/60">—</span>;
+    return <span className="text-muted-foreground">—</span>;
   }
   return (
     <div className="flex flex-wrap gap-1">
       {flags.map((f) => (
         <span
           key={f}
-          className="rounded border border-border bg-muted/20 px-1.5 py-0.5 text-[0.65rem] text-muted-foreground"
+          className="rounded border border-border bg-muted px-1.5 py-0.5 text-[0.65rem] text-muted-foreground"
         >
           {f}
         </span>
@@ -374,7 +374,7 @@ function RoomStatusBadge({
     occupied: "border-status-yellow/40 bg-status-yellow/10 text-status-yellow",
     maintenance:
       "border-status-yellow/40 bg-status-yellow/10 text-status-yellow",
-    offline: "border-border bg-muted/20 text-muted-foreground",
+    offline: "border-border bg-muted text-muted-foreground",
   };
   const label =
     status === "available" && occupied
@@ -384,7 +384,7 @@ function RoomStatusBadge({
     <span
       className={
         "rounded border px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider " +
-        (map[status] ?? "border-border bg-muted/20 text-muted-foreground")
+        (map[status] ?? "border-border bg-muted text-muted-foreground")
       }
     >
       {label}

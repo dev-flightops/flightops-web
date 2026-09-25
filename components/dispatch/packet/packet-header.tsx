@@ -27,10 +27,10 @@ export function PacketHeader({
   return (
     <div className="mb-5 flex flex-wrap items-end justify-between gap-2">
       <div>
-        <h1 className="text-xl font-bold tracking-tight text-foreground sm:text-2xl">
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">
           Flight Dispatch Packet
         </h1>
-        <p className="mt-0.5 text-xs text-muted-foreground">
+        <p className="mt-1 text-sm text-muted-foreground">
           {tenantName} · FAR 135 Dispatch Release
         </p>
       </div>
@@ -43,7 +43,7 @@ export function PacketHeader({
           // that does the same hand-off.
           <a
             href="#release-actions"
-            className="inline-flex items-center gap-1 rounded-md border border-status-blue bg-status-blue/[0.08] px-3 py-1.5 text-[0.72rem] font-semibold text-status-blue hover:bg-status-blue/[0.14]"
+            className="inline-flex items-center gap-1 rounded-md border border-primary bg-primary/[0.08] px-3 py-1.5 text-[0.72rem] font-semibold text-primary hover:bg-primary/[0.14]"
           >
             Switch to Release Mode →
           </a>
@@ -54,7 +54,7 @@ export function PacketHeader({
                 ? `This flight is ${flight.status} — nothing to release.`
                 : "Pick a scheduled flight to enable release."
             }
-            className="inline-flex items-center gap-1.5 rounded-md border border-primary/30 bg-primary/5 px-3 py-1.5 text-[0.72rem] font-semibold text-status-blue opacity-80"
+            className="inline-flex items-center gap-1.5 rounded-md border border-primary/30 bg-primary/5 px-3 py-1.5 text-[0.72rem] font-semibold text-primary"
           >
             Planning Mode
           </span>
@@ -68,7 +68,7 @@ export function PacketHeader({
             single form, linked from where the need arises. */}
         <Link
           href="/flight-following/new"
-          className="inline-flex items-center gap-1 rounded-md bg-status-blue px-3 py-1.5 text-[0.72rem] font-semibold text-white hover:brightness-110"
+          className="inline-flex items-center gap-1 rounded-md bg-primary px-3 py-1.5 text-[0.72rem] font-semibold text-white hover:bg-brand-dark"
         >
           + New Flight
         </Link>

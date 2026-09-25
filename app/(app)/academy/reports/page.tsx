@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import { AcademyHeader } from "../academy-header";
 
 /**
@@ -9,19 +11,27 @@ import { AcademyHeader } from "../academy-header";
  */
 export default function AcademyReportsPage() {
   return (
-    <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6">
+    <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
       <AcademyHeader activeSection="reports" />
 
-      <section className="rounded-lg border border-status-yellow/40 bg-status-yellow/10 p-5 text-sm">
-        <p className="font-semibold text-status-yellow">
-          Reports — coming in M4.
+      {/* Plain language, on a neutral card: "not built yet" is not a
+          warning, and a customer should not read milestone codes or
+          service names. */}
+      <section className="rounded-lg border border-border bg-card p-5 text-sm">
+        <p className="font-semibold text-foreground">
+          Academy reports aren&apos;t available yet.
         </p>
-        <p className="mt-2 text-foreground/80">
-          Enrolment velocity, completion rates by role, cert-expiry
-          runway, and CSV export land with the Reporting / BI vertical
-          in M4. The academy-service emits every enrollment / lesson-
-          completion event, so the reporting-service pipe will have
-          the raw data ready when that ships.
+        <p className="mt-2 text-muted-foreground">
+          Enrolment velocity, completion rates by role, certificate-expiry
+          runway and CSV export are planned for this page. Until then,{" "}
+          <Link href="/academy/assignments" className="font-medium text-primary hover:underline">
+            Assignments
+          </Link>{" "}
+          and{" "}
+          <Link href="/academy/certificates" className="font-medium text-primary hover:underline">
+            Certificates
+          </Link>{" "}
+          show the underlying records.
         </p>
       </section>
     </div>

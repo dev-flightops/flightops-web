@@ -23,24 +23,24 @@ import Link from "next/link";
 export default function RtsQueuePage() {
   const canSignoff = false;
   return (
-    <div className="mx-auto max-w-5xl px-4 py-8">
+    <div className="mx-auto max-w-5xl px-4 sm:px-6 py-8">
       <header className="mb-6 flex items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold">Return to Service Queue</h1>
+          <h1 className="text-2xl font-bold tracking-tight">Return to Service Queue</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Aircraft pending AMT signoff or RII inspector review
           </p>
         </div>
         <Link
           href="/maintenance"
-          className="rounded-md border border-border bg-card px-3 py-2 text-sm font-semibold text-foreground hover:bg-muted/30"
+          className="rounded-md border border-border bg-card px-3 py-2 text-sm font-semibold text-foreground hover:bg-accent"
         >
           ← Maintenance
         </Link>
       </header>
 
       {!canSignoff && (
-        <div className="mb-5 rounded-lg border border-status-blue/40 bg-status-blue/10 px-4 py-2.5 text-sm text-status-blue">
+        <div className="mb-5 rounded-lg border border-primary/40 bg-primary/10 px-4 py-2.5 text-sm text-primary">
           View only — AMT, DOM, or admin role required to perform signoffs.
         </div>
       )}
@@ -58,7 +58,7 @@ export default function RtsQueuePage() {
       <div className="mb-6 overflow-hidden rounded-lg border border-border bg-card">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="border-b border-border bg-muted/10 text-left text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
+            <thead className="border-b border-border bg-muted/60 text-left text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
               <tr>
                 <th scope="col" className="px-4 py-2 font-semibold">N-Number</th>
                 <th scope="col" className="px-4 py-2 font-semibold">Type</th>

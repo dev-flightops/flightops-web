@@ -94,7 +94,7 @@ export function AdminAccessToggle({ roleId, initial, locked }: Props) {
           className={cn(
             "relative inline-flex h-5 w-9 items-center rounded-full transition-colors",
             enabled
-              ? "bg-status-blue/80"
+              ? "bg-primary/80"
               : "bg-muted-foreground/30",
             isLocked && "opacity-70",
           )}
@@ -109,7 +109,7 @@ export function AdminAccessToggle({ roleId, initial, locked }: Props) {
         <span
           className={cn(
             "font-semibold tracking-[0.04em] uppercase",
-            enabled ? "text-status-blue" : "text-muted-foreground",
+            enabled ? "text-primary" : "text-muted-foreground",
           )}
         >
           {enabled ? "Admin" : "—"}

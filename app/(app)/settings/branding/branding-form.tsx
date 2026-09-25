@@ -3,6 +3,7 @@
 import { useActionState, useEffect, useMemo, useState } from "react";
 
 import { Spinner } from "@/components/ui/spinner";
+import { brandTones, DEFAULT_BRAND } from "@/lib/theme/brand";
 
 import {
   extractBrandingAction,
@@ -44,11 +45,22 @@ export function BrandingForm({
     }
   }, [extractState]);
 
-  const previewPrimary = useMemo(() => _validHex(primary) ?? "#0a84ff", [primary]);
-  const previewDark = useMemo(
-    () => _validHex(primaryDark) ?? _validHex(primary) ?? "#0070e0",
-    [primaryDark, primary],
+  // The preview falls back exactly as the live theme does
+  // (BrandThemeStyle): no colour → the platform default, no hover shade
+  // → the one derived from the primary. It used to fall back to the old
+  // theme's blue, previewing a colour the app no longer shows.
+  // And it previews what the app will actually paint: a colour too light
+  // to carry white text is deepened by brandTones, so the preview shows
+  // that version and says so.
+  const tones = useMemo(
+    () => brandTones(_validHex(primary) ?? DEFAULT_BRAND),
+    [primary],
   );
+  const previewPrimary = tones.hex;
+  const previewDark = useMemo(() => {
+    const hover = _validHex(primaryDark);
+    return hover ? brandTones(hover).hex : _channelsToHex(tones.darkRgb);
+  }, [primaryDark, tones]);
 
   const fieldError = (k: string) =>
     state.status === "field-errors" ? state.errors[k] : undefined;
@@ -72,12 +84,12 @@ export function BrandingForm({
             placeholder="e.g. yourairline.com"
             spellCheck={false}
             autoComplete="off"
-            className="min-w-0 flex-1 rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-status-blue focus:outline-none"
+            className="min-w-0 flex-1 rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
           />
           <button
             type="submit"
             disabled={extractPending}
-            className="inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-3 py-2 text-xs font-semibold text-foreground hover:bg-muted/40 disabled:opacity-60"
+            className="inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-3 py-2 text-xs font-semibold text-foreground hover:bg-accent disabled:opacity-60"
           >
             {extractPending && <Spinner size="xs" />}
             {extractPending ? "Extracting…" : "Suggest colors"}
@@ -171,6 +183,12 @@ export function BrandingForm({
             Chip / badge
           </span>
         </div>
+        {tones.adjusted && (
+          <p role="status" className="mt-3 text-xs text-muted-foreground">
+            {primary} is too light for white text on buttons, so the app
+            uses a deeper shade of it ({tones.hex}), shown here.
+          </p>
+        )}
       </div>
 
       <div className="flex items-center justify-end gap-2">
@@ -223,7 +241,7 @@ function ColorField({
           maxLength={9}
           spellCheck={false}
           aria-invalid={error ? "true" : undefined}
-          className="flex-1 rounded-md border border-border bg-background px-3 py-2 font-mono text-sm text-foreground focus:border-status-blue focus:outline-none aria-[invalid=true]:border-status-red"
+          className="flex-1 rounded-md border border-border bg-background px-3 py-2 font-mono text-sm text-foreground focus:border-primary focus:outline-none aria-[invalid=true]:border-status-red"
         />
         <span
           className="h-9 w-9 flex-shrink-0 rounded-md border border-border"
@@ -240,7 +258,7 @@ function ColorField({
           {error}
         </p>
       ) : (
-        <p className="mt-1 text-[0.65rem] text-muted-foreground/80">{hint}</p>
+        <p className="mt-1 text-[0.65rem] text-muted-foreground">{hint}</p>
       )}
     </div>
   );
@@ -248,4 +266,16 @@ function ColorField({
 
 function _validHex(v: string): string | null {
   return /^#[0-9A-Fa-f]{6}([0-9A-Fa-f]{2})?$/.test(v.trim()) ? v.trim() : null;
+}
+
+/** "143 30 34" → "#8f1e22". The preview appends an alpha byte to its
+ *  colours, so it needs hex rather than rgb(). */
+function _channelsToHex(channels: string): string {
+  return (
+    "#" +
+    channels
+      .split(" ")
+      .map((c) => Number(c).toString(16).padStart(2, "0"))
+      .join("")
+  );
 }

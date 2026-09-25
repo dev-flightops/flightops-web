@@ -104,7 +104,7 @@ export function MxTranscript({
               key={e}
               type="button"
               onClick={() => onExample(e)}
-              className="rounded-full border border-border bg-card px-3 py-1.5 text-xs text-foreground hover:border-status-blue"
+              className="rounded-full border border-border bg-card px-3 py-1.5 text-xs text-foreground hover:border-primary"
             >
               {e}
             </button>
@@ -127,7 +127,7 @@ export function MxTranscript({
             </span>
           </div>
           {turn.tail && (
-            <p className="font-mono text-[0.65rem] uppercase tracking-wider text-status-blue">
+            <p className="font-mono text-[0.65rem] uppercase tracking-wider text-primary">
               scoped to {turn.tail}
             </p>
           )}

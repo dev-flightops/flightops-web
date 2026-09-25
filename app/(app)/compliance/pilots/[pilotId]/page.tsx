@@ -45,7 +45,7 @@ export default async function PilotComplianceProfilePage({
   } catch (err) {
     if (err instanceof ApiError && err.status === 404) notFound();
     return (
-      <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6">
+      <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
         <div
           role="alert"
           className="rounded-md border border-border bg-card px-4 py-6 text-center text-sm text-muted-foreground"
@@ -69,10 +69,10 @@ export default async function PilotComplianceProfilePage({
   const overallToken = STATUS_TOKENS[profile.overall_status];
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6">
+    <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
       <Link
         href="/compliance/crew-currency"
-        className="mb-3 inline-block text-xs font-semibold text-status-blue hover:underline"
+        className="mb-3 inline-block text-xs font-semibold text-primary hover:underline"
       >
         ← Back to compliance board
       </Link>

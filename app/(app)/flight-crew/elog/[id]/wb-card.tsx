@@ -71,7 +71,7 @@ export function WeightBalanceCard({
     <div className="rounded-lg border border-border bg-card p-4">
       <header className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
         <div className="flex items-baseline gap-2">
-          <span className="text-[0.7rem] font-semibold uppercase tracking-[0.08em] text-status-blue">
+          <span className="text-[0.7rem] font-semibold uppercase tracking-[0.08em] text-primary">
             Leg {leg.leg_number} W&amp;B
           </span>
           <span className="text-[0.65rem] font-mono text-muted-foreground">
@@ -154,18 +154,18 @@ export function WeightBalanceCard({
         />
       </div>
 
-      <div className="mt-3 grid grid-cols-3 gap-2 rounded-md bg-muted/20 p-2 text-center text-[0.65rem]">
+      <div className="mt-3 grid grid-cols-3 gap-2 rounded-md bg-muted/60 p-2 text-center text-[0.65rem]">
         <Derived
           label="Takeoff Wt"
-          hint="Needs aircraft config (M3)"
+          hint="Needs aircraft moment arms"
         />
         <Derived
           label="Landing Wt"
-          hint="Needs aircraft config (M3)"
+          hint="Needs aircraft moment arms"
         />
         <Derived
           label="CG"
-          hint="Needs aircraft config (M3)"
+          hint="Needs aircraft moment arms"
         />
       </div>
 
@@ -306,7 +306,7 @@ function Derived({ label, hint }: { label: string; hint: string }) {
       <div className="text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
         {label}
       </div>
-      <div className="text-[0.65rem] italic text-muted-foreground/70">
+      <div className="text-[0.65rem] italic text-muted-foreground">
         {hint}
       </div>
     </div>

@@ -47,7 +47,7 @@ export function DashboardNav({ active }: { active: DashboardSlug }) {
 
   return (
     <div className="mb-5">
-      <div className="mb-2 rounded-md border border-border bg-muted/40 px-3 py-1.5 text-[0.65rem] text-muted-foreground/80">
+      <div className="mb-2 rounded-md border border-border bg-muted/60 px-3 py-1.5 text-[0.65rem] text-muted-foreground">
         <span className="font-semibold text-muted-foreground">Admin</span>
         {" "}— role-based access control coming soon. These views will be
         restricted by user role.
@@ -78,8 +78,8 @@ function DashboardNavTab({ tab, active }: { tab: NavTab; active: boolean }) {
       className={cn(
         "rounded-md px-2.5 py-1 text-[0.72rem] font-medium whitespace-nowrap transition-colors",
         active
-          ? "bg-primary/12 text-status-blue font-semibold"
-          : "text-muted-foreground hover:bg-primary/8 hover:text-status-blue",
+          ? "bg-primary/12 text-primary font-semibold"
+          : "text-muted-foreground hover:bg-primary/8 hover:text-primary",
       )}
     >
       {tab.label}

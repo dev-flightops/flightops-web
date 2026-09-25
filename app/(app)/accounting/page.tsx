@@ -88,7 +88,7 @@ export default async function AccountingPage({
   }
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-8">
+    <div className="mx-auto max-w-6xl px-4 sm:px-6 py-8">
       <header className="mb-6 flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-foreground">
@@ -308,12 +308,12 @@ export default async function AccountingPage({
                     {aging.invoices.map((row) => (
                       <tr
                         key={row.invoice_id}
-                        className="border-b border-border last:border-0 hover:bg-muted/20"
+                        className="border-b border-border last:border-0 hover:bg-accent"
                       >
                         <td className="px-4 py-2.5">
                           <Link
                             href={`/invoicing/${row.invoice_id}`}
-                            className="font-mono font-semibold text-status-blue hover:underline"
+                            className="font-mono font-semibold text-primary hover:underline"
                           >
                             {row.invoice_number}
                           </Link>

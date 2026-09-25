@@ -62,7 +62,7 @@ export function ComplianceGrid({
                 className="px-3 py-2 align-bottom whitespace-nowrap"
               >
                 <div>{abbreviateItemName(item)}</div>
-                <div className="mt-0.5 text-[0.55rem] font-normal text-muted-foreground/70">
+                <div className="mt-0.5 text-[0.55rem] font-normal text-muted-foreground">
                   {item.regulation}
                 </div>
               </th>
@@ -84,7 +84,7 @@ export function ComplianceGrid({
                   <div className="flex items-center gap-2">
                     <Link
                       href={`/compliance/pilots/${row.pilot.id}`}
-                      className="font-semibold text-foreground hover:text-status-blue hover:underline"
+                      className="font-semibold text-foreground hover:text-primary hover:underline"
                     >
                       {row.pilot.full_name}
                     </Link>
@@ -92,7 +92,7 @@ export function ComplianceGrid({
                       {overallToken.label}
                     </span>
                   </div>
-                  <div className="text-[0.6rem] font-normal text-muted-foreground/70">
+                  <div className="text-[0.6rem] font-normal text-muted-foreground">
                     {row.pilot.email}
                   </div>
                 </th>

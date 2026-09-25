@@ -47,7 +47,7 @@ export function EditUserDialog({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="rounded-md border border-border bg-card px-2.5 py-1 text-[0.7rem] font-semibold text-foreground hover:bg-muted/40"
+        className="rounded-md border border-border bg-card px-2.5 py-1 text-[0.7rem] font-semibold text-foreground hover:bg-accent"
       >
         Edit
       </button>
@@ -97,7 +97,7 @@ export function EditUserDialog({
                 name="is_active"
                 defaultChecked={user.is_active}
                 disabled={isSelf}
-                className="h-4 w-4 rounded border-border bg-background text-status-blue focus:ring-status-blue disabled:opacity-50"
+                className="h-4 w-4 rounded border-border bg-background text-primary focus:ring-primary disabled:opacity-50"
               />
               Active (can sign in)
             </label>
@@ -107,14 +107,14 @@ export function EditUserDialog({
                 type="button"
                 onClick={() => setOpen(false)}
                 disabled={pending}
-                className="rounded-md border border-border bg-card px-3 py-2 text-xs font-semibold text-foreground hover:bg-muted/40"
+                className="rounded-md border border-border bg-card px-3 py-2 text-xs font-semibold text-foreground hover:bg-accent"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={pending}
-                className="inline-flex items-center gap-1.5 rounded-md bg-status-blue px-4 py-2 text-xs font-semibold text-white hover:brightness-110 disabled:opacity-60"
+                className="inline-flex items-center gap-1.5 rounded-md bg-primary px-4 py-2 text-xs font-semibold text-white hover:bg-brand-dark disabled:opacity-60"
               >
                 {pending && <Spinner size="xs" />}
                 {pending ? "Saving…" : "Save"}
@@ -150,7 +150,7 @@ function Field({
         id={name}
         name={name}
         aria-invalid={error ? "true" : undefined}
-        className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-status-blue focus:outline-none aria-[invalid=true]:border-status-red"
+        className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none aria-[invalid=true]:border-status-red"
         {...inputProps}
       />
       {error && (

@@ -73,7 +73,7 @@ export default async function SupplierPortalPage({
 
   if (notAuthorized) {
     return (
-      <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6">
+      <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
         <div className="rounded-lg border border-status-yellow/40 bg-status-yellow/10 px-6 py-8 text-center">
           <h1 className="text-base font-bold tracking-tight text-status-yellow">
             Supplier Portal
@@ -92,12 +92,12 @@ export default async function SupplierPortalPage({
   }
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6">
+    <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
       <header className="mb-5">
-        <h1 className="text-xl font-bold tracking-tight sm:text-2xl">
+        <h1 className="text-2xl font-bold tracking-tight">
           Supplier Portal — Fuel Orders
         </h1>
-        <p className="mt-1 text-xs text-muted-foreground">
+        <p className="mt-1 text-sm text-muted-foreground">
           Acknowledge new orders so the requesting dispatcher knows you
           have it. Fueled / closeout is handled by ramp staff after
           delivery.
@@ -130,7 +130,7 @@ function SupplierOrderTable({ orders }: { orders: FuelOrderResponse[] }) {
   return (
     <div className="overflow-hidden rounded-lg border border-border bg-card">
       <table className="w-full text-xs">
-        <thead className="bg-muted/40 text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+        <thead className="bg-muted/60 text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
           <tr>
             <th className="px-3 py-2 text-left">Requested</th>
             <th className="px-3 py-2 text-left">Tail</th>
@@ -200,7 +200,7 @@ function SupplierOrderTable({ orders }: { orders: FuelOrderResponse[] }) {
         Need to close out a fueled order? Ramp staff handles that on the{" "}
         <Link
           href="/fuel/orders"
-          className="font-semibold text-status-blue hover:underline"
+          className="font-semibold text-primary hover:underline"
         >
           dispatcher view
         </Link>
@@ -220,7 +220,7 @@ function StatusBadge({ status }: { status: FuelOrderStatus }) {
           ? "bg-status-green/15 text-status-green"
           : status === "discrepancy"
             ? "bg-status-red/15 text-status-red"
-            : "bg-muted/40 text-muted-foreground";
+            : "bg-muted text-muted-foreground";
   return (
     <span
       className={`rounded px-1.5 py-0.5 text-[0.6rem] font-semibold uppercase tracking-[0.06em] ${tone}`}

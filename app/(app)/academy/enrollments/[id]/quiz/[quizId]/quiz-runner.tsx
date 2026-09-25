@@ -126,8 +126,8 @@ export function QuizRunner({ enrollmentId, quiz, backToLessonHref }: Props) {
                       className={
                         "flex cursor-pointer items-start gap-2 rounded-md border px-3 py-2 text-sm transition " +
                         (answers[qIdx] === oIdx
-                          ? "border-status-blue/60 bg-status-blue/10"
-                          : "border-border hover:bg-muted/10")
+                          ? "border-primary/60 bg-primary/10"
+                          : "border-border hover:bg-accent")
                       }
                     >
                       <input
@@ -137,7 +137,7 @@ export function QuizRunner({ enrollmentId, quiz, backToLessonHref }: Props) {
                         checked={answers[qIdx] === oIdx}
                         onChange={() => chooseAnswer(qIdx, oIdx)}
                         disabled={pending}
-                        className="mt-0.5 accent-status-blue"
+                        className="mt-0.5 accent-primary"
                       />
                       <span>{opt}</span>
                     </label>
@@ -158,7 +158,7 @@ export function QuizRunner({ enrollmentId, quiz, backToLessonHref }: Props) {
         <button
           type="submit"
           disabled={pending || !allAnswered}
-          className="rounded-md bg-status-blue px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-status-blue/90 disabled:cursor-not-allowed disabled:opacity-60"
+          className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-brand-dark disabled:cursor-not-allowed disabled:opacity-60"
         >
           {pending ? "Submitting…" : "Submit answers"}
         </button>
@@ -255,13 +255,13 @@ function ResultView({
         <button
           type="button"
           onClick={onRetake}
-          className="rounded-md border border-border bg-card px-3 py-1.5 text-xs font-semibold hover:bg-muted/20"
+          className="rounded-md border border-border bg-card px-3 py-1.5 text-xs font-semibold hover:bg-accent"
         >
           Retake
         </button>
         <Link
           href={backToLessonHref}
-          className="rounded-md bg-status-blue px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-status-blue/90"
+          className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-brand-dark"
         >
           Back to lesson →
         </Link>

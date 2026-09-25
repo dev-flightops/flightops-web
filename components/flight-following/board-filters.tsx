@@ -68,7 +68,7 @@ export function BoardFilters({
         placeholder="Search flight #, tail, PIC, ICAO…"
         aria-label="Search flights"
         onChange={(e) => updateParam("q", e.target.value)}
-        className="min-w-[220px] flex-1 rounded-md border border-border bg-background px-3 py-1.5 text-xs text-foreground focus:border-status-blue focus:outline-none"
+        className="min-w-[220px] flex-1 rounded-md border border-border bg-background px-3 py-1.5 text-xs text-foreground focus:border-primary focus:outline-none"
       />
 
       <div
@@ -93,8 +93,8 @@ export function BoardFilters({
               aria-pressed={on}
               className={`rounded-md border px-2.5 py-1 text-[0.7rem] font-semibold uppercase tracking-[0.06em] transition-colors ${
                 on
-                  ? "border-status-blue bg-status-blue/15 text-status-blue"
-                  : "border-border bg-card text-muted-foreground hover:bg-muted/40"
+                  ? "border-primary bg-primary/10 text-primary"
+                  : "border-border bg-card text-muted-foreground hover:bg-accent"
               }`}
             >
               {s.label}
@@ -107,7 +107,7 @@ export function BoardFilters({
         value={base}
         onChange={(e) => updateParam("base", e.target.value)}
         aria-label="Base filter"
-        className="rounded-md border border-border bg-background px-3 py-1.5 text-xs text-foreground focus:border-status-blue focus:outline-none"
+        className="rounded-md border border-border bg-background px-3 py-1.5 text-xs text-foreground focus:border-primary focus:outline-none"
       >
         <option value="">All bases</option>
         {bases.map((b) => (

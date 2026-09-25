@@ -97,7 +97,7 @@ export default async function EnrollmentLessonPage({
           </span>
           <StatusChip status={enrollment.status} />
         </h1>
-        <p className="mt-1 text-xs text-muted-foreground">
+        <p className="mt-1 text-sm text-muted-foreground">
           {enrollment.completed_lessons} of {enrollment.total_lessons}{" "}
           lesson{enrollment.total_lessons === 1 ? "" : "s"} complete
           {enrollment.completed_at
@@ -125,8 +125,8 @@ export default async function EnrollmentLessonPage({
                     className={
                       "block rounded-md border px-2 py-1.5 text-xs " +
                       (isActive
-                        ? "border-status-blue bg-status-blue/15 text-status-blue"
-                        : "border-border bg-card text-foreground/80 hover:bg-muted/10")
+                        ? "border-primary/40 bg-primary/10 text-primary"
+                        : "border-border bg-card text-foreground/80 hover:bg-accent")
                     }
                   >
                     <div className="flex items-baseline justify-between gap-2">

@@ -90,7 +90,7 @@ export default async function SafetyHazardDetailPage({
             {HAZARD_CATEGORY_LABELS[hazard.category]}
           </span>
         </h1>
-        <p className="mt-1 text-xs text-muted-foreground">
+        <p className="mt-1 text-sm text-muted-foreground">
           Filed {new Date(hazard.created_at).toLocaleString()} —{" "}
           {hazard.is_anonymous && !hazard.reporter
             ? "Anonymous reporter"

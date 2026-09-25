@@ -212,7 +212,7 @@ export function WeatherAndNotamStep({ flightId, flight, weather }: Props) {
                     type="checkbox"
                     checked={isAcked}
                     onChange={() => toggle(icao)}
-                    className="mt-0.5 h-4 w-4 cursor-pointer accent-status-blue"
+                    className="mt-0.5 h-4 w-4 cursor-pointer accent-primary"
                   />
                   <span>
                     I have reviewed all weather and NOTAMs for{" "}
@@ -228,7 +228,7 @@ export function WeatherAndNotamStep({ flightId, flight, weather }: Props) {
           type="button"
           disabled={!canSubmit}
           onClick={handleSubmit}
-          className="inline-flex w-full items-center justify-center rounded-md bg-status-blue px-4 py-2.5 text-sm font-semibold text-white transition-opacity hover:brightness-110 disabled:opacity-50"
+          className="inline-flex w-full items-center justify-center rounded-md bg-primary px-4 py-2.5 text-sm font-semibold text-white transition-opacity hover:bg-brand-dark disabled:opacity-50"
         >
           {pending ? "Saving…" : "Continue to Step 4 →"}
         </button>
@@ -298,7 +298,7 @@ function WeatherError({ kind, detail }: { kind: string; detail: string }) {
 function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <div className="text-[0.6rem] uppercase tracking-wider text-muted-foreground/70">
+      <div className="text-[0.6rem] uppercase tracking-wider text-muted-foreground">
         {label}
       </div>
       <div className="font-mono text-foreground">{value}</div>

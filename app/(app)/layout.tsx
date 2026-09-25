@@ -3,6 +3,7 @@ import { AppShell } from "@/components/app-shell/app-shell";
 import { HeaderActions } from "@/components/app-shell/header-actions";
 import { BrandThemeStyle } from "@/components/app-shell/brand-theme-style";
 import { DatePickerAffordance } from "@/components/app-shell/date-picker-affordance";
+import { rolesCanSeeModule } from "@/components/home/module-catalog";
 import { SafetyReportButton } from "@/components/safety/safety-report-button";
 import { getCompanyProfile, listMyTenants } from "@/lib/api/auth";
 import { SessionExpiredError } from "@/lib/api/client";
@@ -63,19 +64,24 @@ export default async function AppGroupLayout({
     brand_primary_color: string | null;
     brand_primary_dark_color: string | null;
   } = { brand_primary_color: null, brand_primary_dark_color: null };
+  // The tenant's own ops line, for the top bar. The home page used to
+  // hardcode +1 (555) 000-0000 in two places, which every tenant would
+  // have seen.
+  let opsPhone: string | null = null;
   try {
     const profile = await getCompanyProfile();
     brandTheme = {
       brand_primary_color: profile.brand_primary_color,
       brand_primary_dark_color: profile.brand_primary_dark_color,
     };
+    opsPhone = profile.ops_phone?.trim() || null;
   } catch {
     // Non-fatal: fall through to defaults.
   }
 
   // Every prop the top bar needs, assembled in one place — see
-  // header-actions-props.ts for why. /home builds its own top bar and
-  // calls the same helper.
+  // header-actions-props.ts for why. There is one top bar now, for every
+  // page including /home, so this is the only place it is sourced.
   const headerData = session?.user?.email
     ? await buildHeaderActionsData(
         session.user.email,
@@ -99,7 +105,13 @@ export default async function AppGroupLayout({
         primary={brandTheme.brand_primary_color}
         primaryDark={brandTheme.brand_primary_dark_color}
       />
-      <AppShell brand={brand} actionsSlot={actionsSlot} roles={sessionRoles}>
+      <AppShell
+        brand={brand}
+        actionsSlot={actionsSlot}
+        roles={sessionRoles}
+        showOpsChip={rolesCanSeeModule("reservations", sessionRoles)}
+        opsPhone={opsPhone}
+      >
         {children}
         {/* Spec: global Safety Report button, fixed bottom-right on every
             page. Mounted at the layout so it survives client-side

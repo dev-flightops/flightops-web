@@ -69,10 +69,10 @@ export function MaintenanceHeader() {
   return (
     <header className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
       <div>
-        <h1 className="text-lg font-bold tracking-tight text-foreground sm:text-xl">
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">
           Fleet Management
         </h1>
-        <p className="mt-0.5 text-xs text-muted-foreground">
+        <p className="mt-1 text-sm text-muted-foreground">
           Aircraft, maintenance, work orders, and vendors
         </p>
       </div>
@@ -89,8 +89,8 @@ function ActionLink({ action }: { action: ActionButton }) {
   const baseClass = cn(
     "rounded-md px-3 py-1.5 text-xs font-semibold transition-colors",
     action.primary
-      ? "border border-status-blue bg-status-blue text-white hover:brightness-110"
-      : "border border-border bg-card text-foreground hover:bg-muted/40",
+      ? "border border-primary bg-primary text-white hover:bg-brand-dark"
+      : "border border-border bg-card text-foreground hover:bg-accent",
     action.status !== "live" && "cursor-not-allowed opacity-50 hover:bg-card",
   );
 

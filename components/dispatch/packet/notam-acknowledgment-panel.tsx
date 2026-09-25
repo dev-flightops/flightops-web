@@ -45,9 +45,9 @@ export function NotamAcknowledgmentPanel({
         titleAction={
           <span
             className="rounded-md border border-status-yellow/40 bg-status-yellow/10 px-2 py-0.5 text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-status-yellow"
-            title="Real NOTAM list lands when the FAA proxy ships (M2-M-4). Today this is a manual acknowledgment that you have reviewed NOTAMs out-of-band."
+            title="The FAA NOTAM feed isn't connected yet. This records that you reviewed NOTAMs outside the app."
           >
-            Manual ack · proxy M2-M-4
+            Manual acknowledgment
           </span>
         }
       >
@@ -126,7 +126,7 @@ export function NotamAcknowledgmentPanel({
                 className={`flex cursor-pointer items-center justify-between rounded-md border px-3 py-2 text-sm transition-colors ${
                   isAcked
                     ? "border-status-green/40 bg-status-green/5"
-                    : "border-border bg-card/40 hover:border-status-blue/40"
+                    : "border-border bg-card/40 hover:border-primary/40"
                 }`}
               >
                 <span className="flex items-center gap-3">
@@ -136,7 +136,7 @@ export function NotamAcknowledgmentPanel({
                     onChange={() => toggle(icao)}
                     disabled={isPending}
                     aria-label={`Acknowledge NOTAMs for ${icao}`}
-                    className="h-4 w-4 cursor-pointer accent-status-blue"
+                    className="h-4 w-4 cursor-pointer accent-primary"
                   />
                   <span className="font-mono font-semibold">{icao}</span>
                   <span className="text-xs text-muted-foreground">
@@ -170,7 +170,7 @@ export function NotamAcknowledgmentPanel({
             type="button"
             onClick={ackAll}
             disabled={isPending}
-            className="rounded-md border border-status-blue bg-status-blue/15 px-3 py-1 text-[0.7rem] font-semibold text-status-blue hover:bg-status-blue/20 disabled:opacity-60"
+            className="rounded-md border border-primary/40 bg-background px-3 py-1 text-[0.7rem] font-semibold text-primary hover:bg-primary/5 disabled:opacity-60"
           >
             Acknowledge all
           </button>

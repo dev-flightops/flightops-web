@@ -60,17 +60,17 @@ export default async function SettingsPilotPayPage() {
   const modifiers = data?.modifiers ?? [];
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-6">
+    <div className="mx-auto max-w-5xl px-4 sm:px-6 py-8">
       <nav aria-label="Breadcrumb" className="mb-4 text-xs">
         <Link href="/settings" className="text-muted-foreground hover:text-foreground">
           Settings
         </Link>
         <span aria-hidden className="px-1.5 text-muted-foreground">/</span>
-        <span className="font-semibold text-status-blue">Pilot Pay</span>
+        <span className="font-semibold text-primary">Pilot Pay</span>
       </nav>
 
-      <h1 className="mb-1 text-xl font-bold">Pilot Pay Rates &amp; Modifiers</h1>
-      <p className="mb-5 text-xs text-muted-foreground">
+      <h1 className="mb-1 text-2xl font-bold tracking-tight">Pilot Pay Rates &amp; Modifiers</h1>
+      <p className="mb-5 text-sm text-muted-foreground">
         Configure pay rate tables by seniority, airframe, and role. Add daily
         modifiers for medevac, night ops, and other situations.
       </p>
@@ -89,7 +89,7 @@ export default async function SettingsPilotPayPage() {
 
       <Link
         href="/settings"
-        className="inline-block rounded-md border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground hover:bg-muted/30"
+        className="inline-block rounded-md border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground hover:bg-accent"
       >
         Back to Settings
       </Link>
@@ -110,7 +110,7 @@ function PayRateSection({ rates }: { rates: PayRateRow[] }) {
       <div className="mb-4 overflow-hidden rounded-lg border border-border bg-card">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="border-b border-border bg-muted/10 text-left text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
+            <thead className="border-b border-border bg-muted/60 text-left text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
               <tr>
                 <th scope="col" className="px-4 py-2 font-semibold">Type</th>
                 <th scope="col" className="px-4 py-2 font-semibold">Pilot</th>
@@ -131,10 +131,10 @@ function PayRateSection({ rates }: { rates: PayRateRow[] }) {
                 </tr>
               ) : (
                 rates.map((r) => (
-                  <tr key={r.id} className="hover:bg-muted/5">
+                  <tr key={r.id} className="hover:bg-accent">
                     <td className="whitespace-nowrap px-4 py-3 text-xs">
                       {r.rate_type === "daily" ? (
-                        <span className="rounded border border-status-blue/40 bg-status-blue/10 px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider text-status-blue">
+                        <span className="rounded border border-border bg-muted px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider text-muted-foreground">
                           Daily
                         </span>
                       ) : (
@@ -221,7 +221,7 @@ function PayRateSection({ rates }: { rates: PayRateRow[] }) {
             disabled
             aria-disabled="true"
             title={BACKEND_HINT_ADD}
-            className="h-[34px] cursor-not-allowed rounded-md bg-status-blue px-3 text-xs font-semibold text-white disabled:opacity-100"
+            className="h-[34px] cursor-not-allowed rounded-md bg-primary px-3 text-xs font-semibold text-white disabled:opacity-100"
           >
             + Add Rate
           </button>
@@ -244,7 +244,7 @@ function PayModifierSection({ modifiers }: { modifiers: PayModifierRow[] }) {
       <div className="mb-4 overflow-hidden rounded-lg border border-border bg-card">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="border-b border-border bg-muted/10 text-left text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
+            <thead className="border-b border-border bg-muted/60 text-left text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
               <tr>
                 <th scope="col" className="px-4 py-2 font-semibold">Modifier</th>
                 <th scope="col" className="px-4 py-2 font-semibold">Label</th>
@@ -262,7 +262,7 @@ function PayModifierSection({ modifiers }: { modifiers: PayModifierRow[] }) {
                 </tr>
               ) : (
                 modifiers.map((m) => (
-                  <tr key={m.id} className="hover:bg-muted/5">
+                  <tr key={m.id} className="hover:bg-accent">
                     <td className="whitespace-nowrap px-4 py-3 text-xs font-semibold">
                       {m.modifier_name}
                     </td>
@@ -320,7 +320,7 @@ function PayModifierSection({ modifiers }: { modifiers: PayModifierRow[] }) {
             disabled
             aria-disabled="true"
             title={BACKEND_HINT_ADD}
-            className="h-[34px] cursor-not-allowed rounded-md bg-status-blue px-3 text-xs font-semibold text-white disabled:opacity-100"
+            className="h-[34px] cursor-not-allowed rounded-md bg-primary px-3 text-xs font-semibold text-white disabled:opacity-100"
           >
             + Add Modifier
           </button>

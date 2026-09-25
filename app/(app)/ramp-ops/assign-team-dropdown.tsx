@@ -96,7 +96,7 @@ export function AssignTeamDropdown({
         className={
           currentTeam
             ? "inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-[0.65rem] font-semibold hover:brightness-110 disabled:opacity-60"
-            : "inline-flex items-center gap-1.5 rounded-md border border-border bg-card/40 px-2.5 py-1 text-[0.65rem] font-semibold text-foreground hover:bg-muted/40 disabled:opacity-60"
+            : "inline-flex items-center gap-1.5 rounded-md border border-border bg-card/40 px-2.5 py-1 text-[0.65rem] font-semibold text-foreground hover:bg-accent disabled:opacity-60"
         }
         style={
           currentTeam
@@ -151,8 +151,8 @@ export function AssignTeamDropdown({
                         type="submit"
                         role="menuitem"
                         disabled={pending}
-                        className={`flex w-full items-center gap-2 px-3 py-2 text-left text-[0.75rem] hover:bg-muted/40 disabled:opacity-60 ${
-                          isCurrent ? "bg-muted/30 font-semibold" : ""
+                        className={`flex w-full items-center gap-2 px-3 py-2 text-left text-[0.75rem] hover:bg-accent disabled:opacity-60 ${
+                          isCurrent ? "bg-muted/60 font-semibold" : ""
                         }`}
                       >
                         <span
@@ -172,7 +172,7 @@ export function AssignTeamDropdown({
                         {isCurrent && (
                           <span
                             aria-hidden
-                            className="text-status-blue text-[0.7rem]"
+                            className="text-primary text-[0.7rem]"
                           >
                             ✓
                           </span>

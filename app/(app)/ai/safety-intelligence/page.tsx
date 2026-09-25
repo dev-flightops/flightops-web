@@ -89,7 +89,7 @@ function BreakdownPanel({
               className="flex items-center justify-between gap-2 py-1.5 text-sm"
             >
               <span className="text-foreground">{label}</span>
-              <span className="rounded bg-status-blue/15 px-2 py-0.5 text-[0.65rem] font-semibold tabular-nums text-status-blue">
+              <span className="rounded bg-muted px-2 py-0.5 text-[0.65rem] font-semibold tabular-nums text-muted-foreground">
                 {count}
               </span>
             </li>
@@ -143,7 +143,7 @@ export default async function SafetyIntelligencePage() {
   const byLocation = tally(all, locationOf);
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-8">
+    <div className="mx-auto max-w-5xl px-4 sm:px-6 py-8">
       <header className="mb-6">
         <h1 className="text-2xl font-bold tracking-tight text-foreground">
           Safety Intelligence

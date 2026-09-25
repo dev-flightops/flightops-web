@@ -87,7 +87,7 @@ export function LessonPlayer({
           <div className="flex flex-col items-end gap-1">
             <Link
               href={`/academy/enrollments/${enrollmentId}/quiz/${lesson.quiz_id}?lesson=${lesson.id}`}
-              className="rounded-md bg-status-blue px-4 py-2 text-sm font-semibold text-white hover:brightness-110"
+              className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-brand-dark"
             >
               Take Quiz →
             </Link>
@@ -107,7 +107,7 @@ export function LessonPlayer({
             <button
               type="submit"
               disabled={pending}
-              className="rounded-md bg-status-blue px-4 py-2 text-sm font-semibold text-white hover:brightness-110 disabled:opacity-60"
+              className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-brand-dark disabled:opacity-60"
             >
               {pending ? "Saving…" : "Mark Complete"}
             </button>

@@ -54,7 +54,7 @@ export default async function SafetyReportPage({
         <h1 className="mt-2 text-2xl font-bold tracking-tight">
           File a Hazard
         </h1>
-        <p className="mt-2 text-sm text-muted-foreground">
+        <p className="mt-1 text-sm text-muted-foreground">
           Safety reports go straight to the Safety Officer&rsquo;s triage
           inbox. Everything you file is confidential — you can request
           your name be hidden with the &ldquo;anonymous&rdquo; checkbox

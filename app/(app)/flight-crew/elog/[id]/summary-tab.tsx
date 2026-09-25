@@ -139,7 +139,7 @@ function BigTile({
       </div>
       <div
         className={`mt-1 font-mono text-2xl font-extrabold tabular-nums ${
-          value === null ? "text-muted-foreground/70" : toneCls
+          value === null ? "text-muted-foreground" : toneCls
         }`}
       >
         {value === null ? "—" : value.toFixed(1)}
@@ -164,7 +164,7 @@ function Counter({
       </div>
       <div
         className={`mt-1 font-mono text-base font-bold tabular-nums ${
-          dim ? "text-muted-foreground/60" : "text-foreground"
+          dim ? "text-muted-foreground" : "text-foreground"
         }`}
       >
         {value}

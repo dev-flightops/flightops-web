@@ -55,8 +55,8 @@ export default async function DispatcherDashboardPage() {
     <div className="container py-6">
       <DashboardNav active="dispatcher" />
 
-      <h1 className="text-xl font-bold tracking-tight">Dispatcher Live View</h1>
-      <p className="mt-0.5 text-xs text-muted-foreground">
+      <h1 className="text-2xl font-bold tracking-tight">Dispatcher Live View</h1>
+      <p className="mt-1 text-sm text-muted-foreground">
         Active flights · crew legality · pending dispatch packets
       </p>
 
@@ -101,8 +101,8 @@ export default async function DispatcherDashboardPage() {
             <AlertTriangle className="h-3.5 w-3.5" aria-hidden />
             Active Alerts
           </h2>
-          <span className="text-[0.65rem] text-muted-foreground/70">
-            {snapshot.alerts.length} live · 7 more land with M3 services
+          <span className="text-[0.65rem] text-muted-foreground">
+            {snapshot.alerts.length} live · 7 more alert types land with their services
           </span>
         </div>
         <AlertList
@@ -119,7 +119,7 @@ export default async function DispatcherDashboardPage() {
           </h2>
           <Link
             href="/flight-following"
-            className="text-[0.7rem] text-muted-foreground/70 hover:text-status-blue"
+            className="text-[0.7rem] text-muted-foreground hover:text-primary"
           >
             Full following →
           </Link>
@@ -136,7 +136,7 @@ export default async function DispatcherDashboardPage() {
             </h2>
             <Link
               href="/dispatch/"
-              className="rounded-md bg-primary px-3 py-1 text-[0.7rem] font-semibold text-primary-foreground hover:bg-primary/90"
+              className="rounded-md bg-primary px-3 py-1 text-[0.7rem] font-semibold text-primary-foreground hover:bg-brand-dark"
             >
               + New Packet
             </Link>
@@ -177,12 +177,12 @@ function RecentOutcomesPanel() {
         </h2>
         <Link
           href="/flight-following/history"
-          className="text-[0.7rem] text-muted-foreground/70 hover:text-status-blue"
+          className="text-[0.7rem] text-muted-foreground hover:text-primary"
         >
           Dispatch history →
         </Link>
       </div>
-      <p className="py-4 text-center text-xs text-muted-foreground/70">
+      <p className="py-4 text-center text-xs text-muted-foreground">
         No outcomes recorded yet.
       </p>
     </section>
@@ -192,7 +192,7 @@ function RecentOutcomesPanel() {
 function LiveOpsTable({ flights }: { flights: FlightListItem[] }) {
   if (flights.length === 0) {
     return (
-      <p className="py-8 text-center text-xs text-muted-foreground/70">
+      <p className="py-8 text-center text-xs text-muted-foreground">
         No flights scheduled today.
       </p>
     );
@@ -228,7 +228,7 @@ function LiveOpsTable({ flights }: { flights: FlightListItem[] }) {
               <td className="px-2 py-2 text-muted-foreground">
                 {f.origin}→{f.destination}
               </td>
-              <td className="px-2 py-2 text-muted-foreground/60">—</td>
+              <td className="px-2 py-2 text-muted-foreground">—</td>
               <td className="px-2 py-2">
                 <StatusPill flight={f} />
               </td>
@@ -243,9 +243,9 @@ function LiveOpsTable({ flights }: { flights: FlightListItem[] }) {
               <td className="px-2 py-2 text-foreground/80">
                 {formatTime(f.scheduled_arrival_at)}
               </td>
-              <td className="px-2 py-2 text-muted-foreground/60">—</td>
+              <td className="px-2 py-2 text-muted-foreground">—</td>
               <td className="px-2 py-2 text-right">
-                <Link href={`/dispatch/${f.id}`} className="text-status-blue hover:underline">
+                <Link href={`/dispatch/${f.id}`} className="text-primary hover:underline">
                   →
                 </Link>
               </td>
@@ -260,7 +260,7 @@ function LiveOpsTable({ flights }: { flights: FlightListItem[] }) {
 function PendingDispatchTable({ flights }: { flights: FlightListItem[] }) {
   if (flights.length === 0) {
     return (
-      <p className="inline-flex w-full items-center justify-center gap-1.5 py-6 text-center text-xs text-muted-foreground/70">
+      <p className="inline-flex w-full items-center justify-center gap-1.5 py-6 text-center text-xs text-muted-foreground">
         <CheckCircle2
           className="h-3.5 w-3.5 text-status-green"
           aria-hidden
@@ -294,7 +294,7 @@ function PendingDispatchTable({ flights }: { flights: FlightListItem[] }) {
               <td className="px-2 py-2 text-right">
                 <Link
                   href={`/dispatch/?flight=${f.id}`}
-                  className="text-[0.7rem] font-medium text-status-blue hover:underline"
+                  className="text-[0.7rem] font-medium text-primary hover:underline"
                 >
                   Dispatch →
                 </Link>
@@ -352,7 +352,7 @@ function StatusPill({ flight }: { flight: FlightListItem }) {
         ? "bg-status-red/15 text-status-red"
         : flight.status === "completed"
           ? "bg-muted text-muted-foreground"
-          : "bg-muted/40 text-muted-foreground";
+          : "bg-muted text-muted-foreground";
   return (
     <span
       className={

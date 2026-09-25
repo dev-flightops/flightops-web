@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
-import { DepartmentNav } from "./department-nav";
+import { activeModuleId, DepartmentNav } from "./department-nav";
 
 vi.mock("next/navigation", () => ({
   usePathname: vi.fn(),
@@ -128,5 +128,54 @@ describe("DepartmentNav", () => {
     expect(screen.getByTestId("dept-nav-mx-intel").className).toContain(
       "purple",
     );
+  });
+});
+
+describe("one current module", () => {
+  it("lights only Assignments on /academy/assignments, not the /academy library too", () => {
+    vi.mocked(usePathname).mockReturnValue("/academy/assignments");
+    render(<DepartmentNav />);
+    expect(screen.getByTestId("dept-nav-academy-assignments")).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
+    expect(
+      screen.getByTestId("dept-nav-academy-course-library"),
+    ).not.toHaveAttribute("aria-current");
+    expect(document.querySelectorAll('[aria-current="page"]')).toHaveLength(1);
+  });
+
+  it("still lights the library on a course under /academy", () => {
+    vi.mocked(usePathname).mockReturnValue("/academy/0c1d-course");
+    render(<DepartmentNav />);
+    expect(
+      screen.getByTestId("dept-nav-academy-course-library"),
+    ).toHaveAttribute("aria-current", "page");
+  });
+
+  const live = (id: string, href: string) => ({ id, href, status: "live" as const });
+
+  it("prefers the most specific href", () => {
+    const mods = [live("lib", "/academy"), live("assign", "/academy/assignments")];
+    expect(activeModuleId(mods, "/academy/assignments/x")).toBe("assign");
+    expect(activeModuleId(mods, "/academy")).toBe("lib");
+  });
+
+  it("matches whole path segments only", () => {
+    const mods = [live("fuel", "/fuel")];
+    expect(activeModuleId(mods, "/fuel-supplier")).toBeNull();
+    expect(activeModuleId(mods, "/fuel/orders")).toBe("fuel");
+  });
+
+  it("ignores trailing slashes and an href's query string", () => {
+    const mods = [live("hist", "/flight-crew/history?tab=duty"), live("home", "/home/")];
+    expect(activeModuleId(mods, "/flight-crew/history/")).toBe("hist");
+    expect(activeModuleId(mods, "/home")).toBe("home");
+  });
+
+  it("never marks an unbuilt module current", () => {
+    expect(
+      activeModuleId([{ id: "crew", href: "/crew", status: "m3" }], "/crew"),
+    ).toBeNull();
   });
 });

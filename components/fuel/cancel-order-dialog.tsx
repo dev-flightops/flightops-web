@@ -33,7 +33,7 @@ export function CancelOrderDialog({ orderId }: { orderId: string }) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="rounded-md border border-status-red/40 bg-status-red/10 px-3 py-1.5 text-xs font-semibold text-status-red hover:bg-status-red/20"
+        className="rounded-md border border-status-red/40 bg-status-red/10 px-3 py-1.5 text-xs font-semibold text-status-red hover:bg-status-red/15"
       >
         Cancel order
       </button>
@@ -83,14 +83,14 @@ export function CancelOrderDialog({ orderId }: { orderId: string }) {
                 type="button"
                 onClick={() => setOpen(false)}
                 disabled={pending}
-                className="rounded-md border border-border bg-card px-3 py-2 text-xs font-semibold text-foreground hover:bg-muted/40"
+                className="rounded-md border border-border bg-card px-3 py-2 text-xs font-semibold text-foreground hover:bg-accent"
               >
                 Keep order
               </button>
               <button
                 type="submit"
                 disabled={pending}
-                className="inline-flex items-center gap-1.5 rounded-md bg-status-red px-4 py-2 text-xs font-semibold text-white hover:brightness-110 disabled:opacity-60"
+                className="inline-flex items-center gap-1.5 rounded-md bg-status-red px-4 py-2 text-xs font-semibold text-white hover:brightness-95 disabled:opacity-60"
               >
                 {pending && <Spinner size="xs" />}
                 {pending ? "Cancelling…" : "Cancel order"}

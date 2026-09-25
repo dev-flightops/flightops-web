@@ -27,7 +27,7 @@ const EXAMPLES = [
 
 export default function MxIntelligencePage() {
   return (
-    <div className="mx-auto max-w-4xl px-4 py-8">
+    <div className="mx-auto max-w-4xl px-4 sm:px-6 py-8">
       <Link
         href="/maintenance"
         className="text-[0.65rem] font-semibold uppercase tracking-wider text-muted-foreground hover:text-foreground"

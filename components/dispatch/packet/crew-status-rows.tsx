@@ -14,10 +14,10 @@
 export function CrewLegalityHints() {
   return (
     <div className="space-y-3">
-      <div className="rounded-md bg-muted/40 px-5 py-3.5 text-xs text-muted-foreground">
+      <div className="rounded-md bg-muted/60 px-5 py-3.5 text-xs text-muted-foreground">
         Enter PIC/SIC names above to check crew legality.
       </div>
-      <div className="rounded-md bg-muted/40 px-5 py-3.5 text-xs text-muted-foreground">
+      <div className="rounded-md bg-muted/60 px-5 py-3.5 text-xs text-muted-foreground">
         Enter N-number above to check airworthiness.
       </div>
     </div>

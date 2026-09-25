@@ -21,17 +21,17 @@ import { AutoClock } from "./auto-clock";
  */
 export function PageHeader() {
   return (
-    <div className="mb-4 flex items-start justify-between gap-4">
+    <div className="mb-4 flex flex-wrap items-start justify-between gap-4">
       <div>
-        <h1 className="text-xl font-bold tracking-tight sm:text-2xl">
+        <h1 className="text-2xl font-bold tracking-tight">
           Flight Following
         </h1>
-        <p className="mt-0.5 text-xs text-muted-foreground">
+        <p className="mt-1 text-sm text-muted-foreground">
           Live ops board · auto-refreshes every 60 s ·{" "}
           <AutoClock />
         </p>
       </div>
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2">
         <Button asChild variant="secondary" size="sm">
           <Link href="/schedule" title="Published schedule + printable manifest">
             Schedule

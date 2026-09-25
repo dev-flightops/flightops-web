@@ -146,8 +146,8 @@ export function QueryView({
   return (
     <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6">
       <header className="mb-4">
-        <h1 className="text-2xl font-bold">Intelligence Query</h1>
-        <p className="mt-0.5 text-xs text-muted-foreground">
+        <h1 className="text-2xl font-bold tracking-tight">Intelligence Query</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
           Ask about your operation in plain English
         </p>
       </header>
@@ -181,12 +181,12 @@ export function QueryView({
             maxLength={500}
             autoComplete="off"
             placeholder="e.g. How many flights were cancelled last month?"
-            className="flex-1 rounded-md border border-border bg-background px-3 py-2 text-sm focus:border-status-blue focus:outline-none"
+            className="flex-1 rounded-md border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none"
           />
           <button
             type="submit"
             disabled={pending || !draft.trim()}
-            className="rounded-md bg-status-blue px-5 py-2 text-xs font-semibold text-white hover:brightness-110 disabled:opacity-40"
+            className="rounded-md bg-primary px-5 py-2 text-xs font-semibold text-white hover:bg-brand-dark disabled:opacity-40"
           >
             {pending ? "Asking…" : "Ask"}
           </button>
@@ -199,7 +199,7 @@ export function QueryView({
               type="button"
               onClick={() => onAsk(s)}
               disabled={pending}
-              className="rounded-lg border border-status-blue/20 bg-status-blue/5 px-2.5 py-1 text-[0.65rem] text-status-blue hover:bg-status-blue/12 disabled:opacity-40"
+              className="rounded-lg border border-primary/40 bg-background px-2.5 py-1 text-[0.65rem] text-primary hover:bg-primary/5 disabled:opacity-40"
             >
               {s}
             </button>
@@ -228,7 +228,7 @@ export function QueryView({
               <li key={e.name} className="text-xs">
                 <span className="font-semibold">{e.name}</span>
                 <span className="text-muted-foreground"> — {e.description}</span>
-                <span className="block text-[0.65rem] text-muted-foreground/70">
+                <span className="block text-[0.65rem] text-muted-foreground">
                   {e.fields.join(", ")}
                 </span>
               </li>
@@ -272,13 +272,13 @@ function TurnBlock({ turn }: { turn: Turn }) {
 
         {turn.result?.spec ? (
           <details className="mt-3">
-            <summary className="cursor-pointer text-[0.65rem] text-muted-foreground/70 hover:text-muted-foreground">
+            <summary className="cursor-pointer text-[0.65rem] text-muted-foreground hover:text-muted-foreground">
               What I understood
             </summary>
             {/* Legacy prints the SQL it generated here. There is no
                 SQL to print — the model never writes any — so this is
                 the equivalent: the reading the answer came from. */}
-            <p className="mt-1.5 rounded-md bg-muted/20 px-3 py-2 font-mono text-[0.65rem] text-muted-foreground">
+            <p className="mt-1.5 rounded-md bg-muted/60 px-3 py-2 font-mono text-[0.65rem] text-muted-foreground">
               {describeSpec(turn.result.spec)}
             </p>
           </details>

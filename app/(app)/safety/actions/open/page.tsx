@@ -69,7 +69,7 @@ export default async function OpenCapaPage({
         <h1 className="mt-2 text-2xl font-bold tracking-tight">
           Open a Corrective Action
         </h1>
-        <p className="mt-2 text-sm text-muted-foreground">
+        <p className="mt-1 text-sm text-muted-foreground">
           Track the follow-through work needed to prevent this{" "}
           {sourceType} from recurring. Assign to an owner and give it a
           due date.

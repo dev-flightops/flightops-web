@@ -39,7 +39,7 @@ export default async function RequiredReadingPage() {
   const acknowledged = feed.items.filter((r) => r.status.acknowledged);
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-6 sm:px-6">
+    <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6">
       <nav aria-label="Breadcrumb" className="mb-4 flex items-center text-xs">
         <Link
           href="/home"
@@ -60,14 +60,14 @@ export default async function RequiredReadingPage() {
         <span aria-hidden className="px-1.5 text-muted-foreground">
           ›
         </span>
-        <span className="font-semibold text-status-blue">Required Reading</span>
+        <span className="font-semibold text-primary">Required Reading</span>
       </nav>
 
       <header className="mb-6 border-b border-border pb-4">
         <p className="text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
           Documents
         </p>
-        <h1 className="mt-0.5 text-2xl font-bold sm:text-3xl">
+        <h1 className="mt-0.5 text-2xl font-bold tracking-tight">
           Required Reading
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
@@ -133,7 +133,7 @@ function Section({
         <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
           {title}
         </h2>
-        <span className="text-xs text-muted-foreground/60">
+        <span className="text-xs text-muted-foreground">
           {count} document{count === 1 ? "" : "s"}
         </span>
       </div>
@@ -174,7 +174,7 @@ function RowCard({
         : "Ack required";
 
   return (
-    <li className="rounded-lg border border-border bg-card px-4 py-3 hover:bg-muted/5">
+    <li className="rounded-lg border border-border bg-card px-4 py-3 hover:bg-accent">
       <Link
         href={`/documents/${doc.id}`}
         className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between"

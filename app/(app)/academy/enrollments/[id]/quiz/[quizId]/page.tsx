@@ -52,6 +52,12 @@ export default async function QuizPage({
     if (err instanceof ApiError) {
       if (err.status === 404) notFound();
       if (err.status === 401) redirect("/login");
+      // An admin can open anyone's enrollment, and the lesson player
+      // offers the quiz there — but only the learner may take it
+      // (403 not_enrollee). That used to fall through to the error page.
+      if (err.status === 403) {
+        return <NotYourQuiz enrollmentId={enrollmentId} lesson={lessonParam} />;
+      }
     }
     throw err;
   }
@@ -103,7 +109,7 @@ export default async function QuizPage({
             You already passed this quiz —{" "}
             {passingAttempt.score}/{passingAttempt.question_count} correct.
           </p>
-          <p className="mt-0.5 text-xs text-status-green/80">
+          <p className="mt-0.5 text-xs text-status-green">
             Retake below if you want to study the material again, or head
             back to the lesson to mark it complete.
           </p>
@@ -136,6 +142,38 @@ export default async function QuizPage({
         quiz={quiz}
         backToLessonHref={backToLessonHref}
       />
+    </div>
+  );
+}
+
+function NotYourQuiz({
+  enrollmentId,
+  lesson,
+}: {
+  enrollmentId: string;
+  lesson?: string;
+}) {
+  const back = lesson
+    ? `/academy/enrollments/${enrollmentId}?lesson=${lesson}`
+    : `/academy/enrollments/${enrollmentId}`;
+  return (
+    <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
+      <p className="text-xs font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+        <Link href={back} className="hover:text-foreground">
+          ← Back to lesson
+        </Link>
+      </p>
+      <div
+        role="status"
+        className="mt-4 rounded-lg border border-border bg-muted/60 px-4 py-3 text-sm"
+      >
+        <p className="font-semibold text-foreground">
+          Only the enrolled learner can take this quiz.
+        </p>
+        <p className="mt-0.5 text-muted-foreground">
+          You&apos;re viewing someone else&apos;s enrollment.
+        </p>
+      </div>
     </div>
   );
 }

@@ -32,8 +32,11 @@ export function FleetCard({ summary }: { summary: FleetAircraftSummary }) {
   return (
     <article
       className={cn(
-        "rounded-xl border border-border bg-card p-5",
-        !summary.is_active && "opacity-60",
+        "rounded-xl border border-border p-5",
+        // Out of service reads from the ground and the grounding chip,
+        // not from fading the card: the grounded aircraft is the one
+        // whose reason most needs to be legible.
+        summary.is_active ? "bg-card" : "bg-muted/60",
       )}
     >
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -60,7 +63,7 @@ export function FleetCard({ summary }: { summary: FleetAircraftSummary }) {
               model: summary.aircraft.model,
             })}
             {summary.serial_number && (
-              <span className="text-muted-foreground/70">
+              <span className="text-muted-foreground">
                 {" · S/N "}
                 <span className="font-mono">{summary.serial_number}</span>
               </span>
@@ -75,7 +78,7 @@ export function FleetCard({ summary }: { summary: FleetAircraftSummary }) {
         </div>
         <Link
           href={`/maintenance/aircraft/${summary.aircraft.id}`}
-          className="shrink-0 rounded-md border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-muted/40"
+          className="shrink-0 rounded-md border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-accent"
         >
           Details →
         </Link>
@@ -196,7 +199,7 @@ const AIRFRAME_PALETTE: Record<
 function AirframeChip({ airframeType }: { airframeType: string }) {
   const entry = AIRFRAME_PALETTE[airframeType.toLowerCase()] ?? {
     abbr: airframeType.toUpperCase().slice(0, 4),
-    className: "bg-muted/40 text-muted-foreground border border-border",
+    className: "bg-muted text-muted-foreground border border-border",
   };
   return (
     <span
@@ -212,7 +215,7 @@ function AirframeChip({ airframeType }: { airframeType: string }) {
 
 function BaseBadge({ base }: { base: string }) {
   return (
-    <span className="rounded bg-muted/40 px-1.5 py-0.5 text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+    <span className="rounded bg-muted px-1.5 py-0.5 text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
       {base}
     </span>
   );
@@ -270,7 +273,7 @@ function groundingChipConfig(reason: string | null): {
     default:
       return {
         label: "Inactive",
-        className: `${base} bg-muted/40 text-muted-foreground`,
+        className: `${base} bg-muted text-muted-foreground`,
       };
   }
 }

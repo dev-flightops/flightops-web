@@ -75,14 +75,14 @@ export default async function OpsScoreDashboardPage({
 
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-xl font-bold tracking-tight">
+          <h1 className="text-2xl font-bold tracking-tight">
             Daily Operations Score
           </h1>
-          <p className="mt-0.5 text-xs text-muted-foreground">{longDate}</p>
+          <p className="mt-1 text-sm text-muted-foreground">{longDate}</p>
         </div>
         <Link
           href="/dashboards/system-health"
-          className="inline-flex items-center gap-1.5 text-xs text-status-blue hover:underline"
+          className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline"
         >
           <Stethoscope className="h-3.5 w-3.5" aria-hidden />
           System Health →
@@ -97,7 +97,7 @@ export default async function OpsScoreDashboardPage({
         {scoreError && (
           <p
             role="alert"
-            className="mx-auto mt-3 max-w-md rounded-md border border-status-red/30 bg-status-red/10 px-3 py-2 text-xs text-status-red"
+            className="mx-auto mt-3 max-w-md rounded-md border border-status-red/30 bg-status-red/10 px-4 sm:px-6 py-2 text-xs text-status-red"
           >
             {scoreError}
           </p>
@@ -120,7 +120,7 @@ export default async function OpsScoreDashboardPage({
             the breakdown below.
           </p>
         )}
-        <div className="mt-4 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-[0.65rem] text-muted-foreground/80">
+        <div className="mt-4 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-[0.65rem] text-muted-foreground">
           {/* Percentages, not absolute points. While any pillar is
               unmeasurable the total is out of less than 100, and
               "90–100 Excellent" beside a score out of 97 reads as an
@@ -188,7 +188,7 @@ export default async function OpsScoreDashboardPage({
             body="Starts at 10. Deducts 2 pts per currently overdue flight. The 3 pts allocated to diversions and returns-to-departure are withheld rather than awarded: a flight record has no actual destination, so a diversion cannot be detected, and scoring it as clean would assert something we cannot see. This is not a safety compliance score — it is a signal of unusual events that warrant leadership attention."
           />
         </div>
-        <div className="mt-4 space-y-1 border-t border-border pt-3 text-[0.7rem] text-muted-foreground/80">
+        <div className="mt-4 space-y-1 border-t border-border pt-3 text-[0.7rem] text-muted-foreground">
           <p>
             This score is informational and trend-focused. A single day&apos;s
             score should always be read in context.
@@ -206,7 +206,7 @@ export default async function OpsScoreDashboardPage({
           8-Week Completion Trend
         </h2>
         <CompletionTrend opsScore={opsScore} />
-        <div className="mt-3 space-y-1 text-[0.7rem] text-muted-foreground/80">
+        <div className="mt-3 space-y-1 text-[0.7rem] text-muted-foreground">
           <p>
             Based on recorded DispatchOutcomes. Flights without outcomes are not
             counted.
@@ -215,7 +215,7 @@ export default async function OpsScoreDashboardPage({
             Record outcomes in{" "}
             <Link
               href="/flight-following/history"
-              className="text-status-blue hover:underline"
+              className="text-primary hover:underline"
             >
               Dispatch History
             </Link>{" "}
@@ -294,14 +294,14 @@ function CompletionTrend({ opsScore }: { opsScore: number }) {
     <div className="flex h-32 items-end justify-between gap-2">
       {labels.map(({ key, pct }) => (
         <div key={key} className="flex flex-1 flex-col items-center gap-1">
-          <span className="text-[0.6rem] text-muted-foreground/60">
+          <span className="text-[0.6rem] text-muted-foreground">
             {pct > 0 ? `${pct.toFixed(0)}%` : "0%"}
           </span>
           <div
             className="w-full rounded-t bg-status-blue/60"
             style={{ height: `${Math.max(pct, 2)}%` }}
           />
-          <span className="font-mono text-[0.6rem] text-muted-foreground/60">
+          <span className="font-mono text-[0.6rem] text-muted-foreground">
             {key}
           </span>
         </div>

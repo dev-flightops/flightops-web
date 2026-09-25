@@ -30,9 +30,9 @@ export interface StatusToken {
 export const STATUS_TOKENS: Record<CurrencyStatus, StatusToken> = {
   not_started: {
     label: "Not Started",
-    pill: "rounded bg-muted/40 px-1.5 py-0.5 text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground",
+    pill: "rounded bg-muted px-1.5 py-0.5 text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground",
     badge:
-      "rounded bg-muted/30 px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground",
+      "rounded bg-muted px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground",
     rowTint: "",
   },
   upcoming: {
@@ -44,9 +44,9 @@ export const STATUS_TOKENS: Record<CurrencyStatus, StatusToken> = {
   },
   early_month: {
     label: "Early",
-    pill: "rounded bg-status-teal/20 px-1.5 py-0.5 text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-status-teal",
+    pill: "rounded bg-status-teal/15 px-1.5 py-0.5 text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-status-teal",
     badge:
-      "rounded bg-status-teal/20 px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-[0.06em] text-status-teal",
+      "rounded bg-status-teal/15 px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-[0.06em] text-status-teal",
     rowTint: "",
   },
   due_this_month: {
@@ -67,7 +67,7 @@ export const STATUS_TOKENS: Record<CurrencyStatus, StatusToken> = {
     label: "Non-Current",
     pill: "rounded bg-status-red/15 px-1.5 py-0.5 text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-status-red",
     badge:
-      "rounded bg-status-red/20 px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-[0.06em] text-status-red",
+      "rounded bg-status-red/15 px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-[0.06em] text-status-red",
     rowTint: "bg-status-red/[0.04]",
   },
 };

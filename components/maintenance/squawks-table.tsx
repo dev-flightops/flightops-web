@@ -36,7 +36,7 @@ export function SquawksTable({
   return (
     <div className="overflow-hidden rounded-lg border border-border bg-card">
       <table className="w-full text-xs">
-        <thead className="bg-muted/30">
+        <thead className="bg-muted/60">
           <tr className="text-left text-[0.6rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
             {showAircraft && <th className="px-3 py-2">Aircraft</th>}
             <th className="px-3 py-2">Title</th>
@@ -70,12 +70,12 @@ function SquawkRow({
   const reported = formatBoth(squawk.reported_at);
 
   return (
-    <tr className="border-t border-border hover:bg-muted/20">
+    <tr className="border-t border-border hover:bg-accent">
       {showAircraft && (
         <td className="px-3 py-2.5">
           <Link
             href={`/maintenance/aircraft/${squawk.aircraft.id}`}
-            className="font-mono font-semibold text-status-blue hover:underline"
+            className="font-mono font-semibold text-primary hover:underline"
           >
             {squawk.aircraft.tail_number}
           </Link>
@@ -97,7 +97,7 @@ function SquawkRow({
       </td>
       <td className="px-3 py-2.5 text-muted-foreground">
         <div className="font-mono">{reported.local}</div>
-        <div className="font-mono text-[0.6rem] opacity-80">{reported.zulu}</div>
+        <div className="font-mono text-[0.6rem]">{reported.zulu}</div>
       </td>
       <td className="px-3 py-2.5 text-muted-foreground">
         {squawk.reported_by.full_name}
@@ -121,7 +121,7 @@ function SeverityPill({ severity }: { severity: SquawkSeverity }) {
     },
     minor: {
       label: "Minor",
-      className: "bg-muted/40 text-muted-foreground",
+      className: "bg-muted text-muted-foreground",
     },
   };
   const c = config[severity];
@@ -141,7 +141,7 @@ function StatusChip({ status }: { status: SquawkResponse["status"] }) {
   const label =
     status === "in_progress" ? "In progress" : status === "open" ? "Open" : "Resolved";
   return (
-    <span className="inline-flex items-center rounded bg-muted/30 px-1.5 py-0.5 font-mono text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+    <span className="inline-flex items-center rounded bg-muted px-1.5 py-0.5 font-mono text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
       {label}
     </span>
   );

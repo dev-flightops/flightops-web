@@ -12,26 +12,32 @@ import { cn } from "@/lib/utils";
 //   ghost        → text-only with hover bg
 //   link         → underline-on-hover text-only
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-lg text-[0.8125rem] font-semibold ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
+  "inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-md text-[0.8125rem] font-semibold ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
   {
     variants: {
       variant: {
+        // The home page's "Call ops": solid brand, DARKER on hover, and
+        // no lift — the home cards were built "no lift so the layout
+        // stays rock-solid during pointer movement", and a button that
+        // hops under the cursor is the same problem.
         default:
-          "bg-primary text-primary-foreground shadow-sm hover:brightness-110 hover:-translate-y-px hover:shadow",
+          "bg-primary text-primary-foreground shadow-sm hover:bg-brand-dark",
         destructive:
-          "bg-destructive text-destructive-foreground hover:brightness-110",
+          "bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90",
+        // Neutral bordered — the everyday secondary action.
         outline:
-          "border border-border bg-transparent text-foreground hover:bg-border/40",
+          "border border-input bg-background text-foreground shadow-sm hover:bg-accent",
+        // The home page's secondary: brand outline on white.
         secondary:
-          "bg-border/40 text-foreground border border-border hover:bg-border/70",
+          "border border-primary/40 bg-background text-primary hover:bg-primary/5",
         ghost:
-          "text-muted-foreground hover:bg-primary/10 hover:text-primary",
+          "text-muted-foreground hover:bg-accent hover:text-foreground",
         link: "text-primary underline-offset-4 hover:underline",
       },
       size: {
         default: "h-9 px-4 py-2",
         sm: "h-8 px-3 text-xs",
-        lg: "h-10 px-6",
+        lg: "h-10 px-5 text-[0.8125rem]",
         icon: "h-9 w-9",
       },
     },

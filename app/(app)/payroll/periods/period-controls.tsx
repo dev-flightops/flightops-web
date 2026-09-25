@@ -57,7 +57,7 @@ export function NewPeriodForm() {
       <button
         type="submit"
         disabled={pending}
-        className="h-[38px] rounded-md bg-status-blue px-4 text-xs font-semibold text-white hover:brightness-110 disabled:opacity-60"
+        className="h-[38px] rounded-md bg-primary px-4 text-xs font-semibold text-white hover:bg-brand-dark disabled:opacity-60"
       >
         {pending ? "Creating…" : "+ New Period"}
       </button>
@@ -134,7 +134,7 @@ export function LockExportButtons({
           type="button"
           disabled={pending}
           onClick={onLock}
-          className="text-xs font-semibold text-status-yellow hover:text-status-yellow/80 disabled:opacity-50"
+          className="text-xs font-semibold text-status-yellow hover:underline disabled:opacity-50"
         >
           Lock
         </button>
@@ -144,7 +144,7 @@ export function LockExportButtons({
           type="button"
           disabled={pending}
           onClick={onExport}
-          className="text-xs font-semibold text-status-green hover:text-status-green/80 disabled:opacity-50"
+          className="text-xs font-semibold text-status-green hover:underline disabled:opacity-50"
         >
           {status === "exported" ? "Re-export CSV" : "Export CSV"}
         </button>

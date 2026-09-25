@@ -111,7 +111,7 @@ export default async function CapaBoardPage({
         </div>
         <Link
           href="/safety/actions/mine"
-          className="rounded-md border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground/80 hover:bg-muted/20"
+          className="rounded-md border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground/80 hover:bg-accent"
         >
           My Assignments
         </Link>
@@ -137,7 +137,7 @@ export default async function CapaBoardPage({
                 className={
                   "rounded-md border px-2.5 py-1 text-xs font-semibold transition " +
                   (isActive
-                    ? "border-status-blue bg-status-blue/15 text-status-blue"
+                    ? "border-primary bg-primary/10 text-primary"
                     : "border-border bg-card text-muted-foreground hover:text-foreground")
                 }
               >
@@ -162,7 +162,7 @@ export default async function CapaBoardPage({
             No corrective actions matching &ldquo;{activeFilter.label}&rdquo;
             {overdueOnly ? " (overdue only)" : ""}.
           </p>
-          <p className="mt-2 text-xs text-muted-foreground/70">
+          <p className="mt-2 text-xs text-muted-foreground">
             CAPAs are opened from a hazard or incident detail page.
           </p>
         </div>
@@ -215,7 +215,7 @@ function CapaTable({
     <div className="overflow-hidden rounded-lg border border-border bg-card">
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
-          <thead className="border-b border-border bg-muted/10 text-left text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
+          <thead className="border-b border-border bg-muted/60 text-left text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
             <tr>
               <th scope="col" className="px-4 py-2.5 font-semibold">
                 Due
@@ -242,7 +242,7 @@ function CapaTable({
               const dueDate = new Date(c.due_date + "T00:00:00");
               const overdue = dueDate < today && c.status !== "closed";
               return (
-                <tr key={c.id} className="hover:bg-muted/5">
+                <tr key={c.id} className="hover:bg-accent">
                   <td className="whitespace-nowrap px-4 py-3 text-xs">
                     <span
                       className={
@@ -273,7 +273,7 @@ function CapaTable({
                           ? `/safety/${c.source_id}`
                           : `/safety/incidents/${c.source_id}`
                       }
-                      className="text-status-blue hover:underline"
+                      className="text-primary hover:underline"
                     >
                       {c.source_type === "hazard" ? "Hazard" : "Incident"} →
                     </Link>
@@ -289,7 +289,7 @@ function CapaTable({
                           ? "border-status-yellow bg-status-yellow/15 text-status-yellow"
                           : c.status === "open"
                             ? "border-status-blue bg-status-blue/15 text-status-blue"
-                            : "border-border bg-muted/20 text-muted-foreground")
+                            : "border-border bg-muted text-muted-foreground")
                       }
                     >
                       {CAPA_STATUS_LABELS[c.status]}
@@ -298,7 +298,7 @@ function CapaTable({
                   <td className="whitespace-nowrap px-4 py-3 text-right">
                     <Link
                       href={`/safety/actions/${c.id}`}
-                      className="text-xs font-semibold text-status-blue hover:underline"
+                      className="text-xs font-semibold text-primary hover:underline"
                     >
                       Open →
                     </Link>

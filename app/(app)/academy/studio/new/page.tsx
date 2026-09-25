@@ -30,7 +30,7 @@ export default async function NewCoursePage() {
         <h1 className="mt-2 text-2xl font-bold tracking-tight">
           New Course
         </h1>
-        <p className="mt-2 text-sm text-muted-foreground">
+        <p className="mt-1 text-sm text-muted-foreground">
           Give it a title + description; add lessons once it&rsquo;s
           created. The course won&rsquo;t appear in the public catalog
           until it has lessons.

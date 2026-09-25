@@ -38,7 +38,7 @@ export function statusClasses(status: string): string {
   if (status === "paid") return "bg-status-green/15 text-status-green";
   if (status === "sent") return "bg-status-blue/15 text-status-blue";
   if (status === "draft") return "bg-status-yellow/15 text-status-yellow";
-  return "bg-muted/40 text-muted-foreground";
+  return "bg-muted text-muted-foreground";
 }
 
 /** True when a sent invoice is past its due date. Compared as calendar

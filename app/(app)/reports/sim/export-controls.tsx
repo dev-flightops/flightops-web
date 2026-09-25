@@ -201,7 +201,7 @@ export function ExportControls({
               ? "Nothing to export in this window"
               : undefined
           }
-          className="rounded-md bg-status-blue px-3 py-1.5 text-xs font-semibold text-white hover:brightness-110 disabled:opacity-40"
+          className="rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-dark disabled:opacity-40"
         >
           {busy ? "Preparing…" : `Download ${FORMAT_LABEL[effectiveFormat]}`}
         </button>

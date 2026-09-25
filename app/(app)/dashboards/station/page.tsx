@@ -80,10 +80,10 @@ export default async function StationDashboardPage({
 
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-xl font-bold tracking-tight">
+          <h1 className="text-2xl font-bold tracking-tight">
             Station: <span className="font-mono">{station}</span>
           </h1>
-          <p className="mt-0.5 text-xs text-muted-foreground">
+          <p className="mt-1 text-sm text-muted-foreground">
             Per-station traffic, ground times, and turn metrics
           </p>
         </div>
@@ -138,8 +138,8 @@ export default async function StationDashboardPage({
             <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
               Active Alerts
             </h2>
-            <span className="text-[0.65rem] text-muted-foreground/70">
-              {scopedSnapshot.alerts.length} live · NOTAM / weather alerts land with M3
+            <span className="text-[0.65rem] text-muted-foreground">
+              {scopedSnapshot.alerts.length} live · NOTAM and weather alerts land with their services
             </span>
           </div>
           <AlertList
@@ -157,7 +157,7 @@ export default async function StationDashboardPage({
           </h2>
           <Link
             href="/dispatch/"
-            className="text-[0.7rem] text-muted-foreground/70 hover:text-status-blue"
+            className="text-[0.7rem] text-muted-foreground hover:text-primary"
           >
             Open dispatch →
           </Link>
@@ -195,7 +195,7 @@ function StationFlightsTable({
 }) {
   if (flights.length === 0) {
     return (
-      <p className="py-6 text-center text-xs text-muted-foreground/70">
+      <p className="py-6 text-center text-xs text-muted-foreground">
         No flights to show.
       </p>
     );
@@ -216,7 +216,7 @@ function StationFlightsTable({
           {flights.map((f) => (
             <tr key={f.id} className="border-b border-border/60 last:border-0">
               <td className="px-2 py-2 font-semibold text-foreground">
-                <Link href={`/dispatch/${f.id}`} className="hover:text-status-blue">
+                <Link href={`/dispatch/${f.id}`} className="hover:text-primary">
                   {f.flight_number}
                 </Link>
               </td>
@@ -272,7 +272,7 @@ function NetworkGrid({
 
   if (bases.length === 0) {
     return (
-      <p className="py-4 text-center text-xs text-muted-foreground/70">
+      <p className="py-4 text-center text-xs text-muted-foreground">
         No bases configured. Add bases in Settings → Bases.
       </p>
     );
@@ -295,8 +295,8 @@ function NetworkGrid({
           >
             <p className="font-mono font-semibold text-foreground">{b.icao}</p>
             <p className="mt-1 text-[0.65rem] text-muted-foreground">
-              <span className="text-status-blue/80">↑ {c.dep} dep</span>{" "}
-              <span className="text-status-green/80">↓ {c.arr} arr</span>
+              <span className="text-status-blue">↑ {c.dep} dep</span>{" "}
+              <span className="text-status-green">↓ {c.arr} arr</span>
             </p>
             {c.inbound > 0 && (
               <p className="mt-0.5 text-[0.6rem] text-status-blue">

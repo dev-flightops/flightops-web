@@ -35,7 +35,7 @@ export default async function MaintenanceLandingPage() {
   }
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6">
+    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
       <MaintenanceHeader />
 
       {loadError ? (
@@ -53,7 +53,7 @@ export default async function MaintenanceLandingPage() {
           <p className="text-sm text-muted-foreground">
             No aircraft in this tenant&apos;s fleet yet.
           </p>
-          <p className="mt-2 text-xs text-muted-foreground/70">
+          <p className="mt-2 text-xs text-muted-foreground">
             Add the first one from{" "}
             <Link href="/settings/fleet" className="underline">
               Settings &rarr; Fleet
@@ -62,7 +62,7 @@ export default async function MaintenanceLandingPage() {
           </p>
         </div>
       ) : (
-        <div className="grid gap-4">
+        <div className="grid grid-cols-1 gap-4">
           {items.map((summary) => (
             <FleetCard key={summary.aircraft.id} summary={summary} />
           ))}

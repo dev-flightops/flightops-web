@@ -150,5 +150,5 @@ function warningsFor(flight: FlightDetail): string[] {
 }
 
 function Sep() {
-  return <span className="text-muted-foreground/40">·</span>;
+  return <span className="text-muted-foreground">·</span>;
 }

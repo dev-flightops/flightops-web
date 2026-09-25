@@ -154,7 +154,7 @@ export function AcceptOrDenyStep({ flightId, initial }: Props) {
               type="button"
               onClick={() => advanceAfterAccept()}
               disabled={pending}
-              className="mt-2.5 rounded-md bg-status-blue px-3 py-1.5 text-xs font-semibold text-white hover:brightness-110 disabled:opacity-50"
+              className="mt-2.5 rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-dark disabled:opacity-50"
             >
               {pending ? "Recording…" : "Continue to Step 7 →"}
             </button>
@@ -289,7 +289,7 @@ function DenyForm({
             disabled={!canSubmit}
             onClick={onSubmit}
             className={cn(
-              "rounded-md border-2 border-status-red/40 bg-status-red/15 px-3 py-1 text-xs font-bold uppercase tracking-[0.04em] text-status-red transition-colors hover:bg-status-red/20",
+              "rounded-md border-2 border-status-red/40 bg-status-red/15 px-3 py-1 text-xs font-bold uppercase tracking-[0.04em] text-status-red transition-colors hover:bg-status-red/15",
               !canSubmit && "opacity-50",
             )}
           >

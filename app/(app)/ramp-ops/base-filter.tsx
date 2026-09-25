@@ -37,7 +37,7 @@ export function BaseFilter({
         router.push(`/ramp-ops${qs}`);
       }}
       aria-label="Filter flights by base"
-      className="rounded-md border border-border bg-card px-2 py-1 text-xs text-foreground focus:border-status-blue focus:outline-none"
+      className="rounded-md border border-border bg-card px-2 py-1 text-xs text-foreground focus:border-primary focus:outline-none"
     >
       <option value="">All Bases</option>
       {bases.map((b) => (

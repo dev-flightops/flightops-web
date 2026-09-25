@@ -22,12 +22,12 @@ export default async function SupplierLoginPage() {
   if (session) redirect("/fuel-supplier");
 
   return (
-    <div className="mx-auto flex min-h-screen max-w-sm flex-col justify-center px-6 py-10">
+    <div className="mx-auto flex min-h-screen max-w-sm flex-col justify-center px-4 sm:px-6 py-8">
       <header className="mb-6 text-center">
-        <h1 className="text-xl font-bold tracking-tight">
+        <h1 className="text-2xl font-bold tracking-tight">
           Fuel Supplier Portal
         </h1>
-        <p className="mt-2 text-xs text-muted-foreground">
+        <p className="mt-1 text-sm text-muted-foreground">
           Sign in to see and act on the fuel orders addressed to your
           company across every operator you serve.
         </p>
@@ -41,7 +41,7 @@ export default async function SupplierLoginPage() {
         Not a fuel supplier?{" "}
         <a
           href="/login"
-          className="font-semibold text-status-blue hover:underline"
+          className="font-semibold text-primary hover:underline"
         >
           Sign in to the operator portal →
         </a>

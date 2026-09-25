@@ -49,7 +49,7 @@ export default async function FuelSuppliersPage() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6">
+    <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
       <header className="mb-5 flex flex-wrap items-end justify-between gap-3">
         <div>
           <Link
@@ -79,9 +79,9 @@ export default async function FuelSuppliersPage() {
           <p className="text-sm text-muted-foreground">
             No suppliers configured yet.
           </p>
-          <p className="mt-1 text-xs text-muted-foreground/70">
-            Adding suppliers from the UI lands in M2-G-43b. Use the API for
-            now: <code>POST /ground/fuel/suppliers</code>.
+          <p className="mt-1 text-xs text-muted-foreground">
+            Suppliers are added through the API for now:{" "}
+            <code>POST /ground/fuel/suppliers</code>.
           </p>
         </div>
       ) : (
@@ -174,7 +174,7 @@ function SupplierCard({
                   </td>
                   <td className="px-3 py-2">
                     {p.is_default && (
-                      <span className="rounded-md border border-status-blue/40 bg-status-blue/10 px-2 py-0.5 text-[0.6rem] font-semibold text-status-blue">
+                      <span className="rounded-md border border-border bg-muted px-2 py-0.5 text-[0.6rem] font-semibold text-muted-foreground">
                         Default
                       </span>
                     )}

@@ -33,7 +33,7 @@ export default async function FlightFollowingNewPage() {
   }
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6">
+    <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
       <div className="mb-6">
         <Link
           href="/flight-following"
@@ -41,10 +41,10 @@ export default async function FlightFollowingNewPage() {
         >
           ← Flight Following
         </Link>
-        <h1 className="mt-1 text-xl font-bold tracking-tight sm:text-2xl">
+        <h1 className="mt-1 text-2xl font-bold tracking-tight">
           Open New Flight
         </h1>
-        <p className="mt-1 text-xs text-muted-foreground">
+        <p className="mt-1 text-sm text-muted-foreground">
           Adds the flight to the schedule with status{" "}
           <span className="font-semibold text-foreground">Planned</span>.
           Release through the dispatch packet once the briefing is
@@ -64,7 +64,7 @@ export default async function FlightFollowingNewPage() {
           <p className="text-sm text-muted-foreground">
             No active aircraft on this tenant.
           </p>
-          <p className="mt-1 text-xs text-muted-foreground/70">
+          <p className="mt-1 text-xs text-muted-foreground">
             Activate an aircraft on the Maintenance page before opening
             a flight.
           </p>

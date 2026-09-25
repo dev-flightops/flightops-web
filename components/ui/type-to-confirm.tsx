@@ -51,7 +51,7 @@ export function useTypeToConfirm({
             ? "border-status-green/60 focus:border-status-green"
             : value.length > 0
               ? "border-status-red/40 focus:border-status-red"
-              : "border-border focus:border-status-blue")
+              : "border-border focus:border-primary")
         }
       />
     </label>

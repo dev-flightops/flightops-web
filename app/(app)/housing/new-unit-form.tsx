@@ -5,6 +5,7 @@ import { useActionState, useState } from "react";
 
 import type { ActionResult } from "./actions";
 import { createHousingUnitAction } from "./actions";
+import { DEFAULT_UNIT_COLOR } from "@/lib/housing/unit-color";
 
 /**
  * Slide-over drawer for creating a new housing unit. Opens from the
@@ -30,7 +31,7 @@ export function NewUnitDrawer() {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="rounded-md bg-status-blue px-3 py-2 text-xs font-semibold text-white hover:brightness-110"
+        className="rounded-md bg-primary px-3 py-2 text-xs font-semibold text-white hover:bg-brand-dark"
       >
         + New House
       </button>
@@ -58,7 +59,7 @@ export function NewUnitDrawer() {
                 type="button"
                 onClick={() => setOpen(false)}
                 aria-label="Close"
-                className="rounded p-1 text-muted-foreground hover:bg-muted/20"
+                className="rounded p-1 text-muted-foreground hover:bg-accent"
               >
                 ✕
               </button>
@@ -113,14 +114,14 @@ export function NewUnitDrawer() {
                 <button
                   type="button"
                   onClick={() => setOpen(false)}
-                  className="rounded-md border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground/80 hover:bg-muted/20"
+                  className="rounded-md border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground/80 hover:bg-accent"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={pending}
-                  className="rounded-md bg-status-blue px-3 py-1.5 text-xs font-semibold text-white hover:brightness-110 disabled:opacity-60"
+                  className="rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-dark disabled:opacity-60"
                 >
                   {pending ? "Creating…" : "Create unit"}
                 </button>
@@ -164,7 +165,7 @@ function TextField({
         placeholder={placeholder}
         required={required}
         autoComplete={autoComplete}
-        className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-xs text-foreground focus:border-status-blue focus:outline-none"
+        className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-xs text-foreground focus:border-primary focus:outline-none"
       />
       {hint && (
         <p className="mt-1 text-[0.65rem] text-muted-foreground">{hint}</p>
@@ -195,7 +196,7 @@ function TextAreaField({
         name={name}
         rows={3}
         placeholder={placeholder}
-        className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-xs text-foreground focus:border-status-blue focus:outline-none"
+        className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-xs text-foreground focus:border-primary focus:outline-none"
       />
     </div>
   );
@@ -216,10 +217,10 @@ function ColorField({ name, label }: { name: string; label: string }) {
           id={`field-${name}`}
           name={name}
           type="text"
-          placeholder="#3b82f6"
+          placeholder={DEFAULT_UNIT_COLOR}
           value={value}
           onChange={(e) => setValue(e.target.value)}
-          className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-xs text-foreground focus:border-status-blue focus:outline-none"
+          className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-xs text-foreground focus:border-primary focus:outline-none"
         />
         <span
           aria-hidden

@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 
 import { ApiError } from "@/lib/api/client";
 import { listMyTenants } from "@/lib/api/auth";
+import { type CrewAssignmentList, listFlightCrew } from "@/lib/api/crew-assignments";
 import { getFlight } from "@/lib/api/ops";
 import type { FlightDetail } from "@/lib/api/types";
 
@@ -37,13 +38,18 @@ export default async function ManifestPage({
 
   let flight: FlightDetail | null = null;
   let companyName = "Peregrine Flight Ops";
+  // The roster is additive: if it cannot be read, the sheet still prints
+  // with the crew lines blank rather than failing the whole manifest.
+  let crew: CrewAssignmentList | null = null;
 
   try {
-    const [f, tenants] = await Promise.all([
+    const [f, tenants, roster] = await Promise.all([
       getFlight(flightId),
       listMyTenants().catch(() => ({ tenants: [] })),
+      listFlightCrew(flightId).catch(() => null),
     ]);
     flight = f;
+    crew = roster;
     companyName =
       tenants.tenants.find((t) => t.is_current)?.name ??
       tenants.tenants[0]?.name ??
@@ -53,7 +59,7 @@ export default async function ManifestPage({
       notFound();
     }
     return (
-      <div className="mx-auto max-w-3xl px-6 py-10">
+      <div className="mx-auto max-w-3xl px-4 sm:px-6 py-8">
         <p
           role="alert"
           className="rounded-lg border border-border bg-card px-4 py-6 text-center text-sm text-muted-foreground"
@@ -92,7 +98,7 @@ export default async function ManifestPage({
       : null;
 
   return (
-    <div className="manifest-page mx-auto max-w-[800px] px-6 py-8 text-foreground print:max-w-none print:px-0 print:py-0">
+    <div className="manifest-page mx-auto max-w-[800px] px-4 sm:px-6 py-8 text-foreground print:max-w-none print:px-0 print:py-0">
       <PrintButton />
       <ManifestStyles />
 
@@ -135,10 +141,14 @@ export default async function ManifestPage({
         />
       </Section>
 
+      {/* Read from the flight's crew roster. This printed "— from
+          crew-service (M3) —" as the PIC long after crew assignment
+          shipped (flight_crew_assignments), so a release sheet never
+          named its captain. Certificate numbers are not stored. */}
       <Section title="Crew">
-        <Field label="PIC" value="— from crew-service (M3) —" />
+        <Field label="PIC" value={crewName(crew, "pic")} />
         <Field label="Cert" value="—" />
-        <Field label="SIC" value="—" />
+        <Field label="SIC" value={crewName(crew, "sic")} />
       </Section>
 
       <Section title="Load">
@@ -281,4 +291,14 @@ function ManifestStyles() {
       }
     `}</style>
   );
+}
+
+function crewName(
+  crew: CrewAssignmentList | null,
+  role: "pic" | "sic",
+): string {
+  if (crew === null) return "—";
+  const seat = crew.items.find((a) => a.crew_role === role);
+  if (!seat) return role === "pic" ? "Not assigned" : "—";
+  return seat.user.full_name || seat.user.email;
 }

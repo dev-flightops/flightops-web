@@ -64,7 +64,7 @@ export default async function SettingsUsersPage() {
   const inactive = users.filter((u) => !u.is_active);
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6">
+    <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
       <nav className="mb-4 text-xs text-muted-foreground">
         <Link href="/settings" className="hover:text-foreground">
           Settings
@@ -131,7 +131,7 @@ export default async function SettingsUsersPage() {
           <h2 className="mb-2 text-[0.65rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
             Inactive ({inactive.length})
           </h2>
-          <div className="overflow-hidden rounded-lg border border-border bg-card/40 opacity-70">
+          <div className="overflow-hidden rounded-lg border border-border bg-muted/60">
             <UsersTable
               users={inactive}
               roles={roles}
@@ -148,7 +148,7 @@ export default async function SettingsUsersPage() {
           Wondering what each role can do?{" "}
           <Link
             href="/settings/permissions"
-            className="text-status-blue hover:underline"
+            className="text-primary hover:underline"
           >
             See the role catalog →
           </Link>
@@ -173,7 +173,7 @@ function UsersTable({
 }) {
   return (
     <table className="w-full text-sm">
-      <thead className="border-b border-border bg-muted/20 text-[0.6rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+      <thead className="border-b border-border bg-muted/60 text-[0.6rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
         <tr>
           <th scope="col" className="px-4 py-2 text-left">User</th>
           <th scope="col" className="px-4 py-2 text-left">Roles</th>
@@ -187,14 +187,14 @@ function UsersTable({
           return (
             <tr
               key={u.id}
-              className="border-b border-border last:border-b-0 hover:bg-muted/10"
+              className="border-b border-border last:border-b-0 hover:bg-accent"
             >
               <td className="px-4 py-3">
                 <div className="flex flex-col">
                   <span className="flex items-center gap-2 font-semibold text-foreground">
                     {u.full_name}
                     {isSelf && (
-                      <span className="rounded-sm border border-border bg-muted/30 px-1.5 py-0.5 text-[0.55rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+                      <span className="rounded-sm border border-border bg-muted px-1.5 py-0.5 text-[0.55rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
                         You
                       </span>
                     )}
@@ -214,7 +214,7 @@ function UsersTable({
                     {u.roles.map((r) => (
                       <span
                         key={r}
-                        className="rounded-sm border border-border bg-muted/20 px-1.5 py-0.5 text-[0.65rem] font-semibold text-foreground"
+                        className="rounded-sm border border-border bg-muted/60 px-1.5 py-0.5 text-[0.65rem] font-semibold text-foreground"
                       >
                         {roleLabel(r)}
                       </span>

@@ -146,7 +146,10 @@ export function TopBarClockButton({ initial, clockIn, clockOut }: Props) {
     ? "border-status-red/50 bg-status-red/15 text-status-red hover:bg-status-red/20"
     : isOnDuty
       ? "border-status-green/40 bg-status-green/10 text-status-green hover:bg-status-green/15"
-      : "border-border bg-primary/8 text-primary hover:bg-primary/12";
+      // The pill lives on the ink bar, where the deep brand as TEXT is
+      // 2.9:1 — so it takes the brand's on-ink tone, as the home page's
+      // old scoped override did by hand (#ff6b6f).
+      : "border-primary/40 bg-primary/15 text-brand-light hover:bg-primary/25";
 
   return (
     <div ref={ref} className="hidden sm:inline-flex">

@@ -47,7 +47,7 @@ export default async function StationsPage() {
         </div>
         <Link
           href="/stations/new"
-          className="rounded-md border border-status-blue bg-status-blue/15 px-3 py-1.5 text-xs font-semibold text-status-blue hover:bg-status-blue/20"
+          className="rounded-md border border-primary/40 bg-background px-3 py-1.5 text-xs font-semibold text-primary hover:bg-primary/5"
         >
           + Add Station
         </Link>
@@ -63,7 +63,7 @@ export default async function StationsPage() {
       ) : stations.length === 0 ? (
         <div className="rounded-lg border border-border bg-card px-4 py-16 text-center">
           <p className="text-sm text-muted-foreground">No stations yet.</p>
-          <p className="mt-1 text-xs text-muted-foreground/70">
+          <p className="mt-1 text-xs text-muted-foreground">
             Use &ldquo;+ Add Station&rdquo; above to create the first one.
           </p>
         </div>
@@ -126,7 +126,7 @@ function StationsTable({ stations }: { stations: StationListItem[] }) {
               <td className="px-4 py-3 text-right">
                 <Link
                   href={`/stations/${s.id}`}
-                  className="text-sm font-medium text-status-blue hover:underline"
+                  className="text-sm font-medium text-primary hover:underline"
                 >
                   View →
                 </Link>
@@ -173,7 +173,7 @@ function SourceCell({ station }: { station: StationListItem }) {
   }
   if (station.runway_source === "faa_api") {
     return (
-      <span className="rounded-md border border-status-blue/40 bg-status-blue/10 px-2 py-0.5 text-[0.65rem] font-semibold text-status-blue">
+      <span className="rounded-md border border-border bg-muted px-2 py-0.5 text-[0.65rem] font-semibold text-muted-foreground">
         FAA API
       </span>
     );

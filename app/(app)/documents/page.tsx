@@ -92,7 +92,7 @@ export default async function DocumentsPage({
   const grouped = groupByCategory(filtered);
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6">
+    <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
       <nav aria-label="Breadcrumb" className="mb-4 flex items-center text-xs">
         <Link
           href="/home"
@@ -112,7 +112,7 @@ export default async function DocumentsPage({
         <span aria-hidden className="px-1.5 text-muted-foreground">
           ›
         </span>
-        <span className="font-semibold text-status-blue">Documents</span>
+        <span className="font-semibold text-primary">Documents</span>
       </nav>
 
       <header className="mb-4 flex flex-wrap items-start justify-between gap-3">
@@ -120,7 +120,7 @@ export default async function DocumentsPage({
           <h1 className="text-2xl font-bold tracking-tight">
             Document Library
           </h1>
-          <p className="mt-0.5 text-xs text-muted-foreground">
+          <p className="mt-1 text-sm text-muted-foreground">
             Company manuals, regulations, safety bulletins, and compliance
             references — {total} document{total === 1 ? "" : "s"}
             {/* The category count has to describe the same set the
@@ -131,7 +131,7 @@ export default async function DocumentsPage({
                 categories". Zero documents cannot occupy two
                 categories. */}
             {grouped.length > 0 && (
-              <span className="text-muted-foreground/70">
+              <span className="text-muted-foreground">
                 {" "}
                 · {grouped.length} categor
                 {grouped.length === 1 ? "y" : "ies"}
@@ -146,13 +146,13 @@ export default async function DocumentsPage({
               className={
                 "inline-flex items-center gap-2 rounded-md border px-3 py-1.5 text-xs font-semibold transition " +
                 (requiredReadingPending > 0
-                  ? "border-status-blue/40 bg-status-blue/10 text-status-blue hover:bg-status-blue/20"
-                  : "border-border bg-card text-muted-foreground hover:bg-muted/10")
+                  ? "border-primary/40 bg-primary/10 text-primary hover:bg-primary/20"
+                  : "border-border bg-card text-muted-foreground hover:bg-accent")
               }
             >
               Required reading
               {requiredReadingPending > 0 && (
-                <span className="inline-flex min-w-[1.25rem] items-center justify-center rounded-full bg-status-blue px-1.5 text-[0.65rem] font-bold text-white">
+                <span className="inline-flex min-w-[1.25rem] items-center justify-center rounded-full bg-primary px-1.5 text-[0.65rem] font-bold text-white">
                   {requiredReadingPending}
                 </span>
               )}
@@ -210,7 +210,7 @@ function CategorySection({
           <li key={d.id}>
             <Link
               href={`/documents/${d.id}`}
-              className="flex items-baseline justify-between gap-3 px-4 py-3 text-sm hover:bg-muted/5"
+              className="flex items-baseline justify-between gap-3 px-4 py-3 text-sm hover:bg-accent"
             >
               <div className="min-w-0">
                 <div className="truncate font-semibold text-foreground">
@@ -232,7 +232,7 @@ function CategorySection({
                   v{d.current_version_number}
                 </span>
                 <span className="hidden sm:inline">{fmtDate(d.updated_at)}</span>
-                <span className="font-semibold text-status-blue">Open →</span>
+                <span className="font-semibold text-primary">Open →</span>
               </div>
             </Link>
           </li>

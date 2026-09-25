@@ -84,10 +84,10 @@ const STATUS_LABELS: Record<
   },
   cancelled: {
     label: "Cancelled",
-    className: "bg-muted/40 text-muted-foreground opacity-60",
+    className: "bg-muted text-muted-foreground",
   },
   completed: {
     label: "Landed",
-    className: "bg-muted/40 text-muted-foreground",
+    className: "bg-muted text-muted-foreground",
   },
 };

@@ -120,15 +120,15 @@ export function SummaryView({
     <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6">
       <Link
         href="/reports"
-        className="mb-2 inline-block text-xs font-semibold text-status-blue hover:underline"
+        className="mb-2 inline-block text-xs font-semibold text-primary hover:underline"
       >
         ← Reports
       </Link>
 
       <header className="mb-5 flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold">Executive Summary</h1>
-          <p className="mt-0.5 text-xs text-muted-foreground">
+          <h1 className="text-2xl font-bold tracking-tight">Executive Summary</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
             {isoRange(s.period_start, s.period_end)} — 60-second snapshot
           </p>
         </div>

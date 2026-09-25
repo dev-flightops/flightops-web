@@ -142,7 +142,7 @@ function CertRow({
 }) {
   const expiryClass = _expiryClass(cert.expires_at, now);
   return (
-    <li className="rounded-lg border border-border bg-card px-4 py-3 hover:bg-muted/5">
+    <li className="rounded-lg border border-border bg-card px-4 py-3 hover:bg-accent">
       <Link
         href={`/academy/certificates/${cert.id}`}
         className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between"
@@ -198,8 +198,8 @@ function ScopeTab({
       className={
         "rounded-md border px-3 py-1 text-xs font-semibold transition " +
         (active
-          ? "border-status-blue bg-status-blue/15 text-status-blue"
-          : "border-border bg-card text-foreground/80 hover:bg-muted/20")
+          ? "border-primary bg-primary/10 text-primary"
+          : "border-border bg-card text-foreground/80 hover:bg-accent")
       }
     >
       {label}
@@ -217,7 +217,7 @@ function _expiryClass(
   if (expiresAt === null) {
     return {
       label: "Never expires",
-      className: "border-border bg-muted/40 text-muted-foreground",
+      className: "border-border bg-muted text-muted-foreground",
     };
   }
   const ms = new Date(expiresAt).getTime() - now;

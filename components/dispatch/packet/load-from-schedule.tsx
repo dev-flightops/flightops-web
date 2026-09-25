@@ -88,7 +88,7 @@ export function LoadFromSchedule({
             <span
               role="status"
               aria-live="polite"
-              className="mr-1 flex items-center gap-1 text-[0.65rem] font-medium text-status-blue"
+              className="mr-1 flex items-center gap-1 text-[0.65rem] font-medium text-primary"
             >
               <Loader2 className="h-3 w-3 animate-spin" aria-hidden />
               Loading…
@@ -99,7 +99,7 @@ export function LoadFromSchedule({
             onClick={() => shiftDays(-1)}
             disabled={isPending}
             aria-label="Previous day"
-            className="rounded-md border border-border bg-card px-2 py-1 text-xs font-semibold text-foreground hover:bg-muted/40 disabled:opacity-60"
+            className="rounded-md border border-border bg-card px-2 py-1 text-xs font-semibold text-foreground hover:bg-accent disabled:opacity-60"
           >
             ←
           </button>
@@ -109,14 +109,14 @@ export function LoadFromSchedule({
             value={date}
             onChange={(e) => goToDate(e.target.value)}
             disabled={isPending}
-            className="rounded-md border border-border bg-background px-2 py-1 text-xs text-foreground focus:border-status-blue focus:outline-none disabled:opacity-60"
+            className="rounded-md border border-border bg-background px-2 py-1 text-xs text-foreground focus:border-primary focus:outline-none disabled:opacity-60"
           />
           <button
             type="button"
             onClick={() => shiftDays(1)}
             disabled={isPending}
             aria-label="Next day"
-            className="rounded-md border border-border bg-card px-2 py-1 text-xs font-semibold text-foreground hover:bg-muted/40 disabled:opacity-60"
+            className="rounded-md border border-border bg-card px-2 py-1 text-xs font-semibold text-foreground hover:bg-accent disabled:opacity-60"
           >
             →
           </button>
@@ -137,7 +137,7 @@ export function LoadFromSchedule({
             Step to another day above, or{" "}
             <Link
               href="/flight-following/new"
-              className="font-semibold text-status-blue hover:underline"
+              className="font-semibold text-primary hover:underline"
             >
               build a flight for this one →
             </Link>

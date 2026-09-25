@@ -257,7 +257,7 @@ export function NewBookingSearchForm({
                   (t.disabled
                     ? "cursor-not-allowed border-border bg-background text-muted-foreground/50"
                     : tripType === t.id
-                      ? "border-status-blue bg-status-blue/15 text-status-blue"
+                      ? "border-primary bg-primary/10 text-primary"
                       : "border-border bg-background text-muted-foreground hover:text-foreground")
                 }
               >
@@ -270,7 +270,7 @@ export function NewBookingSearchForm({
           <select
             value={adults}
             onChange={(e) => setAdults(Number(e.target.value))}
-            className="ff w-16"
+            className="ff-input w-16"
           >
             {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => (
               <option key={n} value={n}>
@@ -283,7 +283,7 @@ export function NewBookingSearchForm({
           <select
             value={children}
             onChange={(e) => setChildren(Number(e.target.value))}
-            className="ff w-16"
+            className="ff-input w-16"
           >
             {Array.from({ length: 10 }, (_, i) => i).map((n) => (
               <option key={n} value={n}>
@@ -302,7 +302,7 @@ export function NewBookingSearchForm({
                 setCustomerId(null);
               }}
               placeholder="Search name, phone, or account…"
-              className="ff"
+              className="ff-input"
               autoComplete="off"
             />
             {customerQuery.trim() && !customerId && filteredCustomers.length > 0 ? (
@@ -319,7 +319,7 @@ export function NewBookingSearchForm({
                             : c.full_name,
                         );
                       }}
-                      className="block w-full px-3 py-1.5 text-left text-xs hover:bg-muted/20"
+                      className="block w-full px-3 py-1.5 text-left text-xs hover:bg-accent"
                     >
                       <span className="font-semibold">{c.full_name}</span>
                       {c.company_name ? (
@@ -345,7 +345,7 @@ export function NewBookingSearchForm({
             value={couponCode}
             onChange={(e) => setCouponCode(e.target.value)}
             placeholder="Promo code"
-            className="ff"
+            className="ff-input"
             autoComplete="off"
           />
         </Field>
@@ -359,7 +359,7 @@ export function NewBookingSearchForm({
             value={date}
             onChange={(e) => setDate(e.target.value)}
             required
-            className="ff"
+            className="ff-input"
           />
         </Field>
         <Field label="From" error={errors.origin}>
@@ -371,7 +371,7 @@ export function NewBookingSearchForm({
             // Four, because no airport identifier is longer. The old 10
             // let a stray character ride along unnoticed.
             maxLength={4}
-            className="ff uppercase"
+            className="ff-input uppercase"
             autoComplete="off"
             list={STATION_LIST_ID}
           />
@@ -383,7 +383,7 @@ export function NewBookingSearchForm({
             onChange={(e) => setDestination(e.target.value)}
             placeholder="Destination ICAO"
             maxLength={4}
-            className="ff uppercase"
+            className="ff-input uppercase"
             autoComplete="off"
             list={STATION_LIST_ID}
           />
@@ -395,7 +395,7 @@ export function NewBookingSearchForm({
             onChange={(e) => setVia(e.target.value)}
             placeholder="Stop"
             maxLength={4}
-            className="ff uppercase"
+            className="ff-input uppercase"
             autoComplete="off"
             list={STATION_LIST_ID}
           />
@@ -452,14 +452,14 @@ export function NewBookingSearchForm({
         <button
           type="button"
           disabled
-          title="Gift vouchers ship with the fares vertical (M3 follow-up)"
+          title="Gift vouchers aren't built yet"
           className="rounded-md border border-border bg-card px-3 py-2 text-xs font-semibold text-muted-foreground/70 cursor-not-allowed"
         >
           Use Gift Voucher
         </button>
         <button
           type="submit"
-          className="rounded-md bg-status-blue px-5 py-2 text-sm font-semibold text-white hover:brightness-110"
+          className="rounded-md bg-primary px-5 py-2 text-sm font-semibold text-white hover:bg-brand-dark"
         >
           Search Flights
         </button>
@@ -492,7 +492,7 @@ export function NewBookingSearchForm({
           Not seeing the right flight?{" "}
           <a
             href={`/reservations/bookings/new?${searched}`}
-            className="text-status-blue hover:underline"
+            className="text-primary hover:underline"
           >
             File the booking manually
           </a>{" "}
@@ -500,29 +500,6 @@ export function NewBookingSearchForm({
         </p>
       )}
 
-      <style>{`
-        .ff {
-          width: 100%;
-          background: hsl(var(--background));
-          color: hsl(var(--foreground));
-          border: 1px solid hsl(var(--border));
-          border-radius: 8px;
-          padding: 0.5rem 0.75rem;
-          font-size: 0.8125rem;
-          outline: none;
-          transition: border-color 0.15s, box-shadow 0.15s;
-        }
-        .ff:focus:not(:disabled) {
-          border-color: hsl(var(--primary));
-          box-shadow: 0 0 0 3px hsl(var(--primary) / 0.12);
-        }
-        /* Keep user-typed ICAO values uppercase but render the
-         * placeholder in Title Case so it reads like a hint, not a
-         * shouted label — matches legacy peregrineflight.com. */
-        .ff.uppercase::placeholder {
-          text-transform: none;
-        }
-      `}</style>
     </form>
   );
 }

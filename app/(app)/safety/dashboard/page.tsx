@@ -85,7 +85,7 @@ export default async function SafetyDashboardPage() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6">
+    <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
       <nav aria-label="Breadcrumb" className="mb-4 flex items-center text-xs">
         <Link
           href="/home"
@@ -114,7 +114,7 @@ export default async function SafetyDashboardPage() {
         <span aria-hidden className="px-1.5 text-muted-foreground">
           ›
         </span>
-        <span className="font-semibold text-status-blue">Dashboard</span>
+        <span className="font-semibold text-primary">Dashboard</span>
       </nav>
 
       <header className="mb-5 flex flex-col gap-3 border-b border-border pb-4 sm:flex-row sm:items-end sm:justify-between">
@@ -122,10 +122,10 @@ export default async function SafetyDashboardPage() {
           <div className="text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
             Safety SMS
           </div>
-          <h1 className="mt-0.5 text-2xl font-bold sm:text-3xl">
+          <h1 className="mt-0.5 text-2xl font-bold tracking-tight">
             Safety Dashboard
           </h1>
-          <p className="mt-1 text-xs text-muted-foreground">
+          <p className="mt-1 text-sm text-muted-foreground">
             Open hazards, incidents, and corrective actions across the tenant —
             one glance surface for Safety Officers + Chief Pilots.
           </p>
@@ -133,25 +133,25 @@ export default async function SafetyDashboardPage() {
         <div className="flex flex-wrap items-center gap-2">
           <Link
             href="/safety"
-            className="rounded-md border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground/80 hover:bg-muted/20"
+            className="rounded-md border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground/80 hover:bg-accent"
           >
             Hazard triage
           </Link>
           <Link
             href="/safety/incidents"
-            className="rounded-md border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground/80 hover:bg-muted/20"
+            className="rounded-md border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground/80 hover:bg-accent"
           >
             Incident triage
           </Link>
           <Link
             href="/safety/actions"
-            className="rounded-md border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground/80 hover:bg-muted/20"
+            className="rounded-md border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground/80 hover:bg-accent"
           >
             CAPA board
           </Link>
           <Link
             href="/safety/report"
-            className="rounded-md bg-status-blue px-3 py-1.5 text-xs font-semibold text-white hover:brightness-110"
+            className="rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-dark"
           >
             + File a report
           </Link>
@@ -270,13 +270,13 @@ function StatCard({
   return (
     <Link
       href={href}
-      className="block rounded-lg border border-border bg-card px-3 py-3 transition-colors hover:bg-muted/5"
+      className="block rounded-lg border border-border bg-card px-3 py-3 transition-colors hover:bg-accent"
     >
       <div className={"text-2xl font-bold " + toneClass}>{value}</div>
       <div className="mt-0.5 text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
         {label}
       </div>
-      <div className="mt-0.5 text-[0.7rem] text-muted-foreground/80">
+      <div className="mt-0.5 text-[0.7rem] text-muted-foreground">
         {hint}
       </div>
     </Link>
@@ -295,7 +295,7 @@ function RecentHazardsCard({ hazards }: { hazards: HazardReport[] }) {
         </h2>
         <Link
           href="/safety"
-          className="text-[0.7rem] font-semibold text-status-blue hover:underline"
+          className="text-[0.7rem] font-semibold text-primary hover:underline"
         >
           Triage inbox →
         </Link>
@@ -309,7 +309,7 @@ function RecentHazardsCard({ hazards }: { hazards: HazardReport[] }) {
               <li key={h.id}>
                 <Link
                   href={`/safety/${h.id}`}
-                  className="flex items-baseline justify-between gap-3 px-4 py-3 text-sm hover:bg-muted/5"
+                  className="flex items-baseline justify-between gap-3 px-4 py-3 text-sm hover:bg-accent"
                 >
                   <div className="min-w-0">
                     <div className="line-clamp-1 font-medium">
@@ -346,7 +346,7 @@ function RecentIncidentsCard({ incidents }: { incidents: Incident[] }) {
         </h2>
         <Link
           href="/safety/incidents"
-          className="text-[0.7rem] font-semibold text-status-blue hover:underline"
+          className="text-[0.7rem] font-semibold text-primary hover:underline"
         >
           Incident triage →
         </Link>
@@ -360,7 +360,7 @@ function RecentIncidentsCard({ incidents }: { incidents: Incident[] }) {
               <li key={i.id}>
                 <Link
                   href={`/safety/incidents/${i.id}`}
-                  className="flex items-baseline justify-between gap-3 px-4 py-3 text-sm hover:bg-muted/5"
+                  className="flex items-baseline justify-between gap-3 px-4 py-3 text-sm hover:bg-accent"
                 >
                   <div className="min-w-0">
                     <div className="line-clamp-1 font-medium">
@@ -397,7 +397,7 @@ function OverdueCapasCard({ capas }: { capas: CorrectiveAction[] }) {
         </h2>
         <Link
           href="/safety/actions"
-          className="text-[0.7rem] font-semibold text-status-blue hover:underline"
+          className="text-[0.7rem] font-semibold text-primary hover:underline"
         >
           CAPA board →
         </Link>
@@ -408,7 +408,7 @@ function OverdueCapasCard({ capas }: { capas: CorrectiveAction[] }) {
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="border-b border-border bg-muted/10 text-left text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
+              <thead className="border-b border-border bg-muted/60 text-left text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
                 <tr>
                   <th className="px-3 py-2.5 font-semibold">Action</th>
                   <th className="px-3 py-2.5 font-semibold">Owner</th>
@@ -421,11 +421,11 @@ function OverdueCapasCard({ capas }: { capas: CorrectiveAction[] }) {
                 {sorted.map((c) => {
                   const days = daysPastDue(c.due_date);
                   return (
-                    <tr key={c.id} className="hover:bg-muted/5">
+                    <tr key={c.id} className="hover:bg-accent">
                       <td className="px-3 py-2.5">
                         <Link
                           href={`/safety/actions/${c.id}`}
-                          className="font-medium text-status-blue hover:underline"
+                          className="font-medium text-primary hover:underline"
                         >
                           {c.title}
                         </Link>
@@ -478,7 +478,7 @@ function SeverityBadge({ severity }: { severity: HazardSeverity }) {
     ],
   };
   const [cls, label] = map[severity] ?? [
-    "border-border bg-muted/20 text-muted-foreground",
+    "border-border bg-muted text-muted-foreground",
     HAZARD_SEVERITY_LABELS[severity] ?? severity,
   ];
   return (
@@ -504,7 +504,7 @@ function CapaStatusBadge({ status }: { status: CorrectiveAction["status"] }) {
     <span
       className={
         "rounded border px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider " +
-        (map[status] ?? "border-border bg-muted/20 text-muted-foreground")
+        (map[status] ?? "border-border bg-muted text-muted-foreground")
       }
     >
       {CAPA_STATUS_LABELS[status] ?? status}

@@ -33,8 +33,8 @@ export function UploadDocumentDrawer({
 
   const buttonClass =
     variant === "primary"
-      ? "rounded-md bg-status-blue px-3 py-2 text-xs font-semibold text-white hover:brightness-110"
-      : "rounded-md border border-border bg-card px-3 py-2 text-xs font-semibold text-foreground/80 hover:bg-muted/20";
+      ? "rounded-md bg-primary px-3 py-2 text-xs font-semibold text-white hover:bg-brand-dark"
+      : "rounded-md border border-border bg-card px-3 py-2 text-xs font-semibold text-foreground/80 hover:bg-accent";
   const label = variant === "primary" ? "+ Upload Document" : "Upload Document";
 
   return (
@@ -70,7 +70,7 @@ export function UploadDocumentDrawer({
                 type="button"
                 onClick={() => setOpen(false)}
                 aria-label="Close"
-                className="rounded p-1 text-muted-foreground hover:bg-muted/20"
+                className="rounded p-1 text-muted-foreground hover:bg-accent"
               >
                 ✕
               </button>
@@ -83,12 +83,12 @@ export function UploadDocumentDrawer({
                   type="text"
                   required
                   placeholder="General Operations Manual"
-                  className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-xs text-foreground focus:border-status-blue focus:outline-none"
+                  className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-xs text-foreground focus:border-primary focus:outline-none"
                 />
               </Field>
 
               <Field label="Category">
-                <select name="category" defaultValue="General" className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-xs text-foreground focus:border-status-blue focus:outline-none">
+                <select name="category" defaultValue="General" className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-xs text-foreground focus:border-primary focus:outline-none">
                   <option value="General">General</option>
                   {DOCUMENT_CATEGORIES.filter((c) => c.value).map((c) => (
                     <option key={c.value} value={c.label}>
@@ -103,7 +103,7 @@ export function UploadDocumentDrawer({
                   name="description"
                   rows={3}
                   placeholder="Short summary — what does this cover?"
-                  className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-xs text-foreground focus:border-status-blue focus:outline-none"
+                  className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-xs text-foreground focus:border-primary focus:outline-none"
                 />
               </Field>
 
@@ -111,7 +111,7 @@ export function UploadDocumentDrawer({
                 <input
                   name="file"
                   type="file"
-                  className="block w-full text-xs text-foreground file:mr-3 file:rounded-md file:border file:border-border file:bg-background file:px-2 file:py-1 file:text-xs file:font-semibold file:text-foreground/80 hover:file:bg-muted/20"
+                  className="block w-full text-xs text-foreground file:mr-3 file:rounded-md file:border file:border-border file:bg-background file:px-2 file:py-1 file:text-xs file:font-semibold file:text-foreground/80 hover:file:bg-accent"
                 />
                 <p className="mt-1 text-[0.65rem] text-muted-foreground">
                   Max 50 MB. PDF, DOCX, XLSX supported.
@@ -141,7 +141,7 @@ export function UploadDocumentDrawer({
                   name="upload_notes"
                   type="text"
                   placeholder="e.g. Rev 3.1 — Bethel base added"
-                  className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-xs text-foreground focus:border-status-blue focus:outline-none"
+                  className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-xs text-foreground focus:border-primary focus:outline-none"
                 />
               </Field>
 
@@ -155,14 +155,14 @@ export function UploadDocumentDrawer({
                 <button
                   type="button"
                   onClick={() => setOpen(false)}
-                  className="rounded-md border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground/80 hover:bg-muted/20"
+                  className="rounded-md border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground/80 hover:bg-accent"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={pending}
-                  className="rounded-md bg-status-blue px-3 py-1.5 text-xs font-semibold text-white hover:brightness-110 disabled:opacity-60"
+                  className="rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-dark disabled:opacity-60"
                 >
                   {pending ? "Uploading…" : "Upload document"}
                 </button>

@@ -52,13 +52,13 @@ export function SettingsMilestonePlaceholder({
         <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>
       </header>
 
-      <section className="rounded-xl border border-dashed border-border bg-muted/20 p-6">
+      <section className="rounded-xl border border-dashed border-border bg-muted/60 p-6">
         <div className="flex items-start gap-4">
           <CalendarClock className="h-5 w-5 flex-shrink-0 text-muted-foreground" />
           <div className="space-y-3">
             <p className="text-sm font-medium">
               Available after{" "}
-              <span className="text-status-blue">{availableAfter}</span>
+              <span className="text-primary">{availableAfter}</span>
             </p>
             <p className="text-xs text-muted-foreground">
               The route is reserved — bookmarks land here today and will
@@ -68,7 +68,7 @@ export function SettingsMilestonePlaceholder({
               {upcomingFields.map((field) => (
                 <li
                   key={field}
-                  className="before:mr-2 before:text-status-blue before:content-['→']"
+                  className="before:mr-2 before:text-primary before:content-['→']"
                 >
                   {field}
                 </li>
