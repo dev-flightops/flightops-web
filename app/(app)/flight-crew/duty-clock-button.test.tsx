@@ -13,22 +13,30 @@ import type { CurrentDutyResponse } from "@/lib/api/types";
 
 import { DutyClockButton } from "./duty-clock-button";
 
-const onDuty = (): CurrentDutyResponse =>
-  ({
-    open: {
-      id: "d-1",
-      clock_in_at: new Date(Date.now() - 12 * 3_600_000).toISOString(),
-      clock_out_at: null,
-      elapsed_hours: 12.5,
-      is_open: true,
-      rest_acknowledged: true,
-    },
-    last_closed: null,
-    warnings: [],
-  }) as CurrentDutyResponse;
+const onDuty = (): CurrentDutyResponse => ({
+  open: {
+    id: "d-1",
+    clock_in_at: new Date(Date.now() - 12 * 3_600_000).toISOString(),
+    clock_out_at: null,
+    elapsed_hours: 12.5,
+    is_open: true,
+    rest_acknowledged: true,
+  },
+  last_closed: null,
+  // The operator's own limits, so a fixture cannot drift from what the
+  // screen is measuring against.
+  min_rest_hours: 9,
+  max_duty_hours: 14,
+  warnings: [],
+});
 
-const offDuty = (): CurrentDutyResponse =>
-  ({ open: null, last_closed: null, warnings: [] }) as CurrentDutyResponse;
+const offDuty = (): CurrentDutyResponse => ({
+  open: null,
+  last_closed: null,
+  min_rest_hours: 9,
+  max_duty_hours: 14,
+  warnings: [],
+});
 
 /**
  * Client bug report, 24 September:
