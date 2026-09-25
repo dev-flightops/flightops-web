@@ -49,14 +49,18 @@ export function BrandingForm({
   // (BrandThemeStyle): no colour → the platform default, no hover shade
   // → the one derived from the primary. It used to fall back to the old
   // theme's blue, previewing a colour the app no longer shows.
-  const previewPrimary = useMemo(
-    () => _validHex(primary) ?? DEFAULT_BRAND,
+  // And it previews what the app will actually paint: a colour too light
+  // to carry white text is deepened by brandTones, so the preview shows
+  // that version and says so.
+  const tones = useMemo(
+    () => brandTones(_validHex(primary) ?? DEFAULT_BRAND),
     [primary],
   );
-  const previewDark = useMemo(
-    () => _validHex(primaryDark) ?? _channelsToHex(brandTones(previewPrimary).darkRgb),
-    [primaryDark, previewPrimary],
-  );
+  const previewPrimary = tones.hex;
+  const previewDark = useMemo(() => {
+    const hover = _validHex(primaryDark);
+    return hover ? brandTones(hover).hex : _channelsToHex(tones.darkRgb);
+  }, [primaryDark, tones]);
 
   const fieldError = (k: string) =>
     state.status === "field-errors" ? state.errors[k] : undefined;
@@ -179,6 +183,12 @@ export function BrandingForm({
             Chip / badge
           </span>
         </div>
+        {tones.adjusted && (
+          <p role="status" className="mt-3 text-xs text-muted-foreground">
+            {primary} is too light for white text on buttons, so the app
+            uses a deeper shade of it ({tones.hex}), shown here.
+          </p>
+        )}
       </div>
 
       <div className="flex items-center justify-end gap-2">

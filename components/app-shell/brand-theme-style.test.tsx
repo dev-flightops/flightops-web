@@ -33,6 +33,15 @@ describe("BrandThemeStyle", () => {
     expect(css("#1d4ed8", "#0f2a80")).toContain("--brand-dark-rgb: 15 42 128");
   });
 
+  it("emits the legible version of a brand too light for white text", () => {
+    // A gold would put white-on-gold buttons on every page.
+    const out = css("#f5c518")!;
+    expect(out).not.toContain("--brand-primary: #f5c518");
+    expect(out).not.toContain("--brand-rgb: 245 197 24");
+    const hex = /--brand-primary: (#[0-9a-f]{6})/.exec(out)![1];
+    expect(hex).not.toBe("#f5c518");
+  });
+
   it("refuses a value that could break out of the style element", () => {
     // It lands inside <style>, so anything but a plain hex is dropped.
     expect(css("#ab2429;}body{display:none")).toBeNull();

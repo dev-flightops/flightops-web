@@ -30,10 +30,13 @@
  *
  * STATUS COLOURS are theme-aware channels too. The light values were
  * solved, not picked: each is the lightest shade of its hue that reaches
- * WCAG AA (4.5:1) on white, on the muted band, AND on its own /15 tint —
- * the `bg-status-x/10 text-status-x` chip pattern that ~3,300 elements
- * use. Status red is a scarlet (hue 5°) so it stays distinguishable from
- * the crimson brand (hue 358°).
+ * WCAG AA (4.5:1, with a 0.1 margin) on white, on the muted band and on
+ * the hover accent — AND on its own /10 and /15 tint over each of those.
+ * That is the `bg-status-x/10 text-status-x` chip pattern ~3,300 elements
+ * use, and chips sit in banded tables and hovered rows, not only on
+ * white; solving for white alone left them at ~4.1:1 there. Status red
+ * is a scarlet (hue 5°) so it stays distinguishable from the crimson
+ * brand (hue 358°).
  */
 @layer base {
   /* `.light` re-declares the light ground, for a surface that opens from
@@ -72,14 +75,14 @@
     --brand-primary-dark: #8f1e22;
 
     /* Status on a light ground. */
-    --status-green: 4 116 84;
-    --status-yellow: 166 76 8;
-    --status-red: 193 43 28;
+    --status-green: 4 107 78;
+    --status-yellow: 153 70 7;
+    --status-red: 177 39 26;
     --status-blue: 29 78 216;
-    --status-gray: 96 104 114;
-    --status-orange: 182 61 11;
+    --status-gray: 89 96 105;
+    --status-orange: 167 56 10;
     --status-purple: 126 34 206;
-    --status-teal: 15 114 107;
+    --status-teal: 14 106 99;
 
     /* The ink used by the top bar and hero — near-black, not navy. */
     --ink: 0 0% 4%;

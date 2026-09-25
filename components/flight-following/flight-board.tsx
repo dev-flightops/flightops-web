@@ -79,7 +79,7 @@ function FlightBoardRow({ flight }: { flight: BoardFlightItem }) {
     <tr
       className={
         flight.is_overdue
-          ? "border-t border-border bg-status-red/[0.06] hover:bg-status-red/[0.1]"
+          ? "border-t border-border bg-status-red/[0.06] hover:bg-status-red/[0.08]"
           : "border-t border-border hover:bg-accent"
       }
     >

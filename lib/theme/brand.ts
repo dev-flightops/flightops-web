@@ -21,6 +21,8 @@
  *           the home page already used on its hero eyebrow.
  */
 
+import { contrastRatio } from "./contrast";
+
 export const DEFAULT_BRAND = "#ab2429";
 
 export interface BrandTones {
@@ -28,7 +30,23 @@ export interface BrandTones {
   rgb: string;
   darkRgb: string;
   lightRgb: string;
+  /** The accent as #rrggbb — the tenant's colour, or the legible
+   *  version of it when it was too light (see MIN_CONTRAST_ON_WHITE). */
+  hex: string;
+  /** True when the tenant's colour had to be darkened to be legible. */
+  adjusted: boolean;
 }
+
+/**
+ * The accent carries white text (every primary button) and is itself
+ * text on white (every link) and on its own /10 "selected" tint (active
+ * nav items, the current lesson). A tenant can pick any colour; a light
+ * one — a gold, a sky blue — would put ~1.7:1 white-on-gold buttons on
+ * every page. 5.2:1 against white is what brand text needs to still
+ * clear AA on that /10 tint, so below it the colour is darkened, keeping
+ * its hue and saturation. Peregrine crimson is 7.0:1 and is untouched.
+ */
+export const MIN_CONTRAST_ON_WHITE = 5.2;
 
 const HEX = /^#[0-9a-f]{6}$/i;
 
@@ -86,13 +104,42 @@ function hslToRgb([h, s, l]: [number, number, number]): [number, number, number]
 
 const channels = (rgb: [number, number, number]) => rgb.join(" ");
 
+const toHex = (rgb: [number, number, number]) =>
+  "#" + rgb.map((v) => v.toString(16).padStart(2, "0")).join("");
+
+/** The colour, darkened just enough to clear MIN_CONTRAST_ON_WHITE. */
+function legible(rgb: [number, number, number]): {
+  rgb: [number, number, number];
+  adjusted: boolean;
+} {
+  if (contrastRatio("#ffffff", toHex(rgb)) >= MIN_CONTRAST_ON_WHITE) {
+    return { rgb, adjusted: false };
+  }
+  const [h, s, l] = rgbToHsl(rgb);
+  for (let lightness = l; lightness > 0; lightness -= 0.005) {
+    const candidate = hslToRgb([h, s, lightness]);
+    if (contrastRatio("#ffffff", toHex(candidate)) >= MIN_CONTRAST_ON_WHITE) {
+      return { rgb: candidate, adjusted: true };
+    }
+  }
+  return { rgb: [0, 0, 0], adjusted: true };
+}
+
 export function brandTones(hex: string): BrandTones {
-  const base = hexToRgb(isBrandHex(hex) ? hex : DEFAULT_BRAND);
+  const { rgb: base, adjusted } = legible(
+    hexToRgb(isBrandHex(hex) ? hex : DEFAULT_BRAND),
+  );
   const [h, s, l] = rgbToHsl(base);
   // Hover: 16% darker, clamped so a very dark brand still moves.
   const dark = hslToRgb([h, s, Math.max(0.12, l * 0.84)]);
   // On-ink text: a greyscale brand stays greyscale rather than being
   // saturated into an arbitrary hue.
   const light = hslToRgb([h, s < 0.08 ? 0 : 1, 0.71]);
-  return { rgb: channels(base), darkRgb: channels(dark), lightRgb: channels(light) };
+  return {
+    rgb: channels(base),
+    darkRgb: channels(dark),
+    lightRgb: channels(light),
+    hex: toHex(base),
+    adjusted,
+  };
 }

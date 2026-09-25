@@ -266,10 +266,10 @@ function colourForSource(source: PositionResponse["source"]): string {
 
 /** Light-ground values, for a render with no stylesheet (tests). */
 const STATUS_FALLBACK: Record<string, string> = {
-  "status-green": "rgb(4, 116, 84)",
+  "status-green": "rgb(4, 107, 78)",
   "status-blue": "rgb(29, 78, 216)",
-  "status-yellow": "rgb(166, 76, 8)",
-  "status-gray": "rgb(96, 104, 114)",
+  "status-yellow": "rgb(153, 70, 7)",
+  "status-gray": "rgb(89, 96, 105)",
 };
 
 /** A theme status colour as a string Leaflet can paint with.

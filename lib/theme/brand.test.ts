@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 
-import { brandTones, DEFAULT_BRAND, isBrandHex } from "./brand";
+import {
+  brandTones,
+  DEFAULT_BRAND,
+  isBrandHex,
+  MIN_CONTRAST_ON_WHITE,
+} from "./brand";
+import { contrastRatio } from "./contrast";
 
 describe("brandTones", () => {
   it("carries the default crimson as bare channels", () => {
@@ -57,6 +63,44 @@ describe("isBrandHex", () => {
     // The value lands inside a style tag, so the check is an allowlist.
     for (const bad of ["red", "#abc", "#ab2429;}body{", "", null, undefined]) {
       expect(isBrandHex(bad)).toBe(false);
+    }
+  });
+});
+
+describe("a brand too light to carry white text", () => {
+  const hue = (hex: string) => {
+    const [r, g, b] = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255);
+    const max = Math.max(r, g, b);
+    const min = Math.min(r, g, b);
+    const d = max - min;
+    const h =
+      max === r ? ((g - b) / d) % 6 : max === g ? (b - r) / d + 2 : (r - g) / d + 4;
+    return (h * 60 + 360) % 360;
+  };
+
+  it("is darkened until white text and brand text both read", () => {
+    for (const light of ["#f5c518", "#38bdf8", "#ff8fab", "#9ca3af"]) {
+      const tones = brandTones(light);
+      expect(tones.adjusted).toBe(true);
+      expect(contrastRatio("#ffffff", tones.hex)).toBeGreaterThanOrEqual(
+        MIN_CONTRAST_ON_WHITE,
+      );
+      expect(tones.rgb).toBe(
+        [1, 3, 5].map((i) => parseInt(tones.hex.slice(i, i + 2), 16)).join(" "),
+      );
+    }
+  });
+
+  it("keeps its hue — a gold brand stays gold, only deeper", () => {
+    const tones = brandTones("#f5c518");
+    expect(Math.abs(hue(tones.hex) - hue("#f5c518"))).toBeLessThan(3);
+  });
+
+  it("leaves a brand that already reads exactly as chosen", () => {
+    for (const ok of [DEFAULT_BRAND, "#c31117", "#1d4ed8", "#0f2a80"]) {
+      const tones = brandTones(ok);
+      expect(tones.adjusted).toBe(false);
+      expect(tones.hex).toBe(ok);
     }
   });
 });

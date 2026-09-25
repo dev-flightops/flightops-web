@@ -24,11 +24,13 @@ export function BrandThemeStyle({
   const p = isBrandHex(primary) ? primary : isBrandHex(primaryDark) ? primaryDark : null;
   if (!p) return null;
 
+  // brandTones darkens a colour too light to carry white text, so every
+  // value below is the legible version of what the tenant picked.
   const tones = brandTones(p);
   // A tenant who picked their own hover shade keeps it; otherwise it is
   // derived from the brand so the pair stays coherent.
-  const hoverHex = isBrandHex(primaryDark) ? primaryDark : null;
-  const hoverRgb = hoverHex ? brandTones(hoverHex).rgb : tones.darkRgb;
+  const hover = isBrandHex(primaryDark) ? brandTones(primaryDark) : null;
+  const hoverRgb = hover ? hover.rgb : tones.darkRgb;
 
   return (
     // Every island re-declares its palette, so each needs the tenant's
@@ -38,8 +40,8 @@ export function BrandThemeStyle({
       --brand-rgb: ${tones.rgb};
       --brand-dark-rgb: ${hoverRgb};
       --brand-light-rgb: ${tones.lightRgb};
-      --brand-primary: ${p};
-      --brand-primary-dark: ${hoverHex ?? p};
+      --brand-primary: ${tones.hex};
+      --brand-primary-dark: ${hover?.hex ?? tones.hex};
     }`}</style>
   );
 }
