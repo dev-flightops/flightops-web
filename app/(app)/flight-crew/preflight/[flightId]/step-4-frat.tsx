@@ -997,6 +997,16 @@ function FratResultPanel({
   onRetake: () => void;
 }) {
   const risk = assessment.risk_level;
+  // Named by the server, so the client cannot disagree with it about
+  // what "out of company limits" means.
+  const overLimits = assessment.over_limit_factors ?? [];
+  const overLimitLabels = overLimits
+    .map(
+      (code) =>
+        FACTOR_GROUPS.flatMap((g) => g.factors).find((f) => f.code === code)
+          ?.label ?? code,
+    )
+    .join(" · ");
   // Only EXTREME hard-gates the pilot behind an authorization row.
   // HIGH used to require a `dispatch_contact` gate on this screen —
   // The Aug 2026 review removed it: dispatch controls whether the packet
@@ -1051,28 +1061,67 @@ function FratResultPanel({
           />
           <Tile
             label="Approval"
+            // "Not required" was printed for a flight over company
+            // limits, because the band was LOW. The no-go outranks the
+            // band on this tile for the same reason it outranks it
+            // everywhere else.
             value={
-              risk === "extreme"
-                ? hasRequiredAuth
-                  ? "Cleared"
-                  : "Pending"
-                : risk === "high"
-                  ? "Dispatch reviews"
-                  : "Not required"
+              overLimits.length > 0
+                ? "No-go"
+                : risk === "extreme"
+                  ? hasRequiredAuth
+                    ? "Cleared"
+                    : "Pending"
+                  : risk === "high"
+                    ? "Dispatch reviews"
+                    : "Not required"
             }
             valueClass={
-              risk === "extreme"
-                ? hasRequiredAuth
-                  ? "text-status-green text-sm"
-                  : "text-status-yellow text-sm"
-                : risk === "high"
-                  ? "text-status-yellow text-sm"
-                  : "text-muted-foreground text-sm"
+              overLimits.length > 0
+                ? "text-status-red text-sm"
+                : risk === "extreme"
+                  ? hasRequiredAuth
+                    ? "text-status-green text-sm"
+                    : "text-status-yellow text-sm"
+                  : risk === "high"
+                    ? "text-status-yellow text-sm"
+                    : "text-muted-foreground text-sm"
             }
           />
         </div>
 
-        {risk === "high" && (
+        {overLimits.length > 0 && (
+          /* The operator, 25 September:
+               "Over company limits is a no go. Higher risk is something
+                to caution dispatchers and pilots before heading out the
+                door."
+             So this is not a louder risk band — it is a different
+             answer, and it has to survive a low total. A flight with
+             the wind over the company crosswind limit and everything
+             else genuinely zero totals 5, lands in LOW, and used to
+             print "Not required" on the approval line. */
+          <div
+            role="alert"
+            className="rounded-md border border-status-red/50 bg-status-red/10 px-3 py-3 text-xs"
+          >
+            <p className="font-semibold uppercase tracking-[0.06em] text-status-red">
+              Over company limits — this flight is a no-go
+            </p>
+            <p className="mt-1 text-foreground">
+              {overLimits.length === 1 ? "This factor is" : "These factors are"}{" "}
+              scored out of company limits:{" "}
+              <span className="font-semibold">{overLimitLabels}</span>. That is
+              not a risk level to accept — the flight does not go until the
+              condition changes or the load does.
+            </p>
+            <p className="mt-1 text-muted-foreground">
+              Call dispatch. If you scored one of these by mistake, retake the
+              questionnaire below.
+            </p>
+          </div>
+        )}
+
+        {risk === "high" && overLimits.length === 0 && (
           <p
             role="note"
             className="rounded-md border border-status-yellow/40 bg-status-yellow/10 px-3 py-2 text-xs text-status-yellow"
@@ -1133,6 +1182,7 @@ function FratResultPanel({
           </ul>
         )}
 
+        {overLimits.length === 0 && (
         <button
           type="button"
           disabled={!hasRequiredAuth || pending}
@@ -1141,6 +1191,7 @@ function FratResultPanel({
         >
           {pending ? "Saving…" : "Continue to Step 5 →"}
         </button>
+        )}
 
         <button
           type="button"
