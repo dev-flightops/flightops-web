@@ -7,7 +7,7 @@ import Link from "next/link";
  *   🎓 Peregrine Academy
  *      Training courses, assignments, and certification
  *
- *   Dashboard | Course Library (yellow) | Assignments | Certificates | Reports | Studio (purple)
+ *   Dashboard | Course Library | Assignments | Certificates | Reports | Studio
  */
 export function AcademyHeader({
   activeSection,
@@ -24,7 +24,7 @@ export function AcademyHeader({
   return (
     <>
       <header className="mb-4 flex items-start gap-3">
-        <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-lg bg-status-yellow/15 text-status-yellow">
+        <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 24 24"
@@ -58,7 +58,6 @@ export function AcademyHeader({
           href="/academy"
           label="Course Library"
           active={activeSection === "course-library"}
-          accent="yellow"
         />
         <SectionTab
           href="/academy/mine"
@@ -84,38 +83,28 @@ export function AcademyHeader({
           href="/academy/studio"
           label="Studio"
           active={activeSection === "studio"}
-          accent="purple"
         />
       </nav>
     </>
   );
 }
 
+/** One "you are here" style, the department strip's: brand on its /10
+ *  selected tint. Legacy coloured Course Library yellow and Studio purple
+ *  (always, even inactive); in the unified theme yellow is a status and
+ *  purple means AI, so neither can double as a section colour. */
 function SectionTab({
   href,
   label,
   active,
-  accent,
 }: {
   href: string;
   label: string;
   active: boolean;
-  accent?: "yellow" | "purple";
 }) {
-  let cls = "border-border bg-card text-foreground/80 hover:bg-accent";
-  if (active) {
-    if (accent === "yellow") {
-      cls = "border-status-yellow bg-status-yellow/15 text-status-yellow";
-    } else if (accent === "purple") {
-      cls = "border-status-purple bg-status-purple/15 text-status-purple";
-    } else {
-      cls = "border-primary bg-primary/15 text-primary";
-    }
-  } else if (accent === "purple") {
-    // Studio always gets the purple accent even when inactive — legacy
-    // uses this to signal it's the author-facing "Editorial" surface.
-    cls = "border-status-purple/40 bg-status-purple/8 text-status-purple hover:bg-status-purple/15";
-  }
+  const cls = active
+    ? "border-primary/40 bg-primary/10 text-primary"
+    : "border-border bg-card text-foreground/80 hover:bg-accent";
   return (
     <Link
       href={href}

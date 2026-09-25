@@ -27,12 +27,15 @@ export function BookingsAwaitingFlightPanel({
 }) {
   if (bookings.length === 0) return null;
 
+  // A white card like every other list; the amber stays on the label and
+  // count, where it says "waiting". Washing all fourteen rows in it made
+  // a routine queue read as a warning.
   return (
     <section
       aria-label="Bookings awaiting a flight"
-      className="mt-3 rounded-xl border border-status-yellow/40 bg-status-yellow/5"
+      className="mt-3 overflow-hidden rounded-xl border border-border bg-card"
     >
-      <header className="flex items-center justify-between border-b border-status-yellow/20 px-4 py-2.5">
+      <header className="flex items-center justify-between border-b border-border bg-muted/60 px-4 py-2.5">
         <h2 className="text-xs font-semibold uppercase tracking-[0.06em] text-status-yellow">
           Awaiting a flight
         </h2>
@@ -41,9 +44,9 @@ export function BookingsAwaitingFlightPanel({
         </span>
       </header>
 
-      <ul className="divide-y divide-status-yellow/10">
+      <ul className="divide-y divide-border">
         {bookings.map((b) => (
-          <li key={b.id} className="px-4 py-3 text-xs">
+          <li key={b.id} className="px-4 py-3 text-xs hover:bg-accent">
             <div className="flex flex-wrap items-baseline justify-between gap-3">
               <Link
                 href={`/reservations/bookings/${b.id}`}
@@ -67,7 +70,7 @@ export function BookingsAwaitingFlightPanel({
         ))}
       </ul>
 
-      <p className="border-t border-status-yellow/20 px-4 py-2 text-[0.65rem] text-muted-foreground">
+      <p className="border-t border-border px-4 py-2 text-[0.65rem] text-muted-foreground">
         Open a booking to put it on an existing flight, or build one for
         it here.
       </p>

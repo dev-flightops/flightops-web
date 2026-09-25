@@ -125,7 +125,7 @@ export default async function EnrollmentLessonPage({
                     className={
                       "block rounded-md border px-2 py-1.5 text-xs " +
                       (isActive
-                        ? "border-primary bg-primary/15 text-primary"
+                        ? "border-primary/40 bg-primary/10 text-primary"
                         : "border-border bg-card text-foreground/80 hover:bg-accent")
                     }
                   >
