@@ -11,6 +11,7 @@ vi.mock("./actions", () => ({
 import { submitFratAction } from "./actions";
 
 import type {
+  FratAssessmentResponse,
   FratBlockEligibilityResponse,
   FratPrefillResponse,
 } from "@/lib/api/types";
@@ -50,6 +51,9 @@ const renderStep = (props: {
   hasCompanyLimits?: boolean;
   fratPrefill?: FratPrefillResponse | null;
   fratBlock?: FratBlockEligibilityResponse | null;
+  /** A filed assessment, for the tests that exercise the panel shown
+   *  after submission rather than the questionnaire. */
+  initial?: FratAssessmentResponse | null;
 }) =>
   render(
     <FlightRiskAssessmentStep flightId="f-1" initial={null} {...props} />,
@@ -504,5 +508,94 @@ describe("affirming untouched zeros", () => {
     );
     const [, body] = vi.mocked(submitFratAction).mock.calls.at(-1)!;
     expect(body.affirmed_zero_factors).toBeUndefined();
+  });
+});
+
+
+/**
+ * The operator, 25 September, asked what "elevated risk" should be:
+ *
+ *   I really don't have a point value or threshold. You're probably
+ *   right to put each one at 4/5 for elevated risk. 5 being out of
+ *   company limits.
+ *
+ *   Over company limits is a no go. Higher risk is something to
+ *   caution dispatchers and pilots before heading out the door.
+ *
+ * So 4 cautions and 5 stops, per factor, and the stop has to survive a
+ * low total. Filed exactly this way before the rule existed: wind over
+ * the company crosswind limit, everything else genuinely zero, total 5,
+ * band LOW, approval "Not required".
+ */
+const filedOverLimits = (over: string[] = ["wx_wind"]) => ({
+  id: "a-1",
+  flight_id: "f-1",
+  pilot_user_id: "u-1",
+  answers: { wx_wind: 5 },
+  total_score: 5,
+  risk_level: "low" as const,
+  mitigations: null,
+  over_limit_factors: over,
+  affirmed_zero_factors: null,
+  carried_from_assessment_id: null,
+  created_at: "2026-09-25T12:00:00Z",
+  authorizations: [],
+});
+
+describe("over company limits", () => {
+  it("says no-go even though the total lands in LOW", () => {
+    renderStep({ initial: filedOverLimits() });
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      /Over company limits — this flight is a no-go/i,
+    );
+  });
+
+  it("names the factor rather than counting it", () => {
+    // "1 factor is over limits" makes a pilot go looking.
+    renderStep({ initial: filedOverLimits() });
+    expect(screen.getByRole("alert")).toHaveTextContent(/Wind & gusts/);
+  });
+
+  it("names every one of them", () => {
+    renderStep({
+      initial: filedOverLimits(["wx_wind", "ac_maintenance"]),
+    });
+    const alert = screen.getByRole("alert");
+    expect(alert).toHaveTextContent(/Wind & gusts/);
+    expect(alert).toHaveTextContent(/Maintenance status/);
+  });
+
+  it("offers no Continue button at all, not a disabled one", () => {
+    // How the over-weight W&B step was fixed on 26 August: a greyed
+    // button still reads as "there is a way through, I just have not
+    // found it".
+    renderStep({ initial: filedOverLimits() });
+    expect(
+      screen.queryByRole("button", { name: /Continue to Step 5/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("stops the approval line reading 'Not required'", () => {
+    renderStep({ initial: filedOverLimits() });
+    expect(screen.getByText("No-go")).toBeInTheDocument();
+    expect(screen.queryByText("Not required")).not.toBeInTheDocument();
+  });
+
+  it("still lets the pilot retake it", () => {
+    // The way out of a mis-scored factor, and the only way out.
+    renderStep({ initial: filedOverLimits() });
+    expect(
+      screen.getByRole("button", { name: /Retake questionnaire/i }),
+    ).toBeInTheDocument();
+  });
+
+  it("leaves a within-limits assessment alone", () => {
+    renderStep({
+      initial: { ...filedOverLimits([]), answers: { wx_wind: 4 } },
+    });
+    expect(
+      screen.getByRole("button", { name: /Continue to Step 5/i }),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/no-go/i)).not.toBeInTheDocument();
   });
 });

@@ -1432,6 +1432,14 @@ export interface FratAssessmentResponse {
   total_score: number;
   risk_level: FratRiskLevel;
   mitigations: string | null;
+  /** Factors the pilot scored at the operator's out-of-company-limits
+   *  mark. Any one of them makes the flight a no-go, independently of
+   *  `risk_level` — the operator, 25 Sep 2026: "Over company limits is
+   *  a no go. Higher risk is something to caution dispatchers and
+   *  pilots before heading out the door." So 4 cautions and 5 stops.
+   *  Derived server-side from the answers, so it is as true of
+   *  assessments filed before the rule existed. */
+  over_limit_factors: string[];
   /** The assessment this one's answers were carried from, when the
    *  pilot accepted a block FRAT. Null for anything scored on its
    *  own, which is the normal case. */
