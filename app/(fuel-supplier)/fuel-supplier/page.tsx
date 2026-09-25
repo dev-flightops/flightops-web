@@ -44,13 +44,13 @@ export default async function SupplierInboxPage() {
   const bindingCount = session.bindings.length;
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6">
+    <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
       <header className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-xl font-bold tracking-tight sm:text-2xl">
+          <h1 className="text-2xl font-bold tracking-tight">
             Fuel Supplier Portal
           </h1>
-          <p className="mt-1 text-xs text-muted-foreground">
+          <p className="mt-1 text-sm text-muted-foreground">
             Signed in as{" "}
             <span className="font-semibold text-foreground">
               {session.full_name}

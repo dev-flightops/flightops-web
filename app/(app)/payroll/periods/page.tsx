@@ -64,7 +64,7 @@ export default async function PayrollPeriodsPage() {
   }
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6">
+    <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
       <nav aria-label="Breadcrumb" className="mb-4 text-xs">
         <Link
           href="/payroll"
@@ -79,8 +79,8 @@ export default async function PayrollPeriodsPage() {
       </nav>
 
       <header className="mb-5">
-        <h1 className="text-xl font-bold">Pay Periods</h1>
-        <p className="mt-0.5 text-xs text-muted-foreground">
+        <h1 className="text-2xl font-bold tracking-tight">Pay Periods</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
           Group approved pay events into a period, lock the period, then
           export a CSV for your payroll provider.
         </p>

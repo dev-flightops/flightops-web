@@ -87,7 +87,7 @@ export default async function Dot41Page({
   }
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-8">
+    <div className="mx-auto max-w-6xl px-4 sm:px-6 py-8">
       <FilingHeader
         title="DOT Form 41 — Operating Statistics"
         subtitle={

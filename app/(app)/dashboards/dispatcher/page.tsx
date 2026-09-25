@@ -55,8 +55,8 @@ export default async function DispatcherDashboardPage() {
     <div className="container py-6">
       <DashboardNav active="dispatcher" />
 
-      <h1 className="text-xl font-bold tracking-tight">Dispatcher Live View</h1>
-      <p className="mt-0.5 text-xs text-muted-foreground">
+      <h1 className="text-2xl font-bold tracking-tight">Dispatcher Live View</h1>
+      <p className="mt-1 text-sm text-muted-foreground">
         Active flights · crew legality · pending dispatch packets
       </p>
 

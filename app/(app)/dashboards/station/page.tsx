@@ -80,10 +80,10 @@ export default async function StationDashboardPage({
 
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-xl font-bold tracking-tight">
+          <h1 className="text-2xl font-bold tracking-tight">
             Station: <span className="font-mono">{station}</span>
           </h1>
-          <p className="mt-0.5 text-xs text-muted-foreground">
+          <p className="mt-1 text-sm text-muted-foreground">
             Per-station traffic, ground times, and turn metrics
           </p>
         </div>

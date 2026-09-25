@@ -53,7 +53,7 @@ export default async function PS5500Page({
   }
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-8">
+    <div className="mx-auto max-w-6xl px-4 sm:px-6 py-8">
       <FilingHeader
         title="PS Form 5500 — Mail Trips"
         subtitle={

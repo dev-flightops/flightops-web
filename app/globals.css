@@ -143,6 +143,19 @@
   ::-webkit-scrollbar-thumb:hover {
     background: hsl(var(--input));
   }
+
+  /* A horizontal scroller contains what is inside it. Tables put an
+     `sr-only` label in their action column's header ("Open", "Edit");
+     sr-only is position:absolute, and with no positioned ancestor its
+     containing block is the page — so it escaped the table's scroller
+     and widened the whole page at phone width (by 456px on /customers).
+     Making scrollers the containing block keeps it inside. In the base
+     layer, so an explicit sticky/absolute/fixed utility still wins. */
+  .overflow-x-auto,
+  .overflow-auto,
+  .overflow-x-scroll {
+    position: relative;
+  }
 }
 
 @layer components {

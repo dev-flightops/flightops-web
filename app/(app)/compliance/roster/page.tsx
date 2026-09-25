@@ -51,7 +51,7 @@ export default async function PilotRosterPage({
     .filter((r) => r.flight_time_exceeded).length;
 
   return (
-    <div className="mx-auto max-w-[100rem] px-4 py-6 sm:px-6">
+    <div className="mx-auto max-w-[100rem] px-4 py-8 sm:px-6">
       <header className="mb-5">
         <h1 className="text-2xl font-bold tracking-tight">Pilot Roster</h1>
         <p className="mt-1 text-sm text-muted-foreground">

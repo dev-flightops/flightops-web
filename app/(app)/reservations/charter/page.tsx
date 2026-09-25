@@ -101,9 +101,9 @@ export default async function CharterPipelinePage({
   }
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-10">
+    <div className="mx-auto max-w-6xl px-4 sm:px-6 py-8">
       <header className="mb-6 flex items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold">Charter Pipeline</h1>
+        <h1 className="text-2xl font-bold tracking-tight">Charter Pipeline</h1>
         {loadError ? null : <NewCharterToggle customers={customers} />}
       </header>
 

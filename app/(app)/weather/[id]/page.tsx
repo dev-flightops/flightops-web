@@ -50,7 +50,7 @@ export default async function WeatherBriefingDetailPage({
 
   if (loadError) {
     return (
-      <div className="mx-auto max-w-5xl px-4 py-10">
+      <div className="mx-auto max-w-5xl px-4 sm:px-6 py-8">
         <BackLink />
         <div
           role="alert"
@@ -64,7 +64,7 @@ export default async function WeatherBriefingDetailPage({
   if (briefing === null) notFound();  // unreachable in the happy path
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-10">
+    <div className="mx-auto max-w-5xl px-4 sm:px-6 py-8">
       <BackLink />
       <Header briefing={briefing} />
       <MetarPanel briefing={briefing} />

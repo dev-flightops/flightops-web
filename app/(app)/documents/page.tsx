@@ -92,7 +92,7 @@ export default async function DocumentsPage({
   const grouped = groupByCategory(filtered);
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6">
+    <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
       <nav aria-label="Breadcrumb" className="mb-4 flex items-center text-xs">
         <Link
           href="/home"
@@ -120,7 +120,7 @@ export default async function DocumentsPage({
           <h1 className="text-2xl font-bold tracking-tight">
             Document Library
           </h1>
-          <p className="mt-0.5 text-xs text-muted-foreground">
+          <p className="mt-1 text-sm text-muted-foreground">
             Company manuals, regulations, safety bulletins, and compliance
             references — {total} document{total === 1 ? "" : "s"}
             {/* The category count has to describe the same set the

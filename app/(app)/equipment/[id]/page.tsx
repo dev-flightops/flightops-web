@@ -67,7 +67,7 @@ export default async function EquipmentDetailPage({
 
   if (loadError) {
     return (
-      <div className="mx-auto max-w-5xl px-4 py-10">
+      <div className="mx-auto max-w-5xl px-4 sm:px-6 py-8">
         <BackLink />
         <div
           role="alert"
@@ -86,7 +86,7 @@ export default async function EquipmentDetailPage({
   const resolvedSquawks = squawks.filter((s) => s.status === "resolved");
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-10">
+    <div className="mx-auto max-w-5xl px-4 sm:px-6 py-8">
       <BackLink />
       <Header unit={unit} />
       <Meta unit={unit} />

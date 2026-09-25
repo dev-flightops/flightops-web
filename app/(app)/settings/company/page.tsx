@@ -16,7 +16,7 @@ export default async function SettingsCompanyPage() {
   try {
     const profile = await getCompanyProfile();
     return (
-      <div className="mx-auto max-w-4xl px-4 py-6 sm:px-6">
+      <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6">
         <Breadcrumb />
         <header className="mb-6">
           <h1 className="text-2xl font-bold tracking-tight">Company Profile</h1>
@@ -34,7 +34,7 @@ export default async function SettingsCompanyPage() {
         ? "Your session expired — please sign in again."
         : "Company profile unavailable. Try refreshing in a moment.";
     return (
-      <div className="mx-auto max-w-4xl px-4 py-6 sm:px-6">
+      <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6">
         <Breadcrumb />
         <div
           role="alert"

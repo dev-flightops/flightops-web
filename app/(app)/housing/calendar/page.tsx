@@ -117,7 +117,7 @@ export default async function HousingCalendarPage({
           <h1 className="text-2xl font-bold tracking-tight">
             Housing Calendar
           </h1>
-          <p className="mt-0.5 text-xs text-muted-foreground">
+          <p className="mt-1 text-sm text-muted-foreground">
             Week of {fmtDay(anchor, "long")} · rooms × days
           </p>
         </div>

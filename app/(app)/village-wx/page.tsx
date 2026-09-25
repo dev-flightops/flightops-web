@@ -62,7 +62,7 @@ export default async function VillageWxPage({
   const grouped = groupByRegion(board);
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6">
+    <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
       <AutoRefresh />
 
       <header className="mb-6 flex flex-wrap items-end justify-between gap-3">

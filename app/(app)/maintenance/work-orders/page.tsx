@@ -72,11 +72,11 @@ export default async function WorkOrdersPage({
   }
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-6">
+    <div className="mx-auto max-w-6xl px-4 sm:px-6 py-8">
       <header className="mb-5 flex items-center justify-between gap-3">
         <div>
-          <h1 className="text-lg font-bold">Work Orders</h1>
-          <p className="mt-0.5 text-xs text-muted-foreground">
+          <h1 className="text-2xl font-bold tracking-tight">Work Orders</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
             {orders.length} order{orders.length === 1 ? "" : "s"}
           </p>
         </div>

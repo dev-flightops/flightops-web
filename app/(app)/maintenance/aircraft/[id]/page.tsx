@@ -169,7 +169,7 @@ function AircraftHeader({
         <h1 className="font-mono text-2xl font-bold tracking-tight text-foreground">
           {verdict.aircraft.tail_number}
         </h1>
-        <p className="mt-1 text-xs text-muted-foreground">
+        <p className="mt-1 text-sm text-muted-foreground">
           {subParts.join(" · ")}
         </p>
         {summary?.special_notes && (

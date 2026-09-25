@@ -107,7 +107,7 @@ export default async function PayrollEventsPage({
       <header className="mb-5 flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Pay Events</h1>
-          <p className="mt-0.5 text-xs text-muted-foreground">
+          <p className="mt-1 text-sm text-muted-foreground">
             {total} event{total === 1 ? "" : "s"}
           </p>
         </div>

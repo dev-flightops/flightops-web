@@ -132,7 +132,7 @@ export default async function HousingReportsPage({
   const cost = costByEmployee(bookings, rooms, from, to);
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6">
+    <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
       <nav aria-label="Breadcrumb" className="mb-4 flex items-center text-xs">
         <Link
           href="/home"
@@ -163,7 +163,7 @@ export default async function HousingReportsPage({
 
       <header className="mb-4">
         <h1 className="text-2xl font-bold tracking-tight">Housing Reports</h1>
-        <p className="mt-0.5 text-xs text-muted-foreground">
+        <p className="mt-1 text-sm text-muted-foreground">
           Occupancy, employee history and cost over a date range —{" "}
           {nights} night{nights === 1 ? "" : "s"}
           {units.length > 0 && (

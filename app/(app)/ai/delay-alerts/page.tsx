@@ -73,7 +73,7 @@ export default async function DelayAlertsPage({
   const assessable = flights.filter((f) => f.status !== "cancelled");
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-8">
+    <div className="mx-auto max-w-5xl px-4 sm:px-6 py-8">
       <header className="mb-6 flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-foreground">

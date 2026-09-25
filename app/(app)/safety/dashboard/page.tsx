@@ -85,7 +85,7 @@ export default async function SafetyDashboardPage() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6">
+    <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
       <nav aria-label="Breadcrumb" className="mb-4 flex items-center text-xs">
         <Link
           href="/home"
@@ -122,10 +122,10 @@ export default async function SafetyDashboardPage() {
           <div className="text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
             Safety SMS
           </div>
-          <h1 className="mt-0.5 text-2xl font-bold sm:text-3xl">
+          <h1 className="mt-0.5 text-2xl font-bold tracking-tight">
             Safety Dashboard
           </h1>
-          <p className="mt-1 text-xs text-muted-foreground">
+          <p className="mt-1 text-sm text-muted-foreground">
             Open hazards, incidents, and corrective actions across the tenant —
             one glance surface for Safety Officers + Chief Pilots.
           </p>

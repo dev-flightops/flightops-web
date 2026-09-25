@@ -144,8 +144,8 @@ export default async function RecordsRequestPage() {
 
   if (!catalogue) {
     return (
-      <div className="mx-auto max-w-4xl px-4 py-6 sm:px-6">
-        <h1 className="text-2xl font-bold">Records Request</h1>
+      <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6">
+        <h1 className="text-2xl font-bold tracking-tight">Records Request</h1>
         <div className="mt-4 rounded-xl border border-status-red/40 bg-status-red/5 p-4">
           <p className="text-sm font-semibold text-status-red">
             The disclosure catalogue could not be loaded
@@ -159,10 +159,10 @@ export default async function RecordsRequestPage() {
   const late = catalogue.recent.filter((r) => !r.within_deadline).length;
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-6 sm:px-6">
+    <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6">
       <header className="mb-4">
-        <h1 className="text-2xl font-bold">Records Request</h1>
-        <p className="mt-0.5 text-xs text-muted-foreground">
+        <h1 className="text-2xl font-bold tracking-tight">Records Request</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
           Producing records for an authorised requestor, within the{" "}
           {catalogue.deadline_hours}-hour commitment in the General
           Operations Manual

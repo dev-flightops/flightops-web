@@ -22,14 +22,14 @@ export default function ExpirationPage() {
   const nothingExpiring = expired + exp30 + exp60 + exp90 === 0;
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-6">
+    <div className="mx-auto max-w-5xl px-4 sm:px-6 py-8">
       <Link
         href="/maintenance/inventory"
         className="mb-4 inline-block text-sm text-primary hover:underline"
       >
         ← Inventory
       </Link>
-      <h1 className="mb-5 text-xl font-bold">Parts Expiration Report</h1>
+      <h1 className="mb-5 text-2xl font-bold tracking-tight">Parts Expiration Report</h1>
 
       <div className="mb-6 grid grid-cols-2 gap-4 md:grid-cols-4">
         <StatCard value={expired} label="Expired" color="red" />

@@ -40,10 +40,10 @@ export function ProfileHeader({
     <div className="rounded-lg border border-border bg-card p-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-xl font-bold tracking-tight sm:text-2xl">
+          <h1 className="text-2xl font-bold tracking-tight">
             {pilot.full_name}
           </h1>
-          <p className="mt-1 text-xs text-muted-foreground">{pilot.email}</p>
+          <p className="mt-1 text-sm text-muted-foreground">{pilot.email}</p>
         </div>
         <span className={overallToken.badge}>{overallToken.label}</span>
       </div>

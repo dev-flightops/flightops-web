@@ -179,7 +179,7 @@ export default async function PreflightPage({
 
   if (loadError) {
     return (
-      <div className="mx-auto max-w-3xl px-4 py-10">
+      <div className="mx-auto max-w-3xl px-4 sm:px-6 py-8">
         <BackLink />
         <div
           role="alert"
@@ -193,7 +193,7 @@ export default async function PreflightPage({
   if (!flight || !progress) notFound();
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-6 sm:px-6">
+    <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
       <BackLink />
       <PreflightShell
         flight={flight}

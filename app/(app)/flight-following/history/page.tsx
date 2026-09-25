@@ -109,10 +109,10 @@ export default async function FlightFollowingHistoryPage({
         >
           ← Flight Following
         </Link>
-        <h1 className="mt-1 text-xl font-bold tracking-tight sm:text-2xl">
+        <h1 className="mt-1 text-2xl font-bold tracking-tight">
           Flight History
         </h1>
-        <p className="mt-1 text-xs text-muted-foreground">
+        <p className="mt-1 text-sm text-muted-foreground">
           Completed and cancelled flights with real ATD / ATA + flown
           block hours. Filter by date range and tail.
         </p>

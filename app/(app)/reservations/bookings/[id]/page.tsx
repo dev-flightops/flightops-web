@@ -71,7 +71,7 @@ export default async function BookingDetailPage({
             {formatZuluDateTime(booking.requested_departure_at)}
           </span>
         </h1>
-        <p className="mt-1 text-xs text-muted-foreground">
+        <p className="mt-1 text-sm text-muted-foreground">
           {BOOKING_STATUS_LABELS[booking.status]} · Filed{" "}
           {formatZuluDate(booking.created_at)} · Booking id{" "}
           <code className="rounded bg-muted/60 px-1 font-mono text-[0.7em]">

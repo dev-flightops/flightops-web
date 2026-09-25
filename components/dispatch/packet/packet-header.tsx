@@ -27,10 +27,10 @@ export function PacketHeader({
   return (
     <div className="mb-5 flex flex-wrap items-end justify-between gap-2">
       <div>
-        <h1 className="text-xl font-bold tracking-tight text-foreground sm:text-2xl">
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">
           Flight Dispatch Packet
         </h1>
-        <p className="mt-0.5 text-xs text-muted-foreground">
+        <p className="mt-1 text-sm text-muted-foreground">
           {tenantName} · FAR 135 Dispatch Release
         </p>
       </div>

@@ -65,7 +65,7 @@ export default async function DispatchIntelligencePage() {
   }
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-8">
+    <div className="mx-auto max-w-5xl px-4 sm:px-6 py-8">
       <Link
         href="/dispatch"
         className="text-[0.65rem] font-semibold uppercase tracking-wider text-muted-foreground hover:text-foreground"

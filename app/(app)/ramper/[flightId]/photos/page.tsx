@@ -65,7 +65,7 @@ export default async function RamperPhotosPage({
 
   return (
     <div
-      className="mx-auto w-full max-w-[600px] px-3 pb-24 pt-3"
+      className="mx-auto w-full max-w-[600px] px-4 sm:px-6 pb-24 pt-3"
       style={{ WebkitTapHighlightColor: "transparent" }}
     >
       <Link
@@ -96,7 +96,7 @@ export default async function RamperPhotosPage({
       >
         <div className="flex items-start justify-between gap-2">
           <div>
-            <h1 className="text-2xl font-extrabold">
+            <h1 className="text-2xl font-bold tracking-tight">
               {flight.flight_number ?? "—"}
             </h1>
             <p className="mt-0.5 text-sm font-semibold text-primary">

@@ -50,7 +50,7 @@ export default async function FlightManifestPage({
   }
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-6">
+    <div className="mx-auto max-w-7xl px-4 sm:px-6 py-8">
       <div className="mb-4 text-xs">
         <Link
           href="/manifest"
@@ -90,7 +90,7 @@ function FlightHeader({ flight }: { flight: FlightDetail }) {
         <div className="text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
           Passenger Manifest
         </div>
-        <h1 className="mt-0.5 text-2xl font-bold sm:text-3xl">
+        <h1 className="mt-0.5 text-2xl font-bold tracking-tight">
           {flight.flight_number}
         </h1>
         <div className="mt-1 font-mono text-sm text-muted-foreground">

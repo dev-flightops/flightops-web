@@ -35,7 +35,7 @@ export default async function IncidentReportPage() {
         <h1 className="mt-2 text-2xl font-bold tracking-tight">
           File an Incident
         </h1>
-        <p className="mt-2 text-sm text-muted-foreground">
+        <p className="mt-1 text-sm text-muted-foreground">
           Report an event that has already occurred. Injury + damage
           answers are required so the Safety Officer sees the impact at
           a glance — write &ldquo;none&rdquo; if there weren&rsquo;t any.

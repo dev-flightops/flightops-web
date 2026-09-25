@@ -70,11 +70,11 @@ export default async function RewardsMembersPage() {
   const buttonLabel = `+ Enroll Member`;
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-10">
+    <div className="mx-auto max-w-6xl px-4 sm:px-6 py-8">
       <header className="mb-6 flex items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold">{programName}</h1>
-          <p className="mt-0.5 text-sm text-muted-foreground">
+          <h1 className="text-2xl font-bold tracking-tight">{programName}</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
             {activeCount} active member{activeCount === 1 ? "" : "s"}
           </p>
         </div>

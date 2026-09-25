@@ -69,8 +69,8 @@ export function FleetBrainChat({ examples }: { examples: string[] }) {
       <header className="mb-5 flex items-center gap-3">
         <BrainMark size={36} />
         <div>
-          <h1 className="text-xl font-bold">FleetBrain</h1>
-          <p className="text-xs text-muted-foreground">
+          <h1 className="text-2xl font-bold tracking-tight">FleetBrain</h1>
+          <p className="text-sm text-muted-foreground">
             AI copilot — ask anything about your operation
           </p>
         </div>

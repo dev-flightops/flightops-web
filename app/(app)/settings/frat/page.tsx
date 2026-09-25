@@ -143,7 +143,7 @@ export default async function FratThresholdsPage() {
   }
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-6 sm:px-6">
+    <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
       <nav className="mb-3 text-xs text-muted-foreground">
         <Link href="/settings" className="hover:text-foreground">
           Settings
@@ -152,8 +152,8 @@ export default async function FratThresholdsPage() {
         <span>Flight Risk</span>
       </nav>
       <header className="mb-4">
-        <h1 className="text-2xl font-bold">Flight Risk Thresholds</h1>
-        <p className="mt-0.5 text-xs text-muted-foreground">
+        <h1 className="text-2xl font-bold tracking-tight">Flight Risk Thresholds</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
           Where Low, Medium, High and Extreme begin on the pre-flight
           risk assessment
         </p>

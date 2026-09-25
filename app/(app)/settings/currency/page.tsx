@@ -50,7 +50,7 @@ export default async function SettingsCurrencyPage() {
   const customs = items.filter((i) => !i.is_default);
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-6">
+    <div className="mx-auto max-w-6xl px-4 sm:px-6 py-8">
       <nav aria-label="Breadcrumb" className="mb-4 text-xs">
         <Link href="/settings" className="text-muted-foreground hover:text-foreground">
           Settings
@@ -61,8 +61,8 @@ export default async function SettingsCurrencyPage() {
 
       <header className="mb-5 flex flex-wrap items-center justify-between gap-2">
         <div>
-          <h1 className="text-lg font-bold">Currency Items — Manage</h1>
-          <p className="mt-0.5 text-xs text-muted-foreground">
+          <h1 className="text-2xl font-bold tracking-tight">Currency Items — Manage</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
             Company-specific catalog. Changes apply to future calculations only —
             existing records are preserved.
           </p>

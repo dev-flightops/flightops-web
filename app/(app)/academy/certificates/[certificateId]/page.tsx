@@ -64,7 +64,7 @@ export default async function CertificateDetailPage({
             <p className="text-[0.65rem] uppercase tracking-[0.1em] text-status-yellow">
               Peregrine Academy
             </p>
-            <h1 className="mt-1 text-xl font-bold tracking-tight sm:text-2xl">
+            <h1 className="mt-1 text-2xl font-bold tracking-tight">
               Certificate of Completion
             </h1>
           </div>

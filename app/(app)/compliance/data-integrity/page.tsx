@@ -257,8 +257,8 @@ export default async function DataIntegrityPage() {
 
   if (!audit) {
     return (
-      <div className="mx-auto max-w-4xl px-4 py-6 sm:px-6">
-        <h1 className="text-2xl font-bold">Data Integrity Review</h1>
+      <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6">
+        <h1 className="text-2xl font-bold tracking-tight">Data Integrity Review</h1>
         <div className="mt-4 rounded-xl border border-status-red/40 bg-status-red/5 p-4">
           <p className="text-sm font-semibold text-status-red">
             The audit could not be built
@@ -275,10 +275,10 @@ export default async function DataIntegrityPage() {
   const omissions = audit.findings.filter((f) => f.kind === "omission");
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-6 sm:px-6">
+    <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6">
       <header className="mb-4">
-        <h1 className="text-2xl font-bold">Data Integrity Review</h1>
-        <p className="mt-0.5 text-xs text-muted-foreground">
+        <h1 className="text-2xl font-bold tracking-tight">Data Integrity Review</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
           The {audit.cycle_days}-day audit required by the General
           Operations Manual · window {day(audit.window_start)} to{" "}
           {day(audit.window_end)}

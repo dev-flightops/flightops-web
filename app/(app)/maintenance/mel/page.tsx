@@ -68,10 +68,10 @@ export default async function MelListPage({
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
       <header className="mb-6">
-        <h1 className="text-xl font-bold tracking-tight sm:text-2xl">
+        <h1 className="text-2xl font-bold tracking-tight">
           MEL Items
         </h1>
-        <p className="mt-1 text-xs text-muted-foreground">
+        <p className="mt-1 text-sm text-muted-foreground">
           Deferred-maintenance backlog across the fleet. Sorted by due
           date — soonest first.
         </p>

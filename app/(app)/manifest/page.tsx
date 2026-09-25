@@ -161,11 +161,11 @@ export default async function FlightSchedulePage({
   const orderedKeys = Array.from(byDate.keys()).sort();
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-6">
+    <div className="mx-auto max-w-7xl px-4 sm:px-6 py-8">
       <header className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-xl font-bold sm:text-2xl">Flight Schedule</h1>
-          <p className="mt-0.5 text-xs text-muted-foreground">
+          <h1 className="text-2xl font-bold tracking-tight">Flight Schedule</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
             Scheduling, manifest, and multi-stop routing
           </p>
         </div>

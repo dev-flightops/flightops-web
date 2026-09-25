@@ -60,7 +60,7 @@ export default async function SettingsLoadTeamsPage({
   const grouped = groupByBase(teams);
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-6">
+    <div className="mx-auto max-w-5xl px-4 sm:px-6 py-8">
       <nav aria-label="Breadcrumb" className="mb-4 text-xs">
         <Link href="/settings" className="text-muted-foreground hover:text-foreground">
           Settings
@@ -71,8 +71,8 @@ export default async function SettingsLoadTeamsPage({
 
       <header className="mb-6 flex items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-extrabold">Load Teams</h1>
-          <p className="mt-0.5 text-xs text-muted-foreground">
+          <h1 className="text-2xl font-bold tracking-tight">Load Teams</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
             Manage ramp and load crew teams by base
           </p>
         </div>

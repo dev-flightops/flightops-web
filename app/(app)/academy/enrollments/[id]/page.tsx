@@ -97,7 +97,7 @@ export default async function EnrollmentLessonPage({
           </span>
           <StatusChip status={enrollment.status} />
         </h1>
-        <p className="mt-1 text-xs text-muted-foreground">
+        <p className="mt-1 text-sm text-muted-foreground">
           {enrollment.completed_lessons} of {enrollment.total_lessons}{" "}
           lesson{enrollment.total_lessons === 1 ? "" : "s"} complete
           {enrollment.completed_at

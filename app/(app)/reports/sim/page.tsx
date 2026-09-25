@@ -346,7 +346,7 @@ export default async function SimExportPage({
     : 0;
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6">
+    <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
       <Link
         href="/reports"
         className="mb-3 inline-block text-xs text-muted-foreground hover:text-foreground"
@@ -354,8 +354,8 @@ export default async function SimExportPage({
         ← Reports
       </Link>
       <header className="mb-4">
-        <h1 className="text-2xl font-bold">Schedule Export</h1>
-        <p className="mt-0.5 text-xs text-muted-foreground">
+        <h1 className="text-2xl font-bold tracking-tight">Schedule Export</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
           SIM / OAG schedule data, and a per-departure extract for
           accounting
           {report ? ` · carrier ${report.carrier}` : ""}

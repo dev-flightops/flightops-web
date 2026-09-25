@@ -72,7 +72,7 @@ export default async function HousingUnitDetailPage({
   );
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6">
+    <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6">
       <nav aria-label="Breadcrumb" className="mb-4 flex items-center text-xs">
         <Link
           href="/home"
@@ -109,7 +109,7 @@ export default async function HousingUnitDetailPage({
           <div className="text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
             Housing Unit
           </div>
-          <h1 className="mt-0.5 text-2xl font-bold sm:text-3xl">{unit.name}</h1>
+          <h1 className="mt-0.5 text-2xl font-bold tracking-tight">{unit.name}</h1>
           <div className="mt-1 flex flex-wrap items-baseline gap-2 text-sm text-muted-foreground">
             <span className="font-mono">{unit.station}</span>
             {unit.address && (

@@ -75,10 +75,10 @@ export default async function OpsScoreDashboardPage({
 
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-xl font-bold tracking-tight">
+          <h1 className="text-2xl font-bold tracking-tight">
             Daily Operations Score
           </h1>
-          <p className="mt-0.5 text-xs text-muted-foreground">{longDate}</p>
+          <p className="mt-1 text-sm text-muted-foreground">{longDate}</p>
         </div>
         <Link
           href="/dashboards/system-health"
@@ -97,7 +97,7 @@ export default async function OpsScoreDashboardPage({
         {scoreError && (
           <p
             role="alert"
-            className="mx-auto mt-3 max-w-md rounded-md border border-status-red/30 bg-status-red/10 px-3 py-2 text-xs text-status-red"
+            className="mx-auto mt-3 max-w-md rounded-md border border-status-red/30 bg-status-red/10 px-4 sm:px-6 py-2 text-xs text-status-red"
           >
             {scoreError}
           </p>

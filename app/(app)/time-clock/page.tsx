@@ -61,7 +61,7 @@ export default async function TimeClockPage() {
       <header className="mb-6 flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Time Clock</h1>
-          <p className="mt-0.5 text-xs text-muted-foreground">
+          <p className="mt-1 text-sm text-muted-foreground">
             {open
               ? `On duty since ${formatTime(open.clock_in_at)} — ${open.elapsed_hours.toFixed(1)}h`
               : "Not on duty"}

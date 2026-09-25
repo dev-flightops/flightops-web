@@ -83,7 +83,7 @@ export default async function RewardsMemberDetailPage({
   const { member, transactions } = detail;
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-8">
+    <div className="mx-auto max-w-5xl px-4 sm:px-6 py-8">
       <nav aria-label="Breadcrumb" className="mb-4 text-xs">
         <Link
           href="/reservations/rewards"
@@ -100,10 +100,10 @@ export default async function RewardsMemberDetailPage({
       <header className="mb-6 rounded-lg border border-border bg-card p-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <h1 className="text-xl font-bold">
+            <h1 className="text-2xl font-bold tracking-tight">
               {member.customer_name ?? "—"}
             </h1>
-            <p className="mt-0.5 text-xs text-muted-foreground">
+            <p className="mt-1 text-sm text-muted-foreground">
               {member.member_number} · enrolled{" "}
               {formatDate(member.enrollment_date)}
               {member.enrolled_station ? ` at ${member.enrolled_station}` : ""}

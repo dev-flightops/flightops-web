@@ -226,7 +226,7 @@ export function EmployeeRecordForm({
 
       <header className="mb-4 flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <h1 className="truncate text-2xl font-bold sm:text-3xl">
+          <h1 className="truncate text-2xl font-bold tracking-tight">
             {displayName}
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>

@@ -90,8 +90,8 @@ export default async function DirectorOpsDashboardPage() {
 
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-xl font-bold tracking-tight">Director of Operations</h1>
-          <p className="mt-0.5 text-xs text-muted-foreground">
+          <h1 className="text-2xl font-bold tracking-tight">Director of Operations</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
             Real-time operational overview
           </p>
         </div>

@@ -64,7 +64,7 @@ export default async function T100Page({
   }
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-8">
+    <div className="mx-auto max-w-5xl px-4 sm:px-6 py-8">
       <header className="mb-6 flex flex-wrap items-end justify-between gap-3">
         <div>
           <Link

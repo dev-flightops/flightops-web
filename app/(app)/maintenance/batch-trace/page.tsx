@@ -18,15 +18,15 @@ import { BatchTraceSearch } from "./search";
  */
 export default function BatchTracePage() {
   return (
-    <div className="mx-auto max-w-5xl px-4 py-6">
+    <div className="mx-auto max-w-5xl px-4 sm:px-6 py-8">
       <Link
         href="/maintenance/inventory"
         className="mb-4 inline-block text-sm text-primary hover:underline"
       >
         ← Inventory
       </Link>
-      <h1 className="mb-1 text-xl font-bold">Batch & Lot Traceability</h1>
-      <p className="mb-5 text-xs text-muted-foreground">
+      <h1 className="mb-1 text-2xl font-bold tracking-tight">Batch & Lot Traceability</h1>
+      <p className="mb-5 text-sm text-muted-foreground">
         Trace every aircraft that received a part from a specific batch or lot
         number. Critical for AD compliance and recall situations.
       </p>

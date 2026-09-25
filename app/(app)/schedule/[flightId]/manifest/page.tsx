@@ -59,7 +59,7 @@ export default async function ManifestPage({
       notFound();
     }
     return (
-      <div className="mx-auto max-w-3xl px-6 py-10">
+      <div className="mx-auto max-w-3xl px-4 sm:px-6 py-8">
         <p
           role="alert"
           className="rounded-lg border border-border bg-card px-4 py-6 text-center text-sm text-muted-foreground"
@@ -98,7 +98,7 @@ export default async function ManifestPage({
       : null;
 
   return (
-    <div className="manifest-page mx-auto max-w-[800px] px-6 py-8 text-foreground print:max-w-none print:px-0 print:py-0">
+    <div className="manifest-page mx-auto max-w-[800px] px-4 sm:px-6 py-8 text-foreground print:max-w-none print:px-0 print:py-0">
       <PrintButton />
       <ManifestStyles />
 

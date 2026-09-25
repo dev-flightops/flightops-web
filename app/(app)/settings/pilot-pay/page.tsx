@@ -60,7 +60,7 @@ export default async function SettingsPilotPayPage() {
   const modifiers = data?.modifiers ?? [];
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-6">
+    <div className="mx-auto max-w-5xl px-4 sm:px-6 py-8">
       <nav aria-label="Breadcrumb" className="mb-4 text-xs">
         <Link href="/settings" className="text-muted-foreground hover:text-foreground">
           Settings
@@ -69,8 +69,8 @@ export default async function SettingsPilotPayPage() {
         <span className="font-semibold text-primary">Pilot Pay</span>
       </nav>
 
-      <h1 className="mb-1 text-xl font-bold">Pilot Pay Rates &amp; Modifiers</h1>
-      <p className="mb-5 text-xs text-muted-foreground">
+      <h1 className="mb-1 text-2xl font-bold tracking-tight">Pilot Pay Rates &amp; Modifiers</h1>
+      <p className="mb-5 text-sm text-muted-foreground">
         Configure pay rate tables by seniority, airframe, and role. Add daily
         modifiers for medevac, night ops, and other situations.
       </p>

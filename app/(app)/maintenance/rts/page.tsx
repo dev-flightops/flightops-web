@@ -23,10 +23,10 @@ import Link from "next/link";
 export default function RtsQueuePage() {
   const canSignoff = false;
   return (
-    <div className="mx-auto max-w-5xl px-4 py-8">
+    <div className="mx-auto max-w-5xl px-4 sm:px-6 py-8">
       <header className="mb-6 flex items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold">Return to Service Queue</h1>
+          <h1 className="text-2xl font-bold tracking-tight">Return to Service Queue</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Aircraft pending AMT signoff or RII inspector review
           </p>

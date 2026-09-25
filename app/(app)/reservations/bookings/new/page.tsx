@@ -49,7 +49,7 @@ export default async function NewBookingPage({
         <h1 className="mt-2 text-2xl font-bold tracking-tight">
           New Booking
         </h1>
-        <p className="mt-2 text-sm text-muted-foreground">
+        <p className="mt-1 text-sm text-muted-foreground">
           Assign a customer, route, and departure time. Aircraft and
           quote can be filled in later.
         </p>

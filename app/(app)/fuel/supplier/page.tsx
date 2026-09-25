@@ -73,7 +73,7 @@ export default async function SupplierPortalPage({
 
   if (notAuthorized) {
     return (
-      <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6">
+      <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
         <div className="rounded-lg border border-status-yellow/40 bg-status-yellow/10 px-6 py-8 text-center">
           <h1 className="text-base font-bold tracking-tight text-status-yellow">
             Supplier Portal
@@ -92,12 +92,12 @@ export default async function SupplierPortalPage({
   }
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6">
+    <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
       <header className="mb-5">
-        <h1 className="text-xl font-bold tracking-tight sm:text-2xl">
+        <h1 className="text-2xl font-bold tracking-tight">
           Supplier Portal — Fuel Orders
         </h1>
-        <p className="mt-1 text-xs text-muted-foreground">
+        <p className="mt-1 text-sm text-muted-foreground">
           Acknowledge new orders so the requesting dispatcher knows you
           have it. Fueled / closeout is handled by ramp staff after
           delivery.

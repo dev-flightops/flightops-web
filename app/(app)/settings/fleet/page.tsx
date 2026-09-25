@@ -39,7 +39,7 @@ export default async function SettingsFleetPage() {
   const retired = aircraft.filter((a) => !a.is_active);
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6">
+    <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
       <nav className="mb-4 text-xs text-muted-foreground">
         <Link href="/settings" className="hover:text-foreground">
           Settings

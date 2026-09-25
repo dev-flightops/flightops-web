@@ -31,7 +31,7 @@ export default async function NewPayEventPage() {
   }
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-6 sm:px-6">
+    <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
       <nav aria-label="Breadcrumb" className="mb-4 text-xs">
         <Link
           href="/payroll"
@@ -45,8 +45,8 @@ export default async function NewPayEventPage() {
         <span className="font-semibold text-primary">New</span>
       </nav>
 
-      <h1 className="mb-1 text-xl font-bold">New Pay Event</h1>
-      <p className="mb-5 text-xs text-muted-foreground">
+      <h1 className="mb-1 text-2xl font-bold tracking-tight">New Pay Event</h1>
+      <p className="mb-5 text-sm text-muted-foreground">
         Record a compensable event for an employee. New events land in
         pending status and need Approve before they can roll into a
         locked pay period.

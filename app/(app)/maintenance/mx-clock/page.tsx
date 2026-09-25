@@ -30,11 +30,11 @@ const BACKEND_HINT = "The maintenance clock isn't built yet";
 
 export default function MxClockPage() {
   return (
-    <div className="mx-auto max-w-5xl px-4 py-6">
+    <div className="mx-auto max-w-5xl px-4 sm:px-6 py-8">
       <header className="mb-5 flex items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl font-bold">Maintenance Clock</h1>
-          <p className="mt-0.5 text-xs text-muted-foreground">
+          <h1 className="text-2xl font-bold tracking-tight">Maintenance Clock</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
             Track aircraft maintenance time with milestones
           </p>
         </div>
