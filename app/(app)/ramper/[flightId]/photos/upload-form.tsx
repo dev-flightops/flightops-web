@@ -80,7 +80,7 @@ export function UploadRampPhotoForm({ flightId }: { flightId: string }) {
           type="submit"
           disabled={pending}
           aria-label="Upload photo"
-          className="flex h-[52px] w-[52px] flex-shrink-0 items-center justify-center rounded-2xl border-2 border-primary/30 bg-primary/15 text-primary transition-colors hover:bg-primary/15 active:bg-primary/35 disabled:opacity-50"
+          className="flex h-[52px] w-[52px] flex-shrink-0 items-center justify-center rounded-2xl border-2 border-primary/30 bg-primary/10 text-primary transition-colors hover:bg-primary/15 active:bg-primary/35 disabled:opacity-50"
         >
           {pending ? (
             <span className="text-[0.55rem] font-bold uppercase">Sending</span>

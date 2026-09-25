@@ -71,7 +71,7 @@ function Pill({
       aria-current={active ? "page" : undefined}
       className={
         active
-          ? "rounded-md border border-primary bg-primary/15 px-2 py-1 font-mono text-[0.65rem] font-semibold text-primary"
+          ? "rounded-md border border-primary bg-primary/10 px-2 py-1 font-mono text-[0.65rem] font-semibold text-primary"
           : "rounded-md border border-border bg-card px-2 py-1 font-mono text-[0.65rem] font-semibold text-muted-foreground hover:bg-accent hover:text-foreground"
       }
     >

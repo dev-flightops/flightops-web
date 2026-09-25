@@ -203,7 +203,7 @@ function StatusChip({
       className={
         "rounded-md border px-2.5 py-1 text-xs font-semibold transition " +
         (active
-          ? "border-primary bg-primary/15 text-primary"
+          ? "border-primary bg-primary/10 text-primary"
           : "border-border bg-card text-muted-foreground hover:text-foreground")
       }
     >
@@ -271,7 +271,7 @@ function SidebarItem({
       className={
         "flex items-baseline justify-between gap-2 rounded-md px-2 py-1.5 transition " +
         (active
-          ? "bg-primary/15 text-primary"
+          ? "bg-primary/10 text-primary"
           : "text-muted-foreground hover:bg-accent hover:text-foreground") +
         (bold ? " font-semibold text-foreground" : "")
       }

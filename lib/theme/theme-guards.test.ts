@@ -144,14 +144,17 @@ describe("theme guards", () => {
     expect(show(hits)).toEqual([]);
   });
 
-  it("keeps status text on a tint it was solved for", () => {
-    // The status tones clear AA on their own /10 and /15 tint. At /20+
-    // the same text drops to ~4.2:1.
+  it("keeps status and brand text on a tint it was solved for", () => {
+    // The status tones clear AA on their own /10 and /15 tint; at /20+
+    // the same text drops to ~4.2:1. Brand text is held to /10, the
+    // "selected" tint: the tenant brand's contrast floor (brandTones) is
+    // sized for /10, and a brand at that floor fails on /15 (4.35:1).
     const hits: string[] = [];
     for (const file of FILES) {
       for (const s of classStrings(file)) {
-        for (const m of s.text.matchAll(/(?<![\w:/-])bg-(status-[a-z]+|primary)\/(20|25|30|35|40)\b/g)) {
-          if (new RegExp(`(?<![\\w:/-])text-${m[1]}(?![\\w/-])`).test(s.text) && !s.text.includes("cursor-not-allowed")) {
+        for (const m of s.text.matchAll(/(?<![\w:/-])bg-(?:(status-[a-z]+)\/(?:20|25|30|35|40)|(primary)\/(?:15|20|25|30|35|40))\b/g)) {
+          const hue = m[1] ?? m[2];
+          if (new RegExp(`(?<![\\w:/-])text-${hue}(?![\\w/-])`).test(s.text) && !s.text.includes("cursor-not-allowed")) {
             hits.push(`${file}: ${s.text.trim().slice(0, 90)}`);
           }
         }

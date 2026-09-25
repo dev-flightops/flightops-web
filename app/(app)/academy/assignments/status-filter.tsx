@@ -39,7 +39,7 @@ export function StatusFilter({ current }: { current: string }) {
             className={
               "rounded-md border px-3 py-1.5 text-xs font-semibold transition " +
               (active
-                ? "border-primary bg-primary/15 text-primary"
+                ? "border-primary bg-primary/10 text-primary"
                 : "border-border bg-card text-foreground/80 hover:bg-accent")
             }
           >

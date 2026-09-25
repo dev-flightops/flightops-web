@@ -9,7 +9,7 @@ export function SourceLegend() {
       Source colour: <span className="text-status-green">green</span> = ADS-B
       · <span className="text-status-blue">blue</span> = GPS uplink ·{" "}
       <span className="text-status-yellow">amber</span> = manual radio relay ·{" "}
-      <span className="text-muted-foreground">grey</span> = simulated (demo
+      <span className="text-status-gray">grey</span> = simulated (demo
       data).
     </p>
   );

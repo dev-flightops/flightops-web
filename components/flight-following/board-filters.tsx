@@ -93,7 +93,7 @@ export function BoardFilters({
               aria-pressed={on}
               className={`rounded-md border px-2.5 py-1 text-[0.7rem] font-semibold uppercase tracking-[0.06em] transition-colors ${
                 on
-                  ? "border-primary bg-primary/15 text-primary"
+                  ? "border-primary bg-primary/10 text-primary"
                   : "border-border bg-card text-muted-foreground hover:bg-accent"
               }`}
             >

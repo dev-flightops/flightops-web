@@ -146,7 +146,7 @@ function SectionCard({
               href={link.href}
               className={
                 link.primary
-                  ? "flex items-center justify-between rounded-md border border-primary bg-primary/15 px-3 py-2.5 text-sm font-semibold text-primary hover:bg-primary/20"
+                  ? "flex items-center justify-between rounded-md border border-primary/40 bg-background px-3 py-2.5 text-sm font-semibold text-primary hover:bg-primary/5"
                   : "flex items-center justify-between rounded-md border border-border bg-card/40 px-3 py-2.5 text-sm text-foreground hover:border-primary/60 hover:bg-primary/5"
               }
             >

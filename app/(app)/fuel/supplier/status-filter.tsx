@@ -39,7 +39,7 @@ export function SupplierStatusFilter({
             className={
               "rounded-md border px-3 py-1.5 text-xs font-semibold transition-colors " +
               (isActive
-                ? "border-primary/60 bg-primary/15 text-primary"
+                ? "border-primary/60 bg-primary/10 text-primary"
                 : "border-border bg-card text-muted-foreground hover:text-foreground")
             }
           >

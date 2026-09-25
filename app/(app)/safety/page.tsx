@@ -161,7 +161,7 @@ function StatusFilterBar({ active }: { active: string }) {
             className={
               "rounded-md border px-2.5 py-1 text-xs font-semibold transition " +
               (isActive
-                ? "border-primary bg-primary/15 text-primary"
+                ? "border-primary bg-primary/10 text-primary"
                 : "border-border bg-card text-muted-foreground hover:text-foreground")
             }
           >

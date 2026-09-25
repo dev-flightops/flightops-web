@@ -128,7 +128,7 @@ function FilterChip({
       className={
         "rounded-md border px-2.5 py-1 font-semibold transition " +
         (active
-          ? "border-primary/50 bg-primary/15 text-primary"
+          ? "border-primary/50 bg-primary/10 text-primary"
           : "border-border bg-card text-muted-foreground hover:text-foreground")
       }
     >

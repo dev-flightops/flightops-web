@@ -64,7 +64,7 @@ export default async function SettingsBasesPage({
           className={
             activeOnly
               ? "rounded-md border border-border bg-card px-2.5 py-1 hover:bg-accent"
-              : "rounded-md border border-primary bg-primary/15 px-2.5 py-1 font-semibold text-primary"
+              : "rounded-md border border-primary bg-primary/10 px-2.5 py-1 font-semibold text-primary"
           }
         >
           All
@@ -73,7 +73,7 @@ export default async function SettingsBasesPage({
           href="/settings/bases?active_only=true"
           className={
             activeOnly
-              ? "rounded-md border border-primary bg-primary/15 px-2.5 py-1 font-semibold text-primary"
+              ? "rounded-md border border-primary bg-primary/10 px-2.5 py-1 font-semibold text-primary"
               : "rounded-md border border-border bg-card px-2.5 py-1 hover:bg-accent"
           }
         >

@@ -56,7 +56,7 @@ export function ViewSwitcher({
             className={
               "rounded-sm px-3 py-1.5 font-semibold transition-colors " +
               (isActive
-                ? "bg-primary/15 text-primary"
+                ? "bg-primary/10 text-primary"
                 : "text-muted-foreground hover:text-foreground")
             }
           >

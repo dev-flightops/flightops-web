@@ -257,7 +257,7 @@ export function NewBookingSearchForm({
                   (t.disabled
                     ? "cursor-not-allowed border-border bg-background text-muted-foreground/50"
                     : tripType === t.id
-                      ? "border-primary bg-primary/15 text-primary"
+                      ? "border-primary bg-primary/10 text-primary"
                       : "border-border bg-background text-muted-foreground hover:text-foreground")
                 }
               >

@@ -73,7 +73,7 @@ export function FleetBoardChrome({
                   className={
                     "px-2.5 py-1 text-xs font-semibold transition " +
                     (view === v
-                      ? "bg-primary/15 text-primary"
+                      ? "bg-primary/10 text-primary"
                       : "text-muted-foreground hover:text-foreground")
                   }
                 >
