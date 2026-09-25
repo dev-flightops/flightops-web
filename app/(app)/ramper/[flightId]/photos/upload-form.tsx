@@ -51,7 +51,7 @@ export function UploadRampPhotoForm({ flightId }: { flightId: string }) {
           name="photo_type"
           defaultValue="secured_load"
           disabled={pending}
-          className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-status-blue focus:ring-2 focus:ring-status-blue/30 disabled:opacity-60"
+          className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/30 disabled:opacity-60"
         >
           {PHOTO_TYPES.map((t) => (
             <option key={t.value} value={t.value}>
@@ -80,7 +80,7 @@ export function UploadRampPhotoForm({ flightId }: { flightId: string }) {
           type="submit"
           disabled={pending}
           aria-label="Upload photo"
-          className="flex h-[52px] w-[52px] flex-shrink-0 items-center justify-center rounded-2xl border-2 border-status-blue/30 bg-status-blue/15 text-status-blue transition-colors hover:bg-status-blue/25 active:bg-status-blue/35 disabled:opacity-50"
+          className="flex h-[52px] w-[52px] flex-shrink-0 items-center justify-center rounded-2xl border-2 border-primary/30 bg-primary/15 text-primary transition-colors hover:bg-primary/25 active:bg-primary/35 disabled:opacity-50"
         >
           {pending ? (
             <span className="text-[0.55rem] font-bold uppercase">Sending</span>
@@ -105,7 +105,7 @@ export function UploadRampPhotoForm({ flightId }: { flightId: string }) {
         name="notes"
         placeholder="Notes (optional)"
         disabled={pending}
-        className="w-full rounded-xl border border-border bg-background px-3 py-2 text-xs outline-none focus:border-status-blue focus:ring-2 focus:ring-status-blue/30 disabled:opacity-60"
+        className="w-full rounded-xl border border-border bg-background px-3 py-2 text-xs outline-none focus:border-primary focus:ring-2 focus:ring-primary/30 disabled:opacity-60"
       />
 
       {state.status === "error" && (

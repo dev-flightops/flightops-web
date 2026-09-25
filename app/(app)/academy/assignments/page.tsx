@@ -163,7 +163,7 @@ function AssignmentsTable({ enrollments }: { enrollments: Enrollment[] }) {
                 <td className="px-3 py-2.5">
                   <Link
                     href={`/academy/${e.course.id}`}
-                    className="text-status-blue hover:underline"
+                    className="text-primary hover:underline"
                   >
                     {e.course.title}
                   </Link>

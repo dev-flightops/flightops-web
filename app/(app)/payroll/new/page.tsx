@@ -42,7 +42,7 @@ export default async function NewPayEventPage() {
         <span aria-hidden className="px-1.5 text-muted-foreground">
           /
         </span>
-        <span className="font-semibold text-status-blue">New</span>
+        <span className="font-semibold text-primary">New</span>
       </nav>
 
       <h1 className="mb-1 text-xl font-bold">New Pay Event</h1>

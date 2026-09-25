@@ -213,7 +213,7 @@ function FlightCard({
   const time = formatTime(f.scheduled_departure_at);
   return (
     <li>
-      <article className="rounded-md border border-border bg-card p-3 hover:border-status-blue/60">
+      <article className="rounded-md border border-border bg-card p-3 hover:border-primary/60">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <div className="flex items-center gap-2 text-sm">
@@ -271,7 +271,7 @@ function TeamsColumn({
           No teams.{" "}
           <Link
             href="/settings/load-teams"
-            className="font-semibold text-status-blue hover:underline"
+            className="font-semibold text-primary hover:underline"
             title="Load team management UI lands with a follow-up settings story"
           >
             Create teams →

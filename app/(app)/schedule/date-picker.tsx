@@ -44,7 +44,7 @@ export function DatePicker({
         value={defaultValue}
         onChange={(e) => navigateTo(e.target.value)}
         disabled={isPending}
-        className="rounded-md border border-border bg-background px-2 py-1.5 text-xs text-foreground focus:border-status-blue focus:outline-none"
+        className="rounded-md border border-border bg-background px-2 py-1.5 text-xs text-foreground focus:border-primary focus:outline-none"
       />
       <button
         type="button"

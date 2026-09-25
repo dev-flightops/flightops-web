@@ -31,7 +31,7 @@ export function InventoryFilterBar({
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder="Part number or description"
-            className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:border-status-blue focus:ring-2 focus:ring-status-blue/30"
+            className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/30"
           />
         </label>
         <label className="min-w-[140px]">
@@ -41,7 +41,7 @@ export function InventoryFilterBar({
           <select
             value={category}
             onChange={(e) => setCategory(e.target.value)}
-            className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:border-status-blue focus:ring-2 focus:ring-status-blue/30"
+            className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/30"
           >
             <option value="">All</option>
             {categories.map((c) => (

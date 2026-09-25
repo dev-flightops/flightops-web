@@ -30,7 +30,7 @@ export function NewUnitDrawer() {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="rounded-md bg-status-blue px-3 py-2 text-xs font-semibold text-white hover:brightness-110"
+        className="rounded-md bg-primary px-3 py-2 text-xs font-semibold text-white hover:bg-brand-dark"
       >
         + New House
       </button>
@@ -120,7 +120,7 @@ export function NewUnitDrawer() {
                 <button
                   type="submit"
                   disabled={pending}
-                  className="rounded-md bg-status-blue px-3 py-1.5 text-xs font-semibold text-white hover:brightness-110 disabled:opacity-60"
+                  className="rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-dark disabled:opacity-60"
                 >
                   {pending ? "Creating…" : "Create unit"}
                 </button>
@@ -164,7 +164,7 @@ function TextField({
         placeholder={placeholder}
         required={required}
         autoComplete={autoComplete}
-        className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-xs text-foreground focus:border-status-blue focus:outline-none"
+        className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-xs text-foreground focus:border-primary focus:outline-none"
       />
       {hint && (
         <p className="mt-1 text-[0.65rem] text-muted-foreground">{hint}</p>
@@ -195,7 +195,7 @@ function TextAreaField({
         name={name}
         rows={3}
         placeholder={placeholder}
-        className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-xs text-foreground focus:border-status-blue focus:outline-none"
+        className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-xs text-foreground focus:border-primary focus:outline-none"
       />
     </div>
   );
@@ -219,7 +219,7 @@ function ColorField({ name, label }: { name: string; label: string }) {
           placeholder="#3b82f6"
           value={value}
           onChange={(e) => setValue(e.target.value)}
-          className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-xs text-foreground focus:border-status-blue focus:outline-none"
+          className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-xs text-foreground focus:border-primary focus:outline-none"
         />
         <span
           aria-hidden

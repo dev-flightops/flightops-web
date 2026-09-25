@@ -200,7 +200,7 @@ function SupplierOrderTable({ orders }: { orders: FuelOrderResponse[] }) {
         Need to close out a fueled order? Ramp staff handles that on the{" "}
         <Link
           href="/fuel/orders"
-          className="font-semibold text-status-blue hover:underline"
+          className="font-semibold text-primary hover:underline"
         >
           dispatcher view
         </Link>

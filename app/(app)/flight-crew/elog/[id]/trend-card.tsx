@@ -74,7 +74,7 @@ export function TrendCard({
   return (
     <div className="rounded-lg border border-border bg-card p-4">
       <header className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
-        <span className="text-[0.7rem] font-semibold uppercase tracking-[0.08em] text-status-blue">
+        <span className="text-[0.7rem] font-semibold uppercase tracking-[0.08em] text-primary">
           Leg {leg.leg_number} Trends
         </span>
         <span className="text-[0.65rem] font-mono text-muted-foreground">

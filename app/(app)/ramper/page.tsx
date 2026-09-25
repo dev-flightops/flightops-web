@@ -245,7 +245,7 @@ function Section({
         </h2>
         <Link
           href={actionHref}
-          className="text-[0.7rem] font-semibold text-status-blue hover:underline"
+          className="text-[0.7rem] font-semibold text-primary hover:underline"
         >
           See all →
         </Link>

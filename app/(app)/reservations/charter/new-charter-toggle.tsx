@@ -20,7 +20,7 @@ export function NewCharterToggle({ customers }: { customers: Customer[] }) {
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="rounded-md bg-status-blue px-4 py-2 text-sm font-semibold text-white hover:brightness-110"
+          className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-brand-dark"
         >
           + New Charter Request
         </button>

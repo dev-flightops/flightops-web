@@ -90,7 +90,7 @@ export default async function DocumentDetailPage({
         <span aria-hidden className="px-1.5 text-muted-foreground">
           ›
         </span>
-        <span className="truncate font-semibold text-status-blue">
+        <span className="truncate font-semibold text-primary">
           {doc.title}
         </span>
       </nav>
@@ -288,7 +288,7 @@ function VersionsCard({
                     <td className="whitespace-nowrap px-3 py-2.5 text-right">
                       <a
                         href={versionDownloadUrl(docId, v.version_number)}
-                        className="text-xs font-semibold text-status-blue hover:underline"
+                        className="text-xs font-semibold text-primary hover:underline"
                       >
                         ↓ Download
                       </a>

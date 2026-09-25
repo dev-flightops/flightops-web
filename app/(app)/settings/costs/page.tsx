@@ -60,7 +60,7 @@ export default async function SettingsCostsPage() {
           Settings
         </Link>
         <span aria-hidden className="px-1.5 text-muted-foreground">/</span>
-        <span className="font-semibold text-status-blue">Costs</span>
+        <span className="font-semibold text-primary">Costs</span>
       </nav>
 
       <header className="mb-5">
@@ -152,7 +152,7 @@ function AircraftCostsSection({ rows }: { rows: AircraftCostRow[] }) {
                       <td className="whitespace-nowrap px-4 py-3 font-mono text-xs">
                         {r.avg_duty_hrs ?? "—"}h
                       </td>
-                      <td className="whitespace-nowrap px-4 py-3 font-mono text-xs text-status-blue">
+                      <td className="whitespace-nowrap px-4 py-3 font-mono text-xs text-foreground">
                         {pilotHourly === null ? "—" : `$${pilotHourly.toFixed(0)}`}
                       </td>
                       <td className="whitespace-nowrap px-4 py-3 font-mono text-xs font-bold text-status-green">
@@ -379,7 +379,7 @@ function DisabledAddDetails({
 }) {
   return (
     <details className="mt-3">
-      <summary className="cursor-pointer text-xs text-status-blue">{label}</summary>
+      <summary className="cursor-pointer text-xs text-primary">{label}</summary>
       <div className="mt-3 flex flex-wrap gap-2">
         {children.map((f) => (
           <label key={f.label} className="min-w-[120px]">
@@ -401,7 +401,7 @@ function DisabledAddDetails({
             disabled
             aria-disabled="true"
             title={hint}
-            className="cursor-not-allowed rounded-md bg-status-blue px-3 py-2 text-xs font-semibold text-white disabled:opacity-100"
+            className="cursor-not-allowed rounded-md bg-primary px-3 py-2 text-xs font-semibold text-white disabled:opacity-100"
           >
             Save
           </button>

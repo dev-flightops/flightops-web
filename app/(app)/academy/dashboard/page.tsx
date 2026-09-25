@@ -197,7 +197,7 @@ function RecentCompletionsCard({ completed }: { completed: Enrollment[] }) {
         </h2>
         <Link
           href="/academy"
-          className="text-[0.7rem] font-semibold text-status-blue hover:underline"
+          className="text-[0.7rem] font-semibold text-primary hover:underline"
         >
           Course library →
         </Link>
@@ -245,7 +245,7 @@ function ExpiringSoonCard({ enrollments }: { enrollments: Enrollment[] }) {
         </h2>
         <Link
           href="/academy/mine"
-          className="text-[0.7rem] font-semibold text-status-blue hover:underline"
+          className="text-[0.7rem] font-semibold text-primary hover:underline"
         >
           My training →
         </Link>

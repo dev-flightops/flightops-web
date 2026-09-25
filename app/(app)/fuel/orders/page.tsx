@@ -70,7 +70,7 @@ export default async function FuelOrdersPage({
         </div>
         <Link
           href="/fuel/orders/new"
-          className="rounded-md border border-status-blue bg-status-blue/15 px-3 py-1.5 text-xs font-semibold text-status-blue hover:bg-status-blue/20"
+          className="rounded-md border border-primary bg-primary/15 px-3 py-1.5 text-xs font-semibold text-primary hover:bg-primary/20"
         >
           + Order Fuel
         </Link>
@@ -93,7 +93,7 @@ export default async function FuelOrdersPage({
           {!status && (
             <Link
               href="/fuel/orders/new"
-              className="mt-4 inline-block rounded-md border border-status-blue bg-status-blue/15 px-3 py-1.5 text-xs font-semibold text-status-blue hover:bg-status-blue/20"
+              className="mt-4 inline-block rounded-md border border-primary bg-primary/15 px-3 py-1.5 text-xs font-semibold text-primary hover:bg-primary/20"
             >
               + Order Fuel
             </Link>
@@ -157,7 +157,7 @@ function OrderRow({ order }: { order: FuelOrderResponse }) {
       <td className="px-4 py-3 text-right">
         <Link
           href={`/fuel/orders/${order.id}`}
-          className="text-sm font-medium text-status-blue hover:underline"
+          className="text-sm font-medium text-primary hover:underline"
         >
           View →
         </Link>

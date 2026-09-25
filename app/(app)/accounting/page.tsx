@@ -313,7 +313,7 @@ export default async function AccountingPage({
                         <td className="px-4 py-2.5">
                           <Link
                             href={`/invoicing/${row.invoice_id}`}
-                            className="font-mono font-semibold text-status-blue hover:underline"
+                            className="font-mono font-semibold text-primary hover:underline"
                           >
                             {row.invoice_number}
                           </Link>

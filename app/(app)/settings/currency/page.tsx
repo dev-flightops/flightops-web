@@ -56,7 +56,7 @@ export default async function SettingsCurrencyPage() {
           Settings
         </Link>
         <span aria-hidden className="px-1.5 text-muted-foreground">/</span>
-        <span className="font-semibold text-status-blue">Currency</span>
+        <span className="font-semibold text-primary">Currency</span>
       </nav>
 
       <header className="mb-5 flex flex-wrap items-center justify-between gap-2">
@@ -79,7 +79,7 @@ export default async function SettingsCurrencyPage() {
             disabled
             aria-disabled="true"
             title={BACKEND_HINT_WRITE}
-            className="cursor-not-allowed rounded-md bg-status-blue px-3 py-2 text-xs font-semibold text-white disabled:opacity-100"
+            className="cursor-not-allowed rounded-md bg-primary px-3 py-2 text-xs font-semibold text-white disabled:opacity-100"
           >
             + New Custom Item
           </button>

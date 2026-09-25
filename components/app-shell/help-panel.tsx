@@ -164,7 +164,7 @@ function Article({
             {entry.worthKnowing.map((note) => (
               <li
                 key={note}
-                className="border-l-2 border-status-blue/40 pl-2 text-xs leading-relaxed text-muted-foreground"
+                className="border-l-2 border-primary/40 pl-2 text-xs leading-relaxed text-muted-foreground"
               >
                 {note}
               </li>
@@ -178,7 +178,7 @@ function Article({
           in one faster than they parse a feature description. */}
       {entry.example && (
         <Section heading="For example">
-          <p className="border-l-2 border-status-blue/40 pl-2 text-xs leading-relaxed text-muted-foreground">
+          <p className="border-l-2 border-primary/40 pl-2 text-xs leading-relaxed text-muted-foreground">
             {entry.example}
           </p>
         </Section>
@@ -203,7 +203,7 @@ function Article({
                 <Link
                   href={r.route}
                   onClick={onNavigate}
-                  className="text-xs text-status-blue hover:underline"
+                  className="text-xs text-primary hover:underline"
                 >
                   {r.label}
                 </Link>
@@ -319,7 +319,7 @@ export function HelpPanel() {
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Search help"
                 aria-label="Search help"
-                className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-xs text-foreground focus:border-status-blue focus:outline-none"
+                className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-xs text-foreground focus:border-primary focus:outline-none"
               />
             </div>
 
@@ -374,7 +374,7 @@ export function HelpPanel() {
                         <Link
                           href={entry.route}
                           onClick={() => setOpen(false)}
-                          className="text-xs text-status-blue hover:underline"
+                          className="text-xs text-primary hover:underline"
                         >
                           {entry.title}
                         </Link>

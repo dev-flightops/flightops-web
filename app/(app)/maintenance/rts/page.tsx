@@ -40,7 +40,7 @@ export default function RtsQueuePage() {
       </header>
 
       {!canSignoff && (
-        <div className="mb-5 rounded-lg border border-status-blue/40 bg-status-blue/10 px-4 py-2.5 text-sm text-status-blue">
+        <div className="mb-5 rounded-lg border border-primary/40 bg-primary/10 px-4 py-2.5 text-sm text-primary">
           View only — AMT, DOM, or admin role required to perform signoffs.
         </div>
       )}

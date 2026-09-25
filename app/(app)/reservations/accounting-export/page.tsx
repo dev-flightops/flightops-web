@@ -135,7 +135,7 @@ export default async function AccountingExportPage({
                     <td className="whitespace-nowrap px-4 py-3 font-mono text-xs text-muted-foreground">
                       {r.date}
                     </td>
-                    <td className="whitespace-nowrap px-4 py-3 font-mono text-xs font-semibold text-status-blue">
+                    <td className="whitespace-nowrap px-4 py-3 font-mono text-xs font-semibold text-foreground">
                       {r.flight_number}
                     </td>
                     <td className="whitespace-nowrap px-4 py-3 text-xs">
@@ -216,7 +216,7 @@ function ExportCsvButton({
     return (
       <span
         aria-disabled
-        className="flex cursor-not-allowed items-center gap-2 rounded-md bg-status-blue px-4 py-2 text-sm font-semibold text-white opacity-60"
+        className="flex cursor-not-allowed items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white opacity-60"
       >
         {icon}
         Export CSV (0 rows)
@@ -228,7 +228,7 @@ function ExportCsvButton({
     <a
       href={csvHref}
       download="accounting-export.csv"
-      className="flex items-center gap-2 rounded-md bg-status-blue px-4 py-2 text-sm font-semibold text-white hover:brightness-110"
+      className="flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-brand-dark"
     >
       {icon}
       Export CSV ({total} rows)

@@ -136,7 +136,7 @@ function TabNav({
             replace
             className={
               isActive
-                ? "rounded-t-md border-b-2 border-status-blue px-3 py-1.5 text-xs font-semibold text-status-blue"
+                ? "rounded-t-md border-b-2 border-primary px-3 py-1.5 text-xs font-semibold text-primary"
                 : "rounded-t-md border-b-2 border-transparent px-3 py-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground"
             }
           >

@@ -112,7 +112,7 @@ export default async function EmployeeDetailPage({
       <div className="mx-auto max-w-4xl px-4 py-6 sm:px-6">
         <Link
           href="/employees"
-          className="mb-3 inline-block text-xs font-semibold text-status-blue hover:underline"
+          className="mb-3 inline-block text-xs font-semibold text-primary hover:underline"
         >
           ← Employees
         </Link>

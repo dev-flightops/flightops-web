@@ -198,7 +198,7 @@ function ScopeTab({
       className={
         "rounded-md border px-3 py-1 text-xs font-semibold transition " +
         (active
-          ? "border-status-blue bg-status-blue/15 text-status-blue"
+          ? "border-primary bg-primary/15 text-primary"
           : "border-border bg-card text-foreground/80 hover:bg-muted/20")
       }
     >

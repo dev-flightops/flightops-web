@@ -155,7 +155,7 @@ export default async function FlightCrewPage() {
           </h2>
           <Link
             href="/flight-crew/elog"
-            className="text-xs font-semibold text-status-blue hover:underline"
+            className="text-xs font-semibold text-primary hover:underline"
           >
             + Create Flight Log
           </Link>
@@ -199,7 +199,7 @@ export default async function FlightCrewPage() {
           <li>
             <Link
               href="/flight-crew/history"
-              className="hover:text-status-blue"
+              className="hover:text-primary"
             >
               My Flight History
             </Link>
@@ -207,7 +207,7 @@ export default async function FlightCrewPage() {
           <li>
             <Link
               href="/flight-crew/history?tab=duty"
-              className="hover:text-status-blue"
+              className="hover:text-primary"
             >
               My Duty History
             </Link>
@@ -218,7 +218,7 @@ export default async function FlightCrewPage() {
               so this entry was telling a pilot they could not do
               something they could do from where they were standing. */}
           <li>
-            <Link href="/documents" className="hover:text-status-blue">
+            <Link href="/documents" className="hover:text-primary">
               My Documents
             </Link>
           </li>
@@ -230,7 +230,7 @@ export default async function FlightCrewPage() {
               surface and delivering the narrower one is the same
               overclaim as a dimmed link that works. */}
           <li>
-            <Link href="/safety/report" className="hover:text-status-blue">
+            <Link href="/safety/report" className="hover:text-primary">
               File a Hazard
             </Link>
           </li>

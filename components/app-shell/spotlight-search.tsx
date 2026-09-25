@@ -192,7 +192,7 @@ export function SpotlightSearch() {
                             className={
                               "flex w-full flex-col items-start gap-0.5 border-b border-border/25 px-4 py-2.5 text-left transition-colors last:border-b-0 " +
                               (isSelected
-                                ? "bg-status-blue/15 text-foreground"
+                                ? "bg-primary/15 text-foreground"
                                 : "text-foreground hover:bg-muted/20")
                             }
                           >

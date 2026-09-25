@@ -41,7 +41,7 @@ export default async function SupplierLoginPage() {
         Not a fuel supplier?{" "}
         <a
           href="/login"
-          className="font-semibold text-status-blue hover:underline"
+          className="font-semibold text-primary hover:underline"
         >
           Sign in to the operator portal →
         </a>

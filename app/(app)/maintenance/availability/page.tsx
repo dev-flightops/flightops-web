@@ -67,7 +67,7 @@ export default function AvailabilityPage() {
             disabled
             aria-disabled="true"
             title="Availability roll-up ships with the maintenance-service (M2 backend)"
-            className="cursor-not-allowed rounded-md bg-status-blue px-4 py-2 text-xs font-semibold text-white disabled:opacity-100"
+            className="cursor-not-allowed rounded-md bg-primary px-4 py-2 text-xs font-semibold text-white disabled:opacity-100"
           >
             Update
           </button>

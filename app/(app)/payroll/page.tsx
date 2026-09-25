@@ -120,7 +120,7 @@ export default async function PayrollEventsPage({
           </Link>
           <Link
             href="/payroll/new"
-            className="rounded-md bg-status-blue px-3 py-2 text-xs font-semibold text-white hover:brightness-110"
+            className="rounded-md bg-primary px-3 py-2 text-xs font-semibold text-white hover:bg-brand-dark"
           >
             + New Pay Event
           </Link>
@@ -138,7 +138,7 @@ export default async function PayrollEventsPage({
               className={
                 "rounded-md px-3 py-1.5 text-xs font-semibold " +
                 (active
-                  ? "bg-status-blue text-white"
+                  ? "bg-primary text-white"
                   : "text-muted-foreground hover:text-foreground")
               }
             >

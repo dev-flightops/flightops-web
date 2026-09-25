@@ -32,7 +32,7 @@ export function FlightHistoryTable({
           Start one from{" "}
           <Link
             href="/flight-crew/elog"
-            className="font-semibold text-status-blue hover:underline"
+            className="font-semibold text-primary hover:underline"
           >
             the elog landing
           </Link>
@@ -65,7 +65,7 @@ export function FlightHistoryTable({
               <td className="px-3 py-2 font-mono">{log.flight_date}</td>
               <td className="px-3 py-2 font-mono">{log.log_number}</td>
               <td className="px-3 py-2">{log.flight_number ?? "—"}</td>
-              <td className="px-3 py-2 font-mono text-status-blue">
+              <td className="px-3 py-2 font-mono text-foreground">
                 {log.aircraft.tail_number}
               </td>
               <td className="px-3 py-2">
@@ -77,7 +77,7 @@ export function FlightHistoryTable({
               <td className="px-3 py-2 text-right">
                 <Link
                   href={`/flight-crew/elog/${log.id}`}
-                  className="text-status-blue hover:underline"
+                  className="text-primary hover:underline"
                 >
                   Open →
                 </Link>

@@ -148,7 +148,7 @@ function BriefingsTable({
               <td className="px-4 py-3 text-right">
                 <Link
                   href={`/weather/${b.id}`}
-                  className="text-sm font-medium text-status-blue hover:underline"
+                  className="text-sm font-medium text-primary hover:underline"
                 >
                   View →
                 </Link>

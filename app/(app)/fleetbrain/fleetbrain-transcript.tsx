@@ -77,7 +77,7 @@ export function BrainMark({ size = 28 }: { size?: number }) {
     <span
       aria-hidden
       style={{ width: size, height: size }}
-      className="flex flex-shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-status-blue to-status-purple"
+      className="flex flex-shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-status-purple"
     >
       <svg
         width={size * 0.5}
@@ -105,8 +105,8 @@ export function SuggestionButton({
       type="button"
       onClick={() => onPick(label)}
       className={
-        "rounded-lg border border-status-blue/20 bg-status-blue/5 px-3 py-1.5 " +
-        "text-xs text-status-blue transition-colors hover:bg-status-blue/12 " +
+        "rounded-lg border border-status-purple/20 bg-status-purple/5 px-3 py-1.5 " +
+        "text-xs text-status-purple transition-colors hover:bg-status-purple/12 " +
         (block ? "block w-full text-left" : "")
       }
     >
@@ -162,7 +162,7 @@ function TurnBlock({
     <div>
       {/* Asked */}
       <div className="mb-3 flex justify-end gap-3">
-        <div className="max-w-lg rounded-xl bg-status-blue/12 px-4 py-2">
+        <div className="max-w-lg rounded-xl bg-primary/12 px-4 py-2">
           <p className="text-sm">{turn.query}</p>
           <p className="mt-0.5 text-[0.65rem] text-muted-foreground">
             {turn.at}

@@ -25,7 +25,7 @@ export default function ExpirationPage() {
     <div className="mx-auto max-w-5xl px-4 py-6">
       <Link
         href="/maintenance/inventory"
-        className="mb-4 inline-block text-sm text-status-blue hover:underline"
+        className="mb-4 inline-block text-sm text-primary hover:underline"
       >
         ← Inventory
       </Link>

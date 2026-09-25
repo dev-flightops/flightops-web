@@ -36,7 +36,7 @@ export function ActiveDraftsPanel({
                 <span className="font-mono text-sm font-bold text-foreground">
                   {log.log_number}
                 </span>
-                <span className="ml-2 font-mono text-xs text-status-blue">
+                <span className="ml-2 font-mono text-xs text-primary">
                   {log.aircraft.tail_number}
                 </span>
                 <span className="ml-2 text-[0.65rem] text-muted-foreground">

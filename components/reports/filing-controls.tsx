@@ -53,7 +53,7 @@ function ExportButton({
       onClick={onClick}
       disabled={busy || disabled}
       title={disabled ? "Nothing to export for this period" : undefined}
-      className="ml-1 rounded-md bg-status-blue px-3 py-1.5 text-xs font-semibold text-white hover:brightness-110 disabled:opacity-40"
+      className="ml-1 rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-dark disabled:opacity-40"
     >
       {busy ? "Preparing…" : "Export CSV"}
     </button>
@@ -167,7 +167,7 @@ export function MonthlyFilingControls({
             goTo(y, m);
           }}
           disabled={isPending}
-          className="rounded-md border border-border bg-background px-2 py-1.5 text-xs text-foreground focus:border-status-blue focus:outline-none disabled:opacity-60"
+          className="rounded-md border border-border bg-background px-2 py-1.5 text-xs text-foreground focus:border-primary focus:outline-none disabled:opacity-60"
         />
         <StepButton
           label="Next month"
@@ -258,7 +258,7 @@ export function QuarterlyFilingControls({
             goTo(Number(m[1]), Number(m[2]));
           }}
           disabled={isPending}
-          className="rounded-md border border-border bg-background px-2 py-1.5 text-xs text-foreground focus:border-status-blue focus:outline-none disabled:opacity-60"
+          className="rounded-md border border-border bg-background px-2 py-1.5 text-xs text-foreground focus:border-primary focus:outline-none disabled:opacity-60"
         >
           {/* The viewed quarter and the eight around it. Enough to
               reach last year's filings without a year picker. */}

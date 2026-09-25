@@ -174,7 +174,7 @@ function SupplierCard({
                   </td>
                   <td className="px-3 py-2">
                     {p.is_default && (
-                      <span className="rounded-md border border-status-blue/40 bg-status-blue/10 px-2 py-0.5 text-[0.6rem] font-semibold text-status-blue">
+                      <span className="rounded-md border border-border bg-muted px-2 py-0.5 text-[0.6rem] font-semibold text-muted-foreground">
                         Default
                       </span>
                     )}

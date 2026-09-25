@@ -122,7 +122,7 @@ export function DutyInConfirmStep({ flightId, duty }: Props) {
               type="button"
               onClick={handleClockIn}
               disabled={clockingIn}
-              className="mt-2.5 rounded-md bg-status-blue px-3 py-1.5 text-xs font-semibold text-white hover:brightness-110 disabled:opacity-50"
+              className="mt-2.5 rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-dark disabled:opacity-50"
             >
               {clockingIn ? "Clocking in…" : "Duty in"}
             </button>
@@ -192,7 +192,7 @@ export function DutyInConfirmStep({ flightId, duty }: Props) {
                   type="checkbox"
                   checked={acknowledged}
                   onChange={(e) => setAcknowledged(e.target.checked)}
-                  className="mt-0.5 h-4 w-4 cursor-pointer accent-status-blue"
+                  className="mt-0.5 h-4 w-4 cursor-pointer accent-primary"
                 />
                 <span>
                   I acknowledge the rest / duty warnings above and accept
@@ -205,7 +205,7 @@ export function DutyInConfirmStep({ flightId, duty }: Props) {
               type="button"
               disabled={!canSubmit}
               onClick={handleSubmit}
-              className="inline-flex w-full items-center justify-center rounded-md bg-status-blue px-4 py-2.5 text-sm font-semibold text-white transition-opacity hover:brightness-110 disabled:opacity-50"
+              className="inline-flex w-full items-center justify-center rounded-md bg-primary px-4 py-2.5 text-sm font-semibold text-white transition-opacity hover:bg-brand-dark disabled:opacity-50"
             >
               {pending ? "Saving…" : "Continue to Step 6 →"}
             </button>

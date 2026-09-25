@@ -69,7 +69,7 @@ export default async function TimeClockPage() {
         </div>
         <Link
           href="/flight-crew/elog"
-          className="rounded-md bg-status-blue px-3 py-2 text-xs font-semibold text-white hover:brightness-110"
+          className="rounded-md bg-primary px-3 py-2 text-xs font-semibold text-white hover:bg-brand-dark"
         >
           Open Flight Log →
         </Link>

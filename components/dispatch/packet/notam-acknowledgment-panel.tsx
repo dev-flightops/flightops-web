@@ -126,7 +126,7 @@ export function NotamAcknowledgmentPanel({
                 className={`flex cursor-pointer items-center justify-between rounded-md border px-3 py-2 text-sm transition-colors ${
                   isAcked
                     ? "border-status-green/40 bg-status-green/5"
-                    : "border-border bg-card/40 hover:border-status-blue/40"
+                    : "border-border bg-card/40 hover:border-primary/40"
                 }`}
               >
                 <span className="flex items-center gap-3">
@@ -136,7 +136,7 @@ export function NotamAcknowledgmentPanel({
                     onChange={() => toggle(icao)}
                     disabled={isPending}
                     aria-label={`Acknowledge NOTAMs for ${icao}`}
-                    className="h-4 w-4 cursor-pointer accent-status-blue"
+                    className="h-4 w-4 cursor-pointer accent-primary"
                   />
                   <span className="font-mono font-semibold">{icao}</span>
                   <span className="text-xs text-muted-foreground">
@@ -170,7 +170,7 @@ export function NotamAcknowledgmentPanel({
             type="button"
             onClick={ackAll}
             disabled={isPending}
-            className="rounded-md border border-status-blue bg-status-blue/15 px-3 py-1 text-[0.7rem] font-semibold text-status-blue hover:bg-status-blue/20 disabled:opacity-60"
+            className="rounded-md border border-primary bg-primary/15 px-3 py-1 text-[0.7rem] font-semibold text-primary hover:bg-primary/20 disabled:opacity-60"
           >
             Acknowledge all
           </button>

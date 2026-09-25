@@ -208,7 +208,7 @@ function ListView({
         <p className="mt-2 text-xs text-muted-foreground/70">
           <Link
             href="/reservations/bookings/new"
-            className="text-status-blue hover:underline"
+            className="text-primary hover:underline"
           >
             File a new booking
           </Link>{" "}

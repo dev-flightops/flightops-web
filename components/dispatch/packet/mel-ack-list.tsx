@@ -87,7 +87,7 @@ export function MelAckList({
                 checked={isAcked}
                 onChange={(e) => toggle(mel.id, e.target.checked)}
                 disabled={pending}
-                className="mt-1 h-4 w-4 cursor-pointer accent-status-blue"
+                className="mt-1 h-4 w-4 cursor-pointer accent-primary"
                 aria-label={`Acknowledge MEL ${mel.ata_chapter} — ${mel.description}`}
               />
               <label

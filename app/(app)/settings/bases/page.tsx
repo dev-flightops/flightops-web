@@ -64,7 +64,7 @@ export default async function SettingsBasesPage({
           className={
             activeOnly
               ? "rounded-md border border-border bg-card px-2.5 py-1 hover:bg-muted/40"
-              : "rounded-md border border-status-blue bg-status-blue/15 px-2.5 py-1 font-semibold text-status-blue"
+              : "rounded-md border border-primary bg-primary/15 px-2.5 py-1 font-semibold text-primary"
           }
         >
           All
@@ -73,7 +73,7 @@ export default async function SettingsBasesPage({
           href="/settings/bases?active_only=true"
           className={
             activeOnly
-              ? "rounded-md border border-status-blue bg-status-blue/15 px-2.5 py-1 font-semibold text-status-blue"
+              ? "rounded-md border border-primary bg-primary/15 px-2.5 py-1 font-semibold text-primary"
               : "rounded-md border border-border bg-card px-2.5 py-1 hover:bg-muted/40"
           }
         >
@@ -148,7 +148,7 @@ function BaseTable({
                   {b.icao}
                 </span>
                 {b.is_hub && (
-                  <span className="rounded-sm border border-status-blue/40 bg-status-blue/10 px-1.5 py-0.5 text-[0.55rem] font-semibold uppercase tracking-[0.08em] text-status-blue">
+                  <span className="rounded-sm border border-border bg-muted px-1.5 py-0.5 text-[0.55rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
                     Hub
                   </span>
                 )}

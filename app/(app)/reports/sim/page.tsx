@@ -150,7 +150,7 @@ function CarrierCodeMissing() {
         Set the two-character IATA or three-character ICAO designator on{" "}
         <Link
           href="/settings/company"
-          className="font-semibold text-status-blue hover:underline"
+          className="font-semibold text-primary hover:underline"
         >
           Settings → Company Profile
         </Link>
@@ -503,7 +503,7 @@ export default async function SimExportPage({
               travels in its own column, where the{" "}
               <Link
                 href="/reports"
-                className="text-status-blue hover:underline"
+                className="text-primary hover:underline"
               >
                 regulatory returns
               </Link>{" "}

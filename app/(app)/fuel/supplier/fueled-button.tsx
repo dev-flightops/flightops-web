@@ -43,7 +43,7 @@ export function MarkFueledButton({
           setError(null);
           setOpen(true);
         }}
-        className="rounded-md border border-status-blue/40 bg-status-blue/10 px-3 py-1 text-[0.65rem] font-semibold text-status-blue hover:bg-status-blue/20"
+        className="rounded-md border border-primary/40 bg-primary/10 px-3 py-1 text-[0.65rem] font-semibold text-primary hover:bg-primary/20"
       >
         Mark Fueled
       </button>
@@ -126,7 +126,7 @@ export function MarkFueledButton({
               router.refresh();
             });
           }}
-          className="inline-flex items-center gap-1 rounded-md bg-status-blue px-2.5 py-1 text-[0.65rem] font-semibold text-white hover:brightness-110 disabled:opacity-50"
+          className="inline-flex items-center gap-1 rounded-md bg-primary px-2.5 py-1 text-[0.65rem] font-semibold text-white hover:bg-brand-dark disabled:opacity-50"
         >
           {pending && <Spinner size="xs" />}
           Confirm

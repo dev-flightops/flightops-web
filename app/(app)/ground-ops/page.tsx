@@ -111,7 +111,7 @@ export default async function GroundOpsHubPage() {
 
       <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <SectionCard
-          icon={<Plane className="h-6 w-6 text-status-blue/80" strokeWidth={1.5} />}
+          icon={<Plane className="h-6 w-6 text-primary/80" strokeWidth={1.5} />}
           title="Ramp Operations"
           blurb="Mobile-optimized flight board for ramp agents. Track turnarounds, confirm loads, capture photos, manage fuel orders."
           links={[
@@ -140,7 +140,7 @@ export default async function GroundOpsHubPage() {
           ]}
         />
         <SectionCard
-          icon={<MapPin className="h-6 w-6 text-status-blue/80" strokeWidth={1.5} />}
+          icon={<MapPin className="h-6 w-6 text-primary/80" strokeWidth={1.5} />}
           title="Station Management"
           blurb="Airport and base master data. Runway information, station issues, and operational notes."
           links={[
@@ -171,7 +171,7 @@ export default async function GroundOpsHubPage() {
           ]}
         />
         <SectionCard
-          icon={<Truck className="h-6 w-6 text-status-blue/80" strokeWidth={1.5} />}
+          icon={<Truck className="h-6 w-6 text-primary/80" strokeWidth={1.5} />}
           title="Ground Support Equipment"
           blurb="Equipment inventory, service tracking, and squawk management for tugs, GPUs, fuel trucks, and more."
           links={[
@@ -194,7 +194,7 @@ export default async function GroundOpsHubPage() {
           ]}
         />
         <SectionCard
-          icon={<Fuel className="h-6 w-6 text-status-blue/80" strokeWidth={1.5} />}
+          icon={<Fuel className="h-6 w-6 text-primary/80" strokeWidth={1.5} />}
           title="Fuel Management"
           blurb="Order fuel, manage suppliers, track pricing, and view fuel reports across all bases."
           links={[
@@ -333,7 +333,7 @@ function SectionLinkRow({ link }: { link: SectionLink }) {
     return (
       <Link
         href={link.href}
-        className={`${baseClass} hover:border-status-blue/60 hover:bg-status-blue/5`}
+        className={`${baseClass} hover:border-primary/60 hover:bg-primary/5`}
       >
         {inner}
       </Link>

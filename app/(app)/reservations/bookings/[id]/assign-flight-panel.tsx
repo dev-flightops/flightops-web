@@ -122,7 +122,7 @@ export function AssignFlightPanel({
               and links there. */}
           <Link
             href="/dispatch"
-            className="mt-1.5 inline-block font-semibold text-status-blue hover:underline"
+            className="mt-1.5 inline-block font-semibold text-primary hover:underline"
           >
             Build a flight for it →
           </Link>
@@ -177,7 +177,7 @@ export function AssignFlightPanel({
           type="button"
           onClick={() => void assign(selected)}
           disabled={!selected || pending}
-          className="mt-3 rounded-md bg-status-blue px-4 py-2 text-xs font-semibold text-white hover:brightness-110 disabled:opacity-40"
+          className="mt-3 rounded-md bg-primary px-4 py-2 text-xs font-semibold text-white hover:bg-brand-dark disabled:opacity-40"
         >
           {pending ? "Assigning…" : "Assign to flight"}
         </button>

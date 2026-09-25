@@ -42,7 +42,7 @@ export function SupplierLoginForm() {
           type="email"
           required
           autoComplete="email"
-          className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:border-status-blue focus:outline-none aria-[invalid=true]:border-status-red"
+          className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none aria-[invalid=true]:border-status-red"
           aria-invalid={fieldError("email") ? "true" : undefined}
         />
         {fieldError("email") && (
@@ -65,7 +65,7 @@ export function SupplierLoginForm() {
           type="password"
           required
           autoComplete="current-password"
-          className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:border-status-blue focus:outline-none aria-[invalid=true]:border-status-red"
+          className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none aria-[invalid=true]:border-status-red"
           aria-invalid={fieldError("password") ? "true" : undefined}
         />
         {fieldError("password") && (
@@ -78,7 +78,7 @@ export function SupplierLoginForm() {
       <button
         type="submit"
         disabled={pending}
-        className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-status-blue px-4 py-2.5 text-sm font-semibold text-white hover:brightness-110 disabled:opacity-60"
+        className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-primary px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-dark disabled:opacity-60"
       >
         {pending && <Spinner size="xs" />}
         {pending ? "Signing in…" : "Sign in"}

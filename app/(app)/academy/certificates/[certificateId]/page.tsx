@@ -129,7 +129,7 @@ export default async function CertificateDetailPage({
             </div>
             <Link
               href={`/academy/enrollments/${cert.enrollment_id}`}
-              className="mt-0.5 font-mono text-xs text-status-blue hover:underline"
+              className="mt-0.5 font-mono text-xs text-primary hover:underline"
             >
               View progress →
             </Link>

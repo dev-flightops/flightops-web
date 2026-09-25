@@ -92,7 +92,7 @@ export default async function RewardsMemberDetailPage({
           {programName}
         </Link>
         <span aria-hidden className="px-1.5 text-muted-foreground">/</span>
-        <span className="font-semibold text-status-blue">
+        <span className="font-semibold text-primary">
           {member.member_number}
         </span>
       </nav>

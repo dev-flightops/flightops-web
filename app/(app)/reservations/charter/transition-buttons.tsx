@@ -52,7 +52,7 @@ export function TransitionButtons({
             type="button"
             disabled={pending}
             onClick={() => submit(s)}
-            className="text-xs font-semibold text-status-blue hover:text-status-blue/80 disabled:opacity-50"
+            className="text-xs font-semibold text-primary hover:text-primary/80 disabled:opacity-50"
           >
             → {CHARTER_STATUS_LABELS[s]}
           </button>

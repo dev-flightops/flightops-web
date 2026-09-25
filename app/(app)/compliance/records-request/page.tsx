@@ -256,7 +256,7 @@ export default async function RecordsRequestPage() {
         worse than one that was declined. Related:{" "}
         <Link
           href="/compliance/data-integrity"
-          className="text-status-blue hover:underline"
+          className="text-primary hover:underline"
         >
           Data Integrity Review
         </Link>

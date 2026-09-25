@@ -116,7 +116,7 @@ export default async function EquipmentPage({
         </div>
         <Link
           href="/equipment/new"
-          className="rounded-md border border-status-blue bg-status-blue/15 px-3 py-1.5 text-xs font-semibold text-status-blue hover:bg-status-blue/20"
+          className="rounded-md border border-primary bg-primary/15 px-3 py-1.5 text-xs font-semibold text-primary hover:bg-primary/20"
         >
           + Add Equipment
         </Link>
@@ -151,7 +151,7 @@ export default async function EquipmentPage({
                   </p>
                   <Link
                     href="/equipment/new"
-                    className="inline-block rounded-md border border-status-blue bg-status-blue/15 px-4 py-2 text-xs font-semibold text-status-blue hover:bg-status-blue/20"
+                    className="inline-block rounded-md border border-primary bg-primary/15 px-4 py-2 text-xs font-semibold text-primary hover:bg-primary/20"
                   >
                     + Add First Unit
                   </Link>
@@ -349,7 +349,7 @@ function FilterSelect({
       <select
         name={name}
         defaultValue={value}
-        className="rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-status-blue focus:outline-none"
+        className="rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
       >
         {options.map((o) => (
           <option key={o.value} value={o.value}>
@@ -424,7 +424,7 @@ function UnitRow({ unit }: { unit: GSEUnitListItem }) {
       <td className="px-4 py-3 text-right">
         <Link
           href={`/equipment/${unit.id}`}
-          className="text-sm font-medium text-status-blue hover:underline"
+          className="text-sm font-medium text-primary hover:underline"
         >
           View →
         </Link>

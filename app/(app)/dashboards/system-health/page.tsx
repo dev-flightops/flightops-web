@@ -198,10 +198,10 @@ export default async function SystemHealthDashboardPage() {
               <Link
                 key={q.href}
                 href={q.href}
-                className="flex flex-col items-center gap-2 rounded-lg border border-border bg-background/40 p-4 text-center transition-colors hover:border-status-blue/40 hover:bg-status-blue/[0.04]"
+                className="flex flex-col items-center gap-2 rounded-lg border border-border bg-background/40 p-4 text-center transition-colors hover:border-primary/40 hover:bg-primary/[0.04]"
               >
                 <Icon
-                  className="h-6 w-6 text-status-blue/80"
+                  className="h-6 w-6 text-primary/80"
                   aria-hidden
                   strokeWidth={1.5}
                 />

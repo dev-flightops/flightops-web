@@ -161,14 +161,14 @@ export function NewFuelOrderForm({
           rows={3}
           maxLength={2000}
           placeholder="e.g. north ramp; contact captain before fueling"
-          className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-status-blue focus:outline-none"
+          className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
         />
       </div>
 
       <button
         type="submit"
         disabled={pending || suppliers.length === 0 || fuelTypes.length === 0}
-        className="inline-flex w-full items-center justify-center gap-1.5 rounded-md bg-status-blue px-4 py-2.5 text-sm font-semibold text-white hover:brightness-110 disabled:opacity-50"
+        className="inline-flex w-full items-center justify-center gap-1.5 rounded-md bg-primary px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-dark disabled:opacity-50"
       >
         {pending && <Spinner size="xs" />}
         {pending ? "Placing order…" : "Place fuel order"}
@@ -209,7 +209,7 @@ function Field({
         name={name}
         type={type}
         aria-invalid={error ? "true" : undefined}
-        className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-status-blue focus:outline-none aria-[invalid=true]:border-status-red"
+        className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none aria-[invalid=true]:border-status-red"
         {...inputProps}
       />
       {error && (
@@ -253,7 +253,7 @@ function SideInput({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         aria-invalid={error ? "true" : undefined}
-        className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-status-blue focus:outline-none aria-[invalid=true]:border-status-red"
+        className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none aria-[invalid=true]:border-status-red"
       />
       {error && (
         <p role="alert" className="mt-1 text-[0.65rem] text-status-red">
@@ -291,7 +291,7 @@ function FieldSelect({
         name={name}
         required={required}
         aria-invalid={error ? "true" : undefined}
-        className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-status-blue focus:outline-none aria-[invalid=true]:border-status-red"
+        className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none aria-[invalid=true]:border-status-red"
       >
         {children}
       </select>

@@ -104,7 +104,7 @@ export function AddBaseDialog() {
               <input
                 type="checkbox"
                 name="is_hub"
-                className="h-4 w-4 rounded border-border bg-background text-status-blue focus:ring-status-blue"
+                className="h-4 w-4 rounded border-border bg-background text-primary focus:ring-primary"
               />
               Hub base (defaults selected in dispatch + fuel)
             </label>
@@ -139,7 +139,7 @@ export function AddBaseDialog() {
                 id="notes"
                 name="notes"
                 rows={2}
-                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-status-blue focus:outline-none"
+                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
               />
             </div>
 
@@ -192,7 +192,7 @@ function Field({
         id={name}
         name={name}
         aria-invalid={error ? "true" : undefined}
-        className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-status-blue focus:outline-none aria-[invalid=true]:border-status-red"
+        className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none aria-[invalid=true]:border-status-red"
         {...inputProps}
       />
       {error && (

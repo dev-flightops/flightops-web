@@ -108,7 +108,7 @@ function ComplianceLinkPicker({
           Compliance link
         </h2>
         {linkedItem ? (
-          <span className="rounded border border-status-blue/40 bg-status-blue/10 px-2 py-0.5 text-[0.6rem] font-semibold uppercase tracking-wider text-status-blue">
+          <span className="rounded border border-border bg-muted px-2 py-0.5 text-[0.6rem] font-semibold uppercase tracking-wider text-muted-foreground">
             Fires {linkedItem.code || linkedItem.regulation || "linked item"}
           </span>
         ) : null}
@@ -393,7 +393,7 @@ function LessonRow({
             <button
               type="submit"
               disabled={pending}
-              className="rounded-md bg-status-blue px-3 py-1.5 text-xs font-semibold text-white hover:brightness-110 disabled:opacity-60"
+              className="rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-dark disabled:opacity-60"
             >
               {pending ? "Saving…" : "Save lesson"}
             </button>
@@ -445,7 +445,7 @@ function AddLessonForm({ courseId }: { courseId: string }) {
           <button
             type="submit"
             disabled={pending}
-            className="rounded-md bg-status-blue px-4 py-2 text-sm font-semibold text-white hover:brightness-110 disabled:opacity-60"
+            className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-brand-dark disabled:opacity-60"
           >
             {pending ? "Adding…" : "Add lesson"}
           </button>

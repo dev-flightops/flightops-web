@@ -60,7 +60,7 @@ export default async function DocumentRequirementsPage() {
         <span aria-hidden className="px-1.5 text-muted-foreground">
           ›
         </span>
-        <span className="font-semibold text-status-blue">
+        <span className="font-semibold text-primary">
           Document requirements
         </span>
       </nav>

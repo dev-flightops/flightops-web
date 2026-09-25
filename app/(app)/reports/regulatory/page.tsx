@@ -96,7 +96,7 @@ export default function RegulatoryHubPage() {
           <Link
             key={f.href}
             href={f.href}
-            className="rounded-lg border border-border bg-card p-5 transition-colors hover:border-status-blue"
+            className="rounded-lg border border-border bg-card p-5 transition-colors hover:border-primary"
           >
             <div className="flex items-baseline justify-between gap-2">
               <h2 className="font-semibold text-foreground">{f.name}</h2>

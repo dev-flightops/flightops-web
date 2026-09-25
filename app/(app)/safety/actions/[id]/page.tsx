@@ -85,7 +85,7 @@ export default async function CapaDetailPage({
         <p className="mt-1 text-xs text-muted-foreground">
           Opened {new Date(capa.created_at).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" })} by{" "}
           {capa.opened_by.full_name} — linked to a{" "}
-          <Link href={sourceHref} className="text-status-blue hover:underline">
+          <Link href={sourceHref} className="text-primary hover:underline">
             {capa.source_type}
           </Link>
         </p>

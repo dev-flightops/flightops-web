@@ -64,7 +64,7 @@ export function FleetAirworthinessPanel({
         </span>
         <Link
           href="/maintenance"
-          className="text-status-blue hover:underline"
+          className="text-primary hover:underline"
         >
           Maintenance →
         </Link>

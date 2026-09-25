@@ -169,7 +169,7 @@ export function CompanyForm({ profile }: { profile: CompanyProfileResponse }) {
           name="notes"
           rows={3}
           defaultValue={profile.notes ?? ""}
-          className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-status-blue focus:outline-none"
+          className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
         />
       </Section>
 
@@ -237,7 +237,7 @@ function Field({
         type={type}
         aria-invalid={error ? "true" : undefined}
         aria-describedby={hintId}
-        className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-status-blue focus:outline-none aria-[invalid=true]:border-status-red"
+        className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none aria-[invalid=true]:border-status-red"
         {...inputProps}
       />
       {hint && (

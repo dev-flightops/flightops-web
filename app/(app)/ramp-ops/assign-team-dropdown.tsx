@@ -172,7 +172,7 @@ export function AssignTeamDropdown({
                         {isCurrent && (
                           <span
                             aria-hidden
-                            className="text-status-blue text-[0.7rem]"
+                            className="text-primary text-[0.7rem]"
                           >
                             ✓
                           </span>

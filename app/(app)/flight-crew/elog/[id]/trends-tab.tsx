@@ -48,7 +48,7 @@ export function TrendsTab({
               Add a leg on{" "}
               <Link
                 href={`/flight-crew/elog/${logId}?tab=legs`}
-                className="font-semibold text-status-blue hover:underline"
+                className="font-semibold text-primary hover:underline"
               >
                 Tab 2
               </Link>{" "}

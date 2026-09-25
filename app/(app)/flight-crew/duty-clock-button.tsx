@@ -157,12 +157,12 @@ export function DutyClockButton({ initial }: Props) {
           type="button"
           onClick={handleClick}
           disabled={pending}
-          className="flex w-full items-center justify-between gap-3 rounded-xl border border-status-blue/40 bg-status-blue/10 px-5 py-4 transition-colors hover:bg-status-blue/15 disabled:opacity-60"
+          className="flex w-full items-center justify-between gap-3 rounded-xl border border-primary/40 bg-primary/10 px-5 py-4 transition-colors hover:bg-primary/15 disabled:opacity-60"
         >
           <span className="flex items-center gap-3">
-            <ClockIcon className="h-6 w-6 text-status-blue" />
+            <ClockIcon className="h-6 w-6 text-primary" />
             <span className="flex flex-col items-start">
-              <span className="text-base font-bold tracking-wide text-status-blue">
+              <span className="text-base font-bold tracking-wide text-primary">
                 DUTY IN
               </span>
               <span className="text-[0.7rem] text-muted-foreground">

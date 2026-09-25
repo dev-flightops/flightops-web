@@ -191,7 +191,7 @@ function Panel({
           {headerLink && (
             <Link
               href={headerLink.href}
-              className="text-[0.7rem] text-muted-foreground/70 hover:text-status-blue"
+              className="text-[0.7rem] text-muted-foreground/70 hover:text-primary"
             >
               {headerLink.label}
             </Link>

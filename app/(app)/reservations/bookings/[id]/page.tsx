@@ -234,7 +234,7 @@ function DetailRow({
         {label}
       </span>
       {href ? (
-        <Link href={href} className="text-status-blue hover:underline">
+        <Link href={href} className="text-primary hover:underline">
           {value}
         </Link>
       ) : (

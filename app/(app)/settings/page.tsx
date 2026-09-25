@@ -344,8 +344,8 @@ function SectionCard({
                 href={link.href}
                 className={
                   link.primary
-                    ? "flex items-center justify-between rounded-md border border-status-blue bg-status-blue/15 px-3 py-2.5 text-sm font-semibold text-status-blue hover:bg-status-blue/20"
-                    : "flex items-center justify-between rounded-md border border-border bg-card/40 px-3 py-2.5 text-sm text-foreground hover:border-status-blue/60 hover:bg-status-blue/5"
+                    ? "flex items-center justify-between rounded-md border border-primary bg-primary/15 px-3 py-2.5 text-sm font-semibold text-primary hover:bg-primary/20"
+                    : "flex items-center justify-between rounded-md border border-border bg-card/40 px-3 py-2.5 text-sm text-foreground hover:border-primary/60 hover:bg-primary/5"
                 }
               >
                 <span>

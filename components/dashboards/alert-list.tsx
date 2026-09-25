@@ -90,7 +90,7 @@ export function AlertList({
             {alert.href && (
               <Link
                 href={alert.href}
-                className="flex-shrink-0 text-[0.7rem] font-medium text-status-blue hover:underline"
+                className="flex-shrink-0 text-[0.7rem] font-medium text-primary hover:underline"
               >
                 {alert.linkLabel ?? "details →"}
               </Link>

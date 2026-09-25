@@ -57,7 +57,7 @@ export function NewPeriodForm() {
       <button
         type="submit"
         disabled={pending}
-        className="h-[38px] rounded-md bg-status-blue px-4 text-xs font-semibold text-white hover:brightness-110 disabled:opacity-60"
+        className="h-[38px] rounded-md bg-primary px-4 text-xs font-semibold text-white hover:bg-brand-dark disabled:opacity-60"
       >
         {pending ? "Creating…" : "+ New Period"}
       </button>

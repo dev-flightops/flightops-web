@@ -84,7 +84,7 @@ export default async function HousingPage() {
         <span aria-hidden className="px-1.5 text-muted-foreground">
           ›
         </span>
-        <span className="font-semibold text-status-blue">Housing</span>
+        <span className="font-semibold text-primary">Housing</span>
       </nav>
 
       <header className="mb-4 flex flex-wrap items-start justify-between gap-3">
@@ -278,7 +278,7 @@ function UnitCard({
         </span>
         <Link
           href={`/housing/${unit.id}`}
-          className="font-semibold text-status-blue hover:underline"
+          className="font-semibold text-primary hover:underline"
         >
           Open →
         </Link>

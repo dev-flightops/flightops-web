@@ -163,7 +163,7 @@ export default async function CharterPipelinePage({
               <tbody className="divide-y divide-border">
                 {rows.map((c) => (
                   <tr key={c.id} className="hover:bg-muted/5">
-                    <td className="whitespace-nowrap px-4 py-3 font-mono text-xs font-semibold text-status-blue">
+                    <td className="whitespace-nowrap px-4 py-3 font-mono text-xs font-semibold text-foreground">
                       {charterRef(c.id)}
                     </td>
                     <td className="px-4 py-3 text-xs">

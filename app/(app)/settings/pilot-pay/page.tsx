@@ -66,7 +66,7 @@ export default async function SettingsPilotPayPage() {
           Settings
         </Link>
         <span aria-hidden className="px-1.5 text-muted-foreground">/</span>
-        <span className="font-semibold text-status-blue">Pilot Pay</span>
+        <span className="font-semibold text-primary">Pilot Pay</span>
       </nav>
 
       <h1 className="mb-1 text-xl font-bold">Pilot Pay Rates &amp; Modifiers</h1>
@@ -134,7 +134,7 @@ function PayRateSection({ rates }: { rates: PayRateRow[] }) {
                   <tr key={r.id} className="hover:bg-muted/5">
                     <td className="whitespace-nowrap px-4 py-3 text-xs">
                       {r.rate_type === "daily" ? (
-                        <span className="rounded border border-status-blue/40 bg-status-blue/10 px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider text-status-blue">
+                        <span className="rounded border border-border bg-muted px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider text-muted-foreground">
                           Daily
                         </span>
                       ) : (
@@ -221,7 +221,7 @@ function PayRateSection({ rates }: { rates: PayRateRow[] }) {
             disabled
             aria-disabled="true"
             title={BACKEND_HINT_ADD}
-            className="h-[34px] cursor-not-allowed rounded-md bg-status-blue px-3 text-xs font-semibold text-white disabled:opacity-100"
+            className="h-[34px] cursor-not-allowed rounded-md bg-primary px-3 text-xs font-semibold text-white disabled:opacity-100"
           >
             + Add Rate
           </button>
@@ -320,7 +320,7 @@ function PayModifierSection({ modifiers }: { modifiers: PayModifierRow[] }) {
             disabled
             aria-disabled="true"
             title={BACKEND_HINT_ADD}
-            className="h-[34px] cursor-not-allowed rounded-md bg-status-blue px-3 text-xs font-semibold text-white disabled:opacity-100"
+            className="h-[34px] cursor-not-allowed rounded-md bg-primary px-3 text-xs font-semibold text-white disabled:opacity-100"
           >
             + Add Modifier
           </button>

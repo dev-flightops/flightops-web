@@ -98,7 +98,7 @@ export function LegCard({
     <div className="rounded-lg border border-border bg-card p-4">
       <header className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
         <div className="flex items-baseline gap-2">
-          <span className="text-[0.7rem] font-semibold uppercase tracking-[0.08em] text-status-blue">
+          <span className="text-[0.7rem] font-semibold uppercase tracking-[0.08em] text-primary">
             Leg {leg.leg_number}
           </span>
           <span className="text-[0.65rem] text-muted-foreground">
@@ -561,7 +561,7 @@ function CheckboxField({
           checked={checked}
           disabled={disabled}
           onChange={(e) => onChange(e.target.checked)}
-          className="h-3.5 w-3.5 accent-status-blue disabled:opacity-60"
+          className="h-3.5 w-3.5 accent-primary disabled:opacity-60"
         />
         {label}
       </label>

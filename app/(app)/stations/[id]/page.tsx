@@ -146,7 +146,7 @@ function Header({ station }: { station: StationListItem }) {
           {station.is_hub && (
             <span
               title="Hub bases sort first in all dropdowns + render as larger markers on the flight following map."
-              className="rounded-md border border-status-blue/40 bg-status-blue/10 px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-[0.06em] text-status-blue"
+              className="rounded-md border border-border bg-muted px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground"
             >
               Hub
             </span>

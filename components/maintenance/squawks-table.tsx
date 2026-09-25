@@ -75,7 +75,7 @@ function SquawkRow({
         <td className="px-3 py-2.5">
           <Link
             href={`/maintenance/aircraft/${squawk.aircraft.id}`}
-            className="font-mono font-semibold text-status-blue hover:underline"
+            className="font-mono font-semibold text-primary hover:underline"
           >
             {squawk.aircraft.tail_number}
           </Link>

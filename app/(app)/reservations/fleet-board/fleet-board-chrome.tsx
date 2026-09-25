@@ -73,7 +73,7 @@ export function FleetBoardChrome({
                   className={
                     "px-2.5 py-1 text-xs font-semibold transition " +
                     (view === v
-                      ? "bg-status-blue/15 text-status-blue"
+                      ? "bg-primary/15 text-primary"
                       : "text-muted-foreground hover:text-foreground")
                   }
                 >
@@ -107,7 +107,7 @@ export function FleetBoardChrome({
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="rounded-md border border-status-blue/40 bg-status-blue/10 px-2.5 py-1 text-xs font-semibold text-status-blue">
+          <span className="rounded-md border border-border bg-muted px-2.5 py-1 text-xs font-semibold text-muted-foreground">
             {flightsCount} flight{flightsCount === 1 ? "" : "s"}
           </span>
           <span className="rounded-md border border-status-green/40 bg-status-green/10 px-2.5 py-1 text-xs font-semibold text-status-green">

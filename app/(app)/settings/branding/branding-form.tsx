@@ -72,7 +72,7 @@ export function BrandingForm({
             placeholder="e.g. yourairline.com"
             spellCheck={false}
             autoComplete="off"
-            className="min-w-0 flex-1 rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-status-blue focus:outline-none"
+            className="min-w-0 flex-1 rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
           />
           <button
             type="submit"
@@ -223,7 +223,7 @@ function ColorField({
           maxLength={9}
           spellCheck={false}
           aria-invalid={error ? "true" : undefined}
-          className="flex-1 rounded-md border border-border bg-background px-3 py-2 font-mono text-sm text-foreground focus:border-status-blue focus:outline-none aria-[invalid=true]:border-status-red"
+          className="flex-1 rounded-md border border-border bg-background px-3 py-2 font-mono text-sm text-foreground focus:border-primary focus:outline-none aria-[invalid=true]:border-status-red"
         />
         <span
           className="h-9 w-9 flex-shrink-0 rounded-md border border-border"

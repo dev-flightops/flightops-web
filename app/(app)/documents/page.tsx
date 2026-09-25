@@ -112,7 +112,7 @@ export default async function DocumentsPage({
         <span aria-hidden className="px-1.5 text-muted-foreground">
           ›
         </span>
-        <span className="font-semibold text-status-blue">Documents</span>
+        <span className="font-semibold text-primary">Documents</span>
       </nav>
 
       <header className="mb-4 flex flex-wrap items-start justify-between gap-3">
@@ -146,13 +146,13 @@ export default async function DocumentsPage({
               className={
                 "inline-flex items-center gap-2 rounded-md border px-3 py-1.5 text-xs font-semibold transition " +
                 (requiredReadingPending > 0
-                  ? "border-status-blue/40 bg-status-blue/10 text-status-blue hover:bg-status-blue/20"
+                  ? "border-primary/40 bg-primary/10 text-primary hover:bg-primary/20"
                   : "border-border bg-card text-muted-foreground hover:bg-muted/10")
               }
             >
               Required reading
               {requiredReadingPending > 0 && (
-                <span className="inline-flex min-w-[1.25rem] items-center justify-center rounded-full bg-status-blue px-1.5 text-[0.65rem] font-bold text-white">
+                <span className="inline-flex min-w-[1.25rem] items-center justify-center rounded-full bg-primary px-1.5 text-[0.65rem] font-bold text-white">
                   {requiredReadingPending}
                 </span>
               )}
@@ -232,7 +232,7 @@ function CategorySection({
                   v{d.current_version_number}
                 </span>
                 <span className="hidden sm:inline">{fmtDate(d.updated_at)}</span>
-                <span className="font-semibold text-status-blue">Open →</span>
+                <span className="font-semibold text-primary">Open →</span>
               </div>
             </Link>
           </li>

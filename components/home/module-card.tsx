@@ -53,7 +53,7 @@ export function ModuleCard({ module }: { module: HomeModule }) {
         <div
           className={cn(
             "text-[0.82rem] font-semibold",
-            module.highlight ? "text-status-blue" : "text-foreground",
+            module.highlight ? "text-primary" : "text-foreground",
           )}
         >
           {module.label}

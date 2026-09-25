@@ -137,7 +137,7 @@ export default async function CapaBoardPage({
                 className={
                   "rounded-md border px-2.5 py-1 text-xs font-semibold transition " +
                   (isActive
-                    ? "border-status-blue bg-status-blue/15 text-status-blue"
+                    ? "border-primary bg-primary/15 text-primary"
                     : "border-border bg-card text-muted-foreground hover:text-foreground")
                 }
               >
@@ -273,7 +273,7 @@ function CapaTable({
                           ? `/safety/${c.source_id}`
                           : `/safety/incidents/${c.source_id}`
                       }
-                      className="text-status-blue hover:underline"
+                      className="text-primary hover:underline"
                     >
                       {c.source_type === "hazard" ? "Hazard" : "Incident"} →
                     </Link>
@@ -298,7 +298,7 @@ function CapaTable({
                   <td className="whitespace-nowrap px-4 py-3 text-right">
                     <Link
                       href={`/safety/actions/${c.id}`}
-                      className="text-xs font-semibold text-status-blue hover:underline"
+                      className="text-xs font-semibold text-primary hover:underline"
                     >
                       Open →
                     </Link>

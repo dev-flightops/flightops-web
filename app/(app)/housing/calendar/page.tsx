@@ -107,7 +107,7 @@ export default async function HousingCalendarPage({
         <span aria-hidden className="px-1.5 text-muted-foreground">
           ›
         </span>
-        <span className="font-semibold text-status-blue">Calendar</span>
+        <span className="font-semibold text-primary">Calendar</span>
       </nav>
 
       <header className="mb-4 flex flex-wrap items-start justify-between gap-3">
@@ -178,7 +178,7 @@ function CalendarNav({
         className={
           "rounded-md px-3 py-1.5 text-xs font-semibold " +
           (isToday
-            ? "bg-status-blue text-white"
+            ? "bg-primary text-white"
             : "border border-border bg-card text-foreground/80 hover:bg-muted/20")
         }
       >
@@ -225,7 +225,7 @@ function CalendarGrid({
                 key={d.toISOString()}
                 className={
                   "px-2 py-2.5 text-center font-semibold " +
-                  (isoDay(d) === todayIso ? "bg-status-blue/10 text-status-blue" : "")
+                  (isoDay(d) === todayIso ? "bg-primary/10 text-primary" : "")
                 }
               >
                 <div>{fmtDay(d, "short")}</div>
@@ -309,7 +309,7 @@ function UnitBlock({
             ) : null}
             <Link
               href={`/housing/${unit.id}`}
-              className="block font-mono text-xs text-foreground hover:text-status-blue"
+              className="block font-mono text-xs text-foreground hover:text-primary"
             >
               {r.room_number}
               <span className="ml-1 text-[0.65rem] text-muted-foreground">
@@ -327,7 +327,7 @@ function UnitBlock({
                 key={dayIso}
                 className={
                   "px-1 py-1 align-top " +
-                  (dayIso === todayIso ? "bg-status-blue/[0.06]" : "")
+                  (dayIso === todayIso ? "bg-primary/[0.06]" : "")
                 }
               >
                 <div className="flex flex-col gap-1">

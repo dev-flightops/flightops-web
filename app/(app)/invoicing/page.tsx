@@ -154,7 +154,7 @@ export default async function InvoicingPage({
                         <td className="px-4 py-2.5">
                           <Link
                             href={`/invoicing/${inv.id}`}
-                            className="font-mono font-semibold text-status-blue hover:underline"
+                            className="font-mono font-semibold text-primary hover:underline"
                           >
                             {inv.invoice_number}
                           </Link>
@@ -241,7 +241,7 @@ function FilterChip({
       className={
         "rounded-md border px-3 py-1.5 text-xs font-semibold transition " +
         (active
-          ? "border-status-blue bg-status-blue/15 text-status-blue"
+          ? "border-primary bg-primary/15 text-primary"
           : "border-border bg-background text-muted-foreground hover:text-foreground")
       }
     >

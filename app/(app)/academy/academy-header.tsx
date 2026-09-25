@@ -109,7 +109,7 @@ function SectionTab({
     } else if (accent === "purple") {
       cls = "border-status-purple bg-status-purple/20 text-status-purple";
     } else {
-      cls = "border-status-blue bg-status-blue/15 text-status-blue";
+      cls = "border-primary bg-primary/15 text-primary";
     }
   } else if (accent === "purple") {
     // Studio always gets the purple accent even when inactive — legacy

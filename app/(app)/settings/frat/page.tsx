@@ -196,7 +196,7 @@ export default async function FratThresholdsPage() {
               see{" "}
               <Link
                 href="/flight-crew"
-                className="text-status-blue hover:underline"
+                className="text-primary hover:underline"
               >
                 the preflight sequence
               </Link>

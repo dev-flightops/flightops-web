@@ -55,7 +55,7 @@ export function StatusFilterTabs<S extends string>({
             className={cn(
               "rounded-md px-3 py-1.5 text-xs font-semibold transition-colors",
               isActive
-                ? "bg-status-blue text-white"
+                ? "bg-primary text-white"
                 : "text-muted-foreground hover:bg-muted/40 hover:text-foreground",
             )}
           >

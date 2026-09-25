@@ -81,7 +81,7 @@ export function TrackingForm({
             type="checkbox"
             name="simulation_mode_enabled"
             defaultChecked={config.simulation_mode_enabled}
-            className="h-4 w-4 rounded border-border bg-background text-status-blue focus:ring-status-blue"
+            className="h-4 w-4 rounded border-border bg-background text-primary focus:ring-primary"
           />
           Simulation mode (flips the SIMULATION-MODE banner on the map)
         </label>
@@ -113,7 +113,7 @@ export function TrackingForm({
         <button
           type="submit"
           disabled={pending}
-          className="inline-flex items-center justify-center gap-1.5 rounded-md bg-status-blue px-5 py-2.5 text-sm font-semibold text-white hover:brightness-110 disabled:opacity-50"
+          className="inline-flex items-center justify-center gap-1.5 rounded-md bg-primary px-5 py-2.5 text-sm font-semibold text-white hover:bg-brand-dark disabled:opacity-50"
         >
           {pending && <Spinner size="xs" />}
           {pending ? "Saving…" : "Save changes"}
@@ -145,7 +145,7 @@ function NumberField({
       >
         {label}
       </label>
-      <div className="flex items-stretch overflow-hidden rounded-md border border-border bg-background focus-within:border-status-blue">
+      <div className="flex items-stretch overflow-hidden rounded-md border border-border bg-background focus-within:border-primary">
         <input
           id={name}
           name={name}
@@ -194,7 +194,7 @@ function Field({
         id={name}
         name={name}
         aria-invalid={error ? "true" : undefined}
-        className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-status-blue focus:outline-none aria-[invalid=true]:border-status-red"
+        className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none aria-[invalid=true]:border-status-red"
         {...inputProps}
       />
       {error && (

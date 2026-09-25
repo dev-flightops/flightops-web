@@ -58,7 +58,7 @@ export function SettingsMilestonePlaceholder({
           <div className="space-y-3">
             <p className="text-sm font-medium">
               Available after{" "}
-              <span className="text-status-blue">{availableAfter}</span>
+              <span className="text-primary">{availableAfter}</span>
             </p>
             <p className="text-xs text-muted-foreground">
               The route is reserved — bookmarks land here today and will
@@ -68,7 +68,7 @@ export function SettingsMilestonePlaceholder({
               {upcomingFields.map((field) => (
                 <li
                   key={field}
-                  className="before:mr-2 before:text-status-blue before:content-['→']"
+                  className="before:mr-2 before:text-primary before:content-['→']"
                 >
                   {field}
                 </li>

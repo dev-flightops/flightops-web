@@ -158,7 +158,7 @@ export default async function HousingReportsPage({
         <span aria-hidden className="px-1.5 text-muted-foreground">
           ›
         </span>
-        <span className="font-semibold text-status-blue">Reports</span>
+        <span className="font-semibold text-primary">Reports</span>
       </nav>
 
       <header className="mb-4">
@@ -186,7 +186,7 @@ export default async function HousingReportsPage({
               aria-current={active ? "page" : undefined}
               className={
                 active
-                  ? "rounded-md bg-status-blue px-3 py-1.5 text-xs font-semibold text-white"
+                  ? "rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-white"
                   : "rounded-md border border-border px-3 py-1.5 text-xs font-semibold text-muted-foreground hover:bg-muted/30 hover:text-foreground"
               }
             >
@@ -209,7 +209,7 @@ export default async function HousingReportsPage({
             type="date"
             name="from"
             defaultValue={from}
-            className="rounded-md border border-border bg-background px-3 py-1.5 text-sm text-foreground focus:border-status-blue focus:outline-none"
+            className="rounded-md border border-border bg-background px-3 py-1.5 text-sm text-foreground focus:border-primary focus:outline-none"
           />
         </label>
         <label className="block">
@@ -220,7 +220,7 @@ export default async function HousingReportsPage({
             type="date"
             name="to"
             defaultValue={to}
-            className="rounded-md border border-border bg-background px-3 py-1.5 text-sm text-foreground focus:border-status-blue focus:outline-none"
+            className="rounded-md border border-border bg-background px-3 py-1.5 text-sm text-foreground focus:border-primary focus:outline-none"
           />
         </label>
         <button

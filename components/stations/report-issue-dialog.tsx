@@ -66,7 +66,7 @@ export function ReportIssueDialog({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="rounded-md border border-status-blue bg-status-blue/15 px-3 py-1.5 text-xs font-semibold text-status-blue hover:bg-status-blue/20"
+        className="rounded-md border border-primary bg-primary/15 px-3 py-1.5 text-xs font-semibold text-primary hover:bg-primary/20"
       >
         + Report Issue
       </button>
@@ -108,7 +108,7 @@ export function ReportIssueDialog({
                 maxLength={300}
                 placeholder="Belt loader #2 hydraulics weak"
                 aria-invalid={fieldError("title") ? "true" : undefined}
-                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-status-blue focus:outline-none aria-[invalid=true]:border-status-red"
+                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none aria-[invalid=true]:border-status-red"
               />
               {fieldError("title") && (
                 <p className="mt-1 text-[0.65rem] text-status-red">
@@ -131,7 +131,7 @@ export function ReportIssueDialog({
                 rows={4}
                 placeholder="What's happening, when did you notice, who's affected."
                 aria-invalid={fieldError("description") ? "true" : undefined}
-                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-status-blue focus:outline-none aria-[invalid=true]:border-status-red"
+                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none aria-[invalid=true]:border-status-red"
               />
               {fieldError("description") && (
                 <p className="mt-1 text-[0.65rem] text-status-red">
@@ -152,7 +152,7 @@ export function ReportIssueDialog({
                   id="category"
                   name="category"
                   defaultValue="other"
-                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-status-blue focus:outline-none"
+                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
                 >
                   {CATEGORIES.map((c) => (
                     <option key={c.value} value={c.value}>
@@ -172,7 +172,7 @@ export function ReportIssueDialog({
                   id="priority"
                   name="priority"
                   defaultValue="normal"
-                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-status-blue focus:outline-none"
+                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
                 >
                   {PRIORITIES.map((p) => (
                     <option key={p.value} value={p.value}>
@@ -195,7 +195,7 @@ export function ReportIssueDialog({
                 name="assigned_to"
                 maxLength={200}
                 placeholder="e.g. Marc"
-                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-status-blue focus:outline-none"
+                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
               />
             </div>
 
@@ -211,7 +211,7 @@ export function ReportIssueDialog({
               <button
                 type="submit"
                 disabled={pending}
-                className="inline-flex items-center gap-1.5 rounded-md bg-status-blue px-4 py-2 text-xs font-semibold text-white hover:brightness-110 disabled:opacity-60"
+                className="inline-flex items-center gap-1.5 rounded-md bg-primary px-4 py-2 text-xs font-semibold text-white hover:bg-brand-dark disabled:opacity-60"
               >
                 {pending && <Spinner size="xs" />}
                 {pending ? "Submitting…" : "Submit issue"}

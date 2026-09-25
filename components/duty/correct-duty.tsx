@@ -105,7 +105,7 @@ export function CorrectDuty({ period }: { period: DutyPeriodSummary }) {
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="text-[0.65rem] font-semibold text-status-blue hover:underline"
+          className="text-[0.65rem] font-semibold text-primary hover:underline"
         >
           Correct
         </button>
@@ -177,7 +177,7 @@ export function CorrectDuty({ period }: { period: DutyPeriodSummary }) {
         <button
           type="submit"
           disabled={pending || !reason.trim()}
-          className="rounded-md bg-status-blue px-3 py-1.5 text-[0.65rem] font-semibold text-white hover:brightness-110 disabled:opacity-40"
+          className="rounded-md bg-primary px-3 py-1.5 text-[0.65rem] font-semibold text-white hover:bg-brand-dark disabled:opacity-40"
         >
           {pending ? "Saving…" : "Save correction"}
         </button>

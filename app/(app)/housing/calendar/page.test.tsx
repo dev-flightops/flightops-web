@@ -277,14 +277,14 @@ describe("week navigation", () => {
     seed();
     const { unmount } = await renderPage();
     expect(screen.getByRole("link", { name: "Today" }).className).toMatch(
-      /bg-status-blue/,
+      /bg-primary/,
     );
     unmount();
 
     seed();
     await renderPage({ from: "2026-09-07" });
     expect(screen.getByRole("link", { name: "Today" }).className).not.toMatch(
-      /bg-status-blue/,
+      /bg-primary/,
     );
   });
 
@@ -295,8 +295,8 @@ describe("week navigation", () => {
       .getAllByRole("columnheader")
       .slice(1);
     // Wednesday is index 2 of a Monday-anchored week.
-    expect(heads[2].className).toMatch(/bg-status-blue/);
-    expect(heads[0].className).not.toMatch(/bg-status-blue/);
+    expect(heads[2].className).toMatch(/bg-primary/);
+    expect(heads[0].className).not.toMatch(/bg-primary/);
   });
 });
 

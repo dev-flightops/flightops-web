@@ -131,7 +131,7 @@ export default async function SettingsPermissionsPage() {
           To assign roles, edit a user on the{" "}
           <Link
             href="/settings/users"
-            className="text-status-blue hover:underline"
+            className="text-primary hover:underline"
           >
             Users page
           </Link>

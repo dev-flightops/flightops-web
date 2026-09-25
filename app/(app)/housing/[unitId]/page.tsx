@@ -101,7 +101,7 @@ export default async function HousingUnitDetailPage({
         <span aria-hidden className="px-1.5 text-muted-foreground">
           ›
         </span>
-        <span className="font-semibold text-status-blue">{unit.name}</span>
+        <span className="font-semibold text-primary">{unit.name}</span>
       </nav>
 
       <header className="mb-5 flex flex-col gap-3 border-b border-border pb-4 sm:flex-row sm:items-end sm:justify-between">

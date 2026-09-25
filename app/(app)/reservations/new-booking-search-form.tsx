@@ -257,7 +257,7 @@ export function NewBookingSearchForm({
                   (t.disabled
                     ? "cursor-not-allowed border-border bg-background text-muted-foreground/50"
                     : tripType === t.id
-                      ? "border-status-blue bg-status-blue/15 text-status-blue"
+                      ? "border-primary bg-primary/15 text-primary"
                       : "border-border bg-background text-muted-foreground hover:text-foreground")
                 }
               >
@@ -459,7 +459,7 @@ export function NewBookingSearchForm({
         </button>
         <button
           type="submit"
-          className="rounded-md bg-status-blue px-5 py-2 text-sm font-semibold text-white hover:brightness-110"
+          className="rounded-md bg-primary px-5 py-2 text-sm font-semibold text-white hover:bg-brand-dark"
         >
           Search Flights
         </button>
@@ -492,7 +492,7 @@ export function NewBookingSearchForm({
           Not seeing the right flight?{" "}
           <a
             href={`/reservations/bookings/new?${searched}`}
-            className="text-status-blue hover:underline"
+            className="text-primary hover:underline"
           >
             File the booking manually
           </a>{" "}

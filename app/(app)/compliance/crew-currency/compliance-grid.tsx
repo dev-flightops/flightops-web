@@ -84,7 +84,7 @@ export function ComplianceGrid({
                   <div className="flex items-center gap-2">
                     <Link
                       href={`/compliance/pilots/${row.pilot.id}`}
-                      className="font-semibold text-foreground hover:text-status-blue hover:underline"
+                      className="font-semibold text-foreground hover:text-primary hover:underline"
                     >
                       {row.pilot.full_name}
                     </Link>

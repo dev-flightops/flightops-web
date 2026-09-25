@@ -119,7 +119,7 @@ export default async function DispatcherDashboardPage() {
           </h2>
           <Link
             href="/flight-following"
-            className="text-[0.7rem] text-muted-foreground/70 hover:text-status-blue"
+            className="text-[0.7rem] text-muted-foreground/70 hover:text-primary"
           >
             Full following →
           </Link>
@@ -177,7 +177,7 @@ function RecentOutcomesPanel() {
         </h2>
         <Link
           href="/flight-following/history"
-          className="text-[0.7rem] text-muted-foreground/70 hover:text-status-blue"
+          className="text-[0.7rem] text-muted-foreground/70 hover:text-primary"
         >
           Dispatch history →
         </Link>
@@ -245,7 +245,7 @@ function LiveOpsTable({ flights }: { flights: FlightListItem[] }) {
               </td>
               <td className="px-2 py-2 text-muted-foreground/60">—</td>
               <td className="px-2 py-2 text-right">
-                <Link href={`/dispatch/${f.id}`} className="text-status-blue hover:underline">
+                <Link href={`/dispatch/${f.id}`} className="text-primary hover:underline">
                   →
                 </Link>
               </td>
@@ -294,7 +294,7 @@ function PendingDispatchTable({ flights }: { flights: FlightListItem[] }) {
               <td className="px-2 py-2 text-right">
                 <Link
                   href={`/dispatch/?flight=${f.id}`}
-                  className="text-[0.7rem] font-medium text-status-blue hover:underline"
+                  className="text-[0.7rem] font-medium text-primary hover:underline"
                 >
                   Dispatch →
                 </Link>

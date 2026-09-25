@@ -157,7 +157,7 @@ export default async function StationDashboardPage({
           </h2>
           <Link
             href="/dispatch/"
-            className="text-[0.7rem] text-muted-foreground/70 hover:text-status-blue"
+            className="text-[0.7rem] text-muted-foreground/70 hover:text-primary"
           >
             Open dispatch →
           </Link>
@@ -216,7 +216,7 @@ function StationFlightsTable({
           {flights.map((f) => (
             <tr key={f.id} className="border-b border-border/60 last:border-0">
               <td className="px-2 py-2 font-semibold text-foreground">
-                <Link href={`/dispatch/${f.id}`} className="hover:text-status-blue">
+                <Link href={`/dispatch/${f.id}`} className="hover:text-primary">
                   {f.flight_number}
                 </Link>
               </td>

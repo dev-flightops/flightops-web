@@ -74,7 +74,7 @@ function Assessment({ data }: { data: DelayAssessment }) {
   const { route, aircraft, judgement } = data;
   return (
     <div className="mt-3 space-y-3 border-t border-border pt-3">
-      <p className="text-[0.65rem] text-status-blue">{data.advisory}</p>
+      <p className="text-[0.65rem] text-primary">{data.advisory}</p>
 
       <div>
         <h4 className="mb-1.5 text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
@@ -187,7 +187,7 @@ function FlightRow({ flight }: { flight: FlightListItem }) {
             <span className="font-mono font-bold text-foreground">
               {flight.flight_number}
             </span>
-            <span className="text-sm text-status-blue">
+            <span className="text-sm text-primary">
               {flight.origin} → {flight.destination}
             </span>
             <span className="text-xs tabular-nums text-muted-foreground">

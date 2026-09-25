@@ -36,7 +36,7 @@ export function RoleCheckboxGroup({
                 name="roles"
                 value={role.id}
                 defaultChecked={selected.has(role.id)}
-                className="mt-0.5 h-4 w-4 rounded border-border bg-background text-status-blue focus:ring-status-blue"
+                className="mt-0.5 h-4 w-4 rounded border-border bg-background text-primary focus:ring-primary"
               />
               <span>
                 <span className="text-sm font-semibold text-foreground">

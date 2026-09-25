@@ -67,7 +67,7 @@ export function LiveOpsBoard({ board }: Props) {
       <div className="mt-3 flex justify-end border-t border-border pt-3 text-[0.65rem]">
         <Link
           href="/flight-following"
-          className="text-status-blue hover:underline"
+          className="text-primary hover:underline"
         >
           Full ops board →
         </Link>

@@ -37,7 +37,7 @@ export function CorrectiveActionPanel({
         {canOpen ? (
           <Link
             href={openHref}
-            className="rounded-md border border-status-blue bg-status-blue/15 px-2 py-1 text-[0.6875rem] font-semibold text-status-blue hover:bg-status-blue/20"
+            className="rounded-md border border-primary bg-primary/15 px-2 py-1 text-[0.6875rem] font-semibold text-primary hover:bg-primary/20"
           >
             + Open a CAPA
           </Link>

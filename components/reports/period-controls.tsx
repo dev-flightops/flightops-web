@@ -75,7 +75,7 @@ export function PeriodControls({
           goTo(y, m);
         }}
         disabled={isPending}
-        className="rounded-md border border-border bg-background px-2 py-1.5 text-xs text-foreground focus:border-status-blue focus:outline-none disabled:opacity-60"
+        className="rounded-md border border-border bg-background px-2 py-1.5 text-xs text-foreground focus:border-primary focus:outline-none disabled:opacity-60"
       />
       <button
         type="button"

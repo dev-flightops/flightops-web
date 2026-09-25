@@ -181,7 +181,7 @@ export default async function FlightSchedulePage({
           </button>
           <Link
             href="/flight-following/new"
-            className="rounded-md bg-status-blue px-3 py-2 text-sm font-semibold text-white hover:brightness-110"
+            className="rounded-md bg-primary px-3 py-2 text-sm font-semibold text-white hover:bg-brand-dark"
           >
             + New Flight
           </Link>
@@ -219,7 +219,7 @@ export default async function FlightSchedulePage({
                   className={
                     "rounded-lg px-3 py-1.5 text-xs font-medium " +
                     (active
-                      ? "bg-status-blue text-white"
+                      ? "bg-primary text-white"
                       : "bg-muted/20 text-muted-foreground hover:text-foreground")
                   }
                 >
@@ -244,7 +244,7 @@ export default async function FlightSchedulePage({
             </select>
             <button
               type="submit"
-              className="rounded-md bg-status-blue px-3 py-1.5 text-xs font-semibold text-white hover:brightness-110"
+              className="rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-dark"
             >
               Filter
             </button>
@@ -266,7 +266,7 @@ export default async function FlightSchedulePage({
           </p>
           <Link
             href="/flight-following/new"
-            className="inline-block rounded-md bg-status-blue px-4 py-2 text-sm font-semibold text-white hover:brightness-110"
+            className="inline-block rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-brand-dark"
           >
             Schedule First Flight
           </Link>
@@ -329,7 +329,7 @@ function DayBlock({
         <h2
           className={
             "text-xs font-semibold uppercase tracking-wider " +
-            (isToday ? "text-status-blue" : "text-muted-foreground")
+            (isToday ? "text-primary" : "text-muted-foreground")
           }
         >
           {isToday ? "TODAY — " : ""}
@@ -339,7 +339,7 @@ function DayBlock({
           {flights.length} flight{flights.length === 1 ? "" : "s"}
         </span>
         {isToday && (
-          <div className="h-px flex-1 bg-status-blue/20" aria-hidden />
+          <div className="h-px flex-1 bg-primary/20" aria-hidden />
         )}
       </div>
       <div className="overflow-hidden rounded-lg border border-border bg-card">
@@ -367,7 +367,7 @@ function DayBlock({
                   <td className="whitespace-nowrap px-4 py-3 font-mono text-xs font-semibold">
                     <Link
                       href={`/manifest/${f.id}`}
-                      className="text-status-blue hover:underline"
+                      className="text-primary hover:underline"
                     >
                       {f.flight_number}
                     </Link>
@@ -387,7 +387,7 @@ function DayBlock({
                   <td className="whitespace-nowrap px-4 py-3 text-right">
                     <Link
                       href={`/manifest/${f.id}`}
-                      className="text-xs font-semibold text-status-blue hover:underline"
+                      className="text-xs font-semibold text-primary hover:underline"
                     >
                       Manifest →
                     </Link>

@@ -78,8 +78,8 @@ function DashboardNavTab({ tab, active }: { tab: NavTab; active: boolean }) {
       className={cn(
         "rounded-md px-2.5 py-1 text-[0.72rem] font-medium whitespace-nowrap transition-colors",
         active
-          ? "bg-primary/12 text-status-blue font-semibold"
-          : "text-muted-foreground hover:bg-primary/8 hover:text-status-blue",
+          ? "bg-primary/12 text-primary font-semibold"
+          : "text-muted-foreground hover:bg-primary/8 hover:text-primary",
       )}
     >
       {tab.label}

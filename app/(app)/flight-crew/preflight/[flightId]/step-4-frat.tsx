@@ -653,7 +653,7 @@ function FratQuestionnaire({
 
         {FACTOR_GROUPS.map((group) => (
           <div key={group.group}>
-            <h3 className="mb-2 text-[0.65rem] font-bold uppercase tracking-[0.08em] text-status-blue">
+            <h3 className="mb-2 text-[0.65rem] font-bold uppercase tracking-[0.08em] text-primary">
               {group.group}
             </h3>
             <div className="space-y-3">
@@ -722,7 +722,7 @@ function FratQuestionnaire({
             rows={2}
             maxLength={2000}
             placeholder="What risk controls were applied for this flight…"
-            className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs text-foreground focus:border-status-blue focus:outline-none"
+            className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs text-foreground focus:border-primary focus:outline-none"
           />
         </div>
 
@@ -774,7 +774,7 @@ function FratQuestionnaire({
               <button
                 type="button"
                 onClick={() => setConfirming(false)}
-                className="rounded-md bg-status-blue px-3 py-1.5 font-semibold text-white hover:brightness-110"
+                className="rounded-md bg-primary px-3 py-1.5 font-semibold text-white hover:bg-brand-dark"
               >
                 Go back and score them
               </button>
@@ -793,7 +793,7 @@ function FratQuestionnaire({
             type="button"
             disabled={pending}
             onClick={handleSubmit}
-            className="inline-flex w-full items-center justify-center rounded-md bg-status-blue px-4 py-2.5 text-sm font-semibold text-white transition-opacity hover:brightness-110 disabled:opacity-50"
+            className="inline-flex w-full items-center justify-center rounded-md bg-primary px-4 py-2.5 text-sm font-semibold text-white transition-opacity hover:bg-brand-dark disabled:opacity-50"
           >
             {pending ? "Submitting…" : "Submit assessment"}
           </button>
@@ -940,7 +940,7 @@ function FactorRow({
             value={value}
             onChange={(e) => onChange(Number(e.target.value))}
             aria-describedby={`factor-${factor.code}-anchor`}
-            className="flex-1 accent-status-blue"
+            className="flex-1 accent-primary"
           />
           <span
             className={cn(
@@ -1187,7 +1187,7 @@ function FratResultPanel({
           type="button"
           disabled={!hasRequiredAuth || pending}
           onClick={handleContinue}
-          className="inline-flex w-full items-center justify-center rounded-md bg-status-blue px-4 py-2.5 text-sm font-semibold text-white transition-opacity hover:brightness-110 disabled:opacity-50"
+          className="inline-flex w-full items-center justify-center rounded-md bg-primary px-4 py-2.5 text-sm font-semibold text-white transition-opacity hover:bg-brand-dark disabled:opacity-50"
         >
           {pending ? "Saving…" : "Continue to Step 5 →"}
         </button>
@@ -1196,7 +1196,7 @@ function FratResultPanel({
         <button
           type="button"
           onClick={onRetake}
-          className="w-full text-center text-[0.7rem] font-semibold text-status-blue hover:underline"
+          className="w-full text-center text-[0.7rem] font-semibold text-primary hover:underline"
         >
           ↻ Retake questionnaire
         </button>
@@ -1300,7 +1300,7 @@ function FratAuthorizationForm({
         type="button"
         disabled={!canSubmit}
         onClick={handleSubmit}
-        className="w-full rounded-md bg-status-blue px-3 py-1.5 text-xs font-semibold text-white transition-opacity hover:brightness-110 disabled:opacity-50"
+        className="w-full rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-white transition-opacity hover:bg-brand-dark disabled:opacity-50"
       >
         {pending ? "Recording…" : "Record authorization"}
       </button>
@@ -1337,7 +1337,7 @@ function Field({
           onChange={(e) => onChange(e.target.value)}
           rows={2}
           placeholder={placeholder}
-          className="w-full rounded-md border border-border bg-background px-2 py-1 text-xs text-foreground focus:border-status-blue focus:outline-none"
+          className="w-full rounded-md border border-border bg-background px-2 py-1 text-xs text-foreground focus:border-primary focus:outline-none"
         />
       ) : (
         <input
@@ -1345,7 +1345,7 @@ function Field({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
-          className="w-full rounded-md border border-border bg-background px-2 py-1 text-xs text-foreground focus:border-status-blue focus:outline-none"
+          className="w-full rounded-md border border-border bg-background px-2 py-1 text-xs text-foreground focus:border-primary focus:outline-none"
         />
       )}
     </div>

@@ -106,7 +106,7 @@ export default async function FuelQualityPage({
           className={
             onlyFailures
               ? "rounded-md border border-border bg-card px-2.5 py-1 text-xs hover:bg-muted/40"
-              : "rounded-md border border-status-blue bg-status-blue/15 px-2.5 py-1 text-xs font-semibold text-status-blue"
+              : "rounded-md border border-primary bg-primary/15 px-2.5 py-1 text-xs font-semibold text-primary"
           }
         >
           All tests

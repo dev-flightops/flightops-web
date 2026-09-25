@@ -85,7 +85,7 @@ export function ScheduleMaintenanceDialog({ unitId }: { unitId: string }) {
                 maxLength={300}
                 placeholder="100hr inspection"
                 aria-invalid={fieldError("title") ? "true" : undefined}
-                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-status-blue focus:outline-none aria-[invalid=true]:border-status-red"
+                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none aria-[invalid=true]:border-status-red"
               />
               {fieldError("title") && (
                 <p className="mt-1 text-[0.65rem] text-status-red">
@@ -106,7 +106,7 @@ export function ScheduleMaintenanceDialog({ unitId }: { unitId: string }) {
                   id="item_type"
                   name="item_type"
                   defaultValue="service"
-                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-status-blue focus:outline-none"
+                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
                 >
                   {ITEM_TYPES.map((t) => (
                     <option key={t.value} value={t.value}>
@@ -126,7 +126,7 @@ export function ScheduleMaintenanceDialog({ unitId }: { unitId: string }) {
                   id="due_date"
                   name="due_date"
                   type="date"
-                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-status-blue focus:outline-none"
+                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
                 />
               </div>
             </div>
@@ -153,7 +153,7 @@ export function ScheduleMaintenanceDialog({ unitId }: { unitId: string }) {
                   aria-invalid={
                     fieldError("interval_days") ? "true" : undefined
                   }
-                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-status-blue focus:outline-none aria-[invalid=true]:border-status-red"
+                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none aria-[invalid=true]:border-status-red"
                 />
                 {fieldError("interval_days") && (
                   <p className="mt-1 text-[0.65rem] text-status-red">
@@ -175,7 +175,7 @@ export function ScheduleMaintenanceDialog({ unitId }: { unitId: string }) {
                   step="0.1"
                   min={0.1}
                   placeholder="100"
-                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-status-blue focus:outline-none"
+                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
                 />
               </div>
             </div>
@@ -192,7 +192,7 @@ export function ScheduleMaintenanceDialog({ unitId }: { unitId: string }) {
                 name="description"
                 rows={3}
                 placeholder="Specifics, references, notes."
-                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-status-blue focus:outline-none"
+                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
               />
             </div>
 
@@ -201,7 +201,7 @@ export function ScheduleMaintenanceDialog({ unitId }: { unitId: string }) {
                 type="checkbox"
                 name="is_recurring"
                 defaultChecked
-                className="h-4 w-4 cursor-pointer accent-status-blue"
+                className="h-4 w-4 cursor-pointer accent-primary"
               />
               <span>
                 Recurring — recompute next due date when completed
@@ -220,7 +220,7 @@ export function ScheduleMaintenanceDialog({ unitId }: { unitId: string }) {
               <button
                 type="submit"
                 disabled={pending}
-                className="inline-flex items-center gap-1.5 rounded-md bg-status-blue px-4 py-2 text-xs font-semibold text-white hover:brightness-110 disabled:opacity-60"
+                className="inline-flex items-center gap-1.5 rounded-md bg-primary px-4 py-2 text-xs font-semibold text-white hover:bg-brand-dark disabled:opacity-60"
               >
                 {pending && <Spinner size="xs" />}
                 {pending ? "Scheduling…" : "Schedule"}

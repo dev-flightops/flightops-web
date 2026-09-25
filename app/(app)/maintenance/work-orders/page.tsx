@@ -92,7 +92,7 @@ export default async function WorkOrdersPage({
             disabled
             aria-disabled="true"
             title={BACKEND_HINT_ADD}
-            className="cursor-not-allowed rounded-md bg-status-blue px-3 py-2 text-xs font-semibold text-white disabled:opacity-100"
+            className="cursor-not-allowed rounded-md bg-primary px-3 py-2 text-xs font-semibold text-white disabled:opacity-100"
           >
             + New Work Order
           </button>
@@ -105,7 +105,7 @@ export default async function WorkOrdersPage({
           className={
             "rounded px-3 py-1.5 text-xs font-semibold " +
             (!filterStatus
-              ? "bg-status-blue text-white"
+              ? "bg-primary text-white"
               : "text-muted-foreground hover:text-foreground")
           }
         >
@@ -118,7 +118,7 @@ export default async function WorkOrdersPage({
             className={
               "rounded px-3 py-1.5 text-xs font-semibold " +
               (filterStatus === s.value
-                ? "bg-status-blue text-white"
+                ? "bg-primary text-white"
                 : "text-muted-foreground hover:text-foreground")
             }
           >
@@ -162,7 +162,7 @@ export default async function WorkOrdersPage({
                 ) : (
                   orders.map((wo) => (
                     <tr key={wo.id} className="hover:bg-muted/5">
-                      <td className="whitespace-nowrap px-4 py-3 font-mono text-xs font-semibold text-status-blue">
+                      <td className="whitespace-nowrap px-4 py-3 font-mono text-xs font-semibold text-foreground">
                         {wo.wo_number}
                       </td>
                       <td className="whitespace-nowrap px-4 py-3 font-mono text-xs">

@@ -15,7 +15,7 @@ import {
  *
  * Like the filter tabs this is URL-driven (preserves `?view=` while
  * swapping `?display=`) so each combination is deep-linkable. The
- * active mode is filled with status-blue and the others sit on a
+ * active mode is filled with the brand (primary) and the others sit on a
  * subtle bordered chip group, matching the legacy board.html.
  */
 export function DisplayToggle({
@@ -42,7 +42,7 @@ export function DisplayToggle({
             className={cn(
               "rounded px-3 py-1 text-xs font-semibold transition-colors",
               isActive
-                ? "bg-status-blue text-white"
+                ? "bg-primary text-white"
                 : "text-muted-foreground hover:bg-muted/40 hover:text-foreground",
             )}
           >

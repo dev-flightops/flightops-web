@@ -114,7 +114,7 @@ export default async function SafetyDashboardPage() {
         <span aria-hidden className="px-1.5 text-muted-foreground">
           ›
         </span>
-        <span className="font-semibold text-status-blue">Dashboard</span>
+        <span className="font-semibold text-primary">Dashboard</span>
       </nav>
 
       <header className="mb-5 flex flex-col gap-3 border-b border-border pb-4 sm:flex-row sm:items-end sm:justify-between">
@@ -151,7 +151,7 @@ export default async function SafetyDashboardPage() {
           </Link>
           <Link
             href="/safety/report"
-            className="rounded-md bg-status-blue px-3 py-1.5 text-xs font-semibold text-white hover:brightness-110"
+            className="rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-dark"
           >
             + File a report
           </Link>
@@ -295,7 +295,7 @@ function RecentHazardsCard({ hazards }: { hazards: HazardReport[] }) {
         </h2>
         <Link
           href="/safety"
-          className="text-[0.7rem] font-semibold text-status-blue hover:underline"
+          className="text-[0.7rem] font-semibold text-primary hover:underline"
         >
           Triage inbox →
         </Link>
@@ -346,7 +346,7 @@ function RecentIncidentsCard({ incidents }: { incidents: Incident[] }) {
         </h2>
         <Link
           href="/safety/incidents"
-          className="text-[0.7rem] font-semibold text-status-blue hover:underline"
+          className="text-[0.7rem] font-semibold text-primary hover:underline"
         >
           Incident triage →
         </Link>
@@ -397,7 +397,7 @@ function OverdueCapasCard({ capas }: { capas: CorrectiveAction[] }) {
         </h2>
         <Link
           href="/safety/actions"
-          className="text-[0.7rem] font-semibold text-status-blue hover:underline"
+          className="text-[0.7rem] font-semibold text-primary hover:underline"
         >
           CAPA board →
         </Link>
@@ -425,7 +425,7 @@ function OverdueCapasCard({ capas }: { capas: CorrectiveAction[] }) {
                       <td className="px-3 py-2.5">
                         <Link
                           href={`/safety/actions/${c.id}`}
-                          className="font-medium text-status-blue hover:underline"
+                          className="font-medium text-primary hover:underline"
                         >
                           {c.title}
                         </Link>

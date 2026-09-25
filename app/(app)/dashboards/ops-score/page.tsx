@@ -82,7 +82,7 @@ export default async function OpsScoreDashboardPage({
         </div>
         <Link
           href="/dashboards/system-health"
-          className="inline-flex items-center gap-1.5 text-xs text-status-blue hover:underline"
+          className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline"
         >
           <Stethoscope className="h-3.5 w-3.5" aria-hidden />
           System Health →
@@ -215,7 +215,7 @@ export default async function OpsScoreDashboardPage({
             Record outcomes in{" "}
             <Link
               href="/flight-following/history"
-              className="text-status-blue hover:underline"
+              className="text-primary hover:underline"
             >
               Dispatch History
             </Link>{" "}

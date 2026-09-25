@@ -172,7 +172,7 @@ function ChecklistRow({
           {current ? (
             <a
               href={`/api/employee-documents/${current.id}/download`}
-              className="font-semibold text-status-blue hover:underline"
+              className="font-semibold text-primary hover:underline"
             >
               {current.original_filename}
             </a>
@@ -201,7 +201,7 @@ function ChecklistRow({
               <li key={d.id} className="text-[0.7rem] text-muted-foreground">
                 <a
                   href={`/api/employee-documents/${d.id}/download`}
-                  className="text-status-blue hover:underline"
+                  className="text-primary hover:underline"
                 >
                   {d.original_filename}
                 </a>

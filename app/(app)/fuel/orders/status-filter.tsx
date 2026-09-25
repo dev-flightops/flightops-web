@@ -32,7 +32,7 @@ export function OrdersStatusFilter({
             href={o.value ? `/fuel/orders?status=${o.value}` : "/fuel/orders"}
             className={`rounded-md border px-2.5 py-1 text-[0.7rem] font-semibold uppercase tracking-[0.06em] transition-colors ${
               on
-                ? "border-status-blue bg-status-blue/15 text-status-blue"
+                ? "border-primary bg-primary/15 text-primary"
                 : "border-border bg-card text-muted-foreground hover:bg-muted/40"
             }`}
           >

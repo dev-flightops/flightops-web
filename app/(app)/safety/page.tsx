@@ -120,7 +120,7 @@ export default async function SafetyInboxPage({
           </Link>
           <Link
             href="/safety/report"
-            className="rounded-md border border-status-blue bg-status-blue/15 px-3 py-1.5 text-xs font-semibold text-status-blue hover:bg-status-blue/20"
+            className="rounded-md border border-primary bg-primary/15 px-3 py-1.5 text-xs font-semibold text-primary hover:bg-primary/20"
           >
             + File a Hazard
           </Link>
@@ -161,7 +161,7 @@ function StatusFilterBar({ active }: { active: string }) {
             className={
               "rounded-md border px-2.5 py-1 text-xs font-semibold transition " +
               (isActive
-                ? "border-status-blue bg-status-blue/15 text-status-blue"
+                ? "border-primary bg-primary/15 text-primary"
                 : "border-border bg-card text-muted-foreground hover:text-foreground")
             }
           >
@@ -255,7 +255,7 @@ function HazardTable({
                 <td className="whitespace-nowrap px-4 py-3 text-right">
                   <Link
                     href={`/safety/${h.id}`}
-                    className="text-xs font-semibold text-status-blue hover:underline"
+                    className="text-xs font-semibold text-primary hover:underline"
                   >
                     Open →
                   </Link>

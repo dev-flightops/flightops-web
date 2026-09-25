@@ -127,7 +127,7 @@ export async function TrainingCurrencySummary({
         open your{" "}
         <Link
           href={`/compliance/pilots/${pilotUserId}`}
-          className="font-semibold text-status-blue hover:underline"
+          className="font-semibold text-primary hover:underline"
         >
           full profile
         </Link>{" "}

@@ -32,7 +32,7 @@ export function AddRoomDrawer({ unitId }: { unitId: string }) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="rounded-md bg-status-blue px-3 py-1.5 text-xs font-semibold text-white hover:brightness-110"
+        className="rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-dark"
       >
         + Add Room
       </button>
@@ -74,7 +74,7 @@ export function AddRoomDrawer({ unitId }: { unitId: string }) {
                     type="text"
                     required
                     placeholder="101"
-                    className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-xs text-foreground focus:border-status-blue focus:outline-none"
+                    className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-xs text-foreground focus:border-primary focus:outline-none"
                   />
                 </Field>
                 <Field label="Capacity">
@@ -84,7 +84,7 @@ export function AddRoomDrawer({ unitId }: { unitId: string }) {
                     min={1}
                     step={1}
                     defaultValue={1}
-                    className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-xs text-foreground focus:border-status-blue focus:outline-none"
+                    className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-xs text-foreground focus:border-primary focus:outline-none"
                   />
                 </Field>
               </div>
@@ -94,7 +94,7 @@ export function AddRoomDrawer({ unitId }: { unitId: string }) {
                   <select
                     name="room_type"
                     defaultValue="single"
-                    className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-xs text-foreground focus:border-status-blue focus:outline-none"
+                    className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-xs text-foreground focus:border-primary focus:outline-none"
                   >
                     {ROOM_TYPES.map((t) => (
                       <option key={t} value={t}>
@@ -107,7 +107,7 @@ export function AddRoomDrawer({ unitId }: { unitId: string }) {
                   <select
                     name="status"
                     defaultValue="available"
-                    className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-xs text-foreground focus:border-status-blue focus:outline-none"
+                    className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-xs text-foreground focus:border-primary focus:outline-none"
                   >
                     {ROOM_STATUSES.map((s) => (
                       <option key={s} value={s}>
@@ -125,7 +125,7 @@ export function AddRoomDrawer({ unitId }: { unitId: string }) {
                   min={0}
                   step="0.01"
                   placeholder="0.00"
-                  className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-xs text-foreground focus:border-status-blue focus:outline-none"
+                  className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-xs text-foreground focus:border-primary focus:outline-none"
                 />
               </Field>
 
@@ -146,7 +146,7 @@ export function AddRoomDrawer({ unitId }: { unitId: string }) {
                   name="amenities"
                   type="text"
                   placeholder="e.g. king bed, workspace"
-                  className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-xs text-foreground focus:border-status-blue focus:outline-none"
+                  className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-xs text-foreground focus:border-primary focus:outline-none"
                 />
               </Field>
 
@@ -155,7 +155,7 @@ export function AddRoomDrawer({ unitId }: { unitId: string }) {
                   name="notes"
                   rows={3}
                   placeholder="Access, quirks, contact info…"
-                  className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-xs text-foreground focus:border-status-blue focus:outline-none"
+                  className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-xs text-foreground focus:border-primary focus:outline-none"
                 />
               </Field>
 
@@ -176,7 +176,7 @@ export function AddRoomDrawer({ unitId }: { unitId: string }) {
                 <button
                   type="submit"
                   disabled={pending}
-                  className="rounded-md bg-status-blue px-3 py-1.5 text-xs font-semibold text-white hover:brightness-110 disabled:opacity-60"
+                  className="rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-dark disabled:opacity-60"
                 >
                   {pending ? "Adding…" : "Add room"}
                 </button>
@@ -212,7 +212,7 @@ function Field({
 function Checkbox({ name, label }: { name: string; label: string }) {
   return (
     <label className="flex items-center gap-2 text-xs">
-      <input type="checkbox" name={name} className="accent-status-blue" />
+      <input type="checkbox" name={name} className="accent-primary" />
       <span>{label}</span>
     </label>
   );

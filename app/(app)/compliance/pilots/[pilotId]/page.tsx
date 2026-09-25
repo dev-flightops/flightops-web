@@ -72,7 +72,7 @@ export default async function PilotComplianceProfilePage({
     <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6">
       <Link
         href="/compliance/crew-currency"
-        className="mb-3 inline-block text-xs font-semibold text-status-blue hover:underline"
+        className="mb-3 inline-block text-xs font-semibold text-primary hover:underline"
       >
         ← Back to compliance board
       </Link>

@@ -89,7 +89,7 @@ function BreakdownPanel({
               className="flex items-center justify-between gap-2 py-1.5 text-sm"
             >
               <span className="text-foreground">{label}</span>
-              <span className="rounded bg-status-blue/15 px-2 py-0.5 text-[0.65rem] font-semibold tabular-nums text-status-blue">
+              <span className="rounded bg-muted px-2 py-0.5 text-[0.65rem] font-semibold tabular-nums text-muted-foreground">
                 {count}
               </span>
             </li>

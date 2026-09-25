@@ -143,7 +143,7 @@ export function NotificationsBell({
             <Link
               href="/home"
               onClick={() => setOpen(false)}
-              className="text-[0.65rem] text-status-blue hover:underline"
+              className="text-[0.65rem] text-primary hover:underline"
             >
               All alerts
             </Link>
@@ -213,7 +213,7 @@ export function NotificationsBell({
                 <Link
                   href="/home"
                   onClick={() => setOpen(false)}
-                  className="text-status-blue hover:underline"
+                  className="text-primary hover:underline"
                 >
                   unfiltered list
                 </Link>

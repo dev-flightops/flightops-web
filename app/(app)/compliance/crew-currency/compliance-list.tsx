@@ -123,7 +123,7 @@ export function ComplianceList({
               <td className="px-3 py-2">
                 <Link
                   href={`/compliance/pilots/${e.pilot.id}`}
-                  className="font-semibold text-foreground hover:text-status-blue"
+                  className="font-semibold text-foreground hover:text-primary"
                 >
                   {e.pilot.full_name}
                 </Link>

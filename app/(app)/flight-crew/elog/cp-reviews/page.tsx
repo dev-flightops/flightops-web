@@ -151,7 +151,7 @@ function ReviewTable({
               <td className="px-3 py-2">
                 <Link
                   href={`/flight-crew/elog/${r.flight_log_id}`}
-                  className="font-mono text-status-blue hover:underline"
+                  className="font-mono text-primary hover:underline"
                 >
                   {r.log_number}
                 </Link>

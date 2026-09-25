@@ -83,7 +83,7 @@ export default async function EmployeesPage({
           <StatusFilter value={statusFilter} />
           <Link
             href="/settings/users"
-            className="rounded-md bg-status-blue px-4 py-2 text-sm font-semibold text-white hover:brightness-110"
+            className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-brand-dark"
           >
             + New Employee
           </Link>
@@ -165,7 +165,7 @@ function EmployeesTable({
                       person's record and was not. */}
                   <Link
                     href={`/employees/${u.id}`}
-                    className="text-status-blue hover:underline"
+                    className="text-primary hover:underline"
                   >
                     {u.full_name}
                   </Link>

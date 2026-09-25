@@ -189,7 +189,7 @@ export async function FuelOrderPanel({
               type="button"
               disabled
               title="Order workflow ships in M2-M-27b (fuel_orders + supplier notification)"
-              className="cursor-not-allowed rounded-md border border-status-blue bg-status-blue/15 px-4 py-2 text-xs font-semibold text-status-blue opacity-60"
+              className="cursor-not-allowed rounded-md border border-primary bg-primary/15 px-4 py-2 text-xs font-semibold text-primary opacity-60"
             >
               Order Fuel · M2-M-27b
             </button>

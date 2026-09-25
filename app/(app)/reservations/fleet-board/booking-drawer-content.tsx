@@ -39,7 +39,7 @@ export async function BookingDrawerContent({ bookingId }: { bookingId: string })
           · Filed {new Date(booking.created_at).toLocaleDateString()} ·{" "}
           <Link
             href={`/reservations/bookings/${booking.id}`}
-            className="text-status-blue hover:underline"
+            className="text-primary hover:underline"
           >
             Open full page →
           </Link>
@@ -172,7 +172,7 @@ function DetailRow({
         {label}
       </span>
       {href ? (
-        <Link href={href} className="text-status-blue hover:underline">
+        <Link href={href} className="text-primary hover:underline">
           {value}
         </Link>
       ) : (

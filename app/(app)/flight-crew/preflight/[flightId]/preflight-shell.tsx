@@ -196,9 +196,9 @@ function EditingBanner({
   return (
     <div
       role="status"
-      className="mb-3 flex items-center justify-between gap-2 rounded-md border border-status-blue/40 bg-status-blue/10 px-3 py-2 text-xs"
+      className="mb-3 flex items-center justify-between gap-2 rounded-md border border-primary/40 bg-primary/10 px-3 py-2 text-xs"
     >
-      <span className="text-status-blue">
+      <span className="text-primary">
         <span className="font-semibold uppercase tracking-[0.06em]">
           Editing Step {stepNumber}
         </span>
@@ -272,11 +272,11 @@ function ProgressIndicator({
               aria-label={`Step ${n}${isEditing ? " — editing" : isDone ? " — complete" : isNext ? " — active" : ""}`}
               className={
                 isEditing
-                  ? "h-1.5 flex-1 rounded-full bg-status-blue"
+                  ? "h-1.5 flex-1 rounded-full bg-primary"
                   : isDone
                     ? "h-1.5 flex-1 rounded-full bg-status-green"
                     : isNext
-                      ? "h-1.5 flex-1 rounded-full bg-status-blue"
+                      ? "h-1.5 flex-1 rounded-full bg-primary"
                       : "h-1.5 flex-1 rounded-full bg-muted-foreground/20"
               }
             />
@@ -422,7 +422,7 @@ function CompletedSummary({
               className={
                 "flex items-baseline justify-between gap-2 rounded-md border px-3 py-2 text-xs " +
                 (isEditing
-                  ? "border-status-blue/40 bg-status-blue/5"
+                  ? "border-primary/40 bg-primary/5"
                   : "border-border bg-card/40")
               }
             >
@@ -438,7 +438,7 @@ function CompletedSummary({
                   {formatUtcTime(s.completed_at)}
                 </span>
                 {isEditing ? (
-                  <span className="text-[0.7rem] font-semibold text-status-blue">
+                  <span className="text-[0.7rem] font-semibold text-primary">
                     Editing…
                   </span>
                 ) : (
@@ -446,7 +446,7 @@ function CompletedSummary({
                     type="button"
                     onClick={() => onEdit(s.step_number)}
                     disabled={editingStep !== null}
-                    className="text-[0.7rem] font-semibold text-status-blue hover:underline disabled:cursor-not-allowed disabled:opacity-40 disabled:no-underline"
+                    className="text-[0.7rem] font-semibold text-primary hover:underline disabled:cursor-not-allowed disabled:opacity-40 disabled:no-underline"
                     aria-label={`Edit step ${s.step_number}`}
                   >
                     Edit

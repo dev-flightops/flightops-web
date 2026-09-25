@@ -50,7 +50,7 @@ export function TodayFlightsPanel({ flights }: Props) {
           If you&apos;re expecting to fly, check with dispatch — or{" "}
           <Link
             href="/flight-crew/elog"
-            className="font-semibold text-status-blue hover:underline"
+            className="font-semibold text-primary hover:underline"
           >
             create a manual log
           </Link>{" "}
@@ -108,7 +108,7 @@ function FlightCard({ flight }: { flight: FlightListItem }) {
         </div>
         <Link
           href={`/flight-crew/preflight/${flight.id}`}
-          className="shrink-0 rounded-md border border-status-blue/40 bg-status-blue/10 px-3 py-1.5 text-xs font-semibold text-status-blue transition-colors hover:bg-status-blue/15"
+          className="shrink-0 rounded-md border border-primary/40 bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary transition-colors hover:bg-primary/15"
         >
           Begin Preflight →
         </Link>

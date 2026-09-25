@@ -60,7 +60,7 @@ export function EnrollMemberForm({
           Customer
         </label>
         {customerId ? (
-          <div className="flex items-center gap-2 rounded-md border border-status-blue bg-status-blue/10 px-3 py-2 text-sm">
+          <div className="flex items-center gap-2 rounded-md border border-primary bg-primary/10 px-3 py-2 text-sm">
             <span className="font-semibold">{customerLabel}</span>
             <button
               type="button"
@@ -171,7 +171,7 @@ export function EnrollMemberForm({
         <button
           type="submit"
           disabled={pending || !customerId}
-          className="rounded-md bg-status-blue px-4 py-2 text-xs font-semibold text-white hover:brightness-110 disabled:opacity-60"
+          className="rounded-md bg-primary px-4 py-2 text-xs font-semibold text-white hover:bg-brand-dark disabled:opacity-60"
         >
           {pending ? "Enrolling…" : "Enroll Member"}
         </button>

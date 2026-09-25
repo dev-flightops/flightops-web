@@ -123,7 +123,7 @@ function Section({ title, entries }: { title: string; entries: Entry[] }) {
             {entry.href ? (
               <Link
                 href={entry.href}
-                className="block rounded-xl border border-border bg-card p-4 transition-colors hover:border-status-blue/50"
+                className="block rounded-xl border border-border bg-card p-4 transition-colors hover:border-primary/50"
               >
                 <p className="text-sm font-semibold">{entry.label}</p>
                 <p className="mt-0.5 text-xs text-muted-foreground">

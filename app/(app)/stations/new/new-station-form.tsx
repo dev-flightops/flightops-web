@@ -118,7 +118,7 @@ export function NewStationForm() {
             id="station_type"
             name="station_type"
             defaultValue="spoke_base"
-            className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-status-blue focus:outline-none"
+            className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
           >
             {STATION_TYPE_OPTIONS.map((opt) => (
               <option key={opt.value} value={opt.value}>
@@ -134,7 +134,7 @@ export function NewStationForm() {
           <input
             type="checkbox"
             name="is_hub"
-            className="h-4 w-4 cursor-pointer accent-status-blue"
+            className="h-4 w-4 cursor-pointer accent-primary"
           />
           <span>Hub base</span>
         </label>
@@ -145,7 +145,7 @@ export function NewStationForm() {
           type="checkbox"
           name="has_reporting_function"
           defaultChecked
-          className="h-4 w-4 cursor-pointer accent-status-blue"
+          className="h-4 w-4 cursor-pointer accent-primary"
         />
         <span>Include on the village weather board</span>
       </label>
@@ -160,7 +160,7 @@ export function NewStationForm() {
             name="fuel_available"
             checked={fuelAvailable}
             onChange={(e) => setFuelAvailable(e.target.checked)}
-            className="h-4 w-4 cursor-pointer accent-status-blue"
+            className="h-4 w-4 cursor-pointer accent-primary"
           />
           <span>Fuel available at this station</span>
         </label>
@@ -175,7 +175,7 @@ export function NewStationForm() {
                 type="checkbox"
                 name="fuel_types_available"
                 value="Jet A"
-                className="h-4 w-4 cursor-pointer accent-status-blue"
+                className="h-4 w-4 cursor-pointer accent-primary"
               />
               Jet A
             </label>
@@ -184,7 +184,7 @@ export function NewStationForm() {
                 type="checkbox"
                 name="fuel_types_available"
                 value="100LL"
-                className="h-4 w-4 cursor-pointer accent-status-blue"
+                className="h-4 w-4 cursor-pointer accent-primary"
               />
               100LL
             </label>
@@ -210,14 +210,14 @@ export function NewStationForm() {
           rows={3}
           maxLength={2000}
           placeholder="Operational notes — runway condition flags, ramp restrictions, etc."
-          className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-status-blue focus:outline-none"
+          className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
         />
       </div>
 
       <button
         type="submit"
         disabled={pending}
-        className="inline-flex w-full items-center justify-center gap-1.5 rounded-md bg-status-blue px-4 py-2.5 text-sm font-semibold text-white hover:brightness-110 disabled:opacity-50"
+        className="inline-flex w-full items-center justify-center gap-1.5 rounded-md bg-primary px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-dark disabled:opacity-50"
       >
         {pending && <Spinner size="xs" />}
         {pending ? "Adding station…" : "Add station"}
@@ -251,7 +251,7 @@ function Field({
         name={name}
         type={type}
         aria-invalid={error ? "true" : undefined}
-        className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-status-blue focus:outline-none aria-[invalid=true]:border-status-red"
+        className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none aria-[invalid=true]:border-status-red"
         {...inputProps}
       />
       {error && (

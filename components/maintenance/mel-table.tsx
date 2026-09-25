@@ -100,7 +100,7 @@ function MelRow({
         <td className="px-3 py-2.5">
           <Link
             href={`/maintenance/aircraft/${item.aircraft.id}`}
-            className="font-mono font-semibold text-status-blue hover:underline"
+            className="font-mono font-semibold text-primary hover:underline"
           >
             {item.aircraft.tail_number}
           </Link>

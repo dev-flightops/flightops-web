@@ -66,7 +66,7 @@ export default async function SettingsLoadTeamsPage({
           Settings
         </Link>
         <span aria-hidden className="px-1.5 text-muted-foreground">/</span>
-        <span className="font-semibold text-status-blue">Load Teams</span>
+        <span className="font-semibold text-primary">Load Teams</span>
       </nav>
 
       <header className="mb-6 flex items-center justify-between gap-3">
@@ -91,7 +91,7 @@ export default async function SettingsLoadTeamsPage({
             disabled
             aria-disabled="true"
             title={BACKEND_HINT_EDIT}
-            className="cursor-not-allowed rounded-md bg-status-blue px-3 py-2 text-sm font-semibold text-white disabled:opacity-100"
+            className="cursor-not-allowed rounded-md bg-primary px-3 py-2 text-sm font-semibold text-white disabled:opacity-100"
           >
             + Add Team
           </button>
@@ -161,7 +161,7 @@ function BaseSection({
   return (
     <section>
       <div className="mb-3 flex items-center justify-between border-b border-border pb-2">
-        <span className="text-sm font-bold uppercase tracking-[0.04em] text-status-blue">
+        <span className="text-sm font-bold uppercase tracking-[0.04em] text-primary">
           {base}
         </span>
         <span className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
@@ -179,7 +179,7 @@ function BaseSection({
 
 function TeamCard({ team }: { team: LoadTeamResponse }) {
   return (
-    <div className="relative overflow-hidden rounded-lg border border-border bg-card p-3 pl-4 transition-colors hover:border-status-blue/30">
+    <div className="relative overflow-hidden rounded-lg border border-border bg-card p-3 pl-4 transition-colors hover:border-primary/30">
       <span
         className="absolute left-0 top-0 bottom-0 w-1.5"
         style={{ background: team.color_code }}
@@ -246,7 +246,7 @@ function TabChip({ label, active }: { label: string; active?: boolean }) {
       className={
         "-mb-0.5 cursor-not-allowed px-4 py-2 text-xs font-semibold disabled:opacity-100 " +
         (active
-          ? "border-b-2 border-status-blue text-status-blue"
+          ? "border-b-2 border-primary text-primary"
           : "border-b-2 border-transparent text-muted-foreground")
       }
     >

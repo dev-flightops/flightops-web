@@ -15,7 +15,7 @@ import {
  *
  * Each tab is a Link that preserves the current display mode in the
  * URL, so switching filters keeps the user in their chosen view
- * (list/split/map). The active tab is filled with status-blue to
+ * (list/split/map). The active tab is filled with the brand (primary) to
  * match the legacy board.html.
  */
 export function FilterTabs({
@@ -42,7 +42,7 @@ export function FilterTabs({
             className={cn(
               "rounded-md px-3 py-1.5 text-xs font-semibold transition-colors",
               isActive
-                ? "bg-status-blue text-white"
+                ? "bg-primary text-white"
                 : "text-muted-foreground hover:bg-muted/40 hover:text-foreground",
             )}
           >

@@ -116,7 +116,7 @@ export default async function RewardsMembersPage() {
               <tbody className="divide-y divide-border">
                 {members.map((m) => (
                   <tr key={m.id} className="hover:bg-muted/5">
-                    <td className="whitespace-nowrap px-4 py-3 font-mono text-xs font-semibold text-status-blue">
+                    <td className="whitespace-nowrap px-4 py-3 font-mono text-xs font-semibold text-foreground">
                       {m.member_number}
                     </td>
                     <td className="px-4 py-3 text-xs">
@@ -137,7 +137,7 @@ export default async function RewardsMembersPage() {
                     <td className="whitespace-nowrap px-4 py-3 text-right">
                       <Link
                         href={`/reservations/rewards/${m.id}`}
-                        className="text-xs font-semibold text-status-blue hover:underline"
+                        className="text-xs font-semibold text-primary hover:underline"
                       >
                         Open →
                       </Link>

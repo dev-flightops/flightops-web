@@ -69,7 +69,7 @@ export function PositionReportsStep({ flightId, flight }: Props) {
           <ChecklistItem>
             <Link
               href="/flight-following"
-              className="font-semibold text-status-blue hover:underline"
+              className="font-semibold text-primary hover:underline"
             >
               Live Flight Following board
             </Link>{" "}
@@ -92,7 +92,7 @@ export function PositionReportsStep({ flightId, flight }: Props) {
             type="checkbox"
             checked={acknowledged}
             onChange={(e) => setAcknowledged(e.target.checked)}
-            className="mt-0.5 h-4 w-4 cursor-pointer accent-status-blue"
+            className="mt-0.5 h-4 w-4 cursor-pointer accent-primary"
           />
           <span>
             I acknowledge how position reporting works on this leg and
@@ -104,7 +104,7 @@ export function PositionReportsStep({ flightId, flight }: Props) {
           type="button"
           disabled={!canSubmit}
           onClick={handleSubmit}
-          className="inline-flex w-full items-center justify-center rounded-md bg-status-blue px-4 py-2.5 text-sm font-semibold text-white transition-opacity hover:brightness-110 disabled:opacity-50"
+          className="inline-flex w-full items-center justify-center rounded-md bg-primary px-4 py-2.5 text-sm font-semibold text-white transition-opacity hover:bg-brand-dark disabled:opacity-50"
         >
           {pending ? "Saving…" : "Continue to Step 8 →"}
         </button>
@@ -122,7 +122,7 @@ export function PositionReportsStep({ flightId, flight }: Props) {
 function ChecklistItem({ children }: { children: React.ReactNode }) {
   return (
     <li className="flex items-start gap-2 rounded-md border border-border bg-background px-3 py-2 text-xs text-foreground">
-      <span aria-hidden className="mt-0.5 text-status-blue">
+      <span aria-hidden className="mt-0.5 text-primary">
         •
       </span>
       <span>{children}</span>

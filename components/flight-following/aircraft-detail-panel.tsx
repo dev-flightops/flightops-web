@@ -110,7 +110,7 @@ export function AircraftDetailPanel({
         {hasFlight ? (
           <Link
             href={`/dispatch?flight=${position.flight_id}`}
-            className="rounded-md bg-status-blue px-3 py-2 text-center text-[0.7rem] font-semibold text-white hover:brightness-110"
+            className="rounded-md bg-primary px-3 py-2 text-center text-[0.7rem] font-semibold text-white hover:bg-brand-dark"
           >
             Open Dispatch Packet →
           </Link>
@@ -125,7 +125,7 @@ export function AircraftDetailPanel({
             type="button"
             onClick={onShowTrack}
             disabled={isTrackLoading}
-            className="inline-flex w-full items-center justify-center gap-1.5 rounded-md border border-status-blue/40 bg-status-blue/10 px-2 py-1.5 text-[0.65rem] font-semibold uppercase tracking-[0.06em] text-status-blue hover:bg-status-blue/20 disabled:opacity-50"
+            className="inline-flex w-full items-center justify-center gap-1.5 rounded-md border border-primary/40 bg-primary/10 px-2 py-1.5 text-[0.65rem] font-semibold uppercase tracking-[0.06em] text-primary hover:bg-primary/20 disabled:opacity-50"
           >
             {isTrackLoading && <Spinner size="xs" />}
             {isTrackLoading ? "Loading track…" : "Show flight track"}

@@ -131,7 +131,7 @@ export default async function CourseLibraryPage({
           {isAdmin ? (
             <Link
               href="/academy/studio/new"
-              className="rounded-md bg-status-blue px-4 py-2 text-sm font-semibold text-white hover:brightness-110"
+              className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-brand-dark"
             >
               + Create Course
             </Link>
@@ -203,7 +203,7 @@ function StatusChip({
       className={
         "rounded-md border px-2.5 py-1 text-xs font-semibold transition " +
         (active
-          ? "border-status-blue bg-status-blue/15 text-status-blue"
+          ? "border-primary bg-primary/15 text-primary"
           : "border-border bg-card text-muted-foreground hover:text-foreground")
       }
     >
@@ -271,7 +271,7 @@ function SidebarItem({
       className={
         "flex items-baseline justify-between gap-2 rounded-md px-2 py-1.5 transition " +
         (active
-          ? "bg-status-blue/15 text-status-blue"
+          ? "bg-primary/15 text-primary"
           : "text-muted-foreground hover:bg-muted/20 hover:text-foreground") +
         (bold ? " font-semibold text-foreground" : "")
       }
@@ -297,7 +297,7 @@ function EmptyState({ isAdmin }: { isAdmin: boolean }) {
         <div className="mt-4">
           <Link
             href="/academy/studio/new"
-            className="rounded-md bg-status-blue px-4 py-2 text-sm font-semibold text-white hover:brightness-110"
+            className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-brand-dark"
           >
             + Create Course
           </Link>

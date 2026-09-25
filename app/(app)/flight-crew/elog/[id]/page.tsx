@@ -89,7 +89,7 @@ export default async function FlightLogDetailPage({
             {log.is_manual_entry && <ManualEntryBadge />}
           </div>
           <p className="mt-1 text-xs text-muted-foreground">
-            <span className="font-mono text-status-blue">
+            <span className="font-mono text-primary">
               {log.aircraft.tail_number}
             </span>
             {log.aircraft.model ? ` · ${log.aircraft.model}` : ""}

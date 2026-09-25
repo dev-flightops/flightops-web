@@ -97,7 +97,7 @@ export default async function RamperPhotosPage({
             <h1 className="text-2xl font-extrabold">
               {flight.flight_number ?? "—"}
             </h1>
-            <p className="mt-0.5 text-sm font-semibold text-status-blue">
+            <p className="mt-0.5 text-sm font-semibold text-primary">
               {flight.aircraft?.tail_number ?? "—"}
               {flight.aircraft?.model && ` · ${flight.aircraft.model}`}
             </p>
@@ -155,7 +155,7 @@ export default async function RamperPhotosPage({
                 href={p.url}
                 target="_blank"
                 rel="noreferrer"
-                className="block overflow-hidden rounded-lg border border-border bg-background transition-colors hover:border-status-blue"
+                className="block overflow-hidden rounded-lg border border-border bg-background transition-colors hover:border-primary"
               >
                 <img
                   src={p.url}

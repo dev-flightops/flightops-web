@@ -156,7 +156,7 @@ export default async function DirectorOpsDashboardPage() {
             </h2>
             <Link
               href="/dispatch/"
-              className="text-[0.7rem] text-muted-foreground/70 hover:text-status-blue"
+              className="text-[0.7rem] text-muted-foreground/70 hover:text-primary"
             >
               Open dispatch →
             </Link>
@@ -288,7 +288,7 @@ function FlightsTable({
               <td className="px-2 py-2 text-right">
                 <Link
                   href={`/dispatch/${f.id}`}
-                  className="text-status-blue hover:underline"
+                  className="text-primary hover:underline"
                 >
                   →
                 </Link>
@@ -466,7 +466,7 @@ function collectStations(flights: FlightListItem[]): ListRow[] {
       left: icao,
       right: (
         <span className="font-mono">
-          <span className="font-semibold text-status-blue">{c.dep}</span>
+          <span className="font-semibold text-primary">{c.dep}</span>
           <span className="font-normal text-muted-foreground/70">
             {" dep · "}
           </span>

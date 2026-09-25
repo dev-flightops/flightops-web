@@ -60,7 +60,7 @@ export default async function RequiredReadingPage() {
         <span aria-hidden className="px-1.5 text-muted-foreground">
           ›
         </span>
-        <span className="font-semibold text-status-blue">Required Reading</span>
+        <span className="font-semibold text-primary">Required Reading</span>
       </nav>
 
       <header className="mb-6 border-b border-border pb-4">

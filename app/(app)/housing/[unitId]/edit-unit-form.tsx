@@ -182,7 +182,7 @@ export function EditUnitDrawer({ unit }: { unit: HousingUnit }) {
                 <button
                   type="submit"
                   disabled={pending}
-                  className="rounded-md bg-status-blue px-3 py-1.5 text-xs font-semibold text-white hover:brightness-110 disabled:opacity-50"
+                  className="rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-dark disabled:opacity-50"
                 >
                   {pending ? "Saving…" : "Save changes"}
                 </button>
@@ -203,7 +203,7 @@ export function EditUnitDrawer({ unit }: { unit: HousingUnit }) {
 }
 
 const INPUT =
-  "w-full rounded-md border border-border bg-background px-3 py-1.5 text-xs text-foreground focus:border-status-blue focus:outline-none";
+  "w-full rounded-md border border-border bg-background px-3 py-1.5 text-xs text-foreground focus:border-primary focus:outline-none";
 
 function Field({
   label,

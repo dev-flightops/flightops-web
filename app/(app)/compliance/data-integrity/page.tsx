@@ -381,7 +381,7 @@ export default async function DataIntegrityPage() {
         being wrong as it ages, while nobody can retroactively file a
         risk assessment for a flight last June. Fleet configuration is
         checked as it stands. Related:{" "}
-        <Link href="/reports" className="text-status-blue hover:underline">
+        <Link href="/reports" className="text-primary hover:underline">
           Reports
         </Link>
         .

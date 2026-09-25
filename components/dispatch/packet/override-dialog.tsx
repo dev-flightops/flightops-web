@@ -160,7 +160,7 @@ export function OverrideDialog({
                 disabled={pending}
                 onChange={(e) => setCert(e.target.value)}
                 placeholder="CFI-123456"
-                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-status-blue focus:outline-none aria-[invalid=true]:border-status-red"
+                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none aria-[invalid=true]:border-status-red"
                 aria-invalid={fieldError("supervisor_cert_number") ? "true" : undefined}
               />
               {fieldError("supervisor_cert_number") && (
@@ -199,7 +199,7 @@ export function OverrideDialog({
                 disabled={pending}
                 onChange={(e) => setReason(e.target.value)}
                 placeholder="Why does this pilot need to fly despite the block? Spec 5 requires at least 50 characters of context."
-                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-status-blue focus:outline-none aria-[invalid=true]:border-status-red"
+                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none aria-[invalid=true]:border-status-red"
                 aria-invalid={fieldError("reason") ? "true" : undefined}
               />
               {fieldError("reason") && (

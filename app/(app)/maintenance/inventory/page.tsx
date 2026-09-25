@@ -80,7 +80,7 @@ export default function InventoryPage() {
             disabled
             aria-disabled="true"
             title={BACKEND_HINT}
-            className="cursor-not-allowed rounded-md bg-status-blue px-3 py-2 text-xs font-semibold text-white disabled:opacity-100"
+            className="cursor-not-allowed rounded-md bg-primary px-3 py-2 text-xs font-semibold text-white disabled:opacity-100"
           >
             + Add Part
           </button>

@@ -77,7 +77,7 @@ function Label({
 }
 
 const FIELD =
-  "w-full rounded-md border border-border bg-background px-3 py-2 text-xs text-foreground focus:border-status-blue focus:outline-none";
+  "w-full rounded-md border border-border bg-background px-3 py-2 text-xs text-foreground focus:border-primary focus:outline-none";
 
 export function RequestForm({
   categories,
@@ -342,7 +342,7 @@ export function RequestForm({
               ? "Fill in the requestor, receipt time, period and reason, and pick at least one record set"
               : undefined
           }
-          className="rounded-md bg-status-blue px-3 py-1.5 text-xs font-semibold text-white hover:brightness-110 disabled:opacity-40"
+          className="rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-dark disabled:opacity-40"
         >
           {busy ? "Producing…" : "Produce and record"}
         </button>

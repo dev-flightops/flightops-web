@@ -96,7 +96,7 @@ export function ChangeStatusDialog({
                 id="status"
                 name="status"
                 defaultValue={currentStatus}
-                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-status-blue focus:outline-none"
+                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
               >
                 {STATUSES.map((s) => (
                   <option key={s.value} value={s.value}>
@@ -118,7 +118,7 @@ export function ChangeStatusDialog({
                 name="status_note"
                 rows={3}
                 placeholder="e.g. hydraulic pump failure; parts on order"
-                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-status-blue focus:outline-none"
+                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
               />
             </div>
 
@@ -134,7 +134,7 @@ export function ChangeStatusDialog({
               <button
                 type="submit"
                 disabled={pending}
-                className="inline-flex items-center gap-1.5 rounded-md bg-status-blue px-4 py-2 text-xs font-semibold text-white hover:brightness-110 disabled:opacity-60"
+                className="inline-flex items-center gap-1.5 rounded-md bg-primary px-4 py-2 text-xs font-semibold text-white hover:bg-brand-dark disabled:opacity-60"
               >
                 {pending && <Spinner size="xs" />}
                 {pending ? "Updating…" : "Update status"}

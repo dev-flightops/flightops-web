@@ -61,7 +61,7 @@ export default async function CustomersListPage({
         </div>
         <Link
           href="/customers/new"
-          className="rounded-md bg-status-blue px-4 py-2 text-sm font-semibold text-white hover:brightness-110"
+          className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-brand-dark"
         >
           + New Customer
         </Link>
@@ -206,7 +206,7 @@ function CustomerTable({
                 <td className="whitespace-nowrap px-4 py-3 text-right">
                   <Link
                     href={`/customers/${c.id}`}
-                    className="text-xs font-semibold text-status-blue hover:underline"
+                    className="text-xs font-semibold text-primary hover:underline"
                   >
                     Open →
                   </Link>

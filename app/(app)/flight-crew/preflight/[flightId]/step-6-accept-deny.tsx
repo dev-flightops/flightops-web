@@ -154,7 +154,7 @@ export function AcceptOrDenyStep({ flightId, initial }: Props) {
               type="button"
               onClick={() => advanceAfterAccept()}
               disabled={pending}
-              className="mt-2.5 rounded-md bg-status-blue px-3 py-1.5 text-xs font-semibold text-white hover:brightness-110 disabled:opacity-50"
+              className="mt-2.5 rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-dark disabled:opacity-50"
             >
               {pending ? "Recording…" : "Continue to Step 7 →"}
             </button>

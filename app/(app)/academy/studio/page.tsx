@@ -136,7 +136,7 @@ function EmptyState() {
         Click{" "}
         <Link
           href="/academy/studio/new"
-          className="text-status-blue hover:underline"
+          className="text-primary hover:underline"
         >
           + Blank Course
         </Link>{" "}
@@ -205,7 +205,7 @@ function CourseTable({ courses, total }: { courses: Course[]; total: number }) {
                 <td className="whitespace-nowrap px-4 py-3 text-right">
                   <Link
                     href={`/academy/studio/${c.id}`}
-                    className="text-xs font-semibold text-status-blue hover:underline"
+                    className="text-xs font-semibold text-primary hover:underline"
                   >
                     Edit →
                   </Link>

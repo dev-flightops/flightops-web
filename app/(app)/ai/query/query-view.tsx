@@ -181,12 +181,12 @@ export function QueryView({
             maxLength={500}
             autoComplete="off"
             placeholder="e.g. How many flights were cancelled last month?"
-            className="flex-1 rounded-md border border-border bg-background px-3 py-2 text-sm focus:border-status-blue focus:outline-none"
+            className="flex-1 rounded-md border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none"
           />
           <button
             type="submit"
             disabled={pending || !draft.trim()}
-            className="rounded-md bg-status-blue px-5 py-2 text-xs font-semibold text-white hover:brightness-110 disabled:opacity-40"
+            className="rounded-md bg-primary px-5 py-2 text-xs font-semibold text-white hover:bg-brand-dark disabled:opacity-40"
           >
             {pending ? "Asking…" : "Ask"}
           </button>
@@ -199,7 +199,7 @@ export function QueryView({
               type="button"
               onClick={() => onAsk(s)}
               disabled={pending}
-              className="rounded-lg border border-status-blue/20 bg-status-blue/5 px-2.5 py-1 text-[0.65rem] text-status-blue hover:bg-status-blue/12 disabled:opacity-40"
+              className="rounded-lg border border-primary/20 bg-primary/5 px-2.5 py-1 text-[0.65rem] text-primary hover:bg-primary/12 disabled:opacity-40"
             >
               {s}
             </button>

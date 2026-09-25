@@ -75,7 +75,7 @@ export default async function PayrollPeriodsPage() {
         <span aria-hidden className="px-1.5 text-muted-foreground">
           /
         </span>
-        <span className="font-semibold text-status-blue">Pay Periods</span>
+        <span className="font-semibold text-primary">Pay Periods</span>
       </nav>
 
       <header className="mb-5">

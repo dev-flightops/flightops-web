@@ -191,7 +191,7 @@ function Stat({
     <div
       className={
         "rounded-lg border bg-card px-3 py-2.5 " +
-        (emphasis ? "border-status-blue/40 bg-status-blue/5" : "border-border")
+        (emphasis ? "border-primary/40 bg-primary/5" : "border-border")
       }
     >
       <div
@@ -454,7 +454,7 @@ function MailBadge({ mailClass }: { mailClass: string }) {
     .map((s) => s.charAt(0).toUpperCase() + s.slice(1))
     .join(" ");
   return (
-    <span className="rounded border border-status-blue/40 bg-status-blue/10 px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider text-status-blue">
+    <span className="rounded border border-border bg-muted px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider text-muted-foreground">
       {label}
     </span>
   );

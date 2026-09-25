@@ -148,7 +148,7 @@ export default async function SettingsUsersPage() {
           Wondering what each role can do?{" "}
           <Link
             href="/settings/permissions"
-            className="text-status-blue hover:underline"
+            className="text-primary hover:underline"
           >
             See the role catalog →
           </Link>

@@ -189,7 +189,7 @@ function OrdersTable({
 
 function TenantChip({ label }: { label: string }) {
   return (
-    <span className="inline-flex items-center rounded bg-status-blue/15 px-1.5 py-0.5 text-[0.6rem] font-semibold uppercase tracking-[0.05em] text-status-blue">
+    <span className="inline-flex items-center rounded bg-muted px-1.5 py-0.5 text-[0.6rem] font-semibold uppercase tracking-[0.05em] text-muted-foreground">
       {label}
     </span>
   );

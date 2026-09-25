@@ -55,7 +55,7 @@ export default async function MyEnrollmentsPage() {
             You haven&rsquo;t enrolled in any courses yet.
           </p>
           <p className="mt-2 text-xs text-muted-foreground/70">
-            <Link href="/academy" className="text-status-blue hover:underline">
+            <Link href="/academy" className="text-primary hover:underline">
               Browse the catalog
             </Link>{" "}
             to get started.

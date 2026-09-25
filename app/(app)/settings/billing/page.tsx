@@ -266,7 +266,7 @@ function InvoiceHistoryCard({ invoices }: { invoices: Invoice[] }) {
                           href={inv.invoice_pdf_url}
                           target="_blank"
                           rel="noopener"
-                          className="text-xs font-semibold text-status-blue hover:underline"
+                          className="text-xs font-semibold text-primary hover:underline"
                         >
                           ↓ PDF
                         </a>
@@ -275,7 +275,7 @@ function InvoiceHistoryCard({ invoices }: { invoices: Invoice[] }) {
                           href={inv.hosted_invoice_url}
                           target="_blank"
                           rel="noopener"
-                          className="text-xs font-semibold text-status-blue hover:underline"
+                          className="text-xs font-semibold text-primary hover:underline"
                         >
                           View →
                         </a>
@@ -323,7 +323,7 @@ function PlanCatalogCard({
               className={
                 "rounded-lg border p-4 " +
                 (isCurrent
-                  ? "border-status-blue/60 bg-status-blue/5"
+                  ? "border-primary/60 bg-primary/5"
                   : "border-border bg-background/50")
               }
             >
@@ -332,7 +332,7 @@ function PlanCatalogCard({
                   {plan.name}
                 </span>
                 {isCurrent && (
-                  <span className="rounded border border-status-blue/40 bg-status-blue/10 px-1.5 py-0.5 text-[0.6rem] font-semibold uppercase tracking-wider text-status-blue">
+                  <span className="rounded border border-border bg-muted px-1.5 py-0.5 text-[0.6rem] font-semibold uppercase tracking-wider text-muted-foreground">
                     Current
                   </span>
                 )}

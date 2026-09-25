@@ -36,7 +36,7 @@ export function FlightBoard({ flights }: { flights: BoardFlightItem[] }) {
         <p className="text-sm text-muted-foreground">No active flights.</p>
         <Link
           href="/flight-following/new"
-          className="mt-4 rounded-md bg-status-blue px-3 py-1.5 text-xs font-semibold text-white hover:brightness-110"
+          className="mt-4 rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-dark"
         >
           + Open Flight
         </Link>
@@ -163,7 +163,7 @@ function FlightBoardRow({ flight }: { flight: BoardFlightItem }) {
         </span>
         <Link
           href={`/dispatch?flight=${flight.id}`}
-          className="text-[0.7rem] font-medium text-status-blue hover:underline"
+          className="text-[0.7rem] font-medium text-primary hover:underline"
         >
           Update →
         </Link>

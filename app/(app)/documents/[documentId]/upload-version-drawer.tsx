@@ -26,7 +26,7 @@ export function UploadVersionDrawer({ documentId }: { documentId: string }) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="rounded-md bg-status-blue px-3 py-1.5 text-xs font-semibold text-white hover:brightness-110"
+        className="rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-dark"
       >
         + Upload New Version
       </button>
@@ -84,7 +84,7 @@ export function UploadVersionDrawer({ documentId }: { documentId: string }) {
                   name="notes"
                   type="text"
                   placeholder="e.g. Rev 3.2 — updated MEL section"
-                  className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-xs text-foreground focus:border-status-blue focus:outline-none"
+                  className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-xs text-foreground focus:border-primary focus:outline-none"
                 />
               </label>
 
@@ -105,7 +105,7 @@ export function UploadVersionDrawer({ documentId }: { documentId: string }) {
                 <button
                   type="submit"
                   disabled={pending}
-                  className="rounded-md bg-status-blue px-3 py-1.5 text-xs font-semibold text-white hover:brightness-110 disabled:opacity-60"
+                  className="rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-dark disabled:opacity-60"
                 >
                   {pending ? "Uploading…" : "Upload version"}
                 </button>
