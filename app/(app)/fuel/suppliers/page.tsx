@@ -80,8 +80,8 @@ export default async function FuelSuppliersPage() {
             No suppliers configured yet.
           </p>
           <p className="mt-1 text-xs text-muted-foreground">
-            Adding suppliers from the UI lands in M2-G-43b. Use the API for
-            now: <code>POST /ground/fuel/suppliers</code>.
+            Suppliers are added through the API for now:{" "}
+            <code>POST /ground/fuel/suppliers</code>.
           </p>
         </div>
       ) : (

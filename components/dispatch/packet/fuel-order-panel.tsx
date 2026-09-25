@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import { ApiError } from "@/lib/api/client";
 import { listSupplierBases } from "@/lib/api/ground";
 import type {
@@ -80,9 +82,9 @@ export async function FuelOrderPanel({
       titleAction={
         <span
           className="rounded-md border border-status-yellow/40 bg-status-yellow/10 px-2 py-0.5 text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-status-yellow"
-          title="Order workflow lands in M2-M-27b. Pricing + supplier directory shown today."
+          title="Orders are placed from Fuel → Order Fuel. This panel shows pricing and suppliers."
         >
-          Pricing only · order workflow M2-M-27b
+          Pricing only
         </span>
       }
     >
@@ -182,17 +184,18 @@ export async function FuelOrderPanel({
 
           <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
             <p className="text-[0.7rem] text-muted-foreground">
-              Estimated cost auto-calculates from gallons × contract price
-              once order entry is live (M2-M-27b).
+              Orders are placed on the Fuel Orders page, which notifies the
+              supplier. Ordering from the packet isn&apos;t built yet.
             </p>
-            <button
-              type="button"
-              disabled
-              title="Order workflow ships in M2-M-27b (fuel_orders + supplier notification)"
-              className="cursor-not-allowed rounded-md border border-primary bg-primary/15 px-4 py-2 text-xs font-semibold text-primary opacity-60"
+            {/* Was a disabled "Order Fuel · M2-M-27b" button — a dead
+                control naming a story, while /fuel/orders/new already
+                took orders. It goes there now. */}
+            <Link
+              href="/fuel/orders/new"
+              className="rounded-md border border-primary/40 bg-background px-4 py-2 text-xs font-semibold text-primary hover:bg-primary/5"
             >
-              Order Fuel · M2-M-27b
-            </button>
+              Order fuel →
+            </Link>
           </div>
         </>
       )}

@@ -157,15 +157,15 @@ export function WeightBalanceCard({
       <div className="mt-3 grid grid-cols-3 gap-2 rounded-md bg-muted/60 p-2 text-center text-[0.65rem]">
         <Derived
           label="Takeoff Wt"
-          hint="Needs aircraft config (M3)"
+          hint="Needs aircraft moment arms"
         />
         <Derived
           label="Landing Wt"
-          hint="Needs aircraft config (M3)"
+          hint="Needs aircraft moment arms"
         />
         <Derived
           label="CG"
-          hint="Needs aircraft config (M3)"
+          hint="Needs aircraft moment arms"
         />
       </div>
 

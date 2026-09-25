@@ -139,7 +139,7 @@ export default async function StationDashboardPage({
               Active Alerts
             </h2>
             <span className="text-[0.65rem] text-muted-foreground">
-              {scopedSnapshot.alerts.length} live · NOTAM / weather alerts land with M3
+              {scopedSnapshot.alerts.length} live · NOTAM and weather alerts land with their services
             </span>
           </div>
           <AlertList

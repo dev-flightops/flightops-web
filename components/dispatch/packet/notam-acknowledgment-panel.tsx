@@ -45,9 +45,9 @@ export function NotamAcknowledgmentPanel({
         titleAction={
           <span
             className="rounded-md border border-status-yellow/40 bg-status-yellow/10 px-2 py-0.5 text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-status-yellow"
-            title="Real NOTAM list lands when the FAA proxy ships (M2-M-4). Today this is a manual acknowledgment that you have reviewed NOTAMs out-of-band."
+            title="The FAA NOTAM feed isn't connected yet. This records that you reviewed NOTAMs outside the app."
           >
-            Manual ack · proxy M2-M-4
+            Manual acknowledgment
           </span>
         }
       >

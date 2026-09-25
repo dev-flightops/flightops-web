@@ -50,8 +50,8 @@ export default async function NewFuelOrderPage() {
       </div>
       <p className="mt-4 text-center text-xs text-muted-foreground">
         The supplier is notified on submit. Status flows ordered → confirmed →
-        fueled. Real email delivery via ops-service (M3); today's notification
-        payload is logged for audit.
+        fueled. Email delivery isn&apos;t connected yet — the notification
+        is logged for audit.
       </p>
     </div>
   );

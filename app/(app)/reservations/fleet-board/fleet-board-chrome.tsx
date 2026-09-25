@@ -153,7 +153,7 @@ function FilterChip({ label }: { label: string }) {
     <button
       type="button"
       disabled
-      title="Filter fields ship with the base/type/pilot booking assignment story (M3 follow-up)"
+      title="Filters aren't built yet"
       className="rounded-md border border-border bg-card px-2.5 py-1 text-xs font-semibold text-muted-foreground/70 cursor-not-allowed"
     >
       {label}

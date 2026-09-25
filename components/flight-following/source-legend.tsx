@@ -10,7 +10,7 @@ export function SourceLegend() {
       · <span className="text-status-blue">blue</span> = GPS uplink ·{" "}
       <span className="text-status-yellow">amber</span> = manual radio relay ·{" "}
       <span className="text-muted-foreground">grey</span> = simulated (demo
-      data, M3 ADS-B adapter replaces).
+      data).
     </p>
   );
 }

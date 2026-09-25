@@ -129,7 +129,7 @@ export async function WeatherPanel({ icaos }: { icaos: string[] }) {
       )}
       <p className="mt-3 text-[0.65rem] text-muted-foreground">
         Source: Aviation Weather Center via weather-service. METAR cached 5 min,
-        TAF cached 30 min. ATIS + PIREP land with M2-M-4.
+        TAF cached 30 min. ATIS and PIREPs are not shown yet.
       </p>
     </SectionPanel>
   );

@@ -452,7 +452,7 @@ export function NewBookingSearchForm({
         <button
           type="button"
           disabled
-          title="Gift vouchers ship with the fares vertical (M3 follow-up)"
+          title="Gift vouchers aren't built yet"
           className="rounded-md border border-border bg-card px-3 py-2 text-xs font-semibold text-muted-foreground/70 cursor-not-allowed"
         >
           Use Gift Voucher

@@ -137,7 +137,7 @@ describe("WeightBalanceTab", () => {
     expect(screen.getByText("7588")).toBeInTheDocument();
   });
 
-  it("hides Takeoff / Landing / CG behind a 'Needs aircraft config' hint", () => {
+  it("hides Takeoff / Landing / CG behind a 'Needs aircraft moment arms' hint", () => {
     render(
       <WeightBalanceTab
         logId="log-1"
@@ -148,9 +148,9 @@ describe("WeightBalanceTab", () => {
     expect(screen.getByText(/Takeoff Wt/i)).toBeInTheDocument();
     expect(screen.getByText(/Landing Wt/i)).toBeInTheDocument();
     expect(screen.getByText(/^CG$/)).toBeInTheDocument();
-    // All three carry the M3 hint.
+    // All three say what they are waiting on.
     expect(
-      screen.getAllByText(/needs aircraft config/i).length,
+      screen.getAllByText(/needs aircraft moment arms/i).length,
     ).toBeGreaterThanOrEqual(3);
   });
 

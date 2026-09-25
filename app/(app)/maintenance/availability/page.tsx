@@ -48,7 +48,7 @@ export default function AvailabilityPage() {
               type="date"
               disabled
               className="w-full cursor-not-allowed rounded-md border border-border bg-background px-3 py-2 text-sm disabled:opacity-100"
-              title="Availability roll-up ships with the maintenance-service (M2 backend)"
+              title="Fleet availability isn't built yet"
             />
           </label>
           <label className="min-w-[140px]">
@@ -59,14 +59,14 @@ export default function AvailabilityPage() {
               type="date"
               disabled
               className="w-full cursor-not-allowed rounded-md border border-border bg-background px-3 py-2 text-sm disabled:opacity-100"
-              title="Availability roll-up ships with the maintenance-service (M2 backend)"
+              title="Fleet availability isn't built yet"
             />
           </label>
           <button
             type="button"
             disabled
             aria-disabled="true"
-            title="Availability roll-up ships with the maintenance-service (M2 backend)"
+            title="Fleet availability isn't built yet"
             className="cursor-not-allowed rounded-md bg-primary px-4 py-2 text-xs font-semibold text-white disabled:opacity-100"
           >
             Update
@@ -99,7 +99,7 @@ export default function AvailabilityPage() {
             <tbody>
               <tr>
                 <td colSpan={9} className="px-4 py-16 text-center text-sm text-muted-foreground">
-                  Availability data ships with the maintenance-service (M2). Per-aircraft status is available today on /maintenance (Fleet tab).
+                  Fleet availability isn&apos;t built yet. Each aircraft&apos;s status is on the Maintenance fleet view.
                 </td>
               </tr>
             </tbody>

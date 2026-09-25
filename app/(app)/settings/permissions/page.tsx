@@ -136,7 +136,7 @@ export default async function SettingsPermissionsPage() {
             Users page
           </Link>
           . Granular per-action permissions (e.g. &quot;dispatcher can release
-          but not cancel&quot;) ship in M4. Users have to sign out and back in
+          but not cancel&quot;) aren&apos;t available yet. Users have to sign out and back in
           for an Admin Access change to take effect.
         </p>
       )}

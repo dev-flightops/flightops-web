@@ -67,8 +67,8 @@ export function WeightBalanceTab({
         <p className="mt-1 text-[0.7rem] text-muted-foreground">
           {initialLegs.length} leg{initialLegs.length === 1 ? "" : "s"} —
           enter the load profile for each. Ramp weight updates live;
-          takeoff &amp; landing weights + CG ship with the per-aircraft
-          moment-arm config in M3.
+          takeoff &amp; landing weights and CG need per-aircraft moment
+          arms, which aren&apos;t configured yet.
         </p>
       </div>
 

@@ -189,9 +189,8 @@ export function NewStationForm() {
               100LL
             </label>
             <p className="pt-1 text-[0.65rem] text-muted-foreground">
-              Primary fuel supplier is set after creation from the station
-              detail page (M3 surfaces the picker once we ship the
-              supplier-portal config flow).
+              Setting a station&apos;s primary fuel supplier isn&apos;t
+              available yet.
             </p>
           </fieldset>
         )}

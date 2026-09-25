@@ -28,7 +28,7 @@ const PART_CATEGORIES = [
   { value: "tool", label: "Tool" },
 ] as const;
 
-const BACKEND_HINT = "Inventory ships with the maintenance-service (M2 backend)";
+const BACKEND_HINT = "Parts inventory isn't built yet";
 
 export default function InventoryPage() {
   const total: number = 0;

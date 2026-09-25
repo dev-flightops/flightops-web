@@ -106,8 +106,7 @@ export default async function SettingsSsoPage() {
       {!unauthorized && (
         <p className="mt-8 text-xs text-muted-foreground">
           Notes: \`client_secret\` never leaves the server after it&apos;s
-          stored. At-rest encryption is a planned follow-up (M3
-          hardening). Until the web Auth.js wiring lands in a separate
+          stored. At-rest encryption is a planned follow-up. Until the web Auth.js wiring lands in a separate
           story, a connected provider here is admin-visible only —
           users don&apos;t see the sign-in button yet.
         </p>

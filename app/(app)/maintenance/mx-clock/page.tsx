@@ -26,7 +26,7 @@ const MILESTONES = [
   { key: "ready_for_rts", label: "Ready for RTS" },
 ] as const;
 
-const BACKEND_HINT = "MX Clock ships with the maintenance-service (M2 backend)";
+const BACKEND_HINT = "The maintenance clock isn't built yet";
 
 export default function MxClockPage() {
   return (

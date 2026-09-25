@@ -168,7 +168,7 @@ export default async function ExecutiveDashboardPage() {
               Active Alerts
             </h2>
             <span className="text-[0.65rem] text-muted-foreground">
-              {snapshot.alerts.length} live · 7 more land with M3 services
+              {snapshot.alerts.length} live · 7 more alert types land with their services
             </span>
           </div>
           <AlertList
