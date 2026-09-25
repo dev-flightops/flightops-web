@@ -220,9 +220,9 @@ describe("factors nobody assessed", () => {
   });
 
   it("records the confirmation in the filed assessment", async () => {
-    // The backend has no field for this yet, so it goes in the
-    // mitigations text where an auditor will see it. Losing the fact
-    // while waiting for a dedicated column would be worse.
+    // It has a real column now (services 0101). It used to be appended
+    // to the mitigations text, which mixed a system record into the
+    // pilot's own words and could not be queried.
     const user = userEvent.setup();
     renderStep({});
     await user.click(
@@ -232,7 +232,7 @@ describe("factors nobody assessed", () => {
       screen.getByRole("button", { name: /genuinely zero/i }),
     );
     const call = vi.mocked(submitFratAction).mock.calls.at(-1);
-    expect(call?.[1].mitigations).toMatch(/confirmed 18 factor/i);
+    expect(call?.[1].affirmed_zero_factors).toHaveLength(18);
   });
 
   it("counts a prefilled factor as assessed", async () => {
@@ -448,5 +448,61 @@ describe("block FRAT carry-forward", () => {
       screen.queryByRole("button", { name: /accept new weight/i }),
     ).not.toBeInTheDocument();
     expect(screen.getByText("Wind & gusts")).toBeInTheDocument();
+  });
+});
+
+
+/**
+ * The affirmation used to be appended to the pilot's mitigations text
+ * as a sentence. It has its own column now, and these pin the three
+ * things that made the old way wrong.
+ */
+describe("affirming untouched zeros", () => {
+  beforeEach(() => {
+    vi.mocked(submitFratAction).mockClear();
+  });
+
+  it("sends the affirmed codes in their own field", async () => {
+    const user = userEvent.setup();
+    renderStep({});
+    await user.click(screen.getByRole("button", { name: /Submit assessment/i }));
+    await user.click(screen.getByRole("button", { name: /genuinely zero/i }));
+
+    const [, body] = vi.mocked(submitFratAction).mock.calls.at(-1)!;
+    expect(body.affirmed_zero_factors).toBeDefined();
+    expect(body.affirmed_zero_factors!.length).toBeGreaterThan(0);
+    // Codes, because that is what the backend validates against the
+    // answers it was sent.
+    expect(body.affirmed_zero_factors).toContain("pilot_health");
+  });
+
+  it("leaves the pilot's mitigations text alone", async () => {
+    // It is their field. The old sentence mixed a system record into
+    // the words a pilot wrote, and they could edit or delete it.
+    const user = userEvent.setup();
+    renderStep({});
+    await user.type(
+      screen.getByPlaceholderText(/What risk controls/i),
+      "Briefed the crew.",
+    );
+    await user.click(screen.getByRole("button", { name: /Submit assessment/i }));
+    await user.click(screen.getByRole("button", { name: /genuinely zero/i }));
+
+    const [, body] = vi.mocked(submitFratAction).mock.calls.at(-1)!;
+    expect(body.mitigations).toBe("Briefed the crew.");
+    expect(body.mitigations).not.toMatch(/genuinely zero/i);
+  });
+
+  it("does not send it on a block carry-forward", async () => {
+    // Those answers came from a questionnaire the pilot answered on an
+    // earlier leg, so there is nothing to affirm here and claiming
+    // otherwise would put a statement in the record they never made.
+    const user = userEvent.setup();
+    renderStep({ fratBlock: eligibleBlock });
+    await user.click(
+      screen.getByRole("button", { name: /accept new weight & balance/i }),
+    );
+    const [, body] = vi.mocked(submitFratAction).mock.calls.at(-1)!;
+    expect(body.affirmed_zero_factors).toBeUndefined();
   });
 });
