@@ -26,7 +26,7 @@ export function DensityToggle({ active }: { active: "compact" | "expanded" }) {
         className={
           active === "compact"
             ? "border-r border-border bg-primary px-3 py-1 text-xs font-semibold text-white"
-            : "border-r border-border px-3 py-1 text-xs font-semibold text-foreground hover:bg-muted/40"
+            : "border-r border-border px-3 py-1 text-xs font-semibold text-foreground hover:bg-accent"
         }
       >
         Compact
@@ -38,7 +38,7 @@ export function DensityToggle({ active }: { active: "compact" | "expanded" }) {
         className={
           active === "expanded"
             ? "bg-primary px-3 py-1 text-xs font-semibold text-white"
-            : "px-3 py-1 text-xs font-semibold text-foreground hover:bg-muted/40"
+            : "px-3 py-1 text-xs font-semibold text-foreground hover:bg-accent"
         }
       >
         Expanded

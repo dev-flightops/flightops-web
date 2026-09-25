@@ -289,7 +289,7 @@ function DenyForm({
             disabled={!canSubmit}
             onClick={onSubmit}
             className={cn(
-              "rounded-md border-2 border-status-red/40 bg-status-red/15 px-3 py-1 text-xs font-bold uppercase tracking-[0.04em] text-status-red transition-colors hover:bg-status-red/20",
+              "rounded-md border-2 border-status-red/40 bg-status-red/15 px-3 py-1 text-xs font-bold uppercase tracking-[0.04em] text-status-red transition-colors hover:bg-status-red/15",
               !canSubmit && "opacity-50",
             )}
           >

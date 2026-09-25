@@ -55,7 +55,7 @@ export function ExportButton({
         type="button"
         onClick={onExport}
         disabled={disabled || pending}
-        className="rounded-md border border-border px-4 py-2 text-sm font-semibold text-foreground hover:bg-muted/30 disabled:opacity-50"
+        className="rounded-md border border-border px-4 py-2 text-sm font-semibold text-foreground hover:bg-accent disabled:opacity-50"
       >
         {pending ? "Exporting…" : "Export CSV"}
       </button>

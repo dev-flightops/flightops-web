@@ -44,7 +44,7 @@ export function MelTable({
   return (
     <div className="overflow-hidden rounded-lg border border-border bg-card">
       <table className="w-full text-xs">
-        <thead className="bg-muted/30">
+        <thead className="bg-muted/60">
           <tr className="text-left text-[0.6rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
             {showAircraft && <th className="px-3 py-2">Aircraft</th>}
             <th className="px-3 py-2">ATA</th>
@@ -95,7 +95,7 @@ function MelRow({
   const due = formatBoth(item.due_at);
 
   return (
-    <tr className="border-t border-border hover:bg-muted/20">
+    <tr className="border-t border-border hover:bg-accent">
       {showAircraft && (
         <td className="px-3 py-2.5">
           <Link
@@ -118,11 +118,11 @@ function MelRow({
       </td>
       <td className="px-3 py-2.5 text-muted-foreground">
         <div className="font-mono">{deferred.local}</div>
-        <div className="font-mono text-[0.6rem] opacity-80">{deferred.zulu}</div>
+        <div className="font-mono text-[0.6rem]">{deferred.zulu}</div>
       </td>
       <td className={cn("px-3 py-2.5", toneClass(dueTone))}>
         <div className="font-mono">{due.local}</div>
-        <div className="font-mono text-[0.6rem] opacity-80">
+        <div className="font-mono text-[0.6rem]">
           {due.zulu}{" "}
           {!isClosed && daysToDue < 0 ? (
             <span className="font-semibold">
@@ -140,7 +140,7 @@ function MelRow({
           className={cn(
             "inline-flex items-center rounded px-1.5 py-0.5 text-[0.6rem] font-semibold uppercase tracking-[0.08em]",
             isClosed
-              ? "bg-muted/40 text-muted-foreground"
+              ? "bg-muted text-muted-foreground"
               : "bg-status-yellow/15 text-status-yellow",
           )}
         >

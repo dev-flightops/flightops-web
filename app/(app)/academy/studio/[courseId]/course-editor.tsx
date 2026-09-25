@@ -151,7 +151,7 @@ function ComplianceLinkPicker({
         <button
           type="submit"
           disabled={pending || selectedId === (course.linked_currency_item_id ?? "")}
-          className="rounded-md border border-border bg-muted/30 px-3 py-1.5 text-xs font-semibold hover:bg-muted/40 disabled:opacity-60"
+          className="rounded-md border border-border bg-muted/60 px-3 py-1.5 text-xs font-semibold hover:bg-accent disabled:opacity-60"
         >
           {pending ? "Saving…" : "Save"}
         </button>
@@ -224,7 +224,7 @@ function PublishStatusPicker({ course }: { course: CourseDetail }) {
         <button
           type="submit"
           disabled={pending}
-          className="rounded-md border border-border bg-muted/30 px-3 py-1.5 text-xs font-semibold hover:bg-muted/40 disabled:opacity-60"
+          className="rounded-md border border-border bg-muted/60 px-3 py-1.5 text-xs font-semibold hover:bg-accent disabled:opacity-60"
         >
           {pending ? "Saving…" : "Save"}
         </button>
@@ -305,7 +305,7 @@ function QuizAffordance({
             ? state.message
             : "Create a quiz on this lesson"
         }
-        className="rounded-md border border-border bg-muted/20 px-2 py-1 text-[0.6875rem] font-semibold hover:bg-muted/40 disabled:opacity-60"
+        className="rounded-md border border-border bg-muted/60 px-2 py-1 text-[0.6875rem] font-semibold hover:bg-accent disabled:opacity-60"
       >
         {pending ? "…" : "Attach Quiz"}
       </button>
@@ -347,7 +347,7 @@ function LessonRow({
           <button
             type="button"
             onClick={() => setEditing((v) => !v)}
-            className="rounded-md border border-border bg-muted/20 px-2 py-1 text-[0.6875rem] font-semibold hover:bg-muted/40"
+            className="rounded-md border border-border bg-muted/60 px-2 py-1 text-[0.6875rem] font-semibold hover:bg-accent"
           >
             {editing ? "Close" : "Edit"}
           </button>

@@ -52,7 +52,7 @@ export function TransitionButtons({
             type="button"
             disabled={pending}
             onClick={() => submit(s)}
-            className="text-xs font-semibold text-primary hover:text-primary/80 disabled:opacity-50"
+            className="text-xs font-semibold text-primary hover:underline disabled:opacity-50"
           >
             → {CHARTER_STATUS_LABELS[s]}
           </button>
@@ -62,7 +62,7 @@ export function TransitionButtons({
           type="button"
           disabled={pending}
           onClick={() => submit("cancelled")}
-          className="text-xs font-semibold text-status-red hover:text-status-red/80 disabled:opacity-50"
+          className="text-xs font-semibold text-status-red hover:underline disabled:opacity-50"
         >
           Cancel
         </button>

@@ -86,7 +86,7 @@ export default async function StudioPage() {
           </button>
           <Link
             href="/academy/studio/new"
-            className="rounded-md border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground/90 hover:bg-muted/20"
+            className="rounded-md border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground/90 hover:bg-accent"
           >
             + Blank Course
           </Link>
@@ -120,7 +120,7 @@ export default async function StudioPage() {
 function EmptyState() {
   return (
     <div className="rounded-xl border border-border bg-card px-4 py-16 text-center">
-      <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-muted/20">
+      <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-muted/60">
         <svg
           xmlns="http://www.w3.org/2000/svg"
           viewBox="0 0 24 24"
@@ -151,7 +151,7 @@ function CourseTable({ courses, total }: { courses: Course[]; total: number }) {
     <div className="overflow-hidden rounded-lg border border-border bg-card">
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
-          <thead className="border-b border-border bg-muted/10 text-left text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
+          <thead className="border-b border-border bg-muted/60 text-left text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
             <tr>
               <th scope="col" className="px-4 py-2.5 font-semibold">
                 Title
@@ -175,7 +175,7 @@ function CourseTable({ courses, total }: { courses: Course[]; total: number }) {
           </thead>
           <tbody className="divide-y divide-border">
             {courses.map((c) => (
-              <tr key={c.id} className="hover:bg-muted/5">
+              <tr key={c.id} className="hover:bg-accent">
                 <td className="whitespace-nowrap px-4 py-3 text-xs font-semibold">
                   {c.title}
                 </td>
@@ -196,7 +196,7 @@ function CourseTable({ courses, total }: { courses: Course[]; total: number }) {
                         ? "border-status-green/40 bg-status-green/10 text-status-green"
                         : c.publish_status === "draft"
                           ? "border-status-yellow/40 bg-status-yellow/10 text-status-yellow"
-                          : "border-border bg-muted/30 text-muted-foreground")
+                          : "border-border bg-muted text-muted-foreground")
                     }
                   >
                     {COURSE_PUBLISH_STATUS_LABELS[c.publish_status]}

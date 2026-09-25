@@ -111,7 +111,7 @@ export function EditRoomDrawer({
                 type="button"
                 onClick={() => setOpen(false)}
                 aria-label="Close"
-                className="rounded px-2 py-1 text-xs text-muted-foreground hover:bg-muted/40 hover:text-foreground"
+                className="rounded px-2 py-1 text-xs text-muted-foreground hover:bg-accent hover:text-foreground"
               >
                 ✕
               </button>
@@ -246,7 +246,7 @@ export function EditRoomDrawer({
                 <button
                   type="button"
                   onClick={() => setOpen(false)}
-                  className="rounded-md border border-border px-3 py-1.5 text-xs font-semibold text-foreground/80 hover:bg-muted/20"
+                  className="rounded-md border border-border px-3 py-1.5 text-xs font-semibold text-foreground/80 hover:bg-accent"
                 >
                   Cancel
                 </button>

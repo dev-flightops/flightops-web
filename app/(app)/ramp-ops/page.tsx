@@ -333,7 +333,7 @@ function TeamCard({
               )}
             </div>
             {team.notes && (
-              <p className="mt-1 text-[0.7rem] text-muted-foreground/80">
+              <p className="mt-1 text-[0.7rem] text-muted-foreground">
                 {team.notes}
               </p>
             )}
@@ -381,17 +381,17 @@ function EmptyCard({ children }: { children: React.ReactNode }) {
 
 function StatusChip({ status }: { status: string }) {
   const palette: Record<string, string> = {
-    scheduled: "border-border bg-muted/30 text-muted-foreground",
+    scheduled: "border-border bg-muted text-muted-foreground",
     released:
       "border-status-blue/40 bg-status-blue/10 text-status-blue",
     completed:
       "border-status-green/40 bg-status-green/10 text-status-green",
-    cancelled: "border-border bg-muted/30 text-muted-foreground/70",
+    cancelled: "border-border bg-muted text-muted-foreground",
   };
   return (
     <span
       className={`shrink-0 rounded-sm border px-1.5 py-0.5 text-[0.55rem] font-semibold uppercase tracking-[0.08em] ${
-        palette[status] ?? "border-border bg-muted/30 text-muted-foreground"
+        palette[status] ?? "border-border bg-muted text-muted-foreground"
       }`}
     >
       {status}

@@ -171,7 +171,7 @@ function TrackOverlay({ track }: { track: TrackState }) {
       <Polyline
         positions={path}
         pathOptions={{
-          color: "#3b82f6",  // status-blue
+          color: themeColour("status-blue"),
           weight: 3,
           opacity: 0.9,
         }}
@@ -181,7 +181,7 @@ function TrackOverlay({ track }: { track: TrackState }) {
         center={[start.latitude, start.longitude]}
         radius={5}
         pathOptions={{
-          color: "#3b82f6",
+          color: themeColour("status-blue"),
           fillColor: "#ffffff",
           fillOpacity: 1,
           weight: 2,
@@ -198,8 +198,8 @@ function TrackOverlay({ track }: { track: TrackState }) {
         center={[end.latitude, end.longitude]}
         radius={5}
         pathOptions={{
-          color: "#3b82f6",
-          fillColor: "#3b82f6",
+          color: themeColour("status-blue"),
+          fillColor: themeColour("status-blue"),
           fillOpacity: 1,
           weight: 2,
         }}
@@ -254,12 +254,37 @@ function AircraftMarker({
 function colourForSource(source: PositionResponse["source"]): string {
   switch (source) {
     case "adsb":
-      return "#22c55e"; // green — real authoritative feed
+      return themeColour("status-green"); // real authoritative feed
     case "gps":
-      return "#3b82f6"; // blue — onboard GPS uplink
+      return themeColour("status-blue"); // onboard GPS uplink
     case "manual":
-      return "#f59e0b"; // amber — manual radio relay
+      return themeColour("status-yellow"); // manual radio relay
     case "simulated":
-      return "#a3a3a3"; // grey — demo data
+      return themeColour("status-gray"); // demo data
   }
+}
+
+/** Light-ground values, for a render with no stylesheet (tests). */
+const STATUS_FALLBACK: Record<string, string> = {
+  "status-green": "rgb(4, 116, 84)",
+  "status-blue": "rgb(29, 78, 216)",
+  "status-yellow": "rgb(166, 76, 8)",
+  "status-gray": "rgb(96, 104, 114)",
+};
+
+/** A theme status colour as a string Leaflet can paint with.
+ *
+ *  The legend under the map (source-legend.tsx) colours its words with
+ *  the status tokens; the markers used Tailwind 500s picked for the old
+ *  navy theme. On the light ground the two stopped matching, and a
+ *  legend that does not match its map misdescribes it. Leaflet takes a
+ *  colour, not a class, so the token's channels are read from :root. */
+function themeColour(token: string): string {
+  if (typeof window !== "undefined") {
+    const channels = getComputedStyle(document.documentElement)
+      .getPropertyValue(`--${token}`)
+      .trim();
+    if (channels) return `rgb(${channels.split(/\s+/).join(", ")})`;
+  }
+  return STATUS_FALLBACK[token];
 }

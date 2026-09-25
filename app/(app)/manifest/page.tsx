@@ -220,7 +220,7 @@ export default async function FlightSchedulePage({
                     "rounded-lg px-3 py-1.5 text-xs font-medium " +
                     (active
                       ? "bg-primary text-white"
-                      : "bg-muted/20 text-muted-foreground hover:text-foreground")
+                      : "bg-muted text-muted-foreground hover:text-foreground")
                   }
                 >
                   {r.label}
@@ -335,7 +335,7 @@ function DayBlock({
           {isToday ? "TODAY — " : ""}
           {formatDayHeading(dayKey)}
         </h2>
-        <span className="text-xs text-muted-foreground/60">
+        <span className="text-xs text-muted-foreground">
           {flights.length} flight{flights.length === 1 ? "" : "s"}
         </span>
         {isToday && (
@@ -345,7 +345,7 @@ function DayBlock({
       <div className="overflow-hidden rounded-lg border border-border bg-card">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="border-b border-border bg-muted/10 text-left text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
+            <thead className="border-b border-border bg-muted/60 text-left text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
               <tr>
                 <th scope="col" className="px-4 py-2.5 font-semibold">Flight</th>
                 <th scope="col" className="px-4 py-2.5 font-semibold">Route</th>
@@ -360,7 +360,7 @@ function DayBlock({
                 <tr
                   key={f.id}
                   className={
-                    "hover:bg-muted/5 " +
+                    "hover:bg-accent " +
                     (f.status === "cancelled" ? "opacity-40" : "")
                   }
                 >
@@ -404,7 +404,7 @@ function DayBlock({
 
 function FlightStatusBadge({ status }: { status: FlightStatus }) {
   const map: Record<FlightStatus, [string, string]> = {
-    scheduled: ["border-border bg-muted/20 text-muted-foreground", "Scheduled"],
+    scheduled: ["border-border bg-muted text-muted-foreground", "Scheduled"],
     released: [
       "border-status-blue/40 bg-status-blue/10 text-status-blue",
       "Released",

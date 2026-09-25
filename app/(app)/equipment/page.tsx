@@ -116,7 +116,7 @@ export default async function EquipmentPage({
         </div>
         <Link
           href="/equipment/new"
-          className="rounded-md border border-primary bg-primary/15 px-3 py-1.5 text-xs font-semibold text-primary hover:bg-primary/20"
+          className="rounded-md border border-primary/40 bg-background px-3 py-1.5 text-xs font-semibold text-primary hover:bg-primary/5"
         >
           + Add Equipment
         </Link>
@@ -151,7 +151,7 @@ export default async function EquipmentPage({
                   </p>
                   <Link
                     href="/equipment/new"
-                    className="inline-block rounded-md border border-primary bg-primary/15 px-4 py-2 text-xs font-semibold text-primary hover:bg-primary/20"
+                    className="inline-block rounded-md border border-primary/40 bg-background px-4 py-2 text-xs font-semibold text-primary hover:bg-primary/5"
                   >
                     + Add First Unit
                   </Link>

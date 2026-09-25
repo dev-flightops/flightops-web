@@ -72,7 +72,7 @@ function Pill({
       className={
         active
           ? "rounded-md border border-primary bg-primary/15 px-2 py-1 font-mono text-[0.65rem] font-semibold text-primary"
-          : "rounded-md border border-border bg-card px-2 py-1 font-mono text-[0.65rem] font-semibold text-muted-foreground hover:bg-muted/30 hover:text-foreground"
+          : "rounded-md border border-border bg-card px-2 py-1 font-mono text-[0.65rem] font-semibold text-muted-foreground hover:bg-accent hover:text-foreground"
       }
     >
       {label}

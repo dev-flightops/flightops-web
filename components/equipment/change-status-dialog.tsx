@@ -58,7 +58,7 @@ export function ChangeStatusDialog({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="rounded-md border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-muted/40"
+        className="rounded-md border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-accent"
       >
         Change status
       </button>
@@ -127,7 +127,7 @@ export function ChangeStatusDialog({
                 type="button"
                 onClick={() => setOpen(false)}
                 disabled={pending}
-                className="rounded-md border border-border bg-card px-3 py-2 text-xs font-semibold text-foreground hover:bg-muted/40"
+                className="rounded-md border border-border bg-card px-3 py-2 text-xs font-semibold text-foreground hover:bg-accent"
               >
                 Cancel
               </button>

@@ -76,7 +76,7 @@ export function DocumentsPanel({
               : outstanding === 0
                 ? `All ${items.length} on file.`
                 : `${outstanding} of ${items.length} needing attention.`}
-            <span className="text-muted-foreground/70">
+            <span className="text-muted-foreground">
               {" "}
               · as of {asOf}
             </span>
@@ -123,7 +123,7 @@ function ChecklistRow({
   const { requirement, state, days_to_expiry: days, current, superseded } = item;
   const token =
     DOCUMENT_STATE_TOKENS[state as DocumentState] ??
-    "border-border bg-muted/20 text-muted-foreground";
+    "border-border bg-muted text-muted-foreground";
   const label =
     DOCUMENT_STATE_LABELS[state as DocumentState] ?? state;
   const needsAction = NEEDS_ACTION.has(state as DocumentState);
@@ -180,7 +180,7 @@ function ChecklistRow({
             <span className="text-muted-foreground">No file</span>
           )}
           {canUpload && (
-            <span className="text-muted-foreground/60">
+            <span className="text-muted-foreground">
               {current ? "Replace via Upload" : "Upload to file"}
             </span>
           )}

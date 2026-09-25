@@ -157,7 +157,7 @@ export function CurrencyCountersField({
             <div className="text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
               {f.label}
               {f.hint ? (
-                <span className="ml-1 font-normal text-muted-foreground/60">
+                <span className="ml-1 font-normal text-muted-foreground">
                   ({f.hint})
                 </span>
               ) : null}
@@ -174,7 +174,7 @@ export function CurrencyCountersField({
                 setValues((v) => ({ ...v, [f.key]: e.target.value }))
               }
               onBlur={() => commit(f.key)}
-              className="mt-1 w-full rounded-md border border-border bg-background px-2 py-1.5 text-center font-mono text-sm tabular-nums text-foreground placeholder:text-muted-foreground/50 disabled:opacity-60"
+              className="mt-1 w-full rounded-md border border-border bg-background px-2 py-1.5 text-center font-mono text-sm tabular-nums text-foreground placeholder:text-muted-foreground disabled:opacity-60"
             />
           </label>
         ))}

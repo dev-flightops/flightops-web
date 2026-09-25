@@ -101,7 +101,7 @@ function AircraftCostsSection({ rows }: { rows: AircraftCostRow[] }) {
       <div className="overflow-hidden rounded-lg border border-border bg-card">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="border-b border-border bg-muted/10 text-left text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
+            <thead className="border-b border-border bg-muted/60 text-left text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
               <tr>
                 <th scope="col" className="px-4 py-2 font-semibold">Type</th>
                 <th scope="col" className="px-4 py-2 font-semibold">Fuel GPH</th>
@@ -127,7 +127,7 @@ function AircraftCostsSection({ rows }: { rows: AircraftCostRow[] }) {
                   const pilotHourly = pilotPerHour(r);
                   const directCost = directCostPerHour(r);
                   return (
-                    <tr key={r.id} className="hover:bg-muted/5">
+                    <tr key={r.id} className="hover:bg-accent">
                       <td className="whitespace-nowrap px-4 py-3 text-xs font-semibold">
                         {r.aircraft_type}
                       </td>
@@ -319,7 +319,7 @@ function CalculatorSection({
       <div className="overflow-hidden rounded-lg border border-border bg-card">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="border-b border-border bg-muted/10 text-left text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
+            <thead className="border-b border-border bg-muted/60 text-left text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
               <tr>
                 <th scope="col" className="px-4 py-2 font-semibold">Aircraft</th>
                 {fuelPrices.map((fp) => (
@@ -330,7 +330,7 @@ function CalculatorSection({
                   >
                     {fp.icao_code}
                     <br />
-                    <span className="font-normal opacity-60">
+                    <span className="font-normal text-muted-foreground">
                       ${Number(fp.price_per_gal).toFixed(2)}
                     </span>
                   </th>
@@ -339,7 +339,7 @@ function CalculatorSection({
             </thead>
             <tbody className="divide-y divide-border">
               {aircraft.map((ac) => (
-                <tr key={ac.id} className="hover:bg-muted/5">
+                <tr key={ac.id} className="hover:bg-accent">
                   <td className="whitespace-nowrap px-4 py-3 text-xs font-semibold">
                     {ac.aircraft_type}
                   </td>

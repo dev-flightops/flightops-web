@@ -159,7 +159,7 @@ export function ReviewDispatchReleaseStep({ flightId, flight }: Props) {
             </p>
             <a
               href={`/api/dispatch/${flight.id}/release.pdf`}
-              className="inline-flex items-center gap-1 rounded-md border border-primary/40 bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary hover:bg-primary/20"
+              className="inline-flex items-center gap-1 rounded-md border border-primary/40 bg-background px-3 py-1.5 text-xs font-semibold text-primary hover:bg-primary/5"
               target="_blank"
               rel="noopener"
             >
@@ -269,7 +269,7 @@ function AwaitingReleasePanel({ flight }: { flight: FlightDetail }) {
       </div>
       <Link
         href="/flight-crew"
-        className="inline-flex items-center gap-1 rounded-md border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground/80 hover:bg-muted/10"
+        className="inline-flex items-center gap-1 rounded-md border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground/80 hover:bg-accent"
       >
         ← Back to Flight Crew
       </Link>

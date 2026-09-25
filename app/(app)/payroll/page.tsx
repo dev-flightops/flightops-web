@@ -114,7 +114,7 @@ export default async function PayrollEventsPage({
         <div className="flex items-center gap-2">
           <Link
             href="/payroll/periods"
-            className="rounded-md border border-border bg-card px-3 py-2 text-xs font-semibold text-foreground hover:bg-muted/30"
+            className="rounded-md border border-border bg-card px-3 py-2 text-xs font-semibold text-foreground hover:bg-accent"
           >
             Pay Periods
           </Link>
@@ -163,7 +163,7 @@ export default async function PayrollEventsPage({
         <div className="overflow-hidden rounded-lg border border-border bg-card">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="border-b border-border bg-muted/10 text-left text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
+              <thead className="border-b border-border bg-muted/60 text-left text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
                 <tr>
                   <th scope="col" className="px-4 py-2.5 font-semibold">Date</th>
                   <th scope="col" className="px-4 py-2.5 font-semibold">Employee</th>
@@ -177,7 +177,7 @@ export default async function PayrollEventsPage({
               </thead>
               <tbody className="divide-y divide-border">
                 {events.map((e) => (
-                  <tr key={e.id} className="hover:bg-muted/5">
+                  <tr key={e.id} className="hover:bg-accent">
                     <td className="whitespace-nowrap px-4 py-3 text-xs text-muted-foreground">
                       {formatEventDate(e.event_date)}
                     </td>
@@ -218,7 +218,7 @@ export default async function PayrollEventsPage({
 function PayEventStatusBadge({ status }: { status: PayEventStatus }) {
   const map: Record<PayEventStatus, [string, string]> = {
     pending: [
-      "border-border bg-muted/20 text-muted-foreground",
+      "border-border bg-muted text-muted-foreground",
       "Pending",
     ],
     approved: [

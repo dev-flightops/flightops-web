@@ -3,6 +3,7 @@
 import { useActionState, useEffect, useMemo, useState } from "react";
 
 import { Spinner } from "@/components/ui/spinner";
+import { brandTones, DEFAULT_BRAND } from "@/lib/theme/brand";
 
 import {
   extractBrandingAction,
@@ -44,10 +45,17 @@ export function BrandingForm({
     }
   }, [extractState]);
 
-  const previewPrimary = useMemo(() => _validHex(primary) ?? "#0a84ff", [primary]);
+  // The preview falls back exactly as the live theme does
+  // (BrandThemeStyle): no colour → the platform default, no hover shade
+  // → the one derived from the primary. It used to fall back to the old
+  // theme's blue, previewing a colour the app no longer shows.
+  const previewPrimary = useMemo(
+    () => _validHex(primary) ?? DEFAULT_BRAND,
+    [primary],
+  );
   const previewDark = useMemo(
-    () => _validHex(primaryDark) ?? _validHex(primary) ?? "#0070e0",
-    [primaryDark, primary],
+    () => _validHex(primaryDark) ?? _channelsToHex(brandTones(previewPrimary).darkRgb),
+    [primaryDark, previewPrimary],
   );
 
   const fieldError = (k: string) =>
@@ -77,7 +85,7 @@ export function BrandingForm({
           <button
             type="submit"
             disabled={extractPending}
-            className="inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-3 py-2 text-xs font-semibold text-foreground hover:bg-muted/40 disabled:opacity-60"
+            className="inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-3 py-2 text-xs font-semibold text-foreground hover:bg-accent disabled:opacity-60"
           >
             {extractPending && <Spinner size="xs" />}
             {extractPending ? "Extracting…" : "Suggest colors"}
@@ -240,7 +248,7 @@ function ColorField({
           {error}
         </p>
       ) : (
-        <p className="mt-1 text-[0.65rem] text-muted-foreground/80">{hint}</p>
+        <p className="mt-1 text-[0.65rem] text-muted-foreground">{hint}</p>
       )}
     </div>
   );
@@ -248,4 +256,16 @@ function ColorField({
 
 function _validHex(v: string): string | null {
   return /^#[0-9A-Fa-f]{6}([0-9A-Fa-f]{2})?$/.test(v.trim()) ? v.trim() : null;
+}
+
+/** "143 30 34" → "#8f1e22". The preview appends an alpha byte to its
+ *  colours, so it needs hex rather than rgb(). */
+function _channelsToHex(channels: string): string {
+  return (
+    "#" +
+    channels
+      .split(" ")
+      .map((c) => Number(c).toString(16).padStart(2, "0"))
+      .join("")
+  );
 }

@@ -70,7 +70,7 @@ export default async function SettingsCurrencyPage() {
         <div className="flex flex-wrap gap-2">
           <Link
             href="/compliance/crew-currency"
-            className="rounded-md border border-border bg-card px-3 py-2 text-xs font-semibold text-foreground hover:bg-muted/30"
+            className="rounded-md border border-border bg-card px-3 py-2 text-xs font-semibold text-foreground hover:bg-accent"
           >
             ← Fleet Board
           </Link>
@@ -136,7 +136,7 @@ function ItemsList({
         <div className="overflow-hidden rounded-lg border border-border bg-card">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="border-b border-border bg-muted/10 text-left text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
+              <thead className="border-b border-border bg-muted/60 text-left text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
                 <tr>
                   <th scope="col" className="px-4 py-2.5 font-semibold">Code</th>
                   <th scope="col" className="px-4 py-2.5 font-semibold">Name</th>
@@ -148,7 +148,7 @@ function ItemsList({
               </thead>
               <tbody className="divide-y divide-border">
                 {items.map((i) => (
-                  <tr key={i.id} className="hover:bg-muted/5">
+                  <tr key={i.id} className="hover:bg-accent">
                     <td className="whitespace-nowrap px-4 py-3 font-mono text-xs">
                       {i.code}
                     </td>
@@ -171,7 +171,7 @@ function ItemsList({
                           "rounded border px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider " +
                           (i.is_active
                             ? "border-status-green/40 bg-status-green/10 text-status-green"
-                            : "border-border bg-muted/30 text-muted-foreground")
+                            : "border-border bg-muted text-muted-foreground")
                         }
                       >
                         {i.is_active ? "Active" : "Inactive"}
@@ -200,7 +200,7 @@ function FlagPills({ item }: { item: CurrencyItemRef }) {
       {pills.map((p) => (
         <span
           key={p}
-          className="rounded border border-border bg-muted/20 px-1.5 py-0.5 text-[0.6rem] font-semibold uppercase tracking-wider text-muted-foreground"
+          className="rounded border border-border bg-muted px-1.5 py-0.5 text-[0.6rem] font-semibold uppercase tracking-wider text-muted-foreground"
         >
           {p}
         </span>

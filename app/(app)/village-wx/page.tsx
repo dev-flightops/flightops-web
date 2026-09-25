@@ -108,7 +108,7 @@ export default async function VillageWxPage({
           <p className="text-sm text-muted-foreground">
             No village airports configured. Add one to get started.
           </p>
-          <p className="mt-2 text-xs text-muted-foreground/70">
+          <p className="mt-2 text-xs text-muted-foreground">
             (Village airports are the strips AWC doesn&apos;t publish METAR
             for — Bethel, etc.)
           </p>
@@ -177,7 +177,7 @@ function ReportCard({
             {r ? (
               <Conditions report={r} view={view} />
             ) : (
-              <p className="mt-1 text-[0.75rem] text-muted-foreground/80">
+              <p className="mt-1 text-[0.75rem] text-muted-foreground">
                 No report yet — file the first observation.
               </p>
             )}
@@ -353,7 +353,7 @@ function categoryAccent(category: FlightCategory | null) {
         leftBorder: "border-l-border",
         border: "border-border",
         dot: "bg-muted-foreground/50",
-        badge: "border-border bg-muted/30 text-muted-foreground",
+        badge: "border-border bg-muted text-muted-foreground",
       };
   }
 }

@@ -156,7 +156,7 @@ export default async function DirectorOpsDashboardPage() {
             </h2>
             <Link
               href="/dispatch/"
-              className="text-[0.7rem] text-muted-foreground/70 hover:text-primary"
+              className="text-[0.7rem] text-muted-foreground hover:text-primary"
             >
               Open dispatch →
             </Link>
@@ -174,7 +174,7 @@ export default async function DirectorOpsDashboardPage() {
             </h2>
             <Link
               href="/dispatch/"
-              className="rounded-md bg-primary px-3 py-1 text-[0.7rem] font-semibold text-primary-foreground hover:bg-primary/90"
+              className="rounded-md bg-primary px-3 py-1 text-[0.7rem] font-semibold text-primary-foreground hover:bg-brand-dark"
             >
               + New Packet
             </Link>
@@ -199,7 +199,7 @@ export default async function DirectorOpsDashboardPage() {
             <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
               8-Week Completion Trend
             </h2>
-            <span className="text-[0.65rem] text-muted-foreground/70">
+            <span className="text-[0.65rem] text-muted-foreground">
               not computed
             </span>
           </div>
@@ -251,7 +251,7 @@ function FlightsTable({
 }) {
   if (flights.length === 0) {
     return (
-      <p className="py-6 text-center text-xs text-muted-foreground/70">
+      <p className="py-6 text-center text-xs text-muted-foreground">
         {emptyHint}
       </p>
     );
@@ -332,13 +332,13 @@ function FlightStatusBadge({ flight }: { flight: FlightListItem }) {
   }
   if (flight.status === "completed") {
     return (
-      <span className={`${cls} bg-muted/40 text-muted-foreground`}>
+      <span className={`${cls} bg-muted text-muted-foreground`}>
         Completed
       </span>
     );
   }
   return (
-    <span className={`${cls} bg-muted/30 text-muted-foreground`}>
+    <span className={`${cls} bg-muted text-muted-foreground`}>
       Planned
     </span>
   );
@@ -363,7 +363,7 @@ function CompletionTrendNotMeasured() {
       <p className="text-xs font-semibold text-muted-foreground">
         Not computed yet
       </p>
-      <p className="max-w-xs text-[0.68rem] leading-relaxed text-muted-foreground/80">
+      <p className="max-w-xs text-[0.68rem] leading-relaxed text-muted-foreground">
         Weekly completion is not aggregated anywhere yet. It is
         derivable — flights flown against flights scheduled, the same
         arithmetic PS Form 5500 does per route — and this panel will
@@ -404,7 +404,7 @@ function ListPanel({
         </span>
       </div>
       {rows.length === 0 ? (
-        <p className="py-4 text-center text-xs text-muted-foreground/70">
+        <p className="py-4 text-center text-xs text-muted-foreground">
           {emptyHint ?? "—"}
         </p>
       ) : (
@@ -467,11 +467,11 @@ function collectStations(flights: FlightListItem[]): ListRow[] {
       right: (
         <span className="font-mono">
           <span className="font-semibold text-primary">{c.dep}</span>
-          <span className="font-normal text-muted-foreground/70">
+          <span className="font-normal text-muted-foreground">
             {" dep · "}
           </span>
           <span className="font-semibold text-status-green">{c.arr}</span>
-          <span className="font-normal text-muted-foreground/70">
+          <span className="font-normal text-muted-foreground">
             {" arr"}
           </span>
         </span>

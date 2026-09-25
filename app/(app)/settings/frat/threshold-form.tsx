@@ -340,7 +340,7 @@ export function ThresholdForm({
           />
         </div>
 
-        <p className="mt-2 text-[0.65rem] text-muted-foreground/80">
+        <p className="mt-2 text-[0.65rem] text-muted-foreground">
           IFR flights below approach minimums are elevated risk too, and
           are not scored here: approach minima are per airport and per
           procedure from your ops specs, and the system holds none. A
@@ -385,7 +385,7 @@ export function ThresholdForm({
             )}
           </p>
         </div>
-        <p className="mt-2 text-[0.65rem] text-muted-foreground/80">
+        <p className="mt-2 text-[0.65rem] text-muted-foreground">
           An aircraft swap, a crew change and new NOTAMs are not
           checked &mdash; the system cannot score them yet, so the pilot
           is told what was compared rather than told the block is safe.

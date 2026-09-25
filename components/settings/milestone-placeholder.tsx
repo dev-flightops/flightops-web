@@ -52,7 +52,7 @@ export function SettingsMilestonePlaceholder({
         <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>
       </header>
 
-      <section className="rounded-xl border border-dashed border-border bg-muted/20 p-6">
+      <section className="rounded-xl border border-dashed border-border bg-muted/60 p-6">
         <div className="flex items-start gap-4">
           <CalendarClock className="h-5 w-5 flex-shrink-0 text-muted-foreground" />
           <div className="space-y-3">

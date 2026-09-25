@@ -155,7 +155,7 @@ function NumberField({
           {...inputProps}
         />
         {suffix && (
-          <span className="flex items-center bg-muted/30 px-3 text-xs text-muted-foreground">
+          <span className="flex items-center bg-muted/60 px-3 text-xs text-muted-foreground">
             {suffix}
           </span>
         )}

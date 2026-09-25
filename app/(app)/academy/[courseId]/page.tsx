@@ -62,7 +62,7 @@ export default async function CourseDetailPage({
             {COURSE_CATEGORY_LABELS[course.category]}
           </span>
           {!course.is_active ? (
-            <span className="rounded border border-border bg-muted/30 px-1.5 py-0.5 text-[0.6rem] font-semibold uppercase tracking-wider text-muted-foreground">
+            <span className="rounded border border-border bg-muted px-1.5 py-0.5 text-[0.6rem] font-semibold uppercase tracking-wider text-muted-foreground">
               Inactive
             </span>
           ) : null}
@@ -163,7 +163,7 @@ function EnrolCtaSection({
         </div>
         <Link
           href={`/academy/enrollments/${enrollment.id}`}
-          className="rounded-md border border-status-green bg-status-green/15 px-3 py-1.5 text-xs font-semibold text-status-green hover:bg-status-green/20"
+          className="rounded-md border border-status-green bg-status-green/15 px-3 py-1.5 text-xs font-semibold text-status-green hover:bg-status-green/15"
         >
           View progress
         </Link>

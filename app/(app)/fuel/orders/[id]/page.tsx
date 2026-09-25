@@ -111,7 +111,7 @@ function Header({ order }: { order: FuelOrderResponse }) {
           {order.requested_quantity_gallons.toLocaleString()} gal
           {order.requested_left_gallons !== null &&
             order.requested_right_gallons !== null && (
-              <span className="ml-1 text-muted-foreground/70">
+              <span className="ml-1 text-muted-foreground">
                 (L {order.requested_left_gallons} / R {order.requested_right_gallons})
               </span>
             )}

@@ -60,7 +60,7 @@ export function AddRoomDrawer({ unitId }: { unitId: string }) {
                 type="button"
                 onClick={() => setOpen(false)}
                 aria-label="Close"
-                className="rounded p-1 text-muted-foreground hover:bg-muted/20"
+                className="rounded p-1 text-muted-foreground hover:bg-accent"
               >
                 ✕
               </button>
@@ -169,7 +169,7 @@ export function AddRoomDrawer({ unitId }: { unitId: string }) {
                 <button
                   type="button"
                   onClick={() => setOpen(false)}
-                  className="rounded-md border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground/80 hover:bg-muted/20"
+                  className="rounded-md border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground/80 hover:bg-accent"
                 >
                   Cancel
                 </button>

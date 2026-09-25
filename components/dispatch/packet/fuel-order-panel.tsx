@@ -216,7 +216,7 @@ function Field({
           {label}
         </label>
         {hint && (
-          <span className="text-[0.6rem] text-muted-foreground/70">{hint}</span>
+          <span className="text-[0.6rem] text-muted-foreground">{hint}</span>
         )}
       </div>
       {children}

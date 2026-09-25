@@ -44,7 +44,7 @@ export function CpReviewDecideButtons({
             setError(null);
             setOpen("approve");
           }}
-          className="rounded-md border border-status-green/40 bg-status-green/10 px-2.5 py-1 text-[0.65rem] font-semibold text-status-green hover:bg-status-green/20"
+          className="rounded-md border border-status-green/40 bg-status-green/10 px-2.5 py-1 text-[0.65rem] font-semibold text-status-green hover:bg-status-green/15"
         >
           Approve
         </button>
@@ -54,7 +54,7 @@ export function CpReviewDecideButtons({
             setError(null);
             setOpen("decline");
           }}
-          className="rounded-md border border-border bg-background px-2.5 py-1 text-[0.65rem] font-semibold text-foreground hover:bg-muted"
+          className="rounded-md border border-border bg-background px-2.5 py-1 text-[0.65rem] font-semibold text-foreground hover:bg-accent"
         >
           Decline
         </button>
@@ -74,8 +74,8 @@ export function CpReviewDecideButtons({
       : "The log is soft-deleted. The audit row stays for review."
     : "The pilot can open a fresh request if circumstances change.";
   const confirmCls = isApprove
-    ? "bg-status-green text-white hover:brightness-110"
-    : "bg-status-yellow text-black hover:brightness-110";
+    ? "bg-status-green text-white hover:brightness-95"
+    : "bg-status-yellow text-white hover:brightness-95";
 
   return (
     <div className="rounded-md border border-border bg-card p-2 text-[0.65rem] shadow-sm">
@@ -128,7 +128,7 @@ export function CpReviewDecideButtons({
             setNote("");
             setError(null);
           }}
-          className="rounded-md border border-border bg-background px-2.5 py-1 font-semibold text-foreground hover:bg-muted disabled:opacity-50"
+          className="rounded-md border border-border bg-background px-2.5 py-1 font-semibold text-foreground hover:bg-accent disabled:opacity-50"
         >
           Cancel
         </button>

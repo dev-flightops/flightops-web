@@ -138,7 +138,7 @@ function Section({ title, entries }: { title: string; entries: Entry[] }) {
                     Not built
                   </span>
                 </p>
-                <p className="mt-0.5 text-xs text-muted-foreground/70">
+                <p className="mt-0.5 text-xs text-muted-foreground">
                   {entry.detail}
                 </p>
               </div>

@@ -55,7 +55,7 @@ export default async function CustomerDetailPage({
             </span>
           ) : null}
           {customer.archived_at ? (
-            <span className="rounded border border-border bg-muted/30 px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider text-muted-foreground">
+            <span className="rounded border border-border bg-muted px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider text-muted-foreground">
               Archived
             </span>
           ) : null}
@@ -98,7 +98,7 @@ export default async function CustomerDetailPage({
           {!customer.archived_at ? (
             <Link
               href={`/reservations/bookings/new?customer=${customer.id}`}
-              className="rounded-md border border-primary bg-primary/15 px-2 py-1 text-[0.6875rem] font-semibold text-primary hover:bg-primary/20"
+              className="rounded-md border border-primary/40 bg-background px-2 py-1 text-[0.6875rem] font-semibold text-primary hover:bg-primary/5"
             >
               + New booking for this customer
             </Link>
@@ -114,7 +114,7 @@ export default async function CustomerDetailPage({
               <li key={b.id}>
                 <Link
                   href={`/reservations/bookings/${b.id}`}
-                  className="flex flex-wrap items-baseline justify-between gap-3 rounded-md border border-border bg-background/40 px-3 py-2 text-sm hover:bg-muted/10"
+                  className="flex flex-wrap items-baseline justify-between gap-3 rounded-md border border-border bg-background/40 px-3 py-2 text-sm hover:bg-accent"
                 >
                   <div className="min-w-0 flex-1">
                     <div className="mb-0.5 flex flex-wrap items-baseline gap-2">
@@ -128,7 +128,7 @@ export default async function CustomerDetailPage({
                       </span>
                     </div>
                   </div>
-                  <span className="whitespace-nowrap rounded border border-border bg-muted/20 px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider text-muted-foreground">
+                  <span className="whitespace-nowrap rounded border border-border bg-muted px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider text-muted-foreground">
                     {BOOKING_STATUS_LABELS[b.status]}
                   </span>
                 </Link>

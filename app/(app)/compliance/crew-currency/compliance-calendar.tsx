@@ -183,7 +183,7 @@ export function ComplianceCalendar({
                 )}
               </div>
               {entries.length === 0 ? (
-                <div className="text-[0.65rem] text-muted-foreground/70">
+                <div className="text-[0.65rem] text-muted-foreground">
                   Nothing scheduled
                 </div>
               ) : (
@@ -288,7 +288,7 @@ function FocusedMonthView({
         </div>
         <Link
           href={backHref}
-          className="rounded-md border border-border bg-card px-3 py-1.5 text-[0.7rem] font-semibold text-foreground hover:bg-muted/40"
+          className="rounded-md border border-border bg-card px-3 py-1.5 text-[0.7rem] font-semibold text-foreground hover:bg-accent"
         >
           ← Back to 12-month view
         </Link>

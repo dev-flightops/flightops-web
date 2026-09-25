@@ -218,7 +218,7 @@ function StatusChip({ status }: { status: ProviderStatus }) {
       "border-status-green/40 bg-status-green/10 text-status-green",
     "configured-inactive":
       "border-status-yellow/40 bg-status-yellow/10 text-status-yellow",
-    "not-configured": "border-border bg-muted/30 text-muted-foreground",
+    "not-configured": "border-border bg-muted text-muted-foreground",
   };
   const label: Record<ProviderStatus, string> = {
     connected: "Connected",

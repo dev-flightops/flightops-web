@@ -44,7 +44,7 @@ export function TrendsTab({
         <div className="rounded-md border border-dashed border-border bg-card/40 px-4 py-10 text-center">
           <p className="text-xs text-muted-foreground">No legs to monitor.</p>
           {!readOnly && (
-            <p className="mt-2 text-[0.7rem] text-muted-foreground/80">
+            <p className="mt-2 text-[0.7rem] text-muted-foreground">
               Add a leg on{" "}
               <Link
                 href={`/flight-crew/elog/${logId}?tab=legs`}
@@ -85,7 +85,7 @@ export function TrendsTab({
         <h2 className="text-[0.7rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
           Trends
         </h2>
-        <p className="mt-1 text-[0.7rem] text-muted-foreground/80">
+        <p className="mt-1 text-[0.7rem] text-muted-foreground">
           {familyDisplayName(family, airframeType)} ·{" "}
           {initialLegs.length} leg
           {initialLegs.length === 1 ? "" : "s"}

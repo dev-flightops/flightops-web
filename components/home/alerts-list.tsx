@@ -127,7 +127,7 @@ function AlertGroup({
         </span>
         <span
           aria-hidden
-          className="shrink-0 text-muted-foreground/60 transition-transform duration-150 group-open/disc:rotate-90"
+          className="shrink-0 text-muted-foreground transition-transform duration-150 group-open/disc:rotate-90"
         >
           ›
         </span>
@@ -152,7 +152,7 @@ function AlertGroup({
               </span>
               <span
                 aria-hidden
-                className="shrink-0 text-muted-foreground/50 transition-colors group-hover:text-muted-foreground"
+                className="shrink-0 text-muted-foreground transition-colors group-hover:text-muted-foreground"
               >
                 →
               </span>

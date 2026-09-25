@@ -66,7 +66,7 @@ export function HomeModuleCard({ module }: { module: HomeModule }) {
       {/* Right-side affordance: SOON chip for unbuilt, chevron for live */}
       {isLive ? (
         <span
-          className="flex-shrink-0 text-muted-foreground/50 transition-all group-hover:translate-x-0.5 group-hover:text-primary"
+          className="flex-shrink-0 text-muted-foreground transition-all group-hover:translate-x-0.5 group-hover:text-primary"
           aria-hidden
         >
           <ChevronRight />

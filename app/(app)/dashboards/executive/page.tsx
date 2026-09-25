@@ -167,7 +167,7 @@ export default async function ExecutiveDashboardPage() {
             <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
               Active Alerts
             </h2>
-            <span className="text-[0.65rem] text-muted-foreground/70">
+            <span className="text-[0.65rem] text-muted-foreground">
               {snapshot.alerts.length} live · 7 more land with M3 services
             </span>
           </div>
@@ -183,7 +183,7 @@ export default async function ExecutiveDashboardPage() {
               Daily Operations Score —{" "}
               <span className="text-foreground">{opsScore.toFixed(1)}/100</span>
             </h2>
-            <span className="text-[0.65rem] text-muted-foreground/70">
+            <span className="text-[0.65rem] text-muted-foreground">
               details →
             </span>
           </div>

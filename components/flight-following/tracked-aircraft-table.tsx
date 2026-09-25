@@ -23,7 +23,7 @@ export function TrackedAircraftTable({
 }) {
   if (rows.length === 0) {
     return (
-      <div className="flex flex-1 items-center justify-center px-3 text-center text-[0.7rem] text-muted-foreground/70">
+      <div className="flex flex-1 items-center justify-center px-3 text-center text-[0.7rem] text-muted-foreground">
         No flights match the current filter.
       </div>
     );
@@ -71,7 +71,7 @@ function TrackedAircraftRow({ row }: { row: TrackedAircraft }) {
       className={
         flight.is_overdue
           ? "border-t border-border bg-status-red/[0.06]"
-          : "border-t border-border hover:bg-muted/20"
+          : "border-t border-border hover:bg-accent"
       }
     >
       <td className="px-2.5 py-2 align-top">

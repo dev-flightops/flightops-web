@@ -201,7 +201,7 @@ export default async function SystemHealthDashboardPage() {
                 className="flex flex-col items-center gap-2 rounded-lg border border-border bg-background/40 p-4 text-center transition-colors hover:border-primary/40 hover:bg-primary/[0.04]"
               >
                 <Icon
-                  className="h-6 w-6 text-primary/80"
+                  className="h-6 w-6 text-primary"
                   aria-hidden
                   strokeWidth={1.5}
                 />
@@ -241,7 +241,7 @@ export default async function SystemHealthDashboardPage() {
       {/* Says what is absent, without naming a milestone. "Ships with
           M4" was written during M2; read during M4 it promises the
           reader something the page they are looking at does not have. */}
-      <p className="mt-4 text-center text-[0.65rem] text-muted-foreground/60">
+      <p className="mt-4 text-center text-[0.65rem] text-muted-foreground">
         Deeper observability — request latency p50/p95/p99, deploy history, job
         queue depth, and per-route error rates — is not built.
       </p>
@@ -287,7 +287,7 @@ function StatusCard({
         OK
       </span>
     ) : state === "info" ? (
-      <span className="rounded bg-muted/40 px-1.5 py-0.5 text-[0.6rem] font-bold uppercase tracking-wider text-muted-foreground">
+      <span className="rounded bg-muted px-1.5 py-0.5 text-[0.6rem] font-bold uppercase tracking-wider text-muted-foreground">
         INFO
       </span>
     ) : (

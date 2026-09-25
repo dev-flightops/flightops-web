@@ -236,7 +236,7 @@ export function EmployeeRecordForm({
             "rounded border px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider " +
             (employee.is_active
               ? "border-status-green/40 bg-status-green/10 text-status-green"
-              : "border-border bg-muted/20 text-muted-foreground")
+              : "border-border bg-muted text-muted-foreground")
           }
         >
           {employee.is_active ? "Active" : "Inactive"}

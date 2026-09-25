@@ -51,7 +51,7 @@ export function CancelStaleButton({ flightIds }: { flightIds: string[] }) {
       type="button"
       onClick={onClick}
       disabled={pending}
-      className="inline-flex items-center gap-1.5 rounded-md bg-status-red px-3 py-1.5 text-xs font-semibold text-white hover:brightness-110 disabled:opacity-50"
+      className="inline-flex items-center gap-1.5 rounded-md bg-status-red px-3 py-1.5 text-xs font-semibold text-white hover:brightness-95 disabled:opacity-50"
     >
       {pending && <Spinner size="xs" />}
       {pending ? "Cancelling…" : `Cancel ${n} Stale Flight${n === 1 ? "" : "s"}`}

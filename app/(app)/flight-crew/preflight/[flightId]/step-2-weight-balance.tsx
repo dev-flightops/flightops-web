@@ -164,7 +164,7 @@ export function WeightAndBalanceStep({ flightId, flight, openReturn }: Props) {
                   ) : (
                     "."
                   )}{" "}
-                  <span className="text-muted-foreground/70">
+                  <span className="text-muted-foreground">
                     Actual weights come from the manifest or your
                     loading schedule — this is what your payload limit
                     leaves room for, not a verdict.
@@ -254,7 +254,7 @@ export function WeightAndBalanceStep({ flightId, flight, openReturn }: Props) {
                 type="button"
                 disabled={!canReturn}
                 onClick={handleReturn}
-                className="inline-flex w-full items-center justify-center rounded-md bg-status-red px-4 py-2.5 text-sm font-semibold text-white transition-opacity hover:brightness-110 disabled:opacity-50"
+                className="inline-flex w-full items-center justify-center rounded-md bg-status-red px-4 py-2.5 text-sm font-semibold text-white transition-opacity hover:brightness-95 disabled:opacity-50"
               >
                 {pending ? "Sending…" : "Send back to dispatch"}
               </button>

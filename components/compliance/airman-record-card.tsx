@@ -41,7 +41,7 @@ export function AirmanRecordCard({
         className="mt-6 mb-3 text-xs font-bold uppercase tracking-[0.08em] text-muted-foreground"
       >
         Airman record
-        <span className="ml-2 font-normal normal-case tracking-normal text-muted-foreground/70">
+        <span className="ml-2 font-normal normal-case tracking-normal text-muted-foreground">
           14 CFR 135.63(a)(4)
         </span>
       </h2>
@@ -82,7 +82,7 @@ export function AirmanRecordCard({
                   <span
                     key={r}
                     title={RATING_LABELS[r] ?? r}
-                    className="rounded border border-border bg-muted/20 px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider"
+                    className="rounded border border-border bg-muted/60 px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider"
                   >
                     {ratingChipText(r)}
                   </span>
@@ -198,7 +198,7 @@ function Panel({
           {title}
         </h3>
         {subtitle ? (
-          <span className="text-[0.65rem] text-muted-foreground/70">
+          <span className="text-[0.65rem] text-muted-foreground">
             {subtitle}
           </span>
         ) : null}
@@ -256,7 +256,7 @@ function ratingChipText(code: string): string {
 /** Said in words rather than punctuation — see the note at the top. */
 function NotRecorded() {
   return (
-    <span className="font-normal italic text-muted-foreground/60">
+    <span className="font-normal italic text-muted-foreground">
       Not recorded
     </span>
   );

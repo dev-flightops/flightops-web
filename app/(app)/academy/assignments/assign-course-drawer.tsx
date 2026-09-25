@@ -133,7 +133,7 @@ export function AssignCourseDrawer({ courses, users }: Props) {
                 type="button"
                 onClick={handleClose}
                 aria-label="Close"
-                className="rounded p-1 text-muted-foreground hover:bg-muted/20"
+                className="rounded p-1 text-muted-foreground hover:bg-accent"
               >
                 ✕
               </button>
@@ -219,7 +219,7 @@ export function AssignCourseDrawer({ courses, users }: Props) {
                         const checked = selectedIds.has(u.id);
                         return (
                           <li key={u.id}>
-                            <label className="flex cursor-pointer items-center gap-3 px-3 py-2 text-xs hover:bg-muted/10">
+                            <label className="flex cursor-pointer items-center gap-3 px-3 py-2 text-xs hover:bg-accent">
                               <input
                                 type="checkbox"
                                 checked={checked}
@@ -299,7 +299,7 @@ export function AssignCourseDrawer({ courses, users }: Props) {
               <button
                 type="button"
                 onClick={handleClose}
-                className="rounded-md border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground/80 hover:bg-muted/20"
+                className="rounded-md border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground/80 hover:bg-accent"
               >
                 {result?.assigned ? "Close" : "Cancel"}
               </button>

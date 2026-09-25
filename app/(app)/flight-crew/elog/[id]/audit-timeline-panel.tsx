@@ -37,7 +37,7 @@ export async function AuditTimelinePanel({ logId }: { logId: string }) {
         <span className="select-none">
           History
           {!loadError && events.length > 0 && (
-            <span className="ml-2 rounded-full bg-muted/40 px-1.5 py-0.5 font-mono text-foreground">
+            <span className="ml-2 rounded-full bg-muted/60 px-1.5 py-0.5 font-mono text-foreground">
               {events.length}
             </span>
           )}

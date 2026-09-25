@@ -117,7 +117,7 @@ export default async function SchedulePage({
           </Link>
           <Link
             href="/flight-following"
-            className="rounded-md border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-muted/40"
+            className="rounded-md border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-accent"
             title="Switch to live tracking view"
           >
             Live →
@@ -254,7 +254,7 @@ function FlightRow({ flight }: { flight: FlightListItem }) {
           href={`/schedule/${flight.id}/manifest`}
           target="_blank"
           rel="noopener noreferrer"
-          className="rounded-md border border-primary/40 bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary hover:bg-primary/20"
+          className="rounded-md border border-primary/40 bg-background px-2.5 py-1 text-xs font-semibold text-primary hover:bg-primary/5"
         >
           🖨 Print
         </Link>

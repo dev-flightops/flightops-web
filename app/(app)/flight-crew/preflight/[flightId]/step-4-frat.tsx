@@ -635,7 +635,7 @@ function FratQuestionnaire({
               type="button"
               disabled={pending}
               onClick={handleAcceptBlock}
-              className="mt-2.5 rounded-md bg-status-green px-3 py-1.5 text-xs font-semibold text-white hover:brightness-110 disabled:opacity-50"
+              className="mt-2.5 rounded-md bg-status-green px-3 py-1.5 text-xs font-semibold text-white hover:brightness-95 disabled:opacity-50"
             >
               {pending
                 ? "Filing…"
@@ -905,7 +905,7 @@ function FactorRow({
                   ) : null}
                 </span>
                 {demonstratedCrosswindKt != null ? (
-                  <span className="text-muted-foreground/70">
+                  <span className="text-muted-foreground">
                     {" "}
                     &middot; AFM demonstrated{" "}
                     <span className="tabular-nums">

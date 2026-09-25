@@ -91,7 +91,7 @@ export function KeyStatus({ row }: { row: ApiKeyRow }) {
   }
   if (row.expires_at && new Date(row.expires_at).getTime() <= Date.now()) {
     return (
-      <span className={`${base} bg-muted/40 text-muted-foreground`}>Expired</span>
+      <span className={`${base} bg-muted text-muted-foreground`}>Expired</span>
     );
   }
   return (

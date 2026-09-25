@@ -72,7 +72,7 @@ export default async function ChiefPilotDashboardPage() {
               nothing behind it. /ops/duty/current returns the caller's
               own duty status; there is no tenant-wide endpoint for who
               is on duty, so this panel cannot know the number is zero. */}
-          <p className="py-4 text-center text-xs text-muted-foreground/70">
+          <p className="py-4 text-center text-xs text-muted-foreground">
             Tenant-wide duty periods with FAR 117 rest progress are not
             built — /ops/duty/current reports only your own status.
           </p>
@@ -112,7 +112,7 @@ export default async function ChiefPilotDashboardPage() {
               <tr>
                 <td
                   colSpan={6}
-                  className="py-6 text-center text-muted-foreground/70"
+                  className="py-6 text-center text-muted-foreground"
                 >
                   Not wired here yet — per-pilot medical and currency
                   status is on Fleet Compliance.
@@ -131,13 +131,13 @@ export default async function ChiefPilotDashboardPage() {
           title="Pilot Risk Profiles (90d)"
           milestone="M3"
         >
-          <p className="py-4 text-center text-xs text-muted-foreground/70">
+          <p className="py-4 text-center text-xs text-muted-foreground">
             No pilot data in the last 90 days.
           </p>
         </Panel>
 
         <Panel title="HIGH / EXTREME Review (90d)" milestone="M3">
-          <p className="py-4 text-center text-xs text-muted-foreground/70">
+          <p className="py-4 text-center text-xs text-muted-foreground">
             No HIGH/EXTREME dispatches in the last 90 days.
           </p>
         </Panel>
@@ -146,7 +146,7 @@ export default async function ChiefPilotDashboardPage() {
       {/* Row 5 — 2-col: Overrides + Recognition */}
       <div className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2">
         <Panel title="Recent Overrides" milestone="M3">
-          <p className="py-4 text-center text-xs text-muted-foreground/70">
+          <p className="py-4 text-center text-xs text-muted-foreground">
             No overrides in the last 90 days.
           </p>
         </Panel>
@@ -155,7 +155,7 @@ export default async function ChiefPilotDashboardPage() {
           title="Pilot Recognition"
           milestone="M3"
         >
-          <p className="py-4 text-center text-xs text-muted-foreground/70">
+          <p className="py-4 text-center text-xs text-muted-foreground">
             No achievements yet.
           </p>
         </Panel>
@@ -191,7 +191,7 @@ function Panel({
           {headerLink && (
             <Link
               href={headerLink.href}
-              className="text-[0.7rem] text-muted-foreground/70 hover:text-primary"
+              className="text-[0.7rem] text-muted-foreground hover:text-primary"
             >
               {headerLink.label}
             </Link>

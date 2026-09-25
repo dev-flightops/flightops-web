@@ -48,7 +48,7 @@ export function DisconnectProviderButton({
       <button
         type="submit"
         disabled={pending}
-        className="inline-flex items-center gap-1.5 rounded-md border border-status-red/40 bg-status-red/10 px-3 py-1.5 text-xs font-semibold text-status-red hover:bg-status-red/20 disabled:opacity-60"
+        className="inline-flex items-center gap-1.5 rounded-md border border-status-red/40 bg-status-red/10 px-3 py-1.5 text-xs font-semibold text-status-red hover:bg-status-red/15 disabled:opacity-60"
       >
         {pending && <Spinner size="xs" />}
         Disconnect

@@ -131,7 +131,7 @@ export default async function DocumentsPage({
                 categories". Zero documents cannot occupy two
                 categories. */}
             {grouped.length > 0 && (
-              <span className="text-muted-foreground/70">
+              <span className="text-muted-foreground">
                 {" "}
                 · {grouped.length} categor
                 {grouped.length === 1 ? "y" : "ies"}
@@ -147,7 +147,7 @@ export default async function DocumentsPage({
                 "inline-flex items-center gap-2 rounded-md border px-3 py-1.5 text-xs font-semibold transition " +
                 (requiredReadingPending > 0
                   ? "border-primary/40 bg-primary/10 text-primary hover:bg-primary/20"
-                  : "border-border bg-card text-muted-foreground hover:bg-muted/10")
+                  : "border-border bg-card text-muted-foreground hover:bg-accent")
               }
             >
               Required reading
@@ -210,7 +210,7 @@ function CategorySection({
           <li key={d.id}>
             <Link
               href={`/documents/${d.id}`}
-              className="flex items-baseline justify-between gap-3 px-4 py-3 text-sm hover:bg-muted/5"
+              className="flex items-baseline justify-between gap-3 px-4 py-3 text-sm hover:bg-accent"
             >
               <div className="min-w-0">
                 <div className="truncate font-semibold text-foreground">

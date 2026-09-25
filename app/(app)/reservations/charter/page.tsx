@@ -121,7 +121,7 @@ export default async function CharterPipelinePage({
               className={
                 "rounded-lg border border-border px-3 py-1.5 text-xs " +
                 (isActive
-                  ? "bg-muted/40 font-bold text-foreground"
+                  ? "bg-muted/60 font-bold text-foreground"
                   : "text-muted-foreground hover:text-foreground")
               }
             >
@@ -148,7 +148,7 @@ export default async function CharterPipelinePage({
         <div className="overflow-hidden rounded-lg border border-border bg-card">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="border-b border-border bg-muted/10 text-left text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
+              <thead className="border-b border-border bg-muted/60 text-left text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
                 <tr>
                   <th scope="col" className="px-4 py-2.5 font-semibold">Ref</th>
                   <th scope="col" className="px-4 py-2.5 font-semibold">Customer</th>
@@ -162,7 +162,7 @@ export default async function CharterPipelinePage({
               </thead>
               <tbody className="divide-y divide-border">
                 {rows.map((c) => (
-                  <tr key={c.id} className="hover:bg-muted/5">
+                  <tr key={c.id} className="hover:bg-accent">
                     <td className="whitespace-nowrap px-4 py-3 font-mono text-xs font-semibold text-foreground">
                       {charterRef(c.id)}
                     </td>
@@ -204,7 +204,7 @@ export default async function CharterPipelinePage({
 function CharterStatusBadge({ status }: { status: CharterStatus }) {
   const map: Record<CharterStatus, [string, string]> = {
     request: [
-      "border-border bg-muted/20 text-muted-foreground",
+      "border-border bg-muted text-muted-foreground",
       "Request",
     ],
     quoted: [

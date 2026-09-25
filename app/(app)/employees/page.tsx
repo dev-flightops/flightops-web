@@ -125,7 +125,7 @@ function EmployeesTable({
     <div className="overflow-hidden rounded-lg border border-border bg-card">
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
-          <thead className="border-b border-border bg-muted/10 text-left text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
+          <thead className="border-b border-border bg-muted/60 text-left text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
             <tr>
               <th scope="col" className="px-4 py-2.5 font-semibold">
                 Emp #
@@ -155,7 +155,7 @@ function EmployeesTable({
           </thead>
           <tbody className="divide-y divide-border">
             {users.map((u, i) => (
-              <tr key={u.id} className="hover:bg-muted/5">
+              <tr key={u.id} className="hover:bg-accent">
                 <td className="whitespace-nowrap px-4 py-3 font-mono text-[0.7rem] text-muted-foreground">
                   {u.emp_number ?? empNumber(tenantSlug, i)}
                 </td>
@@ -193,7 +193,7 @@ function EmployeesTable({
                       "rounded border px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider " +
                       (u.is_active
                         ? "border-status-green/40 bg-status-green/10 text-status-green"
-                        : "border-border bg-muted/30 text-muted-foreground")
+                        : "border-border bg-muted text-muted-foreground")
                     }
                   >
                     {u.is_active

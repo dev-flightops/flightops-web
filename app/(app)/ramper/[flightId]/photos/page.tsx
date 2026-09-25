@@ -89,7 +89,9 @@ export default async function RamperPhotosPage({
         className="mb-3 rounded-2xl border-2 border-border bg-card p-4"
         style={{
           borderLeftWidth: 5,
-          borderLeftColor: flight.status === "completed" ? "#60a5fa" : "#34d399",
+          borderLeftColor: flight.status === "completed"
+            ? "rgb(var(--status-blue))"
+            : "rgb(var(--status-green))",
         }}
       >
         <div className="flex items-start justify-between gap-2">

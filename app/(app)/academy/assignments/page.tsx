@@ -143,7 +143,7 @@ function AssignmentsTable({ enrollments }: { enrollments: Enrollment[] }) {
     <div className="overflow-hidden rounded-lg border border-border bg-card">
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
-          <thead className="border-b border-border bg-muted/10 text-left text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
+          <thead className="border-b border-border bg-muted/60 text-left text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
             <tr>
               <th className="px-3 py-2.5 font-semibold">Learner</th>
               <th className="px-3 py-2.5 font-semibold">Course</th>
@@ -156,7 +156,7 @@ function AssignmentsTable({ enrollments }: { enrollments: Enrollment[] }) {
           </thead>
           <tbody className="divide-y divide-border">
             {sorted.map((e) => (
-              <tr key={e.id} className="hover:bg-muted/5">
+              <tr key={e.id} className="hover:bg-accent">
                 <td className="whitespace-nowrap px-3 py-2.5 font-medium text-foreground">
                   {e.user.full_name || e.user.email}
                 </td>
@@ -205,7 +205,7 @@ function StatusBadge({ status }: { status: Enrollment["status"] }) {
     <span
       className={
         "rounded border px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider " +
-        (map[status] ?? "border-border bg-muted/20 text-muted-foreground")
+        (map[status] ?? "border-border bg-muted text-muted-foreground")
       }
     >
       {ENROLLMENT_STATUS_LABELS[status] ?? status}

@@ -56,7 +56,7 @@ export async function MaintenancePanel({
     const status = err instanceof ApiError ? err.status : 0;
     return (
       <SectionPanel title="Maintenance & Airworthiness">
-        <p className="text-xs italic text-muted-foreground/70">
+        <p className="text-xs italic text-muted-foreground">
           {status === 404
             ? "Aircraft not found in the maintenance service."
             : "Maintenance check unavailable — try refreshing in a moment."}
@@ -109,7 +109,7 @@ export async function MaintenancePanel({
       )}
 
       <div className="mt-3 flex items-center justify-between gap-3">
-        <p className="text-[0.65rem] text-muted-foreground/70">
+        <p className="text-[0.65rem] text-muted-foreground">
           Source: maintenance-service. Release-gating against this verdict
           ships in M2-M-8b.
         </p>

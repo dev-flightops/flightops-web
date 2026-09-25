@@ -34,7 +34,7 @@ export function UploadDocumentDrawer({
   const buttonClass =
     variant === "primary"
       ? "rounded-md bg-primary px-3 py-2 text-xs font-semibold text-white hover:bg-brand-dark"
-      : "rounded-md border border-border bg-card px-3 py-2 text-xs font-semibold text-foreground/80 hover:bg-muted/20";
+      : "rounded-md border border-border bg-card px-3 py-2 text-xs font-semibold text-foreground/80 hover:bg-accent";
   const label = variant === "primary" ? "+ Upload Document" : "Upload Document";
 
   return (
@@ -70,7 +70,7 @@ export function UploadDocumentDrawer({
                 type="button"
                 onClick={() => setOpen(false)}
                 aria-label="Close"
-                className="rounded p-1 text-muted-foreground hover:bg-muted/20"
+                className="rounded p-1 text-muted-foreground hover:bg-accent"
               >
                 ✕
               </button>
@@ -111,7 +111,7 @@ export function UploadDocumentDrawer({
                 <input
                   name="file"
                   type="file"
-                  className="block w-full text-xs text-foreground file:mr-3 file:rounded-md file:border file:border-border file:bg-background file:px-2 file:py-1 file:text-xs file:font-semibold file:text-foreground/80 hover:file:bg-muted/20"
+                  className="block w-full text-xs text-foreground file:mr-3 file:rounded-md file:border file:border-border file:bg-background file:px-2 file:py-1 file:text-xs file:font-semibold file:text-foreground/80 hover:file:bg-accent"
                 />
                 <p className="mt-1 text-[0.65rem] text-muted-foreground">
                   Max 50 MB. PDF, DOCX, XLSX supported.
@@ -155,7 +155,7 @@ export function UploadDocumentDrawer({
                 <button
                   type="button"
                   onClick={() => setOpen(false)}
-                  className="rounded-md border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground/80 hover:bg-muted/20"
+                  className="rounded-md border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground/80 hover:bg-accent"
                 >
                   Cancel
                 </button>

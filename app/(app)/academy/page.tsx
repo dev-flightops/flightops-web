@@ -100,7 +100,7 @@ export default async function CourseLibraryPage({
           />
           <button
             type="submit"
-            className="rounded-md border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground/80 hover:bg-muted/20"
+            className="rounded-md border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground/80 hover:bg-accent"
           >
             Search
           </button>
@@ -272,7 +272,7 @@ function SidebarItem({
         "flex items-baseline justify-between gap-2 rounded-md px-2 py-1.5 transition " +
         (active
           ? "bg-primary/15 text-primary"
-          : "text-muted-foreground hover:bg-muted/20 hover:text-foreground") +
+          : "text-muted-foreground hover:bg-accent hover:text-foreground") +
         (bold ? " font-semibold text-foreground" : "")
       }
     >
@@ -280,7 +280,7 @@ function SidebarItem({
       <span
         className={
           "tabular-nums text-[0.7rem] " +
-          (active ? "" : "text-muted-foreground/60")
+          (active ? "" : "text-muted-foreground")
         }
       >
         {count}
@@ -323,7 +323,7 @@ function CourseGrid({
         <li key={c.id}>
           <Link
             href={`/academy/${c.id}`}
-            className="flex h-full min-w-0 flex-col rounded-lg border border-border bg-card p-4 hover:bg-muted/5"
+            className="flex h-full min-w-0 flex-col rounded-lg border border-border bg-card p-4 hover:bg-accent"
           >
             <div className="mb-1 flex items-baseline justify-between gap-2">
               <span className="line-clamp-1 text-sm font-semibold">
@@ -384,7 +384,7 @@ function CourseMetaChips({ course }: { course: Course }) {
       {chips.map((chip) => (
         <span
           key={chip}
-          className="rounded bg-muted/40 px-1.5 py-0.5 text-[0.6rem] font-semibold text-muted-foreground"
+          className="rounded bg-muted px-1.5 py-0.5 text-[0.6rem] font-semibold text-muted-foreground"
         >
           {chip}
         </span>
@@ -398,7 +398,7 @@ function PublishBadge({ status }: { status: CoursePublishStatus }) {
   const cls =
     status === "draft"
       ? "border-status-yellow/40 bg-status-yellow/10 text-status-yellow"
-      : "border-border bg-muted/30 text-muted-foreground";
+      : "border-border bg-muted text-muted-foreground";
   return (
     <span
       className={

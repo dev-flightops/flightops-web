@@ -66,7 +66,7 @@ export default async function MyCapasPage() {
               <li key={c.id}>
                 <Link
                   href={`/safety/actions/${c.id}`}
-                  className="flex flex-wrap items-baseline justify-between gap-3 rounded-lg border border-border bg-card px-4 py-3 text-sm hover:bg-muted/5"
+                  className="flex flex-wrap items-baseline justify-between gap-3 rounded-lg border border-border bg-card px-4 py-3 text-sm hover:bg-accent"
                 >
                   <div className="min-w-0 flex-1">
                     <div className="mb-0.5 flex flex-wrap items-baseline gap-2">
@@ -82,7 +82,7 @@ export default async function MyCapasPage() {
                       {c.opened_by.full_name}
                     </p>
                   </div>
-                  <span className="whitespace-nowrap rounded border border-border bg-muted/20 px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider text-muted-foreground">
+                  <span className="whitespace-nowrap rounded border border-border bg-muted px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider text-muted-foreground">
                     {CAPA_STATUS_LABELS[c.status]}
                   </span>
                 </Link>

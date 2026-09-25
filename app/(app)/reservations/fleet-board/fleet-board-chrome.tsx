@@ -118,7 +118,7 @@ export function FleetBoardChrome({
 
       <div className="mt-4 flex flex-wrap items-center gap-2">
         <div className="relative flex-1 min-w-[16rem]">
-          <span className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground/60">
+          <span className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground">
             🔍
           </span>
           <input
@@ -139,7 +139,7 @@ export function FleetBoardChrome({
         <FilterChip label="All Pilots" />
         <button
           type="button"
-          className="rounded-md border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground/80 hover:bg-muted/20"
+          className="rounded-md border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground/80 hover:bg-accent"
         >
           Go
         </button>

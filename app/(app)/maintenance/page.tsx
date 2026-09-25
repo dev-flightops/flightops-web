@@ -53,7 +53,7 @@ export default async function MaintenanceLandingPage() {
           <p className="text-sm text-muted-foreground">
             No aircraft in this tenant&apos;s fleet yet.
           </p>
-          <p className="mt-2 text-xs text-muted-foreground/70">
+          <p className="mt-2 text-xs text-muted-foreground">
             Add the first one from{" "}
             <Link href="/settings/fleet" className="underline">
               Settings &rarr; Fleet

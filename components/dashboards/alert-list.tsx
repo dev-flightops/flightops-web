@@ -59,7 +59,7 @@ export function AlertList({
 }) {
   if (alerts.length === 0) {
     return (
-      <p className="py-4 text-center text-xs text-muted-foreground/70">
+      <p className="py-4 text-center text-xs text-muted-foreground">
         {emptyHint}
       </p>
     );
@@ -82,7 +82,7 @@ export function AlertList({
             <div className="min-w-0 flex-1">
               <p className="text-foreground/90">{alert.message}</p>
               {alert.detail && (
-                <p className="mt-0.5 text-[0.7rem] text-muted-foreground/80">
+                <p className="mt-0.5 text-[0.7rem] text-muted-foreground">
                   {alert.detail}
                 </p>
               )}

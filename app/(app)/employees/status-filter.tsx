@@ -32,7 +32,7 @@ export function StatusFilter({
             className={
               "px-3 py-1.5 text-xs font-semibold transition-colors " +
               (active
-                ? "bg-muted/40 text-foreground"
+                ? "bg-muted/60 text-foreground"
                 : "text-muted-foreground hover:text-foreground")
             }
           >

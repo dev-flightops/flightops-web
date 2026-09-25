@@ -71,7 +71,7 @@ export function PillarBar({
         />
       </div>
       {context && (
-        <p className="text-[0.7rem] text-muted-foreground/80">{context}</p>
+        <p className="text-[0.7rem] text-muted-foreground">{context}</p>
       )}
       {notMeasured && (
         <p className="text-[0.7rem] text-status-yellow">{notMeasured}</p>

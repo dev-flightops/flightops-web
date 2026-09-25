@@ -319,7 +319,7 @@ export function NewBookingSearchForm({
                             : c.full_name,
                         );
                       }}
-                      className="block w-full px-3 py-1.5 text-left text-xs hover:bg-muted/20"
+                      className="block w-full px-3 py-1.5 text-left text-xs hover:bg-accent"
                     >
                       <span className="font-semibold">{c.full_name}</span>
                       {c.company_name ? (

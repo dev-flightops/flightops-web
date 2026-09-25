@@ -170,7 +170,7 @@ export function NotamAcknowledgmentPanel({
             type="button"
             onClick={ackAll}
             disabled={isPending}
-            className="rounded-md border border-primary bg-primary/15 px-3 py-1 text-[0.7rem] font-semibold text-primary hover:bg-primary/20 disabled:opacity-60"
+            className="rounded-md border border-primary/40 bg-background px-3 py-1 text-[0.7rem] font-semibold text-primary hover:bg-primary/5 disabled:opacity-60"
           >
             Acknowledge all
           </button>

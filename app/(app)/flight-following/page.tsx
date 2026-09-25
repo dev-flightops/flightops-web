@@ -200,7 +200,7 @@ export default async function FlightFollowingPage({
         )}
       </div>
 
-      <p className="mt-3 text-xs text-muted-foreground/70">
+      <p className="mt-3 text-xs text-muted-foreground">
         {VIEW_HINTS[view as FlightFollowingView]}
       </p>
       {(display === "map" || display === "split") && <SourceLegend />}

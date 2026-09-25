@@ -158,7 +158,7 @@ function HeroStat({
       <span
         className={
           "text-[2.25rem] font-bold leading-none tabular-nums " +
-          (muted ? "text-foreground/30" : TONE[tone])
+          (muted ? "text-muted-foreground" : TONE[tone])
         }
       >
         {value}

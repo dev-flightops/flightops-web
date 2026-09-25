@@ -45,7 +45,7 @@ export function DepartmentNav({ roles = [] }: { roles?: readonly string[] }) {
           <Home className="h-3 w-3 opacity-60" aria-hidden />
         </Link>
         <ChevronRight
-          className="h-3 w-3 flex-shrink-0 text-muted-foreground/40"
+          className="h-3 w-3 flex-shrink-0 text-muted-foreground"
           aria-hidden
         />
 

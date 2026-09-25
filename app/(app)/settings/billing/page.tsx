@@ -237,7 +237,7 @@ function InvoiceHistoryCard({ invoices }: { invoices: Invoice[] }) {
               {invoices.map((inv) => {
                 const pill = _invoiceStatusPill(inv.status);
                 return (
-                  <tr key={inv.id} className="hover:bg-muted/5">
+                  <tr key={inv.id} className="hover:bg-accent">
                     <td className="px-2 py-2 font-mono text-xs">
                       {inv.number ?? "—"}
                     </td>
@@ -280,7 +280,7 @@ function InvoiceHistoryCard({ invoices }: { invoices: Invoice[] }) {
                           View →
                         </a>
                       ) : (
-                        <span className="text-[0.65rem] text-muted-foreground/60">
+                        <span className="text-[0.65rem] text-muted-foreground">
                           —
                         </span>
                       )}
@@ -361,7 +361,7 @@ function PlanCatalogCard({
                 />
               )}
               {!isCurrent && !plan.checkout_available && (
-                <p className="mt-2 text-[0.6rem] italic text-muted-foreground/70">
+                <p className="mt-2 text-[0.6rem] italic text-muted-foreground">
                   Checkout not yet wired for this plan — Stripe price
                   id missing.
                 </p>
@@ -397,7 +397,7 @@ function CheckoutOutcomeBanner({ outcome }: { outcome: CheckoutOutcome }) {
   return (
     <div
       role="status"
-      className="mb-4 rounded-md border border-border/60 bg-muted/10 px-4 py-3 text-sm text-muted-foreground"
+      className="mb-4 rounded-md border border-border/60 bg-muted/60 px-4 py-3 text-sm text-muted-foreground"
     >
       Checkout was cancelled — nothing charged. Pick a plan below when
       you&rsquo;re ready.
@@ -409,7 +409,7 @@ function PortalReturnBanner() {
   return (
     <div
       role="status"
-      className="mb-4 rounded-md border border-border/60 bg-muted/10 px-4 py-3 text-sm text-muted-foreground"
+      className="mb-4 rounded-md border border-border/60 bg-muted/60 px-4 py-3 text-sm text-muted-foreground"
     >
       Welcome back from the Stripe portal. If you made a change, it
       may take a few seconds for the update to reach this page —
@@ -480,7 +480,7 @@ function _statusPill(status: string): { label: string; className: string } {
     default:
       return {
         label: status,
-        className: "border-border bg-muted/40 text-muted-foreground",
+        className: "border-border bg-muted text-muted-foreground",
       };
   }
 }
@@ -505,17 +505,17 @@ function _invoiceStatusPill(status: string): { label: string; className: string 
     case "void":
       return {
         label: "Void",
-        className: "border-border bg-muted/40 text-muted-foreground opacity-70",
+        className: "border-border bg-muted text-muted-foreground",
       };
     case "draft":
       return {
         label: "Draft",
-        className: "border-border bg-muted/40 text-muted-foreground",
+        className: "border-border bg-muted text-muted-foreground",
       };
     default:
       return {
         label: status,
-        className: "border-border bg-muted/40 text-muted-foreground",
+        className: "border-border bg-muted text-muted-foreground",
       };
   }
 }

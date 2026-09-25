@@ -134,7 +134,7 @@ function ConfirmForm({ bookingId }: { bookingId: string }) {
         <button
           type="submit"
           disabled={pending}
-          className="rounded-md border border-status-green bg-status-green/15 px-3 py-2 text-xs font-semibold text-status-green hover:bg-status-green/20 disabled:opacity-60"
+          className="rounded-md border border-status-green bg-status-green/15 px-3 py-2 text-xs font-semibold text-status-green hover:bg-status-green/15 disabled:opacity-60"
         >
           {pending ? "Confirming…" : "Confirm"}
         </button>
@@ -158,7 +158,7 @@ function CompleteForm({ bookingId }: { bookingId: string }) {
         <button
           type="submit"
           disabled={pending}
-          className="rounded-md border border-border bg-muted/30 px-3 py-2 text-xs font-semibold text-foreground/80 hover:bg-muted/40 disabled:opacity-60"
+          className="rounded-md border border-border bg-muted/60 px-3 py-2 text-xs font-semibold text-foreground/80 hover:bg-accent disabled:opacity-60"
         >
           {pending ? "Saving…" : "Mark Completed"}
         </button>
@@ -208,7 +208,7 @@ function CancelForm({
           <button
             type="submit"
             disabled={pending || reason.trim() === "" || !isConfirmed}
-            className="rounded-md border border-status-red/60 bg-status-red/15 px-3 py-2 text-xs font-semibold text-status-red hover:bg-status-red/20 disabled:opacity-60"
+            className="rounded-md border border-status-red/60 bg-status-red/15 px-3 py-2 text-xs font-semibold text-status-red hover:bg-status-red/15 disabled:opacity-60"
           >
             {pending ? "Cancelling…" : "Cancel Booking"}
           </button>

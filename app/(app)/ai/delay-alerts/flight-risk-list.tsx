@@ -193,7 +193,7 @@ function FlightRow({ flight }: { flight: FlightListItem }) {
             <span className="text-xs tabular-nums text-muted-foreground">
               ETD {hhmmZ(flight.scheduled_departure_at)}
             </span>
-            <span className="rounded bg-muted/40 px-2 py-0.5 font-mono text-[0.65rem] text-muted-foreground">
+            <span className="rounded bg-muted px-2 py-0.5 font-mono text-[0.65rem] text-muted-foreground">
               {flight.aircraft.tail_number}
             </span>
           </div>
@@ -214,7 +214,7 @@ function FlightRow({ flight }: { flight: FlightListItem }) {
             type="button"
             onClick={() => void assess()}
             disabled={pending}
-            className="rounded-md border border-status-purple/40 bg-status-purple/10 px-3 py-1.5 text-xs font-semibold text-status-purple hover:bg-status-purple/20 disabled:opacity-50"
+            className="rounded-md border border-status-purple/40 bg-status-purple/10 px-3 py-1.5 text-xs font-semibold text-status-purple hover:bg-status-purple/15 disabled:opacity-50"
           >
             {pending ? "Assessing…" : data ? "Re-assess" : "Assess"}
           </button>

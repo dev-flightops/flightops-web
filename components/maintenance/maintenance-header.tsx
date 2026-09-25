@@ -90,7 +90,7 @@ function ActionLink({ action }: { action: ActionButton }) {
     "rounded-md px-3 py-1.5 text-xs font-semibold transition-colors",
     action.primary
       ? "border border-primary bg-primary text-white hover:bg-brand-dark"
-      : "border border-border bg-card text-foreground hover:bg-muted/40",
+      : "border border-border bg-card text-foreground hover:bg-accent",
     action.status !== "live" && "cursor-not-allowed opacity-50 hover:bg-card",
   );
 

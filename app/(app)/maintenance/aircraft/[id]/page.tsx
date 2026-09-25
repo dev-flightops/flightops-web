@@ -230,7 +230,7 @@ function Stat({
   const toneClass = {
     red: "bg-status-red/15 text-status-red",
     yellow: "bg-status-yellow/15 text-status-yellow",
-    muted: "bg-muted/30 text-muted-foreground",
+    muted: "bg-muted text-muted-foreground",
   }[tone];
   return (
     <span

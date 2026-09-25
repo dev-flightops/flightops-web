@@ -126,7 +126,7 @@ function CategoryBadge({ category }: { category: string }) {
           ? "border-status-yellow/40 bg-status-yellow/15 text-status-yellow"
           : category === "D"
             ? "border-status-blue/40 bg-status-blue/15 text-status-blue"
-            : "border-border bg-muted/40 text-muted-foreground";
+            : "border-border bg-muted text-muted-foreground";
   return (
     <span
       className={`rounded border px-1.5 py-0.5 text-[0.6rem] font-semibold uppercase tracking-[0.08em] ${tone}`}

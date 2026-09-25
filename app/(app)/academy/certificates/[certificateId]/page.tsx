@@ -156,7 +156,7 @@ function _certStatus(
   if (expiresAt === null) {
     return {
       label: "Never expires",
-      className: "border-border bg-muted/40 text-muted-foreground",
+      className: "border-border bg-muted text-muted-foreground",
     };
   }
   const ms = new Date(expiresAt).getTime() - now;

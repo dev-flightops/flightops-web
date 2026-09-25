@@ -5,6 +5,7 @@ import { useActionState, useState } from "react";
 
 import type { ActionResult } from "./actions";
 import { createHousingUnitAction } from "./actions";
+import { DEFAULT_UNIT_COLOR } from "@/lib/housing/unit-color";
 
 /**
  * Slide-over drawer for creating a new housing unit. Opens from the
@@ -58,7 +59,7 @@ export function NewUnitDrawer() {
                 type="button"
                 onClick={() => setOpen(false)}
                 aria-label="Close"
-                className="rounded p-1 text-muted-foreground hover:bg-muted/20"
+                className="rounded p-1 text-muted-foreground hover:bg-accent"
               >
                 ✕
               </button>
@@ -113,7 +114,7 @@ export function NewUnitDrawer() {
                 <button
                   type="button"
                   onClick={() => setOpen(false)}
-                  className="rounded-md border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground/80 hover:bg-muted/20"
+                  className="rounded-md border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground/80 hover:bg-accent"
                 >
                   Cancel
                 </button>
@@ -216,7 +217,7 @@ function ColorField({ name, label }: { name: string; label: string }) {
           id={`field-${name}`}
           name={name}
           type="text"
-          placeholder="#3b82f6"
+          placeholder={DEFAULT_UNIT_COLOR}
           value={value}
           onChange={(e) => setValue(e.target.value)}
           className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-xs text-foreground focus:border-primary focus:outline-none"

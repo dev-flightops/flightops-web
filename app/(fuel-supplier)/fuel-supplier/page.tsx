@@ -134,7 +134,7 @@ function OrdersTable({
   return (
     <div className="overflow-hidden rounded-lg border border-border bg-card">
       <table className="w-full text-xs">
-        <thead className="bg-muted/40 text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+        <thead className="bg-muted/60 text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
           <tr>
             <th className="px-3 py-2 text-left">Operator / Supplier</th>
             <th className="px-3 py-2 text-left">Aircraft</th>
@@ -205,7 +205,7 @@ function StatusPill({ status }: { status: string }) {
           ? "bg-status-green/15 text-status-green"
           : status === "discrepancy"
             ? "bg-status-red/15 text-status-red"
-            : "bg-muted/40 text-muted-foreground";
+            : "bg-muted text-muted-foreground";
   return (
     <span
       className={`inline-flex items-center rounded px-1.5 py-0.5 text-[0.6rem] font-semibold uppercase tracking-[0.05em] ${tone}`}

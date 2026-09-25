@@ -127,7 +127,7 @@ export function QuizRunner({ enrollmentId, quiz, backToLessonHref }: Props) {
                         "flex cursor-pointer items-start gap-2 rounded-md border px-3 py-2 text-sm transition " +
                         (answers[qIdx] === oIdx
                           ? "border-primary/60 bg-primary/10"
-                          : "border-border hover:bg-muted/10")
+                          : "border-border hover:bg-accent")
                       }
                     >
                       <input
@@ -255,7 +255,7 @@ function ResultView({
         <button
           type="button"
           onClick={onRetake}
-          className="rounded-md border border-border bg-card px-3 py-1.5 text-xs font-semibold hover:bg-muted/20"
+          className="rounded-md border border-border bg-card px-3 py-1.5 text-xs font-semibold hover:bg-accent"
         >
           Retake
         </button>

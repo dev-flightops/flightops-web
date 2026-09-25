@@ -150,7 +150,7 @@ function NewKeyPanel({ plaintext, name }: { plaintext: string; name: string }) {
               () => setCopied(false),
             );
           }}
-          className="rounded-md bg-status-green px-3 py-2 text-xs font-semibold text-white hover:brightness-110"
+          className="rounded-md bg-status-green px-3 py-2 text-xs font-semibold text-white hover:brightness-95"
         >
           {copied ? "Copied" : "Copy"}
         </button>

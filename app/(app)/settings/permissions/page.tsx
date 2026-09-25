@@ -102,7 +102,7 @@ export default async function SettingsPermissionsPage() {
                       <h2 className="text-base font-semibold text-foreground">
                         {role.label}
                       </h2>
-                      <code className="rounded-sm border border-border bg-muted/20 px-1.5 py-0.5 font-mono text-[0.65rem] text-muted-foreground">
+                      <code className="rounded-sm border border-border bg-muted px-1.5 py-0.5 font-mono text-[0.65rem] text-muted-foreground">
                         {role.id}
                       </code>
                     </div>

@@ -100,7 +100,7 @@ export function ComplianceList({
   return (
     <div className="overflow-hidden rounded-lg border border-border bg-card">
       <table className="w-full text-xs">
-        <thead className="bg-muted/40 text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+        <thead className="bg-muted/60 text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
           <tr>
             <th className="px-3 py-2 text-left">Pilot</th>
             <th className="px-3 py-2 text-left">Item</th>

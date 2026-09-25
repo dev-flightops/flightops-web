@@ -168,13 +168,13 @@ function StatCard({
   return (
     <Link
       href={href}
-      className="block rounded-lg border border-border bg-card px-3 py-3 transition-colors hover:bg-muted/5"
+      className="block rounded-lg border border-border bg-card px-3 py-3 transition-colors hover:bg-accent"
     >
       <div className={"text-2xl font-bold " + toneClass}>{value}</div>
       <div className="mt-0.5 text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
         {label}
       </div>
-      <div className="mt-0.5 text-[0.7rem] text-muted-foreground/80">
+      <div className="mt-0.5 text-[0.7rem] text-muted-foreground">
         {hint}
       </div>
     </Link>
@@ -211,7 +211,7 @@ function RecentCompletionsCard({ completed }: { completed: Enrollment[] }) {
               <li key={e.id}>
                 <Link
                   href={`/academy/${e.course.id}`}
-                  className="flex items-baseline justify-between gap-3 px-4 py-3 text-sm hover:bg-muted/5"
+                  className="flex items-baseline justify-between gap-3 px-4 py-3 text-sm hover:bg-accent"
                 >
                   <div className="min-w-0">
                     <div className="line-clamp-1 font-medium">
@@ -263,7 +263,7 @@ function ExpiringSoonCard({ enrollments }: { enrollments: Enrollment[] }) {
                 <li key={e.id}>
                   <Link
                     href={`/academy/${e.course.id}`}
-                    className="flex items-baseline justify-between gap-3 px-4 py-3 text-sm hover:bg-muted/5"
+                    className="flex items-baseline justify-between gap-3 px-4 py-3 text-sm hover:bg-accent"
                   >
                     <div className="min-w-0">
                       <div className="line-clamp-1 font-medium">
@@ -298,7 +298,7 @@ function StatusBadge({ status }: { status: Enrollment["status"] }) {
     <span
       className={
         "flex-shrink-0 rounded border px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider " +
-        (map[status] ?? "border-border bg-muted/20 text-muted-foreground")
+        (map[status] ?? "border-border bg-muted text-muted-foreground")
       }
     >
       {ENROLLMENT_STATUS_LABELS[status] ?? status}

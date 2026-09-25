@@ -84,7 +84,7 @@ function QuizMetaCard({ quiz }: { quiz: QuizAdminResponse }) {
           <button
             type="submit"
             disabled={pending}
-            className="rounded-md border border-border bg-muted/30 px-3 py-1.5 text-xs font-semibold hover:bg-muted/40 disabled:opacity-60"
+            className="rounded-md border border-border bg-muted/60 px-3 py-1.5 text-xs font-semibold hover:bg-accent disabled:opacity-60"
           >
             {pending ? "Saving…" : "Save"}
           </button>
@@ -141,7 +141,7 @@ function QuestionRow({
           <button
             type="button"
             onClick={() => setEditing((v) => !v)}
-            className="rounded-md border border-border bg-muted/20 px-2 py-1 text-[0.6875rem] font-semibold hover:bg-muted/40"
+            className="rounded-md border border-border bg-muted/60 px-2 py-1 text-[0.6875rem] font-semibold hover:bg-accent"
           >
             {editing ? "Close" : "Edit"}
           </button>
@@ -183,7 +183,7 @@ function QuestionRow({
             </li>
           ))}
           {question.explanation ? (
-            <li className="list-none pt-1 italic text-muted-foreground/80">
+            <li className="list-none pt-1 italic text-muted-foreground">
               Note: {question.explanation}
             </li>
           ) : null}
@@ -339,7 +339,7 @@ function QuestionForm({
           <button
             type="button"
             onClick={onDone}
-            className="rounded-md border border-border bg-transparent px-3 py-1.5 text-xs font-semibold hover:bg-muted/20"
+            className="rounded-md border border-border bg-transparent px-3 py-1.5 text-xs font-semibold hover:bg-accent"
           >
             Cancel
           </button>

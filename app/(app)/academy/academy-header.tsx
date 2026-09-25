@@ -102,19 +102,19 @@ function SectionTab({
   active: boolean;
   accent?: "yellow" | "purple";
 }) {
-  let cls = "border-border bg-card text-foreground/80 hover:bg-muted/20";
+  let cls = "border-border bg-card text-foreground/80 hover:bg-accent";
   if (active) {
     if (accent === "yellow") {
-      cls = "border-status-yellow bg-status-yellow/20 text-status-yellow";
+      cls = "border-status-yellow bg-status-yellow/15 text-status-yellow";
     } else if (accent === "purple") {
-      cls = "border-status-purple bg-status-purple/20 text-status-purple";
+      cls = "border-status-purple bg-status-purple/15 text-status-purple";
     } else {
       cls = "border-primary bg-primary/15 text-primary";
     }
   } else if (accent === "purple") {
     // Studio always gets the purple accent even when inactive — legacy
     // uses this to signal it's the author-facing "Editorial" surface.
-    cls = "border-status-purple/40 bg-status-purple/8 text-status-purple/80 hover:bg-status-purple/15";
+    cls = "border-status-purple/40 bg-status-purple/8 text-status-purple hover:bg-status-purple/15";
   }
   return (
     <Link

@@ -47,7 +47,7 @@ export function DashboardNav({ active }: { active: DashboardSlug }) {
 
   return (
     <div className="mb-5">
-      <div className="mb-2 rounded-md border border-border bg-muted/40 px-3 py-1.5 text-[0.65rem] text-muted-foreground/80">
+      <div className="mb-2 rounded-md border border-border bg-muted/60 px-3 py-1.5 text-[0.65rem] text-muted-foreground">
         <span className="font-semibold text-muted-foreground">Admin</span>
         {" "}— role-based access control coming soon. These views will be
         restricted by user role.

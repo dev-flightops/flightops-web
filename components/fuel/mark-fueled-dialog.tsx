@@ -40,7 +40,7 @@ export function MarkFueledDialog({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="inline-flex items-center gap-1.5 rounded-md border border-status-green/40 bg-status-green/10 px-3 py-1.5 text-xs font-semibold text-status-green hover:bg-status-green/20"
+        className="inline-flex items-center gap-1.5 rounded-md border border-status-green/40 bg-status-green/10 px-3 py-1.5 text-xs font-semibold text-status-green hover:bg-status-green/15"
       >
         <Fuel className="h-3.5 w-3.5" aria-hidden />
         Mark fueled
@@ -103,7 +103,7 @@ export function MarkFueledDialog({
                 required
                 className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-status-green focus:outline-none"
               />
-              <p className="mt-1 text-[0.65rem] text-muted-foreground/70">
+              <p className="mt-1 text-[0.65rem] text-muted-foreground">
                 Requested {requestedGallons.toLocaleString()} gal.
               </p>
             </div>
@@ -149,14 +149,14 @@ export function MarkFueledDialog({
                 type="button"
                 onClick={() => setOpen(false)}
                 disabled={pending}
-                className="rounded-md border border-border bg-card px-3 py-2 text-xs font-semibold text-foreground hover:bg-muted/40"
+                className="rounded-md border border-border bg-card px-3 py-2 text-xs font-semibold text-foreground hover:bg-accent"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={pending}
-                className="inline-flex items-center gap-1.5 rounded-md bg-status-green px-4 py-2 text-xs font-semibold text-white hover:brightness-110 disabled:opacity-60"
+                className="inline-flex items-center gap-1.5 rounded-md bg-status-green px-4 py-2 text-xs font-semibold text-white hover:brightness-95 disabled:opacity-60"
               >
                 {pending && <Spinner size="xs" />}
                 {pending ? "Submitting…" : "Mark fueled"}

@@ -139,7 +139,7 @@ function Article({
                   key={step}
                   className="flex gap-2 text-xs leading-relaxed text-muted-foreground"
                 >
-                  <span aria-hidden className="shrink-0 text-muted-foreground/60">
+                  <span aria-hidden className="shrink-0 text-muted-foreground">
                     •
                   </span>
                   <span>{step}</span>
@@ -306,7 +306,7 @@ export function HelpPanel() {
                 type="button"
                 onClick={() => setOpen(false)}
                 aria-label="Close help"
-                className="rounded px-2 py-1 text-xs text-muted-foreground hover:bg-muted/40 hover:text-foreground"
+                className="rounded px-2 py-1 text-xs text-muted-foreground hover:bg-accent hover:text-foreground"
               >
                 Close
               </button>

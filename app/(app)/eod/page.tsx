@@ -121,7 +121,7 @@ export default async function EodPage() {
         </div>
         <Link
           href="/flight-following"
-          className="rounded-md border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-muted/40"
+          className="rounded-md border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-accent"
         >
           ← Back to Board
         </Link>

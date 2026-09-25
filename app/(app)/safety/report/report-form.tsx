@@ -186,7 +186,7 @@ function Field({
       </label>
       {children}
       {hint && !error ? (
-        <p className="mt-1 text-[0.6875rem] text-muted-foreground/80">{hint}</p>
+        <p className="mt-1 text-[0.6875rem] text-muted-foreground">{hint}</p>
       ) : null}
       {error ? (
         <p className="mt-1 text-[0.6875rem] text-status-red">{error}</p>

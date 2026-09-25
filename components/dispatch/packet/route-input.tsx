@@ -70,7 +70,7 @@ export function RouteInput({ defaultText }: { defaultText: string }) {
           onClick={clear}
           aria-label="Clear route"
           title="Clear route — Weather will fall back to the flight's origin + destination"
-          className="absolute right-2 top-2 inline-flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground/70 transition hover:bg-muted hover:text-foreground"
+          className="absolute right-2 top-2 inline-flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground transition hover:bg-accent hover:text-foreground"
         >
           <X className="h-3.5 w-3.5" />
         </button>

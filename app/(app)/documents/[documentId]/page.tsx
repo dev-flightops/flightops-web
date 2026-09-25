@@ -118,7 +118,7 @@ export default async function DocumentDetailPage({
           {currentVersion && (
             <a
               href={downloadUrl(doc.id)}
-              className="rounded-md border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground/80 hover:bg-muted/20"
+              className="rounded-md border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground/80 hover:bg-accent"
             >
               ↓ Download current (v{currentVersion.version_number})
             </a>
@@ -221,7 +221,7 @@ function VersionsCard({
         <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
           Version History
         </h2>
-        <span className="text-xs text-muted-foreground/60">
+        <span className="text-xs text-muted-foreground">
           {sorted.length} version{sorted.length === 1 ? "" : "s"} · newest first
         </span>
       </div>
@@ -234,7 +234,7 @@ function VersionsCard({
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="border-b border-border bg-muted/10 text-left text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
+              <thead className="border-b border-border bg-muted/60 text-left text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
                 <tr>
                   <th className="px-3 py-2.5 font-semibold">Version</th>
                   <th className="px-3 py-2.5 font-semibold">File</th>
@@ -252,7 +252,7 @@ function VersionsCard({
                   <tr
                     key={v.id}
                     className={
-                      "hover:bg-muted/5 " + (v.id === currentId ? "bg-muted/5" : "")
+                      "hover:bg-accent " + (v.id === currentId ? "bg-muted/60" : "")
                     }
                   >
                     <td className="whitespace-nowrap px-3 py-2.5">
@@ -269,7 +269,7 @@ function VersionsCard({
                       <span className="block truncate text-xs">
                         {v.original_filename}
                       </span>
-                      <span className="block text-[0.65rem] text-muted-foreground/70">
+                      <span className="block text-[0.65rem] text-muted-foreground">
                         {v.content_type}
                       </span>
                     </td>
@@ -283,7 +283,7 @@ function VersionsCard({
                       {fmtDateTime(v.uploaded_at)}
                     </td>
                     <td className="px-3 py-2.5 text-xs text-muted-foreground">
-                      {v.notes ?? <span className="text-muted-foreground/50">—</span>}
+                      {v.notes ?? <span className="text-muted-foreground">—</span>}
                     </td>
                     <td className="whitespace-nowrap px-3 py-2.5 text-right">
                       <a

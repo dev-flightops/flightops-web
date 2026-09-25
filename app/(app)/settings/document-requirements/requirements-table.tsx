@@ -74,7 +74,7 @@ export function RequirementsTable({
         <p className="text-xs text-muted-foreground">
           {active.length} in use
           {retired.length > 0 && (
-            <span className="text-muted-foreground/70">
+            <span className="text-muted-foreground">
               {" "}
               · {retired.length} retired
             </span>
@@ -280,7 +280,7 @@ function RequirementForm({
           className="h-3.5 w-3.5 rounded border-border"
         />
         Required on hire
-        <span className="text-muted-foreground/70">
+        <span className="text-muted-foreground">
           (shown on the checklist; does not block activating a new hire)
         </span>
       </label>

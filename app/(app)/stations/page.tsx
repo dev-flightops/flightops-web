@@ -47,7 +47,7 @@ export default async function StationsPage() {
         </div>
         <Link
           href="/stations/new"
-          className="rounded-md border border-primary bg-primary/15 px-3 py-1.5 text-xs font-semibold text-primary hover:bg-primary/20"
+          className="rounded-md border border-primary/40 bg-background px-3 py-1.5 text-xs font-semibold text-primary hover:bg-primary/5"
         >
           + Add Station
         </Link>
@@ -63,7 +63,7 @@ export default async function StationsPage() {
       ) : stations.length === 0 ? (
         <div className="rounded-lg border border-border bg-card px-4 py-16 text-center">
           <p className="text-sm text-muted-foreground">No stations yet.</p>
-          <p className="mt-1 text-xs text-muted-foreground/70">
+          <p className="mt-1 text-xs text-muted-foreground">
             Use &ldquo;+ Add Station&rdquo; above to create the first one.
           </p>
         </div>

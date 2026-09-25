@@ -12,7 +12,7 @@ export function PrintCertificateButton() {
     <button
       type="button"
       onClick={() => window.print()}
-      className="rounded-md border border-border bg-card px-3 py-1.5 text-xs font-semibold hover:bg-muted/10"
+      className="rounded-md border border-border bg-card px-3 py-1.5 text-xs font-semibold hover:bg-accent"
     >
       Print
     </button>

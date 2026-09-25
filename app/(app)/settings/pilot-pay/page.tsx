@@ -89,7 +89,7 @@ export default async function SettingsPilotPayPage() {
 
       <Link
         href="/settings"
-        className="inline-block rounded-md border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground hover:bg-muted/30"
+        className="inline-block rounded-md border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground hover:bg-accent"
       >
         Back to Settings
       </Link>
@@ -110,7 +110,7 @@ function PayRateSection({ rates }: { rates: PayRateRow[] }) {
       <div className="mb-4 overflow-hidden rounded-lg border border-border bg-card">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="border-b border-border bg-muted/10 text-left text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
+            <thead className="border-b border-border bg-muted/60 text-left text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
               <tr>
                 <th scope="col" className="px-4 py-2 font-semibold">Type</th>
                 <th scope="col" className="px-4 py-2 font-semibold">Pilot</th>
@@ -131,7 +131,7 @@ function PayRateSection({ rates }: { rates: PayRateRow[] }) {
                 </tr>
               ) : (
                 rates.map((r) => (
-                  <tr key={r.id} className="hover:bg-muted/5">
+                  <tr key={r.id} className="hover:bg-accent">
                     <td className="whitespace-nowrap px-4 py-3 text-xs">
                       {r.rate_type === "daily" ? (
                         <span className="rounded border border-border bg-muted px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider text-muted-foreground">
@@ -244,7 +244,7 @@ function PayModifierSection({ modifiers }: { modifiers: PayModifierRow[] }) {
       <div className="mb-4 overflow-hidden rounded-lg border border-border bg-card">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="border-b border-border bg-muted/10 text-left text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
+            <thead className="border-b border-border bg-muted/60 text-left text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
               <tr>
                 <th scope="col" className="px-4 py-2 font-semibold">Modifier</th>
                 <th scope="col" className="px-4 py-2 font-semibold">Label</th>
@@ -262,7 +262,7 @@ function PayModifierSection({ modifiers }: { modifiers: PayModifierRow[] }) {
                 </tr>
               ) : (
                 modifiers.map((m) => (
-                  <tr key={m.id} className="hover:bg-muted/5">
+                  <tr key={m.id} className="hover:bg-accent">
                     <td className="whitespace-nowrap px-4 py-3 text-xs font-semibold">
                       {m.modifier_name}
                     </td>

@@ -43,7 +43,7 @@ export function SubmitLogButton({ logId }: { logId: string }) {
       <button
         type="submit"
         disabled={pending || refreshPending || state.status === "submitted"}
-        className="inline-flex items-center gap-1.5 rounded-md bg-status-green px-4 py-2 text-xs font-semibold text-white hover:brightness-110 disabled:opacity-50"
+        className="inline-flex items-center gap-1.5 rounded-md bg-status-green px-4 py-2 text-xs font-semibold text-white hover:brightness-95 disabled:opacity-50"
       >
         {(pending || refreshPending) && <Spinner size="xs" />}
         Submit Log

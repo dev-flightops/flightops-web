@@ -66,7 +66,7 @@ export default async function FuelLandingPage() {
 
       <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <SectionCard
-          icon={<Fuel className="h-6 w-6 text-primary/80" strokeWidth={1.5} />}
+          icon={<Fuel className="h-6 w-6 text-primary" strokeWidth={1.5} />}
           title="Orders"
           blurb="Place fuel orders by aircraft + base; track status through confirm and fueled."
           links={[
@@ -75,7 +75,7 @@ export default async function FuelLandingPage() {
           ]}
         />
         <SectionCard
-          icon={<Building2 className="h-6 w-6 text-primary/80" strokeWidth={1.5} />}
+          icon={<Building2 className="h-6 w-6 text-primary" strokeWidth={1.5} />}
           title="Suppliers & Pricing"
           blurb="Vendor directory with contract pricing per base + fuel type."
           links={[
@@ -83,7 +83,7 @@ export default async function FuelLandingPage() {
           ]}
         />
         <SectionCard
-          icon={<Droplets className="h-6 w-6 text-primary/80" strokeWidth={1.5} />}
+          icon={<Droplets className="h-6 w-6 text-primary" strokeWidth={1.5} />}
           title="Fuel Types"
           blurb="Tenant's fuel catalog — Jet A, 100LL, mogas, etc."
           links={[

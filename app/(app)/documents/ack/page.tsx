@@ -133,7 +133,7 @@ function Section({
         <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
           {title}
         </h2>
-        <span className="text-xs text-muted-foreground/60">
+        <span className="text-xs text-muted-foreground">
           {count} document{count === 1 ? "" : "s"}
         </span>
       </div>
@@ -174,7 +174,7 @@ function RowCard({
         : "Ack required";
 
   return (
-    <li className="rounded-lg border border-border bg-card px-4 py-3 hover:bg-muted/5">
+    <li className="rounded-lg border border-border bg-card px-4 py-3 hover:bg-accent">
       <Link
         href={`/documents/${doc.id}`}
         className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between"

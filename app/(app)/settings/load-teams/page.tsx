@@ -101,7 +101,7 @@ export default async function SettingsLoadTeamsPage({
                 ? "/settings/load-teams"
                 : "/settings/load-teams?status=all"
             }
-            className="rounded-md border border-border bg-card px-3 py-2 text-sm font-semibold text-foreground hover:bg-muted/30"
+            className="rounded-md border border-border bg-card px-3 py-2 text-sm font-semibold text-foreground hover:bg-accent"
           >
             {statusFilter === "all" ? "Hide Inactive" : "Show Inactive"}
           </Link>

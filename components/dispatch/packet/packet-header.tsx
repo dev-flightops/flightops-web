@@ -54,7 +54,7 @@ export function PacketHeader({
                 ? `This flight is ${flight.status} — nothing to release.`
                 : "Pick a scheduled flight to enable release."
             }
-            className="inline-flex items-center gap-1.5 rounded-md border border-primary/30 bg-primary/5 px-3 py-1.5 text-[0.72rem] font-semibold text-primary opacity-80"
+            className="inline-flex items-center gap-1.5 rounded-md border border-primary/30 bg-primary/5 px-3 py-1.5 text-[0.72rem] font-semibold text-primary"
           >
             Planning Mode
           </span>

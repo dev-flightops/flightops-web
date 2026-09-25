@@ -105,7 +105,7 @@ export default async function FuelQualityPage({
           href="/fuel/quality"
           className={
             onlyFailures
-              ? "rounded-md border border-border bg-card px-2.5 py-1 text-xs hover:bg-muted/40"
+              ? "rounded-md border border-border bg-card px-2.5 py-1 text-xs hover:bg-accent"
               : "rounded-md border border-primary bg-primary/15 px-2.5 py-1 text-xs font-semibold text-primary"
           }
         >
@@ -116,7 +116,7 @@ export default async function FuelQualityPage({
           className={
             onlyFailures
               ? "rounded-md border border-status-red bg-status-red/15 px-2.5 py-1 text-xs font-semibold text-status-red"
-              : "rounded-md border border-border bg-card px-2.5 py-1 text-xs hover:bg-muted/40"
+              : "rounded-md border border-border bg-card px-2.5 py-1 text-xs hover:bg-accent"
           }
         >
           Failures only
@@ -151,7 +151,7 @@ export default async function FuelQualityPage({
       {tests.length > 0 && (
         <section className="overflow-hidden rounded-lg border border-border bg-card">
           <table className="w-full text-sm">
-            <thead className="border-b border-border bg-muted/20 text-[0.6rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+            <thead className="border-b border-border bg-muted/60 text-[0.6rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
               <tr>
                 <th scope="col" className="px-4 py-2 text-left">Tested</th>
                 <th scope="col" className="px-4 py-2 text-left">Where</th>
@@ -167,7 +167,7 @@ export default async function FuelQualityPage({
                   key={t.id}
                   className={
                     t.result === "pass"
-                      ? "border-b border-border align-top last:border-b-0 hover:bg-muted/10"
+                      ? "border-b border-border align-top last:border-b-0 hover:bg-accent"
                       : "border-b border-border align-top bg-status-red/[0.04] last:border-b-0 hover:bg-status-red/[0.08]"
                   }
                 >
@@ -193,7 +193,7 @@ export default async function FuelQualityPage({
                   <td className="px-4 py-3 text-[0.75rem]">
                     <Findings test={t} />
                     {t.notes && (
-                      <p className="mt-1 text-[0.7rem] text-muted-foreground/80">
+                      <p className="mt-1 text-[0.7rem] text-muted-foreground">
                         {t.notes}
                       </p>
                     )}

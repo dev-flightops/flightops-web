@@ -199,7 +199,7 @@ export function QueryView({
               type="button"
               onClick={() => onAsk(s)}
               disabled={pending}
-              className="rounded-lg border border-primary/20 bg-primary/5 px-2.5 py-1 text-[0.65rem] text-primary hover:bg-primary/12 disabled:opacity-40"
+              className="rounded-lg border border-primary/40 bg-background px-2.5 py-1 text-[0.65rem] text-primary hover:bg-primary/5 disabled:opacity-40"
             >
               {s}
             </button>
@@ -228,7 +228,7 @@ export function QueryView({
               <li key={e.name} className="text-xs">
                 <span className="font-semibold">{e.name}</span>
                 <span className="text-muted-foreground"> — {e.description}</span>
-                <span className="block text-[0.65rem] text-muted-foreground/70">
+                <span className="block text-[0.65rem] text-muted-foreground">
                   {e.fields.join(", ")}
                 </span>
               </li>
@@ -272,13 +272,13 @@ function TurnBlock({ turn }: { turn: Turn }) {
 
         {turn.result?.spec ? (
           <details className="mt-3">
-            <summary className="cursor-pointer text-[0.65rem] text-muted-foreground/70 hover:text-muted-foreground">
+            <summary className="cursor-pointer text-[0.65rem] text-muted-foreground hover:text-muted-foreground">
               What I understood
             </summary>
             {/* Legacy prints the SQL it generated here. There is no
                 SQL to print — the model never writes any — so this is
                 the equivalent: the reading the answer came from. */}
-            <p className="mt-1.5 rounded-md bg-muted/20 px-3 py-2 font-mono text-[0.65rem] text-muted-foreground">
+            <p className="mt-1.5 rounded-md bg-muted/60 px-3 py-2 font-mono text-[0.65rem] text-muted-foreground">
               {describeSpec(turn.result.spec)}
             </p>
           </details>

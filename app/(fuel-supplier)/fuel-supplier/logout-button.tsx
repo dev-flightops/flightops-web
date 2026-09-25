@@ -14,7 +14,7 @@ export function SupplierLogoutButton() {
       type="button"
       disabled={pending}
       onClick={() => startTransition(() => supplierLogoutAction())}
-      className="rounded-md border border-border bg-card px-3 py-1.5 text-[0.7rem] font-semibold text-foreground hover:bg-muted/40 disabled:opacity-60"
+      className="rounded-md border border-border bg-card px-3 py-1.5 text-[0.7rem] font-semibold text-foreground hover:bg-accent disabled:opacity-60"
     >
       {pending ? "Signing out…" : "Sign out"}
     </button>

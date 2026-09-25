@@ -162,7 +162,7 @@ function FlightHistoryTable({ flights }: { flights: FlightListItem[] }) {
   return (
     <div className="overflow-hidden rounded-lg border border-border bg-card">
       <table className="w-full text-xs">
-        <thead className="bg-muted/30">
+        <thead className="bg-muted/60">
           <tr className="text-left text-[0.65rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
             <th className="px-3 py-2">Flight</th>
             <th className="px-3 py-2">Aircraft</th>
@@ -190,7 +190,7 @@ function FlightHistoryRow({ flight }: { flight: FlightListItem }) {
   const eta = formatBoth(flight.scheduled_arrival_at);
 
   return (
-    <tr className="border-t border-border hover:bg-muted/20">
+    <tr className="border-t border-border hover:bg-accent">
       <td className="px-3 py-2.5 font-semibold text-foreground">
         {flight.flight_number || "—"}
       </td>
@@ -209,12 +209,12 @@ function FlightHistoryRow({ flight }: { flight: FlightListItem }) {
       </td>
       <td className="px-3 py-2.5 text-muted-foreground">
         <div className="font-mono">{etd.local}</div>
-        <div className="font-mono text-[0.6rem] opacity-80">{etd.zulu}</div>
+        <div className="font-mono text-[0.6rem]">{etd.zulu}</div>
       </td>
       <ActualTimeCell actualIso={flight.actual_departure_at ?? null} />
       <td className="px-3 py-2.5 text-muted-foreground">
         <div className="font-mono">{eta.local}</div>
-        <div className="font-mono text-[0.6rem] opacity-80">{eta.zulu}</div>
+        <div className="font-mono text-[0.6rem]">{eta.zulu}</div>
       </td>
       <ActualTimeCell actualIso={flight.actual_arrival_at ?? null} />
       <td className="px-3 py-2.5 font-mono">{formatBlockHours(flight)}</td>
@@ -233,7 +233,7 @@ function ActualTimeCell({ actualIso }: { actualIso: string | null }) {
   return (
     <td className="px-3 py-2.5 text-status-green">
       <div className="font-mono">{formatted.local}</div>
-      <div className="font-mono text-[0.6rem] opacity-80">{formatted.zulu}</div>
+      <div className="font-mono text-[0.6rem]">{formatted.zulu}</div>
     </td>
   );
 }

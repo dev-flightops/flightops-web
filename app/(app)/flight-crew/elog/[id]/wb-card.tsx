@@ -154,7 +154,7 @@ export function WeightBalanceCard({
         />
       </div>
 
-      <div className="mt-3 grid grid-cols-3 gap-2 rounded-md bg-muted/20 p-2 text-center text-[0.65rem]">
+      <div className="mt-3 grid grid-cols-3 gap-2 rounded-md bg-muted/60 p-2 text-center text-[0.65rem]">
         <Derived
           label="Takeoff Wt"
           hint="Needs aircraft config (M3)"
@@ -306,7 +306,7 @@ function Derived({ label, hint }: { label: string; hint: string }) {
       <div className="text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
         {label}
       </div>
-      <div className="text-[0.65rem] italic text-muted-foreground/70">
+      <div className="text-[0.65rem] italic text-muted-foreground">
         {hint}
       </div>
     </div>

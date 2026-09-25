@@ -298,7 +298,7 @@ function WeatherError({ kind, detail }: { kind: string; detail: string }) {
 function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <div className="text-[0.6rem] uppercase tracking-wider text-muted-foreground/70">
+      <div className="text-[0.6rem] uppercase tracking-wider text-muted-foreground">
         {label}
       </div>
       <div className="font-mono text-foreground">{value}</div>

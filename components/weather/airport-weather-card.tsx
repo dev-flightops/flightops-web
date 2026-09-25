@@ -43,7 +43,7 @@ export function AirportWeatherCard({
           )}
         </div>
         {metar.ok && metar.report && (
-          <span className="text-xs text-muted-foreground/70">
+          <span className="text-xs text-muted-foreground">
             METAR age: {metarAge(metar.report.parsed_at)}
           </span>
         )}
@@ -80,7 +80,7 @@ function ReportBlock({
           {outcome.report.raw}
         </pre>
       ) : (
-        <p className="m-0 text-[0.7rem] italic text-muted-foreground/70">
+        <p className="m-0 text-[0.7rem] italic text-muted-foreground">
           {outcome.status === 404
             ? `No current ${label} for this airport.`
             : outcome.status === 502

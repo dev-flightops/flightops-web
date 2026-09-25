@@ -61,6 +61,7 @@ export function RecordTabs({
         <span
           key={label}
           title={`${label} is not built yet and is not currently scheduled`}
+          aria-disabled="true"
           className="-mb-px cursor-not-allowed px-3 py-2 text-xs font-semibold text-muted-foreground/50"
         >
           {label}

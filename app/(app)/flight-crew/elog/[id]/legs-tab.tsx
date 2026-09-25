@@ -37,7 +37,7 @@ export function LegsTab({
           <h2 className="text-[0.7rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
             Legs
           </h2>
-          <p className="mt-1 text-[0.7rem] text-muted-foreground/80">
+          <p className="mt-1 text-[0.7rem] text-muted-foreground">
             {initialLegs.length === 0
               ? "No legs yet — add the first leg below."
               : `${initialLegs.length} leg${initialLegs.length === 1 ? "" : "s"} on this log.`}

@@ -62,7 +62,7 @@ export function ComplianceGrid({
                 className="px-3 py-2 align-bottom whitespace-nowrap"
               >
                 <div>{abbreviateItemName(item)}</div>
-                <div className="mt-0.5 text-[0.55rem] font-normal text-muted-foreground/70">
+                <div className="mt-0.5 text-[0.55rem] font-normal text-muted-foreground">
                   {item.regulation}
                 </div>
               </th>
@@ -92,7 +92,7 @@ export function ComplianceGrid({
                       {overallToken.label}
                     </span>
                   </div>
-                  <div className="text-[0.6rem] font-normal text-muted-foreground/70">
+                  <div className="text-[0.6rem] font-normal text-muted-foreground">
                     {row.pilot.email}
                   </div>
                 </th>

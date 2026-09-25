@@ -207,7 +207,7 @@ function EditingBanner({
       <button
         type="button"
         onClick={onCancel}
-        className="rounded border border-border bg-background px-2 py-0.5 text-[0.7rem] font-semibold text-foreground/80 hover:bg-muted/20"
+        className="rounded border border-border bg-background px-2 py-0.5 text-[0.7rem] font-semibold text-foreground/80 hover:bg-accent"
       >
         Cancel edit
       </button>

@@ -86,7 +86,7 @@ export function TrendCard({
         {grouped.map(({ group, items }) => (
           <div key={group ?? "ungrouped"}>
             {group && (
-              <div className="mb-1 text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground/80">
+              <div className="mb-1 text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
                 {group}
               </div>
             )}

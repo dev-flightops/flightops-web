@@ -39,7 +39,7 @@ const VALUE_TONE: Record<StatTileTone, string> = {
   orange:  "text-status-orange",
   red:     "text-status-red",
   purple:  "text-status-purple",
-  muted:   "text-muted-foreground/60",
+  muted:   "text-muted-foreground",
 };
 
 /**
@@ -86,7 +86,7 @@ export function StatTile({
         {label}
       </div>
       {sub && (
-        <div className="mt-1 text-xs text-muted-foreground/40">
+        <div className="mt-1 text-xs text-muted-foreground">
           {sub}
         </div>
       )}

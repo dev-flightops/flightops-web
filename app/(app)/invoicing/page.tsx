@@ -149,7 +149,7 @@ export default async function InvoicingPage({
                     return (
                       <tr
                         key={inv.id}
-                        className="border-b border-border last:border-0 hover:bg-muted/20"
+                        className="border-b border-border last:border-0 hover:bg-accent"
                       >
                         <td className="px-4 py-2.5">
                           <Link

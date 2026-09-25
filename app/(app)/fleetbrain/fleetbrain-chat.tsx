@@ -117,7 +117,7 @@ export function FleetBrainChat({ examples }: { examples: string[] }) {
             </svg>
           </button>
         </form>
-        <p className="mt-1.5 text-center text-[0.65rem] text-muted-foreground/60">
+        <p className="mt-1.5 text-center text-[0.65rem] text-muted-foreground">
           FleetBrain queries live platform data. Results reflect current state
           as of query time.
         </p>

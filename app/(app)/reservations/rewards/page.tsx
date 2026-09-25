@@ -102,7 +102,7 @@ export default async function RewardsMembersPage() {
         <div className="overflow-hidden rounded-lg border border-border bg-card">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="border-b border-border bg-muted/10 text-left text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
+              <thead className="border-b border-border bg-muted/60 text-left text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
                 <tr>
                   <th scope="col" className="px-4 py-2.5 font-semibold">Member #</th>
                   <th scope="col" className="px-4 py-2.5 font-semibold">Customer</th>
@@ -115,7 +115,7 @@ export default async function RewardsMembersPage() {
               </thead>
               <tbody className="divide-y divide-border">
                 {members.map((m) => (
-                  <tr key={m.id} className="hover:bg-muted/5">
+                  <tr key={m.id} className="hover:bg-accent">
                     <td className="whitespace-nowrap px-4 py-3 font-mono text-xs font-semibold text-foreground">
                       {m.member_number}
                     </td>
@@ -161,7 +161,7 @@ function TierBadge({ tier }: { tier: RewardsTier }) {
         ? "border-status-yellow/40 bg-status-yellow/10 text-status-yellow"
         : tier === "silver"
           ? "border-status-blue/40 bg-status-blue/10 text-status-blue"
-          : "border-border bg-muted/20 text-muted-foreground";
+          : "border-border bg-muted text-muted-foreground";
   return (
     <span
       className={

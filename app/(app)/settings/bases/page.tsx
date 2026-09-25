@@ -63,7 +63,7 @@ export default async function SettingsBasesPage({
           href="/settings/bases"
           className={
             activeOnly
-              ? "rounded-md border border-border bg-card px-2.5 py-1 hover:bg-muted/40"
+              ? "rounded-md border border-border bg-card px-2.5 py-1 hover:bg-accent"
               : "rounded-md border border-primary bg-primary/15 px-2.5 py-1 font-semibold text-primary"
           }
         >
@@ -74,7 +74,7 @@ export default async function SettingsBasesPage({
           className={
             activeOnly
               ? "rounded-md border border-primary bg-primary/15 px-2.5 py-1 font-semibold text-primary"
-              : "rounded-md border border-border bg-card px-2.5 py-1 hover:bg-muted/40"
+              : "rounded-md border border-border bg-card px-2.5 py-1 hover:bg-accent"
           }
         >
           Active only
@@ -109,7 +109,7 @@ export default async function SettingsBasesPage({
           <h2 className="mb-2 text-[0.65rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
             Inactive ({inactive.length})
           </h2>
-          <div className="overflow-hidden rounded-lg border border-border bg-card/40 opacity-70">
+          <div className="overflow-hidden rounded-lg border border-border bg-muted/60">
             <BaseTable bases={inactive} muted />
           </div>
         </section>
@@ -127,7 +127,7 @@ function BaseTable({
 }) {
   return (
     <table className="w-full text-sm">
-      <thead className="border-b border-border bg-muted/20 text-[0.6rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+      <thead className="border-b border-border bg-muted/60 text-[0.6rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
         <tr>
           <th scope="col" className="px-4 py-2 text-left">ICAO</th>
           <th scope="col" className="px-4 py-2 text-left">Name</th>
@@ -140,7 +140,7 @@ function BaseTable({
         {bases.map((b) => (
           <tr
             key={b.id}
-            className="border-b border-border last:border-b-0 hover:bg-muted/10"
+            className="border-b border-border last:border-b-0 hover:bg-accent"
           >
             <td className="px-4 py-3">
               <div className="flex items-center gap-2">

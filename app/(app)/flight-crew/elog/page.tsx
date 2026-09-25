@@ -91,7 +91,7 @@ export default async function FlightLogPage() {
               <p className="text-sm text-muted-foreground">
                 No active aircraft on this tenant.
               </p>
-              <p className="mt-1 text-xs text-muted-foreground/70">
+              <p className="mt-1 text-xs text-muted-foreground">
                 Activate one on the Maintenance page before starting a
                 flight log.
               </p>

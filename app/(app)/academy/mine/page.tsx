@@ -54,7 +54,7 @@ export default async function MyEnrollmentsPage() {
           <p className="text-sm text-muted-foreground">
             You haven&rsquo;t enrolled in any courses yet.
           </p>
-          <p className="mt-2 text-xs text-muted-foreground/70">
+          <p className="mt-2 text-xs text-muted-foreground">
             <Link href="/academy" className="text-primary hover:underline">
               Browse the catalog
             </Link>{" "}
@@ -100,7 +100,7 @@ function EnrollmentGroup({
             <li key={e.id}>
               <Link
                 href={`/academy/enrollments/${e.id}`}
-                className="flex flex-wrap items-baseline justify-between gap-3 rounded-lg border border-border bg-card px-4 py-3 text-sm hover:bg-muted/5"
+                className="flex flex-wrap items-baseline justify-between gap-3 rounded-lg border border-border bg-card px-4 py-3 text-sm hover:bg-accent"
               >
                 <div className="min-w-0 flex-1">
                   <div className="mb-1 flex flex-wrap items-baseline gap-2">

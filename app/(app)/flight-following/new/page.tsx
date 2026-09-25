@@ -64,7 +64,7 @@ export default async function FlightFollowingNewPage() {
           <p className="text-sm text-muted-foreground">
             No active aircraft on this tenant.
           </p>
-          <p className="mt-1 text-xs text-muted-foreground/70">
+          <p className="mt-1 text-xs text-muted-foreground">
             Activate an aircraft on the Maintenance page before opening
             a flight.
           </p>

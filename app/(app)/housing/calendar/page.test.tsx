@@ -56,6 +56,7 @@ vi.mock("@/lib/api/housing", () => ({
 }));
 
 import HousingCalendarPage from "./page";
+import { DEFAULT_UNIT_COLOR } from "@/lib/housing/unit-color";
 
 // Wednesday. Chosen so the Monday-of-this-week arithmetic has to do
 // real work rather than being a no-op.
@@ -484,9 +485,26 @@ describe("unit accent colour", () => {
       });
       await renderPage();
       const block = screen.getAllByRole("link", { name: /AC/ })[0];
-      expect(block).toHaveStyle({ backgroundColor: "#3b82f6" });
+      expect(block).toHaveStyle({ backgroundColor: DEFAULT_UNIT_COLOR });
     },
   );
+
+  // The accent is the operator's choice, so the initials take whichever
+  // of white or black reads on it — white on a mid-tone does not.
+  it.each([
+    ["#22c55e", "#000000"],
+    ["#fbbf24", "#000000"],
+    ["#1d4ed8", "#ffffff"],
+    ["#ab2429", "#ffffff"],
+  ])("prints legible text on a %s accent", async (accent, text) => {
+    seed({
+      units: [unit({ id: "u-1", color_accent: accent })],
+      bookings: [booking({ id: "b-1" })],
+    });
+    await renderPage();
+    const block = screen.getAllByRole("link", { name: /AC/ })[0];
+    expect(block).toHaveStyle({ backgroundColor: accent, color: text });
+  });
 });
 
 describe("rooms and units", () => {

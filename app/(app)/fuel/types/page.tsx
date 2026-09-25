@@ -52,7 +52,7 @@ export default async function FuelTypesPage() {
           <p className="text-sm text-muted-foreground">
             No fuel types configured yet.
           </p>
-          <p className="mt-1 text-xs text-muted-foreground/70">
+          <p className="mt-1 text-xs text-muted-foreground">
             Add via the API: <code>POST /ground/fuel/types</code>. The UI for
             this ships in M2-G-44b.
           </p>

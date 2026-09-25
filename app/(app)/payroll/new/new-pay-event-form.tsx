@@ -129,7 +129,7 @@ export function NewPayEventForm({ employees }: { employees: UserResponse[] }) {
         </label>
       </div>
 
-      <p className="text-xs text-muted-foreground/70">
+      <p className="text-xs text-muted-foreground">
         Enter Hours for time-based events (flight/duty/training), Amount
         for dollar events (per diem, expense, deduction), or both if
         the event carries both a rate and a fixed adjustment.
@@ -180,7 +180,7 @@ export function NewPayEventForm({ employees }: { employees: UserResponse[] }) {
       <div className="flex justify-end gap-2">
         <a
           href="/payroll"
-          className="rounded-md border border-border bg-card px-4 py-2 text-xs font-semibold text-foreground hover:bg-muted/30"
+          className="rounded-md border border-border bg-card px-4 py-2 text-xs font-semibold text-foreground hover:bg-accent"
         >
           Cancel
         </a>

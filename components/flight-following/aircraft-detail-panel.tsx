@@ -50,7 +50,7 @@ export function AircraftDetailPanel({
       aria-label={`Aircraft details for ${position.aircraft.tail_number}`}
       className="absolute right-3 top-3 bottom-3 z-[1000] flex w-[280px] flex-col overflow-hidden rounded-lg border border-border bg-card shadow-lg"
     >
-      <header className="flex items-start justify-between gap-2 border-b border-border bg-muted/40 px-3 py-2">
+      <header className="flex items-start justify-between gap-2 border-b border-border bg-muted/60 px-3 py-2">
         <div className="min-w-0">
           <div className="font-mono text-sm font-bold text-foreground">
             {position.aircraft.tail_number}
@@ -115,7 +115,7 @@ export function AircraftDetailPanel({
             Open Dispatch Packet →
           </Link>
         ) : (
-          <p className="rounded-md border border-dashed border-border bg-muted/20 px-3 py-2 text-center text-[0.65rem] italic text-muted-foreground/70">
+          <p className="rounded-md border border-dashed border-border bg-muted/60 px-3 py-2 text-center text-[0.65rem] italic text-muted-foreground">
             No flight plan filed for this aircraft.
           </p>
         )}
@@ -125,7 +125,7 @@ export function AircraftDetailPanel({
             type="button"
             onClick={onShowTrack}
             disabled={isTrackLoading}
-            className="inline-flex w-full items-center justify-center gap-1.5 rounded-md border border-primary/40 bg-primary/10 px-2 py-1.5 text-[0.65rem] font-semibold uppercase tracking-[0.06em] text-primary hover:bg-primary/20 disabled:opacity-50"
+            className="inline-flex w-full items-center justify-center gap-1.5 rounded-md border border-primary/40 bg-background px-2 py-1.5 text-[0.65rem] font-semibold uppercase tracking-[0.06em] text-primary hover:bg-primary/5 disabled:opacity-50"
           >
             {isTrackLoading && <Spinner size="xs" />}
             {isTrackLoading ? "Loading track…" : "Show flight track"}
@@ -135,7 +135,7 @@ export function AircraftDetailPanel({
           <button
             type="button"
             onClick={onClearTrack}
-            className="w-full rounded-md border border-border bg-muted/30 px-2 py-1.5 text-[0.65rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground hover:bg-muted/50"
+            className="w-full rounded-md border border-border bg-muted/60 px-2 py-1.5 text-[0.65rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground hover:bg-accent"
           >
             Clear track
           </button>
@@ -159,7 +159,7 @@ function SourcePill({ source }: { source: PositionResponse["source"] }) {
     adsb: "bg-status-green/15 text-status-green",
     gps: "bg-status-blue/15 text-status-blue",
     manual: "bg-status-yellow/15 text-status-yellow",
-    simulated: "bg-muted/50 text-muted-foreground",
+    simulated: "bg-muted text-muted-foreground",
   };
   return (
     <span

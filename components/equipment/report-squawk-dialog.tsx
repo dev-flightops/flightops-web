@@ -45,7 +45,7 @@ export function ReportSquawkDialog({ unitId }: { unitId: string }) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="rounded-md border border-status-yellow bg-status-yellow/15 px-3 py-1.5 text-xs font-semibold text-status-yellow hover:bg-status-yellow/20"
+        className="rounded-md border border-status-yellow bg-status-yellow/15 px-3 py-1.5 text-xs font-semibold text-status-yellow hover:bg-status-yellow/15"
       >
         + Report squawk
       </button>
@@ -117,14 +117,14 @@ export function ReportSquawkDialog({ unitId }: { unitId: string }) {
                 type="button"
                 onClick={() => setOpen(false)}
                 disabled={pending}
-                className="rounded-md border border-border bg-card px-3 py-2 text-xs font-semibold text-foreground hover:bg-muted/40"
+                className="rounded-md border border-border bg-card px-3 py-2 text-xs font-semibold text-foreground hover:bg-accent"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={pending}
-                className="inline-flex items-center gap-1.5 rounded-md bg-status-yellow px-4 py-2 text-xs font-semibold text-black hover:brightness-110 disabled:opacity-60"
+                className="inline-flex items-center gap-1.5 rounded-md bg-status-yellow px-4 py-2 text-xs font-semibold text-white hover:brightness-95 disabled:opacity-60"
               >
                 {pending && <Spinner size="xs" />}
                 {pending ? "Submitting…" : "Report squawk"}

@@ -96,7 +96,7 @@ export default async function AccountingExportPage({
           <p className="text-sm text-muted-foreground">
             No completed flights in this date range.
           </p>
-          <p className="mt-1 text-xs text-muted-foreground/70">
+          <p className="mt-1 text-xs text-muted-foreground">
             Adjust the date range or check that flights have been marked as
             landed.
           </p>
@@ -107,14 +107,14 @@ export default async function AccountingExportPage({
           <h2 className="text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
             Flight Activity
           </h2>
-          <p className="text-xs text-muted-foreground/70">
+          <p className="text-xs text-muted-foreground">
             This data is for accounting reference only. No dollar amounts are
             stored in the dispatch platform.
           </p>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="border-b border-border bg-muted/10 text-left text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
+            <thead className="border-b border-border bg-muted/60 text-left text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
               <tr>
                 <th scope="col" className="px-4 py-2 font-semibold">Date</th>
                 <th scope="col" className="px-4 py-2 font-semibold">Flight #</th>
@@ -131,7 +131,7 @@ export default async function AccountingExportPage({
             </thead>
             <tbody className="divide-y divide-border">
               {rows.map((r) => (
-                  <tr key={r.id} className="hover:bg-muted/5">
+                  <tr key={r.id} className="hover:bg-accent">
                     <td className="whitespace-nowrap px-4 py-3 font-mono text-xs text-muted-foreground">
                       {r.date}
                     </td>
@@ -140,7 +140,7 @@ export default async function AccountingExportPage({
                     </td>
                     <td className="whitespace-nowrap px-4 py-3 text-xs">
                       {r.flight_type ? (
-                        <span className="rounded border border-border bg-muted/20 px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase text-muted-foreground">
+                        <span className="rounded border border-border bg-muted px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase text-muted-foreground">
                           {r.flight_type}
                         </span>
                       ) : (

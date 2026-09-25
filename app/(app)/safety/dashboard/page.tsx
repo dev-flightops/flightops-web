@@ -133,19 +133,19 @@ export default async function SafetyDashboardPage() {
         <div className="flex flex-wrap items-center gap-2">
           <Link
             href="/safety"
-            className="rounded-md border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground/80 hover:bg-muted/20"
+            className="rounded-md border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground/80 hover:bg-accent"
           >
             Hazard triage
           </Link>
           <Link
             href="/safety/incidents"
-            className="rounded-md border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground/80 hover:bg-muted/20"
+            className="rounded-md border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground/80 hover:bg-accent"
           >
             Incident triage
           </Link>
           <Link
             href="/safety/actions"
-            className="rounded-md border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground/80 hover:bg-muted/20"
+            className="rounded-md border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground/80 hover:bg-accent"
           >
             CAPA board
           </Link>
@@ -270,13 +270,13 @@ function StatCard({
   return (
     <Link
       href={href}
-      className="block rounded-lg border border-border bg-card px-3 py-3 transition-colors hover:bg-muted/5"
+      className="block rounded-lg border border-border bg-card px-3 py-3 transition-colors hover:bg-accent"
     >
       <div className={"text-2xl font-bold " + toneClass}>{value}</div>
       <div className="mt-0.5 text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
         {label}
       </div>
-      <div className="mt-0.5 text-[0.7rem] text-muted-foreground/80">
+      <div className="mt-0.5 text-[0.7rem] text-muted-foreground">
         {hint}
       </div>
     </Link>
@@ -309,7 +309,7 @@ function RecentHazardsCard({ hazards }: { hazards: HazardReport[] }) {
               <li key={h.id}>
                 <Link
                   href={`/safety/${h.id}`}
-                  className="flex items-baseline justify-between gap-3 px-4 py-3 text-sm hover:bg-muted/5"
+                  className="flex items-baseline justify-between gap-3 px-4 py-3 text-sm hover:bg-accent"
                 >
                   <div className="min-w-0">
                     <div className="line-clamp-1 font-medium">
@@ -360,7 +360,7 @@ function RecentIncidentsCard({ incidents }: { incidents: Incident[] }) {
               <li key={i.id}>
                 <Link
                   href={`/safety/incidents/${i.id}`}
-                  className="flex items-baseline justify-between gap-3 px-4 py-3 text-sm hover:bg-muted/5"
+                  className="flex items-baseline justify-between gap-3 px-4 py-3 text-sm hover:bg-accent"
                 >
                   <div className="min-w-0">
                     <div className="line-clamp-1 font-medium">
@@ -408,7 +408,7 @@ function OverdueCapasCard({ capas }: { capas: CorrectiveAction[] }) {
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="border-b border-border bg-muted/10 text-left text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
+              <thead className="border-b border-border bg-muted/60 text-left text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
                 <tr>
                   <th className="px-3 py-2.5 font-semibold">Action</th>
                   <th className="px-3 py-2.5 font-semibold">Owner</th>
@@ -421,7 +421,7 @@ function OverdueCapasCard({ capas }: { capas: CorrectiveAction[] }) {
                 {sorted.map((c) => {
                   const days = daysPastDue(c.due_date);
                   return (
-                    <tr key={c.id} className="hover:bg-muted/5">
+                    <tr key={c.id} className="hover:bg-accent">
                       <td className="px-3 py-2.5">
                         <Link
                           href={`/safety/actions/${c.id}`}
@@ -478,7 +478,7 @@ function SeverityBadge({ severity }: { severity: HazardSeverity }) {
     ],
   };
   const [cls, label] = map[severity] ?? [
-    "border-border bg-muted/20 text-muted-foreground",
+    "border-border bg-muted text-muted-foreground",
     HAZARD_SEVERITY_LABELS[severity] ?? severity,
   ];
   return (
@@ -504,7 +504,7 @@ function CapaStatusBadge({ status }: { status: CorrectiveAction["status"] }) {
     <span
       className={
         "rounded border px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider " +
-        (map[status] ?? "border-border bg-muted/20 text-muted-foreground")
+        (map[status] ?? "border-border bg-muted text-muted-foreground")
       }
     >
       {CAPA_STATUS_LABELS[status] ?? status}

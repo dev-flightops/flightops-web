@@ -239,7 +239,7 @@ function Section({
       <header className="mb-2 flex items-center justify-between">
         <h2 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.06em] text-foreground">
           {title}
-          <span className="rounded-sm border border-border bg-muted/30 px-1.5 py-0.5 text-[0.55rem] font-semibold text-muted-foreground">
+          <span className="rounded-sm border border-border bg-muted px-1.5 py-0.5 text-[0.55rem] font-semibold text-muted-foreground">
             {count}
           </span>
         </h2>
@@ -283,12 +283,12 @@ function TaskRow({
         ? "border-status-blue/40 bg-status-blue/10 text-status-blue"
         : tone === "red"
           ? "border-status-red/40 bg-status-red/10 text-status-red"
-          : "border-border bg-muted/30 text-foreground";
+          : "border-border bg-muted/60 text-foreground";
   return (
     <li className="border-b border-border last:border-b-0">
       <Link
         href={href}
-        className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-muted/10"
+        className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-accent"
       >
         <div className="min-w-0">
           <div className="text-sm font-semibold text-foreground">{primary}</div>

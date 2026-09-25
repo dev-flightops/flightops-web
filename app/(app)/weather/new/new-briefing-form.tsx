@@ -147,7 +147,7 @@ function Field({
         {...inputProps}
       />
       {hint && !error && (
-        <p className="mt-1 text-[0.65rem] text-muted-foreground/70">{hint}</p>
+        <p className="mt-1 text-[0.65rem] text-muted-foreground">{hint}</p>
       )}
       {error && (
         <p role="alert" className="mt-1 text-[0.65rem] text-status-red">

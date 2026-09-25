@@ -17,7 +17,7 @@ export function NonCurrentBanner({ count }: { count: number }) {
       <p className="text-sm font-semibold text-status-red">
         {count} {noun} non-current and cannot fly Part 135.
       </p>
-      <p className="mt-1 text-xs text-status-red/80">
+      <p className="mt-1 text-xs text-status-red">
         Filter by NON-CURRENT below to see who needs attention.
       </p>
     </div>

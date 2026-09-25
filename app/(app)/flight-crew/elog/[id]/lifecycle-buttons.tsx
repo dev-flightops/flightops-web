@@ -147,9 +147,9 @@ function LifecyclePrompt({
 
   const confirmCls =
     variant === "reopen"
-      ? "bg-status-yellow text-black hover:brightness-110"
+      ? "bg-status-yellow text-white hover:brightness-95"
       : variant === "delete"
-        ? "bg-status-red text-white hover:brightness-110"
+        ? "bg-status-red text-white hover:brightness-95"
         : "bg-primary text-white hover:bg-brand-dark";
 
   const explainer =
@@ -211,7 +211,7 @@ function LifecyclePrompt({
             setReason("");
             setError(null);
           }}
-          className="rounded-md border border-border bg-background px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-muted disabled:opacity-50"
+          className="rounded-md border border-border bg-background px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-accent disabled:opacity-50"
         >
           Cancel
         </button>

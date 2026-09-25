@@ -43,7 +43,7 @@ export function MarkFueledButton({
           setError(null);
           setOpen(true);
         }}
-        className="rounded-md border border-primary/40 bg-primary/10 px-3 py-1 text-[0.65rem] font-semibold text-primary hover:bg-primary/20"
+        className="rounded-md border border-primary/40 bg-background px-3 py-1 text-[0.65rem] font-semibold text-primary hover:bg-primary/5"
       >
         Mark Fueled
       </button>
@@ -140,7 +140,7 @@ export function MarkFueledButton({
             setReason("");
             setError(null);
           }}
-          className="rounded-md border border-border bg-background px-2.5 py-1 text-[0.65rem] font-semibold text-foreground hover:bg-muted disabled:opacity-50"
+          className="rounded-md border border-border bg-background px-2.5 py-1 text-[0.65rem] font-semibold text-foreground hover:bg-accent disabled:opacity-50"
         >
           Cancel
         </button>

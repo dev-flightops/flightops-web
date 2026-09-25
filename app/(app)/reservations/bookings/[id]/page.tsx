@@ -74,7 +74,7 @@ export default async function BookingDetailPage({
         <p className="mt-1 text-xs text-muted-foreground">
           {BOOKING_STATUS_LABELS[booking.status]} · Filed{" "}
           {formatZuluDate(booking.created_at)} · Booking id{" "}
-          <code className="rounded bg-muted/30 px-1 font-mono text-[0.7em]">
+          <code className="rounded bg-muted/60 px-1 font-mono text-[0.7em]">
             {booking.id.slice(0, 8)}
           </code>
         </p>

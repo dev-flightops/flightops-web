@@ -28,7 +28,7 @@ export function FlightHistoryTable({
         <p className="text-sm text-muted-foreground">
           No flight logs in {fromDate} → {toDate}.
         </p>
-        <p className="mt-2 text-xs text-muted-foreground/80">
+        <p className="mt-2 text-xs text-muted-foreground">
           Start one from{" "}
           <Link
             href="/flight-crew/elog"
@@ -90,7 +90,7 @@ export function FlightHistoryTable({
             <td colSpan={5} className="px-3 py-2 text-right text-muted-foreground">
               {logs.length} log{logs.length === 1 ? "" : "s"}
             </td>
-            <td colSpan={2} className="px-3 py-2 text-muted-foreground/70">
+            <td colSpan={2} className="px-3 py-2 text-muted-foreground">
               Filtered totals: hours roll in once Tab 2 (Legs) ships.
             </td>
           </tr>
