@@ -5,6 +5,11 @@ import { useState, useTransition } from "react";
 import type { CurrentDutyResponse } from "@/lib/api/types";
 import { cn } from "@/lib/utils";
 
+import {
+  NEW_PERIOD_WARNING,
+  useArmedConfirm,
+} from "@/components/duty/confirm-duty-out";
+
 import { clockInAction, clockOutAction } from "./actions";
 
 interface Props {
@@ -36,11 +41,20 @@ export function DutyClockButton({ initial }: Props) {
   const [error, setError] = useState<string | null>(null);
 
   const isOnDuty = duty.open !== null;
+  const { armed, arm, disarm, ref } = useArmedConfirm();
 
   const handleClick = () => {
     setError(null);
 
     if (isOnDuty) {
+      // Asked first. What an accidental close costs is in
+      // NEW_PERIOD_WARNING and the hook's comment: a split duty record
+      // that reads as two legal short days.
+      if (!armed) {
+        arm();
+        return;
+      }
+      disarm();
       // Optimistic: immediately close the open period locally.
       const closedShape = {
         ...duty,
@@ -82,8 +96,41 @@ export function DutyClockButton({ initial }: Props) {
   };
 
   return (
-    <div className="space-y-2">
-      {isOnDuty && duty.open ? (
+    <div className="space-y-2" ref={ref}>
+      {isOnDuty && duty.open && armed ? (
+        /* Armed. The elapsed time and the consequence are both on
+           screen, because "are you sure?" on its own does not tell a
+           pilot anything they did not already know. */
+        <div className="rounded-xl border border-status-red/50 bg-status-red/10 px-5 py-4">
+          <p className="text-base font-bold tracking-wide text-status-red">
+            CLOSE THIS DUTY PERIOD?
+          </p>
+          <p className="mt-1 text-xs text-foreground">
+            You have been on duty{" "}
+            <span className="font-mono font-semibold">
+              {formatElapsed(duty.open.elapsed_hours)}
+            </span>
+            . {NEW_PERIOD_WARNING}
+          </p>
+          <div className="mt-3 flex gap-2">
+            <button
+              type="button"
+              onClick={disarm}
+              className="rounded-md border border-border px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-card"
+            >
+              Keep working
+            </button>
+            <button
+              type="button"
+              onClick={handleClick}
+              disabled={pending}
+              className="rounded-md bg-status-red px-3 py-1.5 text-xs font-semibold text-white hover:brightness-110 disabled:opacity-60"
+            >
+              {pending ? "Closing…" : "Close duty period"}
+            </button>
+          </div>
+        </div>
+      ) : isOnDuty && duty.open ? (
         <button
           type="button"
           onClick={handleClick}
@@ -97,7 +144,7 @@ export function DutyClockButton({ initial }: Props) {
                 DUTY OUT
               </span>
               <span className="text-[0.7rem] text-muted-foreground">
-                Currently on duty — tap to close
+                Currently on duty — tap, then confirm
               </span>
             </span>
           </span>
