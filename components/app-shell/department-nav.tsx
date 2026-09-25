@@ -35,11 +35,11 @@ export function DepartmentNav({ roles = [] }: { roles?: readonly string[] }) {
   if (modules.length === 0) return null;
 
   return (
-    <div className="border-t border-border bg-muted">
-      <div className="container flex items-center gap-1 px-3 py-1">
+    <div className="border-b border-border bg-background">
+      <div className="container flex items-center gap-1 px-3 py-1.5">
         <Link
           href="/home/"
-          className="flex-shrink-0 rounded-md p-1 text-muted-foreground hover:bg-primary/8 hover:text-status-blue"
+          className="flex-shrink-0 rounded-md p-1 text-muted-foreground hover:bg-accent hover:text-primary"
           aria-label="Home"
         >
           <Home className="h-3 w-3 opacity-60" aria-hidden />
@@ -80,18 +80,21 @@ function DepartmentNavItem({
   const isActive = isLive && module.href ? pathname.startsWith(module.href) : false;
   const isPurple = module.accent === "purple";
 
-  // Default chip color: muted; active gets the blue tint; purple-accent AI
-  // items override to purple text. Disabled items dim to 40%.
+  // Muted by default; the active module takes the brand, as every other
+  // "you are here" in the app does. AI modules keep purple — the one
+  // accent besides the brand, and it means "AI" everywhere it appears.
+  // (The active background here was `bg-primary/12`, an off-scale opacity
+  // that generated no CSS, so the current module had no highlight at all.)
   const baseTone = isPurple
     ? isActive
-      ? "bg-primary/12 text-status-purple font-semibold"
-      : "text-status-purple hover:bg-primary/8"
+      ? "bg-status-purple/10 text-status-purple font-semibold"
+      : "text-status-purple hover:bg-status-purple/8"
     : isActive
-      ? "bg-primary/12 text-status-blue font-semibold"
-      : "text-muted-foreground hover:bg-primary/8 hover:text-status-blue";
+      ? "bg-primary/10 text-primary font-semibold"
+      : "text-muted-foreground hover:bg-accent hover:text-foreground";
 
   const className = cn(
-    "rounded-md px-1.5 py-1 text-[0.68rem] font-medium whitespace-nowrap transition-colors",
+    "rounded-md px-2 py-1 text-[0.72rem] font-medium whitespace-nowrap transition-colors",
     baseTone,
     !isLive && "opacity-40 cursor-not-allowed hover:bg-transparent",
   );

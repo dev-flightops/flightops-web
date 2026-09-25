@@ -69,12 +69,12 @@ export function AlertsList({ alerts }: { alerts: OperationalAlert[] }) {
   })).filter((g) => g.items.length > 0);
 
   return (
-    <section className="rounded-xl border border-black/10 bg-white">
-      <header className="flex flex-wrap items-baseline justify-between gap-2 border-b border-black/10 px-5 py-4">
-        <h2 className="text-lg font-bold tracking-tight text-neutral-900">
+    <section className="rounded-xl border border-border bg-card">
+      <header className="flex flex-wrap items-baseline justify-between gap-2 border-b border-border px-5 py-4">
+        <h2 className="text-lg font-bold tracking-tight text-foreground">
           Active alerts
         </h2>
-        <span className="text-xs text-neutral-500">
+        <span className="text-xs text-muted-foreground">
           {alerts.length === 0
             ? "Nothing needs attention"
             : `${alerts.length} open · 7 more alert types land with their services`}
@@ -82,12 +82,12 @@ export function AlertsList({ alerts }: { alerts: OperationalAlert[] }) {
       </header>
 
       {alerts.length === 0 ? (
-        <p className="px-5 py-8 text-center text-sm text-neutral-500">
+        <p className="px-5 py-8 text-center text-sm text-muted-foreground">
           Nothing from the wired sources — the fleet is airworthy, no flights
           are overdue, and no MELs expire in the next 48 hours.
         </p>
       ) : (
-        <div className="divide-y divide-black/[0.06]">
+        <div className="divide-y divide-border">
           {groups.map(({ category, items }) => (
             <AlertGroup key={category} category={category} items={items} />
           ))}
@@ -109,25 +109,25 @@ function AlertGroup({
 
   return (
     <details className="group/disc px-5 py-3.5">
-      <summary className="flex cursor-pointer list-none items-center gap-2 rounded-lg py-0.5 outline-none [&::-webkit-details-marker]:hidden focus-visible:ring-2 focus-visible:ring-neutral-400">
+      <summary className="flex cursor-pointer list-none items-center gap-2 rounded-lg py-0.5 outline-none [&::-webkit-details-marker]:hidden focus-visible:ring-2 focus-visible:ring-ring">
         <span
           className={`inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[0.7rem] font-bold tabular-nums ${
-            red ? "bg-red-600 text-white" : "bg-amber-500 text-white"
+            red ? "bg-status-red text-white" : "bg-status-yellow text-white"
           }`}
         >
           {items.length}
         </span>
-        <h3 className="text-sm font-semibold text-neutral-900">
+        <h3 className="text-sm font-semibold text-foreground">
           {CATEGORY_LABEL[category]}
         </h3>
         {/* The affected tails, on the closed row. Collapsing should hide
             the detail, not the answer to "which ones?". */}
-        <span className="min-w-0 flex-1 truncate text-xs text-neutral-500">
+        <span className="min-w-0 flex-1 truncate text-xs text-muted-foreground">
           {summarise(items)}
         </span>
         <span
           aria-hidden
-          className="shrink-0 text-neutral-400 transition-transform duration-150 group-open/disc:rotate-90"
+          className="shrink-0 text-muted-foreground/60 transition-transform duration-150 group-open/disc:rotate-90"
         >
           ›
         </span>
@@ -138,21 +138,21 @@ function AlertGroup({
           <li key={a.id}>
             <Link
               href={a.href}
-              className="group flex items-center justify-between gap-3 rounded-lg px-3 py-2 text-sm transition-colors hover:bg-neutral-50"
+              className="group flex items-center justify-between gap-3 rounded-lg px-3 py-2 text-sm transition-colors hover:bg-accent"
             >
               <span className="flex min-w-0 items-baseline gap-2">
-                <span className="truncate font-medium text-neutral-900">
+                <span className="truncate font-medium text-foreground">
                   {/* The category is already the group heading — repeating
                       it on every row is what made this read as a wall. */}
                   {stripCategoryPrefix(a.title)}
                 </span>
-                <span className="truncate text-xs text-neutral-500">
+                <span className="truncate text-xs text-muted-foreground">
                   {a.detail}
                 </span>
               </span>
               <span
                 aria-hidden
-                className="shrink-0 text-neutral-300 transition-colors group-hover:text-neutral-500"
+                className="shrink-0 text-muted-foreground/50 transition-colors group-hover:text-muted-foreground"
               >
                 →
               </span>

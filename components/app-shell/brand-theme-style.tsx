@@ -31,7 +31,10 @@ export function BrandThemeStyle({
   const hoverRgb = hoverHex ? brandTones(hoverHex).rgb : tones.darkRgb;
 
   return (
-    <style>{`:root, .dark {
+    // Every island re-declares its palette, so each needs the tenant's
+    // brand re-applied — or a panel opened from the dark top bar (a
+    // `.light` island) would show Peregrine crimson to another tenant.
+    <style>{`:root, .dark, .light {
       --brand-rgb: ${tones.rgb};
       --brand-dark-rgb: ${hoverRgb};
       --brand-light-rgb: ${tones.lightRgb};

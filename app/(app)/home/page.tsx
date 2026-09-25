@@ -1,16 +1,13 @@
 import { auth } from "@/auth";
-import { buildHeaderActionsData } from "@/app/(app)/header-actions-props";
-import { HeaderActions } from "@/components/app-shell/header-actions";
 import { ActiveAlertsPanel } from "@/components/home/active-alerts-panel";
 import { HomeHero } from "@/components/home/home-hero";
 import { HomeModuleCard } from "@/components/home/home-module-card";
-import { HomeTopBar } from "@/components/home/home-topbar";
 import { HOME_QUICK_LINKS, QuickLinks } from "@/components/home/quick-links";
 import {
   HOME_MODULES,
   HOME_MODULE_ROLES,
 } from "@/components/home/module-catalog";
-import { listMyTenants } from "@/lib/api/auth";
+import { getCompanyProfile, listMyTenants } from "@/lib/api/auth";
 import { getFlightStats } from "@/lib/api/ops";
 import { loadOperationalSnapshot } from "@/lib/dashboards/operational-snapshot";
 import { currentGreeting, firstNameFrom } from "@/lib/greeting";
@@ -61,25 +58,26 @@ function wordmarkFromName(name: string | undefined): {
 /**
  * /home — pitch landing.
  *
- * Owns its own top chrome (the app-shell hides its default header on this
- * route). Layout:
+ * The top bar comes from the app shell, as on every page — this page's
+ * own design, which the whole app now shares. Layout:
  *
- *   1. HomeTopBar        — dark black bar with a red primary chip, brand
- *                          wordmark, phone, and the default HeaderActions
- *                          cluster re-tinted for the dark background
- *   2. HomeHero          — light-gray secondary header + photo hero
- *                          (dark overlay) + ops-line strip with a red CTA
+ *   1. HomeHero          — brand band + photo hero (an ink island) +
+ *                          the tenant's ops line, when they have one
  *   3. Active Alerts     — unchanged, role-gated (M2 spec)
  *   4. Departments       — white surface with HomeModuleCard tiles
  *   5. Quick links       — unchanged footer strip
  */
 export default async function HomePage() {
-  const [session, tenantsResponse, stats, snapshot] = await Promise.all([
+  const [session, tenantsResponse, stats, snapshot, profile] = await Promise.all([
     auth(),
     listMyTenants().catch(() => ({ tenants: [] })),
     getFlightStats().catch(() => null),
     loadOperationalSnapshot(),
+    // The layout fetches this too; Next memoises identical GETs within a
+    // request, so it is one call.
+    getCompanyProfile().catch(() => null),
   ]);
+  const opsPhone = profile?.ops_phone?.trim() || null;
 
   const currentTenant =
     tenantsResponse.tenants.find((t) => t.is_current) ??
@@ -127,35 +125,10 @@ export default async function HomePage() {
     ? Math.max(0, stats.aircraft_total - stats.aircraft_active)
     : 0;
 
-  // The same top-bar cluster the rest of the app gets. This page
-  // renders its own top bar rather than the (app) layout's, so every
-  // prop has to be sourced here too — and three of them were missed
-  // one at a time: the AI tools menu, the duty seed, and the
-  // notification bell, each showing a degraded state on /home alone.
-  //
-  // buildHeaderActionsData assembles all of them in one place, so a
-  // fourth cannot be missed. See app/(app)/header-actions-props.ts.
-  const headerData = userEmail
-    ? await buildHeaderActionsData(
-        userEmail,
-        session?.user?.name ?? null,
-        sessionRoles,
-      )
-    : null;
 
-  const actionsSlot = headerData ? <HeaderActions {...headerData} /> : null;
 
   return (
-    // Full-bleed white surface so /home owns the entire viewport — the
-    // standard app-shell dark chrome is hidden for this route (see
-    // AppShellHeader) and our HomeTopBar / HomeHero render at the top.
-    <div className="min-h-screen bg-white">
-      <HomeTopBar
-        brand={currentTenant?.name ?? "FlightOps"}
-        phone="+1 (555) 000-0000"
-        actionsSlot={actionsSlot}
-        showOpsChip={visibleModules.some((m) => m.id === "reservations")}
-      />
+    <div>
       <HomeHero
         tenantName={currentTenant?.name ?? "FlightOps"}
         wordmark={wordmarkFromName(currentTenant?.name).wordmark}
@@ -165,6 +138,7 @@ export default async function HomePage() {
         airborne={airborne}
         onGround={onGround}
         acftHold={acftHold}
+        opsPhone={opsPhone}
       />
 
       <div className="mx-auto max-w-6xl px-4 pb-16 sm:px-8">
@@ -174,23 +148,21 @@ export default async function HomePage() {
           </div>
         )}
 
-        {/* Departments — clean white content block */}
         <section className="pt-10">
-          <div className="mb-6 flex items-baseline justify-between border-b border-black/10 pb-4">
+          <div className="mb-6 flex items-baseline justify-between border-b border-border pb-4">
             <div>
-              <h2 className="text-2xl font-bold tracking-tight text-neutral-900">
+              <h2 className="text-2xl font-bold tracking-tight text-foreground">
                 Departments
               </h2>
-              <p className="mt-1 text-sm text-neutral-500">
+              <p className="mt-1 text-sm text-muted-foreground">
                 Every module in the platform, one click away.
               </p>
             </div>
-            <span className="text-[0.7rem] font-semibold uppercase tracking-[0.14em] text-neutral-500">
+            <span className="text-[0.7rem] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
               {visibleModules.filter((m) => m.status === "live").length} live ·{" "}
               {visibleModules.filter((m) => m.status !== "live").length} coming
             </span>
           </div>
-
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {visibleModules.map((module) => (
               <HomeModuleCard key={module.id} module={module} />

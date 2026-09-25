@@ -104,8 +104,11 @@ describe("AlertsList", () => {
 
   it("falls back to a yellow count for a group with no red alerts", () => {
     const { container } = render(<AlertsList alerts={[melExpiring("N100PA")]} />);
-    expect(container.querySelector(".bg-amber-500")).not.toBeNull();
-    expect(container.querySelector(".bg-red-600")).toBeNull();
+    // Theme tokens since the unified theme; both names checked so the
+    // negative assertion cannot pass by referring to a class that no
+    // longer exists anywhere.
+    expect(container.querySelector(".bg-status-yellow")).not.toBeNull();
+    expect(container.querySelector(".bg-status-red")).toBeNull();
   });
 
   it("says nothing needs attention rather than rendering an empty box", () => {

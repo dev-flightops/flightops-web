@@ -36,7 +36,11 @@
  * the crimson brand (hue 358°).
  */
 @layer base {
-  :root {
+  /* `.light` re-declares the light ground, for a surface that opens from
+     inside an ink island — a dropdown panel hanging off the top bar
+     should read like every other panel in the app, not like the bar. */
+  :root,
+  .light {
     --background: 0 0% 100%;
     --foreground: 0 0% 9%;
     --card: 0 0% 100%;

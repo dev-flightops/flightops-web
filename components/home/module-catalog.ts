@@ -28,7 +28,10 @@ export interface HomeModule {
   sub: string;
   href: string;
   status: ModuleStatus;
-  color: string; // hex for icon fill
+  /** Icon fill. Sits on its own colour at 10% over white, so each was
+   *  solved to reach 3:1 there (WCAG 1.4.11 for graphics) — the
+   *  dark-theme originals were as low as 1.6:1 on the light tiles. */
+  color: string;
   /** Optional accent treatment — blue glow on the card */
   highlight?: boolean;
   /** Raw `<path d="...">` payload for the icon SVG */
@@ -59,7 +62,7 @@ export const HOME_MODULES: HomeModule[] = [
     sub: "Fleet Board, bookings, customers, billing",
     href: "/reservations/",
     status: "live",
-    color: "#34d399",
+    color: "#279e73",
     iconPath:
       "M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z",
   },
@@ -79,7 +82,7 @@ export const HOME_MODULES: HomeModule[] = [
     sub: "Aircraft, squawks, MEL",
     href: "/maintenance",
     status: "live",
-    color: "#f87171",
+    color: "#df6666",
     iconPath:
       "M22.7 19l-9.1-9.1c.9-2.3.4-5-1.5-6.9-2-2-5-2.4-7.4-1.3L9 6 6 9 1.6 4.7C.4 7.1.9 10.1 2.9 12.1c1.9 1.9 4.6 2.4 6.9 1.5l9.1 9.1c.4.4 1 .4 1.4 0l2.3-2.3c.5-.4.5-1.1.1-1.4z",
   },
@@ -89,7 +92,7 @@ export const HOME_MODULES: HomeModule[] = [
     sub: "Ramp, stations, GSE, fuel",
     href: "/ground-ops/",
     status: "live",
-    color: "#fbbf24",
+    color: "#b08619",
     iconPath:
       "M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z",
   },
@@ -99,7 +102,7 @@ export const HOME_MODULES: HomeModule[] = [
     sub: "Employees & payroll",
     href: "/employees/",
     status: "live",
-    color: "#a78bfa",
+    color: "#967de1",
     iconPath:
       "M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z",
   },
@@ -109,7 +112,7 @@ export const HOME_MODULES: HomeModule[] = [
     sub: "Training & courses",
     href: "/academy/",
     status: "live",
-    color: "#daa520",
+    color: "#b1861a",
     iconPath:
       "M12 3L1 9l4 2.18v6L12 21l7-3.82v-6l2-1.09V17h2V9L12 3zm6.82 6L12 12.72 5.18 9 12 5.28 18.82 9zM17 15.99l-5 2.73-5-2.73v-3.72L12 15l5-2.73v3.72z",
   },
@@ -119,7 +122,7 @@ export const HOME_MODULES: HomeModule[] = [
     sub: "FAR, safety, regulatory checks",
     href: "/compliance/crew-currency",
     status: "live",
-    color: "#34d399",
+    color: "#279e73",
     iconPath:
       "M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z",
   },
@@ -129,7 +132,7 @@ export const HOME_MODULES: HomeModule[] = [
     sub: "Reports, hazards, incidents, SMS",
     href: "/safety/",
     status: "live",
-    color: "#60a5fa",
+    color: "#538ed7",
     iconPath:
       "M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z",
   },
@@ -139,7 +142,7 @@ export const HOME_MODULES: HomeModule[] = [
     sub: "Dashboards, analytics, users",
     href: "/dashboards",
     status: "live",
-    color: "#fbbf24",
+    color: "#b08619",
     iconPath:
       "M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z",
   },
@@ -159,7 +162,7 @@ export const HOME_MODULES: HomeModule[] = [
     sub: "Live ops board, tracking, history",
     href: "/flight-following",
     status: "live",
-    color: "#34d399",
+    color: "#279e73",
     iconPath:
       "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z",
   },
@@ -169,7 +172,7 @@ export const HOME_MODULES: HomeModule[] = [
     sub: "Crew housing, rooms, assignments",
     href: "/housing/",
     status: "live",
-    color: "#a78bfa",
+    color: "#967de1",
     iconPath: "M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z",
   },
   {
@@ -178,7 +181,7 @@ export const HOME_MODULES: HomeModule[] = [
     sub: "Flight invoices, billing, AR",
     href: "/invoicing",
     status: "live",
-    color: "#34d399",
+    color: "#279e73",
     iconPath:
       "M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm-1 7V3.5L18.5 9H13zM8 13h8v2H8v-2zm0 4h8v2H8v-2z",
   },
@@ -188,7 +191,7 @@ export const HOME_MODULES: HomeModule[] = [
     sub: "Incoming orders — acknowledge and complete",
     href: "/fuel/supplier",
     status: "live",
-    color: "#fbbf24",
+    color: "#b08619",
     roleGate: "fuel_supplier",
     iconPath:
       "M19.77 7.23l.01-.01-3.72-3.72L15 4.56l2.11 2.11c-.94.36-1.61 1.26-1.61 2.33 0 1.38 1.12 2.5 2.5 2.5.36 0 .69-.08 1-.21v7.21c0 .55-.45 1-1 1s-1-.45-1-1V14c0-1.1-.9-2-2-2h-1V5c0-1.1-.9-2-2-2H6c-1.1 0-2 .9-2 2v16h10v-7.5h1.5v5c0 1.38 1.12 2.5 2.5 2.5s2.5-1.12 2.5-2.5V9c0-.69-.28-1.32-.73-1.77zM12 10H6V5h6v5zm6 0c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1z",
@@ -317,3 +320,22 @@ export const HOME_MODULE_ROLES: Record<string, readonly Role[]> = {
   // everyone, and hazard reporting must be reachable by whoever saw the
   // hazard. See the note in components/app-shell/modules.ts.
 };
+
+
+/**
+ * Whether a session's roles can see a module — the rule the home tiles
+ * use, exported so the top bar's Ops chip follows it too rather than
+ * keeping a second copy.
+ *
+ * Fails open on an empty role list, as the tiles do: a session that
+ * failed to carry roles gets a cluttered screen rather than an empty
+ * one, and every page still gates itself.
+ */
+export function rolesCanSeeModule(
+  moduleId: string,
+  roles: readonly string[],
+): boolean {
+  const allowed = HOME_MODULE_ROLES[moduleId];
+  if (!allowed || roles.length === 0) return true;
+  return roles.some((r) => (allowed as readonly string[]).includes(r));
+}

@@ -26,6 +26,10 @@ export interface AppShellProps {
   actionsSlot?: ReactNode;
   /** Session roles — drives which department modules appear in the nav. */
   roles?: readonly string[];
+  /** Show the crimson Ops chip — only for roles that can open Reservations. */
+  showOpsChip?: boolean;
+  /** The tenant's ops line; hidden when the company profile has none. */
+  opsPhone?: string | null;
 }
 
 export function AppShell({
@@ -33,13 +37,21 @@ export function AppShell({
   brand = "Peregrine Flight Ops",
   actionsSlot,
   roles = [],
+  showOpsChip = false,
+  opsPhone = null,
 }: AppShellProps) {
   return (
     <div className="flex min-h-screen flex-col">
       {/* AppShellHeader hides itself on /home so that page can render its
        *  own light-themed HomeTopBar for the pitch skin. Every other
        *  route keeps the standard dark Peregrine chrome. */}
-      <AppShellHeader brand={brand} actionsSlot={actionsSlot} roles={roles} />
+      <AppShellHeader
+        brand={brand}
+        actionsSlot={actionsSlot}
+        roles={roles}
+        showOpsChip={showOpsChip}
+        opsPhone={opsPhone}
+      />
       <main className="flex-1">{children}</main>
     </div>
   );

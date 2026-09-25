@@ -97,6 +97,15 @@ const config: Config = {
           teal: rgb("--status-teal"),
         },
       },
+      // Tailwind 3's opacity scale moves in fives, and an off-scale
+      // modifier generates no CSS at all — silently. `/8` and `/12` were
+      // used 25 times, almost all for the top bar's and module nav's
+      // hover and active backgrounds, none of which ever rendered.
+      // Extending the scale makes them work as written.
+      opacity: {
+        8: "0.08",
+        12: "0.12",
+      },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",

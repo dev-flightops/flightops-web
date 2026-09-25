@@ -268,7 +268,7 @@ export function HelpPanel() {
         aria-expanded={open}
         aria-label="Help"
         title={contextual ? `Help — ${contextual.title}` : "Help"}
-        className="hidden items-center rounded-md p-2 text-muted-foreground hover:bg-primary/8 hover:text-foreground sm:inline-flex"
+        className="hidden items-center rounded-md p-2 text-muted-foreground hover:bg-foreground/8 hover:text-foreground sm:inline-flex"
       >
         <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
           <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z" />
@@ -340,7 +340,7 @@ export function HelpPanel() {
                         <Link
                           href={entry.route}
                           onClick={() => setOpen(false)}
-                          className="text-xs font-semibold hover:text-status-blue"
+                          className="text-xs font-semibold hover:text-primary"
                         >
                           {entry.title}
                         </Link>

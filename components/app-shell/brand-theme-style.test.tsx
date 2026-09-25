@@ -22,9 +22,11 @@ describe("BrandThemeStyle", () => {
     expect(out).toContain("--brand-dark-rgb:");
   });
 
-  it("applies inside the dark ink surfaces too", () => {
-    // The top bar is a `.dark` island; a tenant's brand has to reach it.
-    expect(css("#1d4ed8")).toMatch(/:root,\s*\.dark\s*\{/);
+  it("applies inside both kinds of island too", () => {
+    // The top bar is a `.dark` island and its dropdowns are `.light`
+    // ones. Each re-declares its palette, so without this a tenant's
+    // brand would revert to the default inside them.
+    expect(css("#1d4ed8")).toMatch(/:root,\s*\.dark,\s*\.light\s*\{/);
   });
 
   it("keeps a hover shade the tenant chose rather than deriving one", () => {

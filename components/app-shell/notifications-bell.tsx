@@ -112,7 +112,7 @@ export function NotificationsBell({
         }
         aria-expanded={open}
         title="Notifications"
-        className="relative inline-flex items-center rounded-md p-2 text-muted-foreground hover:bg-primary/8 hover:text-foreground"
+        className="relative inline-flex items-center rounded-md p-2 text-muted-foreground hover:bg-foreground/8 hover:text-foreground"
       >
         <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
           <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z" />
@@ -134,7 +134,7 @@ export function NotificationsBell({
         <div
           role="dialog"
           aria-label="Notifications"
-          className="absolute right-0 z-50 mt-1 w-[22rem] overflow-hidden rounded-xl border border-border bg-card shadow-lg"
+          className="light absolute right-0 z-50 mt-1 w-[22rem] overflow-hidden rounded-xl border border-border bg-card text-card-foreground shadow-lg"
         >
           <div className="flex items-baseline justify-between border-b border-border px-3 py-2">
             <p className="text-xs font-semibold">
@@ -179,7 +179,7 @@ export function NotificationsBell({
                     <Link
                       href={alert.href}
                       onClick={() => setOpen(false)}
-                      className="block text-xs font-semibold hover:text-status-blue"
+                      className="block text-xs font-semibold hover:text-primary"
                     >
                       {alert.title}
                     </Link>
