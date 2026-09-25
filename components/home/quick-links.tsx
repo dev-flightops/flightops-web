@@ -108,7 +108,7 @@ function QuickLinkChip({ link }: { link: QuickLink }) {
       ? "text-muted-foreground hover:bg-primary/8 hover:text-primary"
       : "cursor-not-allowed text-muted-foreground/50",
     link.accent === "gold" && isLive && "text-status-yellow",
-    link.accent === "gold" && !isLive && "text-status-yellow/40",
+    link.accent === "gold" && !isLive && "cursor-not-allowed text-status-yellow/40",
   );
 
   if (isLive) {
