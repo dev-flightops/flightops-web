@@ -18,7 +18,7 @@ import { NewFlightLogForm } from "./new-flight-log-form";
  *
  * Mirrors legacy `peregrineflight.com/elog/`:
  *   - Title "Electronic Flight Log" + today's local date subtitle
- *   - Active Logs (Draft) panel — yellow-tinted list of in-progress
+ *   - Active Logs (Draft) panel — list of in-progress
  *     logs (empty list collapses the panel, same as legacy)
  *   - New Flight Log form — Aircraft / Flight / Flight Number /
  *     Flight Type, submit creates a draft + redirects to the 7-tab
