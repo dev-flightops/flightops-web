@@ -74,7 +74,7 @@ export function NotesForm({
           rows={6}
           maxLength={8000}
           placeholder="Log progress here — Safety Officer sees this on the board."
-          className="ff-notes"
+          className="ff-input"
         />
         <div className="mt-3 flex items-center justify-end">
           <button
@@ -87,24 +87,6 @@ export function NotesForm({
         </div>
       </form>
 
-      <style>{`
-        .ff-notes {
-          width: 100%;
-          background: hsl(var(--background));
-          color: hsl(var(--foreground));
-          border: 1px solid hsl(var(--border));
-          border-radius: 8px;
-          padding: 0.5rem 0.75rem;
-          font-size: 0.8125rem;
-          outline: none;
-          resize: vertical;
-          font-family: inherit;
-        }
-        .ff-notes:focus:not(:disabled) {
-          border-color: hsl(var(--primary));
-          box-shadow: 0 0 0 3px hsl(var(--primary) / 0.12);
-        }
-      `}</style>
     </section>
   );
 }

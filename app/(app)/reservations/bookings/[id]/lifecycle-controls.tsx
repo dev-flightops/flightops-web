@@ -104,7 +104,7 @@ function QuoteForm({
             step="0.01"
             required
             defaultValue={defaultDollars}
-            className="ff-inline"
+            className="ff-input"
           />
         </label>
         <button
@@ -115,7 +115,6 @@ function QuoteForm({
           {pending ? "Saving…" : "Send Quote"}
         </button>
       </form>
-      <FormStyles />
     </ActionCard>
   );
 }
@@ -200,7 +199,7 @@ function CancelForm({
             maxLength={4000}
             value={reason}
             onChange={(e) => setReason(e.target.value)}
-            className="ff-inline"
+            className="ff-input"
             placeholder="Customer weather no-go, aircraft unavailable, etc."
           />
         </label>
@@ -215,7 +214,6 @@ function CancelForm({
           </button>
         </div>
       </form>
-      <FormStyles />
     </ActionCard>
   );
 }
@@ -255,24 +253,3 @@ function ErrorBanner({ message }: { message: string }) {
   );
 }
 
-function FormStyles() {
-  return (
-    <style>{`
-      .ff-inline {
-        width: 100%;
-        background: hsl(var(--background));
-        color: hsl(var(--foreground));
-        border: 1px solid hsl(var(--border));
-        border-radius: 8px;
-        padding: 0.5rem 0.75rem;
-        font-size: 0.8125rem;
-        outline: none;
-      }
-      .ff-inline:focus:not(:disabled) {
-        border-color: hsl(var(--primary));
-        box-shadow: 0 0 0 3px hsl(var(--primary) / 0.12);
-      }
-      textarea.ff-inline { resize: vertical; font-family: inherit; }
-    `}</style>
-  );
-}

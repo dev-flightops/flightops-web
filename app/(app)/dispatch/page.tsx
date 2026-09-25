@@ -6,7 +6,6 @@ import { BookingsAwaitingFlightPanel } from "@/components/dispatch/packet/bookin
 import { WeightReturnsPanel } from "@/components/dispatch/packet/weight-returns-panel";
 import {
   FlightDetailsPanel,
-  PacketStyles,
 } from "@/components/dispatch/packet/flight-details-panel";
 import { LeftColumn } from "@/components/dispatch/packet/left-column";
 import { CrewPanel } from "@/components/dispatch/packet/crew-panel";
@@ -258,7 +257,6 @@ export default async function DispatchPage({
         {/* Behind, not blocked — see the panel for why it is amber
             rather than red. */}
         <BookingsAwaitingFlightPanel bookings={awaitingFlight.items} />
-      <PacketStyles />
 
       <div className="space-y-4">
         <LoadFromSchedule

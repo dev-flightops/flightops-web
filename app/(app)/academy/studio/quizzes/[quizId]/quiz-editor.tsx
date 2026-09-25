@@ -50,7 +50,7 @@ function QuizMetaCard({ quiz }: { quiz: QuizAdminResponse }) {
             defaultValue={quiz.title}
             required
             maxLength={200}
-            className="ff mt-1"
+            className="ff-input mt-1"
           />
         </label>
         <label className="block">
@@ -63,7 +63,7 @@ function QuizMetaCard({ quiz }: { quiz: QuizAdminResponse }) {
             rows={3}
             maxLength={4000}
             placeholder="Shown at the top of the quiz — e.g. 'Read each prompt carefully.'"
-            className="ff mt-1"
+            className="ff-input mt-1"
           />
         </label>
         <label className="block max-w-xs">
@@ -77,7 +77,7 @@ function QuizMetaCard({ quiz }: { quiz: QuizAdminResponse }) {
             max={100}
             step={1}
             defaultValue={quiz.pass_threshold}
-            className="ff mt-1"
+            className="ff-input mt-1"
           />
         </label>
         <div className="flex justify-end">
@@ -90,7 +90,6 @@ function QuizMetaCard({ quiz }: { quiz: QuizAdminResponse }) {
           </button>
         </div>
       </form>
-      <FormStyles />
     </section>
   );
 }
@@ -190,7 +189,6 @@ function QuestionRow({
           ) : null}
         </ul>
       )}
-      <FormStyles />
     </li>
   );
 }
@@ -271,7 +269,7 @@ function QuestionForm({
           rows={2}
           required
           maxLength={2000}
-          className="ff mt-1"
+          className="ff-input mt-1"
         />
       </label>
       <div>
@@ -310,7 +308,7 @@ function QuestionForm({
                 required
                 maxLength={500}
                 placeholder={`Option ${idx + 1}`}
-                className="ff flex-1"
+                className="ff-input flex-1"
               />
               <button
                 type="button"
@@ -333,7 +331,7 @@ function QuestionForm({
           defaultValue={question?.explanation ?? ""}
           rows={2}
           maxLength={2000}
-          className="ff mt-1"
+          className="ff-input mt-1"
         />
       </label>
       <div className="flex justify-end gap-2">
@@ -365,7 +363,6 @@ function AddQuestionCard({ quizId }: { quizId: string }) {
         Add question
       </h2>
       <QuestionForm quizId={quizId} />
-      <FormStyles />
     </section>
   );
 }
@@ -404,22 +401,3 @@ function ErrorBanner({ message }: { message: string }) {
   );
 }
 
-function FormStyles() {
-  return (
-    <style>{`
-      .ff {
-        width: 100%;
-        padding: 0.5rem 0.75rem;
-        border: 1px solid hsl(var(--border));
-        border-radius: 0.375rem;
-        background: hsl(var(--background));
-        font-size: 0.8125rem;
-        color: hsl(var(--foreground));
-      }
-      .ff:focus {
-        outline: none;
-        border-color: hsl(var(--ring));
-      }
-    `}</style>
-  );
-}

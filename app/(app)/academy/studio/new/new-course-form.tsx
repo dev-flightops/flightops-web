@@ -39,7 +39,7 @@ export function NewCourseForm() {
           name="title"
           required
           maxLength={200}
-          className="ff"
+          className="ff-input"
           placeholder="e.g. Annual Part 135 Refresher"
         />
       </Field>
@@ -54,7 +54,7 @@ export function NewCourseForm() {
           name="description"
           rows={3}
           maxLength={10_000}
-          className="ff"
+          className="ff-input"
           placeholder="What does this course cover?"
         />
       </Field>
@@ -69,7 +69,7 @@ export function NewCourseForm() {
             id="category"
             name="category"
             required
-            className="ff"
+            className="ff-input"
             defaultValue=""
           >
             <option value="" disabled>
@@ -96,7 +96,7 @@ export function NewCourseForm() {
             max={3650}
             required
             defaultValue={365}
-            className="ff"
+            className="ff-input"
           />
         </Field>
       </div>
@@ -106,7 +106,7 @@ export function NewCourseForm() {
           id="publish_status"
           name="publish_status"
           defaultValue="draft"
-          className="ff"
+          className="ff-input"
         >
           {COURSE_PUBLISH_STATUSES.map((s) => (
             <option key={s} value={s}>
@@ -126,23 +126,6 @@ export function NewCourseForm() {
         </button>
       </div>
 
-      <style>{`
-        .ff {
-          width: 100%;
-          background: hsl(var(--background));
-          color: hsl(var(--foreground));
-          border: 1px solid hsl(var(--border));
-          border-radius: 8px;
-          padding: 0.5rem 0.75rem;
-          font-size: 0.8125rem;
-          outline: none;
-        }
-        .ff:focus:not(:disabled) {
-          border-color: hsl(var(--primary));
-          box-shadow: 0 0 0 3px hsl(var(--primary) / 0.12);
-        }
-        textarea.ff { resize: vertical; font-family: inherit; }
-      `}</style>
     </form>
   );
 }

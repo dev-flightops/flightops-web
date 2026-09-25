@@ -3,80 +3,114 @@
 @tailwind utilities;
 
 /*
- * Color palette is the legacy dispatch-platform-main `--ff-*` tokens, ported
- * into the shadcn HSL-variable system so our existing primitives keep working
- * without API churn. Map:
+ * ONE THEME — the home page's design language, everywhere.
  *
- *   legacy            hex        → shadcn token (HSL)
- *   --ff-bg           #080c12    → --background
- *   --ff-surface      #0c1219    → --muted (sub-surface — darker than card)
- *   --ff-panel        #111a28    → --card
- *   --ff-border       #1a2a3e    → --border / --input
- *   --ff-accent       #0a84ff    → --primary / --accent / --ring
- *   --ff-text         #e2e8f0    → --foreground / --card-foreground
- *   --ff-sub          #7e8ea0    → --muted-foreground
+ * Until September 2026 the app had two design systems. The home page
+ * was light, crimson-accented and editorial, but built from ~80
+ * hardcoded colour literals, so none of it reached any other page.
+ * Every other page was the legacy dispatch-platform dark navy
+ * (#080c12) with a blue accent, forced by <html class="dark">. The
+ * operator's words: "When we take this to pitch it needs to look like
+ * a real software solution." So the home page's language is now the
+ * theme, and every page gets it through these tokens.
  *
- * Light mode is unused (we render `<html className="dark">` in app/layout.tsx)
- * but the tokens are kept sensible so shadcn primitives don't break if a story
- * or test renders without the .dark class.
+ * LIGHT GROUND by default (:root). DARK is no longer a page theme — it
+ * is an *ink island*: put `className="dark"` on a surface (the top bar,
+ * the photo hero) and every token inside it resolves to ink values, so
+ * shared components render correctly there without per-surface
+ * overrides. That replaces the `!important` attribute-selector restyle
+ * the home top bar used, one rule of which had already silently stopped
+ * matching.
+ *
+ * ONE ACCENT — the tenant's brand, carried as bare RGB channels
+ * (--brand-rgb) because that is the only form Tailwind 3 can put an
+ * opacity modifier on. Defaults to Peregrine crimson; a tenant's own
+ * colour arrives via <BrandThemeStyle>. `primary`, `ring` and `brand`
+ * all resolve to it.
+ *
+ * STATUS COLOURS are theme-aware channels too. The light values were
+ * solved, not picked: each is the lightest shade of its hue that reaches
+ * WCAG AA (4.5:1) on white, on the muted band, AND on its own /15 tint —
+ * the `bg-status-x/10 text-status-x` chip pattern that ~3,300 elements
+ * use. Status red is a scarlet (hue 5°) so it stays distinguishable from
+ * the crimson brand (hue 358°).
  */
 @layer base {
   :root {
     --background: 0 0% 100%;
-    --foreground: 217 41% 5%;
+    --foreground: 0 0% 9%;
     --card: 0 0% 100%;
-    --card-foreground: 217 41% 5%;
+    --card-foreground: 0 0% 9%;
     --popover: 0 0% 100%;
-    --popover-foreground: 217 41% 5%;
-    --muted: 213 41% 96%;
-    --muted-foreground: 213 13% 45%;
-    --accent: 210 100% 52%;
-    --accent-foreground: 0 0% 100%;
-    --border: 213 41% 88%;
-    --input: 213 41% 88%;
-    --primary: 210 100% 52%;
+    --popover-foreground: 0 0% 9%;
+    /* The home page's grey band (#f2f2f2), a hair cooler. */
+    --muted: 240 5% 96%;
+    --muted-foreground: 240 4% 41%;
+    --border: 240 6% 90%;
+    /* Stronger than --border: an input's edge is what says "type here". */
+    --input: 240 5% 82%;
+    --secondary: 240 5% 96%;
+    --secondary-foreground: 0 0% 9%;
+    /* A quiet hover tint for menus and rows — not the brand, which would
+       turn every hovered row solid crimson. */
+    --accent: 240 5% 95%;
+    --accent-foreground: 0 0% 9%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 213 41% 92%;
-    --secondary-foreground: 217 41% 5%;
-    --destructive: 0 78% 48%;
+    --destructive: 0 74% 42%;
     --destructive-foreground: 0 0% 100%;
-    --ring: 210 100% 52%;
     --radius: 0.5rem;
 
-    /* Per-tenant brand override tokens (M3 branding). Consumed as
-     * `var(--brand-primary)` for primary buttons, accents, etc. Values
-     * are hex strings (not HSL triples) so a tenant setting comes
-     * through as-is. Defaults fall back to the platform accent. */
-    --brand-primary: #0a84ff;
-    --brand-primary-dark: #0070e0;
+    /* Brand — the single accent. */
+    --brand-rgb: 171 36 41;
+    --brand-dark-rgb: 143 30 34;
+    --brand-light-rgb: 255 107 113;
+    --brand-primary: #ab2429;
+    --brand-primary-dark: #8f1e22;
+
+    /* Status on a light ground. */
+    --status-green: 4 116 84;
+    --status-yellow: 166 76 8;
+    --status-red: 193 43 28;
+    --status-blue: 29 78 216;
+    --status-gray: 96 104 114;
+    --status-orange: 182 61 11;
+    --status-purple: 126 34 206;
+    --status-teal: 15 114 107;
+
+    /* The ink used by the top bar and hero — near-black, not navy. */
+    --ink: 0 0% 4%;
   }
 
+  /* Ink islands. Neutral near-black — the home page's top bar and hero —
+     rather than the legacy navy. */
   .dark {
-    --background: 216 39% 5%;
-    --foreground: 214 32% 91%;
-    --card: 217 40% 11%;
-    --card-foreground: 214 32% 91%;
-    --popover: 217 40% 11%;
-    --popover-foreground: 214 32% 91%;
-    --muted: 212 33% 8%;
-    --muted-foreground: 213 13% 56%;
-    --accent: 210 100% 52%;
-    --accent-foreground: 0 0% 100%;
-    --border: 213 41% 17%;
-    --input: 213 41% 17%;
-    --primary: 210 100% 52%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 213 41% 22%;
-    --secondary-foreground: 214 32% 91%;
-    /* Legacy `.btn-danger` — dark-red panel with light-pink text rather than
-     * the typical "bright red, white text" destructive. */
+    --background: 0 0% 4%;
+    --foreground: 0 0% 93%;
+    --card: 0 0% 9%;
+    --card-foreground: 0 0% 93%;
+    --popover: 0 0% 9%;
+    --popover-foreground: 0 0% 93%;
+    --muted: 0 0% 8%;
+    --muted-foreground: 0 0% 64%;
+    --border: 0 0% 17%;
+    --input: 0 0% 22%;
+    --secondary: 0 0% 14%;
+    --secondary-foreground: 0 0% 93%;
+    --accent: 0 0% 13%;
+    --accent-foreground: 0 0% 93%;
     --destructive: 0 75% 24%;
     --destructive-foreground: 0 93% 82%;
-    --ring: 210 100% 52%;
 
-    /* Brand override tokens — same defaults in dark mode. */
-    --brand-primary: #0a84ff;
-    --brand-primary-dark: #0070e0;
+    /* Status on ink — the original dark-tuned values, which were right
+       for a dark ground. */
+    --status-green: 52 211 153;
+    --status-yellow: 251 191 36;
+    --status-red: 248 113 113;
+    --status-blue: 96 165 250;
+    --status-gray: 154 164 177;
+    --status-orange: 251 146 60;
+    --status-purple: 192 132 252;
+    --status-teal: 94 234 212;
   }
 }
 
@@ -87,10 +121,10 @@
     font-feature-settings: "cv11", "ss01"; /* Inter stylistic alternates */
   }
 
-  /* Slim scrollbar to match legacy's 5px webkit treatment. */
+  /* Slim scrollbar, kept from legacy. */
   ::-webkit-scrollbar {
-    width: 5px;
-    height: 5px;
+    width: 6px;
+    height: 6px;
   }
   ::-webkit-scrollbar-track {
     background: transparent;
@@ -100,6 +134,49 @@
     border-radius: 3px;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: hsl(213 41% 25%);
+    background: hsl(var(--input));
+  }
+}
+
+@layer components {
+  /*
+   * The form field. Seventeen forms each declared their own copy of this
+   * in a scoped <style> block — eleven distinct variants of one intent,
+   * drifted by copy-paste. This is the one version: the majority's
+   * declarations, plus the few improvements individual copies had
+   * (disabled state, placeholder tone, title-case ICAO placeholders).
+   */
+  .ff-input {
+    width: 100%;
+    background: hsl(var(--background));
+    color: hsl(var(--foreground));
+    border: 1px solid hsl(var(--input));
+    border-radius: calc(var(--radius) - 2px);
+    padding: 0.5rem 0.75rem;
+    font-size: 0.8125rem;
+    line-height: 1.35;
+    outline: none;
+    transition:
+      border-color 0.15s,
+      box-shadow 0.15s;
+  }
+  .ff-input:focus:not(:disabled) {
+    border-color: rgb(var(--brand-rgb));
+    box-shadow: 0 0 0 3px rgb(var(--brand-rgb) / 0.14);
+  }
+  .ff-input:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+  .ff-input::placeholder {
+    color: hsl(var(--muted-foreground));
+  }
+  /* ICAO fields upper-case what is typed, not the hint. */
+  .ff-input.uppercase::placeholder {
+    text-transform: none;
+  }
+  textarea.ff-input {
+    resize: vertical;
+    font-family: inherit;
   }
 }

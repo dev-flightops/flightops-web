@@ -36,7 +36,7 @@ export function CustomerForm() {
           name="full_name"
           required
           maxLength={200}
-          className="ff"
+          className="ff-input"
           autoComplete="name"
         />
       </Field>
@@ -50,7 +50,7 @@ export function CustomerForm() {
           id="company_name"
           name="company_name"
           maxLength={200}
-          className="ff"
+          className="ff-input"
           autoComplete="organization"
         />
       </Field>
@@ -60,7 +60,7 @@ export function CustomerForm() {
           id="customer_type"
           name="customer_type"
           defaultValue="individual"
-          className="ff"
+          className="ff-input"
         >
           {CUSTOMER_TYPES.map((t) => (
             <option key={t} value={t}>
@@ -76,7 +76,7 @@ export function CustomerForm() {
             id="email"
             name="email"
             type="email"
-            className="ff"
+            className="ff-input"
             autoComplete="email"
           />
         </Field>
@@ -86,7 +86,7 @@ export function CustomerForm() {
             name="phone"
             type="tel"
             maxLength={40}
-            className="ff"
+            className="ff-input"
             autoComplete="tel"
           />
         </Field>
@@ -98,7 +98,7 @@ export function CustomerForm() {
           name="notes"
           rows={3}
           maxLength={4000}
-          className="ff"
+          className="ff-input"
         />
       </Field>
 
@@ -112,23 +112,6 @@ export function CustomerForm() {
         </button>
       </div>
 
-      <style>{`
-        .ff {
-          width: 100%;
-          background: hsl(var(--background));
-          color: hsl(var(--foreground));
-          border: 1px solid hsl(var(--border));
-          border-radius: 8px;
-          padding: 0.5rem 0.75rem;
-          font-size: 0.8125rem;
-          outline: none;
-        }
-        .ff:focus:not(:disabled) {
-          border-color: hsl(var(--primary));
-          box-shadow: 0 0 0 3px hsl(var(--primary) / 0.12);
-        }
-        textarea.ff { resize: vertical; font-family: inherit; }
-      `}</style>
     </form>
   );
 }

@@ -74,11 +74,11 @@ export default async function CustomersListPage({
             name="q"
             defaultValue={q}
             placeholder="Name, company, email…"
-            className="ff"
+            className="ff-input"
           />
         </Field>
         <Field label="Type">
-          <select name="type" defaultValue={customerType ?? ""} className="ff">
+          <select name="type" defaultValue={customerType ?? ""} className="ff-input">
             <option value="">All types</option>
             {CUSTOMER_TYPES.map((t) => (
               <option key={t} value={t}>
@@ -123,22 +123,6 @@ export default async function CustomersListPage({
         <CustomerTable items={customers} total={total} />
       )}
 
-      <style>{`
-        .ff {
-          width: 100%;
-          background: hsl(var(--background));
-          color: hsl(var(--foreground));
-          border: 1px solid hsl(var(--border));
-          border-radius: 8px;
-          padding: 0.5rem 0.75rem;
-          font-size: 0.8125rem;
-          outline: none;
-        }
-        .ff:focus:not(:disabled) {
-          border-color: hsl(var(--primary));
-          box-shadow: 0 0 0 3px hsl(var(--primary) / 0.12);
-        }
-      `}</style>
     </div>
   );
 }

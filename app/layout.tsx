@@ -33,7 +33,9 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`dark ${fontSans.variable} ${fontMono.variable}`}
+      // No `dark` here any more. The page ground is the home page's light
+      // theme; dark is an ink island a surface opts into (see globals.css).
+      className={`${fontSans.variable} ${fontMono.variable}`}
     >
       <body className="min-h-screen bg-background text-foreground font-sans antialiased">
         {children}

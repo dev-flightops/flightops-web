@@ -379,7 +379,7 @@ function LessonRow({
             defaultValue={lesson.title}
             required
             maxLength={200}
-            className="ff"
+            className="ff-input"
           />
           <textarea
             name="body_markdown"
@@ -387,7 +387,7 @@ function LessonRow({
             rows={6}
             maxLength={100_000}
             placeholder="Lesson body (markdown OK)"
-            className="ff"
+            className="ff-input"
           />
           <div className="flex justify-end">
             <button
@@ -408,7 +408,6 @@ function LessonRow({
           No body yet.
         </p>
       )}
-      <FormStyles />
     </li>
   );
 }
@@ -433,14 +432,14 @@ function AddLessonForm({ courseId }: { courseId: string }) {
           required
           maxLength={200}
           placeholder="Lesson title"
-          className="ff"
+          className="ff-input"
         />
         <textarea
           name="body_markdown"
           rows={5}
           maxLength={100_000}
           placeholder="Lesson body (markdown OK)"
-          className="ff"
+          className="ff-input"
         />
         <div className="flex justify-end">
           <button
@@ -452,7 +451,6 @@ function AddLessonForm({ courseId }: { courseId: string }) {
           </button>
         </div>
       </form>
-      <FormStyles />
     </section>
   );
 }
@@ -468,24 +466,3 @@ function ErrorBanner({ message }: { message: string }) {
   );
 }
 
-function FormStyles() {
-  return (
-    <style>{`
-      .ff {
-        width: 100%;
-        background: hsl(var(--background));
-        color: hsl(var(--foreground));
-        border: 1px solid hsl(var(--border));
-        border-radius: 8px;
-        padding: 0.5rem 0.75rem;
-        font-size: 0.8125rem;
-        outline: none;
-      }
-      .ff:focus:not(:disabled) {
-        border-color: hsl(var(--primary));
-        box-shadow: 0 0 0 3px hsl(var(--primary) / 0.12);
-      }
-      textarea.ff { resize: vertical; font-family: inherit; }
-    `}</style>
-  );
-}
