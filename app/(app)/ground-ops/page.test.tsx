@@ -204,7 +204,7 @@ describe("GroundOpsHubPage", () => {
     ).toHaveAttribute("href", "/stations/new");
   });
 
-  it("Equipment Dashboard is live and Add Equipment is dimmed", async () => {
+  it("links Equipment Dashboard and Add Equipment", async () => {
     listStations.mockResolvedValueOnce({ items: [], total: 0 });
     listOpenStationIssues.mockResolvedValueOnce({ items: [], total: 0 });
     listGseUnits.mockResolvedValueOnce({ items: [], total: 4 });
@@ -216,9 +216,12 @@ describe("GroundOpsHubPage", () => {
     });
     expect(equipmentDashboard).toHaveAttribute("href", "/equipment");
 
+    // Add Equipment was dimmed here as "m2" while /equipment/new worked
+    // and the equipment page itself linked to it — Add Station's bug
+    // again, one card over.
     expect(
-      screen.queryByRole("link", { name: /add equipment/i }),
-    ).not.toBeInTheDocument();
+      screen.getByRole("link", { name: /add equipment/i }),
+    ).toHaveAttribute("href", "/equipment/new");
   });
 
   it("renders live links for Ramp Dashboard + Fuel sub-links; Messages still dim", async () => {

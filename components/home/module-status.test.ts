@@ -5,6 +5,7 @@ import { describe, expect, it } from "vitest";
 
 import { DEPARTMENTS } from "@/components/app-shell/modules";
 import { MAINTENANCE_ACTIONS } from "@/components/maintenance/maintenance-header";
+import { GROUND_OPS_LINKS } from "@/app/(app)/ground-ops/links";
 
 import { HOME_MODULES } from "./module-catalog";
 import { HOME_QUICK_LINKS } from "./quick-links";
@@ -41,6 +42,10 @@ import { HOME_QUICK_LINKS } from "./quick-links";
  * dimmed: Work Orders, Inventory, RTS Queue, the due list and
  * + Aircraft. The department nav linked them; the header a mechanic
  * actually reaches for did not.
+ *
+ * And the Ground Ops hub, which dimmed Add Station and later Add
+ * Equipment the same way while both forms worked. Its links lived
+ * inside the page file, where this test could not import them.
  *
  * So the rule is now: a catalogue of (href, status) pairs anywhere in
  * this app belongs in `allEntries()`. Adding one here is cheaper than
@@ -149,6 +154,14 @@ function allEntries(): Entry[] {
       id: action.label,
       href: action.href,
       status: action.status,
+    });
+  }
+  for (const [id, link] of Object.entries(GROUND_OPS_LINKS)) {
+    out.push({
+      where: "GROUND_OPS_LINKS",
+      id,
+      href: link.href,
+      status: link.status,
     });
   }
   for (const dept of DEPARTMENTS) {
