@@ -4,16 +4,70 @@ import { PicPicker, type PicOption } from "./pic-picker";
 import { SectionPanel } from "./section-panel";
 
 /**
- * Abbreviate the long aircraft model string ("Cessna 208 Caravan") to
- * the short label the legacy form uses ("208 (Caravan)"). Falls back
- * to the raw model for anything we don't recognize; renders a dash
- * placeholder when the aircraft has no model on file (nullable since
- * flightops-services migration 0023).
+ * The operator's own shorthand for an airframe, from legacy
+ * `modules/dispatch/weather.py`:
+ *
+ *     AIRCRAFT_CHOICES = ("207", "208 (Caravan)", "GA8", "PA31",
+ *                         "King Air")
+ *
+ * Ported as two of the five, which is the bug the client found on
+ * 24 September: a flight assigned N806PA — a Cessna 207 — showed
+ * "208 (Caravan)". `shortAircraftModel` returned the raw model string
+ * for anything outside those two, no <option> matched it, and a browser
+ * with no matching option renders the first one. Four of the eight
+ * models in the fleet displayed a materially wrong type that way, and
+ * two more an imprecise one.
+ *
+ * "1900D (Beech)" is ours rather than legacy's; the fleet has one and
+ * it would otherwise fall through.
  */
-function shortAircraftModel(model: string | null): string {
+const AIRCRAFT_LABELS = [
+  "207",
+  "208 (Caravan)",
+  "GA8",
+  "PA31",
+  "King Air",
+  "1900D (Beech)",
+] as const;
+
+/**
+ * The airframe label for an aircraft.
+ *
+ * Reads `airframe_type` first, because that is the structured field the
+ * rest of the platform scores against — the FRAT's type-currency check
+ * uses it — and matching on model strings is how the original went
+ * wrong. Model text is the fallback for the one fleet row whose
+ * airframe_type is null, and the raw model is the last resort.
+ *
+ * Returning the raw model rather than a default is the point: an
+ * unrecognised airframe shows as itself. Showing the first option
+ * instead is what told a dispatcher their 207 was a Caravan.
+ */
+function airframeLabel(
+  airframeType: string | null | undefined,
+  model: string | null,
+): string {
+  switch ((airframeType ?? "").toLowerCase()) {
+    case "c207":
+      return "207";
+    case "caravan":
+      return "208 (Caravan)";
+    case "ga8":
+      return "GA8";
+    case "navajo":
+      return "PA31";
+    case "kingair":
+      // The fleet's two king airs are a 1900D and a King Air 200, and
+      // the model text is what separates them.
+      return model && /1900D/i.test(model) ? "1900D (Beech)" : "King Air";
+  }
   if (!model) return "—";
-  if (/Cessna\s+208\s+Caravan/i.test(model)) return "208 (Caravan)";
-  if (/Beechcraft\s+1900D/i.test(model)) return "1900D (Beech)";
+  if (/207/.test(model)) return "207";
+  if (/Grand\s+Caravan|208/i.test(model)) return "208 (Caravan)";
+  if (/GA8|Airvan/i.test(model)) return "GA8";
+  if (/PA-?31|Navajo/i.test(model)) return "PA31";
+  if (/1900D/i.test(model)) return "1900D (Beech)";
+  if (/King\s+Air/i.test(model)) return "King Air";
   return model;
 }
 
@@ -27,8 +81,11 @@ function shortAircraftModel(model: string | null): string {
  * overrides. Live behaviour behind each field:
  *   - Flight # / N-Number: freeform today, live lookup lands with the
  *     Flight # search API (backend exists; wiring pending)
- *   - Aircraft / Area Forecast Region: static <select> options, submit
- *     captures the selection
+ *   - Area Forecast Region: a static <select>; nothing submits it yet
+ *   - Aircraft: derived from the loaded flight and shown as a value.
+ *     A dropdown here previously claimed a choice it did not have —
+ *     there is no form, no name attribute and no submit handler on
+ *     this panel, so no selection was ever captured.
  *   - PIC / SIC: freeform text; typeahead search ships with crew-service
  *     in M3
  */
@@ -66,16 +123,40 @@ export function FlightDetailsPanel({
         </Field>
 
         <Field label="Aircraft">
-          <select
-            className="ff-input"
-            defaultValue={
-              flight ? shortAircraftModel(flight.aircraft.model) : "208 (Caravan)"
-            }
-            key={`aircraft-${flight?.id ?? "none"}`}
-          >
-            <option>208 (Caravan)</option>
-            <option>1900D (Beech)</option>
-          </select>
+          {flight ? (
+            /* Fixed, not a dropdown, once a flight is loaded.
+               The airframe is whatever the assigned tail is, so there
+               is nothing here for a dispatcher to decide — and the
+               control captured nothing anyway: no form, no name, no
+               submit handler. An editable dropdown that changes
+               nothing is worse than a value, because it invites
+               exactly the reasoning the client applied to it ("it
+               lets you select a caravan"). Swapping the aircraft is a
+               change to the flight, not to this packet. */
+            <p
+              className="ff-input flex items-center justify-between gap-2"
+              data-testid="packet-airframe"
+            >
+              <span>
+                {airframeLabel(
+                  flight.aircraft.airframe_type,
+                  flight.aircraft.model,
+                )}
+              </span>
+              <span className="text-[0.65rem] font-normal text-muted-foreground">
+                from {flight.aircraft.tail_number}
+              </span>
+            </p>
+          ) : (
+            /* No flight loaded — a hand-filled packet, where the
+               dispatcher is telling us what they are flying. All five
+               of the operator's airframes, plus the 1900D. */
+            <select className="ff-input" defaultValue="208 (Caravan)">
+              {AIRCRAFT_LABELS.map((label) => (
+                <option key={label}>{label}</option>
+              ))}
+            </select>
+          )}
         </Field>
 
         <Field label="N-Number">
