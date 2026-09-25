@@ -33,6 +33,7 @@ export function DepartmentNav({ roles = [] }: { roles?: readonly string[] }) {
 
   const modules = visibleModules(dept, roles);
   if (modules.length === 0) return null;
+  const activeId = activeModuleId(modules, pathname);
 
   return (
     <div className="border-b border-border bg-background">
@@ -60,7 +61,7 @@ export function DepartmentNav({ roles = [] }: { roles?: readonly string[] }) {
             <DepartmentNavItem
               key={module.id}
               module={module}
-              pathname={pathname}
+              isActive={module.id === activeId}
             />
           ))}
         </nav>
@@ -69,15 +70,43 @@ export function DepartmentNav({ roles = [] }: { roles?: readonly string[] }) {
   );
 }
 
+/**
+ * The one module the current page belongs to: the live module whose href
+ * is the longest segment-wise prefix of the path.
+ *
+ * A plain `pathname.startsWith(href)` lit up two chips at once — the
+ * Academy's "Course Library" is /academy, which prefixes every academy
+ * page, so on /academy/assignments both it and Assignments showed as
+ * current. It would also let /fuel claim /fuel-supplier. Matching whole
+ * segments and keeping the most specific match fixes both.
+ */
+export function activeModuleId(
+  modules: readonly Pick<ModuleEntry, "id" | "href" | "status">[],
+  pathname: string,
+): string | null {
+  const trim = (p: string) => p.split(/[?#]/)[0].replace(/\/+$/, "") || "/";
+  const path = trim(pathname);
+  let best: { id: string; length: number } | null = null;
+  for (const m of modules) {
+    if (m.status !== "live" || !m.href) continue;
+    const href = trim(m.href);
+    const matches =
+      path === href || path.startsWith(href === "/" ? "/" : `${href}/`);
+    if (matches && (!best || href.length > best.length)) {
+      best = { id: m.id, length: href.length };
+    }
+  }
+  return best?.id ?? null;
+}
+
 function DepartmentNavItem({
   module,
-  pathname,
+  isActive,
 }: {
   module: ModuleEntry;
-  pathname: string;
+  isActive: boolean;
 }) {
   const isLive = module.status === "live";
-  const isActive = isLive && module.href ? pathname.startsWith(module.href) : false;
   const isPurple = module.accent === "purple";
 
   // Muted by default; the active module takes the brand, as every other
