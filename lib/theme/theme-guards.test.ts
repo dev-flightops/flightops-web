@@ -109,6 +109,8 @@ describe("theme guards", () => {
         "Validation message showing the hex format.",
       "components/flight-following/fleet-map.tsx":
         "Leaflet paints with colour strings; the start marker's white fill.",
+      "app/(app)/settings/load-teams/team-dialog.tsx":
+        "A load team's colour is its data, not theme; a new team starts at legacy's #60a5fa.",
     };
     const hits = scan(/["'`(:\s]#[0-9a-fA-F]{6}\b|["'`]#[0-9a-fA-F]{3}["'`]/g, allow).filter(
       // The theme's own colour helpers define colours on purpose.
