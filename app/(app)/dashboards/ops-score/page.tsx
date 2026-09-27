@@ -1,7 +1,6 @@
 import { Activity, Clock, Plane, Shield, Stethoscope, Users } from "lucide-react";
 import Link from "next/link";
 
-import { DashboardNav } from "@/components/dashboards/dashboard-nav";
 import { getOpsScore, type OpsScorePillar } from "@/lib/api/reports";
 import { PillarBar } from "@/components/dashboards/pillar-bar";
 import { ScorePill } from "@/components/dashboards/score-pill";
@@ -71,7 +70,6 @@ export default async function OpsScoreDashboardPage({
 
   return (
     <div className="container py-6">
-      <DashboardNav active="ops-score" />
 
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>

@@ -11,7 +11,6 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
-import { DashboardNav } from "@/components/dashboards/dashboard-nav";
 import { getCompanyProfile } from "@/lib/api/auth";
 import { PLATFORM_SERVICES, healthPath } from "@/lib/platform-services";
 import { listFlights } from "@/lib/api/ops";
@@ -165,7 +164,6 @@ export default async function SystemHealthDashboardPage() {
 
   return (
     <div className="container py-6">
-      <DashboardNav active="system-health" />
 
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>

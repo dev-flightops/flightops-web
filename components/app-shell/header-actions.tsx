@@ -1,7 +1,5 @@
 import Link from "next/link";
 
-import { LogOut } from "lucide-react";
-
 import type { DutyActionResult } from "@/app/(app)/duty-actions";
 import type { CurrentDutyResponse } from "@/lib/api/types";
 import { cn } from "@/lib/utils";
@@ -11,6 +9,7 @@ import type { UnacknowledgedAlerts } from "@/lib/dashboards/unacknowledged-alert
 import { AiToolsMenu } from "./ai-tools-menu";
 import type { DismissResult } from "./notifications-actions";
 import { HelpPanel } from "./help-panel";
+import { IdentityCluster, SignOutButton } from "./identity";
 import { NotificationsBell } from "./notifications-bell";
 import type { AiTool } from "./modules";
 import { SpotlightSearch } from "./spotlight-search";
@@ -44,6 +43,9 @@ export interface HeaderActionsProps {
    *  there (client request 8/25). Defaults true so callers that have not
    *  been updated keep the old behaviour. */
   showSettings?: boolean;
+  /** Users is exec_admin's page — the API behind it refuses everyone
+   *  else, and legacy showed the link to admin roles only. */
+  showUsers?: boolean;
   signOutAction: () => Promise<void>;
   /** Initial duty state for the top-bar Clock In/Out pill. Null when the
    *  ops service is unreachable — the pill falls back to the disabled
@@ -82,6 +84,7 @@ export function HeaderActions({
   email,
   fullName,
   showSettings = true,
+  showUsers = true,
   signOutAction,
   initialDuty,
   clockInAction,
@@ -91,7 +94,6 @@ export function HeaderActions({
   dismissAlertAction,
 }: HeaderActionsProps) {
   const displayName = fullName?.trim() || email;
-  const initial = (displayName[0] ?? "U").toUpperCase();
 
   return (
     <div className="flex flex-shrink-0 items-center gap-2">
@@ -176,6 +178,7 @@ export function HeaderActions({
           the whole AI department behind a "coming soon" chip. A button
           that stays disabled after its page ships understates the
           product to the person using it. */}
+      {showUsers && (
       <Link
         href="/settings/users"
         title="User Management"
@@ -187,17 +190,14 @@ export function HeaderActions({
         </svg>
         <span className="hidden lg:inline">Users</span>
       </Link>
+      )}
 
-      <IconButton
-        title="Owner Admin · Coming in M4"
-        disabled
-        srLabel="Owner Admin"
-        className="hidden text-status-yellow sm:inline-flex"
-      >
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M12 1L9.2 8H2l6 4.4-2.3 7.1L12 15l6.3 4.5L16 12.4 22 8h-7.2L12 1z" />
-        </svg>
-      </IconButton>
+      {/* Owner Admin, the gold star, is gone. It sat here disabled on every
+          page for every tenant's staff. Legacy showed it only inside the
+          SaaS owner's own company (company.plan == "owner"), and the
+          console behind it is admin-service slice 2, which serves nothing
+          until the platform-administrator question is settled. When it
+          ships it belongs to platform administrators, not to operators. */}
 
 {/* Help. Opens on the article for the route you are standing on,
           because that is the question somebody presses ? to ask. Says
@@ -205,19 +205,7 @@ export function HeaderActions({
           empty panel. */}
       <HelpPanel />
 
-      {/* User identity cluster — 24×24 avatar + name, left-bordered like legacy. */}
-      <div className="hidden items-center gap-2 border-l border-border pl-2 sm:flex">
-        <div
-          className="flex h-6 w-6 items-center justify-center rounded-full border border-foreground/15 bg-gradient-to-br from-primary to-brand-dark text-[0.65rem] font-bold text-primary-foreground"
-          title={displayName}
-          aria-hidden
-        >
-          {initial}
-        </div>
-        <span className="hidden text-xs font-medium text-muted-foreground lg:inline">
-          {displayName}
-        </span>
-      </div>
+      <IdentityCluster displayName={displayName} />
 
       {/* Settings shipped across M2 (M2-G-46/47/48/53 + SSO admin) — the
           old disabled placeholder is now a real link to the /settings
@@ -237,17 +225,7 @@ export function HeaderActions({
       </Link>
       )}
 
-      {/* Sign out — the only fully wired action in the cluster today. */}
-      <form action={signOutAction}>
-        <button
-          type="submit"
-          className="inline-flex items-center gap-1 rounded-md p-2 text-xs font-medium text-muted-foreground hover:bg-foreground/8 hover:text-foreground"
-          aria-label="Sign out"
-        >
-          <span className="hidden sm:inline">Sign out</span>
-          <LogOut className="h-3 w-3 sm:hidden" aria-hidden />
-        </button>
-      </form>
+      <SignOutButton action={signOutAction} />
     </div>
   );
 }

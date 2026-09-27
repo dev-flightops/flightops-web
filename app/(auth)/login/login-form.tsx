@@ -1,7 +1,7 @@
 "use client";
 
 import { Suspense, useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -46,9 +46,8 @@ const schema = z.object({
 type FormValues = z.infer<typeof schema>;
 
 function LoginInner({ providers }: { providers: ProviderSummary[] }) {
-  const router = useRouter();
   const searchParams = useSearchParams();
-  const from = searchParams.get("from") ?? "/home/";
+  const from = sameSitePath(searchParams.get("from"));
   const ssoError = searchParams.get("error");
   const [error, setError] = useState<string | null>(
     ssoError ? "Sign-in failed — your account may not be provisioned." : null,
@@ -113,8 +112,12 @@ function LoginInner({ providers }: { providers: ProviderSummary[] }) {
       setError("Invalid email or password.");
       return;
     }
-    router.push(from);
-    router.refresh();
+    // A full page load, not router.push. The proxy may redirect it — a
+    // customer login's /home/ becomes /portal — and a client-side
+    // navigation the proxy redirects never commits: the page sat on
+    // /login with the customer signed in. A login is a natural place
+    // for a real navigation anyway.
+    window.location.assign(from);
   };
 
   const isSubmitting = form.formState.isSubmitting;
@@ -399,4 +402,14 @@ export function LoginForm({ providers }: { providers: ProviderSummary[] }) {
       <LoginInner providers={providers} />
     </Suspense>
   );
+}
+
+/** `from` if it is a path on this site, else staff home. It is read from
+ *  the URL, so anything absolute or protocol-relative
+ *  (https://…, //…, /\…) would be an open redirect off the site. */
+export function sameSitePath(raw: string | null): string {
+  if (!raw || !raw.startsWith("/") || raw.startsWith("//") || raw.startsWith("/\\")) {
+    return "/home/";
+  }
+  return raw;
 }

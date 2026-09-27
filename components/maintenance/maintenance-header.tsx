@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { moduleStatusHint, type ModuleStatus } from "@/components/app-shell/modules";
 import { cn } from "@/lib/utils";
 
 /**
@@ -22,9 +23,15 @@ export interface ActionButton {
   label: string;
   href?: string;
   primary?: boolean;
-  status: "live" | "m3";
+  status: ModuleStatus;
 }
 
+// Due List, Inventory and RTS Queue are `planned`: their pages existed
+// as shells — legacy's layout with every control disabled — and an
+// earlier pass marked them live because the files were there. Nothing
+// backs them (no maintenance-service endpoint), so they say "Not built
+// yet" now, as their pages do (components/not-built-page.tsx).
+//
 // Five of these shipped and stayed dimmed here. The department nav
 // links them; this header, which is what somebody standing on
 // /maintenance actually reaches for, still said "Coming in M3".
@@ -50,10 +57,10 @@ export const MAINTENANCE_ACTIONS: ActionButton[] = [
   // only opening the page showed it. The department nav calls this
   // same page "MX Clock" — one page, two labels, because this header
   // mirrors legacy's wording.
-  { label: "Due List", href: "/maintenance/mx-clock", status: "live" },
+  { label: "Due List", href: "/maintenance/mx-clock", status: "planned" },
   { label: "Work Orders", href: "/maintenance/work-orders", status: "live" },
-  { label: "Inventory", href: "/maintenance/inventory", status: "live" },
-  { label: "RTS Queue", href: "/maintenance/rts", status: "live" },
+  { label: "Inventory", href: "/maintenance/inventory", status: "planned" },
+  { label: "RTS Queue", href: "/maintenance/rts", status: "planned" },
   { label: "Inspections", status: "m3" },
   { label: "Vendors", status: "m3" },
   { label: "Roster", status: "m3" },
@@ -106,7 +113,7 @@ function ActionLink({ action }: { action: ActionButton }) {
     <span
       role="button"
       aria-disabled="true"
-      title="Coming in M3"
+      title={moduleStatusHint(action.status)}
       className={baseClass}
     >
       {action.label}

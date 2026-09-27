@@ -81,7 +81,10 @@ export default async function CourseLibraryPage({
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
-      <AcademyHeader activeSection="course-library" />
+      <AcademyHeader
+        title="Course Library"
+        description="Every course your operation offers, by category."
+      />
 
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <form method="GET" className="flex flex-wrap items-center gap-2">

@@ -78,12 +78,14 @@ export default async function CertificatesPage({
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6">
-      <AcademyHeader activeSection="certificates" />
-      <p className="mb-6 text-sm text-muted-foreground">
-        {wantAll
-          ? "Tenant-wide roster of every certificate issued by Peregrine Academy."
-          : "Certificates you have earned. Recurrent-training cycles land here as they issue."}
-      </p>
+      <AcademyHeader
+        title="Certificates"
+        description={
+          wantAll
+            ? "Tenant-wide roster of every certificate issued by Peregrine Academy."
+            : "Certificates you have earned. Recurrent-training cycles land here as they issue."
+        }
+      />
 
       {isAdmin && (
         <nav

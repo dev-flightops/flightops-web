@@ -8,6 +8,8 @@ import {
 } from "@/lib/api/academy";
 import { ApiError } from "@/lib/api/client";
 
+import { AcademyHeader } from "../academy-header";
+
 export default async function MyEnrollmentsPage() {
   let enrollments: Enrollment[] = [];
   let loadError: string | null = null;
@@ -25,22 +27,10 @@ export default async function MyEnrollmentsPage() {
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6">
-      <header className="mb-6 flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.06em] text-muted-foreground">
-            <Link href="/academy" className="hover:text-foreground">
-              ← Academy
-            </Link>
-          </p>
-          <h1 className="mt-2 text-2xl font-bold tracking-tight">
-            My Enrollments
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Every course you&rsquo;ve started, completed, or need to
-            re-take.
-          </p>
-        </div>
-      </header>
+      <AcademyHeader
+        title="My Training"
+        description="Every course you’ve started, completed, or need to re-take."
+      />
 
       {loadError ? (
         <div

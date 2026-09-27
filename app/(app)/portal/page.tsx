@@ -1,6 +1,8 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 
 import { ApiError } from "@/lib/api/client";
+import { listSupplierFuelOrders } from "@/lib/api/ground";
 import { formatQuote, getPortalDashboard } from "@/lib/api/portal";
 
 import { StatusBadge, formatDate } from "./portal-ui";
@@ -42,13 +44,16 @@ export default async function PortalPage() {
   // An unlinked account is an expected state, not an error: ops staff
   // create portal logins, and the customer record may not be linked yet.
   if (!data.profile.linked) {
+    // The portal is where every login without a staff role lands, and a
+    // fuel supplier's rep is one too. Their page is the supplier inbox.
+    if (await isSupplierLogin()) redirect("/fuel/supplier");
     return (
       <Shell>
-        <div className="rounded-lg border border-status-yellow/40 bg-status-yellow/5 p-4">
-          <p className="text-sm font-semibold text-status-yellow">
+        <div className="rounded-lg border border-border bg-card p-4">
+          <p className="text-sm font-semibold text-foreground">
             Your account isn&apos;t linked to a customer profile yet
           </p>
-          <p className="mt-1 text-xs text-muted-foreground">
+          <p className="mt-1 text-sm text-muted-foreground">
             Contact the operations team and they&apos;ll connect your login
             to your account.
           </p>
@@ -139,3 +144,13 @@ function Shell({
   );
 }
 
+/** True when this login is linked to a fuel supplier: the supplier
+ *  inbox answers it rather than refusing it. */
+async function isSupplierLogin(): Promise<boolean> {
+  try {
+    await listSupplierFuelOrders({ limit: 1 });
+    return true;
+  } catch {
+    return false;
+  }
+}

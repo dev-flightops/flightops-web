@@ -17,7 +17,10 @@ import { ROLES, type Role } from "@/lib/roles";
  *      on that route (or any prefix under it).
  */
 
-export type ModuleStatus = "live" | "m2" | "m3" | "m4";
+/** `planned`: legacy has it, nothing here backs it, and no milestone is
+ *  set — so the hint says "Not built yet" rather than naming a
+ *  milestone. See components/not-built-page.tsx. */
+export type ModuleStatus = "live" | "m2" | "m3" | "m4" | "planned";
 
 export interface ModuleEntry {
   id: string;
@@ -64,6 +67,7 @@ export interface Department {
 
 const ms = (status: ModuleStatus): string => {
   if (status === "live") return "";
+  if (status === "planned") return "Not built yet";
   return `Coming in ${status.toUpperCase()}`;
 };
 
@@ -411,6 +415,15 @@ export const DEPARTMENTS: Department[] = [
         department: "academy",
       },
       {
+        // It was the one academy section the in-page tab row had and
+        // this strip did not; the tab row is gone, so it lives here.
+        id: "academy-my-training",
+        label: "My Training",
+        href: "/academy/mine",
+        status: "live",
+        department: "academy",
+      },
+      {
         id: "academy-assignments",
         label: "Assignments",
         href: "/academy/assignments",
@@ -623,42 +636,42 @@ export const DEPARTMENTS: Department[] = [
         id: "rts",
         label: "RTS",
         href: "/maintenance/rts",
-        status: "live",
+        status: "planned",
         department: "maintenance",
       },
       {
         id: "inventory",
         label: "Inventory",
         href: "/maintenance/inventory",
-        status: "live",
+        status: "planned",
         department: "maintenance",
       },
       {
         id: "expiration",
         label: "Expiration",
         href: "/maintenance/expiration",
-        status: "live",
+        status: "planned",
         department: "maintenance",
       },
       {
         id: "batch-trace",
         label: "Batch Trace",
         href: "/maintenance/batch-trace",
-        status: "live",
+        status: "planned",
         department: "maintenance",
       },
       {
         id: "mx-clock",
         label: "MX Clock",
         href: "/maintenance/mx-clock",
-        status: "live",
+        status: "planned",
         department: "maintenance",
       },
       {
         id: "availability",
         label: "Availability",
         href: "/maintenance/availability",
-        status: "live",
+        status: "planned",
         department: "maintenance",
       },
       {
@@ -1415,11 +1428,13 @@ export const MODULE_ROLES: Record<string, readonly Role[]> = {
 /**
  * True when a user holding `roles` should see `allowed`.
  *
- * Fails OPEN on an empty role list. A user whose roles failed to load
- * should get a cluttered nav, not an empty one — the backend still
- * refuses anything they may click, and stranding someone with no
- * navigation is a worse failure than showing them a module they cannot
- * use.
+ * Fails OPEN on an empty role list — but an empty role list no longer
+ * reaches the staff shell. A login with no staff role is a customer or
+ * a supplier's rep, and the proxy and the (app) layout give it the
+ * portal instead (lib/external-access.ts). This was written for "roles
+ * failed to load", and a customer's login read exactly like that: they
+ * got every module in the nav. The open fallback stays only as defence
+ * for a staff session with an unexpected role list.
  */
 function _permits(
   allowed: readonly Role[] | undefined,
