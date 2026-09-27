@@ -1,7 +1,5 @@
 import Link from "next/link";
 
-import { LogOut } from "lucide-react";
-
 import type { DutyActionResult } from "@/app/(app)/duty-actions";
 import type { CurrentDutyResponse } from "@/lib/api/types";
 import { cn } from "@/lib/utils";
@@ -11,6 +9,7 @@ import type { UnacknowledgedAlerts } from "@/lib/dashboards/unacknowledged-alert
 import { AiToolsMenu } from "./ai-tools-menu";
 import type { DismissResult } from "./notifications-actions";
 import { HelpPanel } from "./help-panel";
+import { IdentityCluster, SignOutButton } from "./identity";
 import { NotificationsBell } from "./notifications-bell";
 import type { AiTool } from "./modules";
 import { SpotlightSearch } from "./spotlight-search";
@@ -91,7 +90,6 @@ export function HeaderActions({
   dismissAlertAction,
 }: HeaderActionsProps) {
   const displayName = fullName?.trim() || email;
-  const initial = (displayName[0] ?? "U").toUpperCase();
 
   return (
     <div className="flex flex-shrink-0 items-center gap-2">
@@ -205,19 +203,7 @@ export function HeaderActions({
           empty panel. */}
       <HelpPanel />
 
-      {/* User identity cluster — 24×24 avatar + name, left-bordered like legacy. */}
-      <div className="hidden items-center gap-2 border-l border-border pl-2 sm:flex">
-        <div
-          className="flex h-6 w-6 items-center justify-center rounded-full border border-foreground/15 bg-gradient-to-br from-primary to-brand-dark text-[0.65rem] font-bold text-primary-foreground"
-          title={displayName}
-          aria-hidden
-        >
-          {initial}
-        </div>
-        <span className="hidden text-xs font-medium text-muted-foreground lg:inline">
-          {displayName}
-        </span>
-      </div>
+      <IdentityCluster displayName={displayName} />
 
       {/* Settings shipped across M2 (M2-G-46/47/48/53 + SSO admin) — the
           old disabled placeholder is now a real link to the /settings
@@ -237,17 +223,7 @@ export function HeaderActions({
       </Link>
       )}
 
-      {/* Sign out — the only fully wired action in the cluster today. */}
-      <form action={signOutAction}>
-        <button
-          type="submit"
-          className="inline-flex items-center gap-1 rounded-md p-2 text-xs font-medium text-muted-foreground hover:bg-foreground/8 hover:text-foreground"
-          aria-label="Sign out"
-        >
-          <span className="hidden sm:inline">Sign out</span>
-          <LogOut className="h-3 w-3 sm:hidden" aria-hidden />
-        </button>
-      </form>
+      <SignOutButton action={signOutAction} />
     </div>
   );
 }

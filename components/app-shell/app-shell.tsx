@@ -30,6 +30,10 @@ export interface AppShellProps {
   showOpsChip?: boolean;
   /** The tenant's ops line; hidden when the company profile has none. */
   opsPhone?: string | null;
+  /** Where the operator's name links; the portal for an external login. */
+  homeHref?: string;
+  /** Staff navigation below the bar; off for an external login. */
+  showDepartmentNav?: boolean;
 }
 
 export function AppShell({
@@ -39,6 +43,8 @@ export function AppShell({
   roles = [],
   showOpsChip = false,
   opsPhone = null,
+  homeHref,
+  showDepartmentNav,
 }: AppShellProps) {
   return (
     <div className="flex min-h-screen flex-col">
@@ -51,6 +57,8 @@ export function AppShell({
         roles={roles}
         showOpsChip={showOpsChip}
         opsPhone={opsPhone}
+        homeHref={homeHref}
+        showDepartmentNav={showDepartmentNav}
       />
       <main className="flex-1">{children}</main>
     </div>
