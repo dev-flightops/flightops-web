@@ -1,29 +1,30 @@
-import Link from "next/link";
+import type { ReactNode } from "react";
 
 /**
- * Shared "Peregrine Academy" header + section sub-nav.
+ * The academy's page header: the academy mark beside the page's own
+ * title.
  *
- * Legacy peregrineflight.com/academy/ header shape:
- *   🎓 Peregrine Academy
- *      Training courses, assignments, and certification
- *
- *   Dashboard | Course Library | Assignments | Certificates | Reports | Studio
+ * It used to be one "Peregrine Academy" banner on every academy page,
+ * with a row of section tabs under it — Dashboard, Course Library, My
+ * Training, Assignments, Certificates, Reports, Studio. That row
+ * repeated the department strip directly above it, entry for entry
+ * except My Training, which now lives in the strip too. So the pages
+ * name themselves, and the strip is the navigation, as it is everywhere
+ * else in the app.
  */
 export function AcademyHeader({
-  activeSection,
+  title,
+  description,
+  actions,
 }: {
-  activeSection:
-    | "dashboard"
-    | "course-library"
-    | "my-training"
-    | "assignments"
-    | "certificates"
-    | "reports"
-    | "studio";
+  title: string;
+  description?: ReactNode;
+  /** Right-aligned buttons for the page — Course Studio's, say. */
+  actions?: ReactNode;
 }) {
   return (
-    <>
-      <header className="mb-4 flex items-start gap-3">
+    <header className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+      <div className="flex items-start gap-3">
         <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -36,82 +37,15 @@ export function AcademyHeader({
           </svg>
         </div>
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">
-            Peregrine Academy
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            Training courses, assignments, and certification
-          </p>
+          <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
+          {description ? (
+            <p className="mt-1 text-sm text-muted-foreground">{description}</p>
+          ) : null}
         </div>
-      </header>
-
-      <nav
-        aria-label="Academy sections"
-        className="mb-6 flex flex-wrap items-center gap-2"
-      >
-        <SectionTab
-          href="/academy/dashboard"
-          label="Dashboard"
-          active={activeSection === "dashboard"}
-        />
-        <SectionTab
-          href="/academy"
-          label="Course Library"
-          active={activeSection === "course-library"}
-        />
-        <SectionTab
-          href="/academy/mine"
-          label="My Training"
-          active={activeSection === "my-training"}
-        />
-        <SectionTab
-          href="/academy/assignments"
-          label="Assignments"
-          active={activeSection === "assignments"}
-        />
-        <SectionTab
-          href="/academy/certificates"
-          label="Certificates"
-          active={activeSection === "certificates"}
-        />
-        <SectionTab
-          href="/academy/reports"
-          label="Reports"
-          active={activeSection === "reports"}
-        />
-        <SectionTab
-          href="/academy/studio"
-          label="Studio"
-          active={activeSection === "studio"}
-        />
-      </nav>
-    </>
-  );
-}
-
-/** One "you are here" style, the department strip's: brand on its /10
- *  selected tint. Legacy coloured Course Library yellow and Studio purple
- *  (always, even inactive); in the unified theme yellow is a status and
- *  purple means AI, so neither can double as a section colour. */
-function SectionTab({
-  href,
-  label,
-  active,
-}: {
-  href: string;
-  label: string;
-  active: boolean;
-}) {
-  const cls = active
-    ? "border-primary/40 bg-primary/10 text-primary"
-    : "border-border bg-card text-foreground/80 hover:bg-accent";
-  return (
-    <Link
-      href={href}
-      aria-current={active ? "page" : undefined}
-      className={"rounded-md border px-3.5 py-1.5 text-sm font-semibold transition " + cls}
-    >
-      {label}
-    </Link>
+      </div>
+      {actions ? (
+        <div className="flex flex-wrap items-center gap-2">{actions}</div>
+      ) : null}
+    </header>
   );
 }

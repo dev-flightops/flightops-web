@@ -20,7 +20,7 @@ import type { Role } from "@/lib/roles";
  * Fleet Brain (blue-tinted border + background). Optional.
  */
 
-export type ModuleStatus = "live" | "m2" | "m3" | "m4";
+export type ModuleStatus = "live" | "m2" | "m3" | "m4" | "planned";
 
 export interface HomeModule {
   id: string;
@@ -211,6 +211,7 @@ export const HOME_MODULES: HomeModule[] = [
 
 export function moduleStatusHint(status: ModuleStatus): string | null {
   if (status === "live") return null;
+  if (status === "planned") return "Not built yet";
   return `Coming in ${status.toUpperCase()}`;
 }
 

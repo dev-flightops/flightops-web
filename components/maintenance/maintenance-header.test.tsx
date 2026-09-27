@@ -45,10 +45,7 @@ describe("MaintenanceHeader", () => {
       MEL: "/maintenance/mel",
       // Not /maintenance/expiration — that is the parts shelf-life
       // report. The due list is the Maintenance Clock.
-      "Due List": "/maintenance/mx-clock",
       "Work Orders": "/maintenance/work-orders",
-      Inventory: "/maintenance/inventory",
-      "RTS Queue": "/maintenance/rts",
       // Adding a tail ships under Settings, not /maintenance — which is
       // exactly why it was missed. See below.
       "+ Aircraft": "/settings/fleet",
@@ -79,6 +76,21 @@ describe("MaintenanceHeader", () => {
       expect(action.tagName).toBe("SPAN");
       expect(action).toHaveAttribute("aria-disabled", "true");
       expect(action).toHaveAttribute("title", "Coming in M3");
+    }
+  });
+
+  it("dims the three whose pages were shells, and says they are not built", () => {
+    // Due List, Inventory and RTS Queue were asserted live above
+    // because their pages existed. The pages were legacy's layout with
+    // every control disabled, and no maintenance-service endpoint backs
+    // any of them. Each page now says it is not built.
+    render(<MaintenanceHeader />);
+
+    for (const label of ["Due List", "Inventory", "RTS Queue"]) {
+      const action = screen.getByText(label);
+      expect(action.tagName).toBe("SPAN");
+      expect(action).toHaveAttribute("aria-disabled", "true");
+      expect(action).toHaveAttribute("title", "Not built yet");
     }
   });
 });

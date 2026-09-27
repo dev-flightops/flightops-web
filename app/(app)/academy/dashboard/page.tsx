@@ -66,7 +66,10 @@ export default async function AcademyDashboardPage() {
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
-      <AcademyHeader activeSection="dashboard" />
+      <AcademyHeader
+        title="Academy Dashboard"
+        description="Enrolments, completions and certificates coming due."
+      />
 
       {loadError ? (
         <div

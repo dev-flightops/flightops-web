@@ -17,7 +17,10 @@ import { ROLES, type Role } from "@/lib/roles";
  *      on that route (or any prefix under it).
  */
 
-export type ModuleStatus = "live" | "m2" | "m3" | "m4";
+/** `planned`: legacy has it, nothing here backs it, and no milestone is
+ *  set — so the hint says "Not built yet" rather than naming a
+ *  milestone. See components/not-built-page.tsx. */
+export type ModuleStatus = "live" | "m2" | "m3" | "m4" | "planned";
 
 export interface ModuleEntry {
   id: string;
@@ -64,6 +67,7 @@ export interface Department {
 
 const ms = (status: ModuleStatus): string => {
   if (status === "live") return "";
+  if (status === "planned") return "Not built yet";
   return `Coming in ${status.toUpperCase()}`;
 };
 
@@ -411,6 +415,15 @@ export const DEPARTMENTS: Department[] = [
         department: "academy",
       },
       {
+        // It was the one academy section the in-page tab row had and
+        // this strip did not; the tab row is gone, so it lives here.
+        id: "academy-my-training",
+        label: "My Training",
+        href: "/academy/mine",
+        status: "live",
+        department: "academy",
+      },
+      {
         id: "academy-assignments",
         label: "Assignments",
         href: "/academy/assignments",
@@ -623,42 +636,42 @@ export const DEPARTMENTS: Department[] = [
         id: "rts",
         label: "RTS",
         href: "/maintenance/rts",
-        status: "live",
+        status: "planned",
         department: "maintenance",
       },
       {
         id: "inventory",
         label: "Inventory",
         href: "/maintenance/inventory",
-        status: "live",
+        status: "planned",
         department: "maintenance",
       },
       {
         id: "expiration",
         label: "Expiration",
         href: "/maintenance/expiration",
-        status: "live",
+        status: "planned",
         department: "maintenance",
       },
       {
         id: "batch-trace",
         label: "Batch Trace",
         href: "/maintenance/batch-trace",
-        status: "live",
+        status: "planned",
         department: "maintenance",
       },
       {
         id: "mx-clock",
         label: "MX Clock",
         href: "/maintenance/mx-clock",
-        status: "live",
+        status: "planned",
         department: "maintenance",
       },
       {
         id: "availability",
         label: "Availability",
         href: "/maintenance/availability",
-        status: "live",
+        status: "planned",
         department: "maintenance",
       },
       {

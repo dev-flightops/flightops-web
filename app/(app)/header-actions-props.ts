@@ -48,6 +48,7 @@ export interface HeaderActionsData {
   email: string;
   fullName: string | null;
   showSettings: boolean;
+  showUsers: boolean;
   signOutAction: typeof signOutAction;
   initialDuty: CurrentDutyResponse | null;
   clockInAction: typeof clockInAction;
@@ -74,6 +75,9 @@ export async function buildHeaderActionsData(
     // personal-profile page behind it, so most roles have nothing to
     // do there (client request 8/25).
     showSettings: roles.length === 0 || roles.includes("exec_admin"),
+    // Same audience: /settings/users is exec_admin-only in the API, so
+    // the link only ever led anyone else to a "no access" page.
+    showUsers: roles.length === 0 || roles.includes("exec_admin"),
     signOutAction,
     initialDuty,
     clockInAction,

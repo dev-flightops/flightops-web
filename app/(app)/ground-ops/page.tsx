@@ -256,7 +256,7 @@ function SectionLinkRow({ link }: { link: SectionLink }) {
         <span className="text-xs text-muted-foreground">→</span>
       ) : (
         <span className="rounded-md border border-border bg-card/60 px-2 py-0.5 text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
-          Coming in {link.status.toUpperCase()}
+          Soon
         </span>
       )}
     </>
