@@ -108,8 +108,9 @@ export function FlightDetailsPanel({
   return (
     <SectionPanel title="Flight Details">
       <div className="grid grid-cols-2 gap-4 md:grid-cols-6">
-        <Field label="Flight #" hint="press Enter to load">
+        <Field label="Flight #" hint="press Enter to load" htmlFor="flight-number">
           <input
+            id="flight-number"
             type="text"
             placeholder="GV306"
             defaultValue={flight?.flight_number ?? ""}
@@ -122,7 +123,9 @@ export function FlightDetailsPanel({
           />
         </Field>
 
-        <Field label="Aircraft">
+        {/* Only a hand-filled packet has a control here; with a flight
+            loaded the airframe is a value, and the label names it. */}
+        <Field label="Aircraft" htmlFor={flight ? undefined : "flight-aircraft"}>
           {flight ? (
             /* Fixed, not a dropdown, once a flight is loaded.
                The airframe is whatever the assigned tail is, so there
@@ -151,7 +154,11 @@ export function FlightDetailsPanel({
             /* No flight loaded — a hand-filled packet, where the
                dispatcher is telling us what they are flying. All five
                of the operator's airframes, plus the 1900D. */
-            <select className="ff-input" defaultValue="208 (Caravan)">
+            <select
+              id="flight-aircraft"
+              className="ff-input"
+              defaultValue="208 (Caravan)"
+            >
               {AIRCRAFT_LABELS.map((label) => (
                 <option key={label}>{label}</option>
               ))}
@@ -159,8 +166,9 @@ export function FlightDetailsPanel({
           )}
         </Field>
 
-        <Field label="N-Number">
+        <Field label="N-Number" htmlFor="flight-tail">
           <input
+            id="flight-tail"
             type="text"
             placeholder="N12345"
             defaultValue={flight?.aircraft.tail_number ?? ""}
@@ -176,8 +184,9 @@ export function FlightDetailsPanel({
           flightId={flightId}
         />
 
-        <Field label="SIC Name">
+        <Field label="SIC Name" htmlFor="flight-sic">
           <input
+            id="flight-sic"
             type="text"
             placeholder="Last, First (optional)"
             className="ff-input"
@@ -185,8 +194,8 @@ export function FlightDetailsPanel({
           />
         </Field>
 
-        <Field label="Area Forecast Region">
-          <select className="ff-input">
+        <Field label="Area Forecast Region" htmlFor="flight-afd-region">
+          <select id="flight-afd-region" className="ff-input">
             {/* FAA Area Forecast Discussion regions covering AK ops. Codes
                 match legacy peregrineflight; "Southeast Alaska (fallback)"
                 is the legacy catch-all when no other region claims the
@@ -208,11 +217,15 @@ export function FlightDetailsPanel({
 
 function Field({
   label,
+  htmlFor,
   hint,
   help,
   children,
 }: {
   label: string;
+  /** The control's id. The label sat beside its control unlinked, so
+   *  the selects here had no accessible name (WCAG 4.1.2). */
+  htmlFor?: string;
   /** Inline parenthetical hint shown next to the label (e.g. "press Enter to load"). */
   hint?: string;
   /** Small "?" affordance with a hover title — used for fields whose live
@@ -233,6 +246,7 @@ function Field({
   return (
     <div className="min-w-0">
       <label
+        htmlFor={htmlFor}
         title={fullTitle}
         className="mb-1.5 block truncate text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground"
       >
@@ -246,6 +260,7 @@ function Field({
           <span
             className="ml-1 inline-flex h-3.5 w-3.5 cursor-help items-center justify-center rounded-full border border-muted-foreground/40 text-[0.55rem] font-bold text-muted-foreground"
             title={help}
+            role="img"
             aria-label={help}
           >
             ?

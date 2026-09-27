@@ -60,14 +60,19 @@ describe("PicPicker (M2-G-5)", () => {
   });
 
   it("renders the red status dot next to the label when the selected PIC is non-current", () => {
-    render(
+    const { container } = render(
       <PicPicker
         options={[sarah, bob, alice]}
         currentPicId={alice.pilot.id}
       />,
     );
-    const dot = screen.getByLabelText(/PIC compliance red/i);
+    const dot = container.querySelector('label[for="pic-picker"] .bg-status-red');
     expect(dot).toBeInTheDocument();
+    // The dot is for sighted users; a screen reader gets the status from
+    // the selected option, which reads "Alice Chen — NON-CURRENT".
+    expect(dot).toHaveAttribute("aria-hidden", "true");
+    const combo = screen.getByLabelText("Pilot in Command") as HTMLSelectElement;
+    expect(combo.selectedOptions[0].textContent).toMatch(/Alice Chen.*NON-CURRENT/);
   });
 
   it("navigates to /dispatch/?pic=<uuid> when a pilot is chosen", async () => {
