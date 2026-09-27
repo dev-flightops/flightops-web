@@ -8,9 +8,11 @@ import { redirect } from "next/navigation";
  *
  * Until RBAC lands in M4 we don't yet know each user's intended default, so
  * we route everyone to the Executive view (matches the most common "I just
- * opened the Admin section" intent). All seven role tabs are accessible
- * from the DashboardNav at the top of every dashboard page, so the user
- * can hop to any of them with one click.
+ * opened the Admin section" intent). All seven role views are in the
+ * Admin department strip at the top of every dashboard page, so the user
+ * can hop to any of them with one click. (Each page used to carry its own
+ * tab row repeating that strip, under a banner promising role-based
+ * access "soon"; both went.)
  */
 export default function DashboardsIndexPage() {
   redirect("/dashboards/executive");

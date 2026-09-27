@@ -2,7 +2,6 @@ import { AlertTriangle, CheckCircle2 } from "lucide-react";
 import Link from "next/link";
 
 import { AlertList } from "@/components/dashboards/alert-list";
-import { DashboardNav } from "@/components/dashboards/dashboard-nav";
 import { FleetAirworthinessPanel } from "@/components/dashboards/fleet-airworthiness-panel";
 import { StatTile } from "@/components/dashboards/stat-tile";
 import { listFlights, getFlightStats } from "@/lib/api/ops";
@@ -53,7 +52,6 @@ export default async function DispatcherDashboardPage() {
 
   return (
     <div className="container py-6">
-      <DashboardNav active="dispatcher" />
 
       <h1 className="text-2xl font-bold tracking-tight">Dispatcher Live View</h1>
       <p className="mt-1 text-sm text-muted-foreground">

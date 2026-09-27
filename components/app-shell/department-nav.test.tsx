@@ -188,3 +188,13 @@ describe("one current module", () => {
     ).toBeNull();
   });
 });
+
+describe("the academy strip", () => {
+  it("carries My Training, which only the removed in-page tab row had", () => {
+    vi.mocked(usePathname).mockReturnValue("/academy/mine");
+    render(<DepartmentNav />);
+    const chip = screen.getByTestId("dept-nav-academy-my-training");
+    expect(chip).toHaveAttribute("href", "/academy/mine");
+    expect(chip).toHaveAttribute("aria-current", "page");
+  });
+});

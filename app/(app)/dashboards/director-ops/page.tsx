@@ -2,7 +2,6 @@ import { CheckCircle2 } from "lucide-react";
 import Link from "next/link";
 
 import { AlertList } from "@/components/dashboards/alert-list";
-import { DashboardNav } from "@/components/dashboards/dashboard-nav";
 import { ScorePill } from "@/components/dashboards/score-pill";
 import { StatTile } from "@/components/dashboards/stat-tile";
 import { listFlights, getFlightStats } from "@/lib/api/ops";
@@ -86,7 +85,6 @@ export default async function DirectorOpsDashboardPage() {
 
   return (
     <div className="container py-6">
-      <DashboardNav active="director-ops" />
 
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>

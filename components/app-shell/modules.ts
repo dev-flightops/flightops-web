@@ -415,6 +415,15 @@ export const DEPARTMENTS: Department[] = [
         department: "academy",
       },
       {
+        // It was the one academy section the in-page tab row had and
+        // this strip did not; the tab row is gone, so it lives here.
+        id: "academy-my-training",
+        label: "My Training",
+        href: "/academy/mine",
+        status: "live",
+        department: "academy",
+      },
+      {
         id: "academy-assignments",
         label: "Assignments",
         href: "/academy/assignments",

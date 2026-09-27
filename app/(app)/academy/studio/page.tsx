@@ -64,45 +64,39 @@ export default async function StudioPage() {
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
-      <AcademyHeader activeSection="studio" />
-
       {/* The one working action is the solid one; the two unbuilt ones
           are quiet. It was the other way round — the disabled buttons
           carried purple and yellow, the live one was plain. */}
-      <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight text-foreground">
-            Course Studio
-          </h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Build training courses from scratch or start from a template
-          </p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <button
-            type="button"
-            disabled
-            title="The course-template gallery isn't built yet"
-            className="cursor-not-allowed rounded-md border border-border bg-card px-4 py-2 text-sm font-semibold text-muted-foreground opacity-60"
-          >
-            Browse Templates
-          </button>
-          <Link
-            href="/academy/studio/new"
-            className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm hover:bg-brand-dark"
-          >
-            + Blank Course
-          </Link>
-          <button
-            type="button"
-            disabled
-            title="The full-page Studio editor isn't built yet"
-            className="cursor-not-allowed rounded-md border border-border bg-card px-4 py-2 text-sm font-semibold text-muted-foreground opacity-60"
-          >
-            Open Studio
-          </button>
-        </div>
-      </div>
+      <AcademyHeader
+        title="Course Studio"
+        description="Build training courses from scratch or start from a template"
+        actions={
+          <>
+            <button
+              type="button"
+              disabled
+              title="The course-template gallery isn't built yet"
+              className="cursor-not-allowed rounded-md border border-border bg-card px-4 py-2 text-sm font-semibold text-muted-foreground opacity-60"
+            >
+              Browse Templates
+            </button>
+            <Link
+              href="/academy/studio/new"
+              className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm hover:bg-brand-dark"
+            >
+              + Blank Course
+            </Link>
+            <button
+              type="button"
+              disabled
+              title="The full-page Studio editor isn't built yet"
+              className="cursor-not-allowed rounded-md border border-border bg-card px-4 py-2 text-sm font-semibold text-muted-foreground opacity-60"
+            >
+              Open Studio
+            </button>
+          </>
+        }
+      />
 
       {loadError ? (
         <div

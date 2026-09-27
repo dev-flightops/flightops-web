@@ -1,7 +1,6 @@
 import { Activity, Clock, Plane, ShieldCheck, Users } from "lucide-react";
 
 import { AlertList } from "@/components/dashboards/alert-list";
-import { DashboardNav } from "@/components/dashboards/dashboard-nav";
 import { FleetAirworthinessPanel } from "@/components/dashboards/fleet-airworthiness-panel";
 import { LiveOpsBoard } from "@/components/dashboards/live-ops-board";
 import { PillarBar } from "@/components/dashboards/pillar-bar";
@@ -86,7 +85,6 @@ export default async function ExecutiveDashboardPage() {
 
   return (
     <div className="container py-6">
-      <DashboardNav active="executive" />
 
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>

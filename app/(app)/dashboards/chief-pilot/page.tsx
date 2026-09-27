@@ -1,6 +1,5 @@
 import Link from "next/link";
 
-import { DashboardNav } from "@/components/dashboards/dashboard-nav";
 import { AlertList } from "@/components/dashboards/alert-list";
 import { StatTile } from "@/components/dashboards/stat-tile";
 import { loadOperationalSnapshot } from "@/lib/dashboards/operational-snapshot";
@@ -14,7 +13,6 @@ export default async function ChiefPilotDashboardPage() {
 
   return (
     <div className="container py-6">
-      <DashboardNav active="chief-pilot" />
 
       <h1 className="text-2xl font-bold tracking-tight">Chief Pilot</h1>
       <p className="mt-1 text-sm text-muted-foreground">
