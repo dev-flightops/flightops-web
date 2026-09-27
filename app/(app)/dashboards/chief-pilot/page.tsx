@@ -22,20 +22,12 @@ export default async function ChiefPilotDashboardPage() {
       {/* Row 1 — 5-col stats. Sub copy matches legacy verbatim per the
           fidelity rule. */}
       <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5">
-        <StatTile value={0} label="Active Crew" tone="muted" />
-        <StatTile value="0/0" label="Fully Current" sub="0%" tone="muted" />
-        <StatTile
-          value={0}
-          label="Expired"
-          sub="immediate action"
-          tone="muted"
-        />
-        <StatTile
-          value={0}
-          label="Expiring Soon"
-          sub="< 30 days"
-          tone="muted"
-        />
+        {/* The four crew tiles printed hardcoded zeros ("0/0 Fully
+            Current", "0 Expired"). Not wired, so they say so. */}
+        <StatTile value="—" label="Active Crew" sub="Not built yet" tone="muted" />
+        <StatTile value="—" label="Fully Current" sub="Not built yet" tone="muted" />
+        <StatTile value="—" label="Expired" sub="Not built yet" tone="muted" />
+        <StatTile value="—" label="Expiring Soon" sub="Not built yet" tone="muted" />
         <StatTile
           value={snapshot.airborneCount}
           label="Airborne Now"
@@ -54,7 +46,7 @@ export default async function ChiefPilotDashboardPage() {
             executive and director-ops dashboards showed both from the
             identical source. The Ops half is now wired the way they
             are; the Crew half genuinely has nowhere to come from. */}
-        <Panel title="Crew & Ops Alerts" milestone="M3">
+        <Panel title="Crew & Ops Alerts">
           <AlertList
             alerts={snapshotAlertsToList(snapshot.alerts)}
             emptyHint="No grounded aircraft, overdue flights or MELs expiring in the next two days. Medical certificate expirations, recurrent due dates and crew legality violations are not wired — no crew-service exists to supply them."
@@ -63,7 +55,6 @@ export default async function ChiefPilotDashboardPage() {
 
         <Panel
           title="Open Duty Periods"
-          milestone="M3"
           headerLink={{ label: "pilot roster →", href: "/compliance/roster" }}
         >
           {/* Not "0 pilots on duty" — that asserted a count with
@@ -87,7 +78,6 @@ export default async function ChiefPilotDashboardPage() {
           it now links there. */}
       <Panel
         title="Crew Currency Matrix"
-        milestone="M3"
         className="mt-5"
         headerLink={{
           label: "fleet compliance →",
@@ -121,40 +111,39 @@ export default async function ChiefPilotDashboardPage() {
         </div>
       </Panel>
 
-      {/* Row 4 — 2-col: Pilot Risk Profiles + Review.
-          Both are single-line empty states until the underlying services
-          ship (risk-analytics for risk, dispatch-outcomes for the review). */}
+      {/* Rows 4–5 are not wired. They used to say "No pilot data in the
+          last 90 days", "No overrides in the last 90 days" and the like —
+          statements about data they never read, while FRAT assessments
+          and CP/DO overrides exist. "Not built yet" is what is true. */}
       <div className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2">
         <Panel
           title="Pilot Risk Profiles (90d)"
-          milestone="M3"
         >
           <p className="py-4 text-center text-xs text-muted-foreground">
-            No pilot data in the last 90 days.
+            Not built yet.
           </p>
         </Panel>
 
-        <Panel title="HIGH / EXTREME Review (90d)" milestone="M3">
+        <Panel title="HIGH / EXTREME Review (90d)">
           <p className="py-4 text-center text-xs text-muted-foreground">
-            No HIGH/EXTREME dispatches in the last 90 days.
+            Not built yet.
           </p>
         </Panel>
       </div>
 
       {/* Row 5 — 2-col: Overrides + Recognition */}
       <div className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2">
-        <Panel title="Recent Overrides" milestone="M3">
+        <Panel title="Recent Overrides">
           <p className="py-4 text-center text-xs text-muted-foreground">
-            No overrides in the last 90 days.
+            Not built yet.
           </p>
         </Panel>
 
         <Panel
           title="Pilot Recognition"
-          milestone="M3"
         >
           <p className="py-4 text-center text-xs text-muted-foreground">
-            No achievements yet.
+            Not built yet.
           </p>
         </Panel>
       </div>
@@ -164,13 +153,11 @@ export default async function ChiefPilotDashboardPage() {
 
 function Panel({
   title,
-  milestone,
   headerLink,
   children,
   className,
 }: {
   title: string;
-  milestone: "M2" | "M3" | "M4";
   /** Optional trailing link in the heading row (matches legacy's
    *  "crew records →" / "full analytics →" / "all →" affordances). */
   headerLink?: { label: string; href: string };
@@ -194,9 +181,6 @@ function Panel({
               {headerLink.label}
             </Link>
           )}
-          <span className="rounded-md bg-muted px-1.5 py-0.5 text-[0.6rem] font-bold uppercase text-muted-foreground">
-            {milestone}
-          </span>
         </div>
       </div>
       {children}

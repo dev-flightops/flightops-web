@@ -205,33 +205,25 @@ export default async function DirectorOpsDashboardPage() {
         </section>
       </div>
 
-      {/* Row 4 — 3-col: Stations + Crew Compliance + Risk Distribution */}
+      {/* Row 4 — 3-col: Stations + Crew Compliance + Risk Distribution.
+          The last two printed hardcoded zeros ("PICs current 0/0",
+          "Extreme 0") under an "M3" pill, which was the only sign they
+          were not real. They say they are not built now. */}
       <div className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-3">
         <ListPanel
           title="Station Summary"
-          milestone="M2"
           rows={collectStations(todaysFlights.items)}
           emptyHint="No station traffic today."
         />
         <ListPanel
           title="Crew Compliance"
-          milestone="M3"
-          rows={[
-            { left: "PICs current", right: "0/0" },
-            { left: "SICs current", right: "0/0" },
-            { left: "Expired this week", right: "0" },
-            { left: "Expiring next 30d", right: "0" },
-          ]}
+          rows={[]}
+          emptyHint="Not built here yet — pilot currency is on Fleet Compliance."
         />
         <ListPanel
           title="Risk Distribution (14d)"
-          milestone="M3"
-          rows={[
-            { left: "Low", right: "0", tone: "green" },
-            { left: "Medium", right: "0", tone: "yellow" },
-            { left: "High", right: "0", tone: "orange" },
-            { left: "Extreme", right: "0", tone: "red" },
-          ]}
+          rows={[]}
+          emptyHint="Not built yet."
         />
       </div>
     </div>
@@ -382,12 +374,10 @@ interface ListRow {
 
 function ListPanel({
   title,
-  milestone,
   rows,
   emptyHint,
 }: {
   title: string;
-  milestone: "M2" | "M3" | "M4";
   rows: ListRow[];
   emptyHint?: string;
 }) {
@@ -397,9 +387,6 @@ function ListPanel({
         <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
           {title}
         </h2>
-        <span className="rounded-md bg-muted px-1.5 py-0.5 text-[0.6rem] font-bold uppercase text-muted-foreground">
-          {milestone}
-        </span>
       </div>
       {rows.length === 0 ? (
         <p className="py-4 text-center text-xs text-muted-foreground">

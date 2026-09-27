@@ -84,12 +84,10 @@ export default async function DispatcherDashboardPage() {
           sub={`${fleetActive}/${fleetTotal} avail`}
           tone={fleetGrounded > 0 ? "orange" : "muted"}
         />
-        <StatTile
-          value={0}
-          label="Crew Expired"
-          sub="check before dispatch"
-          tone="muted"
-        />
+        {/* This read "0 Crew Expired — check before dispatch" from a
+            hardcoded zero: false reassurance on the one check it names.
+            Not wired, so it says so; currency is on Fleet Compliance. */}
+        <StatTile value="—" label="Crew Expired" sub="Not built yet" tone="muted" />
       </div>
 
       {/* Row 2 — alerts */}
@@ -152,14 +150,9 @@ export default async function DispatcherDashboardPage() {
       <div className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-3">
         <FuturePanel
           title="Crew Currency"
-          milestone="M3"
-          hint="Per-PIC currency snapshot (90-day landings, IPC, recurrent) once crew-service ships."
+          hint="Not built here yet — pilot currency is on Fleet Compliance."
         />
-        <FuturePanel
-          title="Risk Distribution (7d)"
-          milestone="M3"
-          hint="Bar chart of LOW / MEDIUM / HIGH / EXTREME risk scores across the last 7 days once risk-analytics is wired."
-        />
+        <FuturePanel title="Risk Distribution (7d)" hint="Not built yet." />
         <RecentOutcomesPanel />
       </div>
     </div>
@@ -305,27 +298,13 @@ function PendingDispatchTable({ flights }: { flights: FlightListItem[] }) {
   );
 }
 
-function FuturePanel({
-  title,
-  milestone,
-  hint,
-}: {
-  title: string;
-  milestone: "M2" | "M3" | "M4";
-  hint: string;
-}) {
+function FuturePanel({ title, hint }: { title: string; hint: string }) {
   return (
     <section className="rounded-xl border border-border bg-card p-5">
       <div className="mb-2 flex items-center justify-between">
         <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
           {title}
         </h2>
-        <span
-          className="rounded-md bg-muted px-1.5 py-0.5 text-[0.6rem] font-bold uppercase tracking-[0.06em] text-muted-foreground"
-          title={`Coming in ${milestone}`}
-        >
-          {milestone}
-        </span>
       </div>
       <p className="text-xs text-muted-foreground">{hint}</p>
     </section>
