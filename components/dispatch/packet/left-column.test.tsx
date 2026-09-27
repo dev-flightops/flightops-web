@@ -7,6 +7,9 @@ import { expectNoA11yViolations } from "@/tests/a11y";
 // async server components with their own tests; stub them.
 vi.mock("./alternate-review-panel", () => ({ AlternateReviewPanel: () => null }));
 vi.mock("./fuel-order-panel", () => ({ FuelOrderPanel: () => null }));
+// Arrives with the Load Team work (fix/dispatch-panel-labels); stubbed
+// here so this test holds whichever of the two lands first.
+vi.mock("./load-team-panel", () => ({ LoadTeamPanel: () => null }));
 vi.mock("./maintenance-panel", () => ({ MaintenancePanel: () => null }));
 vi.mock("./notam-acknowledgment-panel", () => ({ NotamAcknowledgmentPanel: () => null }));
 vi.mock("./route-input", () => ({ RouteInput: () => null }));
