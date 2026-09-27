@@ -1,15 +1,17 @@
 import { auth, signOut } from "@/auth";
 import { AppShell } from "@/components/app-shell/app-shell";
 import { HeaderActions } from "@/components/app-shell/header-actions";
+import { ExternalActions } from "@/components/app-shell/identity";
 import { BrandThemeStyle } from "@/components/app-shell/brand-theme-style";
 import { DatePickerAffordance } from "@/components/app-shell/date-picker-affordance";
 import { rolesCanSeeModule } from "@/components/home/module-catalog";
 import { SafetyReportButton } from "@/components/safety/safety-report-button";
-import { getCompanyProfile, listMyTenants } from "@/lib/api/auth";
+import { getCompanyProfile, getMyBrand, listMyTenants } from "@/lib/api/auth";
 import { SessionExpiredError } from "@/lib/api/client";
+import { EXTERNAL_HOME, isStaffSession } from "@/lib/external-access";
 import { TenantProvider } from "@/lib/tenant";
 
-import { switchTenantAction } from "./actions";
+import { signOutAction, switchTenantAction } from "./actions";
 import { buildHeaderActionsData } from "./header-actions-props";
 
 /**
@@ -55,6 +57,25 @@ export default async function AppGroupLayout({
     (session as unknown as { roles?: string[] } | null)?.roles ?? [];
   const currentTenant = tenants.find((t) => t.is_current) ?? tenants[0];
   const brand = currentTenant?.name ?? "Peregrine Flight Ops";
+
+  // A customer or supplier login (no staff role) gets the operator's
+  // bar and its own page — none of the staff chrome, and none of the
+  // staff fetches, which the services would refuse anyway. The proxy
+  // has already confined it to the portal and the supplier inbox. See
+  // lib/external-access.ts.
+  if (!isStaffSession(sessionRoles)) {
+    return (
+      <ExternalLayout
+        tenants={tenants}
+        fallbackBrand={brand}
+        displayName={
+          session?.user?.name?.trim() || session?.user?.email || ""
+        }
+      >
+        {children}
+      </ExternalLayout>
+    );
+  }
 
   // Per-tenant brand color overrides (M3 branding). Fetched here so every
   // authenticated page inherits the tenant theme without each route
@@ -118,6 +139,58 @@ export default async function AppGroupLayout({
             navigation between routes inside the (app) group. */}
         <SafetyReportButton />
         <DatePickerAffordance />
+      </AppShell>
+    </TenantProvider>
+  );
+}
+
+async function ExternalLayout({
+  tenants,
+  fallbackBrand,
+  displayName,
+  children,
+}: {
+  tenants: Awaited<ReturnType<typeof listMyTenants>>["tenants"];
+  fallbackBrand: string;
+  displayName: string;
+  children: React.ReactNode;
+}) {
+  // The operator's public face — name, colours, ops line. Soft-fails to
+  // the platform defaults, like the staff layout's company profile.
+  let brand = fallbackBrand;
+  let theme: { primary: string | null; primaryDark: string | null } = {
+    primary: null,
+    primaryDark: null,
+  };
+  let opsPhone: string | null = null;
+  try {
+    const b = await getMyBrand();
+    brand = b.name || fallbackBrand;
+    theme = {
+      primary: b.brand_primary_color,
+      primaryDark: b.brand_primary_dark_color,
+    };
+    opsPhone = b.ops_phone?.trim() || null;
+  } catch {
+    // Non-fatal.
+  }
+
+  return (
+    <TenantProvider tenants={tenants} switchTenantAction={switchTenantAction}>
+      <BrandThemeStyle primary={theme.primary} primaryDark={theme.primaryDark} />
+      <AppShell
+        brand={brand}
+        actionsSlot={
+          <ExternalActions
+            displayName={displayName}
+            signOutAction={signOutAction}
+          />
+        }
+        opsPhone={opsPhone}
+        homeHref={EXTERNAL_HOME}
+        showDepartmentNav={false}
+      >
+        {children}
       </AppShell>
     </TenantProvider>
   );

@@ -328,9 +328,9 @@ export const HOME_MODULE_ROLES: Record<string, readonly Role[]> = {
  * use, exported so the top bar's Ops chip follows it too rather than
  * keeping a second copy.
  *
- * Fails open on an empty role list, as the tiles do: a session that
- * failed to carry roles gets a cluttered screen rather than an empty
- * one, and every page still gates itself.
+ * Fails open on an empty role list, as the tiles do. A login with no
+ * staff role never gets this far any more — it is a customer or a
+ * supplier's rep, and it gets the portal (lib/external-access.ts).
  */
 export function rolesCanSeeModule(
   moduleId: string,

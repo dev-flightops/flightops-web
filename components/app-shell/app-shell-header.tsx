@@ -32,6 +32,8 @@ export function AppShellHeader({
   roles = [],
   showOpsChip = false,
   opsPhone = null,
+  homeHref = "/home/",
+  showDepartmentNav = true,
 }: {
   brand: string;
   actionsSlot?: ReactNode;
@@ -46,6 +48,12 @@ export function AppShellHeader({
   /** The tenant's ops line from their company profile. Hidden when
    *  unset rather than showing a placeholder number to a customer. */
   opsPhone?: string | null;
+  /** Where the operator's name links. A customer or supplier login's
+   *  home is the portal, not the staff dashboard. */
+  homeHref?: string;
+  /** The department strip is staff navigation; a customer or supplier
+   *  login gets the bar alone. */
+  showDepartmentNav?: boolean;
 }) {
   const pathname = usePathname();
   const isHome = pathname === "/home" || pathname === "/home/";
@@ -65,7 +73,7 @@ export function AppShellHeader({
           )}
 
           <Link
-            href="/home/"
+            href={homeHref}
             className="flex min-w-0 items-center border-l border-border px-4 text-[0.8rem] font-semibold tracking-tight text-foreground transition-colors hover:text-foreground/80 sm:px-5"
           >
             <span className="truncate">{brand}</span>
@@ -91,7 +99,7 @@ export function AppShellHeader({
         </div>
       </div>
 
-      {!isHome && <DepartmentNav roles={roles} />}
+      {!isHome && showDepartmentNav && <DepartmentNav roles={roles} />}
     </header>
   );
 }

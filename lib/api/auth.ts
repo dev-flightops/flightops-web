@@ -9,6 +9,7 @@ import type {
   AdminAccessRoleRow,
   AdminAccessRolesResponse,
   AdminAccessToggleRequest,
+  BrandResponse,
   CompanyBaseCreateRequest,
   CompanyBaseListResponse,
   CompanyBaseResponse,
@@ -108,6 +109,10 @@ export async function resolveSsoForEmail(
   } catch {
     return empty;
   }
+}
+
+export async function getMyBrand(): Promise<BrandResponse> {
+  return apiFetch<BrandResponse>("/auth/me/brand");
 }
 
 // ---- Settings (M2-M-28a) ----

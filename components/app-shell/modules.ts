@@ -1428,11 +1428,13 @@ export const MODULE_ROLES: Record<string, readonly Role[]> = {
 /**
  * True when a user holding `roles` should see `allowed`.
  *
- * Fails OPEN on an empty role list. A user whose roles failed to load
- * should get a cluttered nav, not an empty one — the backend still
- * refuses anything they may click, and stranding someone with no
- * navigation is a worse failure than showing them a module they cannot
- * use.
+ * Fails OPEN on an empty role list — but an empty role list no longer
+ * reaches the staff shell. A login with no staff role is a customer or
+ * a supplier's rep, and the proxy and the (app) layout give it the
+ * portal instead (lib/external-access.ts). This was written for "roles
+ * failed to load", and a customer's login read exactly like that: they
+ * got every module in the nav. The open fallback stays only as defence
+ * for a staff session with an unexpected role list.
  */
 function _permits(
   allowed: readonly Role[] | undefined,
