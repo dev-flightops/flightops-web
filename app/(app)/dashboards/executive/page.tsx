@@ -1,7 +1,6 @@
 import { Activity, Clock, Plane, ShieldCheck, Users } from "lucide-react";
 
 import { AlertList } from "@/components/dashboards/alert-list";
-import { DashboardNav } from "@/components/dashboards/dashboard-nav";
 import { FleetAirworthinessPanel } from "@/components/dashboards/fleet-airworthiness-panel";
 import { LiveOpsBoard } from "@/components/dashboards/live-ops-board";
 import { PillarBar } from "@/components/dashboards/pillar-bar";
@@ -86,7 +85,6 @@ export default async function ExecutiveDashboardPage() {
 
   return (
     <div className="container py-6">
-      <DashboardNav active="executive" />
 
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
@@ -121,18 +119,10 @@ export default async function ExecutiveDashboardPage() {
           sub={`${fleetGrounded} on hold`}
           tone="green"
         />
-        <StatTile
-          value="0/0"
-          label="Crew Current"
-          sub="0 expired · 0 expiring"
-          tone="muted"
-        />
-        <StatTile
-          value={0}
-          label="Overrides (30d)"
-          sub="0% of dispatches"
-          tone="muted"
-        />
+        {/* Not wired. These printed "0/0" and "0" as if measured; a dash
+            and "Not built yet" is what is true. */}
+        <StatTile value="—" label="Crew Current" sub="Not built yet" tone="muted" />
+        <StatTile value="—" label="Overrides (30d)" sub="Not built yet" tone="muted" />
       </div>
 
       {/* Row 2 — 6-col financial row. Smaller value font (size="small")
@@ -140,17 +130,14 @@ export default async function ExecutiveDashboardPage() {
           revenue/margin, blue rev-per-hour, yellow forecast, purple AR,
           and the analytics → arrow stays neutral. */}
       <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-6">
-        <StatTile
-          value="$0"
-          label="Revenue MTD"
-          sub="+0%"
-          tone="green"
-          size="small"
-        />
-        <StatTile value="0%" label="Profit Margin" tone="green" size="small" />
-        <StatTile value="$0" label="Rev / FH" tone="blue" size="small" />
-        <StatTile value="$0" label="30d Forecast" tone="yellow" size="small" />
-        <StatTile value="$0" label="Outstanding AR" tone="purple" size="small" />
+        {/* The five money tiles were literal "$0" and "0%" — an executive
+            reading them would take the operation for broke. They are not
+            wired; the Executive Summary report computes these figures. */}
+        <StatTile value="—" label="Revenue MTD" sub="Not built yet" tone="muted" size="small" />
+        <StatTile value="—" label="Profit Margin" sub="Not built yet" tone="muted" size="small" />
+        <StatTile value="—" label="Rev / FH" sub="Not built yet" tone="muted" size="small" />
+        <StatTile value="—" label="30d Forecast" sub="Not built yet" tone="muted" size="small" />
+        <StatTile value="—" label="Outstanding AR" sub="Not built yet" tone="muted" size="small" />
         <StatTile
           value="→"
           label="Executive Analytics"

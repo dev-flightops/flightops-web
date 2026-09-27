@@ -1,7 +1,6 @@
 import Link from "next/link";
 
 import { AlertList } from "@/components/dashboards/alert-list";
-import { DashboardNav } from "@/components/dashboards/dashboard-nav";
 import { StationPicker } from "@/components/dashboards/station-picker";
 import { StatTile } from "@/components/dashboards/stat-tile";
 import { listCompanyBases } from "@/lib/api/auth";
@@ -76,7 +75,6 @@ export default async function StationDashboardPage({
 
   return (
     <div className="container py-6">
-      <DashboardNav active="station" />
 
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>

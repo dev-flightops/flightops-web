@@ -84,7 +84,7 @@ export default async function AcademyAssignmentsPage({
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
-      <AcademyHeader activeSection="assignments" />
+      <AcademyHeader title="Training Assignments" />
 
       {loadError ? (
         <div
@@ -97,8 +97,7 @@ export default async function AcademyAssignmentsPage({
         <>
           <div className="mb-5 flex flex-col gap-3 border-b border-border pb-4 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <h2 className="text-lg font-bold">Training Assignments</h2>
-              <p className="mt-0.5 text-xs text-muted-foreground">
+              <p className="text-sm text-muted-foreground">
                 {enrollments.length}{" "}
                 {enrollments.length === 1 ? "enrolment" : "enrolments"}
                 {statusFilter && (

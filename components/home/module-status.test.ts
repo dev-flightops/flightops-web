@@ -1,4 +1,4 @@
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
 import { describe, expect, it } from "vitest";
@@ -68,7 +68,7 @@ import { HOME_QUICK_LINKS } from "./quick-links";
  * built", while /settings/fleet had been calling createAircraftAction
  * through AddAircraftDialog since M2. Four of the five dimmed entries in
  * that catalogue were caught here; that one was not, purely because it
- * carried no href for hasPage() to test. Being unreachable by the guard
+ * carried no href for pageState() to test. Being unreachable by the guard
  * is what let it stay wrong.
  *
  * So a non-live entry now has to carry an href, which is what puts it
@@ -111,19 +111,30 @@ const NON_LIVE_WITHOUT_HREF: Record<string, string> = {
   "DEPARTMENTS.crew.crew-payroll": "Unreachable dept; ships at /payroll (also HR's).",
 };
 
-/** Does a concrete (non-dynamic) route have a page?
+/** Does a concrete (non-dynamic) route have a page — and is it built?
  *
  *  A query string or hash is not part of the path — the quick links use
  *  `/flight-crew/history?tab=duty`, and treating that whole string as a
- *  directory reported a live page as a 404. */
-function hasPage(href: string): boolean | null {
+ *  directory reported a live page as a 404.
+ *
+ *  A page that renders NotBuiltPage is a placeholder, not a shipped
+ *  page. Six maintenance pages were shells — legacy's layout with every
+ *  control disabled, nothing behind it — and this sweep called three of
+ *  them shipped because page.tsx existed. The comment at the top says
+ *  existence is the floor, not proof; this is the part of "useful" a
+ *  file can declare about itself. */
+function pageState(href: string): "built" | "placeholder" | "none" | null {
   const path = href.split(/[?#]/)[0];
   if (!path.startsWith("/") || path.startsWith("/api") || path.includes("[")) {
     return null; // not statically checkable
   }
   const segments = path.replace(/^\/+|\/+$/g, "");
   if (!segments) return null;
-  return existsSync(join(APP_DIR, segments, "page.tsx"));
+  const file = join(APP_DIR, segments, "page.tsx");
+  if (!existsSync(file)) return "none";
+  return readFileSync(file, "utf8").includes("NotBuiltPage")
+    ? "placeholder"
+    : "built";
 }
 
 interface Entry {
@@ -185,7 +196,7 @@ describe("module status matches what is actually built", () => {
 
   it("never links a live module at a route with no page", () => {
     const broken = allEntries()
-      .filter((e) => e.status === "live" && e.href && hasPage(e.href) === false)
+      .filter((e) => e.status === "live" && e.href && pageState(e.href) === "none")
       .map((e) => `${e.where}.${e.id} -> ${e.href}`);
 
     expect(broken, "these are live and clickable, and lead to a 404").toEqual(
@@ -198,12 +209,27 @@ describe("module status matches what is actually built", () => {
     // page exists but whose status is not live renders a Soon chip and
     // drops its link, so the department looks unbuilt.
     const stale = allEntries()
-      .filter((e) => e.status !== "live" && e.href && hasPage(e.href) === true)
+      .filter((e) => e.status !== "live" && e.href && pageState(e.href) === "built")
       .map((e) => `${e.where}.${e.id} -> ${e.href} (status: ${e.status})`);
 
     expect(
       stale,
       "these have shipped but are still marked as coming soon",
+    ).toEqual([]);
+  });
+
+  it("never calls a placeholder page live", () => {
+    // Due List, Inventory and RTS Queue sat here as live over pages
+    // that were shells — every control disabled, nothing behind them.
+    const placeholders = allEntries()
+      .filter(
+        (e) => e.status === "live" && e.href && pageState(e.href) === "placeholder",
+      )
+      .map((e) => `${e.where}.${e.id} -> ${e.href}`);
+
+    expect(
+      placeholders,
+      "these are live in the nav but their page says it is not built",
     ).toEqual([]);
   });
 
@@ -240,7 +266,7 @@ describe("module status matches what is actually built", () => {
  * catch most status drift, but only ever indirectly — via whether a
  * page happens to exist on disk.
  *
- * The href check is the one they genuinely cannot make. hasPage() strips
+ * The href check is the one they genuinely cannot make. pageState() strips
  * the slashes off a route before testing it, so /documents/ and
  * /documents both resolve to the same page.tsx and both pass. Two
  * registries naming one route two different ways is invisible to every
