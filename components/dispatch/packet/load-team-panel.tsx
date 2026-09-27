@@ -33,8 +33,10 @@ import { EmptyPanel, SectionPanel } from "./section-panel";
  *     reassign.
  *   - A cancelled or completed flight shows its team read-only, like
  *     the packet's other actions (see RightColumn).
- *   - With no teams at the base, legacy said "add teams in Settings".
- *     Settings can't add a team yet, so this doesn't send anyone there.
+ *   - With no teams at the base, legacy said "add teams in Settings",
+ *     linking a dispatcher to a page its own access check bounced them
+ *     from. Settings isn't in a dispatcher's navigation here either, so
+ *     the panel just says there are none.
  */
 export async function LoadTeamPanel({
   flight,
