@@ -9,26 +9,32 @@ vi.mock("next-auth/react", () => ({
   signIn: (...args: unknown[]) => signIn(...args),
 }));
 
-const push = vi.fn();
-const refresh = vi.fn();
+let search = new URLSearchParams();
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({ push, refresh }),
-  useSearchParams: () => new URLSearchParams(),
+  useSearchParams: () => search,
 }));
+
+// Sign-in ends in a full page load (see login-form.tsx), so the
+// navigation is window.location.assign rather than the router.
+const assign = vi.fn();
+Object.defineProperty(window, "location", {
+  configurable: true,
+  value: { ...window.location, assign },
+});
 
 const resolveSsoAction = vi.fn();
 vi.mock("./actions", () => ({
   resolveSsoAction: (...args: unknown[]) => resolveSsoAction(...args),
 }));
 
-import { LoginForm } from "./login-form";
+import { LoginForm, sameSitePath } from "./login-form";
 
 describe("LoginForm", () => {
   beforeEach(() => {
     resolveSsoAction.mockResolvedValue({ tenant_id: null, providers: [] });
     signIn.mockReset();
-    push.mockReset();
-    refresh.mockReset();
+    assign.mockReset();
+    search = new URLSearchParams();
   });
 
   it("renders the brand, the form fields and the sign-in button", () => {
@@ -83,7 +89,7 @@ describe("LoginForm", () => {
     expect(screen.getByText(/or use password/i)).toBeInTheDocument();
   });
 
-  it("calls signIn('credentials', …) on submit and pushes /home on success", async () => {
+  it("calls signIn('credentials', …) on submit and loads /home on success", async () => {
     signIn.mockResolvedValue({ error: null, ok: true });
     const user = userEvent.setup();
     render(<LoginForm providers={[]} />);
@@ -97,7 +103,40 @@ describe("LoginForm", () => {
       password: "flightops-dev",
       redirect: false,
     });
-    expect(push).toHaveBeenCalledWith("/home/");
+    // A full page load: the proxy may redirect it (a customer login's
+    // /home/ becomes /portal), and a redirected client-side navigation
+    // never committed — the page stayed on /login.
+    await waitFor(() => expect(assign).toHaveBeenCalledWith("/home/"));
+  });
+
+  it("returns to `from` after sign-in, but only a path on this site", async () => {
+    signIn.mockResolvedValue({ ok: true });
+    search = new URLSearchParams("from=/dispatch");
+    const user = userEvent.setup();
+    render(<LoginForm providers={[]} />);
+    await user.type(screen.getByLabelText(/email/i), "admin@flightops.local");
+    await user.type(screen.getByLabelText(/password/i), "flightops-dev");
+    await user.click(screen.getByRole("button", { name: /^sign in$/i }));
+    await waitFor(() => expect(assign).toHaveBeenCalledWith("/dispatch"));
+  });
+
+  it("signs in to staff home, not off the site, when `from` is crafted", async () => {
+    signIn.mockResolvedValue({ ok: true });
+    search = new URLSearchParams("from=https://evil.example/login");
+    const user = userEvent.setup();
+    render(<LoginForm providers={[]} />);
+    await user.type(screen.getByLabelText(/email/i), "admin@flightops.local");
+    await user.type(screen.getByLabelText(/password/i), "flightops-dev");
+    await user.click(screen.getByRole("button", { name: /^sign in$/i }));
+    await waitFor(() => expect(assign).toHaveBeenCalledWith("/home/"));
+  });
+
+  it("will not send anyone off the site from a crafted `from`", () => {
+    for (const bad of ["https://evil.example/login", "//evil.example", "/\\evil.example", "javascript:alert(1)"]) {
+      expect(sameSitePath(bad)).toBe("/home/");
+    }
+    expect(sameSitePath(null)).toBe("/home/");
+    expect(sameSitePath("/portal")).toBe("/portal");
   });
 
   it("shows an inline error when signIn returns an error", async () => {
