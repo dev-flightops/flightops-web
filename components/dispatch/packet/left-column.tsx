@@ -2,10 +2,11 @@ import type { FlightDetail, RouteFreshness } from "@/lib/api/types";
 
 import { AlternateReviewPanel } from "./alternate-review-panel";
 import { FuelOrderPanel } from "./fuel-order-panel";
+import { LoadTeamPanel } from "./load-team-panel";
 import { MaintenancePanel } from "./maintenance-panel";
 import { NotamAcknowledgmentPanel } from "./notam-acknowledgment-panel";
 import { RouteInput } from "./route-input";
-import { DisabledPanel, SectionPanel } from "./section-panel";
+import { SectionPanel } from "./section-panel";
 import { StaleWeatherAck } from "./stale-weather-ack";
 import { WeatherPanel } from "./weather-panel";
 
@@ -23,10 +24,11 @@ import { WeatherPanel } from "./weather-panel";
  *     /weather/batch round-trip (M2-M-12)
  *   - Maintenance & Airworthiness — open MELs + squawks via
  *     maintenance-service (M2-M-8)
- *   - Non-Certified Weather Notes textarea
+ *   - Fuel — the departure base's supplier and contract price
+ *   - Load Team — assign the ramp team, same row as /ramp-ops
  *
- * NOTAM Review still blocked on M2-M-4 (FAA NOTAM proxy). Fuel, Load
- * Team, Mgmt Approval all wait on their respective services.
+ * NOTAM Review still blocked on M2-M-4 (FAA NOTAM proxy). Mgmt Approval
+ * and the Non-Certified Weather Notes box are still disabled.
  *
  * `icaos` is the resolved routing — either parsed from `?route=` in the
  * URL or [origin, destination] from the selected flight. Empty array
@@ -115,12 +117,7 @@ export async function LeftColumn({
 
       <FuelOrderPanel flight={flight} />
 
-      <DisabledPanel
-        title="Load Team"
-        milestone="M3"
-        hint="Assignments + acknowledgements once crew-service ships."
-        accent="blue"
-      />
+      <LoadTeamPanel flight={flight} />
 
       <SectionPanel title="Company Risk Inputs">
         <div className="grid grid-cols-3 gap-4">

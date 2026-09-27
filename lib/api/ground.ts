@@ -597,10 +597,7 @@ export async function cancelFuelOrder(
 // Load Teams (M2-M-25d) -----------------------------------------------------
 
 /** List load teams, alphabetically by team_name. Active-only filter
- *  is server-side; pass `includeInactive: true` to surface archived teams.
- *
- *  Flight-to-team assignment is M2-M-25e — until that lands, /ramp-ops
- *  uses the list read-only to render the team column. */
+ *  is server-side; pass `includeInactive: true` to surface archived teams. */
 export async function listLoadTeams(
   options: { includeInactive?: boolean; baseIcao?: string } = {},
 ): Promise<LoadTeamListResponse> {
@@ -622,6 +619,17 @@ export async function listAssignmentsByTeam(
   return apiFetch<FlightAssignmentListResponse>(
     `/ground/flight-assignments?team_id=${teamId}`,
   );
+}
+
+/** The flight's current assignment, or null when it has none. The
+ *  backend keeps at most one active row per flight. */
+export async function getFlightAssignment(
+  flightId: string,
+): Promise<FlightAssignmentResponse | null> {
+  const { items } = await apiFetch<FlightAssignmentListResponse>(
+    `/ground/flight-assignments?flight_id=${flightId}`,
+  );
+  return items[0] ?? null;
 }
 
 /** Idempotent upsert: assign a flight to a team. Re-posting the same

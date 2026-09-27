@@ -2,14 +2,13 @@
 
 import { useActionState, useEffect, useRef, useState } from "react";
 
-import { Spinner } from "@/components/ui/spinner";
-import type { LoadTeamResponse } from "@/lib/api/types";
-
 import {
   assignFlightAction,
   unassignFlightAction,
   type AssignActionState,
-} from "./assign-actions";
+} from "@/components/load-teams/assign-actions";
+import { Spinner } from "@/components/ui/spinner";
+import type { LoadTeamResponse } from "@/lib/api/types";
 
 /**
  * Tiny popover dropdown attached to each flight card on /ramp-ops.

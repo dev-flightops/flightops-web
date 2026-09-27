@@ -7,9 +7,10 @@ import { assignFlightToTeam, unassignFlight } from "@/lib/api/ground";
 import { ApiError } from "@/lib/api/client";
 
 /**
- * /ramp-ops server actions for flight × load-team assignment (M2-M-25e).
- * Both submit a single hidden form post (no react useActionState — the
- * dropdown just calls these and waits) so the UI stays small.
+ * Flight × load-team assignment (M2-M-25e), shared by the /ramp-ops
+ * Assign team dropdown and the dispatch packet's Load Team panel. Both
+ * change the same row, so both pages are revalidated. Each action takes
+ * the useActionState shape: previous state, then the form data.
  */
 
 const AssignSchema = z.object({
@@ -25,6 +26,22 @@ export type AssignActionState =
   | { status: "idle" }
   | { status: "ok" }
   | { status: "error"; message: string };
+
+function _revalidate() {
+  revalidatePath("/ramp-ops");
+  revalidatePath("/dispatch");
+}
+
+/** ApiError carries the raw response body in `message`; FastAPI puts
+ *  the reason in `detail`. */
+function _detail(err: ApiError): string | null {
+  try {
+    const parsed = JSON.parse(err.message) as { detail?: unknown };
+    return typeof parsed.detail === "string" ? parsed.detail : null;
+  } catch {
+    return null;
+  }
+}
 
 function _apiError(err: unknown, verb: string): AssignActionState {
   if (err instanceof ApiError) {
@@ -44,9 +61,15 @@ function _apiError(err: unknown, verb: string): AssignActionState {
       };
     }
     if (err.status === 409) {
+      // The backend's 409 means one of two things. Every 409 used to
+      // read as "inactive", which sent a dispatcher who lost a race
+      // looking for a problem with the team.
       return {
         status: "error",
-        message: "That load team is inactive — pick another team.",
+        message:
+          _detail(err) === "assignment_conflict_retry"
+            ? "Someone else assigned this flight at the same moment — refresh to see which team has it."
+            : "That load team is inactive — pick another team.",
       };
     }
     return {
@@ -73,7 +96,7 @@ export async function assignFlightAction(
   } catch (err) {
     return _apiError(err, "assign");
   }
-  revalidatePath("/ramp-ops");
+  _revalidate();
   return { status: "ok" };
 }
 
@@ -92,11 +115,11 @@ export async function unassignFlightAction(
   } catch (err) {
     // 404 on unassign is acceptable — same end state.
     if (err instanceof ApiError && err.status === 404) {
-      revalidatePath("/ramp-ops");
+      _revalidate();
       return { status: "ok" };
     }
     return _apiError(err, "unassign");
   }
-  revalidatePath("/ramp-ops");
+  _revalidate();
   return { status: "ok" };
 }
