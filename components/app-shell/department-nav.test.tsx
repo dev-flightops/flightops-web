@@ -80,7 +80,7 @@ describe("DepartmentNav", () => {
     expect(weather).toHaveAttribute("href", "/weather");
   });
 
-  it("renders the legacy Maintenance subnav on /maintenance (Fleet + 7 sub-pages + MX Intel)", () => {
+  it("renders the legacy Maintenance subnav on /maintenance, built entries linked", () => {
     // Parity check against legacy templates/maintenance/dashboard.html
     // sub-nav: Fleet | Work Orders | RTS | Inventory | Expiration |
     // Batch Trace | MX Clock | Availability | ✨ MX Intel.
@@ -102,18 +102,14 @@ describe("DepartmentNav", () => {
     expect(screen.queryByTestId("dept-nav-mel")).not.toBeInTheDocument();
     expect(screen.queryByTestId("dept-nav-squawks")).not.toBeInTheDocument();
 
-    // Fleet + the 7 sub-pages shipped in #172 (Work Orders, RTS,
-    // Inventory, Expiration, Batch Trace, MX Clock, Availability) are
-    // all live — each should be a real link with a matching href.
+    // Fleet, Work Orders and MX Intel are built. The other six were
+    // asserted live here as "shipped in #172", and their pages existed —
+    // as shells: legacy's layout with every control disabled and no
+    // maintenance-service endpoint behind any of them. They are
+    // `planned` now, dimmed with "Not built yet", and their pages say so.
     for (const [id, href] of [
       ["fleet", "/maintenance"],
       ["work-orders", "/maintenance/work-orders"],
-      ["rts", "/maintenance/rts"],
-      ["inventory", "/maintenance/inventory"],
-      ["expiration", "/maintenance/expiration"],
-      ["batch-trace", "/maintenance/batch-trace"],
-      ["mx-clock", "/maintenance/mx-clock"],
-      ["availability", "/maintenance/availability"],
       // MX Intel shipped in M4. It was a disabled span with a "Coming
       // in M4" tooltip, and this assertion is what caught the flip —
       // the nav entry changed and nothing else in the suite noticed.
@@ -122,6 +118,19 @@ describe("DepartmentNav", () => {
       const chip = screen.getByTestId(`dept-nav-${id}`);
       expect(chip.tagName).toBe("A");
       expect(chip).toHaveAttribute("href", href);
+    }
+    for (const id of [
+      "rts",
+      "inventory",
+      "expiration",
+      "batch-trace",
+      "mx-clock",
+      "availability",
+    ]) {
+      const chip = screen.getByTestId(`dept-nav-${id}`);
+      expect(chip.tagName).toBe("SPAN");
+      expect(chip).toHaveAttribute("aria-disabled", "true");
+      expect(chip).toHaveAttribute("title", "Not built yet");
     }
     // The AI accent survives going live. It is what tells a mechanic
     // this chip opens a model rather than a record.
