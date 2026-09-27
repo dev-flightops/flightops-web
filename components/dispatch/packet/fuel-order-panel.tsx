@@ -7,7 +7,7 @@ import type {
   FuelSupplierBaseResponse,
 } from "@/lib/api/types";
 
-import { DisabledPanel, SectionPanel } from "./section-panel";
+import { EmptyPanel, SectionPanel } from "./section-panel";
 
 /**
  * Fuel Order panel — reads the supplier × base × fuel_type pricing
@@ -36,9 +36,8 @@ export async function FuelOrderPanel({
 }) {
   if (!flight) {
     return (
-      <DisabledPanel
+      <EmptyPanel
         title="Fuel"
-        milestone="M2"
         hint="Pick a flight from the dropdown above to see the configured supplier + contract price for the departure base."
         accent="yellow"
       />

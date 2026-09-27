@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 
 import { expectNoA11yViolations } from "@/tests/a11y";
 
-import { DisabledPanel, SectionPanel } from "./section-panel";
+import { EmptyPanel, SectionPanel } from "./section-panel";
 
 describe("SectionPanel", () => {
   it("renders title + children", () => {
@@ -44,31 +44,28 @@ describe("SectionPanel", () => {
   });
 });
 
-describe("DisabledPanel", () => {
-  it("renders the user-facing SOON pill (milestone stays in the tooltip)", () => {
+describe("EmptyPanel", () => {
+  // Every panel that shows this is built — it only means "pick a flight
+  // first". It used to carry a "Soon" pill, which told dispatchers the
+  // Weather, Fuel, Maintenance and Alternate panels were unfinished.
+  it("renders the title and what to do, with no Soon pill", () => {
     render(
-      <DisabledPanel
+      <EmptyPanel
         title="Weather & ATIS"
-        milestone="M2"
-        hint="Enter routing to pull METAR/TAF."
+        hint="Pick a flight to pull METAR + TAF."
       />,
     );
     expect(screen.getByText("Weather & ATIS")).toBeInTheDocument();
-    const pill = screen.getByText("Soon");
-    expect(pill).toBeInTheDocument();
-    expect(pill).toHaveAttribute("title", "Coming in M2");
     expect(
-      screen.getByText(/Enter routing to pull METAR\/TAF/),
+      screen.getByText("Pick a flight to pull METAR + TAF."),
     ).toBeInTheDocument();
+    expect(screen.queryByText(/soon/i)).not.toBeInTheDocument();
+    expect(document.querySelector("[title]")).toBeNull();
   });
 
   it("has no a11y violations", async () => {
     const { container } = render(
-      <DisabledPanel
-        title="NOTAM Review"
-        milestone="M2"
-        hint="Empty state copy"
-      />,
+      <EmptyPanel title="Fuel" hint="Empty state copy" accent="yellow" />,
     );
     await expectNoA11yViolations(container);
   });

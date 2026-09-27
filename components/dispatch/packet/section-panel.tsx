@@ -77,42 +77,28 @@ export function SectionPanel({
 }
 
 /**
- * Common shape for a panel that doesn't have its underlying service yet.
- * Renders the SectionPanel with a muted-foreground hint inside, plus a
- * milestone tag so users can see where each piece is coming from.
+ * A panel with nothing to show yet because the dispatcher has not picked
+ * a flight or typed a route: its title and a line saying what to do.
+ *
+ * This was DisabledPanel, which added a "Soon" pill. Every panel that
+ * used it — Weather & ATIS, Fuel, Maintenance & Airworthiness, Alternate
+ * Review — is built; the pill showed only while it waited for a flight,
+ * so it told a dispatcher working features were unfinished. Load Team,
+ * the last user, is wired now too.
  */
-export function DisabledPanel({
+export function EmptyPanel({
   title,
-  milestone,
   hint,
   accent,
   className,
 }: {
   title: ReactNode;
-  /** "M2" / "M3" / "M4" — controls the tag pill at the right. */
-  milestone: "M2" | "M3" | "M4";
   hint: ReactNode;
   accent?: SectionPanelProps["accent"];
   className?: string;
 }) {
   return (
-    <SectionPanel
-      title={title}
-      accent={accent}
-      className={className}
-      titleAction={
-        // Pill shows a user-facing "SOON" so the dispatcher isn't
-        // asked to interpret internal milestone codes (M2/M3/M4).
-        // The tooltip retains the milestone tag so ops + dev can
-        // still hover to see which release cycle unlocks the panel.
-        <span
-          className="rounded-md bg-muted px-1.5 py-0.5 text-[0.6rem] font-bold uppercase tracking-[0.06em] text-muted-foreground"
-          title={`Coming in ${milestone}`}
-        >
-          Soon
-        </span>
-      }
-    >
+    <SectionPanel title={title} accent={accent} className={className}>
       <p className="text-xs text-muted-foreground">{hint}</p>
     </SectionPanel>
   );

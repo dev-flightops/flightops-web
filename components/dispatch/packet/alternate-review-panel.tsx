@@ -2,7 +2,7 @@ import { ApiError } from "@/lib/api/client";
 import { batchWeather } from "@/lib/api/weather";
 import type { WeatherReportResponse } from "@/lib/api/types";
 
-import { DisabledPanel, SectionPanel } from "./section-panel";
+import { EmptyPanel, SectionPanel } from "./section-panel";
 
 const MAX_STOPS = 10;
 
@@ -27,9 +27,8 @@ const MAX_STOPS = 10;
 export async function AlternateReviewPanel({ icaos }: { icaos: string[] }) {
   if (icaos.length === 0) {
     return (
-      <DisabledPanel
+      <EmptyPanel
         title="Alternate Review"
-        milestone="M2"
         hint="Pick a flight or type a routing above to evaluate whether each airport needs an alternate filed under FAR 91.169."
       />
     );

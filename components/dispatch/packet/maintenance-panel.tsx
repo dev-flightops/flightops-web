@@ -12,12 +12,11 @@ import type {
 import { CloseMelDialog } from "./close-mel-dialog";
 import { MelDeferralDialog } from "./mel-deferral-dialog";
 import { ResolveSquawkDialog } from "./resolve-squawk-dialog";
-import { DisabledPanel, SectionPanel } from "./section-panel";
+import { EmptyPanel, SectionPanel } from "./section-panel";
 import { SquawkDialog } from "./squawk-dialog";
 
 /**
- * Maintenance / airworthiness panel — replaces the M1 DisabledPanel
- * placeholder that lived between Compliance Gates and Fuel.
+ * Maintenance / airworthiness panel, between Compliance Gates and Fuel.
  *
  * Hits maintenance-service `/aircraft/{id}/airworthiness` (M2-M-8) and
  * renders two grouped lists:
@@ -41,9 +40,8 @@ export async function MaintenancePanel({
 }) {
   if (!flight) {
     return (
-      <DisabledPanel
+      <EmptyPanel
         title="Maintenance & Airworthiness"
-        milestone="M2"
         hint="Pick a flight from the dropdown above to check open MELs, grounding squawks, and airworthiness status for the selected aircraft."
       />
     );

@@ -11,7 +11,7 @@ import {
   type RouteRole,
 } from "@/lib/weather-format";
 
-import { DisabledPanel, SectionPanel } from "./section-panel";
+import { EmptyPanel, SectionPanel } from "./section-panel";
 
 // Backend caps batch at 20 requests — slice longer routes (one METAR +
 // one TAF per stop = 10-stop max). If the dispatcher pastes a wild
@@ -34,9 +34,8 @@ const MAX_STOPS = 10;
 export async function WeatherPanel({ icaos }: { icaos: string[] }) {
   if (icaos.length === 0) {
     return (
-      <DisabledPanel
+      <EmptyPanel
         title="Weather & ATIS"
-        milestone="M2"
         hint="Pick a flight from the dropdown above, or type a routing in the Route panel, to pull METAR + TAF for every stop."
       />
     );

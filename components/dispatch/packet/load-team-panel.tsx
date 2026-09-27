@@ -7,7 +7,7 @@ import type {
 } from "@/lib/api/types";
 
 import { LoadTeamPicker, type LoadTeamCard } from "./load-team-picker";
-import { SectionPanel } from "./section-panel";
+import { EmptyPanel, SectionPanel } from "./section-panel";
 
 /**
  * Load Team — the ramp team that loads the selected flight. Legacy
@@ -43,11 +43,11 @@ export async function LoadTeamPanel({
 }) {
   if (!flight) {
     return (
-      <SectionPanel title="Load Team" accent="blue">
-        <p className="text-xs text-muted-foreground">
-          Pick a flight from the dropdown above to assign the team that loads it.
-        </p>
-      </SectionPanel>
+      <EmptyPanel
+        title="Load Team"
+        hint="Pick a flight from the dropdown above to assign the team that loads it."
+        accent="blue"
+      />
     );
   }
 
