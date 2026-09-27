@@ -44,6 +44,9 @@ export interface HeaderActionsProps {
    *  there (client request 8/25). Defaults true so callers that have not
    *  been updated keep the old behaviour. */
   showSettings?: boolean;
+  /** Users is exec_admin's page — the API behind it refuses everyone
+   *  else, and legacy showed the link to admin roles only. */
+  showUsers?: boolean;
   signOutAction: () => Promise<void>;
   /** Initial duty state for the top-bar Clock In/Out pill. Null when the
    *  ops service is unreachable — the pill falls back to the disabled
@@ -82,6 +85,7 @@ export function HeaderActions({
   email,
   fullName,
   showSettings = true,
+  showUsers = true,
   signOutAction,
   initialDuty,
   clockInAction,
@@ -176,6 +180,7 @@ export function HeaderActions({
           the whole AI department behind a "coming soon" chip. A button
           that stays disabled after its page ships understates the
           product to the person using it. */}
+      {showUsers && (
       <Link
         href="/settings/users"
         title="User Management"
@@ -187,17 +192,14 @@ export function HeaderActions({
         </svg>
         <span className="hidden lg:inline">Users</span>
       </Link>
+      )}
 
-      <IconButton
-        title="Owner Admin · Coming in M4"
-        disabled
-        srLabel="Owner Admin"
-        className="hidden text-status-yellow sm:inline-flex"
-      >
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M12 1L9.2 8H2l6 4.4-2.3 7.1L12 15l6.3 4.5L16 12.4 22 8h-7.2L12 1z" />
-        </svg>
-      </IconButton>
+      {/* Owner Admin, the gold star, is gone. It sat here disabled on every
+          page for every tenant's staff. Legacy showed it only inside the
+          SaaS owner's own company (company.plan == "owner"), and the
+          console behind it is admin-service slice 2, which serves nothing
+          until the platform-administrator question is settled. When it
+          ships it belongs to platform administrators, not to operators. */}
 
 {/* Help. Opens on the article for the route you are standing on,
           because that is the question somebody presses ? to ask. Says

@@ -28,34 +28,51 @@ describe("HeaderActions", () => {
     expect(screen.getByLabelText("AI Assistant")).toBeInTheDocument();
     expect(screen.getByLabelText("Time Clock")).toBeInTheDocument();
     expect(screen.getByLabelText("Users")).toBeInTheDocument();
-    expect(screen.getByLabelText("Owner Admin")).toBeInTheDocument();
     expect(screen.getByLabelText("Help")).toBeInTheDocument();
     expect(screen.getByLabelText("Settings")).toBeInTheDocument();
     expect(screen.getByLabelText("Sign out")).toBeInTheDocument();
   });
 
-  it("marks every unbuilt entry as disabled with a milestone tooltip", () => {
+  it("has no unbuilt placeholders left in the bar", () => {
     render(
       <HeaderActions
         email="admin@flightops.local"
         signOutAction={vi.fn()}
       />,
     );
-    // This list keeps shrinking, which is the point of it. Settings
+    // This list kept shrinking, which was the point of it. Settings
     // shipped in M2; AI Assistant left when FleetBrain landed; Users
     // left when /settings/users turned out to have been live the whole
     // time; Notifications left when the bell shipped; Help left when
     // the panel did.
     //
-    // Owner Admin is the last one, and it is not waiting on work —
-    // admin-service deliberately serves nothing but /health until the
-    // platform-administrator question is settled, because a role on an
-    // ordinary tenant user would make compromising one account in one
-    // operator a compromise of every operator.
-    for (const label of ["Owner Admin"]) {
-      const el = screen.getByLabelText(label);
-      expect(el).toBeDisabled();
+    // Owner Admin was the last, and it was removed rather than waiting:
+    // legacy showed it only inside the SaaS owner's own company, and
+    // admin-service serves nothing but /health until the
+    // platform-administrator question is settled. When it ships it is
+    // for platform administrators, not every operator's staff.
+    expect(screen.queryByLabelText("Owner Admin")).toBeNull();
+    // The clock and the bell render disabled here only because this
+    // test gives them no data — their "could not load" fallback, which
+    // is deliberate and covered below. Nothing else may be disabled.
+    const dataFallbacks = new Set(["Time Clock", "Notifications"]);
+    for (const button of screen.getAllByRole("button")) {
+      if (dataFallbacks.has(button.getAttribute("aria-label") ?? "")) continue;
+      expect(button).not.toBeDisabled();
     }
+  });
+
+  it("shows Users only to those who can use it", () => {
+    // /settings/users is exec_admin-only in the API; the link led
+    // everyone else to a "no access" page. Legacy showed it to admins.
+    render(
+      <HeaderActions
+        email="pilot@flightops.local"
+        signOutAction={vi.fn()}
+        showUsers={false}
+      />,
+    );
+    expect(screen.queryByLabelText("Users")).toBeNull();
   });
 
   it("opens help on the article for the current route", () => {
