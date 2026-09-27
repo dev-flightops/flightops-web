@@ -1099,6 +1099,19 @@ export interface RampPhotoListResponse {
 
 // Settings — M2-M-28a / M2-G-46+47+53
 
+/** GET /auth/me/brand — the operator's public face. The customer-safe
+ *  part of the company profile, readable by any login including a
+ *  customer's; /auth/settings/company is staff-only. */
+export interface BrandResponse {
+  name: string;
+  short_name: string | null;
+  logo_url: string | null;
+  ops_phone: string | null;
+  ops_email: string | null;
+  brand_primary_color: string | null;
+  brand_primary_dark_color: string | null;
+}
+
 export interface CompanyProfileResponse {
   id: string;
   legal_name: string | null;
