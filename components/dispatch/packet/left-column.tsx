@@ -86,10 +86,14 @@ export async function LeftColumn({
           <YesNoSelect label="MEL/DMI on A/C" />
           <YesNoSelect label="Pilot Actions Required" />
           <div>
-            <label className="mb-1.5 block text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+            <label
+              htmlFor="packet-flight-rules"
+              className="mb-1.5 block text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground"
+            >
               IFR / VFR
             </label>
-            <select disabled className="ff-input cursor-not-allowed">
+            <select
+              id="packet-flight-rules" disabled className="ff-input cursor-not-allowed">
               <option>VFR</option>
               <option>IFR</option>
             </select>
@@ -125,28 +129,40 @@ export async function LeftColumn({
       <SectionPanel title="Company Risk Inputs">
         <div className="grid grid-cols-3 gap-4">
           <div>
-            <label className="mb-1.5 block text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+            <label
+              htmlFor="packet-reporting-ok"
+              className="mb-1.5 block text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground"
+            >
               Reporting OK
             </label>
-            <select disabled className="ff-input cursor-not-allowed">
+            <select
+              id="packet-reporting-ok" disabled className="ff-input cursor-not-allowed">
               <option>Yes</option>
               <option>No</option>
             </select>
           </div>
           <div>
-            <label className="mb-1.5 block text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+            <label
+              htmlFor="packet-night-ops"
+              className="mb-1.5 block text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground"
+            >
               Night Ops
             </label>
-            <select disabled className="ff-input cursor-not-allowed">
+            <select
+              id="packet-night-ops" disabled className="ff-input cursor-not-allowed">
               <option>No</option>
               <option>Yes</option>
             </select>
           </div>
           <div>
-            <label className="mb-1.5 block text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+            <label
+              htmlFor="packet-crosswind"
+              className="mb-1.5 block text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground"
+            >
               Crosswind (kt)
             </label>
             <input
+              id="packet-crosswind"
               type="number"
               disabled
               placeholder="auto"
@@ -203,12 +219,17 @@ function YesNoSelect({
    *  "No". The disabled select still needs the right initial option. */
   defaultYes?: boolean;
 }) {
+  // Labels are unique on the packet, so they make the id.
+  const id = `packet-${label.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}`;
   return (
     <div>
-      <label className="mb-1.5 block text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+      <label
+        htmlFor={id}
+        className="mb-1.5 block text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground"
+      >
         {label}
       </label>
-      <select disabled className="ff-input cursor-not-allowed">
+      <select id={id} disabled className="ff-input cursor-not-allowed">
         <option>{defaultYes ? "Yes" : "No"}</option>
         <option>{defaultYes ? "No" : "Yes"}</option>
       </select>
