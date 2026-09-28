@@ -1,13 +1,14 @@
 "use client";
 
 import { Loader2 } from "lucide-react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 
 import type { CrewSeat } from "@/lib/api/ops";
 import type { ComplianceFinding } from "@/lib/api/types";
 
-import { findingMessage, warningAckKey } from "./soft-warning-ack-parser";
+import { findingMessage, parseAckedWarns, warningAckKey } from "./soft-warning-ack-parser";
+import { useDispatchQuery } from "./use-dispatch-query";
 
 /**
  * M2-G-5 tail — soft-warning acknowledgment checkboxes.
@@ -23,6 +24,16 @@ import { findingMessage, warningAckKey } from "./soft-warning-ack-parser";
  * flips to a completed style. When ALL soft warnings are acked, the
  * parent enables Generate PDF (see page.tsx).
  */
+/**
+ * The checkbox's accessible name. An SIC item already says so ("SIC IFR
+ * Currency"); one either seat holds, like a medical, says whose it is,
+ * or the PIC's box and the SIC's would read the same.
+ */
+function ackLabel(seat: CrewSeat, name: string): string {
+  if (seat === "pic" || /^SIC\b/.test(name)) return `Acknowledge ${name}`;
+  return `Acknowledge ${name} (SIC)`;
+}
+
 export function SoftWarningAckList({
   findings,
   ackedCodes,
@@ -35,17 +46,17 @@ export function SoftWarningAckList({
   seat?: CrewSeat;
 }) {
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const nextQuery = useDispatchQuery();
   const [pending, startTransition] = useTransition();
 
   const toggle = (code: string, next: boolean) => {
-    const nextAcks = new Set(ackedCodes);
-    if (next) nextAcks.add(code);
-    else nextAcks.delete(code);
-    const params = new URLSearchParams(searchParams.toString());
-    if (nextAcks.size === 0) params.delete("warns_acked");
-    else params.set("warns_acked", Array.from(nextAcks).sort().join(","));
-    const qs = params.toString();
+    const qs = nextQuery((params) => {
+      const nextAcks = parseAckedWarns(params.get("warns_acked") ?? undefined);
+      if (next) nextAcks.add(code);
+      else nextAcks.delete(code);
+      if (nextAcks.size === 0) params.delete("warns_acked");
+      else params.set("warns_acked", Array.from(nextAcks).sort().join(","));
+    });
     startTransition(() => {
       router.push(qs ? `/dispatch/?${qs}` : "/dispatch/");
     });
@@ -73,7 +84,7 @@ export function SoftWarningAckList({
               checked={acked}
               disabled={pending}
               onChange={(e) => toggle(key, e.target.checked)}
-              aria-label={`Acknowledge ${seat === "sic" ? "SIC " : ""}${f.name}`}
+              aria-label={ackLabel(seat, f.name)}
               className="mt-0.5 h-3 w-3 shrink-0 cursor-pointer accent-status-green"
             />
             <label

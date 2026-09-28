@@ -214,7 +214,7 @@ describe("DispatchComplianceGate — the SIC seat (client, 27 Sep)", () => {
     expect(screen.getByText("SIC")).toBeInTheDocument();
     expect(screen.getByText("Sam Second")).toBeInTheDocument();
     // The PIC's key for the same code does not tick the SIC's box.
-    const box = screen.getByRole("checkbox", { name: "Acknowledge SIC SIC IFR Currency" });
+    const box = screen.getByRole("checkbox", { name: "Acknowledge SIC IFR Currency" });
     expect(box).not.toBeChecked();
     // The item name is printed once, not again inside the message.
     expect(box.closest("li")).toHaveTextContent(
