@@ -133,8 +133,10 @@ export function PicPicker({
       >
         <span>PIC</span>
         {selectedDot && (
+          // Decorative: the selected option already reads "Name — status",
+          // and an aria-label on a plain span is not allowed.
           <span
-            aria-label={`PIC compliance ${selectedDot}`}
+            aria-hidden
             className={
               "inline-block h-2 w-2 shrink-0 rounded-full " +
               (selectedDot === "green"

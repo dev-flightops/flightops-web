@@ -13,6 +13,7 @@ vi.mock("next/navigation", () => ({
 }));
 
 import type { FlightDetail } from "@/lib/api/types";
+import { expectNoA11yViolations } from "@/tests/a11y";
 
 import { FlightDetailsPanel } from "./flight-details-panel";
 
@@ -156,5 +157,27 @@ describe("the packet's airframe", () => {
     ]) {
       expect(options).toContain(label);
     }
+  });
+});
+
+describe("the fields are labelled", () => {
+  // The labels sat beside their controls unlinked, so the Aircraft and
+  // Area Forecast selects had no accessible name (axe select-name).
+  it("names every control, on a hand-filled packet", async () => {
+    panel(null);
+    for (const name of [/^Flight #/, "Aircraft", "N-Number", "SIC Name", "Area Forecast Region"]) {
+      expect(screen.getByLabelText(name)).toBeInTheDocument();
+    }
+    await expectNoA11yViolations(document.body);
+  });
+
+  it("points the Aircraft label at nothing once the airframe is a value", async () => {
+    panel(flight());
+    expect(screen.queryByLabelText("Aircraft")).toBeNull();
+    // A `for` naming an id that isn't on the page is invalid HTML, and
+    // neither axe nor getByLabelText notices it.
+    expect(screen.getByText("Aircraft").closest("label")).not.toHaveAttribute("for");
+    expect(screen.getByLabelText("Area Forecast Region")).toBeInTheDocument();
+    await expectNoA11yViolations(document.body);
   });
 });

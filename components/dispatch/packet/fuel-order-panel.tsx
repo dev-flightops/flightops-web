@@ -103,8 +103,13 @@ export async function FuelOrderPanel({
       ) : (
         <>
           <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
-            <Field label="Fuel Type" hint={`auto · ${flight.aircraft.model}`}>
+            <Field
+              label="Fuel Type"
+              hint={`auto · ${flight.aircraft.model}`}
+              htmlFor="fuel-type"
+            >
               <input
+                id="fuel-type"
                 type="text"
                 disabled
                 value={fuelTypeCode}
@@ -114,6 +119,7 @@ export async function FuelOrderPanel({
             </Field>
             <Field
               label="Supplier"
+              htmlFor="fuel-supplier"
               hint={
                 otherOptions.length > 0
                   ? `${otherOptions.length} alternate${otherOptions.length === 1 ? "" : "s"}`
@@ -121,6 +127,7 @@ export async function FuelOrderPanel({
               }
             >
               <select
+                id="fuel-supplier"
                 disabled
                 defaultValue={defaultRow?.supplier_id ?? ""}
                 key={`supplier-${flight.id}`}
@@ -141,8 +148,10 @@ export async function FuelOrderPanel({
             <Field
               label="Contract Price"
               hint={defaultRow?.is_contract_rate ? "contract" : "spot"}
+              htmlFor="fuel-price"
             >
               <input
+                id="fuel-price"
                 type="text"
                 disabled
                 value={
@@ -154,8 +163,9 @@ export async function FuelOrderPanel({
                 className="ff-input cursor-not-allowed font-mono"
               />
             </Field>
-            <Field label="Gallons" hint="required">
+            <Field label="Gallons" hint="required" htmlFor="fuel-gallons">
               <input
+                id="fuel-gallons"
                 type="number"
                 placeholder="e.g. 80"
                 min={0}
@@ -164,15 +174,21 @@ export async function FuelOrderPanel({
                 className="ff-input cursor-not-allowed"
               />
             </Field>
-            <Field label="Requested Time" hint="local">
+            <Field label="Requested Time" hint="local" htmlFor="fuel-time">
               <input
+                id="fuel-time"
                 type="time"
                 disabled
                 className="ff-input cursor-not-allowed font-mono"
               />
             </Field>
-            <Field label="Special Instructions" hint="optional">
+            <Field
+              label="Special Instructions"
+              hint="optional"
+              htmlFor="fuel-instructions"
+            >
               <input
+                id="fuel-instructions"
                 type="text"
                 placeholder="e.g. north ramp"
                 disabled
@@ -204,17 +220,23 @@ export async function FuelOrderPanel({
 
 function Field({
   label,
+  htmlFor,
   hint,
   children,
 }: {
   label: string;
+  /** The control's id, so the label names it. */
+  htmlFor: string;
   hint?: string;
   children: React.ReactNode;
 }) {
   return (
     <div>
       <div className="mb-1 flex items-baseline justify-between gap-2">
-        <label className="block text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+        <label
+          htmlFor={htmlFor}
+          className="block text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground"
+        >
           {label}
         </label>
         {hint && (
