@@ -235,3 +235,85 @@ describe("createFlightAction returns what was submitted", () => {
     );
   });
 });
+
+describe("createFlightAction — multi-leg routes (client, 27 Sep)", () => {
+  function withStops(stops: Array<[string, string, string]>) {
+    const fd = makeFormData({ destination: "pahp", scheduled_arrival_at: "2026-07-01T14:40" });
+    for (const [destination, departure, arrival] of stops) {
+      fd.append("stop_destination", destination);
+      fd.append("stop_departure", departure);
+      fd.append("stop_arrival", arrival);
+    }
+    return fd;
+  }
+
+  it("chains each stop from where the leg before it landed", async () => {
+    createFlight.mockResolvedValueOnce({});
+    await expect(
+      createFlightAction(
+        { status: "idle" },
+        withStops([
+          ["pasm", "2026-07-01T15:00", "2026-07-01T15:35"],
+          ["pakn", "2026-07-01T16:00", "2026-07-01T17:10"],
+        ]),
+      ),
+    ).rejects.toThrow("NEXT_REDIRECT");
+    const payload = createFlight.mock.calls[0][0];
+    expect(payload.legs.map((l: { origin: string; destination: string }) => `${l.origin}-${l.destination}`)).toEqual([
+      "PADU-PAHP",
+      "PAHP-PASM",
+      "PASM-PAKN",
+    ]);
+    // The flight's own endpoints: the first departure, the last arrival.
+    expect(payload).toMatchObject({
+      origin: "PADU",
+      destination: "PAKN",
+      scheduled_departure_at: "2026-07-01T14:00:00.000Z",
+      scheduled_arrival_at: "2026-07-01T17:10:00.000Z",
+    });
+  });
+
+  it("sends no legs for a single-leg flight", async () => {
+    createFlight.mockResolvedValueOnce({});
+    await expect(createFlightAction({ status: "idle" }, makeFormData())).rejects.toThrow(
+      "NEXT_REDIRECT",
+    );
+    expect(createFlight.mock.calls[0][0]).not.toHaveProperty("legs");
+  });
+
+  it("names the stop field that is wrong, and keeps every stop", async () => {
+    const result = await createFlightAction(
+      { status: "idle" },
+      withStops([
+        ["pasm", "2026-07-01T14:30", "2026-07-01T15:35"], // departs before leg 1 lands
+        ["x", "2026-07-01T16:00", "2026-07-01T15:00"],
+      ]),
+    );
+    expect(createFlight).not.toHaveBeenCalled();
+    expect(result).toMatchObject({
+      status: "field-errors",
+      errors: {
+        stop_0_departure: "Departs before the leg before it lands",
+        stop_1_destination: "3- or 4-letter ICAO code",
+        stop_1_arrival: "Arrival must be after departure",
+      },
+      stops: [
+        { destination: "PASM", departure: "2026-07-01T14:30", arrival: "2026-07-01T15:35" },
+        { destination: "X", departure: "2026-07-01T16:00", arrival: "2026-07-01T15:00" },
+      ],
+    });
+  });
+
+  it("caps a route at nine legs", async () => {
+    const stops = Array.from({ length: 9 }, (_, i): [string, string, string] => [
+      `PA${String.fromCharCode(65 + i)}${String.fromCharCode(65 + i)}`,
+      `2026-07-01T${String(15 + i).padStart(2, "0")}:00`,
+      `2026-07-01T${String(15 + i).padStart(2, "0")}:30`,
+    ]);
+    const result = await createFlightAction({ status: "idle" }, withStops(stops));
+    expect(result).toMatchObject({
+      status: "field-errors",
+      errors: { stops: "A flight can have at most 9 legs." },
+    });
+  });
+});

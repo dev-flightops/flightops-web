@@ -173,6 +173,12 @@ export async function updateFlightAction(
       if (err.message.includes("aircraft_not_found")) {
         return { ok: false, error: "The chosen aircraft was not found." };
       }
+      if (err.message.includes("flight_has_legs")) {
+        return {
+          ok: false,
+          error: "This flight has several legs; its route and times are set per leg.",
+        };
+      }
       return { ok: false, error: `Save failed (HTTP ${err.status}).` };
     }
     return { ok: false, error: "Save failed. Please try again." };

@@ -104,6 +104,13 @@ export async function listFlights(
   return apiFetch<FlightListResponse>(`/ops/flights${qs}`);
 }
 
+export interface FlightLegPayload {
+  origin: string;
+  destination: string;
+  scheduled_departure_at: string; // ISO 8601 UTC
+  scheduled_arrival_at: string;
+}
+
 export interface FlightCreatePayload {
   flight_number: string;
   aircraft_id: string;
@@ -114,6 +121,9 @@ export interface FlightCreatePayload {
   pax_count?: number;
   cargo_lbs?: number;
   notes?: string | null;
+  /** A multi-stop route (services migration 0104): origin and the
+   *  departure are the first leg's, destination and arrival the last's. */
+  legs?: FlightLegPayload[];
 }
 
 export async function createFlight(

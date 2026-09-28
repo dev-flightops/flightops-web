@@ -29,6 +29,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { FlightUpdatePayload } from "@/lib/api/ops";
 import type { AircraftListItem, FlightDetail } from "@/lib/api/types";
+import { routeText } from "@/lib/route";
 
 // ICAO airport codes are 3-4 alphanumeric chars (legacy used 3 too).
 const icaoPattern = /^[A-Z0-9]{3,4}$/;
@@ -78,6 +79,10 @@ function localInputToIso(local: string): string {
   return `${local}:00Z`;
 }
 
+function isMultiLeg(flight: FlightDetail): boolean {
+  return (flight.legs?.length ?? 0) > 1;
+}
+
 /** Returns only the keys whose form value differs from the seeded flight. */
 function buildPatch(
   flight: FlightDetail,
@@ -88,15 +93,19 @@ function buildPatch(
     patch.flight_number = values.flight_number;
   if (values.aircraft_id !== flight.aircraft.id)
     patch.aircraft_id = values.aircraft_id;
-  if (values.origin !== flight.origin) patch.origin = values.origin;
-  if (values.destination !== flight.destination)
-    patch.destination = values.destination;
-  const depIso = localInputToIso(values.scheduled_departure_at);
-  if (depIso !== flight.scheduled_departure_at)
-    patch.scheduled_departure_at = depIso;
-  const arrIso = localInputToIso(values.scheduled_arrival_at);
-  if (arrIso !== flight.scheduled_arrival_at)
-    patch.scheduled_arrival_at = arrIso;
+  // A multi-leg flight's endpoints and times are its first and last
+  // legs'; the API refuses to move them on their own (flight_has_legs).
+  if (!isMultiLeg(flight)) {
+    if (values.origin !== flight.origin) patch.origin = values.origin;
+    if (values.destination !== flight.destination)
+      patch.destination = values.destination;
+    const depIso = localInputToIso(values.scheduled_departure_at);
+    if (depIso !== flight.scheduled_departure_at)
+      patch.scheduled_departure_at = depIso;
+    const arrIso = localInputToIso(values.scheduled_arrival_at);
+    if (arrIso !== flight.scheduled_arrival_at)
+      patch.scheduled_arrival_at = arrIso;
+  }
   if (values.pax_count !== flight.pax_count) patch.pax_count = values.pax_count;
   if (values.cargo_lbs !== flight.cargo_lbs) patch.cargo_lbs = values.cargo_lbs;
   const notesNormalized = values.notes.trim() || null;
@@ -222,6 +231,7 @@ export function EditFlightDialog({
                     <FormControl>
                       <Input
                         autoComplete="off"
+                        readOnly={isMultiLeg(flight)}
                         className="font-mono uppercase"
                         {...field}
                         onChange={(e) =>
@@ -243,6 +253,7 @@ export function EditFlightDialog({
                     <FormControl>
                       <Input
                         autoComplete="off"
+                        readOnly={isMultiLeg(flight)}
                         className="font-mono uppercase"
                         {...field}
                         onChange={(e) =>
@@ -262,7 +273,11 @@ export function EditFlightDialog({
                   <FormItem>
                     <FormLabel>Departure (UTC)</FormLabel>
                     <FormControl>
-                      <Input type="datetime-local" {...field} />
+                      <Input
+                        type="datetime-local"
+                        readOnly={isMultiLeg(flight)}
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -276,12 +291,23 @@ export function EditFlightDialog({
                   <FormItem>
                     <FormLabel>Arrival (UTC)</FormLabel>
                     <FormControl>
-                      <Input type="datetime-local" {...field} />
+                      <Input
+                        type="datetime-local"
+                        readOnly={isMultiLeg(flight)}
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
+
+              {isMultiLeg(flight) && (
+                <p className="text-xs text-muted-foreground sm:col-span-2">
+                  This flight has {flight.legs?.length} legs ({routeText(flight)}):
+                  its route and times are its legs&apos;.
+                </p>
+              )}
 
               <FormField
                 control={form.control}

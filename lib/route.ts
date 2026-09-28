@@ -42,3 +42,12 @@ export function flightStops(flight: {
     ? flight.stops
     : [flight.origin, flight.destination];
 }
+
+/** A flight's route as one line: "PABE → PAHP → PASM". */
+export function routeText(flight: {
+  origin: string;
+  destination: string;
+  stops?: string[];
+}): string {
+  return flightStops(flight).join(" → ");
+}

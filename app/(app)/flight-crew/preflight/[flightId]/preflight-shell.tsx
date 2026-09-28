@@ -27,6 +27,7 @@ import { DutyInConfirmStep } from "./step-5-duty";
 import { AcceptOrDenyStep } from "./step-6-accept-deny";
 import { PositionReportsStep } from "./step-7-position-reports";
 import { PostFlightLogStep } from "./step-8-post-flight-log";
+import { routeText } from "@/lib/route";
 
 interface Props {
   flight: FlightDetail;
@@ -230,7 +231,7 @@ function FlightContextBar({ flight }: { flight: FlightDetail }) {
           {flight.flight_number}
         </span>
         <span className="font-mono text-sm font-semibold text-foreground">
-          {flight.origin} → {flight.destination}
+          {routeText(flight)}
         </span>
         <span className="text-xs text-muted-foreground">
           {flight.aircraft.tail_number}

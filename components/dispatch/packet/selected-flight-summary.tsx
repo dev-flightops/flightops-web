@@ -1,4 +1,5 @@
 import type { FlightDetail } from "@/lib/api/types";
+import { routeText } from "@/lib/route";
 
 /**
  * Inline summary rows shown directly below the Load-from-Schedule dropdown
@@ -49,7 +50,7 @@ export function SelectedFlightSummary({
             {flight.flight_number}
           </span>
           <span className="font-mono text-foreground">
-            {flight.origin} → {flight.destination}
+            {routeText(flight)}
           </span>
         </div>
         {/* Legacy pattern shows a tail · PIC-group · load-group

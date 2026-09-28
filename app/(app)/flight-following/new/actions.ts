@@ -84,14 +84,73 @@ function parseDetail(message: string): string {
  */
 export type SubmittedValues = Record<string, string>;
 
+/** One stop after the first leg, as typed: it departs from wherever the
+ *  leg before it landed. */
+export interface SubmittedStop {
+  destination: string;
+  departure: string;
+  arrival: string;
+}
+
 export type CreateFlightFormState =
   | { status: "idle" }
   | {
       status: "field-errors";
       errors: Record<string, string>;
       values: SubmittedValues;
+      stops: SubmittedStop[];
     }
-  | { status: "api-error"; message: string; values: SubmittedValues };
+  | {
+      status: "api-error";
+      message: string;
+      values: SubmittedValues;
+      stops: SubmittedStop[];
+    };
+
+/** Legacy's cap: its route checks stopped at ten airports. */
+const MAX_LEGS = 9;
+
+function submittedStops(formData: FormData): SubmittedStop[] {
+  const all = (key: string) => formData.getAll(key).map((v) => String(v));
+  const destinations = all("stop_destination");
+  const departures = all("stop_departure");
+  const arrivals = all("stop_arrival");
+  return destinations.map((destination, i) => ({
+    destination: destination.trim().toUpperCase(),
+    departure: departures[i] ?? "",
+    arrival: arrivals[i] ?? "",
+  }));
+}
+
+/** Field errors for the stops, keyed stop_<n>_<field>. A stop departs
+ *  where the leg before it landed, and not before it lands. */
+function stopErrors(
+  stops: SubmittedStop[],
+  firstArrival: string,
+): Record<string, string> {
+  const errors: Record<string, string> = {};
+  if (stops.length + 1 > MAX_LEGS) {
+    errors.stops = `A flight can have at most ${MAX_LEGS} legs.`;
+  }
+  let previousArrival = firstArrival;
+  stops.forEach((stop, i) => {
+    if (!/^[A-Z]{3,4}$/.test(stop.destination)) {
+      errors[`stop_${i}_destination`] = "3- or 4-letter ICAO code";
+    }
+    if (!stop.departure) {
+      errors[`stop_${i}_departure`] = "Departure time is required";
+    } else if (previousArrival && new Date(stop.departure) < new Date(previousArrival)) {
+      errors[`stop_${i}_departure`] = "Departs before the leg before it lands";
+    }
+    if (!stop.arrival) {
+      errors[`stop_${i}_arrival`] = "Arrival time is required";
+    } else if (stop.departure && new Date(stop.arrival) <= new Date(stop.departure)) {
+      errors[`stop_${i}_arrival`] = "Arrival must be after departure";
+    }
+    previousArrival = stop.arrival;
+  });
+  return errors;
+}
 
 /** Only strings — a File entry in a FormData is not a form value we
  *  can put back into an input's defaultValue. */
@@ -111,15 +170,19 @@ export async function createFlightAction(
 ): Promise<CreateFlightFormState> {
   const raw = Object.fromEntries(formData.entries());
   const values = submittedValues(formData);
+  const stops = submittedStops(formData);
   const parsed = FlightCreateSchema.safeParse(raw);
 
+  const errors: Record<string, string> = {};
   if (!parsed.success) {
-    const errors: Record<string, string> = {};
     for (const issue of parsed.error.issues) {
       const key = String(issue.path[0] ?? "_");
       if (!errors[key]) errors[key] = issue.message;
     }
-    return { status: "field-errors", errors, values };
+  }
+  Object.assign(errors, stopErrors(stops, values.scheduled_arrival_at ?? ""));
+  if (!parsed.success || Object.keys(errors).length > 0) {
+    return { status: "field-errors", errors, values, stops };
   }
 
   // datetime-local inputs come in as "YYYY-MM-DDTHH:MM" with no
@@ -128,17 +191,39 @@ export async function createFlightAction(
   const toUtcIso = (s: string) =>
     s.endsWith("Z") ? s : new Date(`${s}Z`).toISOString();
 
+  // The client, 27 Sep: "It appears there is not a way to build a multi
+  // leg route." Leg 1 is the form's origin and destination; each stop
+  // departs where the leg before it landed. The flight's own endpoints
+  // are the first departure and the last arrival.
+  const firstLeg = {
+    origin: parsed.data.origin,
+    destination: parsed.data.destination,
+    scheduled_departure_at: toUtcIso(parsed.data.scheduled_departure_at),
+    scheduled_arrival_at: toUtcIso(parsed.data.scheduled_arrival_at),
+  };
+  const legs = [firstLeg];
+  for (const stop of stops) {
+    legs.push({
+      origin: legs[legs.length - 1].destination,
+      destination: stop.destination,
+      scheduled_departure_at: toUtcIso(stop.departure),
+      scheduled_arrival_at: toUtcIso(stop.arrival),
+    });
+  }
+  const last = legs[legs.length - 1];
+
   try {
     await createFlight({
       flight_number: parsed.data.flight_number,
       aircraft_id: parsed.data.aircraft_id,
-      origin: parsed.data.origin,
-      destination: parsed.data.destination,
-      scheduled_departure_at: toUtcIso(parsed.data.scheduled_departure_at),
-      scheduled_arrival_at: toUtcIso(parsed.data.scheduled_arrival_at),
+      origin: firstLeg.origin,
+      destination: last.destination,
+      scheduled_departure_at: firstLeg.scheduled_departure_at,
+      scheduled_arrival_at: last.scheduled_arrival_at,
       pax_count: parsed.data.pax_count,
       cargo_lbs: parsed.data.cargo_lbs,
       notes: parsed.data.notes ?? null,
+      ...(legs.length > 1 ? { legs } : {}),
     });
   } catch (err) {
     if (err instanceof ApiError) {
@@ -147,6 +232,7 @@ export async function createFlightAction(
           status: "api-error",
           message: "Your session expired — please sign in again.",
           values,
+          stops,
         };
       }
       // FastAPI 4xx bodies are JSON like {"detail": "..."}. apiFetch
@@ -158,6 +244,7 @@ export async function createFlightAction(
           message:
             "The selected aircraft is inactive. Reactivate it under Maintenance, then retry.",
           values,
+          stops,
         };
       }
       if (detail === "flight_number_conflict") {
@@ -166,6 +253,7 @@ export async function createFlightAction(
           message:
             "Another flight already uses this flight number at the same departure time. Change one to continue.",
           values,
+          stops,
         };
       }
       if (detail === "arrival_must_be_after_departure") {
@@ -173,18 +261,38 @@ export async function createFlightAction(
           status: "field-errors",
           errors: { scheduled_arrival_at: "Arrival must be after departure" },
           values,
+          stops,
+        };
+      }
+      if (detail === "legs_out_of_order" || detail === "legs_not_continuous") {
+        return {
+          status: "api-error",
+          message:
+            "The legs don't fly in order — each stop has to depart after the leg before it lands.",
+          values,
+          stops,
+        };
+      }
+      if (detail === "too_many_legs") {
+        return {
+          status: "api-error",
+          message: `A flight can have at most ${MAX_LEGS} legs.`,
+          values,
+          stops,
         };
       }
       return {
         status: "api-error",
         message: `Couldn't open the flight (HTTP ${err.status}). Try again in a moment.`,
         values,
+        stops,
       };
     }
     return {
       status: "api-error",
       message: "Couldn't open the flight. Try again in a moment.",
       values,
+      stops,
     };
   }
 

@@ -37,7 +37,7 @@ import type { PicOption } from "@/components/dispatch/packet/pic-picker";
 import { parseAckedWarns } from "@/components/dispatch/packet/soft-warning-ack-parser";
 import { parseAckedIcaos } from "@/components/dispatch/packet/notam-acks";
 import { computeHardBlockReason } from "@/components/dispatch/packet/release-gate";
-import { paramToRoute } from "@/lib/route";
+import { flightStops, paramToRoute } from "@/lib/route";
 
 function todayUtc(): string {
   return new Date().toISOString().slice(0, 10);
@@ -223,7 +223,8 @@ export default async function DispatchPage({
 
   // Resolve the routing for the Weather panel:
   //   1. `?route=PADU,PAUN,PAGM` if set (dispatcher typed something)
-  //   2. [origin, destination] from the selected flight as a fallback
+  //   2. the selected flight's stops: every airport on a multi-leg
+  //      route, else origin and destination
   //   3. empty array (panel shows the placeholder)
   const routedIcaos = paramToRoute(routeParam);
   const notamAckedIcaos = parseAckedIcaos(notamsAckedParam);
@@ -232,7 +233,7 @@ export default async function DispatchPage({
     routedIcaos.length > 0
       ? routedIcaos
       : selectedFlight
-        ? [selectedFlight.origin, selectedFlight.destination]
+        ? flightStops(selectedFlight)
         : [];
 
   // HALT-2 — weather staleness for the routed stops. Soft-fails to null:

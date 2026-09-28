@@ -9,7 +9,9 @@ import type { AircraftListItem } from "@/lib/api/types";
 import {
   createFlightAction,
   type CreateFlightFormState,
+  type SubmittedStop,
 } from "./actions";
+import { StopsEditor } from "./stops-editor";
 
 /**
  * "+ Open Flight" form (M2-G-14). Client component because we want
@@ -20,8 +22,11 @@ import {
  * new-flight branch with two intentional differences:
  *   - Aircraft is a select bound to the tenant's active aircraft list
  *     (legacy was a free-text "n_number" input — easy to typo).
- *   - PIC name + Route are omitted; we don't have those columns on
- *     the Flight model yet (M3 crew + route storage).
+ *   - PIC name is omitted: crew is assigned on the dispatch packet.
+ *   - The route is legs, not a free-text box: "+ Add stop" adds a leg
+ *     from the previous destination (client, 27 Sep: "there is not a
+ *     way to build a multi leg route"). Legacy's text Route field was
+ *     never read by anything.
  */
 export function OpenFlightForm({
   aircraft,
@@ -72,6 +77,18 @@ export function OpenFlightForm({
     wasPending.current = pending;
   }, [pending]);
 
+  // The legs after the first. Controlled, and put back from what the
+  // action echoes after a failed submit, like every other field here.
+  const [stops, setStops] = useState<SubmittedStop[]>([]);
+  const [firstDestination, setFirstDestination] = useState("");
+  useEffect(() => {
+    if (state.status !== "idle") {
+      setStops(state.stops);
+      setFirstDestination((state.values.destination ?? "").toUpperCase());
+    }
+  }, [state]);
+  const errors = state.status === "field-errors" ? state.errors : {};
+
   return (
     <form action={action} className="space-y-5">
       {state.status === "api-error" && (
@@ -120,10 +137,11 @@ export function OpenFlightForm({
         />
         <Field
           name="destination"
-          label="Destination ICAO"
+          label={stops.length > 0 ? "Leg 1 destination ICAO" : "Destination ICAO"}
           required
           placeholder="PAEN"
           defaultValue={submitted("destination")}
+          onChange={(e) => setFirstDestination(e.target.value.toUpperCase())}
           maxLength={4}
           autoCapitalize="characters"
           spellCheck={false}
@@ -139,12 +157,21 @@ export function OpenFlightForm({
         />
         <Field
           name="scheduled_arrival_at"
-          label="ETA (UTC)"
+          label={stops.length > 0 ? "Leg 1 ETA (UTC)" : "ETA (UTC)"}
           type="datetime-local"
           required
           defaultValue={submitted("scheduled_arrival_at")}
           error={fieldError("scheduled_arrival_at")}
         />
+        <div className="md:col-span-2">
+          <StopsEditor
+            key={`stops-${submitCount}`}
+            stops={stops}
+            onChange={setStops}
+            firstDestination={firstDestination}
+            errors={errors}
+          />
+        </div>
         <Field
           name="pax_count"
           label="Passengers"
