@@ -93,6 +93,20 @@ describe("FlightFuel", () => {
     expect(screen.getByRole("button", { name: "Order more fuel" })).toBeInTheDocument();
   });
 
+  it("lists open orders before finished ones", () => {
+    // Newest first from the API: a cancelled order placed after the
+    // live one sat above it on the pilot's preflight.
+    renderFuel([
+      order({ id: "o-2", status: "cancelled", requested_quantity_gallons: 20 }),
+      order({ id: "o-3", status: "fueled", requested_quantity_gallons: 60 }),
+      order({ id: "o-1", status: "ordered", requested_quantity_gallons: 180 }),
+    ]);
+    const rows = screen.getAllByRole("listitem").map((r) => r.textContent);
+    expect(rows[0]).toContain("180 gal");
+    expect(rows[1]).toContain("60 gal");
+    expect(rows[2]).toContain("20 gal");
+  });
+
   it("orders fuel for the flight without leaving the page", async () => {
     const user = userEvent.setup();
     renderFuel();

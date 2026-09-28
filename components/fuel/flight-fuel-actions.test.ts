@@ -87,6 +87,22 @@ describe("orderFuelForFlightAction", () => {
     expect(revalidatePath).toHaveBeenCalledWith(`/flight-crew/preflight/${FLIGHT}`);
   });
 
+  it("puts a needed-by time later in the day than departure on the day before", async () => {
+    // A 16:30 AKDT departure is 00:30Z; fuel "by 23:50" is the evening
+    // before, not 23:50Z after the aircraft has gone.
+    getFlight.mockResolvedValueOnce({
+      id: FLIGHT,
+      origin: "PABE",
+      scheduled_departure_at: "2026-09-28T00:30:00Z",
+      aircraft: { tail_number: "N503PA" },
+    });
+    await orderFuelForFlightAction(order({ neededBy: "23:50" }));
+    expect(createFuelOrder.mock.calls[0][0]).toMatchObject({
+      requested_fuel_date: "2026-09-27",
+      requested_fuel_time: "2026-09-27T23:50:00Z",
+    });
+  });
+
   it("sends no time when none was given", async () => {
     await orderFuelForFlightAction(order({ neededBy: "" }));
     expect(createFuelOrder.mock.calls[0][0].requested_fuel_time).toBeNull();

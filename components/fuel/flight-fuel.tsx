@@ -45,6 +45,14 @@ const FIELD =
 const LABEL =
   "mb-1 block text-[0.65rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground";
 
+const LIST_RANK: Record<FuelOrderStatus, number> = {
+  ordered: 0,
+  confirmed: 0,
+  fueled: 1,
+  discrepancy: 1,
+  cancelled: 2,
+};
+
 function isOpen(order: FuelOrderResponse) {
   return order.status === "ordered" || order.status === "confirmed";
 }
@@ -77,6 +85,10 @@ export function FlightFuel({
 }) {
   const [ordering, setOrdering] = useState(false);
   const openOrders = orders.filter(isOpen);
+  // What is still coming leads, then what was delivered: a pilot
+  // opening preflight wants the fuel on its way, and a cancelled order
+  // above it only reads as noise. Newest first within each.
+  const listed = [...orders].sort((a, b) => LIST_RANK[a.status] - LIST_RANK[b.status]);
 
   return (
     <div className="space-y-3">
@@ -86,7 +98,7 @@ export function FlightFuel({
         </p>
       ) : (
         <ul className="space-y-2">
-          {orders.map((order) => (
+          {listed.map((order) => (
             <OrderRow
               key={order.id}
               order={order}

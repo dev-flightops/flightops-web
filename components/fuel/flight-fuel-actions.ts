@@ -11,6 +11,7 @@ import {
   type FuelOrderRequester,
 } from "@/lib/api/ground";
 import { getFlight } from "@/lib/api/ops";
+import { neededByInstant } from "@/lib/fuel";
 
 /**
  * Fuel for one flight, from the dispatch packet and the pilot's
@@ -56,7 +57,7 @@ const OrderInput = z.object({
   supplierId: z.string().uuid(),
   fuelTypeId: z.string().uuid(),
   gallons: Gallons,
-  // UTC wall-clock on the flight's departure date, "HH:MM".
+  // UTC wall-clock, "HH:MM": the last one before departure (lib/fuel).
   neededBy: z
     .string()
     .regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Needed-by is a 24-hour time.")
@@ -76,7 +77,14 @@ export async function orderFuelForFlightAction(
     parsed.data;
   try {
     const flight = await getFlight(flightId);
-    const date = flight.scheduled_departure_at.slice(0, 10);
+    const neededAt = neededBy
+      ? neededByInstant(flight.scheduled_departure_at, neededBy)
+      : null;
+    // The day the fuel is wanted, which is the day before departure's
+    // UTC date when the needed-by time is later in the day than it.
+    const date = neededAt
+      ? neededAt.toISOString().slice(0, 10)
+      : flight.scheduled_departure_at.slice(0, 10);
     await createFuelOrder({
       n_number: flight.aircraft.tail_number,
       base_code: flight.origin,
@@ -84,7 +92,7 @@ export async function orderFuelForFlightAction(
       fuel_type_id: fuelTypeId,
       requested_quantity_gallons: gallons,
       requested_fuel_date: date,
-      requested_fuel_time: neededBy ? `${date}T${neededBy}:00Z` : null,
+      requested_fuel_time: neededAt ? neededAt.toISOString().replace(".000Z", "Z") : null,
       special_instructions: instructions || null,
       flight_id: flightId,
       source: source as FuelOrderRequester,

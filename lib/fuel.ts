@@ -53,3 +53,27 @@ export function supplierOptionsFor(
       isDefault: r.is_default,
     }));
 }
+
+/**
+ * When a "needed by HH:MM" (UTC) falls: the last time the clock reads
+ * that at or before the flight departs. Fuel is wanted before the
+ * flight, and for an Alaska operator the UTC day turns mid-afternoon: a
+ * 16:30 AKDT departure is 00:30Z the next day, so "needed by 23:50" for
+ * it is the evening before, not 23:50 on the departure's own UTC date,
+ * almost a day after the aircraft has gone.
+ */
+export function neededByInstant(departureIso: string, hhmm: string): Date {
+  const departs = new Date(departureIso);
+  const [hours, minutes] = hhmm.split(":").map(Number);
+  const at = new Date(
+    Date.UTC(
+      departs.getUTCFullYear(),
+      departs.getUTCMonth(),
+      departs.getUTCDate(),
+      hours,
+      minutes,
+    ),
+  );
+  if (at > departs) at.setUTCDate(at.getUTCDate() - 1);
+  return at;
+}

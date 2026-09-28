@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import type { FuelSupplierBaseResponse } from "@/lib/api/types";
 
-import { fuelTypeForAircraft, supplierOptionsFor } from "./fuel";
+import { fuelTypeForAircraft, neededByInstant, supplierOptionsFor } from "./fuel";
 
 function row(over: Partial<FuelSupplierBaseResponse>): FuelSupplierBaseResponse {
   return {
@@ -50,5 +50,32 @@ describe("fuel for an aircraft", () => {
       "Default",
       "Second",
     ]);
+  });
+});
+
+describe("neededByInstant", () => {
+  it("is on the departure's day when earlier than departure", () => {
+    expect(neededByInstant("2026-09-28T23:15:00Z", "22:55").toISOString()).toBe(
+      "2026-09-28T22:55:00.000Z",
+    );
+  });
+
+  it("is the day before when later in the day than departure", () => {
+    // 16:30 AKDT is 00:30Z the next day; "by 23:50" is the evening before.
+    expect(neededByInstant("2026-09-29T00:30:00Z", "23:50").toISOString()).toBe(
+      "2026-09-28T23:50:00.000Z",
+    );
+  });
+
+  it("allows the departure minute itself", () => {
+    expect(neededByInstant("2026-09-28T23:15:00Z", "23:15").toISOString()).toBe(
+      "2026-09-28T23:15:00.000Z",
+    );
+  });
+
+  it("crosses a month end", () => {
+    expect(neededByInstant("2026-10-01T00:10:00Z", "23:00").toISOString()).toBe(
+      "2026-09-30T23:00:00.000Z",
+    );
   });
 });
