@@ -878,7 +878,9 @@ function FactorRow({
               <>
                 Prefilled from{" "}
                 <span className="text-muted-foreground">
-                  {suggestion.source}
+                  {/* Some sources end in a sentence of their own
+                      ("…not your rest."); the full stop is added here. */}
+                  {suggestion.source.replace(/\.$/, "")}
                 </span>
                 . Change it if you disagree.
               </>

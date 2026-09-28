@@ -285,6 +285,30 @@ describe("factors nobody assessed", () => {
     expect(screen.getByText("Lands 10h+ in — heading toward the limit")).toBeInTheDocument();
   });
 
+  it("does not double the full stop after a source that ends in one", () => {
+    // The client's 27 Sep screenshot: "Adjust if that is not your rest..
+    // Change it if you disagree."
+    renderStep({
+      fratPrefill: {
+        flight_id: "f-1",
+        suggestions: [
+          {
+            factor: "pilot_rest",
+            score: 0,
+            source: "duty clock: no rest warning. Adjust if that is not your rest.",
+          },
+        ],
+        crosswind_limit_kt: 30,
+        near_limit_entry_kt: 20,
+        vfr_min_ceiling_ft: 1000,
+        vfr_min_visibility_sm: 3,
+      },
+    });
+    const line = screen.getByText(/Adjust if that is not your rest/).closest("p");
+    expect(line).toHaveTextContent("not your rest. Change it if you disagree.");
+    expect(line?.textContent).not.toContain("..");
+  });
+
   it("keeps 5 on the duty scale for landing past the limit", () => {
     // 5 is the operator's "out of company limits": a no-go. A legal
     // 12-14h day must not read as one, which "Past 12h" did.
