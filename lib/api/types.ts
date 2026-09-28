@@ -1072,6 +1072,40 @@ export interface LoadTeamListResponse {
   total: number;
 }
 
+export interface LoadTeamCreateRequest {
+  team_name: string;
+  base_icao: string;
+  team_lead_user_id?: string | null;
+  color_code?: string;
+  notes?: string | null;
+}
+
+/** Partial: a field left out is unchanged. `team_lead_user_id` and
+ *  `notes` can be null to clear them (flightops-services
+ *  fix/load-team-edit). */
+export interface LoadTeamUpdateRequest {
+  team_name?: string;
+  base_icao?: string;
+  team_lead_user_id?: string | null;
+  color_code?: string;
+  is_active?: boolean;
+  notes?: string | null;
+}
+
+export interface LoadTeamMemberResponse {
+  id: string;
+  team_id: string;
+  user: UserRef;
+  is_active: boolean;
+  joined_date: string; // YYYY-MM-DD
+  notes: string | null;
+}
+
+export interface LoadTeamMemberListResponse {
+  items: LoadTeamMemberResponse[];
+  total: number;
+}
+
 // Ramp turnaround photos (M2 tail — flightops-services PR #111)
 
 export type RampPhotoType =

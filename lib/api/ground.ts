@@ -33,7 +33,12 @@ import type {
   FlightAssignmentCreateRequest,
   FlightAssignmentListResponse,
   FlightAssignmentResponse,
+  LoadTeamCreateRequest,
   LoadTeamListResponse,
+  LoadTeamMemberListResponse,
+  LoadTeamMemberResponse,
+  LoadTeamResponse,
+  LoadTeamUpdateRequest,
   RampPhotoListResponse,
   RampPhotoResponse,
   StationIssueCategory,
@@ -606,6 +611,53 @@ export async function listLoadTeams(
   if (options.baseIcao) search.set("base_icao", options.baseIcao);
   const qs = search.toString() ? `?${search.toString()}` : "";
   return apiFetch<LoadTeamListResponse>(`/ground/load-teams${qs}`);
+}
+
+export async function createLoadTeam(
+  body: LoadTeamCreateRequest,
+): Promise<LoadTeamResponse> {
+  return apiFetch<LoadTeamResponse>(`/ground/load-teams`, {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+}
+
+export async function updateLoadTeam(
+  teamId: string,
+  body: LoadTeamUpdateRequest,
+): Promise<LoadTeamResponse> {
+  return apiFetch<LoadTeamResponse>(`/ground/load-teams/${teamId}`, {
+    method: "PATCH",
+    body: JSON.stringify(body),
+  });
+}
+
+export async function listLoadTeamMembers(
+  teamId: string,
+): Promise<LoadTeamMemberListResponse> {
+  return apiFetch<LoadTeamMemberListResponse>(
+    `/ground/load-teams/${teamId}/members`,
+  );
+}
+
+/** 409 when the user is already on the team. */
+export async function addLoadTeamMember(
+  teamId: string,
+  userId: string,
+): Promise<LoadTeamMemberResponse> {
+  return apiFetch<LoadTeamMemberResponse>(
+    `/ground/load-teams/${teamId}/members`,
+    { method: "POST", body: JSON.stringify({ user_id: userId }) },
+  );
+}
+
+export async function removeLoadTeamMember(
+  teamId: string,
+  memberId: string,
+): Promise<void> {
+  await apiFetch<void>(`/ground/load-teams/${teamId}/members/${memberId}`, {
+    method: "DELETE",
+  });
 }
 
 // Flight × LoadTeam assignments (M2-M-25e) ---------------------------------
