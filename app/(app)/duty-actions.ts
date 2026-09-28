@@ -9,6 +9,11 @@ export interface DutyActionResult {
   ok: boolean;
   /** Short message the calling button surfaces inline on failure. */
   error?: string;
+  /** On clock-in: true when it reopened the duty day (back inside the
+   *  operator's minimum rest) instead of starting one. */
+  resumed?: boolean;
+  /** On clock-in: when the duty day (re)started. */
+  clockInAt?: string;
 }
 
 /**
@@ -22,9 +27,13 @@ export async function clockInAction(
   args: { rest_acknowledged?: boolean } = {},
 ): Promise<DutyActionResult> {
   try {
-    await clockIn({ rest_acknowledged: args.rest_acknowledged });
+    const period = await clockIn({ rest_acknowledged: args.rest_acknowledged });
     revalidatePath("/", "layout");
-    return { ok: true };
+    return {
+      ok: true,
+      resumed: period.resumed === true,
+      clockInAt: period.clock_in_at,
+    };
   } catch (err) {
     return { ok: false, error: mapError(err, "couldn't clock in") };
   }

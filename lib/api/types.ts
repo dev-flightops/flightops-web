@@ -1574,6 +1574,8 @@ export interface DutyPeriodSummary {
   elapsed_hours: number;
   is_open: boolean;
   rest_acknowledged: boolean;
+  /** On the clock-in response: it reopened the duty day. */
+  resumed?: boolean;
 }
 
 export interface DutyWarning {

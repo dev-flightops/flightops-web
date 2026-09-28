@@ -6,6 +6,8 @@ import { getCurrentDuty, listFlights } from "@/lib/api/ops";
 import type { CurrentDutyResponse, FlightListItem } from "@/lib/api/types";
 import { currentGreeting, firstNameFrom } from "@/lib/greeting";
 
+import { CorrectDuty } from "@/components/duty/correct-duty";
+
 import { DutyClockButton } from "./duty-clock-button";
 import { TodayFlightsPanel } from "./today-flights-panel";
 import { TrainingCurrencySummary } from "./training-currency-summary";
@@ -145,6 +147,19 @@ export default async function FlightCrewPage() {
       {/* 1. Duty In / Out — Spec 4 §"Page layout / Duty In / Out button" */}
       <section className="mb-6">
         <DutyClockButton initial={duty} />
+        {/* The client, 8/28: "easy start stop button, but manual
+            clock/date function underneath." It was only on Pilot
+            History, so the 27 Sep report asked for it again: the day
+            on the clock (or the last one) is adjustable right here. */}
+        {(duty.open ?? duty.last_closed) && (
+          <div className="mt-2">
+            <CorrectDuty
+              key={(duty.open ?? duty.last_closed)!.id}
+              period={(duty.open ?? duty.last_closed)!}
+              triggerLabel={duty.open ? "Adjust today's duty times" : "Adjust your last duty day"}
+            />
+          </div>
+        )}
       </section>
 
       {/* 2. My Flights today + 3. + Create Flight Log */}

@@ -1,14 +1,11 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 
 import type { CurrentDutyResponse } from "@/lib/api/types";
 import { cn } from "@/lib/utils";
 
-import {
-  NEW_PERIOD_WARNING,
-  useArmedConfirm,
-} from "@/components/duty/confirm-duty-out";
+import { resumeNote, useArmedConfirm } from "@/components/duty/confirm-duty-out";
 
 import { clockInAction, clockOutAction } from "./actions";
 
@@ -39,12 +36,22 @@ export function DutyClockButton({ initial }: Props) {
   const [duty, setDuty] = useState<CurrentDutyResponse>(initial);
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  // Set when a clock-in reopened the duty day, so the pilot is told why
+  // the clock reads the whole day rather than zero.
+  const [resumedSince, setResumedSince] = useState<string | null>(null);
+  // useState(initial) keeps its first value; after the action
+  // revalidates, the server's snapshot has to replace the optimistic
+  // one (a temp id and 0h, where a resumed day is hours in).
+  useEffect(() => {
+    setDuty(initial);
+  }, [initial]);
 
   const isOnDuty = duty.open !== null;
   const { armed, arm, disarm, ref } = useArmedConfirm();
 
   const handleClick = () => {
     setError(null);
+    setResumedSince(null);
 
     if (isOnDuty) {
       // Asked first. What an accidental close costs is in
@@ -91,6 +98,8 @@ export function DutyClockButton({ initial }: Props) {
       if (!result.ok) {
         setDuty(previous);
         setError(result.error ?? "Couldn't clock in.");
+      } else if (result.resumed && result.clockInAt) {
+        setResumedSince(result.clockInAt);
       }
     });
   };
@@ -110,7 +119,7 @@ export function DutyClockButton({ initial }: Props) {
             <span className="font-mono font-semibold">
               {formatElapsed(duty.open.elapsed_hours)}
             </span>
-            . {NEW_PERIOD_WARNING}
+            . {resumeNote(duty.min_rest_hours)}
           </p>
           <div className="mt-3 flex gap-2">
             <button
@@ -192,6 +201,21 @@ export function DutyClockButton({ initial }: Props) {
             </li>
           ))}
         </ul>
+      )}
+
+      {resumedSince && (
+        <p role="status" className="text-xs text-foreground">
+          Duty day resumed — on duty since{" "}
+          <span className="font-mono font-semibold">
+            {new Date(resumedSince).toLocaleTimeString("en-US", {
+              hour: "2-digit",
+              minute: "2-digit",
+              hour12: false,
+            })}
+          </span>
+          . You were back inside the {duty.min_rest_hours}h minimum rest, so
+          the break counts as duty.
+        </p>
       )}
 
       {error && (
