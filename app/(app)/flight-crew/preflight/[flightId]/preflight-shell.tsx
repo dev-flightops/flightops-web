@@ -56,6 +56,10 @@ interface Props {
   /** Whether a FRAT the pilot already filed can be carried to this
    *  leg. Null when the weather was unreachable or the check failed. */
   fratBlock: FratBlockEligibilityResponse | null;
+  /** The flight's fuel card, rendered on the server. Below the active
+   *  step on every step: the pilot can review and change fuel at any
+   *  point in the release process. */
+  fuel?: React.ReactNode;
 }
 
 /**
@@ -84,6 +88,7 @@ export function PreflightShell({
   fratConfig,
   fratPrefill,
   fratBlock,
+  fuel,
 }: Props) {
   const completedNumbers = new Set(
     progress.completed.map((s) => s.step_number),
@@ -173,6 +178,8 @@ export function PreflightShell({
           fratBlock={fratBlock}
         />
       )}
+
+      {fuel}
 
       {progress.completed.length > 0 && (
         <CompletedSummary

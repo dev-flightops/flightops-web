@@ -1,33 +1,31 @@
-import Link from "next/link";
-
+import { FlightFuel } from "@/components/fuel/flight-fuel";
 import { ApiError } from "@/lib/api/client";
-import { listSupplierBases } from "@/lib/api/ground";
-import type {
-  FlightDetail,
-  FuelSupplierBaseResponse,
-} from "@/lib/api/types";
+import { listFuelOrders, listSupplierBases } from "@/lib/api/ground";
+import type { FlightDetail, FuelOrderResponse } from "@/lib/api/types";
+import {
+  fuelTypeForAircraft,
+  supplierOptionsFor,
+  type FuelSupplierOption,
+} from "@/lib/fuel";
 
 import { EmptyPanel, SectionPanel } from "./section-panel";
 
 /**
- * Fuel Order panel — reads the supplier × base × fuel_type pricing
- * matrix shipped in M2-M-25c and surfaces it on the dispatch packet.
+ * Fuel for the selected flight, on the dispatch packet: the aircraft's
+ * fuel, the departure base's supplier and price, this flight's orders
+ * with where each stands, and ordering or adjusting without leaving
+ * the packet.
  *
- * What it shows when a flight is selected:
- *   - Auto-selected fuel type (mapped from aircraft model)
- *   - Default supplier for departure base (is_default=true)
- *   - Contract price per gallon
- *   - Form fields: gallons (required), requested time, special instructions
- *   - "Order Fuel" button DISABLED pending M2-M-27b
- *     (fuel_orders table + supplier email/notification pipeline)
+ * The client, 27 Sep: "fuel ordering takes you to a different page and
+ * then you lose all your work on the dispatch page when you go back."
+ * The panel showed pricing and linked to /fuel/orders/new, which knew
+ * nothing of the flight, and the packet's route, acknowledgements and
+ * override flag lived only in its URL. Legacy ordered inline too: its
+ * dispatch form carried the order and submitted it with the release.
  *
- * Why the button is disabled: M2-M-25c only added the directory + pricing
- * matrix backend. The actual order workflow — FuelOrder model, supplier
- * notification, status state machine, ramp-staff push — is M2-M-27b and
- * hasn't been built. The legacy spec mandates an Order Fuel button at
- * dispatch time, so we render the full form chrome with a "Order
- * workflow coming in M2-M-27b" tooltip on submit. Dispatchers see the
- * pricing + supplier they would order from today.
+ * The same component is the pilot's fuel panel in preflight, so both
+ * see the same orders (flightops-services migration 0103 links them to
+ * the flight).
  */
 export async function FuelOrderPanel({
   flight,
@@ -38,7 +36,7 @@ export async function FuelOrderPanel({
     return (
       <EmptyPanel
         title="Fuel"
-        hint="Pick a flight from the dropdown above to see the configured supplier + contract price for the departure base."
+        hint="Pick a flight from the dropdown above to see its fuel orders and order fuel for it."
         accent="yellow"
       />
     );
@@ -47,219 +45,76 @@ export async function FuelOrderPanel({
   const baseCode = flight.origin;
   const fuelTypeCode = fuelTypeForAircraft(flight.aircraft.model);
 
-  let supplierBases: FuelSupplierBaseResponse[] = [];
-  let loadError: string | null = null;
-  try {
-    const result = await listSupplierBases({ baseCode });
-    // Filter by the auto-selected fuel type on the client; the backend
-    // filter is by fuel_type_id (uuid) but we only have a code here.
-    // Backend stores codes with underscores (`jet_a`, `av_gas_100ll`)
-    // while `fuelTypeForAircraft` returns dash form (`JET-A`, `100LL`);
-    // normalize both by stripping separators so we don't miss matches.
-    const norm = (code: string) => code.toUpperCase().replace(/[-_]/g, "");
-    const wanted = norm(fuelTypeCode);
-    supplierBases = result.items.filter(
-      (sb) => norm(sb.fuel_type_code) === wanted,
-    );
-  } catch (err) {
-    const status = err instanceof ApiError ? err.status : 0;
-    loadError =
-      status === 401
-        ? "Session expired — sign in again to load fuel pricing."
-        : "Fuel pricing unavailable — try refreshing in a moment.";
-  }
+  const [basesResult, ordersResult] = await Promise.allSettled([
+    listSupplierBases({ baseCode }),
+    listFuelOrders({ flightId: flight.id }),
+  ]);
 
-  const defaultRow =
-    supplierBases.find((sb) => sb.is_default) ?? supplierBases[0] ?? null;
-  const otherOptions = supplierBases.filter(
-    (sb) => defaultRow && sb.id !== defaultRow.id,
-  );
-
-  return (
-    <SectionPanel
-      title="Fuel"
-      titleAction={
-        <span
-          className="rounded-md border border-status-yellow/40 bg-status-yellow/10 px-2 py-0.5 text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-status-yellow"
-          title="Orders are placed from Fuel → Order Fuel. This panel shows pricing and suppliers."
-        >
-          Pricing only
-        </span>
-      }
-    >
-      {loadError ? (
+  const failed = [basesResult, ordersResult].find((r) => r.status === "rejected");
+  if (failed && failed.status === "rejected") {
+    const status = failed.reason instanceof ApiError ? failed.reason.status : 0;
+    return (
+      <SectionPanel title="Fuel" accent="yellow">
         <p
           role="alert"
           className="rounded-md border border-status-yellow/40 bg-status-yellow/10 px-3 py-2 text-xs text-status-yellow"
         >
-          {loadError}
+          {status === 401
+            ? "Session expired — sign in again to see fuel."
+            : "Fuel unavailable — try refreshing in a moment."}
         </p>
-      ) : supplierBases.length === 0 ? (
-        <div className="rounded-md border border-dashed border-border bg-card/40 px-3 py-4 text-xs text-muted-foreground">
-          No supplier configured for{" "}
-          <span className="font-mono font-semibold">{baseCode}</span> ·{" "}
-          {fuelTypeCode}. Add one in Ground Ops → Fuel → Suppliers.
-        </div>
-      ) : (
-        <>
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
-            <Field
-              label="Fuel Type"
-              hint={`auto · ${flight.aircraft.model}`}
-              htmlFor="fuel-type"
-            >
-              <input
-                id="fuel-type"
-                type="text"
-                disabled
-                value={fuelTypeCode}
-                className="ff-input cursor-not-allowed font-mono"
-                title="Auto-selected from aircraft model. Change requires supervisor override (M3)."
-              />
-            </Field>
-            <Field
-              label="Supplier"
-              htmlFor="fuel-supplier"
-              hint={
-                otherOptions.length > 0
-                  ? `${otherOptions.length} alternate${otherOptions.length === 1 ? "" : "s"}`
-                  : "only supplier"
-              }
-            >
-              <select
-                id="fuel-supplier"
-                disabled
-                defaultValue={defaultRow?.supplier_id ?? ""}
-                key={`supplier-${flight.id}`}
-                className="ff-input cursor-not-allowed"
-              >
-                {defaultRow && (
-                  <option value={defaultRow.supplier_id}>
-                    {defaultRow.supplier_name}
-                  </option>
-                )}
-                {otherOptions.map((sb) => (
-                  <option key={sb.id} value={sb.supplier_id}>
-                    {sb.supplier_name}
-                  </option>
-                ))}
-              </select>
-            </Field>
-            <Field
-              label="Contract Price"
-              hint={defaultRow?.is_contract_rate ? "contract" : "spot"}
-              htmlFor="fuel-price"
-            >
-              <input
-                id="fuel-price"
-                type="text"
-                disabled
-                value={
-                  defaultRow?.price_per_gallon !== null &&
-                  defaultRow?.price_per_gallon !== undefined
-                    ? `$${defaultRow.price_per_gallon.toFixed(2)} / gal`
-                    : "—"
-                }
-                className="ff-input cursor-not-allowed font-mono"
-              />
-            </Field>
-            <Field label="Gallons" hint="required" htmlFor="fuel-gallons">
-              <input
-                id="fuel-gallons"
-                type="number"
-                placeholder="e.g. 80"
-                min={0}
-                step={1}
-                disabled
-                className="ff-input cursor-not-allowed"
-              />
-            </Field>
-            <Field label="Requested Time" hint="local" htmlFor="fuel-time">
-              <input
-                id="fuel-time"
-                type="time"
-                disabled
-                className="ff-input cursor-not-allowed font-mono"
-              />
-            </Field>
-            <Field
-              label="Special Instructions"
-              hint="optional"
-              htmlFor="fuel-instructions"
-            >
-              <input
-                id="fuel-instructions"
-                type="text"
-                placeholder="e.g. north ramp"
-                disabled
-                className="ff-input cursor-not-allowed"
-              />
-            </Field>
-          </div>
+      </SectionPanel>
+    );
+  }
 
-          <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
-            <p className="text-[0.7rem] text-muted-foreground">
-              Orders are placed on the Fuel Orders page, which notifies the
-              supplier. Ordering from the packet isn&apos;t built yet.
-            </p>
-            {/* Was a disabled "Order Fuel · M2-M-27b" button — a dead
-                control naming a story, while /fuel/orders/new already
-                took orders. It goes there now. */}
-            <Link
-              href="/fuel/orders/new"
-              className="rounded-md border border-primary/40 bg-background px-4 py-2 text-xs font-semibold text-primary hover:bg-primary/5"
-            >
-              Order fuel →
-            </Link>
-          </div>
-        </>
-      )}
+  const options: FuelSupplierOption[] =
+    basesResult.status === "fulfilled"
+      ? supplierOptionsFor(basesResult.value.items, fuelTypeCode)
+      : [];
+  const orders: FuelOrderResponse[] =
+    ordersResult.status === "fulfilled" ? ordersResult.value.items : [];
+  const preferred = options[0] ?? null;
+
+  return (
+    <SectionPanel title="Fuel" accent="yellow">
+      <dl className="mb-3 grid grid-cols-2 gap-x-4 gap-y-1 text-xs sm:grid-cols-3">
+        <div>
+          <dt className="text-[0.65rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+            Fuel type
+          </dt>
+          <dd className="font-mono text-foreground">
+            {fuelTypeCode}{" "}
+            <span className="font-sans text-muted-foreground">
+              · auto from {flight.aircraft.model ?? "the aircraft"}
+            </span>
+          </dd>
+        </div>
+        <div>
+          <dt className="text-[0.65rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+            Supplier at {baseCode}
+          </dt>
+          <dd className="text-foreground">{preferred?.supplierName ?? "—"}</dd>
+        </div>
+        <div>
+          <dt className="text-[0.65rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+            Price
+          </dt>
+          <dd className="font-mono text-foreground">
+            {preferred?.pricePerGallon != null
+              ? `$${preferred.pricePerGallon.toFixed(2)} / gal ${preferred.isContract ? "contract" : "spot"}`
+              : "—"}
+          </dd>
+        </div>
+      </dl>
+      <FlightFuel
+        flightId={flight.id}
+        flightNumber={flight.flight_number}
+        base={baseCode}
+        source="dispatch"
+        orders={orders}
+        options={options}
+        fuelTypeCode={fuelTypeCode}
+      />
     </SectionPanel>
   );
-}
-
-function Field({
-  label,
-  htmlFor,
-  hint,
-  children,
-}: {
-  label: string;
-  /** The control's id, so the label names it. */
-  htmlFor: string;
-  hint?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div>
-      <div className="mb-1 flex items-baseline justify-between gap-2">
-        <label
-          htmlFor={htmlFor}
-          className="block text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground"
-        >
-          {label}
-        </label>
-        {hint && (
-          <span className="text-[0.6rem] text-muted-foreground">{hint}</span>
-        )}
-      </div>
-      {children}
-    </div>
-  );
-}
-
-/**
- * Aircraft-model → fuel-type-code mapping. Mirrors the legacy
- * spec exactly:
- *   208 / 208B / King Air         → JET-A
- *   207 / GA8 / PA-31             → 100LL
- * Anything else (including null model, since flightops-services
- * migration 0023 made aircraft.model nullable) falls back to JET-A
- * (the legacy default for unknown turbine equipment).
- */
-function fuelTypeForAircraft(model: string | null): string {
-  if (!model) return "JET-A";
-  const normalized = model.toUpperCase();
-  if (/(207|GA[\s-]?8|PA[\s-]?31)/.test(normalized)) return "100LL";
-  return "JET-A";
 }

@@ -426,6 +426,8 @@ export interface ListFuelOrdersParams {
   status?: FuelOrderStatus;
   baseCode?: string;
   nNumber?: string;
+  /** A flight's orders (flightops-services migration 0103). */
+  flightId?: string;
   limit?: number;
 }
 
@@ -436,6 +438,7 @@ export async function listFuelOrders(
   if (params.status) search.set("status", params.status);
   if (params.baseCode) search.set("base_code", params.baseCode);
   if (params.nNumber) search.set("n_number", params.nNumber);
+  if (params.flightId) search.set("flight_id", params.flightId);
   if (params.limit !== undefined) search.set("limit", String(params.limit));
   const qs = search.toString() ? `?${search.toString()}` : "";
   return apiFetch<FuelOrderListResponse>(`/ground/fuel/orders${qs}`);
@@ -469,6 +472,35 @@ export interface CreateFuelOrderPayload {
   requested_fuel_date: string;
   requested_fuel_time?: string | null;
   special_instructions?: string | null;
+  /** The flight the fuel is for, from the packet or the preflight. */
+  flight_id?: string | null;
+  /** Who placed it, for the order's status log. */
+  source?: FuelOrderRequester;
+}
+
+/** Where an order was placed or changed from on the web. */
+export type FuelOrderRequester = "dispatch" | "pilot";
+
+export interface AmendFuelOrderPayload {
+  requested_quantity_gallons?: number;
+  requested_fuel_time?: string | null;
+  special_instructions?: string | null;
+  /** Why, for the status log. */
+  note?: string | null;
+  source?: FuelOrderRequester;
+}
+
+/** Change an open order (ordered or confirmed). A confirmed order goes
+ *  back to the supplier to confirm again. 409 once it is fueled or
+ *  cancelled. */
+export async function amendFuelOrder(
+  orderId: string,
+  payload: AmendFuelOrderPayload,
+): Promise<FuelOrderResponse> {
+  return apiFetch<FuelOrderResponse>(`/ground/fuel/orders/${orderId}`, {
+    method: "PATCH",
+    body: JSON.stringify(payload),
+  });
 }
 
 export async function createFuelOrder(

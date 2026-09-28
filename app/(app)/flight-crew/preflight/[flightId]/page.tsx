@@ -18,6 +18,8 @@ import {
   observationsFromWeather,
 } from "@/lib/frat/observations";
 import { batchWeather } from "@/lib/api/weather";
+import { listFuelOrders, listSupplierBases } from "@/lib/api/ground";
+import { fuelTypeForAircraft, supplierOptionsFor } from "@/lib/fuel";
 import { flightStops } from "@/lib/route";
 import type {
   FratBlockEligibilityResponse,
@@ -32,6 +34,7 @@ import type {
   WeatherBatchResponse,
 } from "@/lib/api/types";
 
+import { PreflightFuel } from "./preflight-fuel";
 import { PreflightShell } from "./preflight-shell";
 
 const DUTY_OFFLINE_DEFAULT: CurrentDutyResponse = {
@@ -197,6 +200,32 @@ export default async function PreflightPage({
   }
   if (!flight || !progress) notFound();
 
+  // Fuel: the flight's orders and the departure base's suppliers for
+  // this aircraft's fuel. Best-effort, like the weather: a failure costs
+  // the pilot the fuel card, not the preflight.
+  const fuelTypeCode = fuelTypeForAircraft(flight.aircraft.model);
+  const [fuelOrders, fuelBases] = await Promise.allSettled([
+    listFuelOrders({ flightId: flight.id }),
+    listSupplierBases({ baseCode: flight.origin }),
+  ]);
+  const fuel = (
+    <PreflightFuel
+      flight={flight}
+      fuelTypeCode={fuelTypeCode}
+      orders={fuelOrders.status === "fulfilled" ? fuelOrders.value.items : []}
+      options={
+        fuelBases.status === "fulfilled"
+          ? supplierOptionsFor(fuelBases.value.items, fuelTypeCode)
+          : []
+      }
+      unavailable={
+        fuelOrders.status === "rejected" || fuelBases.status === "rejected"
+          ? "Fuel unavailable — try refreshing in a moment."
+          : null
+      }
+    />
+  );
+
   return (
     <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
       <BackLink />
@@ -211,6 +240,7 @@ export default async function PreflightPage({
         fratConfig={fratConfig}
         fratPrefill={fratPrefill}
         fratBlock={fratBlock}
+        fuel={fuel}
       />
     </div>
   );

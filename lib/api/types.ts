@@ -997,7 +997,7 @@ export interface FuelSupplierBaseListResponse {
 export type FuelOrderStatus =
   "ordered" | "confirmed" | "fueled" | "discrepancy" | "cancelled";
 
-export type FuelOrderCloseSource = "supplier" | "ramp" | "dispatch";
+export type FuelOrderCloseSource = "supplier" | "ramp" | "dispatch" | "pilot";
 
 export interface FuelOrderSupplierRef {
   id: string;
@@ -1014,6 +1014,8 @@ export interface FuelOrderResponse {
   id: string;
   n_number: string;
   base_code: string;
+  /** The flight it is for, when placed from a flight. */
+  flight_id?: string | null;
   requested_fuel_date: string;
   requested_fuel_time: string | null;
   supplier: FuelOrderSupplierRef;
