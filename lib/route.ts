@@ -29,3 +29,16 @@ export function paramToRoute(param: string | null | undefined): string[] {
   if (!param) return [];
   return parseRouteText(param);
 }
+
+/** Every airport on a flight's route, in order. A multi-leg flight sends
+ *  `stops` (flightops-services migration 0104); a single leg, or a
+ *  service from before it, is origin → destination. */
+export function flightStops(flight: {
+  origin: string;
+  destination: string;
+  stops?: string[];
+}): string[] {
+  return flight.stops && flight.stops.length > 0
+    ? flight.stops
+    : [flight.origin, flight.destination];
+}

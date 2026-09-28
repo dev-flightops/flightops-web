@@ -61,3 +61,20 @@ export function extractMissingIcaos(body: string): string | null {
     return null;
   }
 }
+
+/** Name the warnings a 409 `soft_warnings_not_acknowledged` lists, seat
+ *  first for the SIC: "IFR Currency; SIC: SIC Day Landing Currency".
+ *  Null when the body isn't that shape. */
+export function extractMissingWarnings(body: string): string | null {
+  try {
+    const parsed = JSON.parse(body) as {
+      detail?: { missing?: Array<{ seat?: string; name?: string }> };
+    };
+    const names = (parsed.detail?.missing ?? [])
+      .filter((m) => Boolean(m.name))
+      .map((m) => (m.seat === "sic" ? `SIC: ${m.name}` : m.name));
+    return names.length > 0 ? names.join("; ") : null;
+  } catch {
+    return null;
+  }
+}

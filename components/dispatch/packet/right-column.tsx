@@ -5,6 +5,7 @@ import { EditFlightDialog } from "@/components/dispatch/edit-flight-dialog";
 import { ReleaseButton } from "@/components/dispatch/release-button";
 import { ReleasedFooter } from "@/components/dispatch/released-footer";
 import { StatusBadge } from "@/components/dispatch/status-badge";
+import { flightStops } from "@/lib/route";
 import type { AircraftListItem, FlightDetail } from "@/lib/api/types";
 
 import { GeneratePdfButton } from "./generate-pdf-button";
@@ -32,6 +33,7 @@ export function RightColumn({
   overridesAcknowledged = false,
   notamAckedIcaos = [],
   staleWeatherAcknowledged = false,
+  acknowledgedWarnings = [],
 }: {
   flight?: FlightDetail | null;
   /** Aircraft list for the Edit dialog's tail-swap selector. Only needed
@@ -53,6 +55,9 @@ export function RightColumn({
    *  routed stop and stores them as the release audit trail. */
   notamAckedIcaos?: string[];
   staleWeatherAcknowledged?: boolean;
+  /** `?warns_acked=` — sent with the release; the backend refuses while
+   *  a currency warning for the crew is missing. */
+  acknowledgedWarnings?: string[];
 }) {
   return (
     <div className="space-y-5">
@@ -61,10 +66,12 @@ export function RightColumn({
           <FlightActionsRow
             flight={flight}
             aircraft={aircraft}
+            hardBlockReason={hardBlockReason}
             pilotUserId={pilotUserId}
             overridesAcknowledged={overridesAcknowledged}
             notamAckedIcaos={notamAckedIcaos}
             staleWeatherAcknowledged={staleWeatherAcknowledged}
+            acknowledgedWarnings={acknowledgedWarnings}
           />
         </div>
       )}
@@ -90,6 +97,7 @@ export function RightColumn({
             overridesAcknowledged={overridesAcknowledged}
             notamAckedIcaos={notamAckedIcaos}
             staleWeatherAcknowledged={staleWeatherAcknowledged}
+            acknowledgedWarnings={acknowledgedWarnings}
           />
         </div>
       </SectionPanel>
@@ -127,13 +135,18 @@ export function RightColumn({
 function FlightActionsRow({
   flight,
   aircraft,
+  hardBlockReason = null,
   pilotUserId = null,
   overridesAcknowledged = false,
   notamAckedIcaos = [],
   staleWeatherAcknowledged = false,
+  acknowledgedWarnings = [],
 }: {
   flight: FlightDetail;
   aircraft: AircraftListItem[];
+  /** The same gate as Generate PDF. Release dispatch used to skip it,
+   *  so a dispatcher could release with warnings unacknowledged. */
+  hardBlockReason?: string | null;
   /** Release arguments, forwarded straight to ReleaseButton. This row
    *  took only flight + aircraft, so the release path below had no way
    *  to reach the NOTAM acks the column already held — see the note on
@@ -142,22 +155,31 @@ function FlightActionsRow({
   overridesAcknowledged?: boolean;
   notamAckedIcaos?: string[];
   staleWeatherAcknowledged?: boolean;
+  acknowledgedWarnings?: string[];
 }) {
   if (flight.status === "scheduled") {
     return (
-      <div className="flex flex-wrap items-center gap-3">
-        <StatusBadge status={flight.status} />
-        <EditFlightDialog flight={flight} aircraft={aircraft} />
-        <ReleaseButton
-          flightId={flight.id}
-          flightNumber={flight.flight_number}
-          origin={flight.origin}
-          destination={flight.destination}
-          pilotUserId={pilotUserId}
-          overridesAcknowledged={overridesAcknowledged}
-          notamAckedIcaos={notamAckedIcaos}
-          staleWeatherAcknowledged={staleWeatherAcknowledged}
-        />
+      <div className="space-y-2">
+        <div className="flex flex-wrap items-center gap-3">
+          <StatusBadge status={flight.status} />
+          <EditFlightDialog flight={flight} aircraft={aircraft} />
+          <ReleaseButton
+            flightId={flight.id}
+            flightNumber={flight.flight_number}
+            stops={flightStops(flight)}
+            hardBlockReason={hardBlockReason}
+            pilotUserId={pilotUserId}
+            overridesAcknowledged={overridesAcknowledged}
+            notamAckedIcaos={notamAckedIcaos}
+            staleWeatherAcknowledged={staleWeatherAcknowledged}
+            acknowledgedWarnings={acknowledgedWarnings}
+          />
+        </div>
+        {hardBlockReason && (
+          <p id="release-blocked-reason" className="text-xs text-status-red">
+            Release blocked: {hardBlockReason}
+          </p>
+        )}
       </div>
     );
   }

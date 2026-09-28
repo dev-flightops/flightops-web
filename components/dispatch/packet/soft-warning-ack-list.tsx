@@ -4,7 +4,10 @@ import { Loader2 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTransition } from "react";
 
+import type { CrewSeat } from "@/lib/api/ops";
 import type { ComplianceFinding } from "@/lib/api/types";
+
+import { findingMessage, warningAckKey } from "./soft-warning-ack-parser";
 
 /**
  * M2-G-5 tail — soft-warning acknowledgment checkboxes.
@@ -23,10 +26,13 @@ import type { ComplianceFinding } from "@/lib/api/types";
 export function SoftWarningAckList({
   findings,
   ackedCodes,
+  seat = "pic",
 }: {
   findings: ComplianceFinding[];
-  /** Currency-item codes the dispatcher has already ack'd (from URL). */
+  /** Ack keys the dispatcher has already ticked (from URL). */
   ackedCodes: ReadonlySet<string>;
+  /** Whose warnings these are. The SIC's are keyed "sic:<code>". */
+  seat?: CrewSeat;
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -48,8 +54,9 @@ export function SoftWarningAckList({
   return (
     <ul className="mt-2 space-y-1 text-[0.7rem]">
       {findings.map((f) => {
-        const acked = ackedCodes.has(f.code);
-        const id = `warn-ack-${f.code}`;
+        const key = warningAckKey(seat, f.code);
+        const acked = ackedCodes.has(key);
+        const id = `warn-ack-${seat}-${f.code}`;
         return (
           <li
             key={f.currency_item_id}
@@ -65,8 +72,8 @@ export function SoftWarningAckList({
               type="checkbox"
               checked={acked}
               disabled={pending}
-              onChange={(e) => toggle(f.code, e.target.checked)}
-              aria-label={`Acknowledge ${f.name}`}
+              onChange={(e) => toggle(key, e.target.checked)}
+              aria-label={`Acknowledge ${seat === "sic" ? "SIC " : ""}${f.name}`}
               className="mt-0.5 h-3 w-3 shrink-0 cursor-pointer accent-status-green"
             />
             <label
@@ -79,7 +86,7 @@ export function SoftWarningAckList({
               <span className="font-semibold">{f.name}</span>
               <span className="text-muted-foreground"> ({f.regulation})</span>
               {" — "}
-              <span>{f.message}</span>
+              <span>{findingMessage(f)}</span>
             </label>
             {acked && (
               <span className="shrink-0 text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-status-green">

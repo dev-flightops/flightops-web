@@ -180,3 +180,65 @@ describe("DispatchComplianceGate", () => {
     expect(banner).not.toBeNull();
   });
 });
+
+describe("DispatchComplianceGate — the SIC seat (client, 27 Sep)", () => {
+  it("shows no SIC banner on a single-pilot flight", async () => {
+    getPicCompliance.mockResolvedValueOnce(makeData());
+    render(await DispatchComplianceGate({ pilotUserId: "p-1", sicChecks: [] }));
+    expect(screen.queryByText("SIC")).toBeNull();
+    expect(screen.getAllByText(/Clear — all currency items current/i)).toHaveLength(1);
+  });
+
+  it("shows the SIC's own warnings, keyed to the SIC", async () => {
+    getPicCompliance.mockResolvedValueOnce(makeData());
+    const sic = makeData({
+      pilot: { id: "s-1", full_name: "Sam Second", email: "sam@x.test" },
+      dot_color: "yellow",
+      soft_warnings: [
+        makeFinding({
+          code: "sic_ifr_currency",
+          name: "SIC IFR Currency",
+          regulation: "14 CFR 61.57(c)",
+          status: "not_started",
+          message: "SIC IFR Currency — 0 of 6 required in last 180 days.",
+        }),
+      ],
+    });
+    render(
+      await DispatchComplianceGate({
+        pilotUserId: "p-1",
+        sicChecks: [{ pilotId: "s-1", compliance: sic }],
+        ackedWarnCodes: new Set(["sic_ifr_currency"]),
+      }),
+    );
+    expect(screen.getByText("SIC")).toBeInTheDocument();
+    expect(screen.getByText("Sam Second")).toBeInTheDocument();
+    // The PIC's key for the same code does not tick the SIC's box.
+    const box = screen.getByRole("checkbox", { name: "Acknowledge SIC SIC IFR Currency" });
+    expect(box).not.toBeChecked();
+    // The item name is printed once, not again inside the message.
+    expect(box.closest("li")).toHaveTextContent(
+      "SIC IFR Currency (14 CFR 61.57(c)) — 0 of 6 required in last 180 days.",
+    );
+  });
+
+  it("offers no supervisor override for an SIC hard block", async () => {
+    getPicCompliance.mockResolvedValueOnce(makeData());
+    const sic = makeData({
+      pilot: { id: "s-1", full_name: "Sam Second", email: "sam@x.test" },
+      dot_color: "red",
+      hard_blocks: [makeFinding()],
+    });
+    render(
+      await DispatchComplianceGate({
+        pilotUserId: "p-1",
+        flightId: "f-1",
+        sicChecks: [{ pilotId: "s-1", compliance: sic }],
+      }),
+    );
+    expect(
+      screen.getByText("Assign a current SIC in the Crew panel, or clear the items"),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /override/i })).toBeNull();
+  });
+});

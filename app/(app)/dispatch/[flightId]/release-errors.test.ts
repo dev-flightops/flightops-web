@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { extractBlockingSummary, extractMissingIcaos } from "./release-errors";
+import {
+  extractBlockingSummary,
+  extractMissingIcaos,
+  extractMissingWarnings,
+} from "./release-errors";
 
 describe("extractBlockingSummary", () => {
   it("returns a single description when there is one blocking issue", () => {
@@ -108,5 +112,25 @@ describe("extractMissingIcaos", () => {
       detail: { missing_icaos: ["PANC", "", "PABE"] },
     });
     expect(extractMissingIcaos(body)).toBe("PANC, PABE");
+  });
+});
+
+describe("extractMissingWarnings", () => {
+  it("names each warning, the SIC's with its seat", () => {
+    const body = JSON.stringify({
+      detail: {
+        error: "soft_warnings_not_acknowledged",
+        missing: [
+          { seat: "pic", code: "ifr_currency", name: "IFR Currency" },
+          { seat: "sic", code: "sic_ifr_currency", name: "SIC IFR Currency" },
+        ],
+      },
+    });
+    expect(extractMissingWarnings(body)).toBe("IFR Currency; SIC: SIC IFR Currency");
+  });
+
+  it("returns null for anything else", () => {
+    expect(extractMissingWarnings("not json")).toBeNull();
+    expect(extractMissingWarnings(JSON.stringify({ detail: "flight_not_found" }))).toBeNull();
   });
 });

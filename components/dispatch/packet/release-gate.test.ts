@@ -256,3 +256,62 @@ describe("computeHardBlockReason — stale weather", () => {
     expect(reason).toMatch(/notam/i);
   });
 });
+
+describe("computeHardBlockReason — the SIC seat and soft warnings (27 Sep)", () => {
+  const sic = (dot: PicDotColor, opts = {}) => ({
+    ...pic(dot, opts),
+    pilot: { id: "s-1", full_name: "Sam Second", email: "sam@test.local" },
+  });
+
+  it("does not ask a single-pilot flight about an SIC", () => {
+    expect(computeHardBlockReason({ ...CLEAR, picCompliance: pic("green") })).toBeNull();
+  });
+
+  it("blocks on an SIC hard block, which no override clears", () => {
+    const reason = computeHardBlockReason({
+      ...CLEAR,
+      picCompliance: pic("green"),
+      sicCompliance: [sic("red", { hard: [finding("competency_check")] })],
+      overridesAcknowledged: true,
+    });
+    expect(reason).toBe(
+      "SIC Sam Second has 1 hard-block currency item — assign a current SIC or clear them before release.",
+    );
+  });
+
+  it("needs the SIC's warnings acknowledged under the SIC's own key", () => {
+    const input = {
+      ...CLEAR,
+      picCompliance: pic("green"),
+      sicCompliance: [sic("yellow", { soft: [finding("sic_day_landing_currency")] })],
+    };
+    expect(computeHardBlockReason(input)).toBe(
+      "1 of 1 soft warnings still need dispatcher acknowledgment.",
+    );
+    // The PIC's key for the same code does not count for the SIC.
+    expect(
+      computeHardBlockReason({
+        ...input,
+        ackedWarnCodes: new Set(["sic_day_landing_currency"]),
+      }),
+    ).not.toBeNull();
+    expect(
+      computeHardBlockReason({
+        ...input,
+        ackedWarnCodes: new Set(["sic:sic_day_landing_currency"]),
+      }),
+    ).toBeNull();
+  });
+
+  it("still needs a PIC's soft warnings acknowledged after an override", () => {
+    const reason = computeHardBlockReason({
+      ...CLEAR,
+      picCompliance: pic("red", {
+        hard: [finding("competency_check")],
+        soft: [finding("ifr_currency")],
+      }),
+      overridesAcknowledged: true,
+    });
+    expect(reason).toBe("1 of 1 soft warnings still need dispatcher acknowledgment.");
+  });
+});

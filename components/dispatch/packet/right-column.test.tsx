@@ -198,6 +198,7 @@ describe("RightColumn / Release dispatch forwards the release arguments", () => 
         overridesAcknowledged
         notamAckedIcaos={["PADU", "PANC"]}
         staleWeatherAcknowledged
+        acknowledgedWarnings={["ifr_currency", "sic:crm_recurrent"]}
       />,
     );
 
@@ -210,6 +211,23 @@ describe("RightColumn / Release dispatch forwards the release arguments", () => 
       true,
       true,
       ["PADU", "PANC"],
+      ["ifr_currency", "sic:crm_recurrent"],
+    );
+  });
+
+  it("holds Release dispatch behind the same gate as Generate PDF", () => {
+    // It used to skip the gate: a dispatcher could release with every
+    // currency warning unacknowledged (client report, 27 Sep).
+    render(
+      <RightColumn
+        flight={baseFlight()}
+        hardBlockReason="1 of 1 soft warnings still need dispatcher acknowledgment."
+      />,
+    );
+    const release = screen.getByRole("button", { name: /Release — blocked/i });
+    expect(release).toBeDisabled();
+    expect(release).toHaveAccessibleDescription(
+      "Release blocked: 1 of 1 soft warnings still need dispatcher acknowledgment.",
     );
   });
 

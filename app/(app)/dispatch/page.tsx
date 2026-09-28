@@ -17,6 +17,7 @@ import { ApiError } from "@/lib/api/client";
 import { listMyTenants } from "@/lib/api/auth";
 import { listFlightCrew } from "@/lib/api/crew-assignments";
 import {
+  type CrewSeat,
   getComplianceBoard,
   getFlight,
   getPicCompliance,
@@ -146,6 +147,12 @@ export default async function DispatchPage({
   const assignedPicId =
     crew.items.find((a) => a.crew_role === "pic")?.user.id ?? null;
   const effectivePicId = assignedPicId ?? currentPicId;
+  // Anyone in the SIC seat is checked for that seat. None on a
+  // single-pilot flight, which is the case the client reported: the PIC
+  // was asked to acknowledge their own SIC counters with no SIC aboard.
+  const sicIds = crew.items
+    .filter((a) => a.crew_role === "sic")
+    .map((a) => a.user.id);
 
   const [
     { items: flights },
@@ -155,6 +162,7 @@ export default async function DispatchPage({
     picCompliance,
     weightReturns,
     awaitingFlight,
+    sicChecks,
   ] = await Promise.all([
     listFlights({ onDate: scheduleDate }).catch(() => ({
       items: [],
@@ -180,6 +188,12 @@ export default async function DispatchPage({
       items: [],
       total: 0,
     })),
+    Promise.all(
+      sicIds.map(async (pilotId) => ({
+        pilotId,
+        compliance: await loadPicCompliance(pilotId, "sic"),
+      })),
+    ),
   ]);
 
   // M2-G-5 tail — parse ack state from URL. `warns_acked` is
@@ -235,6 +249,7 @@ export default async function DispatchPage({
   // rules can't drift.
   const hardBlockReason = computeHardBlockReason({
     picCompliance,
+    sicCompliance: sicChecks.flatMap((c) => (c.compliance ? [c.compliance] : [])),
     ackedWarnCodes,
     overridesAcknowledged,
     hasSelectedFlight: selectedFlight !== null,
@@ -309,6 +324,7 @@ export default async function DispatchPage({
             ackedWarnCodes={ackedWarnCodes}
             flightId={selectedFlight.id}
             overridesAcknowledged={overridesAcknowledged}
+            sicChecks={sicChecks}
           />
         )}
 
@@ -338,6 +354,7 @@ export default async function DispatchPage({
             overridesAcknowledged={overridesAcknowledged}
             notamAckedIcaos={notamAckedIcaos}
             staleWeatherAcknowledged={staleWeatherAcknowledged}
+            acknowledgedWarnings={Array.from(ackedWarnCodes)}
           />
         </div>
       </div>
@@ -387,9 +404,10 @@ async function loadPicRoster(): Promise<PicOption[]> {
  *  error so the compliance gate can render its friendly banner. */
 async function loadPicCompliance(
   pilotId: string,
+  seat: CrewSeat = "pic",
 ): Promise<PicComplianceResponse | null> {
   try {
-    return await getPicCompliance(pilotId);
+    return await getPicCompliance(pilotId, seat);
   } catch {
     return null;
   }
