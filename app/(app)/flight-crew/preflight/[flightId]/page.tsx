@@ -18,6 +18,7 @@ import {
   observationsFromWeather,
 } from "@/lib/frat/observations";
 import { batchWeather } from "@/lib/api/weather";
+import { flightStops } from "@/lib/route";
 import type {
   FratBlockEligibilityResponse,
   FratPrefillResponse,
@@ -148,23 +149,27 @@ export default async function PreflightPage({
       // did, with nothing prefilled, which is the status quo rather
       // than a regression.
       const observations = observationsFromWeather(weather);
-      if (observations.length > 0) {
-        // Both take the same observations, and neither blocks the page:
-        // a failure on either means step 4 behaves as it did before it
-        // existed, which is the status quo rather than a regression.
-        const [prefillResult, blockResult] = await Promise.all([
-          getFratPrefill(flightId, {
-            observations,
-            is_ifr: isIfrPlanned(),
-          }).catch(() => null),
-          getFratBlockEligibility(flightId, {
-            observations,
-            is_ifr: isIfrPlanned(),
-          }).catch(() => null),
-        ]);
-        fratPrefill = prefillResult;
-        fratBlock = blockResult;
-      }
+      // The prefill runs even with no weather: duty, rest, currency and
+      // maintenance need none, and gating it on the METAR meant a
+      // weather-service blip also blanked the duty-clock factors. The
+      // wind and ceiling factors come back unscored without it. The
+      // block eligibility compares weather, so it still needs some.
+      // Neither blocks the page: a failure means step 4 behaves as it
+      // did before it existed.
+      const [prefillResult, blockResult] = await Promise.all([
+        getFratPrefill(flightId, {
+          observations,
+          is_ifr: isIfrPlanned(),
+        }).catch(() => null),
+        observations.length > 0
+          ? getFratBlockEligibility(flightId, {
+              observations,
+              is_ifr: isIfrPlanned(),
+            }).catch(() => null)
+          : Promise.resolve(null),
+      ]);
+      fratPrefill = prefillResult;
+      fratBlock = blockResult;
     }
   } catch (err) {
     if (err instanceof ApiError && err.status === 404) {
@@ -222,13 +227,12 @@ function BackLink() {
   );
 }
 
-/** Deduped origin → destination list for the Step 3 weather batch.
- *  Multi-leg routes ship with the elog Tab 2 work; today the Flight
- *  row only carries origin + destination. */
+/** Deduped airports on the route, in order, for the Step 3 weather
+ *  batch: every stop of a multi-leg flight. */
 function _routingAirports(flight: FlightDetail): string[] {
   const seen = new Set<string>();
   const list: string[] = [];
-  for (const icao of [flight.origin, flight.destination]) {
+  for (const icao of flightStops(flight)) {
     if (icao && !seen.has(icao)) {
       seen.add(icao);
       list.push(icao);

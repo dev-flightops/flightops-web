@@ -259,6 +259,49 @@ describe("factors nobody assessed", () => {
     expect(screen.getByText("16")).toBeInTheDocument();
   });
 
+  it("shows the duty day at landing, and its band", () => {
+    // The client, 27 Sep: almost 8h in and the slider still read "First
+    // flight, well under 8h". The prefill now measures to the landing.
+    renderStep({
+      fratPrefill: {
+        flight_id: "f-1",
+        suggestions: [
+          {
+            factor: "pilot_duty",
+            score: 4,
+            source:
+              "duty clock: on duty since 06:05Z; this flight lands about 17:58Z, 11h 53m into the duty day (limit 14h)",
+          },
+        ],
+        crosswind_limit_kt: 30,
+        near_limit_entry_kt: 20,
+        vfr_min_ceiling_ft: 1000,
+        vfr_min_visibility_sm: 3,
+      },
+    });
+    expect(
+      screen.getByText(/11h 53m into the duty day \(limit 14h\)/),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Lands 10h+ in — heading toward the limit")).toBeInTheDocument();
+  });
+
+  it("keeps 5 on the duty scale for landing past the limit", () => {
+    // 5 is the operator's "out of company limits": a no-go. A legal
+    // 12-14h day must not read as one, which "Past 12h" did.
+    renderStep({
+      fratPrefill: {
+        flight_id: "f-1",
+        suggestions: [{ factor: "pilot_duty", score: 5, source: "duty clock: past the limit" }],
+        crosswind_limit_kt: 30,
+        near_limit_entry_kt: 20,
+        vfr_min_ceiling_ft: 1000,
+        vfr_min_visibility_sm: 3,
+      },
+    });
+    expect(screen.getByText("Lands past the duty limit — out of limits")).toBeInTheDocument();
+    expect(screen.queryByText(/Past 12h/)).toBeNull();
+  });
+
   it("does not count a factor the prefill could not score", () => {
     // score: null means the system had no input. That is not an
     // assessment, and treating it as one would restore the silent path.
