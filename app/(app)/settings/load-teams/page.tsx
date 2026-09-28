@@ -1,26 +1,34 @@
 import Link from "next/link";
 
-import { listLoadTeams } from "@/lib/api/ground";
+import { listRoles, listUsers } from "@/lib/api/auth";
+import { listLoadTeams, listStations } from "@/lib/api/ground";
 import { ApiError } from "@/lib/api/client";
 import type { LoadTeamResponse } from "@/lib/api/types";
+
+import { MembersSheet } from "./members-sheet";
+import { TeamActiveButton } from "./team-active-button";
+import {
+  TeamDialog,
+  type PersonOption,
+  type StationOption,
+} from "./team-dialog";
 
 /**
  * /settings/load-teams — legacy `templates/settings/load_teams.html`.
  *
- * Reads live from `/ground/load-teams` (endpoints already existed
- * from an earlier M2 story). Teams are grouped by base ICAO into
- * per-base sections mirroring legacy. Each team card shows a
- * colour swatch, lead assignment (green name or amber "No Lead
- * Assigned"), member count, and notes.
+ * Teams from ground-service `/load-teams`, grouped by base as legacy
+ * does, each base headed with its station name. Add Team, Edit,
+ * Members and Deactivate / Reactivate work against the same service;
+ * the lead and member pickers use the staff list, which only an
+ * Executive Admin can read, and say so to anyone else.
  *
- * Add-team / Edit / Members / Performance modals are still to
- * come — the backend endpoints exist (POST /ground/load-teams,
- * PATCH /ground/load-teams/{id}, /members etc.); the modal UI
- * wiring is a follow-up story.
+ * Not built, and shown as such: Fleet Report and each team's
+ * Performance page (legacy reports on turnaround timings we don't
+ * record), and the Reminders and Activity Log tabs (legacy's automated
+ * reminder texts — nothing here sends them).
  */
 
-const BACKEND_HINT_EDIT =
-  "Add / Edit modals are a follow-up — backend endpoints are live";
+const NOT_BUILT = "Not built yet";
 
 type StatusParam = "active" | "all";
 
@@ -40,14 +48,18 @@ export default async function SettingsLoadTeamsPage({
   const params = await searchParams;
   const statusFilter = parseStatus(params.status);
 
+  const [teamsResult, stationsResult, peopleResult] = await Promise.allSettled([
+    listLoadTeams({ includeInactive: statusFilter === "all" }),
+    listStations({ limit: 500 }),
+    Promise.all([listUsers(), listRoles()]),
+  ]);
+
   let teams: LoadTeamResponse[] = [];
   let loadError: string | null = null;
-  try {
-    const response = await listLoadTeams({
-      includeInactive: statusFilter === "all",
-    });
-    teams = response.items;
-  } catch (err) {
+  if (teamsResult.status === "fulfilled") {
+    teams = teamsResult.value.items;
+  } else {
+    const err = teamsResult.reason;
     const status = err instanceof ApiError ? err.status : 0;
     loadError =
       status === 401
@@ -55,6 +67,33 @@ export default async function SettingsLoadTeamsPage({
         : status === 403
           ? "You don't have permission to manage load teams."
           : "Load teams unavailable. Try refreshing in a moment.";
+  }
+
+  // Soft-fail: without stations the base picker offers only the bases
+  // teams already use, and headings show the code alone.
+  const stations: StationOption[] =
+    stationsResult.status === "fulfilled"
+      ? stationsResult.value.items
+          .filter((s) => s.is_active)
+          .map((s) => ({ icao: s.icao_code, name: s.name }))
+          .sort((a, b) => a.icao.localeCompare(b.icao))
+      : [];
+  const stationNames = new Map(stations.map((s) => [s.icao, s.name]));
+
+  // Null, not empty, when the staff list can't be read: the pickers
+  // then explain who can set a lead or add a member.
+  let people: PersonOption[] | null = null;
+  if (peopleResult.status === "fulfilled") {
+    const [users, roles] = peopleResult.value;
+    const roleLabel = new Map(roles.roles.map((r) => [r.id, r.label]));
+    people = users.items
+      .filter((u) => u.is_active)
+      .map((u) => ({
+        id: u.id,
+        name: u.full_name,
+        roles: u.roles.map((r) => roleLabel.get(r) ?? r).join(", "),
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name));
   }
 
   const grouped = groupByBase(teams);
@@ -69,32 +108,23 @@ export default async function SettingsLoadTeamsPage({
         <span className="font-semibold text-primary">Load Teams</span>
       </nav>
 
-      <header className="mb-6 flex items-center justify-between gap-3">
+      <header className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Load Teams</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Manage ramp and load crew teams by base
           </p>
         </div>
-        <div className="flex gap-2">
-          <button
-            type="button"
-            disabled
-            aria-disabled="true"
-            title={BACKEND_HINT_EDIT}
-            className="cursor-not-allowed rounded-md border border-border bg-card px-3 py-2 text-sm font-semibold text-foreground disabled:opacity-100"
-          >
+        <div className="flex flex-wrap gap-2">
+          <NotBuilt className="rounded-md border border-border bg-card px-3 py-2 text-sm font-semibold text-foreground">
             Fleet Report
-          </button>
-          <button
-            type="button"
-            disabled
-            aria-disabled="true"
-            title={BACKEND_HINT_EDIT}
-            className="cursor-not-allowed rounded-md bg-primary px-3 py-2 text-sm font-semibold text-white disabled:opacity-100"
-          >
-            + Add Team
-          </button>
+          </NotBuilt>
+          <TeamDialog
+            stations={stations}
+            people={people}
+            trigger="+ Add Team"
+            triggerClassName="rounded-md bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground hover:bg-brand-dark"
+          />
           <Link
             href={
               statusFilter === "all"
@@ -109,9 +139,15 @@ export default async function SettingsLoadTeamsPage({
       </header>
 
       <div className="mb-4 flex gap-1 border-b-2 border-border">
-        <TabChip label="Teams" active />
-        <TabChip label="Reminders" />
-        <TabChip label="Activity Log" />
+        <span className="-mb-0.5 border-b-2 border-primary px-4 py-2 text-xs font-semibold text-primary">
+          Teams
+        </span>
+        <NotBuilt className="-mb-0.5 border-b-2 border-transparent px-4 py-2 text-xs font-semibold text-muted-foreground">
+          Reminders
+        </NotBuilt>
+        <NotBuilt className="-mb-0.5 border-b-2 border-transparent px-4 py-2 text-xs font-semibold text-muted-foreground">
+          Activity Log
+        </NotBuilt>
       </div>
 
       {loadError ? (
@@ -126,14 +162,29 @@ export default async function SettingsLoadTeamsPage({
           <div className="mx-auto mb-2 text-2xl opacity-30">👥</div>
           <p className="text-sm text-muted-foreground">
             {statusFilter === "all"
-              ? "No load teams — active or inactive."
-              : "No active load teams. Toggle Show Inactive to see archived teams, or Add Team to create one."}
+              ? "No load teams yet."
+              : "No active load teams. Show Inactive lists archived ones."}
           </p>
+          <div className="mt-2">
+            <TeamDialog
+              stations={stations}
+              people={people}
+              trigger="Create a team"
+              triggerClassName="text-sm font-semibold text-primary hover:underline"
+            />
+          </div>
         </div>
       ) : (
         <div className="space-y-8">
           {Object.entries(grouped).map(([base, list]) => (
-            <BaseSection key={base} base={base} teams={list} />
+            <BaseSection
+              key={base}
+              base={base}
+              stationName={stationNames.get(base) ?? null}
+              teams={list}
+              stations={stations}
+              people={people}
+            />
           ))}
         </div>
       )}
@@ -151,33 +202,80 @@ function groupByBase(
   return grouped;
 }
 
-function BaseSection({
-  base,
-  teams,
+/** A legacy control with nothing behind it yet: dimmed, "Not built yet"
+ *  on hover, as the maintenance header marks its unbuilt actions. */
+function NotBuilt({
+  className,
+  children,
 }: {
-  base: string;
-  teams: LoadTeamResponse[];
+  className: string;
+  children: string;
 }) {
   return (
-    <section>
-      <div className="mb-3 flex items-center justify-between border-b border-border pb-2">
-        <span className="text-sm font-bold uppercase tracking-[0.04em] text-primary">
-          {base}
-        </span>
-        <span className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-          {teams.length} team{teams.length === 1 ? "" : "s"}
-        </span>
+    <span
+      role="button"
+      aria-disabled="true"
+      title={NOT_BUILT}
+      className={`cursor-not-allowed opacity-50 ${className}`}
+    >
+      {children}
+    </span>
+  );
+}
+
+function BaseSection({
+  base,
+  stationName,
+  teams,
+  stations,
+  people,
+}: {
+  base: string;
+  stationName: string | null;
+  teams: LoadTeamResponse[];
+  stations: StationOption[];
+  people: PersonOption[] | null;
+}) {
+  return (
+    <section aria-label={`${base} load teams`}>
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2 border-b border-border pb-2">
+        <h2 className="text-sm font-bold uppercase tracking-[0.04em] text-primary">
+          {stationName ? `${base} — ${stationName}` : base}
+        </h2>
+        <div className="flex items-center gap-3">
+          <span className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+            {teams.length} team{teams.length === 1 ? "" : "s"}
+          </span>
+          <TeamDialog
+            defaultBase={base}
+            stations={stations}
+            people={people}
+            trigger={`+ Add Team at ${base}`}
+            triggerClassName="rounded border border-border bg-transparent px-2.5 py-1 text-[0.65rem] font-semibold text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary"
+          />
+        </div>
       </div>
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
         {teams.map((t) => (
-          <TeamCard key={t.id} team={t} />
+          <TeamCard key={t.id} team={t} stations={stations} people={people} />
         ))}
       </div>
     </section>
   );
 }
 
-function TeamCard({ team }: { team: LoadTeamResponse }) {
+const CARD_BUTTON =
+  "rounded border border-border bg-transparent px-2.5 py-1 text-[0.65rem] font-semibold text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary";
+
+function TeamCard({
+  team,
+  stations,
+  people,
+}: {
+  team: LoadTeamResponse;
+  stations: StationOption[];
+  people: PersonOption[] | null;
+}) {
   return (
     <div className="relative overflow-hidden rounded-lg border border-border bg-card p-3 pl-4 transition-colors hover:border-primary/30">
       <span
@@ -217,40 +315,25 @@ function TeamCard({ team }: { team: LoadTeamResponse }) {
           {team.notes}
         </p>
       )}
-      <div className="mt-2 flex gap-1">
-        {(["Edit", "Members", "Performance"] as const).map((label) => (
-          <button
-            key={label}
-            type="button"
-            disabled
-            aria-disabled="true"
-            title={BACKEND_HINT_EDIT}
-            className="cursor-not-allowed rounded border border-border bg-transparent px-2.5 py-1 text-[0.65rem] font-semibold text-muted-foreground disabled:opacity-100"
-          >
-            {label}
-          </button>
-        ))}
+      <div className="mt-2 flex flex-wrap gap-1">
+        <TeamDialog
+          team={team}
+          stations={stations}
+          people={people}
+          trigger="Edit"
+          triggerLabel={`Edit ${team.team_name}`}
+          triggerClassName={CARD_BUTTON}
+        />
+        <MembersSheet team={team} people={people} />
+        <NotBuilt className="rounded border border-border px-2.5 py-1 text-[0.65rem] font-semibold text-muted-foreground">
+          Performance
+        </NotBuilt>
+        <TeamActiveButton
+          teamId={team.id}
+          teamName={team.team_name}
+          active={team.is_active}
+        />
       </div>
     </div>
-  );
-}
-
-function TabChip({ label, active }: { label: string; active?: boolean }) {
-  return (
-    <button
-      type="button"
-      disabled
-      aria-disabled="true"
-      aria-pressed={active}
-      title="Reminders + Activity Log tabs are a follow-up story"
-      className={
-        "-mb-0.5 cursor-not-allowed px-4 py-2 text-xs font-semibold disabled:opacity-100 " +
-        (active
-          ? "border-b-2 border-primary text-primary"
-          : "border-b-2 border-transparent text-muted-foreground")
-      }
-    >
-      {label}
-    </button>
   );
 }

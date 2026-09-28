@@ -272,7 +272,6 @@ function TeamsColumn({
           <Link
             href="/settings/load-teams"
             className="font-semibold text-primary hover:underline"
-            title="Load team management UI lands with a follow-up settings story"
           >
             Create teams →
           </Link>
