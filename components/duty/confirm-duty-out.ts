@@ -10,17 +10,15 @@ import { useCallback, useEffect, useRef, useState } from "react";
  *   Duty out function: You can accidently close out your duty day
  *
  * Both duty-out controls fired on a single click, and one of them is a
- * pill in the header of every page. What an accidental press costs is
- * not a tidy-up: clocking back in creates a *new* duty period rather
- * than resuming the closed one (ops-service refuses a second open
- * period and inserts a fresh row), so a 14-hour day accidentally split
- * at hour 12 becomes a 12-hour record and a 2-hour one. Two shorter
- * periods each look legal where the single long one was approaching the
- * 14-hour ceiling, and the FRAT's duty factor reads the open period —
- * so the questionnaire would prefill "2h into duty" for a pilot who has
- * been working fourteen. The same accident also resets the rest clock,
- * which then prefills rest as a violation. It corrupts the assessment
- * in both directions.
+ * pill in the header of every page. Clocking back in used to start a
+ * new duty period, so an accident at hour 12 split the day into a
+ * 12-hour record and a new one starting at zero.
+ *
+ * The client, 27 Sep: "It's all one continuous period. So, if you click
+ * the start duty day again it should be reopening your duty day." It
+ * does now: inside the operator's minimum rest, ops-service reopens the
+ * period. The confirmation stays, because closing is still the end of
+ * the duty day as far as anyone reading the clock can tell.
  *
  * Clocking *in* stays a single press. It is not the destructive
  * direction, and adding friction to starting a duty day would be
@@ -29,9 +27,13 @@ import { useCallback, useEffect, useRef, useState } from "react";
  * Escape and a click elsewhere both disarm, because an armed control
  * the user has walked away from should not be waiting to fire.
  */
-export const NEW_PERIOD_WARNING =
-  "Clocking back in starts a new duty period — it does not resume " +
-  "this one.";
+/** What clocking back in does after this close. */
+export function resumeNote(minRestHours: number): string {
+  return (
+    `Clocking back in within ${minRestHours}h resumes this duty day; ` +
+    "after a full rest, a new one starts."
+  );
+}
 
 export function useArmedConfirm(): {
   armed: boolean;

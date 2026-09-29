@@ -5,6 +5,7 @@ import { useEffect, useRef, useState, useTransition } from "react";
 
 import type { FlightDetail } from "@/lib/api/types";
 import { cn } from "@/lib/utils";
+import { routeText } from "@/lib/route";
 
 import { completeStepAction } from "./actions";
 
@@ -130,7 +131,7 @@ export function ReviewDispatchReleaseStep({ flightId, flight }: Props) {
                 {flight.flight_number}
               </span>
               <span className="ml-2 font-mono text-foreground">
-                {flight.origin} → {flight.destination}
+                {routeText(flight)}
               </span>
             </div>
             <div className="text-muted-foreground">
@@ -257,7 +258,7 @@ function AwaitingReleasePanel({ flight }: { flight: FlightDetail }) {
             {flight.flight_number}
           </span>
           <span className="ml-2 font-mono text-foreground">
-            {flight.origin} → {flight.destination}
+            {routeText(flight)}
           </span>
         </div>
         <div className="mt-1">

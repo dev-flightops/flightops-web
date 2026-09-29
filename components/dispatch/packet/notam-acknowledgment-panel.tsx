@@ -1,9 +1,10 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 
 import { SectionPanel } from "./section-panel";
+import { useDispatchQuery } from "./use-dispatch-query";
 
 /**
  * NOTAM Acknowledgment panel — manual bridge until M2-M-4 ships the
@@ -35,7 +36,7 @@ export function NotamAcknowledgmentPanel({
   ackedFromUrl: string[];
 }) {
   const router = useRouter();
-  const params = useSearchParams();
+  const nextQuery = useDispatchQuery();
   const [isPending, startTransition] = useTransition();
 
   if (icaos.length === 0) {
@@ -66,31 +67,33 @@ export function NotamAcknowledgmentPanel({
       .filter((s) => icaos.includes(s)),
   );
 
-  const updateUrl = (next: Set<string>) => {
-    const search = new URLSearchParams(params?.toString() ?? "");
-    if (next.size === 0) {
-      search.delete("notams_acked");
-    } else {
-      search.set(
-        "notams_acked",
-        [...next].sort().join(","),
+  // The set is rebuilt from the newest URL, not from `acked`: that is
+  // the last render, and a tick still loading is not in it.
+  const updateUrl = (change: (next: Set<string>) => void) => {
+    const qs = nextQuery((search) => {
+      const next = new Set(
+        (search.get("notams_acked") ?? "")
+          .split(",")
+          .map((s) => s.trim().toUpperCase())
+          .filter((s) => icaos.includes(s)),
       );
-    }
-    const qs = search.toString();
+      change(next);
+      if (next.size === 0) search.delete("notams_acked");
+      else search.set("notams_acked", [...next].sort().join(","));
+    });
     startTransition(() => {
       router.replace(`/dispatch/${qs ? `?${qs}` : ""}`, { scroll: false });
     });
   };
 
-  const toggle = (icao: string) => {
-    const next = new Set(acked);
-    if (next.has(icao)) next.delete(icao);
-    else next.add(icao);
-    updateUrl(next);
-  };
+  const toggle = (icao: string, checked: boolean) =>
+    updateUrl((next) => {
+      if (checked) next.add(icao);
+      else next.delete(icao);
+    });
 
-  const ackAll = () => updateUrl(new Set(icaos));
-  const clearAll = () => updateUrl(new Set());
+  const ackAll = () => updateUrl((next) => icaos.forEach((i) => next.add(i)));
+  const clearAll = () => updateUrl((next) => next.clear());
 
   const allAcked = icaos.every((i) => acked.has(i));
 
@@ -133,7 +136,7 @@ export function NotamAcknowledgmentPanel({
                   <input
                     type="checkbox"
                     checked={isAcked}
-                    onChange={() => toggle(icao)}
+                    onChange={(e) => toggle(icao, e.target.checked)}
                     disabled={isPending}
                     aria-label={`Acknowledge NOTAMs for ${icao}`}
                     className="h-4 w-4 cursor-pointer accent-primary"

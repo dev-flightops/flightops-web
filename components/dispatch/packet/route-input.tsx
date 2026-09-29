@@ -1,10 +1,12 @@
 "use client";
 
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import { X } from "lucide-react";
 
 import { parseRouteText, routeToParam } from "@/lib/route";
+
+import { useDispatchQuery } from "./use-dispatch-query";
 
 /**
  * Live Route textarea — M2-G-12.
@@ -25,18 +27,19 @@ import { parseRouteText, routeToParam } from "@/lib/route";
 export function RouteInput({ defaultText }: { defaultText: string }) {
   const router = useRouter();
   const pathname = usePathname();
-  const searchParams = useSearchParams();
+  const nextQuery = useDispatchQuery();
   const [text, setText] = useState(defaultText);
 
   const commit = (override?: string) => {
-    const params = new URLSearchParams(searchParams.toString());
     const icaos = parseRouteText(override ?? text);
-    if (icaos.length > 0) {
-      params.set("route", routeToParam(icaos));
-    } else {
-      params.delete("route");
-    }
-    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    const qs = nextQuery((params) => {
+      if (icaos.length > 0) {
+        params.set("route", routeToParam(icaos));
+      } else {
+        params.delete("route");
+      }
+    });
+    router.replace(`${pathname}?${qs}`, { scroll: false });
   };
 
   const clear = () => {

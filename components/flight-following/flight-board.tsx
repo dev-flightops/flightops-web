@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import type { BoardFlightItem } from "@/lib/api/types";
 import { formatBoth, formatZulu } from "@/lib/format/flight-time";
+import { flightStops } from "@/lib/route";
 
 import { CheckInButton } from "./check-in-button";
 import { OverdueBadge, StatusBadge } from "./status-badge";
@@ -96,8 +97,12 @@ function FlightBoardRow({ flight }: { flight: BoardFlightItem }) {
       </td>
       <td className="px-3 py-2.5">
         <div className="font-mono text-foreground">
-          {flight.origin}{" "}
-          <span className="text-muted-foreground">→</span> {flight.destination}
+          {flightStops(flight).map((icao, i) => (
+            <span key={`${icao}-${i}`}>
+              {i > 0 && <span className="text-muted-foreground"> → </span>}
+              {icao}
+            </span>
+          ))}
         </div>
         {hasPax && (
           <div className="text-[0.65rem]">

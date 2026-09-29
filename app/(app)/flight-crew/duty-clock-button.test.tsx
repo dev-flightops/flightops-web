@@ -64,7 +64,34 @@ describe("the duty hero button", () => {
     await user.click(screen.getByRole("button", { name: /DUTY OUT/i }));
     expect(screen.getByText(/CLOSE THIS DUTY PERIOD\?/i)).toBeInTheDocument();
     expect(screen.getByText(/12h 30m/)).toBeInTheDocument();
-    expect(screen.getByText(/starts a new duty period/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Clocking back in within 9h resumes this duty day/),
+    ).toBeInTheDocument();
+  });
+
+  it("says so when clocking in reopened the duty day", async () => {
+    // Back inside the minimum rest, ops-service reopens the day from its
+    // original start (client, 27 Sep): the pilot should know why the
+    // clock reads the whole day, not zero.
+    clockInAction.mockResolvedValueOnce({
+      ok: true,
+      resumed: true,
+      clockInAt: new Date(2026, 8, 27, 6, 5).toISOString(),
+    } as never);
+    const user = userEvent.setup();
+    render(<DutyClockButton initial={offDuty()} />);
+    await user.click(screen.getByRole("button", { name: /DUTY IN/i }));
+    expect(await screen.findByRole("status")).toHaveTextContent(
+      "Duty day resumed — on duty since 06:05. You were back inside the 9h minimum rest, so the break counts as duty.",
+    );
+  });
+
+  it("takes the server's snapshot when the page revalidates", () => {
+    // It kept its optimistic 0h after a clock-in that reopened a day
+    // hours old, until the page remounted.
+    const { rerender } = render(<DutyClockButton initial={offDuty()} />);
+    rerender(<DutyClockButton initial={onDuty()} />);
+    expect(screen.getByRole("button", { name: /DUTY OUT/i })).toHaveTextContent("12h 30m");
   });
 
   it("closes it when confirmed", async () => {

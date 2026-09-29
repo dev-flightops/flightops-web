@@ -7,6 +7,7 @@ import { useTransition, type ReactNode } from "react";
 
 import { SectionPanel } from "./section-panel";
 import type { FlightListItem } from "@/lib/api/types";
+import { routeText } from "@/lib/route";
 
 /**
  * "Load from Schedule" — pick the day, then the flight.
@@ -164,7 +165,7 @@ export function LoadFromSchedule({
             const dep = f.scheduled_departure_at.slice(0, 10);
             return (
               <option key={f.id} value={f.id}>
-                {dep} · {f.flight_number} · {f.origin} → {f.destination} ·{" "}
+                {dep} · {f.flight_number} · {routeText(f)} ·{" "}
                 {f.aircraft.tail_number}
               </option>
             );

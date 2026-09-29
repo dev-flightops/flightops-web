@@ -69,15 +69,16 @@ describe("the header duty pill", () => {
     ).toBeInTheDocument();
   });
 
-  it("warns that clocking back in will not resume this period", async () => {
-    // The fact that makes an accidental close expensive rather than
-    // untidy, and the reason a bare "are you sure?" would not do.
+  it("says clocking back in within the rest minimum resumes the day", async () => {
+    // Since 27 Sep a clock-in inside the minimum rest reopens the day,
+    // so the confirmation says what the next press will actually do.
     const user = userEvent.setup();
     pill(onDuty());
     await user.click(screen.getByRole("button", { name: /Clock Out/i }));
     expect(
-      screen.getByText(/starts a new duty period/i),
+      screen.getByText(/Clocking back in within 9h resumes this duty day/),
     ).toBeInTheDocument();
+    expect(screen.queryByText(/starts a new duty period —/)).toBeNull();
   });
 
   it("clocks out on the second press", async () => {

@@ -18,6 +18,9 @@ import {
   observationsFromWeather,
 } from "@/lib/frat/observations";
 import { batchWeather } from "@/lib/api/weather";
+import { listFuelOrders, listSupplierBases } from "@/lib/api/ground";
+import { fuelTypeForAircraft, supplierOptionsFor } from "@/lib/fuel";
+import { flightStops } from "@/lib/route";
 import type {
   FratBlockEligibilityResponse,
   FratPrefillResponse,
@@ -31,6 +34,7 @@ import type {
   WeatherBatchResponse,
 } from "@/lib/api/types";
 
+import { PreflightFuel } from "./preflight-fuel";
 import { PreflightShell } from "./preflight-shell";
 
 const DUTY_OFFLINE_DEFAULT: CurrentDutyResponse = {
@@ -148,23 +152,27 @@ export default async function PreflightPage({
       // did, with nothing prefilled, which is the status quo rather
       // than a regression.
       const observations = observationsFromWeather(weather);
-      if (observations.length > 0) {
-        // Both take the same observations, and neither blocks the page:
-        // a failure on either means step 4 behaves as it did before it
-        // existed, which is the status quo rather than a regression.
-        const [prefillResult, blockResult] = await Promise.all([
-          getFratPrefill(flightId, {
-            observations,
-            is_ifr: isIfrPlanned(),
-          }).catch(() => null),
-          getFratBlockEligibility(flightId, {
-            observations,
-            is_ifr: isIfrPlanned(),
-          }).catch(() => null),
-        ]);
-        fratPrefill = prefillResult;
-        fratBlock = blockResult;
-      }
+      // The prefill runs even with no weather: duty, rest, currency and
+      // maintenance need none, and gating it on the METAR meant a
+      // weather-service blip also blanked the duty-clock factors. The
+      // wind and ceiling factors come back unscored without it. The
+      // block eligibility compares weather, so it still needs some.
+      // Neither blocks the page: a failure means step 4 behaves as it
+      // did before it existed.
+      const [prefillResult, blockResult] = await Promise.all([
+        getFratPrefill(flightId, {
+          observations,
+          is_ifr: isIfrPlanned(),
+        }).catch(() => null),
+        observations.length > 0
+          ? getFratBlockEligibility(flightId, {
+              observations,
+              is_ifr: isIfrPlanned(),
+            }).catch(() => null)
+          : Promise.resolve(null),
+      ]);
+      fratPrefill = prefillResult;
+      fratBlock = blockResult;
     }
   } catch (err) {
     if (err instanceof ApiError && err.status === 404) {
@@ -192,6 +200,32 @@ export default async function PreflightPage({
   }
   if (!flight || !progress) notFound();
 
+  // Fuel: the flight's orders and the departure base's suppliers for
+  // this aircraft's fuel. Best-effort, like the weather: a failure costs
+  // the pilot the fuel card, not the preflight.
+  const fuelTypeCode = fuelTypeForAircraft(flight.aircraft.model);
+  const [fuelOrders, fuelBases] = await Promise.allSettled([
+    listFuelOrders({ flightId: flight.id }),
+    listSupplierBases({ baseCode: flight.origin }),
+  ]);
+  const fuel = (
+    <PreflightFuel
+      flight={flight}
+      fuelTypeCode={fuelTypeCode}
+      orders={fuelOrders.status === "fulfilled" ? fuelOrders.value.items : []}
+      options={
+        fuelBases.status === "fulfilled"
+          ? supplierOptionsFor(fuelBases.value.items, fuelTypeCode)
+          : []
+      }
+      unavailable={
+        fuelOrders.status === "rejected" || fuelBases.status === "rejected"
+          ? "Fuel unavailable — try refreshing in a moment."
+          : null
+      }
+    />
+  );
+
   return (
     <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
       <BackLink />
@@ -206,6 +240,7 @@ export default async function PreflightPage({
         fratConfig={fratConfig}
         fratPrefill={fratPrefill}
         fratBlock={fratBlock}
+        fuel={fuel}
       />
     </div>
   );
@@ -222,13 +257,12 @@ function BackLink() {
   );
 }
 
-/** Deduped origin → destination list for the Step 3 weather batch.
- *  Multi-leg routes ship with the elog Tab 2 work; today the Flight
- *  row only carries origin + destination. */
+/** Deduped airports on the route, in order, for the Step 3 weather
+ *  batch: every stop of a multi-leg flight. */
 function _routingAirports(flight: FlightDetail): string[] {
   const seen = new Set<string>();
   const list: string[] = [];
-  for (const icao of [flight.origin, flight.destination]) {
+  for (const icao of flightStops(flight)) {
     if (icao && !seen.has(icao)) {
       seen.add(icao);
       list.push(icao);

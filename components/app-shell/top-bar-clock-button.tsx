@@ -3,7 +3,7 @@
 import { useEffect, useState, useTransition } from "react";
 
 import type { DutyActionResult } from "@/app/(app)/duty-actions";
-import { NEW_PERIOD_WARNING, useArmedConfirm } from "@/components/duty/confirm-duty-out";
+import { resumeNote, useArmedConfirm } from "@/components/duty/confirm-duty-out";
 import type { CurrentDutyResponse } from "@/lib/api/types";
 
 interface Props {
@@ -138,7 +138,7 @@ export function TopBarClockButton({ initial, clockIn, clockOut }: Props) {
   const title =
     error ??
     (armed
-      ? `Press again to close this duty period. ${NEW_PERIOD_WARNING} Escape to cancel.`
+      ? `Press again to close this duty period. ${resumeNote(duty.min_rest_hours)} Escape to cancel.`
       : isOnDuty
         ? "Currently on duty — click to clock out"
         : "Click to clock in");
@@ -175,7 +175,7 @@ export function TopBarClockButton({ initial, clockIn, clockOut }: Props) {
       </button>
       {armed && (
         <span id="duty-out-armed" role="status" className="sr-only">
-          Press again to close this duty period. {NEW_PERIOD_WARNING}
+          Press again to close this duty period. {resumeNote(duty.min_rest_hours)}
         </span>
       )}
     </div>

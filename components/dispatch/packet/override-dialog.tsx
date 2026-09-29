@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
 import {
@@ -18,6 +18,7 @@ import {
   createOverridesAction,
   type CreateOverridesResult,
 } from "./override-actions";
+import { useDispatchQuery } from "./use-dispatch-query";
 
 /**
  * M2-G-5 tail — supervisor override modal for the hard-block banner.
@@ -52,7 +53,7 @@ export function OverrideDialog({
   flightId: string | null;
 }) {
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const nextQuery = useDispatchQuery();
   const [open, setOpen] = useState(false);
   const [cert, setCert] = useState("");
   const [reason, setReason] = useState("");
@@ -82,9 +83,8 @@ export function OverrideDialog({
         // Flip the URL flag so the page-level loader knows the
         // hard-block was overridden and the release action can send
         // overrides_acknowledged=true.
-        const params = new URLSearchParams(searchParams.toString());
-        params.set("overrides_ack", "1");
-        router.push(`/dispatch/?${params.toString()}`);
+        const qs = nextQuery((params) => params.set("overrides_ack", "1"));
+        router.push(`/dispatch/?${qs}`);
         setOpen(false);
         setCert("");
         setReason("");

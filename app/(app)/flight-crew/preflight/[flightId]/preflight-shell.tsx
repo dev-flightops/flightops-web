@@ -27,6 +27,7 @@ import { DutyInConfirmStep } from "./step-5-duty";
 import { AcceptOrDenyStep } from "./step-6-accept-deny";
 import { PositionReportsStep } from "./step-7-position-reports";
 import { PostFlightLogStep } from "./step-8-post-flight-log";
+import { routeText } from "@/lib/route";
 
 interface Props {
   flight: FlightDetail;
@@ -56,6 +57,10 @@ interface Props {
   /** Whether a FRAT the pilot already filed can be carried to this
    *  leg. Null when the weather was unreachable or the check failed. */
   fratBlock: FratBlockEligibilityResponse | null;
+  /** The flight's fuel card, rendered on the server. Below the active
+   *  step on every step: the pilot can review and change fuel at any
+   *  point in the release process. */
+  fuel?: React.ReactNode;
 }
 
 /**
@@ -84,6 +89,7 @@ export function PreflightShell({
   fratConfig,
   fratPrefill,
   fratBlock,
+  fuel,
 }: Props) {
   const completedNumbers = new Set(
     progress.completed.map((s) => s.step_number),
@@ -174,6 +180,8 @@ export function PreflightShell({
         />
       )}
 
+      {fuel}
+
       {progress.completed.length > 0 && (
         <CompletedSummary
           completed={progress.completed}
@@ -223,7 +231,7 @@ function FlightContextBar({ flight }: { flight: FlightDetail }) {
           {flight.flight_number}
         </span>
         <span className="font-mono text-sm font-semibold text-foreground">
-          {flight.origin} → {flight.destination}
+          {routeText(flight)}
         </span>
         <span className="text-xs text-muted-foreground">
           {flight.aircraft.tail_number}

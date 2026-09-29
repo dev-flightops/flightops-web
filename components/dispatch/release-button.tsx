@@ -18,8 +18,11 @@ import {
 interface ReleaseButtonProps {
   flightId: string;
   flightNumber: string;
-  origin: string;
-  destination: string;
+  /** Every airport on the route, for the confirmation. */
+  stops: string[];
+  /** The packet's release gate. When set the button is disabled; the
+   *  row shows the reason beside it. */
+  hardBlockReason?: string | null;
   /** M2-M-5 — currently-selected PIC, so the server compliance gate
    *  runs against the pilot the dispatcher is actually releasing. */
   pilotUserId?: string | null;
@@ -31,6 +34,8 @@ interface ReleaseButtonProps {
   notamAckedIcaos?: string[];
   /** Dispatcher acknowledged stale / missing route weather. */
   staleWeatherAcknowledged?: boolean;
+  /** `?warns_acked=` — the currency warnings the dispatcher ticked. */
+  acknowledgedWarnings?: string[];
 }
 
 /**
@@ -50,12 +55,13 @@ interface ReleaseButtonProps {
 export function ReleaseButton({
   flightId,
   flightNumber,
-  origin,
-  destination,
+  stops,
+  hardBlockReason = null,
   pilotUserId = null,
   overridesAcknowledged = false,
   notamAckedIcaos = [],
   staleWeatherAcknowledged = false,
+  acknowledgedWarnings = [],
 }: ReleaseButtonProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -71,6 +77,7 @@ export function ReleaseButton({
         overridesAcknowledged,
         staleWeatherAcknowledged,
         notamAckedIcaos,
+        acknowledgedWarnings,
       );
       if (result.ok) {
         setOpen(false);
@@ -83,9 +90,14 @@ export function ReleaseButton({
 
   return (
     <>
-      <Button onClick={() => setOpen(true)}>
+      <Button
+        onClick={() => setOpen(true)}
+        disabled={hardBlockReason !== null}
+        title={hardBlockReason ?? undefined}
+        aria-describedby={hardBlockReason ? "release-blocked-reason" : undefined}
+      >
         <Send className="h-4 w-4" />
-        Release dispatch
+        {hardBlockReason ? "Release — blocked" : "Release dispatch"}
       </Button>
 
       <Dialog open={open} onOpenChange={(o) => !isPending && setOpen(o)}>
@@ -94,9 +106,7 @@ export function ReleaseButton({
             <DialogTitle>Release {flightNumber}?</DialogTitle>
             <DialogDescription>
               Locks the flight plan for{" "}
-              <span className="font-mono">
-                {origin} → {destination}
-              </span>{" "}
+              <span className="font-mono">{stops.join(" → ")}</span>{" "}
               and marks it as released. This action is recorded in the audit log
               and cannot be undone.
             </DialogDescription>

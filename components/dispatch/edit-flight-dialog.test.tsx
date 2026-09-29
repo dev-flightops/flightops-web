@@ -127,3 +127,66 @@ describe("EditFlightDialog", () => {
     expect(updateFlightAction).not.toHaveBeenCalled();
   });
 });
+
+describe("EditFlightDialog — a multi-leg flight", () => {
+  const multiLeg: FlightDetail = {
+    ...baseFlight,
+    origin: "PABE",
+    destination: "PASM",
+    stops: ["PABE", "PAHP", "PASM"],
+    legs: [
+      {
+        sequence: 1,
+        origin: "PABE",
+        destination: "PAHP",
+        scheduled_departure_at: "2026-06-01T14:00:00Z",
+        scheduled_arrival_at: "2026-06-01T14:40:00Z",
+      },
+      {
+        sequence: 2,
+        origin: "PAHP",
+        destination: "PASM",
+        scheduled_departure_at: "2026-06-01T15:00:00Z",
+        scheduled_arrival_at: "2026-06-01T15:35:00Z",
+      },
+    ],
+  };
+
+  it("shows the route as its legs and keeps it out of the change", async () => {
+    // Moving one end of a multi-leg route on its own would leave the
+    // legs disagreeing with it; the API refuses (flight_has_legs).
+    updateFlightAction.mockResolvedValue({ ok: true });
+    const user = userEvent.setup();
+    render(<EditFlightDialog flight={multiLeg} aircraft={[aircraft207, aircraft510]} />);
+    await user.click(screen.getByRole("button", { name: /edit/i }));
+    expect(screen.getByText(/This flight has 2 legs \(PABE → PAHP → PASM\)/)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Origin/)).toHaveAttribute("readonly");
+    expect(screen.getByLabelText(/Arrival/)).toHaveAttribute("readonly");
+
+    const pax = screen.getByLabelText(/passengers/i);
+    await user.clear(pax);
+    await user.type(pax, "6");
+    await user.click(screen.getByRole("button", { name: /save changes/i }));
+    expect(updateFlightAction).toHaveBeenLastCalledWith(multiLeg.id, { pax_count: 6 });
+  });
+
+  it("does not send the times back even when they do not round-trip", async () => {
+    // The form holds minutes, so a time stored with seconds comes back
+    // different. On a single-leg flight that only trims the seconds; on
+    // a multi-leg one it would get a passengers-only edit refused.
+    updateFlightAction.mockResolvedValue({ ok: true });
+    const user = userEvent.setup();
+    const withSeconds: FlightDetail = {
+      ...multiLeg,
+      scheduled_departure_at: "2026-06-01T14:00:30Z",
+      scheduled_arrival_at: "2026-06-01T15:35:45Z",
+    };
+    render(<EditFlightDialog flight={withSeconds} aircraft={[aircraft207, aircraft510]} />);
+    await user.click(screen.getByRole("button", { name: /edit/i }));
+    const pax = screen.getByLabelText(/passengers/i);
+    await user.clear(pax);
+    await user.type(pax, "6");
+    await user.click(screen.getByRole("button", { name: /save changes/i }));
+    expect(updateFlightAction).toHaveBeenLastCalledWith(withSeconds.id, { pax_count: 6 });
+  });
+});

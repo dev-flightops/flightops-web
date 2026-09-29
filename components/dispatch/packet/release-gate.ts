@@ -1,6 +1,7 @@
 import type { PicComplianceResponse, RouteFreshness } from "@/lib/api/types";
 
 import { unacknowledgedNotamIcaos } from "./notam-acks";
+import { seatWarnings } from "./soft-warning-ack-parser";
 
 /**
  * The single Generate-PDF release gate.
@@ -14,8 +15,12 @@ import { unacknowledgedNotamIcaos } from "./notam-acks";
  *
  *   1. PIC currency RED   → block unless a supervisor override was
  *                           recorded (?overrides_ack=1).
- *   2. PIC currency YELLOW → block until every soft warning is ack'd
- *                           (?warns_acked=...).
+ *      SIC currency RED   → block. No override: the supervisor override
+ *                           records PIC deviations, so the seat is
+ *                           reassigned or the items cleared.
+ *   2. Soft warnings      → block until every one, for either seat, is
+ *                           ack'd (?warns_acked=..., the SIC's as
+ *                           "sic:<code>"), whatever the dot colour.
  *   3. NOTAMs              → block until every routed ICAO is ack'd
  *                           (?notams_acked=...), enforcing the promise
  *                           the NOTAM panel makes on screen.
@@ -27,17 +32,17 @@ import { unacknowledgedNotamIcaos } from "./notam-acks";
  *
  * Enforcement depth differs, and it matters which is which:
  *
- *   (1), (2) and (4) are ALSO enforced by the backend release endpoint,
- *   so bypassing the UI still fails. For (4) the server runs the same
- *   shared evaluator this gate's input came from, so the two cannot
- *   disagree about whether an ack is needed.
- *
- *   (3) is UI-only today — NOTAM ack state never reaches the release
- *   call — so it is a dispatcher-workflow guard, not a server-side
- *   control. Backend NOTAM enforcement is a tracked follow-up.
+ *   All four are ALSO enforced by the backend release endpoint, so
+ *   bypassing the UI still fails: currency per seat (the SIC read from
+ *   the flight's crew, not from here), soft-warning acks (27 Sep; before
+ *   that only this gate checked them, and Release dispatch skipped this
+ *   gate), NOTAM acks for every stop (audit finding C1), and weather,
+ *   where the server runs the same shared evaluator this gate read.
  */
 export function computeHardBlockReason(input: {
   picCompliance: PicComplianceResponse | null;
+  /** Everyone in the flight's SIC seat, checked for that seat. */
+  sicCompliance?: PicComplianceResponse[];
   ackedWarnCodes: Set<string>;
   overridesAcknowledged: boolean;
   /** True when a flight is loaded — NOTAMs only gate a real release. */
@@ -53,6 +58,7 @@ export function computeHardBlockReason(input: {
 }): string | null {
   const {
     picCompliance,
+    sicCompliance = [],
     ackedWarnCodes,
     overridesAcknowledged,
     hasSelectedFlight,
@@ -71,13 +77,20 @@ export function computeHardBlockReason(input: {
     return `PIC ${picCompliance.pilot.full_name} has ${n} hard-block currency item${n === 1 ? "" : "s"} — release blocked until cleared or overridden.`;
   }
 
-  if (picCompliance && picCompliance.dot_color === "yellow") {
-    const unacked = picCompliance.soft_warnings.filter(
-      (w) => !ackedWarnCodes.has(w.code),
-    );
-    if (unacked.length > 0) {
-      return `${unacked.length} of ${picCompliance.soft_warnings.length} soft warnings still need dispatcher acknowledgment.`;
+  for (const sic of sicCompliance) {
+    if (sic.dot_color === "red") {
+      const n = sic.hard_blocks.length;
+      return `SIC ${sic.pilot.full_name} has ${n} hard-block currency item${n === 1 ? "" : "s"} — assign a current SIC or clear them before release.`;
     }
+  }
+
+  const warnings = seatWarnings([
+    ...(picCompliance ? [{ seat: "pic" as const, compliance: picCompliance }] : []),
+    ...sicCompliance.map((compliance) => ({ seat: "sic" as const, compliance })),
+  ]);
+  const unacked = warnings.filter((w) => !ackedWarnCodes.has(w.key));
+  if (unacked.length > 0) {
+    return `${unacked.length} of ${warnings.length} soft warnings still need dispatcher acknowledgment.`;
   }
 
   if (hasSelectedFlight && icaos.length > 0) {

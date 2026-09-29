@@ -1,9 +1,11 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 
 import type { RouteFreshness } from "@/lib/api/types";
+
+import { useDispatchQuery } from "./use-dispatch-query";
 
 /**
  * Stale / missing weather acknowledgment (HALT-2).
@@ -35,16 +37,18 @@ export function StaleWeatherAck({
   acknowledged: boolean;
 }) {
   const router = useRouter();
-  const params = useSearchParams();
+  const nextQuery = useDispatchQuery();
   const [isPending, startTransition] = useTransition();
 
   if (freshness === null || !freshness.acknowledgment_required) return null;
 
-  const toggle = () => {
-    const search = new URLSearchParams(params?.toString() ?? "");
-    if (acknowledged) search.delete("stale_wx_ack");
-    else search.set("stale_wx_ack", "1");
-    const qs = search.toString();
+  // Set from the box's own state rather than by inverting the prop,
+  // which is the last render: see use-dispatch-query.ts.
+  const toggle = (checked: boolean) => {
+    const qs = nextQuery((search) => {
+      if (checked) search.set("stale_wx_ack", "1");
+      else search.delete("stale_wx_ack");
+    });
     startTransition(() => {
       router.replace(`/dispatch/${qs ? `?${qs}` : ""}`, { scroll: false });
     });
@@ -56,7 +60,7 @@ export function StaleWeatherAck({
         <input
           type="checkbox"
           checked={acknowledged}
-          onChange={toggle}
+          onChange={(e) => toggle(e.target.checked)}
           disabled={isPending}
           className="mt-0.5 h-4 w-4 shrink-0 accent-status-yellow"
         />

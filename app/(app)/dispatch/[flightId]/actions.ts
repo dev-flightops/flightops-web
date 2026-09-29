@@ -9,7 +9,11 @@ import {
   type FlightUpdatePayload,
 } from "@/lib/api/ops";
 
-import { extractBlockingSummary, extractMissingIcaos } from "./release-errors";
+import {
+  extractBlockingSummary,
+  extractMissingIcaos,
+  extractMissingWarnings,
+} from "./release-errors";
 
 export type ActionResult =
   | { ok: true }
@@ -31,6 +35,9 @@ export async function releaseFlightAction(
    *  notam_count fields land when the NOTAM feed (M2-M-4) ships and the
    *  panel actually has a list to report. */
   notamAckedIcaos?: string[],
+  /** `?warns_acked=` — the currency warnings the dispatcher ticked. The
+   *  backend refuses the release while any is missing. */
+  acknowledgedWarnings?: string[],
 ): Promise<ActionResult> {
   try {
     await releaseFlight(
@@ -39,6 +46,7 @@ export async function releaseFlightAction(
       overridesAcknowledged,
       staleWeatherAcknowledged,
       (notamAckedIcaos ?? []).map((icao) => ({ icao })),
+      acknowledgedWarnings ?? [],
     );
   } catch (err) {
     if (err instanceof ApiError) {
@@ -70,6 +78,31 @@ export async function releaseFlightAction(
           ok: false,
           error:
             "Release blocked — the assigned PIC has hard-block currency items. Clear them on the compliance board, or record a supervisor override, and try again.",
+        };
+      }
+      // The SIC seat, from the flight's crew. No override path: the
+      // supervisor override records PIC deviations.
+      if (err.message.includes("sic_hard_blocked")) {
+        return {
+          ok: false,
+          error:
+            "Release blocked — the SIC has hard-block currency items. Assign a current SIC in the Crew panel, or clear the items on the compliance board.",
+        };
+      }
+      if (err.message.includes("soft_warnings_not_acknowledged")) {
+        const missing = extractMissingWarnings(err.message);
+        return {
+          ok: false,
+          error: missing
+            ? `Release blocked — acknowledge the currency warnings first: ${missing}.`
+            : "Release blocked — every currency warning needs acknowledging first.",
+        };
+      }
+      if (err.message.includes("flight_time_limit_exceeded")) {
+        return {
+          ok: false,
+          error:
+            "Release blocked — a pilot on this flight is past a 14 CFR 135.265 flight-time limit.",
         };
       }
       // Audit finding C1 NOTAM gate. Backend sends:
@@ -139,6 +172,12 @@ export async function updateFlightAction(
       }
       if (err.message.includes("aircraft_not_found")) {
         return { ok: false, error: "The chosen aircraft was not found." };
+      }
+      if (err.message.includes("flight_has_legs")) {
+        return {
+          ok: false,
+          error: "This flight has several legs; its route and times are set per leg.",
+        };
       }
       return { ok: false, error: `Save failed (HTTP ${err.status}).` };
     }

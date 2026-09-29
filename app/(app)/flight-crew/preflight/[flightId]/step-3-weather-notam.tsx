@@ -9,6 +9,7 @@ import type {
   WeatherReportResponse,
 } from "@/lib/api/types";
 import { cn } from "@/lib/utils";
+import { flightStops } from "@/lib/route";
 
 import { completeStepAction } from "./actions";
 
@@ -47,14 +48,16 @@ export function WeatherAndNotamStep({ flightId, flight, weather }: Props) {
   const airports = useMemo(() => {
     const seen = new Set<string>();
     const list: string[] = [];
-    for (const icao of [flight.origin, flight.destination]) {
+    // Every stop: the pilot reviews weather and NOTAMs for the whole
+    // route, as the release requires (multi-leg, 27 Sep).
+    for (const icao of flightStops(flight)) {
       if (icao && !seen.has(icao)) {
         seen.add(icao);
         list.push(icao);
       }
     }
     return list;
-  }, [flight.origin, flight.destination]);
+  }, [flight]);
 
   // Index the batch response for O(1) lookup per (icao, kind) card.
   const byKey = useMemo(() => {

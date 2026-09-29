@@ -1,11 +1,12 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 
 import type { MelItemResponse } from "@/lib/api/types";
 
-import { serializeAckedMelIds } from "./mel-acks";
+import { parseAckedMelIds, serializeAckedMelIds } from "./mel-acks";
+import { useDispatchQuery } from "./use-dispatch-query";
 
 /**
  * Open-MEL acknowledgment checkboxes (Spec 7).
@@ -28,7 +29,7 @@ export function MelAckList({
   ackedMelIds: string[];
 }) {
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const nextQuery = useDispatchQuery();
   const [pending, startTransition] = useTransition();
 
   const ackedSet = new Set(ackedMelIds);
@@ -36,17 +37,18 @@ export function MelAckList({
   const allAcked = ackedCount === items.length;
 
   function toggle(melId: string, checked: boolean) {
-    const next = new Set(ackedSet);
-    if (checked) next.add(melId);
-    else next.delete(melId);
-
-    const params = new URLSearchParams(searchParams.toString());
-    const serialized = serializeAckedMelIds(next);
-    if (serialized) params.set("mels_acked", serialized);
-    else params.delete("mels_acked");
+    // From the newest URL, not ackedSet: see use-dispatch-query.ts.
+    const qs = nextQuery((params) => {
+      const next = new Set(parseAckedMelIds(params.get("mels_acked")));
+      if (checked) next.add(melId);
+      else next.delete(melId);
+      const serialized = serializeAckedMelIds(next);
+      if (serialized) params.set("mels_acked", serialized);
+      else params.delete("mels_acked");
+    });
 
     startTransition(() => {
-      router.replace(`?${params.toString()}`, { scroll: false });
+      router.replace(`?${qs}`, { scroll: false });
     });
   }
 

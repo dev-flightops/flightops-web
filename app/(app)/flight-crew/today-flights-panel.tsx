@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import type { FlightListItem } from "@/lib/api/types";
+import { routeText } from "@/lib/route";
 
 interface Props {
   flights: FlightListItem[];
@@ -82,7 +83,7 @@ function FlightCard({ flight }: { flight: FlightListItem }) {
           </div>
           <div className="mt-1.5 flex flex-wrap items-baseline gap-x-3 gap-y-1 text-sm text-muted-foreground">
             <span className="font-mono font-semibold text-foreground">
-              {flight.origin} → {flight.destination}
+              {routeText(flight)}
             </span>
             <span className="text-xs">
               {flight.aircraft.tail_number}

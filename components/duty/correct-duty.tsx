@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 
+import { DateTimeWheel } from "@/components/ui/date-time-wheel";
 import type { DutyPeriodSummary } from "@/lib/api/types";
 
 import {
@@ -24,10 +25,14 @@ import {
  * that is open by default invites hand-editing as the normal route,
  * and the clock is the normal route.
  *
- * The datetime-local input is deliberate. A duty period spans midnight
- * often enough that a time-only field would need the reader to work
- * out which day they meant, and the reported case — forgetting to
- * clock out — is precisely the one where the answer is "yesterday".
+ * Date and time together, because a duty period spans midnight often
+ * enough that a time-only field would need the reader to work out which
+ * day they meant, and the reported case — forgetting to clock out — is
+ * precisely the one where the answer is "yesterday". As scrolling
+ * wheels since the client asked for them, 27 Sep: "We also simply need
+ * a scrolling wheel with date and time to manually adjust our duty
+ * day." They were datetime-local inputs, which render differently on
+ * every device and want typing on a phone.
  *
  * A reason is required. This is an amendment to a record the 135.267
  * limits are computed from, and one with no stated reason is the one
@@ -51,37 +56,50 @@ import {
  * periods". Only the UI was missing from where a pilot stands.
  */
 
-/** A UTC instant as the value a datetime-local input wants — local
- *  wall-clock, no zone suffix. */
-function toLocalInput(iso: string | null): string {
-  if (!iso) return "";
+/** Corrections reach this far back: ops-service AMENDMENT_WINDOW_DAYS. */
+const WINDOW_DAYS = 30;
+
+/** The same instant, to the minute: what the wheels can express. */
+function toMinute(iso: string): Date {
   const d = new Date(iso);
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return (
-    `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}` +
-    `T${pad(d.getHours())}:${pad(d.getMinutes())}`
-  );
+  d.setSeconds(0, 0);
+  return d;
 }
 
-/** Back the other way. The input has no zone, so it is read as local
- *  time and converted — which is what the pilot meant when they typed
- *  the hour they went off duty. */
-function toIso(local: string): string | null {
-  if (!local) return null;
-  const d = new Date(local);
-  return Number.isNaN(d.getTime()) ? null : d.toISOString();
-}
-
-export function CorrectDuty({ period }: { period: DutyPeriodSummary }) {
+export function CorrectDuty({
+  period,
+  triggerLabel = "Correct",
+}: {
+  period: DutyPeriodSummary;
+  /** "Correct" on a history row; "Adjust duty times" under the button. */
+  triggerLabel?: string;
+}) {
   const [open, setOpen] = useState(false);
-  const [clockIn, setClockIn] = useState(toLocalInput(period.clock_in_at));
-  const [clockOut, setClockOut] = useState(toLocalInput(period.clock_out_at));
+  const [now, setNow] = useState(() => new Date());
+  const [clockIn, setClockIn] = useState(() => toMinute(period.clock_in_at));
+  const [clockOut, setClockOut] = useState<Date | null>(() =>
+    period.clock_out_at ? toMinute(period.clock_out_at) : null,
+  );
   const [reason, setReason] = useState("");
   const [pending, setPending] = useState(false);
   const [state, setState] = useState<AmendState>({ status: "idle" });
 
-  const originalIn = toLocalInput(period.clock_in_at);
-  const originalOut = toLocalInput(period.clock_out_at);
+  const originalIn = toMinute(period.clock_in_at).getTime();
+  const originalOut = period.clock_out_at
+    ? toMinute(period.clock_out_at).getTime()
+    : null;
+  const earliest = new Date(now.getTime() - WINDOW_DAYS * 24 * 3600 * 1000);
+
+  function start() {
+    // Fresh bounds and values each time it opens: the period may have
+    // moved on since the page rendered.
+    const current = new Date();
+    setNow(current);
+    setClockIn(toMinute(period.clock_in_at));
+    setClockOut(period.clock_out_at ? toMinute(period.clock_out_at) : null);
+    setState({ status: "idle" });
+    setOpen(true);
+  }
 
   async function submit() {
     setPending(true);
@@ -90,8 +108,10 @@ export function CorrectDuty({ period }: { period: DutyPeriodSummary }) {
       period.id,
       // Only send what actually changed, so an untouched field is not
       // rewritten with the same value and logged as an amendment.
-      clockIn !== originalIn ? toIso(clockIn) : null,
-      clockOut !== originalOut ? toIso(clockOut) : null,
+      clockIn.getTime() !== originalIn ? clockIn.toISOString() : null,
+      clockOut !== null && clockOut.getTime() !== originalOut
+        ? clockOut.toISOString()
+        : null,
       reason,
     );
     setState(result);
@@ -104,10 +124,10 @@ export function CorrectDuty({ period }: { period: DutyPeriodSummary }) {
       <div>
         <button
           type="button"
-          onClick={() => setOpen(true)}
+          onClick={start}
           className="text-[0.65rem] font-semibold text-primary hover:underline"
         >
-          Correct
+          {triggerLabel}
         </button>
         {state.status === "ok" ? (
           <span role="status" className="ml-2 text-[0.65rem] text-status-green">
@@ -125,27 +145,47 @@ export function CorrectDuty({ period }: { period: DutyPeriodSummary }) {
         e.preventDefault();
         void submit();
       }}
-      className="mt-2 space-y-2 rounded-md border border-border bg-background p-3"
+      className="mt-2 space-y-3 rounded-md border border-border bg-background p-3"
     >
-      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-        <label className="block text-[0.65rem] font-semibold uppercase tracking-wider text-muted-foreground">
-          Duty in
-          <input
-            type="datetime-local"
-            value={clockIn}
-            onChange={(e) => setClockIn(e.target.value)}
-            className="mt-1 w-full rounded-md border border-border bg-card px-2 py-1.5 text-xs font-normal normal-case tracking-normal text-foreground"
-          />
-        </label>
-        <label className="block text-[0.65rem] font-semibold uppercase tracking-wider text-muted-foreground">
-          Duty out
-          <input
-            type="datetime-local"
-            value={clockOut}
-            onChange={(e) => setClockOut(e.target.value)}
-            className="mt-1 w-full rounded-md border border-border bg-card px-2 py-1.5 text-xs font-normal normal-case tracking-normal text-foreground"
-          />
-        </label>
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <DateTimeWheel
+          label="Duty in"
+          value={clockIn}
+          onChange={setClockIn}
+          earliest={earliest}
+          latest={now}
+        />
+        {clockOut !== null ? (
+          <div>
+            <DateTimeWheel
+              label="Duty out"
+              value={clockOut}
+              onChange={setClockOut}
+              earliest={earliest}
+              latest={now}
+            />
+            {originalOut === null && (
+              <button
+                type="button"
+                onClick={() => setClockOut(null)}
+                className="mt-1 text-[0.65rem] font-semibold text-muted-foreground hover:text-foreground"
+              >
+                Still on duty — no duty-out time
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className="flex flex-col justify-center gap-1 rounded-md border border-dashed border-border p-3">
+            <p className="text-xs text-muted-foreground">Still on duty.</p>
+            <button
+              type="button"
+              onClick={() => setClockOut(new Date(now))}
+              className="self-start text-[0.65rem] font-semibold text-primary hover:underline"
+            >
+              Add a duty-out time
+            </button>
+          </div>
+        )}
       </div>
 
       <label className="block text-[0.65rem] font-semibold uppercase tracking-wider text-muted-foreground">
@@ -177,7 +217,7 @@ export function CorrectDuty({ period }: { period: DutyPeriodSummary }) {
         <button
           type="submit"
           disabled={pending || !reason.trim()}
-          className="rounded-md bg-primary px-3 py-1.5 text-[0.65rem] font-semibold text-white hover:bg-brand-dark disabled:opacity-40"
+          className="rounded-md bg-primary px-3 py-1.5 text-[0.65rem] font-semibold text-primary-foreground hover:bg-brand-dark disabled:opacity-40"
         >
           {pending ? "Saving…" : "Save correction"}
         </button>

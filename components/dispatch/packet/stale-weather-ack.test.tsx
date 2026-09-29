@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import type { RouteFreshness, StationFreshness } from "@/lib/api/types";
@@ -146,6 +146,36 @@ describe("StaleWeatherAck", () => {
       />,
     );
     expect(screen.getByRole("checkbox")).toBeChecked();
+  });
+
+  it("records the acknowledgment in the URL when ticked", () => {
+    replace.mockReset();
+    render(
+      <StaleWeatherAck
+        freshness={freshness({
+          acknowledgment_required: true,
+          stations: [station({ metar_stale: true, requires_acknowledgment: true })],
+        })}
+        acknowledged={false}
+      />,
+    );
+    fireEvent.click(screen.getByRole("checkbox"));
+    expect(replace).toHaveBeenCalledWith("/dispatch/?stale_wx_ack=1", { scroll: false });
+  });
+
+  it("takes it back out when unticked", () => {
+    replace.mockReset();
+    render(
+      <StaleWeatherAck
+        freshness={freshness({
+          acknowledgment_required: true,
+          stations: [station({ metar_stale: true, requires_acknowledgment: true })],
+        })}
+        acknowledged
+      />,
+    );
+    fireEvent.click(screen.getByRole("checkbox"));
+    expect(replace).toHaveBeenCalledWith("/dispatch/", { scroll: false });
   });
 
   it("still renders when no station explains why", () => {

@@ -133,12 +133,16 @@ const FACTOR_GROUPS: ReadonlyArray<{
       {
         code: "pilot_duty",
         label: "Duty day length",
-        hint: "Where in the 14-hour ceiling is this flight landing?",
+        hint: "How far into your duty day does this flight land?",
+        // Measured at landing, and prefilled from the duty clock. 5 is
+        // the operator's "out of company limits", so it means landing
+        // past the duty limit rather than past 12h, which is legal
+        // (client, 27 Sep).
         anchors: {
-          0: "First flight, well under 8h of duty",
-          2: "8–10h into duty, still fresh",
-          4: "10–12h in — heading toward the ceiling",
-          5: "Past 12h, or reduced rest yesterday",
+          0: "Lands well under 8h into duty",
+          2: "Lands 8–10h into duty, still fresh",
+          4: "Lands 10h+ in — heading toward the limit",
+          5: "Lands past the duty limit — out of limits",
         },
       },
       {
@@ -874,7 +878,9 @@ function FactorRow({
               <>
                 Prefilled from{" "}
                 <span className="text-muted-foreground">
-                  {suggestion.source}
+                  {/* Some sources end in a sentence of their own
+                      ("…not your rest."); the full stop is added here. */}
+                  {suggestion.source.replace(/\.$/, "")}
                 </span>
                 . Change it if you disagree.
               </>

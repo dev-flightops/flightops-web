@@ -13,6 +13,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import type { FlightDetail } from "@/lib/api/types";
+import { flightStops } from "@/lib/route";
 
 /**
  * Generate-PDF action on the /dispatch/ packet form. Three states:
@@ -47,6 +48,7 @@ export function GeneratePdfButton({
   overridesAcknowledged = false,
   notamAckedIcaos = [],
   staleWeatherAcknowledged = false,
+  acknowledgedWarnings = [],
 }: {
   flight: FlightDetail | null;
   /** M2-G-5 — when set, disable the button and surface the reason as
@@ -89,6 +91,8 @@ export function GeneratePdfButton({
    *  Without this the UI would clear its own block and the server would
    *  then refuse the release, which reads as a broken button. */
   staleWeatherAcknowledged?: boolean;
+  /** `?warns_acked=` — the backend refuses while any is missing. */
+  acknowledgedWarnings?: string[];
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -157,6 +161,7 @@ export function GeneratePdfButton({
         overridesAcknowledged,
         staleWeatherAcknowledged,
         notamAckedIcaos,
+        acknowledgedWarnings,
       );
       if (!result.ok) {
         setError(result.error);
@@ -193,7 +198,7 @@ export function GeneratePdfButton({
               The backend only renders a dispatch PDF for released flights, so
               clicking continue locks{" "}
               <span className="font-mono">
-                {flight.origin} → {flight.destination}
+                {flightStops(flight).join(" → ")}
               </span>{" "}
               as released and then opens the PDF in a new tab. Release is
               recorded in the audit log and cannot be undone.

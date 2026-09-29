@@ -1,10 +1,11 @@
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import userEvent from "@testing-library/user-event";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { expectNoA11yViolations } from "@/tests/a11y";
 import type { FlightDetail, FuelSupplierBaseResponse } from "@/lib/api/types";
 
-const { TestApiError, listSupplierBases } = vi.hoisted(() => {
+const { TestApiError, listSupplierBases, listFuelOrders } = vi.hoisted(() => {
   class TestApiError extends Error {
     constructor(
       public status: number,
@@ -14,10 +15,15 @@ const { TestApiError, listSupplierBases } = vi.hoisted(() => {
       super(message);
     }
   }
-  return { TestApiError, listSupplierBases: vi.fn() };
+  return { TestApiError, listSupplierBases: vi.fn(), listFuelOrders: vi.fn() };
 });
 vi.mock("@/lib/api/client", () => ({ ApiError: TestApiError }));
-vi.mock("@/lib/api/ground", () => ({ listSupplierBases }));
+vi.mock("@/lib/api/ground", () => ({ listSupplierBases, listFuelOrders }));
+vi.mock("@/components/fuel/flight-fuel-actions", () => ({
+  orderFuelForFlightAction: vi.fn(),
+  amendFuelOrderAction: vi.fn(),
+  cancelFuelOrderAction: vi.fn(),
+}));
 
 import { FuelOrderPanel } from "./fuel-order-panel";
 
@@ -47,23 +53,38 @@ const ROW: FuelSupplierBaseResponse = {
   is_active: true,
 };
 
-describe("FuelOrderPanel's fields", () => {
-  // Labels sat beside their controls unlinked: the supplier select and
-  // the price and time inputs had no accessible name.
-  it("are each named by their label", async () => {
-    listSupplierBases.mockResolvedValue({ items: [ROW], total: 1 });
+beforeEach(() => {
+  vi.clearAllMocks();
+  listSupplierBases.mockResolvedValue({ items: [ROW], total: 1 });
+  listFuelOrders.mockResolvedValue({ items: [], total: 0 });
+});
+
+describe("the packet's Fuel panel", () => {
+  it("reads this flight's orders", async () => {
+    render(await FuelOrderPanel({ flight: FLIGHT }));
+    expect(listFuelOrders).toHaveBeenCalledWith({ flightId: "f-1" });
+    expect(screen.getByText("Arctic Fuel")).toBeInTheDocument();
+    expect(screen.getByText("$6.00 / gal contract")).toBeInTheDocument();
+  });
+
+  it("orders on the packet instead of sending the dispatcher away", async () => {
+    // The client, 27 Sep: "fuel ordering takes you to a different page
+    // and then you lose all your work on the dispatch page".
+    const user = userEvent.setup();
     const { container } = render(await FuelOrderPanel({ flight: FLIGHT }));
-    for (const name of [
-      "Fuel Type",
-      "Supplier",
-      "Contract Price",
-      "Gallons",
-      "Requested Time",
-      "Special Instructions",
-    ]) {
+    expect(container.querySelector('a[href="/fuel/orders/new"]')).toBeNull();
+    expect(screen.queryByText(/pricing only/i)).toBeNull();
+    await user.click(screen.getByRole("button", { name: "Order fuel" }));
+    // Every field in the form is named by its label.
+    for (const name of ["Supplier", "Gallons", "Needed by (UTC, optional)", "Special instructions (optional)"]) {
       expect(screen.getByLabelText(name)).toBeInTheDocument();
     }
-    expect(screen.getByLabelText("Supplier")).toHaveDisplayValue("Arctic Fuel");
     await expectNoA11yViolations(container);
+  });
+
+  it("says when fuel can't be read", async () => {
+    listFuelOrders.mockRejectedValue(new TestApiError(500, "/x", ""));
+    render(await FuelOrderPanel({ flight: FLIGHT }));
+    expect(screen.getByRole("alert")).toHaveTextContent("Fuel unavailable");
   });
 });

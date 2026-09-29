@@ -93,6 +93,20 @@ describe("SoftWarningAckList (M2-G-5 tail)", () => {
     expect(screen.getByText("Ack'd")).toBeInTheDocument();
   });
 
+  it("names whose box it is when either seat can hold the item", () => {
+    // Both pilots can have a medical warning; "SIC IFR Currency" already
+    // says whose it is and is not said twice.
+    render(
+      <SoftWarningAckList
+        seat="sic"
+        findings={[medical, { ...grace, code: "sic_ifr_currency", name: "SIC IFR Currency" }]}
+        ackedCodes={new Set()}
+      />,
+    );
+    expect(screen.getByLabelText("Acknowledge Medical Certificate (SIC)")).toBeInTheDocument();
+    expect(screen.getByLabelText("Acknowledge SIC IFR Currency")).toBeInTheDocument();
+  });
+
   it("pushes ?warns_acked=<code> when a checkbox flips on", async () => {
     push.mockReset();
     const user = userEvent.setup();

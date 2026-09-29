@@ -104,6 +104,13 @@ export async function listFlights(
   return apiFetch<FlightListResponse>(`/ops/flights${qs}`);
 }
 
+export interface FlightLegPayload {
+  origin: string;
+  destination: string;
+  scheduled_departure_at: string; // ISO 8601 UTC
+  scheduled_arrival_at: string;
+}
+
 export interface FlightCreatePayload {
   flight_number: string;
   aircraft_id: string;
@@ -114,6 +121,9 @@ export interface FlightCreatePayload {
   pax_count?: number;
   cargo_lbs?: number;
   notes?: string | null;
+  /** A multi-stop route (services migration 0104): origin and the
+   *  departure are the first leg's, destination and arrival the last's. */
+  legs?: FlightLegPayload[];
 }
 
 export async function createFlight(
@@ -148,6 +158,10 @@ export async function releaseFlight(
    *  refuses the release if any routed stop is missing, and persists
    *  these as the release's audit trail. */
   notamAcknowledgments?: { icao: string }[],
+  /** Currency soft warnings the dispatcher acknowledged: item codes for
+   *  the PIC, "sic:<code>" for the SIC. The backend refuses the release
+   *  while any warning for the crew is missing. */
+  acknowledgedWarnings?: string[],
 ): Promise<ReleaseResponse> {
   const body: Record<string, unknown> = {};
   if (pilotUserId) body.pilot_user_id = pilotUserId;
@@ -155,6 +169,9 @@ export async function releaseFlight(
   if (staleWeatherAcknowledged) body.stale_weather_acknowledged = true;
   if (notamAcknowledgments?.length) {
     body.notam_acknowledgments = notamAcknowledgments;
+  }
+  if (acknowledgedWarnings?.length) {
+    body.acknowledged_warnings = acknowledgedWarnings;
   }
   return apiFetch<ReleaseResponse>(`/ops/flights/${flightId}/release`, {
     method: "POST",
@@ -664,11 +681,18 @@ export async function logCurrencyCompletion(
 /** Real-time PIC compliance check — backs the dispatch packet's
  *  status dot, hard-block list, and soft-warning ack list. Spec 5
  *  mandates this isn't cached: every call hits live state. */
+/** The seat a pilot is judged for. Currency items say which seat they
+ *  govern; a PIC is checked on PIC and either-seat items, an SIC on SIC
+ *  and either-seat items. */
+export type CrewSeat = "pic" | "sic";
+
 export async function getPicCompliance(
   pilotId: string,
+  seat: CrewSeat = "pic",
 ): Promise<PicComplianceResponse> {
+  const seatParam = seat === "pic" ? "" : `&seat=${seat}`;
   return apiFetch<PicComplianceResponse>(
-    `/ops/compliance/pic-check?pilot_id=${pilotId}`,
+    `/ops/compliance/pic-check?pilot_id=${pilotId}${seatParam}`,
   );
 }
 

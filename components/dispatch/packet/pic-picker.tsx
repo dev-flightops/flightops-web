@@ -1,7 +1,7 @@
 "use client";
 
 import { Loader2 } from "lucide-react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
 import {
@@ -10,6 +10,8 @@ import {
 } from "@/app/(app)/dispatch/crew-actions";
 
 import type { CurrencyStatus, UserRef } from "@/lib/api/types";
+
+import { useDispatchQuery } from "./use-dispatch-query";
 
 /**
  * Spec 5 / M2-G-5 — PIC dropdown on the dispatch packet's Flight
@@ -86,7 +88,7 @@ export function PicPicker({
   flightId?: string | null;
 }) {
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const nextQuery = useDispatchQuery();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
@@ -94,13 +96,6 @@ export function PicPicker({
   const selectedDot = selected ? STATUS_TO_DOT[selected.status] : null;
 
   function onChange(next: string) {
-    const params = new URLSearchParams(searchParams.toString());
-    if (next === "") {
-      params.delete("pic");
-    } else {
-      params.set("pic", next);
-    }
-    const qs = params.toString();
     setError(null);
     startTransition(async () => {
       if (flightId) {
@@ -117,6 +112,12 @@ export function PicPicker({
           return;
         }
       }
+      // Built after the assignment returns, on the newest URL, so an
+      // acknowledgment ticked meanwhile is kept.
+      const qs = nextQuery((params) => {
+        if (next === "") params.delete("pic");
+        else params.set("pic", next);
+      });
       router.push(qs ? `/dispatch/?${qs}` : "/dispatch/");
     });
   }

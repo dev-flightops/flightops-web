@@ -84,6 +84,18 @@ export interface FlightListItem {
    *  `?? scheduled_*_at` either way. */
   actual_departure_at?: string | null;
   actual_arrival_at?: string | null;
+  /** Every airport on the route, in order (services migration 0104).
+   *  Optional for services from before it; read through flightStops(). */
+  stops?: string[];
+}
+
+/** One leg of a multi-stop flight. */
+export interface FlightLeg {
+  sequence: number;
+  origin: string;
+  destination: string;
+  scheduled_departure_at: string;
+  scheduled_arrival_at: string;
 }
 
 export interface FlightDetail extends FlightListItem {
@@ -93,6 +105,8 @@ export interface FlightDetail extends FlightListItem {
   max_payload_lbs: number | null;
   released_at: string | null;
   released_by: UserRef | null;
+  /** Empty (or absent) for a single-leg flight. */
+  legs?: FlightLeg[];
 }
 
 export interface FlightListResponse {
@@ -732,6 +746,8 @@ export interface BoardFlightItem {
   is_overdue: boolean;
   /** max(positions.reported_at) for this flight_id, or null. */
   last_contact_at: string | null;
+  /** Every airport on the route (services migration 0104). */
+  stops?: string[];
 }
 
 export interface BoardResponse {
@@ -981,7 +997,7 @@ export interface FuelSupplierBaseListResponse {
 export type FuelOrderStatus =
   "ordered" | "confirmed" | "fueled" | "discrepancy" | "cancelled";
 
-export type FuelOrderCloseSource = "supplier" | "ramp" | "dispatch";
+export type FuelOrderCloseSource = "supplier" | "ramp" | "dispatch" | "pilot";
 
 export interface FuelOrderSupplierRef {
   id: string;
@@ -998,6 +1014,8 @@ export interface FuelOrderResponse {
   id: string;
   n_number: string;
   base_code: string;
+  /** The flight it is for, when placed from a flight. */
+  flight_id?: string | null;
   requested_fuel_date: string;
   requested_fuel_time: string | null;
   supplier: FuelOrderSupplierRef;
@@ -1558,6 +1576,8 @@ export interface DutyPeriodSummary {
   elapsed_hours: number;
   is_open: boolean;
   rest_acknowledged: boolean;
+  /** On the clock-in response: it reopened the duty day. */
+  resumed?: boolean;
 }
 
 export interface DutyWarning {

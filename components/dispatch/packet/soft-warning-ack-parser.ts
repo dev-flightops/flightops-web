@@ -1,4 +1,5 @@
-import type { ComplianceFinding } from "@/lib/api/types";
+import type { CrewSeat } from "@/lib/api/ops";
+import type { ComplianceFinding, PicComplianceResponse } from "@/lib/api/types";
 
 /**
  * Server-safe helpers for the soft-warning ack state that lives in
@@ -29,4 +30,42 @@ export function allSoftAcked(
   ackedCodes: ReadonlySet<string>,
 ): boolean {
   return findings.every((f) => ackedCodes.has(f.code));
+}
+
+/** How an acknowledged warning is named in `?warns_acked=` and in the
+ *  release request: the item code for the PIC, "sic:<code>" for the
+ *  SIC. Many items apply to either seat (a medical), so the seat keeps
+ *  one pilot's acknowledgement from standing in for another's. */
+export function warningAckKey(seat: CrewSeat, code: string): string {
+  return seat === "pic" ? code : `${seat}:${code}`;
+}
+
+export interface SeatCompliance {
+  seat: CrewSeat;
+  compliance: PicComplianceResponse;
+}
+
+/** Every soft warning on the flight deck, with its ack key, in seat
+ *  order. Soft warnings need acknowledging whatever the dot colour: a
+ *  PIC released on a supervisor override still has them. */
+export function seatWarnings(
+  checks: SeatCompliance[],
+): { seat: CrewSeat; key: string; finding: ComplianceFinding }[] {
+  return checks.flatMap(({ seat, compliance }) =>
+    compliance.soft_warnings.map((finding) => ({
+      seat,
+      key: warningAckKey(seat, finding.code),
+      finding,
+    })),
+  );
+}
+
+/** A finding's message without the item name in front of it. The page
+ *  prints the name first; the backend used to repeat it in the message
+ *  ("SIC IFR Currency (…) — SIC IFR Currency — 0 of 6"). */
+export function findingMessage(finding: ComplianceFinding): string {
+  const prefix = `${finding.name} — `;
+  return finding.message.startsWith(prefix)
+    ? finding.message.slice(prefix.length)
+    : finding.message;
 }
