@@ -47,9 +47,9 @@ export function RightColumn({
   /** M2-M-5 — currently-selected PIC; passed to the release action so
    *  the server-side compliance gate runs. */
   pilotUserId?: string | null;
-  /** M2-G-5 tail — true when ?overrides_ack=1 (supervisor override
-   *  modal ran). Passed to Generate PDF so release goes through even
-   *  with hard blocks. */
+  /** Every PIC hard block has a supervisor override on record for this
+   *  flight. The backend checks the records itself; this tells it the
+   *  packet expected them (a missing one is then override_missing). */
   overridesAcknowledged?: boolean;
   /** Forwarded to the release call — the backend requires one entry per
    *  routed stop and stores them as the release audit trail. */

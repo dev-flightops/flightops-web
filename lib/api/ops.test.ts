@@ -5,7 +5,7 @@ vi.mock("./client", () => ({
 }));
 
 import { apiFetch } from "./client";
-import { listFlights } from "./ops";
+import { getPicCompliance, listFlights } from "./ops";
 
 const mockedApiFetch = vi.mocked(apiFetch);
 
@@ -60,5 +60,23 @@ describe("listFlights", () => {
     mockedApiFetch.mockResolvedValueOnce({ items: [], total: 0 });
     await listFlights({ limit: 50, offset: 100 });
     expect(mockedApiFetch).toHaveBeenCalledWith("/ops/flights?limit=50&offset=100");
+  });
+});
+
+describe("getPicCompliance", () => {
+  it("asks about the flight for the PIC, so hard blocks carry their overrides", async () => {
+    mockedApiFetch.mockResolvedValueOnce({});
+    await getPicCompliance("p-1", "pic", "f-1");
+    expect(mockedApiFetch).toHaveBeenCalledWith(
+      "/ops/compliance/pic-check?pilot_id=p-1&flight_id=f-1",
+    );
+  });
+
+  it("does not for the SIC: overrides record PIC deviations", async () => {
+    mockedApiFetch.mockResolvedValueOnce({});
+    await getPicCompliance("s-1", "sic", "f-1");
+    expect(mockedApiFetch).toHaveBeenCalledWith(
+      "/ops/compliance/pic-check?pilot_id=s-1&seat=sic",
+    );
   });
 });

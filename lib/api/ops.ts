@@ -690,10 +690,14 @@ export type CrewSeat = "pic" | "sic";
 export async function getPicCompliance(
   pilotId: string,
   seat: CrewSeat = "pic",
+  /** The flight they are PIC of: each hard block then carries the
+   *  override on record for it (`override_id`). */
+  flightId?: string | null,
 ): Promise<PicComplianceResponse> {
   const seatParam = seat === "pic" ? "" : `&seat=${seat}`;
+  const flightParam = seat === "pic" && flightId ? `&flight_id=${flightId}` : "";
   return apiFetch<PicComplianceResponse>(
-    `/ops/compliance/pic-check?pilot_id=${pilotId}${seatParam}`,
+    `/ops/compliance/pic-check?pilot_id=${pilotId}${seatParam}${flightParam}`,
   );
 }
 

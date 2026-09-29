@@ -66,10 +66,10 @@ export async function DispatchComplianceGate({
    *  selected (the gate can render without one, but override
    *  requires a flight context to be useful). */
   flightId?: string | null;
-  /** M2-G-5 tail — true when ?overrides_ack=1 is set (supervisor has
-   *  already signed off). Hides the override button and swaps the
-   *  hard-block banner tone from red to muted-red so the dispatcher
-   *  knows the block was cleared. */
+  /** Every PIC hard block has a supervisor override on record for this
+   *  flight (the PIC check's override_id). Hides the override button and
+   *  swaps the hard-block banner tone from red to muted-red so the
+   *  dispatcher knows the block was cleared. */
   overridesAcknowledged?: boolean;
   /** The viewer may record a supervisor override (OVERRIDE_AUTHORITY):
    *  the backend records the caller as the supervisor and refuses
@@ -108,7 +108,7 @@ export async function DispatchComplianceGate({
   let loadError: string | null = null;
   if (prefetched === undefined) {
     try {
-      data = await getPicCompliance(pilotUserId);
+      data = await getPicCompliance(pilotUserId, "pic", flightId ?? null);
     } catch (err) {
       if (err instanceof ApiError) {
         if (err.status === 401) {

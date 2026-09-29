@@ -17,11 +17,12 @@ import { seatWarnings } from "./soft-warning-ack-parser";
  *                           from the roster and refuses without one
  *                           (29 Sep): a release that named nobody used
  *                           to skip every PIC check.
- *   1. PIC currency RED   → block unless a supervisor override was
- *                           recorded (?overrides_ack=1). The server
- *                           checks the override records themselves: a
- *                           Chief Pilot, DO or Exec Admin must have
- *                           written one for this flight, pilot and item.
+ *   1. PIC currency RED   → block unless every hard block has a
+ *                           supervisor override on record for this
+ *                           flight (the PIC check's override_id): one a
+ *                           Chief Pilot, DO or Exec Admin wrote for this
+ *                           flight, pilot and item. The server applies
+ *                           the same rule.
  *      SIC currency RED   → block. No override: the supervisor override
  *                           records PIC deviations, so the seat is
  *                           reassigned or the items cleared.
@@ -133,4 +134,14 @@ export function computeHardBlockReason(input: {
   // instead would strand every release whenever weather-service blips,
   // for a check the server is already making.
   return null;
+}
+
+/**
+ * Every PIC hard block has a supervisor override on record for this
+ * flight: the PIC check marks each covered block with `override_id`.
+ * No hard blocks is not "overridden": there is nothing to override.
+ */
+export function overridesOnRecord(pic: PicComplianceResponse | null): boolean {
+  const blocks = pic?.hard_blocks ?? [];
+  return blocks.length > 0 && blocks.every((b) => Boolean(b.override_id));
 }

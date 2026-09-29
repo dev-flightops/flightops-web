@@ -7,7 +7,7 @@ import type {
   RouteFreshness,
 } from "@/lib/api/types";
 
-import { computeHardBlockReason } from "./release-gate";
+import { computeHardBlockReason, overridesOnRecord } from "./release-gate";
 
 function finding(code: string): ComplianceFinding {
   return {
@@ -336,5 +336,31 @@ describe("computeHardBlockReason — the SIC seat and soft warnings (27 Sep)", (
       overridesAcknowledged: true,
     });
     expect(reason).toBe("1 of 1 soft warnings still need dispatcher acknowledgment.");
+  });
+});
+
+describe("overridesOnRecord", () => {
+  // The dispatcher's packet reads the supervisor's override from the
+  // record (29 Sep); it used to be a flag in the recording browser's URL.
+  it("is true when every hard block has an override on record", () => {
+    const covered = pic("red", {
+      hard: [
+        { ...finding("a"), override_id: "o-1" },
+        { ...finding("b"), override_id: "o-2" },
+      ],
+    });
+    expect(overridesOnRecord(covered)).toBe(true);
+  });
+
+  it("is false while any hard block is not covered", () => {
+    const partly = pic("red", {
+      hard: [{ ...finding("a"), override_id: "o-1" }, finding("b")],
+    });
+    expect(overridesOnRecord(partly)).toBe(false);
+  });
+
+  it("is false with nothing to override, or no check at all", () => {
+    expect(overridesOnRecord(pic("green"))).toBe(false);
+    expect(overridesOnRecord(null)).toBe(false);
   });
 });
