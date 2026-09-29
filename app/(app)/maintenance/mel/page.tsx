@@ -9,6 +9,8 @@ import type {
   MelItemResponse,
   MelStatus,
 } from "@/lib/api/types";
+import { auth } from "@/auth";
+import { AIRWORTHINESS_WRITERS, hasAnyRole } from "@/lib/roles";
 
 /**
  * /maintenance/mel — cross-fleet MEL items list (M2-G-21).
@@ -39,6 +41,9 @@ export default async function MelListPage({
 }) {
   const { status: statusParam, aircraft: aircraftParam } =
     await searchParams;
+  // Closing an item is maintenance's (AIRWORTHINESS_WRITERS, enforced by
+  // the backend); everyone else sees the backlog read-only.
+  const canClose = hasAnyRole((await auth())?.roles ?? [], AIRWORTHINESS_WRITERS);
   const status = parseStatus(statusParam);
   const aircraftId = aircraftParam ?? null;
 
@@ -106,6 +111,7 @@ export default async function MelListPage({
         <MelTable
           items={items}
           showAircraft
+          canClose={canClose}
           emptyMessage={
             status === "closed"
               ? "No closed MEL items match this filter."

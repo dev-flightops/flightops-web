@@ -1,7 +1,16 @@
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import type { SquawkResponse } from "@/lib/api/types";
+
+// The dialog posts through a server action; its own tests cover that.
+vi.mock("@/components/dispatch/packet/resolve-squawk-dialog", () => ({
+  ResolveSquawkDialog: ({ squawkId }: { squawkId: string }) => (
+    <button data-testid="resolve-squawk" data-squawk-id={squawkId}>
+      Resolve
+    </button>
+  ),
+}));
 
 import { SquawksTable } from "./squawks-table";
 
@@ -72,5 +81,28 @@ describe("SquawksTable", () => {
     );
 
     expect(screen.getByText(/in progress/i)).toBeInTheDocument();
+  });
+});
+
+describe("SquawksTable — resolving", () => {
+  it("offers no Resolve without the sign-off (the default)", () => {
+    render(<SquawksTable items={[makeSquawk({ id: "s-1" })]} />);
+    expect(screen.queryByTestId("resolve-squawk")).toBeNull();
+  });
+
+  it("offers Resolve on each open or in-progress squawk to maintenance", () => {
+    render(
+      <SquawksTable
+        canResolve
+        items={[
+          makeSquawk({ id: "s-1", status: "open" }),
+          makeSquawk({ id: "s-2", status: "in_progress" }),
+          makeSquawk({ id: "s-3", status: "resolved" }),
+        ]}
+      />,
+    );
+    expect(
+      screen.getAllByTestId("resolve-squawk").map((b) => b.getAttribute("data-squawk-id")),
+    ).toEqual(["s-1", "s-2"]);
   });
 });

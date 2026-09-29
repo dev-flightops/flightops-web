@@ -12,6 +12,8 @@ import { STATUS_TOKENS } from "../../crew-currency/status-tokens";
 import { CurrencyItemCard } from "./currency-item-card";
 import { AirmanRecordCard } from "@/components/compliance/airman-record-card";
 import { ProfileHeader } from "./profile-header";
+import { auth } from "@/auth";
+import { CURRENCY_SIGNOFF, hasAnyRole } from "@/lib/roles";
 
 /**
  * /compliance/pilots/[pilotId] — Per-pilot currency profile.
@@ -38,6 +40,9 @@ export default async function PilotComplianceProfilePage({
   params: Promise<{ pilotId: string }>;
 }) {
   const { pilotId } = await params;
+  // Logging a completion is a sign-off (CURRENCY_SIGNOFF); anyone else
+  // who can open this page reads it.
+  const canLogCompletion = hasAnyRole((await auth())?.roles ?? [], CURRENCY_SIGNOFF);
 
   let profile;
   try {
@@ -101,6 +106,7 @@ export default async function PilotComplianceProfilePage({
               cell={cell}
               pilotId={profile.pilot.id}
               pilotName={profile.pilot.full_name}
+              canLogCompletion={canLogCompletion}
             />
           );
         })}

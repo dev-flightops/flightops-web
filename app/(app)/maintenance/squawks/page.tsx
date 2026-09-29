@@ -9,6 +9,8 @@ import type {
   SquawkResponse,
   SquawkStatus,
 } from "@/lib/api/types";
+import { auth } from "@/auth";
+import { AIRWORTHINESS_WRITERS, hasAnyRole } from "@/lib/roles";
 
 /**
  * /maintenance/squawks — cross-fleet squawks list (M2-G-21).
@@ -49,6 +51,9 @@ export default async function SquawksListPage({
 }) {
   const { status: statusParam, aircraft: aircraftParam } =
     await searchParams;
+  // Resolving is maintenance's (AIRWORTHINESS_WRITERS, enforced by the
+  // backend); everyone else sees the list read-only.
+  const canResolve = hasAnyRole((await auth())?.roles ?? [], AIRWORTHINESS_WRITERS);
   const tab = parseTab(statusParam);
   const aircraftId = aircraftParam ?? null;
 
@@ -114,6 +119,7 @@ export default async function SquawksListPage({
         <SquawksTable
           items={items}
           showAircraft
+          canResolve={canResolve}
           emptyMessage={`No ${
             tab === "active"
               ? "active"

@@ -44,6 +44,7 @@ export async function DispatchComplianceGate({
   flightId,
   overridesAcknowledged,
   sicChecks = [],
+  canOverride = false,
 }: {
   /** Pilot whose compliance to check. `null` renders the awaiting
    *  state. */
@@ -70,6 +71,10 @@ export async function DispatchComplianceGate({
    *  hard-block banner tone from red to muted-red so the dispatcher
    *  knows the block was cleared. */
   overridesAcknowledged?: boolean;
+  /** The viewer may record a supervisor override (OVERRIDE_AUTHORITY):
+   *  the backend records the caller as the supervisor and refuses
+   *  anyone else. Everyone else is told who can. */
+  canOverride?: boolean;
 }) {
   const acked = ackedWarnCodes ?? new Set<string>();
   const sicBanners = sicChecks.map(({ pilotId, compliance }) =>
@@ -132,6 +137,7 @@ export async function DispatchComplianceGate({
           ackedCodes={acked}
           flightId={flightId ?? null}
           overridesAcknowledged={overridesAcknowledged ?? false}
+          canOverride={canOverride}
         />
       ) : null}
       {sicBanners}
@@ -156,12 +162,14 @@ function SeatBanner({
   ackedCodes,
   flightId,
   overridesAcknowledged,
+  canOverride = false,
 }: {
   seat: CrewSeat;
   data: PicComplianceResponse;
   ackedCodes: ReadonlySet<string>;
   flightId: string | null;
   overridesAcknowledged: boolean;
+  canOverride?: boolean;
 }) {
   if (data.dot_color === "red") {
     return (
@@ -171,6 +179,7 @@ function SeatBanner({
         ackedCodes={ackedCodes}
         flightId={flightId}
         overridesAcknowledged={overridesAcknowledged}
+        canOverride={canOverride}
       />
     );
   }
@@ -271,12 +280,14 @@ function HardBlockBanner({
   ackedCodes,
   flightId,
   overridesAcknowledged,
+  canOverride,
 }: {
   seat: CrewSeat;
   data: PicComplianceResponse;
   ackedCodes: ReadonlySet<string>;
   flightId: string | null;
   overridesAcknowledged: boolean;
+  canOverride: boolean;
 }) {
   return (
     <div
@@ -320,15 +331,25 @@ function HardBlockBanner({
         <ViewProfileLink pilotId={data.pilot.id} />
       </div>
       <FindingsList findings={data.hard_blocks} tone="hard" />
-      {/* The override records PIC deviations; an SIC is replaced. */}
-      {!overridesAcknowledged && seat === "pic" && (
-        <OverrideDialog
-          pilotUserId={data.pilot.id}
-          pilotName={data.pilot.full_name}
-          hardBlocks={data.hard_blocks}
-          flightId={flightId}
-        />
-      )}
+      {/* The override records PIC deviations; an SIC is replaced. The
+          supervisor records it from their own login (the operator's
+          choice, 29 Sep), so nobody else is offered the button. */}
+      {!overridesAcknowledged &&
+        seat === "pic" &&
+        (canOverride ? (
+          <OverrideDialog
+            pilotUserId={data.pilot.id}
+            pilotName={data.pilot.full_name}
+            hardBlocks={data.hard_blocks}
+            flightId={flightId}
+          />
+        ) : (
+          <p className="mt-3 text-xs text-muted-foreground">
+            Only a Chief Pilot, Director of Operations or Exec Admin can
+            record an override, from their own login. They can open this
+            packet and do it here.
+          </p>
+        ))}
       {data.soft_warnings.length > 0 && (
         <>
           <div className="mt-3 text-[0.65rem] font-semibold uppercase tracking-[0.06em] text-status-yellow">

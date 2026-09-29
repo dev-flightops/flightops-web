@@ -32,11 +32,19 @@ import { SquawkDialog } from "./squawk-dialog";
  * and refreshes the panel — verdict updates immediately, item disappears
  * from the list, blocking-issue count drops, and the release gate
  * (M2-M-8b) unsticks if that was the last blocking issue.
+ *
+ * Since 29 Sep those actions, and deferring an item, are maintenance's
+ * (AIRWORTHINESS_WRITERS), enforced by the backend: they return an
+ * aircraft to service, and the dispatcher was clearing the very item
+ * the release was stopping on. Anyone can still write a squawk up.
  */
 export async function MaintenancePanel({
   flight,
+  canSignOff = false,
 }: {
   flight: FlightDetail | null;
+  /** The viewer may defer, close and resolve (AIRWORTHINESS_WRITERS). */
+  canSignOff?: boolean;
 }) {
   if (!flight) {
     return (
@@ -87,7 +95,7 @@ export async function MaintenancePanel({
                 kind: i.kind,
                 description: i.description,
                 meta: blockingMeta(i),
-                action: blockingAction(i),
+                action: canSignOff ? blockingAction(i) : null,
               }))}
             />
           )}
@@ -99,7 +107,7 @@ export async function MaintenancePanel({
                 kind: i.kind,
                 description: i.description,
                 meta: advisoryMeta(i),
-                action: advisoryAction(i),
+                action: canSignOff ? advisoryAction(i) : null,
               }))}
             />
           )}
@@ -110,16 +118,25 @@ export async function MaintenancePanel({
         <p className="text-[0.65rem] text-muted-foreground">
           Source: maintenance-service. Release is refused while a blocking
           issue is open.
+          {!canSignOff && (
+            <>
+              {" "}
+              Maintenance (the DOM or a mechanic) defers, closes and
+              resolves these.
+            </>
+          )}
         </p>
         <div className="flex shrink-0 gap-2">
           <SquawkDialog
             aircraftId={verdict.aircraft.id}
             tailNumber={verdict.aircraft.tail_number}
           />
-          <MelDeferralDialog
-            aircraftId={verdict.aircraft.id}
-            tailNumber={verdict.aircraft.tail_number}
-          />
+          {canSignOff && (
+            <MelDeferralDialog
+              aircraftId={verdict.aircraft.id}
+              tailNumber={verdict.aircraft.tail_number}
+            />
+          )}
         </div>
       </div>
     </SectionPanel>

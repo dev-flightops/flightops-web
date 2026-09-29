@@ -23,6 +23,17 @@ vi.mock("@/lib/api/client", () => ({ ApiError: TestApiError }));
 vi.mock("@/lib/api/maintenance", () => ({ listSquawks }));
 vi.mock("@/lib/api/ops", () => ({ listAircraft }));
 
+// The page reads the viewer's roles to decide what it offers (29 Sep).
+const { auth } = vi.hoisted(() => ({
+  auth: vi.fn(async () => ({ roles: ["dispatcher"] as string[] })),
+}));
+vi.mock("@/auth", () => ({ auth }));
+vi.mock("@/components/dispatch/packet/resolve-squawk-dialog", () => ({
+  ResolveSquawkDialog: ({ squawkId }: { squawkId: string }) => (
+    <button data-testid="resolve-squawk" data-squawk-id={squawkId}>Resolve</button>
+  ),
+}));
+
 import SquawksListPage from "./page";
 
 function makeSquawk(
@@ -170,5 +181,25 @@ describe("SquawksListPage", () => {
     expect(
       screen.getByText(/session expired/i),
     ).toBeInTheDocument();
+  });
+});
+
+
+describe("SquawksListPage — who may resolve", () => {
+  it("offers Resolve on active squawks to maintenance", async () => {
+    auth.mockResolvedValueOnce({ roles: ["director_of_maintenance"] });
+    listSquawks
+      .mockResolvedValueOnce({ items: [makeSquawk({ id: "s-1", status: "open" })], total: 1 })
+      .mockResolvedValueOnce({ items: [], total: 0 });
+    await renderPage();
+    expect(screen.getByTestId("resolve-squawk")).toHaveAttribute("data-squawk-id", "s-1");
+  });
+
+  it("shows a dispatcher the list read-only", async () => {
+    listSquawks
+      .mockResolvedValueOnce({ items: [makeSquawk({ id: "s-1", status: "open" })], total: 1 })
+      .mockResolvedValueOnce({ items: [], total: 0 });
+    await renderPage();
+    expect(screen.queryByTestId("resolve-squawk")).toBeNull();
   });
 });

@@ -51,10 +51,14 @@ export async function createMelDeferralAction(
     // tree; revalidate the layout so any open flight detail page also
     // refetches.
     revalidatePath(`/dispatch`, "layout");
+    revalidatePath(`/maintenance`, "layout");
 
     return { ok: true, mel_item_id: created.id };
   } catch (err) {
     if (err instanceof ApiError) {
+      if (err.status === 403) {
+        return { ok: false, error: "Only maintenance (the DOM or a mechanic) can defer an MEL item." };
+      }
       // 400 = bad due_at (before deferred_at). 404 = aircraft wasn't found
       // in the caller's tenant. 422 = pydantic validation (shouldn't reach
       // here since the dialog already validates).
@@ -98,6 +102,7 @@ export async function createSquawkAction(
 
     revalidatePath(`/dispatch`);
     revalidatePath(`/dispatch`, "layout");
+    revalidatePath(`/maintenance`, "layout");
 
     return { ok: true, squawk_id: created.id };
   } catch (err) {
@@ -129,10 +134,14 @@ export async function closeMelDeferralAction(
 
     revalidatePath(`/dispatch`);
     revalidatePath(`/dispatch`, "layout");
+    revalidatePath(`/maintenance`, "layout");
 
     return { ok: true };
   } catch (err) {
     if (err instanceof ApiError) {
+      if (err.status === 403) {
+        return { ok: false, error: "Only maintenance (the DOM or a mechanic) can close an MEL item." };
+      }
       if (err.status === 404) {
         return { ok: false, error: "MEL item not found." };
       }
@@ -165,10 +174,14 @@ export async function resolveSquawkAction(
 
     revalidatePath(`/dispatch`);
     revalidatePath(`/dispatch`, "layout");
+    revalidatePath(`/maintenance`, "layout");
 
     return { ok: true };
   } catch (err) {
     if (err instanceof ApiError) {
+      if (err.status === 403) {
+        return { ok: false, error: "Only maintenance (the DOM or a mechanic) can resolve a squawk." };
+      }
       if (err.status === 404) {
         return { ok: false, error: "Squawk not found." };
       }

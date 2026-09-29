@@ -26,6 +26,17 @@ vi.mock("@/lib/api/client", () => ({ ApiError: TestApiError }));
 vi.mock("@/lib/api/maintenance", () => ({ listMelItems }));
 vi.mock("@/lib/api/ops", () => ({ listAircraft }));
 
+// The page reads the viewer's roles to decide what it offers (29 Sep).
+const { auth } = vi.hoisted(() => ({
+  auth: vi.fn(async () => ({ roles: ["dispatcher"] as string[] })),
+}));
+vi.mock("@/auth", () => ({ auth }));
+vi.mock("@/components/dispatch/packet/close-mel-dialog", () => ({
+  CloseMelDialog: ({ melItemId }: { melItemId: string }) => (
+    <button data-testid="close-mel" data-mel-id={melItemId}>Close</button>
+  ),
+}));
+
 import MelListPage from "./page";
 
 function makeMel(
@@ -175,5 +186,20 @@ describe("MelListPage", () => {
     expect(
       screen.getByText(/session expired/i),
     ).toBeInTheDocument();
+  });
+});
+
+describe("MelListPage — who may close an item", () => {
+  it("offers Close on open items to maintenance", async () => {
+    auth.mockResolvedValueOnce({ roles: ["maintenance"] });
+    listMelItems.mockResolvedValueOnce({ items: [makeMel({ id: "m-1" })], total: 1 });
+    await renderPage();
+    expect(screen.getByTestId("close-mel")).toHaveAttribute("data-mel-id", "m-1");
+  });
+
+  it("shows everyone else the backlog read-only", async () => {
+    listMelItems.mockResolvedValueOnce({ items: [makeMel({ id: "m-1" })], total: 1 });
+    await renderPage();
+    expect(screen.queryByTestId("close-mel")).toBeNull();
   });
 });

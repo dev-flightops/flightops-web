@@ -320,7 +320,7 @@ describe("MaintenancePanel", () => {
       }),
     );
 
-    const ui = await MaintenancePanel({ flight: baseFlight });
+    const ui = await MaintenancePanel({ flight: baseFlight, canSignOff: true });
     render(ui);
 
     // Two Close buttons total (one per MEL row).
@@ -353,13 +353,48 @@ describe("MaintenancePanel", () => {
       }),
     );
 
-    const ui = await MaintenancePanel({ flight: baseFlight });
+    const ui = await MaintenancePanel({ flight: baseFlight, canSignOff: true });
     render(ui);
 
     const resolveButtons = screen.getAllByTestId("resolve-squawk-stub");
     expect(resolveButtons).toHaveLength(2);
     expect(resolveButtons[0]).toHaveAttribute("data-squawk-id", "sq-1");
     expect(resolveButtons[1]).toHaveAttribute("data-squawk-id", "sq-2");
+  });
+
+  it("offers a dispatcher no way to clear what is blocking the release", async () => {
+    // 29 Sep: deferring, closing and resolving return an aircraft to
+    // service, so they are maintenance's. Writing a squawk up is not.
+    getAirworthiness.mockReset().mockResolvedValueOnce(
+      makeVerdict({
+        is_airworthy: false,
+        blocking_issues: [
+          {
+            kind: "expired_mel",
+            description: "MEL 21-30: Cabin pressurization controller",
+            ata_chapter: "21-30",
+            days_overdue: 2,
+            mel_item_id: "mel-1",
+          },
+          {
+            kind: "grounding_squawk",
+            description: "Engine oil pressure low",
+            severity: "grounding",
+            squawk_id: "sq-1",
+          },
+        ],
+      }),
+    );
+
+    render(await MaintenancePanel({ flight: baseFlight }));
+
+    expect(screen.queryByTestId("close-mel-stub")).toBeNull();
+    expect(screen.queryByTestId("resolve-squawk-stub")).toBeNull();
+    expect(screen.queryByTestId("mel-dialog-stub")).toBeNull();
+    expect(screen.getByTestId("squawk-dialog-stub")).toBeInTheDocument();
+    expect(
+      screen.getByText(/Maintenance \(the DOM or a mechanic\) defers, closes and\s+resolves these\./),
+    ).toBeInTheDocument();
   });
 
   it("renders no action button on rows whose backend didn't include the id (defensive)", async () => {

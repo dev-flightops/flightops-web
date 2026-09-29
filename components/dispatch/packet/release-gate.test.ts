@@ -58,6 +58,7 @@ const CLEAR = {
   ackedWarnCodes: new Set<string>(),
   overridesAcknowledged: false,
   hasSelectedFlight: true,
+  picAssigned: true,
   icaos: ["PANC", "PABE"],
   notamAckedIcaos: ["PANC", "PABE"],
   weatherFreshness: freshness(),
@@ -67,6 +68,28 @@ const CLEAR = {
 describe("computeHardBlockReason", () => {
   it("returns null when nothing blocks", () => {
     expect(computeHardBlockReason(CLEAR)).toBeNull();
+  });
+
+  // ---- PIC on the crew -----------------------------------------------------
+
+  it("blocks a flight with no PIC on its crew, before anything else", () => {
+    // The release reads the PIC from the roster (29 Sep); a packet that
+    // only named one in ?pic= would be refused, and used to skip every
+    // PIC check instead.
+    expect(
+      computeHardBlockReason({
+        ...CLEAR,
+        picAssigned: false,
+        notamAckedIcaos: [],
+      }),
+    ).toBe("No PIC on this flight's crew — pick one in Flight Details before release.");
+  });
+
+  it("does not ask for a PIC when no flight is loaded", () => {
+    // A hand-filled packet has no crew to assign to.
+    expect(
+      computeHardBlockReason({ ...CLEAR, hasSelectedFlight: false, picAssigned: false }),
+    ).toBeNull();
   });
 
   // ---- PIC currency ------------------------------------------------------

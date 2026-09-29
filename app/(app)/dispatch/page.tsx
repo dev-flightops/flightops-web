@@ -1,4 +1,6 @@
 import { CrewLegalityHints } from "@/components/dispatch/packet/crew-status-rows";
+import { auth } from "@/auth";
+import { AIRWORTHINESS_WRITERS, hasAnyRole, OVERRIDE_AUTHORITY } from "@/lib/roles";
 import { DispatchComplianceGate } from "@/components/dispatch/packet/dispatch-compliance-gate";
 import { parseAckedMelIds } from "@/components/dispatch/packet/mel-acks";
 import { OpenMelPanel } from "@/components/dispatch/packet/open-mel-panel";
@@ -111,6 +113,10 @@ export default async function DispatchPage({
     overrides_ack: overridesAckParam,
     stale_wx_ack: staleWxAckParam,
   } = await searchParams;
+  // What the viewer may do on the packet, not what they may see: the
+  // backend enforces each of these, so this only keeps controls away
+  // from people it would refuse.
+  const viewerRoles = (await auth())?.roles ?? [];
   // Validate rather than trust: a malformed ?date= would otherwise be
   // passed to the API as a filter and quietly return nothing, which
   // reads as "no flights" rather than "bad date".
@@ -254,6 +260,7 @@ export default async function DispatchPage({
     ackedWarnCodes,
     overridesAcknowledged,
     hasSelectedFlight: selectedFlight !== null,
+    picAssigned: assignedPicId !== null,
     icaos,
     notamAckedIcaos,
     weatherFreshness,
@@ -326,6 +333,7 @@ export default async function DispatchPage({
             flightId={selectedFlight.id}
             overridesAcknowledged={overridesAcknowledged}
             sicChecks={sicChecks}
+            canOverride={hasAnyRole(viewerRoles, OVERRIDE_AUTHORITY)}
           />
         )}
 
@@ -346,6 +354,7 @@ export default async function DispatchPage({
             notamAckedIcaos={notamAckedIcaos}
             weatherFreshness={weatherFreshness}
             staleWeatherAcknowledged={staleWeatherAcknowledged}
+            canSignOffMaintenance={hasAnyRole(viewerRoles, AIRWORTHINESS_WRITERS)}
           />
           <RightColumn
             flight={selectedFlight}

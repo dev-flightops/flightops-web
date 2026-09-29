@@ -13,8 +13,15 @@ import { seatWarnings } from "./soft-warning-ack-parser";
  * Rules, in precedence order (only one reason surfaces — there's one
  * tooltip slot — but ALL unsatisfied conditions block release):
  *
+ *   0. No PIC on the flight's crew → block. The server takes the PIC
+ *                           from the roster and refuses without one
+ *                           (29 Sep): a release that named nobody used
+ *                           to skip every PIC check.
  *   1. PIC currency RED   → block unless a supervisor override was
- *                           recorded (?overrides_ack=1).
+ *                           recorded (?overrides_ack=1). The server
+ *                           checks the override records themselves: a
+ *                           Chief Pilot, DO or Exec Admin must have
+ *                           written one for this flight, pilot and item.
  *      SIC currency RED   → block. No override: the supervisor override
  *                           records PIC deviations, so the seat is
  *                           reassigned or the items cleared.
@@ -47,6 +54,9 @@ export function computeHardBlockReason(input: {
   overridesAcknowledged: boolean;
   /** True when a flight is loaded — NOTAMs only gate a real release. */
   hasSelectedFlight: boolean;
+  /** The flight's crew roster has a PIC. The page's `?pic=` alone does
+   *  not count: the release reads the roster. */
+  picAssigned: boolean;
   /** Routed ICAOs (explicit ?route= or the flight's origin+destination). */
   icaos: string[];
   notamAckedIcaos: string[];
@@ -62,11 +72,16 @@ export function computeHardBlockReason(input: {
     ackedWarnCodes,
     overridesAcknowledged,
     hasSelectedFlight,
+    picAssigned,
     icaos,
     notamAckedIcaos,
     weatherFreshness,
     staleWeatherAcknowledged,
   } = input;
+
+  if (hasSelectedFlight && !picAssigned) {
+    return "No PIC on this flight's crew — pick one in Flight Details before release.";
+  }
 
   if (
     picCompliance &&
