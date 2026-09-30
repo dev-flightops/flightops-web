@@ -26,6 +26,13 @@ export async function uploadRampPhotoAction(
     return { status: "ok", photoId: created.id };
   } catch (err) {
     if (err instanceof ApiError) {
+      if (err.status === 403) {
+        return {
+          status: "error",
+          message:
+            "Only Ground Ops, dispatchers, the Chief Pilot, the Director of Operations or an Exec Admin can upload ramp photos.",
+        };
+      }
       if (err.status === 413) return { status: "error", message: "Photo is over 10 MB." };
       if (err.status === 422) return { status: "error", message: err.message || "Invalid photo." };
       if (err.status === 404) return { status: "error", message: "Flight not found." };

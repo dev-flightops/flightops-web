@@ -6,6 +6,7 @@ import {
   FLIGHT_LOG_ADMINS,
   GSE_WRITERS,
   hasAnyRole,
+  RAMP_OPS,
   isRole,
   OVERRIDE_AUTHORITY,
   ROLES,
@@ -137,6 +138,16 @@ describe("the ground and village sets (29 Sep)", () => {
       "chief_pilot",
       "director_of_operations",
       "exec_admin",
+    ]);
+  });
+
+  it("the ramp: station staff, dispatch and management", () => {
+    expect(sorted(RAMP_OPS)).toEqual([
+      "chief_pilot",
+      "director_of_operations",
+      "dispatcher",
+      "exec_admin",
+      "ground_ops",
     ]);
   });
 

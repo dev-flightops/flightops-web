@@ -34,6 +34,14 @@ function _revalidate(flightId: string) {
 function _message(err: unknown, verb: string): string {
   if (err instanceof ApiError) {
     if (err.status === 401) return "Your session expired — please sign in again.";
+    if (err.status === 403) {
+      // A login that orders only as a pilot orders for its own flights
+      // (29 Sep); any other refusal is the role.
+      if (err.message.includes("pilot_not_on_this_flight")) {
+        return `Couldn't ${verb}: you're not on this flight's crew. Dispatch can do it.`;
+      }
+      return `Couldn't ${verb}: fuel orders are for dispatchers, Ground Ops, the flight's pilots and management.`;
+    }
     if (err.status === 404) return `Couldn't ${verb}: that order, supplier or flight isn't available. Refresh and try again.`;
     if (err.status === 409) {
       if (err.message.includes("inactive")) return "That supplier is inactive — pick another.";

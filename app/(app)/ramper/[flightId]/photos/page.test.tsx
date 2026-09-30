@@ -23,6 +23,10 @@ const { TestApiError, getFlight, listRampPhotos } = vi.hoisted(() => {
 vi.mock("@/lib/api/client", () => ({ ApiError: TestApiError }));
 vi.mock("@/lib/api/ops", () => ({ getFlight }));
 vi.mock("@/lib/api/ground", () => ({ listRampPhotos }));
+const { auth } = vi.hoisted(() => ({
+  auth: vi.fn(async () => ({ roles: ["ground_ops"] as string[] })),
+}));
+vi.mock("@/auth", () => ({ auth }));
 
 // Mock the client-side upload form so useActionState (React 19) doesn't
 // blow up in the jsdom env — we cover the server-render pieces here and
@@ -162,5 +166,30 @@ describe("/ramper/[flightId]/photos", () => {
     listRampPhotos.mockResolvedValue({ items: [], total: 0 });
     await expect(renderPage("does-not-exist")).rejects.toThrow(/NEXT_NOT_FOUND/);
     expect(notFoundMock).toHaveBeenCalled();
+  });
+});
+
+describe("/ramper/[flightId]/photos: who uploads (29 Sep)", () => {
+  it("leaves the DOM reading, and says who uploads", async () => {
+    auth.mockResolvedValueOnce({ roles: ["director_of_maintenance"] });
+    getFlight.mockResolvedValue(makeFlight());
+    listRampPhotos.mockResolvedValue({ items: [], total: 0 });
+
+    await renderPage();
+
+    expect(screen.queryByTestId("upload-form-stub")).toBeNull();
+    expect(
+      screen.getByText(/ground ops, dispatchers, the chief pilot, the director of\s+operations or an exec admin upload ramp photos/i),
+    ).toBeDefined();
+  });
+
+  it.each(["dispatcher", "chief_pilot"])("gives a %s the upload form", async (role) => {
+    auth.mockResolvedValueOnce({ roles: [role] });
+    getFlight.mockResolvedValue(makeFlight());
+    listRampPhotos.mockResolvedValue({ items: [], total: 0 });
+
+    await renderPage();
+
+    expect(screen.getByTestId("upload-form-stub")).toBeDefined();
   });
 });

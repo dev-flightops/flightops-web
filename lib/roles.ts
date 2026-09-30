@@ -122,6 +122,16 @@ export const VILLAGE_WX_REPORTERS = roleGate(
   "exec_admin",
 );
 
+/** Upload ramp photos, assign a flight to a load team: legacy's
+ *  _require_ramper set (29 Sep). */
+export const RAMP_OPS = roleGate(
+  "ground_ops",
+  "dispatcher",
+  "chief_pilot",
+  "director_of_operations",
+  "exec_admin",
+);
+
 /** Correct another pilot's flight log (29 Sep). A draft is its filing
  *  pilot's; legacy elog's ADMIN_ROLES could save anyone's. */
 export const FLIGHT_LOG_ADMINS = roleGate(

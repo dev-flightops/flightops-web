@@ -1,10 +1,12 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { auth } from "@/auth";
 import { listRampPhotos } from "@/lib/api/ground";
 import { getFlight } from "@/lib/api/ops";
 import { ApiError } from "@/lib/api/client";
 import type { RampPhotoResponse, RampPhotoType } from "@/lib/api/types";
+import { hasAnyRole, RAMP_OPS } from "@/lib/roles";
 
 import { UploadRampPhotoForm } from "./upload-form";
 
@@ -36,6 +38,10 @@ export default async function RamperPhotosPage({
   params: Promise<{ flightId: string }>;
 }) {
   const { flightId } = await params;
+  // Uploading is ramp staff's, dispatch's and management's (RAMP_OPS,
+  // enforced by the backend since 29 Sep). The DOM reaches this page
+  // through Ground Ops, for equipment, and reads the photos.
+  const canUpload = hasAnyRole((await auth())?.roles ?? [], RAMP_OPS);
 
   let flight;
   try {
@@ -134,7 +140,14 @@ export default async function RamperPhotosPage({
       </div>
 
       <div className="rounded-2xl border-2 border-border bg-card p-4">
-        <UploadRampPhotoForm flightId={flightId} />
+        {canUpload ? (
+          <UploadRampPhotoForm flightId={flightId} />
+        ) : (
+          <p className="rounded-md border border-border bg-card px-3 py-2 text-xs text-muted-foreground">
+            Ground Ops, dispatchers, the Chief Pilot, the Director of
+            Operations or an Exec Admin upload ramp photos.
+          </p>
+        )}
 
         {photosError && (
           <p
