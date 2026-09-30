@@ -109,8 +109,10 @@ describe("FlightLogPage (M2-G-26b)", () => {
   it("issues three parallel calls (drafts, aircraft, released flights)", async () => {
     await renderPage();
 
+    // Only the caller's own drafts, as legacy's active-logs list (29 Sep).
     expect(listFlightLogs).toHaveBeenCalledWith({
       status: "draft",
+      mine: true,
       limit: 50,
     });
     expect(listAircraft).toHaveBeenCalled();

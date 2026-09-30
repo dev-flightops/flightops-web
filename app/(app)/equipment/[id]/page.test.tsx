@@ -58,6 +58,10 @@ vi.mock("@/lib/api/ground", () => ({
   listGseSquawks,
 }));
 vi.mock("next/navigation", () => ({ notFound: notFoundSpy }));
+const { auth } = vi.hoisted(() => ({
+  auth: vi.fn(async () => ({ roles: ["ground_ops"] as string[] })),
+}));
+vi.mock("@/auth", () => ({ auth }));
 
 import EquipmentDetailPage from "./page";
 
@@ -255,4 +259,41 @@ describe("EquipmentDetailPage (M2-G-39)", () => {
 
     expect(screen.getByText(/equipment unavailable/i)).toBeInTheDocument();
   });
+});
+
+describe("EquipmentDetailPage: who works a unit (29 Sep)", () => {
+  function withMaintenanceAndASquawk() {
+    getGseUnit.mockResolvedValueOnce(makeUnit());
+    listGseMaintenance.mockResolvedValueOnce({ items: [makeMx()], total: 1 });
+    listGseSquawks.mockResolvedValueOnce({ items: [makeSquawk()], total: 1 });
+  }
+
+  it.each(["ground_ops", "director_of_maintenance"])(
+    "gives a %s status, maintenance and resolve",
+    async (role) => {
+      auth.mockResolvedValueOnce({ roles: [role] });
+      withMaintenanceAndASquawk();
+      await renderPage();
+      for (const name of ["Change status", "+ Schedule MX", "Complete", "Resolve", "+ Report squawk"]) {
+        expect(screen.getByRole("button", { name })).toBeInTheDocument();
+      }
+      expect(screen.getByRole("columnheader", { name: "Actions" })).toBeInTheDocument();
+    },
+  );
+
+  it.each(["dispatcher", "maintenance"])(
+    "leaves a %s reporting squawks, and says who does the rest",
+    async (role) => {
+      auth.mockResolvedValueOnce({ roles: [role] });
+      withMaintenanceAndASquawk();
+      await renderPage();
+      for (const name of ["Change status", "+ Schedule MX", "Complete", "Resolve"]) {
+        expect(screen.queryByRole("button", { name })).toBeNull();
+      }
+      expect(screen.queryByRole("columnheader", { name: "Actions" })).toBeNull();
+      expect(screen.getByRole("button", { name: "+ Report squawk" })).toBeInTheDocument();
+      expect(screen.getByText(/schedules and completes maintenance\./i)).toBeInTheDocument();
+      expect(screen.getByText(/resolves squawks\./i)).toBeInTheDocument();
+    },
+  );
 });

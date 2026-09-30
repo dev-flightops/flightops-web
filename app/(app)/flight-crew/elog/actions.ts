@@ -164,6 +164,15 @@ export async function submitFlightLogAction(
         };
       }
       const detail = parseDetail(err.message);
+      // Someone else's draft (29 Sep): the filer's, or a Chief Pilot's,
+      // DO's or Exec Admin's to correct.
+      if (detail === "flight_log_owner_or_admin_only") {
+        return {
+          status: "error",
+          message:
+            "Only the pilot who filed this log, a Chief Pilot, the Director of Operations or an Exec Admin can submit it.",
+        };
+      }
       if (detail === "flight_log_already_submitted") {
         return { status: "submitted" };
       }

@@ -172,3 +172,12 @@ describe("WeightBalanceTab", () => {
     expect(fuel).toBeDisabled();
   });
 });
+
+describe("WeightBalanceTab: someone else's draft (29 Sep)", () => {
+  it("drops the Tab-2 link when the caller may not change the draft", () => {
+    render(
+      <WeightBalanceTab logId="log-1" logStatus="draft" initialLegs={[]} canEdit={false} />,
+    );
+    expect(screen.queryByRole("link", { name: /Tab 2/ })).not.toBeInTheDocument();
+  });
+});

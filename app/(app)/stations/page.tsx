@@ -1,8 +1,10 @@
 import Link from "next/link";
 
+import { auth } from "@/auth";
 import { ApiError } from "@/lib/api/client";
 import { listStations } from "@/lib/api/ground";
 import type { StationListItem } from "@/lib/api/types";
+import { hasAnyRole, STATION_ADMINS } from "@/lib/roles";
 
 /**
  * /stations — Stations list page (M2-G-38 rebuild).
@@ -22,6 +24,9 @@ import type { StationListItem } from "@/lib/api/types";
 const STATIONS_LIMIT = 200;
 
 export default async function StationsPage() {
+  // Adding a station is station staff's and management's (STATION_ADMINS,
+  // enforced by the backend since 29 Sep).
+  const canAdd = hasAnyRole((await auth())?.roles ?? [], STATION_ADMINS);
   let stations: StationListItem[] = [];
   let loadError: string | null = null;
 
@@ -45,12 +50,14 @@ export default async function StationsPage() {
             station-issue tracker.
           </p>
         </div>
-        <Link
-          href="/stations/new"
-          className="rounded-md border border-primary/40 bg-background px-3 py-1.5 text-xs font-semibold text-primary hover:bg-primary/5"
-        >
-          + Add Station
-        </Link>
+        {canAdd ? (
+          <Link
+            href="/stations/new"
+            className="rounded-md border border-primary/40 bg-background px-3 py-1.5 text-xs font-semibold text-primary hover:bg-primary/5"
+          >
+            + Add Station
+          </Link>
+        ) : null}
       </header>
 
       {loadError ? (
@@ -64,7 +71,9 @@ export default async function StationsPage() {
         <div className="rounded-lg border border-border bg-card px-4 py-16 text-center">
           <p className="text-sm text-muted-foreground">No stations yet.</p>
           <p className="mt-1 text-xs text-muted-foreground">
-            Use &ldquo;+ Add Station&rdquo; above to create the first one.
+            {canAdd
+              ? <>Use &ldquo;+ Add Station&rdquo; above to create the first one.</>
+              : "Ground Ops, the Director of Operations or an Exec Admin adds stations."}
           </p>
         </div>
       ) : (

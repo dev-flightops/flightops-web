@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { auth } from "@/auth";
 import { ChangeStatusDialog } from "@/components/equipment/change-status-dialog";
 import { CompleteMaintenanceButton } from "@/components/equipment/complete-maintenance-button";
 import { ReportSquawkDialog } from "@/components/equipment/report-squawk-dialog";
@@ -20,6 +21,7 @@ import type {
   GSEUnitListItem,
   GSEUnitStatus,
 } from "@/lib/api/types";
+import { GSE_WRITERS, hasAnyRole } from "@/lib/roles";
 
 /**
  * /equipment/{id} — GSE unit detail (M2-G-39).
@@ -39,6 +41,10 @@ export default async function EquipmentDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  // Status, maintenance and resolving squawks are station staff's, the
+  // DOM's and management's (GSE_WRITERS, enforced by the backend since
+  // 29 Sep). Reporting a squawk stays open to all staff.
+  const canWrite = hasAnyRole((await auth())?.roles ?? [], GSE_WRITERS);
 
   let unit: GSEUnitListItem | null = null;
   let maintenance: GSEMaintenanceItemResponse[] = [];
@@ -88,12 +94,13 @@ export default async function EquipmentDetailPage({
   return (
     <div className="mx-auto max-w-5xl px-4 sm:px-6 py-8">
       <BackLink />
-      <Header unit={unit} />
+      <Header unit={unit} canWrite={canWrite} />
       <Meta unit={unit} />
       <MaintenanceSection
         unitId={unit.id}
         unitHours={unit.hours_total}
         items={maintenance}
+        canWrite={canWrite}
       />
       <SquawksSection
         unitId={unit.id}
@@ -101,7 +108,8 @@ export default async function EquipmentDetailPage({
         squawks={openSquawks}
         emptyHint="No open squawks on this unit."
         showReportButton
-        showResolve
+        showResolve={canWrite}
+        note={canWrite ? undefined : `${GSE_WRITER_NAMES} resolves squawks.`}
       />
       {resolvedSquawks.length > 0 && (
         <SquawksSection
@@ -138,7 +146,17 @@ const EQUIPMENT_TYPE_LABELS: Record<GSEEquipmentType, string> = {
   other: "Other",
 };
 
-function Header({ unit }: { unit: GSEUnitListItem }) {
+/** Who holds GSE_WRITERS, for the read-only notes. */
+const GSE_WRITER_NAMES =
+  "Ground Ops, the Director of Maintenance, the Director of Operations or an Exec Admin";
+
+function Header({
+  unit,
+  canWrite,
+}: {
+  unit: GSEUnitListItem;
+  canWrite: boolean;
+}) {
   return (
     <div className="mb-6 flex items-start justify-between gap-4">
       <div>
@@ -155,7 +173,9 @@ function Header({ unit }: { unit: GSEUnitListItem }) {
       </div>
       <div className="flex items-center gap-2">
         <UnitStatusChip status={unit.status} size="lg" />
-        <ChangeStatusDialog unitId={unit.id} currentStatus={unit.status} />
+        {canWrite ? (
+          <ChangeStatusDialog unitId={unit.id} currentStatus={unit.status} />
+        ) : null}
       </div>
     </div>
   );
@@ -212,10 +232,12 @@ function MaintenanceSection({
   unitId,
   unitHours,
   items,
+  canWrite,
 }: {
   unitId: string;
   unitHours: number;
   items: GSEMaintenanceItemResponse[];
+  canWrite: boolean;
 }) {
   return (
     <section className="mb-6">
@@ -223,12 +245,18 @@ function MaintenanceSection({
         <h2 className="text-sm font-semibold text-foreground">
           Scheduled maintenance ({items.length})
         </h2>
-        <ScheduleMaintenanceDialog unitId={unitId} />
+        {canWrite ? <ScheduleMaintenanceDialog unitId={unitId} /> : null}
       </div>
+      {!canWrite ? (
+        <p className="-mt-1 mb-2 text-xs text-muted-foreground">
+          {GSE_WRITER_NAMES} schedules and completes maintenance.
+        </p>
+      ) : null}
       {items.length === 0 ? (
         <div className="rounded-md border border-dashed border-border bg-card/40 px-4 py-8 text-center text-xs text-muted-foreground">
-          No scheduled maintenance items. Use the + Schedule MX button
-          above to add one.
+          {canWrite
+            ? "No scheduled maintenance items. Use the + Schedule MX button above to add one."
+            : "No scheduled maintenance items."}
         </div>
       ) : (
         <div className="overflow-hidden rounded-lg border border-border bg-card">
@@ -240,7 +268,9 @@ function MaintenanceSection({
                 <th className="px-4 py-3">Interval</th>
                 <th className="px-4 py-3">Due</th>
                 <th className="px-4 py-3">Status</th>
-                <th className="px-4 py-3 text-right">Actions</th>
+                {canWrite ? (
+                  <th className="px-4 py-3 text-right">Actions</th>
+                ) : null}
               </tr>
             </thead>
             <tbody>
@@ -281,14 +311,16 @@ function MaintenanceSection({
                   <td className="px-4 py-3">
                     <MxStatusChip status={mx.status} />
                   </td>
-                  <td className="px-4 py-3 text-right">
-                    <CompleteMaintenanceButton
-                      unitId={unitId}
-                      mxId={mx.id}
-                      mxTitle={mx.title}
-                      unitHours={unitHours}
-                    />
-                  </td>
+                  {canWrite ? (
+                    <td className="px-4 py-3 text-right">
+                      <CompleteMaintenanceButton
+                        unitId={unitId}
+                        mxId={mx.id}
+                        mxTitle={mx.title}
+                        unitHours={unitHours}
+                      />
+                    </td>
+                  ) : null}
                 </tr>
               ))}
             </tbody>
@@ -306,6 +338,7 @@ function SquawksSection({
   emptyHint,
   showReportButton = false,
   showResolve = false,
+  note,
 }: {
   unitId: string;
   title: string;
@@ -313,6 +346,8 @@ function SquawksSection({
   emptyHint: string;
   showReportButton?: boolean;
   showResolve?: boolean;
+  /** Shown under the title while there are squawks: who resolves them. */
+  note?: string;
 }) {
   return (
     <section className="mb-4">
@@ -320,6 +355,9 @@ function SquawksSection({
         <h2 className="text-sm font-semibold text-foreground">{title}</h2>
         {showReportButton && <ReportSquawkDialog unitId={unitId} />}
       </div>
+      {note && squawks.length > 0 ? (
+        <p className="-mt-1 mb-2 text-xs text-muted-foreground">{note}</p>
+      ) : null}
       {squawks.length === 0 ? (
         <div className="rounded-md border border-dashed border-border bg-card/40 px-4 py-8 text-center text-xs text-muted-foreground">
           {emptyHint}

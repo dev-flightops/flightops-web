@@ -23,7 +23,15 @@ import { MxDiscrepancyField } from "./mx-discrepancy-field";
  * elsewhere — Submit is the sticky header button on the page; edit
  * history ships with the audit work.
  */
-export async function MiscTab({ log }: { log: FlightLogResponse }) {
+export async function MiscTab({
+  log,
+  canEdit = true,
+}: {
+  log: FlightLogResponse;
+  /** False when the caller may read this log but not change it: it is
+   *  another pilot's, and they are not a Chief Pilot, DO or Exec Admin. */
+  canEdit?: boolean;
+}) {
   let history: SquawkResponse[] = [];
   let historyError: string | null = null;
   try {
@@ -48,7 +56,7 @@ export async function MiscTab({ log }: { log: FlightLogResponse }) {
       <MxDiscrepancyField
         logId={log.id}
         initialValue={log.mx_discrepancy ?? ""}
-        readOnly={log.status === "submitted"}
+        readOnly={log.status === "submitted" || !canEdit}
       />
 
       <MxHistoryPanel

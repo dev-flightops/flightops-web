@@ -143,3 +143,11 @@ describe("VorTab", () => {
     expect(screen.getByLabelText(/computed error/i)).toHaveTextContent("—");
   });
 });
+
+describe("VorTab: someone else's draft (29 Sep)", () => {
+  it("disables the check when the caller may not change the draft", () => {
+    render(<VorTab log={makeLog()} canEdit={false} />);
+    expect(screen.getByLabelText(/VOR Identifier/i)).toBeDisabled();
+    expect(screen.getByLabelText(/I certify this VOR check is accurate/i)).toBeDisabled();
+  });
+});

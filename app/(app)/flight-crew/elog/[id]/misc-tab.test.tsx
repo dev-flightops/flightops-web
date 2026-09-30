@@ -185,3 +185,11 @@ describe("MiscTab", () => {
     expect(screen.getByRole("alert")).toHaveTextContent(/unavailable/i);
   });
 });
+
+describe("MiscTab: someone else's draft (29 Sep)", () => {
+  it("disables the discrepancy when the caller may not change the draft", async () => {
+    listSquawks.mockResolvedValueOnce({ items: [], total: 0 });
+    render(await MiscTab({ log: makeLog(), canEdit: false }));
+    expect(screen.getByLabelText(/MX Discrepancy/i)).toBeDisabled();
+  });
+});

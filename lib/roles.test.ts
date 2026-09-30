@@ -3,11 +3,16 @@ import { describe, expect, it } from "vitest";
 import {
   AIRWORTHINESS_WRITERS,
   CURRENCY_SIGNOFF,
+  FLIGHT_LOG_ADMINS,
+  GSE_WRITERS,
   hasAnyRole,
+  RAMP_OPS,
   isRole,
   OVERRIDE_AUTHORITY,
   ROLES,
   roleGate,
+  STATION_ADMINS,
+  VILLAGE_WX_REPORTERS,
 } from "./roles";
 
 describe("roles", () => {
@@ -107,6 +112,54 @@ describe("who may do what a release relies on (29 Sep)", () => {
       "director_of_maintenance",
       "exec_admin",
       "maintenance",
+    ]);
+  });
+});
+
+describe("the ground and village sets (29 Sep)", () => {
+  // Mirrors of shared/flightops_shared/auth/roles.py; change both.
+  const sorted = (gate: ReadonlySet<string>) => [...gate].sort();
+
+  it("stations: station staff and management", () => {
+    expect(sorted(STATION_ADMINS)).toEqual(["director_of_operations", "exec_admin", "ground_ops"]);
+  });
+
+  it("ground equipment: station staff, the DOM and management", () => {
+    expect(sorted(GSE_WRITERS)).toEqual([
+      "director_of_maintenance",
+      "director_of_operations",
+      "exec_admin",
+      "ground_ops",
+    ]);
+  });
+
+  it("flight logs: the Chief Pilot, DO and Exec Admin correct others'", () => {
+    expect(sorted(FLIGHT_LOG_ADMINS)).toEqual([
+      "chief_pilot",
+      "director_of_operations",
+      "exec_admin",
+    ]);
+  });
+
+  it("the ramp: station staff, dispatch and management", () => {
+    expect(sorted(RAMP_OPS)).toEqual([
+      "chief_pilot",
+      "director_of_operations",
+      "dispatcher",
+      "exec_admin",
+      "ground_ops",
+    ]);
+  });
+
+  it("village weather: legacy's reporters", () => {
+    expect(sorted(VILLAGE_WX_REPORTERS)).toEqual([
+      "chief_pilot",
+      "director_of_operations",
+      "dispatcher",
+      "exec_admin",
+      "ground_ops",
+      "pilot",
+      "reservations_agent",
     ]);
   });
 });

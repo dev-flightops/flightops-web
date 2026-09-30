@@ -194,3 +194,18 @@ describe("TrendsTab", () => {
     expect(screen.getByText(/PADU → PAGM/)).toBeInTheDocument();
   });
 });
+
+describe("TrendsTab: someone else's draft (29 Sep)", () => {
+  it("drops the Tab-2 link when the caller may not change the draft", () => {
+    render(
+      <TrendsTab
+        logId="log-1"
+        logStatus="draft"
+        airframeType="caravan"
+        initialLegs={[]}
+        canEdit={false}
+      />,
+    );
+    expect(screen.queryByRole("link", { name: /Tab 2/ })).not.toBeInTheDocument();
+  });
+});

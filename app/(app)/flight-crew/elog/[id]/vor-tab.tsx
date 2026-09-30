@@ -15,8 +15,16 @@ import { VorCheckCard } from "./vor-card";
  * Saves go through the new PATCH /flight-logs/{id} endpoint
  * (vor-actions.ts wraps it because apiFetch is server-only).
  */
-export function VorTab({ log }: { log: FlightLogResponse }) {
-  const readOnly = log.status === "submitted";
+export function VorTab({
+  log,
+  canEdit = true,
+}: {
+  log: FlightLogResponse;
+  /** False when the caller may read this log but not change it: it is
+   *  another pilot's, and they are not a Chief Pilot, DO or Exec Admin. */
+  canEdit?: boolean;
+}) {
+  const readOnly = log.status === "submitted" || !canEdit;
 
   return (
     <div className="space-y-3">

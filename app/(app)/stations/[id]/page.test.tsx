@@ -29,6 +29,10 @@ const { TestApiError, listStations, listStationIssues, notFoundSpy } =
 vi.mock("@/lib/api/client", () => ({ ApiError: TestApiError }));
 vi.mock("@/lib/api/ground", () => ({ listStations, listStationIssues }));
 vi.mock("next/navigation", () => ({ notFound: notFoundSpy }));
+const { auth } = vi.hoisted(() => ({
+  auth: vi.fn(async () => ({ roles: ["ground_ops"] as string[] })),
+}));
+vi.mock("@/auth", () => ({ auth }));
 
 // New dialog components use React 19's useActionState which isn't
 // available in jsdom. Stub them as passive markers — their actions
@@ -227,5 +231,35 @@ describe("StationDetailPage (M2-G-38)", () => {
     await renderPage();
 
     expect(screen.getByText(/station unavailable/i)).toBeInTheDocument();
+  });
+});
+
+describe("StationDetailPage: who works a station (29 Sep)", () => {
+  function withOneOpenIssue() {
+    listStations.mockResolvedValueOnce({ items: [makeStation()], total: 1 });
+    listStationIssues.mockResolvedValueOnce({ items: [makeIssue()], total: 1 });
+  }
+
+  it("gives Ground Ops deactivate and resolve, and everyone Report Issue", async () => {
+    withOneOpenIssue();
+    await renderPage();
+    expect(screen.getByRole("button", { name: "Deactivate" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Resolve" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /report issue/i })).toBeInTheDocument();
+    expect(screen.queryByText(/resolves station issues/i)).toBeNull();
+  });
+
+  it("leaves a dispatcher reporting, and says who resolves", async () => {
+    auth.mockResolvedValueOnce({ roles: ["dispatcher"] });
+    withOneOpenIssue();
+    await renderPage();
+    expect(screen.queryByRole("button", { name: "Deactivate" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Resolve" })).toBeNull();
+    expect(screen.getByRole("button", { name: /report issue/i })).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Ground Ops, the Director of Operations or an Exec Admin resolves station issues.",
+      ),
+    ).toBeInTheDocument();
   });
 });

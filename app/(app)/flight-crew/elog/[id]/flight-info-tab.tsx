@@ -20,7 +20,15 @@ import { SicPicker } from "./sic-picker";
  * heavier than a bare user list, but it's already accessible to
  * any logged-in tenant user.
  */
-export async function FlightInfoTab({ log }: { log: FlightLogResponse }) {
+export async function FlightInfoTab({
+  log,
+  canEdit = true,
+}: {
+  log: FlightLogResponse;
+  /** False when the caller may read this log but not change it: it is
+   *  another pilot's, and they are not a Chief Pilot, DO or Exec Admin. */
+  canEdit?: boolean;
+}) {
   const session = await auth();
   const selfUserId = session?.user?.id ?? "";
 
@@ -36,7 +44,7 @@ export async function FlightInfoTab({ log }: { log: FlightLogResponse }) {
         : "Pilot roster unavailable. Refresh to retry.";
   }
 
-  const readOnly = log.status !== "draft";
+  const readOnly = log.status !== "draft" || !canEdit;
 
   return (
     <div className="space-y-3">

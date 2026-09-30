@@ -167,3 +167,29 @@ describe("LegsTab", () => {
     expect(within(card.parentElement!).getByText(/4\.0/)).toBeInTheDocument();
   });
 });
+
+describe("LegsTab: someone else's draft (29 Sep)", () => {
+  it("is read-only when the caller may not change the draft", () => {
+    render(
+      <LegsTab
+        logId="log-1"
+        logStatus="draft"
+        initialLegs={[makeLeg({ id: "l-1" })]}
+        canEdit={false}
+      />,
+    );
+    expect(screen.queryByRole("button", { name: /\+ add leg/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^delete$/i })).not.toBeInTheDocument();
+    expect(screen.getByLabelText(/routing/i)).toBeDisabled();
+  });
+});
+
+describe("LegsTab: empty and read-only (29 Sep)", () => {
+  it("doesn't call someone else's empty draft submitted, or offer to add a leg", () => {
+    render(<LegsTab logId="log-1" logStatus="draft" initialLegs={[]} canEdit={false} />);
+    expect(screen.getByText("No legs on this log.")).toBeInTheDocument();
+    expect(screen.getByText("No legs on this draft yet.")).toBeInTheDocument();
+    expect(screen.queryByText(/submitted/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/add the first leg/i)).not.toBeInTheDocument();
+  });
+});

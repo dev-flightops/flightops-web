@@ -179,3 +179,24 @@ describe("cancelFuelOrderAction", () => {
     expect(cancelFuelOrder).toHaveBeenCalledWith(ORDER, "Flight cancelled", "pilot");
   });
 });
+
+describe("fuel refusals (29 Sep)", () => {
+  it("tells a pilot off this flight's crew that dispatch can order", async () => {
+    createFuelOrder.mockRejectedValue(
+      new TestApiError(403, "/x", '{"detail":"pilot_not_on_this_flight"}'),
+    );
+    expect(await orderFuelForFlightAction(order())).toEqual({
+      ok: false,
+      error: "Couldn't place the order: you're not on this flight's crew. Dispatch can do it.",
+    });
+  });
+
+  it("names who orders fuel when the role is refused", async () => {
+    createFuelOrder.mockRejectedValue(new TestApiError(403, "/x", '{"detail":"insufficient_role"}'));
+    expect(await orderFuelForFlightAction(order())).toEqual({
+      ok: false,
+      error:
+        "Couldn't place the order: fuel orders are for dispatchers, Ground Ops, the flight's pilots and management.",
+    });
+  });
+});

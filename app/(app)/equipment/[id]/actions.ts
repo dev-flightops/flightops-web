@@ -53,7 +53,7 @@ export async function changeStatusAction(
       parsed.data.status_note ?? null,
     );
   } catch (err) {
-    return apiToState(err);
+    return apiToState(err, refusal("change equipment status"));
   }
   revalidatePath(`/equipment/${parsed.data.unit_id}`);
   return { status: "ok" };
@@ -111,7 +111,7 @@ export async function resolveSquawkAction(
       parsed.data.resolution_notes,
     );
   } catch (err) {
-    return apiToState(err);
+    return apiToState(err, refusal("resolve a squawk"));
   }
   revalidatePath(`/equipment/${parsed.data.unit_id}`);
   return { status: "ok" };
@@ -179,7 +179,7 @@ export async function scheduleMaintenanceAction(
       is_recurring: parsed.data.is_recurring,
     });
   } catch (err) {
-    return apiToState(err);
+    return apiToState(err, refusal("schedule equipment maintenance"));
   }
   revalidatePath(`/equipment/${parsed.data.unit_id}`);
   return { status: "ok" };
@@ -214,7 +214,7 @@ export async function completeMaintenanceAction(
       completed_hours: parsed.data.completed_hours,
     });
   } catch (err) {
-    return apiToState(err);
+    return apiToState(err, refusal("complete equipment maintenance"));
   }
   revalidatePath(`/equipment/${parsed.data.unit_id}`);
   return { status: "ok" };
@@ -231,13 +231,21 @@ function zodToFieldErrors(
   return { status: "field-errors", errors };
 }
 
-function apiToState(err: unknown): ActionState {
+/** 403 message for the GSE_WRITERS gate (29 Sep). */
+function refusal(what: string): string {
+  return `Only Ground Ops, the Director of Maintenance, the Director of Operations or an Exec Admin can ${what}.`;
+}
+
+function apiToState(err: unknown, refused?: string): ActionState {
   if (err instanceof ApiError) {
     if (err.status === 401) {
       return {
         status: "api-error",
         message: "Your session expired — please sign in again.",
       };
+    }
+    if (err.status === 403 && refused) {
+      return { status: "api-error", message: refused };
     }
     if (err.status === 409) {
       return {

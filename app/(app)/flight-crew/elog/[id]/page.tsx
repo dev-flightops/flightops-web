@@ -1,9 +1,11 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 
+import { auth } from "@/auth";
 import { ApiError } from "@/lib/api/client";
 import { getFlightLog, listFlightLogLegs } from "@/lib/api/ops";
 import { Button } from "@/components/ui/button";
+import { FLIGHT_LOG_ADMINS, hasAnyRole } from "@/lib/roles";
 
 import { TAB_KEYS, TAB_LABELS, isTabKey, type TabKey } from "./tabs";
 import { TabNav } from "./tab-nav";
@@ -66,6 +68,13 @@ export default async function FlightLogDetailPage({
     throw err;
   }
 
+  // A draft is its filing pilot's to change; a Chief Pilot, DO or Exec
+  // Admin may correct it (legacy elog's save rule, enforced by the
+  // backend since 29 Sep). Reopen and delete stay the filer's alone.
+  const session = await auth();
+  const isFiler = log.created_by.id === session?.user?.id;
+  const canEdit = isFiler || hasAnyRole(session?.roles ?? [], FLIGHT_LOG_ADMINS);
+
   // Legs power Tabs 2 (editable list), 3 (W&B forms), 4 (Summary
   // roll-ups), and 5 (Trends forms). Fetch when any of them are
   // active; other tabs skip.
@@ -102,24 +111,36 @@ export default async function FlightLogDetailPage({
           <Button asChild variant="secondary" size="sm">
             <Link href="/flight-crew/elog">← Back</Link>
           </Button>
-          <LifecycleButtons
-            logId={log.id}
-            status={log.status}
-            submittedAt={log.submitted_at ?? null}
-          />
-          {log.status === "draft" && <SubmitLogButton logId={log.id} />}
+          {isFiler && (
+            <LifecycleButtons
+              logId={log.id}
+              status={log.status}
+              submittedAt={log.submitted_at ?? null}
+            />
+          )}
+          {log.status === "draft" && canEdit && (
+            <SubmitLogButton logId={log.id} />
+          )}
         </div>
       </header>
+
+      {log.status === "draft" && !canEdit && (
+        <p className="mb-4 rounded-md border border-border bg-card px-3 py-2 text-xs text-muted-foreground">
+          This is {log.created_by.full_name}&rsquo;s draft. Only they, a Chief
+          Pilot, the Director of Operations or an Exec Admin can change it.
+        </p>
+      )}
 
       <TabNav activeTab={activeTab} logId={log.id} />
 
       <div className="mt-4 rounded-lg border border-border bg-card p-4">
-        {activeTab === "info" && <FlightInfoTab log={log} />}
+        {activeTab === "info" && <FlightInfoTab log={log} canEdit={canEdit} />}
         {activeTab === "legs" && (
           <LegsTab
             logId={log.id}
             logStatus={log.status}
             initialLegs={legs}
+            canEdit={canEdit}
           />
         )}
         {activeTab === "wb" && (
@@ -127,19 +148,23 @@ export default async function FlightLogDetailPage({
             logId={log.id}
             logStatus={log.status}
             initialLegs={legs}
+            canEdit={canEdit}
           />
         )}
-        {activeTab === "times" && <SummaryTab log={log} legs={legs} />}
+        {activeTab === "times" && (
+          <SummaryTab log={log} legs={legs} canEdit={canEdit} />
+        )}
         {activeTab === "trends" && (
           <TrendsTab
             logId={log.id}
             logStatus={log.status}
             airframeType={log.aircraft.airframe_type ?? null}
             initialLegs={legs}
+            canEdit={canEdit}
           />
         )}
-        {activeTab === "vor" && <VorTab log={log} />}
-        {activeTab === "misc" && <MiscTab log={log} />}
+        {activeTab === "vor" && <VorTab log={log} canEdit={canEdit} />}
+        {activeTab === "misc" && <MiscTab log={log} canEdit={canEdit} />}
       </div>
 
       {/* M2-M-10c — collapsible audit history for the log. Closed by

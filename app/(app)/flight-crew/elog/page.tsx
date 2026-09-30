@@ -48,7 +48,10 @@ export default async function FlightLogPage() {
 
   try {
     const [draftsResult, aircraftResult, flightsResult] = await Promise.all([
-      listFlightLogs({ status: "draft", limit: PAGE_LIMIT }),
+      // The caller's own drafts, as legacy's active-logs list: a draft is
+      // its filing pilot's to finish (the backend refuses anyone else's
+      // edits since 29 Sep, bar a Chief Pilot, DO or Exec Admin).
+      listFlightLogs({ status: "draft", mine: true, limit: PAGE_LIMIT }),
       listAircraft(),
       // "Flight" dropdown shows currently-released flights (the pilot
       // is almost certainly logging one of these). Completed flights
