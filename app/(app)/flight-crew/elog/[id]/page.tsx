@@ -65,6 +65,9 @@ export default async function FlightLogDetailPage({
     log = await getFlightLog(id);
   } catch (err) {
     if (err instanceof ApiError && err.status === 404) notFound();
+    // Someone else's log (30 Sep): its filer, a Chief Pilot, DO or Exec
+    // Admin may open it, as in legacy, whose log page said "Access denied".
+    if (err instanceof ApiError && err.status === 403) return <NotYourLog />;
     throw err;
   }
 
@@ -178,6 +181,28 @@ export default async function FlightLogDetailPage({
         // drifts one without the other.
         <noscript />
       )}
+    </div>
+  );
+}
+
+function NotYourLog() {
+  return (
+    <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
+      <div
+        role="alert"
+        className="rounded-lg border border-border bg-card px-4 py-6 text-sm text-muted-foreground"
+      >
+        <p className="font-semibold text-foreground">
+          You can&rsquo;t open this flight log.
+        </p>
+        <p className="mt-1">
+          Only the pilot who filed it, a Chief Pilot, the Director of
+          Operations or an Exec Admin can.
+        </p>
+      </div>
+      <Button asChild variant="secondary" size="sm" className="mt-4">
+        <Link href="/flight-crew/elog">← Flight Log</Link>
+      </Button>
     </div>
   );
 }
