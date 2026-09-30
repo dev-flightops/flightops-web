@@ -34,6 +34,10 @@ const { TestApiError, getVillageBoard, listVillageAirports } = vi.hoisted(
 );
 
 vi.mock("@/lib/api/client", () => ({ ApiError: TestApiError }));
+const { auth } = vi.hoisted(() => ({
+  auth: vi.fn(async () => ({ roles: ["dispatcher"] as string[] })),
+}));
+vi.mock("@/auth", () => ({ auth }));
 vi.mock("@/lib/api/weather", () => ({
   getVillageBoard,
   listVillageAirports,
@@ -259,4 +263,31 @@ describe("VillageWxPage (M2-G-village-wx-redesign)", () => {
 
     expect(screen.getByRole("alert")).toHaveTextContent(/unavailable/i);
   });
+});
+
+describe("VillageWxPage: who reports village weather (29 Sep)", () => {
+  it.each(["pilot", "ground_ops", "reservations_agent"])(
+    "gives a %s both dialogs",
+    async (role) => {
+      auth.mockResolvedValueOnce({ roles: [role] });
+      getVillageBoard.mockResolvedValueOnce({ items: [], total: 0 });
+      await renderPage();
+      expect(screen.getByTestId("add-report-dialog")).toBeInTheDocument();
+      expect(screen.getByTestId("add-airport-dialog")).toBeInTheDocument();
+    },
+  );
+
+  it.each(["maintenance", "safety_officer", "crew_member"])(
+    "shows a %s the board read-only, and says who reports",
+    async (role) => {
+      auth.mockResolvedValueOnce({ roles: [role] });
+      getVillageBoard.mockResolvedValueOnce({ items: [], total: 0 });
+      await renderPage();
+      expect(screen.queryByTestId("add-report-dialog")).toBeNull();
+      expect(screen.queryByTestId("add-airport-dialog")).toBeNull();
+      expect(
+        screen.getByText(/only dispatchers, pilots, ground ops, reservations agents/i),
+      ).toBeInTheDocument();
+    },
+  );
 });

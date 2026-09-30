@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { auth } from "@/auth";
 import { ApiError } from "@/lib/api/client";
 import { listGseUnits } from "@/lib/api/ground";
 import type {
@@ -7,6 +8,7 @@ import type {
   GSEUnitListItem,
   GSEUnitStatus,
 } from "@/lib/api/types";
+import { GSE_WRITERS, hasAnyRole } from "@/lib/roles";
 
 /**
  * /equipment — GSE landing (M2-G-39).
@@ -65,6 +67,9 @@ export default async function EquipmentPage({
   }>;
 }) {
   const params = await searchParams;
+  // Adding equipment is station staff's, the DOM's and management's
+  // (GSE_WRITERS, enforced by the backend since 29 Sep).
+  const canAdd = hasAnyRole((await auth())?.roles ?? [], GSE_WRITERS);
   const status = parseStatus(params.status);
   const type = parseType(params.type);
 
@@ -114,12 +119,14 @@ export default async function EquipmentPage({
             Equipment inventory, status, and service tracking
           </p>
         </div>
-        <Link
-          href="/equipment/new"
-          className="rounded-md border border-primary/40 bg-background px-3 py-1.5 text-xs font-semibold text-primary hover:bg-primary/5"
-        >
-          + Add Equipment
-        </Link>
+        {canAdd ? (
+          <Link
+            href="/equipment/new"
+            className="rounded-md border border-primary/40 bg-background px-3 py-1.5 text-xs font-semibold text-primary hover:bg-primary/5"
+          >
+            + Add Equipment
+          </Link>
+        ) : null}
       </header>
 
       {loadError ? (
@@ -149,12 +156,19 @@ export default async function EquipmentPage({
                   <p className="mb-4 text-sm text-muted-foreground">
                     No equipment tracked yet.
                   </p>
-                  <Link
-                    href="/equipment/new"
-                    className="inline-block rounded-md border border-primary/40 bg-background px-4 py-2 text-xs font-semibold text-primary hover:bg-primary/5"
-                  >
-                    + Add First Unit
-                  </Link>
+                  {canAdd ? (
+                    <Link
+                      href="/equipment/new"
+                      className="inline-block rounded-md border border-primary/40 bg-background px-4 py-2 text-xs font-semibold text-primary hover:bg-primary/5"
+                    >
+                      + Add First Unit
+                    </Link>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">
+                      Ground Ops, the Director of Maintenance, the Director of
+                      Operations or an Exec Admin adds equipment.
+                    </p>
+                  )}
                 </>
               ) : (
                 <p className="text-sm text-muted-foreground">

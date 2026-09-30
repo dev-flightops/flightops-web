@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { auth } from "@/auth";
 import { ReportIssueDialog } from "@/components/stations/report-issue-dialog";
 import { ResolveIssueButton } from "@/components/stations/resolve-issue-button";
 import { ApiError } from "@/lib/api/client";
@@ -10,6 +11,7 @@ import type {
   StationListItem,
   StationType,
 } from "@/lib/api/types";
+import { hasAnyRole, STATION_ADMINS } from "@/lib/roles";
 
 import { StationActiveToggle } from "./active-toggle";
 
@@ -44,6 +46,10 @@ export default async function StationDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  // Deactivating a station and resolving its issues are station staff's
+  // and management's (STATION_ADMINS, enforced by the backend since
+  // 29 Sep). Reporting an issue stays open to all staff.
+  const canAdmin = hasAnyRole((await auth())?.roles ?? [], STATION_ADMINS);
 
   let station: StationListItem | null = null;
   let issues: StationIssueResponse[] = [];
@@ -95,14 +101,19 @@ export default async function StationDetailPage({
   return (
     <div className="mx-auto max-w-5xl px-4 sm:px-6 py-8">
       <BackLink />
-      <Header station={station} />
+      <Header station={station} canAdmin={canAdmin} />
       <Meta station={station} />
       <IssuesSection
         stationId={station.id}
         title={`Open issues (${openIssues.length})`}
         issues={openIssues}
         emptyHint="No open issues at this station."
-        showResolve
+        showResolve={canAdmin}
+        note={
+          canAdmin
+            ? undefined
+            : "Ground Ops, the Director of Operations or an Exec Admin resolves station issues."
+        }
       />
       {resolvedIssues.length > 0 && (
         <IssuesSection
@@ -127,7 +138,13 @@ function BackLink() {
   );
 }
 
-function Header({ station }: { station: StationListItem }) {
+function Header({
+  station,
+  canAdmin,
+}: {
+  station: StationListItem;
+  canAdmin: boolean;
+}) {
   const location = [station.city, station.state].filter(Boolean).join(", ");
   return (
     <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
@@ -167,11 +184,13 @@ function Header({ station }: { station: StationListItem }) {
             Weather board
           </span>
         ) : null}
-        <StationActiveToggle
-          stationId={station.id}
-          initial={station.is_active}
-          icaoCode={station.icao_code}
-        />
+        {canAdmin ? (
+          <StationActiveToggle
+            stationId={station.id}
+            initial={station.is_active}
+            icaoCode={station.icao_code}
+          />
+        ) : null}
         <ReportIssueDialog
           stationId={station.id}
           stationLabel={`${station.icao_code} · ${station.name}`}
@@ -229,16 +248,22 @@ function IssuesSection({
   issues,
   emptyHint,
   showResolve = false,
+  note,
 }: {
   stationId: string;
   title: string;
   issues: StationIssueResponse[];
   emptyHint: string;
   showResolve?: boolean;
+  /** Shown under the title while there are issues: who resolves them. */
+  note?: string;
 }) {
   return (
     <section className="mb-4">
       <h2 className="mb-2 text-sm font-semibold text-foreground">{title}</h2>
+      {note && issues.length > 0 ? (
+        <p className="-mt-1 mb-2 text-xs text-muted-foreground">{note}</p>
+      ) : null}
       {issues.length === 0 ? (
         <div className="rounded-md border border-dashed border-border bg-card/40 px-4 py-8 text-center text-xs text-muted-foreground">
           {emptyHint}

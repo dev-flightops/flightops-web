@@ -1,8 +1,11 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 
+import { auth } from "@/auth";
 import { ApiError } from "@/lib/api/client";
 import { listStations } from "@/lib/api/ground";
 import type { StationListItem } from "@/lib/api/types";
+import { GSE_WRITERS, hasAnyRole } from "@/lib/roles";
 
 import { NewEquipmentForm } from "./new-equipment-form";
 
@@ -14,6 +17,9 @@ import { NewEquipmentForm } from "./new-equipment-form";
  * the form falls back to "Unassigned".
  */
 export default async function NewEquipmentPage() {
+  if (!hasAnyRole((await auth())?.roles ?? [], GSE_WRITERS)) {
+    redirect("/equipment");
+  }
   let stations: StationListItem[] = [];
   let loadError: string | null = null;
 

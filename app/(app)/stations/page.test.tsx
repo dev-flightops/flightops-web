@@ -17,6 +17,10 @@ const { TestApiError, listStations } = vi.hoisted(() => {
 });
 vi.mock("@/lib/api/client", () => ({ ApiError: TestApiError }));
 vi.mock("@/lib/api/ground", () => ({ listStations }));
+const { auth } = vi.hoisted(() => ({
+  auth: vi.fn(async () => ({ roles: ["ground_ops"] as string[] })),
+}));
+vi.mock("@/auth", () => ({ auth }));
 
 import StationsPage from "./page";
 
@@ -171,4 +175,28 @@ describe("StationsPage (M2-G-38 list)", () => {
 
     expect(screen.getByText(/stations feed unavailable/i)).toBeInTheDocument();
   });
+});
+
+describe("StationsPage: who adds stations (29 Sep)", () => {
+  it("offers + Add Station to Ground Ops", async () => {
+    listStations.mockResolvedValueOnce({ items: [makeStation({})], total: 1 });
+    await renderPage();
+    expect(screen.getByRole("link", { name: /\+ add station/i })).toHaveAttribute(
+      "href",
+      "/stations/new",
+    );
+  });
+
+  it.each(["dispatcher", "director_of_maintenance", "pilot"])(
+    "hides it from a %s, whom the backend refuses",
+    async (role) => {
+      auth.mockResolvedValueOnce({ roles: [role] });
+      listStations.mockResolvedValueOnce({ items: [], total: 0 });
+      await renderPage();
+      expect(screen.queryByRole("link", { name: /add station/i })).toBeNull();
+      expect(
+        screen.getByText(/ground ops, the director of operations or an exec admin adds stations/i),
+      ).toBeInTheDocument();
+    },
+  );
 });

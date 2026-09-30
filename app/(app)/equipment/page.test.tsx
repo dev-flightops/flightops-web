@@ -17,6 +17,10 @@ const { TestApiError, listGseUnits } = vi.hoisted(() => {
 });
 vi.mock("@/lib/api/client", () => ({ ApiError: TestApiError }));
 vi.mock("@/lib/api/ground", () => ({ listGseUnits }));
+const { auth } = vi.hoisted(() => ({
+  auth: vi.fn(async () => ({ roles: ["ground_ops"] as string[] })),
+}));
+vi.mock("@/auth", () => ({ auth }));
 
 import EquipmentPage from "./page";
 
@@ -226,4 +230,32 @@ describe("EquipmentPage (M2-G-39)", () => {
 
     expect(screen.getByText(/equipment feed unavailable/i)).toBeInTheDocument();
   });
+});
+
+describe("EquipmentPage: who adds equipment (29 Sep)", () => {
+  it.each(["ground_ops", "director_of_maintenance"])(
+    "offers both add links to a %s",
+    async (role) => {
+      auth.mockResolvedValueOnce({ roles: [role] });
+      listGseUnits.mockResolvedValueOnce({ items: [], total: 0 });
+      await renderPage();
+      expect(screen.getByRole("link", { name: /\+ add equipment/i })).toHaveAttribute(
+        "href",
+        "/equipment/new",
+      );
+      expect(screen.getByRole("link", { name: /\+ add first unit/i })).toBeInTheDocument();
+    },
+  );
+
+  it.each(["dispatcher", "maintenance", "pilot"])(
+    "hides them from a %s, whom the backend refuses",
+    async (role) => {
+      auth.mockResolvedValueOnce({ roles: [role] });
+      listGseUnits.mockResolvedValueOnce({ items: [], total: 0 });
+      await renderPage();
+      expect(screen.queryByRole("link", { name: /add equipment/i })).toBeNull();
+      expect(screen.queryByRole("link", { name: /add first unit/i })).toBeNull();
+      expect(screen.getByText(/adds equipment\./i)).toBeInTheDocument();
+    },
+  );
 });

@@ -1,4 +1,8 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
+
+import { auth } from "@/auth";
+import { hasAnyRole, STATION_ADMINS } from "@/lib/roles";
 
 import { NewStationForm } from "./new-station-form";
 
@@ -9,7 +13,10 @@ import { NewStationForm } from "./new-station-form";
  * 2xl container, back link to /stations, title, then the form inside
  * a panel.
  */
-export default function NewStationPage() {
+export default async function NewStationPage() {
+  if (!hasAnyRole((await auth())?.roles ?? [], STATION_ADMINS)) {
+    redirect("/stations");
+  }
   return (
     <div className="mx-auto max-w-2xl px-4 py-8 sm:px-6">
       <Link

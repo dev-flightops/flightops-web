@@ -121,20 +121,26 @@ export async function resolveIssueAction(
       parsed.data.resolution_notes,
     );
   } catch (err) {
-    return apiToState(err);
+    return apiToState(
+      err,
+      "Only Ground Ops, the Director of Operations or an Exec Admin can resolve a station issue.",
+    );
   }
 
   revalidatePath(`/stations/${parsed.data.station_id}`);
   return { status: "ok" };
 }
 
-function apiToState(err: unknown): ReportIssueState {
+function apiToState(err: unknown, refused?: string): ReportIssueState {
   if (err instanceof ApiError) {
     if (err.status === 401) {
       return {
         status: "api-error",
         message: "Your session expired — please sign in again.",
       };
+    }
+    if (err.status === 403 && refused) {
+      return { status: "api-error", message: refused };
     }
     if (err.status === 409) {
       return {
@@ -179,6 +185,13 @@ export async function setStationActiveAction(
     if (err instanceof ApiError) {
       if (err.status === 401) {
         return { ok: false, error: "Your session expired — sign in again." };
+      }
+      if (err.status === 403) {
+        return {
+          ok: false,
+          error:
+            "Only Ground Ops, the Director of Operations or an Exec Admin can deactivate or reactivate a station.",
+        };
       }
       return { ok: false, error: `Couldn't save (HTTP ${err.status}).` };
     }

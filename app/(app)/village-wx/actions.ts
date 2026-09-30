@@ -91,6 +91,12 @@ function _apiErrorState(err: unknown, action: string): VillageActionState {
         message: "Your session expired — please sign in again.",
       };
     }
+    if (err.status === 403) {
+      return {
+        status: "api-error",
+        message: `Only dispatchers, pilots, Ground Ops, reservations agents, the Chief Pilot, the Director of Operations or an Exec Admin can ${action}.`,
+      };
+    }
     if (err.status === 404) {
       return {
         status: "field-errors",

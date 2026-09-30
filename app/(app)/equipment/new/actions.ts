@@ -129,6 +129,13 @@ export async function createEquipmentAction(
           message: "Your session expired — please sign in again.",
         };
       }
+      if (err.status === 403) {
+        return {
+          status: "api-error",
+          message:
+            "Only Ground Ops, the Director of Maintenance, the Director of Operations or an Exec Admin can add equipment.",
+        };
+      }
       if (err.status === 404) {
         return {
           status: "field-errors",

@@ -93,6 +93,35 @@ export const AIRWORTHINESS_WRITERS = roleGate(
   "exec_admin",
 );
 
+/** Add or edit a station, or work its issues (29 Sep). Reporting an
+ *  issue is open to all staff. */
+export const STATION_ADMINS = roleGate(
+  "ground_ops",
+  "director_of_operations",
+  "exec_admin",
+);
+
+/** Ground support equipment: add, status, maintenance, resolve squawks
+ *  (29 Sep). Reporting a squawk is open to all staff. */
+export const GSE_WRITERS = roleGate(
+  "ground_ops",
+  "director_of_maintenance",
+  "director_of_operations",
+  "exec_admin",
+);
+
+/** Report village weather and keep the village airport board: legacy's
+ *  REPORTER_ROLES (29 Sep). */
+export const VILLAGE_WX_REPORTERS = roleGate(
+  "dispatcher",
+  "pilot",
+  "ground_ops",
+  "reservations_agent",
+  "chief_pilot",
+  "director_of_operations",
+  "exec_admin",
+);
+
 /** Does this caller hold any of the gate's roles? */
 export function hasAnyRole(
   callerRoles: readonly string[],

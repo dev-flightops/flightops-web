@@ -1,3 +1,4 @@
+import { auth } from "@/auth";
 import { AddAirportDialog } from "@/components/village-wx/add-airport-dialog";
 import { formatZuluDateTime } from "@/lib/format/flight-time";
 import { AddReportDialog } from "@/components/village-wx/add-report-dialog";
@@ -8,6 +9,7 @@ import type {
   VillageWeatherReportResponse,
 } from "@/lib/api/types";
 import { getVillageBoard, listVillageAirports } from "@/lib/api/weather";
+import { hasAnyRole, VILLAGE_WX_REPORTERS } from "@/lib/roles";
 
 import { AutoRefresh } from "./auto-refresh";
 import { DensityToggle } from "./density-toggle";
@@ -23,8 +25,14 @@ import { DensityToggle } from "./density-toggle";
  * manual reload.
  *
  * Two write paths: + Add Report (file an observation) and + Add Airport
- * (extend the directory). Both are dialogs hitting weather-service.
+ * (extend the directory). Both are dialogs hitting weather-service, and
+ * both are legacy's reporters' (VILLAGE_WX_REPORTERS, enforced by the
+ * backend since 29 Sep); everyone else reads the board.
  */
+
+/** Who holds VILLAGE_WX_REPORTERS, for the read-only note. */
+const VILLAGE_REPORTER_NAMES =
+  "dispatchers, pilots, Ground Ops, reservations agents, the Chief Pilot, the Director of Operations or an Exec Admin";
 
 const STALE_YELLOW_MS = 2 * 60 * 60 * 1000;
 const STALE_RED_MS = 4 * 60 * 60 * 1000;
@@ -36,6 +44,7 @@ export default async function VillageWxPage({
   searchParams: Promise<{ density?: string }>;
 }) {
   const { density } = await searchParams;
+  const canReport = hasAnyRole((await auth())?.roles ?? [], VILLAGE_WX_REPORTERS);
   const view: "compact" | "expanded" =
     density === "expanded" ? "expanded" : "compact";
 
@@ -75,10 +84,16 @@ export default async function VillageWxPage({
             minutes
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <AddReportDialog airports={activeAirports} />
-          <AddAirportDialog />
-        </div>
+        {canReport ? (
+          <div className="flex items-center gap-2">
+            <AddReportDialog airports={activeAirports} />
+            <AddAirportDialog />
+          </div>
+        ) : (
+          <p className="max-w-sm text-right text-xs text-muted-foreground">
+            Only {VILLAGE_REPORTER_NAMES} can file village reports.
+          </p>
+        )}
       </header>
 
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">

@@ -157,6 +157,13 @@ export async function createStationAction(
           message: "Your session expired — please sign in again.",
         };
       }
+      if (err.status === 403) {
+        return {
+          status: "api-error",
+          message:
+            "Only Ground Ops, the Director of Operations or an Exec Admin can add a station.",
+        };
+      }
       if (err.status === 409) {
         return {
           status: "field-errors",
