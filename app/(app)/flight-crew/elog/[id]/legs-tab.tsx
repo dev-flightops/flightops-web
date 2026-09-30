@@ -23,12 +23,16 @@ export function LegsTab({
   logId,
   logStatus,
   initialLegs,
+  canEdit = true,
 }: {
   logId: string;
   logStatus: FlightLogStatus;
   initialLegs: FlightLogLeg[];
+  /** False when the caller may read this log but not change it: it is
+   *  another pilot's, and they are not a Chief Pilot, DO or Exec Admin. */
+  canEdit?: boolean;
 }) {
-  const readOnly = logStatus === "submitted";
+  const readOnly = logStatus === "submitted" || !canEdit;
 
   return (
     <div className="space-y-4">
@@ -39,7 +43,9 @@ export function LegsTab({
           </h2>
           <p className="mt-1 text-[0.7rem] text-muted-foreground">
             {initialLegs.length === 0
-              ? "No legs yet — add the first leg below."
+              ? readOnly
+                ? "No legs on this log."
+                : "No legs yet — add the first leg below."
               : `${initialLegs.length} leg${initialLegs.length === 1 ? "" : "s"} on this log.`}
           </p>
         </div>
@@ -49,7 +55,9 @@ export function LegsTab({
       {initialLegs.length === 0 && readOnly && (
         <div className="rounded-md border border-dashed border-border bg-card/40 px-4 py-10 text-center">
           <p className="text-xs text-muted-foreground">
-            No legs on this submitted log.
+            {logStatus === "submitted"
+              ? "No legs on this submitted log."
+              : "No legs on this draft yet."}
           </p>
         </div>
       )}

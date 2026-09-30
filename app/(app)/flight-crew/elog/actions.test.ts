@@ -246,3 +246,22 @@ describe("submitFlightLogAction", () => {
     expect(result.status).toBe("error");
   });
 });
+
+describe("submitFlightLogAction: someone else's draft (29 Sep)", () => {
+  it("names who may submit it", async () => {
+    submitFlightLog.mockRejectedValueOnce(
+      new TestApiError(
+        403,
+        "/ops/flight-logs/log-1/submit",
+        JSON.stringify({ detail: "flight_log_owner_or_admin_only" }),
+      ),
+    );
+    expect(
+      await submitFlightLogAction({ status: "idle" }, makeSubmitFormData("log-1")),
+    ).toEqual({
+      status: "error",
+      message:
+        "Only the pilot who filed this log, a Chief Pilot, the Director of Operations or an Exec Admin can submit it.",
+    });
+  });
+});

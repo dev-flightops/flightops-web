@@ -174,3 +174,32 @@ describe("deleteLegAction", () => {
     }
   });
 });
+
+describe("leg actions: someone else's draft (29 Sep)", () => {
+  const refused = () =>
+    new TestApiError(
+      403,
+      "/ops/flight-logs/log-1",
+      JSON.stringify({ detail: "flight_log_owner_or_admin_only" }),
+    );
+  const changeIt = {
+    status: "error",
+    message:
+      "Only the pilot who filed this log, a Chief Pilot, the Director of Operations or an Exec Admin can change it.",
+  };
+
+  it("adding a leg names who may", async () => {
+    addFlightLogLeg.mockRejectedValueOnce(refused());
+    expect(await addLegAction("log-1")).toEqual(changeIt);
+  });
+
+  it("editing a leg names who may", async () => {
+    updateFlightLogLeg.mockRejectedValueOnce(refused());
+    expect(await updateLegAction("log-1", "leg-1", { landings: 2 })).toEqual(changeIt);
+  });
+
+  it("deleting a leg names who may", async () => {
+    deleteFlightLogLeg.mockRejectedValueOnce(refused());
+    expect(await deleteLegAction("log-1", "leg-1")).toEqual(changeIt);
+  });
+});

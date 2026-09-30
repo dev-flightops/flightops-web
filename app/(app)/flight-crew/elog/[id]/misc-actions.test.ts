@@ -120,3 +120,19 @@ describe("updateMiscAction", () => {
     }
   });
 });
+
+describe("updateMiscAction: someone else's draft (29 Sep)", () => {
+  it("names who may change it", async () => {
+    updateFlightLog.mockRejectedValueOnce(
+      new TestApiError(
+        403,
+        "/ops/flight-logs/log-1",
+        JSON.stringify({ detail: "flight_log_owner_or_admin_only" }),
+      ),
+    );
+    expect(await updateMiscAction("log-1", { mx_discrepancy: "x" })).toEqual({
+      status: "error",
+      message: "Only the pilot who filed this log, a Chief Pilot, the Director of Operations or an Exec Admin can change it.",
+    });
+  });
+});

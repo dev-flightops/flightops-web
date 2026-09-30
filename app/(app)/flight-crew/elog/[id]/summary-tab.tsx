@@ -21,12 +21,16 @@ import { computeFlightLogSummary } from "./summary-fields";
 export function SummaryTab({
   log,
   legs,
+  canEdit = true,
 }: {
   log: FlightLogResponse;
   legs: ReadonlyArray<FlightLogLeg>;
+  /** False when the caller may read this log but not change it: it is
+   *  another pilot's, and they are not a Chief Pilot, DO or Exec Admin. */
+  canEdit?: boolean;
 }) {
   const summary = computeFlightLogSummary(legs);
-  const readOnly = log.status === "submitted";
+  const readOnly = log.status === "submitted" || !canEdit;
 
   return (
     <div className="space-y-4">
@@ -36,9 +40,14 @@ export function SummaryTab({
 
       {summary.legCount === 0 ? (
         <div className="rounded-md border border-dashed border-border bg-card/40 px-4 py-6 text-center text-xs text-muted-foreground">
-          No legs entered yet. Add legs in{" "}
-          <span className="font-semibold text-foreground">Tab 2 (Legs)</span>{" "}
-          to see derived totals.
+          No legs entered yet.
+          {!readOnly && (
+            <>
+              {" "}Add legs in{" "}
+              <span className="font-semibold text-foreground">Tab 2 (Legs)</span>{" "}
+              to see derived totals.
+            </>
+          )}
         </div>
       ) : (
         <>
@@ -76,7 +85,8 @@ export function SummaryTab({
           </div>
 
           <p className="text-[0.65rem] text-muted-foreground">
-            Tiles are derived from Tab 2 (Legs). Edit a leg to update them.
+            Tiles are derived from Tab 2 (Legs).
+            {!readOnly && " Edit a leg to update them."}
           </p>
         </>
       )}

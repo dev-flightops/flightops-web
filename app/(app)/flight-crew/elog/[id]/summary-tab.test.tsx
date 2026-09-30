@@ -208,3 +208,30 @@ describe("SummaryTab", () => {
     expect(nightTO).toBeDisabled();
   });
 });
+
+describe("SummaryTab: someone else's draft (29 Sep)", () => {
+  it("disables the counters when the caller may not change the draft", () => {
+    render(<SummaryTab log={makeLog()} legs={[]} canEdit={false} />);
+    expect(screen.getByLabelText(/night t\/o/i)).toBeDisabled();
+  });
+});
+
+describe("SummaryTab: read-only copy (29 Sep)", () => {
+  it("doesn't tell someone who can't edit to add legs", () => {
+    render(<SummaryTab log={makeLog()} legs={[]} canEdit={false} />);
+    expect(screen.getByText(/no legs entered yet/i)).toBeInTheDocument();
+    expect(screen.queryByText(/add legs in/i)).not.toBeInTheDocument();
+  });
+
+  it("doesn't tell them to edit a leg either", () => {
+    render(
+      <SummaryTab
+        log={makeLog()}
+        legs={[leg({ engine_on: "08:00", engine_off: "09:00" })]}
+        canEdit={false}
+      />,
+    );
+    expect(screen.getByText(/derived from tab 2/i)).toBeInTheDocument();
+    expect(screen.queryByText(/edit a leg/i)).not.toBeInTheDocument();
+  });
+});

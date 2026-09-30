@@ -24,12 +24,16 @@ export function WeightBalanceTab({
   logId,
   logStatus,
   initialLegs,
+  canEdit = true,
 }: {
   logId: string;
   logStatus: FlightLogStatus;
   initialLegs: FlightLogLeg[];
+  /** False when the caller may read this log but not change it: it is
+   *  another pilot's, and they are not a Chief Pilot, DO or Exec Admin. */
+  canEdit?: boolean;
 }) {
-  const readOnly = logStatus === "submitted";
+  const readOnly = logStatus === "submitted" || !canEdit;
 
   if (initialLegs.length === 0) {
     return (

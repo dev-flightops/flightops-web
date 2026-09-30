@@ -122,6 +122,14 @@ export const VILLAGE_WX_REPORTERS = roleGate(
   "exec_admin",
 );
 
+/** Correct another pilot's flight log (29 Sep). A draft is its filing
+ *  pilot's; legacy elog's ADMIN_ROLES could save anyone's. */
+export const FLIGHT_LOG_ADMINS = roleGate(
+  "chief_pilot",
+  "director_of_operations",
+  "exec_admin",
+);
+
 /** Does this caller hold any of the gate's roles? */
 export function hasAnyRole(
   callerRoles: readonly string[],

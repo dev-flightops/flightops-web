@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   AIRWORTHINESS_WRITERS,
   CURRENCY_SIGNOFF,
+  FLIGHT_LOG_ADMINS,
   GSE_WRITERS,
   hasAnyRole,
   isRole,
@@ -128,6 +129,14 @@ describe("the ground and village sets (29 Sep)", () => {
       "director_of_operations",
       "exec_admin",
       "ground_ops",
+    ]);
+  });
+
+  it("flight logs: the Chief Pilot, DO and Exec Admin correct others'", () => {
+    expect(sorted(FLIGHT_LOG_ADMINS)).toEqual([
+      "chief_pilot",
+      "director_of_operations",
+      "exec_admin",
     ]);
   });
 

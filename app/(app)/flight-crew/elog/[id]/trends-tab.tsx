@@ -26,14 +26,18 @@ export function TrendsTab({
   logStatus,
   airframeType,
   initialLegs,
+  canEdit = true,
 }: {
   logId: string;
   logStatus: FlightLogStatus;
   airframeType: string | null;
   initialLegs: FlightLogLeg[];
+  /** False when the caller may read this log but not change it: it is
+   *  another pilot's, and they are not a Chief Pilot, DO or Exec Admin. */
+  canEdit?: boolean;
 }) {
   const family = classifyAirframe(airframeType);
-  const readOnly = logStatus === "submitted";
+  const readOnly = logStatus === "submitted" || !canEdit;
 
   if (initialLegs.length === 0) {
     return (
