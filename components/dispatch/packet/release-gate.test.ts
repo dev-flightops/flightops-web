@@ -7,7 +7,7 @@ import type {
   RouteFreshness,
 } from "@/lib/api/types";
 
-import { computeHardBlockReason } from "./release-gate";
+import { computeHardBlockReason, overridesOnRecord } from "./release-gate";
 
 function finding(code: string): ComplianceFinding {
   return {
@@ -58,6 +58,7 @@ const CLEAR = {
   ackedWarnCodes: new Set<string>(),
   overridesAcknowledged: false,
   hasSelectedFlight: true,
+  picAssigned: true,
   icaos: ["PANC", "PABE"],
   notamAckedIcaos: ["PANC", "PABE"],
   weatherFreshness: freshness(),
@@ -67,6 +68,28 @@ const CLEAR = {
 describe("computeHardBlockReason", () => {
   it("returns null when nothing blocks", () => {
     expect(computeHardBlockReason(CLEAR)).toBeNull();
+  });
+
+  // ---- PIC on the crew -----------------------------------------------------
+
+  it("blocks a flight with no PIC on its crew, before anything else", () => {
+    // The release reads the PIC from the roster (29 Sep); a packet that
+    // only named one in ?pic= would be refused, and used to skip every
+    // PIC check instead.
+    expect(
+      computeHardBlockReason({
+        ...CLEAR,
+        picAssigned: false,
+        notamAckedIcaos: [],
+      }),
+    ).toBe("No PIC on this flight's crew — pick one in Flight Details before release.");
+  });
+
+  it("does not ask for a PIC when no flight is loaded", () => {
+    // A hand-filled packet has no crew to assign to.
+    expect(
+      computeHardBlockReason({ ...CLEAR, hasSelectedFlight: false, picAssigned: false }),
+    ).toBeNull();
   });
 
   // ---- PIC currency ------------------------------------------------------
@@ -313,5 +336,31 @@ describe("computeHardBlockReason — the SIC seat and soft warnings (27 Sep)", (
       overridesAcknowledged: true,
     });
     expect(reason).toBe("1 of 1 soft warnings still need dispatcher acknowledgment.");
+  });
+});
+
+describe("overridesOnRecord", () => {
+  // The dispatcher's packet reads the supervisor's override from the
+  // record (29 Sep); it used to be a flag in the recording browser's URL.
+  it("is true when every hard block has an override on record", () => {
+    const covered = pic("red", {
+      hard: [
+        { ...finding("a"), override_id: "o-1" },
+        { ...finding("b"), override_id: "o-2" },
+      ],
+    });
+    expect(overridesOnRecord(covered)).toBe(true);
+  });
+
+  it("is false while any hard block is not covered", () => {
+    const partly = pic("red", {
+      hard: [{ ...finding("a"), override_id: "o-1" }, finding("b")],
+    });
+    expect(overridesOnRecord(partly)).toBe(false);
+  });
+
+  it("is false with nothing to override, or no check at all", () => {
+    expect(overridesOnRecord(pic("green"))).toBe(false);
+    expect(overridesOnRecord(null)).toBe(false);
   });
 });

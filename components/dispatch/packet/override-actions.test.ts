@@ -131,7 +131,9 @@ describe("createOverridesAction (M2-G-5 tail)", () => {
     );
     expect(result).toEqual({
       status: "api-error",
-      message: expect.stringMatching(/don't have permission/i),
+      // Says who can, and that it is their own login (29 Sep).
+      message:
+        "Only a Chief Pilot, Director of Operations or Exec Admin can record an override, from their own login.",
     });
   });
 });

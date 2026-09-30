@@ -1797,6 +1797,10 @@ export interface ComplianceFinding {
   last_completed_date: string | null;
   grace_month_end: string | null;
   message: string;
+  /** A hard block with a supervisor override on record for the flight
+   *  asked about (getPicCompliance's flightId): the override's id. The
+   *  rule release applies (29 Sep). */
+  override_id?: string | null;
 }
 
 export interface PicComplianceResponse {

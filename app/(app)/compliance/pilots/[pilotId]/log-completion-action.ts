@@ -113,6 +113,13 @@ export async function logCompletionAction(
           message: "Your session expired — please sign in again.",
         };
       }
+      if (err.status === 403) {
+        return {
+          status: "api-error",
+          message:
+            "Only a Chief Pilot, Check Airman, Director of Operations or Exec Admin can log a completion.",
+        };
+      }
       const detail = parseDetail(err.message);
       const fieldErrors = mapDetailToField(detail);
       if (fieldErrors) return { status: "field-errors", errors: fieldErrors };

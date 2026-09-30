@@ -21,12 +21,11 @@ export type ActionResult =
 
 export async function releaseFlightAction(
   flightId: string,
-  /** M2-M-5 — currently-selected PIC from ?pic=<uuid>. Passed to the
-   *  backend so the compliance gate runs; omitted callers keep the
-   *  legacy behaviour. */
+  /** The PIC this packet reviewed. The backend reads the PIC from the
+   *  flight's crew roster and refuses when this names someone else. */
   pilotUserId?: string | null,
-  /** M2-G-5 tail — supervisor override recorded already? When true,
-   *  release goes through even with hard blocks. */
+  /** The packet recorded supervisor overrides. The backend checks the
+   *  override records themselves, not this flag. */
   overridesAcknowledged?: boolean,
   /** HALT-2 — dispatcher acknowledged stale / missing route weather. */
   staleWeatherAcknowledged?: boolean,
@@ -69,6 +68,31 @@ export async function releaseFlightAction(
           error: summary
             ? `Release blocked — aircraft is not airworthy: ${summary}. See the Maintenance & Airworthiness panel for full details.`
             : "Release blocked — aircraft is not airworthy. See the Maintenance & Airworthiness panel.",
+        };
+      }
+      // The PIC is read from the crew roster (29 Sep): none, or a
+      // different one from the pilot this packet was checking.
+      if (err.message.includes("pic_required")) {
+        return {
+          ok: false,
+          error:
+            "Release blocked — this flight has no PIC on its crew. Pick one in Flight Details, then release.",
+        };
+      }
+      if (err.message.includes("pic_mismatch")) {
+        return {
+          ok: false,
+          error:
+            "Release blocked — the flight's PIC changed since this page loaded, so the checks shown were for someone else. Reload the packet and review it again.",
+        };
+      }
+      // An override the packet counted on is not on record, or was not
+      // written by a Chief Pilot, DO or Exec Admin.
+      if (err.message.includes("override_missing")) {
+        return {
+          ok: false,
+          error:
+            "Release blocked — there is no supervisor override on record for this flight's hard-block items. A Chief Pilot, Director of Operations or Exec Admin has to record it from their own login.",
         };
       }
       // M2-M-5 PIC compliance gate. Backend sends:

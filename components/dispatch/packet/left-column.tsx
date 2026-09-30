@@ -41,6 +41,7 @@ export async function LeftColumn({
   notamAckedIcaos,
   weatherFreshness,
   staleWeatherAcknowledged,
+  canSignOffMaintenance = false,
 }: {
   flight: FlightDetail | null;
   icaos: string[];
@@ -52,6 +53,8 @@ export async function LeftColumn({
    *  also declines to block on a verdict it could not obtain. */
   weatherFreshness: RouteFreshness | null;
   staleWeatherAcknowledged: boolean;
+  /** Maintenance sign-off (AIRWORTHINESS_WRITERS): defer, close, resolve. */
+  canSignOffMaintenance?: boolean;
 }) {
   return (
     <div className="space-y-5">
@@ -117,7 +120,7 @@ export async function LeftColumn({
         </p>
       </SectionPanel>
 
-      <MaintenancePanel flight={flight} />
+      <MaintenancePanel flight={flight} canSignOff={canSignOffMaintenance} />
 
       <FuelOrderPanel flight={flight} />
 

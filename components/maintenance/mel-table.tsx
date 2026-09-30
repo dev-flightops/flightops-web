@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { CloseMelDialog } from "@/components/dispatch/packet/close-mel-dialog";
 import { cn } from "@/lib/utils";
 import type { MelItemResponse } from "@/lib/api/types";
 import { formatBoth } from "@/lib/format/flight-time";
@@ -19,18 +20,21 @@ import { formatBoth } from "@/lib/format/flight-time";
  * read as historical, not pending action. The caller decides whether
  * to include closed items via the backend `status=` filter.
  *
- * Close / defer-extension actions live on the dispatch maintenance
- * panel for now; M2-G-20b can inline them once decoupled from
- * dispatch.
+ * Close is inlined here for maintenance (`canClose`, the M2-G-20b
+ * plan): since 29 Sep only AIRWORTHINESS_WRITERS may close an item, and
+ * the dispatch packet no longer offers it to anyone else.
  */
 export function MelTable({
   items,
   showAircraft = false,
   emptyMessage = "No open MEL items.",
+  canClose = false,
 }: {
   items: MelItemResponse[];
   showAircraft?: boolean;
   emptyMessage?: string;
+  /** The viewer may close items (AIRWORTHINESS_WRITERS). */
+  canClose?: boolean;
 }) {
   if (items.length === 0) {
     return (
@@ -53,6 +57,11 @@ export function MelTable({
             <th className="px-3 py-2">Deferred</th>
             <th className="px-3 py-2">Due</th>
             <th className="px-3 py-2">Status</th>
+            {canClose && (
+              <th className="px-3 py-2">
+                <span className="sr-only">Actions</span>
+              </th>
+            )}
           </tr>
         </thead>
         <tbody>
@@ -62,6 +71,7 @@ export function MelTable({
               item={item}
               now={now}
               showAircraft={showAircraft}
+              canClose={canClose}
             />
           ))}
         </tbody>
@@ -74,10 +84,12 @@ function MelRow({
   item,
   now,
   showAircraft,
+  canClose,
 }: {
   item: MelItemResponse;
   now: number;
   showAircraft: boolean;
+  canClose: boolean;
 }) {
   const dueAt = new Date(item.due_at).getTime();
   const daysToDue = (dueAt - now) / (1000 * 60 * 60 * 24);
@@ -147,6 +159,17 @@ function MelRow({
           {isClosed ? "Closed" : "Open"}
         </span>
       </td>
+      {canClose && (
+        <td className="px-3 py-2.5 text-right">
+          {!isClosed && (
+            <CloseMelDialog
+              melItemId={item.id}
+              ataChapter={item.ata_chapter}
+              description={item.description}
+            />
+          )}
+        </td>
+      )}
     </tr>
   );
 }

@@ -121,6 +121,27 @@ describe("DispatchComplianceGate", () => {
     ).toBeInTheDocument();
   });
 
+  it("offers a supervisor the override for a PIC hard block", async () => {
+    getPicCompliance.mockResolvedValueOnce(
+      makeData({ dot_color: "red", hard_blocks: [makeFinding()] }),
+    );
+    render(await DispatchComplianceGate({ pilotUserId: "p-1", flightId: "f-1", canOverride: true }));
+    expect(screen.getByRole("button", { name: "Supervisor Override…" })).toBeInTheDocument();
+  });
+
+  it("tells anyone else who records the override, instead of offering it", async () => {
+    // 29 Sep: the supervisor records it from their own login; the
+    // backend refuses anyone else and would record them as supervisor.
+    getPicCompliance.mockResolvedValueOnce(
+      makeData({ dot_color: "red", hard_blocks: [makeFinding()] }),
+    );
+    render(await DispatchComplianceGate({ pilotUserId: "p-1", flightId: "f-1" }));
+    expect(screen.queryByRole("button", { name: /override/i })).toBeNull();
+    expect(
+      screen.getByText(/Only a Chief Pilot, Director of Operations or Exec Admin can\s+record an override, from their own login\./),
+    ).toBeInTheDocument();
+  });
+
   it("hard-block banner also surfaces concurrent soft warnings", async () => {
     getPicCompliance.mockResolvedValueOnce(
       makeData({
@@ -234,6 +255,8 @@ describe("DispatchComplianceGate — the SIC seat (client, 27 Sep)", () => {
         pilotUserId: "p-1",
         flightId: "f-1",
         sicChecks: [{ pilotId: "s-1", compliance: sic }],
+        // Even for someone who may override the PIC.
+        canOverride: true,
       }),
     );
     expect(

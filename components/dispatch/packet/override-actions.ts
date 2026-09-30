@@ -72,7 +72,7 @@ export async function createOverridesAction(
         return {
           status: "api-error",
           message:
-            "You don't have permission to record supervisor overrides.",
+            "Only a Chief Pilot, Director of Operations or Exec Admin can record an override, from their own login.",
         };
       }
       if (err.status === 404) {

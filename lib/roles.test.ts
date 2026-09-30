@@ -1,6 +1,14 @@
 import { describe, expect, it } from "vitest";
 
-import { hasAnyRole, isRole, ROLES, roleGate } from "./roles";
+import {
+  AIRWORTHINESS_WRITERS,
+  CURRENCY_SIGNOFF,
+  hasAnyRole,
+  isRole,
+  OVERRIDE_AUTHORITY,
+  ROLES,
+  roleGate,
+} from "./roles";
 
 describe("roles", () => {
   it("matches the backend catalogue exactly", () => {
@@ -67,5 +75,38 @@ describe("roles", () => {
     expect(hasAnyRole(["pilot", "safety_officer"], gate)).toBe(true);
     expect(hasAnyRole(["pilot"], gate)).toBe(false);
     expect(hasAnyRole([], gate)).toBe(false);
+  });
+});
+
+describe("who may do what a release relies on (29 Sep)", () => {
+  // These mirror flightops-services shared/flightops_shared/auth/roles.py,
+  // which enforces them. A role added here and not there would show a
+  // control the server refuses; one added there and not here would hide
+  // one it allows. Change both together.
+  const sorted = (gate: ReadonlySet<string>) => [...gate].sort();
+
+  it("overrides: the operation's management", () => {
+    expect(sorted(OVERRIDE_AUTHORITY)).toEqual([
+      "chief_pilot",
+      "director_of_operations",
+      "exec_admin",
+    ]);
+  });
+
+  it("completions: those who sign pilots off, not the pilot", () => {
+    expect(sorted(CURRENCY_SIGNOFF)).toEqual([
+      "check_airman",
+      "chief_pilot",
+      "director_of_operations",
+      "exec_admin",
+    ]);
+  });
+
+  it("MELs and squawks: maintenance", () => {
+    expect(sorted(AIRWORTHINESS_WRITERS)).toEqual([
+      "director_of_maintenance",
+      "exec_admin",
+      "maintenance",
+    ]);
   });
 });

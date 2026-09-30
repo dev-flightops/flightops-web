@@ -63,6 +63,36 @@ export function roleGate(...roles: Role[]): ReadonlySet<Role> {
   return new Set(roles);
 }
 
+/**
+ * Who may do the three things a release relies on. Mirrors the named
+ * sets in flightops-services shared/flightops_shared/auth/roles.py,
+ * which the backend enforces (29 Sep); these only decide what to show,
+ * so a control is not offered to someone the server will refuse.
+ */
+
+/** Waive a pilot's currency hard block, from their own login. */
+export const OVERRIDE_AUTHORITY = roleGate(
+  "chief_pilot",
+  "director_of_operations",
+  "exec_admin",
+);
+
+/** Log a currency completion: a sign-off, not a self-report. */
+export const CURRENCY_SIGNOFF = roleGate(
+  "chief_pilot",
+  "check_airman",
+  "director_of_operations",
+  "exec_admin",
+);
+
+/** Defer or close an MEL item, resolve or edit a squawk. Writing a
+ *  squawk up stays open to all staff. */
+export const AIRWORTHINESS_WRITERS = roleGate(
+  "maintenance",
+  "director_of_maintenance",
+  "exec_admin",
+);
+
 /** Does this caller hold any of the gate's roles? */
 export function hasAnyRole(
   callerRoles: readonly string[],

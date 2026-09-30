@@ -23,11 +23,16 @@ export function CurrencyItemCard({
   cell,
   pilotId,
   pilotName,
+  canLogCompletion = false,
 }: {
   item: CurrencyItemRef;
   cell: PilotCurrencyCell;
   pilotId: string;
   pilotName: string;
+  /** The viewer may sign off a completion (CURRENCY_SIGNOFF, enforced by
+   *  the backend since 29 Sep): it can turn a grounded pilot into one who
+   *  flies, so it is not a self-report. */
+  canLogCompletion?: boolean;
 }) {
   const token = STATUS_TOKENS[cell.status];
   const isRolling = item.interval_type === "rolling_days";
@@ -83,7 +88,7 @@ export function CurrencyItemCard({
         )}
       </dl>
 
-      {!isRolling && (
+      {!isRolling && canLogCompletion && (
         <div className="mt-3 flex justify-end">
           <LogCompletionButton
             pilotId={pilotId}

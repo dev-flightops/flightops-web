@@ -18,7 +18,6 @@ import {
   createOverridesAction,
   type CreateOverridesResult,
 } from "./override-actions";
-import { useDispatchQuery } from "./use-dispatch-query";
 
 /**
  * M2-G-5 tail — supervisor override modal for the hard-block banner.
@@ -31,10 +30,11 @@ import { useDispatchQuery } from "./use-dispatch-query";
  *
  * On success:
  *   1. currency_overrides rows exist (audit trail).
- *   2. We flip ?overrides_ack=1 in the URL so the page re-render
- *      knows the hard-block was overridden — the parent page uses
- *      this to enable Generate PDF and pass overrides_acknowledged
- *      to the release action.
+ *   2. The page refreshes and reads them back through the PIC check
+ *      (override_id per hard block), which is what enables release.
+ *      It used to set ?overrides_ack=1 in this browser's URL, which the
+ *      dispatcher's page never saw once supervisors record overrides
+ *      from their own login (29 Sep).
  *
  * We DO NOT release the flight from here; the dispatcher clicks
  * Generate PDF separately. Keeps a small pause between "supervisor
@@ -53,7 +53,6 @@ export function OverrideDialog({
   flightId: string | null;
 }) {
   const router = useRouter();
-  const nextQuery = useDispatchQuery();
   const [open, setOpen] = useState(false);
   const [cert, setCert] = useState("");
   const [reason, setReason] = useState("");
@@ -80,11 +79,8 @@ export function OverrideDialog({
         flightId,
       );
       if (result.status === "ok") {
-        // Flip the URL flag so the page-level loader knows the
-        // hard-block was overridden and the release action can send
-        // overrides_acknowledged=true.
-        const qs = nextQuery((params) => params.set("overrides_ack", "1"));
-        router.push(`/dispatch/?${qs}`);
+        // The page reads the new records back through the PIC check.
+        router.refresh();
         setOpen(false);
         setCert("");
         setReason("");

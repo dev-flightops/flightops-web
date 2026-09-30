@@ -36,6 +36,12 @@ vi.mock("@/lib/api/ops", () => ({
   listDisqualifications,
 }));
 vi.mock("next/navigation", () => ({ notFound }));
+// Logging a completion is a sign-off (CURRENCY_SIGNOFF, 29 Sep); the
+// page asks who is looking. A chief pilot unless a test says otherwise.
+const { auth } = vi.hoisted(() => ({
+  auth: vi.fn(async () => ({ roles: ["chief_pilot"] as string[] })),
+}));
+vi.mock("@/auth", () => ({ auth }));
 
 import PilotComplianceProfilePage from "./page";
 import type {
@@ -212,6 +218,21 @@ describe("PilotComplianceProfilePage", () => {
     expect(
       screen.getByRole("button", { name: /log completion/i }),
     ).toBeInTheDocument();
+  });
+
+  it("offers a pilot no Log Completion: it is a sign-off, not a self-report", async () => {
+    auth.mockResolvedValueOnce({ roles: ["pilot"] });
+    const competency = makeItem({ id: "i-1" });
+    getPilotComplianceProfile.mockResolvedValueOnce(
+      makeProfile({
+        items: [competency],
+        cells: [makeCell({ currency_item_id: "i-1", status: "due_this_month" })],
+      }),
+    );
+
+    await renderPage();
+
+    expect(screen.queryByRole("button", { name: /log completion/i })).toBeNull();
   });
 
   it("calls notFound() on a 404 from the API", async () => {

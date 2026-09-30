@@ -1,4 +1,6 @@
 import { CrewLegalityHints } from "@/components/dispatch/packet/crew-status-rows";
+import { auth } from "@/auth";
+import { AIRWORTHINESS_WRITERS, hasAnyRole, OVERRIDE_AUTHORITY } from "@/lib/roles";
 import { DispatchComplianceGate } from "@/components/dispatch/packet/dispatch-compliance-gate";
 import { parseAckedMelIds } from "@/components/dispatch/packet/mel-acks";
 import { OpenMelPanel } from "@/components/dispatch/packet/open-mel-panel";
@@ -36,7 +38,10 @@ import type {
 import type { PicOption } from "@/components/dispatch/packet/pic-picker";
 import { parseAckedWarns } from "@/components/dispatch/packet/soft-warning-ack-parser";
 import { parseAckedIcaos } from "@/components/dispatch/packet/notam-acks";
-import { computeHardBlockReason } from "@/components/dispatch/packet/release-gate";
+import {
+  computeHardBlockReason,
+  overridesOnRecord,
+} from "@/components/dispatch/packet/release-gate";
 import { flightStops, paramToRoute } from "@/lib/route";
 
 function todayUtc(): string {
@@ -77,7 +82,6 @@ interface SearchParams {
   /** M2-G-5 tail — set to "1" after the supervisor override modal
    *  submits successfully. Signals the page to let Generate PDF fire
    *  even though hard blocks are on the pilot's currency record. */
-  overrides_ack?: string;
   /** HALT-2 — set to "1" once the dispatcher acknowledges stale or
    *  missing route weather. URL-driven like the other acks so the state
    *  survives a reload. The release endpoint re-checks server-side, so
@@ -108,9 +112,12 @@ export default async function DispatchPage({
     mels_acked: melsAckedParam,
     pic: picOverrideId,
     warns_acked: warnsAckedParam,
-    overrides_ack: overridesAckParam,
     stale_wx_ack: staleWxAckParam,
   } = await searchParams;
+  // What the viewer may do on the packet, not what they may see: the
+  // backend enforces each of these, so this only keeps controls away
+  // from people it would refuse.
+  const viewerRoles = (await auth())?.roles ?? [];
   // Validate rather than trust: a malformed ?date= would otherwise be
   // passed to the API as a filter and quietly return nothing, which
   // reads as "no flights" rather than "bad date".
@@ -173,7 +180,7 @@ export default async function DispatchPage({
     loadPicRoster(),
     // Against whoever is actually flying it, not whoever the URL says.
     effectivePicId
-      ? loadPicCompliance(effectivePicId)
+      ? loadPicCompliance(effectivePicId, "pic", selectedId ?? null)
       : Promise.resolve(null),
     // Flights handed back over weight. Soft-fail like the crew roster —
     // but note the consequence differs: a failure here hides flights that
@@ -197,10 +204,14 @@ export default async function DispatchPage({
   ]);
 
   // M2-G-5 tail — parse ack state from URL. `warns_acked` is
-  // comma-separated currency-item codes; `overrides_ack=1` means the
-  // supervisor override modal already ran successfully.
+  // comma-separated currency-item codes.
   const ackedWarnCodes = parseAckedWarns(warnsAckedParam);
-  const overridesAcknowledged = overridesAckParam === "1";
+  // Overridden when every PIC hard block has a supervisor override on
+  // record for this flight. It used to be `?overrides_ack=1`, set by the
+  // dialog in the browser that recorded it; since the supervisor
+  // records it from their own login (29 Sep), the dispatcher's page has
+  // to read it from the record.
+  const overridesAcknowledged = overridesOnRecord(picCompliance);
   const staleWeatherAcknowledged = staleWxAckParam === "1";
 
   const currentTenant =
@@ -254,6 +265,7 @@ export default async function DispatchPage({
     ackedWarnCodes,
     overridesAcknowledged,
     hasSelectedFlight: selectedFlight !== null,
+    picAssigned: assignedPicId !== null,
     icaos,
     notamAckedIcaos,
     weatherFreshness,
@@ -326,6 +338,7 @@ export default async function DispatchPage({
             flightId={selectedFlight.id}
             overridesAcknowledged={overridesAcknowledged}
             sicChecks={sicChecks}
+            canOverride={hasAnyRole(viewerRoles, OVERRIDE_AUTHORITY)}
           />
         )}
 
@@ -346,6 +359,7 @@ export default async function DispatchPage({
             notamAckedIcaos={notamAckedIcaos}
             weatherFreshness={weatherFreshness}
             staleWeatherAcknowledged={staleWeatherAcknowledged}
+            canSignOffMaintenance={hasAnyRole(viewerRoles, AIRWORTHINESS_WRITERS)}
           />
           <RightColumn
             flight={selectedFlight}
@@ -406,9 +420,10 @@ async function loadPicRoster(): Promise<PicOption[]> {
 async function loadPicCompliance(
   pilotId: string,
   seat: CrewSeat = "pic",
+  flightId: string | null = null,
 ): Promise<PicComplianceResponse | null> {
   try {
-    return await getPicCompliance(pilotId, seat);
+    return await getPicCompliance(pilotId, seat, flightId);
   } catch {
     return null;
   }

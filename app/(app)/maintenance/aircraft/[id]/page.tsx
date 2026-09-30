@@ -17,6 +17,9 @@ import type {
   MelItemResponse,
   SquawkResponse,
 } from "@/lib/api/types";
+import { auth } from "@/auth";
+import { AIRWORTHINESS_WRITERS, hasAnyRole } from "@/lib/roles";
+import { MelDeferralDialog } from "@/components/dispatch/packet/mel-deferral-dialog";
 
 /**
  * /maintenance/aircraft/[id] — per-aircraft maintenance detail (M2-G-20).
@@ -26,10 +29,10 @@ import type {
  *   - listMelItems({aircraftId: id, status: "open"})
  *   - listSquawks({aircraftId: id, status: "open" | "in_progress"})
  *
- * Page is read-only at this scope. Close MEL / Resolve squawk actions
- * live on the dispatch maintenance panel (M2-G-17); M2-G-20b can pull
- * those dialogs into this page once they're decoupled from the
- * dispatch context.
+ * Maintenance (AIRWORTHINESS_WRITERS) can defer an item, close MELs and
+ * resolve squawks here (the M2-G-20b plan). Since 29 Sep the backend
+ * refuses those to anyone else, and the dispatch packet only offers
+ * them to maintenance; everyone else sees this page read-only.
  *
  * `status` doesn't accept multi-value yet on /maintenance/squawks, so
  * we issue two parallel calls and merge for open + in_progress —
@@ -41,6 +44,7 @@ export default async function AircraftDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  const canSignOff = hasAnyRole((await auth())?.roles ?? [], AIRWORTHINESS_WRITERS);
 
   let verdict: AirworthinessResponse | null = null;
   let mels: MelItemResponse[] = [];
@@ -111,13 +115,21 @@ export default async function AircraftDetailPage({
       <AircraftHeader verdict={verdict} summary={summary} />
 
       <section className="mt-8">
-        <SectionHeader title="Open MEL items" count={mels.length} />
-        <MelTable items={mels} />
+        <div className="flex items-start justify-between gap-3">
+          <SectionHeader title="Open MEL items" count={mels.length} />
+          {canSignOff && (
+            <MelDeferralDialog
+              aircraftId={verdict.aircraft.id}
+              tailNumber={verdict.aircraft.tail_number}
+            />
+          )}
+        </div>
+        <MelTable items={mels} canClose={canSignOff} />
       </section>
 
       <section className="mt-8">
         <SectionHeader title="Open squawks" count={squawks.length} />
-        <SquawksTable items={squawks} />
+        <SquawksTable items={squawks} canResolve={canSignOff} />
       </section>
     </div>
   );

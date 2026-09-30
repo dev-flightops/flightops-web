@@ -141,13 +141,14 @@ export async function getFlight(flightId: string): Promise<FlightDetail> {
 
 export async function releaseFlight(
   flightId: string,
-  /** M2-M-5 — when the dispatcher picked a PIC via ?pic=<uuid>,
-   *  pass it here so the backend runs the compliance gate. Legacy
-   *  callers without a PIC skip the check (M2 transitional). */
+  /** The PIC this packet reviewed. The backend reads the PIC from the
+   *  crew roster and refuses (409 pic_mismatch) when this names
+   *  someone else, or (pic_required) when the roster has none. */
   pilotUserId?: string | null,
-  /** M2-G-5 tail — when true, backend skips the pic_hard_blocked
-   *  gate because the caller has already recorded currency_overrides
-   *  rows (audit trail lives there). */
+  /** The packet recorded supervisor overrides. The backend no longer
+   *  takes the flag's word: each hard block needs an override on record
+   *  for this flight, written by a Chief Pilot, DO or Exec Admin, or it
+   *  refuses with 409 override_missing. */
   overridesAcknowledged?: boolean,
   /** HALT-2 — dispatcher acknowledged stale / missing route weather
    *  (?stale_wx_ack=1). The backend only consults it when the route
@@ -689,10 +690,14 @@ export type CrewSeat = "pic" | "sic";
 export async function getPicCompliance(
   pilotId: string,
   seat: CrewSeat = "pic",
+  /** The flight they are PIC of: each hard block then carries the
+   *  override on record for it (`override_id`). */
+  flightId?: string | null,
 ): Promise<PicComplianceResponse> {
   const seatParam = seat === "pic" ? "" : `&seat=${seat}`;
+  const flightParam = seat === "pic" && flightId ? `&flight_id=${flightId}` : "";
   return apiFetch<PicComplianceResponse>(
-    `/ops/compliance/pic-check?pilot_id=${pilotId}${seatParam}`,
+    `/ops/compliance/pic-check?pilot_id=${pilotId}${seatParam}${flightParam}`,
   );
 }
 

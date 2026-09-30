@@ -46,6 +46,26 @@ vi.mock("@/lib/api/maintenance", () => ({
   listSquawks,
 }));
 vi.mock("next/navigation", () => ({ notFound: notFoundSpy }));
+// The page reads the viewer's roles to decide what it offers (29 Sep).
+const { auth } = vi.hoisted(() => ({
+  auth: vi.fn(async () => ({ roles: ["dispatcher"] as string[] })),
+}));
+vi.mock("@/auth", () => ({ auth }));
+vi.mock("@/components/dispatch/packet/close-mel-dialog", () => ({
+  CloseMelDialog: ({ melItemId }: { melItemId: string }) => (
+    <button data-testid="close-mel" data-mel-id={melItemId}>Close</button>
+  ),
+}));
+vi.mock("@/components/dispatch/packet/resolve-squawk-dialog", () => ({
+  ResolveSquawkDialog: ({ squawkId }: { squawkId: string }) => (
+    <button data-testid="resolve-squawk" data-squawk-id={squawkId}>Resolve</button>
+  ),
+}));
+vi.mock("@/components/dispatch/packet/mel-deferral-dialog", () => ({
+  MelDeferralDialog: ({ tailNumber }: { tailNumber: string }) => (
+    <button data-testid="defer-mel">Defer an item on {tailNumber}</button>
+  ),
+}));
 
 import AircraftDetailPage from "./page";
 
@@ -276,5 +296,34 @@ describe("AircraftDetailPage", () => {
     // Header still renders — just without the TTAF / special-notes line
     expect(screen.getByText("N207GE")).toBeInTheDocument();
     expect(screen.queryByText(/TTAF/i)).not.toBeInTheDocument();
+  });
+});
+
+describe("AircraftDetailPage — maintenance sign-off", () => {
+  function withOneOfEach() {
+    getAirworthiness.mockResolvedValueOnce(makeVerdict());
+    listMelItems.mockResolvedValueOnce({ items: [makeMel("MEL-A")], total: 1 });
+    listSquawks
+      .mockResolvedValueOnce({ items: [makeSquawk("SQ-A")], total: 1 })
+      .mockResolvedValueOnce({ items: [], total: 0 });
+  }
+
+  it("lets maintenance defer, close and resolve on the aircraft's own page", async () => {
+    // The M2-G-20b plan: the home for these now the dispatch packet only
+    // offers them to maintenance (29 Sep).
+    auth.mockResolvedValueOnce({ roles: ["maintenance"] });
+    withOneOfEach();
+    await renderPage();
+    expect(screen.getByTestId("defer-mel")).toHaveTextContent("N207GE");
+    expect(screen.getByTestId("close-mel")).toBeInTheDocument();
+    expect(screen.getByTestId("resolve-squawk")).toBeInTheDocument();
+  });
+
+  it("is read-only for everyone else", async () => {
+    withOneOfEach();
+    await renderPage();
+    expect(screen.queryByTestId("defer-mel")).toBeNull();
+    expect(screen.queryByTestId("close-mel")).toBeNull();
+    expect(screen.queryByTestId("resolve-squawk")).toBeNull();
   });
 });

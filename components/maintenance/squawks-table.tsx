@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { ResolveSquawkDialog } from "@/components/dispatch/packet/resolve-squawk-dialog";
 import { cn } from "@/lib/utils";
 import type { SquawkResponse, SquawkSeverity } from "@/lib/api/types";
 import { formatBoth } from "@/lib/format/flight-time";
@@ -15,15 +16,22 @@ import { formatBoth } from "@/lib/format/flight-time";
  *   major     → yellow (advisory)
  *   minor     → muted (cosmetic; backend already drops these from the
  *               airworthiness verdict so they only surface in lists)
+ *
+ * `canResolve` adds Resolve for maintenance (AIRWORTHINESS_WRITERS,
+ * 29 Sep): resolving returns the aircraft to service, and the dispatch
+ * packet no longer offers it to anyone else.
  */
 export function SquawksTable({
   items,
   showAircraft = false,
   emptyMessage = "No open squawks.",
+  canResolve = false,
 }: {
   items: SquawkResponse[];
   showAircraft?: boolean;
   emptyMessage?: string;
+  /** The viewer may resolve squawks (AIRWORTHINESS_WRITERS). */
+  canResolve?: boolean;
 }) {
   if (items.length === 0) {
     return (
@@ -44,6 +52,11 @@ export function SquawksTable({
             <th className="px-3 py-2">Reported</th>
             <th className="px-3 py-2">By</th>
             <th className="px-3 py-2">Status</th>
+            {canResolve && (
+              <th className="px-3 py-2">
+                <span className="sr-only">Actions</span>
+              </th>
+            )}
           </tr>
         </thead>
         <tbody>
@@ -52,6 +65,7 @@ export function SquawksTable({
               key={sq.id}
               squawk={sq}
               showAircraft={showAircraft}
+              canResolve={canResolve}
             />
           ))}
         </tbody>
@@ -63,9 +77,11 @@ export function SquawksTable({
 function SquawkRow({
   squawk,
   showAircraft,
+  canResolve,
 }: {
   squawk: SquawkResponse;
   showAircraft: boolean;
+  canResolve: boolean;
 }) {
   const reported = formatBoth(squawk.reported_at);
 
@@ -105,6 +121,17 @@ function SquawkRow({
       <td className="px-3 py-2.5">
         <StatusChip status={squawk.status} />
       </td>
+      {canResolve && (
+        <td className="px-3 py-2.5 text-right">
+          {squawk.status !== "resolved" && (
+            <ResolveSquawkDialog
+              squawkId={squawk.id}
+              title={squawk.title}
+              severity={squawk.severity}
+            />
+          )}
+        </td>
+      )}
     </tr>
   );
 }
