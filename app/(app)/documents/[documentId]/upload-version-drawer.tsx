@@ -2,6 +2,8 @@
 
 import { useActionState, useState } from "react";
 
+import { formOversizeMessage, MAX_UPLOAD_LABEL } from "@/lib/upload-limits";
+
 import type { ActionResult } from "../actions";
 import { uploadVersionAction } from "../actions";
 
@@ -18,6 +20,8 @@ export function UploadVersionDrawer({ documentId }: { documentId: string }) {
     action,
     { ok: false },
   );
+
+  const [sizeError, setSizeError] = useState<string | null>(null);
 
   if (state.ok && open) setOpen(false);
 
@@ -60,7 +64,15 @@ export function UploadVersionDrawer({ documentId }: { documentId: string }) {
               </button>
             </header>
 
-            <form action={formAction} className="space-y-3">
+            <form
+              action={formAction}
+              onSubmit={(e) => {
+                const tooBig = formOversizeMessage(e.currentTarget);
+                setSizeError(tooBig);
+                if (tooBig) e.preventDefault();
+              }}
+              className="space-y-3"
+            >
               <label className="block">
                 <span className="mb-1 block text-[0.65rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
                   File <span className="ml-1 text-status-red">*</span>
@@ -72,7 +84,7 @@ export function UploadVersionDrawer({ documentId }: { documentId: string }) {
                   className="block w-full text-xs text-foreground file:mr-3 file:rounded-md file:border file:border-border file:bg-background file:px-2 file:py-1 file:text-xs file:font-semibold file:text-foreground/80 hover:file:bg-accent"
                 />
                 <p className="mt-1 text-[0.65rem] text-muted-foreground">
-                  Max 50 MB.
+                  Max {MAX_UPLOAD_LABEL}.
                 </p>
               </label>
 
@@ -88,9 +100,9 @@ export function UploadVersionDrawer({ documentId }: { documentId: string }) {
                 />
               </label>
 
-              {state.error && (
+              {(sizeError ?? state.error) && (
                 <p role="alert" className="text-xs text-status-red">
-                  {state.error}
+                  {sizeError ?? state.error}
                 </p>
               )}
 

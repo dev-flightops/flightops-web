@@ -1,8 +1,9 @@
 "use client";
 
-import { useActionState, useRef } from "react";
+import { useActionState, useRef, useState } from "react";
 
 import type { RampPhotoType } from "@/lib/api/types";
+import { formOversizeMessage } from "@/lib/upload-limits";
 
 import {
   uploadRampPhotoAction,
@@ -29,6 +30,7 @@ export function UploadRampPhotoForm({ flightId }: { flightId: string }) {
   const action = uploadRampPhotoAction.bind(null, flightId);
   const [state, dispatch, pending] = useActionState(action, INITIAL);
   const formRef = useRef<HTMLFormElement>(null);
+  const [sizeError, setSizeError] = useState<string | null>(null);
 
   // After a successful upload, clear the file input so the next
   // photo doesn't accidentally re-post the previous file.
@@ -40,6 +42,11 @@ export function UploadRampPhotoForm({ flightId }: { flightId: string }) {
     <form
       ref={formRef}
       action={dispatch}
+      onSubmit={(e) => {
+        const tooBig = formOversizeMessage(e.currentTarget);
+        setSizeError(tooBig);
+        if (tooBig) e.preventDefault();
+      }}
       className="space-y-3"
       encType="multipart/form-data"
     >
@@ -108,15 +115,15 @@ export function UploadRampPhotoForm({ flightId }: { flightId: string }) {
         className="w-full rounded-xl border border-border bg-background px-3 py-2 text-xs outline-none focus:border-primary focus:ring-2 focus:ring-primary/30 disabled:opacity-60"
       />
 
-      {state.status === "error" && (
+      {(sizeError || state.status === "error") && (
         <p
           role="alert"
           className="rounded-md border border-status-red/40 bg-status-red/10 px-3 py-2 text-xs text-status-red"
         >
-          {state.message}
+          {sizeError ?? (state.status === "error" ? state.message : null)}
         </p>
       )}
-      {state.status === "ok" && (
+      {state.status === "ok" && !sizeError && (
         <p className="rounded-md border border-status-green/40 bg-status-green/10 px-3 py-2 text-xs text-status-green">
           Photo uploaded.
         </p>

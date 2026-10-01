@@ -3,6 +3,8 @@
 import { useRouter } from "next/navigation";
 import { useActionState, useState } from "react";
 
+import { formOversizeMessage, MAX_UPLOAD_LABEL } from "@/lib/upload-limits";
+
 import { DOCUMENT_CATEGORIES } from "./filter-bar";
 import type { ActionResult } from "./actions";
 import { createDocumentAction } from "./actions";
@@ -25,6 +27,7 @@ export function UploadDocumentDrawer({
     FormData
   >(createDocumentAction, { ok: false });
   const router = useRouter();
+  const [sizeError, setSizeError] = useState<string | null>(null);
 
   if (state.ok && state.data && open) {
     setOpen(false);
@@ -76,7 +79,15 @@ export function UploadDocumentDrawer({
               </button>
             </header>
 
-            <form action={action} className="space-y-3">
+            <form
+              action={action}
+              onSubmit={(e) => {
+                const tooBig = formOversizeMessage(e.currentTarget);
+                setSizeError(tooBig);
+                if (tooBig) e.preventDefault();
+              }}
+              className="space-y-3"
+            >
               <Field label="Title" required>
                 <input
                   name="title"
@@ -114,7 +125,7 @@ export function UploadDocumentDrawer({
                   className="block w-full text-xs text-foreground file:mr-3 file:rounded-md file:border file:border-border file:bg-background file:px-2 file:py-1 file:text-xs file:font-semibold file:text-foreground/80 hover:file:bg-accent"
                 />
                 <p className="mt-1 text-[0.65rem] text-muted-foreground">
-                  Max 50 MB. PDF, DOCX, XLSX supported.
+                  Max {MAX_UPLOAD_LABEL}. PDF, DOCX, XLSX supported.
                 </p>
               </Field>
 
@@ -145,9 +156,9 @@ export function UploadDocumentDrawer({
                 />
               </Field>
 
-              {state.error && (
+              {(sizeError ?? state.error) && (
                 <p role="alert" className="text-xs text-status-red">
-                  {state.error}
+                  {sizeError ?? state.error}
                 </p>
               )}
 
