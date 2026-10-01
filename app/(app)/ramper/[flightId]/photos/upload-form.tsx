@@ -73,7 +73,10 @@ export function UploadRampPhotoForm({ flightId }: { flightId: string }) {
           <input
             type="file"
             name="photo"
-            accept="image/*"
+            // The types the ground service takes. Not image/*: iOS turns a
+            // camera HEIC into JPEG for a list like this, and a desktop
+            // picker greys out the HEIC files most browsers cannot show.
+            accept="image/jpeg,image/png,image/webp,image/gif"
             // capture="environment" so mobile browsers open the rear
             // camera directly instead of the photo picker — matches
             // legacy ramper flow.

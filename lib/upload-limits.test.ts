@@ -46,6 +46,12 @@ describe("upload limit", () => {
     );
   });
 
+  it("never calls a refused file the size of the limit", () => {
+    expect(oversizeMessage(fileOf(MAX_UPLOAD_BYTES + 1, "scan.pdf"))).toBe(
+      "scan.pdf is 3.9 MB. Files over 3.8 MB can't be uploaded yet.",
+    );
+  });
+
   it("checks every file input in a form", () => {
     expect(formOversizeMessage(formWith(fileOf(1_000)))).toBeNull();
     expect(formOversizeMessage(formWith(fileOf(1_000), fileOf(4_200_000, "scan.pdf")))).toMatch(

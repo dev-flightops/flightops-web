@@ -44,7 +44,11 @@ export function UploadDocumentDrawer({
     <>
       <button
         type="button"
-        onClick={() => setOpen(true)}
+        onClick={() => {
+          // A refusal from the last attempt is not about the next one.
+          setSizeError(null);
+          setOpen(true);
+        }}
         className={buttonClass}
       >
         {label}

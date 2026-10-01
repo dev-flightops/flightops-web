@@ -16,8 +16,9 @@
 export const MAX_UPLOAD_BYTES = 3_800_000;
 export const MAX_UPLOAD_LABEL = "3.8 MB";
 
+/** Rounded up, so a file just over the limit never reads as "3.8 MB". */
 function megabytes(bytes: number): string {
-  return `${(bytes / 1_000_000).toFixed(1)} MB`;
+  return `${(Math.ceil(bytes / 100_000) / 10).toFixed(1)} MB`;
 }
 
 /** Why a file can't be uploaded, or null when it fits. */

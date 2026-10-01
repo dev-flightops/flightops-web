@@ -37,10 +37,16 @@ export async function uploadRampPhotoAction(
       if (err.status === 413) {
         return { status: "error", message: `Photos over ${MAX_UPLOAD_LABEL} can't be uploaded yet.` };
       }
+      if (err.status === 422 && err.message.includes("photo_must_be_jpeg_png_webp_or_gif")) {
+        return {
+          status: "error",
+          message: "HEIC photos can't be shown in most browsers. Export it as JPEG and upload that.",
+        };
+      }
       if (err.status === 422 && err.message.includes("content_type_must_be_image")) {
         return {
           status: "error",
-          message: "That file isn't a photo. Use a JPEG, PNG, HEIC, WebP or GIF image.",
+          message: "That file isn't a photo. Use a JPEG, PNG, WebP or GIF image.",
         };
       }
       if (err.status === 422) return { status: "error", message: err.message || "Invalid photo." };
