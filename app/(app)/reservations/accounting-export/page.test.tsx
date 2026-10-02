@@ -1,5 +1,14 @@
 import { render, screen } from "@testing-library/react";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from "vitest";
 
 import type { AccountingExportResponse } from "@/lib/api/types";
 
@@ -227,8 +236,28 @@ describe("/reservations/accounting-export: who may see it", () => {
 });
 
 describe("/reservations/accounting-export: the date range", () => {
+  // These run in Alaska time. On a UTC runner (CI) a default range read
+  // off local days and one read off UTC days agree, so nothing would
+  // notice the wrong one; in Alaska they differ for 8 or 9 hours a day.
+  let savedTz: string | undefined;
+  beforeAll(() => {
+    savedTz = process.env.TZ;
+    process.env.TZ = "America/Anchorage";
+  });
+  afterAll(() => {
+    if (savedTz === undefined) delete process.env.TZ;
+    else process.env.TZ = savedTz;
+  });
+
   afterEach(() => {
     vi.useRealTimers();
+  });
+
+  it("R5: runs where local and UTC days differ (guards the tests below)", () => {
+    // 03:00Z on 1 Oct is 19:00 on 30 Sep in Alaska (AKDT, UTC-8).
+    const instant = new Date("2026-10-01T03:00:00Z");
+    expect(instant.getTimezoneOffset()).toBe(480);
+    expect(instant.getDate()).toBe(30);
   });
 
   function pinNow(iso: string) {
@@ -251,20 +280,22 @@ describe("/reservations/accounting-export: the date range", () => {
   });
 
   it("counts days in UTC, as the export dates flights", async () => {
-    // 23:30Z on 30 Sep is still the 30th in UTC (and mid-afternoon in
-    // Alaska): the default range is September's.
-    pinNow("2026-09-30T23:30:00Z");
+    // 03:00Z on 1 Oct is already October in UTC, though still the
+    // evening of 30 Sep in Alaska: the default range is 1 Oct alone,
+    // not September.
+    pinNow("2026-10-01T03:00:00Z");
     getAccountingExport.mockResolvedValue(emptyResponse());
 
     await renderPage();
 
     expect(getAccountingExport).toHaveBeenCalledWith({
-      start: "2026-09-01",
-      end: "2026-09-30",
+      start: "2026-10-01",
+      end: "2026-10-01",
     });
   });
 
   it("on the 1st, the default range is that one day", async () => {
+    // 00:30Z on 1 Oct: 16:30 on 30 Sep in Alaska.
     pinNow("2026-10-01T00:30:00Z");
     getAccountingExport.mockResolvedValue(emptyResponse());
 
