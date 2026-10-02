@@ -1,19 +1,22 @@
-import Link from "next/link";
-
 export const ACCOUNTING_EXPORT_PATH = "/reservations/accounting-export";
 
 /**
  * Accounting Export date range, as legacy `acct_export/review.html:22-45`
  * has it: a plain GET form, so Filter puts `?start=&end=` in the URL and
  * the page reads them on the next render. A filtered view can be shared
- * by copying the link. Reset is a link to the bare URL, whose range is
- * the 1st of this month to today.
+ * by copying the link.
+ *
+ * Reset is a plain link to the bare URL, as legacy's is (`:44`), so it
+ * reloads the page. A client-side link to the URL already showing (the
+ * default range) would keep dates typed but not applied. The bare URL's
+ * range is the 1st of this month to today.
  *
  * Legacy's Customer dropdown is left out until the export carries
  * customers: today it would list customers and filter nothing.
  *
  * The inputs are uncontrolled, so the page keys this component on the
- * range: a client-side Reset then remounts it with the new defaults.
+ * range: a client-side navigation to another range (the sub-nav's link
+ * to the bare URL, say) remounts it with that range's dates.
  */
 export function AcctExportFilterBar({
   start,
@@ -53,12 +56,12 @@ export function AcctExportFilterBar({
       >
         Filter
       </button>
-      <Link
+      <a
         href={ACCOUNTING_EXPORT_PATH}
         className="text-sm text-muted-foreground hover:text-foreground"
       >
         Reset
-      </Link>
+      </a>
     </form>
   );
 }
