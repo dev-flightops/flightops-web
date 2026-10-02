@@ -3,17 +3,19 @@ import type { ReactNode } from "react";
 import type { Subscription } from "@/lib/api/billing";
 
 /**
- * Dunning banner shown above the CurrentSubscriptionCard when Stripe
- * is retrying a failed charge for this tenant. Fed by the mirrored
- * `dunning_attempts` + `next_payment_attempt_at` fields the backend
- * populates on `invoice.payment_failed` webhooks (Slice A).
+ * Dunning banner shown above the CurrentSubscriptionCard when a payment
+ * has failed: Stripe is retrying (past due), has stopped retrying
+ * (unpaid), never took the first payment (incomplete, expired), or
+ * cancelled after its retries failed. Fed by the subscription's status,
+ * the mirrored `dunning_attempts` + `next_payment_attempt_at`, and the
+ * amount still due on open invoices.
  *
- * Copy is deliberately calm — the tenant still has service (Stripe
- * doesn't cancel until it exhausts retries), so we want them to
- * update their card without panic.
+ * Copy is deliberately calm and says nothing about access: the app does
+ * not limit a company that hasn't paid (that policy is the client's to
+ * set), so the banner only says what Stripe is doing and what is owed.
  *
- * The manage-payment CTA is passed in as a slot rather than
- * imported directly so the banner stays a pure server component
+ * The manage-billing CTA is passed in as a slot rather than imported
+ * directly so the banner stays a pure server component
  * (portal-button.tsx transitively pulls in Auth.js, which we don't
  * want in the banner's dependency tree for testing / SSR).
  */
@@ -22,57 +24,34 @@ export function DunningBanner({
   managePaymentSlot,
 }: {
   subscription: Subscription;
-  /** Rendered next to the copy when the tenant can still self-heal
-   *  (past_due / unpaid). Omitted on the canceled variant because
-   *  the portal is no longer the right recovery path. */
+  /** Rendered next to the copy while the company can still pay
+   *  (past due, unpaid, incomplete). Omitted once the subscription has
+   *  ended, because the way back is choosing a plan again. The page
+   *  leaves it out where billing isn't set up, and the copy then names
+   *  no action it doesn't offer. */
   managePaymentSlot?: ReactNode;
 }) {
-  if (!isDunning(subscription)) {
+  const copy = bannerCopy(subscription, managePaymentSlot != null);
+  if (copy === null) {
     return null;
   }
-  const nextRetry = subscription.next_payment_attempt_at;
-  const attempts = subscription.dunning_attempts;
-  const isCanceled =
-    subscription.status === "canceled" ||
-    subscription.status === "incomplete_expired";
   return (
     <section
       role="alert"
       aria-live="polite"
       className={
         "mb-6 rounded-xl border p-4 " +
-        (isCanceled
+        (copy.ended
           ? "border-status-red/40 bg-status-red/5 text-status-red"
           : "border-status-yellow/50 bg-status-yellow/10 text-status-yellow")
       }
     >
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-sm font-semibold">
-            {isCanceled
-              ? "Subscription canceled — payment could not be recovered"
-              : "Payment failed — Stripe is retrying"}
-          </p>
-          <p className="mt-1 text-xs text-foreground/80">
-            {isCanceled ? (
-              <>
-                Your subscription was canceled after Stripe exhausted
-                retry attempts. Access continues through the end of the
-                current billing period. Choose a plan below to resume
-                service.
-              </>
-            ) : (
-              <>
-                We couldn&rsquo;t charge the card on file
-                {attempts > 0 ? ` (${attempts} attempt${attempts === 1 ? "" : "s"} so far)` : ""}
-                {nextRetry ? ` — Stripe will retry on ${_fmtDateTime(nextRetry)}` : ""}.
-                Update your card via Manage payment to keep service
-                uninterrupted.
-              </>
-            )}
-          </p>
+          <p className="text-sm font-semibold">{copy.title}</p>
+          <p className="mt-1 text-xs text-foreground/80">{copy.body}</p>
         </div>
-        {!isCanceled && managePaymentSlot && (
+        {!copy.ended && managePaymentSlot && (
           <div className="flex-shrink-0">{managePaymentSlot}</div>
         )}
       </div>
@@ -80,24 +59,74 @@ export function DunningBanner({
   );
 }
 
-function isDunning(subscription: Subscription): boolean {
-  const dunningStatuses = new Set([
-    "past_due",
-    "unpaid",
-    "incomplete",
-    "incomplete_expired",
-  ]);
-  if (dunningStatuses.has(subscription.status)) return true;
-  // Also surface the banner when Stripe canceled the sub due to
-  // exhausted retries — the canceled_at is stamped but the tenant
-  // may not realize why.
-  if (
-    subscription.status === "canceled" &&
-    (subscription.dunning_attempts ?? 0) > 0
-  ) {
-    return true;
+function bannerCopy(
+  subscription: Subscription,
+  canManage: boolean,
+): { title: string; body: string; ended: boolean } | null {
+  const due =
+    subscription.amount_due_cents > 0
+      ? _money(subscription.amount_due_cents)
+      : null;
+  const attempts = subscription.dunning_attempts;
+  const tried =
+    attempts > 0 ? ` (${attempts} attempt${attempts === 1 ? "" : "s"} so far)` : "";
+  switch (subscription.status) {
+    case "past_due": {
+      const retry = subscription.next_payment_attempt_at
+        ? ` Stripe will try again on ${_fmtDateTime(subscription.next_payment_attempt_at)}.`
+        : "";
+      return {
+        title: "Payment failed — Stripe is retrying",
+        body:
+          `We couldn't charge the card on file${due ? ` for ${due}` : ""}${tried}.` +
+          retry +
+          (canManage ? " Update the card under Manage billing to keep the subscription." : ""),
+        ended: false,
+      };
+    }
+    case "unpaid":
+      return {
+        title: "Payment failed — Stripe has stopped retrying",
+        body:
+          `${due ? `${due} is due. ` : ""}Stripe tried the card on file${tried} and won't try again.` +
+          (canManage ? " Use Manage billing to update the card and pay what's due." : ""),
+        ended: false,
+      };
+    case "incomplete":
+      return {
+        title: "The first payment didn't go through",
+        body:
+          `Stripe couldn't take the first payment${due ? ` of ${due}` : ""}.` +
+          (canManage ? " Use Manage billing to update the card." : ""),
+        ended: false,
+      };
+    case "incomplete_expired":
+      return {
+        title: "The subscription didn't start",
+        body: "The first payment never went through, so Stripe dropped the subscription. To subscribe, choose a plan below.",
+        ended: true,
+      };
+    case "canceled":
+      // Only when Stripe cancelled after failed payments. A cancellation
+      // the company chose (no failed attempts) needs no alarm.
+      if ((attempts ?? 0) === 0) return null;
+      return {
+        title: "Subscription cancelled — payment could not be recovered",
+        body:
+          `Stripe cancelled the subscription after its retries failed${due ? `; ${due} is still due` : ""}.` +
+          " To subscribe again, choose a plan below.",
+        ended: true,
+      };
+    default:
+      return null;
   }
-  return false;
+}
+
+function _money(cents: number): string {
+  return `$${(cents / 100).toLocaleString(undefined, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
 }
 
 function _fmtDateTime(iso: string): string {

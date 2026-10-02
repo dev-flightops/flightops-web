@@ -4,8 +4,8 @@
  * billing router uses no internal prefix so gateway paths map 1:1
  * to service paths (unlike the academy router).
  *
- * Every endpoint is gated on `Role.EXEC_ADMIN` on the backend;
- * expect a 403 for pilots / chief pilots hitting these paths.
+ * Every endpoint admits an Executive Admin and a Director of
+ * Operations; expect a 403 for every other role.
  */
 
 import { apiFetch } from "./client";
@@ -20,10 +20,9 @@ export interface Plan {
   monthly_price_cents: number;
   currency: string;
   seat_limit: number | null;
-  /** True when Stripe is fully wired for this plan (price id
-   *  present). Frontend hides Choose Plan when false. Slice 1
-   *  (this PR) doesn't ship checkout — the field is included so
-   *  Slice 2 can consume it without another wrapper. */
+  /** True when this plan can be bought here: Stripe has a key, the
+   *  plan has a Stripe price, and the backend knows where to send the
+   *  browser back to. The page offers Choose plan only when true. */
   checkout_available: boolean;
 }
 
@@ -51,6 +50,25 @@ export interface Subscription {
   /** Stripe's next retry timestamp when a charge failed. Null on a
    *  healthy subscription. */
   next_payment_attempt_at: string | null;
+  /** What the company still owes on its open invoices, in cents. 0
+   *  when nothing is due. */
+  amount_due_cents: number;
+  /** Currency of `amount_due_cents`; null when nothing is due. */
+  amount_due_currency: string | null;
+}
+
+/** Statuses after which Stripe can never bill the subscription again.
+ *  Any other status (past due and unpaid included) is a subscription
+ *  that can still charge, so the page offers Manage billing, not a
+ *  second checkout. Mirrors ENDED_SUBSCRIPTION_STATUSES in the billing
+ *  service. */
+const ENDED_STATUSES: ReadonlySet<string> = new Set([
+  "canceled",
+  "incomplete_expired",
+]);
+
+export function subscriptionHasEnded(subscription: Pick<Subscription, "status">): boolean {
+  return ENDED_STATUSES.has(subscription.status);
 }
 
 export interface Invoice {
@@ -83,16 +101,22 @@ export interface BillingOverviewResponse {
   subscription: Subscription | null;
   invoices: Invoice[];
   plans: Plan[];
+  /** Checkout and the Customer portal can run on this deployment:
+   *  Stripe has a key and the backend knows where to send the browser
+   *  back to. False without Stripe, whatever subscription is shown. */
+  billing_ready: boolean;
 }
 
 /** One-shot payload for /settings/billing — subscription + last 12
  *  invoices + plan catalog in a single round trip. Use this on
- *  page load; individual endpoints below are for refreshes. */
+ *  page load; individual endpoints below are for refreshes. The
+ *  subscription is the latest whatever its status (a live one first),
+ *  so past due, unpaid and cancelled all arrive here. */
 export async function getBillingOverview(): Promise<BillingOverviewResponse> {
   return apiFetch<BillingOverviewResponse>("/billing/overview");
 }
 
-/** Current subscription (or `null` when the tenant has no live one). */
+/** The live subscription (or `null` when none can still bill). */
 export async function getSubscription(): Promise<Subscription | null> {
   return apiFetch<Subscription | null>("/billing/subscription");
 }
@@ -112,11 +136,11 @@ export async function listPlans(): Promise<PlanListResponse> {
 
 export type PlanChoiceCode = "starter" | "growth" | "scale";
 
+/** Where Stripe sends the browser afterwards is decided by the backend
+ *  from its configured web origin, so the request carries no URLs. */
 export interface CheckoutSessionRequest {
   plan_code: PlanChoiceCode;
   seat_count: number;
-  success_url: string;
-  cancel_url: string;
 }
 
 export interface CheckoutSessionResponse {
@@ -142,13 +166,11 @@ export async function createCheckoutSession(
 }
 
 /** Create a Stripe Customer Portal Session for the tenant's existing
- *  subscription. Return URL is where Stripe redirects when the user
- *  clicks Back / Done in the portal. */
-export async function createPortalSession(
-  returnUrl: string,
-): Promise<PortalSessionResponse> {
+ *  subscription. Stripe returns the browser to the billing page; the
+ *  backend builds that URL. */
+export async function createPortalSession(): Promise<PortalSessionResponse> {
   return apiFetch<PortalSessionResponse>("/billing/portal-session", {
     method: "POST",
-    body: JSON.stringify({ return_url: returnUrl }),
+    body: JSON.stringify({}),
   });
 }
