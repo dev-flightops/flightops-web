@@ -54,21 +54,20 @@ export default async function AccountingExportPage({
   let data: AccountingExportResponse | null = null;
   let forbidden = false;
   let loadError: string | null = null;
-  if (start > end) {
-    // The service would answer 422; say what is wrong rather than
-    // "unavailable".
-    loadError = "The From date is after the To date.";
-  } else {
-    try {
-      data = await getAccountingExport({ start, end });
-    } catch (err) {
-      const status = err instanceof ApiError ? err.status : 0;
-      forbidden = status === 403;
-      loadError =
-        status === 401
-          ? "Your session expired — please sign in again."
+  // Asked even when From is after To: the service checks the role
+  // first, so whoever it refuses gets the access panel whatever the
+  // range, and everyone else gets its 422, said plainly below.
+  try {
+    data = await getAccountingExport({ start, end });
+  } catch (err) {
+    const status = err instanceof ApiError ? err.status : 0;
+    forbidden = status === 403;
+    loadError =
+      status === 401
+        ? "Your session expired — please sign in again."
+        : status === 422 && start > end
+          ? "The From date is after the To date."
           : "Accounting export unavailable. Try refreshing in a moment.";
-    }
   }
 
   if (forbidden) {

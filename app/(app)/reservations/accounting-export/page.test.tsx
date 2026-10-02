@@ -312,16 +312,37 @@ describe("/reservations/accounting-export: the date range", () => {
     });
   });
 
-  it("From after To: says so, keeps the filter bar and does not ask the service", async () => {
+  it("From after To: the service's 422 is said plainly, and the filter bar stays", async () => {
+    getAccountingExport.mockRejectedValue(
+      new TestApiError(422, "/ops/accounting-export", '{"detail":"start_after_end"}'),
+    );
+
     await renderPage({ start: "2026-09-30", end: "2026-09-01" });
 
-    expect(getAccountingExport).not.toHaveBeenCalled();
+    expect(getAccountingExport).toHaveBeenCalledWith({
+      start: "2026-09-30",
+      end: "2026-09-01",
+    });
     expect(screen.getByRole("alert").textContent).toBe(
       "The From date is after the To date.",
     );
     expect(fromInput().value).toBe("2026-09-30");
     expect(toInput().value).toBe("2026-09-01");
     expect(screen.queryByText("Completed Flights")).toBeNull();
+  });
+
+  it("From after To for a role the service refuses: the access panel, not the filter bar", async () => {
+    // The service checks the role before the range, so it answers 403.
+    getAccountingExport.mockRejectedValue(
+      new TestApiError(403, "/ops/accounting-export", "Forbidden"),
+    );
+
+    await renderPage({ start: "2026-09-30", end: "2026-09-01" });
+
+    expect(screen.getByRole("alert").textContent).toBe(
+      "The accounting export is limited to executive admins and the director of operations.",
+    );
+    expect(screen.queryByRole("search")).toBeNull();
   });
 });
 
