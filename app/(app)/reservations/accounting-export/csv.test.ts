@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import type { AccountingExportRow } from "@/lib/api/types";
 
-import { CSV_HEADER, csvCell, rowsToCsv } from "./csv";
+import { csvCell, rowsToCsv } from "./csv";
 
 function row(overrides: Partial<AccountingExportRow> = {}): AccountingExportRow {
   return {
@@ -69,8 +69,10 @@ describe("csvCell: formula-safe", () => {
 });
 
 describe("rowsToCsv", () => {
-  it("starts with the header row", () => {
-    expect(rowsToCsv([]).split("\n")).toEqual([CSV_HEADER.join(",")]);
+  it("R6: starts with the header row, column by column", () => {
+    expect(rowsToCsv([])).toBe(
+      "Date,Flight #,Type,Origin,Destination,Aircraft,PIC,Customer,Rev Pax,Cargo lbs,Mail lbs,Notes",
+    );
   });
 
   it("T7: a note that begins =HYPERLINK( comes out as a cell that begins '=HYPERLINK(", () => {
