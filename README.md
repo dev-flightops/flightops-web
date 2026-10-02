@@ -52,6 +52,8 @@ The login page and Auth.js are wired for Google, Microsoft Entra ID, and Okta. E
 | Microsoft Entra ID | `AUTH_MICROSOFT_ENTRA_ID_CLIENT_ID`, `AUTH_MICROSOFT_ENTRA_ID_CLIENT_SECRET` |
 | Okta | `AUTH_OKTA_CLIENT_ID`, `AUTH_OKTA_CLIENT_SECRET` |
 
+SSO also needs `AUTH_EXCHANGE_SECRET`, the same value (32+ characters, e.g. `openssl rand -hex 32`) in **both** the web env and auth-service's env. auth-service issues a token for whatever email the exchange names, so it only accepts exchanges carrying this secret, which only the web server holds. Without it SSO is off: auth-service lists no providers and refuses the exchange.
+
 When a provider's env vars are set in **both** the web env (Vercel) and the backend env (Render) it appears as a "Sign in with …" button on the login page. The backend reports its enabled providers at `GET /auth/providers`, which the login page fetches server-side.
 
 **Provisioning rule:** SSO does not auto-create users. If `pilot@acme.com` signs in via Google but doesn't exist in our `users` table, the backend rejects with `403 user_not_provisioned`. An admin must invite/create the user first.
