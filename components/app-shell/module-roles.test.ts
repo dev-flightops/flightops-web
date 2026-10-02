@@ -48,9 +48,16 @@ describe("reservations_agent — the second half of the request", () => {
     expect(idsFor(AGENT)).toContain("reservations");
   });
 
-  it("sees every module inside reservations", () => {
+  it("sees every module inside reservations but the accounting export", () => {
+    // The export is the books, not bookings: Exec Admin and Director of
+    // Operations only, as legacy gated it (see the next describe).
     const dept = deptById("reservations");
-    expect(visibleModules(dept, AGENT)).toHaveLength(dept.children.length);
+    const ids = visibleModules(dept, AGENT).map((m) => m.id);
+    expect(ids).toEqual(
+      dept.children
+        .map((m) => m.id)
+        .filter((id) => id !== "reservations-acct-export"),
+    );
   });
 
   it("gets Flight Following and nothing else from operations", () => {
@@ -96,6 +103,33 @@ describe("reservations_agent — the second half of the request", () => {
     expect(idsFor(AGENT)).toContain("safety");
     expect(idsFor(AGENT)).toContain("academy");
   });
+});
+
+describe("Accounting Export: Exec Admin and Director of Operations only", () => {
+  // Mirrors ops-service's gate on /accounting-export, which refuses every
+  // other role. The menu shows it only when both the Reservations
+  // department and the module are visible.
+  const ADMITTED: readonly Role[] = ["exec_admin", "director_of_operations"];
+  const menuShowsExport = (role: Role) => {
+    const dept = deptById("reservations");
+    return (
+      canSeeDepartment(dept, [role]) &&
+      visibleModules(dept, [role]).some(
+        (m) => m.id === "reservations-acct-export",
+      )
+    );
+  };
+
+  it.each(ADMITTED)("shows it to %s", (role) => {
+    expect(menuShowsExport(role)).toBe(true);
+  });
+
+  it.each(ROLES.filter((r) => !ADMITTED.includes(r)))(
+    "hides it from %s",
+    (role) => {
+      expect(menuShowsExport(role)).toBe(false);
+    },
+  );
 });
 
 describe("operations is exhaustively listed", () => {
