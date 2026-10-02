@@ -7,6 +7,7 @@ import {
   type Plan,
   type Subscription,
   getBillingOverview,
+  subscriptionHasEnded,
 } from "@/lib/api/billing";
 
 import { ChooseCheckoutButton } from "./checkout-button";
@@ -14,26 +15,32 @@ import { DunningBanner } from "./dunning-banner";
 import { ManagePaymentButton } from "./portal-button";
 
 /**
- * /settings/billing — Billing & Subscription reader (Slice 1).
+ * /settings/billing — Billing & Subscription.
  *
- * Single-fetch page: `GET /billing/overview` returns the active
- * subscription + last 12 invoices + full plan catalog in one round
- * trip, so this surface renders without a fetch-storm.
+ * Single-fetch page: `GET /billing/overview` returns the company's
+ * latest subscription whatever its status (a live one first), the
+ * last 12 invoices and the plan catalog in one round trip, so this
+ * surface renders without a fetch-storm.
  *
- * Backend gates every /billing/* endpoint on Role.EXEC_ADMIN — a
- * chief_pilot or pilot hitting this page gets a 403 which we
- * translate into an "admin-only" empty state instead of surfacing
- * the raw HTTP error.
+ * The backend admits an Executive Admin and a Director of Operations
+ * to every /billing/* endpoint; anyone else gets a 403, which we
+ * translate into a "who can see this" panel instead of surfacing the
+ * raw HTTP error.
  *
- * Slice 1 = READ-ONLY: current plan, seat count, next billing
- * date, invoice history + PDF links, and the plan catalog for
- * reference. Slice 2 (separate PR) ships Choose Plan / Change Seat
- * Count / Portal-manage-payment via the Stripe SDK + webhooks.
+ * What it offers follows the subscription, as Stripe holds it:
+ *   - live (active, trial, past due, unpaid, incomplete, paused):
+ *     Manage billing, the Stripe Customer portal, for plan and seat
+ *     changes, the card and cancelling; never a second checkout,
+ *     which would charge twice.
+ *   - ended (cancelled, expired) or none: Choose plan.
+ * Neither is offered where billing isn't set up (`billing_ready`
+ * false: no Stripe key or no web origin); the plan section says so in
+ * plain words instead, whatever subscription the mirror holds.
  */
 export const dynamic = "force-dynamic";
 
-/** Query-string signals set by our own success_url / cancel_url on the
- *  checkout POST. Reading them here lets the page render a banner
+/** Query-string signals on the return URLs the billing service gives
+ *  Stripe for checkout and the portal. Reading them here lets the page render a banner
  *  after the Stripe round-trip so the user has a visible confirmation
  *  they aren't stuck on the same page with no acknowledgement. */
 type CheckoutOutcome = "success" | "cancel";
@@ -78,8 +85,8 @@ export default async function SettingsBillingPage({
           Billing &amp; Subscription
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Current plan, seat utilization, and invoice history for this
-          tenant. Plan changes + payment method land in the next slice.
+          Plan, seats, billing dates and invoices for this company, as
+          Stripe holds them.
         </p>
       </header>
 
@@ -102,17 +109,21 @@ export default async function SettingsBillingPage({
           {overview.subscription && (
             <DunningBanner
               subscription={overview.subscription}
-              managePaymentSlot={<ManagePaymentButton />}
+              managePaymentSlot={
+                overview.billing_ready ? <ManagePaymentButton /> : undefined
+              }
             />
           )}
           <CurrentSubscriptionCard
             subscription={overview.subscription}
             plans={overview.plans}
+            billingReady={overview.billing_ready}
           />
           <InvoiceHistoryCard invoices={overview.invoices} />
           <PlanCatalogCard
             plans={overview.plans}
-            currentPlanCode={overview.subscription?.plan_code ?? null}
+            subscription={overview.subscription}
+            billingReady={overview.billing_ready}
           />
         </div>
       )}
@@ -123,40 +134,47 @@ export default async function SettingsBillingPage({
 function CurrentSubscriptionCard({
   subscription,
   plans,
+  billingReady,
 }: {
   subscription: Subscription | null;
   plans: Plan[];
+  billingReady: boolean;
 }) {
   if (!subscription) {
     return (
       <section className="rounded-xl border border-dashed border-border bg-card/50 px-5 py-8 text-sm">
         <h2 className="text-base font-semibold text-foreground">
-          No active subscription
+          No subscription yet
         </h2>
         <p className="mt-1 text-xs text-muted-foreground">
-          This tenant has no live subscription on file. Choose a plan
-          from the catalog below once billing checkout ships in the
-          next slice.
+          This company has no subscription on file. The plans are listed
+          below.
         </p>
       </section>
     );
   }
   const plan = plans.find((p) => p.code === subscription.plan_code);
   const statusPill = _statusPill(subscription.status);
+  const ended = subscriptionHasEnded(subscription);
   const seatSummary =
-    plan?.seat_limit !== null && plan?.seat_limit !== undefined
+    !ended && plan?.seat_limit !== null && plan?.seat_limit !== undefined
       ? `${subscription.seat_count} of ${plan.seat_limit} seat${plan.seat_limit === 1 ? "" : "s"}`
       : `${subscription.seat_count} seat${subscription.seat_count === 1 ? "" : "s"}`;
   const monthlyDollars = plan
     ? _dollars(plan.monthly_price_cents * subscription.seat_count)
     : "—";
+  const amountDue =
+    subscription.amount_due_cents > 0
+      ? _dollars(subscription.amount_due_cents)
+      : null;
+  const endedOn = subscription.canceled_at ?? subscription.current_period_end;
 
   return (
     <section className="rounded-xl border border-border bg-card p-5">
       <div className="mb-4 flex flex-wrap items-baseline justify-between gap-3">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.06em] text-muted-foreground">
-            Current subscription
+            {ended ? "Last subscription" : "Current subscription"}
           </p>
           <h2 className="mt-1 text-xl font-bold text-foreground">
             {subscription.plan_name}
@@ -172,33 +190,56 @@ function CurrentSubscriptionCard({
         </span>
       </div>
       <dl className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm sm:grid-cols-4">
-        <Stat label="Monthly (this billing period)" value={monthlyDollars} />
-        <Stat label="Seats" value={seatSummary} />
-        <Stat
-          label="Period start"
-          value={_fmtDate(subscription.current_period_start)}
-        />
-        <Stat
-          label="Renews / expires"
-          value={_fmtDate(subscription.current_period_end)}
-        />
+        {ended ? (
+          <>
+            <Stat label="Seats" value={seatSummary} />
+            <Stat label="Ended" value={_fmtDate(endedOn)} />
+          </>
+        ) : (
+          <>
+            <Stat label="Monthly (this billing period)" value={monthlyDollars} />
+            <Stat label="Seats" value={seatSummary} />
+            <Stat
+              label="Period start"
+              value={_fmtDate(subscription.current_period_start)}
+            />
+            <Stat
+              label={subscription.cancel_at_period_end ? "Ends" : "Renews"}
+              value={_fmtDate(subscription.current_period_end)}
+            />
+          </>
+        )}
+        {amountDue && <Stat label="Amount due" value={amountDue} />}
       </dl>
-      {subscription.cancel_at_period_end && (
-        <div
-          role="status"
-          className="mt-4 rounded-md border border-status-yellow/40 bg-status-yellow/10 px-3 py-2 text-xs text-status-yellow"
-        >
-          Cancels at end of current period. No further invoices will be
-          generated after {_fmtDate(subscription.current_period_end)}.
-        </div>
+      {ended ? (
+        <p className="mt-4 border-t border-border pt-3 text-xs text-muted-foreground">
+          {subscription.status === "incomplete_expired"
+            ? "The first payment never went through, so this subscription didn't start."
+            : `This subscription ended on ${_fmtDate(endedOn)}.`}{" "}
+          To subscribe again, choose a plan below.
+        </p>
+      ) : (
+        <>
+          {subscription.cancel_at_period_end && (
+            <div
+              role="status"
+              className="mt-4 rounded-md border border-status-yellow/40 bg-status-yellow/10 px-3 py-2 text-xs text-status-yellow"
+            >
+              Cancels at end of current period. No further invoices will be
+              generated after {_fmtDate(subscription.current_period_end)}.
+            </div>
+          )}
+          {billingReady && (
+            <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-border pt-3">
+              <ManagePaymentButton />
+              <span className="text-[0.65rem] text-muted-foreground">
+                Change plan or seats, update the card, or cancel, in the
+                Stripe Customer portal.
+              </span>
+            </div>
+          )}
+        </>
       )}
-      <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-border pt-3">
-        <ManagePaymentButton />
-        <span className="text-[0.65rem] text-muted-foreground">
-          Update card, change seat count, or cancel via the Stripe
-          Customer Portal.
-        </span>
-      </div>
     </section>
   );
 }
@@ -255,7 +296,7 @@ function InvoiceHistoryCard({ invoices }: { invoices: Invoice[] }) {
                       </span>
                     </td>
                     <td className="px-2 py-2 text-right font-mono">
-                      {_dollarsFromMajor(inv.amount_paid_major)} {inv.currency}
+                      {_dollars(inv.amount_due_cents)} {inv.currency}
                     </td>
                     <td className="px-2 py-2 text-xs text-muted-foreground">
                       {inv.paid_at ? _fmtDate(inv.paid_at) : "—"}
@@ -298,14 +339,21 @@ function InvoiceHistoryCard({ invoices }: { invoices: Invoice[] }) {
 
 function PlanCatalogCard({
   plans,
-  currentPlanCode,
+  subscription,
+  billingReady,
 }: {
   plans: Plan[];
-  currentPlanCode: string | null;
+  subscription: Subscription | null;
+  billingReady: boolean;
 }) {
   const sorted = [...plans].sort(
     (a, b) => a.monthly_price_cents - b.monthly_price_cents,
   );
+  // A live subscription changes plan in the portal; a second checkout
+  // beside it would charge twice.
+  const live = subscription !== null && !subscriptionHasEnded(subscription);
+  const anyForSale = billingReady && plans.some((p) => p.checkout_available);
+  const offerCheckout = billingReady && !live;
   return (
     <section className="rounded-xl border border-border bg-card p-5">
       <p className="text-xs font-semibold uppercase tracking-[0.06em] text-muted-foreground">
@@ -314,9 +362,33 @@ function PlanCatalogCard({
       <h2 className="mt-1 mb-4 text-base font-semibold text-foreground">
         Available tiers
       </h2>
+      {!billingReady ? (
+        <p
+          role="note"
+          className="mb-4 rounded-md border border-border bg-muted/60 px-3 py-2 text-xs text-muted-foreground"
+        >
+          Billing isn&rsquo;t set up on this system yet, so plans
+          can&rsquo;t be bought or changed here. Ask your Peregrine
+          contact.
+        </p>
+      ) : live ? (
+        <p role="note" className="mb-4 text-xs text-muted-foreground">
+          To change the plan or the number of seats, use Manage billing
+          above.
+        </p>
+      ) : (
+        !anyForSale && (
+          <p
+            role="note"
+            className="mb-4 rounded-md border border-border bg-muted/60 px-3 py-2 text-xs text-muted-foreground"
+          >
+            No plan can be bought here yet. Ask your Peregrine contact.
+          </p>
+        )
+      )}
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         {sorted.map((plan) => {
-          const isCurrent = plan.code === currentPlanCode;
+          const isCurrent = live && plan.code === subscription?.plan_code;
           return (
             <div
               key={plan.id}
@@ -343,27 +415,22 @@ function PlanCatalogCard({
                   /mo · {plan.currency}
                 </span>
               </div>
-              <div className="mb-2 text-[0.65rem] text-muted-foreground">
-                {plan.seat_limit !== null
-                  ? `Up to ${plan.seat_limit} seat${plan.seat_limit === 1 ? "" : "s"}`
-                  : "Unlimited seats"}
-              </div>
-              {plan.description && (
-                <p className="text-xs text-muted-foreground">
-                  {plan.description}
-                </p>
-              )}
-              {!isCurrent && plan.checkout_available && (
+              <p className="text-xs text-muted-foreground">
+                {plan.description ??
+                  (plan.seat_limit !== null
+                    ? `Up to ${plan.seat_limit} seat${plan.seat_limit === 1 ? "" : "s"}.`
+                    : "No seat limit.")}
+              </p>
+              {offerCheckout && plan.checkout_available && (
                 <ChooseCheckoutButton
                   planCode={plan.code as "starter" | "growth" | "scale"}
                   defaultSeatCount={1}
                   seatLimit={plan.seat_limit}
                 />
               )}
-              {!isCurrent && !plan.checkout_available && (
+              {offerCheckout && anyForSale && !plan.checkout_available && (
                 <p className="mt-2 text-[0.6rem] italic text-muted-foreground">
-                  Checkout not yet wired for this plan — Stripe price
-                  id missing.
+                  Not available to buy here yet.
                 </p>
               )}
             </div>
@@ -422,12 +489,11 @@ function AdminOnlyPanel() {
   return (
     <section className="mb-6 rounded-xl border border-status-yellow/40 bg-status-yellow/10 px-5 py-6 text-sm">
       <h2 className="text-base font-semibold text-status-yellow">
-        Admin access required
+        Billing is restricted
       </h2>
       <p className="mt-1 text-xs text-foreground/80">
-        Billing information is restricted to exec-admin users. Ask your
-        FlightOps administrator for read access if you need to see plan
-        or invoice details.
+        Only an Executive Admin or a Director of Operations can see
+        billing. Ask one of them if you need the plan or invoices.
       </p>
     </section>
   );
@@ -456,30 +522,44 @@ function Breadcrumb() {
   );
 }
 
+const STATUS_LABELS: Record<string, string> = {
+  active: "Active",
+  trialing: "Trial",
+  past_due: "Past due",
+  unpaid: "Unpaid",
+  incomplete: "Incomplete",
+  incomplete_expired: "Expired",
+  canceled: "Cancelled",
+  paused: "Paused",
+};
+
 function _statusPill(status: string): { label: string; className: string } {
+  const label = STATUS_LABELS[status] ?? status;
   switch (status) {
     case "active":
     case "trialing":
       return {
-        label: status,
+        label,
         className: "border-status-green/40 bg-status-green/10 text-status-green",
       };
     case "past_due":
     case "unpaid":
+    case "incomplete":
+    case "paused":
       return {
-        label: status,
+        label,
         className:
           "border-status-yellow/40 bg-status-yellow/10 text-status-yellow",
       };
     case "canceled":
     case "incomplete_expired":
       return {
-        label: status,
+        label,
         className: "border-status-red/40 bg-status-red/10 text-status-red",
       };
     default:
       return {
-        label: status,
+        label,
         className: "border-border bg-muted text-muted-foreground",
       };
   }
@@ -522,14 +602,6 @@ function _invoiceStatusPill(status: string): { label: string; className: string 
 
 function _dollars(cents: number): string {
   return `$${(cents / 100).toLocaleString(undefined, {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })}`;
-}
-
-function _dollarsFromMajor(major: string): string {
-  const n = Number(major);
-  return `$${n.toLocaleString(undefined, {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   })}`;
