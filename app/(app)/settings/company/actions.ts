@@ -6,6 +6,8 @@ import { z } from "zod";
 import { ApiError } from "@/lib/api/client";
 import { updateCompanyProfile } from "@/lib/api/auth";
 
+import { parseCargoRate, parseTaxPercent, parseTermsDays } from "./invoicing";
+
 /**
  * /settings/company server action. Validates with zod, PATCHes auth-service,
  * revalidates the page on success.
@@ -14,6 +16,27 @@ import { updateCompanyProfile } from "@/lib/api/auth";
  * null so a cleared field actually clears the row (instead of being saved as
  * "").
  */
+
+/** One of the invoicing fields: the parsed value, null when blank, and a
+ *  field error in words when the parser refuses it. Absent from the form
+ *  data means "leave it alone", as for every other field here. */
+function invoicingField<T>(
+  parse: (input: string) => T | null | undefined,
+  message: string,
+) {
+  return z
+    .string()
+    .optional()
+    .transform((v, ctx) => {
+      if (v === undefined) return undefined;
+      const parsed = parse(v);
+      if (parsed === undefined) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message });
+        return z.NEVER;
+      }
+      return parsed;
+    });
+}
 
 const nullableTrimmed = (max: number) =>
   z
@@ -70,6 +93,21 @@ const Schema = z.object({
     .transform((v) => (v === "" ? null : v))
     .nullable()
     .optional(),
+  // Customer invoicing. Checked here, in the same terms as auth-service,
+  // so the form says what is wrong rather than coming back as a 422.
+  cargo_rate_per_lb: invoicingField(
+    parseCargoRate,
+    "A rate per lb like 0.4750: up to four decimals, not negative.",
+  ),
+  // The form shows a percentage; the service stores the fraction.
+  invoice_tax_percent: invoicingField(
+    parseTaxPercent,
+    "A percentage from 0 to 100, like 7.5, with up to three decimals.",
+  ),
+  invoice_terms_days: invoicingField(
+    parseTermsDays,
+    "Whole days from 0 to 365.",
+  ),
 });
 
 export type UpdateCompanyState =
@@ -93,8 +131,14 @@ export async function updateCompanyAction(
     return { status: "field-errors", errors };
   }
 
+  const { invoice_tax_percent, ...fields } = parsed.data;
+  const body =
+    invoice_tax_percent === undefined
+      ? fields
+      : { ...fields, invoice_tax_rate: invoice_tax_percent };
+
   try {
-    await updateCompanyProfile(parsed.data);
+    await updateCompanyProfile(body);
   } catch (err) {
     if (err instanceof ApiError) {
       if (err.status === 401) {

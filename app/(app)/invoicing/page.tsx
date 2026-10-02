@@ -13,6 +13,7 @@ import {
   STATUS_LABELS,
   statusClasses,
 } from "./money";
+import { RaiseInvoices } from "./raise-invoices";
 
 /**
  * /invoicing — what customers owe us for flights flown.
@@ -82,6 +83,9 @@ export default async function InvoicingPage({
             {status ? ` · ${STATUS_LABELS[status].toLowerCase()}` : ""}
           </p>
         </div>
+        {/* Where legacy had "+ New Invoice". Hidden with the list when
+            the list is refused: the same two roles may raise. */}
+        {!loadError && <RaiseInvoices />}
         {!loadError && (
           <div className="text-right">
             <div className="text-[0.65rem] font-semibold uppercase tracking-wider text-muted-foreground">
@@ -127,7 +131,7 @@ export default async function InvoicingPage({
             <p className="rounded-lg border border-dashed border-border bg-card/40 px-4 py-16 text-center text-sm text-muted-foreground">
               {status
                 ? `No ${STATUS_LABELS[status].toLowerCase()} invoices.`
-                : "No invoices yet. They are raised from a flown flight on the dispatch board."}
+                : "No invoices yet. Raise a flown flight's invoices with Raise invoices above."}
             </p>
           ) : (
             <div className="overflow-x-auto rounded-lg border border-border bg-card">

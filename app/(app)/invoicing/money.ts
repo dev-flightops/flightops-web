@@ -17,6 +17,26 @@ export function money(cents: number): string {
   return cents < 0 ? `(${text})` : text;
 }
 
+/** A line's unit price: to the cent, or to four decimals when it has
+ *  fractions of a cent, like the PDF (`_unit` in pdf.py). A fare reads
+ *  "1,200.30"; a cargo rate of 0.4750 per lb reads "0.4750", so 100 lb
+ *  multiplies out to the 47.50 beside it. Lines from before the service
+ *  kept four decimals have none; their cents are their price. */
+export function unitPrice(line: {
+  unit_price?: string | null;
+  unit_price_cents: number;
+}): string {
+  const m = /^(-?)(\d+)(?:\.(\d*))?$/.exec((line.unit_price ?? "").trim());
+  if (!m) return money(line.unit_price_cents);
+  const [, sign, whole, rawFrac = ""] = m;
+  const frac = rawFrac.slice(0, 4).padEnd(4, "0");
+  if (frac.endsWith("00")) {
+    return money(Number(`${sign}${whole}${frac.slice(0, 2)}`));
+  }
+  const text = `${Number(whole).toLocaleString("en-US")}.${frac}`;
+  return sign ? `(${text})` : text;
+}
+
 /** Thousandths to a readable quantity — one passenger reads "1", not
  *  "1.000", while 137.5 lbs of cargo keeps its half. */
 export function quantity(milli: number): string {

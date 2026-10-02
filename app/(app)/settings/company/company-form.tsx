@@ -6,6 +6,7 @@ import { Spinner } from "@/components/ui/spinner";
 import type { CompanyProfileResponse } from "@/lib/api/types";
 
 import { updateCompanyAction, type UpdateCompanyState } from "./actions";
+import { taxPercentFromFraction } from "./invoicing";
 
 export function CompanyForm({ profile }: { profile: CompanyProfileResponse }) {
   const [state, action, pending] = useActionState<
@@ -159,6 +160,41 @@ export function CompanyForm({ profile }: { profile: CompanyProfileResponse }) {
             type="email"
             defaultValue={profile.ops_email ?? ""}
             error={fieldError("ops_email")}
+          />
+        </div>
+      </Section>
+
+      {/* What every invoice raised from a flight is priced and dated
+          with. Blank is a real state for each, and the hints say what
+          it does, because a cargo line with no rate cannot be sent. */}
+      <Section title="Invoicing">
+        <div className="grid gap-4 sm:grid-cols-3">
+          <Field
+            name="cargo_rate_per_lb"
+            label="Cargo Rate (per lb)"
+            inputMode="decimal"
+            placeholder="0.4750"
+            hint="Dollars per pound, up to four decimals. Prices each cargo line; left blank, cargo is raised with no price and the invoice can't be marked as sent."
+            defaultValue={profile.cargo_rate_per_lb ?? ""}
+            error={fieldError("cargo_rate_per_lb")}
+          />
+          <Field
+            name="invoice_tax_percent"
+            label="Invoice Tax Rate (%)"
+            inputMode="decimal"
+            placeholder="7.5"
+            hint="Percent of each invoice's subtotal, 0 to 100. Blank adds no tax."
+            defaultValue={taxPercentFromFraction(profile.invoice_tax_rate)}
+            error={fieldError("invoice_tax_percent")}
+          />
+          <Field
+            name="invoice_terms_days"
+            label="Payment Terms (days)"
+            inputMode="numeric"
+            placeholder="30"
+            hint="Days from the invoice date to the due date, 0 to 365. Blank means 30."
+            defaultValue={profile.invoice_terms_days ?? ""}
+            error={fieldError("invoice_terms_days")}
           />
         </div>
       </Section>

@@ -1184,6 +1184,13 @@ export interface CompanyProfileResponse {
    *  the schedule export refuses to run rather than guessing one. */
   carrier_code: string | null;
   fiscal_year_end: string | null; // ISO date (yyyy-mm-dd)
+  /** Customer invoicing. Decimal strings as stored: dollars per lb to
+   *  four places ("0.4750"), and the tax rate as a fraction ("0.07500"
+   *  is 7.5 %). null means unset: cargo lines are raised unpriced, no
+   *  tax is added, and invoices fall due in 30 days. */
+  cargo_rate_per_lb: string | null;
+  invoice_tax_rate: string | null;
+  invoice_terms_days: number | null;
   /** Per-tenant display name for the loyalty program. Operators brand
    *  it themselves — "Miles", "Frequent Flyer", a name in their own
    *  language — and a fresh tenant sees "Rewards Program" until they
@@ -1213,6 +1220,13 @@ export interface CompanyProfileUpdateRequest {
   part_135_certificate?: string | null;
   carrier_code?: string | null;
   fiscal_year_end?: string | null;
+  /** Dollars per lb, up to four decimals, sent as a string so it is
+   *  not rounded on the way. */
+  cargo_rate_per_lb?: string | null;
+  /** A fraction from 0 to 1, up to five decimals: "0.07500" is 7.5 %. */
+  invoice_tax_rate?: string | null;
+  /** 0 to 365. */
+  invoice_terms_days?: number | null;
   rewards_program_name?: string;
   /** #RRGGBB or #RRGGBBAA. Empty string clears the override. */
   brand_primary_color?: string | null;

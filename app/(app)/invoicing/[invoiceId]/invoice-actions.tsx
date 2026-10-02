@@ -101,7 +101,9 @@ export function InvoiceActions({
             disabled={pending !== null}
             className="rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-dark disabled:opacity-50"
           >
-            {pending === "send" ? "Sending…" : "Send"}
+            {/* Says what it does: nothing is emailed yet, the invoice
+                is only recorded as sent (#25, item 8). */}
+            {pending === "send" ? "Marking…" : "Mark as sent"}
           </button>
         )}
 
@@ -133,8 +135,9 @@ export function InvoiceActions({
       {canSend && hasUnpricedLines && (
         // In place of the button, not as an error after clicking it.
         <p className="rounded-md border border-status-yellow/30 bg-status-yellow/10 px-3 py-2 text-xs text-status-yellow">
-          This invoice has a line with no price. Set a cargo rate in
-          company settings and regenerate before sending it.
+          This invoice has a line with no price, so it can&apos;t be marked
+          as sent. Set the cargo rate in Settings → Company, then void
+          this draft and raise the flight&apos;s invoices again.
         </p>
       )}
 
