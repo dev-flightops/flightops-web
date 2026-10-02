@@ -25,7 +25,9 @@ import {
  *
  * Outstanding is a tenant-wide figure from the service, not a sum of
  * the rows on screen. A header total that changes when you paginate is
- * worse than no header total.
+ * worse than no header total. It is what customers owe: sent invoices
+ * less the payments against them. Drafts are not counted until they
+ * are sent, the same rule as AR aging, so the two pages agree.
  *
  * A draft carrying an unpriced line is flagged in the list rather than
  * only on the detail page. It cannot be sent, and finding that out
@@ -93,7 +95,7 @@ export default async function InvoicingPage({
             {/* Said plainly: this covers the whole operation, not the
                 rows below, which may be filtered. */}
             <div className="text-[0.65rem] text-muted-foreground">
-              draft + sent, all invoices
+              sent, less payments · all invoices
             </div>
           </div>
         )}

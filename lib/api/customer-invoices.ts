@@ -67,18 +67,49 @@ export interface CustomerInvoice {
   has_unpriced_lines: boolean;
 }
 
+/** What the money arrived as. The record-payment form offers cash,
+ *  check, card, transfer ("ACH or wire") and other; `account` and
+ *  `comp` are accepted by the service but kept out of the form until
+ *  the client decides how they count. */
+export type PaymentMethod =
+  | "cash"
+  | "card"
+  | "check"
+  | "transfer"
+  | "account"
+  | "comp"
+  | "other";
+
+export interface CustomerPayment {
+  id: string;
+  amount_cents: number;
+  method: PaymentMethod;
+  /** When the money arrived, not when it was recorded. */
+  received_on: string;
+  reference: string | null;
+  notes: string | null;
+}
+
 export interface CustomerInvoiceDetail extends CustomerInvoice {
   lines: InvoiceLine[];
   void_reason: string | null;
   notes: string | null;
+  /** Sum of `payments`. */
+  paid_cents: number;
+  /** The total less payments, never below zero; zero for a void
+   *  invoice. */
+  outstanding_cents: number;
+  /** Oldest first, by the date the money arrived. */
+  payments: CustomerPayment[];
 }
 
 export interface CustomerInvoiceList {
   items: CustomerInvoice[];
   total: number;
-  /** Everything not paid and not void, across the tenant rather than
-   *  the page — a header total that changes when you paginate is worse
-   *  than none. */
+  /** Sent invoices' totals less the payments against them, across the
+   *  tenant rather than the page — a header total that changes when you
+   *  paginate is worse than none. Drafts are not counted: nobody has
+   *  been asked for them yet. The same rule as AR aging. */
   outstanding_cents: number;
 }
 
@@ -116,13 +147,50 @@ export async function sendCustomerInvoice(
   );
 }
 
+/** Close a sent invoice as paid in full. The service records whatever
+ *  is still outstanding as one payment, by `method`, dated `paidOn`
+ *  (today when omitted), before it closes the invoice. */
 export async function markCustomerInvoicePaid(
   invoiceId: string,
+  method: PaymentMethod,
   paidOn?: string,
 ): Promise<CustomerInvoice> {
   return apiFetch<CustomerInvoice>(
     `/billing/customer-invoices/${invoiceId}/paid`,
-    { method: "POST", body: JSON.stringify({ paid_on: paidOn ?? null }) },
+    {
+      method: "POST",
+      body: JSON.stringify({ method, paid_on: paidOn ?? null }),
+    },
+  );
+}
+
+export interface RecordPaymentInput {
+  amount_cents: number;
+  method: PaymentMethod;
+  received_on: string;
+  reference: string | null;
+}
+
+export interface RecordPaymentResult {
+  payment: CustomerPayment;
+  /** The invoice after the payment. */
+  invoice: CustomerInvoice;
+  paid_cents: number;
+  outstanding_cents: number;
+  /** True when this payment closed the invoice. */
+  settled: boolean;
+}
+
+/** Money received against a sent invoice, part or all of what is
+ *  outstanding. The service refuses more than the outstanding balance,
+ *  a date in the future, and drafts and voids. */
+export async function recordCustomerInvoicePayment(
+  invoiceId: string,
+  input: RecordPaymentInput,
+): Promise<RecordPaymentResult> {
+  return apiFetch<RecordPaymentResult>(
+    `/billing/customer-invoices/${invoiceId}/payments`,
+    { method: "POST", body: JSON.stringify(input) },
   );
 }
 
