@@ -14,13 +14,18 @@ import {
   STATUS_LABELS,
   statusClasses,
 } from "../money";
+import { METHOD_LABELS } from "../payments";
 import { InvoiceActions } from "./invoice-actions";
+import { RecordPayment } from "./record-payment";
 
 /**
  * /invoicing/{id} — one invoice, as the customer will see it.
  *
  * Legacy's `templates/invoicing/invoice_detail.html`: header, bill-to
- * and flight, lines, totals, and the lifecycle buttons.
+ * and flight, lines, totals, and the lifecycle buttons. Then what
+ * legacy's page did not have: what has been paid, what is outstanding,
+ * the payments themselves, and a form to record one. Legacy's invoice
+ * carried only a paid date, so a part payment had nowhere to go.
  *
  * The layout deliberately mirrors the PDF
  * (`services/billing/app/customer_invoicing/pdf.py`) — same order, same
@@ -113,6 +118,8 @@ export default async function InvoiceDetailPage({
           invoiceNumber={invoice.invoice_number}
           status={invoice.status}
           hasUnpricedLines={invoice.has_unpriced_lines}
+          paidCents={invoice.paid_cents}
+          outstandingCents={invoice.outstanding_cents}
         />
       </header>
 
@@ -211,6 +218,89 @@ export default async function InvoiceDetailPage({
           </tfoot>
         </table>
       </section>
+
+      {/* A draft cannot take money until it is sent; anything else
+          that has had money shows it, a void included. */}
+      {(invoice.status !== "draft" || invoice.payments.length > 0) && (
+        <section
+          aria-labelledby="payments-heading"
+          className="mt-4 rounded-lg border border-border bg-card p-5"
+        >
+          <div className="mb-3 flex flex-wrap items-start justify-between gap-4">
+            <h2
+              id="payments-heading"
+              className="text-[0.65rem] font-semibold uppercase tracking-wider text-muted-foreground"
+            >
+              Payments
+            </h2>
+            <dl className="flex gap-6 text-right">
+              <div>
+                <dt className="text-[0.6rem] font-semibold uppercase tracking-wider text-muted-foreground">
+                  Paid
+                </dt>
+                <dd className="text-sm font-semibold tabular-nums text-foreground">
+                  {money(invoice.paid_cents)}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-[0.6rem] font-semibold uppercase tracking-wider text-muted-foreground">
+                  Outstanding
+                </dt>
+                <dd className="text-sm font-semibold tabular-nums text-foreground">
+                  {money(invoice.outstanding_cents)}
+                </dd>
+              </div>
+            </dl>
+          </div>
+
+          {invoice.payments.length === 0 ? (
+            <p className="mb-3 text-sm text-muted-foreground">
+              No payments recorded.
+            </p>
+          ) : (
+            <div className="mb-3 overflow-x-auto">
+              <table className="w-full text-sm">
+                <caption className="sr-only">
+                  Payments on invoice {invoice.invoice_number}
+                </caption>
+                <thead>
+                  <tr className="border-b border-border text-left text-[0.6rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+                    <th scope="col" className="py-2 pr-4">Received</th>
+                    <th scope="col" className="py-2 pr-4">Method</th>
+                    <th scope="col" className="py-2 pr-4">Reference</th>
+                    <th scope="col" className="py-2 text-right">Amount</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {invoice.payments.map((p) => (
+                    <tr key={p.id} className="border-b border-border last:border-0">
+                      <td className="py-2 pr-4 tabular-nums text-foreground">
+                        {p.received_on}
+                      </td>
+                      <td className="py-2 pr-4 text-foreground">
+                        {METHOD_LABELS[p.method] ?? p.method}
+                      </td>
+                      <td className="py-2 pr-4 text-muted-foreground">
+                        {p.reference ?? "—"}
+                      </td>
+                      <td className="py-2 text-right tabular-nums text-foreground">
+                        {money(p.amount_cents)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {invoice.status === "sent" && invoice.outstanding_cents > 0 && (
+            <RecordPayment
+              invoiceId={invoice.id}
+              outstandingCents={invoice.outstanding_cents}
+            />
+          )}
+        </section>
+      )}
 
       {invoice.notes && (
         <section className="mt-4 rounded-lg border border-border bg-card p-5">

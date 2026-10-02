@@ -6,9 +6,13 @@ import { ApiError, SessionExpiredError } from "@/lib/api/client";
 import {
   getCustomerInvoicePdfBase64,
   markCustomerInvoicePaid,
+  recordCustomerInvoicePayment,
   sendCustomerInvoice,
   voidCustomerInvoice,
 } from "@/lib/api/customer-invoices";
+
+import { money } from "./money";
+import { isFormMethod, METHOD_LABELS, parseAmount } from "./payments";
 
 /**
  * Invoice lifecycle actions, from the server.
@@ -35,6 +39,11 @@ const REFUSALS: Record<string, string> = {
     "This invoice has a line with no price yet. Set a cargo rate in " +
     "company settings, regenerate, and try again.",
   paid_on_in_the_future: "A payment cannot be dated in the future.",
+  received_on_in_the_future: "A payment cannot be dated in the future.",
+  invoice_has_payments:
+    "This invoice has payments recorded against it, so it cannot be voided.",
+  invoice_not_sent_yet: "Send the invoice before recording a payment on it.",
+  invoice_is_void: "This invoice is void and cannot take a payment.",
   invoice_not_found: "That invoice no longer exists.",
 };
 
@@ -47,6 +56,14 @@ function explain(err: unknown, fallback: string): string {
     // otherwise say what happened without pasting raw JSON at the user.
     for (const [slug, sentence] of Object.entries(REFUSALS)) {
       if (String(err.message).includes(slug)) return sentence;
+    }
+    // Usually somebody else's payment landed first, so say what is
+    // left rather than only that it was refused.
+    const over = String(err.message).match(
+      /payment_exceeds_outstanding_of_(-?\d+)/,
+    );
+    if (over) {
+      return `That is more than the ${money(Math.max(0, Number(over[1])))} still outstanding.`;
     }
     const transition = String(err.message).match(
       /cannot_go_from_(\w+?)_to_(\w+)/,
@@ -72,17 +89,76 @@ export async function sendInvoiceAction(
   }
 }
 
+/** Paid in full: the service records the outstanding balance as one
+ *  payment by `method`, dated `paidOn`, and closes the invoice. */
 export async function markPaidAction(
   invoiceId: string,
+  method: string,
   paidOn: string,
 ): Promise<InvoiceActionState> {
+  if (!isFormMethod(method)) {
+    return { status: "error", message: "Choose how the money arrived." };
+  }
   try {
-    await markCustomerInvoicePaid(invoiceId, paidOn || undefined);
+    await markCustomerInvoicePaid(invoiceId, method, paidOn || undefined);
     revalidatePath("/invoicing");
     revalidatePath(`/invoicing/${invoiceId}`);
     return { status: "ok", message: "Marked paid." };
   } catch (err) {
     return { status: "error", message: explain(err, "Could not record it") };
+  }
+}
+
+export interface RecordPaymentForm {
+  /** As typed: "250", "250.00", "1,250.00". */
+  amount: string;
+  method: string;
+  /** YYYY-MM-DD, the day the money arrived. */
+  receivedOn: string;
+  reference: string;
+}
+
+/** Money received against a sent invoice. The form checks the same
+ *  things first; these checks are for whatever reaches the action
+ *  without it, and the service has the last word on the balance. */
+export async function recordPaymentAction(
+  invoiceId: string,
+  form: RecordPaymentForm,
+): Promise<InvoiceActionState> {
+  const cents = parseAmount(form.amount);
+  if (cents === null || cents <= 0) {
+    return {
+      status: "error",
+      message: "Enter the amount received, like 250.00.",
+    };
+  }
+  if (!isFormMethod(form.method)) {
+    return { status: "error", message: "Choose how the money arrived." };
+  }
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(form.receivedOn)) {
+    return { status: "error", message: "Enter the date the money arrived." };
+  }
+  try {
+    const result = await recordCustomerInvoicePayment(invoiceId, {
+      amount_cents: cents,
+      method: form.method,
+      received_on: form.receivedOn,
+      reference: form.reference.trim() || null,
+    });
+    revalidatePath("/invoicing");
+    revalidatePath(`/invoicing/${invoiceId}`);
+    const recorded = `Recorded ${money(cents)} (${METHOD_LABELS[form.method]}).`;
+    return {
+      status: "ok",
+      message: result.settled
+        ? `${recorded} The invoice is paid.`
+        : `${recorded} ${money(result.outstanding_cents)} still outstanding.`,
+    };
+  } catch (err) {
+    return {
+      status: "error",
+      message: explain(err, "Could not record the payment"),
+    };
   }
 }
 
