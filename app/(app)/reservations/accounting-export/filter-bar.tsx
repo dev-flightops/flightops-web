@@ -1,37 +1,40 @@
-"use client";
+import Link from "next/link";
 
-import { useState } from "react";
+export const ACCOUNTING_EXPORT_PATH = "/reservations/accounting-export";
 
-/** Accounting Export filter — matches legacy `acct_export/review.html`.
- * State is client-local until the ops-service completed-flights
- * aggregate endpoint lands. */
-export function AcctExportFilterBar() {
-  const today = new Date();
-  const monthAgo = new Date(today);
-  monthAgo.setDate(monthAgo.getDate() - 30);
-  const isoDate = (d: Date) => d.toISOString().slice(0, 10);
-
-  const [start, setStart] = useState(isoDate(monthAgo));
-  const [end, setEnd] = useState(isoDate(today));
-  const [customer, setCustomer] = useState("");
-  const reset = () => {
-    setStart(isoDate(monthAgo));
-    setEnd(isoDate(today));
-    setCustomer("");
-  };
-
+/**
+ * Accounting Export date range, as legacy `acct_export/review.html:22-45`
+ * has it: a plain GET form, so Filter puts `?start=&end=` in the URL and
+ * the page reads them on the next render. A filtered view can be shared
+ * by copying the link. Reset is a link to the bare URL, whose range is
+ * the 1st of this month to today.
+ *
+ * Legacy's Customer dropdown is left out until the export carries
+ * customers: today it would list customers and filter nothing.
+ *
+ * The inputs are uncontrolled, so the page keys this component on the
+ * range: a client-side Reset then remounts it with the new defaults.
+ */
+export function AcctExportFilterBar({
+  start,
+  end,
+}: {
+  start: string;
+  end: string;
+}) {
   return (
     <form
       role="search"
+      method="get"
+      action={ACCOUNTING_EXPORT_PATH}
       className="mb-5 flex flex-wrap items-end gap-4 rounded-lg border border-border bg-card px-4 py-3"
-      onSubmit={(e) => e.preventDefault()}
     >
       <label>
         <span className="mb-1 block text-xs text-muted-foreground">From</span>
         <input
           type="date"
-          value={start}
-          onChange={(e) => setStart(e.target.value)}
+          name="start"
+          defaultValue={start}
           className="w-40 rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/30"
         />
       </label>
@@ -39,20 +42,10 @@ export function AcctExportFilterBar() {
         <span className="mb-1 block text-xs text-muted-foreground">To</span>
         <input
           type="date"
-          value={end}
-          onChange={(e) => setEnd(e.target.value)}
+          name="end"
+          defaultValue={end}
           className="w-40 rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/30"
         />
-      </label>
-      <label>
-        <span className="mb-1 block text-xs text-muted-foreground">Customer</span>
-        <select
-          value={customer}
-          onChange={(e) => setCustomer(e.target.value)}
-          className="w-56 rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/30"
-        >
-          <option value="">All Customers</option>
-        </select>
       </label>
       <button
         type="submit"
@@ -60,13 +53,12 @@ export function AcctExportFilterBar() {
       >
         Filter
       </button>
-      <button
-        type="button"
-        onClick={reset}
+      <Link
+        href={ACCOUNTING_EXPORT_PATH}
         className="text-sm text-muted-foreground hover:text-foreground"
       >
         Reset
-      </button>
+      </Link>
     </form>
   );
 }
