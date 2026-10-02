@@ -15,12 +15,24 @@ const { auth, getFlightLog, tab } = vi.hoisted(() => ({
     ),
 }));
 vi.mock("@/auth", () => ({ auth }));
-vi.mock("@/lib/api/client", () => ({ ApiError: class extends Error {} }));
+const { TestApiError } = vi.hoisted(() => ({
+  TestApiError: class extends Error {
+    constructor(
+      public status: number,
+      public path: string,
+      message: string,
+    ) {
+      super(message);
+    }
+  },
+}));
+vi.mock("@/lib/api/client", () => ({ ApiError: TestApiError }));
 vi.mock("@/lib/api/ops", () => ({
   getFlightLog,
   listFlightLogLegs: vi.fn(async () => ({ items: [], total: 0 })),
 }));
-vi.mock("next/navigation", () => ({ notFound: vi.fn() }));
+const { notFound } = vi.hoisted(() => ({ notFound: vi.fn() }));
+vi.mock("next/navigation", () => ({ notFound }));
 
 vi.mock("./flight-info-tab", () => ({ FlightInfoTab: tab("info") }));
 vi.mock("./legs-tab", () => ({ LegsTab: tab("legs") }));
@@ -118,3 +130,33 @@ describe("FlightLogDetailPage: whose draft it is (29 Sep)", () => {
     expect(screen.queryByText(NOTE)).not.toBeInTheDocument();
   });
 });
+
+describe("FlightLogDetailPage: someone else's log (30 Sep)", () => {
+  it("says who may open it when the backend refuses", async () => {
+    auth.mockResolvedValue({ user: { id: "u-other" }, roles: ["pilot"] });
+    getFlightLog.mockRejectedValue(
+      new TestApiError(403, "/ops/flight-logs/log-1", '{"detail":"flight_log_owner_or_admin_only"}'),
+    );
+    const ui = await FlightLogDetailPage({
+      params: Promise.resolve({ id: "log-1" }),
+      searchParams: Promise.resolve({}),
+    });
+    render(ui);
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      /only the pilot who filed it, a chief pilot, the director of\s+operations or an exec admin can/i,
+    );
+    expect(screen.getByRole("link", { name: /flight log/i })).toHaveAttribute("href", "/flight-crew/elog");
+    expect(screen.queryByTestId("legs")).not.toBeInTheDocument();
+  });
+
+  it("still sends a missing log to not-found", async () => {
+    auth.mockResolvedValue({ user: { id: "u-other" }, roles: ["pilot"] });
+    getFlightLog.mockRejectedValue(new TestApiError(404, "/ops/flight-logs/log-1", "{}"));
+    notFound.mockClear();
+    await expect(
+      FlightLogDetailPage({ params: Promise.resolve({ id: "log-1" }), searchParams: Promise.resolve({}) }),
+    ).rejects.toThrow();
+    expect(notFound).toHaveBeenCalled();
+  });
+});
+
