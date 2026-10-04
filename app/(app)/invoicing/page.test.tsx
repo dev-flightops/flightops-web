@@ -17,7 +17,7 @@ vi.mock("@/lib/api/client", () => ({ ApiError: TestApiError }));
 vi.mock("@/lib/api/customer-invoices", () => ({ listCustomerInvoices }));
 vi.mock("./raise-actions", () => ({
   raiseInvoicesAction: vi.fn(),
-  recentFlownFlightsAction: vi.fn(),
+  flownFlightsOnAction: vi.fn(),
 }));
 
 import InvoicingPage from "./page";

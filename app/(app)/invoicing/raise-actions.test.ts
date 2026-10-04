@@ -26,7 +26,7 @@ vi.mock("@/lib/api/customer-invoices", () => ({ generateCustomerInvoices }));
 vi.mock("@/lib/api/ops", () => ({ listFlights }));
 vi.mock("next/cache", () => ({ revalidatePath }));
 
-import { raiseInvoicesAction, recentFlownFlightsAction } from "./raise-actions";
+import { flownFlightsOnAction, raiseInvoicesAction } from "./raise-actions";
 
 const FLIGHT = "6f1c2a4e-0b7d-4c55-9a51-3f2a7c9d1e20";
 
@@ -47,42 +47,57 @@ beforeEach(() => {
   vi.clearAllMocks();
 });
 
-describe("recentFlownFlightsAction", () => {
-  it("asks for the last page of flown flights and lists them newest first", async () => {
-    // ops-service lists oldest first: the count, then the last page.
-    listFlights
-      .mockResolvedValueOnce({ items: [item(1)], total: 120 })
-      .mockResolvedValueOnce({ items: [item(7), item(8), item(9)], total: 120 });
+describe("flownFlightsOnAction (R1)", () => {
+  it("lists the day's flown flights, newest first", async () => {
+    // ops-service lists a day oldest first.
+    listFlights.mockResolvedValue({ items: [item(7), item(8), item(9)], total: 3 });
 
-    const state = await recentFlownFlightsAction();
+    const state = await flownFlightsOnAction("2026-09-08");
 
-    expect(listFlights).toHaveBeenNthCalledWith(1, { status: "completed", limit: 1 });
-    expect(listFlights).toHaveBeenNthCalledWith(2, {
+    expect(listFlights).toHaveBeenCalledWith({
       status: "completed",
-      limit: 50,
-      offset: 70,
+      onDate: "2026-09-08",
+      limit: 200,
     });
-    expect(state.status).toBe("ok");
-    if (state.status === "ok") {
-      expect(state.flights.map((f) => f.id)).toEqual(["f-9", "f-8", "f-7"]);
-    }
+    expect(state).toEqual({
+      status: "ok",
+      flights: [
+        expect.objectContaining({ id: "f-9" }),
+        expect.objectContaining({ id: "f-8" }),
+        expect.objectContaining({ id: "f-7" }),
+      ],
+      truncated: false,
+    });
   });
 
-  it("starts at the first flight when there are fewer than fifty", async () => {
-    listFlights
-      .mockResolvedValueOnce({ items: [], total: 3 })
-      .mockResolvedValueOnce({ items: [item(1), item(2), item(3)], total: 3 });
-    await recentFlownFlightsAction();
-    expect(listFlights).toHaveBeenLastCalledWith({
-      status: "completed",
-      limit: 50,
-      offset: 0,
-    });
+  it("reaches any day, not only the last few dozen flights", async () => {
+    // The old picker offered the 50 most recent: about a week.
+    listFlights.mockResolvedValue({ items: [item(3)], total: 1 });
+    await flownFlightsOnAction("2025-11-03");
+    expect(listFlights).toHaveBeenCalledWith(
+      expect.objectContaining({ onDate: "2025-11-03" }),
+    );
+  });
+
+  it("says when more flew that day than one list holds", async () => {
+    listFlights.mockResolvedValue({ items: [item(1), item(2)], total: 201 });
+    const state = await flownFlightsOnAction("2026-09-08");
+    expect(state.status === "ok" && state.truncated).toBe(true);
+  });
+
+  it("refuses anything that is not a date, before ops-service", async () => {
+    for (const bad of ["", "2026-02-30", "08/09/2026", "2026-09-08&status=scheduled"]) {
+      expect(await flownFlightsOnAction(bad)).toEqual({
+        status: "error",
+        message: "Choose the date the flight flew.",
+      });
+    }
+    expect(listFlights).not.toHaveBeenCalled();
   });
 
   it("says so when the flights cannot be loaded", async () => {
     listFlights.mockRejectedValue(new TestApiError(503, "/ops/flights", "down"));
-    expect(await recentFlownFlightsAction()).toEqual({
+    expect(await flownFlightsOnAction("2026-09-08")).toEqual({
       status: "error",
       message: "Could not load the flown flights (HTTP 503).",
     });

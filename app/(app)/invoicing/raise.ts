@@ -13,8 +13,9 @@ import type { GenerateResult } from "@/lib/api/customer-invoices";
 import type { FlightListItem } from "@/lib/api/types";
 import { formatZuluDateTime } from "@/lib/format/flight-time";
 
-/** How many flown flights the picker offers, newest first. */
-export const RECENT_FLOWN_FLIGHTS = 50;
+/** The most flights one day's list shows: ops-service's page limit.
+ *  More than that in a day is flagged rather than silently cut. */
+export const FLOWN_FLIGHTS_PER_DAY = 200;
 
 export interface FlownFlightOption {
   id: string;
@@ -35,7 +36,12 @@ export function flownFlightOption(f: FlightListItem): FlownFlightOption {
 }
 
 export type FlownFlightsState =
-  | { status: "ok"; flights: FlownFlightOption[] }
+  | {
+      status: "ok";
+      flights: FlownFlightOption[];
+      /** More flights flew that day than one list holds. */
+      truncated: boolean;
+    }
   | { status: "error"; message: string };
 
 export interface RaisedInvoice {

@@ -1,11 +1,18 @@
 "use client";
 
 import Link from "next/link";
-import { useId, useState } from "react";
+import { useId, useRef, useState } from "react";
+
+import { formatIsoDayLong, isValidIsoDay } from "@/lib/iso-day";
 
 import { money } from "./money";
 import type { FlownFlightOption, RaiseState } from "./raise";
-import { raiseInvoicesAction, recentFlownFlightsAction } from "./raise-actions";
+import { flownFlightsOnAction, raiseInvoicesAction } from "./raise-actions";
+
+/** Today's date in UTC, the day ops-service's `on_date` filters on. */
+function todayUtc(): string {
+  return new Date().toISOString().slice(0, 10);
+}
 
 /**
  * "Raise invoices" on /invoicing: pick a flown flight, raise its draft
@@ -21,26 +28,52 @@ import { raiseInvoicesAction, recentFlownFlightsAction } from "./raise-actions";
  * full-width panel that wraps onto its own row below the header line.
  * The flights load when the panel opens, not with the page: the list is
  * read far more often than invoices are raised.
+ *
+ * The flight is picked by the day it flew, today by default, so any
+ * flight can be raised however old. A list of the most recent fifty
+ * covered about a week, after which a flight could not be invoiced
+ * from the app at all. The day is UTC, like the Zulu times beside each
+ * flight and ops-service's filter.
  */
 export function RaiseInvoices() {
   const [open, setOpen] = useState(false);
+  const [onDate, setOnDate] = useState("");
+  const [today, setToday] = useState("");
   const [flights, setFlights] = useState<FlownFlightOption[] | null>(null);
+  const [truncated, setTruncated] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [flightId, setFlightId] = useState("");
   const [pending, setPending] = useState(false);
   const [result, setResult] = useState<RaiseState>({ status: "idle" });
+  // The day last asked for: an answer for an earlier choice that lands
+  // after a later one must not replace its list.
+  const asked = useRef("");
   const panelId = useId();
   const headingId = useId();
 
-  async function openPanel() {
-    setOpen(true);
-    setResult({ status: "idle" });
-    setLoadError(null);
+  async function load(day: string) {
+    asked.current = day;
     setFlights(null);
+    setTruncated(false);
+    setLoadError(null);
     setFlightId("");
-    const loaded = await recentFlownFlightsAction();
-    if (loaded.status === "ok") setFlights(loaded.flights);
-    else setLoadError(loaded.message);
+    setResult({ status: "idle" });
+    const loaded = await flownFlightsOnAction(day);
+    if (asked.current !== day) return;
+    if (loaded.status === "ok") {
+      setFlights(loaded.flights);
+      setTruncated(loaded.truncated);
+    } else {
+      setLoadError(loaded.message);
+    }
+  }
+
+  async function openPanel() {
+    const day = todayUtc();
+    setOpen(true);
+    setToday(day);
+    setOnDate(day);
+    await load(day);
   }
 
   async function raise() {
@@ -79,6 +112,60 @@ export function RaiseInvoices() {
             customer already invoiced for it is skipped.
           </p>
 
+          <div className="mt-3 flex flex-wrap items-end gap-2">
+            <label className="block text-[0.65rem] font-semibold uppercase tracking-wider text-muted-foreground">
+              Flown on (UTC)
+              <input
+                type="date"
+                value={onDate}
+                max={today}
+                onChange={(e) => {
+                  const day = e.target.value;
+                  setOnDate(day);
+                  if (isValidIsoDay(day)) void load(day);
+                }}
+                className="ff-input mt-1 font-normal normal-case tracking-normal"
+              />
+            </label>
+            {flights && flights.length > 0 && (
+              <>
+                <label className="block min-w-[16rem] flex-1 text-[0.65rem] font-semibold uppercase tracking-wider text-muted-foreground">
+                  Flown flight
+                  <select
+                    value={flightId}
+                    onChange={(e) => {
+                      setFlightId(e.target.value);
+                      setResult({ status: "idle" });
+                    }}
+                    className="ff-input mt-1 font-normal normal-case tracking-normal"
+                  >
+                    <option value="">Choose a flight…</option>
+                    {flights.map((f) => (
+                      <option key={f.id} value={f.id}>
+                        {f.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <button
+                  type="button"
+                  onClick={() => void raise()}
+                  disabled={!flightId || pending}
+                  className="rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-dark disabled:opacity-50"
+                >
+                  {pending ? "Raising…" : "Raise"}
+                </button>
+              </>
+            )}
+            <button
+              type="button"
+              onClick={() => setOpen(false)}
+              className="px-1 py-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground"
+            >
+              Close
+            </button>
+          </div>
+
           {loadError ? (
             <p
               role="alert"
@@ -87,50 +174,23 @@ export function RaiseInvoices() {
               {loadError}
             </p>
           ) : flights === null ? (
-            <p role="status" className="mt-3 text-xs text-muted-foreground">
-              Loading flown flights…
-            </p>
+            isValidIsoDay(onDate) && (
+              <p role="status" className="mt-3 text-xs text-muted-foreground">
+                Loading the flights flown on {formatIsoDayLong(onDate)}…
+              </p>
+            )
           ) : flights.length === 0 ? (
             <p className="mt-3 text-xs text-muted-foreground">
-              No flown flights yet. A flight counts as flown once its
-              arrival is recorded.
+              No flight flew on {formatIsoDayLong(onDate)} (UTC). A flight
+              counts as flown once its arrival is recorded.
             </p>
           ) : (
-            <div className="mt-3 flex flex-wrap items-end gap-2">
-              <label className="block min-w-[16rem] flex-1 text-[0.65rem] font-semibold uppercase tracking-wider text-muted-foreground">
-                Flown flight
-                <select
-                  value={flightId}
-                  onChange={(e) => {
-                    setFlightId(e.target.value);
-                    setResult({ status: "idle" });
-                  }}
-                  className="ff-input mt-1 font-normal normal-case tracking-normal"
-                >
-                  <option value="">Choose a flight…</option>
-                  {flights.map((f) => (
-                    <option key={f.id} value={f.id}>
-                      {f.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <button
-                type="button"
-                onClick={() => void raise()}
-                disabled={!flightId || pending}
-                className="rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-dark disabled:opacity-50"
-              >
-                {pending ? "Raising…" : "Raise"}
-              </button>
-              <button
-                type="button"
-                onClick={() => setOpen(false)}
-                className="px-1 py-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground"
-              >
-                Close
-              </button>
-            </div>
+            truncated && (
+              <p className="mt-2 text-xs text-muted-foreground">
+                Showing the first {flights.length} flights flown that day;
+                more flew than one list holds.
+              </p>
+            )
           )}
 
           <div aria-live="polite">

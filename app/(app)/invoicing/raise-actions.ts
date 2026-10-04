@@ -4,13 +4,14 @@ import { revalidatePath } from "next/cache";
 
 import { generateCustomerInvoices } from "@/lib/api/customer-invoices";
 import { listFlights } from "@/lib/api/ops";
+import { isValidIsoDay } from "@/lib/iso-day";
 
 import {
   explainFlightsError,
   explainRaiseError,
+  FLOWN_FLIGHTS_PER_DAY,
   flownFlightOption,
   raisedFrom,
-  RECENT_FLOWN_FLIGHTS,
   type FlownFlightsState,
   type RaiseState,
 } from "./raise";
@@ -23,25 +24,33 @@ import {
  */
 
 /**
- * The most recent flown flights, newest first, for the picker.
+ * The flights flown on one day, newest first, for the picker.
  *
- * ops-service lists flights oldest first and has no newest-first order,
- * so this asks for the count first and then for the last page. A flight
- * counts as flown when it is `completed`, which recording its arrival
- * sets; billing-service refuses anything else as not flown.
+ * Picked by day rather than "the most recent fifty", so any flown
+ * flight can be raised however old it is. The advice to void a draft
+ * and raise the flight again depends on that. The day is the UTC one:
+ * ops-service's `on_date` filters on the UTC departure date, and the
+ * picker shows each flight's time in Zulu. A flight counts as flown when
+ * it is `completed`, which recording its arrival sets; billing-service
+ * refuses anything else as not flown.
  */
-export async function recentFlownFlightsAction(): Promise<FlownFlightsState> {
+export async function flownFlightsOnAction(
+  onDate: string,
+): Promise<FlownFlightsState> {
+  if (!isValidIsoDay(onDate)) {
+    return { status: "error", message: "Choose the date the flight flew." };
+  }
   try {
-    const head = await listFlights({ status: "completed", limit: 1 });
-    const offset = Math.max(0, head.total - RECENT_FLOWN_FLIGHTS);
     const page = await listFlights({
       status: "completed",
-      limit: RECENT_FLOWN_FLIGHTS,
-      offset,
+      onDate,
+      limit: FLOWN_FLIGHTS_PER_DAY,
     });
     return {
       status: "ok",
+      // ops-service lists a day oldest first.
       flights: [...page.items].reverse().map(flownFlightOption),
+      truncated: page.total > page.items.length,
     };
   } catch (err) {
     return { status: "error", message: explainFlightsError(err) };

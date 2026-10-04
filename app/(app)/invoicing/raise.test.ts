@@ -82,7 +82,7 @@ describe("raisedFrom", () => {
       skipped: [
         {
           booking_id: "b-2",
-          reason: "already invoiced on INV-000002",
+          reason: "customer already has INV-000002 for this flight; a booking added after INV-000002 was raised is not on it: void INV-000002 and raise again to include it",
           customer: { id: "c-2", full_name: "Bob Kalskag" },
         },
         { booking_id: "b-3", reason: "cancelled", customer: null },
@@ -101,7 +101,7 @@ describe("raisedFrom", () => {
         },
       ],
       skipped: [
-        { customer: "Bob Kalskag", reason: "already invoiced on INV-000002" },
+        { customer: "Bob Kalskag", reason: "customer already has INV-000002 for this flight; a booking added after INV-000002 was raised is not on it: void INV-000002 and raise again to include it" },
         { customer: "A deleted customer", reason: "cancelled" },
       ],
       notes: result.notes,

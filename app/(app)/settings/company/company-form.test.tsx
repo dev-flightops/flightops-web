@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
 import { expectNoA11yViolations } from "@/tests/a11y";
@@ -84,5 +85,53 @@ describe("Invoicing", () => {
     expect(screen.getByLabelText("Payment Terms (days)")).toHaveAccessibleDescription(
       "Days from the invoice date to the due date, 0 to 365. Blank means 30.",
     );
+  });
+});
+
+describe("a refused save (R2)", () => {
+  it("keeps what was typed through React's form reset", async () => {
+    // React 19 resets the form's DOM when the action completes, refused
+    // or not. Uncontrolled, every field went back to what was stored:
+    // Terms 45, typed beside a tax of 101, was lost.
+    const user = userEvent.setup();
+    const { container } = render(
+      <CompanyForm
+        profile={profile({
+          cargo_rate_per_lb: "0.4750",
+          invoice_tax_rate: "0.08250",
+          invoice_terms_days: 14,
+        })}
+      />,
+    );
+    const terms = screen.getByLabelText("Payment Terms (days)");
+    const tax = screen.getByLabelText("Invoice Tax Rate (%)");
+    const name = screen.getByLabelText("Legal Name");
+    await user.clear(terms);
+    await user.type(terms, "45");
+    await user.clear(tax);
+    await user.type(tax, "101");
+    await user.type(name, "Example Air LLC");
+
+    (container.querySelector("form") as HTMLFormElement).reset();
+
+    expect(terms).toHaveValue("45");
+    expect(tax).toHaveValue("101");
+    expect(name).toHaveValue("Example Air LLC");
+    expect(screen.getByLabelText("Cargo Rate (per lb)")).toHaveValue("0.4750");
+  });
+
+  it("shows what the service stored once a save lands", async () => {
+    const user = userEvent.setup();
+    const { rerender } = render(<CompanyForm profile={profile()} />);
+    await user.type(screen.getByLabelText("Cargo Rate (per lb)"), "0.475");
+
+    // revalidatePath hands back the stored profile: four decimals.
+    rerender(
+      <CompanyForm
+        profile={profile({ cargo_rate_per_lb: "0.4750", invoice_terms_days: 30 })}
+      />,
+    );
+    expect(screen.getByLabelText("Cargo Rate (per lb)")).toHaveValue("0.4750");
+    expect(screen.getByLabelText("Payment Terms (days)")).toHaveValue("30");
   });
 });
