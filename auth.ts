@@ -4,6 +4,7 @@ import {
   decideSessionAction,
   refreshAccessToken,
 } from "@/lib/session-refresh";
+import { postOAuthExchange } from "@/lib/sso-exchange";
 import type { Provider } from "next-auth/providers";
 import Credentials from "next-auth/providers/credentials";
 import Google from "next-auth/providers/google";
@@ -119,24 +120,16 @@ function buildProviders(): Provider[] {
  * Exchange an upstream OAuth identity for a FlightOps JWT. The backend is
  * the single source of identity — Auth.js handles the OAuth dance, then
  * hands the verified `{provider, sub, email}` to auth-service which decides
- * whether the user is provisioned (403 if not).
+ * whether the user is provisioned (403 if not). The call carries the shared
+ * exchange secret; see lib/sso-exchange.ts.
  */
 async function exchangeOAuthForFlightOpsJwt(
   provider: string,
   providerUserId: string,
   email: string,
 ): Promise<{ access_token: string; claims: AccessTokenClaims } | null> {
-  const response = await fetch(`${apiBaseUrl()}/auth/oauth-exchange`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      provider,
-      provider_user_id: providerUserId,
-      email,
-    }),
-  });
-  if (!response.ok) return null;
-  const body = (await response.json()) as AuthServiceLoginResponse;
+  const body = await postOAuthExchange(apiBaseUrl(), { provider, providerUserId, email });
+  if (!body) return null;
   return { access_token: body.access_token, claims: decodeJwtPayload(body.access_token) };
 }
 
