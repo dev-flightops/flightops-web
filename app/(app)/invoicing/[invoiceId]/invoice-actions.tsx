@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import type { InvoiceStatus } from "@/lib/api/customer-invoices";
 
@@ -29,7 +29,8 @@ import { FORM_METHODS, todayLocalIsoDate } from "../payments";
  * service refuses it, because voiding would strand the payments.
  *
  * Mark paid records the outstanding balance as one payment, so it asks
- * how and when the money arrived before it closes the invoice.
+ * how and when the money arrived, and the reference (a check number)
+ * as Record payment does, before it closes the invoice.
  */
 export function InvoiceActions({
   invoiceId,
@@ -53,7 +54,15 @@ export function InvoiceActions({
   const [markingPaid, setMarkingPaid] = useState(false);
   const [method, setMethod] = useState("");
   const [paidOn, setPaidOn] = useState("");
+  const [reference, setReference] = useState("");
   const [today, setToday] = useState("");
+  const statusRef = useRef<HTMLParagraphElement>(null);
+
+  // The panel that held focus closes on success; the confirmation
+  // takes it, so it is read out rather than lost to <body>.
+  useEffect(() => {
+    if (state.status === "ok") statusRef.current?.focus();
+  }, [state]);
 
   function openMarkPaid() {
     // The date is read here, in the browser, rather than at render:
@@ -62,7 +71,9 @@ export function InvoiceActions({
     setToday(now);
     setPaidOn(now);
     setMethod("");
+    setReference("");
     setVoiding(false);
+    setState({ status: "idle" });
     setMarkingPaid(true);
   }
 
@@ -199,13 +210,30 @@ export function InvoiceActions({
                 className="ff-input mt-1 font-normal normal-case tracking-normal"
               />
             </label>
+            <label className="col-span-2 block text-[0.65rem] font-semibold uppercase tracking-wider text-muted-foreground">
+              Reference
+              <input
+                type="text"
+                value={reference}
+                onChange={(e) => setReference(e.target.value)}
+                maxLength={120}
+                placeholder="Check number, card or bank reference"
+                autoComplete="off"
+                className="ff-input mt-1 font-normal normal-case tracking-normal"
+              />
+            </label>
           </div>
           <div className="mt-2 flex items-center gap-2">
             <button
               type="button"
               onClick={() =>
                 void run("paid", async () => {
-                  const r = await markPaidAction(invoiceId, method, paidOn);
+                  const r = await markPaidAction(
+                    invoiceId,
+                    method,
+                    paidOn,
+                    reference,
+                  );
                   if (r.status === "ok") setMarkingPaid(false);
                   return r;
                 })
@@ -219,7 +247,10 @@ export function InvoiceActions({
             </button>
             <button
               type="button"
-              onClick={() => setMarkingPaid(false)}
+              onClick={() => {
+                setMarkingPaid(false);
+                setState({ status: "idle" });
+              }}
               className="text-xs font-semibold text-muted-foreground hover:text-foreground"
             >
               Cancel
@@ -285,7 +316,12 @@ export function InvoiceActions({
         </p>
       )}
       {state.status === "ok" && (
-        <p role="status" className="text-xs text-status-green">
+        <p
+          ref={statusRef}
+          role="status"
+          tabIndex={-1}
+          className="text-xs text-status-green"
+        >
           {state.message}
         </p>
       )}

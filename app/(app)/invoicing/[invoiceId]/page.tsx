@@ -14,8 +14,8 @@ import {
   STATUS_LABELS,
   statusClasses,
 } from "../money";
-import { METHOD_LABELS } from "../payments";
 import { InvoiceActions } from "./invoice-actions";
+import { PaymentHistory } from "./payment-history";
 import { RecordPayment } from "./record-payment";
 
 /**
@@ -253,52 +253,22 @@ export default async function InvoiceDetailPage({
             </dl>
           </div>
 
-          {invoice.payments.length === 0 ? (
-            <p className="mb-3 text-sm text-muted-foreground">
-              No payments recorded.
-            </p>
-          ) : (
-            <div className="mb-3 overflow-x-auto">
-              <table className="w-full text-sm">
-                <caption className="sr-only">
-                  Payments on invoice {invoice.invoice_number}
-                </caption>
-                <thead>
-                  <tr className="border-b border-border text-left text-[0.6rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-                    <th scope="col" className="py-2 pr-4">Received</th>
-                    <th scope="col" className="py-2 pr-4">Method</th>
-                    <th scope="col" className="py-2 pr-4">Reference</th>
-                    <th scope="col" className="py-2 text-right">Amount</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {invoice.payments.map((p) => (
-                    <tr key={p.id} className="border-b border-border last:border-0">
-                      <td className="py-2 pr-4 tabular-nums text-foreground">
-                        {p.received_on}
-                      </td>
-                      <td className="py-2 pr-4 text-foreground">
-                        {METHOD_LABELS[p.method] ?? p.method}
-                      </td>
-                      <td className="py-2 pr-4 text-muted-foreground">
-                        {p.reference ?? "—"}
-                      </td>
-                      <td className="py-2 text-right tabular-nums text-foreground">
-                        {money(p.amount_cents)}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+          <PaymentHistory
+            invoiceId={invoice.id}
+            invoiceNumber={invoice.invoice_number}
+            payments={invoice.payments}
+          />
 
-          {invoice.status === "sent" && invoice.outstanding_cents > 0 && (
-            <RecordPayment
-              invoiceId={invoice.id}
-              outstandingCents={invoice.outstanding_cents}
-            />
-          )}
+          {/* Always mounted while payments show: a payment that settles
+              the invoice turns canRecord off, and its confirmation has
+              to outlive that. */}
+          <RecordPayment
+            invoiceId={invoice.id}
+            outstandingCents={invoice.outstanding_cents}
+            canRecord={
+              invoice.status === "sent" && invoice.outstanding_cents > 0
+            }
+          />
         </section>
       )}
 

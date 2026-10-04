@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { recordPaymentAction, type InvoiceActionState } from "../actions";
 import { money } from "../money";
@@ -20,13 +20,21 @@ import {
  * more than is outstanding, no method, a date after today. The service
  * checks the balance again under a lock, which is what stops two people
  * recording the same cheque at once.
+ *
+ * Mounted for every invoice that shows payments, with `canRecord`
+ * deciding only whether the button and form are offered. A payment that
+ * settles the invoice turns `canRecord` off when the page refreshes,
+ * and the confirmation that it is paid has to survive that: unmounted,
+ * it would go with the component, and focus with it to <body>.
  */
 export function RecordPayment({
   invoiceId,
   outstandingCents,
+  canRecord,
 }: {
   invoiceId: string;
   outstandingCents: number;
+  canRecord: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [amount, setAmount] = useState("");
@@ -36,6 +44,13 @@ export function RecordPayment({
   const [today, setToday] = useState("");
   const [pending, setPending] = useState(false);
   const [state, setState] = useState<InvoiceActionState>({ status: "idle" });
+  const statusRef = useRef<HTMLParagraphElement>(null);
+
+  // The form that held focus closes on success; the confirmation takes
+  // it, so it is read out rather than lost.
+  useEffect(() => {
+    if (state.status === "ok") statusRef.current?.focus();
+  }, [state]);
 
   function start() {
     // Defaults are read when the form opens, not at render: the
@@ -90,7 +105,7 @@ export function RecordPayment({
 
   return (
     <div className="space-y-2">
-      {!open && (
+      {canRecord && !open && (
         <button
           type="button"
           onClick={start}
@@ -100,7 +115,7 @@ export function RecordPayment({
         </button>
       )}
 
-      {open && (
+      {canRecord && open && (
         <form
           onSubmit={(e) => void submit(e)}
           aria-label="Record payment"
@@ -188,7 +203,12 @@ export function RecordPayment({
         </p>
       )}
       {state.status === "ok" && (
-        <p role="status" className="text-xs text-status-green">
+        <p
+          ref={statusRef}
+          role="status"
+          tabIndex={-1}
+          className="text-xs text-status-green"
+        >
           {state.message}
         </p>
       )}

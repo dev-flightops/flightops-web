@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 
 import {
   centsToInput,
@@ -75,10 +75,21 @@ describe("centsToInput", () => {
 });
 
 describe("todayLocalIsoDate", () => {
+  // CI and the dev box run in UTC, where the local and the UTC date are
+  // the same and a UTC rewrite of the helper would pass. The operator's
+  // zone is where the two differ.
+  beforeAll(() => {
+    vi.stubEnv("TZ", "America/Anchorage");
+  });
+  afterAll(() => {
+    vi.unstubAllEnvs();
+  });
+
   it("is the local calendar date, not the UTC one", () => {
-    // 23:30 local on 31 Oct is 1 Nov in UTC anywhere west of Greenwich;
-    // a cheque received that evening was received in October.
+    // 23:30 in Anchorage on 31 Oct is already 1 Nov in UTC; a cheque
+    // received that evening was received in October.
     const evening = new Date(2026, 9, 31, 23, 30);
+    expect(evening.toISOString().slice(0, 10)).toBe("2026-11-01");
     expect(todayLocalIsoDate(evening)).toBe("2026-10-31");
   });
 });

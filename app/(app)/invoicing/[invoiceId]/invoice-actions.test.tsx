@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -87,9 +87,62 @@ describe("Mark paid", () => {
     expect(confirm).toBeEnabled();
     await user.click(confirm);
     await waitFor(() =>
-      expect(markPaidAction).toHaveBeenCalledWith("inv-1", "check", "2026-10-02"),
+      expect(markPaidAction).toHaveBeenCalledWith("inv-1", "check", "2026-10-02", ""),
     );
-    expect(await screen.findByRole("status")).toHaveTextContent("Marked paid.");
+    const status = await screen.findByRole("status");
+    expect(status).toHaveTextContent("Marked paid.");
+    // The panel that held focus is gone; the confirmation has it.
+    expect(status).toHaveFocus();
+  });
+
+  it("sends the reference, so a check paid in full keeps its number", async () => {
+    const user = userEvent.setup();
+    renderActions();
+    await user.click(screen.getByRole("button", { name: "Mark paid" }));
+    await user.selectOptions(screen.getByLabelText("Method"), "check");
+    await user.type(screen.getByLabelText("Reference"), "1042");
+    await user.click(screen.getByRole("button", { name: "Confirm paid" }));
+    await waitFor(() =>
+      expect(markPaidAction).toHaveBeenCalledWith("inv-1", "check", "2026-10-02", "1042"),
+    );
+  });
+
+  it("cannot be confirmed with a date after today", async () => {
+    const user = userEvent.setup();
+    renderActions();
+    await user.click(screen.getByRole("button", { name: "Mark paid" }));
+    await user.selectOptions(screen.getByLabelText("Method"), "check");
+    fireEvent.change(screen.getByLabelText("Received"), {
+      target: { value: "2026-10-03" },
+    });
+    expect(screen.getByRole("button", { name: "Confirm paid" })).toBeDisabled();
+  });
+
+  it("clears an error on Cancel and when reopened", async () => {
+    markPaidAction.mockResolvedValueOnce({
+      status: "error",
+      message: "An invoice that is paid cannot be marked paid.",
+    });
+    const user = userEvent.setup();
+    renderActions();
+    await user.click(screen.getByRole("button", { name: "Mark paid" }));
+    await user.selectOptions(screen.getByLabelText("Method"), "check");
+    await user.click(screen.getByRole("button", { name: "Confirm paid" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "An invoice that is paid cannot be marked paid.",
+    );
+
+    await user.click(screen.getByRole("button", { name: "Cancel" }));
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+
+    markPaidAction.mockResolvedValueOnce({ status: "error", message: "Still refused." });
+    await user.click(screen.getByRole("button", { name: "Mark paid" }));
+    await user.selectOptions(screen.getByLabelText("Method"), "check");
+    await user.click(screen.getByRole("button", { name: "Confirm paid" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("Still refused.");
+    await user.click(screen.getByRole("button", { name: "Cancel" }));
+    await user.click(screen.getByRole("button", { name: "Mark paid" }));
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
 
   it("offers the five form methods and not comp or on-account", async () => {

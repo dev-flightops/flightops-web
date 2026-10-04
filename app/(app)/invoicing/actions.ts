@@ -9,6 +9,7 @@ import {
   recordCustomerInvoicePayment,
   sendCustomerInvoice,
   voidCustomerInvoice,
+  voidCustomerInvoicePayment,
 } from "@/lib/api/customer-invoices";
 
 import { money } from "./money";
@@ -44,6 +45,8 @@ const REFUSALS: Record<string, string> = {
     "This invoice has payments recorded against it, so it cannot be voided.",
   invoice_not_sent_yet: "Send the invoice before recording a payment on it.",
   invoice_is_void: "This invoice is void and cannot take a payment.",
+  payment_already_voided: "That payment has already been voided.",
+  payment_not_found: "That payment is not on this invoice.",
   invoice_not_found: "That invoice no longer exists.",
 };
 
@@ -90,17 +93,24 @@ export async function sendInvoiceAction(
 }
 
 /** Paid in full: the service records the outstanding balance as one
- *  payment by `method`, dated `paidOn`, and closes the invoice. */
+ *  payment by `method`, dated `paidOn`, with the reference when one is
+ *  given, and closes the invoice. */
 export async function markPaidAction(
   invoiceId: string,
   method: string,
   paidOn: string,
+  reference: string,
 ): Promise<InvoiceActionState> {
   if (!isFormMethod(method)) {
     return { status: "error", message: "Choose how the money arrived." };
   }
   try {
-    await markCustomerInvoicePaid(invoiceId, method, paidOn || undefined);
+    await markCustomerInvoicePaid(
+      invoiceId,
+      method,
+      paidOn || undefined,
+      reference.trim() || null,
+    );
     revalidatePath("/invoicing");
     revalidatePath(`/invoicing/${invoiceId}`);
     return { status: "ok", message: "Marked paid." };
@@ -179,6 +189,42 @@ export async function voidInvoiceAction(
     return { status: "ok", message: "Voided." };
   } catch (err) {
     return { status: "error", message: explain(err, "Could not void it") };
+  }
+}
+
+/** Void a payment entered in error. It stays in the history, marked,
+ *  and stops counting as paid; the invoice follows the money that is
+ *  left. The reason is asked for here too, so a blank one costs no
+ *  round trip. */
+export async function voidPaymentAction(
+  invoiceId: string,
+  paymentId: string,
+  reason: string,
+): Promise<InvoiceActionState> {
+  if (reason.trim().length < 3) {
+    return {
+      status: "error",
+      message: "Say why the payment is being voided.",
+    };
+  }
+  try {
+    const result = await voidCustomerInvoicePayment(
+      invoiceId,
+      paymentId,
+      reason.trim(),
+    );
+    revalidatePath("/invoicing");
+    revalidatePath(`/invoicing/${invoiceId}`);
+    const { amount_cents, method } = result.payment;
+    return {
+      status: "ok",
+      message: `Voided the ${money(amount_cents)} (${METHOD_LABELS[method] ?? method}) payment. ${money(result.outstanding_cents)} outstanding.`,
+    };
+  } catch (err) {
+    return {
+      status: "error",
+      message: explain(err, "Could not void the payment"),
+    };
   }
 }
 

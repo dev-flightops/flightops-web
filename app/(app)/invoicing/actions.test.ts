@@ -4,6 +4,7 @@ const {
   markCustomerInvoicePaid,
   recordCustomerInvoicePayment,
   voidCustomerInvoice,
+  voidCustomerInvoicePayment,
   revalidatePath,
   TestApiError,
   TestSessionExpiredError,
@@ -18,11 +19,18 @@ const {
       this.name = "ApiError";
     }
   }
-  class TestSessionExpiredError extends TestApiError {}
+  // The real class's shape: (path, message), always a 401.
+  class TestSessionExpiredError extends TestApiError {
+    constructor(path: string, message: string) {
+      super(401, path, message);
+      this.name = "SessionExpiredError";
+    }
+  }
   return {
     markCustomerInvoicePaid: vi.fn(),
     recordCustomerInvoicePayment: vi.fn(),
     voidCustomerInvoice: vi.fn(),
+    voidCustomerInvoicePayment: vi.fn(),
     revalidatePath: vi.fn(),
     TestApiError,
     TestSessionExpiredError,
@@ -40,12 +48,14 @@ vi.mock("@/lib/api/customer-invoices", () => ({
   recordCustomerInvoicePayment,
   sendCustomerInvoice: vi.fn(),
   voidCustomerInvoice,
+  voidCustomerInvoicePayment,
 }));
 
 import {
   markPaidAction,
   recordPaymentAction,
   voidInvoiceAction,
+  voidPaymentAction,
 } from "./actions";
 
 const refused = (detail: string, status = 409) =>
@@ -134,24 +144,108 @@ describe("recordPaymentAction", () => {
       message: "A payment cannot be dated in the future.",
     });
   });
+
+  it.each([
+    [
+      "an expired session",
+      new TestSessionExpiredError("/billing/customer-invoices/inv-1/payments", "expired"),
+      "Your session has expired. Sign in again.",
+    ],
+    [
+      "billing unreachable",
+      new Error("fetch failed"),
+      "Could not reach billing-service.",
+    ],
+    [
+      "an invoice voided meanwhile",
+      refused("invoice_is_void"),
+      "This invoice is void and cannot take a payment.",
+    ],
+    [
+      "a draft",
+      refused("invoice_not_sent_yet"),
+      "Send the invoice before recording a payment on it.",
+    ],
+    [
+      "any other refusal",
+      refused("x", 403),
+      "Could not record the payment (HTTP 403).",
+    ],
+  ])("explains %s", async (_case, err, message) => {
+    recordCustomerInvoicePayment.mockRejectedValueOnce(err);
+    const state = await recordPaymentAction("inv-1", form);
+    expect(state).toEqual({ status: "error", message });
+    expect(revalidatePath).not.toHaveBeenCalled();
+  });
 });
 
 describe("markPaidAction", () => {
-  it("sends the method and the date", async () => {
+  it("sends the method, the date and the trimmed reference", async () => {
     markCustomerInvoicePaid.mockResolvedValueOnce({});
-    const state = await markPaidAction("inv-1", "check", "2026-10-01");
+    const state = await markPaidAction("inv-1", "check", "2026-10-01", " 1042 ");
     expect(markCustomerInvoicePaid).toHaveBeenCalledWith(
       "inv-1",
       "check",
       "2026-10-01",
+      "1042",
     );
     expect(state).toEqual({ status: "ok", message: "Marked paid." });
   });
 
+  it("sends no reference when none was typed", async () => {
+    markCustomerInvoicePaid.mockResolvedValueOnce({});
+    await markPaidAction("inv-1", "cash", "2026-10-01", "   ");
+    expect(markCustomerInvoicePaid.mock.calls[0][3]).toBeNull();
+  });
+
   it("will not mark paid without a method", async () => {
-    const state = await markPaidAction("inv-1", "", "2026-10-01");
+    const state = await markPaidAction("inv-1", "", "2026-10-01", "");
     expect(state.status).toBe("error");
     expect(markCustomerInvoicePaid).not.toHaveBeenCalled();
+  });
+});
+
+describe("voidPaymentAction", () => {
+  it("sends the trimmed reason and says what was voided", async () => {
+    voidCustomerInvoicePayment.mockResolvedValueOnce({
+      payment: { amount_cents: 60_000, method: "check" },
+      outstanding_cents: 60_000,
+    });
+    const state = await voidPaymentAction(
+      "inv-1",
+      "pay-7",
+      "  Check returned unpaid ",
+    );
+    expect(voidCustomerInvoicePayment).toHaveBeenCalledWith(
+      "inv-1",
+      "pay-7",
+      "Check returned unpaid",
+    );
+    expect(revalidatePath).toHaveBeenCalledWith("/invoicing/inv-1");
+    expect(state).toEqual({
+      status: "ok",
+      message: "Voided the 600.00 (Check) payment. 600.00 outstanding.",
+    });
+  });
+
+  it("will not void without a reason", async () => {
+    for (const reason of ["", "   ", "no"]) {
+      const state = await voidPaymentAction("inv-1", "pay-7", reason);
+      expect(state).toEqual({
+        status: "error",
+        message: "Say why the payment is being voided.",
+      });
+    }
+    expect(voidCustomerInvoicePayment).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ["already voided", refused("payment_already_voided"), "That payment has already been voided."],
+    ["not on this invoice", refused("payment_not_found", 404), "That payment is not on this invoice."],
+  ])("explains a payment %s", async (_case, err, message) => {
+    voidCustomerInvoicePayment.mockRejectedValueOnce(err);
+    const state = await voidPaymentAction("inv-1", "pay-7", "wrong invoice");
+    expect(state).toEqual({ status: "error", message });
   });
 });
 

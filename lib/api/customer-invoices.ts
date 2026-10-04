@@ -88,13 +88,19 @@ export interface CustomerPayment {
   received_on: string;
   reference: string | null;
   notes: string | null;
+  /** Set when the payment was voided as entered in error: it stays in
+   *  the history and no longer counts as paid. `voided_by` is the user
+   *  who voided it. */
+  voided_at: string | null;
+  voided_by: string | null;
+  void_reason: string | null;
 }
 
 export interface CustomerInvoiceDetail extends CustomerInvoice {
   lines: InvoiceLine[];
   void_reason: string | null;
   notes: string | null;
-  /** Sum of `payments`. */
+  /** Sum of the `payments` that are not voided. */
   paid_cents: number;
   /** The total less payments, never below zero; zero for a void
    *  invoice. */
@@ -149,17 +155,23 @@ export async function sendCustomerInvoice(
 
 /** Close a sent invoice as paid in full. The service records whatever
  *  is still outstanding as one payment, by `method`, dated `paidOn`
- *  (today when omitted), before it closes the invoice. */
+ *  (today when omitted), with `reference` (a check number, say) when
+ *  given, before it closes the invoice. */
 export async function markCustomerInvoicePaid(
   invoiceId: string,
   method: PaymentMethod,
   paidOn?: string,
+  reference?: string | null,
 ): Promise<CustomerInvoice> {
   return apiFetch<CustomerInvoice>(
     `/billing/customer-invoices/${invoiceId}/paid`,
     {
       method: "POST",
-      body: JSON.stringify({ method, paid_on: paidOn ?? null }),
+      body: JSON.stringify({
+        method,
+        paid_on: paidOn ?? null,
+        reference: reference ?? null,
+      }),
     },
   );
 }
@@ -179,6 +191,29 @@ export interface RecordPaymentResult {
   outstanding_cents: number;
   /** True when this payment closed the invoice. */
   settled: boolean;
+}
+
+export interface PaymentVoidResult {
+  /** The payment, now voided. */
+  payment: CustomerPayment;
+  /** The invoice after the void: back to sent when what still counts
+   *  no longer covers it. */
+  invoice: CustomerInvoice;
+  paid_cents: number;
+  outstanding_cents: number;
+}
+
+/** Void a payment entered in error. It stays on the invoice, marked,
+ *  and stops counting as paid. The reason is required. */
+export async function voidCustomerInvoicePayment(
+  invoiceId: string,
+  paymentId: string,
+  reason: string,
+): Promise<PaymentVoidResult> {
+  return apiFetch<PaymentVoidResult>(
+    `/billing/customer-invoices/${invoiceId}/payments/${paymentId}/void`,
+    { method: "POST", body: JSON.stringify({ reason }) },
+  );
 }
 
 /** Money received against a sent invoice, part or all of what is

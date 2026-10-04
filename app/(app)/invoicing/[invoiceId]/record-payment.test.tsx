@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -26,7 +26,11 @@ beforeEach(() => {
 async function openForm(outstandingCents = 100_000) {
   const user = userEvent.setup();
   const view = render(
-    <RecordPayment invoiceId="inv-1" outstandingCents={outstandingCents} />,
+    <RecordPayment
+      invoiceId="inv-1"
+      outstandingCents={outstandingCents}
+      canRecord
+    />,
   );
   await user.click(screen.getByRole("button", { name: "Record payment" }));
   return { user, ...view };
@@ -96,6 +100,58 @@ describe("RecordPayment", () => {
     await user.click(screen.getByRole("button", { name: "Record payment" }));
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "Enter the amount received, like 250.00.",
+    );
+    expect(recordPaymentAction).not.toHaveBeenCalled();
+  });
+
+  it("keeps the confirmation, with focus, when a settling payment turns recording off", async () => {
+    recordPaymentAction.mockResolvedValueOnce({
+      status: "ok",
+      message: "Recorded 600.00 (Cash). The invoice is paid.",
+    });
+    const { user, rerender } = await openForm(60_000);
+    await user.selectOptions(screen.getByLabelText("Method"), "cash");
+    await user.click(screen.getByRole("button", { name: "Record payment" }));
+    const status = await screen.findByRole("status");
+    expect(status).toHaveFocus();
+
+    // The page refreshes with the invoice paid: nothing left to record.
+    rerender(
+      <RecordPayment invoiceId="inv-1" outstandingCents={0} canRecord={false} />,
+    );
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "Recorded 600.00 (Cash). The invoice is paid.",
+    );
+    expect(screen.getByRole("status")).toHaveFocus();
+    expect(
+      screen.queryByRole("button", { name: "Record payment" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("offers nothing when recording is off", () => {
+    render(
+      <RecordPayment invoiceId="inv-1" outstandingCents={0} canRecord={false} />,
+    );
+    expect(
+      screen.queryByRole("button", { name: "Record payment" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("will not send a date after today, or no date", async () => {
+    const { user } = await openForm();
+    await user.selectOptions(screen.getByLabelText("Method"), "cash");
+    fireEvent.change(screen.getByLabelText("Received"), {
+      target: { value: "2026-10-03" },
+    });
+    await user.click(screen.getByRole("button", { name: "Record payment" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "A payment cannot be dated in the future.",
+    );
+
+    fireEvent.change(screen.getByLabelText("Received"), { target: { value: "" } });
+    await user.click(screen.getByRole("button", { name: "Record payment" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Enter the date the money arrived.",
     );
     expect(recordPaymentAction).not.toHaveBeenCalled();
   });
