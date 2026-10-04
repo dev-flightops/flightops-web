@@ -243,6 +243,88 @@ describe("Settings → Billing", () => {
     expect(row).not.toHaveTextContent("$0.00");
   });
 
+  it("links an open invoice to Stripe's page to pay it", async () => {
+    getBillingOverview.mockResolvedValue(
+      overview({
+        subscription: sub({ status: "past_due", amount_due_cents: 299_000, amount_due_currency: "USD" }),
+        invoices: [
+          invoice({
+            id: "inv-open",
+            number: "PFO-0003",
+            status: "open",
+            amount_paid_cents: 0,
+            amount_remaining_cents: 299_000,
+            amount_paid_major: "0.00",
+            paid_at: null,
+            hosted_invoice_url: "https://invoice.stripe.com/i/acct_1QTest/test_open",
+            invoice_pdf_url: "https://pay.stripe.com/invoice/acct_1QTest/test_open/pdf",
+          }),
+          invoice({
+            id: "inv-paid",
+            number: "PFO-0002",
+            invoice_pdf_url: "https://pay.stripe.com/invoice/acct_1QTest/test_paid/pdf",
+          }),
+        ],
+      }),
+    );
+    await renderPage();
+
+    const open = screen.getByText("PFO-0003").closest("tr")!;
+    expect(open.querySelector("a")?.textContent).toBe("Pay →");
+    expect(open.querySelector("a")?.getAttribute("href")).toBe(
+      "https://invoice.stripe.com/i/acct_1QTest/test_open",
+    );
+    const paid = screen.getByText("PFO-0002").closest("tr")!;
+    expect(paid.querySelector("a")?.textContent).toBe("↓ PDF");
+  });
+
+  it("tells a cancelled subscription that still owes how to pay", async () => {
+    getBillingOverview.mockResolvedValue(
+      overview({
+        subscription: sub({
+          status: "canceled",
+          canceled_at: "2026-09-20T12:00:00Z",
+          amount_due_cents: 299_000,
+          amount_due_currency: "USD",
+        }),
+        invoices: [
+          invoice({
+            status: "open",
+            amount_paid_cents: 0,
+            amount_remaining_cents: 299_000,
+            amount_paid_major: "0.00",
+            paid_at: null,
+            hosted_invoice_url: "https://invoice.stripe.com/i/acct_1QTest/test_open",
+          }),
+        ],
+        plans: PLANS_FOR_SALE,
+        billing_ready: true,
+      }),
+    );
+    await renderPage();
+
+    expect(
+      screen.getByText(/\$2,990\.00 is still due: use Pay on the open invoice below\./),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Pay →" })).toBeInTheDocument();
+  });
+
+  it("without billing set up, an ended subscription says to ask the contact, not to choose a plan", async () => {
+    getBillingOverview.mockResolvedValue(
+      overview({
+        subscription: sub({ status: "canceled", canceled_at: "2026-09-20T12:00:00Z" }),
+      }),
+    );
+    await renderPage();
+
+    expect(screen.getByText("Cancelled")).toBeInTheDocument();
+    expect(
+      screen.getByText(/To subscribe again, ask your Peregrine contact: billing isn't set up on this system yet\./),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/choose a plan below/)).not.toBeInTheDocument();
+    expect(chooseButtons()).toHaveLength(0);
+  });
+
   it("names who can see billing when the API refuses", async () => {
     getBillingOverview.mockRejectedValue(
       new TestApiError(403, "/billing/overview", '{"detail":"insufficient_role"}'),

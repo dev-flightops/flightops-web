@@ -39,6 +39,7 @@ describe("DunningBanner", () => {
           dunning_attempts: 2,
           next_payment_attempt_at: "2026-08-14T15:00:00Z",
         })}
+        billingReady
         managePaymentSlot={<button type="button">Manage payment</button>}
       />,
     );
@@ -128,6 +129,7 @@ describe("DunningBanner", () => {
           amount_due_cents: 299_000,
           amount_due_currency: "USD",
         })}
+        billingReady
         managePaymentSlot={<button type="button">Manage billing</button>}
       />,
     );
@@ -151,10 +153,46 @@ describe("DunningBanner", () => {
           amount_due_cents: 29_900,
           amount_due_currency: "USD",
         })}
+        billingReady
       />,
     );
     expect(screen.getByText(/\$299\.00 is still due/)).toBeInTheDocument();
     expect(screen.getByText(/To subscribe again, choose a plan below/)).toBeInTheDocument();
+  });
+
+  it("points to the invoice's Pay link when one is there", () => {
+    render(
+      <DunningBanner
+        subscription={makeSub({
+          status: "canceled",
+          dunning_attempts: 4,
+          canceled_at: "2026-08-10T00:00:00Z",
+          amount_due_cents: 29_900,
+          amount_due_currency: "USD",
+        })}
+        billingReady
+        canPayOnline
+      />,
+    );
+    expect(
+      screen.getByText(/\$299\.00 is still due\. Use Pay on the open invoice below\./),
+    ).toBeInTheDocument();
+  });
+
+  it("doesn't send anyone to choose a plan where billing isn't set up", () => {
+    render(
+      <DunningBanner
+        subscription={makeSub({
+          status: "canceled",
+          dunning_attempts: 4,
+          canceled_at: "2026-08-10T00:00:00Z",
+        })}
+      />,
+    );
+    expect(
+      screen.getByText(/To subscribe again, ask your Peregrine contact: billing isn't set up on this system yet\./),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/choose a plan below/)).not.toBeInTheDocument();
   });
 
   it("names Manage billing only when the page offers it", () => {
@@ -166,6 +204,7 @@ describe("DunningBanner", () => {
     rerender(
       <DunningBanner
         subscription={makeSub({ status: "past_due", dunning_attempts: 1 })}
+        billingReady
         managePaymentSlot={<button type="button">Manage billing</button>}
       />,
     );
@@ -180,6 +219,7 @@ describe("DunningBanner", () => {
           dunning_attempts: 2,
           next_payment_attempt_at: "2026-08-14T15:00:00Z",
         })}
+        billingReady
         managePaymentSlot={<button type="button">Manage payment</button>}
       />,
     );

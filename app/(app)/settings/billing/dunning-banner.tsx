@@ -21,17 +21,24 @@ import type { Subscription } from "@/lib/api/billing";
  */
 export function DunningBanner({
   subscription,
+  billingReady = false,
+  canPayOnline = false,
   managePaymentSlot,
 }: {
   subscription: Subscription;
-  /** Rendered next to the copy while the company can still pay
-   *  (past due, unpaid, incomplete). Omitted once the subscription has
-   *  ended, because the way back is choosing a plan again. The page
-   *  leaves it out where billing isn't set up, and the copy then names
-   *  no action it doesn't offer. */
+  /** Checkout and the Customer portal can run here. Where they can't,
+   *  the copy names no action the page doesn't offer: no Manage
+   *  billing, and no "choose a plan below". */
+  billingReady?: boolean;
+  /** An open invoice below links Stripe's page to pay it. */
+  canPayOnline?: boolean;
+  /** The Manage billing button, shown beside the copy while the
+   *  company can still pay through the portal (past due, unpaid,
+   *  incomplete) and billing is set up. Never once the subscription
+   *  has ended: the way back is choosing a plan again. */
   managePaymentSlot?: ReactNode;
 }) {
-  const copy = bannerCopy(subscription, managePaymentSlot != null);
+  const copy = bannerCopy(subscription, billingReady, canPayOnline);
   if (copy === null) {
     return null;
   }
@@ -51,7 +58,7 @@ export function DunningBanner({
           <p className="text-sm font-semibold">{copy.title}</p>
           <p className="mt-1 text-xs text-foreground/80">{copy.body}</p>
         </div>
-        {!copy.ended && managePaymentSlot && (
+        {!copy.ended && billingReady && managePaymentSlot && (
           <div className="flex-shrink-0">{managePaymentSlot}</div>
         )}
       </div>
@@ -61,7 +68,8 @@ export function DunningBanner({
 
 function bannerCopy(
   subscription: Subscription,
-  canManage: boolean,
+  billingReady: boolean,
+  canPayOnline: boolean,
 ): { title: string; body: string; ended: boolean } | null {
   const due =
     subscription.amount_due_cents > 0
@@ -70,6 +78,11 @@ function bannerCopy(
   const attempts = subscription.dunning_attempts;
   const tried =
     attempts > 0 ? ` (${attempts} attempt${attempts === 1 ? "" : "s"} so far)` : "";
+  // Stripe's own invoice page takes a payment whatever this page offers.
+  const pay = due && canPayOnline ? " Use Pay on the open invoice below." : "";
+  const subscribeAgain = billingReady
+    ? " To subscribe again, choose a plan below."
+    : " To subscribe again, ask your Peregrine contact: billing isn't set up on this system yet.";
   switch (subscription.status) {
     case "past_due": {
       const retry = subscription.next_payment_attempt_at
@@ -80,7 +93,8 @@ function bannerCopy(
         body:
           `We couldn't charge the card on file${due ? ` for ${due}` : ""}${tried}.` +
           retry +
-          (canManage ? " Update the card under Manage billing to keep the subscription." : ""),
+          (billingReady ? " Update the card under Manage billing to keep the subscription." : "") +
+          pay,
         ended: false,
       };
     }
@@ -89,7 +103,8 @@ function bannerCopy(
         title: "Payment failed — Stripe has stopped retrying",
         body:
           `${due ? `${due} is due. ` : ""}Stripe tried the card on file${tried} and won't try again.` +
-          (canManage ? " Use Manage billing to update the card and pay what's due." : ""),
+          (billingReady ? " Use Manage billing to update the card and pay what's due." : "") +
+          pay,
         ended: false,
       };
     case "incomplete":
@@ -97,13 +112,16 @@ function bannerCopy(
         title: "The first payment didn't go through",
         body:
           `Stripe couldn't take the first payment${due ? ` of ${due}` : ""}.` +
-          (canManage ? " Use Manage billing to update the card." : ""),
+          (billingReady ? " Use Manage billing to update the card." : "") +
+          pay,
         ended: false,
       };
     case "incomplete_expired":
       return {
         title: "The subscription didn't start",
-        body: "The first payment never went through, so Stripe dropped the subscription. To subscribe, choose a plan below.",
+        body:
+          "The first payment never went through, so Stripe dropped the subscription." +
+          subscribeAgain,
         ended: true,
       };
     case "canceled":
@@ -114,7 +132,8 @@ function bannerCopy(
         title: "Subscription cancelled — payment could not be recovered",
         body:
           `Stripe cancelled the subscription after its retries failed${due ? `; ${due} is still due` : ""}.` +
-          " To subscribe again, choose a plan below.",
+          pay +
+          subscribeAgain,
         ended: true,
       };
     default:

@@ -109,6 +109,8 @@ export default async function SettingsBillingPage({
           {overview.subscription && (
             <DunningBanner
               subscription={overview.subscription}
+              billingReady={overview.billing_ready}
+              canPayOnline={_canPayOnline(overview.invoices)}
               managePaymentSlot={
                 overview.billing_ready ? <ManagePaymentButton /> : undefined
               }
@@ -118,6 +120,7 @@ export default async function SettingsBillingPage({
             subscription={overview.subscription}
             plans={overview.plans}
             billingReady={overview.billing_ready}
+            canPayOnline={_canPayOnline(overview.invoices)}
           />
           <InvoiceHistoryCard invoices={overview.invoices} />
           <PlanCatalogCard
@@ -135,10 +138,13 @@ function CurrentSubscriptionCard({
   subscription,
   plans,
   billingReady,
+  canPayOnline,
 }: {
   subscription: Subscription | null;
   plans: Plan[];
   billingReady: boolean;
+  /** An open invoice below links Stripe's page to pay it. */
+  canPayOnline: boolean;
 }) {
   if (!subscription) {
     return (
@@ -215,8 +221,14 @@ function CurrentSubscriptionCard({
         <p className="mt-4 border-t border-border pt-3 text-xs text-muted-foreground">
           {subscription.status === "incomplete_expired"
             ? "The first payment never went through, so this subscription didn't start."
-            : `This subscription ended on ${_fmtDate(endedOn)}.`}{" "}
-          To subscribe again, choose a plan below.
+            : `This subscription ended on ${_fmtDate(endedOn)}.`}
+          {amountDue &&
+            (canPayOnline
+              ? ` ${amountDue} is still due: use Pay on the open invoice below.`
+              : ` ${amountDue} is still due.`)}{" "}
+          {billingReady
+            ? "To subscribe again, choose a plan below."
+            : "To subscribe again, ask your Peregrine contact: billing isn't set up on this system yet."}
         </p>
       ) : (
         <>
@@ -302,7 +314,18 @@ function InvoiceHistoryCard({ invoices }: { invoices: Invoice[] }) {
                       {inv.paid_at ? _fmtDate(inv.paid_at) : "—"}
                     </td>
                     <td className="px-2 py-2 text-right">
-                      {inv.invoice_pdf_url ? (
+                      {inv.status === "open" && inv.hosted_invoice_url ? (
+                        // Stripe's hosted page takes the payment, whether
+                        // or not the subscription is still live.
+                        <a
+                          href={inv.hosted_invoice_url}
+                          target="_blank"
+                          rel="noopener"
+                          className="text-xs font-semibold text-primary hover:underline"
+                        >
+                          Pay →
+                        </a>
+                      ) : inv.invoice_pdf_url ? (
                         <a
                           href={inv.invoice_pdf_url}
                           target="_blank"
@@ -520,6 +543,11 @@ function Breadcrumb() {
       <span className="text-foreground">Billing</span>
     </nav>
   );
+}
+
+/** An open invoice with Stripe's hosted page, where it can be paid. */
+function _canPayOnline(invoices: Invoice[]): boolean {
+  return invoices.some((i) => i.status === "open" && i.hosted_invoice_url);
 }
 
 const STATUS_LABELS: Record<string, string> = {
