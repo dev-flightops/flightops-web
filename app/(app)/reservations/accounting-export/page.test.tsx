@@ -12,7 +12,7 @@ import {
 
 import type { AccountingExportResponse } from "@/lib/api/types";
 
-const { TestApiError, getAccountingExport } = vi.hoisted(() => {
+const { TestApiError, getAccountingExport, listCustomers } = vi.hoisted(() => {
   class TestApiError extends Error {
     constructor(
       public status: number,
@@ -22,11 +22,12 @@ const { TestApiError, getAccountingExport } = vi.hoisted(() => {
       super(message);
     }
   }
-  return { TestApiError, getAccountingExport: vi.fn() };
+  return { TestApiError, getAccountingExport: vi.fn(), listCustomers: vi.fn() };
 });
 
 vi.mock("@/lib/api/client", () => ({ ApiError: TestApiError }));
 vi.mock("@/lib/api/ops", () => ({ getAccountingExport }));
+vi.mock("@/lib/api/reservations", () => ({ listCustomers }));
 
 import AccountingExportPage from "./page";
 
@@ -41,6 +42,8 @@ function emptyResponse(): AccountingExportResponse {
 
 beforeEach(() => {
   getAccountingExport.mockReset();
+  listCustomers.mockReset();
+  listCustomers.mockResolvedValue({ items: [], total: 0 });
 });
 
 async function renderPage(params: Record<string, string> = {}) {
@@ -63,9 +66,12 @@ function exportRow(
     aircraft_tail: "N208EX",
     pic_name: "Pat Pilot",
     customer: null,
+    customer_type: null,
     revenue_pax: 5,
+    total_pax: 6,
     cargo_lbs: 250,
-    mail_lbs: null,
+    mail_lbs: 0,
+    cargo_description: null,
     notes: null,
     ...overrides,
   };
@@ -393,6 +399,38 @@ describe("/reservations/accounting-export: the CSV download", () => {
     const prefix = "data:text/csv;charset=utf-8,";
     expect(href.startsWith(prefix)).toBe(true);
     const csv = decodeURIComponent(href.slice(prefix.length));
-    expect(csv.split("\n")[1]).toMatch(/,"'=HYPERLINK\(""https:\/\/x\.example"",""Pay""\)"$/);
+    expect(csv.split("\r\n")[1]).toMatch(/,"'=HYPERLINK\(""https:\/\/x\.example"",""Pay""\)"$/);
+  });
+
+  it("#27: lists customers in the filter and sends the chosen one to the export", async () => {
+    listCustomers.mockResolvedValue({
+      items: [
+        { id: "11111111-1111-4111-8111-111111111111", full_name: "Bo Flyer", company_name: null, customer_type: "individual" },
+        { id: "22222222-2222-4222-8222-222222222222", full_name: "Ann Acme", company_name: "Acme Mining", customer_type: "corporate" },
+      ],
+      total: 2,
+    });
+    getAccountingExport.mockResolvedValue(emptyResponse());
+    await renderPage({
+      start: "2026-09-01",
+      end: "2026-09-30",
+      customer: "22222222-2222-4222-8222-222222222222",
+    });
+    expect(getAccountingExport).toHaveBeenCalledWith({
+      start: "2026-09-01",
+      end: "2026-09-30",
+      customer: "22222222-2222-4222-8222-222222222222",
+    });
+    const select = screen.getByLabelText("Customer") as HTMLSelectElement;
+    expect([...select.options].map((o) => o.text)).toEqual(["All customers", "Acme Mining", "Bo Flyer"]);
+    expect(select.value).toBe("22222222-2222-4222-8222-222222222222");
+  });
+
+  it("#27: the page still works without the customer filter when customers can't be read", async () => {
+    listCustomers.mockRejectedValue(new TestApiError(403, "/reservations/customers", "no"));
+    getAccountingExport.mockResolvedValue(emptyResponse());
+    await renderPage({ start: "2026-09-01", end: "2026-09-30" });
+    expect(screen.queryByLabelText("Customer")).toBeNull();
+    expect(getAccountingExport).toHaveBeenCalledWith({ start: "2026-09-01", end: "2026-09-30", customer: undefined });
   });
 });

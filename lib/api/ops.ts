@@ -619,11 +619,12 @@ export async function getPilotComplianceProfile(
 /** M2 tail — completed flights aggregate for /reservations/accounting-export.
  *  Both dates optional; backend defaults to last 30 days. */
 export async function getAccountingExport(
-  params: { start?: string; end?: string } = {},
+  params: { start?: string; end?: string; customer?: string } = {},
 ): Promise<AccountingExportResponse> {
   const qs = new URLSearchParams();
   if (params.start) qs.set("start", params.start);
   if (params.end) qs.set("end", params.end);
+  if (params.customer) qs.set("customer", params.customer);
   const tail = qs.toString() ? `?${qs.toString()}` : "";
   return apiFetch<AccountingExportResponse>(`/ops/accounting-export${tail}`);
 }
