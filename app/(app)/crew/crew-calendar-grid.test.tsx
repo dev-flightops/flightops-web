@@ -28,6 +28,7 @@ const CALENDAR: CrewCalendar = {
   first_day: "2026-10-01",
   last_day: "2026-10-31",
   station: null,
+  bases: ["PABE", "PANC"],
   stations: [
     { code: "PABE", name: "Bethel" },
     { code: "PANC", name: "Anchorage" },

@@ -37,6 +37,11 @@ function href(month: string, station: string | null): string {
   return `/crew?${qs.toString()}`;
 }
 
+/** The bases in use, plus the one in the address if nothing uses it now. */
+function baseChoices(bases: string[], station: string | null): string[] {
+  return station && !bases.includes(station) ? [...bases, station].sort() : bases;
+}
+
 const NAV_LINK =
   "rounded-md border border-border bg-card px-3 py-1.5 text-sm font-semibold text-foreground hover:bg-accent";
 
@@ -93,9 +98,9 @@ export default async function CrewCalendarPage({
           )}
         </nav>
 
-        {calendar && calendar.stations.length > 0 && (
+        {calendar && calendar.bases.length > 0 && (
           <nav aria-label="Base" className="flex flex-wrap gap-1.5">
-            {[null, ...calendar.stations.map((s) => s.code)].map((code) => (
+            {[null, ...baseChoices(calendar.bases, station)].map((code) => (
               <Link
                 key={code ?? "all"}
                 href={href(month, code)}

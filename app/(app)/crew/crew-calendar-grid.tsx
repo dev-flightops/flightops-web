@@ -114,7 +114,7 @@ export function CrewCalendarGrid({
             <tr className="border-b border-border">
               <th
                 scope="col"
-                className="sticky left-0 z-10 min-w-[180px] bg-card px-3 py-2 text-left text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground"
+                className="sticky left-0 z-10 min-w-[170px] bg-card px-3 py-2 text-left text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground"
               >
                 Crew
               </th>
@@ -123,7 +123,7 @@ export function CrewCalendarGrid({
                   key={d.iso}
                   scope="col"
                   className={cn(
-                    "min-w-[34px] px-0.5 py-1 text-center font-normal",
+                    "min-w-[30px] px-0.5 py-1 text-center font-normal",
                     d.weekend && "bg-muted/60",
                     d.iso === today && "text-primary",
                   )}

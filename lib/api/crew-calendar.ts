@@ -91,6 +91,9 @@ export interface CrewCalendar {
   first_day: string;
   last_day: string;
   station: string | null;
+  /** The filter's choices: crew home bases and bases with an assignment
+   *  this month, whatever filter is applied. */
+  bases: string[];
   stations: CrewCalendarStation[];
   airframe_types: string[];
   aircraft: CrewCalendarAircraft[];
