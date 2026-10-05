@@ -131,7 +131,13 @@ export const DEPARTMENTS: Department[] = [
         status: "live",
         department: "operations",
       },
-      { id: "crew", label: "Crew", status: "m3", department: "operations" },
+      {
+        id: "crew",
+        label: "Crew",
+        href: "/crew",
+        status: "live",
+        department: "operations",
+      },
       {
         id: "currency",
         label: "Currency",

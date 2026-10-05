@@ -50,14 +50,23 @@ describe("DepartmentNav", () => {
     );
   });
 
-  it("renders future modules as disabled spans with milestone hint", () => {
+  it("renders the Crew calendar as a live link", () => {
     vi.mocked(usePathname).mockReturnValue("/dispatch");
     render(<DepartmentNav />);
-    // Crew + Currency are M3 — assert one of them keeps the disabled-span shape.
     const crew = screen.getByTestId("dept-nav-crew");
-    expect(crew.tagName).toBe("SPAN");
-    expect(crew).toHaveAttribute("aria-disabled", "true");
-    expect(crew).toHaveAttribute("title", "Coming in M3");
+    expect(crew.tagName).toBe("A");
+    expect(crew).toHaveAttribute("href", "/crew");
+  });
+
+  it("renders future modules as disabled spans with milestone hint", () => {
+    // Operations has none left since the crew calendar (#43); the Crew
+    // department's own modules are still M3.
+    vi.mocked(usePathname).mockReturnValue("/crew-admin");
+    render(<DepartmentNav />);
+    const roster = screen.getByTestId("dept-nav-crew-roster");
+    expect(roster.tagName).toBe("SPAN");
+    expect(roster).toHaveAttribute("aria-disabled", "true");
+    expect(roster).toHaveAttribute("title", "Coming in M3");
   });
 
   it("renders Village Wx + Ramp Ops as live links (M2)", () => {
