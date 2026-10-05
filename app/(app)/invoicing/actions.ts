@@ -37,8 +37,9 @@ export type InvoiceActionState =
  *  something to put in front of somebody chasing a payment. */
 const REFUSALS: Record<string, string> = {
   invoice_has_unpriced_lines:
-    "This invoice has a line with no price yet. Set a cargo rate in " +
-    "company settings, regenerate, and try again.",
+    "This invoice has a line with no price yet. Set the cargo rate in " +
+    "Settings → Company, then void this draft and raise the flight's " +
+    "invoices again.",
   paid_on_in_the_future: "A payment cannot be dated in the future.",
   received_on_in_the_future: "A payment cannot be dated in the future.",
   invoice_has_payments:
@@ -86,9 +87,14 @@ export async function sendInvoiceAction(
     await sendCustomerInvoice(invoiceId);
     revalidatePath("/invoicing");
     revalidatePath(`/invoicing/${invoiceId}`);
-    return { status: "ok", message: "Sent." };
+    // Recorded as sent, not emailed: nothing is emailed yet (#25, item
+    // 8), so the message must not say it went anywhere.
+    return { status: "ok", message: "Marked as sent." };
   } catch (err) {
-    return { status: "error", message: explain(err, "Could not send it") };
+    return {
+      status: "error",
+      message: explain(err, "Could not mark it as sent"),
+    };
   }
 }
 

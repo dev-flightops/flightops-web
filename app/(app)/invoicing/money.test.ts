@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 
-import { isOverdue, money, quantity, statusClasses } from "./money";
+import {
+  isOverdue,
+  money,
+  quantity,
+  statusClasses,
+  unitPrice,
+} from "./money";
 
 /**
  * These strings go on a document somebody pays against, and the same
@@ -42,6 +48,33 @@ describe("quantity", () => {
 
   it("handles zero", () => {
     expect(quantity(0)).toBe("0");
+  });
+});
+
+describe("unitPrice", () => {
+  it("shows a cargo rate to four decimals, so the line multiplies out", () => {
+    // 100 lb x 0.4750 = 47.50. Rounded to 0.48 it would read 48.00.
+    expect(unitPrice({ unit_price: "0.4750", unit_price_cents: 48 })).toBe("0.4750");
+  });
+
+  it("shows a price in whole cents to the cent, as the PDF does", () => {
+    expect(unitPrice({ unit_price: "1200.3000", unit_price_cents: 120_030 })).toBe(
+      "1,200.30",
+    );
+    expect(unitPrice({ unit_price: "0.5000", unit_price_cents: 50 })).toBe("0.50");
+    expect(unitPrice({ unit_price: "0.0000", unit_price_cents: 0 })).toBe("0.00");
+  });
+
+  it("groups thousands and parenthesises negatives like money()", () => {
+    expect(unitPrice({ unit_price: "1234.5678", unit_price_cents: 123_457 })).toBe(
+      "1,234.5678",
+    );
+    expect(unitPrice({ unit_price: "-0.1250", unit_price_cents: -13 })).toBe("(0.1250)");
+  });
+
+  it("falls back to the cents on a line from before four decimals were kept", () => {
+    expect(unitPrice({ unit_price: null, unit_price_cents: 48 })).toBe("0.48");
+    expect(unitPrice({ unit_price_cents: 45_000 })).toBe("450.00");
   });
 });
 

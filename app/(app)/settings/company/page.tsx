@@ -21,7 +21,8 @@ export default async function SettingsCompanyPage() {
         <header className="mb-6">
           <h1 className="text-2xl font-bold tracking-tight">Company Profile</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Legal name, mailing address, contacts, and Part 135 certificate
+            Legal name, mailing address, contacts, Part 135 certificate,
+            and how invoices are priced and dated
           </p>
         </header>
         <CompanyForm profile={profile} />

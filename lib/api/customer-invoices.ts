@@ -28,6 +28,10 @@ export interface InvoiceLine {
    *  round differently from the server. */
   quantity_milli: number;
   unit_price_cents: number;
+  /** The unit price to four decimals, as a decimal string ("0.4750").
+   *  A cargo rate per lb has four, which `unit_price_cents` rounds to
+   *  48; the amount is computed from this one, so it is the one shown. */
+  unit_price: string;
   amount_cents: number;
   /** The line exists but has no price — cargo carried with no
    *  configured rate. Rendered, so a draft is never sent with a hole
@@ -243,10 +247,25 @@ export async function voidCustomerInvoice(
  * Raise drafts for a flown flight. Returns the invoices created and,
  * separately, the bookings that did not make it onto one — "where is
  * this passenger" is the first question anyone asks.
+ *
+ * 409 `invoice_generation_in_progress` when another raise for the same
+ * flight is running; 409 `flight_has_not_flown`; 404 `flight_not_found`.
  */
+export interface SkippedBooking {
+  booking_id: string;
+  /** "cancelled", "no quote on the booking", "quoted at zero",
+   *  "already invoiced on INV-000123". */
+  reason: string;
+  /** Who the booking is for; null only if the customer record is gone. */
+  customer: InvoiceCustomerRef | null;
+}
+
 export interface GenerateResult {
   invoices: CustomerInvoice[];
-  skipped: Array<{ booking_id: string; reason: string }>;
+  skipped: SkippedBooking[];
+  /** What became of the flight's cargo and USPS mail, in sentences:
+   *  which invoice carries the cargo, or why none does. */
+  notes: string[];
 }
 
 export async function generateCustomerInvoices(

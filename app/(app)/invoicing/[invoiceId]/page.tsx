@@ -13,6 +13,7 @@ import {
   quantity,
   STATUS_LABELS,
   statusClasses,
+  unitPrice,
 } from "../money";
 import { InvoiceActions } from "./invoice-actions";
 import { PaymentHistory } from "./payment-history";
@@ -174,7 +175,7 @@ export default async function InvoiceDetailPage({
                   {quantity(line.quantity_milli)}
                 </td>
                 <td className="px-4 py-2.5 text-right tabular-nums text-muted-foreground">
-                  {money(line.unit_price_cents)}
+                  {unitPrice(line)}
                 </td>
                 <td className="px-4 py-2.5 text-right tabular-nums text-foreground">
                   {money(line.amount_cents)}
