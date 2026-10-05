@@ -44,6 +44,15 @@ import { PeriodControls } from "@/components/reports/period-controls";
 
 export const dynamic = "force-dynamic";
 
+/** The last day of a past month, so aging shows that month-end as it
+ *  stood (#29); undefined for this month or later, which ages as of
+ *  today. Months are UTC, as the summary's are. */
+export function monthEndIfPast(year: number, month: number, now: Date = new Date()): string | undefined {
+  const thisMonth = now.getUTCFullYear() * 12 + now.getUTCMonth();
+  if (year * 12 + (month - 1) >= thisMonth) return undefined;
+  return new Date(Date.UTC(year, month, 0)).toISOString().slice(0, 10);
+}
+
 const MONTH_RE = /^\d{1,2}$/;
 const YEAR_RE = /^\d{4}$/;
 
@@ -82,7 +91,9 @@ export default async function AccountingPage({
   }
 
   try {
-    aging = await getAgingReport();
+    aging = await getAgingReport(
+      bothGiven ? monthEndIfPast(Number(yearParam), Number(monthParam)) : undefined,
+    );
   } catch {
     agingError = "Could not load the aging report just now.";
   }
@@ -146,18 +157,21 @@ export default async function AccountingPage({
             />
           </section>
 
-          {summary.uninvoiced_cents > 0 && (
+          {(summary.uninvoiced_flights ?? 0) > 0 && (
             // The actionable gap. Flights flown that nobody has billed
-            // for, which is a month-end job rather than a statistic.
+            // for, which is a month-end job rather than a statistic (#29).
             <p
               role="status"
               className="mb-4 rounded-md border border-status-yellow/30 bg-status-yellow/10 px-3 py-2 text-xs text-status-yellow"
             >
               <span className="font-semibold">
-                {money(summary.uninvoiced_cents)} booked but not invoiced.
+                {summary.uninvoiced_flights} flight{summary.uninvoiced_flights === 1 ? "" : "s"} flown
+                with no invoice — {money(summary.uninvoiced_cents)} booked.
               </span>{" "}
-              Flights flown with no invoice raised — raise them from the
-              flight before closing the month.
+              <Link href="/invoicing" className="underline">
+                Raise them from Invoicing
+              </Link>{" "}
+              before closing the month.
             </p>
           )}
 

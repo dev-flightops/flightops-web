@@ -198,6 +198,8 @@ export interface AccountingSummary {
   /** Booked less invoiced: flights flown with no invoice raised. The
    *  number somebody acts on at month end. */
   uninvoiced_cents: number;
+  /** The month's flown, sold flights with no live invoice (#29). */
+  uninvoiced_flights: number;
   block_hours: number;
   confidence: CostConfidence;
   note: string;
