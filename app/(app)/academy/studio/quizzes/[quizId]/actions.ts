@@ -171,7 +171,7 @@ export async function updateQuestionAction(
     };
   }
   return _run(quizId, () =>
-    updateQuizQuestion(quizId, questionId, {
+    updateQuizQuestion(questionId, {
       prompt,
       options,
       correct_option_index: correctIndex,
@@ -189,7 +189,7 @@ export async function deleteQuestionAction(
   if (!quizId || !questionId) {
     return { status: "error", message: "Missing ids." };
   }
-  return _run(quizId, () => deleteQuizQuestion(quizId, questionId));
+  return _run(quizId, () => deleteQuizQuestion(questionId));
 }
 
 export async function deleteQuizAction(formData: FormData): Promise<void> {
