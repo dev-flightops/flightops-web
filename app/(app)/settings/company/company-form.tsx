@@ -251,6 +251,11 @@ export function CompanyForm({ profile }: { profile: CompanyProfileResponse }) {
       </Section>
 
       <Section title="Notes">
+        {/* The section title is a heading, not a label: without this a
+            screen reader announced an unnamed text box (#41). */}
+        <label htmlFor="notes" className="sr-only">
+          Notes
+        </label>
         <textarea
           id="notes"
           {...bind("notes")}
