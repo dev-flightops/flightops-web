@@ -198,3 +198,37 @@ describe("the academy strip", () => {
     expect(chip).toHaveAttribute("aria-current", "page");
   });
 });
+
+describe("a page the role cannot see", () => {
+  it("R7: marks no chip current, not the nearest chip the role can see", () => {
+    // A dispatcher who opens the accounting export by URL. New Booking
+    // (/reservations) prefixes the path, but it is not where they are.
+    vi.mocked(usePathname).mockReturnValue("/reservations/accounting-export");
+    render(<DepartmentNav roles={["dispatcher"]} />);
+    expect(
+      screen.queryByTestId("dept-nav-reservations-acct-export"),
+    ).not.toBeInTheDocument();
+    expect(screen.getByTestId("dept-nav-reservations-search")).not.toHaveAttribute(
+      "aria-current",
+    );
+    expect(document.querySelectorAll('[aria-current="page"]')).toHaveLength(0);
+  });
+
+  it("still marks the export current for a role that sees it", () => {
+    vi.mocked(usePathname).mockReturnValue("/reservations/accounting-export");
+    render(<DepartmentNav roles={["director_of_operations"]} />);
+    expect(
+      screen.getByTestId("dept-nav-reservations-acct-export"),
+    ).toHaveAttribute("aria-current", "page");
+    expect(document.querySelectorAll('[aria-current="page"]')).toHaveLength(1);
+  });
+
+  it("still marks New Booking current on /reservations for the dispatcher", () => {
+    vi.mocked(usePathname).mockReturnValue("/reservations");
+    render(<DepartmentNav roles={["dispatcher"]} />);
+    expect(screen.getByTestId("dept-nav-reservations-search")).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
+  });
+});
