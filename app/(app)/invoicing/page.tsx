@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { ApiError } from "@/lib/api/client";
+import { listCustomers } from "@/lib/api/reservations";
 import {
   listCustomerInvoices,
   type CustomerInvoice,
@@ -39,6 +40,30 @@ export const dynamic = "force-dynamic";
 
 const STATUSES: InvoiceStatus[] = ["draft", "sent", "paid", "void"];
 
+function invoicingHref(status: InvoiceStatus | undefined, customer: string | undefined): string {
+  const q = new URLSearchParams();
+  if (status) q.set("status", status);
+  if (customer) q.set("customer", customer);
+  const qs = q.toString();
+  return qs ? `/invoicing?${qs}` : "/invoicing";
+}
+
+/** The operator's active customers for the filter. Empty when they can't
+ *  be read: the list still works, without the filter (#30). */
+async function customerOptions(): Promise<{ id: string; name: string }[]> {
+  try {
+    const { items } = await listCustomers({ limit: 200 });
+    return items
+      .map((c) => ({
+        id: c.id,
+        name: c.customer_type === "individual" ? c.full_name : c.company_name || c.full_name,
+      }))
+      .sort((x, y) => x.name.localeCompare(y.name));
+  } catch {
+    return [];
+  }
+}
+
 function todayUtc(): string {
   return new Date().toISOString().slice(0, 10);
 }
@@ -46,12 +71,16 @@ function todayUtc(): string {
 export default async function InvoicingPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string }>;
+  searchParams: Promise<{ status?: string; customer?: string }>;
 }) {
-  const { status: statusParam } = await searchParams;
+  const { status: statusParam, customer: customerParam } = await searchParams;
   const status = STATUSES.includes(statusParam as InvoiceStatus)
     ? (statusParam as InvoiceStatus)
     : undefined;
+  const customer =
+    customerParam && /^[0-9a-f-]{36}$/i.test(customerParam) ? customerParam : undefined;
+  const customers = await customerOptions();
+  const customerName = customers.find((c) => c.id === customer)?.name;
 
   let items: CustomerInvoice[] = [];
   let total = 0;
@@ -59,7 +88,7 @@ export default async function InvoicingPage({
   let loadError: string | null = null;
 
   try {
-    const data = await listCustomerInvoices({ status, limit: 100 });
+    const data = await listCustomerInvoices({ status, customer_id: customer, limit: 100 });
     items = data.items;
     total = data.total;
     outstanding = data.outstanding_cents;
@@ -96,10 +125,12 @@ export default async function InvoicingPage({
             <div className="text-xl font-bold tabular-nums text-foreground">
               {money(outstanding)}
             </div>
-            {/* Said plainly: this covers the whole operation, not the
-                rows below, which may be filtered. */}
+            {/* Said plainly: this covers the whole operation, or the
+                chosen customer, not just the rows below, which a status
+                may filter. */}
             <div className="text-[0.65rem] text-muted-foreground">
-              sent, less payments · all invoices
+              sent, less payments ·{" "}
+              {customer ? (customerName ?? "this customer") : "all invoices"}
             </div>
           </div>
         )}
@@ -118,16 +149,47 @@ export default async function InvoicingPage({
             aria-label="Filter by status"
             className="mb-4 flex flex-wrap gap-1"
           >
-            <FilterChip label="All" href="/invoicing" active={!status} />
+            <FilterChip label="All" href={invoicingHref(undefined, customer)} active={!status} />
             {STATUSES.map((s) => (
               <FilterChip
                 key={s}
                 label={STATUS_LABELS[s]}
-                href={`/invoicing?status=${s}`}
+                href={invoicingHref(s, customer)}
                 active={status === s}
               />
             ))}
           </nav>
+          {customers.length > 0 ? (
+            <form
+              method="get"
+              action="/invoicing"
+              role="search"
+              className="mb-4 flex flex-wrap items-end gap-2"
+            >
+              {status ? <input type="hidden" name="status" value={status} /> : null}
+              <label className="text-xs text-muted-foreground">
+                <span className="mb-1 block">Customer</span>
+                <select
+                  name="customer"
+                  defaultValue={customer ?? ""}
+                  className="w-60 rounded-md border border-border bg-background px-3 py-1.5 text-sm text-foreground"
+                >
+                  <option value="">All customers</option>
+                  {customers.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <button
+                type="submit"
+                className="rounded-md border border-border bg-muted/60 px-3 py-1.5 text-sm font-semibold text-foreground hover:bg-accent"
+              >
+                Filter
+              </button>
+            </form>
+          ) : null}
 
           {items.length === 0 ? (
             <p className="rounded-lg border border-dashed border-border bg-card/40 px-4 py-16 text-center text-sm text-muted-foreground">

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
 import { ApiError } from "@/lib/api/client";
+import { type CustomerInvoiceList, listCustomerInvoices } from "@/lib/api/customer-invoices";
 import {
   BOOKING_STATUS_LABELS,
   CUSTOMER_TYPE_LABELS,
@@ -10,6 +11,8 @@ import {
   getCustomer,
   listBookings,
 } from "@/lib/api/reservations";
+
+import { money, STATUS_LABELS, statusClasses } from "../../invoicing/money";
 
 export default async function CustomerDetailPage({
   params,
@@ -37,6 +40,16 @@ export default async function CustomerDetailPage({
     history = (await listBookings({ customer_id: id, limit: 100 })).items;
   } catch {
     history = [];
+  }
+
+  // The customer's invoices and balance (#30), for the roles billing
+  // admits. Anyone else is refused by the service, and the section is
+  // simply left out.
+  let invoices: CustomerInvoiceList | null = null;
+  try {
+    invoices = await listCustomerInvoices({ customer_id: id, limit: 50 });
+  } catch {
+    invoices = null;
   }
 
   return (
@@ -137,6 +150,48 @@ export default async function CustomerDetailPage({
           </ul>
         )}
       </section>
+
+      {invoices ? (
+        <section aria-labelledby="customer-invoices" className="mt-6 rounded-lg border border-border bg-card p-5">
+          <header className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
+            <h2
+              id="customer-invoices"
+              className="text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground"
+            >
+              Invoices
+            </h2>
+            <p className="text-sm">
+              <span className="text-muted-foreground">Balance owed </span>
+              <span className="font-semibold tabular-nums">{money(invoices.outstanding_cents)}</span>
+            </p>
+          </header>
+          {invoices.items.length === 0 ? (
+            <p className="text-xs text-muted-foreground">No invoices for this customer.</p>
+          ) : (
+            <ul className="space-y-2">
+              {invoices.items.map((inv) => (
+                <li key={inv.id}>
+                  <Link
+                    href={`/invoicing/${inv.id}`}
+                    className="flex flex-wrap items-baseline justify-between gap-3 rounded-md border border-border bg-background/40 px-3 py-2 text-sm hover:bg-accent"
+                  >
+                    <span className="font-semibold">{inv.invoice_number}</span>
+                    <span className="tabular-nums">{money(inv.total_cents)}</span>
+                    <span className={`whitespace-nowrap rounded px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider ${statusClasses(inv.status)}`}>
+                      {STATUS_LABELS[inv.status] ?? inv.status}
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+          <p className="mt-3 text-xs">
+            <Link href={`/invoicing?customer=${customer.id}`} className="text-primary hover:underline">
+              Open in Invoicing →
+            </Link>
+          </p>
+        </section>
+      ) : null}
     </div>
   );
 }
