@@ -559,13 +559,14 @@ export async function addQuizQuestion(
   );
 }
 
+/** A question is edited and deleted by its own id: the service's routes are
+ *  `/academy/questions/{id}`, not nested under the quiz (#15). */
 export async function updateQuizQuestion(
-  quizId: string,
   questionId: string,
   input: QuizQuestionUpdateInput,
 ): Promise<QuizQuestionAdmin> {
   return apiFetch<QuizQuestionAdmin>(
-    `${QUIZ_GATEWAY_PREFIX}/quizzes/${quizId}/questions/${questionId}`,
+    `${QUIZ_GATEWAY_PREFIX}/questions/${questionId}`,
     {
       method: "PATCH",
       body: JSON.stringify(input),
@@ -573,12 +574,9 @@ export async function updateQuizQuestion(
   );
 }
 
-export async function deleteQuizQuestion(
-  quizId: string,
-  questionId: string,
-): Promise<void> {
+export async function deleteQuizQuestion(questionId: string): Promise<void> {
   await apiFetch<void>(
-    `${QUIZ_GATEWAY_PREFIX}/quizzes/${quizId}/questions/${questionId}`,
+    `${QUIZ_GATEWAY_PREFIX}/questions/${questionId}`,
     { method: "DELETE" },
   );
 }
