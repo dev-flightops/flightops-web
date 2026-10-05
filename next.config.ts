@@ -15,6 +15,15 @@ const nextConfig: NextConfig = {
   // is binary, so we disable its auto-redirect entirely and let internal
   // Links + the proxy middleware pick the canonical form per-route.
   skipTrailingSlashRedirect: true,
+  experimental: {
+    // Uploads (documents, employee documents, ramp photos) are server
+    // actions. Next's default 1 MB refused most phone photos and scanned
+    // PDFs. Vercel caps a request at 4.5 MB anyway (4 MB through
+    // proxy.ts), so the forms hold files to 3.8 MB (lib/upload-limits.ts).
+    serverActions: {
+      bodySizeLimit: "4mb",
+    },
+  },
 };
 
 export default nextConfig;

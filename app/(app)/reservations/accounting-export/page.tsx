@@ -1,18 +1,30 @@
 import { getAccountingExport } from "@/lib/api/ops";
 import { ApiError } from "@/lib/api/client";
 import type { AccountingExportResponse } from "@/lib/api/types";
+import { isValidIsoDay } from "@/lib/iso-day";
 
+import { rowsToCsv } from "./csv";
 import { AcctExportFilterBar } from "./filter-bar";
 
 /**
  * /reservations/accounting-export — legacy `templates/acct_export/review.html`.
  *
- * Reads live from `/ops/accounting-export?start=&end=` (M2 backend
- * tail). Backend returns every completed flight in the date range
- * with the columns operators need to import into QuickBooks / Xero
- * / Sage. Fields the current schema can't populate come through as
- * null: `customer` (bookings→flight link is not yet modelled) and
- * `mail_lbs` (only total cargo_lbs is tracked). Both render as "—".
+ * Reads live from `/ops/accounting-export?start=&end=`: every completed
+ * flight in the range, with the columns operators import into
+ * QuickBooks / Xero / Sage. Fields the current schema can't populate
+ * come through as null: `customer` (bookings→flight link is not yet
+ * modelled) and `mail_lbs` (only total cargo_lbs is tracked). Both
+ * render as "—".
+ *
+ * Exec Admins and the Director of Operations only, as in legacy
+ * (`modules/acct_export/router.py:33`). The ops service refuses anyone
+ * else, and they get the access panel the other finance pages show,
+ * with nothing behind it.
+ *
+ * The range comes from the URL: the filter bar is a GET form. With none
+ * it runs from the 1st of this month to today, legacy's default
+ * (`router.py:188-192`). Days are UTC, because the export dates each
+ * flight by its UTC landing day.
  */
 
 export const dynamic = "force-dynamic";
@@ -21,8 +33,12 @@ type Params = { start?: string | string[]; end?: string | string[] };
 
 function parseDate(v: string | string[] | undefined): string | undefined {
   const s = Array.isArray(v) ? v[0] : v;
-  if (!s || !/^\d{4}-\d{2}-\d{2}$/.test(s)) return undefined;
-  return s;
+  return isValidIsoDay(s) ? s : undefined;
+}
+
+function defaultRange(now: Date = new Date()): { start: string; end: string } {
+  const today = now.toISOString().slice(0, 10);
+  return { start: `${today.slice(0, 8)}01`, end: today };
 }
 
 export default async function AccountingExportPage({
@@ -31,43 +47,56 @@ export default async function AccountingExportPage({
   searchParams: Promise<Params>;
 }) {
   const params = await searchParams;
-  const start = parseDate(params.start);
-  const end = parseDate(params.end);
+  const fallback = defaultRange();
+  const start = parseDate(params.start) ?? fallback.start;
+  const end = parseDate(params.end) ?? fallback.end;
 
   let data: AccountingExportResponse | null = null;
+  let forbidden = false;
   let loadError: string | null = null;
+  // Asked even when From is after To: the service checks the role
+  // first, so whoever it refuses gets the access panel whatever the
+  // range, and everyone else gets its 422, said plainly below.
   try {
     data = await getAccountingExport({ start, end });
   } catch (err) {
     const status = err instanceof ApiError ? err.status : 0;
+    forbidden = status === 403;
     loadError =
       status === 401
         ? "Your session expired — please sign in again."
-        : "Accounting export unavailable. Try refreshing in a moment.";
+        : status === 422 && start > end
+          ? "The From date is after the To date."
+          : "Accounting export unavailable. Try refreshing in a moment.";
+  }
+
+  if (forbidden) {
+    return (
+      <div className="mx-auto max-w-screen-xl px-4 sm:px-6 py-8">
+        <header className="mb-6">
+          <PageTitle />
+        </header>
+        <p
+          role="alert"
+          className="rounded-md border border-status-red/30 bg-status-red/10 px-3 py-2 text-sm text-status-red"
+        >
+          The accounting export is limited to executive admins and the
+          director of operations.
+        </p>
+      </div>
+    );
   }
 
   const rows = data?.rows ?? [];
-  const totals = data?.totals ?? {
-    flights: 0,
-    revenue_pax: 0,
-    cargo_lbs: 0,
-    mail_lbs: 0,
-  };
 
   return (
     <div className="mx-auto max-w-screen-xl px-4 sm:px-6 py-8">
       <header className="mb-6 flex items-start justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Accounting Export</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Review completed flight activity, then export a CSV for your
-            accounting software.
-          </p>
-        </div>
+        <PageTitle />
         {rows.length > 0 ? <ExportCsvButton rows={rows} /> : null}
       </header>
 
-      <AcctExportFilterBar />
+      <AcctExportFilterBar key={`${start}:${end}`} start={start} end={end} />
 
       {loadError ? (
         <div
@@ -78,6 +107,33 @@ export default async function AccountingExportPage({
         </div>
       ) : null}
 
+      {/* No tiles or table without data: zeros would read as "nothing
+          flew", which nobody knows when the load failed. */}
+      {data ? <Activity rows={data.rows} totals={data.totals} /> : null}
+
+      <div className="mt-4 rounded-lg border border-border bg-card px-4 py-3">
+        <p className="text-xs text-muted-foreground">
+          <strong className="text-foreground/80">About this export:</strong>{" "}
+          The CSV contains operational activity only — flight dates, routes,
+          customers, passenger counts, and cargo/mail weights. Dollar amounts,
+          rates, and billing terms are managed in your accounting software.
+          This file can be imported into QuickBooks, Xero, Sage, or any system
+          that accepts CSV.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function Activity({
+  rows,
+  totals,
+}: {
+  rows: AccountingExportResponse["rows"];
+  totals: AccountingExportResponse["totals"];
+}) {
+  return (
+    <>
       <div className="mb-5 grid grid-cols-2 gap-4 md:grid-cols-4">
         <StatTile value={totals.flights} label="Completed Flights" color="blue" />
         <StatTile value={totals.revenue_pax} label="Revenue Passengers" />
@@ -180,18 +236,7 @@ export default async function AccountingExportPage({
         </div>
       </div>
       )}
-
-      <div className="mt-4 rounded-lg border border-border bg-card px-4 py-3">
-        <p className="text-xs text-muted-foreground">
-          <strong className="text-foreground/80">About this export:</strong>{" "}
-          The CSV contains operational activity only — flight dates, routes,
-          customers, passenger counts, and cargo/mail weights. Dollar amounts,
-          rates, and billing terms are managed in your accounting software.
-          This file can be imported into QuickBooks, Xero, Sage, or any system
-          that accepts CSV.
-        </p>
-      </div>
-    </div>
+    </>
   );
 }
 
@@ -236,46 +281,16 @@ function ExportCsvButton({
   );
 }
 
-function rowsToCsv(rows: AccountingExportResponse["rows"]): string {
-  const header = [
-    "Date",
-    "Flight #",
-    "Type",
-    "Origin",
-    "Destination",
-    "Aircraft",
-    "PIC",
-    "Customer",
-    "Rev Pax",
-    "Cargo lbs",
-    "Mail lbs",
-    "Notes",
-  ].join(",");
-  const escape = (v: string | number | null | undefined): string => {
-    if (v === null || v === undefined) return "";
-    const s = String(v);
-    if (/[",\n]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
-    return s;
-  };
-  const lines = rows.map((r) =>
-    [
-      r.date,
-      r.flight_number,
-      r.flight_type,
-      r.origin,
-      r.destination,
-      r.aircraft_tail,
-      r.pic_name,
-      r.customer,
-      r.revenue_pax,
-      r.cargo_lbs,
-      r.mail_lbs,
-      r.notes,
-    ]
-      .map(escape)
-      .join(","),
+function PageTitle() {
+  return (
+    <div>
+      <h1 className="text-2xl font-bold tracking-tight">Accounting Export</h1>
+      <p className="mt-1 text-sm text-muted-foreground">
+        Review completed flight activity, then export a CSV for your
+        accounting software.
+      </p>
+    </div>
   );
-  return [header, ...lines].join("\n");
 }
 
 function StatTile({

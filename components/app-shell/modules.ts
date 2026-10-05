@@ -1389,6 +1389,13 @@ export const MODULE_ROLES: Record<string, readonly Role[]> = {
   // about what the certificate holder will fly.
   "reports-sim-export": ["exec_admin", "director_of_operations"],
 
+  // Matches ops-service's accounting-export route, and legacy's
+  // acct_export gate (exec_admin, director_ops, admin). Every flight
+  // with its PIC and notes, for the books. Without this entry it
+  // inherits Reservations and the link appears for the dispatcher and
+  // the reservations agent, both of whom the service refuses.
+  "reservations-acct-export": ["exec_admin", "director_of_operations"],
+
   // Matches reports-service's integrity route. Wider than the filings
   // deliberately: the GOM makes the Director of Operations responsible
   // for signing the review, but a chief pilot, DOM or safety officer

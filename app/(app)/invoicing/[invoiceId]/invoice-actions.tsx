@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import type { InvoiceStatus } from "@/lib/api/customer-invoices";
 
@@ -11,6 +11,8 @@ import {
   voidInvoiceAction,
   type InvoiceActionState,
 } from "../actions";
+import { money } from "../money";
+import { FORM_METHODS, todayLocalIsoDate } from "../payments";
 
 /**
  * Send, mark paid, void, and download.
@@ -23,23 +25,57 @@ import {
  *
  * Send is withheld on an unpriced invoice for the same reason, with
  * the explanation in place of the button rather than in an error after
- * clicking it.
+ * clicking it. Void is withheld once any money has been received: the
+ * service refuses it, because voiding would strand the payments.
+ *
+ * Mark paid records the outstanding balance as one payment, so it asks
+ * how and when the money arrived, and the reference (a check number)
+ * as Record payment does, before it closes the invoice.
  */
 export function InvoiceActions({
   invoiceId,
   invoiceNumber,
   status,
   hasUnpricedLines,
+  paidCents,
+  outstandingCents,
 }: {
   invoiceId: string;
   invoiceNumber: string;
   status: InvoiceStatus;
   hasUnpricedLines: boolean;
+  paidCents: number;
+  outstandingCents: number;
 }) {
   const [state, setState] = useState<InvoiceActionState>({ status: "idle" });
   const [pending, setPending] = useState<string | null>(null);
   const [voiding, setVoiding] = useState(false);
   const [reason, setReason] = useState("");
+  const [markingPaid, setMarkingPaid] = useState(false);
+  const [method, setMethod] = useState("");
+  const [paidOn, setPaidOn] = useState("");
+  const [reference, setReference] = useState("");
+  const [today, setToday] = useState("");
+  const statusRef = useRef<HTMLParagraphElement>(null);
+
+  // The panel that held focus closes on success; the confirmation
+  // takes it, so it is read out rather than lost to <body>.
+  useEffect(() => {
+    if (state.status === "ok") statusRef.current?.focus();
+  }, [state]);
+
+  function openMarkPaid() {
+    // The date is read here, in the browser, rather than at render:
+    // the server's today is UTC, and the person's is what they mean.
+    const now = todayLocalIsoDate();
+    setToday(now);
+    setPaidOn(now);
+    setMethod("");
+    setReference("");
+    setVoiding(false);
+    setState({ status: "idle" });
+    setMarkingPaid(true);
+  }
 
   async function run(name: string, fn: () => Promise<InvoiceActionState>) {
     setPending(name);
@@ -78,7 +114,7 @@ export function InvoiceActions({
 
   const canSend = status === "draft";
   const canMarkPaid = status === "sent";
-  const canVoid = status === "draft" || status === "sent";
+  const canVoid = (status === "draft" || status === "sent") && paidCents === 0;
 
   return (
     <div className="space-y-2">
@@ -107,23 +143,24 @@ export function InvoiceActions({
           </button>
         )}
 
-        {canMarkPaid && (
+        {canMarkPaid && !markingPaid && (
           <button
             type="button"
-            onClick={() =>
-              void run("paid", () => markPaidAction(invoiceId, ""))
-            }
+            onClick={openMarkPaid}
             disabled={pending !== null}
             className="rounded-md bg-status-green px-3 py-1.5 text-xs font-semibold text-white hover:brightness-95 disabled:opacity-50"
           >
-            {pending === "paid" ? "Recording…" : "Mark paid"}
+            Mark paid
           </button>
         )}
 
         {canVoid && !voiding && (
           <button
             type="button"
-            onClick={() => setVoiding(true)}
+            onClick={() => {
+              setMarkingPaid(false);
+              setVoiding(true);
+            }}
             disabled={pending !== null}
             className="rounded-md border border-status-red/40 px-3 py-1.5 text-xs font-semibold text-status-red hover:bg-status-red/10 disabled:opacity-50"
           >
@@ -141,7 +178,93 @@ export function InvoiceActions({
         </p>
       )}
 
-      {voiding && (
+      {canMarkPaid && markingPaid && (
+        <div className="rounded-md border border-border bg-background p-3">
+          <p className="text-xs text-foreground">
+            Records the outstanding{" "}
+            <span className="font-semibold tabular-nums">
+              {money(outstandingCents)}
+            </span>{" "}
+            as one payment and closes the invoice.
+          </p>
+          <div className="mt-2 grid grid-cols-2 gap-2">
+            <label className="block text-[0.65rem] font-semibold uppercase tracking-wider text-muted-foreground">
+              Method
+              <select
+                value={method}
+                onChange={(e) => setMethod(e.target.value)}
+                className="ff-input mt-1 font-normal normal-case tracking-normal"
+              >
+                <option value="">Choose…</option>
+                {FORM_METHODS.map((m) => (
+                  <option key={m.value} value={m.value}>
+                    {m.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="block text-[0.65rem] font-semibold uppercase tracking-wider text-muted-foreground">
+              Received
+              <input
+                type="date"
+                value={paidOn}
+                max={today}
+                onChange={(e) => setPaidOn(e.target.value)}
+                className="ff-input mt-1 font-normal normal-case tracking-normal"
+              />
+            </label>
+            <label className="col-span-2 block text-[0.65rem] font-semibold uppercase tracking-wider text-muted-foreground">
+              Reference
+              <input
+                type="text"
+                value={reference}
+                onChange={(e) => setReference(e.target.value)}
+                maxLength={120}
+                placeholder="Check number, card or bank reference"
+                autoComplete="off"
+                className="ff-input mt-1 font-normal normal-case tracking-normal"
+              />
+            </label>
+          </div>
+          <div className="mt-2 flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() =>
+                void run("paid", async () => {
+                  const r = await markPaidAction(
+                    invoiceId,
+                    method,
+                    paidOn,
+                    reference,
+                  );
+                  if (r.status === "ok") setMarkingPaid(false);
+                  return r;
+                })
+              }
+              disabled={
+                pending !== null || !method || !paidOn || paidOn > today
+              }
+              className="rounded-md bg-status-green px-3 py-1.5 text-xs font-semibold text-white hover:brightness-95 disabled:opacity-40"
+            >
+              {pending === "paid" ? "Recording…" : "Confirm paid"}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setMarkingPaid(false);
+                setState({ status: "idle" });
+              }}
+              className="text-xs font-semibold text-muted-foreground hover:text-foreground"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Gated on canVoid as well: a payment recorded below while this
+          is open takes the option away. */}
+      {canVoid && voiding && (
         <div className="rounded-md border border-border bg-background p-3">
           <label className="block text-[0.65rem] font-semibold uppercase tracking-wider text-muted-foreground">
             Why is it being voided?
@@ -196,7 +319,12 @@ export function InvoiceActions({
         </p>
       )}
       {state.status === "ok" && (
-        <p role="status" className="text-xs text-status-green">
+        <p
+          ref={statusRef}
+          role="status"
+          tabIndex={-1}
+          className="text-xs text-status-green"
+        >
           {state.message}
         </p>
       )}

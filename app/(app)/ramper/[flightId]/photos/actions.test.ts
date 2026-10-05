@@ -31,3 +31,32 @@ describe("uploadRampPhotoAction refused by role (29 Sep)", () => {
     });
   });
 });
+
+describe("uploadRampPhotoAction refused by type (1 Oct)", () => {
+  function photoForm(name: string, type: string) {
+    const form = new FormData();
+    form.set("photo", new File(["x"], name, { type }));
+    form.set("photo_type", "secured_load");
+    return form;
+  }
+
+  it("asks for a JPEG when the photo is HEIC", async () => {
+    uploadRampPhoto.mockRejectedValueOnce(
+      new TestApiError(422, "/ground/flights/f-1/photos", "photo_must_be_jpeg_png_webp_or_gif"),
+    );
+    expect(await uploadRampPhotoAction("f-1", { status: "idle" }, photoForm("IMG_0001.HEIC", "image/heic"))).toEqual({
+      status: "error",
+      message: "HEIC photos can't be shown in most browsers. Export it as JPEG and upload that.",
+    });
+  });
+
+  it("says what a photo is when the file is not one", async () => {
+    uploadRampPhoto.mockRejectedValueOnce(
+      new TestApiError(422, "/ground/flights/f-1/photos", "content_type_must_be_image"),
+    );
+    expect(await uploadRampPhotoAction("f-1", { status: "idle" }, photoForm("plan.svg", "image/svg+xml"))).toEqual({
+      status: "error",
+      message: "That file isn't a photo. Use a JPEG, PNG, WebP or GIF image.",
+    });
+  });
+});

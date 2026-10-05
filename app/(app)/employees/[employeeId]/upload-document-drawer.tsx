@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useRef, useState, useTransition } from "react";
 
 import type { DocumentRequirementRow } from "@/lib/api/employee-documents";
+import { formOversizeMessage, MAX_UPLOAD_LABEL } from "@/lib/upload-limits";
 
 import { uploadEmployeeDocumentAction } from "./document-actions";
 
@@ -36,7 +37,9 @@ export function UploadDocumentDrawer({
   const expiryRequired = Boolean(chosen?.has_expiry);
 
   function onSubmit(form: HTMLFormElement) {
-    setError(null);
+    const tooBig = formOversizeMessage(form);
+    setError(tooBig);
+    if (tooBig) return;
     const data = new FormData(form);
     start(async () => {
       const result = await uploadEmployeeDocumentAction(employeeId, data);
@@ -124,7 +127,7 @@ export function UploadDocumentDrawer({
                   className="block w-full text-xs text-foreground file:mr-3 file:rounded-md file:border file:border-border file:bg-background file:px-2 file:py-1 file:text-xs file:font-semibold file:text-foreground/80 hover:file:bg-accent"
                 />
                 <span className="mt-1 block text-[0.65rem] text-muted-foreground">
-                  Max 25 MB. PDF, image or Word document.
+                  Max {MAX_UPLOAD_LABEL}. PDF, image or Word document.
                 </span>
               </Field>
 

@@ -1444,7 +1444,7 @@ export const HELP_ENTRIES: HelpEntry[] = [
   {
     route: "/reservations/accounting-export",
     title: "Accounting export",
-    whoCanUse: ["exec_admin", "reservations_agent"],
+    whoCanUse: ["exec_admin", "director_of_operations"],
     whatItDoes:
       "The bookings-side export: completed bookings for a period, as a file the operator's accounting system can take.",
     howToUse: [
@@ -1572,12 +1572,12 @@ export const HELP_ENTRIES: HelpEntry[] = [
   {
     route: "/settings/billing",
     title: "Billing",
-    whoCanUse: ["exec_admin"],
+    whoCanUse: ["exec_admin", "director_of_operations"],
     whatItDoes:
-      "The operator's own subscription to this platform: the plan, the payment method, and the invoices for it. Distinct from Invoicing, which is what the operator bills its own customers.",
+      "The operator's own subscription to this platform: the plan, the seats, the billing dates and the invoices for it, as Stripe holds them, including a failed payment and what is still due. Distinct from Invoicing, which is what the operator bills its own customers.",
     howToUse: [
-      "Read the current plan and what it includes.",
-      "Update the payment method here rather than through support.",
+      "Read the plan, the seats and the next billing date. A failed payment shows here with the amount due.",
+      "Change the plan or seats, update the card, or cancel, under Manage billing (Stripe's Customer portal). Choose plan appears only when there is no live subscription, so the company is never charged twice.",
     ],
     connectsTo: "The platform's own billing, not the operation's.",
     related: ["/settings", "/invoicing"],
