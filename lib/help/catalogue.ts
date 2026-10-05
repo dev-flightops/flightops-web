@@ -546,6 +546,34 @@ export const HELP_ENTRIES: HelpEntry[] = [
       "Qualifications and currency come from the same records the currency matrix reads. Bases come from Settings.",
     related: ["/compliance/crew-currency", "/settings/bases"],
   },
+  {
+    route: "/crew",
+    title: "Crew calendar",
+    whoCanUse: [
+      "chief_pilot",
+      "director_of_operations",
+      "exec_admin",
+      "dispatcher",
+      "check_airman",
+      "pilot",
+      "crew_member",
+    ],
+    whatItDoes:
+      "A month of flight crew grouped by home base, showing who is assigned where, on which aircraft type, and for which days: flying, training, standby, off, ferry or check. A Chief Pilot, Director of Operations or Exec Admin edits it; everyone else reads it.",
+    howToUse: [
+      "Use the arrows to change month, and the base buttons to see one base: a pilot shows there if they are based there or assigned there.",
+      "Click an empty day to add an assignment for that pilot from that day, or use Add Assignment. Flying, ferry and check need an aircraft type; a tail is optional.",
+      "Click an assignment to change its days, base, type or duty, or to remove it.",
+      "Move beside a name changes that pilot's home base.",
+    ],
+    worthKnowing: [
+      "A pilot holds one assignment on any day. Saving one that overlaps another is refused, and the message names the one already there.",
+      "Bases come from Settings → Bases and types from the fleet, so a new base or type has to exist there first.",
+    ],
+    connectsTo:
+      "Home base is the same field as the employee record's station. The Roster page is the currency matrix, by base.",
+    related: ["/compliance/roster", "/settings/bases", "/employees"],
+  },
   // ── Maintenance ─────────────────────────────────────────────────────
   {
     route: "/maintenance/squawks",

@@ -132,6 +132,14 @@ export const RAMP_OPS = roleGate(
   "exec_admin",
 );
 
+/** Change the crew calendar: assignments and a pilot's home base (#43).
+ *  Legacy let any signed-in user edit anyone's schedule. */
+export const CREW_SCHEDULERS = roleGate(
+  "chief_pilot",
+  "director_of_operations",
+  "exec_admin",
+);
+
 /** Correct another pilot's flight log (29 Sep). A draft is its filing
  *  pilot's; legacy elog's ADMIN_ROLES could save anyone's. */
 export const FLIGHT_LOG_ADMINS = roleGate(
