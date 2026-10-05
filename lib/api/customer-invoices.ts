@@ -125,11 +125,14 @@ export interface CustomerInvoiceList {
 
 export async function listCustomerInvoices(params: {
   status?: InvoiceStatus;
+  /** One customer's invoices; `outstanding_cents` is then their balance. */
+  customer_id?: string;
   limit?: number;
   offset?: number;
 } = {}): Promise<CustomerInvoiceList> {
   const q = new URLSearchParams();
   if (params.status) q.set("status", params.status);
+  if (params.customer_id) q.set("customer_id", params.customer_id);
   if (params.limit !== undefined) q.set("limit", String(params.limit));
   if (params.offset !== undefined) q.set("offset", String(params.offset));
   const qs = q.toString();

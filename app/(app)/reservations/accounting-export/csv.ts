@@ -16,8 +16,9 @@ import type { AccountingExportRow } from "@/lib/api/types";
  */
 const FORMULA_START = /^[=+\-@\t\r]/;
 
-/** Columns, in order. Legacy has 15; the rest need data the export
- *  does not carry yet (customers, total passengers, cargo descriptions). */
+/** Legacy's 15 columns, named and ordered as its export writes them
+ *  (`modules/acct_export/router.py:250-266`), so the bookkeeper's
+ *  existing import still maps them (#27). */
 export const CSV_HEADER = [
   "Date",
   "Flight #",
@@ -27,11 +28,19 @@ export const CSV_HEADER = [
   "Aircraft",
   "PIC",
   "Customer",
-  "Rev Pax",
-  "Cargo lbs",
-  "Mail lbs",
+  "Customer Type",
+  "Revenue Pax",
+  "Total Pax",
+  "Cargo (lbs)",
+  "Mail (lbs)",
+  "Cargo Description",
   "Notes",
 ] as const;
+
+/** Legacy's file name for a range. */
+export function csvFilename(start: string, end: string): string {
+  return `peregrine_activity_${start}_${end}.csv`;
+}
 
 /**
  * One CSV field: formula-safe first, then quoted when it holds a quote,
@@ -48,6 +57,8 @@ export function csvCell(v: string | number | null | undefined): string {
   return /[",\r\n]/.test(safe) ? `"${safe.replace(/"/g, '""')}"` : safe;
 }
 
+/** Every line ends CRLF, the last included, as Python's csv writer
+ *  ends legacy's. */
 export function rowsToCsv(rows: readonly AccountingExportRow[]): string {
   const lines = rows.map((r) =>
     [
@@ -59,13 +70,16 @@ export function rowsToCsv(rows: readonly AccountingExportRow[]): string {
       r.aircraft_tail,
       r.pic_name,
       r.customer,
+      r.customer_type,
       r.revenue_pax,
+      r.total_pax,
       r.cargo_lbs,
       r.mail_lbs,
+      r.cargo_description,
       r.notes,
     ]
       .map(csvCell)
       .join(","),
   );
-  return [CSV_HEADER.join(","), ...lines].join("\n");
+  return [CSV_HEADER.join(","), ...lines].map((line) => `${line}\r\n`).join("");
 }

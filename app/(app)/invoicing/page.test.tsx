@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { TestApiError, listCustomerInvoices } = vi.hoisted(() => {
+const { TestApiError, listCustomerInvoices, listCustomers } = vi.hoisted(() => {
   class TestApiError extends Error {
     constructor(
       public status: number,
@@ -11,10 +11,11 @@ const { TestApiError, listCustomerInvoices } = vi.hoisted(() => {
       super(message);
     }
   }
-  return { TestApiError, listCustomerInvoices: vi.fn() };
+  return { TestApiError, listCustomerInvoices: vi.fn(), listCustomers: vi.fn() };
 });
 vi.mock("@/lib/api/client", () => ({ ApiError: TestApiError }));
 vi.mock("@/lib/api/customer-invoices", () => ({ listCustomerInvoices }));
+vi.mock("@/lib/api/reservations", () => ({ listCustomers }));
 vi.mock("./raise-actions", () => ({
   raiseInvoicesAction: vi.fn(),
   flownFlightsOnAction: vi.fn(),
@@ -34,6 +35,7 @@ async function renderPage(status?: string) {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  listCustomers.mockResolvedValue({ items: [], total: 0 });
 });
 
 describe("/invoicing", () => {
@@ -64,5 +66,33 @@ describe("/invoicing", () => {
       ),
     ).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Raise invoices" })).not.toBeInTheDocument();
+  });
+});
+
+describe("/invoicing filtered by customer (#30)", () => {
+  const ACME = "22222222-2222-4222-8222-222222222222";
+
+  it("sends the customer to the service, names them in the caption, and keeps them on the status chips", async () => {
+    listCustomers.mockResolvedValue({
+      items: [{ id: ACME, full_name: "Ann Acme", company_name: "Acme Mining", customer_type: "corporate" }],
+      total: 1,
+    });
+    listCustomerInvoices.mockResolvedValue({ items: [], total: 0, outstanding_cents: 60000 });
+    render(await InvoicingPage({ searchParams: Promise.resolve({ customer: ACME }) }));
+
+    expect(listCustomerInvoices).toHaveBeenCalledWith({ status: undefined, customer_id: ACME, limit: 100 });
+    expect(screen.getByText(/sent, less payments ·\s*Acme Mining/)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Paid" }).getAttribute("href")).toBe(
+      `/invoicing?status=paid&customer=${ACME}`,
+    );
+    expect((screen.getByLabelText("Customer") as HTMLSelectElement).value).toBe(ACME);
+  });
+
+  it("leaves the customer filter out when customers can't be read", async () => {
+    listCustomers.mockRejectedValue(new TestApiError(403, "/reservations/customers", "no"));
+    listCustomerInvoices.mockResolvedValue({ items: [], total: 0, outstanding_cents: 0 });
+    await renderPage();
+    expect(screen.queryByLabelText("Customer")).toBeNull();
+    expect(screen.getByText(/all invoices/)).toBeInTheDocument();
   });
 });

@@ -40,4 +40,31 @@ describe("AcctExportFilterBar", () => {
       "2026-09-30",
     );
   });
+
+  it("#27: offers All customers and each customer, with the chosen one selected", () => {
+    render(
+      <AcctExportFilterBar
+        start="2026-09-01"
+        end="2026-09-30"
+        customer="c-2"
+        customers={[
+          { id: "c-1", name: "Acme Mining" },
+          { id: "c-2", name: "Bo Flyer" },
+        ]}
+      />,
+    );
+    const select = screen.getByLabelText("Customer") as HTMLSelectElement;
+    expect(select.name).toBe("customer");
+    expect([...select.options].map((o) => [o.value, o.text])).toEqual([
+      ["", "All customers"],
+      ["c-1", "Acme Mining"],
+      ["c-2", "Bo Flyer"],
+    ]);
+    expect(select.value).toBe("c-2");
+  });
+
+  it("#27: leaves the customer filter out when there are no customers to list", () => {
+    render(<AcctExportFilterBar start="2026-09-01" end="2026-09-30" />);
+    expect(screen.queryByLabelText("Customer")).toBeNull();
+  });
 });
