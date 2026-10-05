@@ -11,6 +11,7 @@
  */
 
 import { auth } from "@/auth";
+import { fetchBackendFile, storageRedirect } from "@/lib/api/file-proxy";
 
 export async function GET(
   _request: Request,
@@ -27,14 +28,14 @@ export async function GET(
     return new Response("API not configured", { status: 500 });
   }
 
-  const response = await fetch(
+  const response = await fetchBackendFile(
     `${apiUrl}/employee-documents/${documentId}/download`,
-    {
-      headers: { Authorization: `Bearer ${session.access_token}` },
-      cache: "no-store",
-    },
+    session.access_token,
   );
 
+  // The bucket link itself is stored with private, no-store too.
+  const redirect = storageRedirect(response);
+  if (redirect) return redirect;
   if (!response.ok) {
     // A personnel file is not a place to be vague about refusals, but
     // it is also not a place to echo the backend's body — these are
