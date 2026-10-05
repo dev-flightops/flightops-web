@@ -3,7 +3,7 @@ import { join } from "node:path";
 
 import { describe, expect, it } from "vitest";
 
-import { DEPARTMENTS } from "@/components/app-shell/modules";
+import { DEPARTMENTS, MODULE_ROLES } from "@/components/app-shell/modules";
 
 import {
   HELP_ENTRIES,
@@ -110,6 +110,21 @@ describe("the catalogue stays honest", () => {
       (e) => !navRoutes.has(e.route) && !hasPage(e.route),
     ).map((e) => e.route);
     expect(unreachable).toEqual([]);
+  });
+});
+
+describe("articles for gated pages", () => {
+  it("R3: the accounting export article is written for the roles the menu shows it to", () => {
+    // The service admits Exec Admins and the Director of Operations
+    // only. An article written for anyone else points them at a page
+    // that answers with the access panel.
+    expect(helpFor("/reservations/accounting-export")?.whoCanUse).toEqual([
+      "exec_admin",
+      "director_of_operations",
+    ]);
+    expect(helpFor("/reservations/accounting-export")?.whoCanUse).toEqual(
+      MODULE_ROLES["reservations-acct-export"],
+    );
   });
 });
 

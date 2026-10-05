@@ -13,6 +13,7 @@ import {
   createLessonQuiz,
   deleteLesson,
   deleteQuiz,
+  deleteQuizQuestion,
   enrol,
   getAdminQuiz,
   getCertificate,
@@ -28,6 +29,7 @@ import {
   submitQuizAttempt,
   updateCourse,
   updateLesson,
+  updateQuizQuestion,
 } from "./academy";
 
 const mockedApiFetch = vi.mocked(apiFetch);
@@ -226,6 +228,20 @@ describe("academy API client", () => {
       "/academy/quizzes/q-1/questions",
       expect.objectContaining({ method: "POST" }),
     );
+  });
+
+  it("edits and deletes a question at the service's own path (#15)", async () => {
+    mockedApiFetch.mockResolvedValue({});
+    await updateQuizQuestion("qq-7", { prompt: "p2" });
+    expect(mockedApiFetch).toHaveBeenLastCalledWith(
+      "/academy/questions/qq-7",
+      expect.objectContaining({ method: "PATCH", body: JSON.stringify({ prompt: "p2" }) }),
+    );
+
+    await deleteQuizQuestion("qq-7");
+    expect(mockedApiFetch).toHaveBeenLastCalledWith("/academy/questions/qq-7", {
+      method: "DELETE",
+    });
   });
 
   it("certificate reads use a single /academy prefix", async () => {

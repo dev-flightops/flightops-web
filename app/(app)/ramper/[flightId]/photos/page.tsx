@@ -23,6 +23,12 @@ import { UploadRampPhotoForm } from "./upload-form";
  * red ✗) based on which types have been uploaded.
  */
 
+/** The image, through /api/ramp-photos/[photoId]: an <img> can't send
+ *  the bearer token the ground service needs. */
+function rampPhotoSrc(photoId: string): string {
+  return `/api/ramp-photos/${photoId}`;
+}
+
 const REQUIRED_TYPES: readonly {
   value: RampPhotoType;
   label: string;
@@ -167,13 +173,13 @@ export default async function RamperPhotosPage({
             {photos.map((p) => (
               <a
                 key={p.id}
-                href={p.url}
+                href={rampPhotoSrc(p.id)}
                 target="_blank"
                 rel="noreferrer"
                 className="block overflow-hidden rounded-lg border border-border bg-background transition-colors hover:border-primary"
               >
                 <img
-                  src={p.url}
+                  src={rampPhotoSrc(p.id)}
                   alt={photoTypeLabel(p.photo_type)}
                   className="h-24 w-full object-cover"
                 />

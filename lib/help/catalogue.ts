@@ -1444,7 +1444,7 @@ export const HELP_ENTRIES: HelpEntry[] = [
   {
     route: "/reservations/accounting-export",
     title: "Accounting export",
-    whoCanUse: ["exec_admin", "reservations_agent"],
+    whoCanUse: ["exec_admin", "director_of_operations"],
     whatItDoes:
       "The bookings-side export: completed bookings for a period, as a file the operator's accounting system can take.",
     howToUse: [
