@@ -1,6 +1,14 @@
 "use client";
 
-import { Fragment, useEffect, useMemo, useState, useTransition, type KeyboardEvent } from "react";
+import {
+  Fragment,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useTransition,
+  type KeyboardEvent,
+} from "react";
 
 import {
   DUTY_TYPE_LABELS,
@@ -145,16 +153,32 @@ export function CrewCalendarGrid({
   }
 
   const toolTagId = tool?.kind === "tag" ? tool.tagId : null;
-  // Commit a drag wherever the button is released, even off the grid.
-  useEffect(() => {
-    if (!drag || !tool) return;
-    const finish = () => {
-      paint(drag.userId, drag.anchor, drag.current, toolTagId);
-      setDrag(null);
-    };
-    window.addEventListener("mouseup", finish, { once: true });
-    return () => window.removeEventListener("mouseup", finish);
-  }, [drag, tool, toolTagId]);
+  // The drag lives in a ref as well as in state: the release listener is
+  // added in the press handler itself, so even a press and release in the
+  // same instant can't slip past it, and it reads the run's latest end.
+  const dragRef = useRef<Drag | null>(null);
+  function startDrag(userId: string, iso: string) {
+    const tagId = toolTagId;
+    dragRef.current = { userId, anchor: iso, current: iso };
+    setDrag(dragRef.current);
+    // Released wherever the button comes up, even off the grid.
+    window.addEventListener(
+      "mouseup",
+      () => {
+        const run = dragRef.current;
+        dragRef.current = null;
+        setDrag(null);
+        if (run) paint(run.userId, run.anchor, run.current, tagId);
+      },
+      { once: true },
+    );
+  }
+  function extendDrag(userId: string, iso: string) {
+    const run = dragRef.current;
+    if (!run || run.userId !== userId || run.current === iso) return;
+    dragRef.current = { ...run, current: iso };
+    setDrag(dragRef.current);
+  }
 
   const inDrag = (userId: string, iso: string) =>
     drag !== null &&
@@ -321,14 +345,8 @@ export function CrewCalendarGrid({
                         tool={tool}
                         toolTag={toolTagId ? (tagById.get(toolTagId) ?? null) : null}
                         previewing={inDrag(member.user_id, d.iso)}
-                        onDragStart={() =>
-                          setDrag({ userId: member.user_id, anchor: d.iso, current: d.iso })
-                        }
-                        onDragOver={() =>
-                          setDrag((prev) =>
-                            prev && prev.userId === member.user_id ? { ...prev, current: d.iso } : prev,
-                          )
-                        }
+                        onDragStart={() => startDrag(member.user_id, d.iso)}
+                        onDragOver={() => extendDrag(member.user_id, d.iso)}
                         onPaintDay={() => paint(member.user_id, d.iso, d.iso, toolTagId)}
                         onClearDay={() => paint(member.user_id, d.iso, d.iso, null)}
                       />
