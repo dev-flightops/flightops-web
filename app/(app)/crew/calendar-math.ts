@@ -99,3 +99,11 @@ export function rowSegments(
   }
   return segments;
 }
+
+/** Every day from one to the other, inclusive, in order whichever comes first. */
+export function daysBetween(a: string, b: string): string[] {
+  const [start, end] = a <= b ? [a, b] : [b, a];
+  const days: string[] = [];
+  for (let iso = start; iso <= end; iso = shiftIsoDay(iso, 1)) days.push(iso);
+  return days;
+}

@@ -62,6 +62,8 @@ const CALENDAR: CrewCalendar = {
     },
   ],
   entries: [],
+  tags: [],
+  cells: [],
 };
 
 async function renderPage(params: Record<string, string> = {}) {

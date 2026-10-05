@@ -21,8 +21,9 @@ import { CrewCalendarGrid } from "./crew-calendar-grid";
  * removes assignments and moves a pilot to another base; everyone else
  * reads it. Legacy let any signed-in user edit anyone's schedule.
  *
- * Not here yet: legacy's day tags (FLY, OFF, TRN… painted per day),
- * which are the second half of this page (flightops-ops#44).
+ * Under each pilot, a line of day tags: the company's own labels (FLY,
+ * OFF, TRN…) painted one per day, as legacy's month view has them
+ * (flightops-ops#44). Archiving a tag keeps the days painted with it.
  */
 
 export const dynamic = "force-dynamic";

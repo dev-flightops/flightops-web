@@ -5,6 +5,9 @@ const {
   replaceRosterEntry,
   deleteRosterEntry,
   moveCrewHomeStation,
+  createScheduleTag,
+  updateScheduleTag,
+  paintCrewDays,
   revalidatePath,
   TestApiError,
 } = vi.hoisted(() => {
@@ -23,6 +26,9 @@ const {
     replaceRosterEntry: vi.fn(),
     deleteRosterEntry: vi.fn(),
     moveCrewHomeStation: vi.fn(),
+    createScheduleTag: vi.fn(),
+    updateScheduleTag: vi.fn(),
+    paintCrewDays: vi.fn(),
     revalidatePath: vi.fn(),
     TestApiError,
   };
@@ -37,12 +43,18 @@ vi.mock("@/lib/api/crew-calendar", async (importOriginal) => ({
   replaceRosterEntry,
   deleteRosterEntry,
   moveCrewHomeStation,
+  createScheduleTag,
+  updateScheduleTag,
+  paintCrewDays,
 }));
 
 import {
+  createTagAction,
   deleteAssignmentAction,
   moveHomeBaseAction,
+  paintDaysAction,
   saveAssignmentAction,
+  updateTagAction,
 } from "./actions";
 
 const PILOT = "8f6d3a1e-4c1b-4a7e-9a7e-1d2c3b4a5f60";
@@ -179,5 +191,71 @@ describe("deleteAssignmentAction and moveHomeBaseAction", () => {
       new TestApiError(422, "/ops/crew-calendar/crew/x/station", JSON.stringify({ detail: message })),
     );
     expect(await moveHomeBaseAction(PILOT, "PAKN")).toEqual({ ok: false, error: message });
+  });
+});
+
+describe("day tag actions", () => {
+  it("adds a tag with its label tidied", async () => {
+    createScheduleTag.mockResolvedValue({});
+    expect(await createTagAction("  FLY   day ", "blue")).toEqual({ ok: true });
+    expect(createScheduleTag).toHaveBeenCalledWith({ label: "FLY day", tone: "blue" });
+    expect(revalidatePath).toHaveBeenCalledWith("/crew");
+  });
+
+  it.each([
+    ["   ", "blue", "Give the tag a label."],
+    ["A".repeat(17), "blue", "Keep the label to 16 characters."],
+    ["FLY", "magenta", "Pick a colour."],
+  ])("refuses %j / %j before calling the API", async (label, tone, error) => {
+    expect(await createTagAction(label, tone)).toEqual({ ok: false, error });
+    expect(createScheduleTag).not.toHaveBeenCalled();
+  });
+
+  it("sends only what changed, and passes on a clash", async () => {
+    updateScheduleTag.mockResolvedValue({});
+    expect(await updateTagAction("t1", { is_active: false })).toEqual({ ok: true });
+    expect(updateScheduleTag).toHaveBeenCalledWith("t1", { is_active: false });
+
+    const message = "There is already a tag called OFF.";
+    updateScheduleTag.mockRejectedValue(
+      new TestApiError(409, "/ops/crew-calendar/tags/t1", JSON.stringify({ detail: message })),
+    );
+    expect(await updateTagAction("t1", { label: "OFF", tone: "gray" })).toEqual({
+      ok: false,
+      error: message,
+    });
+  });
+
+  it("paints a run in date order, and clears with null", async () => {
+    paintCrewDays.mockResolvedValue({ days: 5, tag_id: "t1" });
+    expect(await paintDaysAction(PILOT, "2026-10-09", "2026-10-05", "t1")).toEqual({ ok: true });
+    expect(paintCrewDays).toHaveBeenCalledWith({
+      user_id: PILOT,
+      start_date: "2026-10-05",
+      end_date: "2026-10-09",
+      tag_id: "t1",
+    });
+    await paintDaysAction(PILOT, "2026-10-05", "2026-10-05", null);
+    expect(paintCrewDays).toHaveBeenLastCalledWith({
+      user_id: PILOT,
+      start_date: "2026-10-05",
+      end_date: "2026-10-05",
+      tag_id: null,
+    });
+  });
+
+  it("explains a refused paint", async () => {
+    const message = "STANDBY is archived. Restore it to paint with it.";
+    paintCrewDays.mockRejectedValue(
+      new TestApiError(422, "/ops/crew-calendar/cells", JSON.stringify({ detail: message })),
+    );
+    expect(await paintDaysAction(PILOT, "2026-10-05", "2026-10-06", "t1")).toEqual({
+      ok: false,
+      error: message,
+    });
+    expect(await paintDaysAction(PILOT, "05/10/2026", "2026-10-06", "t1")).toEqual({
+      ok: false,
+      error: "Pick the days again.",
+    });
   });
 });

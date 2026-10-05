@@ -6,6 +6,9 @@
  *   PUT    /ops/crew-calendar/entries/{id}            change one
  *   DELETE /ops/crew-calendar/entries/{id}            remove one
  *   PUT    /ops/crew-calendar/crew/{userId}/station   move a pilot's home base
+ *   POST   /ops/crew-calendar/tags                    add a day tag
+ *   PATCH  /ops/crew-calendar/tags/{id}               rename, recolour, archive
+ *   PUT    /ops/crew-calendar/cells                   paint or clear a run of days
  *
  * Reads are open to staff; writes need CREW_SCHEDULERS, enforced
  * server-side. A pilot holds one assignment per day: the API refuses an
@@ -47,6 +50,47 @@ export const DUTY_TYPES_NEEDING_AIRFRAME: ReadonlySet<DutyType> = new Set([
   "ferry",
   "check",
 ]);
+
+/** The theme's status tones, in the order the colour picker offers them.
+ *  A tag's colour is one of these, never free hex (#44). */
+export type ScheduleTagTone =
+  | "blue"
+  | "green"
+  | "yellow"
+  | "orange"
+  | "red"
+  | "purple"
+  | "teal"
+  | "gray";
+
+export const SCHEDULE_TAG_TONES: readonly ScheduleTagTone[] = [
+  "blue",
+  "green",
+  "yellow",
+  "orange",
+  "red",
+  "purple",
+  "teal",
+  "gray",
+];
+
+/** Drawn in a 30px day cell; the full label shows on hover. */
+export const SCHEDULE_TAG_LABEL_MAX = 16;
+
+export interface ScheduleTag {
+  id: string;
+  label: string;
+  tone: ScheduleTagTone;
+  sort_order: number;
+  /** Archived tags leave the palette but keep the days painted with them. */
+  is_active: boolean;
+}
+
+export interface CrewCalendarCell {
+  user_id: string;
+  cell_date: string;
+  tag_id: string;
+}
 
 export interface CrewCalendarStation {
   code: string;
@@ -99,6 +143,10 @@ export interface CrewCalendar {
   aircraft: CrewCalendarAircraft[];
   groups: CrewCalendarGroup[];
   entries: RosterEntry[];
+  /** Every tag, archived ones last, so a painted day can name its tag. */
+  tags: ScheduleTag[];
+  /** Tagged days in the month, for the crew shown. */
+  cells: CrewCalendarCell[];
 }
 
 export interface RosterEntryInput {
@@ -153,5 +201,38 @@ export async function moveCrewHomeStation(
   return apiFetch<CrewCalendarMember>(
     `/ops/crew-calendar/crew/${userId}/station`,
     { method: "PUT", body: JSON.stringify({ station }) },
+  );
+}
+
+export async function createScheduleTag(input: {
+  label: string;
+  tone: ScheduleTagTone;
+}): Promise<ScheduleTag> {
+  return apiFetch<ScheduleTag>("/ops/crew-calendar/tags", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
+export async function updateScheduleTag(
+  id: string,
+  patch: { label?: string; tone?: ScheduleTagTone; is_active?: boolean },
+): Promise<ScheduleTag> {
+  return apiFetch<ScheduleTag>(`/ops/crew-calendar/tags/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(patch),
+  });
+}
+
+/** Paint one tag on a run of one pilot's days, or clear them (tagId null). */
+export async function paintCrewDays(input: {
+  user_id: string;
+  start_date: string;
+  end_date: string;
+  tag_id: string | null;
+}): Promise<{ days: number; tag_id: string | null }> {
+  return apiFetch<{ days: number; tag_id: string | null }>(
+    "/ops/crew-calendar/cells",
+    { method: "PUT", body: JSON.stringify(input) },
   );
 }

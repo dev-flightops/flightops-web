@@ -64,6 +64,8 @@ const CALENDAR: CrewCalendar = {
       notes: "Y-K run",
     },
   ],
+  tags: [],
+  cells: [],
 };
 
 beforeEach(() => {
