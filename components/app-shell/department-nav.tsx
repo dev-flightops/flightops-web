@@ -33,7 +33,12 @@ export function DepartmentNav({ roles = [] }: { roles?: readonly string[] }) {
 
   const modules = visibleModules(dept, roles);
   if (modules.length === 0) return null;
-  const activeId = activeModuleId(modules, pathname);
+  // Found among all the department's modules, not just the visible
+  // ones. On a page this role cannot see (opened by URL), the visible
+  // chip with the longest matching prefix is not where they are: a
+  // dispatcher on /reservations/accounting-export would see New Booking
+  // (/reservations) lit. Then no chip is current.
+  const activeId = activeModuleId(dept.children, pathname);
 
   return (
     <div className="border-b border-border bg-background">

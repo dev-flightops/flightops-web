@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useState } from "react";
+import { useActionState } from "react";
 
 import {
   openPortalAction,
@@ -10,31 +10,26 @@ import {
 const _initial: BillingActionState = { status: "idle" };
 
 /**
- * Manage payment / cancel — Stripe Customer Portal entry point.
- * Only renders when the tenant already has an active subscription
- * (parent card gates on subscription != null). Server action
- * redirects to the portal URL on success; the parent form + a
- * mapped error message handle failure.
+ * Manage billing — the Stripe Customer Portal entry point, where the
+ * company changes plan or seats, updates the card, pays what's due or
+ * cancels. Rendered only while the subscription is live (the parent
+ * decides). The server action redirects to the portal URL on success;
+ * a mapped error message shows on failure.
  */
 export function ManagePaymentButton() {
   const [state, formAction, pending] = useActionState(
     openPortalAction,
     _initial,
   );
-  const [origin, setOrigin] = useState("");
-  useEffect(() => {
-    setOrigin(window.location.origin);
-  }, []);
 
   return (
     <form action={formAction} className="flex flex-wrap items-center gap-2">
-      <input type="hidden" name="origin" value={origin} />
       <button
         type="submit"
-        disabled={pending || origin === ""}
+        disabled={pending}
         className="rounded-md border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground/80 hover:bg-accent disabled:opacity-60"
       >
-        {pending ? "Redirecting…" : "Manage payment →"}
+        {pending ? "Redirecting…" : "Manage billing →"}
       </button>
       {state.status === "error" && state.message && (
         <p role="alert" className="w-full text-[0.65rem] text-status-red">
