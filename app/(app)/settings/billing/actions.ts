@@ -21,6 +21,10 @@ export interface BillingActionState {
  * translate the backend's structured detail codes into
  * plain-English messages so the form renders a friendly banner
  * instead of "HTTP 503".
+ *
+ * Where Stripe sends the browser afterwards is decided by the backend
+ * from its configured web origin, so nothing from the form goes into
+ * those URLs.
  */
 export async function startCheckoutAction(
   _prev: BillingActionState,
@@ -29,20 +33,15 @@ export async function startCheckoutAction(
   const planCode = String(formData.get("plan_code") ?? "") as PlanChoiceCode;
   const seatCountRaw = String(formData.get("seat_count") ?? "1");
   const seatCount = Math.max(1, Number.parseInt(seatCountRaw, 10) || 1);
-  const successPath = String(formData.get("success_path") ?? "/settings/billing");
-  const cancelPath = String(formData.get("cancel_path") ?? "/settings/billing");
-  const origin = String(formData.get("origin") ?? "");
 
-  if (!planCode || !origin) {
-    return { status: "error", message: "Missing plan or origin." };
+  if (!planCode) {
+    return { status: "error", message: "Choose a plan first." };
   }
 
   try {
     const session = await createCheckoutSession({
       plan_code: planCode,
       seat_count: seatCount,
-      success_url: `${origin}${successPath}?checkout=success`,
-      cancel_url: `${origin}${cancelPath}?checkout=cancel`,
     });
     // Success: hop the browser out to Stripe. `redirect()` throws a
     // NEXT_REDIRECT — the client handles it as a top-level nav.
@@ -57,20 +56,15 @@ export async function startCheckoutAction(
   }
 }
 
-/** Send the tenant to the Stripe Customer Portal to update payment
- *  method or cancel. Same success (redirect) / failure (mapped
- *  message) contract as startCheckoutAction. */
+/** Send the company to the Stripe Customer Portal to change plan or
+ *  seats, update the card, or cancel. Same success (redirect) /
+ *  failure (mapped message) contract as startCheckoutAction. */
 export async function openPortalAction(
   _prev: BillingActionState,
-  formData: FormData,
+  _formData: FormData,
 ): Promise<BillingActionState> {
-  const returnPath = String(formData.get("return_path") ?? "/settings/billing");
-  const origin = String(formData.get("origin") ?? "");
-  if (!origin) return { status: "error", message: "Missing origin." };
   try {
-    const session = await createPortalSession(
-      `${origin}${returnPath}?portal=return`,
-    );
+    const session = await createPortalSession();
     redirect(session.url);
   } catch (err) {
     if (err && (err as { digest?: string }).digest?.startsWith("NEXT_REDIRECT")) {
@@ -80,12 +74,16 @@ export async function openPortalAction(
   }
 }
 
-// Backend surfaces validation errors as specific `detail` strings
-// (see services/billing/app/routes/billing.py). Translate the ones a
-// billing admin would actually hit into plain English.
+const NOT_SET_UP =
+  "Billing isn't set up on this system yet, so nothing can be bought or changed here. Ask your Peregrine contact.";
+
+// Backend surfaces its refusals as specific `detail` strings (see
+// services/billing/app/routes/billing.py). Translate each into plain
+// English. None of these refusals charges anything: they all happen
+// before the browser reaches Stripe.
 function _mapBillingError(err: unknown): string {
   if (!(err instanceof ApiError)) {
-    return "Couldn't reach billing-service. Try again.";
+    return "Couldn't reach billing. Nothing was charged; try again.";
   }
   let detail: string | undefined;
   try {
@@ -97,19 +95,25 @@ function _mapBillingError(err: unknown): string {
   switch (detail) {
     case "stripe_not_configured":
     case "stripe_sdk_not_installed":
-      return "Checkout isn't available on this deployment yet — Stripe hasn't been configured. Ask your Peregrine contact.";
+    case "web_origin_not_configured":
+      return NOT_SET_UP;
     case "already_subscribed":
-      return "You already have an active subscription. Use Manage payment to change plans or seat count.";
+      return "This company already has a subscription, so a second one can't be started. To change the plan or seats, use Manage billing.";
     case "plan_not_available_for_checkout":
-      return "This plan isn't wired for checkout yet — Stripe price id missing.";
+      return "This plan can't be bought here yet. Ask your Peregrine contact.";
     case "seat_count_exceeds_plan_limit":
-      return "That seat count is above the plan's limit. Pick a higher tier or reduce seats.";
+      return "That's more seats than this plan allows. Choose a bigger plan or fewer seats.";
     case "no_stripe_customer":
-      return "No Stripe customer on file yet — start a subscription first via Choose plan.";
+      return "There's no subscription to manage yet. Choose a plan first.";
     case "plan_not_found":
-      return "Plan not found. Refresh the page and try again.";
+      return "That plan no longer exists. Refresh the page and try again.";
+    case "stripe_unavailable":
+      return "Stripe didn't respond, so nothing was charged or changed. Try again in a minute.";
+    case "stripe_refused":
+      return "Stripe turned the request down, so nothing was charged or changed. Ask your Peregrine contact to look at the billing log.";
   }
   if (err.status === 401) return "Your session expired — sign in again.";
-  if (err.status === 403) return "You don't have permission to manage billing.";
-  return `Backend returned HTTP ${err.status}.`;
+  if (err.status === 403)
+    return "Only an Executive Admin or a Director of Operations can manage billing.";
+  return `Billing returned an error (HTTP ${err.status}). Nothing was charged; try again.`;
 }

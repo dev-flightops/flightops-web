@@ -13,6 +13,7 @@ import {
   STATUS_LABELS,
   statusClasses,
 } from "./money";
+import { RaiseInvoices } from "./raise-invoices";
 
 /**
  * /invoicing — what customers owe us for flights flown.
@@ -25,7 +26,9 @@ import {
  *
  * Outstanding is a tenant-wide figure from the service, not a sum of
  * the rows on screen. A header total that changes when you paginate is
- * worse than no header total.
+ * worse than no header total. It is what customers owe: sent invoices
+ * less the payments against them. Drafts are not counted until they
+ * are sent, the same rule as AR aging, so the two pages agree.
  *
  * A draft carrying an unpriced line is flagged in the list rather than
  * only on the detail page. It cannot be sent, and finding that out
@@ -82,6 +85,9 @@ export default async function InvoicingPage({
             {status ? ` · ${STATUS_LABELS[status].toLowerCase()}` : ""}
           </p>
         </div>
+        {/* Where legacy had "+ New Invoice". Hidden with the list when
+            the list is refused: the same two roles may raise. */}
+        {!loadError && <RaiseInvoices />}
         {!loadError && (
           <div className="text-right">
             <div className="text-[0.65rem] font-semibold uppercase tracking-wider text-muted-foreground">
@@ -93,7 +99,7 @@ export default async function InvoicingPage({
             {/* Said plainly: this covers the whole operation, not the
                 rows below, which may be filtered. */}
             <div className="text-[0.65rem] text-muted-foreground">
-              draft + sent, all invoices
+              sent, less payments · all invoices
             </div>
           </div>
         )}
@@ -127,7 +133,7 @@ export default async function InvoicingPage({
             <p className="rounded-lg border border-dashed border-border bg-card/40 px-4 py-16 text-center text-sm text-muted-foreground">
               {status
                 ? `No ${STATUS_LABELS[status].toLowerCase()} invoices.`
-                : "No invoices yet. They are raised from a flown flight on the dispatch board."}
+                : "No invoices yet. Raise a flown flight's invoices with Raise invoices above."}
             </p>
           ) : (
             <div className="overflow-x-auto rounded-lg border border-border bg-card">

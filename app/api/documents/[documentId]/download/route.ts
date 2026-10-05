@@ -6,6 +6,7 @@
  */
 
 import { auth } from "@/auth";
+import { fetchBackendFile, storageRedirect } from "@/lib/api/file-proxy";
 
 export async function GET(
   _request: Request,
@@ -22,14 +23,13 @@ export async function GET(
     return new Response("API not configured", { status: 500 });
   }
 
-  const response = await fetch(
+  const response = await fetchBackendFile(
     `${apiUrl}/documents/${documentId}/download`,
-    {
-      headers: { Authorization: `Bearer ${session.access_token}` },
-      cache: "no-store",
-    },
+    session.access_token,
   );
 
+  const redirect = storageRedirect(response);
+  if (redirect) return redirect;
   if (!response.ok) {
     return new Response(`Backend returned ${response.status}`, {
       status: response.status,

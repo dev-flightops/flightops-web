@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useState } from "react";
+import { useActionState } from "react";
 
 import {
   startCheckoutAction,
@@ -11,11 +11,11 @@ const _initial: BillingActionState = { status: "idle" };
 
 /**
  * Choose Plan button. Renders only on plans where the backend
- * flagged `checkout_available=true` (Stripe price id present).
- * Wraps a form so the seat-count input can go along; server
- * action redirects to Stripe on success or returns a mapped
- * error message on failure. `window.location.origin` is passed
- * so the success/cancel URLs come back to this deployment.
+ * flagged `checkout_available=true`, and only while the company has no
+ * live subscription. Wraps a form so the seat-count input can go along;
+ * the server action redirects to Stripe on success or returns a mapped
+ * error message on failure. Where Stripe returns the browser to is
+ * decided by the backend, not by this page.
  */
 export function ChooseCheckoutButton({
   planCode,
@@ -31,19 +31,10 @@ export function ChooseCheckoutButton({
     startCheckoutAction,
     _initial,
   );
-  // window.location.origin isn't available at SSR time, so we
-  // snapshot it after mount and thread it into the form as a
-  // hidden input. Any user action fires only after mount so the
-  // value is always populated when the action runs.
-  const [origin, setOrigin] = useState("");
-  useEffect(() => {
-    setOrigin(window.location.origin);
-  }, []);
 
   return (
     <form action={formAction} className="mt-3 flex flex-wrap items-center gap-2">
       <input type="hidden" name="plan_code" value={planCode} />
-      <input type="hidden" name="origin" value={origin} />
       <label className="flex items-center gap-1 text-[0.65rem] text-muted-foreground">
         Seats
         <input
@@ -57,7 +48,7 @@ export function ChooseCheckoutButton({
       </label>
       <button
         type="submit"
-        disabled={pending || origin === ""}
+        disabled={pending}
         className="rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-dark disabled:opacity-60"
       >
         {pending ? "Redirecting…" : "Choose plan →"}
