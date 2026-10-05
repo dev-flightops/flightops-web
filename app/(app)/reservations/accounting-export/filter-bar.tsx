@@ -11,19 +11,27 @@ export const ACCOUNTING_EXPORT_PATH = "/reservations/accounting-export";
  * default range) would keep dates typed but not applied. The bare URL's
  * range is the 1st of this month to today.
  *
- * Legacy's Customer dropdown is left out until the export carries
- * customers: today it would list customers and filter nothing.
+ * The Customer dropdown is legacy's (`:30-38`): "All customers", then
+ * the operator's active customers. It is left out when the customer
+ * list could not be read, rather than offering a filter that lists
+ * nobody.
  *
  * The inputs are uncontrolled, so the page keys this component on the
  * range: a client-side navigation to another range (the sub-nav's link
  * to the bare URL, say) remounts it with that range's dates.
  */
+export type CustomerOption = { id: string; name: string };
+
 export function AcctExportFilterBar({
   start,
   end,
+  customer = "",
+  customers = [],
 }: {
   start: string;
   end: string;
+  customer?: string;
+  customers?: readonly CustomerOption[];
 }) {
   return (
     <form
@@ -50,6 +58,23 @@ export function AcctExportFilterBar({
           className="w-40 rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/30"
         />
       </label>
+      {customers.length > 0 ? (
+        <label>
+          <span className="mb-1 block text-xs text-muted-foreground">Customer</span>
+          <select
+            name="customer"
+            defaultValue={customer}
+            className="w-56 rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/30"
+          >
+            <option value="">All customers</option>
+            {customers.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
+            ))}
+          </select>
+        </label>
+      ) : null}
       <button
         type="submit"
         className="rounded-md border border-border bg-muted/60 px-4 py-2 text-sm font-semibold text-foreground hover:bg-accent"

@@ -1,20 +1,19 @@
 import { getAccountingExport } from "@/lib/api/ops";
+import { listCustomers } from "@/lib/api/reservations";
 import { ApiError } from "@/lib/api/client";
 import type { AccountingExportResponse } from "@/lib/api/types";
 import { isValidIsoDay } from "@/lib/iso-day";
 
-import { rowsToCsv } from "./csv";
-import { AcctExportFilterBar } from "./filter-bar";
+import { csvFilename, rowsToCsv } from "./csv";
+import { AcctExportFilterBar, type CustomerOption } from "./filter-bar";
 
 /**
  * /reservations/accounting-export — legacy `templates/acct_export/review.html`.
  *
- * Reads live from `/ops/accounting-export?start=&end=`: every completed
- * flight in the range, with the columns operators import into
- * QuickBooks / Xero / Sage. Fields the current schema can't populate
- * come through as null: `customer` (bookings→flight link is not yet
- * modelled) and `mail_lbs` (only total cargo_lbs is tracked). Both
- * render as "—".
+ * Reads live from `/ops/accounting-export?start=&end=&customer=`: every
+ * completed flight in the range, with legacy's columns. The CSV is
+ * legacy's file (15 columns, its file name, CRLF lines), so the
+ * bookkeeper's existing import keeps working (#27).
  *
  * Exec Admins and the Director of Operations only, as in legacy
  * (`modules/acct_export/router.py:33`). The ops service refuses anyone
@@ -29,11 +28,32 @@ import { AcctExportFilterBar } from "./filter-bar";
 
 export const dynamic = "force-dynamic";
 
-type Params = { start?: string | string[]; end?: string | string[] };
+type Params = {
+  start?: string | string[];
+  end?: string | string[];
+  customer?: string | string[];
+};
 
 function parseDate(v: string | string[] | undefined): string | undefined {
   const s = Array.isArray(v) ? v[0] : v;
   return isValidIsoDay(s) ? s : undefined;
+}
+
+/** The operator's active customers for the filter, named as the export
+ *  names them. Empty when the list can't be read: the page still works,
+ *  without the filter. */
+async function customerOptions(): Promise<CustomerOption[]> {
+  try {
+    const { items } = await listCustomers({ limit: 200 });
+    return items
+      .map((c) => ({
+        id: c.id,
+        name: c.customer_type === "individual" ? c.full_name : c.company_name || c.full_name,
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  } catch {
+    return [];
+  }
 }
 
 function defaultRange(now: Date = new Date()): { start: string; end: string } {
@@ -50,6 +70,9 @@ export default async function AccountingExportPage({
   const fallback = defaultRange();
   const start = parseDate(params.start) ?? fallback.start;
   const end = parseDate(params.end) ?? fallback.end;
+  const customerParam = Array.isArray(params.customer) ? params.customer[0] : params.customer;
+  const customer = customerParam && /^[0-9a-f-]{36}$/i.test(customerParam) ? customerParam : "";
+  const customers = await customerOptions();
 
   let data: AccountingExportResponse | null = null;
   let forbidden = false;
@@ -58,7 +81,7 @@ export default async function AccountingExportPage({
   // first, so whoever it refuses gets the access panel whatever the
   // range, and everyone else gets its 422, said plainly below.
   try {
-    data = await getAccountingExport({ start, end });
+    data = await getAccountingExport({ start, end, customer: customer || undefined });
   } catch (err) {
     const status = err instanceof ApiError ? err.status : 0;
     forbidden = status === 403;
@@ -93,10 +116,18 @@ export default async function AccountingExportPage({
     <div className="mx-auto max-w-screen-xl px-4 sm:px-6 py-8">
       <header className="mb-6 flex items-start justify-between gap-3">
         <PageTitle />
-        {rows.length > 0 ? <ExportCsvButton rows={rows} /> : null}
+        {rows.length > 0 ? (
+          <ExportCsvButton rows={rows} filename={csvFilename(start, end)} />
+        ) : null}
       </header>
 
-      <AcctExportFilterBar key={`${start}:${end}`} start={start} end={end} />
+      <AcctExportFilterBar
+        key={`${start}:${end}:${customer}`}
+        start={start}
+        end={end}
+        customer={customer}
+        customers={customers}
+      />
 
       {loadError ? (
         <div
@@ -242,8 +273,10 @@ function Activity({
 
 function ExportCsvButton({
   rows,
+  filename,
 }: {
   rows: AccountingExportResponse["rows"];
+  filename: string;
 }) {
   const total = rows.length;
   const icon = (
@@ -272,7 +305,7 @@ function ExportCsvButton({
   return (
     <a
       href={csvHref}
-      download="accounting-export.csv"
+      download={filename}
       className="flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-brand-dark"
     >
       {icon}

@@ -1740,10 +1740,13 @@ export interface AccountingExportRow {
   destination: string;
   aircraft_tail: string | null;
   pic_name: string | null;
-  customer: string | null; // Populated once bookings link to flights.
+  customer: string | null; // "Multiple" or "USPS" as in legacy; null when none
+  customer_type: string | null;
   revenue_pax: number;
+  total_pax: number;
   cargo_lbs: number;
-  mail_lbs: number | null; // Populated once mail vs cargo is split.
+  mail_lbs: number;
+  cargo_description: string | null;
   notes: string | null;
 }
 
