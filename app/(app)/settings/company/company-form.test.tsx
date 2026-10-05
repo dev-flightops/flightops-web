@@ -135,3 +135,11 @@ describe("a refused save (R2)", () => {
     expect(screen.getByLabelText("Payment Terms (days)")).toHaveValue("30");
   });
 });
+
+describe("Notes (#41)", () => {
+  it("has a label a screen reader announces", async () => {
+    const { container } = render(<CompanyForm profile={profile()} />);
+    expect(screen.getByLabelText("Notes").tagName).toBe("TEXTAREA");
+    await expectNoA11yViolations(container);
+  });
+});
