@@ -3,9 +3,15 @@ import Link from "next/link";
 import { auth } from "@/auth";
 import { ApiError } from "@/lib/api/client";
 import { getFratThresholds } from "@/lib/api/auth";
+import { getLatestLimitReading, type LimitReading } from "@/lib/api/document-limits";
+import { listDocuments } from "@/lib/api/documents";
 import type { FratThresholdConfigResponse } from "@/lib/api/types";
 
 import { saveFratThresholdsAction } from "./actions";
+import {
+  DocumentLimitsSection,
+  type ComplianceDocument,
+} from "./document-limits-section";
 import { ThresholdForm } from "./threshold-form";
 
 /**
@@ -142,6 +148,10 @@ export default async function FratThresholdsPage() {
         : "Could not reach auth-service.";
   }
 
+  // Reading documents for these limits is for those who set them (#47).
+  // Soft-fail: losing it costs the section, not the thresholds.
+  const sources = canSet && config ? await complianceSources() : null;
+
   return (
     <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
       <nav className="mb-3 text-xs text-muted-foreground">
@@ -181,6 +191,19 @@ export default async function FratThresholdsPage() {
               <ReadOnlyBands config={config} />
             )}
           </div>
+          {sources && (
+            <DocumentLimitsSection
+              documents={sources.documents}
+              latest={sources.latest}
+              current={{
+                crosswind_single_engine_kt: config.crosswind_single_engine_kt,
+                crosswind_multi_engine_kt: config.crosswind_multi_engine_kt,
+                crosswind_near_margin_kt: config.crosswind_near_margin_kt,
+                vfr_min_ceiling_ft: config.vfr_min_ceiling_ft,
+                vfr_min_visibility_sm: config.vfr_min_visibility_sm,
+              }}
+            />
+          )}
           <div className="mt-5 space-y-1.5 text-[0.7rem] text-muted-foreground">
             <p>
               The questionnaire scores 18 factors from 0 to 5, so{" "}
@@ -207,4 +230,27 @@ export default async function FratThresholdsPage() {
       )}
     </div>
   );
+}
+
+/** The documents marked as stating company limits that have a file, and
+ *  each one's latest reading. */
+async function complianceSources(): Promise<{
+  documents: ComplianceDocument[];
+  latest: Record<string, LimitReading | null>;
+} | null> {
+  try {
+    const { items } = await listDocuments({ complianceOnly: true });
+    const documents = items
+      .filter((d) => d.current_version_number > 0 && !d.is_archived)
+      .map((d) => ({ id: d.id, title: d.title, version: d.current_version_number }));
+    const readings = await Promise.all(
+      documents.map((d) => getLatestLimitReading(d.id).catch(() => null)),
+    );
+    return {
+      documents,
+      latest: Object.fromEntries(documents.map((d, i) => [d.id, readings[i]])),
+    };
+  } catch {
+    return null;
+  }
 }
