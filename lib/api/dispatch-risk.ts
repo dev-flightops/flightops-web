@@ -134,8 +134,9 @@ export interface PacketWeather {
 
 /** weather-service caps a batch at 30 (three kinds a stop) and /airports at 12. */
 const MAX_STOPS = 10;
-/** The release and the print don't wait longer than this for the packet's weather. */
-const PACKET_WEATHER_TIMEOUT_MS = 8000;
+/** The release and the print don't wait longer than this for the packet's
+ *  weather. A cold cache under load took over 8 s on the test stack. */
+const PACKET_WEATHER_TIMEOUT_MS = 15000;
 
 export async function getAirports(idents: string[]): Promise<AirportInfo[]> {
   const query = encodeURIComponent(idents.join(","));

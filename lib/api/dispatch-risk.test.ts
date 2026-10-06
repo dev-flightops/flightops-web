@@ -138,7 +138,7 @@ describe("packetWeatherFor (#52)", () => {
     vi.useFakeTimers();
     vi.mocked(getFlight).mockReturnValue(new Promise(() => {}));
     const pending = packetWeatherFor("f-1");
-    await vi.advanceTimersByTimeAsync(8000);
+    await vi.advanceTimersByTimeAsync(15000);
     expect(await pending).toBeNull();
   });
 });
