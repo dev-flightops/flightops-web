@@ -94,8 +94,7 @@ function Field({
       )}
       {source?.recheck === "revised" && (
         <p className="mt-1 text-[0.65rem] font-semibold text-status-yellow">
-          Version {source.current_version_number} of the document is out and this limit
-          hasn&rsquo;t been checked against it. Read it below and approve the limit again.
+          {`Version ${source.current_version_number} of the document is out and this limit hasn’t been checked against it. Read it below and approve the limit again.`}
         </p>
       )}
       {source?.recheck === "archived" && (
