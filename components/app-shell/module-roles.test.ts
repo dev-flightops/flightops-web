@@ -77,6 +77,7 @@ describe("reservations_agent — the second half of the request", () => {
       "currency",
       "flight-log",
       "roster",
+      "type-qualifications",
       "pilot-history",
       "ramp-ops",
       "eod",
@@ -409,6 +410,7 @@ describe("the M4 post-holder roles", () => {
       for (const mod of [
         "crew",
         "roster",
+        "type-qualifications",
         "currency",
         "flight-log",
         "pilot-history",

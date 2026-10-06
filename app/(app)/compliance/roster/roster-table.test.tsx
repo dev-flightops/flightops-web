@@ -103,16 +103,56 @@ describe("layout", () => {
     }
   });
 
-  it("omits certificate and aircraft columns rather than showing empty ones", () => {
-    // Neither is stored yet. A column of dashes reads as "we checked and
+  it("omits the certificate column rather than showing an empty one", () => {
+    // Not stored yet. A column of dashes reads as "we checked and
     // there's nothing", which is not what's true.
     render(<RosterTable items={ITEMS} groups={[group("PANC", [row()])]} />);
     expect(
       screen.queryByRole("columnheader", { name: /cert/i }),
     ).not.toBeInTheDocument();
-    expect(
-      screen.queryByRole("columnheader", { name: /aircraft/i }),
-    ).not.toBeInTheDocument();
+  });
+
+  it("lists the positions each pilot may fly, by aircraft type", () => {
+    // Legacy's Aircraft column, stored since #45. Grace still flies, so
+    // it is listed, in the board's yellow.
+    render(
+      <RosterTable
+        items={ITEMS}
+        groups={[
+          group("PANC", [
+            row({
+              type_positions: [
+                { airframe_type: "caravan", position: "pic", state: "current" },
+                { airframe_type: "caravan", position: "check_airman", state: "grace" },
+                { airframe_type: "kingair", position: "sic", state: "current" },
+              ],
+            }),
+            row({
+              pilot: { id: "p-2", full_name: "Bob Pilot" } as never,
+              type_positions: [],
+            }),
+          ]),
+        ]}
+      />,
+    );
+    const heads = screen
+      .getAllByRole("columnheader")
+      .map((th) => th.textContent?.trim());
+    const aircraft = within(rowFor("Alice Pilot")).getAllByRole("cell")[
+      heads.indexOf("Aircraft")
+    ];
+    expect(aircraft).toHaveTextContent("CARAVANPICCAKINGAIRSIC");
+    expect(within(aircraft).getByText("PIC").className).toContain("text-status-green");
+    expect(within(aircraft).getByText("CA")).toHaveAttribute(
+      "title",
+      "Check Airman on CARAVAN: Grace month",
+    );
+    expect(within(aircraft).getByText("CA").className).toContain("text-status-yellow");
+
+    const none = within(rowFor("Bob Pilot")).getAllByRole("cell")[
+      heads.indexOf("Aircraft")
+    ];
+    expect(none).toHaveTextContent("—");
   });
 
   it("says so plainly when there are no pilots", () => {
@@ -130,7 +170,15 @@ describe("layout", () => {
     const heads = screen
       .getAllByRole("columnheader")
       .map((th) => th.textContent?.trim());
-    expect(heads.slice(0, 6)).toEqual(["Name", "Role", "24h", "7d", "Mo", "Yr"]);
+    expect(heads.slice(0, 7)).toEqual([
+      "Name",
+      "Role",
+      "Aircraft",
+      "24h",
+      "7d",
+      "Mo",
+      "Yr",
+    ]);
   });
 
   it("aligns each hours figure under its own heading", () => {

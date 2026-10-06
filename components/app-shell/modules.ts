@@ -159,6 +159,13 @@ export const DEPARTMENTS: Department[] = [
         status: "live",
         department: "operations",
       },
+      {
+        id: "type-qualifications",
+        label: "Qualifications",
+        href: "/compliance/type-qualifications",
+        status: "live",
+        department: "operations",
+      },
       // Operations rather than Admin, even though reports-service
       // serves it: `/compliance` is in this department's pathPrefixes,
       // so an entry here under an Admin department would leave the nav
@@ -1216,6 +1223,17 @@ export const MODULE_ROLES: Record<string, readonly Role[]> = {
     "crew_member",
   ],
   roster: [
+    "exec_admin",
+    "director_of_operations",
+    "dispatcher",
+    "chief_pilot",
+    "check_airman",
+    "pilot",
+    "crew_member",
+  ],
+  // Who may fly which type, read alongside the roster. Changes are made
+  // on a pilot's own page, gated there by TYPE_QUALIFICATION_ADMINS.
+  "type-qualifications": [
     "exec_admin",
     "director_of_operations",
     "dispatcher",
