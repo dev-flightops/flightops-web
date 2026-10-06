@@ -459,7 +459,9 @@ export interface WeatherReportResponse {
 
 export interface WeatherBatchRequestItem {
   icao: string;
-  kind: "metar" | "taf";
+  /** "pirep" is every PIREP within 50 nm of the stop from the last 3
+   *  hours, one per line; an empty `raw` means there were none (#51). */
+  kind: "metar" | "taf" | "pirep";
 }
 
 export interface WeatherBatchItemError {

@@ -57,7 +57,7 @@ function makeReport(
  *  response — the component handles the "neither item nor error" case
  *  defensively. */
 function makeBatch(
-  reports: Array<Partial<WeatherReportResponse> & { icao: string; kind: "metar" | "taf" }>,
+  reports: Array<Partial<WeatherReportResponse> & { icao: string; kind: "metar" | "taf" | "pirep" }>,
   errors: WeatherBatchResponse["errors"] = [],
 ): WeatherBatchResponse {
   return {
@@ -76,7 +76,7 @@ describe("WeatherPanel", () => {
     expect(batchWeather).not.toHaveBeenCalled();
   });
 
-  it("fetches METAR + TAF for every ICAO in one batch round-trip", async () => {
+  it("fetches METAR, TAF and PIREPs for every ICAO in one batch round-trip", async () => {
     batchWeather.mockReset().mockResolvedValueOnce(
       makeBatch([
         { icao: "PADU", kind: "metar" },
@@ -94,8 +94,10 @@ describe("WeatherPanel", () => {
     expect(payload).toEqual([
       { icao: "PADU", kind: "metar" },
       { icao: "PADU", kind: "taf" },
+      { icao: "PADU", kind: "pirep" },
       { icao: "PANC", kind: "metar" },
       { icao: "PANC", kind: "taf" },
+      { icao: "PANC", kind: "pirep" },
     ]);
 
     expect(screen.getByText("PADU")).toBeInTheDocument();
@@ -116,12 +118,37 @@ describe("WeatherPanel", () => {
 
     expect(batchWeather).toHaveBeenCalledTimes(1);
     const payload = batchWeather.mock.calls[0][0];
-    // Only one (PADU, metar) + one (PADU, taf) — duplicates dropped before
-    // the request even fires.
+    // One of each kind for PADU — duplicates dropped before the request
+    // even fires.
     expect(payload).toEqual([
       { icao: "PADU", kind: "metar" },
       { icao: "PADU", kind: "taf" },
+      { icao: "PADU", kind: "pirep" },
     ]);
+  });
+
+  it("shows each stop's PIREPs, says when there are none, and when the feed is down", async () => {
+    batchWeather.mockReset().mockResolvedValueOnce(
+      makeBatch(
+        [
+          { icao: "PABE", kind: "metar" },
+          {
+            icao: "PABE",
+            kind: "pirep",
+            raw: "BET UA /OV BET/TM 1520/FL050/TP C208/IC MOD RIME 040-060",
+          },
+          { icao: "PAEM", kind: "metar" },
+          { icao: "PAEM", kind: "pirep", raw: "" },
+        ],
+        [{ icao: "PAVA", kind: "pirep", status: 502, detail: "AWC down" }],
+      ),
+    );
+
+    render(await WeatherPanel({ icaos: ["PABE", "PAEM", "PAVA"] }));
+
+    expect(screen.getByText(/IC MOD RIME 040-060/)).toBeInTheDocument();
+    expect(screen.getByText("None within 50 nm in the last 3 hours.")).toBeInTheDocument();
+    expect(screen.getByText("PIREPs feed unreachable — try Refresh Weather.")).toBeInTheDocument();
   });
 
   it("does NOT render a per-card cache/live badge (legacy-parity — pulled-at on the panel header surfaces freshness instead)", async () => {
@@ -258,8 +285,8 @@ describe("WeatherPanel", () => {
     expect(
       screen.getByText(/Showing first 10 stops of 12/i),
     ).toBeInTheDocument();
-    // Backend was asked for only 20 records (10 stops × 2 kinds), not 24.
-    expect(batchWeather.mock.calls[0][0]).toHaveLength(20);
+    // Backend was asked for only 30 records (10 stops × 3 kinds), not 36.
+    expect(batchWeather.mock.calls[0][0]).toHaveLength(30);
   });
 
   // ---- M2-G-14 rich card ----------------------------------------------------
