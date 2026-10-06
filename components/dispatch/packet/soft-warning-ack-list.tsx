@@ -7,7 +7,12 @@ import { useTransition } from "react";
 import type { CrewSeat } from "@/lib/api/ops";
 import type { ComplianceFinding } from "@/lib/api/types";
 
-import { findingMessage, parseAckedWarns, warningAckKey } from "./soft-warning-ack-parser";
+import {
+  findingKey,
+  findingMessage,
+  parseAckedWarns,
+  warningAckKey,
+} from "./soft-warning-ack-parser";
 import { useDispatchQuery } from "./use-dispatch-query";
 
 /**
@@ -70,7 +75,7 @@ export function SoftWarningAckList({
         const id = `warn-ack-${seat}-${f.code}`;
         return (
           <li
-            key={f.currency_item_id}
+            key={findingKey(f)}
             className={
               "flex items-start gap-2 rounded-md border px-2 py-1.5 transition-colors " +
               (acked

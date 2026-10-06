@@ -9,8 +9,8 @@ import { createComplianceOverride } from "@/lib/api/ops";
  * M2-G-5 tail — supervisor override server action.
  *
  * Called by the OverrideDialog on the dispatch compliance gate.
- * Batches one POST /ops/compliance/overrides per hard-block currency
- * item so each block gets an audit row (Spec 5 §"Hard blocks":
+ * Batches one POST /ops/compliance/overrides per hard block — a currency
+ * item, or the aircraft type (#46) — so each block gets an audit row (Spec 5 §"Hard blocks":
  * "All overrides logged permanently to currency_overrides").
  *
  * Same cert number + reason applied to every block. That matches the
@@ -29,9 +29,15 @@ export type CreateOverridesResult =
   | { status: "field-errors"; errors: Record<string, string> }
   | { status: "api-error"; message: string };
 
+/** What one override waives: a currency item, or the PIC's
+ *  qualification on the flight's aircraft type (#46). */
+export type OverrideSubject =
+  | { currency_item_id: string }
+  | { airframe_type: string };
+
 export async function createOverridesAction(
   pilotUserId: string,
-  currencyItemIds: string[],
+  subjects: OverrideSubject[],
   supervisorCertNumber: string,
   reason: string,
   flightId: string | null,
@@ -43,7 +49,7 @@ export async function createOverridesAction(
   if (reason.trim().length < 50) {
     errors.reason = `Reason must be at least 50 characters (currently ${reason.trim().length}).`;
   }
-  if (currencyItemIds.length === 0) {
+  if (subjects.length === 0) {
     errors._ = "No hard-block items selected.";
   }
   if (Object.keys(errors).length > 0) {
@@ -51,10 +57,10 @@ export async function createOverridesAction(
   }
 
   try {
-    for (const itemId of currencyItemIds) {
+    for (const subject of subjects) {
       await createComplianceOverride({
         pilot_user_id: pilotUserId,
-        currency_item_id: itemId,
+        ...subject,
         flight_id: flightId,
         supervisor_cert_number: supervisorCertNumber.trim(),
         reason: reason.trim(),
@@ -81,6 +87,18 @@ export async function createOverridesAction(
           message: "Pilot or currency item not found — refresh the page.",
         };
       }
+      if (err.status === 422 && err.message.includes("type_override_needs_flight")) {
+        return {
+          status: "api-error",
+          message: "An aircraft type override is for one flight — load the flight first.",
+        };
+      }
+      if (err.status === 422 && err.message.includes("airframe_type_not_on_flight")) {
+        return {
+          status: "api-error",
+          message: "The flight's aircraft has changed — refresh the page.",
+        };
+      }
       return {
         status: "api-error",
         message: `Couldn't record override (HTTP ${err.status}). Try again.`,
@@ -94,5 +112,5 @@ export async function createOverridesAction(
 
   revalidatePath("/dispatch/");
   if (flightId) revalidatePath(`/dispatch/${flightId}`);
-  return { status: "ok", count: currencyItemIds.length };
+  return { status: "ok", count: subjects.length };
 }

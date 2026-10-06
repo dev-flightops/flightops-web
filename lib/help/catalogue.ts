@@ -110,6 +110,7 @@ export const HELP_ENTRIES: HelpEntry[] = [
     connectsTo:
       "Reads the manifest for weight and balance, the maintenance file for airworthiness, crew records for currency, and the weather service for the briefing. A release writes to the flight record and is what the flight board reads to show a flight as released.",
     worthKnowing: [
+      "The packet shows each pilot's standing in their seat on the aircraft's type. Once aircraft qualifications are switched on in Settings → Currency, a PIC who isn't current as PIC on the type is a hard block that a Chief Pilot, Director of Operations or Exec Admin can override for that one flight. The PIC picker and the crew panel name the problem beside each pilot.",
       "Building a flight is reachable from here as well as from Flight Following. It was only on Flight Following until an operator reported being unable to find it.",
       "The AI Assistant and AI Review buttons on the packet are not built. Dispatch Intelligence, which suggests aircraft for a next leg, is a separate page.",
     ],
@@ -583,6 +584,10 @@ export const HELP_ENTRIES: HelpEntry[] = [
         heading: "Recording a check ride",
         body: "A check ride is logged once, against the pilot's competency or instrument check, naming the aircraft type it was flown in. The same entry moves the crew currency board and the type's positions. A failed check is kept on record and renews nothing.",
       },
+      {
+        heading: "At release",
+        body: "Release checks the PIC against this grid once the Director of Operations or an Exec Admin switches aircraft qualifications on in Settings → Currency. It ships off, so the grid can be entered first. When on, a PIC who isn't current as PIC on the aircraft's type is refused, unless a Chief Pilot, Director of Operations or Exec Admin records an override for that flight. A check in its grace month is a warning the dispatcher acknowledges. Each release records the PIC's standing on the type and whether the check was on.",
+      },
     ],
     connectsTo:
       "Types come from the aircraft records in the fleet. Check rides are currency completions, so they show on the crew currency board too. The roster's Aircraft column lists the positions each pilot may fly today.",
@@ -616,6 +621,7 @@ export const HELP_ENTRIES: HelpEntry[] = [
       "A pilot holds one assignment on any day. Saving one that overlaps another is refused, and the message names the one already there.",
       "Bases come from Settings → Bases and types from the fleet, so a new base or type has to exist there first.",
       "Archiving a tag takes it off the palette but keeps every day already painted with it, so the past schedule doesn't change.",
+      "Once aircraft qualifications are switched on, an assignment on a type the pilot holds no current position on is outlined in red with a ⚠. It's a warning, not a refusal: rostering ahead of a check ride is normal, and release is where it's enforced.",
     ],
     connectsTo:
       "Home base is the same field as the employee record's station. The Roster page is the currency matrix, by base.",

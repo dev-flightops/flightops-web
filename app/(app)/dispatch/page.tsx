@@ -28,6 +28,7 @@ import {
   listWeightReturns,
 } from "@/lib/api/ops";
 import { listBookings } from "@/lib/api/reservations";
+import { getTypeQualificationGrid } from "@/lib/api/type-qualifications";
 import { getRouteFreshness } from "@/lib/api/weather";
 import type {
   AircraftListItem,
@@ -38,6 +39,7 @@ import type {
 import type { PicOption } from "@/components/dispatch/packet/pic-picker";
 import { parseAckedWarns } from "@/components/dispatch/packet/soft-warning-ack-parser";
 import { parseAckedIcaos } from "@/components/dispatch/packet/notam-acks";
+import { typeWarnings } from "@/components/dispatch/packet/type-warnings";
 import {
   computeHardBlockReason,
   overridesOnRecord,
@@ -198,10 +200,25 @@ export default async function DispatchPage({
     Promise.all(
       sicIds.map(async (pilotId) => ({
         pilotId,
-        compliance: await loadPicCompliance(pilotId, "sic"),
+        // Asked about the flight, so it also reports the SIC's standing
+        // on the aircraft type (#46).
+        compliance: await loadPicCompliance(pilotId, "sic", selectedId ?? null),
       })),
     ),
   ]);
+
+  // #46 — who is current in which seat on this flight's aircraft type,
+  // for the PIC picker and the crew panel. Soft-fail: losing it costs
+  // the warnings, and release still checks the PIC.
+  const flightType = selectedFlight?.aircraft.airframe_type ?? null;
+  const typeGrid = flightType
+    ? await getTypeQualificationGrid().catch(() => null)
+    : null;
+  const warnings = typeWarnings(typeGrid, flightType);
+  const candidates = picOptions.map((option) => ({
+    ...option,
+    typeWarning: warnings.get(option.pilot.id) ?? null,
+  }));
 
   // M2-G-5 tail — parse ack state from URL. `warns_acked` is
   // comma-separated currency-item codes.
@@ -305,7 +322,7 @@ export default async function DispatchPage({
 
         <FlightDetailsPanel
           flight={selectedFlight}
-          picOptions={picOptions}
+          picOptions={candidates}
           currentPicId={effectivePicId}
           flightId={selectedFlight?.id ?? null}
         />
@@ -319,7 +336,7 @@ export default async function DispatchPage({
           <CrewPanel
             flightId={selectedFlight.id}
             assignments={crew.items}
-            candidates={picOptions}
+            candidates={candidates}
           />
         )}
 

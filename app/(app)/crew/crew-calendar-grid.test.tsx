@@ -178,3 +178,30 @@ describe("CrewCalendarGrid for a scheduler", () => {
     await vi.waitFor(() => expect(moveHomeBaseAction).toHaveBeenCalledWith(BOB, "PABE"));
   });
 });
+
+describe("CrewCalendarGrid — aircraft qualifications (#46)", () => {
+  const withMark = (type_qualified: boolean | null) => ({
+    ...CALENDAR,
+    entries: [{ ...CALENDAR.entries[0], type_qualified }],
+  });
+
+  it("marks an assignment on a type the pilot holds no current position on", () => {
+    render(<CrewCalendarGrid calendar={withMark(false)} canEdit />);
+    const chip = screen.getByRole("button", {
+      name: /^Alice Pilot: Flying · CARAVAN · N208PA · PABE, .*\. No current position on CARAVAN\. Edit$/,
+    });
+    expect(chip).toHaveTextContent("⚠");
+    expect(chip.getAttribute("title")).toContain("No current position on CARAVAN");
+    expect(chip.className).toContain("ring-status-red");
+  });
+
+  it("leaves a qualified or unchecked assignment unmarked", () => {
+    for (const mark of [true, null]) {
+      const { unmount } = render(<CrewCalendarGrid calendar={withMark(mark)} canEdit />);
+      expect(screen.getByRole("button", { name: /^Alice Pilot: Flying/ })).not.toHaveTextContent(
+        "⚠",
+      );
+      unmount();
+    }
+  });
+});

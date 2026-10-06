@@ -14,6 +14,8 @@ import type {
 } from "@/lib/api/crew-assignments";
 import type { CurrencyStatus, UserRef } from "@/lib/api/types";
 
+import type { SeatTypeWarning } from "./type-warnings";
+
 /**
  * Crew for the selected flight, on the dispatch packet.
  *
@@ -67,6 +69,29 @@ const DOT_CLASS = {
 export interface CrewCandidate {
   pilot: UserRef;
   status: CurrencyStatus;
+  /** What is wrong with this pilot in each seat on the flight's
+   *  aircraft type (#46), where the company enforces it. */
+  typeWarning?: SeatTypeWarning | null;
+}
+
+/** The warning for the seat, if the seat is one a type governs. */
+function seatWarning(
+  candidate: CrewCandidate | undefined,
+  role: CrewRole,
+): string | null {
+  if (!candidate?.typeWarning) return null;
+  if (role === "pic") return candidate.typeWarning.pic;
+  if (role === "sic") return candidate.typeWarning.sic;
+  return null;
+}
+
+function TypeWarning({ text }: { text: string | null }) {
+  if (!text) return null;
+  return (
+    <span className="shrink-0 text-[0.68rem] font-semibold text-status-red">
+      {text}
+    </span>
+  );
 }
 
 // PIC is deliberately absent from this list. It is picked in Flight
@@ -150,6 +175,7 @@ export function CrewPanel({
                   {STATUS_LABEL[picCandidate.status]}
                 </span>
               ) : null}
+              <TypeWarning text={seatWarning(picCandidate, "pic")} />
             </span>
           ) : (
             <span className="flex-1 text-sm italic text-muted-foreground">
@@ -200,6 +226,7 @@ export function CrewPanel({
                         {STATUS_LABEL[current.status]}
                       </span>
                     ) : null}
+                    <TypeWarning text={seatWarning(current, role)} />
                   </span>
                   <button
                     type="button"
@@ -227,11 +254,15 @@ export function CrewPanel({
                   <option value="">
                     {required ? "Select a pilot…" : "Unassigned"}
                   </option>
-                  {options.map(({ pilot, status }) => (
-                    <option key={pilot.id} value={pilot.id}>
-                      {pilot.full_name} — {STATUS_LABEL[status]}
-                    </option>
-                  ))}
+                  {options.map((option) => {
+                    const warning = seatWarning(option, role);
+                    return (
+                      <option key={option.pilot.id} value={option.pilot.id}>
+                        {option.pilot.full_name} — {STATUS_LABEL[option.status]}
+                        {warning ? ` · ${warning}` : ""}
+                      </option>
+                    );
+                  })}
                 </select>
               )}
             </div>

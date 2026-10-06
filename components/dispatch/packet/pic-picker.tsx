@@ -11,6 +11,7 @@ import {
 
 import type { CurrencyStatus, UserRef } from "@/lib/api/types";
 
+import type { SeatTypeWarning } from "./type-warnings";
 import { useDispatchQuery } from "./use-dispatch-query";
 
 /**
@@ -55,6 +56,9 @@ import { useDispatchQuery } from "./use-dispatch-query";
 export interface PicOption {
   pilot: UserRef;
   status: CurrencyStatus;
+  /** What is wrong with this pilot in each seat on the flight's
+   *  aircraft type (#46), where the company enforces it. */
+  typeWarning?: SeatTypeWarning | null;
 }
 
 const STATUS_TO_DOT: Record<CurrencyStatus, "green" | "yellow" | "red"> = {
@@ -169,9 +173,16 @@ export function PicPicker({
         {options.map((opt) => (
           <option key={opt.pilot.id} value={opt.pilot.id}>
             ● {opt.pilot.full_name} — {STATUS_LABEL[opt.status]}
+            {opt.typeWarning?.pic ? ` · ${opt.typeWarning.pic}` : ""}
           </option>
         ))}
       </select>
+      {selected?.typeWarning?.pic ? (
+        <p className="mt-1.5 text-[0.68rem] text-status-red">
+          {selected.pilot.full_name} is {selected.typeWarning.pic}. Release needs a
+          supervisor override.
+        </p>
+      ) : null}
       {error ? (
         // The backend names the incumbent — "Ann Pilot is already PIC on
         // PGR900" tells the dispatcher who to stand down. Shown as-is

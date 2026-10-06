@@ -176,3 +176,42 @@ describe("CrewPanel", () => {
     expect(assignCrewAction).not.toHaveBeenCalled();
   });
 });
+
+describe("CrewPanel — the aircraft type (#46)", () => {
+  const WARNED: CrewCandidate[] = [
+    { ...CANDIDATES[0], typeWarning: { pic: null, sic: null } },
+    {
+      ...CANDIDATES[1],
+      typeWarning: {
+        pic: "not authorised as PIC on CARAVAN",
+        sic: "not current as SIC on CARAVAN",
+      },
+    },
+    CANDIDATES[2],
+  ];
+
+  it("names a candidate's problem in the seat being filled", () => {
+    render(<CrewPanel flightId="f-1" assignments={[]} candidates={WARNED} />);
+    const sic = screen.getByRole("combobox", { name: "Assign SIC" });
+    expect(sic).toHaveTextContent("Bo Pilot — NON-CURRENT · not current as SIC on CARAVAN");
+    // A flight attendant isn't judged on the type.
+    expect(screen.getByRole("combobox", { name: "Assign Flight Attendant" })).not.toHaveTextContent(
+      "CARAVAN",
+    );
+  });
+
+  it("warns beside an assigned PIC and SIC, and still lets them stand", () => {
+    render(
+      <CrewPanel
+        flightId="f-1"
+        assignments={[
+          assignment({ user: WARNED[1].pilot, crew_role: "pic" }),
+          assignment({ id: "a-2", user: WARNED[0].pilot, crew_role: "sic" }),
+        ]}
+        candidates={WARNED}
+      />,
+    );
+    expect(screen.getByText("not authorised as PIC on CARAVAN")).toBeInTheDocument();
+    expect(screen.queryByText(/as SIC on CARAVAN/)).toBeNull();
+  });
+});

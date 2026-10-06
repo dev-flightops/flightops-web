@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -55,11 +55,53 @@ describe("OverrideDialog", () => {
     await waitFor(() => expect(refresh).toHaveBeenCalled());
     expect(createOverridesAction).toHaveBeenCalledWith(
       "p-1",
-      ["i-1"],
+      [{ currency_item_id: "i-1" }],
       "CP-4411",
       "Checkride booked for Thursday; released for one leg under a documented mitigation.",
       "f-1",
     );
     expect(push).not.toHaveBeenCalled();
+  });
+
+  it("overrides an aircraft type block by its type (#46)", async () => {
+    createOverridesAction.mockResolvedValueOnce({ status: "ok", count: 2 });
+    const typeBlock: ComplianceFinding = {
+      ...block,
+      currency_item_id: null,
+      airframe_type: "caravan",
+      code: "type_qualification",
+      name: "PIC on CARAVAN",
+      regulation: "14 CFR 135.293 / 135.297",
+      message: "Not authorised as PIC on the CARAVAN.",
+    };
+    const user = userEvent.setup();
+    render(
+      <OverrideDialog
+        pilotUserId="p-1"
+        pilotName="Alice Chen"
+        hardBlocks={[block, typeBlock]}
+        flightId="f-1"
+      />,
+    );
+    await user.click(screen.getByRole("button", { name: "Supervisor Override…" }));
+    expect(screen.getByText("PIC on CARAVAN")).toBeInTheDocument();
+    // One change event per field: typing key by key times out on a busy box.
+    fireEvent.change(screen.getByLabelText(/Supervisor cert number/), {
+      target: { value: "CP-4411" },
+    });
+    fireEvent.change(screen.getByLabelText(/Reason/), {
+      target: { value: "Check ride booked for Thursday; the DO approved this one leg by phone." },
+    });
+    await user.click(screen.getByRole("button", { name: "Record overrides (2)" }));
+
+    await waitFor(() =>
+      expect(createOverridesAction).toHaveBeenCalledWith(
+        "p-1",
+        [{ currency_item_id: "i-1" }, { airframe_type: "caravan" }],
+        "CP-4411",
+        "Check ride booked for Thursday; the DO approved this one leg by phone.",
+        "f-1",
+      ),
+    );
   });
 });

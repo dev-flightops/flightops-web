@@ -17,7 +17,16 @@ import type { ComplianceFinding } from "@/lib/api/types";
 import {
   createOverridesAction,
   type CreateOverridesResult,
+  type OverrideSubject,
 } from "./override-actions";
+import { findingKey } from "./soft-warning-ack-parser";
+
+/** A type block (#46) has no currency item; its override names the type. */
+function subjectOf(block: ComplianceFinding): OverrideSubject {
+  return block.airframe_type
+    ? { airframe_type: block.airframe_type }
+    : { currency_item_id: block.currency_item_id ?? "" };
+}
 
 /**
  * M2-G-5 tail — supervisor override modal for the hard-block banner.
@@ -73,7 +82,7 @@ export function OverrideDialog({
     startTransition(async () => {
       const result = await createOverridesAction(
         pilotUserId,
-        hardBlocks.map((b) => b.currency_item_id),
+        hardBlocks.map(subjectOf),
         cert,
         reason,
         flightId,
@@ -127,7 +136,7 @@ export function OverrideDialog({
             <ul className="rounded-md border border-border bg-card/60 p-2 text-[0.7rem]">
               {hardBlocks.map((b) => (
                 <li
-                  key={b.currency_item_id}
+                  key={findingKey(b)}
                   className="flex items-baseline gap-2 py-0.5"
                 >
                   <span className="text-status-red">●</span>

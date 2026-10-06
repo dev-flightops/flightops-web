@@ -45,7 +45,7 @@ describe("createOverridesAction (M2-G-5 tail)", () => {
     createComplianceOverride.mockResolvedValue({} as never);
     const result = await createOverridesAction(
       PILOT,
-      [ITEM_1, ITEM_2],
+      [{ currency_item_id: ITEM_1 }, { currency_item_id: ITEM_2 }],
       "CFI-9999",
       LONG_REASON,
       FLIGHT,
@@ -73,7 +73,7 @@ describe("createOverridesAction (M2-G-5 tail)", () => {
   it("returns field errors when the reason is under 50 chars", async () => {
     const result = await createOverridesAction(
       PILOT,
-      [ITEM_1],
+      [{ currency_item_id: ITEM_1 }],
       "CFI-9999",
       "short",
       FLIGHT,
@@ -88,7 +88,7 @@ describe("createOverridesAction (M2-G-5 tail)", () => {
   it("returns field errors when the cert number is empty", async () => {
     const result = await createOverridesAction(
       PILOT,
-      [ITEM_1],
+      [{ currency_item_id: ITEM_1 }],
       "   ",
       LONG_REASON,
       FLIGHT,
@@ -124,7 +124,7 @@ describe("createOverridesAction (M2-G-5 tail)", () => {
     );
     const result = await createOverridesAction(
       PILOT,
-      [ITEM_1],
+      [{ currency_item_id: ITEM_1 }],
       "CFI-9999",
       LONG_REASON,
       FLIGHT,
@@ -134,6 +134,37 @@ describe("createOverridesAction (M2-G-5 tail)", () => {
       // Says who can, and that it is their own login (29 Sep).
       message:
         "Only a Chief Pilot, Director of Operations or Exec Admin can record an override, from their own login.",
+    });
+  });
+
+  it("waives an aircraft type block by naming the type (#46)", async () => {
+    createComplianceOverride.mockResolvedValue({} as never);
+    const result = await createOverridesAction(
+      PILOT,
+      [{ airframe_type: "caravan" }, { currency_item_id: ITEM_1 }],
+      "CFI-9999",
+      LONG_REASON,
+      FLIGHT,
+    );
+    expect(result).toEqual({ status: "ok", count: 2 });
+    expect(createComplianceOverride).toHaveBeenNthCalledWith(1, {
+      pilot_user_id: PILOT,
+      airframe_type: "caravan",
+      flight_id: FLIGHT,
+      supervisor_cert_number: "CFI-9999",
+      reason: LONG_REASON,
+    });
+  });
+
+  it("explains a type override the service refuses", async () => {
+    createComplianceOverride.mockRejectedValueOnce(
+      new TestApiError(422, "/ops/compliance/overrides", '{"detail":"airframe_type_not_on_flight"}'),
+    );
+    expect(
+      await createOverridesAction(PILOT, [{ airframe_type: "c207" }], "CFI-9999", LONG_REASON, FLIGHT),
+    ).toEqual({
+      status: "api-error",
+      message: "The flight's aircraft has changed — refresh the page.",
     });
   });
 });
