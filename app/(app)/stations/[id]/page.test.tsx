@@ -247,6 +247,8 @@ describe("StationDetailPage: who works a station (29 Sep)", () => {
     expect(screen.getByRole("button", { name: "Resolve" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /report issue/i })).toBeInTheDocument();
     expect(screen.queryByText(/resolves station issues/i)).toBeNull();
+    // #50: the runway the dispatch risk matrix needs.
+    expect(screen.getByRole("button", { name: "Save runway" })).toBeInTheDocument();
   });
 
   it("leaves a dispatcher reporting, and says who resolves", async () => {
@@ -255,6 +257,7 @@ describe("StationDetailPage: who works a station (29 Sep)", () => {
     await renderPage();
     expect(screen.queryByRole("button", { name: "Deactivate" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Resolve" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Save runway" })).toBeNull();
     expect(screen.getByRole("button", { name: /report issue/i })).toBeInTheDocument();
     expect(
       screen.getByText(

@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { TestApiError, createStationIssue, resolveStationIssue, updateStation } =
+const { TestApiError, createStationIssue, resolveStationIssue, setStationRunway, updateStation } =
   vi.hoisted(() => {
     class TestApiError extends Error {
       constructor(
@@ -15,6 +15,7 @@ const { TestApiError, createStationIssue, resolveStationIssue, updateStation } =
       TestApiError,
       createStationIssue: vi.fn(),
       resolveStationIssue: vi.fn(),
+      setStationRunway: vi.fn(),
       updateStation: vi.fn(),
     };
   });
@@ -22,6 +23,7 @@ vi.mock("@/lib/api/client", () => ({ ApiError: TestApiError }));
 vi.mock("@/lib/api/ground", () => ({
   createStationIssue,
   resolveStationIssue,
+  setStationRunway,
   updateStation,
   STATIONS_CACHE_TAG: "stations",
 }));
@@ -31,6 +33,7 @@ import {
   reportIssueAction,
   resolveIssueAction,
   setStationActiveAction,
+  setStationRunwayAction,
 } from "./actions";
 
 const STATION = "11111111-1111-1111-1111-111111111111";
@@ -85,3 +88,38 @@ describe("station actions refused by role (29 Sep)", () => {
     });
   });
 });
+
+describe("setStationRunwayAction (#50)", () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it("saves the runway entered by hand", async () => {
+    setStationRunway.mockResolvedValueOnce({});
+    const runway = { length_ft: 2010, width_ft: 60, primary_name: "05/23" };
+    expect(await setStationRunwayAction(STATION, runway)).toEqual({ ok: true });
+    expect(setStationRunway).toHaveBeenCalledWith(STATION, runway);
+  });
+
+  it("needs the length and width together", async () => {
+    const result = await setStationRunwayAction(STATION, {
+      length_ft: 2010,
+      width_ft: null,
+      primary_name: null,
+    });
+    expect(result).toEqual({ ok: false, error: "Enter both the length and the width, or neither." });
+    expect(setStationRunway).not.toHaveBeenCalled();
+  });
+
+  it("explains a refusal and a value out of range", async () => {
+    setStationRunway.mockRejectedValueOnce(refused());
+    expect(
+      (await setStationRunwayAction(STATION, { length_ft: 2010, width_ft: 60, primary_name: null }))
+        .error,
+    ).toMatch(/Only Ground Ops, the Director of Operations or an Exec Admin/);
+    setStationRunway.mockRejectedValueOnce(new TestApiError(422, "/ground", "range"));
+    expect(
+      (await setStationRunwayAction(STATION, { length_ft: 50, width_ft: 60, primary_name: null }))
+        .error,
+    ).toBe("Check the numbers: length 100–20,000 ft, width 10–500 ft.");
+  });
+});
+

@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import type { FlightDetail } from "@/lib/api/types";
 
+vi.mock("@/app/(app)/dispatch/risk-actions", () => ({ saveRiskInputsAction: vi.fn() }));
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ refresh: vi.fn(), push: vi.fn() }),
 }));

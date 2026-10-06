@@ -1,6 +1,11 @@
 import { CrewLegalityHints } from "@/components/dispatch/packet/crew-status-rows";
 import { auth } from "@/auth";
-import { AIRWORTHINESS_WRITERS, hasAnyRole, OVERRIDE_AUTHORITY } from "@/lib/roles";
+import {
+  AIRWORTHINESS_WRITERS,
+  DISPATCH_WRITERS,
+  hasAnyRole,
+  OVERRIDE_AUTHORITY,
+} from "@/lib/roles";
 import { DispatchComplianceGate } from "@/components/dispatch/packet/dispatch-compliance-gate";
 import { parseAckedMelIds } from "@/components/dispatch/packet/mel-acks";
 import { OpenMelPanel } from "@/components/dispatch/packet/open-mel-panel";
@@ -29,6 +34,12 @@ import {
 } from "@/lib/api/ops";
 import { listBookings } from "@/lib/api/reservations";
 import { getTypeQualificationGrid } from "@/lib/api/type-qualifications";
+import {
+  getAreaForecastRegions,
+  loadDispatchRisk,
+  type AreaForecastRegion,
+  type DispatchRisk,
+} from "@/lib/api/dispatch-risk";
 import { getRouteFreshness } from "@/lib/api/weather";
 import type {
   AircraftListItem,
@@ -273,6 +284,20 @@ export default async function DispatchPage({
     weatherFreshness = await getRouteFreshness(icaos).catch(() => null);
   }
 
+  // The dispatch risk matrix (#50): scored by ops from the flight's weather
+  // and airport data, which loadDispatchRisk gathers. Both columns use it:
+  // the left for the dispatcher's inputs, the right for the matrix.
+  // Soft-fails: the page still works without it, and says so.
+  let risk: DispatchRisk | null = null;
+  let areaForecastRegions: AreaForecastRegion[] = [];
+  if (selectedFlight) {
+    [risk, areaForecastRegions] = await Promise.all([
+      loadDispatchRisk(selectedFlight.id, flightStops(selectedFlight)).catch(() => null),
+      getAreaForecastRegions().catch(() => []),
+    ]);
+  }
+  const canEditRisk = hasAnyRole(viewerRoles, DISPATCH_WRITERS);
+
   // The Generate-PDF release gate (PIC currency, NOTAM acks, stale
   // weather) lives in one pure, unit-tested function so the precedence
   // rules can't drift.
@@ -325,6 +350,15 @@ export default async function DispatchPage({
           picOptions={candidates}
           currentPicId={effectivePicId}
           flightId={selectedFlight?.id ?? null}
+          areaForecast={
+            risk
+              ? {
+                  value: risk.inputs.area_forecast_product,
+                  regions: areaForecastRegions,
+                  canEdit: canEditRisk,
+                }
+              : null
+          }
         />
 
         {/* Crew for this flight. Sits directly under Flight Details
@@ -377,6 +411,8 @@ export default async function DispatchPage({
             weatherFreshness={weatherFreshness}
             staleWeatherAcknowledged={staleWeatherAcknowledged}
             canSignOffMaintenance={hasAnyRole(viewerRoles, AIRWORTHINESS_WRITERS)}
+            risk={risk}
+            canEditRisk={canEditRisk}
           />
           <RightColumn
             flight={selectedFlight}
@@ -387,6 +423,8 @@ export default async function DispatchPage({
             notamAckedIcaos={notamAckedIcaos}
             staleWeatherAcknowledged={staleWeatherAcknowledged}
             acknowledgedWarnings={Array.from(ackedWarnCodes)}
+            risk={risk}
+            canEditRisk={canEditRisk}
           />
         </div>
       </div>

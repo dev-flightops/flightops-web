@@ -1,6 +1,8 @@
+import type { AreaForecastRegion } from "@/lib/api/dispatch-risk";
 import type { FlightDetail } from "@/lib/api/types";
 
 import { PicPicker, type PicOption } from "./pic-picker";
+import { AreaForecastSelect } from "./risk-inputs";
 import { SectionPanel } from "./section-panel";
 
 /**
@@ -81,7 +83,9 @@ function airframeLabel(
  * overrides. Live behaviour behind each field:
  *   - Flight # / N-Number: freeform today, live lookup lands with the
  *     Flight # search API (backend exists; wiring pending)
- *   - Area Forecast Region: a static <select>; nothing submits it yet
+ *   - Area Forecast Region: saved with the flight once one is loaded
+ *     (#50), and printed on the dispatch packet; a static <select> on a
+ *     hand-filled packet
  *   - Aircraft: derived from the loaded flight and shown as a value.
  *     A dropdown here previously claimed a choice it did not have —
  *     there is no form, no name attribute and no submit handler on
@@ -94,6 +98,7 @@ export function FlightDetailsPanel({
   picOptions,
   currentPicId,
   flightId,
+  areaForecast = null,
 }: {
   flight?: FlightDetail | null;
   /** Pilot roster + overall status for the PIC dropdown (M2-G-5). */
@@ -104,6 +109,9 @@ export function FlightDetailsPanel({
   /** Flight to assign against. Null on a hand-filled packet, where the
    *  picker stays a pre-screen. */
   flightId?: string | null;
+  /** The flight's saved area forecast region and the regions to pick
+   *  from (#50). Null on a hand-filled packet, or when it couldn't load. */
+  areaForecast?: { value: string | null; regions: AreaForecastRegion[]; canEdit: boolean } | null;
 }) {
   return (
     <SectionPanel title="Flight Details">
@@ -195,6 +203,16 @@ export function FlightDetailsPanel({
         </Field>
 
         <Field label="Area Forecast Region" htmlFor="flight-afd-region">
+          {flightId && areaForecast ? (
+            <AreaForecastSelect
+              key={flightId}
+              id="flight-afd-region"
+              flightId={flightId}
+              value={areaForecast.value}
+              regions={areaForecast.regions}
+              canEdit={areaForecast.canEdit}
+            />
+          ) : (
           <select id="flight-afd-region" className="ff-input">
             {/* FAA Area Forecast Discussion regions covering AK ops. Codes
                 match legacy peregrineflight; "Southeast Alaska (fallback)"
@@ -208,6 +226,7 @@ export function FlightDetailsPanel({
             <option>E Gulf Coast &amp; SE Coastal Waters (FAAK57)</option>
             <option>Southeast Alaska (fallback)</option>
           </select>
+          )}
         </Field>
       </div>
 

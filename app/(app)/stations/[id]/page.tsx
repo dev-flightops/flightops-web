@@ -14,6 +14,7 @@ import type {
 import { hasAnyRole, STATION_ADMINS } from "@/lib/roles";
 
 import { StationActiveToggle } from "./active-toggle";
+import { StationRunwayForm } from "./runway-form";
 
 const STATION_TYPE_LABELS: Record<StationType, string> = {
   hub_base: "Hub Base",
@@ -103,6 +104,7 @@ export default async function StationDetailPage({
       <BackLink />
       <Header station={station} canAdmin={canAdmin} />
       <Meta station={station} />
+      {canAdmin && <StationRunwayForm station={station} />}
       <IssuesSection
         stationId={station.id}
         title={`Open issues (${openIssues.length})`}
