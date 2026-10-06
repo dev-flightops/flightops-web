@@ -45,11 +45,16 @@ describe("OverrideDialog", () => {
       <OverrideDialog pilotUserId="p-1" pilotName="Alice Chen" hardBlocks={[block]} flightId="f-1" />,
     );
     await user.click(screen.getByRole("button", { name: "Supervisor Override…" }));
-    await user.type(screen.getByLabelText(/Supervisor cert number/), "CP-4411");
-    await user.type(
-      screen.getByLabelText(/Reason/),
-      "Checkride booked for Thursday; released for one leg under a documented mitigation.",
-    );
+    // One change event per field: typing key by key times out on a busy
+    // box, and the timed-out test keeps typing into the next one.
+    fireEvent.change(screen.getByLabelText(/Supervisor cert number/), {
+      target: { value: "CP-4411" },
+    });
+    fireEvent.change(screen.getByLabelText(/Reason/), {
+      target: {
+        value: "Checkride booked for Thursday; released for one leg under a documented mitigation.",
+      },
+    });
     await user.click(screen.getByRole("button", { name: "Record override" }));
 
     await waitFor(() => expect(refresh).toHaveBeenCalled());
