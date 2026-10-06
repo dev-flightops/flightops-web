@@ -1295,6 +1295,19 @@ export interface FlightTrackingConfigResponse {
  *  No FAR prescribes these numbers — Part 135 does not require a FRAT
  *  at all — so what ships is a starting point rather than a
  *  regulatory baseline, and the page says so. */
+/** A FRAT company limit's document citation (#48). */
+export interface FratLimitSource {
+  limit_key: string;
+  value: string | number;
+  document_id: string | null;
+  document_title: string;
+  version_number: number;
+  page_number: number;
+  quote: string;
+  approved_by_name: string | null;
+  approved_at: string;
+}
+
 export interface FratThresholdConfigResponse {
   id: string;
   /** Lowest total that scores MEDIUM. Below it is LOW. */
@@ -1345,6 +1358,9 @@ export interface FratThresholdConfigResponse {
   default_vfr_min_ceiling_ft: number;
   default_vfr_min_visibility_sm: number;
   default_block_validity_hours: number;
+  /** Where each company limit came from, for those a person approved
+   *  from a company document (#48). A limit set by hand has none. */
+  sources?: Record<string, FratLimitSource>;
 }
 
 /** The whole policy at once. The bands only mean anything ordered, and

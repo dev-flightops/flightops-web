@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-import type { FratThresholdConfigResponse } from "@/lib/api/types";
+import type { FratLimitSource, FratThresholdConfigResponse } from "@/lib/api/types";
 
 import type { FratPolicyInput, SaveThresholdsState } from "./actions";
 
@@ -39,12 +39,15 @@ function Field({
   min = 1,
   step,
   onChange,
+  source,
 }: {
   name: string;
   label: string;
   hint: string;
   value: number;
   max: number;
+  /** The document a company limit was approved from (#48). */
+  source?: FratLimitSource;
   /** The near-limit margin is legitimately 0 — no margin means only a
    *  wind over the limit scores the top band — so min is not always 1. */
   min?: number;
@@ -73,6 +76,20 @@ function Field({
         className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm tabular-nums text-foreground focus:border-primary focus:outline-none"
       />
       <p className="mt-1 text-[0.65rem] text-muted-foreground">{hint}</p>
+      {source && (
+        <p className="mt-1 text-[0.65rem] text-status-blue" title={source.quote}>
+          From {source.document_title}, version {source.version_number}, page{" "}
+          {source.page_number}
+          {source.approved_by_name ? `, approved by ${source.approved_by_name}` : ""} on{" "}
+          {source.approved_at.slice(0, 10)}.
+          {Number(source.value) !== value && (
+            <span className="text-status-yellow">
+              {" "}
+              Changed here: saving sets it by hand.
+            </span>
+          )}
+        </p>
+      )}
     </div>
   );
 }
@@ -260,6 +277,7 @@ export function ThresholdForm({
         <div className="mt-4 grid gap-4 sm:grid-cols-3">
           <Field
             name="crosswind_single_engine_kt"
+            source={config.sources?.["crosswind_single_engine_kt"]}
             label="Single-engine crosswind (kt)"
             hint="Your company limit for single-engine aircraft."
             value={crosswindSingleKt}
@@ -269,6 +287,7 @@ export function ThresholdForm({
           />
           <Field
             name="crosswind_multi_engine_kt"
+            source={config.sources?.["crosswind_multi_engine_kt"]}
             label="Multi-engine crosswind (kt)"
             hint="Applies to anything with more than one engine."
             value={crosswindMultiKt}
@@ -278,6 +297,7 @@ export function ThresholdForm({
           />
           <Field
             name="crosswind_near_margin_kt"
+            source={config.sources?.["crosswind_near_margin_kt"]}
             label="&ldquo;Near the limit&rdquo; margin (kt)"
             hint="How close to the limit counts as near."
             value={nearMarginKt}
@@ -320,6 +340,7 @@ export function ThresholdForm({
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
           <Field
             name="vfr_min_ceiling_ft"
+            source={config.sources?.["vfr_min_ceiling_ft"]}
             label="VFR ceiling floor (ft)"
             hint="Below this, a VFR flight is elevated risk."
             value={vfrMinCeilingFt}
@@ -330,6 +351,7 @@ export function ThresholdForm({
           />
           <Field
             name="vfr_min_visibility_sm"
+            source={config.sources?.["vfr_min_visibility_sm"]}
             label="VFR visibility floor (sm)"
             hint="Either one alone is enough to elevate it."
             value={vfrMinVisibilitySm}

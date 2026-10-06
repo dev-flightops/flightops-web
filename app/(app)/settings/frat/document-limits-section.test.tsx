@@ -3,11 +3,26 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { LimitReading } from "@/lib/api/document-limits";
 
-const { readDocumentLimitsAction, getReadingAction } = vi.hoisted(() => ({
+const {
+  readDocumentLimitsAction,
+  getReadingAction,
+  approveLimitAction,
+  rejectLimitAction,
+  refresh,
+} = vi.hoisted(() => ({
   readDocumentLimitsAction: vi.fn(),
   getReadingAction: vi.fn(),
+  approveLimitAction: vi.fn(),
+  rejectLimitAction: vi.fn(),
+  refresh: vi.fn(),
 }));
-vi.mock("./document-limits-actions", () => ({ readDocumentLimitsAction, getReadingAction }));
+vi.mock("./document-limits-actions", () => ({
+  readDocumentLimitsAction,
+  getReadingAction,
+  approveLimitAction,
+  rejectLimitAction,
+}));
+vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh }) }));
 
 import { DocumentLimitsSection } from "./document-limits-section";
 
@@ -164,5 +179,88 @@ describe("DocumentLimitsSection", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "Only a PDF or a text file can be read for limits.",
     );
+  });
+
+  it("approves a proposal as read and refreshes the page", async () => {
+    approveLimitAction.mockResolvedValue({ ok: true });
+    render(
+      <DocumentLimitsSection documents={[GOM]} latest={{ [GOM.id]: reading() }} current={CURRENT} />,
+    );
+    await act(async () => {
+      fireEvent.click(
+        screen.getByRole("button", { name: "Approve Crosswind limit, multi-engine aircraft: 35 kt" }),
+      );
+    });
+    expect(approveLimitAction).toHaveBeenCalledWith("p-2");
+    expect(refresh).toHaveBeenCalled();
+  });
+
+  it("approves a corrected value instead", async () => {
+    approveLimitAction.mockResolvedValue({ ok: true });
+    render(
+      <DocumentLimitsSection documents={[GOM]} latest={{ [GOM.id]: reading() }} current={CURRENT} />,
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: "Change Crosswind limit, multi-engine aircraft before approving" }),
+    );
+    const input = screen.getByRole("spinbutton", {
+      name: "Value to approve for Crosswind limit, multi-engine aircraft",
+    });
+    expect(input).toHaveValue(35);
+    fireEvent.change(input, { target: { value: "33" } });
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Approve 33" }));
+    });
+    expect(approveLimitAction).toHaveBeenCalledWith("p-2", "33");
+  });
+
+  it("rejects, and shows a refusal where it happened", async () => {
+    rejectLimitAction.mockResolvedValue({
+      ok: false,
+      error: "Someone has already decided on this one. Refresh the page.",
+    });
+    render(
+      <DocumentLimitsSection documents={[GOM]} latest={{ [GOM.id]: reading() }} current={CURRENT} />,
+    );
+    await act(async () => {
+      fireEvent.click(
+        screen.getByRole("button", { name: "Reject Crosswind limit, single-engine aircraft" }),
+      );
+    });
+    expect(rejectLimitAction).toHaveBeenCalledWith("p-1");
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Someone has already decided on this one.",
+    );
+    expect(refresh).not.toHaveBeenCalled();
+  });
+
+  it("says what became of a proposal once decided", () => {
+    const decided = reading({
+      proposals: [
+        {
+          ...reading().proposals[0],
+          status: "approved",
+          reviewed_by_name: "Casey Chief",
+          approved_value: "28.00",
+        },
+        { ...reading().proposals[1], status: "rejected", reviewed_by_name: "Casey Chief" },
+      ],
+    });
+    render(
+      <DocumentLimitsSection documents={[GOM]} latest={{ [GOM.id]: decided }} current={CURRENT} />,
+    );
+    expect(screen.getByText("Approved by Casey Chief")).toBeInTheDocument();
+    expect(screen.getByText("28 kt applied")).toBeInTheDocument();
+    expect(screen.getByText("Rejected by Casey Chief")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^Approve/ })).toBeNull();
+  });
+
+  it("shows a dropped request as a message, not the error screen", async () => {
+    readDocumentLimitsAction.mockRejectedValue(new TypeError("Failed to fetch"));
+    render(<DocumentLimitsSection documents={[GOM]} latest={{}} current={CURRENT} />);
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Read limits" }));
+    });
+    expect(await screen.findByRole("alert")).toHaveTextContent("Couldn't reach the server.");
   });
 });

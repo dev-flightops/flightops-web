@@ -1,12 +1,18 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useId, useState, useTransition } from "react";
 
 import { Spinner } from "@/components/ui/spinner";
-import type { LimitReading } from "@/lib/api/document-limits";
+import type { LimitProposal, LimitReading } from "@/lib/api/document-limits";
 
-import { getReadingAction, readDocumentLimitsAction } from "./document-limits-actions";
+import {
+  approveLimitAction,
+  getReadingAction,
+  readDocumentLimitsAction,
+  rejectLimitAction,
+} from "./document-limits-actions";
 
 /**
  * Limits from the company's own documents (#47, M4-A-3).
@@ -18,6 +24,10 @@ import { getReadingAction, readDocumentLimitsAction } from "./document-limits-ac
  *
  * A reading runs on in the ai service for up to a couple of minutes, so
  * this starts one and asks after it every two seconds.
+ *
+ * Approving a proposal sets that limit above and keeps the document, page
+ * and sentence it came from (#48); the page refreshes so the form shows
+ * the new value with its source.
  */
 
 export interface ComplianceDocument {
@@ -30,6 +40,7 @@ export interface ComplianceDocument {
 export type CurrentLimits = Record<string, number>;
 
 const POLL_MS = 2000;
+const UNREACHABLE = "Couldn't reach the server. Check the connection and try again.";
 const UNITS: Record<string, string> = { kt: "kt", ft: "ft", sm: "sm" };
 
 const FAILURES: Record<string, string> = {
@@ -57,16 +68,25 @@ export function DocumentLimitsSection({
   const reading = documentId ? (readings[documentId] ?? null) : null;
   const running = reading?.status === "running";
 
+  // A refresh after a decision brings the readings as they now stand.
+  useEffect(() => {
+    setReadings(latest);
+  }, [latest]);
+
   // Ask after a running reading until it finishes.
   useEffect(() => {
     if (!reading || reading.status !== "running") return;
     const id = reading.id;
     const timer = setTimeout(async () => {
-      const result = await getReadingAction(id);
-      if (result.ok) {
-        setReadings((all) => ({ ...all, [result.reading.document_id]: result.reading }));
-      } else {
-        setError(result.error);
+      try {
+        const result = await getReadingAction(id);
+        if (result.ok) {
+          setReadings((all) => ({ ...all, [result.reading.document_id]: result.reading }));
+        } else {
+          setError(result.error);
+        }
+      } catch {
+        setError(UNREACHABLE);
       }
     }, POLL_MS);
     return () => clearTimeout(timer);
@@ -75,11 +95,16 @@ export function DocumentLimitsSection({
   function read() {
     setError(null);
     startTransition(async () => {
-      const result = await readDocumentLimitsAction(documentId);
-      if (result.ok) {
-        setReadings((all) => ({ ...all, [result.reading.document_id]: result.reading }));
-      } else {
-        setError(result.error);
+      try {
+        const result = await readDocumentLimitsAction(documentId);
+        if (result.ok) {
+          setReadings((all) => ({ ...all, [result.reading.document_id]: result.reading }));
+        } else {
+          setError(result.error);
+        }
+      } catch {
+        // A dropped request is a message here, not the page's error screen.
+        setError(UNREACHABLE);
       }
     });
   }
@@ -204,6 +229,7 @@ function ReadingResult({ reading, current }: { reading: LimitReading; current: C
                 <th scope="col" className="px-3 py-2">In the document</th>
                 <th scope="col" className="px-3 py-2">Set here now</th>
                 <th scope="col" className="px-3 py-2">Where</th>
+                <th scope="col" className="px-3 py-2">Decision</th>
               </tr>
             </thead>
             <tbody>
@@ -249,6 +275,9 @@ function ReadingResult({ reading, current }: { reading: LimitReading; current: C
                       <span className="font-semibold">Page {p.page_number}</span>
                       <q className="mt-0.5 block italic text-muted-foreground">{p.quote}</q>
                     </td>
+                    <td className="px-3 py-2">
+                      <Decision proposal={p} />
+                    </td>
                   </tr>
                 );
               })}
@@ -257,8 +286,8 @@ function ReadingResult({ reading, current }: { reading: LimitReading; current: C
         </div>
       )}
       <p className="mt-2 text-[0.7rem] text-muted-foreground">
-        Proposals wait for approval. Until a proposal is approved, the FRAT keeps the
-        values set above.
+        Approving sets the limit above and keeps the page and sentence it came from.
+        Change it by hand later and it no longer claims the document&rsquo;s backing.
       </p>
     </div>
   );
@@ -266,4 +295,121 @@ function ReadingResult({ reading, current }: { reading: LimitReading; current: C
 
 function amount(value: number, unit: string): string {
   return `${value.toLocaleString("en-US", { maximumFractionDigits: 2 })} ${UNITS[unit] ?? unit}`;
+}
+
+/** Approve as read, approve a corrected value, or reject (#48). */
+function Decision({ proposal }: { proposal: LimitProposal }) {
+  const router = useRouter();
+  const [changing, setChanging] = useState(false);
+  const [value, setValue] = useState(String(Number(proposal.value)));
+  const [error, setError] = useState<string | null>(null);
+  const [pending, startTransition] = useTransition();
+
+  if (proposal.status === "approved") {
+    const applied = Number(proposal.approved_value ?? proposal.value);
+    return (
+      <span className="text-status-green">
+        Approved{proposal.reviewed_by_name ? ` by ${proposal.reviewed_by_name}` : ""}
+        <span className="block font-mono">{amount(applied, proposal.unit)} applied</span>
+      </span>
+    );
+  }
+  if (proposal.status === "rejected") {
+    return (
+      <span className="text-muted-foreground">
+        Rejected{proposal.reviewed_by_name ? ` by ${proposal.reviewed_by_name}` : ""}
+      </span>
+    );
+  }
+  if (proposal.status === "superseded") {
+    return <span className="text-muted-foreground">Replaced by a newer decision</span>;
+  }
+
+  function decide(run: () => Promise<{ ok: boolean; error?: string }>) {
+    setError(null);
+    startTransition(async () => {
+      try {
+        const result = await run();
+        if (result.ok) {
+          setChanging(false);
+          router.refresh();
+        } else {
+          setError(result.error ?? "Try again.");
+        }
+      } catch {
+        setError(UNREACHABLE);
+      }
+    });
+  }
+
+  const button =
+    "rounded-md border px-2 py-1 text-[0.7rem] font-semibold disabled:opacity-60";
+  return (
+    <div className="min-w-[9rem] space-y-1.5">
+      {changing ? (
+        <div className="flex items-center gap-1">
+          <input
+            aria-label={`Value to approve for ${proposal.label}`}
+            type="number"
+            step="any"
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+            className="w-20 rounded-md border border-border bg-background px-2 py-1 text-xs tabular-nums"
+          />
+          <button
+            type="button"
+            disabled={pending}
+            onClick={() => decide(() => approveLimitAction(proposal.id, value))}
+            className={`${button} border-primary/50 bg-primary text-primary-foreground`}
+          >
+            Approve {value}
+          </button>
+          <button
+            type="button"
+            disabled={pending}
+            onClick={() => setChanging(false)}
+            className={`${button} border-border`}
+          >
+            Cancel
+          </button>
+        </div>
+      ) : (
+        <div className="flex flex-wrap gap-1">
+          <button
+            type="button"
+            disabled={pending}
+            onClick={() => decide(() => approveLimitAction(proposal.id))}
+            className={`${button} border-primary/50 bg-primary text-primary-foreground`}
+            aria-label={`Approve ${proposal.label}: ${amount(Number(proposal.value), proposal.unit)}`}
+          >
+            Approve
+          </button>
+          <button
+            type="button"
+            disabled={pending}
+            onClick={() => setChanging(true)}
+            className={`${button} border-border`}
+            aria-label={`Change ${proposal.label} before approving`}
+          >
+            Change…
+          </button>
+          <button
+            type="button"
+            disabled={pending}
+            onClick={() => decide(() => rejectLimitAction(proposal.id))}
+            className={`${button} border-border text-status-red`}
+            aria-label={`Reject ${proposal.label}`}
+          >
+            Reject
+          </button>
+        </div>
+      )}
+      {pending && <Spinner size="xs" />}
+      {error && (
+        <p role="alert" className="text-[0.68rem] text-status-red">
+          {error}
+        </p>
+      )}
+    </div>
+  );
 }

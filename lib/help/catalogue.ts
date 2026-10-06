@@ -313,7 +313,11 @@ export const HELP_ENTRIES: HelpEntry[] = [
     sections: [
       {
         heading: "Limits from your documents",
-        body: "A Chief Pilot, Director of Operations or Exec Admin can have a manual read for the company limits on this page: crosswind for single and multi engine, how near a limit counts as elevated risk, and the VFR ceiling and visibility floor. Mark the manual as a compliance source in the Document Library, then choose it under Limits from your documents and select Read limits. Only pages that mention wind or weather are read, and a reading takes up to a minute. Each limit found is shown with the page and sentence it came from, beside the value set now. A limit is kept only if that sentence really is on that page. Reading changes nothing: a proposal waits for someone to approve it.",
+        body: "A Chief Pilot, Director of Operations or Exec Admin can have a manual read for the company limits on this page: crosswind for single and multi engine, how near a limit counts as elevated risk, and the VFR ceiling and visibility floor. Mark the manual as a compliance source in the Document Library, then choose it under Limits from your documents and select Read limits. Only pages that mention wind or weather are read, and a reading takes up to a minute. Each limit found is shown with the page and sentence it came from, beside the value set now. A limit is kept only if that sentence really is on that page. Reading changes nothing: a proposal waits for someone to decide.",
+      },
+      {
+        heading: "Approving a limit",
+        body: "Approve sets the limit to the value read; Change… lets you approve a different value instead, and Reject leaves the setting as it is. An approved limit shows its document, version, page and approver under its field, and the FRAT names the document beside the limit it scored a flight against. Change that limit by hand and save, and it no longer claims the document's backing. A limit whose new value would break the policy, such as a near margin no longer smaller than the crosswind limit, is refused with the reason.",
       },
     ],
     related: ["/dispatch", "/settings", "/documents"],
