@@ -406,3 +406,46 @@ describe("block validity", () => {
   });
 });
 
+
+describe("ThresholdForm — limits approved from a document (#48)", () => {
+  const source = {
+    limit_key: "crosswind_single_engine_kt",
+    value: "30.00",
+    read_value: "30.00",
+    document_id: "d-gom",
+    document_title: "GOM Chapter 4",
+    version_number: 3,
+    page_number: 12,
+    quote: "The company crosswind limit is 30 knots for single-engine aircraft.",
+    approved_by_name: "Casey Chief",
+    approved_at: "2026-10-06T12:00:00Z",
+  };
+
+  it("names the document under the limit it set", () => {
+    form({ sources: { crosswind_single_engine_kt: source } });
+    const line = screen.getByText(/From GOM Chapter 4, version 3, page 12/);
+    expect(line).toHaveTextContent("approved by Casey Chief on 2026-10-06.");
+    expect(line).toHaveAttribute("title", source.quote);
+    // Only the limit it backs.
+    expect(screen.getAllByText(/From GOM Chapter 4/)).toHaveLength(1);
+    expect(line).not.toHaveTextContent("Read there as");
+  });
+
+  it("says what the page was read as when a correction was approved", () => {
+    form({
+      crosswind_single_engine_kt: 28,
+      sources: { crosswind_single_engine_kt: { ...source, value: "28.00" } },
+    });
+    const line = screen.getByText(/From GOM Chapter 4, version 3, page 12/);
+    expect(line).toHaveTextContent("Read there as 30; approved as 28.");
+    expect(line).not.toHaveTextContent("Changed here");
+  });
+
+  it("warns that changing it here sets it by hand", async () => {
+    form({ sources: { crosswind_single_engine_kt: source } });
+    const input = screen.getByLabelText("Single-engine crosswind (kt)");
+    await userEvent.clear(input);
+    await userEvent.type(input, "28");
+    expect(screen.getByText(/Changed here: saving sets it by hand/)).toBeInTheDocument();
+  });
+});

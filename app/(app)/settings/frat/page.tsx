@@ -184,6 +184,11 @@ export default async function FratThresholdsPage() {
           <div className="rounded-xl border border-border bg-card p-4">
             {canSet ? (
               <ThresholdForm
+                // The form keeps its own copy of the values while editing.
+                // An approval from a document (#48) changes them under it,
+                // so a new adoption starts the form again from the record:
+                // otherwise Save would put the old value back.
+                key={config.adopted_at ?? "unadopted"}
                 config={config}
                 saveAction={saveFratThresholdsAction}
               />

@@ -5,6 +5,7 @@
  *   POST /ai/document-limits             start a reading (202, runs on)
  *   GET  /ai/document-limits/{id}        one reading and its proposals
  *   GET  /ai/document-limits?document_id= a document's latest reading
+ *   POST /auth/settings/frat/proposals/{id}/approve|reject   (#48)
  *
  * A reading proposes; it never changes a FRAT. Each proposal carries the
  * page and the sentence it came from, checked against the page by the
@@ -32,6 +33,12 @@ export interface LimitProposal {
   quote: string;
   status: "pending" | "approved" | "rejected" | "superseded";
   created_at: string;
+  /** Once a person approved or rejected it (#48). */
+  reviewed_by_name?: string | null;
+  reviewed_at?: string | null;
+  /** What was applied: the value read, or the approver's correction. */
+  approved_value?: string | null;
+  review_note?: string | null;
 }
 
 export interface LimitReading {
@@ -82,4 +89,27 @@ export async function getLatestLimitReading(
     `/ai/document-limits?${qs.toString()}`,
   );
   return body.extraction;
+}
+
+/** Set the FRAT limit from a proposal, as read or corrected (#48). The
+ *  policy comes back too, but the page re-reads it through
+ *  getFratThresholds, which turns its decimals into numbers. */
+export async function approveDocumentLimit(
+  proposalId: string,
+  body: { value?: string | null; note?: string | null },
+): Promise<void> {
+  await apiFetch<unknown>(`/auth/settings/frat/proposals/${proposalId}/approve`, {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+}
+
+export async function rejectDocumentLimit(
+  proposalId: string,
+  body: { note?: string | null } = {},
+): Promise<void> {
+  await apiFetch<void>(`/auth/settings/frat/proposals/${proposalId}/reject`, {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
 }
