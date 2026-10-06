@@ -193,3 +193,29 @@ describe("PicPicker — persisting the choice", () => {
     expect(push).not.toHaveBeenCalled();
   });
 });
+
+describe("PicPicker — the aircraft type (#46)", () => {
+  const unqualified: PicOption = {
+    ...sarah,
+    typeWarning: { pic: "not authorised as PIC on CARAVAN", sic: null },
+  };
+
+  it("names the problem in the option and under the picker once chosen", () => {
+    render(<PicPicker options={[unqualified, bob]} currentPicId={sarah.pilot.id} />);
+    expect(
+      screen.getByRole("option", {
+        name: "● Sarah Kessler — Fully current · not authorised as PIC on CARAVAN",
+      }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Sarah Kessler is not authorised as PIC on CARAVAN. Release needs a supervisor override.",
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it("says nothing about a pilot with no problem on the type", () => {
+    render(<PicPicker options={[unqualified, bob]} currentPicId={bob.pilot.id} />);
+    expect(screen.queryByText(/Release needs a supervisor override/)).toBeNull();
+  });
+});

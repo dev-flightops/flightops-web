@@ -59,6 +59,16 @@ export default async function TypeQualificationsPage({
           The positions each pilot is authorised to fly, by aircraft type. A
           position is current while the check rides on its type are in date.
         </p>
+        {grid ? (
+          <p className="mt-2 text-xs text-muted-foreground">
+            <span className="font-semibold text-foreground">
+              Release check: {grid.enforced ? "on" : "off"}.
+            </span>{" "}
+            {grid.enforced
+              ? "Release is refused for a PIC not current as PIC on the aircraft's type, unless a supervisor overrides it."
+              : "Release doesn't check these yet. The Director of Operations or an Exec Admin turns it on in Settings → Currency."}
+          </p>
+        ) : null}
       </header>
 
       {loadError ? (

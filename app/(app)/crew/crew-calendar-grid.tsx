@@ -494,14 +494,32 @@ function EntryBlock({
 }) {
   const label = entryLabel(entry);
   const dates = `${formatIsoDay(entry.start_date)} – ${formatIsoDay(entry.end_date)}`;
-  const title = [label, dates, entry.notes].filter(Boolean).join("\n");
+  // #46: a warning, not a refusal — rostering ahead of a check ride is
+  // normal, and release is where the PIC is enforced.
+  const warning =
+    entry.type_qualified === false && entry.airframe_type
+      ? `No current position on ${entry.airframe_type.toUpperCase()}`
+      : null;
+  const title = [label, dates, warning, entry.notes].filter(Boolean).join("\n");
   const className = cn(
     "flex h-7 w-full items-center overflow-hidden whitespace-nowrap rounded border px-1.5 text-[0.65rem] font-semibold",
     DUTY_TONE[entry.duty_type],
     continuesBefore && "rounded-l-none border-l-0",
     continuesAfter && "rounded-r-none border-r-0",
+    warning && "ring-1 ring-inset ring-status-red",
   );
-  const text = span >= 3 ? label : DUTY_SHORT[entry.duty_type];
+  // A day or two is one narrow column each: the ring and the tooltip
+  // carry the warning there, or the glyph would widen the whole column.
+  const text = (
+    <>
+      {warning && span >= 3 && (
+        <span aria-hidden className="mr-0.5 text-status-red">
+          ⚠
+        </span>
+      )}
+      {span >= 3 ? label : DUTY_SHORT[entry.duty_type]}
+    </>
+  );
   if (!onOpen) {
     return (
       <div className={className} title={title}>
@@ -514,7 +532,7 @@ function EntryBlock({
       type="button"
       onClick={onOpen}
       title={title}
-      aria-label={`${member.full_name}: ${label}, ${dates}. Edit`}
+      aria-label={`${member.full_name}: ${label}, ${dates}${warning ? `. ${warning}` : ""}. Edit`}
       className={cn(className, "hover:brightness-95")}
     >
       {text}

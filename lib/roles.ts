@@ -148,6 +148,10 @@ export const TYPE_QUALIFICATION_ADMINS = roleGate(
   "exec_admin",
 );
 
+/** Switch aircraft qualifications on or off at release (#46). It changes
+ *  what every dispatcher may release: the operation's policy owners. */
+export const RELEASE_POLICY_ADMINS = roleGate("director_of_operations", "exec_admin");
+
 /** Correct another pilot's flight log (29 Sep). A draft is its filing
  *  pilot's; legacy elog's ADMIN_ROLES could save anyone's. */
 export const FLIGHT_LOG_ADMINS = roleGate(

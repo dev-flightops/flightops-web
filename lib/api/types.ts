@@ -1812,7 +1812,10 @@ export interface LogCompletionResponse {
 export type PicDotColor = "green" | "yellow" | "red";
 
 export interface ComplianceFinding {
-  currency_item_id: string;
+  /** Null on an aircraft type finding (#46), which names the type in
+   *  `airframe_type` instead; its code is "type_qualification". */
+  currency_item_id: string | null;
+  airframe_type?: string | null;
   code: string;
   name: string;
   regulation: string;
@@ -1831,11 +1834,35 @@ export interface PicComplianceResponse {
   dot_color: PicDotColor;
   hard_blocks: ComplianceFinding[];
   soft_warnings: ComplianceFinding[];
+  /** The pilot's standing in this seat on the flight's aircraft type
+   *  (#46), when the check was asked about a flight. Reported whether or
+   *  not the company enforces it. */
+  type_standing?: SeatTypeStanding | null;
 }
 
+/** A pilot's standing in one seat on one aircraft type (#46). */
+export interface SeatTypeStanding {
+  airframe_type: string;
+  position: "pic" | "sic";
+  state: "current" | "grace" | "non_current" | "not_authorised";
+  authorised_on: string | null;
+  checks: {
+    check: "competency" | "instrument";
+    status: CurrencyStatus;
+    last_on: string | null;
+    base_month_due: string | null;
+    grace_month_end: string | null;
+  }[];
+  /** Release acts on it: the company has aircraft qualifications on. */
+  enforced: boolean;
+}
+
+/** What an override waives: a currency item, or the PIC's qualification
+ *  on an aircraft type (#46). Exactly one. */
 export interface OverrideRequest {
   pilot_user_id: string;
-  currency_item_id: string;
+  currency_item_id?: string | null;
+  airframe_type?: string | null;
   flight_id?: string | null;
   supervisor_cert_number: string;
   /** Spec 5: minimum 50 characters. */
@@ -1845,7 +1872,8 @@ export interface OverrideRequest {
 export interface OverrideResponse {
   id: string;
   pilot_user_id: string;
-  currency_item_id: string;
+  currency_item_id: string | null;
+  airframe_type?: string | null;
   flight_id: string | null;
   supervisor_user_id: string;
   supervisor_cert_number: string;

@@ -265,3 +265,78 @@ describe("DispatchComplianceGate — the SIC seat (client, 27 Sep)", () => {
     expect(screen.queryByRole("button", { name: /override/i })).toBeNull();
   });
 });
+
+describe("DispatchComplianceGate — the aircraft type (#46)", () => {
+  const standing = (over: Partial<NonNullable<PicComplianceResponse["type_standing"]>> = {}) => ({
+    airframe_type: "caravan",
+    position: "pic" as const,
+    state: "not_authorised" as const,
+    authorised_on: null,
+    checks: [],
+    enforced: false,
+    ...over,
+  });
+
+  it("shows the PIC's standing on the type, and that release doesn't check it yet", async () => {
+    getPicCompliance.mockResolvedValueOnce(makeData({ type_standing: standing() }));
+    await renderGate("p-1");
+    expect(screen.getByText("PIC on CARAVAN: not authorised")).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Not checked at release: aircraft qualifications are off in Settings → Currency.",
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it("lists an enforced type block with the currency blocks", async () => {
+    const typeBlock = makeFinding({
+      currency_item_id: null,
+      airframe_type: "caravan",
+      code: "type_qualification",
+      name: "PIC on CARAVAN",
+      regulation: "14 CFR 135.293 / 135.297",
+      message: "Not authorised as PIC on the CARAVAN.",
+    });
+    getPicCompliance.mockResolvedValueOnce(
+      makeData({
+        dot_color: "red",
+        hard_blocks: [makeFinding(), typeBlock],
+        type_standing: standing({ enforced: true }),
+      }),
+    );
+    await renderGate("p-1");
+    expect(screen.getByText("PIC on CARAVAN")).toBeInTheDocument();
+    expect(screen.getByText("Not authorised as PIC on the CARAVAN.")).toBeInTheDocument();
+    expect(screen.getByText("PIC on CARAVAN: not authorised").className).toContain(
+      "text-status-red",
+    );
+    expect(screen.queryByText(/Not checked at release/)).toBeNull();
+  });
+
+  it("says a current PIC is current, with no note", async () => {
+    getPicCompliance.mockResolvedValueOnce(
+      makeData({ type_standing: standing({ state: "current", enforced: true }) }),
+    );
+    await renderGate("p-1");
+    expect(screen.getByText("PIC on CARAVAN: current").className).toContain(
+      "text-status-green",
+    );
+  });
+
+  it("reports the SIC's standing without making it a block", async () => {
+    getPicCompliance.mockResolvedValueOnce(makeData());
+    const sic = makeData({
+      pilot: { id: "s-1", full_name: "Sam Second", email: "sam@x.test" },
+      type_standing: standing({ position: "sic", enforced: true }),
+    });
+    render(
+      await DispatchComplianceGate({
+        pilotUserId: "p-1",
+        flightId: "f-1",
+        sicChecks: [{ pilotId: "s-1", compliance: sic }],
+      }),
+    );
+    expect(screen.getByText("SIC on CARAVAN: not authorised")).toBeInTheDocument();
+    expect(screen.getByText("Release checks the PIC's type only.")).toBeInTheDocument();
+  });
+});

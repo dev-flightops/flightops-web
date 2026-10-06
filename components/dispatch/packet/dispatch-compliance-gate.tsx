@@ -5,11 +5,12 @@ import { getPicCompliance, type CrewSeat } from "@/lib/api/ops";
 import type {
   ComplianceFinding,
   PicComplianceResponse,
+  SeatTypeStanding,
 } from "@/lib/api/types";
 
 import { OverrideDialog } from "./override-dialog";
 import { SoftWarningAckList } from "./soft-warning-ack-list";
-import { findingMessage, warningAckKey } from "./soft-warning-ack-parser";
+import { findingKey, findingMessage, warningAckKey } from "./soft-warning-ack-parser";
 
 const SEAT_LABEL: Record<CrewSeat, string> = { pic: "PIC", sic: "SIC" };
 
@@ -213,6 +214,7 @@ function ClearBanner({
         />
         <ViewProfileLink pilotId={data.pilot.id} />
       </div>
+      <TypeStandingLine seat={seat} standing={data.type_standing} />
     </div>
   );
 }
@@ -265,6 +267,7 @@ function SoftWarningBanner({
         />
         <ViewProfileLink pilotId={data.pilot.id} />
       </div>
+      <TypeStandingLine seat={seat} standing={data.type_standing} />
       <SoftWarningAckList
         seat={seat}
         findings={data.soft_warnings}
@@ -330,6 +333,7 @@ function HardBlockBanner({
         />
         <ViewProfileLink pilotId={data.pilot.id} />
       </div>
+      <TypeStandingLine seat={seat} standing={data.type_standing} />
       <FindingsList findings={data.hard_blocks} tone="hard" />
       {/* The override records PIC deviations; an SIC is replaced. The
           supervisor records it from their own login (the operator's
@@ -388,6 +392,53 @@ function PilotLine({
   );
 }
 
+const TYPE_STATE_LABEL: Record<SeatTypeStanding["state"], string> = {
+  current: "current",
+  grace: "in a grace month",
+  non_current: "not current",
+  not_authorised: "not authorised",
+};
+
+/** The pilot's standing in this seat on the aircraft's type (#46). Where
+ *  the company enforces it, a PIC who isn't current is also a hard block
+ *  above; otherwise this line is the only place it shows. */
+function TypeStandingLine({
+  seat,
+  standing,
+}: {
+  seat: CrewSeat;
+  standing: SeatTypeStanding | null | undefined;
+}) {
+  if (!standing) return null;
+  const ok = standing.state === "current";
+  const tone = ok
+    ? "text-status-green"
+    : standing.state === "grace"
+      ? "text-status-yellow"
+      : standing.enforced && seat === "pic"
+        ? "text-status-red"
+        : "text-muted-foreground";
+  const note = ok
+    ? null
+    : seat === "sic"
+      ? "Release checks the PIC's type only."
+      : standing.enforced
+        ? null
+        : "Not checked at release: aircraft qualifications are off in Settings → Currency.";
+  return (
+    <p className="mt-2 flex flex-wrap items-baseline gap-x-2 text-xs">
+      <span className="text-[0.65rem] font-bold uppercase tracking-[0.1em] text-muted-foreground">
+        Aircraft
+      </span>
+      <span className={`font-semibold ${tone}`}>
+        {SEAT_LABEL[seat]} on {standing.airframe_type.toUpperCase()}:{" "}
+        {TYPE_STATE_LABEL[standing.state]}
+      </span>
+      {note && <span className="text-muted-foreground">{note}</span>}
+    </p>
+  );
+}
+
 function ViewProfileLink({ pilotId }: { pilotId: string }) {
   return (
     <Link
@@ -412,7 +463,7 @@ function FindingsList({
     <ul className="mt-2 space-y-1 text-[0.7rem]">
       {findings.map((finding) => (
         <li
-          key={finding.currency_item_id}
+          key={findingKey(finding)}
           className="flex items-start gap-2 text-foreground/90"
         >
           <span

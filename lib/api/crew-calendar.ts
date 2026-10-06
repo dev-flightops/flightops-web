@@ -128,6 +128,10 @@ export interface RosterEntry {
   end_date: string;
   duty_type: DutyType;
   notes: string | null;
+  /** False when the pilot holds no current position on the assignment's
+   *  type (#46). Only checked once the company enforces aircraft
+   *  qualifications; null or absent means not checked. */
+  type_qualified?: boolean | null;
 }
 
 export interface CrewCalendar {

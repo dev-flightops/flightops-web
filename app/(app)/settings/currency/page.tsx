@@ -1,8 +1,13 @@
 import Link from "next/link";
 
+import { auth } from "@/auth";
 import { listCurrencyItems } from "@/lib/api/ops";
 import { ApiError } from "@/lib/api/client";
+import { getComplianceSettings } from "@/lib/api/type-qualifications";
 import type { CurrencyItemRef } from "@/lib/api/types";
+import { RELEASE_POLICY_ADMINS, hasAnyRole } from "@/lib/roles";
+
+import { TypeGateCard } from "./type-gate-card";
 
 /**
  * /settings/currency — legacy `templates/currency/item_manager.html`.
@@ -46,6 +51,14 @@ export default async function SettingsCurrencyPage() {
           : "Currency items unavailable. Try refreshing in a moment.";
   }
 
+  // The release switch (#46) soft-fails on its own: losing it should
+  // cost the reader the card, not the catalogue.
+  const [gate, session] = await Promise.all([
+    getComplianceSettings().catch(() => null),
+    auth(),
+  ]);
+  const canChangeGate = hasAnyRole(session?.roles ?? [], RELEASE_POLICY_ADMINS);
+
   const defaults = items.filter((i) => i.is_default);
   const customs = items.filter((i) => !i.is_default);
 
@@ -85,6 +98,8 @@ export default async function SettingsCurrencyPage() {
           </button>
         </div>
       </header>
+
+      {gate ? <TypeGateCard settings={gate} canChange={canChangeGate} /> : null}
 
       {loadError ? (
         <div

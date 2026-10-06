@@ -60,6 +60,9 @@ export interface TypeQualificationGrid {
   positions: TypePosition[];
   check_items: TypeCheckItems;
   pilots: TypeQualificationPilot[];
+  /** Release acts on these: the company has aircraft qualifications on
+   *  (#46, Settings → Currency). */
+  enforced?: boolean;
 }
 
 export interface TypeQualificationRecord {
@@ -124,4 +127,28 @@ export async function revokeTypePosition(
     `/ops/compliance/type-qualifications/positions/${qualificationId}/revoke`,
     { method: "POST", body: JSON.stringify(body) },
   );
+}
+
+// ---- Company switch (#46) ------------------------------------------------
+
+/** GET/PUT /ops/compliance/settings — whether release needs the PIC
+ *  current as PIC on the flight's aircraft type. Off until the DO or an
+ *  Exec Admin turns it on. */
+export interface ComplianceSettings {
+  enforce_type_qualifications: boolean;
+  type_qualifications_changed_at: string | null;
+  type_qualifications_changed_by: UserRef | null;
+}
+
+export async function getComplianceSettings(): Promise<ComplianceSettings> {
+  return apiFetch<ComplianceSettings>("/ops/compliance/settings");
+}
+
+export async function updateComplianceSettings(body: {
+  enforce_type_qualifications: boolean;
+}): Promise<ComplianceSettings> {
+  return apiFetch<ComplianceSettings>("/ops/compliance/settings", {
+    method: "PUT",
+    body: JSON.stringify(body),
+  });
 }

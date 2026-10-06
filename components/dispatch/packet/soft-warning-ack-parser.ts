@@ -69,3 +69,12 @@ export function findingMessage(finding: ComplianceFinding): string {
     ? finding.message.slice(prefix.length)
     : finding.message;
 }
+
+/** What a finding is about, as a stable key: its currency item, or the
+ *  aircraft type of a type finding (#46), which has no item. The same
+ *  key the service matches an override on. */
+export function findingKey(finding: ComplianceFinding): string {
+  return finding.airframe_type
+    ? `type:${finding.airframe_type}`
+    : `item:${finding.currency_item_id}`;
+}
