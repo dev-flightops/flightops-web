@@ -56,7 +56,7 @@ export function QualificationGrid({
             <Th className="text-left">Pilot</Th>
             <Th className="text-left">Base</Th>
             {airframeTypes.map((t) => (
-              <Th key={t} className="font-mono">
+              <Th key={t} className="text-center font-mono">
                 {typeLabel(t)}
               </Th>
             ))}
@@ -143,7 +143,7 @@ function Th({ children, className = "" }: { children: React.ReactNode; className
   return (
     <th
       scope="col"
-      className={`whitespace-nowrap px-3 py-2 text-center text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground ${className}`}
+      className={`whitespace-nowrap px-3 py-2 text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground ${className || "text-center"}`}
     >
       {children}
     </th>
