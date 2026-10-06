@@ -8,6 +8,13 @@ import type {
 } from "@/lib/api/types";
 
 import { STATUS_TOKENS } from "../crew-currency/status-tokens";
+import {
+  CELL_STATE_LABELS,
+  CELL_TONES,
+  POSITION_LABELS,
+  POSITION_SHORT,
+  typeLabel,
+} from "../type-qualifications/display";
 
 /**
  * Presentational half of the FAR 135 pilot roster.
@@ -36,10 +43,15 @@ import { STATUS_TOKENS } from "../crew-currency/status-tokens";
  * reach. The hours are also the only column here backed by a hard gate
  * (135.265 refuses the release, with no supervisor override), so they now
  * lead. The currency matrix is what scrolls, because it is the part whose
- * width is unbounded. Certificate and aircraft qualification are not stored
- * yet — see the 135.63 recordkeeping gaps — so those two columns are
- * absent rather than rendered empty. A column of dashes reads as "we
- * checked and there is nothing", which is not what is true.
+ * width is unbounded. The certificate is not stored yet — see the 135.63
+ * recordkeeping gaps — so that column is absent rather than rendered
+ * empty. A column of dashes reads as "we checked and there is nothing",
+ * which is not what is true.
+ *
+ * Aircraft is legacy's column, filled since #45: the positions a pilot may
+ * fly now, by type (current or in their grace month). It sits beside Role
+ * rather than after the currency matrix so it never scrolls out of view;
+ * a lapsed position drops out of it, and the pilot's page says why.
  *
  * The currency columns come from the same records the compliance board
  * renders, so the two pages cannot disagree.
@@ -89,6 +101,7 @@ export function RosterTable({
                 <tr className="border-b border-border">
                   <Th className="text-left">Name</Th>
                   <Th className="text-left">Role</Th>
+                  <Th className="text-left">Aircraft</Th>
                   {WINDOW_HEADS.map((w) => (
                     <Th key={w.key} className="tabular-nums">
                       {w.head}
@@ -150,6 +163,9 @@ function Row({
       <td className="whitespace-nowrap px-3 py-2 text-xs text-muted-foreground">
         {row.title ?? "—"}
       </td>
+      <td className="px-3 py-2">
+        <AircraftQualifications held={row.type_positions ?? []} />
+      </td>
 
       {WINDOW_HEADS.map(({ key }) => {
         const w = windows.get(key);
@@ -188,6 +204,41 @@ function Row({
         );
       })}
     </tr>
+  );
+}
+
+function AircraftQualifications({
+  held,
+}: {
+  held: NonNullable<PilotRosterRow["type_positions"]>;
+}) {
+  if (held.length === 0) {
+    return <span className="text-xs text-muted-foreground">—</span>;
+  }
+  const byType = new Map<string, typeof held>();
+  for (const p of held) {
+    byType.set(p.airframe_type, [...(byType.get(p.airframe_type) ?? []), p]);
+  }
+  return (
+    <span className="flex min-w-[9rem] flex-wrap gap-1">
+      {Array.from(byType, ([type, positions]) => (
+        <span
+          key={type}
+          className="inline-flex items-center gap-1 whitespace-nowrap rounded border border-border px-1.5 py-0.5 text-[0.65rem]"
+        >
+          <span className="font-mono font-semibold">{typeLabel(type)}</span>
+          {positions.map((p) => (
+            <span
+              key={p.position}
+              className={`rounded px-1 font-semibold ${CELL_TONES[p.state]}`}
+              title={`${POSITION_LABELS[p.position]} on ${typeLabel(type)}: ${CELL_STATE_LABELS[p.state]}`}
+            >
+              {POSITION_SHORT[p.position]}
+            </span>
+          ))}
+        </span>
+      ))}
+    </span>
   );
 }
 

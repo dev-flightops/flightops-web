@@ -1723,6 +1723,9 @@ export interface PilotRosterRow {
   /** Kept separate from overall_status, which means "worst currency
    *  status". A flight-time breach is not a currency status. */
   flight_time_exceeded: boolean;
+  /** Positions the pilot is current in (or in grace for), per aircraft
+   *  type (#45). */
+  type_positions?: { airframe_type: string; position: TypePosition; state: "current" | "grace" }[];
 }
 
 export interface PilotRosterGroup {
@@ -1796,6 +1799,9 @@ export interface LogCompletionRequest {
   score?: number | null;
   notes?: string | null;
   document_url?: string | null;
+  /** The aircraft type a competency or instrument check was flown in, so
+   *  it also counts for that type's qualifications (#45). */
+  airframe_type?: string | null;
 }
 
 export interface LogCompletionResponse {
@@ -2295,3 +2301,6 @@ export interface FratPrefillResponse {
   vfr_min_ceiling_ft: number;
   vfr_min_visibility_sm: number;
 }
+
+/** A duty position on an aircraft type (#45), as 135ACM names them. */
+export type TypePosition = "pic" | "sic" | "instructor" | "check_airman" | "advisory";

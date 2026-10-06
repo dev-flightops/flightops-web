@@ -544,7 +544,51 @@ export const HELP_ENTRIES: HelpEntry[] = [
     ],
     connectsTo:
       "Qualifications and currency come from the same records the currency matrix reads. Bases come from Settings.",
-    related: ["/compliance/crew-currency", "/settings/bases"],
+    related: ["/compliance/crew-currency", "/compliance/type-qualifications", "/settings/bases"],
+  },
+  {
+    route: "/compliance/type-qualifications",
+    title: "Aircraft qualifications",
+    whoCanUse: [
+      "chief_pilot",
+      "director_of_operations",
+      "exec_admin",
+      "dispatcher",
+      "check_airman",
+      "pilot",
+      "crew_member",
+    ],
+    whatItDoes:
+      "The positions each pilot is authorised to fly on each aircraft type — PIC, SIC, Instructor, Check Airman and Advisory Pilot — and whether each is current. A position is current while the check rides on its type are in date, so \"who can take the Caravan as PIC tomorrow\" has a one-look answer.",
+    howToUse: [
+      "Scan for red first — an authorised position whose check ride is overdue or not on file.",
+      "Hover a position to see when it was authorised and when its checks fall due.",
+      "Open a pilot to authorise or revoke a position, or to record a check ride on a type.",
+    ],
+    sections: [
+      {
+        heading: "What makes a position current",
+        steps: [
+          "Every position needs a competency check (135.293) on the type within the last 12 calendar months.",
+          "PIC also needs an instrument check (135.297) on the type within the last 6 calendar months.",
+          "A check taken in the month before it is due, the month it is due or the month after keeps its anniversary month. One taken earlier or later starts a new anniversary from the month it was taken.",
+          "Yellow is the grace month: still flyable, but the check is overdue. Red is past the grace month, or no check on file.",
+        ],
+      },
+      {
+        heading: "Who changes what",
+        body: "A Chief Pilot, Director of Operations or Exec Admin authorises and revokes positions. A revoked position stays in the pilot's history with who revoked it and why. A check ride is a currency sign-off, so a Check Airman can record one as well.",
+      },
+      {
+        heading: "Recording a check ride",
+        body: "A check ride is logged once, against the pilot's competency or instrument check, naming the aircraft type it was flown in. The same entry moves the crew currency board and the type's positions. A failed check is kept on record and renews nothing.",
+      },
+    ],
+    connectsTo:
+      "Types come from the aircraft records in the fleet. Check rides are currency completions, so they show on the crew currency board too. The roster's Aircraft column lists the positions each pilot may fly today.",
+    example:
+      "A check airman flies a Caravan competency check with a pilot and records the pass on the pilot's page. The pilot's Caravan SIC position turns green at once; their Caravan PIC position stays red until an instrument check on the Caravan is recorded too.",
+    related: ["/compliance/roster", "/compliance/crew-currency", "/crew"],
   },
   {
     route: "/crew",

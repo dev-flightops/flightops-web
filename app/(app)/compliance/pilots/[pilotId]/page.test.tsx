@@ -36,6 +36,10 @@ vi.mock("@/lib/api/ops", () => ({
   listDisqualifications,
 }));
 vi.mock("next/navigation", () => ({ notFound }));
+const { getPilotTypeQualifications } = vi.hoisted(() => ({
+  getPilotTypeQualifications: vi.fn(),
+}));
+vi.mock("@/lib/api/type-qualifications", () => ({ getPilotTypeQualifications }));
 // Logging a completion is a sign-off (CURRENCY_SIGNOFF, 29 Sep); the
 // page asks who is looking. A chief pilot unless a test says otherwise.
 const { auth } = vi.hoisted(() => ({
@@ -123,6 +127,10 @@ beforeEach(() => {
     notes: null,
   });
   listDisqualifications.mockResolvedValue({ items: [], open_count: 0 });
+  // No aircraft qualifications unless a test says otherwise.
+  getPilotTypeQualifications.mockReset();
+  getPilotTypeQualifications.mockRejectedValue(new Error("not under test"));
+  auth.mockResolvedValue({ roles: ["chief_pilot"] });
   notFound.mockClear();
 });
 
@@ -335,5 +343,76 @@ describe("the airman record section", () => {
 
     expect(screen.queryByText(/14 CFR 135\.63/)).not.toBeInTheDocument();
     expect(screen.getByText("Alice Pilot")).toBeInTheDocument();
+  });
+});
+
+describe("the aircraft qualifications section", () => {
+  const typeQuals = {
+    pilot: {
+      pilot: { id: "p-1", full_name: "Alice Pilot", email: "alice@x.test" },
+      station: "PANC",
+      cells: [],
+    },
+    airframe_types: ["caravan"],
+    positions: ["pic", "sic", "instructor", "check_airman", "advisory"],
+    check_items: { competency: "i-1", instrument: null },
+    authorisations: [],
+    checks: [],
+  };
+
+  it("gives a chief pilot the grid with authorise and check ride controls", async () => {
+    getPilotComplianceProfile.mockResolvedValueOnce(
+      makeProfile({ items: [makeItem({ id: "i-1" })] }),
+    );
+    getPilotTypeQualifications.mockResolvedValueOnce(typeQuals);
+
+    await renderPage();
+
+    expect(
+      screen.getByRole("heading", { name: /aircraft qualifications/i }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "+ Authorise" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Record check ride" })).toBeInTheDocument();
+  });
+
+  it("lets a check airman record a check ride but not authorise", async () => {
+    auth.mockResolvedValue({ roles: ["check_airman"] });
+    getPilotComplianceProfile.mockResolvedValueOnce(makeProfile());
+    getPilotTypeQualifications.mockResolvedValueOnce(typeQuals);
+
+    await renderPage();
+
+    expect(screen.getByRole("button", { name: "Record check ride" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "+ Authorise" })).toBeNull();
+  });
+
+  it("shows a pilot their grid without controls", async () => {
+    auth.mockResolvedValue({ roles: ["pilot"] });
+    getPilotComplianceProfile.mockResolvedValueOnce(makeProfile());
+    getPilotTypeQualifications.mockResolvedValueOnce(typeQuals);
+
+    await renderPage();
+
+    expect(
+      screen.getByRole("heading", { name: /aircraft qualifications/i }),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Record check ride" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "+ Authorise" })).toBeNull();
+  });
+
+  it("still renders currency when the qualifications cannot be loaded", async () => {
+    getPilotComplianceProfile.mockResolvedValueOnce(
+      makeProfile({
+        items: [makeItem({ id: "i-1" })],
+        cells: [makeCell({ currency_item_id: "i-1", status: "due_this_month" })],
+      }),
+    );
+
+    await renderPage();
+
+    expect(screen.getByText("Initial Competency Check")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { name: /aircraft qualifications/i }),
+    ).toBeNull();
   });
 });

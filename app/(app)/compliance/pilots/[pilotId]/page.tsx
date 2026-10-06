@@ -8,12 +8,20 @@ import {
   listDisqualifications,
 } from "@/lib/api/ops";
 
+import { getPilotTypeQualifications } from "@/lib/api/type-qualifications";
+
 import { STATUS_TOKENS } from "../../crew-currency/status-tokens";
 import { CurrencyItemCard } from "./currency-item-card";
 import { AirmanRecordCard } from "@/components/compliance/airman-record-card";
 import { ProfileHeader } from "./profile-header";
+import type { CheckItemRef } from "./type-qualification-dialogs";
+import { TypeQualificationsCard } from "./type-qualifications-card";
 import { auth } from "@/auth";
-import { CURRENCY_SIGNOFF, hasAnyRole } from "@/lib/roles";
+import {
+  CURRENCY_SIGNOFF,
+  TYPE_QUALIFICATION_ADMINS,
+  hasAnyRole,
+} from "@/lib/roles";
 
 /**
  * /compliance/pilots/[pilotId] — Per-pilot currency profile.
@@ -41,8 +49,11 @@ export default async function PilotComplianceProfilePage({
 }) {
   const { pilotId } = await params;
   // Logging a completion is a sign-off (CURRENCY_SIGNOFF); anyone else
-  // who can open this page reads it.
-  const canLogCompletion = hasAnyRole((await auth())?.roles ?? [], CURRENCY_SIGNOFF);
+  // who can open this page reads it. A check ride on a type is one too;
+  // authorising a position on a type is the chief pilot's call.
+  const roles = (await auth())?.roles ?? [];
+  const canLogCompletion = hasAnyRole(roles, CURRENCY_SIGNOFF);
+  const canAuthoriseType = hasAnyRole(roles, TYPE_QUALIFICATION_ADMINS);
 
   let profile;
   try {
@@ -66,10 +77,21 @@ export default async function PilotComplianceProfilePage({
   // Soft-failed on purpose, and fetched in parallel with each other.
   // Currency is what this page is primarily for; losing the airman
   // record should cost the reader that section, not the whole page.
-  const [airman, disqualifications] = await Promise.all([
+  const [airman, disqualifications, typeQuals] = await Promise.all([
     getAirmanRecord(pilotId).catch(() => null),
     listDisqualifications(pilotId).catch(() => null),
+    getPilotTypeQualifications(pilotId).catch(() => null),
   ]);
+  // The items a type's check rides are logged against; their examiner
+  // rule comes from the item, as on the currency cards.
+  const checkItem = (id: string | null): CheckItemRef | null =>
+    id
+      ? {
+          id,
+          requiresExaminer:
+            profile.items.find((i) => i.id === id)?.requires_examiner ?? true,
+        }
+      : null;
 
   const overallToken = STATUS_TOKENS[profile.overall_status];
 
@@ -111,6 +133,18 @@ export default async function PilotComplianceProfilePage({
           );
         })}
       </div>
+
+      {typeQuals ? (
+        <TypeQualificationsCard
+          data={typeQuals}
+          checkItems={{
+            competency: checkItem(typeQuals.check_items.competency),
+            instrument: checkItem(typeQuals.check_items.instrument),
+          }}
+          canAuthorise={canAuthoriseType}
+          canRecordCheck={canLogCompletion}
+        />
+      ) : null}
 
       {airman && disqualifications ? (
         <AirmanRecordCard

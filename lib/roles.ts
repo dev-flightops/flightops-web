@@ -140,6 +140,14 @@ export const CREW_SCHEDULERS = roleGate(
   "exec_admin",
 );
 
+/** Authorise or revoke a pilot's position on an aircraft type (#45).
+ *  Check rides themselves are CURRENCY_SIGNOFF, which admits check airmen. */
+export const TYPE_QUALIFICATION_ADMINS = roleGate(
+  "chief_pilot",
+  "director_of_operations",
+  "exec_admin",
+);
+
 /** Correct another pilot's flight log (29 Sep). A draft is its filing
  *  pilot's; legacy elog's ADMIN_ROLES could save anyone's. */
 export const FLIGHT_LOG_ADMINS = roleGate(
