@@ -126,7 +126,7 @@ export function RiskAssessmentPanel({
         <summary className="cursor-pointer text-xs font-semibold text-foreground">
           Risk summary (plain English)
         </summary>
-        <p className="mt-1 whitespace-pre-line rounded-md border border-border bg-muted/40 p-2 text-xs text-foreground">
+        <p className="mt-1 whitespace-pre-line rounded-md border border-border bg-muted/60 p-2 text-xs text-foreground">
           {risk.summary}
         </p>
       </details>
