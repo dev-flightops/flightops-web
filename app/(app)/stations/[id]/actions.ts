@@ -7,8 +7,10 @@ import { ApiError } from "@/lib/api/client";
 import {
   createStationIssue,
   resolveStationIssue,
+  setStationRunway,
   STATIONS_CACHE_TAG,
   updateStation,
+  type StationRunwayPayload,
 } from "@/lib/api/ground";
 
 /**
@@ -208,6 +210,49 @@ export async function setStationActiveAction(
   // The detail-page route renders the station from its own fetch;
   // revalidate the path so the badge/buttons re-render with the
   // new is_active state immediately on next paint.
+  revalidatePath(`/stations/${stationId}`);
+  return { ok: true };
+}
+
+
+/**
+ * The runway the company flies at a station (#50), entered by hand for an
+ * airport the FAA data doesn't cover. The dispatch risk matrix uses it in
+ * place of "runway unknown", which scores HIGH.
+ */
+export async function setStationRunwayAction(
+  stationId: string,
+  runway: StationRunwayPayload,
+): Promise<SetActiveResult> {
+  const { length_ft, width_ft } = runway;
+  if ((length_ft === null) !== (width_ft === null)) {
+    return { ok: false, error: "Enter both the length and the width, or neither." };
+  }
+  try {
+    await setStationRunway(stationId, runway);
+  } catch (err) {
+    if (err instanceof ApiError) {
+      if (err.status === 401) {
+        return { ok: false, error: "Your session expired — sign in again." };
+      }
+      if (err.status === 403) {
+        return {
+          ok: false,
+          error:
+            "Only Ground Ops, the Director of Operations or an Exec Admin can change a station's runway.",
+        };
+      }
+      if (err.status === 422) {
+        return {
+          ok: false,
+          error: "Check the numbers: length 100–20,000 ft, width 10–500 ft.",
+        };
+      }
+      return { ok: false, error: `Couldn't save (HTTP ${err.status}).` };
+    }
+    return { ok: false, error: "Couldn't save — try again." };
+  }
+  revalidateTag(STATIONS_CACHE_TAG, "max");
   revalidatePath(`/stations/${stationId}`);
   return { ok: true };
 }

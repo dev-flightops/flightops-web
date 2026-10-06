@@ -285,6 +285,26 @@ export async function updateStation(
   });
 }
 
+export interface StationRunwayPayload {
+  length_ft: number | null;
+  width_ft: number | null;
+  primary_name: string | null;
+}
+
+/** The runway the company flies at a station, entered by hand (#50). The
+ *  dispatch risk matrix scores a stop whose runway isn't known as HIGH;
+ *  this is how a village strip the FAA data lacks gets one. All three
+ *  null clears it. */
+export async function setStationRunway(
+  stationId: string,
+  payload: StationRunwayPayload,
+): Promise<StationListItem> {
+  return apiFetch<StationListItem>(`/ground/stations/${stationId}/runway`, {
+    method: "PUT",
+    body: JSON.stringify(payload),
+  });
+}
+
 export interface CreateStationIssuePayload {
   title: string;
   description: string;
