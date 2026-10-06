@@ -104,6 +104,9 @@ describe("DocumentLimitsSection", () => {
       "The company crosswind limit is 30 knots for single-engine aircraft",
     );
 
+    // "single-engine aircraft" adds nothing to the name, so it isn't repeated.
+    expect(within(single).queryByText("single-engine aircraft")).toBeNull();
+
     const multi = screen.getByText("Crosswind limit, multi-engine aircraft").closest("tr")!;
     expect(within(multi).getByText("35 kt")).toBeInTheDocument();
     expect(within(multi).getByText("40 kt")).toBeInTheDocument();

@@ -215,11 +215,13 @@ function ReadingResult({ reading, current }: { reading: LimitReading; current: C
                   <tr key={p.id} className="border-b border-border/60 align-top last:border-0">
                     <td className="px-3 py-2 font-semibold">
                       {p.label}
-                      {p.applies_to && (
-                        <span className="block font-normal text-muted-foreground">
-                          {p.applies_to}
-                        </span>
-                      )}
+                      {/* What it applies to, unless the name already says it. */}
+                      {p.applies_to &&
+                        !p.label.toLowerCase().includes(p.applies_to.toLowerCase()) && (
+                          <span className="block font-normal text-muted-foreground">
+                            {p.applies_to}
+                          </span>
+                        )}
                     </td>
                     <td className="whitespace-nowrap px-3 py-2 font-mono">
                       {amount(proposed, p.unit)}
