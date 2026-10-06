@@ -310,7 +310,13 @@ export const HELP_ENTRIES: HelpEntry[] = [
       "No FAR sets these numbers — Part 135 does not require a flight risk assessment tool at all — so they belong to whoever signs your manual. What ships is a starting point, not guidance.",
       "Changing a threshold changes the band new assessments land in. Assessments already submitted keep the band they were scored under.",
     ],
-    related: ["/dispatch", "/settings"],
+    sections: [
+      {
+        heading: "Limits from your documents",
+        body: "A Chief Pilot, Director of Operations or Exec Admin can have a manual read for the company limits on this page: crosswind for single and multi engine, how near a limit counts as elevated risk, and the VFR ceiling and visibility floor. Mark the manual as a compliance source in the Document Library, then choose it under Limits from your documents and select Read limits. Only pages that mention wind or weather are read, and a reading takes up to a minute. Each limit found is shown with the page and sentence it came from, beside the value set now. A limit is kept only if that sentence really is on that page. Reading changes nothing: a proposal waits for someone to approve it.",
+      },
+    ],
+    related: ["/dispatch", "/settings", "/documents"],
   },
   {
     route: "/settings",
