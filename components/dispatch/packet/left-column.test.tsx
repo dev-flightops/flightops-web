@@ -75,7 +75,6 @@ describe("LeftColumn's form controls", () => {
         weatherFreshness: null,
         staleWeatherAcknowledged: false,
         risk: RISK as unknown as DispatchRisk,
-        areaForecastRegions: [{ product: "FAAK58", region: "Southwest AK & Eastern Aleutians" }],
         canEditRisk: true,
       }),
     );
@@ -87,7 +86,6 @@ describe("LeftColumn's form controls", () => {
       "Reporting OK",
       "Night Ops",
       "Crosswind (kt)",
-      "Area forecast region (printed on the packet)",
       "Outside Pilot Restrictions",
       "VFR Mtn Terrain at Night",
       "<4 hrs until MX",

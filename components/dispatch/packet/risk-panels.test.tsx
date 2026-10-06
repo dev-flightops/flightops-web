@@ -12,6 +12,7 @@ vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh }) }));
 
 import { RiskAssessmentPanel } from "./risk-assessment-panel";
 import {
+  AreaForecastSelect,
   CompanyRiskInputs,
   ComplianceGatesInputs,
   DispatcherNotes,
@@ -131,7 +132,7 @@ describe("RiskAssessmentPanel (#50)", () => {
 
 describe("the risk inputs (#50)", () => {
   it("shows what the system worked out and saves an override", async () => {
-    render(<CompanyRiskInputs flightId="f-1" risk={risk()} canEdit regions={[]} />);
+    render(<CompanyRiskInputs flightId="f-1" risk={risk()} canEdit />);
     const night = screen.getByLabelText("Night Ops");
     expect(night).toHaveValue("auto");
     expect(within(night).getByRole("option", { name: "Auto (No)" })).toBeInTheDocument();
@@ -145,7 +146,7 @@ describe("the risk inputs (#50)", () => {
   });
 
   it("saves the crosswind on blur, and clearing it goes back to auto", async () => {
-    render(<CompanyRiskInputs flightId="f-1" risk={risk()} canEdit regions={[]} />);
+    render(<CompanyRiskInputs flightId="f-1" risk={risk()} canEdit />);
     const crosswind = screen.getByLabelText("Crosswind (kt)");
     expect(crosswind).toHaveValue(24);
     expect(crosswind).toHaveAttribute("placeholder", "auto: 5");
@@ -153,6 +154,30 @@ describe("the risk inputs (#50)", () => {
     fireEvent.blur(crosswind);
     await waitFor(() =>
       expect(saveRiskInputsAction).toHaveBeenCalledWith("f-1", { crosswind_override_kt: null }),
+    );
+  });
+
+  it("saves the area forecast region the packet prints", async () => {
+    render(
+      <>
+        <label htmlFor="afd">Area Forecast Region</label>
+        <AreaForecastSelect
+          id="afd"
+          flightId="f-1"
+          value={null}
+          canEdit
+          regions={[
+            { product: "FAAK58", region: "Southwest AK & Eastern Aleutians" },
+            { product: "FAAK48", region: "Southcentral Alaska" },
+          ]}
+        />
+      </>,
+    );
+    const select = screen.getByLabelText("Area Forecast Region");
+    expect(select).toHaveValue("");
+    fireEvent.change(select, { target: { value: "FAAK58" } });
+    await waitFor(() =>
+      expect(saveRiskInputsAction).toHaveBeenCalledWith("f-1", { area_forecast_product: "FAAK58" }),
     );
   });
 

@@ -350,6 +350,15 @@ export default async function DispatchPage({
           picOptions={candidates}
           currentPicId={effectivePicId}
           flightId={selectedFlight?.id ?? null}
+          areaForecast={
+            risk
+              ? {
+                  value: risk.inputs.area_forecast_product,
+                  regions: areaForecastRegions,
+                  canEdit: canEditRisk,
+                }
+              : null
+          }
         />
 
         {/* Crew for this flight. Sits directly under Flight Details
@@ -403,7 +412,6 @@ export default async function DispatchPage({
             staleWeatherAcknowledged={staleWeatherAcknowledged}
             canSignOffMaintenance={hasAnyRole(viewerRoles, AIRWORTHINESS_WRITERS)}
             risk={risk}
-            areaForecastRegions={areaForecastRegions}
             canEditRisk={canEditRisk}
           />
           <RightColumn

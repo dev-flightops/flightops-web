@@ -1,4 +1,4 @@
-import type { AreaForecastRegion, DispatchRisk } from "@/lib/api/dispatch-risk";
+import type { DispatchRisk } from "@/lib/api/dispatch-risk";
 import type { FlightDetail, RouteFreshness } from "@/lib/api/types";
 
 import { AlternateReviewPanel } from "./alternate-review-panel";
@@ -54,7 +54,6 @@ export async function LeftColumn({
   staleWeatherAcknowledged,
   canSignOffMaintenance = false,
   risk = null,
-  areaForecastRegions = [],
   canEditRisk = false,
 }: {
   flight: FlightDetail | null;
@@ -72,7 +71,6 @@ export async function LeftColumn({
   /** The flight's scored risk matrix (#50): its saved inputs and what the
    *  system worked out. Null with no flight, or when scoring failed. */
   risk?: DispatchRisk | null;
-  areaForecastRegions?: AreaForecastRegion[];
   /** DISPATCH_WRITERS: the dispatcher or Exec Admin. */
   canEditRisk?: boolean;
 }) {
@@ -128,7 +126,6 @@ export async function LeftColumn({
             flightId={flight.id}
             risk={risk}
             canEdit={canEditRisk}
-            regions={areaForecastRegions}
           />
           <ManagementTriggers
             key={`${flight.id}-management`}

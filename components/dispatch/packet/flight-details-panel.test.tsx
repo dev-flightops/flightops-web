@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 
 // The PIC picker nested in this panel imports server actions, which
 // pull next-auth into the module graph. Same mocks as crew-panel's.
+vi.mock("@/app/(app)/dispatch/risk-actions", () => ({ saveRiskInputsAction: vi.fn() }));
 vi.mock("@/app/(app)/dispatch/crew-actions", () => ({
   assignCrewAction: vi.fn(),
   unassignCrewAction: vi.fn(),

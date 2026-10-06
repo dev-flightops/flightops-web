@@ -195,17 +195,11 @@ export function ComplianceGatesInputs({ flightId, risk, canEdit }: Props) {
   );
 }
 
-export function CompanyRiskInputs({
-  flightId,
-  risk,
-  canEdit,
-  regions,
-}: Props & { regions: AreaForecastRegion[] }) {
+export function CompanyRiskInputs({ flightId, risk, canEdit }: Props) {
   const { save, pending, error } = useRiskSave(flightId);
   const inputs = risk.inputs;
   const disabled = !canEdit || pending;
   const crosswindId = useId();
-  const regionId = useId();
   const autoCrosswind = risk.automatic.crosswind_kt;
   const [crosswind, setCrosswind] = useState(
     inputs.crosswind_override_kt === null ? "" : String(inputs.crosswind_override_kt),
@@ -259,28 +253,46 @@ export function CompanyRiskInputs({
           </p>
         </div>
       </div>
-      <div className="mt-3">
-        <label htmlFor={regionId} className={LABEL}>
-          Area forecast region (printed on the packet)
-        </label>
-        <select
-          id={regionId}
-          value={inputs.area_forecast_product ?? ""}
-          disabled={disabled}
-          onChange={(e) => save({ area_forecast_product: e.target.value || null })}
-          className="ff-input"
-        >
-          <option value="">Not chosen</option>
-          {regions.map((r) => (
-            <option key={r.product} value={r.product}>
-              {`${r.region} (${r.product})`}
-            </option>
-          ))}
-        </select>
-      </div>
       <ReadOnlyNote canEdit={canEdit} />
       <SaveState pending={pending} error={error} />
     </SectionPanel>
+  );
+}
+
+/** The area forecast the packet prints: Flight Details' region select,
+ *  saved with the flight (#50). */
+export function AreaForecastSelect({
+  id,
+  flightId,
+  value,
+  regions,
+  canEdit,
+}: {
+  id: string;
+  flightId: string;
+  value: string | null;
+  regions: AreaForecastRegion[];
+  canEdit: boolean;
+}) {
+  const { save, pending, error } = useRiskSave(flightId);
+  return (
+    <>
+      <select
+        id={id}
+        value={value ?? ""}
+        disabled={!canEdit || pending}
+        onChange={(e) => save({ area_forecast_product: e.target.value || null })}
+        className="ff-input"
+      >
+        <option value="">Not chosen</option>
+        {regions.map((r) => (
+          <option key={r.product} value={r.product}>
+            {`${r.region} (${r.product})`}
+          </option>
+        ))}
+      </select>
+      <SaveState pending={pending} error={error} />
+    </>
   );
 }
 
