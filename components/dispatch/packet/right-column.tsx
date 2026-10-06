@@ -6,15 +6,19 @@ import { ReleaseButton } from "@/components/dispatch/release-button";
 import { ReleasedFooter } from "@/components/dispatch/released-footer";
 import { StatusBadge } from "@/components/dispatch/status-badge";
 import { flightStops } from "@/lib/route";
+import type { DispatchRisk } from "@/lib/api/dispatch-risk";
 import type { AircraftListItem, FlightDetail } from "@/lib/api/types";
 
 import { GeneratePdfButton } from "./generate-pdf-button";
 import { RefreshWeatherButton } from "./refresh-weather-button";
+import { RiskAssessmentPanel } from "./risk-assessment-panel";
+import { DispatcherNotes } from "./risk-inputs";
 import { SectionPanel } from "./section-panel";
 
 /**
  * Right column of the dispatch packet form — flight-state actions on top,
- * briefing-actions row below, then briefing-data + dispatcher notes panels.
+ * briefing-actions row below, then the risk assessment (#50) and the
+ * dispatcher's notes.
  *
  * As of M2-G-15 this column owns ALL flight-state actions (Edit, Release,
  * Generate PDF) in addition to the existing briefing actions (Refresh
@@ -34,6 +38,8 @@ export function RightColumn({
   notamAckedIcaos = [],
   staleWeatherAcknowledged = false,
   acknowledgedWarnings = [],
+  risk = null,
+  canEditRisk = false,
 }: {
   flight?: FlightDetail | null;
   /** Aircraft list for the Edit dialog's tail-swap selector. Only needed
@@ -58,6 +64,11 @@ export function RightColumn({
   /** `?warns_acked=` — sent with the release; the backend refuses while
    *  a currency warning for the crew is missing. */
   acknowledgedWarnings?: string[];
+  /** The flight's scored risk matrix (#50); null with no flight or when
+   *  scoring failed. */
+  risk?: DispatchRisk | null;
+  /** DISPATCH_WRITERS: the dispatcher or Exec Admin. */
+  canEditRisk?: boolean;
 }) {
   return (
     <div className="space-y-5">
@@ -102,22 +113,16 @@ export function RightColumn({
         </div>
       </SectionPanel>
 
-      <SectionPanel title="Briefing data">
-        <p className="text-xs text-muted-foreground">
-          When the packet is refreshed, this panel fills with weather summary,
-          weight &amp; balance, performance, and risk score cards. Empty until
-          the supporting services ship.
-        </p>
-      </SectionPanel>
+      <RiskAssessmentPanel risk={risk} failed={!!flight && !risk} />
 
-      <SectionPanel title="Dispatcher Notes">
-        <textarea
-          rows={4}
-          disabled
-          placeholder="Internal notes for this packet — visible to dispatch + ops, not on the released PDF."
-          className="ff-input text-sm"
+      {flight && risk && (
+        <DispatcherNotes
+          key={`${flight.id}-dispatcher-notes`}
+          flightId={flight.id}
+          risk={risk}
+          canEdit={canEditRisk}
         />
-      </SectionPanel>
+      )}
     </div>
   );
 }

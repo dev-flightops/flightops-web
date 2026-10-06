@@ -1,3 +1,4 @@
+import type { AreaForecastRegion, DispatchRisk } from "@/lib/api/dispatch-risk";
 import type { FlightDetail, RouteFreshness } from "@/lib/api/types";
 
 import { AlternateReviewPanel } from "./alternate-review-panel";
@@ -5,6 +6,12 @@ import { FuelOrderPanel } from "./fuel-order-panel";
 import { LoadTeamPanel } from "./load-team-panel";
 import { MaintenancePanel } from "./maintenance-panel";
 import { NotamAcknowledgmentPanel } from "./notam-acknowledgment-panel";
+import {
+  CompanyRiskInputs,
+  ComplianceGatesInputs,
+  ManagementTriggers,
+  NonCertifiedNotes,
+} from "./risk-inputs";
 import { RouteInput } from "./route-input";
 import { SectionPanel } from "./section-panel";
 import { StaleWeatherAck } from "./stale-weather-ack";
@@ -27,8 +34,12 @@ import { WeatherPanel } from "./weather-panel";
  *   - Fuel — the departure base's supplier and contract price
  *   - Load Team — assign the ramp team, same row as /ramp-ops
  *
- * NOTAM Review still blocked on M2-M-4 (FAA NOTAM proxy). Mgmt Approval
- * and the Non-Certified Weather Notes box are still disabled.
+ *   - Compliance Gates, Company Risk Inputs, Management Approval
+ *     Triggers and Non-Certified Weather Notes — the dispatch risk
+ *     matrix's inputs (#50): worked out from our data where it can be,
+ *     each overridable, saved per flight
+ *
+ * NOTAM Review still blocked on M2-M-4 (FAA NOTAM proxy).
  *
  * `icaos` is the resolved routing — either parsed from `?route=` in the
  * URL or [origin, destination] from the selected flight. Empty array
@@ -42,6 +53,9 @@ export async function LeftColumn({
   weatherFreshness,
   staleWeatherAcknowledged,
   canSignOffMaintenance = false,
+  risk = null,
+  areaForecastRegions = [],
+  canEditRisk = false,
 }: {
   flight: FlightDetail | null;
   icaos: string[];
@@ -55,6 +69,12 @@ export async function LeftColumn({
   staleWeatherAcknowledged: boolean;
   /** Maintenance sign-off (AIRWORTHINESS_WRITERS): defer, close, resolve. */
   canSignOffMaintenance?: boolean;
+  /** The flight's scored risk matrix (#50): its saved inputs and what the
+   *  system worked out. Null with no flight, or when scoring failed. */
+  risk?: DispatchRisk | null;
+  areaForecastRegions?: AreaForecastRegion[];
+  /** DISPATCH_WRITERS: the dispatcher or Exec Admin. */
+  canEditRisk?: boolean;
 }) {
   return (
     <div className="space-y-5">
@@ -84,41 +104,16 @@ export async function LeftColumn({
         ackedFromUrl={notamAckedIcaos}
       />
 
-      <SectionPanel title="Compliance Gates">
-        <div className="grid grid-cols-2 gap-4">
-          <YesNoSelect label="Hazmat Flight" />
-          <YesNoSelect label="Hazmat Approved" />
-          <YesNoSelect label="MEL/DMI on A/C" />
-          <YesNoSelect label="Pilot Actions Required" />
-          <div>
-            <label
-              htmlFor="packet-flight-rules"
-              className="mb-1.5 block text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground"
-            >
-              IFR / VFR
-            </label>
-            <select
-              id="packet-flight-rules" disabled className="ff-input cursor-not-allowed">
-              <option>VFR</option>
-              <option>IFR</option>
-            </select>
-          </div>
-        </div>
-        <label className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
-          <input
-            type="checkbox"
-            disabled
-            className="cursor-not-allowed"
-            aria-label="MEL/DMI pilot actions complete"
-          />
-          MEL/DMI pilot actions complete
-        </label>
-        <p className="mt-3 text-xs text-muted-foreground">
-          FAR Part 117 crew legality lands once the crew-service ships. MEL
-          acknowledgement + airworthiness is also surfaced in the Maintenance
-          panel below.
-        </p>
-      </SectionPanel>
+      {flight && risk ? (
+        <ComplianceGatesInputs
+          key={flight.id}
+          flightId={flight.id}
+          risk={risk}
+          canEdit={canEditRisk}
+        />
+      ) : (
+        <RiskInputsUnavailable flightSelected={!!flight} />
+      )}
 
       <MaintenancePanel flight={flight} canSignOff={canSignOffMaintenance} />
 
@@ -126,113 +121,41 @@ export async function LeftColumn({
 
       <LoadTeamPanel flight={flight} />
 
-      <SectionPanel title="Company Risk Inputs">
-        <div className="grid grid-cols-3 gap-4">
-          <div>
-            <label
-              htmlFor="packet-reporting-ok"
-              className="mb-1.5 block text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground"
-            >
-              Reporting OK
-            </label>
-            <select
-              id="packet-reporting-ok" disabled className="ff-input cursor-not-allowed">
-              <option>Yes</option>
-              <option>No</option>
-            </select>
-          </div>
-          <div>
-            <label
-              htmlFor="packet-night-ops"
-              className="mb-1.5 block text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground"
-            >
-              Night Ops
-            </label>
-            <select
-              id="packet-night-ops" disabled className="ff-input cursor-not-allowed">
-              <option>No</option>
-              <option>Yes</option>
-            </select>
-          </div>
-          <div>
-            <label
-              htmlFor="packet-crosswind"
-              className="mb-1.5 block text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground"
-            >
-              Crosswind (kt)
-            </label>
-            <input
-              id="packet-crosswind"
-              type="number"
-              disabled
-              placeholder="auto"
-              className="ff-input cursor-not-allowed"
-            />
-          </div>
-        </div>
-      </SectionPanel>
-
-      <SectionPanel title="Management Approval Triggers">
-        <div className="grid grid-cols-3 gap-4">
-          <YesNoSelect label="Outside Pilot Restrictions" />
-          <YesNoSelect label="VFR Mtn Terrain at Night" />
-          <YesNoSelect label="<4 hrs until MX" />
-        </div>
-        <label className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
-          <input
-            type="checkbox"
-            disabled
-            className="cursor-not-allowed"
-            aria-label="Mgmt approval obtained"
+      {flight && risk && (
+        <>
+          <CompanyRiskInputs
+            key={`${flight.id}-company`}
+            flightId={flight.id}
+            risk={risk}
+            canEdit={canEditRisk}
+            regions={areaForecastRegions}
           />
-          Mgmt approval obtained
-        </label>
-        <p className="mt-2 text-[0.7rem] text-muted-foreground">
-          Yes/No flags are dispatcher-set today; automated management
-          sign-off — triggered when risk inputs + crew legality combine to
-          require it — is coming soon.
-        </p>
-      </SectionPanel>
-
-      <SectionPanel title="Non-Certified Weather Notes">
-        <p className="mb-2 text-xs text-muted-foreground">
-          FAA WeatherCams / SayWeather advisory (for awareness only — not
-          certified).
-        </p>
-        <textarea
-          rows={5}
-          disabled
-          placeholder="Paste WeatherCams or SayWeather text here..."
-          className="ff-input font-mono text-sm"
-        />
-      </SectionPanel>
+          <ManagementTriggers
+            key={`${flight.id}-management`}
+            flightId={flight.id}
+            risk={risk}
+            canEdit={canEditRisk}
+          />
+          <NonCertifiedNotes
+            key={`${flight.id}-notes`}
+            flightId={flight.id}
+            risk={risk}
+            canEdit={canEditRisk}
+          />
+        </>
+      )}
     </div>
   );
 }
 
-function YesNoSelect({
-  label,
-  defaultYes = false,
-}: {
-  label: string;
-  /** Some legacy fields default to "Yes" (Reporting OK); most default to
-   *  "No". The disabled select still needs the right initial option. */
-  defaultYes?: boolean;
-}) {
-  // Labels are unique on the packet, so they make the id.
-  const id = `packet-${label.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}`;
+function RiskInputsUnavailable({ flightSelected }: { flightSelected: boolean }) {
   return (
-    <div>
-      <label
-        htmlFor={id}
-        className="mb-1.5 block text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground"
-      >
-        {label}
-      </label>
-      <select id={id} disabled className="ff-input cursor-not-allowed">
-        <option>{defaultYes ? "Yes" : "No"}</option>
-        <option>{defaultYes ? "No" : "Yes"}</option>
-      </select>
-    </div>
+    <SectionPanel title="Risk Inputs">
+      <p className="text-xs text-muted-foreground">
+        {flightSelected
+          ? "The risk inputs couldn't be loaded just now. Try Refresh Weather in a moment."
+          : "Pick a flight to set its compliance gates, risk inputs and management triggers."}
+      </p>
+    </SectionPanel>
   );
 }

@@ -3,16 +3,17 @@ import { describe, expect, it } from "vitest";
 import {
   AIRWORTHINESS_WRITERS,
   CURRENCY_SIGNOFF,
+  DISPATCH_WRITERS,
   FLIGHT_LOG_ADMINS,
   GSE_WRITERS,
-  hasAnyRole,
-  RAMP_OPS,
-  isRole,
   OVERRIDE_AUTHORITY,
+  RAMP_OPS,
   ROLES,
-  roleGate,
   STATION_ADMINS,
   VILLAGE_WX_REPORTERS,
+  hasAnyRole,
+  isRole,
+  roleGate,
 } from "./roles";
 
 describe("roles", () => {
@@ -105,6 +106,10 @@ describe("who may do what a release relies on (29 Sep)", () => {
       "director_of_operations",
       "exec_admin",
     ]);
+  });
+
+  it("release and the risk inputs: the dispatcher and Exec Admin (#50)", () => {
+    expect(sorted(DISPATCH_WRITERS)).toEqual(["dispatcher", "exec_admin"]);
   });
 
   it("MELs and squawks: maintenance", () => {
