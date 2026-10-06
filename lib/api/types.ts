@@ -1299,6 +1299,8 @@ export interface FlightTrackingConfigResponse {
 export interface FratLimitSource {
   limit_key: string;
   value: string | number;
+  /** What the page was read as; differs from `value` after a correction. */
+  read_value: string | number;
   document_id: string | null;
   document_title: string;
   version_number: number;

@@ -82,6 +82,8 @@ function Field({
           {source.page_number}
           {source.approved_by_name ? `, approved by ${source.approved_by_name}` : ""} on{" "}
           {source.approved_at.slice(0, 10)}.
+          {Number(source.read_value) !== Number(source.value) &&
+            ` Read there as ${Number(source.read_value)}; approved as ${Number(source.value)}.`}
           {Number(source.value) !== value && (
             <span className="text-status-yellow">
               {" "}
