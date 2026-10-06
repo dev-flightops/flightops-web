@@ -621,7 +621,7 @@ export const HELP_ENTRIES: HelpEntry[] = [
       "A pilot holds one assignment on any day. Saving one that overlaps another is refused, and the message names the one already there.",
       "Bases come from Settings → Bases and types from the fleet, so a new base or type has to exist there first.",
       "Archiving a tag takes it off the palette but keeps every day already painted with it, so the past schedule doesn't change.",
-      "Once aircraft qualifications are switched on, an assignment on a type the pilot holds no current position on is outlined in red with a ⚠. It's a warning, not a refusal: rostering ahead of a check ride is normal, and release is where it's enforced.",
+      "Once aircraft qualifications are switched on, an assignment on a type the pilot holds no current position on is outlined in red, and hovering it says why. It's a warning, not a refusal: rostering ahead of a check ride is normal, and release is where it's enforced.",
     ],
     connectsTo:
       "Home base is the same field as the employee record's station. The Roster page is the currency matrix, by base.",

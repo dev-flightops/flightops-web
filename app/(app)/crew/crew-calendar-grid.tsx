@@ -508,9 +508,11 @@ function EntryBlock({
     continuesAfter && "rounded-r-none border-r-0",
     warning && "ring-1 ring-inset ring-status-red",
   );
+  // A day or two is one narrow column each: the ring and the tooltip
+  // carry the warning there, or the glyph would widen the whole column.
   const text = (
     <>
-      {warning && (
+      {warning && span >= 3 && (
         <span aria-hidden className="mr-0.5 text-status-red">
           ⚠
         </span>
