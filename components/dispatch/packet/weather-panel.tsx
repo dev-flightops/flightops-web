@@ -13,9 +13,9 @@ import {
 
 import { EmptyPanel, SectionPanel } from "./section-panel";
 
-// Backend caps batch at 20 requests — slice longer routes (one METAR +
-// one TAF per stop = 10-stop max). If the dispatcher pastes a wild
-// 30-stop bush route, we show the first 10 and a footer note.
+// Backend caps batch at 30 requests — slice longer routes (a METAR, a
+// TAF and the PIREPs per stop = 10-stop max). If the dispatcher pastes a
+// wild 30-stop bush route, we show the first 10 and a footer note.
 const MAX_STOPS = 10;
 
 /**
@@ -62,6 +62,7 @@ export async function WeatherPanel({ icaos }: { icaos: string[] }) {
       stops.flatMap((icao) => [
         { icao, kind: "metar" as const },
         { icao, kind: "taf" as const },
+        { icao, kind: "pirep" as const },
       ]),
     );
   } catch (err) {
@@ -102,6 +103,7 @@ export async function WeatherPanel({ icaos }: { icaos: string[] }) {
     role: routeRoleFor(idx, stops.length),
     metar: outcomeFor(icao, "metar", lookup, errorLookup),
     taf: outcomeFor(icao, "taf", lookup, errorLookup),
+    pireps: outcomeFor(icao, "pirep", lookup, errorLookup),
   }));
 
   return (
@@ -128,7 +130,8 @@ export async function WeatherPanel({ icaos }: { icaos: string[] }) {
       )}
       <p className="mt-3 text-[0.65rem] text-muted-foreground">
         Source: Aviation Weather Center via weather-service. METAR cached 5 min,
-        TAF cached 30 min. ATIS and PIREPs are not shown yet.
+        TAF 30 min, PIREPs (within 50 nm, last 3 hours) 15 min. ATIS is not
+        shown yet.
       </p>
     </SectionPanel>
   );
@@ -136,7 +139,7 @@ export async function WeatherPanel({ icaos }: { icaos: string[] }) {
 
 function outcomeFor(
   icao: string,
-  kind: "metar" | "taf",
+  kind: "metar" | "taf" | "pirep",
   ok: Map<string, WeatherReportResponse>,
   bad: Map<string, { status: number; detail: string }>,
 ): FetchOutcome {
@@ -158,11 +161,13 @@ function AirportWeather({
   role,
   metar,
   taf,
+  pireps,
 }: {
   icao: string;
   role: RouteRole | null;
   metar: FetchOutcome;
   taf: FetchOutcome;
+  pireps: FetchOutcome;
 }) {
   return (
     <div className="rounded-md border border-border bg-card/40 p-4">
@@ -173,6 +178,7 @@ function AirportWeather({
       <div className="mt-3 space-y-3">
         <ReportBlock label="METAR" outcome={metar} />
         <ReportBlock label="TAF" outcome={taf} />
+        <ReportBlock label="PIREPs" outcome={pireps} />
       </div>
     </div>
   );
@@ -256,7 +262,11 @@ function ReportBlock({
       <p className="mb-0.5 text-[0.6rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
         {label}
       </p>
-      {outcome.ok ? (
+      {outcome.ok && outcome.report.kind === "pirep" && !outcome.report.raw ? (
+        <p className="m-0 text-[0.7rem] italic text-muted-foreground">
+          None within 50 nm in the last 3 hours.
+        </p>
+      ) : outcome.ok ? (
         <pre className="m-0 whitespace-pre-wrap break-words font-mono text-[0.7rem] leading-snug text-foreground/90">
           {outcome.report.raw}
         </pre>
