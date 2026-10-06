@@ -1,6 +1,14 @@
 "use client";
 
-import { Fragment, useEffect, useMemo, useState } from "react";
+import {
+  Fragment,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useTransition,
+  type KeyboardEvent,
+} from "react";
 
 import {
   DUTY_TYPE_LABELS,
@@ -9,13 +17,27 @@ import {
   type CrewCalendarMember,
   type DutyType,
   type RosterEntry,
+  type ScheduleTag,
 } from "@/lib/api/crew-calendar";
 import { formatIsoDay, todayIsoDay } from "@/lib/iso-day";
 import { cn } from "@/lib/utils";
 
+import { paintDaysAction } from "./actions";
 import { AssignmentDialog, type AssignmentTarget } from "./assignment-dialog";
-import { monthDays, monthOf, rowSegments } from "./calendar-math";
+import { daysBetween, monthDays, monthOf, rowSegments } from "./calendar-math";
 import { MoveBaseDialog } from "./move-base-dialog";
+import { ManageTagsDialog, NewTagDialog } from "./tag-dialogs";
+import { TagLegend, TagPalette, type PaintTool } from "./tag-palette";
+import { shortTagLabel, TAG_TONE } from "./tag-tones";
+
+/** A press-and-drag across one pilot's days, before it is painted. */
+interface Drag {
+  userId: string;
+  anchor: string;
+  current: string;
+}
+
+const dayKey = (userId: string, iso: string) => `${userId}|${iso}`;
 
 /** Status tones, not red or green: a duty type is not a pass or a fail. */
 export const DUTY_TONE: Record<DutyType, string> = {
@@ -81,6 +103,89 @@ export function CrewCalendarGrid({
   const defaultDay =
     today && monthOf(today) === calendar.month ? today : calendar.first_day;
 
+  // ---- Day tags (#44) ----
+  const [tool, setTool] = useState<PaintTool>(null);
+  const [drag, setDrag] = useState<Drag | null>(null);
+  const [newTagOpen, setNewTagOpen] = useState(false);
+  const [manageOpen, setManageOpen] = useState(false);
+  const [paintError, setPaintError] = useState<string | null>(null);
+  // Painted days shown before the server confirms them; dropped when the
+  // refreshed calendar arrives, and undone if the server refuses.
+  const [pending, setPending] = useState<Map<string, string | null>>(new Map());
+  const [, startPaint] = useTransition();
+  useEffect(() => setPending(new Map()), [calendar.cells]);
+
+  const tagById = useMemo(
+    () => new Map<string, ScheduleTag>(calendar.tags.map((t) => [t.id, t])),
+    [calendar.tags],
+  );
+  const savedTags = useMemo(
+    () => new Map(calendar.cells.map((c) => [dayKey(c.user_id, c.cell_date), c.tag_id])),
+    [calendar.cells],
+  );
+  const tagOn = (userId: string, iso: string): ScheduleTag | null => {
+    const key = dayKey(userId, iso);
+    const id = pending.has(key) ? pending.get(key) : savedTags.get(key);
+    return id ? (tagById.get(id) ?? null) : null;
+  };
+
+  function paint(userId: string, a: string, b: string, tagId: string | null) {
+    const run = daysBetween(a, b);
+    const mark = (value: (iso: string) => string | null | undefined) =>
+      setPending((prev) => {
+        const next = new Map(prev);
+        for (const iso of run) {
+          const v = value(iso);
+          if (v === undefined) next.delete(dayKey(userId, iso));
+          else next.set(dayKey(userId, iso), v);
+        }
+        return next;
+      });
+    mark(() => tagId);
+    setPaintError(null);
+    startPaint(async () => {
+      const outcome = await paintDaysAction(userId, run[0], run[run.length - 1], tagId);
+      if (!outcome.ok) {
+        mark(() => undefined);
+        setPaintError(outcome.error);
+      }
+    });
+  }
+
+  const toolTagId = tool?.kind === "tag" ? tool.tagId : null;
+  // The drag lives in a ref as well as in state: the release listener is
+  // added in the press handler itself, so even a press and release in the
+  // same instant can't slip past it, and it reads the run's latest end.
+  const dragRef = useRef<Drag | null>(null);
+  function startDrag(userId: string, iso: string) {
+    const tagId = toolTagId;
+    dragRef.current = { userId, anchor: iso, current: iso };
+    setDrag(dragRef.current);
+    // Released wherever the button comes up, even off the grid.
+    window.addEventListener(
+      "mouseup",
+      () => {
+        const run = dragRef.current;
+        dragRef.current = null;
+        setDrag(null);
+        if (run) paint(run.userId, run.anchor, run.current, tagId);
+      },
+      { once: true },
+    );
+  }
+  function extendDrag(userId: string, iso: string) {
+    const run = dragRef.current;
+    if (!run || run.userId !== userId || run.current === iso) return;
+    dragRef.current = { ...run, current: iso };
+    setDrag(dragRef.current);
+  }
+
+  const inDrag = (userId: string, iso: string) =>
+    drag !== null &&
+    drag.userId === userId &&
+    iso >= (drag.anchor < drag.current ? drag.anchor : drag.current) &&
+    iso <= (drag.anchor < drag.current ? drag.current : drag.anchor);
+
   return (
     <>
       <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
@@ -107,6 +212,22 @@ export function CrewCalendarGrid({
           </button>
         )}
       </div>
+
+      {canEdit ? (
+        <TagPalette
+          tags={calendar.tags}
+          tool={tool}
+          onToolChange={(next) => {
+            setTool(next);
+            setPaintError(null);
+          }}
+          onNewTag={() => setNewTagOpen(true)}
+          onManage={() => setManageOpen(true)}
+          error={paintError}
+        />
+      ) : (
+        <TagLegend tags={calendar.tags} />
+      )}
 
       <div className="overflow-x-auto rounded-lg border border-border bg-card">
         <table className="w-full border-collapse text-xs">
@@ -154,10 +275,12 @@ export function CrewCalendarGrid({
                   </th>
                 </tr>
                 {group.crew.map((member) => (
-                  <tr key={member.user_id} className="border-b border-border/60">
+                  <Fragment key={member.user_id}>
+                  <tr>
                     <th
                       scope="row"
-                      className="sticky left-0 z-10 bg-card px-3 py-1 text-left font-medium"
+                      rowSpan={2}
+                      className="sticky left-0 z-10 border-b border-border/60 bg-card px-3 py-1 text-left font-medium"
                     >
                       <span className="flex items-center justify-between gap-2">
                         <span className="truncate">{member.full_name}</span>
@@ -210,6 +333,26 @@ export function CrewCalendarGrid({
                       ),
                     )}
                   </tr>
+                  <tr className="border-b border-border/60">
+                    {days.map((d) => (
+                      <TagCell
+                        key={d.iso}
+                        member={member}
+                        iso={d.iso}
+                        weekend={d.weekend}
+                        tag={tagOn(member.user_id, d.iso)}
+                        canEdit={canEdit}
+                        tool={tool}
+                        toolTag={toolTagId ? (tagById.get(toolTagId) ?? null) : null}
+                        previewing={inDrag(member.user_id, d.iso)}
+                        onDragStart={() => startDrag(member.user_id, d.iso)}
+                        onDragOver={() => extendDrag(member.user_id, d.iso)}
+                        onPaintDay={() => paint(member.user_id, d.iso, d.iso, toolTagId)}
+                        onClearDay={() => paint(member.user_id, d.iso, d.iso, null)}
+                      />
+                    ))}
+                  </tr>
+                  </Fragment>
                 ))}
               </Fragment>
             ))}
@@ -231,7 +374,106 @@ export function CrewCalendarGrid({
         onClose={() => setMoving(null)}
         stations={calendar.stations}
       />
+      <NewTagDialog open={newTagOpen} onClose={() => setNewTagOpen(false)} />
+      <ManageTagsDialog
+        open={manageOpen}
+        onClose={() => setManageOpen(false)}
+        tags={calendar.tags}
+      />
     </>
+  );
+}
+
+/**
+ * One day on a pilot's tag line. With a tool picked, a press starts a
+ * run, dragging across the row extends it, and releasing paints it;
+ * Enter or Space paints just this day. Right-click clears a tagged day,
+ * as in legacy.
+ */
+function TagCell({
+  member,
+  iso,
+  weekend,
+  tag,
+  canEdit,
+  tool,
+  toolTag,
+  previewing,
+  onDragStart,
+  onDragOver,
+  onPaintDay,
+  onClearDay,
+}: {
+  member: CrewCalendarMember;
+  iso: string;
+  weekend: boolean;
+  tag: ScheduleTag | null;
+  canEdit: boolean;
+  tool: PaintTool;
+  toolTag: ScheduleTag | null;
+  previewing: boolean;
+  onDragStart: () => void;
+  onDragOver: () => void;
+  onPaintDay: () => void;
+  onClearDay: () => void;
+}) {
+  const interactive = canEdit && tool !== null;
+  const chip = cn(
+    "flex h-5 w-full items-center justify-center overflow-hidden rounded border text-[0.55rem] font-semibold",
+    tag ? TAG_TONE[tag.tone] : "border-transparent",
+  );
+  const day = formatIsoDay(iso);
+  return (
+    <td
+      className={cn("px-0.5 pb-1", weekend && "bg-muted/60")}
+      onMouseDown={
+        interactive
+          ? (e) => {
+              if (e.button !== 0) return;
+              e.preventDefault();
+              onDragStart();
+            }
+          : undefined
+      }
+      onMouseEnter={interactive ? onDragOver : undefined}
+      onContextMenu={
+        canEdit && tag
+          ? (e) => {
+              e.preventDefault();
+              onClearDay();
+            }
+          : undefined
+      }
+    >
+      {interactive ? (
+        <button
+          type="button"
+          title={tag?.label}
+          aria-label={
+            tool?.kind === "eraser"
+              ? `Clear ${member.full_name}'s ${day}${tag ? ` (${tag.label})` : ""}`
+              : `Paint ${toolTag?.label ?? "tag"} on ${member.full_name}'s ${day}`
+          }
+          onKeyDown={(e: KeyboardEvent<HTMLButtonElement>) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              onPaintDay();
+            }
+          }}
+          className={cn(
+            chip,
+            !tag && "border-dashed border-border/70",
+            previewing && "ring-2 ring-primary",
+          )}
+        >
+          {tag ? shortTagLabel(tag.label) : ""}
+        </button>
+      ) : (
+        <span title={tag?.label} className={chip}>
+          {tag ? shortTagLabel(tag.label) : ""}
+        </span>
+      )}
+    </td>
   );
 }
 

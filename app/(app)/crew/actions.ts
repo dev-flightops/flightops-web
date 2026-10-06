@@ -6,11 +6,17 @@ import { z } from "zod";
 import { ApiError } from "@/lib/api/client";
 import {
   createRosterEntry,
+  createScheduleTag,
   deleteRosterEntry,
   DUTY_TYPES_NEEDING_AIRFRAME,
   moveCrewHomeStation,
+  paintCrewDays,
   replaceRosterEntry,
+  SCHEDULE_TAG_LABEL_MAX,
+  SCHEDULE_TAG_TONES,
+  updateScheduleTag,
   type DutyType,
+  type ScheduleTagTone,
 } from "@/lib/api/crew-calendar";
 
 /**
@@ -145,6 +151,81 @@ export async function moveHomeBaseAction(
     await moveCrewHomeStation(userId, code);
   } catch (err) {
     return { ok: false, error: messageFor(err, "move the pilot") };
+  }
+  revalidatePath("/crew");
+  return { ok: true };
+}
+
+// ---- Day tags (#44) ------------------------------------------------------
+
+function tagLabel(raw: string): string | { error: string } {
+  const label = raw.split(/\s+/).filter(Boolean).join(" ");
+  if (!label) return { error: "Give the tag a label." };
+  if (label.length > SCHEDULE_TAG_LABEL_MAX) {
+    return { error: `Keep the label to ${SCHEDULE_TAG_LABEL_MAX} characters.` };
+  }
+  return label;
+}
+
+function isTone(tone: string): tone is ScheduleTagTone {
+  return (SCHEDULE_TAG_TONES as readonly string[]).includes(tone);
+}
+
+export async function createTagAction(
+  rawLabel: string,
+  tone: string,
+): Promise<ActionResult> {
+  const label = tagLabel(rawLabel);
+  if (typeof label !== "string") return { ok: false, error: label.error };
+  if (!isTone(tone)) return { ok: false, error: "Pick a colour." };
+  try {
+    await createScheduleTag({ label, tone });
+  } catch (err) {
+    return { ok: false, error: messageFor(err, "add the tag") };
+  }
+  revalidatePath("/crew");
+  return { ok: true };
+}
+
+export async function updateTagAction(
+  tagId: string,
+  patch: { label?: string; tone?: string; is_active?: boolean },
+): Promise<ActionResult> {
+  const body: { label?: string; tone?: ScheduleTagTone; is_active?: boolean } = {};
+  if (patch.label !== undefined) {
+    const label = tagLabel(patch.label);
+    if (typeof label !== "string") return { ok: false, error: label.error };
+    body.label = label;
+  }
+  if (patch.tone !== undefined) {
+    if (!isTone(patch.tone)) return { ok: false, error: "Pick a colour." };
+    body.tone = patch.tone;
+  }
+  if (patch.is_active !== undefined) body.is_active = patch.is_active;
+  try {
+    await updateScheduleTag(tagId, body);
+  } catch (err) {
+    return { ok: false, error: messageFor(err, "change the tag") };
+  }
+  revalidatePath("/crew");
+  return { ok: true };
+}
+
+/** Paint a run of one pilot's days with a tag, or clear them (null). */
+export async function paintDaysAction(
+  userId: string,
+  startDate: string,
+  endDate: string,
+  tagId: string | null,
+): Promise<ActionResult> {
+  if (!ISO_DAY.test(startDate) || !ISO_DAY.test(endDate)) {
+    return { ok: false, error: "Pick the days again." };
+  }
+  const [start, end] = startDate <= endDate ? [startDate, endDate] : [endDate, startDate];
+  try {
+    await paintCrewDays({ user_id: userId, start_date: start, end_date: end, tag_id: tagId });
+  } catch (err) {
+    return { ok: false, error: messageFor(err, tagId ? "paint those days" : "clear those days") };
   }
   revalidatePath("/crew");
   return { ok: true };

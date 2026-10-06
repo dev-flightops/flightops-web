@@ -565,10 +565,13 @@ export const HELP_ENTRIES: HelpEntry[] = [
       "Click an empty day to add an assignment for that pilot from that day, or use Add Assignment. Flying, ferry and check need an aircraft type; a tail is optional.",
       "Click an assignment to change its days, base, type or duty, or to remove it.",
       "Move beside a name changes that pilot's home base.",
+      "Day tags sit on the thin line under each pilot. Pick a tag above the grid, then click a day or drag across days to paint it; the Eraser clears instead, and right-clicking a painted day clears it too.",
+      "Add a tag with + Tag; Manage renames, recolours, archives or restores one.",
     ],
     worthKnowing: [
       "A pilot holds one assignment on any day. Saving one that overlaps another is refused, and the message names the one already there.",
       "Bases come from Settings → Bases and types from the fleet, so a new base or type has to exist there first.",
+      "Archiving a tag takes it off the palette but keeps every day already painted with it, so the past schedule doesn't change.",
     ],
     connectsTo:
       "Home base is the same field as the employee record's station. The Roster page is the currency matrix, by base.",
