@@ -164,7 +164,7 @@ export function ReviewDispatchReleaseStep({ flightId, flight }: Props) {
               target="_blank"
               rel="noopener"
             >
-              ↓ Open dispatch release PDF
+              ↓ Open dispatch packet PDF
             </a>
             {/* Sentinel — when this scrolls into view, the ack checkbox unlocks. */}
             <div

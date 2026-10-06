@@ -6,7 +6,10 @@
  * services don't call each other (the FRAT prefill works the same way).
  */
 
+import { flightStops } from "@/lib/route";
+
 import { apiFetch } from "./client";
+import { getFlight } from "./ops";
 import type { WeatherBatchResponse } from "./types";
 import { batchWeather } from "./weather";
 
@@ -100,7 +103,7 @@ export interface AreaForecastRegion {
   region: string;
 }
 
-interface RiskStopIn {
+export interface RiskStopIn {
   ident: string;
   metar: string | null;
   taf: string | null;
@@ -114,8 +117,25 @@ interface RiskStopIn {
   };
 }
 
+/** The area forecast for a region, as weather-service returns it (#51). */
+export interface AreaForecast {
+  product: string;
+  region: string;
+  text: string;
+  issued_at: string | null;
+  source_url: string;
+}
+
+/** The weather a dispatch packet prints (#52). */
+export interface PacketWeather {
+  stops: RiskStopIn[];
+  area_forecast: AreaForecast | null;
+}
+
 /** weather-service caps a batch at 30 (three kinds a stop) and /airports at 12. */
 const MAX_STOPS = 10;
+/** The release and the print don't wait longer than this for the packet's weather. */
+const PACKET_WEATHER_TIMEOUT_MS = 8000;
 
 export async function getAirports(idents: string[]): Promise<AirportInfo[]> {
   const query = encodeURIComponent(idents.join(","));
@@ -125,6 +145,14 @@ export async function getAirports(idents: string[]): Promise<AirportInfo[]> {
 
 export async function getAreaForecastRegions(): Promise<AreaForecastRegion[]> {
   return (await apiFetch<{ regions: AreaForecastRegion[] }>(`/weather/area-forecasts`)).regions;
+}
+
+export async function getRiskInputs(flightId: string): Promise<DispatchRiskInputs> {
+  return apiFetch<DispatchRiskInputs>(`/ops/dispatch/${flightId}/risk-inputs`);
+}
+
+export async function getAreaForecast(product: string): Promise<AreaForecast> {
+  return apiFetch<AreaForecast>(`/weather/area-forecasts/${encodeURIComponent(product)}`);
 }
 
 export async function scoreFlightRisk(
@@ -183,11 +211,8 @@ export function riskStops(
   });
 }
 
-/** Gather the flight's weather and airport data, then have ops score it. */
-export async function loadDispatchRisk(
-  flightId: string,
-  stops: string[],
-): Promise<DispatchRisk> {
+/** Each stop's weather and airport record, gathered from weather-service. */
+async function gatherStops(stops: string[]): Promise<RiskStopIn[]> {
   const unique = [...new Set(stops)].slice(0, MAX_STOPS);
   const [weather, airports] = await Promise.all([
     batchWeather(
@@ -199,5 +224,62 @@ export async function loadDispatchRisk(
     ).catch(() => null),
     getAirports(unique).catch(() => null),
   ]);
-  return scoreFlightRisk(flightId, { stops: riskStops(unique, weather, airports) });
+  return riskStops(unique, weather, airports);
+}
+
+/** Gather the flight's weather and airport data, then have ops score it. */
+export async function loadDispatchRisk(
+  flightId: string,
+  stops: string[],
+): Promise<DispatchRisk> {
+  return scoreFlightRisk(flightId, { stops: await gatherStops(stops) });
+}
+
+/**
+ * The weather a dispatch packet prints (#52): each stop's reports and the
+ * area forecast for the region the dispatcher chose. What can't be
+ * fetched is left out, and the packet prints it as unavailable.
+ */
+export async function gatherPacketWeather(
+  flightId: string,
+  stops: string[],
+): Promise<PacketWeather> {
+  const [sent, inputs] = await Promise.all([
+    gatherStops(stops),
+    getRiskInputs(flightId).catch(() => null),
+  ]);
+  const product = inputs?.area_forecast_product;
+  const forecast = product ? await getAreaForecast(product).catch(() => null) : null;
+  return {
+    stops: sent,
+    area_forecast: forecast && {
+      product: forecast.product,
+      region: forecast.region,
+      text: forecast.text,
+      issued_at: forecast.issued_at,
+      source_url: forecast.source_url,
+    },
+  };
+}
+
+/**
+ * The packet's weather for a flight, for the release to keep and the print
+ * to fall back on. Null when it can't be had in time: the release goes
+ * ahead without it, and the packet then says so.
+ */
+export async function packetWeatherFor(flightId: string): Promise<PacketWeather | null> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<null>((resolve) => {
+    timer = setTimeout(() => resolve(null), PACKET_WEATHER_TIMEOUT_MS);
+  });
+  try {
+    return await Promise.race([
+      getFlight(flightId).then((flight) => gatherPacketWeather(flightId, flightStops(flight))),
+      timeout,
+    ]);
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
 }

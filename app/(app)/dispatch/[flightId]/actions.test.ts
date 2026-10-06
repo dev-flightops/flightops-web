@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { TestApiError, releaseFlight } = vi.hoisted(() => {
+const { TestApiError, releaseFlight, packetWeatherFor } = vi.hoisted(() => {
   class TestApiError extends Error {
     constructor(
       public status: number,
@@ -10,10 +10,11 @@ const { TestApiError, releaseFlight } = vi.hoisted(() => {
       super(message);
     }
   }
-  return { TestApiError, releaseFlight: vi.fn() };
+  return { TestApiError, releaseFlight: vi.fn(), packetWeatherFor: vi.fn() };
 });
 vi.mock("@/lib/api/client", () => ({ ApiError: TestApiError }));
 vi.mock("@/lib/api/ops", () => ({ releaseFlight, updateFlight: vi.fn() }));
+vi.mock("@/lib/api/dispatch-risk", () => ({ packetWeatherFor }));
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 
 import { releaseFlightAction } from "./actions";
@@ -30,7 +31,31 @@ function refuse(detail: unknown) {
   );
 }
 
-beforeEach(() => releaseFlight.mockReset());
+beforeEach(() => {
+  releaseFlight.mockReset();
+  packetWeatherFor.mockReset().mockResolvedValue(null);
+});
+
+describe("releaseFlightAction (#52)", () => {
+  it("sends the weather the dispatch packet keeps", async () => {
+    const weather = { stops: [], area_forecast: null };
+    packetWeatherFor.mockResolvedValueOnce(weather);
+    releaseFlight.mockResolvedValueOnce({});
+    expect(await releaseFlightAction("f-1", "u-1", false, false, ["PABE"], [])).toEqual({
+      ok: true,
+    });
+    expect(packetWeatherFor).toHaveBeenCalledWith("f-1");
+    expect(releaseFlight).toHaveBeenCalledWith(
+      "f-1",
+      "u-1",
+      false,
+      false,
+      [{ icao: "PABE" }],
+      [],
+      weather,
+    );
+  });
+});
 
 describe("releaseFlightAction refusals", () => {
   it("says where to put a PIC when the flight has none", async () => {

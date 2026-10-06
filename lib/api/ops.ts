@@ -4,6 +4,7 @@
 
 import { apiFetch } from "./client";
 import { asNumber } from "./decimal";
+import type { PacketWeather } from "./dispatch-risk";
 import type {
   AccountingExportResponse,
   AircraftListItem,
@@ -163,6 +164,10 @@ export async function releaseFlight(
    *  the PIC, "sic:<code>" for the SIC. The backend refuses the release
    *  while any warning for the crew is missing. */
   acknowledgedWarnings?: string[],
+  /** The weather the dispatch packet keeps (#52). The backend never
+   *  refuses a release over it: without it, a print says its weather is
+   *  as of printing. */
+  packet?: PacketWeather | null,
 ): Promise<ReleaseResponse> {
   const body: Record<string, unknown> = {};
   if (pilotUserId) body.pilot_user_id = pilotUserId;
@@ -174,6 +179,7 @@ export async function releaseFlight(
   if (acknowledgedWarnings?.length) {
     body.acknowledged_warnings = acknowledgedWarnings;
   }
+  if (packet) body.packet = packet;
   return apiFetch<ReleaseResponse>(`/ops/flights/${flightId}/release`, {
     method: "POST",
     body: JSON.stringify(body),
