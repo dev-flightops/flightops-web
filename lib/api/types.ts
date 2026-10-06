@@ -1308,6 +1308,11 @@ export interface FratLimitSource {
   quote: string;
   approved_by_name: string | null;
   approved_at: string;
+  /** The document's version now (#49). */
+  current_version_number: number | null;
+  /** Why a person has to look again: a newer version, or the document
+   *  was archived. The value stays as approved until then. */
+  recheck: "revised" | "archived" | null;
 }
 
 export interface FratThresholdConfigResponse {

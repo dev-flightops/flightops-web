@@ -180,12 +180,27 @@ export function DocumentLimitsSection({
         </p>
       )}
 
-      {reading && <ReadingResult reading={reading} current={current} />}
+      {reading && (
+        <ReadingResult
+          reading={reading}
+          current={current}
+          currentVersion={documents.find((d) => d.id === documentId)?.version}
+        />
+      )}
     </section>
   );
 }
 
-function ReadingResult({ reading, current }: { reading: LimitReading; current: CurrentLimits }) {
+function ReadingResult({
+  reading,
+  current,
+  currentVersion,
+}: {
+  reading: LimitReading;
+  current: CurrentLimits;
+  /** The document's version now; a reading of an older one is out of date (#49). */
+  currentVersion?: number;
+}) {
   if (reading.status === "running") {
     return (
       <p role="status" className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
@@ -220,6 +235,12 @@ function ReadingResult({ reading, current }: { reading: LimitReading; current: C
           ? ` ${dropped} more set aside: the sentence quoted wasn't on its page, or the value didn't fit the setting.`
           : ""}
       </p>
+      {currentVersion !== undefined && reading.version_number < currentVersion && (
+        <p className="mt-1 text-xs font-semibold text-status-yellow">
+          Version {currentVersion} is the current version. Read again to check the limits
+          against it.
+        </p>
+      )}
       {reading.proposals.length > 0 && (
         <div className="mt-2 overflow-x-auto rounded-lg border border-border">
           <table className="w-full border-collapse text-xs">

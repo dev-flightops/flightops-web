@@ -127,6 +127,20 @@ describe("DocumentLimitsSection", () => {
     expect(within(multi).getByText("40 kt")).toBeInTheDocument();
     expect(within(multi).getByText("differs")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Read again" })).toBeInTheDocument();
+    expect(screen.queryByText(/is the current version/)).toBeNull();
+  });
+
+  it("says when the reading is of a version that has since been replaced", () => {
+    render(
+      <DocumentLimitsSection
+        documents={[{ ...GOM, version: 4 }]}
+        latest={{ [GOM.id]: reading() }}
+        current={CURRENT}
+      />,
+    );
+    expect(
+      screen.getByText("Version 4 is the current version. Read again to check the limits against it."),
+    ).toBeInTheDocument();
   });
 
   it("starts a reading and asks after it until it's done", async () => {
