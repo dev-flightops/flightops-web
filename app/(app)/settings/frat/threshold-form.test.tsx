@@ -419,6 +419,8 @@ describe("ThresholdForm — limits approved from a document (#48)", () => {
     quote: "The company crosswind limit is 30 knots for single-engine aircraft.",
     approved_by_name: "Casey Chief",
     approved_at: "2026-10-06T12:00:00Z",
+    current_version_number: 3,
+    recheck: null,
   };
 
   it("names the document under the limit it set", () => {
@@ -439,6 +441,33 @@ describe("ThresholdForm — limits approved from a document (#48)", () => {
     const line = screen.getByText(/From GOM Chapter 4, version 3, page 12/);
     expect(line).toHaveTextContent("Read there as 30; approved as 28.");
     expect(line).not.toHaveTextContent("Changed here");
+  });
+
+  it("asks for a re-check when the document has a newer version", () => {
+    form({
+      sources: {
+        crosswind_single_engine_kt: { ...source, current_version_number: 4, recheck: "revised" },
+      },
+    });
+    expect(
+      screen.getByText(/Version 4 of the document is out and this limit hasn.t been checked against it/),
+    ).toBeInTheDocument();
+    // The citation still names the version it was approved from.
+    expect(screen.getByText(/From GOM Chapter 4, version 3, page 12/)).toBeInTheDocument();
+  });
+
+  it("asks for a re-check when the document was archived", () => {
+    form({
+      sources: {
+        crosswind_single_engine_kt: { ...source, current_version_number: 3, recheck: "archived" },
+      },
+    });
+    expect(screen.getByText(/The document has been archived/)).toBeInTheDocument();
+  });
+
+  it("asks for nothing while the document still backs the limit", () => {
+    form({ sources: { crosswind_single_engine_kt: source } });
+    expect(screen.queryByText(/re-check|has been archived|of the document is out/)).toBeNull();
   });
 
   it("warns that changing it here sets it by hand", async () => {

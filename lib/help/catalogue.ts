@@ -319,6 +319,10 @@ export const HELP_ENTRIES: HelpEntry[] = [
         heading: "Approving a limit",
         body: "Approve sets the limit to the value read; Change… lets you approve a different value instead, and the citation then also says what the page was read as. Reject leaves the setting as it is. An approved limit shows its document, version, page and approver under its field, and the FRAT names the document beside the limit it scored a flight against. Change that limit by hand and save, and it no longer claims the document's backing. A limit whose new value would break the policy, such as a near margin no longer smaller than the crosswind limit, is refused with the reason.",
       },
+      {
+        heading: "When the document changes",
+        body: "Upload a new version of a document, or archive it, and every limit approved from it keeps its value but is marked for a re-check: under its field here, and on the FRAT beside the limit. Read the new version and approve the limit again to clear it.",
+      },
     ],
     related: ["/dispatch", "/settings", "/documents"],
   },
