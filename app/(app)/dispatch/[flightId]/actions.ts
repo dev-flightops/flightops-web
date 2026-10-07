@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 
 import { ApiError } from "@/lib/api/client";
+import { packetWeatherFor } from "@/lib/api/dispatch-risk";
 import {
   releaseFlight,
   updateFlight,
@@ -39,6 +40,8 @@ export async function releaseFlightAction(
   acknowledgedWarnings?: string[],
 ): Promise<ActionResult> {
   try {
+    // The weather the dispatch packet keeps (#52), as of the release.
+    const packet = await packetWeatherFor(flightId);
     await releaseFlight(
       flightId,
       pilotUserId ?? null,
@@ -46,6 +49,7 @@ export async function releaseFlightAction(
       staleWeatherAcknowledged,
       (notamAckedIcaos ?? []).map((icao) => ({ icao })),
       acknowledgedWarnings ?? [],
+      packet,
     );
   } catch (err) {
     if (err instanceof ApiError) {

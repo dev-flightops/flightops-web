@@ -16,20 +16,19 @@ import type { FlightDetail } from "@/lib/api/types";
 import { flightStops } from "@/lib/route";
 
 /**
- * Generate-PDF action on the /dispatch/ packet form. Three states:
+ * Generate-PDF action on the /dispatch/ packet form. The PDF is the
+ * dispatch packet in the operator's layout (#52): the risk matrix, the
+ * AAWU charts, each stop's weather, the area forecast, the dispatcher's
+ * notes, the NOTAMs reviewed and the signatures. Three states:
  *
  *   1. No flight selected           → disabled button with hint tooltip.
- *   2. Flight selected, released    → direct anchor to the per-flight
- *                                     release PDF endpoint (opens new tab).
+ *   2. Flight selected, released    → direct anchor to the packet
+ *                                     (opens new tab).
  *   3. Flight selected, scheduled   → opens a confirm dialog. Click
  *                                     "Release & generate" → calls the
- *                                     release server action, then opens
- *                                     the PDF in a new tab.
- *
- * This is the M1 stop-gap. In M2-M3 the form-level Generate PDF will
- * swap to a `POST /ops/dispatch/packet` server action that mirrors the
- * legacy single-submit packet generation (legality + currency +
- * airworthiness + MEL + NOTAM + weather + risk validated server-side).
+ *                                     release server action, which keeps
+ *                                     the packet's weather and risk, then
+ *                                     opens the packet in a new tab.
  */
 
 const BUTTON_CLASS =
@@ -140,7 +139,7 @@ export function GeneratePdfButton({
         href={pdfUrl}
         target="_blank"
         rel="noopener noreferrer"
-        title={`Download the release PDF for ${flight.flight_number}`}
+        title={`Open the dispatch packet for ${flight.flight_number}`}
         className={`${BUTTON_CLASS} hover:bg-brand-dark`}
       >
         <PdfIcon />
@@ -149,9 +148,8 @@ export function GeneratePdfButton({
     );
   }
 
-  // Scheduled — must release first. The backend rejects PDF generation for
-  // un-released flights (services/ops/app/routes/flights.py: "flight_not
-  // _released_yet"), and release is irreversible, so prompt before doing it.
+  // Scheduled — the packet is the release record, so generating it
+  // releases the flight; release is irreversible, so prompt before doing it.
   const handleConfirm = () => {
     setError(null);
     startTransition(async () => {
@@ -181,7 +179,7 @@ export function GeneratePdfButton({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        title={`Release ${flight.flight_number} and download the dispatch PDF`}
+        title={`Release ${flight.flight_number} and open the dispatch packet`}
         className={`${BUTTON_CLASS} hover:bg-brand-dark`}
       >
         <PdfIcon />
@@ -195,13 +193,14 @@ export function GeneratePdfButton({
               Release {flight.flight_number} and generate PDF?
             </DialogTitle>
             <DialogDescription>
-              The backend only renders a dispatch PDF for released flights, so
-              clicking continue locks{" "}
+              The dispatch packet is the release record, so continuing
+              locks{" "}
               <span className="font-mono">
                 {flightStops(flight).join(" → ")}
               </span>{" "}
-              as released and then opens the PDF in a new tab. Release is
-              recorded in the audit log and cannot be undone.
+              as released, keeps the packet&rsquo;s weather and risk as they
+              are now, and opens it in a new tab. Release is recorded in the
+              audit log and cannot be undone.
             </DialogDescription>
           </DialogHeader>
 
