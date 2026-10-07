@@ -297,6 +297,25 @@ export const HELP_ENTRIES: HelpEntry[] = [
     related: ["/compliance/data-integrity"],
   },
   {
+    route: "/settings/foreflight",
+    title: "ForeFlight",
+    whatItDoes:
+      "Connects the company's ForeFlight Dispatch account, so each flight scheduled here appears in ForeFlight with its crew, passengers and cargo for the pilot to plan.",
+    howToUse: [
+      "Have your ForeFlight Dispatch administrator generate an API key (Tools → API Console → Generate API Key) and paste it here. The page checks it at once and names the account.",
+      "Read the check: aircraft ForeFlight doesn't have can't be sent, and crew without a ForeFlight user of the same email are left off their flights.",
+      "Turn sending on. Every five minutes, legs scheduled in the next 72 hours are created or brought up to date; Send now does it at once.",
+    ],
+    connectsTo:
+      "Reads the flight board, crew assignments and manifests. Bringing the pilot's finished plan back into the flight is the next step, and arrives on the dispatch page.",
+    worthKnowing: [
+      "Only the Director of Operations or an Exec Admin sees this page: the key reads and writes the company's ForeFlight account. It can be replaced but is never shown again.",
+      "A flight released here, or released in ForeFlight, is left alone from then on. A cancelled flight is taken out of ForeFlight unless ForeFlight already released it.",
+      "Peregrine's own weight and balance check stays the record; what's sent only pre-loads the pilot's weight and balance in ForeFlight.",
+    ],
+    related: ["/settings", "/dispatch"],
+  },
+  {
     route: "/settings/frat",
     title: "Flight Risk Thresholds",
     whatItDoes:
