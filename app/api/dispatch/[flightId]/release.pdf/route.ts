@@ -13,11 +13,15 @@ import { auth } from "@/auth";
 import { getMyBrand } from "@/lib/api/auth";
 import { packetWeatherFor } from "@/lib/api/dispatch-risk";
 
-// Gathering the weather and charts can take a few seconds on a cold cache.
-export const maxDuration = 30;
+// The weather, the charts (about 270 KB each) and the PDF itself cross to
+// the API and back: on the demo's tunnel at about 75 KB/s that is tens of
+// seconds (7 Oct).
+export const maxDuration = 60;
 
 const CHARTS = ["icing", "turbulence"] as const;
-const CHART_TIMEOUT_MS = 8000;
+// 8 s lost both charts on 7 Oct, when the demo's tunnel took 3-4 s per
+// chart on its own and more with the weather fetched alongside.
+const CHART_TIMEOUT_MS = 20000;
 const LOGO_TIMEOUT_MS = 5000;
 const LOGO_MAX_BYTES = 1_500_000;
 
