@@ -101,6 +101,25 @@ describe("ForeFlightSettings (#54)", () => {
     expect((await screen.findByRole("alert")).textContent).toBe("Save the API key first.");
   });
 
+  it("says when the saved key's last check failed, once", async () => {
+    actions.checkForeFlightAction.mockResolvedValue({
+      ok: true,
+      value: { error: "ForeFlight rejected the API key", account_name: null, aircraft: 0, crew: 0, tails_missing: [], crew_missing: [] },
+    });
+    render(
+      <ForeFlightSettings
+        connection={{ ...CONNECTED, account_name: null, last_error: "ForeFlight rejected the API key" }}
+      />,
+    );
+    expect(screen.getByText("Key saved, but the last check failed")).toBeTruthy();
+    expect(screen.getAllByRole("alert").map((a) => a.textContent)).toEqual(["ForeFlight rejected the API key"]);
+    fireEvent.click(screen.getByRole("button", { name: "Check connection" }));
+    await waitFor(() => expect(actions.checkForeFlightAction).toHaveBeenCalled());
+    await waitFor(() =>
+      expect(screen.getAllByRole("alert").map((a) => a.textContent)).toEqual(["ForeFlight rejected the API key"]),
+    );
+  });
+
   it("asks before disconnecting", async () => {
     actions.disconnectForeFlightAction.mockResolvedValue({ ok: true, value: null });
     render(<ForeFlightSettings connection={CONNECTED} />);

@@ -140,9 +140,11 @@ export function ForeFlightSettings({ connection }: { connection: ForeFlightConne
 
   const status = !connection.has_key
     ? "Not connected"
-    : connection.account_name
-      ? `Connected to ${connection.account_name}`
-      : "Key saved, not checked yet";
+    : connection.last_error
+      ? "Key saved, but the last check failed"
+      : connection.account_name
+        ? `Connected to ${connection.account_name}`
+        : "Key saved, not checked yet";
   const legs = connection.legs;
 
   return (
@@ -160,7 +162,7 @@ export function ForeFlightSettings({ connection }: { connection: ForeFlightConne
           <span
             className={
               "mr-2 rounded px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-[0.06em] " +
-              (connection.has_key && connection.account_name
+              (connection.has_key && connection.account_name && !connection.last_error
                 ? "bg-status-green/15 text-status-green"
                 : "bg-muted text-muted-foreground")
             }
@@ -172,7 +174,8 @@ export function ForeFlightSettings({ connection }: { connection: ForeFlightConne
             <span className="text-muted-foreground"> · checked {when(connection.checked_at)}</span>
           )}
         </p>
-        {connection.last_error && <Alert>{connection.last_error}</Alert>}
+        {/* A check just run shows its own outcome below. */}
+        {connection.last_error && !check && <Alert>{connection.last_error}</Alert>}
 
         <form
           className="mt-3 flex flex-wrap items-center gap-2"
