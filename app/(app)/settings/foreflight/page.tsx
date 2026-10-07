@@ -18,6 +18,8 @@ import { ForeFlightSettings } from "./foreflight-settings";
  */
 
 export const dynamic = "force-dynamic";
+// Send now waits for every leg in the next 72 hours to reach ForeFlight.
+export const maxDuration = 60;
 
 export default async function ForeFlightSettingsPage() {
   const session = await auth();
