@@ -1,11 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const { auth, packetWeatherFor } = vi.hoisted(() => ({
+const { auth, packetWeatherFor, getMyBrand } = vi.hoisted(() => ({
   auth: vi.fn(),
   packetWeatherFor: vi.fn(),
+  getMyBrand: vi.fn(),
 }));
 vi.mock("@/auth", () => ({ auth }));
 vi.mock("@/lib/api/dispatch-risk", () => ({ packetWeatherFor }));
+vi.mock("@/lib/api/auth", () => ({ getMyBrand }));
 
 import { GET } from "./route";
 
@@ -22,8 +24,13 @@ const WEATHER = {
 };
 const fetchMock = vi.fn();
 
-function backend(charts: Record<string, number>) {
+const LOGO = "https://cdn.example/logo.png";
+
+function backend(charts: Record<string, number>, logoType = "image/png") {
   fetchMock.mockImplementation(async (url: string) => {
+    if (url === LOGO) {
+      return new Response(PNG, { status: 200, headers: { "Content-Type": logoType } });
+    }
     const name = url.match(/aawu-charts\/(\w+)$/)?.[1];
     if (name) {
       return charts[name] === 200
@@ -53,6 +60,7 @@ beforeEach(() => {
   vi.stubGlobal("fetch", fetchMock);
   auth.mockResolvedValue({ access_token: "tok" });
   packetWeatherFor.mockResolvedValue(WEATHER);
+  getMyBrand.mockResolvedValue({ name: "Demo Air", logo_url: LOGO });
 });
 
 afterEach(() => {
@@ -77,15 +85,24 @@ describe("GET /api/dispatch/[flightId]/release.pdf", () => {
     expect(init.method).toBe("POST");
     expect(init.headers).toMatchObject({ Authorization: "Bearer tok" });
     const png = Buffer.from(PNG).toString("base64");
-    expect(body).toEqual({ charts: { icing: png, turbulence: png }, weather: WEATHER });
+    // The company logo the original prints at the top (#53).
+    expect(body).toEqual({ charts: { icing: png, turbulence: png }, logo: png, weather: WEATHER });
     expect(packetWeatherFor).toHaveBeenCalledWith("f-1");
   });
 
   it("leaves out what it couldn't fetch, for the packet to print as unavailable", async () => {
-    backend({ icing: 502, turbulence: 200 });
+    backend({ icing: 502, turbulence: 200 }, "text/html");
     packetWeatherFor.mockResolvedValue(null);
     expect((await print()).status).toBe(200);
     expect(opsCall().body).toEqual({ charts: { turbulence: Buffer.from(PNG).toString("base64") } });
+  });
+
+  it("only fetches a logo from an https address", async () => {
+    backend({ icing: 200, turbulence: 200 });
+    getMyBrand.mockResolvedValue({ name: "Demo Air", logo_url: "http://cdn.example/logo.png" });
+    await print();
+    expect(opsCall().body.logo).toBeUndefined();
+    expect(fetchMock.mock.calls.some(([url]) => String(url).includes("cdn.example"))).toBe(false);
   });
 
   it("passes a refusal on, and asks for a login first", async () => {
