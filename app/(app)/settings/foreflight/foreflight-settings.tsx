@@ -105,7 +105,7 @@ function FetchResult({ fetched }: { fetched: ForeFlightFetch }) {
   const parts = [
     [fetched.linked, "on legs sent from here"],
     [fetched.matched, "matched to a leg"],
-    [fetched.waiting, "waiting for a dispatcher"],
+    [fetched.waiting, "waiting to be placed"],
     // Plans a dispatcher set aside stay set aside.
     [fetched.fetched - fetched.linked - fetched.matched - fetched.waiting, "set aside earlier"],
     [fetched.failed, "couldn't be read"],
@@ -126,7 +126,7 @@ export function ForeFlightSettings({
   canReview = false,
 }: {
   connection: ForeFlightConnection;
-  /** The viewer may place waiting plans (dispatch), so gets the link. */
+  /** The viewer may place waiting plans (PLAN_REVIEWERS), so gets the link. */
   canReview?: boolean;
 }) {
   const [key, setKey] = useState("");
@@ -323,7 +323,8 @@ export function ForeFlightSettings({
           ForeFlight&rsquo;s weight and balance. A leg sent from here is found by its link; a
           pilot&rsquo;s own flight by its tail, airports and time. The plan shows on the flight&rsquo;s
           dispatch page beside Peregrine&rsquo;s weight and balance check, which stays the record. A
-          plan no single leg fits waits for a dispatcher to place it. Runs every five minutes once on.
+          plan no single leg fits waits for dispatch or the DO to place it. Runs every five minutes once
+          on.
         </p>
         <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
           <span
@@ -349,7 +350,7 @@ export function ForeFlightSettings({
           <span className="text-muted-foreground">Last fetched {when(connection.last_fetch_at)}</span>
           {connection.plans_waiting > 0 && (
             <span>
-              {`· ${connection.plans_waiting} ${connection.plans_waiting === 1 ? "plan" : "plans"} waiting for a dispatcher`}
+              {`· ${connection.plans_waiting} ${connection.plans_waiting === 1 ? "plan" : "plans"} waiting to be placed`}
               {canReview && (
                 <>
                   {" "}

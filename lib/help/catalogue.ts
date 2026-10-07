@@ -308,7 +308,7 @@ export const HELP_ENTRIES: HelpEntry[] = [
       "Turn bringing plans back on. Every five minutes, the flights pilots planned or changed in ForeFlight come back with their route, fuel, times and weight and balance; Fetch now does it at once.",
     ],
     connectsTo:
-      "Reads the flight board, crew assignments and manifests. Plans that come back show on each flight's dispatch page; plans no single leg fits wait on the ForeFlight plans page for a dispatcher.",
+      "Reads the flight board, crew assignments and manifests. Plans that come back show on each flight's dispatch page; plans no single leg fits wait on the ForeFlight plans page.",
     worthKnowing: [
       "Only the Director of Operations or an Exec Admin sees this page: the key reads and writes the company's ForeFlight account. It can be replaced but is never shown again.",
       "A flight released here, or released in ForeFlight, is left alone from then on. A cancelled flight is taken out of ForeFlight unless ForeFlight already released it.",
@@ -331,7 +331,7 @@ export const HELP_ENTRIES: HelpEntry[] = [
     worthKnowing: [
       "A plan for a leg sent from here finds its leg by itself, and so does a pilot's own plan when exactly one leg has its tail and airports within three hours of its time.",
       "Either decision stands when ForeFlight sends the plan again.",
-      "Placing plans is a dispatcher's or an Exec Admin's job, the same people who release flights.",
+      "A dispatcher, the Director of Operations or an Exec Admin places plans.",
     ],
     related: ["/settings/foreflight", "/dispatch"],
   },

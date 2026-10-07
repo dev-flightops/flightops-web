@@ -160,6 +160,10 @@ export const INTEGRATION_ADMINS = roleGate("director_of_operations", "exec_admin
  *  `DispatcherClaims` on both. */
 export const DISPATCH_WRITERS = roleGate("dispatcher", "exec_admin");
 
+/** Put a plan brought back from ForeFlight on a leg, or set it aside
+ *  (#55): dispatch, and the DO whose connection brings the plans in. */
+export const PLAN_REVIEWERS = roleGate("dispatcher", "director_of_operations", "exec_admin");
+
 /** Correct another pilot's flight log (29 Sep). A draft is its filing
  *  pilot's; legacy elog's ADMIN_ROLES could save anyone's. */
 export const FLIGHT_LOG_ADMINS = roleGate(

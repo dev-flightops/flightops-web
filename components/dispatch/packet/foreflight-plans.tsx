@@ -204,7 +204,9 @@ function PlanCard({ plan, disagrees }: { plan: ExternalPlan; disagrees: boolean 
             {label}
           </a>
         ))}
-        <span className="text-muted-foreground">{`Fetched ${zulu(plan.fetched_at)}`}</span>
+        <span className="text-muted-foreground">
+          {`Fetched ${zulu(plan.fetched_at)}${p.account ? ` from ${p.account}` : ""}`}
+        </span>
       </p>
     </article>
   );
@@ -236,7 +238,7 @@ export function ForeFlightPlans({ data }: { data: FlightPlans }) {
 }
 
 /**
- * ForeFlight plans no single leg fits, waiting for a dispatcher (#55).
+ * ForeFlight plans no single leg fits, waiting to be placed (#55).
  * Above the packet like the bookings awaiting a flight, and amber for
  * the same reason: behind, not blocked. Nothing when none wait.
  */

@@ -5,6 +5,7 @@ import {
   DISPATCH_WRITERS,
   hasAnyRole,
   OVERRIDE_AUTHORITY,
+  PLAN_REVIEWERS,
 } from "@/lib/roles";
 import { DispatchComplianceGate } from "@/components/dispatch/packet/dispatch-compliance-gate";
 import { parseAckedMelIds } from "@/components/dispatch/packet/mel-acks";
@@ -220,9 +221,9 @@ export default async function DispatchPage({
         compliance: await loadPicCompliance(pilotId, "sic", selectedId ?? null),
       })),
     ),
-    // ForeFlight plans no single leg fits (#55), for dispatch to place.
-    // Soft-fail: the banner is a pointer, the queue page is the work.
-    hasAnyRole(viewerRoles, DISPATCH_WRITERS)
+    // ForeFlight plans no single leg fits (#55), for dispatch or the DO
+    // to place. Soft-fail: the banner is a pointer, the queue is the work.
+    hasAnyRole(viewerRoles, PLAN_REVIEWERS)
       ? getPlansWaiting()
           .then((r) => r.waiting)
           .catch(() => 0)

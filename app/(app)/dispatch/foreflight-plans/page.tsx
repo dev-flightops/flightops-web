@@ -3,7 +3,7 @@ import Link from "next/link";
 import { auth } from "@/auth";
 import { ApiError } from "@/lib/api/client";
 import { getPlanQueue, type QueuedPlan } from "@/lib/api/integrations";
-import { DISPATCH_WRITERS, hasAnyRole } from "@/lib/roles";
+import { PLAN_REVIEWERS, hasAnyRole } from "@/lib/roles";
 
 import { PlanQueue } from "./plan-queue";
 
@@ -12,14 +12,14 @@ import { PlanQueue } from "./plan-queue";
  * single leg fits (#55). A plan for a leg we sent comes back on it, and
  * a pilot's own plan with one leg of the same tail and airports near its
  * time lands there by itself; the rest wait here. Placing them is
- * dispatch's: ops' DispatcherClaims, mirrored by DISPATCH_WRITERS.
+ * dispatch's and the DO's: PLAN_REVIEWERS, as ops has it.
  */
 
 export const dynamic = "force-dynamic";
 
 export default async function ForeFlightPlansPage() {
   const session = await auth();
-  const canPlace = hasAnyRole(session?.roles ?? [], DISPATCH_WRITERS);
+  const canPlace = hasAnyRole(session?.roles ?? [], PLAN_REVIEWERS);
   let plans: QueuedPlan[] | null = null;
   let loadError: string | null = null;
   if (canPlace) {
@@ -52,7 +52,7 @@ export default async function ForeFlightPlansPage() {
       </header>
       {!canPlace ? (
         <p className="rounded-md border border-border bg-muted/60 px-3 py-3 text-xs text-muted-foreground">
-          A dispatcher or an Exec Admin places ForeFlight plans.
+          A dispatcher, the Director of Operations or an Exec Admin places ForeFlight plans.
         </p>
       ) : loadError || !plans ? (
         <p

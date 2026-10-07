@@ -17,7 +17,10 @@ const PATH = "/dispatch/foreflight-plans";
 function failure(err: unknown): { ok: false; error: string } {
   if (err instanceof ApiError) {
     if (err.status === 403) {
-      return { ok: false, error: "Only a dispatcher or an Exec Admin places ForeFlight plans." };
+      return {
+        ok: false,
+        error: "Only a dispatcher, the Director of Operations or an Exec Admin places ForeFlight plans.",
+      };
     }
     if (err.message.includes("leg_not_on_flight")) {
       return { ok: false, error: "That leg isn't on the flight any more. Refresh and choose again." };

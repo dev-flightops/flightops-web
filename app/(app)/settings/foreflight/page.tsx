@@ -3,7 +3,7 @@ import Link from "next/link";
 import { auth } from "@/auth";
 import { ApiError } from "@/lib/api/client";
 import { getForeFlight, type ForeFlightConnection } from "@/lib/api/integrations";
-import { DISPATCH_WRITERS, INTEGRATION_ADMINS, hasAnyRole } from "@/lib/roles";
+import { INTEGRATION_ADMINS, PLAN_REVIEWERS, hasAnyRole } from "@/lib/roles";
 
 import { ForeFlightSettings } from "./foreflight-settings";
 
@@ -15,8 +15,8 @@ import { ForeFlightSettings } from "./foreflight-settings";
  * the flights (#55). The key reads and writes the company's ForeFlight
  * account, so only the Director of Operations or an Exec Admin
  * (INTEGRATION_ADMINS) sees or changes any of this. Placing a plan
- * that waits is dispatch's (DISPATCH_WRITERS), so only they get the
- * queue's link.
+ * that waits is PLAN_REVIEWERS': dispatch, the DO and Exec Admins, who
+ * get the queue's link.
  */
 
 export const dynamic = "force-dynamic";
@@ -26,7 +26,7 @@ export const maxDuration = 60;
 export default async function ForeFlightSettingsPage() {
   const session = await auth();
   const canChange = hasAnyRole(session?.roles ?? [], INTEGRATION_ADMINS);
-  const canReview = hasAnyRole(session?.roles ?? [], DISPATCH_WRITERS);
+  const canReview = hasAnyRole(session?.roles ?? [], PLAN_REVIEWERS);
   let connection: ForeFlightConnection | null = null;
   let loadError: string | null = null;
   if (canChange) {

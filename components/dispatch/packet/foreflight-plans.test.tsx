@@ -39,7 +39,7 @@ const SENT: ExternalPlan = {
   provider: "foreflight",
   leg_sequence: 1,
   match: "linked",
-  plan: PLAN,
+  plan: { ...PLAN, account: "Demo Air Ops" },
   fetched_at: "2026-10-07T10:05:00Z",
 };
 
@@ -97,6 +97,7 @@ describe("ForeFlightPlans (#55)", () => {
     expect(plan.getByRole("link", { name: "W&B report" }).getAttribute("href")).toBe(
       `/api/foreflight/plans/${SENT.id}/documents/wb`,
     );
+    expect(plan.getByText("Fetched 2026-10-07 10:05Z from Demo Air Ops")).toBeTruthy();
     expect(screen.queryByRole("alert")).toBeNull();
   });
 

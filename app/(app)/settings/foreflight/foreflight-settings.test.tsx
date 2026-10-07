@@ -139,7 +139,7 @@ describe("ForeFlightSettings (#54)", () => {
     await waitFor(() => expect(actions.disconnectForeFlightAction).toHaveBeenCalled());
   });
 
-  it("brings plans back: the switch, a fetch now, and what waits for a dispatcher", async () => {
+  it("brings plans back: the switch, a fetch now, and what waits to be placed", async () => {
     actions.setForeFlightPlansAction.mockResolvedValue({ ok: true, value: null });
     actions.fetchFromForeFlightAction.mockResolvedValue({
       ok: true,
@@ -148,8 +148,8 @@ describe("ForeFlightSettings (#54)", () => {
     render(<ForeFlightSettings connection={{ ...CONNECTED, last_fetch_at: "2026-10-07T08:10:00Z", plans_waiting: 2 }} />);
     expect(plans().getByText("Off")).toBeTruthy();
     expect(plans().getByText("Last fetched 2026-10-07 08:10Z")).toBeTruthy();
-    // The count is for everyone who sees the page; the link is for dispatch.
-    expect(plans().getByText(/2 plans waiting for a dispatcher/)).toBeTruthy();
+    // The count is for everyone who sees the page; the link for those who place plans.
+    expect(plans().getByText(/2 plans waiting to be placed/)).toBeTruthy();
     expect(plans().queryByRole("link", { name: "Review" })).toBeNull();
 
     fireEvent.click(plans().getByRole("button", { name: "Turn on" }));
@@ -158,19 +158,19 @@ describe("ForeFlightSettings (#54)", () => {
     // One plan was set aside earlier: 6 - 3 - 1 - 1.
     expect(
       await plans().findByText(
-        "Plans: 3 on legs sent from here, 1 matched to a leg, 1 waiting for a dispatcher, 1 set aside earlier.",
+        "Plans: 3 on legs sent from here, 1 matched to a leg, 1 waiting to be placed, 1 set aside earlier.",
       ),
     ).toBeTruthy();
   });
 
-  it("gives a dispatcher the queue's link, and says when nothing changed", async () => {
+  it("gives those who place plans the queue's link, and says when nothing changed", async () => {
     actions.fetchFromForeFlightAction.mockResolvedValue({
       ok: true,
       value: { error: null, fetched: 0, linked: 0, matched: 0, waiting: 0, failed: 0 },
     });
     render(<ForeFlightSettings connection={{ ...CONNECTED, bring_plans: true, plans_waiting: 1 }} canReview />);
     expect(plans().getByText("On")).toBeTruthy();
-    expect(plans().getByText(/1 plan waiting for a dispatcher/)).toBeTruthy();
+    expect(plans().getByText(/1 plan waiting to be placed/)).toBeTruthy();
     expect(plans().getByRole("link", { name: "Review" }).getAttribute("href")).toBe("/dispatch/foreflight-plans");
     fireEvent.click(plans().getByRole("button", { name: "Fetch now" }));
     expect(await plans().findByText("Nothing changed in ForeFlight since the last fetch.")).toBeTruthy();

@@ -118,6 +118,8 @@ export interface ToolPlan {
   filing_status: string | null;
   crew: { position: string | null; id: string | null }[];
   warnings: string[];
+  /** The tool's name for the account the plan came from, when known. */
+  account?: string | null;
 }
 
 export interface ExternalPlan {
