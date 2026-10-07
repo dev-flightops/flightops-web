@@ -300,20 +300,40 @@ export const HELP_ENTRIES: HelpEntry[] = [
     route: "/settings/foreflight",
     title: "ForeFlight",
     whatItDoes:
-      "Connects the company's ForeFlight Dispatch account, so each flight scheduled here appears in ForeFlight with its crew, passengers and cargo for the pilot to plan.",
+      "Connects the company's ForeFlight Dispatch account, so each flight scheduled here appears in ForeFlight with its crew, passengers and cargo for the pilot to plan, and the pilot's plan comes back onto the flight.",
     howToUse: [
       "Have your ForeFlight Dispatch administrator generate an API key (Tools → API Console → Generate API Key) and paste it here. The page checks it at once and names the account.",
       "Read the check: aircraft ForeFlight doesn't have can't be sent, and crew without a ForeFlight user of the same email are left off their flights.",
       "Turn sending on. Every five minutes, legs scheduled in the next 72 hours are created or brought up to date; Send now does it at once.",
+      "Turn bringing plans back on. Every five minutes, the flights pilots planned or changed in ForeFlight come back with their route, fuel, times and weight and balance; Fetch now does it at once.",
     ],
     connectsTo:
-      "Reads the flight board, crew assignments and manifests. Bringing the pilot's finished plan back into the flight is the next step, and arrives on the dispatch page.",
+      "Reads the flight board, crew assignments and manifests. Plans that come back show on each flight's dispatch page; plans no single leg fits wait on the ForeFlight plans page for a dispatcher.",
     worthKnowing: [
       "Only the Director of Operations or an Exec Admin sees this page: the key reads and writes the company's ForeFlight account. It can be replaced but is never shown again.",
       "A flight released here, or released in ForeFlight, is left alone from then on. A cancelled flight is taken out of ForeFlight unless ForeFlight already released it.",
-      "Peregrine's own weight and balance check stays the record; what's sent only pre-loads the pilot's weight and balance in ForeFlight.",
+      "Peregrine's own weight and balance check stays the record. What's sent only pre-loads the pilot's weight and balance in ForeFlight, and ForeFlight's verdict that comes back is shown beside ours, never used in its place.",
     ],
-    related: ["/settings", "/dispatch"],
+    related: ["/settings", "/dispatch", "/dispatch/foreflight-plans"],
+  },
+  {
+    route: "/dispatch/foreflight-plans",
+    title: "ForeFlight plans waiting",
+    whatItDoes:
+      "Lists the plans pilots made in ForeFlight that no single leg here fits, so a dispatcher can put each on its leg or set it aside.",
+    howToUse: [
+      "Read why each plan waits: no flight on its aircraft near its time, or more than one leg that fits.",
+      "Choose the leg from the aircraft's legs within a day either side, and put the plan on it. It then shows on that flight's dispatch page.",
+      "Set aside a plan that belongs to no flight here, such as a training or positioning flight planned only in ForeFlight.",
+    ],
+    connectsTo:
+      "Fed by Settings → ForeFlight once bringing plans back is on. The dispatch page shows a banner while any plan waits.",
+    worthKnowing: [
+      "A plan for a leg sent from here finds its leg by itself, and so does a pilot's own plan when exactly one leg has its tail and airports within three hours of its time.",
+      "Either decision stands when ForeFlight sends the plan again.",
+      "Placing plans is a dispatcher's or an Exec Admin's job, the same people who release flights.",
+    ],
+    related: ["/settings/foreflight", "/dispatch"],
   },
   {
     route: "/settings/frat",

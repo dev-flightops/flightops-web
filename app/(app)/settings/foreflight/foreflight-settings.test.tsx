@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const actions = vi.hoisted(() => ({
@@ -7,6 +7,8 @@ const actions = vi.hoisted(() => ({
   checkForeFlightAction: vi.fn(),
   sendToForeFlightAction: vi.fn(),
   disconnectForeFlightAction: vi.fn(),
+  setForeFlightPlansAction: vi.fn(),
+  fetchFromForeFlightAction: vi.fn(),
 }));
 vi.mock("./actions", () => actions);
 
@@ -14,11 +16,14 @@ import type { ForeFlightConnection } from "@/lib/api/integrations";
 
 import { ForeFlightSettings } from "./foreflight-settings";
 
-/** The company's ForeFlight connection (#54). */
+/** The company's ForeFlight connection (#54), and plans brought back (#55). */
 
 const NOT_CONNECTED: ForeFlightConnection = {
   has_key: false,
   send_flights: false,
+  bring_plans: false,
+  last_fetch_at: null,
+  plans_waiting: 0,
   account_name: null,
   checked_at: null,
   last_sync_at: null,
@@ -53,6 +58,9 @@ beforeEach(() => {
   for (const fn of Object.values(actions)) fn.mockReset();
 });
 
+const sending = () => within(screen.getByRole("region", { name: "Send scheduled flights to ForeFlight" }));
+const plans = () => within(screen.getByRole("region", { name: "Bring pilots’ plans back" }));
+
 describe("ForeFlightSettings (#54)", () => {
   it("takes a key, checks it at once and names what won't match", async () => {
     actions.saveForeFlightKeyAction.mockResolvedValue({
@@ -69,8 +77,10 @@ describe("ForeFlightSettings (#54)", () => {
     render(<ForeFlightSettings connection={NOT_CONNECTED} />);
     expect(screen.getByText("Not connected")).toBeTruthy();
     // Nothing to send with until there's a key.
-    expect((screen.getByRole("button", { name: "Turn on" }) as HTMLButtonElement).disabled).toBe(true);
-    expect((screen.getByRole("button", { name: "Send now" }) as HTMLButtonElement).disabled).toBe(true);
+    expect((sending().getByRole("button", { name: "Turn on" }) as HTMLButtonElement).disabled).toBe(true);
+    expect((sending().getByRole("button", { name: "Send now" }) as HTMLButtonElement).disabled).toBe(true);
+    expect((plans().getByRole("button", { name: "Turn on" }) as HTMLButtonElement).disabled).toBe(true);
+    expect((plans().getByRole("button", { name: "Fetch now" }) as HTMLButtonElement).disabled).toBe(true);
 
     fireEvent.change(screen.getByLabelText("ForeFlight API key"), { target: { value: "ff-key-0123456789" } });
     fireEvent.click(screen.getByRole("button", { name: "Save key" }));
@@ -96,7 +106,7 @@ describe("ForeFlightSettings (#54)", () => {
     expect(await screen.findByText("Legs: 2 created, 1 updated, 3 unchanged.")).toBeTruthy();
 
     actions.setForeFlightSendingAction.mockResolvedValue({ ok: false, error: "Save the API key first." });
-    fireEvent.click(screen.getByRole("button", { name: "Turn off" }));
+    fireEvent.click(sending().getByRole("button", { name: "Turn off" }));
     await waitFor(() => expect(actions.setForeFlightSendingAction).toHaveBeenCalledWith(false));
     expect((await screen.findByRole("alert")).textContent).toBe("Save the API key first.");
   });
@@ -127,5 +137,52 @@ describe("ForeFlightSettings (#54)", () => {
     expect(screen.getByText(/Flights already sent stay in ForeFlight/)).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Disconnect" }));
     await waitFor(() => expect(actions.disconnectForeFlightAction).toHaveBeenCalled());
+  });
+
+  it("brings plans back: the switch, a fetch now, and what waits for a dispatcher", async () => {
+    actions.setForeFlightPlansAction.mockResolvedValue({ ok: true, value: null });
+    actions.fetchFromForeFlightAction.mockResolvedValue({
+      ok: true,
+      value: { error: null, fetched: 6, linked: 3, matched: 1, waiting: 1, failed: 0 },
+    });
+    render(<ForeFlightSettings connection={{ ...CONNECTED, last_fetch_at: "2026-10-07T08:10:00Z", plans_waiting: 2 }} />);
+    expect(plans().getByText("Off")).toBeTruthy();
+    expect(plans().getByText("Last fetched 2026-10-07 08:10Z")).toBeTruthy();
+    // The count is for everyone who sees the page; the link is for dispatch.
+    expect(plans().getByText(/2 plans waiting for a dispatcher/)).toBeTruthy();
+    expect(plans().queryByRole("link", { name: "Review" })).toBeNull();
+
+    fireEvent.click(plans().getByRole("button", { name: "Turn on" }));
+    await waitFor(() => expect(actions.setForeFlightPlansAction).toHaveBeenCalledWith(true));
+    fireEvent.click(plans().getByRole("button", { name: "Fetch now" }));
+    // One plan was set aside earlier: 6 - 3 - 1 - 1.
+    expect(
+      await plans().findByText(
+        "Plans: 3 on legs sent from here, 1 matched to a leg, 1 waiting for a dispatcher, 1 set aside earlier.",
+      ),
+    ).toBeTruthy();
+  });
+
+  it("gives a dispatcher the queue's link, and says when nothing changed", async () => {
+    actions.fetchFromForeFlightAction.mockResolvedValue({
+      ok: true,
+      value: { error: null, fetched: 0, linked: 0, matched: 0, waiting: 0, failed: 0 },
+    });
+    render(<ForeFlightSettings connection={{ ...CONNECTED, bring_plans: true, plans_waiting: 1 }} canReview />);
+    expect(plans().getByText("On")).toBeTruthy();
+    expect(plans().getByText(/1 plan waiting for a dispatcher/)).toBeTruthy();
+    expect(plans().getByRole("link", { name: "Review" }).getAttribute("href")).toBe("/dispatch/foreflight-plans");
+    fireEvent.click(plans().getByRole("button", { name: "Fetch now" }));
+    expect(await plans().findByText("Nothing changed in ForeFlight since the last fetch.")).toBeTruthy();
+  });
+
+  it("shows a fetch ForeFlight refused", async () => {
+    actions.fetchFromForeFlightAction.mockResolvedValue({
+      ok: true,
+      value: { error: "ForeFlight rejected the API key", fetched: 0, linked: 0, matched: 0, waiting: 0, failed: 0 },
+    });
+    render(<ForeFlightSettings connection={{ ...CONNECTED, bring_plans: true }} />);
+    fireEvent.click(plans().getByRole("button", { name: "Fetch now" }));
+    expect((await plans().findByRole("alert")).textContent).toBe("ForeFlight rejected the API key");
   });
 });

@@ -6,15 +6,17 @@ import { ApiError } from "@/lib/api/client";
 import {
   checkForeFlight,
   disconnectForeFlight,
+  fetchFromForeFlight,
   sendToForeFlight,
   updateForeFlight,
   type ForeFlightCheck,
+  type ForeFlightFetch,
   type ForeFlightSend,
 } from "@/lib/api/integrations";
 
 /**
- * /settings/foreflight server actions (#54). Each returns an outcome for
- * the card to show rather than throwing to the error page.
+ * /settings/foreflight server actions (#54, #55). Each returns an outcome
+ * for the card to show rather than throwing to the error page.
  */
 
 export type Outcome<T = null> = { ok: true; value: T } | { ok: false; error: string };
@@ -60,6 +62,27 @@ export async function setForeFlightSendingAction(on: boolean): Promise<Outcome> 
     await updateForeFlight({ send_flights: on });
     revalidatePath(PATH);
     return { ok: true, value: null };
+  } catch (err) {
+    return failure(err);
+  }
+}
+
+/** Bring pilots' plans back every five minutes (#55), or stop. */
+export async function setForeFlightPlansAction(on: boolean): Promise<Outcome> {
+  try {
+    await updateForeFlight({ bring_plans: on });
+    revalidatePath(PATH);
+    return { ok: true, value: null };
+  } catch (err) {
+    return failure(err);
+  }
+}
+
+export async function fetchFromForeFlightAction(): Promise<Outcome<ForeFlightFetch>> {
+  try {
+    const fetched = await fetchFromForeFlight();
+    revalidatePath(PATH);
+    return { ok: true, value: fetched };
   } catch (err) {
     return failure(err);
   }
