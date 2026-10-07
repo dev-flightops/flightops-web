@@ -12,6 +12,10 @@
  * exactly once — in the create response. There is no "show key again"
  * endpoint and there cannot be one; the UI has to surface it at that
  * moment or it is gone.
+ *
+ * Scopes (#56): every key reads flights, aircraft and bookings. The
+ * `crew` scope, chosen at creation only, adds crew on flights and each
+ * pilot's duty and flight time.
  */
 
 import { apiFetch } from "./client";
@@ -26,7 +30,11 @@ export interface ApiKeyRow {
   expires_at: string | null;
   revoked_at: string | null;
   is_active: boolean;
+  /** Reads beyond flights, aircraft and bookings: "crew". */
+  scopes: ApiKeyScope[];
 }
+
+export type ApiKeyScope = "crew";
 
 export interface ApiKeyListResponse {
   items: ApiKeyRow[];
@@ -45,6 +53,7 @@ export async function listApiKeys(): Promise<ApiKeyListResponse> {
 export async function createApiKey(input: {
   name: string;
   expires_at?: string | null;
+  scopes?: ApiKeyScope[];
 }): Promise<ApiKeyCreateResponse> {
   return apiFetch<ApiKeyCreateResponse>("/auth/settings/api-keys", {
     method: "POST",

@@ -61,8 +61,9 @@ function Shell({ children }: { children: React.ReactNode }) {
       </h1>
       <p className="mb-6 mt-1 max-w-2xl text-sm text-muted-foreground">
         Keys authenticate partner access to the read-only Public API —
-        flights, fleet and bookings for your operation only. Each key is
-        scoped to this operator and can be revoked at any time.
+        flights, fleet and bookings for your operation only, and crew and
+        duty for a key issued with them. Each key is scoped to this
+        operator and can be revoked at any time.
       </p>
       {children}
     </div>

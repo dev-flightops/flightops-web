@@ -15,11 +15,18 @@ function key(overrides: Partial<ApiKeyRow> = {}): ApiKeyRow {
     expires_at: null,
     revoked_at: null,
     is_active: true,
+    scopes: [],
     ...overrides,
   };
 }
 
 describe("KeyTable", () => {
+  it("says what each key reads (#56)", () => {
+    render(<KeyTable keys={[key(), key({ id: "k-2", name: "Planning tool", scopes: ["crew"] })]} />);
+    expect(screen.getByText("Flights, fleet, bookings")).toBeInTheDocument();
+    expect(screen.getByText("Flights, fleet, bookings, crew and duty")).toBeInTheDocument();
+  });
+
   it("shows the name and the non-secret prefix only", () => {
     // Only a SHA-256 hash of the key is stored, so the prefix is the
     // most that can ever be displayed — there is no full value to leak.

@@ -27,6 +27,7 @@ export function KeyTable({
           <tr className="border-b border-border text-left text-[0.65rem] uppercase tracking-[0.06em] text-muted-foreground">
             <th className="px-4 py-3">Name</th>
             <th className="px-4 py-3">Key</th>
+            <th className="px-4 py-3">Reads</th>
             <th className="px-4 py-3">Created</th>
             <th className="px-4 py-3">Last used</th>
             <th className="px-4 py-3">Status</th>
@@ -37,7 +38,7 @@ export function KeyTable({
           {keys.length === 0 ? (
             <tr>
               <td
-                colSpan={6}
+                colSpan={7}
                 className="px-4 py-6 text-center text-muted-foreground"
               >
                 No API keys yet.
@@ -50,6 +51,7 @@ export function KeyTable({
                 <td className="px-4 py-3 font-mono text-xs text-muted-foreground">
                   {k.key_prefix}…
                 </td>
+                <td className="px-4 py-3 text-xs text-muted-foreground">{reads(k)}</td>
                 <td className="px-4 py-3 text-muted-foreground">
                   {formatWhen(k.created_at)}
                 </td>
@@ -97,6 +99,13 @@ export function KeyStatus({ row }: { row: ApiKeyRow }) {
   return (
     <span className={`${base} bg-status-green/15 text-status-green`}>Active</span>
   );
+}
+
+/** What the key can read: everything every key reads, and its scopes. */
+export function reads(row: ApiKeyRow): string {
+  return (row.scopes ?? []).includes("crew")
+    ? "Flights, fleet, bookings, crew and duty"
+    : "Flights, fleet, bookings";
 }
 
 export function formatWhen(iso: string): string {

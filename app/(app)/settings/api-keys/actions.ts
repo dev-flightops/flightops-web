@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 
 import { ApiError } from "@/lib/api/client";
-import { createApiKey, revokeApiKey } from "@/lib/api/api-keys";
+import { createApiKey, revokeApiKey, type ApiKeyScope } from "@/lib/api/api-keys";
 
 /** /settings/api-keys server actions. Follows the /settings/fleet
  *  action shape: a discriminated result the client renders inline
@@ -78,8 +78,12 @@ export async function issueApiKeyAction(
     expires_at = when.toISOString();
   }
 
+  // People's data (#56): crew on flights, and each pilot's duty and
+  // flight time. Off unless the operator ticks it for this key.
+  const scopes: ApiKeyScope[] = formData.get("scope_crew") === "on" ? ["crew"] : [];
+
   try {
-    const created = await createApiKey({ name, expires_at });
+    const created = await createApiKey({ name, expires_at, scopes });
     revalidatePath("/settings/api-keys");
     // The plaintext is carried back to the client because this is the
     // only moment it exists — only a hash is stored server-side.
