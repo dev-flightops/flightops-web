@@ -215,7 +215,7 @@ export default async function SettingsLandingPage() {
         <SectionCard
           icon={KeyRound}
           title="SSO & Integrations"
-          blurb="Per-tenant SSO provider config (Google / Okta / Entra ID)."
+          blurb="Sign-in providers (Google / Okta / Entra ID) and the flight-planning tools your pilots use."
           links={[
             {
               label: "SSO Providers",
@@ -224,6 +224,11 @@ export default async function SettingsLandingPage() {
                   ? "None connected"
                   : `${ssoConnected} active`,
               href: "/settings/sso",
+            },
+            {
+              label: "ForeFlight",
+              sublabel: "Send scheduled flights to Dispatch",
+              href: "/settings/foreflight",
             },
           ]}
         />

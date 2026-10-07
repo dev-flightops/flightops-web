@@ -883,6 +883,13 @@ export const DEPARTMENTS: Department[] = [
         status: "live",
         department: "settings",
       },
+      {
+        id: "settings-foreflight",
+        label: "ForeFlight",
+        href: "/settings/foreflight",
+        status: "live",
+        department: "settings",
+      },
       // M3+ — placeholders matching the legacy sub-nav order. Each
       // becomes a real link once its surface ships.
       {

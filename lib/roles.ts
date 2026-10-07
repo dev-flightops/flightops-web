@@ -152,6 +152,10 @@ export const TYPE_QUALIFICATION_ADMINS = roleGate(
  *  what every dispatcher may release: the operation's policy owners. */
 export const RELEASE_POLICY_ADMINS = roleGate("director_of_operations", "exec_admin");
 
+/** Connect the company's ForeFlight Dispatch account (#54): its API key
+ *  reads and writes the company's flights there. */
+export const INTEGRATION_ADMINS = roleGate("director_of_operations", "exec_admin");
+
 /** Releasing a flight and the dispatch risk inputs (#50): ops'
  *  `DispatcherClaims` on both. */
 export const DISPATCH_WRITERS = roleGate("dispatcher", "exec_admin");
