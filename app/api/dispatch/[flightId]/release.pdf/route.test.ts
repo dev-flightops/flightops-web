@@ -12,9 +12,9 @@ vi.mock("@/lib/api/auth", () => ({ getMyBrand }));
 import { GET } from "./route";
 
 /**
- * The dispatch packet PDF (#52): ops renders it, so this brings what only
- * the weather service fetches, the AAWU charts, and the flight's current
- * weather for a flight with no packet kept at release.
+ * The dispatch packet PDF (#52): ops renders it and fetches the AAWU
+ * charts itself (#53), so this brings only the company logo and the
+ * flight's current weather for a flight with no packet kept at release.
  */
 
 const PNG = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 1, 2, 3]);
@@ -22,24 +22,17 @@ const WEATHER = {
   stops: [{ ident: "PABE", metar: "PABE 131600Z 34009KT 10SM CLR", taf: null, pireps: "" }],
   area_forecast: null,
 };
+const LOGO = "https://cdn.example/logo.png";
 const fetchMock = vi.fn();
 
-const LOGO = "https://cdn.example/logo.png";
-
-function backend(charts: Record<string, number>, logoType = "image/png") {
+function backend(logoType = "image/png") {
   fetchMock.mockImplementation(async (url: string) => {
     if (url === LOGO) {
       return new Response(PNG, { status: 200, headers: { "Content-Type": logoType } });
     }
-    const name = url.match(/aawu-charts\/(\w+)$/)?.[1];
-    if (name) {
-      return charts[name] === 200
-        ? new Response(PNG, { status: 200, headers: { "Content-Type": "image/png" } })
-        : new Response("chart_unavailable", { status: charts[name] ?? 404 });
-    }
     return new Response("%PDF-1.4 packet", {
       status: 200,
-      headers: { "Content-Disposition": 'inline; filename="11-dispatch-packet.pdf"' },
+      headers: { "Content-Disposition": 'inline; filename="Dispatch_11_PABE_PAEM_20261006_1230.pdf"' },
     });
   });
 }
@@ -70,35 +63,35 @@ afterEach(() => {
 });
 
 describe("GET /api/dispatch/[flightId]/release.pdf", () => {
-  it("brings the charts and the weather to ops and hands back its packet", async () => {
-    backend({ icing: 200, turbulence: 200 });
+  it("brings the logo and the weather to ops and hands back its packet", async () => {
+    backend();
     const response = await print();
 
     expect(response.status).toBe(200);
     expect(response.headers.get("content-type")).toBe("application/pdf");
     expect(response.headers.get("content-disposition")).toBe(
-      'inline; filename="11-dispatch-packet.pdf"',
+      'inline; filename="Dispatch_11_PABE_PAEM_20261006_1230.pdf"',
     );
     expect(await response.text()).toBe("%PDF-1.4 packet");
     const { url, init, body } = opsCall();
     expect(url).toBe("https://gw.example/ops/flights/f-1/packet.pdf");
     expect(init.method).toBe("POST");
     expect(init.headers).toMatchObject({ Authorization: "Bearer tok" });
-    const png = Buffer.from(PNG).toString("base64");
-    // The company logo the original prints at the top (#53).
-    expect(body).toEqual({ charts: { icing: png, turbulence: png }, logo: png, weather: WEATHER });
+    expect(body).toEqual({ logo: Buffer.from(PNG).toString("base64"), weather: WEATHER });
     expect(packetWeatherFor).toHaveBeenCalledWith("f-1");
+    // ops fetches the AAWU charts itself; nothing here carries them (#53).
+    expect(fetchMock.mock.calls.some(([u]) => String(u).includes("aawu-charts"))).toBe(false);
   });
 
-  it("leaves out what it couldn't fetch, for the packet to print as unavailable", async () => {
-    backend({ icing: 502, turbulence: 200 }, "text/html");
+  it("leaves out what it couldn't get, for the packet to print without it", async () => {
+    backend("text/html");
     packetWeatherFor.mockResolvedValue(null);
     expect((await print()).status).toBe(200);
-    expect(opsCall().body).toEqual({ charts: { turbulence: Buffer.from(PNG).toString("base64") } });
+    expect(opsCall().body).toEqual({});
   });
 
   it("only fetches a logo from an https address", async () => {
-    backend({ icing: 200, turbulence: 200 });
+    backend();
     getMyBrand.mockResolvedValue({ name: "Demo Air", logo_url: "http://cdn.example/logo.png" });
     await print();
     expect(opsCall().body.logo).toBeUndefined();
