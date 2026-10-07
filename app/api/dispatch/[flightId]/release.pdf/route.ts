@@ -2,47 +2,23 @@
  * The dispatch packet PDF (#52), in the operator's layout: auth-proxying,
  * since a browser <a href> can't attach a Bearer header.
  *
- * ops renders it, but only the weather service fetches the AAWU charts,
- * so this brings them along, with the company logo the original prints
- * at the top (#53) and the flight's current weather for a flight that has
- * no packet kept at release (unreleased: printed as a draft; released
- * before packets were kept: printed as of now, and the packet says so).
+ * ops renders it and fetches the AAWU charts itself (#53). This brings
+ * the company logo the original prints at the top and the flight's
+ * current weather for a flight that has no packet kept at release
+ * (unreleased: printed as a draft; released before packets were kept:
+ * printed as of now, and the packet says so).
  */
 
 import { auth } from "@/auth";
 import { getMyBrand } from "@/lib/api/auth";
 import { packetWeatherFor } from "@/lib/api/dispatch-risk";
 
-// The weather, the charts (about 270 KB each) and the PDF itself cross to
-// the API and back: on the demo's tunnel at about 75 KB/s that is tens of
-// seconds (7 Oct).
+// The PDF (about 500 KB) crosses from the API: on the demo's tunnel, at
+// about 50 KB/s on 7 Oct, that alone is ten seconds.
 export const maxDuration = 60;
 
-const CHARTS = ["icing", "turbulence"] as const;
-// 8 s lost both charts on 7 Oct, when the demo's tunnel took 3-4 s per
-// chart on its own and more with the weather fetched alongside.
-const CHART_TIMEOUT_MS = 20000;
 const LOGO_TIMEOUT_MS = 5000;
 const LOGO_MAX_BYTES = 1_500_000;
-
-/** An AAWU chart as base64, or null (the packet prints it as unavailable). */
-async function chart(
-  apiUrl: string,
-  headers: Record<string, string>,
-  name: (typeof CHARTS)[number],
-): Promise<string | null> {
-  try {
-    const response = await fetch(`${apiUrl}/weather/aawu-charts/${name}`, {
-      headers,
-      cache: "no-store",
-      signal: AbortSignal.timeout(CHART_TIMEOUT_MS),
-    });
-    if (!response.ok) return null;
-    return Buffer.from(await response.arrayBuffer()).toString("base64");
-  } catch {
-    return null;
-  }
-}
 
 /**
  * The company logo from Settings → Company as base64, or null: none set,
@@ -86,20 +62,12 @@ export async function GET(
   }
 
   const headers = { Authorization: `Bearer ${session.access_token}` };
-  const [weather, logoImage, ...images] = await Promise.all([
-    packetWeatherFor(flightId),
-    logo(),
-    ...CHARTS.map((name) => chart(apiUrl, headers, name)),
-  ]);
-  const charts = Object.fromEntries(
-    CHARTS.flatMap((name, i) => (images[i] ? [[name, images[i]]] : [])),
-  );
+  const [weather, logoImage] = await Promise.all([packetWeatherFor(flightId), logo()]);
 
   const response = await fetch(`${apiUrl}/ops/flights/${flightId}/packet.pdf`, {
     method: "POST",
     headers: { ...headers, "Content-Type": "application/json" },
     body: JSON.stringify({
-      charts,
       ...(logoImage && { logo: logoImage }),
       ...(weather && { weather }),
     }),
