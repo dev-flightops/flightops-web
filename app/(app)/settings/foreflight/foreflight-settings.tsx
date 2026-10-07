@@ -1,22 +1,30 @@
 "use client";
 
+import Link from "next/link";
 import { useState, useTransition } from "react";
 
 import { Spinner } from "@/components/ui/spinner";
-import type { ForeFlightCheck, ForeFlightConnection, ForeFlightSend } from "@/lib/api/integrations";
+import type {
+  ForeFlightCheck,
+  ForeFlightConnection,
+  ForeFlightFetch,
+  ForeFlightSend,
+} from "@/lib/api/integrations";
 
 import {
   checkForeFlightAction,
   disconnectForeFlightAction,
+  fetchFromForeFlightAction,
   saveForeFlightKeyAction,
   sendToForeFlightAction,
+  setForeFlightPlansAction,
   setForeFlightSendingAction,
 } from "./actions";
 
 /**
  * The company's ForeFlight connection (#54): the key, a check of what
  * will and won't match, sending scheduled flights, and the legs that
- * didn't go cleanly. Bringing pilots' plans back follows in #55.
+ * didn't go cleanly; and bringing pilots' plans back (#55).
  */
 
 const BUTTON =
@@ -92,10 +100,39 @@ function SendResult({ sent }: { sent: ForeFlightSend }) {
   );
 }
 
-export function ForeFlightSettings({ connection }: { connection: ForeFlightConnection }) {
+function FetchResult({ fetched }: { fetched: ForeFlightFetch }) {
+  if (fetched.error) return <Alert>{fetched.error}</Alert>;
+  const parts = [
+    [fetched.linked, "on legs sent from here"],
+    [fetched.matched, "matched to a leg"],
+    [fetched.waiting, "waiting to be placed"],
+    // Plans a dispatcher set aside stay set aside.
+    [fetched.fetched - fetched.linked - fetched.matched - fetched.waiting, "set aside earlier"],
+    [fetched.failed, "couldn't be read"],
+  ].filter(([n]) => (n as number) > 0);
+  return (
+    <div className="mt-3 rounded-md border border-border bg-muted/60 px-3 py-2 text-xs">
+      <p>
+        {fetched.fetched === 0 && fetched.failed === 0
+          ? "Nothing changed in ForeFlight since the last fetch."
+          : `Plans: ${parts.map(([n, label]) => `${n} ${label}`).join(", ")}.`}
+      </p>
+    </div>
+  );
+}
+
+export function ForeFlightSettings({
+  connection,
+  canReview = false,
+}: {
+  connection: ForeFlightConnection;
+  /** The viewer may place waiting plans (PLAN_REVIEWERS), so gets the link. */
+  canReview?: boolean;
+}) {
   const [key, setKey] = useState("");
   const [check, setCheck] = useState<ForeFlightCheck | null>(null);
   const [sent, setSent] = useState<ForeFlightSend | null>(null);
+  const [fetched, setFetched] = useState<ForeFlightFetch | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [confirmDisconnect, setConfirmDisconnect] = useState(false);
   const [pending, startTransition] = useTransition();
@@ -129,6 +166,17 @@ export function ForeFlightSettings({ connection }: { connection: ForeFlightConne
       const outcome = await setForeFlightSendingAction(on);
       if (!outcome.ok) setError(outcome.error);
     });
+  const fetchNow = () =>
+    run(async () => {
+      const outcome = await fetchFromForeFlightAction();
+      if (outcome.ok) setFetched(outcome.value);
+      else setError(outcome.error);
+    });
+  const setPlans = (on: boolean) =>
+    run(async () => {
+      const outcome = await setForeFlightPlansAction(on);
+      if (!outcome.ok) setError(outcome.error);
+    });
   const disconnect = () =>
     run(async () => {
       const outcome = await disconnectForeFlightAction();
@@ -136,6 +184,7 @@ export function ForeFlightSettings({ connection }: { connection: ForeFlightConne
       setConfirmDisconnect(false);
       setCheck(null);
       setSent(null);
+      setFetched(null);
     });
 
   const status = !connection.has_key
@@ -263,6 +312,57 @@ export function ForeFlightSettings({ connection }: { connection: ForeFlightConne
           </span>
         </div>
         {sent && <SendResult sent={sent} />}
+      </section>
+
+      <section aria-labelledby="ff-plans" className="rounded-lg border border-border bg-card p-4">
+        <h2 id="ff-plans" className="text-sm font-bold tracking-tight">
+          Bring pilots&rsquo; plans back
+        </h2>
+        <p className="mt-1 text-xs text-muted-foreground">
+          The flights pilots plan or change in ForeFlight come back with their route, fuel, times and
+          ForeFlight&rsquo;s weight and balance. A leg sent from here is found by its link; a
+          pilot&rsquo;s own flight by its tail, airports and time. The plan shows on the flight&rsquo;s
+          dispatch page beside Peregrine&rsquo;s weight and balance check, which stays the record. A
+          plan no single leg fits waits for dispatch or the DO to place it. Runs every five minutes once
+          on.
+        </p>
+        <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
+          <span
+            className={
+              "rounded px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-[0.06em] " +
+              (connection.bring_plans ? "bg-status-green/15 text-status-green" : "bg-muted text-muted-foreground")
+            }
+          >
+            {connection.bring_plans ? "On" : "Off"}
+          </span>
+          <button
+            type="button"
+            onClick={() => setPlans(!connection.bring_plans)}
+            disabled={pending || !connection.has_key}
+            title={connection.has_key ? undefined : "Save the API key first"}
+            className={BUTTON}
+          >
+            {connection.bring_plans ? "Turn off" : "Turn on"}
+          </button>
+          <button type="button" onClick={fetchNow} disabled={pending || !connection.has_key} className={BUTTON}>
+            Fetch now
+          </button>
+          <span className="text-muted-foreground">Last fetched {when(connection.last_fetch_at)}</span>
+          {connection.plans_waiting > 0 && (
+            <span>
+              {`· ${connection.plans_waiting} ${connection.plans_waiting === 1 ? "plan" : "plans"} waiting to be placed`}
+              {canReview && (
+                <>
+                  {" "}
+                  <Link href="/dispatch/foreflight-plans" className="font-semibold text-primary hover:underline">
+                    Review
+                  </Link>
+                </>
+              )}
+            </span>
+          )}
+        </div>
+        {fetched && <FetchResult fetched={fetched} />}
       </section>
 
       {connection.problems.length > 0 && (

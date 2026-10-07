@@ -5,11 +5,14 @@ import {
   DISPATCH_WRITERS,
   hasAnyRole,
   OVERRIDE_AUTHORITY,
+  PLAN_REVIEWERS,
 } from "@/lib/roles";
 import { DispatchComplianceGate } from "@/components/dispatch/packet/dispatch-compliance-gate";
 import { parseAckedMelIds } from "@/components/dispatch/packet/mel-acks";
 import { OpenMelPanel } from "@/components/dispatch/packet/open-mel-panel";
 import { BookingsAwaitingFlightPanel } from "@/components/dispatch/packet/bookings-awaiting-flight-panel";
+import { ForeFlightPlanPanel } from "@/components/dispatch/packet/foreflight-plan-panel";
+import { ForeFlightPlansWaitingBanner } from "@/components/dispatch/packet/foreflight-plans";
 import { WeightReturnsPanel } from "@/components/dispatch/packet/weight-returns-panel";
 import {
   FlightDetailsPanel,
@@ -22,6 +25,7 @@ import { RightColumn } from "@/components/dispatch/packet/right-column";
 import { SelectedFlightSummary } from "@/components/dispatch/packet/selected-flight-summary";
 import { ApiError } from "@/lib/api/client";
 import { listMyTenants } from "@/lib/api/auth";
+import { getPlansWaiting } from "@/lib/api/integrations";
 import { listFlightCrew } from "@/lib/api/crew-assignments";
 import {
   type CrewSeat,
@@ -183,6 +187,7 @@ export default async function DispatchPage({
     weightReturns,
     awaitingFlight,
     sicChecks,
+    plansWaiting,
   ] = await Promise.all([
     listFlights({ onDate: scheduleDate }).catch(() => ({
       items: [],
@@ -216,6 +221,13 @@ export default async function DispatchPage({
         compliance: await loadPicCompliance(pilotId, "sic", selectedId ?? null),
       })),
     ),
+    // ForeFlight plans no single leg fits (#55), for dispatch or the DO
+    // to place. Soft-fail: the banner is a pointer, the queue is the work.
+    hasAnyRole(viewerRoles, PLAN_REVIEWERS)
+      ? getPlansWaiting()
+          .then((r) => r.waiting)
+          .catch(() => 0)
+      : Promise.resolve(0),
   ]);
 
   // #46 — who is current in which seat on this flight's aircraft type,
@@ -328,6 +340,8 @@ export default async function DispatchPage({
             rather than red. */}
         <BookingsAwaitingFlightPanel bookings={awaitingFlight.items} />
 
+        <ForeFlightPlansWaitingBanner count={plansWaiting} />
+
       <div className="space-y-4">
         <LoadFromSchedule
           flights={flights}
@@ -402,6 +416,11 @@ export default async function DispatchPage({
             ackedMelIds={ackedMelIds}
           />
         )}
+
+        {/* The pilot's plan from ForeFlight (#55), beside Peregrine's own
+            weight and balance check, which stays the record. Nothing for
+            a company that doesn't bring plans back. */}
+        {selectedFlight && <ForeFlightPlanPanel flightId={selectedFlight.id} />}
 
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
           <LeftColumn

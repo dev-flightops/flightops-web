@@ -3,7 +3,7 @@ import Link from "next/link";
 import { auth } from "@/auth";
 import { ApiError } from "@/lib/api/client";
 import { getForeFlight, type ForeFlightConnection } from "@/lib/api/integrations";
-import { INTEGRATION_ADMINS, hasAnyRole } from "@/lib/roles";
+import { INTEGRATION_ADMINS, PLAN_REVIEWERS, hasAnyRole } from "@/lib/roles";
 
 import { ForeFlightSettings } from "./foreflight-settings";
 
@@ -11,10 +11,12 @@ import { ForeFlightSettings } from "./foreflight-settings";
  * /settings/foreflight: the company's ForeFlight Dispatch connection (#54).
  *
  * The operator's pilots plan in ForeFlight. Our scheduled flights go
- * there with their crew and load; bringing the pilot's plan back into
- * the flight follows (#55). The key reads and writes the company's
- * ForeFlight account, so only the Director of Operations or an Exec
- * Admin (INTEGRATION_ADMINS) sees or changes any of this.
+ * there with their crew and load, and the pilots' plans come back onto
+ * the flights (#55). The key reads and writes the company's ForeFlight
+ * account, so only the Director of Operations or an Exec Admin
+ * (INTEGRATION_ADMINS) sees or changes any of this. Placing a plan
+ * that waits is PLAN_REVIEWERS': dispatch, the DO and Exec Admins, who
+ * get the queue's link.
  */
 
 export const dynamic = "force-dynamic";
@@ -24,6 +26,7 @@ export const maxDuration = 60;
 export default async function ForeFlightSettingsPage() {
   const session = await auth();
   const canChange = hasAnyRole(session?.roles ?? [], INTEGRATION_ADMINS);
+  const canReview = hasAnyRole(session?.roles ?? [], PLAN_REVIEWERS);
   let connection: ForeFlightConnection | null = null;
   let loadError: string | null = null;
   if (canChange) {
@@ -50,8 +53,8 @@ export default async function ForeFlightSettingsPage() {
         <h1 className="text-2xl font-bold tracking-tight">ForeFlight</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Send the company&rsquo;s scheduled flights to ForeFlight Dispatch, so pilots plan on flights
-          that already carry their crew and load. Peregrine&rsquo;s own weight and balance check stays
-          the record.
+          that already carry their crew and load, and bring their plans back onto the flights.
+          Peregrine&rsquo;s own weight and balance check stays the record.
         </p>
       </header>
       {!canChange ? (
@@ -66,7 +69,7 @@ export default async function ForeFlightSettingsPage() {
           {loadError ?? "The ForeFlight connection couldn't be loaded."}
         </p>
       ) : (
-        <ForeFlightSettings connection={connection} />
+        <ForeFlightSettings connection={connection} canReview={canReview} />
       )}
     </div>
   );
