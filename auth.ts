@@ -5,6 +5,7 @@ import {
   refreshAccessToken,
 } from "@/lib/session-refresh";
 import { postOAuthExchange } from "@/lib/sso-exchange";
+import { ssoProfileAllowed, ssoProviderConfigs } from "@/lib/sso-providers";
 import type { Provider } from "next-auth/providers";
 import Credentials from "next-auth/providers/credentials";
 import Google from "next-auth/providers/google";
@@ -59,7 +60,9 @@ function apiBaseUrl(): string {
  * server-side won't render a sign-in button on the login page either.
  *
  * When someone drops the OAuth client IDs into the Vercel/Render env vars,
- * the providers below activate automatically — no code changes.
+ * the providers below activate automatically — no code changes. Which
+ * names, and why each provider gets its id, secret and issuer passed in
+ * rather than read by Auth.js itself: lib/sso-providers.ts (#11).
  */
 function buildProviders(): Provider[] {
   const providers: Provider[] = [
@@ -101,17 +104,11 @@ function buildProviders(): Provider[] {
     }),
   ];
 
-  if (process.env.AUTH_GOOGLE_CLIENT_ID && process.env.AUTH_GOOGLE_CLIENT_SECRET) {
-    providers.push(Google);
-  }
-  if (
-    process.env.AUTH_MICROSOFT_ENTRA_ID_CLIENT_ID &&
-    process.env.AUTH_MICROSOFT_ENTRA_ID_CLIENT_SECRET
-  ) {
-    providers.push(MicrosoftEntraID);
-  }
-  if (process.env.AUTH_OKTA_CLIENT_ID && process.env.AUTH_OKTA_CLIENT_SECRET) {
-    providers.push(Okta);
+  for (const sso of ssoProviderConfigs()) {
+    const { clientId, clientSecret, issuer } = sso;
+    if (sso.id === "google") providers.push(Google({ clientId, clientSecret }));
+    if (sso.id === "microsoft-entra-id") providers.push(MicrosoftEntraID({ clientId, clientSecret, issuer }));
+    if (sso.id === "okta") providers.push(Okta({ clientId, clientSecret, issuer }));
   }
   return providers;
 }
@@ -139,12 +136,17 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   session: { strategy: "jwt" },
   providers: buildProviders(),
   callbacks: {
-    async signIn({ user, account }) {
+    async signIn({ user, account, profile }) {
       // Credentials sign-in is already a FlightOps login — `authorize`
       // returned the access_token. No exchange needed.
       if (!account || account.provider === "credentials") return true;
 
       if (!user.email) return false;
+      // An unverified Google address, or an Entra user from another
+      // tenant, never reaches the exchange (#11).
+      if (!ssoProfileAllowed(account.provider, profile as Record<string, unknown> | undefined, ssoProviderConfigs())) {
+        return false;
+      }
       const result = await exchangeOAuthForFlightOpsJwt(
         account.provider,
         account.providerAccountId ?? user.id ?? "",

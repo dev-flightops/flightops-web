@@ -2,6 +2,7 @@
 
 import { resolveSsoForEmail } from "@/lib/api/auth";
 import type { SsoResolveResponse } from "@/lib/api/types";
+import { usableProviders } from "@/lib/sso-providers";
 
 /**
  * Server action wrapper for the public /auth/sso/resolve endpoint
@@ -19,5 +20,7 @@ export async function resolveSsoAction(
   if (!email || email.length < 3 || !email.includes("@")) {
     return { tenant_id: null, providers: [] };
   }
-  return resolveSsoForEmail(email);
+  const resolved = await resolveSsoForEmail(email);
+  // Only the ones this deployment can also sign people in with (#11).
+  return { ...resolved, providers: usableProviders(resolved.providers) };
 }
