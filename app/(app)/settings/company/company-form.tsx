@@ -151,6 +151,7 @@ export function CompanyForm({ profile }: { profile: CompanyProfileResponse }) {
           {...bind("logo_url")}
           label="Logo URL"
           placeholder="https://example.com/logo.png"
+          hint="Printed at the top of the dispatch packet: a PNG or JPEG at an https address."
           error={fieldError("logo_url")}
         />
       </Section>
