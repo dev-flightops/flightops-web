@@ -105,6 +105,17 @@ export function KeyManager({ keys }: { keys: ApiKeyRow[] }) {
         <p className="mt-2 text-xs text-muted-foreground">
           Leave expiry blank for a key that only stops when revoked.
         </p>
+        <label className="mt-3 flex items-start gap-2 text-sm text-foreground">
+          <input type="checkbox" name="scope_crew" className="mt-1" />
+          <span>
+            Crew and duty
+            <span className="block text-xs text-muted-foreground">
+              Also reads who is crewing each flight (names and emails) and each pilot&rsquo;s duty, rest
+              and flight time. Only for a planning tool that needs them; it can&rsquo;t be added to a key
+              later.
+            </span>
+          </span>
+        </label>
       </form>
 
       <KeyTable
