@@ -4,7 +4,7 @@ import { notFound, redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { hasAnyRole } from "@/lib/roles";
 import { MANAGE_ROLES } from "@/lib/safety-roles";
-import { listUsers } from "@/lib/api/auth";
+import { listStaff } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
 import {
   CAPA_SOURCE_LABELS,
@@ -23,10 +23,11 @@ import { OpenCapaForm } from "./open-form";
  * the source detail page's CAPA panel. Only Safety Officer + Exec
  * Admin can hit; other roles get redirected to /safety/actions/mine.
  *
- * Owner picker is populated with every active user in the tenant so
- * the CAPA can be assigned to anyone. Filtering to specific roles
- * would be premature — Part 5 SMS doesn't restrict CAPA ownership
- * to a role class.
+ * Owner picker is populated with every active staff member, from the
+ * staff directory (#60), so the CAPA can be assigned to anyone.
+ * Filtering to specific roles would be premature — Part 5 SMS doesn't
+ * restrict CAPA ownership to a role class. It read the Exec Admin's
+ * user list until #60, which left the Safety Officer no one to pick.
  */
 export default async function OpenCapaPage({
   searchParams,
@@ -49,12 +50,10 @@ export default async function OpenCapaPage({
   }
   const sourceLabel = CAPA_SOURCE_LABELS[sourceType].toLowerCase();
 
-  let users: Awaited<ReturnType<typeof listUsers>>["items"] = [];
+  let users: Awaited<ReturnType<typeof listStaff>>["items"] = [];
   try {
-    const response = await listUsers();
-    // Only offer active users as owners — a deactivated user shouldn't
-    // pick up a CAPA.
-    users = response.items.filter((u) => u.is_active);
+    // Active staff only: a deactivated user shouldn't pick up a CAPA.
+    users = (await listStaff()).items;
   } catch (err) {
     if (err instanceof ApiError && err.status === 401) redirect("/login");
     users = [];

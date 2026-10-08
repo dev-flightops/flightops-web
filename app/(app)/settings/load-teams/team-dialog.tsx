@@ -55,9 +55,9 @@ function sixDigit(color: string): string {
  *     without looking went to the wrong base.
  *   - Notes can be cleared. Legacy kept the old notes when the box was
  *     emptied.
- *   - The lead picker needs the staff list, which only an Executive
- *     Admin can read. Without it the form says so and leaves the lead
- *     alone rather than offering a list it can't fill.
+ *   - The lead picker needs the staff directory. If it can't be loaded
+ *     the form says so and leaves the lead alone rather than offering a
+ *     list it can't fill.
  */
 export function TeamDialog({
   team,
@@ -73,7 +73,7 @@ export function TeamDialog({
   /** Base preselected when adding (the "+ Add Team at PANC" buttons). */
   defaultBase?: string;
   stations: StationOption[];
-  /** Null when the staff list couldn't be read (not an Executive Admin). */
+  /** Null when the staff directory couldn't be loaded. */
   people: PersonOption[] | null;
   trigger: ReactNode;
   triggerClassName: string;
@@ -234,8 +234,7 @@ export function TeamDialog({
                 </select>
               ) : (
                 <p className="text-xs text-muted-foreground">
-                  {lead ? lead.full_name : "No lead"}. Only an Executive Admin
-                  can choose the lead.
+                  {`${lead ? lead.full_name : "No lead"}. The staff list couldn’t be loaded, so the lead can’t be changed right now.`}
                 </p>
               )}
             </div>

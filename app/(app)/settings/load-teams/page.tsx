@@ -1,6 +1,7 @@
 import Link from "next/link";
 
-import { listRoles, listUsers } from "@/lib/api/auth";
+import { listStaff } from "@/lib/api/auth";
+import { formatRole } from "@/lib/roles";
 import { listLoadTeams, listStations } from "@/lib/api/ground";
 import { ApiError } from "@/lib/api/client";
 import type { LoadTeamResponse } from "@/lib/api/types";
@@ -19,8 +20,8 @@ import {
  * Teams from ground-service `/load-teams`, grouped by base as legacy
  * does, each base headed with its station name. Add Team, Edit,
  * Members and Deactivate / Reactivate work against the same service;
- * the lead and member pickers use the staff list, which only an
- * Executive Admin can read, and say so to anyone else.
+ * the lead and member pickers use the staff directory, which any staff
+ * member can read (#60), and say so when it can't be loaded.
  *
  * Not built, and shown as such: Fleet Report and each team's
  * Performance page (legacy reports on turnaround timings we don't
@@ -51,7 +52,9 @@ export default async function SettingsLoadTeamsPage({
   const [teamsResult, stationsResult, peopleResult] = await Promise.allSettled([
     listLoadTeams({ includeInactive: statusFilter === "all" }),
     listStations({ limit: 500 }),
-    Promise.all([listUsers(), listRoles()]),
+    // The staff directory (#60), which any staff member may read. Until
+    // #60 this was the Exec Admin's user list, so a DO had no pickers.
+    listStaff(),
   ]);
 
   let teams: LoadTeamResponse[] = [];
@@ -84,14 +87,11 @@ export default async function SettingsLoadTeamsPage({
   // then explain who can set a lead or add a member.
   let people: PersonOption[] | null = null;
   if (peopleResult.status === "fulfilled") {
-    const [users, roles] = peopleResult.value;
-    const roleLabel = new Map(roles.roles.map((r) => [r.id, r.label]));
-    people = users.items
-      .filter((u) => u.is_active)
+    people = peopleResult.value.items
       .map((u) => ({
         id: u.id,
         name: u.full_name,
-        roles: u.roles.map((r) => roleLabel.get(r) ?? r).join(", "),
+        roles: u.roles.map(formatRole).join(", "),
       }))
       .sort((a, b) => a.name.localeCompare(b.name));
   }

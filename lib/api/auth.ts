@@ -315,8 +315,33 @@ export async function getPilotPay(): Promise<PilotPayBundleResponse> {
   return apiFetch<PilotPayBundleResponse>("/auth/settings/pilot-pay");
 }
 
+// ---- Staff directory (#60) ----
+
+/** One person a people picker can offer: no account details. */
+export interface StaffMember {
+  id: string;
+  full_name: string;
+  email: string;
+  roles: string[];
+}
+
+/**
+ * Every active staff member, by name, for people pickers: a CAPA owner,
+ * a trainee, a load team's lead. Any staff member may read it (Greg,
+ * 8 Oct). Customers and supplier reps are not in it.
+ *
+ * Pickers used listUsers() before, which is the Exec Admin's user
+ * administration list: a Safety Officer opening a CAPA got no one to
+ * choose, and Academy assignments failed for a chief pilot.
+ */
+export async function listStaff(): Promise<{ items: StaffMember[]; total: number }> {
+  return apiFetch<{ items: StaffMember[]; total: number }>("/auth/directory");
+}
+
 // ---- Users + Permissions (M2-M-28b) ----
 
+/** User administration (Exec Admin only). A people picker wants
+ *  listStaff(), which everyone on the staff may read. */
 export async function listUsers(): Promise<UserListResponse> {
   return apiFetch<UserListResponse>("/auth/settings/users");
 }

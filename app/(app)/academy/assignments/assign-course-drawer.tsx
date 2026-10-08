@@ -4,13 +4,14 @@ import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 
 import type { Course } from "@/lib/api/academy";
-import type { UserResponse } from "@/lib/api/types";
+import type { StaffMember } from "@/lib/api/auth";
 
 import { bulkAssignAction, type BulkAssignResult } from "./actions";
 
 interface Props {
   courses: Course[];
-  users: UserResponse[];
+  /** Active staff, from the staff directory. */
+  users: StaffMember[];
 }
 
 /**
@@ -41,7 +42,6 @@ export function AssignCourseDrawer({ courses, users }: Props) {
   const visibleUsers = useMemo(() => {
     const needle = nameFilter.trim().toLowerCase();
     return users.filter((u) => {
-      if (!u.is_active) return false;
       if (roleFilter && !u.roles.includes(roleFilter)) return false;
       if (needle) {
         const hay = `${u.full_name} ${u.email}`.toLowerCase();

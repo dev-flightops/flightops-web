@@ -125,7 +125,7 @@ describe("TeamDialog — edit", () => {
     expect(sent()).toMatchObject({ team_id: "t-1", team_lead_user_id: "u-gone" });
   });
 
-  it("without the staff list, says who can set the lead and sends none", async () => {
+  it("without the staff list, says the lead can't be changed and sends none", async () => {
     const user = await openDialog({
       team: TEAM,
       people: null,
@@ -134,7 +134,7 @@ describe("TeamDialog — edit", () => {
     });
     expect(screen.queryByLabelText("Team Lead")).toBeNull();
     expect(
-      screen.getByText("Dana Ruiz. Only an Executive Admin can choose the lead."),
+      screen.getByText("Dana Ruiz. The staff list couldn’t be loaded, so the lead can’t be changed right now."),
     ).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Save Team" }));
     await waitFor(() => expect(saveTeamAction).toHaveBeenCalled());

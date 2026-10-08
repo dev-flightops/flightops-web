@@ -1,9 +1,10 @@
 import { render, screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { LoadTeamResponse } from "@/lib/api/types";
 
-const { TestApiError, listLoadTeams, listStations, listUsers, listRoles } = vi.hoisted(
+const { TestApiError, listLoadTeams, listStations, listStaff } = vi.hoisted(
   () => {
     class TestApiError extends Error {
       constructor(
@@ -18,14 +19,13 @@ const { TestApiError, listLoadTeams, listStations, listUsers, listRoles } = vi.h
       TestApiError,
       listLoadTeams: vi.fn(),
       listStations: vi.fn(),
-      listUsers: vi.fn(),
-      listRoles: vi.fn(),
+      listStaff: vi.fn(),
     };
   },
 );
 vi.mock("@/lib/api/client", () => ({ ApiError: TestApiError }));
 vi.mock("@/lib/api/ground", () => ({ listLoadTeams, listStations }));
-vi.mock("@/lib/api/auth", () => ({ listUsers, listRoles }));
+vi.mock("@/lib/api/auth", () => ({ listStaff }));
 vi.mock("./actions", () => ({
   saveTeamAction: vi.fn(),
   setTeamActiveAction: vi.fn(),
@@ -72,8 +72,7 @@ beforeEach(() => {
     ],
     total: 2,
   });
-  listUsers.mockResolvedValue({ items: [], total: 0 });
-  listRoles.mockResolvedValue({ roles: [] });
+  listStaff.mockResolvedValue({ items: [], total: 0 });
 });
 
 describe("Settings → Load Teams", () => {
@@ -112,10 +111,22 @@ describe("Settings → Load Teams", () => {
     expect(screen.getByRole("link", { name: "Hide Inactive" })).toBeInTheDocument();
   });
 
-  it("still works for someone who can't read the staff list", async () => {
-    listUsers.mockRejectedValue(new TestApiError(403, "/auth/settings/users", ""));
+  it("still works when the staff list can't be read", async () => {
+    listStaff.mockRejectedValue(new TestApiError(500, "/auth/directory", ""));
     await renderPage();
     expect(screen.getByRole("button", { name: "Edit Alpha" })).toBeEnabled();
+  });
+
+  it("offers people from the staff directory, which a DO may read (#60)", async () => {
+    listStaff.mockResolvedValue({
+      items: [{ id: "u-1", full_name: "Rachel Nordstrom", email: "do@x.test", roles: ["director_of_operations"] }],
+      total: 1,
+    });
+    await renderPage();
+    await userEvent.setup().click(screen.getByRole("button", { name: "Edit Alpha" }));
+    expect(
+      screen.getByRole("option", { name: "Rachel Nordstrom (Director of Operations)" }),
+    ).toBeInTheDocument();
   });
 
   it("offers to create a team when there are none", async () => {

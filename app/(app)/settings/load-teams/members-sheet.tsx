@@ -29,9 +29,8 @@ function joined(date: string): string {
  * alphabetical, each with their role and join date; remove with a
  * confirm; add from the staff list.
  *
- * Adding needs the staff list, which only an Executive Admin can read.
- * Without it the panel still lists and removes members, and says who
- * can add them.
+ * Adding needs the staff directory. If it can't be loaded the panel
+ * still lists and removes members, and says why it can't add.
  */
 export function MembersSheet({
   team,
@@ -209,7 +208,7 @@ export function MembersSheet({
               </div>
             ) : (
               <p className="text-xs text-muted-foreground">
-                Only an Executive Admin can add members.
+                The staff list couldn&rsquo;t be loaded, so members can&rsquo;t be added right now.
               </p>
             )}
           </div>
