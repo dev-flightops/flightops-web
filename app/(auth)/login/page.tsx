@@ -1,4 +1,5 @@
 import { fetchEnabledProviders } from "@/lib/api/auth";
+import { usableProviders } from "@/lib/sso-providers";
 
 import { LoginForm } from "./login-form";
 
@@ -8,5 +9,6 @@ export default async function LoginPage() {
   // returns an empty list on backend hiccups so the credentials form still
   // renders no matter what.
   const { providers } = await fetchEnabledProviders();
-  return <LoginForm providers={providers} />;
+  // Only the ones this deployment can also sign people in with (#11).
+  return <LoginForm providers={usableProviders(providers)} />;
 }
