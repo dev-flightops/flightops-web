@@ -17,14 +17,22 @@
  *                                    status flags        → released / airborne
  *                                    origin / destination → base breakdowns
  *   - listMelItems({status:open})  — due_at < now+48h    → MEL expiring
+ *   - listSafetyReports({status:open}) — not yet reviewed → new safety
+ *                                    report (#58). Legacy notified the
+ *                                    Safety Officer, DO and Exec Admins
+ *                                    of each filing; this is that, for
+ *                                    whoever may review it. Everyone else
+ *                                    is refused by the service, which
+ *                                    reads as no reports here.
  *
  * Spec sources NOT used (need M3+ services):
- *   pilot_currency_records, safety_reports, corrective_actions,
+ *   pilot_currency_records, corrective_actions,
  *   compliance_overrides, fuel quality tests, village weather board.
  */
 
 import { getFlightBoard } from "@/lib/api/flight-following";
 import { getFleetAirworthiness, listMelItems } from "@/lib/api/maintenance";
+import { SAFETY_REPORT_TYPE_LABELS, listSafetyReports } from "@/lib/api/safety-reports";
 import type {
   BoardFlightItem,
   FleetAircraftSummary,
@@ -37,7 +45,8 @@ export interface OperationalAlert {
   category:
     | "aircraft_grounded"
     | "flight_overdue"
-    | "mel_expiring";
+    | "mel_expiring"
+    | "safety_report_new";
   title: string;
   detail: string;
   /** Permalink to the source record. */
@@ -76,10 +85,11 @@ export interface OperationalSnapshot {
 const TWO_DAYS_MS = 2 * 24 * 60 * 60 * 1000;
 
 export async function loadOperationalSnapshot(): Promise<OperationalSnapshot> {
-  const [fleet, openMels, board] = await Promise.all([
+  const [fleet, openMels, board, newReports] = await Promise.all([
     getFleetAirworthiness().catch(() => null),
     listMelItems({ status: "open" }).catch(() => null),
     getFlightBoard("today").catch(() => null),
+    listSafetyReports({ status: "open", limit: 50 }).catch(() => null),
   ]);
 
   const alerts: OperationalAlert[] = [];
@@ -148,6 +158,24 @@ export async function loadOperationalSnapshot(): Promise<OperationalSnapshot> {
           occurredAt: mel.deferred_at,
         });
       }
+    }
+  }
+
+  // New safety reports: filed, not yet moved on from Open by anyone on
+  // the safety team. Red when the reporter rated it high risk.
+  if (newReports) {
+    for (const report of newReports.items) {
+      alerts.push({
+        id: `safety-report-${report.id}`,
+        severity: report.risk_level === "high" ? "red" : "yellow",
+        category: "safety_report_new",
+        title: `New safety report — ${report.title.slice(0, 80)}`,
+        detail: `${SAFETY_REPORT_TYPE_LABELS[report.report_type]} · not reviewed yet`,
+        href: `/safety/reports/${report.id}`,
+        // Filing is the event. It never moves, so a dismissal holds
+        // until the report is reviewed, when the alert goes anyway.
+        occurredAt: report.created_at,
+      });
     }
   }
 

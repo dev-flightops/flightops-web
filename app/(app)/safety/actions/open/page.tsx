@@ -6,13 +6,20 @@ import { hasAnyRole } from "@/lib/roles";
 import { MANAGE_ROLES } from "@/lib/safety-roles";
 import { listUsers } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
+import {
+  CAPA_SOURCE_LABELS,
+  CAPA_SOURCE_TYPES,
+  type CapaSourceType,
+  capaSourceHref,
+} from "@/lib/api/safety";
 
 import { OpenCapaForm } from "./open-form";
 
 /**
- * /safety/actions/open — Open a CAPA against a hazard or incident.
+ * /safety/actions/open — Open a CAPA against a hazard, an incident or a
+ * safety report.
  *
- * Landed on with `?source_type=hazard|incident&source_id=<uuid>` from
+ * Landed on with `?source_type=hazard|incident|safety_report&source_id=<uuid>` from
  * the source detail page's CAPA panel. Only Safety Officer + Exec
  * Admin can hit; other roles get redirected to /safety/actions/mine.
  *
@@ -33,14 +40,14 @@ export default async function OpenCapaPage({
   }
 
   const params = await searchParams;
-  const sourceType = params.source_type;
+  const sourceType = CAPA_SOURCE_TYPES.find((t) => t === params.source_type) as
+    | CapaSourceType
+    | undefined;
   const sourceId = params.source_id;
-  if (
-    !sourceId ||
-    (sourceType !== "hazard" && sourceType !== "incident")
-  ) {
+  if (!sourceId || !sourceType) {
     notFound();
   }
+  const sourceLabel = CAPA_SOURCE_LABELS[sourceType].toLowerCase();
 
   let users: Awaited<ReturnType<typeof listUsers>>["items"] = [];
   try {
@@ -53,17 +60,14 @@ export default async function OpenCapaPage({
     users = [];
   }
 
-  const backHref =
-    sourceType === "hazard"
-      ? `/safety/${sourceId}`
-      : `/safety/incidents/${sourceId}`;
+  const backHref = capaSourceHref(sourceType, sourceId);
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-8 sm:px-6">
       <header className="mb-6">
         <p className="text-xs font-semibold uppercase tracking-[0.06em] text-muted-foreground">
           <Link href={backHref} className="hover:text-foreground">
-            ← Back to {sourceType}
+            ← Back to {sourceLabel}
           </Link>
         </p>
         <h1 className="mt-2 text-2xl font-bold tracking-tight">
@@ -71,7 +75,7 @@ export default async function OpenCapaPage({
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Track the follow-through work needed to prevent this{" "}
-          {sourceType} from recurring. Assign to an owner and give it a
+          {sourceLabel} from recurring. Assign to an owner and give it a
           due date.
         </p>
       </header>

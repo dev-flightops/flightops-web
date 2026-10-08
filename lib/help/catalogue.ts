@@ -864,29 +864,67 @@ export const HELP_ENTRIES: HelpEntry[] = [
       },
     ],
     connectsTo:
-      "Reports come from the floating Safety button on every page. Triaged reports feed corrective actions and the safety dashboard. Safety Intelligence reads the same reports to look for patterns across them.",
+      "Safety reports come from the floating Safety button on every page, and the safety team registers hazards from them here. Triaged hazards feed corrective actions and the safety dashboard. Safety Intelligence reads the same reports to look for patterns across them.",
     example:
       "A ramper reports a fuel truck parked inside the wing line at PABE. The safety officer triages it as minor severity but occasional likelihood, raises a corrective action to repaint the stand markings, and closes it after a spot check two weeks later shows trucks stopping short.",
-    related: ["/safety/incidents", "/safety/actions", "/ai/safety-intelligence"],
+    related: ["/safety/reports", "/safety/incidents", "/safety/actions", "/ai/safety-intelligence"],
   },
   {
-    route: "/safety/report",
+    route: "/safety/reports/new",
     title: "Filing a safety report",
     whoCanUse: ["pilot", "crew_member", "maintenance", "ground_ops", "dispatcher", "reservations_agent", "safety_officer", "chief_pilot", "check_airman", "director_of_maintenance", "director_of_operations", "exec_admin"],
     whatItDoes:
-      "Reports a hazard. The red Safety button in the corner of every page comes straight here and remembers where you were, so a report can be filed from wherever the thing was noticed.",
+      "Reports anything that worried you: a safety concern, a near miss, a fatigue concern, an ASAP report, a suggestion. The red Safety button in the corner of every page comes straight here and remembers where you were, so a report can be filed from wherever the thing was noticed.",
     howToUse: [
-      "Describe what you saw, not what you concluded — the assessment is somebody else's job.",
-      "Say where and when.",
-      "Say whether it is still happening, which is what decides how fast it gets looked at.",
-      "Submit. You will be able to follow it under My Reports.",
+      "Pick the report type and the date it happened.",
+      "Give it a short title, then describe what you saw, not what you concluded.",
+      "Add where, the flight and the tail if they apply, and a photo or PDF if you have one.",
+      "Submit. You can follow it under My Reports.",
     ],
     worthKnowing: [
-      "You are not asked for a severity. Severity and likelihood are set at triage, by the safety officer, because a reporter's own estimate of how bad something was biases every figure computed from it afterwards.",
+      "Severity and likelihood are optional. Give your best guess if you have one; the safety team sets the final assessment when they review the report.",
+      "Filed anonymously, your name is hidden from everyone reviewing the report except the Safety Officer and Exec Admins. You can still see the report under My Reports.",
+      "An ASAP report is seen only by the Safety Officer, the Director of Operations and Exec Admins.",
     ],
     connectsTo:
-      "A filed report appears in the safety officer's queue and in your own My Reports list.",
-    related: ["/safety/mine", "/safety"],
+      "A filed report lands in the safety team's Safety Reports inbox, alerts them in the notification bell, and appears in your own My Reports list.",
+    related: ["/safety/mine", "/safety/reports"],
+  },
+  {
+    route: "/safety/reports",
+    title: "Safety reports",
+    whoCanUse: ["safety_officer", "chief_pilot", "director_of_operations", "exec_admin"],
+    whatItDoes:
+      "Every report filed with the red Safety button, newest first, with its status and its risk: severity times likelihood on the 5×5 matrix, high at 15 and above, medium at 8.",
+    howToUse: [
+      "Filter by status to find what has not been looked at yet.",
+      "Open a report to review it: set the status, assign it to someone on the safety team, and set or revise severity and likelihood.",
+      "Write the resolution, which the person who filed it can read.",
+      "Raise a corrective action from the report where one is needed.",
+    ],
+    worthKnowing: [
+      "ASAP reports are not shown to a chief pilot: they are the Safety Officer's, the Director of Operations' and Exec Admins'.",
+      "An anonymous report says only \"Anonymous\" in the list. On the report itself the Safety Officer and Exec Admins see who filed it; nobody else does.",
+    ],
+    connectsTo:
+      "Filed from the red Safety button. A new report alerts the safety team in the notification bell until somebody moves it on from Open. Corrective actions raised here appear on the CAPA board, and the counts feed the safety dashboard.",
+    related: ["/safety/reports/new", "/safety/actions", "/safety/dashboard"],
+  },
+  {
+    route: "/safety/report",
+    title: "Filing a hazard",
+    whoCanUse: ["safety_officer", "chief_pilot", "director_of_operations", "exec_admin"],
+    whatItDoes:
+      "Registers a hazard in the safety team's hazard register, usually from something a safety report raised. Reports from the rest of the operation come in through the red Safety button instead.",
+    howToUse: [
+      "Describe the hazard, not the event that showed it up.",
+      "Say where.",
+      "Record any immediate action taken.",
+      "File it, then triage it from Safety SMS.",
+    ],
+    connectsTo:
+      "A filed hazard appears in the Safety SMS triage inbox.",
+    related: ["/safety", "/safety/reports"],
   },
   {
     route: "/safety/incidents",
@@ -918,7 +956,7 @@ export const HELP_ENTRIES: HelpEntry[] = [
       "Reading the board and owning the programme are deliberately different permissions. A chief pilot or Director of Operations can see everything here and triage the report behind an action, but closing one out is the Safety Officer's — that separation is what makes a closure worth anything.",
     ],
     connectsTo:
-      "Actions are raised from hazard reports and incidents. Open counts feed the safety dashboard.",
+      "Actions are raised from safety reports, hazard reports and incidents. Open counts feed the safety dashboard.",
     related: ["/safety", "/safety/incidents", "/safety/actions/mine"],
   },
   {
@@ -931,7 +969,7 @@ export const HELP_ENTRIES: HelpEntry[] = [
       "Read open items against closed as the state of the programme.",
       "Follow any figure through to the reports behind it rather than quoting it on its own.",
     ],
-    connectsTo: "Aggregates hazard reports, incidents and corrective actions.",
+    connectsTo: "Aggregates safety reports, hazard reports, incidents and corrective actions.",
     related: ["/safety", "/safety/actions", "/ai/safety-intelligence"],
   },
   // ── Academy ─────────────────────────────────────────────────────────
@@ -990,11 +1028,11 @@ export const HELP_ENTRIES: HelpEntry[] = [
     whatItDoes:
       "The reports you have filed, and what happened to them. It exists because a reporting culture depends on reporters seeing that something came of it — a report that vanishes teaches people not to file the next one.",
     howToUse: [
-      "Open a report to see how it was triaged and what action came out of it.",
-      "Read the closure note, which is where the change that resulted is recorded.",
+      "Open a report to see where the safety team has got to with it.",
+      "Read the resolution, which is where they record what came of it.",
     ],
-    connectsTo: "Your reports, as triaged by the safety officer, and any corrective action raised from them.",
-    related: ["/safety/report", "/safety"],
+    connectsTo: "Your reports, as reviewed by the safety team, with the resolution they wrote.",
+    related: ["/safety/reports/new", "/safety"],
   },
   {
     route: "/safety/actions/mine",
@@ -1817,7 +1855,7 @@ export const HELP_ENTRIES: HelpEntry[] = [
       "File a safety report from the button in the corner if something is unsafe — it works from here like everywhere else.",
     ],
     connectsTo: "Reads today's flights at your station; records attach to the flight.",
-    related: ["/ramp-ops", "/ground-ops", "/safety/report"],
+    related: ["/ramp-ops", "/ground-ops", "/safety/reports/new"],
   },
   {
     route: "/settings/document-requirements",

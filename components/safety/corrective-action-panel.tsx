@@ -1,13 +1,14 @@
 import Link from "next/link";
 
 import {
+  CAPA_SOURCE_LABELS,
   CAPA_STATUS_LABELS,
   type CapaSourceType,
   type CorrectiveAction,
 } from "@/lib/api/safety";
 
 /**
- * CAPA panel embedded on hazard + incident detail pages. Shows the
+ * CAPA panel embedded on the hazard, incident and safety report pages. Shows the
  * linked CAPAs (soonest due first) and a link to open a new one when
  * the caller has the manage role.
  *
@@ -45,7 +46,7 @@ export function CorrectiveActionPanel({
       </header>
       {items.length === 0 ? (
         <p className="text-xs text-muted-foreground">
-          No corrective actions linked to this {sourceType} yet.
+          No corrective actions linked to this {CAPA_SOURCE_LABELS[sourceType].toLowerCase()} yet.
         </p>
       ) : (
         <ul className="space-y-2">

@@ -5,9 +5,11 @@ import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { ApiError } from "@/lib/api/client";
 import {
+  CAPA_SOURCE_LABELS,
   CAPA_STATUS_LABELS,
   type CapaStatus,
   type CorrectiveAction,
+  capaSourceHref,
   listCapas,
 } from "@/lib/api/safety";
 
@@ -268,14 +270,10 @@ function CapaTable({
                   </td>
                   <td className="whitespace-nowrap px-4 py-3 text-xs">
                     <Link
-                      href={
-                        c.source_type === "hazard"
-                          ? `/safety/${c.source_id}`
-                          : `/safety/incidents/${c.source_id}`
-                      }
+                      href={capaSourceHref(c.source_type, c.source_id)}
                       className="text-primary hover:underline"
                     >
-                      {c.source_type === "hazard" ? "Hazard" : "Incident"} →
+                      {CAPA_SOURCE_LABELS[c.source_type]} →
                     </Link>
                   </td>
                   <td className="whitespace-nowrap px-4 py-3 text-xs">
