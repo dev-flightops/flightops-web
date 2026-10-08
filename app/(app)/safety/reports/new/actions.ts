@@ -119,6 +119,9 @@ export async function fileSafetyReportAction(
     if (err instanceof ApiError) {
       if (err.status === 401) return fail("Your session expired. Sign in again to file this report.");
       if (err.status === 413) return fail(`Attachments over ${MAX_UPLOAD_LABEL} can't be uploaded yet.`);
+      if (err.status === 422 && err.message.includes("asap_reports_are_not_anonymous")) {
+        return fail("An ASAP report can't be anonymous: the Event Review Committee has to be able to reach you.");
+      }
       if (err.status === 415) {
         return fail(
           "Attach a photo (JPG, PNG, GIF or WEBP) or a PDF. An iPhone HEIC photo has to be exported as JPEG first.",

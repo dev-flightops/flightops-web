@@ -791,6 +791,13 @@ export const DEPARTMENTS: Department[] = [
         department: "safety",
       },
       {
+        id: "safety-asap",
+        label: "ASAP",
+        href: "/safety/asap",
+        status: "live",
+        department: "safety",
+      },
+      {
         id: "incidents",
         label: "Incidents",
         href: "/safety/incidents",
@@ -1478,6 +1485,11 @@ export const MODULE_ROLES: Record<string, readonly Role[]> = {
     "director_of_operations",
     "exec_admin",
   ],
+
+  // Matches safety-service's ASAP_REVIEWERS (#59): ASAP reports and their
+  // ERC reviews are the Safety Officer's, the DO's and Exec Admins'
+  // (Greg, 8 Oct). The chief pilot reviews every other report.
+  "safety-asap": ["safety_officer", "director_of_operations", "exec_admin"],
 };
 
 /**
