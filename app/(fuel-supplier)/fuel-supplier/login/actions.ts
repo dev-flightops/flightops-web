@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import { loginSupplierAccount } from "@/lib/api/supplier-auth";
+import { lockoutMinutes, tooManyAttemptsMessage } from "@/lib/login-errors";
 import { setSupplierSession } from "@/lib/api/supplier-session";
 
 /**
@@ -51,6 +52,13 @@ export async function supplierLoginAction(
     parsed.data.password,
   );
   if (!result.ok) {
+    if (result.status === 429) {
+      // Locked after repeated wrong passwords (#16): say how long.
+      return {
+        status: "api-error",
+        message: tooManyAttemptsMessage(lockoutMinutes(result.retryAfter)),
+      };
+    }
     if (result.status === 401) {
       return {
         status: "api-error",

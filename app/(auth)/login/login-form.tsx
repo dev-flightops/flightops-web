@@ -14,6 +14,7 @@ import type {
 
 import { HomeWordmark } from "@/components/home/home-brand";
 import { Button } from "@/components/ui/button";
+import { loginErrorMessage } from "@/lib/login-errors";
 
 import { resolveSsoAction } from "./actions";
 
@@ -109,7 +110,8 @@ function LoginInner({ providers }: { providers: ProviderSummary[] }) {
       redirect: false,
     });
     if (!result || result.error) {
-      setError("Invalid email or password.");
+      // A locked email says how long to wait (#16).
+      setError(loginErrorMessage(result?.code));
       return;
     }
     // A full page load, not router.push. The proxy may redirect it — a

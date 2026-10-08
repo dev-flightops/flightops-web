@@ -153,6 +153,21 @@ describe("LoginForm", () => {
     ).toBeInTheDocument();
   });
 
+  it("says how long to wait when the email is locked (#16)", async () => {
+    signIn.mockResolvedValue({ error: "CredentialsSignin", code: "too_many_attempts:12", ok: false });
+    const user = userEvent.setup();
+    render(<LoginForm providers={[]} />);
+
+    await user.type(screen.getByLabelText(/email/i), "pilot@flightops.local");
+    await user.type(screen.getByLabelText(/password/i), "right-password");
+    await user.click(screen.getByRole("button", { name: /sign in$/i }));
+
+    expect(
+      await screen.findByText("Too many failed sign-in attempts. Try again in 12 minutes."),
+    ).toBeInTheDocument();
+    expect(assign).not.toHaveBeenCalled();
+  });
+
   it("calls signIn(provider) when an SSO button is clicked", async () => {
     const user = userEvent.setup();
     render(<LoginForm providers={[{ id: "google", label: "Google" }]} />);
