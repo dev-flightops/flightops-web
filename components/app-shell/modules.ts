@@ -784,6 +784,13 @@ export const DEPARTMENTS: Department[] = [
         department: "safety",
       },
       {
+        id: "safety-reports",
+        label: "Reports",
+        href: "/safety/reports",
+        status: "live",
+        department: "safety",
+      },
+      {
         id: "incidents",
         label: "Incidents",
         href: "/safety/incidents",
@@ -1461,6 +1468,16 @@ export const MODULE_ROLES: Record<string, readonly Role[]> = {
   // operator does not necessarily share with the whole roster — the
   // same reason the executive summary is gated this way.
   accounting: ["exec_admin", "director_of_operations"],
+
+  // Matches safety-service's SAFETY_REPORT_REVIEWERS (#58): the inbox of
+  // filed reports. Anyone may file one, from the red button; their own
+  // are under My Reports, which every role keeps.
+  "safety-reports": [
+    "safety_officer",
+    "chief_pilot",
+    "director_of_operations",
+    "exec_admin",
+  ],
 };
 
 /**

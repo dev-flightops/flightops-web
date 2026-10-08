@@ -2,6 +2,8 @@
 
 import { useActionState } from "react";
 
+import type { CapaSourceType } from "@/lib/api/safety";
+
 import { type OpenCapaFormState, openCapaAction } from "./actions";
 
 const _initial: OpenCapaFormState = { status: "idle" };
@@ -25,7 +27,7 @@ export function OpenCapaForm({
   sourceId,
   users,
 }: {
-  sourceType: "hazard" | "incident";
+  sourceType: CapaSourceType;
   sourceId: string;
   users: OwnerOption[];
 }) {

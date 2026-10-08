@@ -7,6 +7,7 @@ import { GET as documentDownload } from "./documents/[documentId]/download/route
 import { GET as versionDownload } from "./documents/[documentId]/versions/[versionNumber]/download/route";
 import { GET as employeeDocumentDownload } from "./employee-documents/[documentId]/download/route";
 import { GET as rampPhoto } from "./ramp-photos/[photoId]/route";
+import { GET as safetyReportAttachment } from "./safety-reports/[id]/attachment/route";
 
 /**
  * The route handlers that hand a backend file to the browser.
@@ -46,6 +47,12 @@ const ROUTES: { name: string; handler: Handler; params: Record<string, string>; 
     handler: rampPhoto as Handler,
     params: { photoId: "p-1" },
     backend: "https://gw.example/ground/photos/p-1/file",
+  },
+  {
+    name: "safety report attachment",
+    handler: safetyReportAttachment as Handler,
+    params: { id: "r-1" },
+    backend: "https://gw.example/safety/reports/r-1/attachment",
   },
 ];
 
@@ -144,5 +151,23 @@ describe("employee document", () => {
     fetchMock.mockResolvedValue(new Response("x", { status: 200 }));
     const res = await call(ROUTES[2]);
     expect(res.headers.get("cache-control")).toBe("no-store, private");
+  });
+});
+
+describe("safety report attachment", () => {
+  const route = ROUTES[4];
+
+  it("tells the browser never to guess the type", async () => {
+    fetchMock.mockResolvedValue(
+      new Response("%PDF-", { status: 200, headers: { "Content-Type": "application/pdf" } }),
+    );
+    const res = await call(route);
+    expect(res.headers.get("x-content-type-options")).toBe("nosniff");
+  });
+
+  it("says a missing attachment plainly", async () => {
+    fetchMock.mockResolvedValue(new Response("", { status: 404 }));
+    const res = await call(route);
+    expect(await res.text()).toBe("That attachment is no longer on file.");
   });
 });

@@ -4,10 +4,10 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import { ApiError } from "@/lib/api/client";
-import { type CapaSourceType, openCapa } from "@/lib/api/safety";
+import { CAPA_SOURCE_TYPES, openCapa } from "@/lib/api/safety";
 
 const _schema = z.object({
-  source_type: z.enum(["hazard", "incident"]),
+  source_type: z.enum(CAPA_SOURCE_TYPES),
   source_id: z.string().uuid(),
   title: z.string().trim().min(1, "Title is required.").max(200),
   description: z
@@ -55,7 +55,7 @@ export async function openCapaAction(
   let newId: string;
   try {
     const created = await openCapa({
-      source_type: v.source_type as CapaSourceType,
+      source_type: v.source_type,
       source_id: v.source_id,
       title: v.title,
       description: v.description,

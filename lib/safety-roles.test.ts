@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 
-import { BOARD_ROLES, MANAGE_ROLES, TRIAGE_ROLES } from "./safety-roles";
+import {
+  ASAP_REVIEWERS,
+  BOARD_ROLES,
+  MANAGE_ROLES,
+  SAFETY_REPORT_REVIEWERS,
+  TRIAGE_ROLES,
+} from "./safety-roles";
 
 /**
  * These gates mirror role tuples in flightops-services. The repos are
@@ -66,5 +72,25 @@ describe("CAPA manage gate", () => {
   it("does not admit a chief pilot or a DO", () => {
     expect(MANAGE_ROLES.has("chief_pilot")).toBe(false);
     expect(MANAGE_ROLES.has("director_of_operations")).toBe(false);
+  });
+});
+
+describe("safety report gates", () => {
+  // flightops-services shared/flightops_shared/auth/roles.py
+  it("matches the API's SAFETY_REPORT_REVIEWERS", () => {
+    expect([...SAFETY_REPORT_REVIEWERS].sort()).toEqual([
+      "chief_pilot",
+      "director_of_operations",
+      "exec_admin",
+      "safety_officer",
+    ]);
+  });
+
+  it("matches the API's ASAP_REVIEWERS, which leaves the chief pilot out", () => {
+    expect([...ASAP_REVIEWERS].sort()).toEqual([
+      "director_of_operations",
+      "exec_admin",
+      "safety_officer",
+    ]);
   });
 });

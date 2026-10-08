@@ -208,3 +208,19 @@ describe("collapsing", () => {
     expect(container.querySelectorAll("details")).toHaveLength(0);
   });
 });
+
+describe("AlertsList: safety reports (#58)", () => {
+  it("shows new safety reports as their own group, after the fleet's", () => {
+    const report = {
+      id: "safety-report-r-1",
+      severity: "yellow",
+      category: "safety_report_new",
+      title: "New safety report — Fuel truck inside the wing line",
+      detail: "Near Miss · not reviewed yet",
+      href: "/safety/reports/r-1",
+    } as OperationalAlert;
+    render(<AlertsList alerts={[report, grounded("N200PA")]} />);
+    const headings = screen.getAllByRole("heading", { level: 3 }).map((h) => h.textContent);
+    expect(headings).toEqual(["Aircraft grounded", "New safety reports"]);
+  });
+});

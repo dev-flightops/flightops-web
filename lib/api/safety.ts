@@ -346,7 +346,22 @@ export async function patchIncident(
 // Corrective Actions (CAPAs)
 // ============================================================================
 
-export type CapaSourceType = "hazard" | "incident";
+export const CAPA_SOURCE_TYPES = ["hazard", "incident", "safety_report"] as const;
+export type CapaSourceType = (typeof CAPA_SOURCE_TYPES)[number];
+
+/** What a CAPA was raised from, as a reader says it. */
+export const CAPA_SOURCE_LABELS: Record<CapaSourceType, string> = {
+  hazard: "Hazard",
+  incident: "Incident",
+  safety_report: "Safety report",
+};
+
+/** The page of the record a CAPA was raised from. */
+export function capaSourceHref(sourceType: CapaSourceType, sourceId: string): string {
+  if (sourceType === "hazard") return `/safety/${sourceId}`;
+  if (sourceType === "incident") return `/safety/incidents/${sourceId}`;
+  return `/safety/reports/${sourceId}`;
+}
 export type CapaStatus = "open" | "in_progress" | "closed";
 
 export const CAPA_STATUS_LABELS: Record<CapaStatus, string> = {

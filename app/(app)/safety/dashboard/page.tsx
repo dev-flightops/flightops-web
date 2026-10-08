@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { ApiError } from "@/lib/api/client";
 import {
+  CAPA_SOURCE_LABELS,
   CAPA_STATUS_LABELS,
   HAZARD_CATEGORY_LABELS,
   HAZARD_SEVERITY_LABELS,
@@ -15,18 +16,31 @@ import {
   type HazardSeverity,
   type Incident,
 } from "@/lib/api/safety";
+import {
+  SAFETY_REPORT_TYPE_LABELS,
+  type SafetyReport,
+  type SafetyReportSummary,
+  getSafetyReportSummary,
+  listSafetyReports,
+} from "@/lib/api/safety-reports";
+import { StatusBadge as ReportStatusBadge } from "@/components/safety/safety-report-badges";
 
 /**
  * /safety/dashboard — Safety SMS Dashboard.
  *
- * Rollup of the three safety-service surfaces (hazards, incidents,
- * corrective actions). Read-only landing for Safety Officers / Chief
- * Pilots that want a single glance instead of clicking through the
- * three triage inboxes:
+ * Rollup of the safety-service surfaces (safety reports, hazards,
+ * incidents, corrective actions). Read-only landing for Safety Officers /
+ * Chief Pilots that want a single glance instead of clicking through the
+ * triage inboxes:
  *
- *   1. 4 stat cards: Open Hazards · Open Incidents · Open CAPAs · Past-Due CAPAs
- *   2. Recent Hazards + Recent Incidents lists
- *   3. Past-due CAPAs table (nudges the owner to act)
+ *   1. 5 stat cards: Open Reports · Open Hazards · Open Incidents ·
+ *      Open CAPAs · Past-Due CAPAs
+ *   2. Legacy's 6-month report trend + Recent Reports (#58)
+ *   3. Recent Hazards + Recent Incidents lists
+ *   4. Past-due CAPAs table (nudges the owner to act)
+ *
+ * The report widgets load on their own: if safety reports cannot be
+ * read, the rest of the dashboard still shows.
  *
  * Cascading state is intentionally NOT invalidated on edit — this is
  * a monitoring surface; edits happen on the item's own detail page.
@@ -47,6 +61,14 @@ export default async function SafetyDashboardPage() {
   let openCapas: CorrectiveAction[] = [];
   let overdueCapas: CorrectiveAction[] = [];
   let loadError: string | null = null;
+
+  // Separate from the rest, and soft: see the note above.
+  const [reportSummary, recentReports] = await Promise.all([
+    getSafetyReportSummary().catch(() => null),
+    listSafetyReports({ limit: 5 })
+      .then((r) => r.items)
+      .catch(() => null),
+  ]);
 
   try {
     // Pull each open status separately, in parallel — the safety
@@ -126,11 +148,18 @@ export default async function SafetyDashboardPage() {
             Safety Dashboard
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Open hazards, incidents, and corrective actions across the tenant —
-            one glance surface for Safety Officers + Chief Pilots.
+            Open safety reports, hazards, incidents and corrective actions
+            across the tenant — one glance surface for Safety Officers + Chief
+            Pilots.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          <Link
+            href="/safety/reports"
+            className="rounded-md border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground/80 hover:bg-accent"
+          >
+            Safety reports
+          </Link>
           <Link
             href="/safety"
             className="rounded-md border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground/80 hover:bg-accent"
@@ -150,7 +179,7 @@ export default async function SafetyDashboardPage() {
             CAPA board
           </Link>
           <Link
-            href="/safety/report"
+            href="/safety/reports/new"
             className="rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-dark"
           >
             + File a report
@@ -168,11 +197,19 @@ export default async function SafetyDashboardPage() {
       ) : (
         <>
           <StatCards
+            reportSummary={reportSummary}
             openHazards={openHazards}
             openIncidents={openIncidents}
             openCapas={openCapas}
             overdueCapas={overdueCapas}
           />
+
+          {reportSummary && recentReports ? (
+            <div className="mt-6 grid gap-6 md:grid-cols-2">
+              <ReportTrendCard summary={reportSummary} />
+              <RecentReportsCard reports={recentReports} />
+            </div>
+          ) : null}
 
           <div className="mt-6 grid gap-6 md:grid-cols-2">
             <RecentHazardsCard hazards={openHazards} />
@@ -189,11 +226,13 @@ export default async function SafetyDashboardPage() {
 }
 
 function StatCards({
+  reportSummary,
   openHazards,
   openIncidents,
   openCapas,
   overdueCapas,
 }: {
+  reportSummary: SafetyReportSummary | null;
   openHazards: HazardReport[];
   openIncidents: Incident[];
   openCapas: CorrectiveAction[];
@@ -207,7 +246,20 @@ function StatCards({
   ).length;
 
   return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+    <div className={"grid grid-cols-2 gap-3 " + (reportSummary ? "sm:grid-cols-5" : "sm:grid-cols-4")}>
+      {reportSummary ? (
+        <StatCard
+          value={reportSummary.open}
+          label="Open Reports"
+          hint={
+            reportSummary.open_high_risk > 0
+              ? `${reportSummary.open_high_risk} high risk`
+              : "None high risk"
+          }
+          tone={reportSummary.open_high_risk > 0 ? "red" : reportSummary.open > 0 ? "yellow" : "green"}
+          href="/safety/reports"
+        />
+      ) : null}
       <StatCard
         value={openHazards.length}
         label="Open Hazards"
@@ -281,6 +333,86 @@ function StatCard({
       </div>
     </Link>
   );
+}
+
+/** Legacy's "Safety Reports — 6 Month Trend": a bar a month, by the day
+ *  each report says it happened. */
+function ReportTrendCard({ summary }: { summary: SafetyReportSummary }) {
+  const max = Math.max(1, ...summary.by_month.map((m) => m.count));
+  return (
+    <section>
+      <div className="mb-2 flex items-baseline justify-between px-1">
+        <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          Safety Reports — 6 Month Trend
+        </h2>
+      </div>
+      <div className="rounded-lg border border-border bg-card px-4 py-4">
+        <div className="flex h-28 items-end gap-1.5">
+          {summary.by_month.map((m) => (
+            <div key={m.month} className="flex h-full flex-1 flex-col items-center justify-end gap-1">
+              <span className="text-[0.65rem] tabular-nums text-muted-foreground">{m.count}</span>
+              <div
+                className="w-full rounded-t bg-primary"
+                style={{ height: `${Math.max(4, Math.round((m.count / max) * 80))}%` }}
+                aria-hidden
+              />
+              <span className="text-[0.6rem] uppercase tracking-[0.04em] text-muted-foreground">
+                {monthLabel(m.month)}
+              </span>
+            </div>
+          ))}
+        </div>
+        <p className="mt-3 text-center text-xs text-muted-foreground">
+          {summary.this_year} report{summary.this_year === 1 ? "" : "s"} year-to-date
+        </p>
+      </div>
+    </section>
+  );
+}
+
+function RecentReportsCard({ reports }: { reports: SafetyReport[] }) {
+  return (
+    <section>
+      <div className="mb-2 flex items-baseline justify-between px-1">
+        <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          Recent Reports
+        </h2>
+        <Link href="/safety/reports" className="text-[0.7rem] font-semibold text-primary hover:underline">
+          All reports →
+        </Link>
+      </div>
+      <div className="overflow-hidden rounded-lg border border-border bg-card">
+        {reports.length === 0 ? (
+          <EmptyState message="No reports yet." />
+        ) : (
+          <ul className="divide-y divide-border">
+            {reports.map((r) => (
+              <li key={r.id}>
+                <Link
+                  href={`/safety/reports/${r.id}`}
+                  className="flex items-baseline justify-between gap-3 px-4 py-3 text-sm hover:bg-accent"
+                >
+                  <div className="min-w-0">
+                    <div className="line-clamp-1 font-medium">{r.title}</div>
+                    <div className="mt-0.5 text-[0.65rem] text-muted-foreground">
+                      {SAFETY_REPORT_TYPE_LABELS[r.report_type]} · {fmtDate(r.occurred_on + "T12:00:00Z")}
+                    </div>
+                  </div>
+                  <ReportStatusBadge status={r.status} />
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </section>
+  );
+}
+
+/** "2026-10" -> "OCT". */
+function monthLabel(month: string): string {
+  const [y, m] = month.split("-").map(Number);
+  return new Date(Date.UTC(y, m - 1, 15)).toLocaleString("en-US", { month: "short", timeZone: "UTC" });
 }
 
 function RecentHazardsCard({ hazards }: { hazards: HazardReport[] }) {
@@ -434,7 +566,7 @@ function OverdueCapasCard({ capas }: { capas: CorrectiveAction[] }) {
                         {c.owner?.full_name ?? c.owner?.email ?? "—"}
                       </td>
                       <td className="whitespace-nowrap px-3 py-2.5 text-[0.7rem] text-muted-foreground">
-                        {c.source_type}
+                        {CAPA_SOURCE_LABELS[c.source_type] ?? c.source_type}
                       </td>
                       <td className="whitespace-nowrap px-3 py-2.5">
                         <span className="font-mono text-xs">

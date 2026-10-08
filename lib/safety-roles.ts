@@ -58,3 +58,26 @@ export const BOARD_ROLES = roleGate(
  * Officer's. Matches the API — not an oversight.
  */
 export const MANAGE_ROLES = roleGate("safety_officer", "exec_admin");
+
+/**
+ * Review a safety report (#58): the inbox, status, assignee, resolution
+ * and risk. The hazard triage roles. Mirrors flightops-services
+ * shared/flightops_shared/auth/roles.py SAFETY_REPORT_REVIEWERS.
+ */
+export const SAFETY_REPORT_REVIEWERS = roleGate(
+  "safety_officer",
+  "chief_pilot",
+  "director_of_operations",
+  "exec_admin",
+);
+
+/**
+ * See ASAP reports (Greg, 8 Oct): the Safety Officer, the DO and Exec
+ * Admins, plus whoever filed one. A chief pilot reviews every other
+ * report but never sees an ASAP one. Mirrors ASAP_REVIEWERS.
+ */
+export const ASAP_REVIEWERS = roleGate(
+  "safety_officer",
+  "director_of_operations",
+  "exec_admin",
+);

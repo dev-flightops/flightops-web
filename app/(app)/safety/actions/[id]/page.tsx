@@ -6,8 +6,10 @@ import { hasAnyRole } from "@/lib/roles";
 import { BOARD_ROLES, MANAGE_ROLES } from "@/lib/safety-roles";
 import { ApiError } from "@/lib/api/client";
 import {
+  CAPA_SOURCE_LABELS,
   CAPA_STATUS_LABELS,
   type CorrectiveAction,
+  capaSourceHref,
   getCapa,
 } from "@/lib/api/safety";
 
@@ -53,10 +55,7 @@ export default async function CapaDetailPage({
     isOwner || hasAnyRole([...roles], BOARD_ROLES);
   if (!canRead) notFound();
 
-  const sourceHref =
-    capa.source_type === "hazard"
-      ? `/safety/${capa.source_id}`
-      : `/safety/incidents/${capa.source_id}`;
+  const sourceHref = capaSourceHref(capa.source_type, capa.source_id);
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -86,7 +85,7 @@ export default async function CapaDetailPage({
           Opened {new Date(capa.created_at).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" })} by{" "}
           {capa.opened_by.full_name} — linked to a{" "}
           <Link href={sourceHref} className="text-primary hover:underline">
-            {capa.source_type}
+            {CAPA_SOURCE_LABELS[capa.source_type].toLowerCase()}
           </Link>
         </p>
       </header>

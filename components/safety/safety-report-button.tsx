@@ -12,35 +12,24 @@ import { usePathname } from "next/navigation";
  *    visible regardless of scroll position. All roles see it at all
  *    times."
  *
- * A link, not a dialog. Legacy does the same — `base.html` renders
- * `<a id="safety-fab" href="/safety/reports/new?return_url=...">` — and
- * it means the global button reaches the one intake path that is
- * actually wired: /safety/report -> submitHazard -> POST /safety/hazards.
+ * A link, not a dialog, to legacy's own URL: `base.html` renders
+ * `<a id="safety-fab" href="/safety/reports/new?return_url=...">`.
  *
- * Until now this button opened its own dialog backed by
- * `fileSafetyReportAction`, an M2-era stub that appended the filing to
- * `.safety-reports.log` and returned `{status: "ok"}`. safety-service
- * shipped in M3 with `POST /safety/hazards`, but the dialog was never
- * rewired — so every report filed from the FAB was discarded, and on
- * Vercel (read-only filesystem) it went to stdout instead. The filing
- * reached neither the Safety Officer's triage queue nor the filer's own
- * /safety/mine list, which nonetheless told them to use this button.
- *
- * The dialog's wider field set — title, report type (incl. ASAP),
- * likelihood, flight #, aircraft tail, occurrence date — was a faithful
- * port of legacy's `safety_reports` table. flightops-services has not
- * built that entity; it has `hazards` only. Those fields are parked
- * until it ships, and nothing is lost relative to the stub, which
- * persisted none of them anywhere durable.
+ * It files a safety report (#58), legacy's record: a title, a report
+ * type (ASAP among them), where and when, flight and tail, severity and
+ * likelihood, a photo. Until that entity existed the button went to the
+ * hazard form, and before that to a dialog whose filings went to a log
+ * file and reached nobody. Hazards are the safety team's register now,
+ * filed from Safety SMS.
  */
 export function SafetyReportButton() {
   const pathname = usePathname();
 
   // The intake page is where this button goes — rendering a link to the
   // page you are already on is a dead control.
-  if (pathname === "/safety/report") return null;
+  if (pathname === "/safety/reports/new") return null;
 
-  const href = `/safety/report?return_url=${encodeURIComponent(pathname)}`;
+  const href = `/safety/reports/new?return_url=${encodeURIComponent(pathname)}`;
 
   return (
     <Link

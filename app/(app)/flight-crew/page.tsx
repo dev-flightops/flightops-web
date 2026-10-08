@@ -237,16 +237,12 @@ export default async function FlightCrewPage() {
               My Documents
             </Link>
           </li>
-          {/* Labelled for what the page is. It was "File Safety Report"
-              and dimmed; /safety/report files a hazard specifically,
-              while the floating button on every page — including this
-              one — covers all five types: safety concern, hazard, near
-              miss, ASAP and incident. A link promising the broader
-              surface and delivering the narrower one is the same
-              overclaim as a dimmed link that works. */}
+          {/* Legacy's "File Safety Report", and since #58 the same form
+              the floating button opens: every report type, ASAP and
+              fatigue among them. */}
           <li>
-            <Link href="/safety/report" className="hover:text-primary">
-              File a Hazard
+            <Link href="/safety/reports/new" className="hover:text-primary">
+              File Safety Report
             </Link>
           </li>
         </ul>
