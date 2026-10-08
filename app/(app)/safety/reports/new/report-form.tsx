@@ -9,6 +9,7 @@ import {
   SAFETY_REPORT_TYPES,
   SAFETY_REPORT_TYPE_LABELS,
   SEVERITY_LABELS,
+  type SafetyReportType,
 } from "@/lib/api/safety-reports";
 import { todayIsoDay } from "@/lib/iso-day";
 import { formOversizeMessage, MAX_UPLOAD_LABEL } from "@/lib/upload-limits";
@@ -31,7 +32,10 @@ export function SafetyReportForm({
   today,
   returnTo,
   cancelHref,
+  startType,
 }: {
+  /** The type to start on: the ASAP hub opens the form on ASAP. */
+  startType?: SafetyReportType;
   reporterName: string;
   /** YYYY-MM-DD on the server, for the first render. The browser's own
    *  day replaces it on mount: an Alaska evening is already tomorrow in
@@ -53,6 +57,7 @@ export function SafetyReportForm({
       today={today}
       returnTo={returnTo}
       cancelHref={cancelHref}
+      startType={startType}
     />
   );
 }
@@ -65,7 +70,9 @@ function FilingForm({
   today,
   returnTo,
   cancelHref,
+  startType,
 }: {
+  startType?: SafetyReportType;
   state: FileReportState;
   formAction: (form: FormData) => void;
   pending: boolean;
@@ -76,7 +83,12 @@ function FilingForm({
 }) {
   const v = state.values ?? {};
   const errors = state.fieldErrors ?? {};
-  const [anonymous, setAnonymous] = useState(v.is_anonymous === "on");
+  const [reportType, setReportType] = useState(v.report_type || startType || "safety_concern");
+  // ASAP is confidential, not anonymous (#59): the Event Review Committee
+  // has to be able to reach the reporter, and the API refuses otherwise.
+  const asap = reportType === "asap";
+  const [anonymousChecked, setAnonymous] = useState(v.is_anonymous === "on");
+  const anonymous = anonymousChecked && !asap;
   const [sizeError, setSizeError] = useState<string | null>(null);
   const message = sizeError ?? (state.status === "error" ? state.message : null);
   const dateRef = useRef<HTMLInputElement>(null);
@@ -111,23 +123,31 @@ function FilingForm({
         </div>
       ) : null}
 
-      <div>
-        <label className="flex cursor-pointer items-center gap-2">
-          <input
-            type="checkbox"
-            name="is_anonymous"
-            checked={anonymous}
-            onChange={(e) => setAnonymous(e.target.checked)}
-            className="accent-primary"
-          />
-          <span className="text-sm font-semibold text-foreground">Submit anonymously</span>
-        </label>
-        <p className="mt-1 text-[0.6875rem] text-muted-foreground">
-          {anonymous
-            ? "Your name is hidden from everyone reviewing it except the Safety Officer and Exec Admins. You can still follow the report under My Reports."
-            : "The safety team will see your name, so they can ask you about it."}
+      {asap ? (
+        <p className="rounded-md border border-border bg-muted/60 px-3 py-2 text-[0.6875rem] text-muted-foreground">
+          An ASAP report carries your name: the Event Review Committee has to be able to reach you, and
+          the ASAP agreement only protects reports it can. It stays confidential to the Safety Officer,
+          the Director of Operations and Exec Admins.
         </p>
-      </div>
+      ) : (
+        <div>
+          <label className="flex cursor-pointer items-center gap-2">
+            <input
+              type="checkbox"
+              name="is_anonymous"
+              checked={anonymousChecked}
+              onChange={(e) => setAnonymous(e.target.checked)}
+              className="accent-primary"
+            />
+            <span className="text-sm font-semibold text-foreground">Submit anonymously</span>
+          </label>
+          <p className="mt-1 text-[0.6875rem] text-muted-foreground">
+            {anonymous
+              ? "Your name is hidden from everyone reviewing it except the Safety Officer and Exec Admins. You can still follow the report under My Reports."
+              : "The safety team will see your name, so they can ask you about it."}
+          </p>
+        </div>
+      )}
 
       {anonymous ? null : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -153,7 +173,8 @@ function FilingForm({
           <select
             id="report_type"
             name="report_type"
-            defaultValue={v.report_type || "safety_concern"}
+            value={reportType}
+            onChange={(e) => setReportType(e.target.value as SafetyReportType)}
             className="ff-input"
           >
             {SAFETY_REPORT_TYPES.map((t) => (

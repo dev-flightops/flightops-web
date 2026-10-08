@@ -884,7 +884,7 @@ export const HELP_ENTRIES: HelpEntry[] = [
     worthKnowing: [
       "Severity and likelihood are optional. Give your best guess if you have one; the safety team sets the final assessment when they review the report.",
       "Filed anonymously, your name is hidden from everyone reviewing the report except the Safety Officer and Exec Admins. You can still see the report under My Reports.",
-      "An ASAP report is seen only by the Safety Officer, the Director of Operations and Exec Admins.",
+      "An ASAP report is seen only by the Safety Officer, the Director of Operations and Exec Admins. It carries your name: ASAP is confidential, not anonymous.",
     ],
     connectsTo:
       "A filed report lands in the safety team's Safety Reports inbox, alerts them in the notification bell, and appears in your own My Reports list.",
@@ -909,6 +909,27 @@ export const HELP_ENTRIES: HelpEntry[] = [
     connectsTo:
       "Filed from the red Safety button. A new report alerts the safety team in the notification bell until somebody moves it on from Open. Corrective actions raised here appear on the CAPA board, and the counts feed the safety dashboard.",
     related: ["/safety/reports/new", "/safety/actions", "/safety/dashboard"],
+  },
+  {
+    route: "/safety/asap",
+    title: "ASAP program",
+    whoCanUse: ["safety_officer", "director_of_operations", "exec_admin"],
+    whatItDoes:
+      "The Aviation Safety Action Program: every ASAP report, the Event Review Committee's decision on each, and the company's FAA MOU. ASAP gives the reporter protection under the MOU in exchange for coming forward, so the ERC's decision on each report is the record that matters.",
+    howToUse: [
+      "Read the pending reports first: each needs the ERC to meet on it.",
+      "File the ERC review under the report: the meeting date, who sat on it, the decision and why, and the corrective action or feedback to the reporter.",
+      "Tick de-identified once the report has been stripped of who filed it, before it goes any further inside the company.",
+      "Keep the current MOU in the document library under the category \"ASAP MOU\" so it shows here.",
+    ],
+    worthKnowing: [
+      "ASAP reports and their reviews are seen only by the Safety Officer, the Director of Operations and Exec Admins, plus the person who filed the report.",
+      "An ASAP report can't be filed anonymously. ASAP is confidential, not anonymous: the ERC has to be able to reach the reporter.",
+      "A decision closes the case on the review date it was recorded for. Moving it back to pending reopens it.",
+    ],
+    connectsTo:
+      "ASAP reports are filed with the red Safety button, as ASAP Report. The same reports appear in Safety Reports for the safety team, where corrective actions are raised.",
+    related: ["/safety/reports", "/safety/reports/new", "/documents"],
   },
   {
     route: "/safety/report",

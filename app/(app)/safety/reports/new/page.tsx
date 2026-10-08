@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { auth } from "@/auth";
 import { todayIsoDay } from "@/lib/iso-day";
+import { SAFETY_REPORT_TYPES } from "@/lib/api/safety-reports";
 import { hasAnyRole } from "@/lib/roles";
 import { safeReturnPath } from "@/lib/safety/return-path";
 import { SAFETY_REPORT_REVIEWERS } from "@/lib/safety-roles";
@@ -19,9 +20,12 @@ import { SafetyReportForm } from "./report-form";
 export default async function NewSafetyReportPage({
   searchParams,
 }: {
-  searchParams: Promise<{ return_url?: string }>;
+  searchParams: Promise<{ return_url?: string; type?: string; asap?: string }>;
 }) {
-  const returnTo = safeReturnPath((await searchParams).return_url);
+  const query = await searchParams;
+  const returnTo = safeReturnPath(query.return_url);
+  // The ASAP hub's "+ File ASAP Report" (legacy linked ?asap=1).
+  const startType = SAFETY_REPORT_TYPES.find((t) => t === query.type) ?? (query.asap === "1" ? "asap" : undefined);
   const session = await auth();
   const roles = session?.roles ?? [];
   const home = hasAnyRole(roles, SAFETY_REPORT_REVIEWERS) ? "/safety/reports" : "/safety/mine";
@@ -47,6 +51,7 @@ export default async function NewSafetyReportPage({
         today={todayIsoDay()}
         returnTo={returnTo}
         cancelHref={returnTo ?? home}
+        startType={startType}
       />
     </div>
   );

@@ -157,6 +157,14 @@ describe("filing a safety report", () => {
     expect(state !== "redirected" && state.message).toMatch(/HEIC photo has to be exported as JPEG/);
   });
 
+  it("explains why an ASAP report can't be anonymous (#59)", async () => {
+    fileSafetyReport.mockRejectedValueOnce(
+      new TestApiError(422, "/safety/reports", '{"detail":"asap_reports_are_not_anonymous"}'),
+    );
+    const state = await submit(form({ report_type: "asap", is_anonymous: "on" }));
+    expect(state !== "redirected" && state.message).toMatch(/ASAP report can't be anonymous/);
+  });
+
   it("says when the service could not be reached", async () => {
     fileSafetyReport.mockRejectedValueOnce(new Error("fetch failed"));
     const state = await submit(form());
