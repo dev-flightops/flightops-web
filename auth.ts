@@ -1,9 +1,10 @@
-import NextAuth from "next-auth";
+import NextAuth, { CredentialsSignin } from "next-auth";
 
 import {
   decideSessionAction,
   refreshAccessToken,
 } from "@/lib/session-refresh";
+import { lockoutMinutes, tooManyAttemptsCode } from "@/lib/login-errors";
 import { postOAuthExchange } from "@/lib/sso-exchange";
 import { ssoProfileAllowed, ssoProviderConfigs } from "@/lib/sso-providers";
 import type { Provider } from "next-auth/providers";
@@ -64,6 +65,16 @@ function apiBaseUrl(): string {
  * names, and why each provider gets its id, secret and issuer passed in
  * rather than read by Auth.js itself: lib/sso-providers.ts (#11).
  */
+/** The auth service has locked this email after repeated wrong
+ *  passwords (#16). The code reaches the login form, which says how
+ *  long to wait instead of "Invalid email or password". */
+class TooManyAttempts extends CredentialsSignin {
+  constructor(minutes: number) {
+    super();
+    this.code = tooManyAttemptsCode(minutes);
+  }
+}
+
 function buildProviders(): Provider[] {
   const providers: Provider[] = [
     Credentials({
@@ -84,6 +95,9 @@ function buildProviders(): Provider[] {
           }),
         });
 
+        if (response.status === 429) {
+          throw new TooManyAttempts(lockoutMinutes(response.headers.get("retry-after")));
+        }
         if (!response.ok) return null;
 
         const body = (await response.json()) as AuthServiceLoginResponse;

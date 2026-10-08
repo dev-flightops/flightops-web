@@ -25,7 +25,7 @@ export interface SupplierLoginResponse {
 
 export type SupplierLoginResult =
   | { ok: true; body: SupplierLoginResponse }
-  | { ok: false; status: number; detail: string };
+  | { ok: false; status: number; detail: string; retryAfter?: string | null };
 
 /** Server-only: POST /auth/fuel-supplier/login. Returns a tagged
  *  result so the caller can distinguish "wrong credentials" from
@@ -52,7 +52,12 @@ export async function loginSupplierAccount(
       } catch {
         /* ignore */
       }
-      return { ok: false, status: response.status, detail };
+      return {
+        ok: false,
+        status: response.status,
+        detail,
+        retryAfter: response.headers.get("retry-after"),
+      };
     }
     const body = (await response.json()) as SupplierLoginResponse;
     return { ok: true, body };
