@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { listUsers } from "@/lib/api/auth";
+import { listStaff, type StaffMember } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
 import {
   COURSE_CATEGORY_LABELS,
@@ -11,7 +11,6 @@ import {
   type Enrollment,
   type EnrollmentStatus,
 } from "@/lib/api/academy";
-import type { UserResponse } from "@/lib/api/types";
 
 import { AcademyHeader } from "../academy-header";
 import { AssignCourseDrawer } from "./assign-course-drawer";
@@ -55,11 +54,18 @@ export default async function AcademyAssignmentsPage({
 
   let enrollments: Enrollment[] = [];
   let publishedCourses: Course[] = [];
-  let users: UserResponse[] = [];
   let loadError: string | null = null;
 
+  // The people for the bulk-assign drawer, from the staff directory
+  // (#60). Loaded on its own: until #60 this read the Exec Admin's user
+  // list inside the Promise.all below, so a chief pilot or DO got the
+  // whole page as "You don't have permission".
+  const users: StaffMember[] = await listStaff()
+    .then((r) => r.items)
+    .catch(() => []);
+
   try {
-    const [enrollmentsResp, coursesResp, usersResp] = await Promise.all([
+    const [enrollmentsResp, coursesResp] = await Promise.all([
       listEnrollments({
         status: statusFilter || undefined,
         limit: 500,
@@ -67,11 +73,9 @@ export default async function AcademyAssignmentsPage({
       // Bulk-assign drawer only offers published courses — drafts /
       // archived aren't valid enrol targets on the backend.
       listCourses({ publish_status: "published", limit: 200 }),
-      listUsers(),
     ]);
     enrollments = enrollmentsResp.items;
     publishedCourses = coursesResp.items;
-    users = usersResp.items;
   } catch (err) {
     const status = err instanceof ApiError ? err.status : 0;
     loadError =

@@ -108,10 +108,12 @@ describe("MembersSheet", () => {
     );
   });
 
-  it("without the staff list, still lists and says who can add", async () => {
+  it("without the staff list, still lists and says why it can't add", async () => {
     await openSheet(null);
     expect(await screen.findAllByRole("listitem")).toHaveLength(2);
     expect(screen.queryByLabelText("Employee to add")).toBeNull();
-    expect(screen.getByText("Only an Executive Admin can add members.")).toBeInTheDocument();
+    expect(
+      screen.getByText("The staff list couldn’t be loaded, so members can’t be added right now."),
+    ).toBeInTheDocument();
   });
 });
