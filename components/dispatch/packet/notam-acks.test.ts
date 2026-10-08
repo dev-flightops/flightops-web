@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { parseAckedIcaos, unacknowledgedNotamIcaos } from "./notam-acks";
+import { parseAckedIcaos, routeAirports, unacknowledgedNotamIcaos } from "./notam-acks";
 
 describe("parseAckedIcaos", () => {
   it("returns [] for empty/missing", () => {
@@ -49,5 +49,16 @@ describe("unacknowledgedNotamIcaos (release gate)", () => {
     expect(
       unacknowledgedNotamIcaos(["PANC", "PABE"], ["PADU", "PANC"]),
     ).toEqual(["PABE"]);
+  });
+});
+
+describe("a round trip (#57)", () => {
+  it("lists each airport once, in the order first flown to", () => {
+    expect(routeAirports(["PANC", "pabe ", "PANC", ""])).toEqual(["PANC", "PABE"]);
+  });
+
+  it("names an unacknowledged airport once", () => {
+    expect(unacknowledgedNotamIcaos(["PANC", "PABE", "PANC"], ["PABE"])).toEqual(["PANC"]);
+    expect(unacknowledgedNotamIcaos(["PANC", "PABE", "PANC"], ["PANC", "PABE"])).toEqual([]);
   });
 });

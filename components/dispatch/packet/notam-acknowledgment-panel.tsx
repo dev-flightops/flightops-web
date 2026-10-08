@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 
+import { routeAirports } from "./notam-acks";
 import { SectionPanel } from "./section-panel";
 import { useDispatchQuery } from "./use-dispatch-query";
 
@@ -29,12 +30,15 @@ import { useDispatchQuery } from "./use-dispatch-query";
  * the surface contract.
  */
 export function NotamAcknowledgmentPanel({
-  icaos,
+  icaos: route,
   ackedFromUrl,
 }: {
   icaos: string[];
   ackedFromUrl: string[];
 }) {
+  // A round trip names its home airport twice; it has one set of NOTAMs
+  // and one acknowledgment (#57).
+  const icaos = routeAirports(route);
   const router = useRouter();
   const nextQuery = useDispatchQuery();
   const [isPending, startTransition] = useTransition();

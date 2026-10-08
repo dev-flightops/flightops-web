@@ -24,6 +24,15 @@ export function parseAckedIcaos(raw: string | undefined | null): string[] {
 }
 
 /**
+ * Each routed airport once, in the order first flown to (#57). A round
+ * trip (PANC → PABE → PANC) has one set of NOTAMs per airport, so one
+ * acknowledgment each, as legacy's get_notams_for_route lists them.
+ */
+export function routeAirports(icaos: string[]): string[] {
+  return [...new Set(icaos.map((s) => s.trim().toUpperCase()).filter(Boolean))];
+}
+
+/**
  * Which routed ICAOs still lack a NOTAM acknowledgment.
  *
  * The single source of truth for the release gate: the NOTAM panel
@@ -38,7 +47,7 @@ export function unacknowledgedNotamIcaos(
   ackedFromUrl: string[],
 ): string[] {
   if (icaos.length === 0) return [];
-  const route = icaos.map((s) => s.trim().toUpperCase());
+  const route = routeAirports(icaos);
   const acked = new Set(
     ackedFromUrl
       .map((s) => s.trim().toUpperCase())
