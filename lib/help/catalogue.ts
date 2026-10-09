@@ -1217,10 +1217,11 @@ export const HELP_ENTRIES: HelpEntry[] = [
     whatItDoes:
       "Who and what is on the aircraft: passengers, their weights, and cargo. It is the input to weight and balance, which is why a guessed weight here becomes a wrong envelope on the release.",
     howToUse: [
-      "Open the flight's manifest.",
-      "Add passengers with actual or standard weights, as the operator's policy requires.",
-      "Add cargo with its weight and where it is loaded.",
+      "Open the flight's manifest, and create it if the flight has none.",
+      "Add passengers and crew with actual or standard weights, as the operator's policy requires, and their bags.",
+      "Add USPS mail by class, and cargo with its weight. A UPS package is a cargo line with its tracking number.",
       "Check the total against the aircraft before the packet is built.",
+      "Lock the manifest when boarding closes. A locked manifest is final: nobody can change it, and there is no unlock. Ground Ops, Reservations Agents, Dispatchers, the Chief Pilot, the Director of Operations and Exec Admins can lock.",
     ],
     connectsTo:
       "Feeds the dispatch packet's weight and balance, and the preflight step the pilot signs. Passenger counts come from the booking where there is one.",
