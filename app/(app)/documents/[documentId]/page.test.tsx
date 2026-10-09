@@ -62,6 +62,7 @@ vi.mock("@/lib/api/documents", () => ({
   myAcknowledgment,
   downloadUrl,
   versionDownloadUrl,
+  getUploadLimits: vi.fn(async () => ({ direct_uploads: false, max_bytes: 52428800 })),
 }));
 vi.mock("./ack-panel", () => ({
   AckPanel: (props: {

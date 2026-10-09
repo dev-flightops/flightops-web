@@ -1,19 +1,35 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useActionState, useState } from "react";
 
+import type { UploadLimits } from "@/lib/api/documents";
 import { formOversizeMessage, MAX_UPLOAD_LABEL } from "@/lib/upload-limits";
 
 import type { ActionResult } from "../actions";
 import { uploadVersionAction } from "../actions";
+import { largeFileRefusal, maxUploadLabel, needsDirectUpload, uploadLargeVersion } from "../large-upload";
+import { UploadProgress } from "../upload-progress";
 
 /**
  * Slide-over drawer for uploading a new version to an existing
  * document. Distinct from the "+ Upload Document" drawer on the list
  * page — this one keeps the document metadata untouched and just
  * appends a version row.
+ *
+ * A file over 3.8 MB goes straight to storage when the server has a
+ * bucket (#17): it is too big for the server action. `limits` says
+ * whether it does; without them the 3.8 MB cap stands.
  */
-export function UploadVersionDrawer({ documentId }: { documentId: string }) {
+export function UploadVersionDrawer({
+  documentId,
+  limits = null,
+}: {
+  documentId: string;
+  limits?: UploadLimits | null;
+}) {
+  const router = useRouter();
+  const [progress, setProgress] = useState<number | null>(null);
   const [open, setOpen] = useState(false);
   const action = uploadVersionAction.bind(null, documentId);
   const [state, formAction, pending] = useActionState<ActionResult, FormData>(
@@ -71,9 +87,27 @@ export function UploadVersionDrawer({ documentId }: { documentId: string }) {
             <form
               action={formAction}
               onSubmit={(e) => {
-                const tooBig = formOversizeMessage(e.currentTarget);
-                setSizeError(tooBig);
-                if (tooBig) e.preventDefault();
+                const form = e.currentTarget;
+                const file = (form.elements.namedItem("file") as HTMLInputElement | null)?.files?.[0] ?? null;
+                if (!needsDirectUpload(file)) {
+                  setSizeError(formOversizeMessage(form));
+                  return;
+                }
+                e.preventDefault();
+                const refusal = largeFileRefusal(file, limits);
+                setSizeError(refusal);
+                if (refusal) return;
+                const notes = String(new FormData(form).get("notes") ?? "").trim() || null;
+                setProgress(0);
+                void uploadLargeVersion(documentId, file, notes, setProgress).then((error) => {
+                  setProgress(null);
+                  if (error) {
+                    setSizeError(error);
+                    return;
+                  }
+                  setOpen(false);
+                  router.refresh();
+                });
               }}
               className="space-y-3"
             >
@@ -88,7 +122,7 @@ export function UploadVersionDrawer({ documentId }: { documentId: string }) {
                   className="block w-full text-xs text-foreground file:mr-3 file:rounded-md file:border file:border-border file:bg-background file:px-2 file:py-1 file:text-xs file:font-semibold file:text-foreground/80 hover:file:bg-accent"
                 />
                 <p className="mt-1 text-[0.65rem] text-muted-foreground">
-                  Max {MAX_UPLOAD_LABEL}.
+                  Max {limits?.direct_uploads ? maxUploadLabel(limits) : MAX_UPLOAD_LABEL}.
                 </p>
               </label>
 
@@ -103,6 +137,8 @@ export function UploadVersionDrawer({ documentId }: { documentId: string }) {
                   className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-xs text-foreground focus:border-primary focus:outline-none"
                 />
               </label>
+
+              {progress !== null ? <UploadProgress fraction={progress} /> : null}
 
               {(sizeError ?? state.error) && (
                 <p role="alert" className="text-xs text-status-red">
@@ -120,10 +156,10 @@ export function UploadVersionDrawer({ documentId }: { documentId: string }) {
                 </button>
                 <button
                   type="submit"
-                  disabled={pending}
+                  disabled={pending || progress !== null}
                   className="rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-dark disabled:opacity-60"
                 >
-                  {pending ? "Uploading…" : "Upload version"}
+                  {pending || progress !== null ? "Uploading…" : "Upload version"}
                 </button>
               </div>
             </form>

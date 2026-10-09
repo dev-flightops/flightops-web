@@ -24,6 +24,9 @@ export const DOCUMENT_CATEGORIES = [
   { value: "compliance", label: "Compliance References" },
   { value: "training", label: "Training Materials" },
   { value: "company-policies", label: "Company Policies" },
+  // The ASAP hub lists the FAA MOU from this category (#59). Without it
+  // here the MOU could not be filed where the hub looks.
+  { value: "asap-mou", label: "ASAP MOU" },
 ] as const;
 
 export function DocumentsFilterBar({
