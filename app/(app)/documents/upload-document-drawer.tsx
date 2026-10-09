@@ -1,13 +1,17 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useActionState, useState } from "react";
 
+import type { UploadLimits } from "@/lib/api/documents";
 import { formOversizeMessage, MAX_UPLOAD_LABEL } from "@/lib/upload-limits";
 
 import { DOCUMENT_CATEGORIES } from "./filter-bar";
 import type { ActionResult } from "./actions";
 import { createDocumentAction } from "./actions";
+import { largeFileRefusal, maxUploadLabel, needsDirectUpload, uploadLargeVersion } from "./large-upload";
+import { UploadProgress } from "./upload-progress";
 
 /**
  * Slide-over drawer for creating a new document. Handles the metadata
@@ -15,12 +19,21 @@ import { createDocumentAction } from "./actions";
  * action creates the document, then chains a POST to /versions if a
  * file was attached. On success, routes to the new document's
  * detail page.
+ *
+ * A file over 3.8 MB is too big for the server action. With a bucket
+ * (#17) the document is created first and the file then goes straight
+ * to storage; `limits` says whether the server has one.
  */
 export function UploadDocumentDrawer({
   variant = "primary",
+  limits = null,
 }: {
   variant?: "primary" | "secondary";
+  limits?: UploadLimits | null;
 }) {
+  const [progress, setProgress] = useState<number | null>(null);
+  // Created, but its large file didn't make it: where to try again.
+  const [strandedId, setStrandedId] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
   const [state, action, pending] = useActionState<
     ActionResult<{ id: string }>,
@@ -47,6 +60,7 @@ export function UploadDocumentDrawer({
         onClick={() => {
           // A refusal from the last attempt is not about the next one.
           setSizeError(null);
+          setStrandedId(null);
           setOpen(true);
         }}
         className={buttonClass}
@@ -86,9 +100,38 @@ export function UploadDocumentDrawer({
             <form
               action={action}
               onSubmit={(e) => {
-                const tooBig = formOversizeMessage(e.currentTarget);
-                setSizeError(tooBig);
-                if (tooBig) e.preventDefault();
+                const form = e.currentTarget;
+                const file = (form.elements.namedItem("file") as HTMLInputElement | null)?.files?.[0] ?? null;
+                if (!needsDirectUpload(file)) {
+                  setSizeError(formOversizeMessage(form));
+                  return;
+                }
+                e.preventDefault();
+                const refusal = largeFileRefusal(file, limits);
+                setSizeError(refusal);
+                if (refusal) return;
+                const data = new FormData(form);
+                data.delete("file");
+                const notes = String(data.get("upload_notes") ?? "").trim() || null;
+                setProgress(0);
+                void (async () => {
+                  const created = await createDocumentAction({ ok: false }, data);
+                  if (!created.ok || !created.data) {
+                    setProgress(null);
+                    setSizeError(created.error ?? "Couldn't create document.");
+                    return;
+                  }
+                  const id = created.data.id;
+                  const error = await uploadLargeVersion(id, file, notes, setProgress);
+                  setProgress(null);
+                  if (error) {
+                    setSizeError(`The document was created, but its file didn't upload. ${error}`);
+                    setStrandedId(id);
+                    return;
+                  }
+                  setOpen(false);
+                  router.push(`/documents/${id}`);
+                })();
               }}
               className="space-y-3"
             >
@@ -129,7 +172,7 @@ export function UploadDocumentDrawer({
                   className="block w-full text-xs text-foreground file:mr-3 file:rounded-md file:border file:border-border file:bg-background file:px-2 file:py-1 file:text-xs file:font-semibold file:text-foreground/80 hover:file:bg-accent"
                 />
                 <p className="mt-1 text-[0.65rem] text-muted-foreground">
-                  Max {MAX_UPLOAD_LABEL}. PDF, DOCX, XLSX supported.
+                  Max {limits?.direct_uploads ? maxUploadLabel(limits) : MAX_UPLOAD_LABEL}. PDF, DOCX, XLSX supported.
                 </p>
               </Field>
 
@@ -160,9 +203,20 @@ export function UploadDocumentDrawer({
                 />
               </Field>
 
+              {progress !== null ? <UploadProgress fraction={progress} /> : null}
+
               {(sizeError ?? state.error) && (
                 <p role="alert" className="text-xs text-status-red">
                   {sizeError ?? state.error}
+                  {strandedId ? (
+                    <>
+                      {" "}
+                      <Link href={`/documents/${strandedId}`} className="font-semibold underline">
+                        Open the document
+                      </Link>{" "}
+                      to upload the file as a new version.
+                    </>
+                  ) : null}
                 </p>
               )}
 
@@ -176,10 +230,10 @@ export function UploadDocumentDrawer({
                 </button>
                 <button
                   type="submit"
-                  disabled={pending}
+                  disabled={pending || progress !== null}
                   className="rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-dark disabled:opacity-60"
                 >
-                  {pending ? "Uploading…" : "Upload document"}
+                  {pending || progress !== null ? "Uploading…" : "Upload document"}
                 </button>
               </div>
             </form>

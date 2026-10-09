@@ -37,7 +37,11 @@ const { TestApiError, listDocuments, myRequiredReading } = vi.hoisted(() => {
 });
 
 vi.mock("@/lib/api/client", () => ({ ApiError: TestApiError }));
-vi.mock("@/lib/api/documents", () => ({ listDocuments, myRequiredReading }));
+vi.mock("@/lib/api/documents", () => ({
+  listDocuments,
+  myRequiredReading,
+  getUploadLimits: vi.fn(async () => ({ direct_uploads: true, max_bytes: 52428800 })),
+}));
 // useActionState drawer. filter-bar is left real — it has no imports,
 // and it renders the checkbox whose state the page reads back.
 vi.mock("./upload-document-drawer", () => ({

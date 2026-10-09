@@ -5,6 +5,7 @@ import { ApiError } from "@/lib/api/client";
 import {
   downloadUrl,
   getDocument,
+  getUploadLimits,
   myAcknowledgment,
   versionDownloadUrl,
   type DocumentDetailResponse,
@@ -33,6 +34,8 @@ export default async function DocumentDetailPage({
 }) {
   const { documentId } = await params;
 
+  // Whether a large file can go straight to storage (#17); unknown is no.
+  const limitsPromise = getUploadLimits().catch(() => null);
   let detail: DocumentDetailResponse;
   try {
     detail = await getDocument(documentId);
@@ -123,7 +126,7 @@ export default async function DocumentDetailPage({
               ↓ Download current (v{currentVersion.version_number})
             </a>
           )}
-          <UploadVersionDrawer documentId={doc.id} />
+          <UploadVersionDrawer documentId={doc.id} limits={await limitsPromise} />
         </div>
       </header>
 

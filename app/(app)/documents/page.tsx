@@ -2,9 +2,11 @@ import Link from "next/link";
 
 import { ApiError } from "@/lib/api/client";
 import {
+  getUploadLimits,
   listDocuments,
   myRequiredReading,
   type DocumentRow,
+  type UploadLimits,
 } from "@/lib/api/documents";
 
 import { DocumentsFilterBar } from "./filter-bar";
@@ -57,6 +59,9 @@ export default async function DocumentsPage({
   // the pill just hides when we can't count.
   let requiredReadingPending = 0;
   let requiredReadingTotal = 0;
+  // Whether a large file can go straight to storage (#17). Unknown reads
+  // as no: the drawer then keeps the 3.8 MB cap it always had.
+  const limitsPromise: Promise<UploadLimits | null> = getUploadLimits().catch(() => null);
   try {
     const [listResp, feedResp] = await Promise.all([
       listDocuments({
@@ -77,6 +82,7 @@ export default async function DocumentsPage({
         ? "Your session expired — please sign in again."
         : "Document library unavailable. Try refreshing in a moment.";
   }
+  const limits = await limitsPromise;
 
   // Search is the only filter still applied in-process; category and
   // compliance_only are both server-side.
@@ -158,7 +164,7 @@ export default async function DocumentsPage({
               )}
             </Link>
           )}
-          <UploadDocumentDrawer variant="primary" />
+          <UploadDocumentDrawer variant="primary" limits={limits} />
         </div>
       </header>
 
@@ -181,6 +187,7 @@ export default async function DocumentsPage({
         <EmptyState
           filtersActive={Boolean(categoryFilter || search || complianceOnly)}
           complianceOnly={complianceOnly}
+          limits={limits}
         />
       ) : (
         <div className="space-y-6">
@@ -258,9 +265,11 @@ function CategorySection({
 function EmptyState({
   filtersActive,
   complianceOnly,
+  limits,
 }: {
   filtersActive: boolean;
   complianceOnly: boolean;
+  limits: UploadLimits | null;
 }) {
   return (
     <div className="rounded-lg border border-border bg-card px-4 py-16 text-center">
@@ -280,7 +289,7 @@ function EmptyState({
       )}
       {!filtersActive && (
         <div className="mt-4">
-          <UploadDocumentDrawer variant="secondary" />
+          <UploadDocumentDrawer variant="secondary" limits={limits} />
         </div>
       )}
     </div>

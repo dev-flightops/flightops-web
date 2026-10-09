@@ -162,6 +162,46 @@ export async function uploadDocumentVersion(
   });
 }
 
+/** How big a library upload can be, and whether it can go straight to
+ *  the bucket past the web host's 4.5 MB cap (#17). */
+export interface UploadLimits {
+  direct_uploads: boolean;
+  max_bytes: number;
+}
+
+export async function getUploadLimits(): Promise<UploadLimits> {
+  return apiFetch<UploadLimits>("/documents/upload-limits");
+}
+
+/** Where the browser PUTs a large file, and the headers it must send:
+ *  they are signed into the URL. */
+export interface UploadTarget {
+  file_key: string;
+  url: string;
+  headers: Record<string, string>;
+  expires_in: number;
+}
+
+export async function getVersionUploadUrl(
+  documentId: string,
+  file: { filename: string; content_type: string; size_bytes: number },
+): Promise<UploadTarget> {
+  return apiFetch<UploadTarget>(`/documents/${documentId}/versions/upload-url`, {
+    method: "POST",
+    body: JSON.stringify(file),
+  });
+}
+
+export async function completeVersionUpload(
+  documentId: string,
+  upload: { file_key: string; filename: string; notes: string | null },
+): Promise<DocumentVersion> {
+  return apiFetch<DocumentVersion>(`/documents/${documentId}/versions/complete`, {
+    method: "POST",
+    body: JSON.stringify(upload),
+  });
+}
+
 export async function archiveDocument(documentId: string): Promise<void> {
   await apiFetch<void>(`/documents/${documentId}`, { method: "DELETE" });
 }
