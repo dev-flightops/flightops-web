@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 
-import { lockoutMinutes, loginErrorMessage, tooManyAttemptsCode, tooManyAttemptsMessage } from "./login-errors";
+import {
+  COMPANY_SUSPENDED,
+  lockoutMinutes,
+  loginErrorMessage,
+  tooManyAttemptsCode,
+  tooManyAttemptsMessage,
+} from "./login-errors";
 
 describe("sign-in lockout messages (#16)", () => {
   it.each([
@@ -25,5 +31,13 @@ describe("sign-in lockout messages (#16)", () => {
     for (const code of [undefined, null, "", "credentials", "too_many_attempts", "too_many_attempts:x"]) {
       expect(loginErrorMessage(code)).toBe("Invalid email or password.");
     }
+  });
+});
+
+describe("a suspended company (#63)", () => {
+  it("says the company is suspended, and whom to call", () => {
+    expect(loginErrorMessage(COMPANY_SUSPENDED)).toBe(
+      "Your company's access to Peregrine Flight Ops is suspended. Contact Peregrine Flight Ops to restore it.",
+    );
   });
 });

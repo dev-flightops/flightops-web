@@ -47,6 +47,12 @@ describe("guardRedirect — signed out", () => {
     expect(go("/fuel-supplier/login", undefined, { loggedIn: false })).toBeNull();
     expect(go("/fuel-supplier", undefined, { loggedIn: false })).toBeNull();
   });
+
+  it("leaves the platform administrators' pages to their own cookie (#63)", () => {
+    expect(go("/platform/login", undefined, { loggedIn: false })).toBeNull();
+    expect(go("/platform", undefined, { loggedIn: false })).toBeNull();
+    expect(go("/platform/password", undefined, { loggedIn: false })).toBeNull();
+  });
 });
 
 describe("guardRedirect — staff", () => {

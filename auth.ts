@@ -4,7 +4,7 @@ import {
   decideSessionAction,
   refreshAccessToken,
 } from "@/lib/session-refresh";
-import { lockoutMinutes, tooManyAttemptsCode } from "@/lib/login-errors";
+import { COMPANY_SUSPENDED, lockoutMinutes, tooManyAttemptsCode } from "@/lib/login-errors";
 import { postOAuthExchange } from "@/lib/sso-exchange";
 import { ssoProfileAllowed, ssoProviderConfigs } from "@/lib/sso-providers";
 import type { Provider } from "next-auth/providers";
@@ -75,6 +75,11 @@ class TooManyAttempts extends CredentialsSignin {
   }
 }
 
+/** The right password, but the company is suspended (#63). */
+class CompanySuspended extends CredentialsSignin {
+  code = COMPANY_SUSPENDED;
+}
+
 function buildProviders(): Provider[] {
   const providers: Provider[] = [
     Credentials({
@@ -97,6 +102,13 @@ function buildProviders(): Provider[] {
 
         if (response.status === 429) {
           throw new TooManyAttempts(lockoutMinutes(response.headers.get("retry-after")));
+        }
+        if (response.status === 403) {
+          const detail = await response
+            .json()
+            .then((b: { detail?: unknown }) => b?.detail)
+            .catch(() => undefined);
+          if (detail === COMPANY_SUSPENDED) throw new CompanySuspended();
         }
         if (!response.ok) return null;
 

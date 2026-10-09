@@ -32,8 +32,16 @@ export function tooManyAttemptsMessage(minutes: number): string {
   return `Too many failed sign-in attempts. Try again in ${minutes} minute${minutes === 1 ? "" : "s"}.`;
 }
 
+/** The right password for a company the platform has suspended (#63):
+ *  said plainly, so the person calls rather than retries. */
+export const COMPANY_SUSPENDED = "company_suspended";
+
+export const COMPANY_SUSPENDED_MESSAGE =
+  "Your company's access to Peregrine Flight Ops is suspended. Contact Peregrine Flight Ops to restore it.";
+
 /** The form's message for an Auth.js sign-in result's `code`. */
 export function loginErrorMessage(code: string | null | undefined): string {
+  if (code === COMPANY_SUSPENDED) return COMPANY_SUSPENDED_MESSAGE;
   const match = /^too_many_attempts:(\d+)$/.exec(code ?? "");
   return match ? tooManyAttemptsMessage(Number(match[1])) : INVALID;
 }
