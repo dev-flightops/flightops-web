@@ -1,5 +1,6 @@
 import { auth } from "@/auth";
 import { guardRedirect } from "@/lib/external-access";
+import { legacyRedirect } from "@/lib/legacy-redirects";
 
 /**
  * Auth guard. Legacy URLs are mixed (no slash on `/login`, slash on
@@ -17,6 +18,29 @@ import { guardRedirect } from "@/lib/external-access";
  */
 export default auth((req) => {
   const path = req.nextUrl.pathname;
+
+  // A legacy tab still open when the old address moves here keeps making
+  // HTMX requests: legacy's pages poll the header badge every minute,
+  // and the boards poll their rows. FlightOps never sends HX-Request, so
+  // such a request is always legacy's. HX-Refresh makes htmx reload the
+  // tab, which lands it on the page's new home below, instead of having
+  // a FlightOps page, or the sign-in, pasted into the old one.
+  if (req.headers.get("hx-request") === "true") {
+    return new Response(null, { headers: { "HX-Refresh": "true" } });
+  }
+
+  // The old site's URLs (#64; the map and its tests are in
+  // lib/legacy-redirects.ts) go first: none of them is a FlightOps page,
+  // so the guard has nothing to say until they arrive at one. Only page
+  // loads (GET, HEAD) move; a stale legacy form's POST goes on to the
+  // guard like any other request. 307 rather than permanent, so no
+  // browser keeps a rule after it changes. The new URL drops the query
+  // string: legacy's parameters name legacy ids.
+  if (req.method === "GET" || req.method === "HEAD") {
+    const moved = legacyRedirect(path);
+    if (moved) return Response.redirect(new URL(moved, req.url), 307);
+  }
+
   // Server Actions POST to their host page with a `next-action` header
   // and a serialised argument stream — a 302 to /login here would come
   // back to the client as a naked redirect, and Next.js's action layer
