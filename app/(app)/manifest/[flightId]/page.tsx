@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { auth } from "@/auth";
 import { ApiError } from "@/lib/api/client";
 import { getFlight } from "@/lib/api/ops";
 import {
@@ -8,6 +9,12 @@ import {
   type ManifestDetailResponse,
 } from "@/lib/api/manifest";
 import type { FlightDetail, FlightStatus } from "@/lib/api/types";
+import { hasAnyRole, MANIFEST_LOCKERS } from "@/lib/roles";
+
+import { FreightSection } from "./freight-section";
+import { CreateManifestButton, LockManifestButton } from "./manifest-controls";
+import { fmtLbs } from "./manifest-bits";
+import { PassengersSection } from "./pax-section";
 
 export const dynamic = "force-dynamic";
 
@@ -22,6 +29,11 @@ export const dynamic = "force-dynamic";
  * When the flight has no manifest yet the endpoint returns 404 — we
  * show a helpful empty state rather than redirecting; the dispatcher
  * decides when to create one.
+ *
+ * Entry (#62): while the manifest is a draft anyone on staff adds, edits
+ * and removes passengers, mail and cargo, as legacy's manifest page lets
+ * them. Locking it is final and is the check-in roles' (MANIFEST_LOCKERS),
+ * legacy's close-boarding roles.
  */
 export default async function FlightManifestPage({
   params,
@@ -49,6 +61,9 @@ export default async function FlightManifestPage({
     }
   }
 
+  const editable = manifest?.status === "draft";
+  const canLock = editable && hasAnyRole((await auth())?.roles ?? [], MANIFEST_LOCKERS);
+
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 py-8">
       <div className="mb-4 text-xs">
@@ -60,18 +75,34 @@ export default async function FlightManifestPage({
         </Link>
       </div>
 
-      <FlightHeader flight={flight} />
+      <FlightHeader
+        flight={flight}
+        lock={canLock ? <LockManifestButton flightId={flight.id} flightNumber={flight.flight_number} /> : null}
+      />
 
       {manifest ? (
         <>
+          {manifest.status === "final" ? <LockedBanner manifest={manifest} /> : null}
+
           <TotalsStrip
             totals={manifest.totals}
             maxPayloadLbs={flight.max_payload_lbs}
           />
 
           <div className="mt-6 grid gap-6">
-            <PaxCard rows={manifest.pax} />
-            <CargoCard rows={manifest.cargo} />
+            <PassengersSection flightId={flight.id} rows={manifest.pax} editable={editable} />
+            <FreightSection
+              flightId={flight.id}
+              kind="mail"
+              rows={manifest.cargo.filter((c) => c.mail_class !== null)}
+              editable={editable}
+            />
+            <FreightSection
+              flightId={flight.id}
+              kind="cargo"
+              rows={manifest.cargo.filter((c) => c.mail_class === null)}
+              editable={editable}
+            />
           </div>
 
           <ManifestMeta manifest={manifest} />
@@ -83,7 +114,27 @@ export default async function FlightManifestPage({
   );
 }
 
-function FlightHeader({ flight }: { flight: FlightDetail }) {
+function LockedBanner({ manifest }: { manifest: ManifestDetailResponse }) {
+  return (
+    <div
+      role="status"
+      className="mb-6 rounded-lg border border-status-green/40 bg-status-green/10 px-4 py-3 text-sm text-status-green"
+    >
+      <span className="font-semibold">Manifest locked.</span>{" "}
+      {manifest.locked_at
+        ? `Final since ${new Date(manifest.locked_at).toLocaleString("en-US", { timeZone: "UTC" })} UTC; it can't be changed.`
+        : "It is final and can't be changed."}
+    </div>
+  );
+}
+
+function FlightHeader({
+  flight,
+  lock,
+}: {
+  flight: FlightDetail;
+  lock: React.ReactNode;
+}) {
   return (
     <header className="mb-6 flex flex-col gap-3 border-b border-border pb-4 sm:flex-row sm:items-end sm:justify-between">
       <div>
@@ -102,7 +153,8 @@ function FlightHeader({ flight }: { flight: FlightDetail }) {
           ) : null}
         </div>
       </div>
-      <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-start gap-3">
+        {lock}
         <FlightStatusBadge status={flight.status} />
         <Link
           href={`/dispatch?flight=${flight.id}`}
@@ -132,6 +184,7 @@ function TotalsStrip({
       <Stat value={totals.pax_count} label="Passengers" />
       <Stat value={totals.revenue_pax} label="Revenue" />
       <Stat value={totals.crew_count} label="Crew" />
+      <Stat value={`${fmtLbs(totals.crew_weight_lbs)} lb`} label="Crew Weight" />
       <Stat
         value={`${fmtLbs(totals.pax_weight_lbs)} lb`}
         label="Pax Weight"
@@ -208,172 +261,6 @@ function Stat({
   );
 }
 
-function PaxCard({ rows }: { rows: ManifestDetailResponse["pax"] }) {
-  const sorted = [...rows].sort((a, b) => {
-    const sa = a.seat_number ?? "";
-    const sb = b.seat_number ?? "";
-    if (sa && sb) return sa.localeCompare(sb, undefined, { numeric: true });
-    if (sa) return -1;
-    if (sb) return 1;
-    return a.last_name.localeCompare(b.last_name);
-  });
-
-  return (
-    <section>
-      <div className="mb-2 flex items-baseline gap-2 px-1">
-        <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          Passengers
-        </h2>
-        <span className="text-xs text-muted-foreground">
-          {rows.length} on board
-        </span>
-      </div>
-      <div className="overflow-hidden rounded-lg border border-border bg-card">
-        {rows.length === 0 ? (
-          <div className="px-4 py-10 text-center text-sm text-muted-foreground">
-            No passengers on this manifest.
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="border-b border-border bg-muted/60 text-left text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
-                <tr>
-                  <th className="px-3 py-2.5 font-semibold">Seat</th>
-                  <th className="px-3 py-2.5 font-semibold">Last</th>
-                  <th className="px-3 py-2.5 font-semibold">First</th>
-                  <th className="px-3 py-2.5 font-semibold">Ticket</th>
-                  <th className="px-3 py-2.5 text-right font-semibold">
-                    Weight
-                  </th>
-                  <th className="px-3 py-2.5 text-right font-semibold">
-                    Baggage
-                  </th>
-                  <th className="px-3 py-2.5 font-semibold">Flags</th>
-                  <th className="px-3 py-2.5 font-semibold">Contact</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {sorted.map((p) => (
-                  <tr key={p.id} className="hover:bg-accent">
-                    <td className="whitespace-nowrap px-3 py-2.5 font-mono text-xs">
-                      {p.seat_number ?? "—"}
-                    </td>
-                    <td className="whitespace-nowrap px-3 py-2.5 font-medium">
-                      {p.last_name}
-                    </td>
-                    <td className="whitespace-nowrap px-3 py-2.5">
-                      {p.first_name}
-                    </td>
-                    <td className="whitespace-nowrap px-3 py-2.5">
-                      <TicketBadge ticket={p.ticket_type} />
-                    </td>
-                    <td className="whitespace-nowrap px-3 py-2.5 text-right font-mono text-xs">
-                      {fmtLbs(p.weight_lbs)}
-                    </td>
-                    <td className="whitespace-nowrap px-3 py-2.5 text-right font-mono text-xs">
-                      {fmtLbs(p.baggage_lbs)}
-                    </td>
-                    <td className="whitespace-nowrap px-3 py-2.5">
-                      <div className="flex flex-wrap gap-1">
-                        {p.is_crew && <Flag label="CREW" tone="blue" />}
-                        {p.is_unaccompanied_minor && (
-                          <Flag label="UM" tone="yellow" />
-                        )}
-                      </div>
-                    </td>
-                    <td className="whitespace-nowrap px-3 py-2.5 text-xs text-muted-foreground">
-                      {p.contact_phone ?? p.contact_email ?? "—"}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
-    </section>
-  );
-}
-
-function CargoCard({ rows }: { rows: ManifestDetailResponse["cargo"] }) {
-  return (
-    <section>
-      <div className="mb-2 flex items-baseline gap-2 px-1">
-        <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          Cargo & Mail
-        </h2>
-        <span className="text-xs text-muted-foreground">
-          {rows.length} item{rows.length === 1 ? "" : "s"}
-        </span>
-      </div>
-      <div className="overflow-hidden rounded-lg border border-border bg-card">
-        {rows.length === 0 ? (
-          <div className="px-4 py-10 text-center text-sm text-muted-foreground">
-            No cargo or mail on this manifest.
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="border-b border-border bg-muted/60 text-left text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
-                <tr>
-                  <th className="px-3 py-2.5 font-semibold">Description</th>
-                  <th className="px-3 py-2.5 text-right font-semibold">
-                    Pieces
-                  </th>
-                  <th className="px-3 py-2.5 text-right font-semibold">
-                    Weight
-                  </th>
-                  <th className="px-3 py-2.5 font-semibold">Class</th>
-                  <th className="px-3 py-2.5 font-semibold">Shipper</th>
-                  <th className="px-3 py-2.5 font-semibold">Consignee</th>
-                  <th className="px-3 py-2.5 font-semibold">Tracking</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {rows.map((c) => (
-                  <tr key={c.id} className="hover:bg-accent">
-                    <td className="px-3 py-2.5">
-                      <div className="font-medium">{c.description}</div>
-                      {c.hazmat_notes && (
-                        <div className="mt-0.5 text-xs text-status-red">
-                          {c.hazmat_notes}
-                        </div>
-                      )}
-                    </td>
-                    <td className="whitespace-nowrap px-3 py-2.5 text-right font-mono text-xs">
-                      {c.pieces}
-                    </td>
-                    <td className="whitespace-nowrap px-3 py-2.5 text-right font-mono text-xs">
-                      {fmtLbs(c.weight_lbs)}
-                    </td>
-                    <td className="whitespace-nowrap px-3 py-2.5">
-                      <div className="flex flex-wrap gap-1">
-                        {c.mail_class && (
-                          <MailBadge mailClass={c.mail_class} />
-                        )}
-                        {c.is_hazmat && <Flag label="HAZMAT" tone="red" />}
-                      </div>
-                    </td>
-                    <td className="whitespace-nowrap px-3 py-2.5 text-xs text-muted-foreground">
-                      {c.shipper ?? "—"}
-                    </td>
-                    <td className="whitespace-nowrap px-3 py-2.5 text-xs text-muted-foreground">
-                      {c.consignee ?? "—"}
-                    </td>
-                    <td className="whitespace-nowrap px-3 py-2.5 font-mono text-xs text-muted-foreground">
-                      {c.tracking_number ?? "—"}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
-    </section>
-  );
-}
-
 function ManifestMeta({ manifest }: { manifest: ManifestDetailResponse }) {
   return (
     <div className="mt-6 rounded-lg border border-border bg-card px-4 py-3 text-xs text-muted-foreground">
@@ -410,78 +297,11 @@ function EmptyState({ flightId }: { flightId: string }) {
         No manifest created for this flight yet.
       </p>
       <p className="mx-auto mb-5 max-w-md text-xs text-muted-foreground">
-        A dispatcher creates the manifest before adding passengers, cargo, or
-        mail. Once created, this page will show the full pax roster, cargo
-        list, and payload totals.
+        Create the manifest to add passengers, mail and cargo. This page then
+        shows the roster, the cargo list and the payload totals.
       </p>
-      <Link
-        href={`/dispatch?flight=${flightId}`}
-        className="inline-block rounded-md border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground/80 hover:bg-accent"
-      >
-        Open Dispatch Packet →
-      </Link>
+      <CreateManifestButton flightId={flightId} />
     </div>
-  );
-}
-
-function TicketBadge({ ticket }: { ticket: string }) {
-  const map: Record<string, [string, string]> = {
-    revenue: ["border-status-blue/40 bg-status-blue/10 text-status-blue", "Revenue"],
-    comp: ["border-status-yellow/40 bg-status-yellow/10 text-status-yellow", "Comp"],
-    employee: ["border-status-green/40 bg-status-green/10 text-status-green", "Employee"],
-    standby: ["border-border bg-muted text-muted-foreground", "Standby"],
-    cargo_only: ["border-border bg-muted text-muted-foreground", "Cargo Only"],
-  };
-  const [cls, label] = map[ticket] ?? [
-    "border-border bg-muted text-muted-foreground",
-    ticket,
-  ];
-  return (
-    <span
-      className={
-        "rounded border px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider " +
-        cls
-      }
-    >
-      {label}
-    </span>
-  );
-}
-
-function MailBadge({ mailClass }: { mailClass: string }) {
-  const label = mailClass
-    .split("_")
-    .map((s) => s.charAt(0).toUpperCase() + s.slice(1))
-    .join(" ");
-  return (
-    <span className="rounded border border-border bg-muted px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider text-muted-foreground">
-      {label}
-    </span>
-  );
-}
-
-function Flag({
-  label,
-  tone,
-}: {
-  label: string;
-  tone: "blue" | "yellow" | "red" | "green";
-}) {
-  const map: Record<typeof tone, string> = {
-    blue: "border-status-blue/40 bg-status-blue/10 text-status-blue",
-    yellow: "border-status-yellow/40 bg-status-yellow/10 text-status-yellow",
-    red: "border-status-red/40 bg-status-red/10 text-status-red",
-    green: "border-status-green/40 bg-status-green/10 text-status-green",
-  };
-  return (
-    <span
-      className={
-        "rounded border px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider " +
-        map[tone]
-      }
-    >
-      {label}
-    </span>
   );
 }
 
@@ -512,10 +332,4 @@ function FlightStatusBadge({ status }: { status: FlightStatus }) {
       {label}
     </span>
   );
-}
-
-function fmtLbs(v: string | number): string {
-  const n = typeof v === "string" ? Number(v) : v;
-  if (!Number.isFinite(n)) return "—";
-  return Math.round(n).toLocaleString();
 }

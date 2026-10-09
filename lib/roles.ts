@@ -132,6 +132,19 @@ export const RAMP_OPS = roleGate(
   "exec_admin",
 );
 
+/** Lock a flight's manifest (#62). A lock is final, so it is legacy's
+ *  close-boarding roles' call: its CSA is the Reservations Agent here,
+ *  station staff and rampers Ground Ops. Building the manifest is open
+ *  to any staff. */
+export const MANIFEST_LOCKERS = roleGate(
+  "ground_ops",
+  "reservations_agent",
+  "dispatcher",
+  "chief_pilot",
+  "director_of_operations",
+  "exec_admin",
+);
+
 /** Change the crew calendar: assignments and a pilot's home base (#43).
  *  Legacy let any signed-in user edit anyone's schedule. */
 export const CREW_SCHEDULERS = roleGate(
