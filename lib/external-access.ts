@@ -23,8 +23,9 @@ import { isRole } from "@/lib/roles";
 const EXTERNAL_PREFIXES = ["/portal", "/fuel/supplier"] as const;
 
 /** Pages outside Auth.js entirely: the cross-tenant fuel supplier
- *  portal checks its own `fuel_supplier_session` cookie. */
-const OWN_AUTH_PREFIXES = ["/fuel-supplier"] as const;
+ *  portal checks its own `fuel_supplier_session` cookie, and the platform
+ *  administrators' pages (#63) their `platform_session` one. */
+const OWN_AUTH_PREFIXES = ["/fuel-supplier", "/platform"] as const;
 
 /** Where an external login lands. */
 export const EXTERNAL_HOME = "/portal";
