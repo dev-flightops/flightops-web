@@ -213,4 +213,8 @@ function parseFirstFieldError(message: string): string {
   }
 }
 
-export type { ActionState as FuelOrderActionState };
+// A type alias, not `export type { ActionState as ... }`: in a "use
+// server" file Next compiles that clause into a runtime export of a name
+// that only exists as a type, so loading the module threw and every
+// action on the order page failed (#67).
+export type FuelOrderActionState = ActionState;

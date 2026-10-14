@@ -132,6 +132,19 @@ export const RAMP_OPS = roleGate(
   "exec_admin",
 );
 
+/** Confirm a fuel order for the supplier and record the fuel put in:
+ *  the services' FUELERS (legacy's FUELER_ROLES). A pilot orders, adjusts
+ *  and cancels their flight's fuel but does not confirm it (#67). */
+export const FUELERS = roleGate(
+  "ground_ops",
+  "maintenance",
+  "director_of_maintenance",
+  "dispatcher",
+  "chief_pilot",
+  "director_of_operations",
+  "exec_admin",
+);
+
 /** Lock a flight's manifest (#62). A lock is final, so it is legacy's
  *  close-boarding roles' call: its CSA is the Reservations Agent here,
  *  station staff and rampers Ground Ops. Building the manifest is open

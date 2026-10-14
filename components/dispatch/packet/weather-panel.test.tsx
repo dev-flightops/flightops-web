@@ -105,6 +105,23 @@ describe("WeatherPanel", () => {
     expect(screen.getByText(/TAF PANC/)).toBeInTheDocument();
   });
 
+  it("says when the latest report is a special one, as PABE's was (#71)", async () => {
+    batchWeather.mockReset().mockResolvedValueOnce(
+      makeBatch([
+        {
+          icao: "PABE",
+          kind: "metar",
+          raw: "SPECI PABE 111659Z 17011KT 10SM BKN005 04/03 A2940 RMK AO2 T00390033 $",
+        },
+        { icao: "PAVA", kind: "metar", raw: "METAR PAVA 111656Z 18008KT 10SM SCT016 05/03 A2941" },
+      ]),
+    );
+    render(await WeatherPanel({ icaos: ["PABE", "PAVA"] }));
+    const chips = screen.getAllByText(/^SPECI \d{2}:\d{2}Z$/);
+    expect(chips.map((c) => c.textContent)).toEqual(["SPECI 16:59Z"]);
+    expect(chips[0]).toHaveAttribute("title", expect.stringMatching(/^Special report/));
+  });
+
   it("deduplicates repeated ICAOs in the routing", async () => {
     batchWeather.mockReset().mockResolvedValueOnce(
       makeBatch([

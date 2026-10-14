@@ -68,7 +68,8 @@ const order = (over = {}) => ({
   source: "pilot" as const,
   supplierId: SUPPLIER,
   fuelTypeId: FUEL,
-  gallons: 80,
+  left: 40,
+  right: 40,
   // 07:30 AKDT, before the 08:00 AKDT (16:00Z) departure.
   neededBy: "07:30",
   instructions: "north ramp",
@@ -83,7 +84,8 @@ describe("orderFuelForFlightAction", () => {
       base_code: "PANC",
       supplier_id: SUPPLIER,
       fuel_type_id: FUEL,
-      requested_quantity_gallons: 80,
+      requested_left_gallons: 40,
+      requested_right_gallons: 40,
       requested_fuel_date: "2026-09-27",
       requested_fuel_time: "2026-09-27T15:30:00Z",
       special_instructions: "north ramp",
@@ -117,8 +119,10 @@ describe("orderFuelForFlightAction", () => {
   });
 
   it.each([
-    [{ gallons: 0 }, "Enter the gallons."],
-    [{ gallons: Number.NaN }, "Enter the gallons."],
+    [{ left: 0, right: 0 }, "Enter the gallons."],
+    [{ right: Number.NaN }, "Enter both sides (0 for a side you don't want filled)."],
+    [{ left: -5 }, "Gallons can't be negative."],
+    [{ left: 3000, right: 2500 }, "That is more fuel than the aircraft holds."],
     [{ neededBy: "3:30pm" }, "Needed-by is a 24-hour time."],
   ])("refuses %j before calling anything", async (over, message) => {
     expect(await orderFuelForFlightAction(order(over))).toEqual({ ok: false, error: message });
@@ -143,12 +147,14 @@ describe("amendFuelOrderAction", () => {
         flightId: FLIGHT,
         orderId: ORDER,
         source: "pilot",
-        gallons: 120,
+        left: 55,
+        right: 65,
         note: "extra for weather",
       }),
     ).toEqual({ ok: true });
     expect(amendFuelOrder).toHaveBeenCalledWith(ORDER, {
-      requested_quantity_gallons: 120,
+      requested_left_gallons: 55,
+      requested_right_gallons: 65,
       note: "extra for weather",
       source: "pilot",
     });
@@ -160,7 +166,8 @@ describe("amendFuelOrderAction", () => {
       flightId: FLIGHT,
       orderId: ORDER,
       source: "dispatch",
-      gallons: 120,
+      left: 60,
+      right: 60,
     });
     expect(result).toEqual({
       ok: false,
