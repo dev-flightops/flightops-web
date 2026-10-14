@@ -114,7 +114,10 @@ describe("FlightFuel", () => {
     await user.click(screen.getByRole("button", { name: "Order fuel" }));
     const form = screen.getByRole("form", { name: "Order fuel" });
     await user.selectOptions(within(form).getByLabelText("Supplier"), "sb-2");
-    await user.type(within(form).getByLabelText("Gallons"), "95");
+    // A load balanced unevenly, as the client's pilots order it (#69).
+    await user.type(within(form).getByLabelText("Left gal"), "55");
+    await user.type(within(form).getByLabelText("Right gal"), "75");
+    expect(form).toHaveTextContent("Total 130 gal");
     await user.click(within(form).getByRole("button", { name: "Place order" }));
     await waitFor(() => expect(orderFuelForFlightAction).toHaveBeenCalled());
     expect(orderFuelForFlightAction.mock.calls[0][0]).toMatchObject({
@@ -122,18 +125,27 @@ describe("FlightFuel", () => {
       source: "pilot",
       supplierId: "s-2",
       fuelTypeId: "ft-1",
-      gallons: 95,
+      left: 55,
+      right: 75,
     });
     await waitFor(() => expect(screen.queryByRole("form", { name: "Order fuel" })).toBeNull());
   });
 
-  it("adjusts an open order, with the reason", async () => {
+  it("shows an order's split by side", () => {
+    renderFuel([order({ requested_left_gallons: 40, requested_right_gallons: 40 })]);
+    expect(screen.getByRole("listitem")).toHaveTextContent("80 gal40 L / 40 R");
+  });
+
+  it("adjusts an open order by side, with the reason", async () => {
     const user = userEvent.setup();
-    renderFuel([order()]);
+    renderFuel([order({ requested_left_gallons: 40, requested_right_gallons: 40 })]);
     await user.click(screen.getByRole("button", { name: "Adjust" }));
-    const gallons = screen.getByLabelText("Gallons");
-    await user.clear(gallons);
-    await user.type(gallons, "120");
+    for (const label of ["Left gal", "Right gal"]) {
+      const side = screen.getByLabelText(label);
+      expect(side).toHaveValue(40);
+      await user.clear(side);
+      await user.type(side, "60");
+    }
     await user.type(screen.getByLabelText("Why (optional)"), "extra for weather");
     await user.click(screen.getByRole("button", { name: "Save" }));
     await waitFor(() =>
@@ -141,10 +153,20 @@ describe("FlightFuel", () => {
         flightId: "f-1",
         orderId: "o-1",
         source: "pilot",
-        gallons: 120,
+        left: 60,
+        right: 60,
         note: "extra for weather",
       }),
     );
+  });
+
+  it("asks for each side when adjusting an order placed as a total", async () => {
+    const user = userEvent.setup();
+    renderFuel([order()]);
+    await user.click(screen.getByRole("button", { name: "Adjust" }));
+    expect(screen.getByLabelText("Left gal")).toHaveValue(null);
+    expect(screen.getByLabelText("Right gal")).toHaveValue(null);
+    expect(screen.getByText("Ordered as 80 gal in total; give each side.")).toBeInTheDocument();
   });
 
   it("cancels only with a reason", async () => {
@@ -180,7 +202,8 @@ describe("FlightFuel", () => {
     const user = userEvent.setup();
     renderFuel();
     await user.click(screen.getByRole("button", { name: "Order fuel" }));
-    await user.type(screen.getByLabelText("Gallons"), "50");
+    await user.type(screen.getByLabelText("Left gal"), "25");
+    await user.type(screen.getByLabelText("Right gal"), "25");
     await user.click(screen.getByRole("button", { name: "Place order" }));
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "That supplier is inactive — pick another.",
