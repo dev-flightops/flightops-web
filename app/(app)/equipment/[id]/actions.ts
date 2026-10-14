@@ -264,4 +264,6 @@ function apiToState(err: unknown, refused?: string): ActionState {
   };
 }
 
-export type { ActionState as EquipmentActionState };
+// A type alias, not `export type { ActionState as ... }`, which broke
+// every action on this page (#67; see the fuel order actions).
+export type EquipmentActionState = ActionState;
