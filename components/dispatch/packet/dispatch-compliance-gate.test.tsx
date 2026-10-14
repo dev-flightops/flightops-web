@@ -19,7 +19,7 @@ vi.mock("@/lib/api/ops", () => ({ getPicCompliance }));
 // SoftWarningAckList + OverrideDialog use next/navigation hooks (M2-G-5
 // tail). Stub the router surface so the banners can render in this test.
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({ push: vi.fn() }),
+  useRouter: () => ({ push: vi.fn(), replace: vi.fn() }),
   useSearchParams: () => new URLSearchParams(""),
 }));
 
