@@ -1,4 +1,5 @@
 import { FlightCategoryBadge } from "@/components/weather/flight-category-badge";
+import { SpecialReportChip } from "@/components/weather/special-report-chip";
 import { ApiError } from "@/lib/api/client";
 import { batchWeather } from "@/lib/api/weather";
 import type { WeatherReportResponse } from "@/lib/api/types";
@@ -129,7 +130,7 @@ export async function WeatherPanel({ icaos }: { icaos: string[] }) {
         </p>
       )}
       <p className="mt-3 text-[0.65rem] text-muted-foreground">
-        Source: Aviation Weather Center via weather-service. METAR cached 5 min,
+        Source: Aviation Weather Center via weather-service. METAR cached 2 min,
         TAF 30 min, PIREPs (within 50 nm, last 3 hours) 15 min. ATIS is not
         shown yet.
       </p>
@@ -211,7 +212,8 @@ function AirportHeader({
         </span>
       </div>
       {metar.ok && (
-        <span className="text-xs text-muted-foreground">
+        <span className="flex items-baseline gap-2 text-xs text-muted-foreground">
+          <SpecialReportChip raw={metar.report.raw} />
           METAR age: {metarAge(metar.report.parsed_at)}
         </span>
       )}

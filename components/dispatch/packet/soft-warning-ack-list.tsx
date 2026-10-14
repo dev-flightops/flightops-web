@@ -20,13 +20,13 @@ import { useDispatchQuery } from "./use-dispatch-query";
  *
  * Spec 5: "Soft warnings — dispatcher must acknowledge". Each
  * warning gets an inline checkbox. Ack state persists in the URL as
- * `?warns_acked=code1,code2` so refresh / share / back-button
- * preserve the acks (matches the NOTAM + MEL ack patterns already
- * in use on the packet).
+ * `?warns_acked=code1,code2` so refresh and share preserve the acks
+ * (matches the NOTAM + MEL ack patterns already in use on the packet).
  *
- * Toggling any checkbox does an optimistic navigation via
- * router.push — the server re-renders and the acked warning line
- * flips to a completed style. When ALL soft warnings are acked, the
+ * Toggling any checkbox replaces the URL without scrolling, as those do
+ * — the server re-renders and the acked warning line flips to a
+ * completed style. A push used to scroll the dispatcher back to the top
+ * of the page on every tick (#70). When ALL soft warnings are acked, the
  * parent enables Generate PDF (see page.tsx).
  */
 /**
@@ -63,7 +63,7 @@ export function SoftWarningAckList({
       else params.set("warns_acked", Array.from(nextAcks).sort().join(","));
     });
     startTransition(() => {
-      router.push(qs ? `/dispatch/?${qs}` : "/dispatch/");
+      router.replace(qs ? `/dispatch/?${qs}` : "/dispatch/", { scroll: false });
     });
   };
 

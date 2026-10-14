@@ -2,9 +2,9 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
-const push = vi.fn();
+const replace = vi.fn();
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({ push }),
+  useRouter: () => ({ replace }),
   useSearchParams: () => new URLSearchParams(""),
 }));
 
@@ -107,8 +107,8 @@ describe("SoftWarningAckList (M2-G-5 tail)", () => {
     expect(screen.getByLabelText("Acknowledge SIC IFR Currency")).toBeInTheDocument();
   });
 
-  it("pushes ?warns_acked=<code> when a checkbox flips on", async () => {
-    push.mockReset();
+  it("puts ?warns_acked=<code> in the URL, without scrolling, when a checkbox flips on", async () => {
+    replace.mockReset();
     const user = userEvent.setup();
     render(
       <SoftWarningAckList findings={[grace, medical]} ackedCodes={new Set()} />,
@@ -116,11 +116,11 @@ describe("SoftWarningAckList (M2-G-5 tail)", () => {
     await user.click(
       screen.getByLabelText("Acknowledge Instrument Proficiency Check"),
     );
-    expect(push).toHaveBeenCalledWith("/dispatch/?warns_acked=ipc");
+    expect(replace).toHaveBeenCalledWith("/dispatch/?warns_acked=ipc", { scroll: false });
   });
 
-  it("pushes clean URL when the last ack toggles off", async () => {
-    push.mockReset();
+  it("clears the URL when the last ack toggles off", async () => {
+    replace.mockReset();
     const user = userEvent.setup();
     render(
       <SoftWarningAckList
@@ -131,6 +131,6 @@ describe("SoftWarningAckList (M2-G-5 tail)", () => {
     await user.click(
       screen.getByLabelText("Acknowledge Instrument Proficiency Check"),
     );
-    expect(push).toHaveBeenCalledWith("/dispatch/");
+    expect(replace).toHaveBeenCalledWith("/dispatch/", { scroll: false });
   });
 });
