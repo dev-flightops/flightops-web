@@ -54,17 +54,34 @@ function _message(err: unknown, verb: string): string {
 }
 
 const Source = z.enum(["dispatch", "pilot"]);
-const Gallons = z
-  .number({ invalid_type_error: "Enter the gallons." })
-  .positive("Enter the gallons.")
-  .max(5000, "That is more fuel than the aircraft holds.");
+const Side = z
+  .number({ invalid_type_error: "Enter both sides (0 for a side you don't want filled)." })
+  .min(0, "Gallons can't be negative.");
+
+/**
+ * Gallons for each wing tank (#69): pilots order by side to balance the
+ * load ("75 L / 75 R", "75 AS"), as on the full order form. The API
+ * sums the sides into the order's total.
+ */
+const PerSide = { left: Side, right: Side };
+
+function totalRefinement<T extends { left: number; right: number }>(
+  value: T,
+  ctx: z.RefinementCtx,
+) {
+  const total = value.left + value.right;
+  if (total <= 0) ctx.addIssue({ code: "custom", message: "Enter the gallons." });
+  else if (total > 5000) {
+    ctx.addIssue({ code: "custom", message: "That is more fuel than the aircraft holds." });
+  }
+}
 
 const OrderInput = z.object({
   flightId: z.string().uuid(),
   source: Source,
   supplierId: z.string().uuid(),
   fuelTypeId: z.string().uuid(),
-  gallons: Gallons,
+  ...PerSide,
   // UTC wall-clock, "HH:MM": the last one before departure (lib/fuel).
   neededBy: z
     .string()
@@ -72,7 +89,7 @@ const OrderInput = z.object({
     .optional()
     .or(z.literal("")),
   instructions: z.string().trim().max(2000).optional(),
-});
+}).superRefine(totalRefinement);
 
 export async function orderFuelForFlightAction(
   input: z.input<typeof OrderInput>,
@@ -81,7 +98,7 @@ export async function orderFuelForFlightAction(
   if (!parsed.success) {
     return { ok: false, error: parsed.error.issues[0]?.message ?? "Check the order." };
   }
-  const { flightId, source, supplierId, fuelTypeId, gallons, neededBy, instructions } =
+  const { flightId, source, supplierId, fuelTypeId, left, right, neededBy, instructions } =
     parsed.data;
   try {
     const flight = await getFlight(flightId);
@@ -98,7 +115,8 @@ export async function orderFuelForFlightAction(
       base_code: flight.origin,
       supplier_id: supplierId,
       fuel_type_id: fuelTypeId,
-      requested_quantity_gallons: gallons,
+      requested_left_gallons: left,
+      requested_right_gallons: right,
       requested_fuel_date: date,
       requested_fuel_time: neededAt ? neededAt.toISOString().replace(".000Z", "Z") : null,
       special_instructions: instructions || null,
@@ -116,9 +134,9 @@ const AmendInput = z.object({
   flightId: z.string().uuid(),
   orderId: z.string().uuid(),
   source: Source,
-  gallons: Gallons,
+  ...PerSide,
   note: z.string().trim().max(500).optional(),
-});
+}).superRefine(totalRefinement);
 
 export async function amendFuelOrderAction(
   input: z.input<typeof AmendInput>,
@@ -127,10 +145,11 @@ export async function amendFuelOrderAction(
   if (!parsed.success) {
     return { ok: false, error: parsed.error.issues[0]?.message ?? "Check the amount." };
   }
-  const { flightId, orderId, source, gallons, note } = parsed.data;
+  const { flightId, orderId, source, left, right, note } = parsed.data;
   try {
     await amendFuelOrder(orderId, {
-      requested_quantity_gallons: gallons,
+      requested_left_gallons: left,
+      requested_right_gallons: right,
       note: note || null,
       source,
     });

@@ -62,10 +62,11 @@ describe("the pilot's fuel card", () => {
     expect(screen.getByRole("heading", { name: "Fuel" })).toBeInTheDocument();
     expect(screen.getByRole("listitem")).toHaveTextContent("Ordered by Dee Dispatcher");
     await user.click(screen.getByRole("button", { name: "Order more fuel" }));
-    await user.type(screen.getByLabelText("Gallons"), "20");
+    await user.type(screen.getByLabelText("Left gal"), "10");
+    await user.type(screen.getByLabelText("Right gal"), "10");
     await user.click(screen.getByRole("button", { name: "Place order" }));
     expect(orderFuelForFlightAction).toHaveBeenCalledWith(
-      expect.objectContaining({ flightId: "f-1", source: "pilot", gallons: 20 }),
+      expect.objectContaining({ flightId: "f-1", source: "pilot", left: 10, right: 10 }),
     );
   });
 

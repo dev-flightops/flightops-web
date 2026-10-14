@@ -76,7 +76,13 @@ describe("the packet's Fuel panel", () => {
     expect(screen.queryByText(/pricing only/i)).toBeNull();
     await user.click(screen.getByRole("button", { name: "Order fuel" }));
     // Every field in the form is named by its label.
-    for (const name of ["Supplier", "Gallons", "Needed by (UTC, optional)", "Special instructions (optional)"]) {
+    for (const name of [
+      "Supplier",
+      "Left gal",
+      "Right gal",
+      "Needed by (UTC, optional)",
+      "Special instructions (optional)",
+    ]) {
       expect(screen.getByLabelText(name)).toBeInTheDocument();
     }
     await expectNoA11yViolations(container);

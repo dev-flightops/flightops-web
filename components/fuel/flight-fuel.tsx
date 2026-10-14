@@ -45,6 +45,70 @@ const FIELD =
 const LABEL =
   "mb-1 block text-[0.65rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground";
 
+/** A side's gallons as typed. Blank stays unknown, so the action asks
+ *  for both sides instead of reading it as 0. */
+function sideNumber(value: string): number {
+  return value.trim() === "" ? Number.NaN : Number(value);
+}
+
+/**
+ * Gallons for each wing tank and the total they make (#69). Pilots
+ * order by side to balance the load ("75 L / 75 R", "75 AS"), as on the
+ * full order form; the order's total is their sum.
+ */
+function SideGallons({
+  uid,
+  left,
+  right,
+  onLeft,
+  onRight,
+}: {
+  uid: string;
+  left: string;
+  right: string;
+  onLeft: (value: string) => void;
+  onRight: (value: string) => void;
+}) {
+  const total = [left, right].reduce((sum, v) => {
+    const n = Number(v);
+    return sum + (Number.isFinite(n) && n > 0 ? n : 0);
+  }, 0);
+  const side = (id: string, label: string, value: string, onChange: (v: string) => void) => (
+    <div>
+      <label htmlFor={id} className={LABEL}>
+        {label}
+      </label>
+      <input
+        id={id}
+        type="number"
+        inputMode="decimal"
+        min={0}
+        step={1}
+        required
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder="e.g. 75"
+        className={FIELD}
+      />
+    </div>
+  );
+  return (
+    <div>
+      <div className="grid grid-cols-2 gap-2">
+        {side(`${uid}-left`, "Left gal", left, onLeft)}
+        {side(`${uid}-right`, "Right gal", right, onRight)}
+      </div>
+      <p aria-live="polite" className="mt-1 text-[0.65rem] text-muted-foreground">
+        Total{" "}
+        <span className="font-semibold tabular-nums text-foreground">
+          {total.toLocaleString()}
+        </span>{" "}
+        gal · 0 for a side not to fill
+      </p>
+    </div>
+  );
+}
+
 const LIST_RANK: Record<FuelOrderStatus, number> = {
   ordered: 0,
   confirmed: 0,
@@ -152,7 +216,13 @@ function OrderRow({
   source: FuelOrderRequester;
 }) {
   const [mode, setMode] = useState<"view" | "adjust" | "cancel">("view");
-  const [gallons, setGallons] = useState(String(order.requested_quantity_gallons));
+  const split =
+    typeof order.requested_left_gallons === "number" &&
+    typeof order.requested_right_gallons === "number"
+      ? { left: order.requested_left_gallons, right: order.requested_right_gallons }
+      : null;
+  const [left, setLeft] = useState(split ? String(split.left) : "");
+  const [right, setRight] = useState(split ? String(split.right) : "");
   const [text, setText] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -186,6 +256,11 @@ function OrderRow({
         <span className="font-semibold tabular-nums text-foreground">
           {order.requested_quantity_gallons.toLocaleString()} gal
         </span>
+        {split && (
+          <span className="tabular-nums text-muted-foreground">
+            {split.left.toLocaleString()} L / {split.right.toLocaleString()} R
+          </span>
+        )}
         <span className="text-foreground">{order.fuel_type.label}</span>
         <span className="text-muted-foreground">· {order.supplier.name}</span>
         {when && <span className="text-muted-foreground">· by {when}</span>}
@@ -227,26 +302,26 @@ function OrderRow({
                 flightId,
                 orderId: order.id,
                 source,
-                gallons: Number(gallons),
+                left: sideNumber(left),
+                right: sideNumber(right),
                 note: text,
               }),
             );
           }}
         >
-          <div className="w-28">
-            <label htmlFor={`${uid}-gal`} className={LABEL}>
-              Gallons
-            </label>
-            <input
-              id={`${uid}-gal`}
-              type="number"
-              inputMode="decimal"
-              min={1}
-              step={1}
-              value={gallons}
-              onChange={(e) => setGallons(e.target.value)}
-              className={FIELD}
+          <div className="w-56">
+            <SideGallons
+              uid={uid}
+              left={left}
+              right={right}
+              onLeft={setLeft}
+              onRight={setRight}
             />
+            {!split && (
+              <p className="mt-0.5 text-[0.65rem] text-muted-foreground">
+                {`Ordered as ${order.requested_quantity_gallons.toLocaleString()} gal in total; give each side.`}
+              </p>
+            )}
           </div>
           <div className="min-w-40 flex-1">
             <label htmlFor={`${uid}-why`} className={LABEL}>
@@ -320,7 +395,8 @@ function OrderForm({
   onDone: () => void;
 }) {
   const [choice, setChoice] = useState(options[0].key);
-  const [gallons, setGallons] = useState("");
+  const [left, setLeft] = useState("");
+  const [right, setRight] = useState("");
   const [time, setTime] = useState("");
   const [instructions, setInstructions] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -341,7 +417,8 @@ function OrderForm({
             source,
             supplierId: option.supplierId,
             fuelTypeId: option.fuelTypeId,
-            gallons: Number(gallons),
+            left: sideNumber(left),
+            right: sideNumber(right),
             neededBy: time,
             instructions,
           });
@@ -372,23 +449,7 @@ function OrderForm({
             ))}
           </select>
         </div>
-        <div>
-          <label htmlFor={`${uid}-gal`} className={LABEL}>
-            Gallons
-          </label>
-          <input
-            id={`${uid}-gal`}
-            type="number"
-            inputMode="decimal"
-            min={1}
-            step={1}
-            required
-            value={gallons}
-            onChange={(e) => setGallons(e.target.value)}
-            placeholder="e.g. 80"
-            className={FIELD}
-          />
-        </div>
+        <SideGallons uid={uid} left={left} right={right} onLeft={setLeft} onRight={setRight} />
         <div>
           <label htmlFor={`${uid}-time`} className={LABEL}>
             Needed by (UTC, optional)
@@ -424,7 +485,7 @@ function OrderForm({
       <FormButtons
         pending={pending}
         submit="Place order"
-        disabled={!gallons}
+        disabled={left === "" || right === ""}
         onCancel={onDone}
       />
     </form>

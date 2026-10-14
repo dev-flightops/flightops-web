@@ -503,6 +503,10 @@ export type FuelOrderRequester = "dispatch" | "pilot";
 
 export interface AmendFuelOrderPayload {
   requested_quantity_gallons?: number;
+  /** Both sides, or neither. The backend sums them into the total; a
+   *  total sent without them clears the order's split. */
+  requested_left_gallons?: number | null;
+  requested_right_gallons?: number | null;
   requested_fuel_time?: string | null;
   special_instructions?: string | null;
   /** Why, for the status log. */
