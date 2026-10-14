@@ -5,6 +5,7 @@ const {
   amendFuelOrder,
   cancelFuelOrder,
   getFlight,
+  loadZoneTable,
   revalidatePath,
   TestApiError,
 } = vi.hoisted(() => {
@@ -23,6 +24,11 @@ const {
     amendFuelOrder: vi.fn(),
     cancelFuelOrder: vi.fn(),
     getFlight: vi.fn(),
+    // Needed-by times are local at the departure base (#68).
+    loadZoneTable: vi.fn(async () => ({
+      byIcao: { PANC: "America/Anchorage", PABE: "America/Anchorage" },
+      fallback: "America/Anchorage",
+    })),
     revalidatePath: vi.fn(),
     TestApiError,
   };
@@ -31,6 +37,7 @@ vi.mock("next/cache", () => ({ revalidatePath }));
 vi.mock("@/lib/api/client", () => ({ ApiError: TestApiError }));
 vi.mock("@/lib/api/ground", () => ({ createFuelOrder, amendFuelOrder, cancelFuelOrder }));
 vi.mock("@/lib/api/ops", () => ({ getFlight }));
+vi.mock("@/lib/api/auth", () => ({ loadZoneTable }));
 
 import {
   amendFuelOrderAction,
@@ -62,7 +69,8 @@ const order = (over = {}) => ({
   supplierId: SUPPLIER,
   fuelTypeId: FUEL,
   gallons: 80,
-  neededBy: "15:30",
+  // 07:30 AKDT, before the 08:00 AKDT (16:00Z) departure.
+  neededBy: "07:30",
   instructions: "north ramp",
   ...over,
 });
@@ -88,8 +96,8 @@ describe("orderFuelForFlightAction", () => {
   });
 
   it("puts a needed-by time later in the day than departure on the day before", async () => {
-    // A 16:30 AKDT departure is 00:30Z; fuel "by 23:50" is the evening
-    // before, not 23:50Z after the aircraft has gone.
+    // A 16:30 AKDT departure (00:30Z the next day); fuel "by 23:50" is
+    // 23:50 the evening before, and the order's date is that local day.
     getFlight.mockResolvedValueOnce({
       id: FLIGHT,
       origin: "PABE",
@@ -98,8 +106,8 @@ describe("orderFuelForFlightAction", () => {
     });
     await orderFuelForFlightAction(order({ neededBy: "23:50" }));
     expect(createFuelOrder.mock.calls[0][0]).toMatchObject({
-      requested_fuel_date: "2026-09-27",
-      requested_fuel_time: "2026-09-27T23:50:00Z",
+      requested_fuel_date: "2026-09-26",
+      requested_fuel_time: "2026-09-27T07:50:00Z",
     });
   });
 

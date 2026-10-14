@@ -3,6 +3,8 @@
  * after login (login itself runs through Auth.js, not these helpers).
  */
 
+import { DEFAULT_ZONE_TABLE, type ZoneTable, zoneTable } from "@/lib/format/local-time";
+
 import { apiFetch } from "./client";
 import { asNumber } from "./decimal";
 import type {
@@ -151,6 +153,20 @@ export async function listCompanyBases(
 ): Promise<CompanyBaseListResponse> {
   const qs = options.includeInactive ? "?include_inactive=true" : "";
   return apiFetch<CompanyBaseListResponse>(`/auth/settings/bases${qs}`);
+}
+
+/**
+ * The zones flight times are typed in (#68): each base's, for the
+ * departure base rule in lib/format/local-time.ts. Any staff login may
+ * read the bases. If they can't be read, Alaska time, the packet's own
+ * fallback, rather than refusing the form.
+ */
+export async function loadZoneTable(): Promise<ZoneTable> {
+  try {
+    return zoneTable((await listCompanyBases({ includeInactive: true })).items);
+  } catch {
+    return DEFAULT_ZONE_TABLE;
+  }
 }
 
 export async function createCompanyBase(

@@ -5,6 +5,13 @@ import { useActionState, useEffect, useRef, useState } from "react";
 
 import { Spinner } from "@/components/ui/spinner";
 import type { AircraftListItem } from "@/lib/api/types";
+import {
+  localToUtcIso,
+  type ZoneTable,
+  zoneAbbreviation,
+  zoneFor,
+  zuluHint,
+} from "@/lib/format/local-time";
 
 import {
   createFlightAction,
@@ -27,11 +34,17 @@ import { StopsEditor } from "./stops-editor";
  *     from the previous destination (client, 27 Sep: "there is not a
  *     way to build a multi leg route"). Legacy's text Route field was
  *     never read by anything.
+ *   - Times are local at the departure base, with Zulu shown under each
+ *     (client, 11 Oct: "Our dispatchers will be using their local time
+ *     to book and create flights", #68). Legacy read them as UTC.
  */
 export function OpenFlightForm({
   aircraft,
+  zones,
 }: {
   aircraft: AircraftListItem[];
+  /** Each base's zone, for the departure base the times are typed in. */
+  zones: ZoneTable;
 }) {
   const [state, action, pending] = useActionState<
     CreateFlightFormState,
@@ -81,12 +94,23 @@ export function OpenFlightForm({
   // action echoes after a failed submit, like every other field here.
   const [stops, setStops] = useState<SubmittedStop[]>([]);
   const [firstDestination, setFirstDestination] = useState("");
+  // The origin decides the zone the times are typed in; the times are
+  // kept to show each one in Zulu as it is typed.
+  const [origin, setOrigin] = useState("");
+  const [etd, setEtd] = useState("");
+  const [eta, setEta] = useState("");
   useEffect(() => {
     if (state.status !== "idle") {
       setStops(state.stops);
       setFirstDestination((state.values.destination ?? "").toUpperCase());
+      setOrigin((state.values.origin ?? "").toUpperCase());
+      setEtd(state.values.scheduled_departure_at ?? "");
+      setEta(state.values.scheduled_arrival_at ?? "");
     }
   }, [state]);
+  const timeZone = zoneFor(zones, origin);
+  const departs = localToUtcIso(etd, timeZone);
+  const tz = zoneAbbreviation(timeZone, departs ? new Date(departs) : new Date());
   const errors = state.status === "field-errors" ? state.errors : {};
 
   return (
@@ -130,6 +154,7 @@ export function OpenFlightForm({
           required
           placeholder="PANC"
           defaultValue={submitted("origin")}
+          onChange={(e) => setOrigin(e.target.value.toUpperCase())}
           maxLength={4}
           autoCapitalize="characters"
           spellCheck={false}
@@ -149,18 +174,22 @@ export function OpenFlightForm({
         />
         <Field
           name="scheduled_departure_at"
-          label="ETD (UTC)"
+          label={`ETD (${tz})`}
           type="datetime-local"
           required
           defaultValue={submitted("scheduled_departure_at")}
+          onChange={(e) => setEtd(e.target.value)}
+          hint={zuluHint(etd, timeZone)}
           error={fieldError("scheduled_departure_at")}
         />
         <Field
           name="scheduled_arrival_at"
-          label={stops.length > 0 ? "Leg 1 ETA (UTC)" : "ETA (UTC)"}
+          label={stops.length > 0 ? `Leg 1 ETA (${tz})` : `ETA (${tz})`}
           type="datetime-local"
           required
           defaultValue={submitted("scheduled_arrival_at")}
+          onChange={(e) => setEta(e.target.value)}
+          hint={zuluHint(eta, timeZone)}
           error={fieldError("scheduled_arrival_at")}
         />
         <div className="md:col-span-2">
@@ -170,6 +199,7 @@ export function OpenFlightForm({
             onChange={setStops}
             firstDestination={firstDestination}
             errors={errors}
+            timeZone={timeZone}
           />
         </div>
         <Field
@@ -232,12 +262,15 @@ function Field({
   label,
   error,
   required,
+  hint,
   ...inputProps
 }: React.InputHTMLAttributes<HTMLInputElement> & {
   name: string;
   label: string;
   error?: string;
   required?: boolean;
+  /** Under the input, e.g. a typed local time in Zulu. */
+  hint?: string;
 }) {
   return (
     <div>
@@ -256,6 +289,7 @@ function Field({
         className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs text-foreground focus:border-primary focus:outline-none aria-[invalid=true]:border-status-red"
         {...inputProps}
       />
+      {hint && <p className="mt-1 font-mono text-[0.65rem] text-muted-foreground">{hint}</p>}
       {error && (
         <p role="alert" className="mt-1 text-[0.65rem] text-status-red">
           {error}

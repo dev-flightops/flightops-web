@@ -5,6 +5,7 @@ import { useId, useState, useTransition } from "react";
 import { Spinner } from "@/components/ui/spinner";
 import type { FuelOrderRequester } from "@/lib/api/ground";
 import type { FuelOrderResponse, FuelOrderStatus } from "@/lib/api/types";
+import { DEFAULT_TIME_ZONE, localClock, zoneAbbreviation } from "@/lib/format/local-time";
 import type { FuelSupplierOption } from "@/lib/fuel";
 import { cn } from "@/lib/utils";
 
@@ -57,10 +58,9 @@ function isOpen(order: FuelOrderResponse) {
   return order.status === "ordered" || order.status === "confirmed";
 }
 
-function neededBy(order: FuelOrderResponse): string | null {
-  return order.requested_fuel_time
-    ? `${order.requested_fuel_time.slice(11, 16)}Z`
-    : null;
+/** "07:30 AKDT": the needed-by time on the departure base's clock (#68). */
+function neededBy(order: FuelOrderResponse, timeZone: string): string | null {
+  return order.requested_fuel_time ? localClock(order.requested_fuel_time, timeZone) : null;
 }
 
 export function FlightFuel({
@@ -71,6 +71,7 @@ export function FlightFuel({
   orders,
   options,
   fuelTypeCode,
+  timeZone = DEFAULT_TIME_ZONE,
 }: {
   flightId: string;
   flightNumber: string;
@@ -82,6 +83,8 @@ export function FlightFuel({
   /** The base's suppliers for this aircraft's fuel, default first. */
   options: FuelSupplierOption[];
   fuelTypeCode: string;
+  /** The departure base's zone: needed-by times are local there. */
+  timeZone?: string;
 }) {
   const [ordering, setOrdering] = useState(false);
   const openOrders = orders.filter(isOpen);
@@ -104,6 +107,7 @@ export function FlightFuel({
               order={order}
               flightId={flightId}
               source={source}
+              timeZone={timeZone}
             />
           ))}
         </ul>
@@ -120,6 +124,7 @@ export function FlightFuel({
           flightId={flightId}
           source={source}
           options={options}
+          timeZone={timeZone}
           onDone={() => setOrdering(false)}
         />
       ) : (
@@ -146,10 +151,12 @@ function OrderRow({
   order,
   flightId,
   source,
+  timeZone,
 }: {
   order: FuelOrderResponse;
   flightId: string;
   source: FuelOrderRequester;
+  timeZone: string;
 }) {
   const [mode, setMode] = useState<"view" | "adjust" | "cancel">("view");
   const [gallons, setGallons] = useState(String(order.requested_quantity_gallons));
@@ -157,7 +164,7 @@ function OrderRow({
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const uid = useId();
-  const when = neededBy(order);
+  const when = neededBy(order, timeZone);
 
   function run(action: () => Promise<FuelActionResult>) {
     setError(null);
@@ -312,11 +319,13 @@ function OrderForm({
   flightId,
   source,
   options,
+  timeZone,
   onDone,
 }: {
   flightId: string;
   source: FuelOrderRequester;
   options: FuelSupplierOption[];
+  timeZone: string;
   onDone: () => void;
 }) {
   const [choice, setChoice] = useState(options[0].key);
@@ -391,7 +400,7 @@ function OrderForm({
         </div>
         <div>
           <label htmlFor={`${uid}-time`} className={LABEL}>
-            Needed by (UTC, optional)
+            {`Needed by (${zoneAbbreviation(timeZone)}, optional)`}
           </label>
           <input
             id={`${uid}-time`}

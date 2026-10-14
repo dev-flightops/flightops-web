@@ -10,8 +10,10 @@ import {
   createFuelOrder,
   type FuelOrderRequester,
 } from "@/lib/api/ground";
+import { loadZoneTable } from "@/lib/api/auth";
 import { getFlight } from "@/lib/api/ops";
-import { neededByInstant } from "@/lib/fuel";
+import { zoneFor } from "@/lib/format/local-time";
+import { localDate, neededByInstant } from "@/lib/fuel";
 
 /**
  * Fuel for one flight, from the dispatch packet and the pilot's
@@ -65,7 +67,8 @@ const OrderInput = z.object({
   supplierId: z.string().uuid(),
   fuelTypeId: z.string().uuid(),
   gallons: Gallons,
-  // UTC wall-clock, "HH:MM": the last one before departure (lib/fuel).
+  // Local "HH:MM" at the departure base: the last one before departure
+  // (lib/fuel, #68).
   neededBy: z
     .string()
     .regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Needed-by is a 24-hour time.")
@@ -84,15 +87,17 @@ export async function orderFuelForFlightAction(
   const { flightId, source, supplierId, fuelTypeId, gallons, neededBy, instructions } =
     parsed.data;
   try {
-    const flight = await getFlight(flightId);
+    const [flight, zones] = await Promise.all([getFlight(flightId), loadZoneTable()]);
+    const timeZone = zoneFor(zones, flight.origin);
     const neededAt = neededBy
-      ? neededByInstant(flight.scheduled_departure_at, neededBy)
+      ? neededByInstant(flight.scheduled_departure_at, neededBy, timeZone)
       : null;
-    // The day the fuel is wanted, which is the day before departure's
-    // UTC date when the needed-by time is later in the day than it.
-    const date = neededAt
-      ? neededAt.toISOString().slice(0, 10)
-      : flight.scheduled_departure_at.slice(0, 10);
+    // The day the fuel is wanted at the base, local like the time: the
+    // day before departure when the needed-by time is later in the day.
+    const date = localDate(
+      neededAt ? neededAt.toISOString() : flight.scheduled_departure_at,
+      timeZone,
+    );
     await createFuelOrder({
       n_number: flight.aircraft.tail_number,
       base_code: flight.origin,

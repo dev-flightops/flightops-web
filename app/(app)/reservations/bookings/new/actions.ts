@@ -3,8 +3,10 @@
 import { redirect } from "next/navigation";
 import { z } from "zod";
 
+import { loadZoneTable } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
 import { createBooking } from "@/lib/api/reservations";
+import { localToUtcIso, zoneFor } from "@/lib/format/local-time";
 
 /**
  * An airport identifier on a new booking.
@@ -86,10 +88,14 @@ export async function createBookingAction(
   }
 
   const v = parsed.data;
-  let departureIso: string;
-  try {
-    departureIso = new Date(v.requested_departure_at_local).toISOString();
-  } catch {
+  // Local at the departure base (#68). `new Date(local)` read it in the
+  // server's own zone, which on Vercel is UTC: a 10:00 booking was
+  // stored as 10:00Z, 02:00 in Alaska.
+  const departureIso = localToUtcIso(
+    v.requested_departure_at_local,
+    zoneFor(await loadZoneTable(), v.origin_icao),
+  );
+  if (!departureIso) {
     return {
       status: "error",
       message: "Invalid departure time.",

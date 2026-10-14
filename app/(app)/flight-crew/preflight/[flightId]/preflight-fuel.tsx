@@ -20,6 +20,7 @@ export function PreflightFuel({
   options,
   fuelTypeCode,
   unavailable,
+  timeZone,
 }: {
   flight: FlightDetail;
   orders: FuelOrderResponse[];
@@ -27,6 +28,8 @@ export function PreflightFuel({
   fuelTypeCode: string;
   /** Set when the orders or suppliers could not be read. */
   unavailable: string | null;
+  /** The departure base's zone, for the needed-by time (#68). */
+  timeZone?: string;
 }) {
   return (
     <section
@@ -55,6 +58,7 @@ export function PreflightFuel({
           orders={orders}
           options={options}
           fuelTypeCode={fuelTypeCode}
+          timeZone={timeZone}
         />
       )}
     </section>

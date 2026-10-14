@@ -134,7 +134,7 @@ export function BookingForm({
           label="Requested departure"
           name="requested_departure_at_local"
           error={state.fieldErrors?.requested_departure_at_local}
-          hint="Local time."
+          hint="Local time at the departure base."
         >
           <input
             id="requested_departure_at_local"

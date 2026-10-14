@@ -3,8 +3,10 @@
 import { redirect } from "next/navigation";
 import { z } from "zod";
 
+import { loadZoneTable } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
 import { createFlight } from "@/lib/api/ops";
+import { localToUtcIso, zoneFor } from "@/lib/format/local-time";
 
 /**
  * Server action for the "+ Open Flight" form (M2-G-14).
@@ -185,11 +187,11 @@ export async function createFlightAction(
     return { status: "field-errors", errors, values, stops };
   }
 
-  // datetime-local inputs come in as "YYYY-MM-DDTHH:MM" with no
-  // timezone — interpret as UTC to match every other API surface in
-  // the app. Future M3 enhancement: pick the tenant's IANA zone.
-  const toUtcIso = (s: string) =>
-    s.endsWith("Z") ? s : new Date(`${s}Z`).toISOString();
+  // datetime-local inputs come in as "YYYY-MM-DDTHH:MM" with no zone.
+  // They are local at the departure base (#68): the client's "11:30am"
+  // flight was read as 11:30Z, 03:30 in Alaska, and scored as night.
+  const timeZone = zoneFor(await loadZoneTable(), parsed.data.origin);
+  const toUtcIso = (s: string) => localToUtcIso(s, timeZone) ?? "";
 
   // The client, 27 Sep: "It appears there is not a way to build a multi
   // leg route." Leg 1 is the form's origin and destination; each stop

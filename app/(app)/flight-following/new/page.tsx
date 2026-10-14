@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
+import { loadZoneTable } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
 import { listAircraft } from "@/lib/api/ops";
 import type { AircraftListItem } from "@/lib/api/types";
@@ -21,6 +22,8 @@ import { OpenFlightForm } from "./open-flight-form";
 export default async function FlightFollowingNewPage() {
   let aircraft: AircraftListItem[] = [];
   let loadError: string | null = null;
+  // Times are typed local to the departure base (#68).
+  const zones = loadZoneTable();
 
   try {
     aircraft = (await listAircraft()).items.filter((a) => a.is_active);
@@ -73,7 +76,7 @@ export default async function FlightFollowingNewPage() {
           </Button>
         </div>
       ) : (
-        <OpenFlightForm aircraft={aircraft} />
+        <OpenFlightForm aircraft={aircraft} zones={await zones} />
       )}
     </div>
   );

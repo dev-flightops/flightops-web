@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import type { FuelSupplierBaseResponse } from "@/lib/api/types";
 
-import { fuelTypeForAircraft, neededByInstant, supplierOptionsFor } from "./fuel";
+import { fuelTypeForAircraft, localDate, neededByInstant, supplierOptionsFor } from "./fuel";
 
 function row(over: Partial<FuelSupplierBaseResponse>): FuelSupplierBaseResponse {
   return {
@@ -54,28 +54,46 @@ describe("fuel for an aircraft", () => {
 });
 
 describe("neededByInstant", () => {
+  // Local at the departure base (#68): 15:15 AKDT is 23:15Z.
+  const ALASKA = "America/Anchorage";
+
   it("is on the departure's day when earlier than departure", () => {
-    expect(neededByInstant("2026-09-28T23:15:00Z", "22:55").toISOString()).toBe(
+    expect(neededByInstant("2026-09-28T23:15:00Z", "14:55", ALASKA).toISOString()).toBe(
       "2026-09-28T22:55:00.000Z",
     );
   });
 
   it("is the day before when later in the day than departure", () => {
-    // 16:30 AKDT is 00:30Z the next day; "by 23:50" is the evening before.
-    expect(neededByInstant("2026-09-29T00:30:00Z", "23:50").toISOString()).toBe(
-      "2026-09-28T23:50:00.000Z",
+    // A 06:00 AKDT departure; fuel "by 23:50" is the evening before.
+    expect(neededByInstant("2026-09-29T14:00:00Z", "23:50", ALASKA).toISOString()).toBe(
+      "2026-09-29T07:50:00.000Z",
     );
   });
 
   it("allows the departure minute itself", () => {
-    expect(neededByInstant("2026-09-28T23:15:00Z", "23:15").toISOString()).toBe(
+    expect(neededByInstant("2026-09-28T23:15:00Z", "15:15", ALASKA).toISOString()).toBe(
       "2026-09-28T23:15:00.000Z",
     );
   });
 
   it("crosses a month end", () => {
-    expect(neededByInstant("2026-10-01T00:10:00Z", "23:00").toISOString()).toBe(
-      "2026-09-30T23:00:00.000Z",
+    // 06:00 AKDT on 1 October; "by 22:00" is 30 September's evening.
+    expect(neededByInstant("2026-10-01T14:00:00Z", "22:00", ALASKA).toISOString()).toBe(
+      "2026-10-01T06:00:00.000Z",
     );
+  });
+
+  it("is read in the zone given, not UTC", () => {
+    // The client's GV2004: 11:30 AKDT is 19:30Z; fuel by 10:30 local.
+    expect(neededByInstant("2026-10-11T19:30:00Z", "10:30", ALASKA).toISOString()).toBe(
+      "2026-10-11T18:30:00.000Z",
+    );
+  });
+});
+
+describe("localDate", () => {
+  it("is the departure base's calendar day", () => {
+    // 18:45 AKDT on 11 October is already 12 October in UTC.
+    expect(localDate("2026-10-12T02:45:00Z", "America/Anchorage")).toBe("2026-10-11");
   });
 });
