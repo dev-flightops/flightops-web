@@ -2,9 +2,9 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const push = vi.fn();
+const replace = vi.fn();
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({ push }),
+  useRouter: () => ({ replace }),
   useSearchParams: () => new URLSearchParams(""),
 }));
 
@@ -76,7 +76,7 @@ describe("PicPicker (M2-G-5)", () => {
   });
 
   it("navigates to /dispatch/?pic=<uuid> when a pilot is chosen", async () => {
-    push.mockReset();
+    replace.mockReset();
     const user = userEvent.setup();
     render(
       <PicPicker options={[sarah, bob, alice]} currentPicId={null} />,
@@ -85,11 +85,11 @@ describe("PicPicker (M2-G-5)", () => {
       screen.getByLabelText("Pilot in Command"),
       alice.pilot.id,
     );
-    expect(push).toHaveBeenCalledWith(`/dispatch/?pic=${alice.pilot.id}`);
+    expect(replace).toHaveBeenCalledWith(`/dispatch/?pic=${alice.pilot.id}`, { scroll: false });
   });
 
   it("clears the pic param when the placeholder option is chosen", async () => {
-    push.mockReset();
+    replace.mockReset();
     const user = userEvent.setup();
     render(
       <PicPicker
@@ -101,7 +101,7 @@ describe("PicPicker (M2-G-5)", () => {
       screen.getByLabelText("Pilot in Command"),
       "",
     );
-    expect(push).toHaveBeenCalledWith("/dispatch/");
+    expect(replace).toHaveBeenCalledWith("/dispatch/", { scroll: false });
   });
 
   it("disables and shows an empty-roster label when no pilots exist", () => {
@@ -165,7 +165,7 @@ describe("PicPicker — persisting the choice", () => {
       sarah.pilot.id,
     );
     expect(assignCrewAction).not.toHaveBeenCalled();
-    expect(push).toHaveBeenCalled();
+    expect(replace).toHaveBeenCalled();
   });
 
   it("does not move the URL when the assignment is refused", async () => {
@@ -190,7 +190,7 @@ describe("PicPicker — persisting the choice", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent(
       /already PIC on PGR900/,
     );
-    expect(push).not.toHaveBeenCalled();
+    expect(replace).not.toHaveBeenCalled();
   });
 });
 
