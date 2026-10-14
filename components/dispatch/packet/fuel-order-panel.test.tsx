@@ -80,7 +80,7 @@ describe("the packet's Fuel panel", () => {
       "Supplier",
       "Left gal",
       "Right gal",
-      "Needed by (UTC, optional)",
+      /^Needed by \(AK[DS]T, optional\)$/,
       "Special instructions (optional)",
     ]) {
       expect(screen.getByLabelText(name)).toBeInTheDocument();

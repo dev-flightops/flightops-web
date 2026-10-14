@@ -12,13 +12,14 @@ import {
   getWeightReturn,
   getPreflightProgress,
 } from "@/lib/api/ops";
-import { getFratThresholds } from "@/lib/api/auth";
+import { getFratThresholds, loadZoneTable } from "@/lib/api/auth";
 import {
   isIfrPlanned,
   observationsFromWeather,
 } from "@/lib/frat/observations";
 import { batchWeather } from "@/lib/api/weather";
 import { listFuelOrders, listSupplierBases } from "@/lib/api/ground";
+import { zoneFor } from "@/lib/format/local-time";
 import { fuelTypeForAircraft, supplierOptionsFor } from "@/lib/fuel";
 import { flightStops } from "@/lib/route";
 import type {
@@ -204,14 +205,18 @@ export default async function PreflightPage({
   // this aircraft's fuel. Best-effort, like the weather: a failure costs
   // the pilot the fuel card, not the preflight.
   const fuelTypeCode = fuelTypeForAircraft(flight.aircraft.model);
-  const [fuelOrders, fuelBases] = await Promise.allSettled([
-    listFuelOrders({ flightId: flight.id }),
-    listSupplierBases({ baseCode: flight.origin }),
+  const [[fuelOrders, fuelBases], zones] = await Promise.all([
+    Promise.allSettled([
+      listFuelOrders({ flightId: flight.id }),
+      listSupplierBases({ baseCode: flight.origin }),
+    ]),
+    loadZoneTable(),
   ]);
   const fuel = (
     <PreflightFuel
       flight={flight}
       fuelTypeCode={fuelTypeCode}
+      timeZone={zoneFor(zones, flight.origin)}
       orders={fuelOrders.status === "fulfilled" ? fuelOrders.value.items : []}
       options={
         fuelBases.status === "fulfilled"

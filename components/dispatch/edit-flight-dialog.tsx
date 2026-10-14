@@ -29,15 +29,24 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { FlightUpdatePayload } from "@/lib/api/ops";
 import type { AircraftListItem, FlightDetail } from "@/lib/api/types";
+import {
+  DEFAULT_ZONE_TABLE,
+  localToUtcIso,
+  utcToLocalInput,
+  type ZoneTable,
+  zoneAbbreviation,
+  zoneFor,
+  zuluHint,
+} from "@/lib/format/local-time";
 import { routeText } from "@/lib/route";
 
 // ICAO airport codes are 3-4 alphanumeric chars (legacy used 3 too).
 const icaoPattern = /^[A-Z0-9]{3,4}$/;
 
-// `datetime-local` input values are local-time without a zone. We treat them
-// as UTC here because the rest of the system stores + displays UTC; the form
-// label says so. Round-tripping ISO → "YYYY-MM-DDTHH:MM" loses seconds, which
-// is fine for our minute-granularity schedules.
+// `datetime-local` input values are wall-clock times without a zone. They are
+// local at the departure base (#68), with Zulu shown under each, and saved in
+// UTC. Round-tripping ISO → "YYYY-MM-DDTHH:MM" loses seconds, which is fine
+// for our minute-granularity schedules.
 const schema = z.object({
   flight_number: z
     .string()
@@ -66,17 +75,15 @@ type FormValues = z.infer<typeof schema>;
 interface EditFlightDialogProps {
   flight: FlightDetail;
   aircraft: AircraftListItem[];
+  /** Each base's zone, for the departure base the times are typed in. */
+  zones?: ZoneTable;
 }
 
-/** ISO 8601 UTC → "YYYY-MM-DDTHH:MM" for use as a datetime-local input value. */
-function isoToLocalInput(iso: string): string {
-  return iso.slice(0, 16);
-}
-
-/** "YYYY-MM-DDTHH:MM" → ISO 8601 UTC (treats the input as UTC). */
-function localInputToIso(local: string): string {
-  // Force the Z suffix so the backend parses as UTC. Add seconds for shape.
-  return `${local}:00Z`;
+/** The typed local time as a UTC instant, if it differs from `stored`. */
+function changedUtc(local: string, timeZone: string, stored: string): string | null {
+  const iso = localToUtcIso(local, timeZone);
+  if (!iso) return null;
+  return new Date(iso).getTime() === new Date(stored).getTime() ? null : iso;
 }
 
 function isMultiLeg(flight: FlightDetail): boolean {
@@ -87,6 +94,7 @@ function isMultiLeg(flight: FlightDetail): boolean {
 function buildPatch(
   flight: FlightDetail,
   values: FormValues,
+  timeZone: string,
 ): FlightUpdatePayload {
   const patch: FlightUpdatePayload = {};
   if (values.flight_number !== flight.flight_number)
@@ -99,12 +107,14 @@ function buildPatch(
     if (values.origin !== flight.origin) patch.origin = values.origin;
     if (values.destination !== flight.destination)
       patch.destination = values.destination;
-    const depIso = localInputToIso(values.scheduled_departure_at);
-    if (depIso !== flight.scheduled_departure_at)
-      patch.scheduled_departure_at = depIso;
-    const arrIso = localInputToIso(values.scheduled_arrival_at);
-    if (arrIso !== flight.scheduled_arrival_at)
-      patch.scheduled_arrival_at = arrIso;
+    const depIso = changedUtc(
+      values.scheduled_departure_at,
+      timeZone,
+      flight.scheduled_departure_at,
+    );
+    if (depIso) patch.scheduled_departure_at = depIso;
+    const arrIso = changedUtc(values.scheduled_arrival_at, timeZone, flight.scheduled_arrival_at);
+    if (arrIso) patch.scheduled_arrival_at = arrIso;
   }
   if (values.pax_count !== flight.pax_count) patch.pax_count = values.pax_count;
   if (values.cargo_lbs !== flight.cargo_lbs) patch.cargo_lbs = values.cargo_lbs;
@@ -117,8 +127,10 @@ function buildPatch(
 export function EditFlightDialog({
   flight,
   aircraft,
+  zones = DEFAULT_ZONE_TABLE,
 }: EditFlightDialogProps) {
   const router = useRouter();
+  const storedZone = zoneFor(zones, flight.origin);
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -130,17 +142,25 @@ export function EditFlightDialog({
       aircraft_id: flight.aircraft.id,
       origin: flight.origin,
       destination: flight.destination,
-      scheduled_departure_at: isoToLocalInput(flight.scheduled_departure_at),
-      scheduled_arrival_at: isoToLocalInput(flight.scheduled_arrival_at),
+      scheduled_departure_at: utcToLocalInput(flight.scheduled_departure_at, storedZone),
+      scheduled_arrival_at: utcToLocalInput(flight.scheduled_arrival_at, storedZone),
       pax_count: flight.pax_count,
       cargo_lbs: flight.cargo_lbs,
       notes: flight.notes ?? "",
     },
   });
 
+  // The times follow the departure base: a new origin in another zone
+  // reads them in its zone, and the labels say which.
+  const timeZone = zoneFor(zones, form.watch("origin"));
+  const tz = zoneAbbreviation(
+    timeZone,
+    new Date(localToUtcIso(form.watch("scheduled_departure_at"), timeZone) ?? Date.now()),
+  );
+
   const onSubmit = (values: FormValues) => {
     setError(null);
-    const patch = buildPatch(flight, values);
+    const patch = buildPatch(flight, values, zoneFor(zones, values.origin));
     if (Object.keys(patch).length === 0) {
       // Nothing changed — just close. Backend would no-op anyway.
       setOpen(false);
@@ -170,8 +190,9 @@ export function EditFlightDialog({
           <DialogHeader>
             <DialogTitle>Edit {flight.flight_number}</DialogTitle>
             <DialogDescription>
-              Amend the scheduled flight. Times are UTC. Each save is recorded in
-              the audit log with a field-level diff.
+              Amend the scheduled flight. Times are local at the departure base
+              ({tz}). Each save is recorded in the audit log with a field-level
+              diff.
             </DialogDescription>
           </DialogHeader>
 
@@ -271,7 +292,7 @@ export function EditFlightDialog({
                 name="scheduled_departure_at"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Departure (UTC)</FormLabel>
+                    <FormLabel>{`Departure (${tz})`}</FormLabel>
                     <FormControl>
                       <Input
                         type="datetime-local"
@@ -279,6 +300,7 @@ export function EditFlightDialog({
                         {...field}
                       />
                     </FormControl>
+                    <ZuluHint value={field.value} timeZone={timeZone} />
                     <FormMessage />
                   </FormItem>
                 )}
@@ -289,7 +311,7 @@ export function EditFlightDialog({
                 name="scheduled_arrival_at"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Arrival (UTC)</FormLabel>
+                    <FormLabel>{`Arrival (${tz})`}</FormLabel>
                     <FormControl>
                       <Input
                         type="datetime-local"
@@ -297,6 +319,7 @@ export function EditFlightDialog({
                         {...field}
                       />
                     </FormControl>
+                    <ZuluHint value={field.value} timeZone={timeZone} />
                     <FormMessage />
                   </FormItem>
                 )}
@@ -380,4 +403,10 @@ export function EditFlightDialog({
       </Dialog>
     </>
   );
+}
+
+/** What a typed local time is in Zulu, under its input. */
+function ZuluHint({ value, timeZone }: { value: string; timeZone: string }) {
+  const hint = zuluHint(value, timeZone);
+  return hint ? <p className="font-mono text-[0.65rem] text-muted-foreground">{hint}</p> : null;
 }

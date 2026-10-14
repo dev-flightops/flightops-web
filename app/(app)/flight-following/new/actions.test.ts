@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { TestApiError, createFlight, redirectSpy } = vi.hoisted(() => {
+const { TestApiError, createFlight, redirectSpy, loadZoneTable } = vi.hoisted(() => {
   class TestApiError extends Error {
     constructor(
       public status: number,
@@ -13,6 +13,11 @@ const { TestApiError, createFlight, redirectSpy } = vi.hoisted(() => {
   return {
     TestApiError,
     createFlight: vi.fn(),
+    // Bases with zones: the departure base's decides how times are read.
+    loadZoneTable: vi.fn(async () => ({
+      byIcao: { PADU: "America/Anchorage", PADK: "America/Adak" },
+      fallback: "America/Anchorage",
+    })),
     redirectSpy: vi.fn((_url: string) => {
       // Match Next.js behavior: redirect() throws a special error
       // (NEXT_REDIRECT) the framework catches. Throw a tagged error
@@ -26,6 +31,7 @@ const { TestApiError, createFlight, redirectSpy } = vi.hoisted(() => {
 });
 vi.mock("@/lib/api/client", () => ({ ApiError: TestApiError }));
 vi.mock("@/lib/api/ops", () => ({ createFlight }));
+vi.mock("@/lib/api/auth", () => ({ loadZoneTable }));
 vi.mock("next/navigation", () => ({ redirect: redirectSpy }));
 
 import { createFlightAction } from "./actions";
@@ -54,7 +60,7 @@ function makeFormData(overrides: Record<string, string> = {}): FormData {
 }
 
 describe("createFlightAction", () => {
-  it("calls createFlight with normalized ICAOs + UTC ISO times, then redirects", async () => {
+  it("calls createFlight with normalized ICAOs and the local times in UTC, then redirects", async () => {
     createFlight.mockReset().mockResolvedValueOnce({});
     redirectSpy.mockClear();
 
@@ -67,8 +73,9 @@ describe("createFlightAction", () => {
     expect(arg.flight_number).toBe("GV404");
     expect(arg.origin).toBe("PADU");
     expect(arg.destination).toBe("PANC");
-    expect(arg.scheduled_departure_at).toBe("2026-07-01T14:00:00.000Z");
-    expect(arg.scheduled_arrival_at).toBe("2026-07-01T16:00:00.000Z");
+    // Typed in Alaska time at the departure base (#68), UTC-8 in July.
+    expect(arg.scheduled_departure_at).toBe("2026-07-01T22:00:00Z");
+    expect(arg.scheduled_arrival_at).toBe("2026-07-02T00:00:00Z");
     expect(arg.pax_count).toBe(4);
     expect(arg.cargo_lbs).toBe(200);
     expect(redirectSpy).toHaveBeenCalledWith("/flight-following");
@@ -268,9 +275,18 @@ describe("createFlightAction — multi-leg routes (client, 27 Sep)", () => {
     expect(payload).toMatchObject({
       origin: "PADU",
       destination: "PAKN",
-      scheduled_departure_at: "2026-07-01T14:00:00.000Z",
-      scheduled_arrival_at: "2026-07-01T17:10:00.000Z",
+      scheduled_departure_at: "2026-07-01T22:00:00Z",
+      scheduled_arrival_at: "2026-07-02T01:10:00Z",
     });
+  });
+
+  it("reads the times in the departure base's own zone", async () => {
+    // Adak keeps Hawaii-Aleutian time, an hour behind Anchorage.
+    createFlight.mockResolvedValueOnce({});
+    await expect(
+      createFlightAction({ status: "idle" }, makeFormData({ origin: "padk" })),
+    ).rejects.toThrow("NEXT_REDIRECT");
+    expect(createFlight.mock.calls[0][0].scheduled_departure_at).toBe("2026-07-01T23:00:00Z");
   });
 
   it("sends no legs for a single-leg flight", async () => {

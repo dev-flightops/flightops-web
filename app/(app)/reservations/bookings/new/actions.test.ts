@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { TestApiError, createBooking } = vi.hoisted(() => {
+const { TestApiError, createBooking, loadZoneTable } = vi.hoisted(() => {
   class TestApiError extends Error {
     constructor(
       public status: number,
@@ -10,10 +10,18 @@ const { TestApiError, createBooking } = vi.hoisted(() => {
       super(message);
     }
   }
-  return { TestApiError, createBooking: vi.fn(async () => ({ id: "b-1" })) };
+  return {
+    TestApiError,
+    createBooking: vi.fn(async () => ({ id: "b-1" })),
+    loadZoneTable: vi.fn(async () => ({
+      byIcao: { PANC: "America/Anchorage" },
+      fallback: "America/Anchorage",
+    })),
+  };
 });
 vi.mock("@/lib/api/client", () => ({ ApiError: TestApiError }));
 vi.mock("@/lib/api/reservations", () => ({ createBooking }));
+vi.mock("@/lib/api/auth", () => ({ loadZoneTable }));
 vi.mock("next/navigation", () => ({
   redirect: (url: string) => {
     throw new Error(`REDIRECT:${url}`);
@@ -60,6 +68,17 @@ async function submit(over: Record<string, string> = {}) {
 }
 
 beforeEach(() => createBooking.mockClear());
+
+describe("the requested departure", () => {
+  it("is local at the departure base, saved in UTC (#68)", async () => {
+    // The form says "Local time"; read in the server's zone, which on
+    // Vercel is UTC, a 09:00 booking was saved as 09:00Z, 01:00 local.
+    await submit({ requested_departure_at_local: "2026-09-20T09:00" });
+    expect(createBooking).toHaveBeenCalledWith(
+      expect.objectContaining({ requested_departure_at: "2026-09-20T17:00:00Z" }),
+    );
+  });
+});
 
 describe("a malformed identifier", () => {
   it.each(["PANC`", "PA", "PANCX", "PA-C", "P@NC", ""])(

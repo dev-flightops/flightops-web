@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
@@ -65,6 +65,8 @@ const baseFlight: FlightDetail = {
   released_by: null,
 };
 
+const ZONES = { byIcao: { PADU: "America/Anchorage" }, fallback: "America/Anchorage" };
+
 describe("EditFlightDialog", () => {
   it("renders the Edit button and opens the dialog on click", async () => {
     const user = userEvent.setup();
@@ -114,6 +116,30 @@ describe("EditFlightDialog", () => {
     expect(
       await screen.findByText(/already uses that flight number/i),
     ).toBeInTheDocument();
+  });
+
+  it("shows the times in the departure base's local time, with Zulu under each (#68)", async () => {
+    const user = userEvent.setup();
+    render(<EditFlightDialog flight={baseFlight} aircraft={[aircraft207]} zones={ZONES} />);
+    await user.click(screen.getByRole("button", { name: /edit/i }));
+    // 14:00Z on 1 June is 06:00 in Alaska summer time.
+    const departure = screen.getByLabelText("Departure (AKDT)");
+    expect(departure).toHaveValue("2026-06-01T06:00");
+    expect(screen.getByText("= 14:00Z 2026-06-01")).toBeInTheDocument();
+  });
+
+  it("saves a changed local time in UTC", async () => {
+    updateFlightAction.mockReset().mockResolvedValue({ ok: true });
+    const user = userEvent.setup();
+    render(<EditFlightDialog flight={baseFlight} aircraft={[aircraft207]} zones={ZONES} />);
+    await user.click(screen.getByRole("button", { name: /edit/i }));
+    fireEvent.change(screen.getByLabelText("Departure (AKDT)"), {
+      target: { value: "2026-06-01T07:30" },
+    });
+    await user.click(screen.getByRole("button", { name: /save changes/i }));
+    expect(updateFlightAction).toHaveBeenCalledWith(baseFlight.id, {
+      scheduled_departure_at: "2026-06-01T15:30:00Z",
+    });
   });
 
   it("closes without calling the server action when no fields changed", async () => {

@@ -1,7 +1,9 @@
 import { FlightFuel } from "@/components/fuel/flight-fuel";
+import { loadZoneTable } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
 import { listFuelOrders, listSupplierBases } from "@/lib/api/ground";
 import type { FlightDetail, FuelOrderResponse } from "@/lib/api/types";
+import { zoneFor } from "@/lib/format/local-time";
 import {
   fuelTypeForAircraft,
   supplierOptionsFor,
@@ -45,9 +47,10 @@ export async function FuelOrderPanel({
   const baseCode = flight.origin;
   const fuelTypeCode = fuelTypeForAircraft(flight.aircraft.model);
 
-  const [basesResult, ordersResult] = await Promise.allSettled([
-    listSupplierBases({ baseCode }),
-    listFuelOrders({ flightId: flight.id }),
+  // The base zones for the needed-by time, local there (#68).
+  const [[basesResult, ordersResult], zones] = await Promise.all([
+    Promise.allSettled([listSupplierBases({ baseCode }), listFuelOrders({ flightId: flight.id })]),
+    loadZoneTable(),
   ]);
 
   const failed = [basesResult, ordersResult].find((r) => r.status === "rejected");
@@ -114,6 +117,7 @@ export async function FuelOrderPanel({
         orders={orders}
         options={options}
         fuelTypeCode={fuelTypeCode}
+        timeZone={zoneFor(zones, baseCode)}
       />
     </SectionPanel>
   );

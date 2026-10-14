@@ -88,7 +88,8 @@ describe("FlightFuel", () => {
   it("shows what dispatch already ordered, and where it stands", () => {
     renderFuel([order()]);
     const row = screen.getByRole("listitem");
-    expect(row).toHaveTextContent("confirmed80 galJet A· Arctic Fuel· by 15:30Z");
+    // Needed-by on the departure base's clock (#68): 15:30Z is 07:30 AKDT.
+    expect(row).toHaveTextContent("confirmed80 galJet A· Arctic Fuel· by 07:30 AKDT");
     expect(row).toHaveTextContent("Ordered by Dee Dispatcher");
     expect(screen.getByRole("button", { name: "Order more fuel" })).toBeInTheDocument();
   });

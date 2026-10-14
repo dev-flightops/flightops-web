@@ -1,4 +1,5 @@
 import type { FuelSupplierBaseResponse } from "@/lib/api/types";
+import { DEFAULT_TIME_ZONE, localToUtcIso, utcToLocalInput } from "@/lib/format/local-time";
 
 /**
  * Aircraft model → fuel-type code, as legacy's spec has it:
@@ -55,25 +56,26 @@ export function supplierOptionsFor(
 }
 
 /**
- * When a "needed by HH:MM" (UTC) falls: the last time the clock reads
- * that at or before the flight departs. Fuel is wanted before the
- * flight, and for an Alaska operator the UTC day turns mid-afternoon: a
- * 16:30 AKDT departure is 00:30Z the next day, so "needed by 23:50" for
- * it is the evening before, not 23:50 on the departure's own UTC date,
- * almost a day after the aircraft has gone.
+ * When a "needed by HH:MM" falls: the last time the departure base's
+ * clock reads that at or before the flight departs. The time is local
+ * there (#68; it used to be UTC). Fuel is wanted before the flight, so
+ * "needed by 23:50" for a 06:00 departure is the evening before.
  */
-export function neededByInstant(departureIso: string, hhmm: string): Date {
+export function neededByInstant(
+  departureIso: string,
+  hhmm: string,
+  timeZone: string = DEFAULT_TIME_ZONE,
+): Date {
   const departs = new Date(departureIso);
-  const [hours, minutes] = hhmm.split(":").map(Number);
-  const at = new Date(
-    Date.UTC(
-      departs.getUTCFullYear(),
-      departs.getUTCMonth(),
-      departs.getUTCDate(),
-      hours,
-      minutes,
-    ),
-  );
-  if (at > departs) at.setUTCDate(at.getUTCDate() - 1);
-  return at;
+  const day = utcToLocalInput(departureIso, timeZone).slice(0, 10);
+  const on = (date: string) => new Date(localToUtcIso(`${date}T${hhmm}`, timeZone) ?? departureIso);
+  const at = on(day);
+  if (at <= departs) return at;
+  const [y, m, d] = day.split("-").map(Number);
+  return on(new Date(Date.UTC(y, m - 1, d - 1)).toISOString().slice(0, 10));
+}
+
+/** The departure base's calendar date of an instant, "YYYY-MM-DD". */
+export function localDate(iso: string, timeZone: string = DEFAULT_TIME_ZONE): string {
+  return utcToLocalInput(iso, timeZone).slice(0, 10);
 }

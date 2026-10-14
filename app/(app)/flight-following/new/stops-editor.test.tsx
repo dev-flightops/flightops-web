@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useState } from "react";
 import { describe, expect, it } from "vitest";
@@ -18,7 +18,13 @@ function Harness({
   const [stops, setStops] = useState(initial);
   return (
     <form aria-label="route">
-      <StopsEditor stops={stops} onChange={setStops} firstDestination="PAHP" errors={errors} />
+      <StopsEditor
+        stops={stops}
+        onChange={setStops}
+        firstDestination="PAHP"
+        errors={errors}
+        timeZone="America/Anchorage"
+      />
     </form>
   );
 }
@@ -33,6 +39,15 @@ describe("StopsEditor", () => {
     expect(screen.getByLabelText(/Destination ICAO/)).toHaveValue("PASM");
     await user.click(screen.getByRole("button", { name: "+ Add stop" }));
     expect(screen.getByRole("group", { name: "Leg 3" })).toHaveTextContent("Leg 3 · from PASM");
+  });
+
+  it("takes each leg's times in local time and shows them in Zulu (#68)", async () => {
+    const user = userEvent.setup();
+    render(<Harness />);
+    await user.click(screen.getByRole("button", { name: /Add stop/ }));
+    const etd = screen.getByLabelText(/^ETD \(AK[DS]T\)/);
+    fireEvent.change(etd, { target: { value: "2026-10-11T11:30" } });
+    expect(screen.getByText("= 19:30Z 2026-10-11")).toBeInTheDocument();
   });
 
   it("removes a leg", async () => {

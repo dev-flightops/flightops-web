@@ -24,7 +24,7 @@ import { PacketHeader } from "@/components/dispatch/packet/packet-header";
 import { RightColumn } from "@/components/dispatch/packet/right-column";
 import { SelectedFlightSummary } from "@/components/dispatch/packet/selected-flight-summary";
 import { ApiError } from "@/lib/api/client";
-import { listMyTenants } from "@/lib/api/auth";
+import { listMyTenants, loadZoneTable } from "@/lib/api/auth";
 import { getPlansWaiting } from "@/lib/api/integrations";
 import { listFlightCrew } from "@/lib/api/crew-assignments";
 import {
@@ -36,6 +36,7 @@ import {
   listFlights,
   listWeightReturns,
 } from "@/lib/api/ops";
+import { DEFAULT_ZONE_TABLE, type ZoneTable } from "@/lib/format/local-time";
 import { listBookings } from "@/lib/api/reservations";
 import { getTypeQualificationGrid } from "@/lib/api/type-qualifications";
 import {
@@ -264,12 +265,15 @@ export default async function DispatchPage({
   // flight is selected. Soft-fail if the call errors (the dialog hides
   // its tail-swap selector when the list is empty).
   let aircraft: AircraftListItem[] = [];
+  // And the base zones its times are typed in (#68).
+  let zones: ZoneTable = DEFAULT_ZONE_TABLE;
   if (selectedFlight?.status === "scheduled") {
-    try {
-      aircraft = (await listAircraft()).items;
-    } catch {
-      aircraft = [];
-    }
+    [aircraft, zones] = await Promise.all([
+      listAircraft()
+        .then((list) => list.items)
+        .catch(() => []),
+      loadZoneTable(),
+    ]);
   }
 
   // Resolve the routing for the Weather panel:
@@ -436,6 +440,7 @@ export default async function DispatchPage({
           <RightColumn
             flight={selectedFlight}
             aircraft={aircraft}
+            zones={zones}
             hardBlockReason={hardBlockReason}
             pilotUserId={effectivePicId}
             overridesAcknowledged={overridesAcknowledged}

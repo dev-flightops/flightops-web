@@ -1,5 +1,7 @@
 "use client";
 
+import { zoneAbbreviation, zuluHint } from "@/lib/format/local-time";
+
 import type { SubmittedStop } from "./actions";
 
 /**
@@ -13,19 +15,25 @@ import type { SubmittedStop } from "./actions";
  *
  * Controlled, so the rows survive a failed submit: the form echoes
  * them back and remounts this with them.
+ *
+ * Times are local at the departure base, like the first leg's (#68).
  */
 export function StopsEditor({
   stops,
   onChange,
   firstDestination,
   errors,
+  timeZone,
 }: {
   stops: SubmittedStop[];
   onChange: (stops: SubmittedStop[]) => void;
   /** Leg 1's destination, as typed, for the second leg's "from". */
   firstDestination: string;
   errors: Record<string, string>;
+  /** The zone the whole route is typed in: the departure base's. */
+  timeZone: string;
 }) {
+  const tz = zoneAbbreviation(timeZone);
   const set = (i: number, patch: Partial<SubmittedStop>) =>
     onChange(stops.map((s, n) => (n === i ? { ...s, ...patch } : s)));
 
@@ -66,20 +74,22 @@ export function StopsEditor({
               <StopField
                 id={`stop-${i}-departure`}
                 name="stop_departure"
-                label="ETD (UTC)"
+                label={`ETD (${tz})`}
                 type="datetime-local"
                 value={stop.departure}
                 onChange={(v) => set(i, { departure: v })}
                 error={errors[`stop_${i}_departure`]}
+                hint={zuluHint(stop.departure, timeZone)}
               />
               <StopField
                 id={`stop-${i}-arrival`}
                 name="stop_arrival"
-                label="ETA (UTC)"
+                label={`ETA (${tz})`}
                 type="datetime-local"
                 value={stop.arrival}
                 onChange={(v) => set(i, { arrival: v })}
                 error={errors[`stop_${i}_arrival`]}
+                hint={zuluHint(stop.arrival, timeZone)}
               />
             </div>
           </fieldset>
@@ -111,6 +121,7 @@ function StopField({
   type = "text",
   maxLength,
   placeholder,
+  hint,
 }: {
   id: string;
   name: string;
@@ -121,6 +132,8 @@ function StopField({
   type?: string;
   maxLength?: number;
   placeholder?: string;
+  /** What the typed time is in Zulu. */
+  hint?: string;
 }) {
   return (
     <div>
@@ -146,6 +159,7 @@ function StopField({
         spellCheck={type === "text" ? false : undefined}
         className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs text-foreground focus:border-primary focus:outline-none aria-[invalid=true]:border-status-red"
       />
+      {hint && <p className="mt-1 font-mono text-[0.65rem] text-muted-foreground">{hint}</p>}
       {error && (
         <p id={`${id}-error`} role="alert" className="mt-1 text-[0.65rem] text-status-red">
           {error}
