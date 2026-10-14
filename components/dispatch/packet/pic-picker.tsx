@@ -117,12 +117,14 @@ export function PicPicker({
         }
       }
       // Built after the assignment returns, on the newest URL, so an
-      // acknowledgment ticked meanwhile is kept.
+      // acknowledgment ticked meanwhile is kept. Replaced without
+      // scrolling, like the packet's other URL state: a push scrolled
+      // the dispatcher back to the top of the page (#70).
       const qs = nextQuery((params) => {
         if (next === "") params.delete("pic");
         else params.set("pic", next);
       });
-      router.push(qs ? `/dispatch/?${qs}` : "/dispatch/");
+      router.replace(qs ? `/dispatch/?${qs}` : "/dispatch/", { scroll: false });
     });
   }
 
