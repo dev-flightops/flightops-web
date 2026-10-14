@@ -2,6 +2,7 @@ import type { WeatherReportResponse } from "@/lib/api/types";
 import { metarAge, metarSummary } from "@/lib/weather-format";
 
 import { FlightCategoryBadge } from "./flight-category-badge";
+import { SpecialReportChip } from "./special-report-chip";
 
 /**
  * Single-airport METAR + TAF card used by /weather standalone (M2-G-24).
@@ -43,7 +44,8 @@ export function AirportWeatherCard({
           )}
         </div>
         {metar.ok && metar.report && (
-          <span className="text-xs text-muted-foreground">
+          <span className="flex items-baseline gap-2 text-xs text-muted-foreground">
+            <SpecialReportChip raw={metar.report.raw} />
             METAR age: {metarAge(metar.report.parsed_at)}
           </span>
         )}

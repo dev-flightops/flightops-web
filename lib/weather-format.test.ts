@@ -6,6 +6,7 @@ import {
   metarAge,
   metarSummary,
   routeRoleFor,
+  specialReport,
   utcHm,
 } from "./weather-format";
 
@@ -80,6 +81,22 @@ describe("metarAge", () => {
 });
 
 // ---- utcHm ------------------------------------------------------------------
+
+describe("specialReport", () => {
+  it("names a special report and when it was observed (#71)", () => {
+    expect(
+      specialReport("SPECI PABE 111659Z 17011KT 10SM BKN005 04/03 A2940 RMK AO2 T00390033 $"),
+    ).toBe("SPECI 16:59Z");
+  });
+
+  it("is null for a routine METAR", () => {
+    expect(
+      specialReport("METAR PABE 111653Z 16010KT 10SM FEW005 FEW016 BKN025 04/03 A2940"),
+    ).toBeNull();
+    expect(specialReport("PABE 111653Z 16010KT 10SM FEW005")).toBeNull();
+    expect(specialReport("")).toBeNull();
+  });
+});
 
 describe("utcHm", () => {
   it("formats as zero-padded HH:MMZ in UTC", () => {
