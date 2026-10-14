@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { auth } from "@/auth";
 import { CancelOrderDialog } from "@/components/fuel/cancel-order-dialog";
 import { ConfirmOrderDialog } from "@/components/fuel/confirm-order-dialog";
 import { MarkFueledDialog } from "@/components/fuel/mark-fueled-dialog";
@@ -11,13 +12,15 @@ import type {
   FuelOrderStatus,
   FuelOrderStatusLogEntry,
 } from "@/lib/api/types";
+import { FUELERS, hasAnyRole } from "@/lib/roles";
 
 /**
  * /fuel/orders/{id} — order detail (M2-G-40).
  *
  * Reads `/ground/fuel/orders/{id}` + `.../status-log`. Renders a
  * meta block, an actions row (with Confirm / Mark fueled / Cancel
- * shown only when the current status allows the transition), and
+ * shown only when the current status allows the transition, and
+ * Confirm / Mark fueled only to the fuelers), and
  * the immutable audit trail at the bottom.
  */
 export default async function FuelOrderDetailPage({
@@ -64,8 +67,11 @@ export default async function FuelOrderDetailPage({
   }
   if (order === null) notFound();
 
-  const canConfirm = order.status === "ordered";
-  const canMarkFueled = order.status === "confirmed";
+  // Confirming and recording the fuel are the fuelers' (#67): a pilot
+  // who ordered was offered both and refused by the API.
+  const fueler = hasAnyRole((await auth())?.roles ?? [], FUELERS);
+  const canConfirm = fueler && order.status === "ordered";
+  const canMarkFueled = fueler && order.status === "confirmed";
   const canCancel =
     order.status === "ordered" || order.status === "confirmed";
 
