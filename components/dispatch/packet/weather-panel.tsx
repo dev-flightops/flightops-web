@@ -1,4 +1,5 @@
 import { FlightCategoryBadge } from "@/components/weather/flight-category-badge";
+import { SpecialReportChip } from "@/components/weather/special-report-chip";
 import { ApiError } from "@/lib/api/client";
 import { batchWeather } from "@/lib/api/weather";
 import type { WeatherReportResponse } from "@/lib/api/types";
@@ -211,7 +212,8 @@ function AirportHeader({
         </span>
       </div>
       {metar.ok && (
-        <span className="text-xs text-muted-foreground">
+        <span className="flex items-baseline gap-2 text-xs text-muted-foreground">
+          <SpecialReportChip raw={metar.report.raw} />
           METAR age: {metarAge(metar.report.parsed_at)}
         </span>
       )}

@@ -42,6 +42,21 @@ export function metarAge(
   return mins === 0 ? `${hours}h` : `${hours}h ${mins}m`;
 }
 
+/**
+ * "SPECI 16:59Z" when the report is a special observation, else null.
+ *
+ * A station issues a SPECI between its routine hourly METARs when
+ * conditions change enough to matter, such as a ceiling forming below
+ * 1,000 ft. The client read Peregrine's PABE "ceiling 500 ft, IFR" as
+ * miscoded weather because other sites showed the 16:53Z METAR
+ * (FEW005); Peregrine showed the 16:59Z SPECI (BKN005), the newer report
+ * (#71). Saying so on the card is what was missing.
+ */
+export function specialReport(raw: string): string | null {
+  const m = /^SPECI\s+[A-Z0-9]{3,4}\s+\d{2}(\d{2})(\d{2})Z\b/.exec(raw.trim());
+  return m ? `SPECI ${m[1]}:${m[2]}Z` : null;
+}
+
 /** "12:34Z" — server-side timestamp formatter that doesn't depend on
  *  the browser's locale settings. */
 export function utcHm(iso: string): string {
