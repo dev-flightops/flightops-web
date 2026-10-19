@@ -12,6 +12,7 @@ import {
   deletePax,
   lockManifest,
   MAIL_CLASSES,
+  setPlannedFuel,
   mailDescription,
   TICKET_TYPES,
   updateCargo,
@@ -328,4 +329,37 @@ export async function lockManifestAction(
   }
   revalidatePath(_page(flightId.data));
   return { status: "ok", attempt };
+}
+
+/** Set or clear the fuel dispatch plans to carry (#74). It comes off the
+ *  useful load with the crew and the payload; left empty, the manifest
+ *  shows what is left before fuel. */
+export async function savePlannedFuelAction(
+  prev: ManifestFormState,
+  formData: FormData,
+): Promise<ManifestFormState> {
+  const values = _values(formData, ["planned_fuel_lbs"]);
+  const attempt = prev.attempt + 1;
+  const fail = (message: string): ManifestFormState => ({ status: "error", message, values, attempt });
+  const flightId = _id.safeParse(formData.get("flight_id"));
+  if (!flightId.success) return fail("This form lost track of its flight. Refresh the page.");
+  // "1,000" is how people write it; the API wants 1000.
+  const typed = values.planned_fuel_lbs.trim().replace(/,/g, "");
+  let lbs: string | null = null;
+  if (typed) {
+    const parsed = _lbs("planned fuel", 20000).safeParse(typed);
+    if (!parsed.success) return fail(parsed.error.issues[0]?.message ?? "Enter the planned fuel in pounds.");
+    lbs = parsed.data;
+  }
+  try {
+    await setPlannedFuel(flightId.data, lbs);
+  } catch (err) {
+    return fail(_refusal(err, _ANY_STAFF));
+  }
+  revalidatePath(_page(flightId.data));
+  return {
+    status: "ok",
+    message: lbs ? `Planned fuel set to ${Number(lbs).toLocaleString()} lb.` : "Planned fuel cleared.",
+    attempt,
+  };
 }

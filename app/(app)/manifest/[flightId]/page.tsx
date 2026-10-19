@@ -11,6 +11,7 @@ import {
 import type { FlightDetail, FlightStatus } from "@/lib/api/types";
 import { hasAnyRole, MANIFEST_LOCKERS } from "@/lib/roles";
 
+import { PlannedFuelForm } from "./fuel-form";
 import { FreightSection } from "./freight-section";
 import { CreateManifestButton, LockManifestButton } from "./manifest-controls";
 import { fmtLbs } from "./manifest-bits";
@@ -23,7 +24,8 @@ export const dynamic = "force-dynamic";
  *
  * Reached from the /manifest schedule board. Renders three blocks:
  *   1. Flight headline (flight #, route, aircraft, status)
- *   2. Totals strip (pax counts, weights, payload vs aircraft max)
+ *   2. Totals strip (pax counts and weights) and the load left for mail
+ *      and freight: useful load − crew − planned fuel − payload (#74)
  *   3. Pax table + Cargo table
  *
  * When the flight has no manifest yet the endpoint returns 404 — we
@@ -84,10 +86,9 @@ export default async function FlightManifestPage({
         <>
           {manifest.status === "final" ? <LockedBanner manifest={manifest} /> : null}
 
-          <TotalsStrip
-            totals={manifest.totals}
-            maxPayloadLbs={flight.max_payload_lbs}
-          />
+          <TotalsStrip totals={manifest.totals} />
+
+          <LoadPanel manifest={manifest} editable={editable} />
 
           <div className="mt-6 grid gap-6">
             <PassengersSection flightId={flight.id} rows={manifest.pax} editable={editable} />
@@ -167,20 +168,9 @@ function FlightHeader({
   );
 }
 
-function TotalsStrip({
-  totals,
-  maxPayloadLbs,
-}: {
-  totals: ManifestDetailResponse["totals"];
-  maxPayloadLbs: number | null;
-}) {
-  const totalPayload = Number(totals.total_payload_lbs);
-  const headroom =
-    maxPayloadLbs != null ? maxPayloadLbs - totalPayload : null;
-  const overWeight = headroom != null && headroom < 0;
-
+function TotalsStrip({ totals }: { totals: ManifestDetailResponse["totals"] }) {
   return (
-    <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-6">
+    <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-6">
       <Stat value={totals.pax_count} label="Passengers" />
       <Stat value={totals.revenue_pax} label="Revenue" />
       <Stat value={totals.crew_count} label="Crew" />
@@ -206,25 +196,103 @@ function TotalsStrip({
         label="Total Payload"
         emphasis
       />
-      {maxPayloadLbs != null && (
-        <>
-          <Stat
-            value={`${maxPayloadLbs.toLocaleString()} lb`}
-            label="Aircraft Max"
-          />
-          <Stat
-            value={`${headroom!.toLocaleString()} lb`}
-            label={overWeight ? "Over Max" : "Headroom"}
-            valueClass={
-              overWeight
-                ? "text-status-red"
-                : headroom! < 200
-                  ? "text-status-yellow"
-                  : "text-status-green"
-            }
-          />
-        </>
-      )}
+    </div>
+  );
+}
+
+const CREW_BASIS: Record<ManifestDetailResponse["load"]["crew_basis"], (count: number) => string> = {
+  manifest: () => "as weighed on the manifest",
+  standard: (count) => `${count} assigned, at standard weight`,
+  none: () => "none on the flight yet",
+};
+
+/**
+ * What is left of the aircraft's useful load for mail and freight (#74):
+ * useful load − crew − planned fuel − payload, worked out by ops. The old
+ * headroom was useful load − payload, which left crew and fuel out and
+ * overstated the room for mail by their weight. Until the planned fuel is
+ * entered the figure is labelled as before fuel, never passed off as real.
+ */
+function LoadPanel({ manifest, editable }: { manifest: ManifestDetailResponse; editable: boolean }) {
+  const load = manifest.load;
+  if (load.useful_load_lbs == null) {
+    return (
+      <section aria-label="Load" className="mb-6 rounded-lg border border-border bg-card p-4 text-sm text-muted-foreground">
+        {`Set this aircraft’s useful load in Settings → Aircraft to see the weight left for mail and freight.`}
+      </section>
+    );
+  }
+  const remaining = Number(load.remaining_lbs);
+  const over = remaining < 0;
+  const tone = over
+    ? "text-status-red"
+    : !load.fuel_counted || remaining < 200
+      ? "text-status-yellow"
+      : "text-status-green";
+  const result = over
+    ? "Over the useful load by"
+    : load.fuel_counted
+      ? "Left for mail & freight"
+      : "Left before fuel";
+  return (
+    <section aria-label="Load" className="mb-6 rounded-lg border border-border bg-card p-4">
+      <div className="flex flex-wrap items-end gap-x-3 gap-y-2">
+        <Term label="Useful load" value={`${load.useful_load_lbs.toLocaleString()} lb`} />
+        <Op>−</Op>
+        <Term label="Crew" value={`${fmtLbs(load.crew_lbs)} lb`} note={CREW_BASIS[load.crew_basis](load.crew_count)} />
+        <Op>−</Op>
+        <Term
+          label="Fuel"
+          value={load.fuel_lbs != null ? `${fmtLbs(load.fuel_lbs)} lb` : "not entered"}
+          note={load.fuel_lbs != null ? "planned" : undefined}
+        />
+        <Op>−</Op>
+        <Term label="Payload" value={`${fmtLbs(load.payload_lbs)} lb`} note="passengers, bags, cargo, mail" />
+        <Op>=</Op>
+        <Term label={result} value={`${fmtLbs(Math.abs(remaining))} lb`} valueClass={tone} emphasis />
+      </div>
+      {!load.fuel_counted ? (
+        <p className="mt-3 text-xs text-status-yellow">
+          {`Fuel isn’t counted yet. Enter the planned fuel to see what is really left for mail and freight.`}
+        </p>
+      ) : null}
+      {editable ? (
+        <div className="mt-3 border-t border-border pt-3">
+          <PlannedFuelForm flightId={manifest.flight_id} current={manifest.planned_fuel_lbs} />
+        </div>
+      ) : null}
+    </section>
+  );
+}
+
+function Op({ children }: { children: string }) {
+  return (
+    <span aria-hidden className="pb-1 text-lg text-muted-foreground">
+      {children}
+    </span>
+  );
+}
+
+function Term({
+  label,
+  value,
+  note,
+  valueClass = "",
+  emphasis = false,
+}: {
+  label: string;
+  value: string;
+  note?: string;
+  valueClass?: string;
+  emphasis?: boolean;
+}) {
+  return (
+    <div className="flex flex-col">
+      <span className="text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">{label}</span>
+      <span className={`tabular-nums ${emphasis ? "text-xl font-bold" : "text-base font-semibold"} ${valueClass}`}>
+        {value}
+      </span>
+      {note ? <span className="text-[0.6875rem] text-muted-foreground">{note}</span> : null}
     </div>
   );
 }

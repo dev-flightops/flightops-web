@@ -62,6 +62,24 @@ export interface ManifestTotals {
   total_payload_lbs: string;
 }
 
+/** What is left of the aircraft's useful load for mail and freight (#74):
+ *  useful load − crew − planned fuel − payload. */
+export interface ManifestLoad {
+  /** The aircraft's useful load; null when it isn't set. */
+  useful_load_lbs: number | null;
+  crew_lbs: string;
+  /** "manifest": crew rows' own weights. "standard": the flight's assigned
+   *  crew at standard weights. "none": no crew anywhere. */
+  crew_basis: "manifest" | "standard" | "none";
+  crew_count: number;
+  /** Null until dispatch enters the planned fuel. */
+  fuel_lbs: string | null;
+  payload_lbs: string;
+  /** Null without a useful load; before fuel while fuel_counted is false. */
+  remaining_lbs: string | null;
+  fuel_counted: boolean;
+}
+
 export interface ManifestDetailResponse {
   id: string;
   flight_id: string;
@@ -69,9 +87,11 @@ export interface ManifestDetailResponse {
   locked_at: string | null;
   locked_by_user_id: string | null;
   notes: string | null;
+  planned_fuel_lbs: string | null;
   pax: ManifestPaxRow[];
   cargo: ManifestCargoRow[];
   totals: ManifestTotals;
+  load: ManifestLoad;
 }
 
 export const TICKET_TYPES: readonly TicketType[] = [
@@ -151,6 +171,17 @@ export async function getFlightManifest(
 /** Start the flight's manifest, as a draft. 409 if it already has one. */
 export async function createManifest(flightId: string): Promise<ManifestDetailResponse> {
   return apiFetch<ManifestDetailResponse>(`/manifest/flights/${flightId}`, { method: "POST" });
+}
+
+/** Set the fuel dispatch plans to carry, in pounds; null clears it (#74). */
+export async function setPlannedFuel(
+  flightId: string,
+  plannedFuelLbs: string | null,
+): Promise<ManifestDetailResponse> {
+  return apiFetch<ManifestDetailResponse>(`/manifest/flights/${flightId}`, {
+    method: "PATCH",
+    body: JSON.stringify({ planned_fuel_lbs: plannedFuelLbs }),
+  });
 }
 
 /** Make the manifest final. There is no unlock; check-in roles only. */
