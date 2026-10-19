@@ -20,6 +20,7 @@ const api = vi.hoisted(() => {
     deleteCargo: vi.fn(),
     createManifest: vi.fn(),
     lockManifest: vi.fn(),
+    setPlannedFuel: vi.fn(),
     revalidatePath: vi.fn(),
   };
 });
@@ -34,6 +35,7 @@ vi.mock("@/lib/api/manifest", async (importOriginal) => ({
   deleteCargo: api.deleteCargo,
   createManifest: api.createManifest,
   lockManifest: api.lockManifest,
+  setPlannedFuel: api.setPlannedFuel,
 }));
 vi.mock("next/cache", () => ({ revalidatePath: api.revalidatePath }));
 
@@ -43,6 +45,7 @@ import {
   removeLineAction,
   saveFreightAction,
   savePaxAction,
+  savePlannedFuelAction,
 } from "./actions";
 
 const FLIGHT = "6b0f6a3e-2c1d-4e5f-8a9b-0c1d2e3f4a5b";
@@ -241,5 +244,41 @@ describe("removing, creating and locking (#62)", () => {
     api.lockManifest.mockResolvedValueOnce({});
     expect(await lockManifestAction(IDLE, form({ flight_id: FLIGHT }))).toEqual({ status: "ok", attempt: 1 });
     expect(api.lockManifest).toHaveBeenCalledWith(FLIGHT);
+  });
+});
+
+describe("savePlannedFuelAction (#74)", () => {
+  beforeEach(() => {
+    api.setPlannedFuel.mockReset().mockResolvedValue({});
+    api.revalidatePath.mockReset();
+  });
+
+  it("saves the planned fuel as typed, commas and all", async () => {
+    const state = await savePlannedFuelAction(IDLE, form({ flight_id: FLIGHT, planned_fuel_lbs: " 1,005 " }));
+    expect(api.setPlannedFuel).toHaveBeenCalledWith(FLIGHT, "1005");
+    expect(state).toMatchObject({ status: "ok", message: "Planned fuel set to 1,005 lb.", attempt: 1 });
+    expect(api.revalidatePath).toHaveBeenCalledWith(`/manifest/${FLIGHT}`);
+  });
+
+  it("clears it when left empty", async () => {
+    const state = await savePlannedFuelAction(IDLE, form({ flight_id: FLIGHT, planned_fuel_lbs: "" }));
+    expect(api.setPlannedFuel).toHaveBeenCalledWith(FLIGHT, null);
+    expect(state.message).toBe("Planned fuel cleared.");
+  });
+
+  it.each([
+    ["full", "Enter the planned fuel in pounds."],
+    ["-5", "Enter the planned fuel in pounds."],
+    ["25000", "The planned fuel can't be over 20,000 lb."],
+  ])("refuses %s before it reaches the API", async (typed, message) => {
+    const state = await savePlannedFuelAction(IDLE, form({ flight_id: FLIGHT, planned_fuel_lbs: typed }));
+    expect(api.setPlannedFuel).not.toHaveBeenCalled();
+    expect(state).toMatchObject({ status: "error", message, values: { planned_fuel_lbs: typed } });
+  });
+
+  it("says so when the manifest is locked", async () => {
+    api.setPlannedFuel.mockRejectedValue(new api.TestApiError(409, "/manifest", "locked"));
+    const state = await savePlannedFuelAction(IDLE, form({ flight_id: FLIGHT, planned_fuel_lbs: "800" }));
+    expect(state).toMatchObject({ status: "error", message: "This manifest is locked, so it can't be changed." });
   });
 });

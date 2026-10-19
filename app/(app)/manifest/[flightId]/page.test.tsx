@@ -30,6 +30,7 @@ vi.mock("./actions", () => ({
   removeLineAction: vi.fn(),
   createManifestAction: vi.fn(),
   lockManifestAction: vi.fn(),
+  savePlannedFuelAction: vi.fn(),
 }));
 
 import FlightManifestPage from "./page";
@@ -46,7 +47,29 @@ const flight = {
   max_payload_lbs: 3000,
 };
 
-function manifest(status: "draft" | "final") {
+type Load = {
+  useful_load_lbs: number | null;
+  crew_lbs: string;
+  crew_basis: "manifest" | "standard" | "none";
+  crew_count: number;
+  fuel_lbs: string | null;
+  payload_lbs: string;
+  remaining_lbs: string | null;
+  fuel_counted: boolean;
+};
+
+const BEFORE_FUEL: Load = {
+  useful_load_lbs: 3000,
+  crew_lbs: "190",
+  crew_basis: "standard",
+  crew_count: 1,
+  fuel_lbs: null,
+  payload_lbs: "228.0",
+  remaining_lbs: "2582.0",
+  fuel_counted: false,
+};
+
+function manifest(status: "draft" | "final", load: Load = BEFORE_FUEL) {
   return {
     id: "m-1",
     flight_id: FLIGHT,
@@ -54,6 +77,8 @@ function manifest(status: "draft" | "final") {
     locked_at: status === "final" ? "2026-11-02T17:40:00Z" : null,
     locked_by_user_id: null,
     notes: null,
+    planned_fuel_lbs: load.fuel_lbs,
+    load,
     pax: [
       {
         id: "p-1",
@@ -145,5 +170,86 @@ describe("manifest entry (#62)", () => {
     expect(screen.getByText("No manifest created for this flight yet.")).toBeTruthy();
     expect(screen.getByRole("button", { name: "Create Manifest" })).toBeTruthy();
     expect(screen.queryByRole("button", { name: "Lock Manifest" })).toBeNull();
+  });
+});
+
+describe("weight left for mail and freight (#74)", () => {
+  function panel(): HTMLElement {
+    return screen.getByRole("region", { name: "Load" });
+  }
+
+  it("says the figure is before fuel until the planned fuel is entered", async () => {
+    mocks.auth.mockResolvedValue({ roles: ["dispatcher"] });
+    mocks.getFlightManifest.mockResolvedValue(manifest("draft"));
+    await renderPage();
+    const load = within(panel());
+    expect(load.getByText("Left before fuel")).toBeTruthy();
+    expect(load.getByText("2,582 lb")).toBeTruthy();
+    expect(load.getByText("not entered")).toBeTruthy();
+    expect(load.getByText("1 assigned, at standard weight")).toBeTruthy();
+    expect(load.getByText(/Fuel isn’t counted yet\./)).toBeTruthy();
+    expect(load.getByRole("textbox", { name: "Planned fuel (lb)" })).toBeTruthy();
+    // The old headroom figure, useful load minus payload only, is gone.
+    expect(screen.queryByText("Headroom")).toBeNull();
+  });
+
+  it("takes crew and planned fuel off the useful load", async () => {
+    mocks.auth.mockResolvedValue({ roles: ["dispatcher"] });
+    mocks.getFlightManifest.mockResolvedValue(
+      manifest("draft", { ...BEFORE_FUEL, fuel_lbs: "1005.0", remaining_lbs: "1577.0", fuel_counted: true }),
+    );
+    await renderPage();
+    const load = within(panel());
+    expect(load.getByText("Left for mail & freight")).toBeTruthy();
+    expect(load.getByText("1,577 lb")).toBeTruthy();
+    expect(load.getByText("1,005 lb")).toBeTruthy();
+    expect(load.getByText("planned")).toBeTruthy();
+    expect(load.queryByText(/Fuel isn’t counted yet/)).toBeNull();
+    expect((load.getByRole("textbox", { name: "Planned fuel (lb)" }) as HTMLInputElement).defaultValue).toBe("1005");
+  });
+
+  it("shows how far over the useful load it is", async () => {
+    mocks.auth.mockResolvedValue({ roles: ["dispatcher"] });
+    mocks.getFlightManifest.mockResolvedValue(
+      manifest("draft", { ...BEFORE_FUEL, fuel_lbs: "2700.0", remaining_lbs: "-118.0", fuel_counted: true }),
+    );
+    await renderPage();
+    const load = within(panel());
+    expect(load.getByText("Over the useful load by")).toBeTruthy();
+    expect(load.getByText("118 lb").className).toContain("text-status-red");
+  });
+
+  it("keeps the fuel with a locked manifest, read only", async () => {
+    mocks.auth.mockResolvedValue({ roles: ["dispatcher"] });
+    mocks.getFlightManifest.mockResolvedValue(
+      manifest("final", { ...BEFORE_FUEL, fuel_lbs: "1005.0", remaining_lbs: "1577.0", fuel_counted: true }),
+    );
+    await renderPage();
+    const load = within(panel());
+    expect(load.getByText("1,005 lb")).toBeTruthy();
+    expect(load.queryByRole("textbox", { name: "Planned fuel (lb)" })).toBeNull();
+  });
+
+  it("asks for the aircraft's useful load when it isn't set", async () => {
+    mocks.auth.mockResolvedValue({ roles: ["dispatcher"] });
+    mocks.getFlightManifest.mockResolvedValue(manifest("draft", { ...BEFORE_FUEL, useful_load_lbs: null, remaining_lbs: null }));
+    await renderPage();
+    expect(within(panel()).getByText(/Set this aircraft’s useful load in Settings → Aircraft/)).toBeTruthy();
+  });
+
+  it("still renders against an ops build that sends no breakdown", async () => {
+    mocks.auth.mockResolvedValue({ roles: ["dispatcher"] });
+    const { load: _load, planned_fuel_lbs: _fuel, ...older } = manifest("draft");
+    mocks.getFlightManifest.mockResolvedValue(older);
+    await renderPage();
+    expect(screen.queryByRole("region", { name: "Load" })).toBeNull();
+    expect(screen.getByText("Total Payload")).toBeTruthy();
+  });
+
+  it("weighs crew on the manifest as entered", async () => {
+    mocks.auth.mockResolvedValue({ roles: ["dispatcher"] });
+    mocks.getFlightManifest.mockResolvedValue(manifest("draft", { ...BEFORE_FUEL, crew_basis: "manifest", crew_lbs: "200.0" }));
+    await renderPage();
+    expect(within(panel()).getByText("as weighed on the manifest")).toBeTruthy();
   });
 });
