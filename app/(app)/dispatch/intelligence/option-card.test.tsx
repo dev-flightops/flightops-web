@@ -184,3 +184,76 @@ describe("cost", () => {
     expect(screen.queryByText(/rates not configured/)).not.toBeInTheDocument();
   });
 });
+
+describe("a run for what is waiting (#76)", () => {
+  const RUN = {
+    pax_waiting: 5,
+    pax_taken: 5,
+    waiting_lbs: "2150.0",
+    taken_lbs: "1100.0",
+    fuel_lbs: "1005",
+    flight_minutes: 55,
+    back_at: "2026-09-15T21:20:00Z",
+    missing: [],
+  };
+  const run = (over: Partial<DispatchOption> = {}) =>
+    option({
+      option_id: "f1:run:PAHP",
+      kind: "waiting_run",
+      destination: "PAHP",
+      summary: "Run PABE-PAHP",
+      reason:
+        "Back in PABE at 18:00Z, it can take the 5 PAHP passengers and about 1,100 lb of the 2,150 lb of mail and freight waiting",
+      pax_count: 5,
+      cargo_lbs: 1100,
+      source_flight_id: null,
+      run: RUN,
+      ...over,
+    });
+
+  it("says what it takes of what is waiting, and when it is back", () => {
+    render(<OptionCard option={run()} />);
+    expect(screen.getByText("Waiting load")).toBeInTheDocument();
+    expect(screen.getByText("back 21:20Z")).toBeInTheDocument();
+    expect(screen.getByText("5 pax")).toBeInTheDocument();
+    expect(screen.getByText("1,100 of 2,150 lb mail & freight")).toBeInTheDocument();
+    expect(screen.queryByText(/lb cargo/)).not.toBeInTheDocument();
+  });
+
+  it("says when not everyone fits", () => {
+    render(<OptionCard option={run({ pax_count: 9, run: { ...RUN, pax_waiting: 12, pax_taken: 9 } })} />);
+    expect(screen.getByText("9 of 12 pax")).toBeInTheDocument();
+  });
+
+  it("says when it can't be sized rather than guessing", () => {
+    render(
+      <OptionCard
+        option={run({
+          cargo_lbs: 0,
+          run: { ...RUN, taken_lbs: null, fuel_lbs: null, back_at: null, missing: ["a route time for PABE-PAHP"] },
+        })}
+      />,
+    );
+    expect(screen.getByText("2,150 lb mail & freight waiting, not sized")).toBeInTheDocument();
+    expect(screen.queryByText(/^back /)).not.toBeInTheDocument();
+  });
+
+  it("is blocked by the pilot's duty limit, which it names", () => {
+    render(
+      <OptionCard
+        option={run({
+          rank: null,
+          blockers: [
+            {
+              code: "duty_limit",
+              source: "crew",
+              detail: "Alice Chen would be 16.3h into the duty day when back at PABE at 21:20Z (limit 14h)",
+            },
+          ],
+        })}
+      />,
+    );
+    expect(screen.getByText("Blocked")).toBeInTheDocument();
+    expect(screen.getByTestId("blocker-duty_limit")).toHaveTextContent("16.3h into the duty day");
+  });
+});
