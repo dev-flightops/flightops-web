@@ -48,12 +48,21 @@ export function AircraftTypeForm({
   const [state, formAction, pending] = useActionState(saveAircraftCostAction, _initial);
   const [type, setType] = useState("");
   const [values, setValues] = useState<Values>(valuesOf(undefined));
+  // React resets a form when its action succeeds, and a reset puts a
+  // <select> back on the option it was first rendered with, whatever the
+  // state says: the fuel showed "Not set" after a save, and the next save
+  // cleared it. So the select is uncontrolled and remounts on every save
+  // and every fill-in, which makes its first render the current fuel.
+  const [filled, setFilled] = useState(0);
   const existing = rows.find((r) => r.aircraft_type === type.trim());
 
   function onType(next: string) {
     setType(next);
     const row = rows.find((r) => r.aircraft_type === next.trim());
-    if (row) setValues(valuesOf(row));
+    if (row) {
+      setValues(valuesOf(row));
+      setFilled((n) => n + 1);
+    }
   }
 
   const suggestions = [...new Set([...rows.map((r) => r.aircraft_type), ...fleetTypes])].sort((a, b) =>
@@ -81,8 +90,9 @@ export function AircraftTypeForm({
       <label className={LABEL}>
         Fuel
         <select
+          key={`${state.attempt}-${filled}`}
           name="fuel_type_code"
-          value={values.fuel_type_code}
+          defaultValue={values.fuel_type_code}
           onChange={(e) => setValues({ ...values, fuel_type_code: e.target.value })}
           className={INPUT}
         >

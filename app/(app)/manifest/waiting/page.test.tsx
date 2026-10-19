@@ -48,7 +48,7 @@ function row(over: Record<string, unknown>) {
 const ITEMS = [
   row({}),
   row({ id: "w-2", mail_class: null, description: "Generator", weight_lbs: "300.0", pieces: 1, shipper: "Bethel Supply", consignee: "Village Clinic", notes: "Keep upright" }),
-  row({ id: "w-3", station_icao: "PHTO", destination_icao: "PHNL", mail_class: "priority_mail", description: "USPS Priority Mail", weight_lbs: "150.0", pieces: 3 }),
+  row({ id: "w-3", station_icao: "PHTO", destination_icao: "PHNL", mail_class: "priority_mail", description: "School lunch program", weight_lbs: "150.0", pieces: 3 }),
 ];
 const ROUTES = [
   { station_icao: "PABE", destination_icao: "PAHP", entries: 2, weight_lbs: "2300.0", pieces: 41 },
@@ -76,6 +76,13 @@ describe("/manifest/waiting (#75)", () => {
     expect(bethel.getByText("Keep upright")).toBeTruthy();
     expect(bethel.getByRole("button", { name: "Remove Generator from waiting" })).toBeTruthy();
     expect(within(screen.getByRole("region", { name: "PHTO → PHNL" })).getByText("1 entry · 150 lb · 3 pieces")).toBeTruthy();
+  });
+
+  it("names a mail class only where the description doesn't already say it", async () => {
+    await renderPage();
+    const cell = (text: string) => screen.getByText(text, { exact: false }).closest("td")?.textContent;
+    expect(cell("USPS Bypass Mail")).toBe("USPS Bypass Mail");
+    expect(cell("School lunch program")).toBe("School lunch programPriority Mail");
   });
 
   it("shows when each entry came in, in its station's zone", async () => {

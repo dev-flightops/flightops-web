@@ -8,6 +8,7 @@ import {
   getFlightManifest,
   getLoadPlan,
   MAIL_CLASS_LABELS,
+  mailDescription,
   type FuelEstimate,
   type LoadPlanResponse,
   type ManifestDetailResponse,
@@ -318,6 +319,16 @@ const BLOCKED: Record<NonNullable<LoadPlanResponse["blocked"]>, string> = {
   no_room: "There is no weight left for mail or freight.",
 };
 
+/** Why nothing is suggested: with some weight left, that nothing fits it. */
+function blockedMessage(plan: LoadPlanResponse): string | null {
+  if (!plan.blocked) return null;
+  const left = Number(plan.load.remaining_lbs ?? 0);
+  if (plan.blocked === "no_room" && left > 0) {
+    return `Nothing waiting fits in the ${fmtLbs(plan.load.remaining_lbs ?? "0")} lb left.`;
+  }
+  return BLOCKED[plan.blocked];
+}
+
 /**
  * Mail and freight waiting for this flight's route, and what to put on it
  * (#75). Ops works out the suggestion: the weight left after crew, fuel and
@@ -336,6 +347,7 @@ function LoadPlanSection({
 }) {
   const route = `${plan.origin} for ${plan.destinations.join(", ")}`;
   const waitingLbs = plan.waiting.reduce((sum, w) => sum + Number(w.weight_lbs), 0);
+  const blocked = blockedMessage(plan);
   return (
     <section aria-label="Mail and freight waiting" className="mb-6 rounded-lg border border-border bg-card p-4">
       <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
@@ -371,7 +383,7 @@ function LoadPlanSection({
                     <tr key={t.waiting_load_id}>
                       <td className="py-2 pr-3">
                         {t.description}
-                        {t.mail_class ? (
+                        {t.mail_class && t.description !== mailDescription(t.mail_class) ? (
                           <span className="ml-2 text-xs text-muted-foreground">{MAIL_CLASS_LABELS[t.mail_class]}</span>
                         ) : null}
                       </td>
@@ -390,26 +402,26 @@ function LoadPlanSection({
               <p className="mt-2 text-xs text-muted-foreground">
                 {`Suggested ${fmtLbs(plan.suggested_lbs)} lb · ${fmtLbs(plan.left_after_lbs ?? 0)} lb left after. What doesn’t fit stays waiting for the next flight.`}
               </p>
-              {editable ? (
-                <div className="mt-3">
-                  <LoadPlanApply
-                    flightId={flight.id}
-                    flightNumber={flight.flight_number}
-                    items={plan.suggestion.map((t) => ({
-                      waiting_load_id: t.waiting_load_id,
-                      weight_lbs: t.weight_lbs,
-                      pieces: t.pieces,
-                    }))}
-                    totalLbs={plan.suggested_lbs}
-                  />
-                </div>
-              ) : null}
             </div>
-          ) : plan.blocked ? (
-            <p className="text-sm text-status-yellow">{BLOCKED[plan.blocked]}</p>
+          ) : blocked ? (
+            <p className="text-sm text-status-yellow">{blocked}</p>
           ) : null}
         </>
       )}
+      {/* Outside the branches above, so it stays mounted when a load
+          empties the suggestion and its "Loaded …" message survives. */}
+      {editable ? (
+        <LoadPlanApply
+          flightId={flight.id}
+          flightNumber={flight.flight_number}
+          items={plan.suggestion.map((t) => ({
+            waiting_load_id: t.waiting_load_id,
+            weight_lbs: t.weight_lbs,
+            pieces: t.pieces,
+          }))}
+          totalLbs={plan.suggested_lbs}
+        />
+      ) : null}
     </section>
   );
 }

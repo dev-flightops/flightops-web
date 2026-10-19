@@ -2,7 +2,7 @@ import Link from "next/link";
 
 import { loadZoneTable } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
-import { listWaiting, MAIL_CLASS_LABELS, type WaitingListResponse } from "@/lib/api/manifest";
+import { listWaiting, MAIL_CLASS_LABELS, mailDescription, type WaitingListResponse } from "@/lib/api/manifest";
 import { zoneAbbreviation, zoneFor, type ZoneTable } from "@/lib/format/local-time";
 
 import { fmtLbs, THEAD, TH } from "../[flightId]/manifest-bits";
@@ -112,7 +112,7 @@ export default async function WaitingMailFreightPage({
                         </td>
                         <td className="px-3 py-2.5">
                           {i.description}
-                          {i.mail_class ? (
+                          {i.mail_class && i.description !== mailDescription(i.mail_class) ? (
                             <span className="ml-2 text-xs text-muted-foreground">{MAIL_CLASS_LABELS[i.mail_class]}</span>
                           ) : null}
                         </td>

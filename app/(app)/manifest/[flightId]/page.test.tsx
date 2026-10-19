@@ -11,11 +11,19 @@ const mocks = vi.hoisted(() => {
       super(message);
     }
   }
-  return { TestApiError, auth: vi.fn(), getFlight: vi.fn(), getFlightManifest: vi.fn(), getLoadPlan: vi.fn() };
+  return {
+    TestApiError,
+    auth: vi.fn(),
+    getFlight: vi.fn(),
+    getFlightManifest: vi.fn(),
+    getLoadPlan: vi.fn(),
+    // What a form's last submit returned; tests that need one set it.
+    actionState: { current: undefined as unknown },
+  };
 });
 vi.mock("react", async (importOriginal) => ({
   ...(await importOriginal<typeof import("react")>()),
-  useActionState: (_action: unknown, initial: unknown) => [initial, () => {}, false],
+  useActionState: (_action: unknown, initial: unknown) => [mocks.actionState.current ?? initial, () => {}, false],
 }));
 vi.mock("@/auth", () => ({ auth: mocks.auth }));
 vi.mock("@/lib/api/client", () => ({ ApiError: mocks.TestApiError, apiFetch: vi.fn() }));
@@ -129,6 +137,7 @@ beforeEach(() => {
   mocks.getFlight.mockReset().mockResolvedValue(flight);
   mocks.getFlightManifest.mockReset();
   mocks.getLoadPlan.mockReset().mockRejectedValue(new mocks.TestApiError(404, "/manifest", "not found"));
+  mocks.actionState.current = undefined;
 });
 
 describe("manifest entry (#62)", () => {
@@ -366,6 +375,41 @@ describe("the trip's fuel and what is waiting for the route (#75)", () => {
     mocks.getLoadPlan.mockResolvedValue(plan({ suggestion: [], blocked: "locked" }));
     await renderPage();
     expect(within(waiting()).getByText("The manifest is locked, so nothing more goes on.")).toBeTruthy();
+  });
+
+  it("names a mail class only where the description doesn't already say it", async () => {
+    mocks.auth.mockResolvedValue({ roles: ["dispatcher"] });
+    mocks.getFlightManifest.mockResolvedValue(manifest("draft", ESTIMATED));
+    const [priority, bypass] = plan().suggestion;
+    mocks.getLoadPlan.mockResolvedValue(plan({ suggestion: [priority, { ...bypass, description: "School lunch program" }] }));
+    await renderPage();
+    const rows = within(waiting()).getAllByRole("row");
+    expect(rows[1].textContent).toContain("USPS Priority Mail");
+    expect(rows[1].textContent).not.toContain("USPS Priority MailPriority Mail");
+    expect(rows[2].textContent).toContain("School lunch programBypass Mail");
+  });
+
+  it("says nothing waiting fits when some weight is left", async () => {
+    mocks.auth.mockResolvedValue({ roles: ["dispatcher"] });
+    mocks.getFlightManifest.mockResolvedValue(manifest("draft", ESTIMATED));
+    mocks.getLoadPlan.mockResolvedValue(
+      plan({ load: { ...ESTIMATED, remaining_lbs: "5.0" }, suggestion: [], suggested_lbs: "0", blocked: "no_room" }),
+    );
+    await renderPage();
+    expect(within(waiting()).getByText("Nothing waiting fits in the 5 lb left.")).toBeTruthy();
+  });
+
+  it("keeps saying what was loaded once the suggestion is gone", async () => {
+    mocks.auth.mockResolvedValue({ roles: ["dispatcher"] });
+    mocks.getFlightManifest.mockResolvedValue(manifest("draft", ESTIMATED));
+    mocks.getLoadPlan.mockResolvedValue(
+      plan({ load: { ...ESTIMATED, remaining_lbs: "5.0" }, suggestion: [], suggested_lbs: "0", blocked: "no_room" }),
+    );
+    mocks.actionState.current = { status: "ok", message: "Loaded 1,550 lb onto PGR901.", attempt: 1 };
+    await renderPage();
+    const w = within(waiting());
+    expect(w.getByRole("status").textContent).toBe("Loaded 1,550 lb onto PGR901.");
+    expect(w.queryByRole("button")).toBeNull();
   });
 
   it("says when nothing is waiting for the route", async () => {

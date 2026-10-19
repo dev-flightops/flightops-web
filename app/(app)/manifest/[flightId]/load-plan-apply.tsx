@@ -9,6 +9,8 @@ const _initial: ManifestFormState = { status: "idle", attempt: 0 };
 /**
  * Put the suggested mail and freight on the manifest (#75). Ops checks it
  * again when it lands: the weight left, the route, what is still waiting.
+ * It stays mounted when there is nothing to load, so the message from the
+ * last load is still shown after the page refreshes without the button.
  */
 export function LoadPlanApply({
   flightId,
@@ -22,18 +24,21 @@ export function LoadPlanApply({
   totalLbs: string;
 }) {
   const [state, formAction, pending] = useActionState(applyLoadPlanAction, _initial);
+  if (items.length === 0 && !state.message) return null;
   return (
-    <form action={formAction} className="flex flex-wrap items-center gap-3">
+    <form action={formAction} className="mt-3 flex flex-wrap items-center gap-3">
       <input type="hidden" name="flight_id" value={flightId} />
       <input type="hidden" name="flight_number" value={flightNumber} />
       <input type="hidden" name="items" value={JSON.stringify(items)} />
-      <button
-        type="submit"
-        disabled={pending}
-        className="rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-dark disabled:opacity-60"
-      >
-        {pending ? "Loading…" : `Load ${Math.round(Number(totalLbs)).toLocaleString()} lb onto ${flightNumber}`}
-      </button>
+      {items.length > 0 ? (
+        <button
+          type="submit"
+          disabled={pending}
+          className="rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-dark disabled:opacity-60"
+        >
+          {pending ? "Loading…" : `Load ${Math.round(Number(totalLbs)).toLocaleString()} lb onto ${flightNumber}`}
+        </button>
+      ) : null}
       {state.status === "error" && state.message ? (
         <p role="alert" className="text-xs text-status-red">
           {state.message}
