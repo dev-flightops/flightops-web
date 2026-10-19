@@ -53,7 +53,14 @@ beforeEach(() => {
     routes: [],
   });
   mocks.listFuelTypes.mockReset().mockResolvedValue({ items: [{ code: "JET_A", label: "Jet A" }] });
-  mocks.listAircraft.mockReset().mockResolvedValue({ items: [{ model: "Cessna 208B Grand Caravan" }, { model: null }] });
+  mocks.listAircraft.mockReset().mockResolvedValue({
+    items: [
+      { model: "Cessna 208B Grand Caravan", airframe_type: "caravan" },
+      { model: "Cessna 208 Caravan", airframe_type: "caravan" },
+      { model: "Piper PA-31 Navajo", airframe_type: null },
+      { model: null, airframe_type: null },
+    ],
+  });
 });
 
 function fuelOf(type: string): string | null {
@@ -70,10 +77,15 @@ describe("/settings/costs aircraft types (#75)", () => {
     expect(fuelOf("Cessna 207")).toBe("—");
   });
 
-  it("has a working form to add or edit a type", async () => {
+  it("has a working form to add or edit a type, suggesting the names costing looks types up by", async () => {
     render(await SettingsCostsPage());
     expect(screen.getByText("+ Add / Edit Aircraft Type")).toBeTruthy();
     expect(screen.getByRole("button", { name: "Add aircraft type" })).toBeTruthy();
+    const suggestions = [...document.querySelectorAll("#aircraft-type-suggestions option")].map((o) =>
+      o.getAttribute("value"),
+    );
+    // Airframe type first, the model when there is none; rows already set up too.
+    expect(suggestions).toEqual(["caravan", "Cessna 207", "Cessna 208B Grand Caravan", "Piper PA-31 Navajo"]);
   });
 
   it("offers no form to someone who can't see the costs", async () => {

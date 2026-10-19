@@ -33,8 +33,8 @@ function valuesOf(row: AircraftCostRow | undefined): Values {
 /**
  * Add an aircraft type's costs, or change one (#75): typing the name of a
  * type already on the list fills in its figures to edit. The type should be
- * the aircraft's model as the fleet list names it (or its airframe type),
- * which is how the load plan finds an aircraft's burn rate and fuel.
+ * the aircraft's airframe type (its model when it has none), which is how
+ * costing and the manifest's fuel estimate find an aircraft's figures.
  */
 export function AircraftTypeForm({
   rows,
@@ -56,7 +56,9 @@ export function AircraftTypeForm({
     if (row) setValues(valuesOf(row));
   }
 
-  const suggestions = [...new Set([...rows.map((r) => r.aircraft_type), ...fleetTypes])].sort();
+  const suggestions = [...new Set([...rows.map((r) => r.aircraft_type), ...fleetTypes])].sort((a, b) =>
+    a.localeCompare(b),
+  );
   return (
     <form action={formAction} className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-5">
       <label className={`${LABEL} col-span-2`}>

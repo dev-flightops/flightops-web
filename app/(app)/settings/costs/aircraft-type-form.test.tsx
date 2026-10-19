@@ -31,7 +31,7 @@ const FUELS = [
 ];
 
 function renderForm() {
-  render(<AircraftTypeForm rows={[CARAVAN]} fuelTypes={FUELS} fleetTypes={["Cessna 208B Grand Caravan", "Piper PA-31 Navajo"]} />);
+  render(<AircraftTypeForm rows={[CARAVAN]} fuelTypes={FUELS} fleetTypes={["caravan", "Piper PA-31 Navajo"]} />);
 }
 
 const field = (name: string) => screen.getByRole("textbox", { name }) as HTMLInputElement;
@@ -68,6 +68,6 @@ describe("AircraftTypeForm (#75)", () => {
     const suggestions = [...document.querySelectorAll("#aircraft-type-suggestions option")].map((o) =>
       o.getAttribute("value"),
     );
-    expect(suggestions).toEqual(["Cessna 208B Grand Caravan", "Piper PA-31 Navajo"]);
+    expect(suggestions).toEqual(["caravan", "Cessna 208B Grand Caravan", "Piper PA-31 Navajo"]);
   });
 });

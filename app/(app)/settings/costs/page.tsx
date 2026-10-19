@@ -52,12 +52,14 @@ export default async function SettingsCostsPage() {
           : "Operating costs unavailable. Try refreshing in a moment.";
   }
 
-  // For the aircraft type form: the company's fuels, and the fleet's model
-  // names to suggest as types. Either can fail without losing the page.
+  // For the aircraft type form: the company's fuels, and the names to
+  // suggest as types: each aircraft's airframe type, else its model, which
+  // is how costing and the fuel estimate look a type up. Either can fail
+  // without losing the page.
   const [fuelTypes, fleet] = await Promise.all([
     listFuelTypes().then((r) => r.items.map((f) => ({ code: f.code, label: f.label }))).catch(() => []),
     listAircraft()
-      .then((r) => [...new Set(r.items.map((a) => a.model).filter((m): m is string => !!m))])
+      .then((r) => [...new Set(r.items.map((a) => a.airframe_type || a.model).filter((m): m is string => !!m))])
       .catch(() => [] as string[]),
   ]);
 
@@ -202,7 +204,7 @@ function AircraftCostsSection({
         <details className="mt-3">
           <summary className="cursor-pointer text-xs text-primary">+ Add / Edit Aircraft Type</summary>
           <p className="mt-2 text-xs text-muted-foreground">
-            {`Name the type as the fleet list names the aircraft’s model. The fuel burn and the fuel are how a manifest estimates a trip’s fuel when dispatch hasn’t entered it.`}
+            {`Name the type by the aircraft’s airframe type (caravan, ga8, …), or its model when it has none; the suggestions list them. Dispatch Intelligence costs flights by it, and a manifest estimates a trip’s fuel from its fuel burn and fuel when dispatch hasn’t entered the fuel.`}
           </p>
           <AircraftTypeForm rows={rows} fuelTypes={fuelTypes} fleetTypes={fleetTypes} />
         </details>
