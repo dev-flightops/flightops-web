@@ -6,12 +6,17 @@ import { ApiError } from "@/lib/api/client";
 import { getFlight } from "@/lib/api/ops";
 import {
   getFlightManifest,
+  getLoadPlan,
+  MAIL_CLASS_LABELS,
+  type FuelEstimate,
+  type LoadPlanResponse,
   type ManifestDetailResponse,
 } from "@/lib/api/manifest";
 import type { FlightDetail, FlightStatus } from "@/lib/api/types";
 import { hasAnyRole, MANIFEST_LOCKERS } from "@/lib/roles";
 
 import { PlannedFuelForm } from "./fuel-form";
+import { LoadPlanApply } from "./load-plan-apply";
 import { FreightSection } from "./freight-section";
 import { CreateManifestButton, LockManifestButton } from "./manifest-controls";
 import { fmtLbs } from "./manifest-bits";
@@ -63,6 +68,17 @@ export default async function FlightManifestPage({
     }
   }
 
+  // The load plan (#75). An ops build from before it answers 404 or an
+  // error; the page then simply goes without the section.
+  let plan: LoadPlanResponse | null = null;
+  if (manifest) {
+    try {
+      plan = await getLoadPlan(flightId);
+    } catch {
+      plan = null;
+    }
+  }
+
   const editable = manifest?.status === "draft";
   const canLock = editable && hasAnyRole((await auth())?.roles ?? [], MANIFEST_LOCKERS);
 
@@ -89,6 +105,8 @@ export default async function FlightManifestPage({
           <TotalsStrip totals={manifest.totals} />
 
           <LoadPanel manifest={manifest} editable={editable} />
+
+          {plan ? <LoadPlanSection plan={plan} flight={flight} editable={editable} /> : null}
 
           <div className="mt-6 grid gap-6">
             <PassengersSection flightId={flight.id} rows={manifest.pax} editable={editable} />
@@ -247,16 +265,23 @@ function LoadPanel({ manifest, editable }: { manifest: ManifestDetailResponse; e
         <Term
           label="Fuel"
           value={load.fuel_lbs != null ? `${fmtLbs(load.fuel_lbs)} lb` : "not entered"}
-          note={load.fuel_lbs != null ? "planned" : undefined}
+          note={load.fuel_lbs == null ? undefined : load.fuel_basis === "estimated" ? "estimated" : "planned"}
         />
         <Op>−</Op>
         <Term label="Payload" value={`${fmtLbs(load.payload_lbs)} lb`} note="passengers, bags, cargo, mail" />
         <Op>=</Op>
         <Term label={result} value={`${fmtLbs(Math.abs(remaining))} lb`} valueClass={tone} emphasis />
       </div>
+      {load.fuel_basis === "estimated" && load.fuel_estimate ? (
+        <p className="mt-3 text-xs text-muted-foreground">
+          {`${estimateLine(load.fuel_estimate)} Enter the planned fuel to use your own figure instead.`}
+        </p>
+      ) : null}
       {!load.fuel_counted ? (
         <p className="mt-3 text-xs text-status-yellow">
-          {`Fuel isn’t counted yet. Enter the planned fuel to see what is really left for mail and freight.`}
+          {load.fuel_estimate?.missing.length
+            ? `Fuel isn’t counted yet. Enter the planned fuel, or set ${load.fuel_estimate.missing.join(" and ")} to have it estimated.`
+            : `Fuel isn’t counted yet. Enter the planned fuel to see what is really left for mail and freight.`}
         </p>
       ) : null}
       {editable ? (
@@ -264,6 +289,127 @@ function LoadPanel({ manifest, editable }: { manifest: ManifestDetailResponse; e
           <PlannedFuelForm flightId={manifest.flight_id} current={manifest.planned_fuel_lbs} />
         </div>
       ) : null}
+    </section>
+  );
+}
+
+const FUEL_LABELS: Record<string, string> = { jet_a: "Jet A", jet_a_plus: "Jet A+", jet_a1: "Jet A-1", "100ll": "100LL", mogas: "Mogas" };
+
+function minutes(m: number | null): string {
+  if (m == null) return "?";
+  return m < 60 ? `${m} min` : `${Math.floor(m / 60)} h${m % 60 ? ` ${m % 60} min` : ""}`;
+}
+
+/** "Fuel estimated: round trip, 55 min each way + 45 min reserve at 58
+ *  gal/h = 149.9 gal of Jet A." — the working, so it can be checked. */
+function estimateLine(e: FuelEstimate): string {
+  const trip = e.round_trip
+    ? `round trip, ${minutes(e.flight_minutes)} each way (no ${FUEL_LABELS[e.fuel_type_code ?? ""] ?? "fuel"} at the destination)`
+    : `one way, ${minutes(e.flight_minutes)}`;
+  const fuel = FUEL_LABELS[e.fuel_type_code ?? ""] ?? (e.fuel_type_code ?? "").toUpperCase();
+  return `Fuel estimated: ${trip} + ${e.reserve_minutes} min reserve at ${Number(e.burn_gph)} gal/h = ${Number(e.gallons).toLocaleString()} gal of ${fuel}.`;
+}
+
+const BLOCKED: Record<NonNullable<LoadPlanResponse["blocked"]>, string> = {
+  locked: "The manifest is locked, so nothing more goes on.",
+  no_useful_load: "Set the aircraft’s useful load in Settings → Aircraft to plan the load.",
+  fuel_unknown: "Enter the planned fuel above, or set up the fuel estimate, before filling the weight left.",
+  nothing_waiting: "Nothing is waiting for this route.",
+  no_room: "There is no weight left for mail or freight.",
+};
+
+/**
+ * Mail and freight waiting for this flight's route, and what to put on it
+ * (#75). Ops works out the suggestion: the weight left after crew, fuel and
+ * passengers, filled with USPS priority classes first, then bypass, then
+ * cargo, oldest first, in whole pieces. One click loads it; what doesn't
+ * fit stays waiting.
+ */
+function LoadPlanSection({
+  plan,
+  flight,
+  editable,
+}: {
+  plan: LoadPlanResponse;
+  flight: FlightDetail;
+  editable: boolean;
+}) {
+  const route = `${plan.origin} for ${plan.destinations.join(", ")}`;
+  const waitingLbs = plan.waiting.reduce((sum, w) => sum + Number(w.weight_lbs), 0);
+  return (
+    <section aria-label="Mail and freight waiting" className="mb-6 rounded-lg border border-border bg-card p-4">
+      <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
+        <h2 className="text-sm font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+          {`Waiting at ${route}`}
+        </h2>
+        <Link
+          href={`/manifest/waiting?station=${encodeURIComponent(plan.origin)}`}
+          className="text-xs text-primary hover:underline"
+        >
+          All waiting mail &amp; freight →
+        </Link>
+      </div>
+      {plan.waiting.length === 0 ? (
+        <p className="text-sm text-muted-foreground">{`Nothing is waiting at ${route}.`}</p>
+      ) : (
+        <>
+          <p className="mb-3 text-sm">
+            {`${plan.waiting.length} ${plan.waiting.length === 1 ? "entry" : "entries"} waiting, ${fmtLbs(waitingLbs)} lb.`}
+          </p>
+          {plan.suggestion.length > 0 ? (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="border-b border-border text-left text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
+                  <tr>
+                    <th scope="col" className="py-2 pr-3 font-semibold">Suggested</th>
+                    <th scope="col" className="py-2 pr-3 text-right font-semibold">Weight</th>
+                    <th scope="col" className="py-2 text-right font-semibold">Pieces</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {plan.suggestion.map((t) => (
+                    <tr key={t.waiting_load_id}>
+                      <td className="py-2 pr-3">
+                        {t.description}
+                        {t.mail_class ? (
+                          <span className="ml-2 text-xs text-muted-foreground">{MAIL_CLASS_LABELS[t.mail_class]}</span>
+                        ) : null}
+                      </td>
+                      <td className="py-2 pr-3 text-right tabular-nums">
+                        {t.weight_lbs === t.of_weight_lbs
+                          ? `${fmtLbs(t.weight_lbs)} lb`
+                          : `${fmtLbs(t.weight_lbs)} of ${fmtLbs(t.of_weight_lbs)} lb`}
+                      </td>
+                      <td className="py-2 text-right tabular-nums">
+                        {t.pieces === t.of_pieces ? `${t.pieces}` : `${t.pieces} of ${t.of_pieces}`}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <p className="mt-2 text-xs text-muted-foreground">
+                {`Suggested ${fmtLbs(plan.suggested_lbs)} lb · ${fmtLbs(plan.left_after_lbs ?? 0)} lb left after. What doesn’t fit stays waiting for the next flight.`}
+              </p>
+              {editable ? (
+                <div className="mt-3">
+                  <LoadPlanApply
+                    flightId={flight.id}
+                    flightNumber={flight.flight_number}
+                    items={plan.suggestion.map((t) => ({
+                      waiting_load_id: t.waiting_load_id,
+                      weight_lbs: t.weight_lbs,
+                      pieces: t.pieces,
+                    }))}
+                    totalLbs={plan.suggested_lbs}
+                  />
+                </div>
+              ) : null}
+            </div>
+          ) : plan.blocked ? (
+            <p className="text-sm text-status-yellow">{BLOCKED[plan.blocked]}</p>
+          ) : null}
+        </>
+      )}
     </section>
   );
 }

@@ -514,6 +514,15 @@ export const DEPARTMENTS: Department[] = [
         department: "reservations",
       },
       {
+        // Mail and freight on hand at a station, before it is on a flight;
+        // each manifest's load plan fills from it (#75).
+        id: "reservations-waiting",
+        label: "Mail & Freight",
+        href: "/manifest/waiting",
+        status: "live",
+        department: "reservations",
+      },
+      {
         id: "reservations-customers",
         label: "Customers",
         href: "/customers",

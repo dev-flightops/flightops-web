@@ -21,6 +21,7 @@ const api = vi.hoisted(() => {
     createManifest: vi.fn(),
     lockManifest: vi.fn(),
     setPlannedFuel: vi.fn(),
+    applyLoadPlan: vi.fn(),
     revalidatePath: vi.fn(),
   };
 });
@@ -36,10 +37,12 @@ vi.mock("@/lib/api/manifest", async (importOriginal) => ({
   createManifest: api.createManifest,
   lockManifest: api.lockManifest,
   setPlannedFuel: api.setPlannedFuel,
+  applyLoadPlan: api.applyLoadPlan,
 }));
 vi.mock("next/cache", () => ({ revalidatePath: api.revalidatePath }));
 
 import {
+  applyLoadPlanAction,
   createManifestAction,
   lockManifestAction,
   removeLineAction,
@@ -280,5 +283,54 @@ describe("savePlannedFuelAction (#74)", () => {
     api.setPlannedFuel.mockRejectedValue(new api.TestApiError(409, "/manifest", "locked"));
     const state = await savePlannedFuelAction(IDLE, form({ flight_id: FLIGHT, planned_fuel_lbs: "800" }));
     expect(state).toMatchObject({ status: "error", message: "This manifest is locked, so it can't be changed." });
+  });
+});
+
+describe("applyLoadPlanAction (#75)", () => {
+  const W1 = "0d5e3c2b-1a09-4f8e-9d7c-6b5a4f3e2d1c";
+  const W2 = "7c6b5a49-3827-4615-a4b3-c2d1e0f9a8b7";
+  const items = [
+    { waiting_load_id: W1, weight_lbs: "150.0", pieces: 3 },
+    { waiting_load_id: W2, weight_lbs: "1050.0", pieces: 21 },
+  ];
+  const fill = (over: Record<string, string> = {}) =>
+    form({ flight_id: FLIGHT, flight_number: "PGR790", items: JSON.stringify(items), ...over });
+
+  beforeEach(() => {
+    api.applyLoadPlan.mockReset().mockResolvedValue({});
+    api.revalidatePath.mockReset();
+  });
+
+  it("loads the suggestion and says how much went on", async () => {
+    const state = await applyLoadPlanAction(IDLE, fill());
+    expect(api.applyLoadPlan).toHaveBeenCalledWith(FLIGHT, items);
+    expect(state).toEqual({ status: "ok", message: "Loaded 1,200 lb onto PGR790.", attempt: 1 });
+    expect(api.revalidatePath).toHaveBeenCalledWith(`/manifest/${FLIGHT}`);
+    expect(api.revalidatePath).toHaveBeenCalledWith("/manifest/waiting");
+  });
+
+  it.each([
+    ["not JSON", "{"],
+    ["nothing to load", "[]"],
+    ["a made-up entry", JSON.stringify([{ waiting_load_id: "x", weight_lbs: "10", pieces: 1 }])],
+    ["no weight", JSON.stringify([{ waiting_load_id: W1, weight_lbs: "0", pieces: 1 }])],
+  ])("refuses %s before it reaches the API", async (_label, raw) => {
+    const state = await applyLoadPlanAction(IDLE, fill({ items: raw }));
+    expect(api.applyLoadPlan).not.toHaveBeenCalled();
+    expect(state).toMatchObject({ status: "error", message: "This form lost track of its flight. Refresh the page." });
+  });
+
+  it.each([
+    [409, "over_weight_left", "That no longer fits: the weight left has changed. Refresh the page for a new suggestion."],
+    [409, "fuel_unknown", "Enter the planned fuel first, so the weight left counts the fuel."],
+    [409, "waiting_load_not_on_this_route", "Some of it is no longer waiting for this route. Refresh the page."],
+    [422, "more_than_is_waiting", "Some of it has been loaded elsewhere since. Refresh the page."],
+    [409, "manifest is locked; unlock is not implemented", "This manifest is locked, so it can't be changed."],
+    [403, "forbidden", "Your account can't change manifests."],
+  ])("explains a %i %s", async (status, detail, message) => {
+    api.applyLoadPlan.mockRejectedValue(new api.TestApiError(status, "/manifest", JSON.stringify({ detail })));
+    const state = await applyLoadPlanAction(IDLE, fill());
+    expect(state).toMatchObject({ status: "error", message });
+    expect(api.revalidatePath).not.toHaveBeenCalled();
   });
 });

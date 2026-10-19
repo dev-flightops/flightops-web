@@ -11,7 +11,7 @@ const mocks = vi.hoisted(() => {
       super(message);
     }
   }
-  return { TestApiError, auth: vi.fn(), getFlight: vi.fn(), getFlightManifest: vi.fn() };
+  return { TestApiError, auth: vi.fn(), getFlight: vi.fn(), getFlightManifest: vi.fn(), getLoadPlan: vi.fn() };
 });
 vi.mock("react", async (importOriginal) => ({
   ...(await importOriginal<typeof import("react")>()),
@@ -23,6 +23,7 @@ vi.mock("@/lib/api/ops", () => ({ getFlight: mocks.getFlight }));
 vi.mock("@/lib/api/manifest", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/lib/api/manifest")>()),
   getFlightManifest: mocks.getFlightManifest,
+  getLoadPlan: mocks.getLoadPlan,
 }));
 vi.mock("./actions", () => ({
   savePaxAction: vi.fn(),
@@ -31,6 +32,7 @@ vi.mock("./actions", () => ({
   createManifestAction: vi.fn(),
   lockManifestAction: vi.fn(),
   savePlannedFuelAction: vi.fn(),
+  applyLoadPlanAction: vi.fn(),
 }));
 
 import FlightManifestPage from "./page";
@@ -126,6 +128,7 @@ beforeEach(() => {
   mocks.auth.mockReset();
   mocks.getFlight.mockReset().mockResolvedValue(flight);
   mocks.getFlightManifest.mockReset();
+  mocks.getLoadPlan.mockReset().mockRejectedValue(new mocks.TestApiError(404, "/manifest", "not found"));
 });
 
 describe("manifest entry (#62)", () => {
@@ -251,5 +254,125 @@ describe("weight left for mail and freight (#74)", () => {
     mocks.getFlightManifest.mockResolvedValue(manifest("draft", { ...BEFORE_FUEL, crew_basis: "manifest", crew_lbs: "200.0" }));
     await renderPage();
     expect(within(panel()).getByText("as weighed on the manifest")).toBeTruthy();
+  });
+});
+
+describe("the trip's fuel and what is waiting for the route (#75)", () => {
+  const ESTIMATE = {
+    lbs: "1005",
+    gallons: "149.9",
+    burn_gph: "58",
+    fuel_type_code: "jet_a",
+    flight_minutes: 55,
+    round_trip: true,
+    reserve_minutes: 45,
+    missing: [],
+  };
+  const ESTIMATED = {
+    ...BEFORE_FUEL,
+    fuel_lbs: "1005",
+    remaining_lbs: "1577.0",
+    fuel_counted: true,
+    fuel_basis: "estimated" as const,
+    fuel_estimate: ESTIMATE,
+  };
+
+  function plan(overrides: Record<string, unknown> = {}) {
+    return {
+      flight_id: FLIGHT,
+      origin: "PANC",
+      destinations: ["PABE"],
+      load: ESTIMATED,
+      waiting: [
+        { id: "w-1", station_icao: "PANC", destination_icao: "PABE", mail_class: "bypass_mail", description: "USPS Bypass Mail", weight_lbs: "2000.0", pieces: 40, shipper: null, consignee: null, notes: null, status: "waiting", received_at: "2026-10-20T16:00:00Z" },
+        { id: "w-2", station_icao: "PANC", destination_icao: "PABE", mail_class: "priority_mail", description: "USPS Priority Mail", weight_lbs: "150.0", pieces: 3, shipper: null, consignee: null, notes: null, status: "waiting", received_at: "2026-10-20T17:00:00Z" },
+      ],
+      suggestion: [
+        { waiting_load_id: "w-2", description: "USPS Priority Mail", mail_class: "priority_mail", weight_lbs: "150.0", pieces: 3, of_weight_lbs: "150.0", of_pieces: 3 },
+        { waiting_load_id: "w-1", description: "USPS Bypass Mail", mail_class: "bypass_mail", weight_lbs: "1400.0", pieces: 28, of_weight_lbs: "2000.0", of_pieces: 40 },
+      ],
+      suggested_lbs: "1550.0",
+      left_after_lbs: "27.0",
+      blocked: null,
+      ...overrides,
+    };
+  }
+
+  function waiting(): HTMLElement {
+    return screen.getByRole("region", { name: "Mail and freight waiting" });
+  }
+
+  it("shows the estimate's working when dispatch hasn't entered fuel", async () => {
+    mocks.auth.mockResolvedValue({ roles: ["dispatcher"] });
+    mocks.getFlightManifest.mockResolvedValue(manifest("draft", ESTIMATED));
+    await renderPage();
+    const load = within(screen.getByRole("region", { name: "Load" }));
+    expect(load.getByText("estimated")).toBeTruthy();
+    expect(load.getByText("1,577 lb")).toBeTruthy();
+    expect(
+      load.getByText(
+        /Fuel estimated: round trip, 55 min each way \(no Jet A at the destination\) \+ 45 min reserve at 58 gal\/h = 149\.9 gal of Jet A\./,
+      ),
+    ).toBeTruthy();
+  });
+
+  it("says what the estimate needs when it can't be had", async () => {
+    mocks.auth.mockResolvedValue({ roles: ["dispatcher"] });
+    mocks.getFlightManifest.mockResolvedValue(
+      manifest("draft", {
+        ...BEFORE_FUEL,
+        fuel_basis: null,
+        fuel_estimate: { ...ESTIMATE, lbs: null, gallons: null, missing: ["the fuel burn for C208B (Settings → Costs)"] },
+      } as never),
+    );
+    await renderPage();
+    expect(
+      screen.getByText(
+        "Fuel isn’t counted yet. Enter the planned fuel, or set the fuel burn for C208B (Settings → Costs) to have it estimated.",
+      ),
+    ).toBeTruthy();
+  });
+
+  it("suggests the fill and offers to load it", async () => {
+    mocks.auth.mockResolvedValue({ roles: ["dispatcher"] });
+    mocks.getFlightManifest.mockResolvedValue(manifest("draft", ESTIMATED));
+    mocks.getLoadPlan.mockResolvedValue(plan());
+    await renderPage();
+    const w = within(waiting());
+    expect(w.getByRole("heading", { name: "Waiting at PANC for PABE" })).toBeTruthy();
+    expect(w.getByText("2 entries waiting, 2,150 lb.")).toBeTruthy();
+    expect(w.getByText("1,400 of 2,000 lb")).toBeTruthy();
+    expect(w.getByText("28 of 40")).toBeTruthy();
+    expect(w.getByText(/Suggested 1,550 lb · 27 lb left after\./)).toBeTruthy();
+    expect(w.getByRole("button", { name: "Load 1,550 lb onto PGR901" })).toBeTruthy();
+    expect(w.getByRole("link", { name: /All waiting mail & freight/ }).getAttribute("href")).toBe(
+      "/manifest/waiting?station=PANC",
+    );
+  });
+
+  it("explains why nothing is suggested", async () => {
+    mocks.auth.mockResolvedValue({ roles: ["dispatcher"] });
+    mocks.getFlightManifest.mockResolvedValue(manifest("draft"));
+    mocks.getLoadPlan.mockResolvedValue(plan({ suggestion: [], suggested_lbs: "0", blocked: "fuel_unknown" }));
+    await renderPage();
+    const w = within(waiting());
+    expect(w.getByText(/Enter the planned fuel above, or set up the fuel estimate/)).toBeTruthy();
+    expect(w.queryByRole("button")).toBeNull();
+  });
+
+  it("offers no loading on a locked manifest", async () => {
+    mocks.auth.mockResolvedValue({ roles: ["dispatcher"] });
+    mocks.getFlightManifest.mockResolvedValue(manifest("final", ESTIMATED));
+    mocks.getLoadPlan.mockResolvedValue(plan({ suggestion: [], blocked: "locked" }));
+    await renderPage();
+    expect(within(waiting()).getByText("The manifest is locked, so nothing more goes on.")).toBeTruthy();
+  });
+
+  it("says when nothing is waiting for the route", async () => {
+    mocks.auth.mockResolvedValue({ roles: ["dispatcher"] });
+    mocks.getFlightManifest.mockResolvedValue(manifest("draft", ESTIMATED));
+    mocks.getLoadPlan.mockResolvedValue(plan({ waiting: [], suggestion: [], blocked: "nothing_waiting" }));
+    await renderPage();
+    expect(within(waiting()).getByText("Nothing is waiting at PANC for PABE.")).toBeTruthy();
   });
 });
