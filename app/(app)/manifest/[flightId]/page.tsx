@@ -215,6 +215,9 @@ const CREW_BASIS: Record<ManifestDetailResponse["load"]["crew_basis"], (count: n
  */
 function LoadPanel({ manifest, editable }: { manifest: ManifestDetailResponse; editable: boolean }) {
   const load = manifest.load;
+  // An ops build from before #74 sends no breakdown; show nothing rather
+  // than fail the page while the two deploys catch up with each other.
+  if (!load) return null;
   if (load.useful_load_lbs == null) {
     return (
       <section aria-label="Load" className="mb-6 rounded-lg border border-border bg-card p-4 text-sm text-muted-foreground">

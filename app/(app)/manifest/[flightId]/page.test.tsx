@@ -237,6 +237,15 @@ describe("weight left for mail and freight (#74)", () => {
     expect(within(panel()).getByText(/Set this aircraft’s useful load in Settings → Aircraft/)).toBeTruthy();
   });
 
+  it("still renders against an ops build that sends no breakdown", async () => {
+    mocks.auth.mockResolvedValue({ roles: ["dispatcher"] });
+    const { load: _load, planned_fuel_lbs: _fuel, ...older } = manifest("draft");
+    mocks.getFlightManifest.mockResolvedValue(older);
+    await renderPage();
+    expect(screen.queryByRole("region", { name: "Load" })).toBeNull();
+    expect(screen.getByText("Total Payload")).toBeTruthy();
+  });
+
   it("weighs crew on the manifest as entered", async () => {
     mocks.auth.mockResolvedValue({ roles: ["dispatcher"] });
     mocks.getFlightManifest.mockResolvedValue(manifest("draft", { ...BEFORE_FUEL, crew_basis: "manifest", crew_lbs: "200.0" }));
