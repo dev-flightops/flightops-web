@@ -1,6 +1,10 @@
 import Link from "next/link";
 
 import { auth } from "@/auth";
+import { linkCaps } from "@/components/ff/controls";
+import { EmptyState } from "@/components/ff/empty-state";
+import { PageHeader } from "@/components/ff/page-header";
+import { Panel } from "@/components/ff/panel";
 import { ApiError } from "@/lib/api/client";
 import { getCurrentDuty, listFlights } from "@/lib/api/ops";
 import type { CurrentDutyResponse, FlightListItem } from "@/lib/api/types";
@@ -133,19 +137,10 @@ export default async function FlightCrewPage() {
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
-      {/* Greeting */}
-      <header className="mb-6">
-        <p className="text-xs uppercase tracking-[0.08em] text-muted-foreground">
-          Flight Crew
-        </p>
-        <h1 className="mt-1 page-title">
-          {greeting}
-          {firstName ? `, ${firstName}` : ""}
-        </h1>
-      </header>
+      <PageHeader eyebrow="Flight Crew" title={`${greeting}${firstName ? `, ${firstName}` : ""}`} />
 
       {/* 1. Duty In / Out — Spec 4 §"Page layout / Duty In / Out button" */}
-      <section className="mb-6">
+      <section aria-label="Duty" className="mb-8">
         <DutyClockButton initial={duty} />
         {/* The client, 8/28: "easy start stop button, but manual
             clock/date function underneath." It was only on Pilot
@@ -163,58 +158,49 @@ export default async function FlightCrewPage() {
       </section>
 
       {/* 2. My Flights today + 3. + Create Flight Log */}
-      <section className="mb-8">
-        <div className="mb-3 flex items-baseline justify-between">
-          <h2 className="text-xs font-bold uppercase tracking-[0.08em] text-muted-foreground">
-            My Flights
-          </h2>
-          <Link
-            href="/flight-crew/elog"
-            className="text-xs font-semibold text-primary hover:underline"
-          >
+      <Panel
+        title="My Flights"
+        actions={
+          <Link href="/flight-crew/elog" className={linkCaps}>
             + Create Flight Log
           </Link>
-        </div>
+        }
+        flush
+        className="mb-8"
+      >
         {unauthorized ? (
-          <div
-            role="alert"
-            className="notice notice-yellow"
-          >
-            You don&apos;t have permission to see the assigned-flights list.
+          <div className="p-5">
+            <div role="alert" className="notice notice-yellow">
+              You don&apos;t have permission to see the assigned-flights list.
+            </div>
           </div>
         ) : loadError ? (
-          <div
-            role="alert"
-            className="notice notice-yellow"
-          >
-            {loadError}
+          <div className="p-5">
+            <div role="alert" className="notice notice-yellow">
+              {loadError}
+            </div>
           </div>
         ) : (
           <TodayFlightsPanel flights={flights} />
         )}
-      </section>
+      </Panel>
 
       {/* 4. Training currency summary */}
-      <section className="mb-8">
-        <h2 className="mb-3 text-xs font-bold uppercase tracking-[0.08em] text-muted-foreground">
-          Training currency
-        </h2>
+      <Panel title="Training currency" flush className="mb-8">
         {session?.user?.id ? (
           <TrainingCurrencySummary pilotUserId={session.user.id} />
         ) : (
-          <div className="rounded-lg border border-dashed border-border bg-card/50 px-5 py-6 text-sm text-muted-foreground">
-            Sign in to see your currency.
-          </div>
+          <EmptyState>Sign in to see your currency.</EmptyState>
         )}
-      </section>
+      </Panel>
 
       {/* 5. Quick links — Spec 4 §"Page layout / Quick links" */}
       <section className="mt-10 border-t border-border pt-6">
-        <ul className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-[0.68rem] font-semibold uppercase tracking-[0.04em] text-muted-foreground">
+        <ul className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-[0.68rem] font-bold uppercase tracking-[0.1em] text-muted-foreground">
           <li>
             <Link
               href="/flight-crew/history"
-              className="hover:text-primary"
+              className="hover:text-foreground"
             >
               My Flight History
             </Link>
@@ -222,7 +208,7 @@ export default async function FlightCrewPage() {
           <li>
             <Link
               href="/flight-crew/history?tab=duty"
-              className="hover:text-primary"
+              className="hover:text-foreground"
             >
               My Duty History
             </Link>
@@ -233,7 +219,7 @@ export default async function FlightCrewPage() {
               so this entry was telling a pilot they could not do
               something they could do from where they were standing. */}
           <li>
-            <Link href="/documents" className="hover:text-primary">
+            <Link href="/documents" className="hover:text-foreground">
               My Documents
             </Link>
           </li>
@@ -241,7 +227,7 @@ export default async function FlightCrewPage() {
               the floating button opens: every report type, ASAP and
               fatigue among them. */}
           <li>
-            <Link href="/safety/reports/new" className="hover:text-primary">
+            <Link href="/safety/reports/new" className="hover:text-foreground">
               File Safety Report
             </Link>
           </li>

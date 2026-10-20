@@ -3,7 +3,9 @@
 import Link from "next/link";
 import { useState, useTransition } from "react";
 
+import { linkCaps } from "@/components/ff/controls";
 import type { FlightDetail } from "@/lib/api/types";
+import { cn } from "@/lib/utils";
 
 import { completeStepAction } from "./actions";
 
@@ -47,12 +49,8 @@ export function PostFlightLogStep({ flightId, flight }: Props) {
   return (
     <section className="rounded-lg border border-border bg-card">
       <header className="border-b border-border px-5 py-3">
-        <p className="text-xs uppercase tracking-[0.08em] text-muted-foreground">
-          Step 8
-        </p>
-        <h2 className="text-base font-semibold text-foreground">
-          Post-Flight Log
-        </h2>
+        <p className="eyebrow">Step 8</p>
+        <h2 className="caption-caps mt-1 text-lg text-foreground">Post-Flight Log</h2>
       </header>
 
       <div className="space-y-4 px-5 py-4 text-sm">
@@ -62,10 +60,8 @@ export function PostFlightLogStep({ flightId, flight }: Props) {
           is a separate workflow with its own submission audit.
         </p>
 
-        <div className="rounded-lg border border-primary/30 bg-primary/5 px-4 py-3">
-          <p className="text-xs font-semibold uppercase tracking-[0.06em] text-primary">
-            File the elog
-          </p>
+        <div className="notice notice-blue">
+          <p className="notice-label">File the elog</p>
           <p className="mt-1 text-xs text-foreground">
             Open the pilot logbook and start a new entry for{" "}
             <span className="font-mono font-semibold">
@@ -77,14 +73,14 @@ export function PostFlightLogStep({ flightId, flight }: Props) {
           </p>
           <Link
             href="/flight-crew/elog"
-            className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
+            className={cn(linkCaps, "mt-2")}
           >
-            Open Flight Log →
+            Open Flight Log <span aria-hidden>›</span>
           </Link>
         </div>
 
-        <div className="rounded-md border border-border bg-background px-3 py-2 text-xs text-muted-foreground">
-          <span className="font-semibold text-foreground">Reminder:</span>{" "}
+        <div className="notice notice-gray text-muted-foreground">
+          <span className="notice-label">Reminder</span>
           the elog submit chain writes Hobbs to the aircraft, refreshes
           rolling currency, and opens a maintenance squawk if you
           logged an MX discrepancy — file it promptly so the airframe
@@ -101,7 +97,7 @@ export function PostFlightLogStep({ flightId, flight }: Props) {
         </button>
 
         {error && (
-          <p role="alert" className="text-xs text-status-red">
+          <p role="alert" className="field-error">
             {error}
           </p>
         )}

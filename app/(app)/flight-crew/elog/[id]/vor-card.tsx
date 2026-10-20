@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useId, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 
 import { Spinner } from "@/components/ui/spinner";
@@ -91,7 +91,7 @@ export function VorCheckCard({
   const tolerance = toleranceFor(state.vor_check_type);
 
   return (
-    <div className="rounded-lg border border-border bg-card p-4">
+    <div className="rounded-md border border-border p-4">
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <TextField
           label="VOR Identifier"
@@ -194,7 +194,7 @@ export function VorCheckCard({
         </p>
       )}
       {error && (
-        <p role="alert" className="mt-2 text-[0.65rem] text-status-red">
+        <p role="alert" className="field-error">
           {error}
         </p>
       )}
@@ -298,9 +298,10 @@ function round1(n: number): number {
 
 // ---------- Field primitives ----------
 
-let nextFieldId = 0;
 function useFieldId(label: string): string {
-  return `vor-${label.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${++nextFieldId}`;
+  // React's id, stable across server and browser (see wb-card.tsx).
+  const uid = useId();
+  return `vor-${label.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${uid}`;
 }
 
 function FieldLabel({
@@ -351,7 +352,7 @@ function TextField({
         disabled={disabled}
         onChange={(e) => onChange(e.target.value)}
         onBlur={onBlur}
-        className={`w-full rounded-md border border-border bg-background px-3 py-1.5 text-xs disabled:opacity-60 ${
+        className={`ff-input px-3 py-1.5 text-xs ${
           mono ? "font-mono uppercase" : ""
         }`}
       />
@@ -392,7 +393,7 @@ function NumberField({
         disabled={disabled}
         onChange={(e) => onChange(e.target.value)}
         onBlur={onBlur}
-        className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-xs disabled:opacity-60"
+        className="ff-input px-3 py-1.5 text-xs"
       />
     </div>
   );
@@ -423,7 +424,7 @@ function SelectField({
         disabled={disabled}
         onChange={(e) => onChange(e.target.value)}
         onBlur={onBlur}
-        className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-xs disabled:opacity-60"
+        className="ff-input px-3 py-1.5 text-xs"
       >
         {children}
       </select>

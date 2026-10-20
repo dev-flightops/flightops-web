@@ -3,7 +3,9 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 
+import { linkCaps } from "@/components/ff/controls";
 import { Spinner } from "@/components/ui/spinner";
+import { cn } from "@/lib/utils";
 import type { FlightLogLeg, FlightLogLegUpdateRequest } from "@/lib/api/types";
 
 import { deleteLegAction, updateLegAction } from "./legs-actions";
@@ -95,12 +97,10 @@ export function LegCard({
   const totals = computeTotals(state);
 
   return (
-    <div className="rounded-lg border border-border bg-card p-4">
+    <div className="rounded-md border border-border p-4">
       <header className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
         <div className="flex items-baseline gap-2">
-          <span className="text-[0.7rem] font-semibold uppercase tracking-[0.08em] text-primary">
-            Leg {leg.leg_number}
-          </span>
+          <span className="panel-title">Leg {leg.leg_number}</span>
           <span className="text-[0.65rem] text-muted-foreground">
             <Stat color="text-status-green" label="flight" value={totals.flightTime} />
             {" · "}
@@ -114,7 +114,7 @@ export function LegCard({
             type="button"
             onClick={onDelete}
             disabled={pending}
-            className="text-[0.65rem] font-semibold text-status-red hover:underline disabled:opacity-50"
+            className={cn(linkCaps, "text-status-red disabled:opacity-50")}
           >
             Delete
           </button>
@@ -244,7 +244,7 @@ export function LegCard({
           onBlur={() => commit("routing")}
           placeholder="Waypoints / SID-STAR"
           disabled={readOnly || pending}
-          className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-xs disabled:opacity-60"
+          className="ff-input px-3 py-1.5 text-xs"
         />
       </div>
 
@@ -254,7 +254,7 @@ export function LegCard({
         </p>
       )}
       {error && (
-        <p role="alert" className="mt-2 text-[0.65rem] text-status-red">
+        <p role="alert" className="field-error">
           {error}
         </p>
       )}
@@ -428,7 +428,7 @@ function IcaoField({
         disabled={disabled}
         onChange={(e) => onChange(e.target.value.toUpperCase())}
         onBlur={onBlur}
-        className="w-full rounded-md border border-border bg-background px-3 py-1.5 font-mono text-xs uppercase disabled:opacity-60"
+        className="ff-input px-3 py-1.5 font-mono text-xs uppercase"
       />
     </div>
   );
@@ -456,7 +456,7 @@ function TimeField({
         disabled={disabled}
         onChange={(e) => onChange(e.target.value)}
         onBlur={onBlur}
-        className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-xs disabled:opacity-60"
+        className="ff-input px-3 py-1.5 text-xs"
       />
     </div>
   );
@@ -495,7 +495,7 @@ function NumberField({
         disabled={disabled}
         onChange={(e) => onChange(e.target.value)}
         onBlur={onBlur}
-        className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-xs disabled:opacity-60"
+        className="ff-input px-3 py-1.5 text-xs"
       />
     </div>
   );
@@ -526,7 +526,7 @@ function SelectField({
         disabled={disabled}
         onChange={(e) => onChange(e.target.value)}
         onBlur={onBlur}
-        className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-xs disabled:opacity-60"
+        className="ff-input px-3 py-1.5 text-xs"
       >
         {children}
       </select>

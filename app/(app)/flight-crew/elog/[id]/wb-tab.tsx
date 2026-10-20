@@ -41,7 +41,7 @@ export function WeightBalanceTab({
         <h2 className="eyebrow">
           Weight &amp; Balance
         </h2>
-        <div className="rounded-md border border-dashed border-border bg-card/40 px-4 py-10 text-center">
+        <div className="py-6 text-center">
           <p className="text-xs text-muted-foreground">
             No legs to load yet.
           </p>

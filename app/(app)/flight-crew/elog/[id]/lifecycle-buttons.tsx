@@ -3,7 +3,9 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 
+import { buttonOutline } from "@/components/ff/controls";
 import { Spinner } from "@/components/ui/spinner";
+import { cn } from "@/lib/utils";
 
 import { requestCpReviewAction } from "./cp-review-actions";
 import {
@@ -123,12 +125,11 @@ function LifecyclePrompt({
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
+  // Outlined caps buttons (#81); delete says what it does in red.
   const triggerCls =
-    variant === "reopen"
-      ? "border border-status-yellow/40 bg-status-yellow/10 text-status-yellow hover:bg-status-yellow/20"
-      : variant === "delete"
-        ? "border border-status-red/40 bg-status-red/10 text-status-red hover:bg-status-red/20"
-        : "border border-primary/40 bg-primary/10 text-primary hover:bg-primary/20";
+    variant === "delete"
+      ? "border-status-red/60 text-status-red hover:border-status-red"
+      : undefined;
 
   if (!open) {
     return (
@@ -138,7 +139,7 @@ function LifecyclePrompt({
           setError(null);
           setOpen(true);
         }}
-        className={`rounded-md px-3 py-1.5 text-xs font-semibold ${triggerCls}`}
+        className={cn(buttonOutline, "px-3 py-1.5", triggerCls)}
       >
         {buttonLabel}
       </button>
@@ -160,7 +161,12 @@ function LifecyclePrompt({
         : "Past the 90-day window — a chief pilot needs to approve before the action runs. They'll see your reason in their queue.";
 
   return (
-    <div className="rounded-md border border-border bg-card px-3 py-2 text-xs shadow-sm">
+    <div
+      className={cn(
+        "w-full max-w-md rounded-lg border border-border border-l-[3px] bg-card px-4 py-3 text-xs",
+        EDGE[variant],
+      )}
+    >
       <div className="font-semibold text-foreground">{panelTitle}</div>
       <p className="mt-0.5 text-[0.65rem] text-muted-foreground">{explainer}</p>
       <label className="mt-2 block">
@@ -173,7 +179,7 @@ function LifecyclePrompt({
           rows={2}
           disabled={pending}
           onChange={(e) => setReason(e.target.value)}
-          className="mt-1 w-full rounded-md border border-border bg-background px-2 py-1.5 text-xs text-foreground disabled:opacity-60"
+          className="ff-input mt-1 px-2 py-1.5 text-xs"
           placeholder="Why are you taking this action?"
         />
       </label>
@@ -198,7 +204,7 @@ function LifecyclePrompt({
               // For "none", the server action redirects on its own.
             });
           }}
-          className={`inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold disabled:opacity-50 ${confirmCls}`}
+          className={`btn-caps inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-[0.72rem] disabled:opacity-50 ${confirmCls}`}
         >
           {pending && <Spinner size="xs" />}
           {confirmLabel}
@@ -217,13 +223,20 @@ function LifecyclePrompt({
         </button>
       </div>
       {error && (
-        <p role="alert" className="mt-2 text-[0.65rem] text-status-red">
+        <p role="alert" className="field-error">
           {error}
         </p>
       )}
     </div>
   );
 }
+
+/** The open prompt's left edge, in the colour of what it will do. */
+const EDGE: Record<"reopen" | "delete" | "cp-review", string> = {
+  reopen: "border-l-status-yellow",
+  delete: "border-l-status-red",
+  "cp-review": "border-l-primary",
+};
 
 type ReopenWindowState = "within" | "past" | "unknown";
 

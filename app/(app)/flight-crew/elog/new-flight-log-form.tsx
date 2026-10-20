@@ -2,7 +2,10 @@
 
 import { useActionState, useState } from "react";
 
+import { buttonSolid } from "@/components/ff/controls";
+import { Panel } from "@/components/ff/panel";
 import { Spinner } from "@/components/ui/spinner";
+import { cn } from "@/lib/utils";
 import type { AircraftListItem, FlightListItem } from "@/lib/api/types";
 
 import {
@@ -68,101 +71,99 @@ export function NewFlightLogForm({
   }
 
   return (
-    <form action={action} className="rounded-lg border border-border bg-card p-4">
-      <h2 className="mb-3 eyebrow">
-        New Flight Log
-      </h2>
+    <Panel title="New Flight Log">
+      <form action={action}>
+        {state.status === "api-error" && (
+          <div
+            role="alert"
+            className="mb-3 notice notice-red"
+          >
+            {state.message}
+          </div>
+        )}
 
-      {state.status === "api-error" && (
-        <div
-          role="alert"
-          className="mb-3 notice notice-red"
-        >
-          {state.message}
+        <div className="grid gap-4 md:grid-cols-4">
+          <FieldSelect
+            name="aircraft_id"
+            label="Aircraft"
+            required
+            value={aircraftId}
+            onChange={handleAircraftChange}
+            error={fieldError("aircraft_id")}
+          >
+            <option value="">Select aircraft…</option>
+            {aircraft.map((a) => (
+              <option key={a.id} value={a.id}>
+                {aircraftOptionLabel(a)}
+              </option>
+            ))}
+          </FieldSelect>
+
+          <FieldSelect
+            name="flight_id"
+            label="Flight"
+            value={flightId}
+            onChange={setFlightId}
+            disabled={!aircraftId}
+            error={fieldError("flight_id")}
+          >
+            <option value="">
+              {aircraftId
+                ? compatibleFlights.length === 0
+                  ? "Manual entry (no scheduled flights)"
+                  : "Manual entry"
+                : "Select aircraft first"}
+            </option>
+            {compatibleFlights.map((f) => (
+              <option key={f.id} value={f.id}>
+                {f.flight_number} · {f.origin}→{f.destination}
+              </option>
+            ))}
+          </FieldSelect>
+
+          <Field
+            name="flight_number"
+            label="Flight Number"
+            placeholder="GV101"
+            maxLength={12}
+            error={fieldError("flight_number")}
+          />
+
+          <FieldSelect
+            name="flight_type"
+            label="Flight Type"
+            // Default to "charter" — Part 135 carriers' primary leg type.
+            // Was "advisory" (a Part 91 VFR-tracking term) which is wrong
+            // for the carrier's main use case.
+            defaultValue="charter"
+            error={fieldError("flight_type")}
+          >
+            <option value="charter">Charter</option>
+            <option value="advisory">Advisory Flight</option>
+            <option value="training">Training</option>
+            <option value="ferry">Ferry</option>
+            <option value="checkride">Checkride</option>
+            <option value="scheduled">Scheduled</option>
+            <option value="eas">EAS</option>
+            <option value="mx_checkflight">MX Checkflight</option>
+            <option value="other">Other</option>
+          </FieldSelect>
         </div>
-      )}
 
-      <div className="grid gap-3 md:grid-cols-4">
-        <FieldSelect
-          name="aircraft_id"
-          label="Aircraft"
-          required
-          value={aircraftId}
-          onChange={handleAircraftChange}
-          error={fieldError("aircraft_id")}
-        >
-          <option value="">Select aircraft…</option>
-          {aircraft.map((a) => (
-            <option key={a.id} value={a.id}>
-              {aircraftOptionLabel(a)}
-            </option>
-          ))}
-        </FieldSelect>
-
-        <FieldSelect
-          name="flight_id"
-          label="Flight"
-          value={flightId}
-          onChange={setFlightId}
-          disabled={!aircraftId}
-          error={fieldError("flight_id")}
-        >
-          <option value="">
-            {aircraftId
-              ? compatibleFlights.length === 0
-                ? "Manual entry (no scheduled flights)"
-                : "Manual entry"
-              : "Select aircraft first"}
-          </option>
-          {compatibleFlights.map((f) => (
-            <option key={f.id} value={f.id}>
-              {f.flight_number} · {f.origin}→{f.destination}
-            </option>
-          ))}
-        </FieldSelect>
-
-        <Field
-          name="flight_number"
-          label="Flight Number"
-          placeholder="GV101"
-          maxLength={12}
-          error={fieldError("flight_number")}
-        />
-
-        <FieldSelect
-          name="flight_type"
-          label="Flight Type"
-          // Default to "charter" — Part 135 carriers' primary leg type.
-          // Was "advisory" (a Part 91 VFR-tracking term) which is wrong
-          // for the carrier's main use case.
-          defaultValue="charter"
-          error={fieldError("flight_type")}
-        >
-          <option value="charter">Charter</option>
-          <option value="advisory">Advisory Flight</option>
-          <option value="training">Training</option>
-          <option value="ferry">Ferry</option>
-          <option value="checkride">Checkride</option>
-          <option value="scheduled">Scheduled</option>
-          <option value="eas">EAS</option>
-          <option value="mx_checkflight">MX Checkflight</option>
-          <option value="other">Other</option>
-        </FieldSelect>
-      </div>
-
-      <div className="mt-4">
-        <button
-          type="submit"
-          disabled={pending || !aircraftId}
-          aria-disabled={!aircraftId || pending}
-          className="btn-caps inline-flex items-center gap-1.5 rounded-md bg-primary px-4 py-2 text-white hover:bg-brand-dark disabled:cursor-not-allowed disabled:opacity-50 text-[0.72rem]"
-          title={!aircraftId ? "Pick an aircraft first" : undefined}
-        >
-          {pending && <Spinner size="xs" />}
-          {pending ? "Starting…" : "Start Flight Log"}
-        </button>
-      </div>
-    </form>
+        <div className="mt-5 flex justify-end">
+          <button
+            type="submit"
+            disabled={pending || !aircraftId}
+            aria-disabled={!aircraftId || pending}
+            className={cn(buttonSolid, "disabled:cursor-not-allowed")}
+            title={!aircraftId ? "Pick an aircraft first" : undefined}
+          >
+            {pending && <Spinner size="xs" />}
+            {pending ? "Starting…" : "Start Flight Log"}
+          </button>
+        </div>
+      </form>
+    </Panel>
   );
 }
 
@@ -202,7 +203,7 @@ function Field({
         id={name}
         name={name}
         aria-invalid={error ? "true" : undefined}
-        className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs text-foreground focus:border-primary focus:outline-none aria-[invalid=true]:border-status-red"
+        className="ff-input px-3 py-2 text-xs aria-[invalid=true]:border-status-red"
         {...inputProps}
       />
       {error && (
@@ -256,7 +257,7 @@ function FieldSelect({
         value={controlled ? value : undefined}
         onChange={onChange ? (e) => onChange(e.target.value) : undefined}
         aria-invalid={error ? "true" : undefined}
-        className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs text-foreground focus:border-primary focus:outline-none disabled:opacity-60 aria-[invalid=true]:border-status-red"
+        className="ff-input px-3 py-2 text-xs aria-[invalid=true]:border-status-red"
       >
         {children}
       </select>

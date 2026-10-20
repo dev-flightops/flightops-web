@@ -4,8 +4,10 @@ import Link from "next/link";
 import { auth } from "@/auth";
 import { ApiError } from "@/lib/api/client";
 import { getFlightLog, listFlightLogLegs } from "@/lib/api/ops";
-import { Button } from "@/components/ui/button";
+import { buttonOutline } from "@/components/ff/controls";
+import { PageHeader } from "@/components/ff/page-header";
 import { FLIGHT_LOG_ADMINS, hasAnyRole } from "@/lib/roles";
+import { cn } from "@/lib/utils";
 
 import { TAB_KEYS, TAB_LABELS, isTabKey, type TabKey } from "./tabs";
 import { TabNav } from "./tab-nav";
@@ -91,44 +93,44 @@ export default async function FlightLogDetailPage({
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
-      <header className="mb-4 flex flex-wrap items-start justify-between gap-3">
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2">
-            <h1 className="page-title">
-              <span className="font-mono">{log.log_number}</span>
-            </h1>
+      <PageHeader
+        back={{ href: "/flight-crew/elog", label: "Flight Log" }}
+        eyebrow={
+          <span className="flex flex-wrap items-center gap-3">
             <StatusPill status={log.status} />
             {log.is_manual_entry && <ManualEntryBadge />}
-          </div>
-          <p className="mt-1 text-xs text-muted-foreground">
-            <span className="font-mono text-primary">
+          </span>
+        }
+        title={log.log_number}
+        description={
+          <>
+            <span className="font-mono text-foreground">
               {log.aircraft.tail_number}
             </span>
             {log.aircraft.model ? ` · ${log.aircraft.model}` : ""}
             {" · "}
             {log.flight_date}
             {log.flight_number ? ` · ${log.flight_number}` : ""}
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button asChild variant="secondary" size="sm">
-            <Link href="/flight-crew/elog">← Back</Link>
-          </Button>
-          {isFiler && (
-            <LifecycleButtons
-              logId={log.id}
-              status={log.status}
-              submittedAt={log.submitted_at ?? null}
-            />
-          )}
-          {log.status === "draft" && canEdit && (
-            <SubmitLogButton logId={log.id} />
-          )}
-        </div>
-      </header>
+          </>
+        }
+        actions={
+          <>
+            {isFiler && (
+              <LifecycleButtons
+                logId={log.id}
+                status={log.status}
+                submittedAt={log.submitted_at ?? null}
+              />
+            )}
+            {log.status === "draft" && canEdit && (
+              <SubmitLogButton logId={log.id} />
+            )}
+          </>
+        }
+      />
 
       {log.status === "draft" && !canEdit && (
-        <p className="mb-4 rounded-md border border-border bg-card px-3 py-2 text-xs text-muted-foreground">
+        <p className="notice notice-gray mb-4">
           This is {log.created_by.full_name}&rsquo;s draft. Only they, a Chief
           Pilot, the Director of Operations or an Exec Admin can change it.
         </p>
@@ -136,7 +138,7 @@ export default async function FlightLogDetailPage({
 
       <TabNav activeTab={activeTab} logId={log.id} />
 
-      <div className="mt-4 rounded-lg border border-border bg-card p-4">
+      <div className="mt-5 rounded-lg border border-border bg-card p-5">
         {activeTab === "info" && <FlightInfoTab log={log} canEdit={canEdit} />}
         {activeTab === "legs" && (
           <LegsTab
@@ -188,21 +190,14 @@ export default async function FlightLogDetailPage({
 function NotYourLog() {
   return (
     <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
-      <div
-        role="alert"
-        className="rounded-lg border border-border bg-card px-4 py-6 text-sm text-muted-foreground"
-      >
-        <p className="font-semibold text-foreground">
-          You can&rsquo;t open this flight log.
-        </p>
-        <p className="mt-1">
-          Only the pilot who filed it, a Chief Pilot, the Director of
-          Operations or an Exec Admin can.
-        </p>
+      <div role="alert" className="notice notice-yellow">
+        <span className="notice-label">You can&rsquo;t open this flight log.</span>
+        Only the pilot who filed it, a Chief Pilot, the Director of
+        Operations or an Exec Admin can.
       </div>
-      <Button asChild variant="secondary" size="sm" className="mt-4">
-        <Link href="/flight-crew/elog">← Flight Log</Link>
-      </Button>
+      <Link href="/flight-crew/elog" className={cn(buttonOutline, "mt-4")}>
+        ← Flight Log
+      </Link>
     </div>
   );
 }
@@ -210,13 +205,7 @@ function NotYourLog() {
 function StatusPill({ status }: { status: "draft" | "submitted" }) {
   const isDraft = status === "draft";
   return (
-    <span
-      className={
-        isDraft
-          ? "rounded bg-status-yellow/15 px-1.5 py-0.5 text-[0.6rem] font-semibold uppercase tracking-[0.08em] text-status-yellow"
-          : "rounded bg-status-green/15 px-1.5 py-0.5 text-[0.6rem] font-semibold uppercase tracking-[0.08em] text-status-green"
-      }
-    >
+    <span className={isDraft ? "status-mark text-status-yellow" : "status-mark text-status-green"}>
       {isDraft ? "Draft" : "Submitted"}
     </span>
   );

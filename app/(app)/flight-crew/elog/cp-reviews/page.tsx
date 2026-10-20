@@ -1,5 +1,8 @@
 import Link from "next/link";
 
+import { EmptyState } from "@/components/ff/empty-state";
+import { PageHeader } from "@/components/ff/page-header";
+import { Panel } from "@/components/ff/panel";
 import { ApiError } from "@/lib/api/client";
 import { listCpReviews } from "@/lib/api/ops";
 import type { CpReviewResponse, CpReviewStatus } from "@/lib/api/types";
@@ -60,14 +63,10 @@ export default async function CpReviewQueuePage({
   if (notAuthorized) {
     return (
       <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
-        <div className="rounded-lg border border-status-yellow/40 bg-status-yellow/10 px-6 py-8 text-center">
-          <h1 className="text-base font-bold tracking-tight text-status-yellow">
-            CP Review Queue
-          </h1>
-          <p className="mt-2 text-sm text-foreground">
-            Only chief pilots can review out-of-window flight log requests.
-          </p>
-        </div>
+        <PageHeader title="CP Review Queue" />
+        <p className="notice notice-yellow">
+          Only chief pilots can review out-of-window flight log requests.
+        </p>
       </div>
     );
   }
@@ -76,32 +75,25 @@ export default async function CpReviewQueuePage({
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
-      <header className="mb-5">
-        <h1 className="page-title">
-          Flight Log Review Queue
-        </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Pilot requests for reopening or deleting flight logs past the
-          90-day window. Approving fires the action under your authority;
-          the audit chain records you.
-        </p>
-      </header>
+      <PageHeader
+        title="Flight Log Review Queue"
+        description="Pilot requests for reopening or deleting flight logs past the 90-day window. Approving fires the action under your authority; the audit chain records you."
+      />
 
       <CpReviewStatusFilter active={activeStatus} />
 
       {loadError ? (
-        <div
-          role="alert"
-          className="rounded-md border border-border bg-card px-4 py-6 text-center text-sm text-muted-foreground"
-        >
+        <div role="alert" className="notice notice-yellow">
           {loadError}
         </div>
       ) : reviews.length === 0 ? (
-        <div className="rounded-md border border-dashed border-border bg-card/40 px-4 py-8 text-center text-sm text-muted-foreground">
-          {activeStatus === "pending"
-            ? "No pending requests right now."
-            : `No ${activeStatus} reviews on file.`}
-        </div>
+        <Panel flush>
+          <EmptyState>
+            {activeStatus === "pending"
+              ? "No pending requests right now."
+              : `No ${activeStatus} reviews on file.`}
+          </EmptyState>
+        </Panel>
       ) : (
         <ReviewTable reviews={reviews} pending={activeStatus === "pending"} />
       )}
@@ -133,15 +125,8 @@ function ReviewTable({
           </tr>
         </thead>
         <tbody>
-          {reviews.map((r, idx) => (
-            <tr
-              key={r.id}
-              className={
-                idx % 2 === 0
-                  ? "border-t border-border/60"
-                  : "border-t border-border/60 bg-card/40"
-              }
-            >
+          {reviews.map((r) => (
+            <tr key={r.id} className="border-t border-border align-top transition-colors hover:bg-accent/40">
               <td className="px-3 py-2 font-mono text-[0.65rem] text-muted-foreground">
                 {r.requested_at.slice(0, 10)}
               </td>
@@ -198,15 +183,6 @@ function ActionBadge({
 }: {
   action: CpReviewResponse["requested_action"];
 }) {
-  const tone =
-    action === "reopen"
-      ? "bg-status-yellow/15 text-status-yellow"
-      : "bg-status-red/15 text-status-red";
-  return (
-    <span
-      className={`rounded px-1.5 py-0.5 text-[0.6rem] font-semibold uppercase tracking-[0.06em] ${tone}`}
-    >
-      {action}
-    </span>
-  );
+  const tone = action === "reopen" ? "text-status-yellow" : "text-status-red";
+  return <span className={`status-mark text-[0.6rem] ${tone}`}>{action}</span>;
 }

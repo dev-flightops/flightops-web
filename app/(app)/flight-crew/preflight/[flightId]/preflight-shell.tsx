@@ -2,6 +2,12 @@
 
 import { useEffect, useState } from "react";
 
+import { buttonOutline, linkCaps } from "@/components/ff/controls";
+import { CheckGlyph } from "@/components/ff/glyphs";
+import { PageHeader } from "@/components/ff/page-header";
+import { Panel } from "@/components/ff/panel";
+import { cn } from "@/lib/utils";
+
 import {
   companyCrosswindLimitKt,
   nearLimitEntryKt,
@@ -204,18 +210,16 @@ function EditingBanner({
   return (
     <div
       role="status"
-      className="mb-3 flex items-center justify-between gap-2 rounded-md border border-primary/40 bg-primary/10 px-3 py-2 text-xs"
+      className="notice notice-blue mb-4 flex flex-wrap items-center justify-between gap-2"
     >
-      <span className="text-primary">
-        <span className="font-semibold uppercase tracking-[0.06em]">
-          Editing Step {stepNumber}
-        </span>
-        <span className="ml-2 text-foreground/80">{label}</span>
+      <span>
+        <span className="notice-label">Editing Step {stepNumber}</span>
+        {label}
       </span>
       <button
         type="button"
         onClick={onCancel}
-        className="btn-caps rounded border border-input px-2 py-0.5 text-foreground hover:bg-accent text-[0.68rem]"
+        className={cn(buttonOutline, "px-2.5 py-1 text-[0.68rem]")}
       >
         Cancel edit
       </button>
@@ -223,25 +227,30 @@ function EditingBanner({
   );
 }
 
+/** The page's head (#81): the flight as the title, its route, aircraft
+ *  and ETD under it, and the way back to the crew page. */
 function FlightContextBar({ flight }: { flight: FlightDetail }) {
   return (
-    <header className="mb-4 rounded-lg border border-border bg-card px-4 py-3">
-      <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
-        <span className="font-mono text-lg font-bold text-foreground">
-          {flight.flight_number}
-        </span>
-        <span className="font-mono text-sm font-semibold text-foreground">
-          {routeText(flight)}
-        </span>
-        <span className="text-xs text-muted-foreground">
+    <PageHeader
+      back={{ href: "/flight-crew", label: "Flight Crew" }}
+      eyebrow="Preflight"
+      title={flight.flight_number}
+      description={
+        <>
+          <span className="font-mono font-semibold text-foreground">
+            {routeText(flight)}
+          </span>
+          {" · "}
           {flight.aircraft.tail_number}
           {flight.aircraft.model ? ` · ${flight.aircraft.model}` : ""}
-        </span>
-        <span className="ml-auto text-xs text-muted-foreground">
-          ETD {formatUtcTime(flight.scheduled_departure_at)}
-        </span>
-      </div>
-    </header>
+          {" · ETD "}
+          <span className="font-mono text-foreground">
+            {formatUtcTime(flight.scheduled_departure_at)}
+          </span>
+        </>
+      }
+      className="mb-5"
+    />
   );
 }
 
@@ -261,7 +270,7 @@ function ProgressIndicator({
   return (
     <section className="mb-6">
       <div className="mb-2 flex items-baseline justify-between text-xs text-muted-foreground">
-        <span className="font-semibold uppercase tracking-[0.06em]">
+        <span className="eyebrow">
           {editingStep !== null ? "Editing step" : "Step"} {currentStep} of{" "}
           {totalSteps}
         </span>
@@ -280,12 +289,12 @@ function ProgressIndicator({
               aria-label={`Step ${n}${isEditing ? " — editing" : isDone ? " — complete" : isNext ? " — active" : ""}`}
               className={
                 isEditing
-                  ? "h-1.5 flex-1 rounded-full bg-primary"
+                  ? "h-1 flex-1 bg-primary"
                   : isDone
-                    ? "h-1.5 flex-1 rounded-full bg-status-green"
+                    ? "h-1 flex-1 bg-status-green"
                     : isNext
-                      ? "h-1.5 flex-1 rounded-full bg-primary"
-                      : "h-1.5 flex-1 rounded-full bg-muted-foreground/20"
+                      ? "h-1 flex-1 bg-primary"
+                      : "h-1 flex-1 bg-input"
               }
             />
           );
@@ -393,11 +402,9 @@ const STEP_LABELS_BY_NUMBER: Record<number, string> = {
 function StepStubPanel({ stepNumber }: { stepNumber: number }) {
   const label = STEP_LABELS_BY_NUMBER[stepNumber] ?? `Step ${stepNumber}`;
   return (
-    <section className="rounded-lg border border-dashed border-border bg-card/40 px-5 py-8 text-center">
-      <p className="text-xs uppercase tracking-[0.08em] text-muted-foreground">
-        Step {stepNumber}
-      </p>
-      <h2 className="mt-1 text-base font-semibold text-foreground">{label}</h2>
+    <section className="rounded-lg border border-border bg-card px-5 py-6">
+      <p className="eyebrow">Step {stepNumber}</p>
+      <h2 className="panel-title mt-1">{label}</h2>
       <p className="mt-3 text-sm text-muted-foreground">
         This step's UI ships in a follow-up PR. The backend gate accepts a
         completion POST today; for now this surface documents what's coming so
@@ -417,25 +424,23 @@ function CompletedSummary({
   onEdit: (stepNumber: number) => void;
 }) {
   return (
-    <section className="mt-8">
-      <h2 className="mb-2 text-xs font-bold uppercase tracking-[0.08em] text-muted-foreground">
-        Completed
-      </h2>
-      <ul className="space-y-1.5">
+    <Panel title="Completed" flush className="mt-8">
+      <ul className="divide-y divide-border">
         {completed.map((s) => {
           const isEditing = editingStep === s.step_number;
           return (
             <li
               key={s.id}
+              // The row being edited carries a 3px brand edge, drawn as an
+              // inset shadow: a left border here would take the list's
+              // divider colour on every row but the first.
               className={
-                "flex items-baseline justify-between gap-2 rounded-md border px-3 py-2 text-xs " +
-                (isEditing
-                  ? "border-primary/40 bg-primary/5"
-                  : "border-border bg-card/40")
+                "flex items-center justify-between gap-2 px-5 py-2.5 text-xs " +
+                (isEditing ? "bg-accent/40 shadow-[inset_3px_0_0_rgb(var(--brand-text-rgb))]" : "")
               }
             >
-              <span className="flex items-baseline gap-2">
-                <CheckIcon />
+              <span className="flex items-center gap-2">
+                <CheckGlyph size={14} className="shrink-0 text-status-green" />
                 <span className="font-semibold text-foreground">
                   Step {s.step_number}
                 </span>
@@ -446,15 +451,13 @@ function CompletedSummary({
                   {formatUtcTime(s.completed_at)}
                 </span>
                 {isEditing ? (
-                  <span className="text-[0.7rem] font-semibold text-primary">
-                    Editing…
-                  </span>
+                  <span className="status-mark text-primary">Editing…</span>
                 ) : (
                   <button
                     type="button"
                     onClick={() => onEdit(s.step_number)}
                     disabled={editingStep !== null}
-                    className="text-[0.7rem] font-semibold text-primary hover:underline disabled:cursor-not-allowed disabled:opacity-40 disabled:no-underline"
+                    className={cn(linkCaps, "disabled:cursor-not-allowed disabled:opacity-40 disabled:no-underline")}
                     aria-label={`Edit step ${s.step_number}`}
                   >
                     Edit
@@ -465,7 +468,7 @@ function CompletedSummary({
           );
         })}
       </ul>
-    </section>
+    </Panel>
   );
 }
 
@@ -476,11 +479,9 @@ function AllDonePanel({ flight }: { flight: FlightDetail }) {
     destination,
   } = flight;
   return (
-    <section className="rounded-xl border border-status-green/40 bg-status-green/10 px-5 py-8 text-center">
-      <CheckBigIcon />
-      <h2 className="mt-2 text-base font-bold text-status-green">
-        All 8 steps complete.
-      </h2>
+    <section className="rounded-lg border border-border border-l-[3px] border-l-status-green bg-card px-5 py-6">
+      <p className="status-mark text-status-green">Preflight complete</p>
+      <h2 className="caption-caps mt-2 text-lg text-foreground">All 8 steps complete.</h2>
       <p className="mt-2 text-sm text-foreground">
         Preflight job flow finished for this leg. Position reports + the
         post-flight log are managed from the flight following + electronic
@@ -501,43 +502,6 @@ function AllDonePanel({ flight }: { flight: FlightDetail }) {
         </span>
       </p>
     </section>
-  );
-}
-
-function CheckIcon() {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 16 16"
-      className="h-3.5 w-3.5 text-status-green"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden
-    >
-      <polyline points="3 8 7 12 13 4" />
-    </svg>
-  );
-}
-
-function CheckBigIcon() {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 24 24"
-      className="mx-auto h-10 w-10 text-status-green"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden
-    >
-      <circle cx="12" cy="12" r="9" />
-      <polyline points="8 12 11 15 16 9" />
-    </svg>
   );
 }
 

@@ -1,6 +1,8 @@
 import Link from "next/link";
 
+import { segment, segmentGroup } from "@/components/ff/controls";
 import type { CpReviewStatus } from "@/lib/api/types";
+import { cn } from "@/lib/utils";
 
 const FILTERS: ReadonlyArray<{ key: CpReviewStatus; label: string }> = [
   { key: "pending", label: "Pending" },
@@ -14,10 +16,7 @@ export function CpReviewStatusFilter({
   active: CpReviewStatus;
 }) {
   return (
-    <nav
-      aria-label="Filter CP reviews by status"
-      className="mb-4 flex flex-wrap gap-2"
-    >
+    <nav aria-label="Filter CP reviews by status" className={cn(segmentGroup, "mb-4")}>
       {FILTERS.map((f) => {
         const isActive = f.key === active;
         const href =
@@ -29,12 +28,7 @@ export function CpReviewStatusFilter({
             key={f.key}
             href={href}
             aria-pressed={isActive}
-            className={
-              "rounded-md border px-3 py-1.5 text-xs font-semibold transition-colors " +
-              (isActive
-                ? "border-primary/60 bg-primary/10 text-primary"
-                : "border-border bg-card text-muted-foreground hover:text-foreground")
-            }
+            className={segment(isActive)}
           >
             {f.label}
           </Link>

@@ -38,7 +38,7 @@ export function PreflightFuel({
     >
       <h2
         id="preflight-fuel-heading"
-        className="mb-3 text-xs font-bold uppercase tracking-[0.08em] text-muted-foreground"
+        className="panel-title mb-3"
       >
         Fuel
       </h2>

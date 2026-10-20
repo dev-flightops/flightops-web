@@ -1,6 +1,10 @@
 import Link from "next/link";
 
+import { buttonOutline } from "@/components/ff/controls";
+import { EmptyState } from "@/components/ff/empty-state";
+import { StatusMark, type StatusTone } from "@/components/ff/status-mark";
 import type { FlightListItem } from "@/lib/api/types";
+import { cn } from "@/lib/utils";
 import { routeText } from "@/lib/route";
 
 interface Props {
@@ -10,8 +14,9 @@ interface Props {
 /**
  * "My Flights" panel (Spec 4 §"Page layout / My Flights today").
  *
- * One card per flight: flight number, route, aircraft, the date and
- * scheduled times in UTC, status badge, Begin Preflight CTA.
+ * One row per flight (#81: rows in the page's My Flights panel, not
+ * cards): flight number, route, aircraft, the date and scheduled times
+ * in UTC, status mark, Begin Preflight.
  *
  * WHY EVERY CARD CARRIES A DATE, AND WHY NOTHING SAYS "TODAY"
  *
@@ -45,7 +50,7 @@ export function TodayFlightsPanel({ flights }: Props) {
     // out loud: a pilot who expects to be flying should ring dispatch
     // rather than assume the page is broken.
     return (
-      <div className="rounded-lg border border-dashed border-border bg-card/50 px-5 py-8 text-center text-sm text-muted-foreground">
+      <EmptyState>
         You&apos;re not rostered on any flights just now.{" "}
         <span className="block pt-1 text-xs">
           If you&apos;re expecting to fly, check with dispatch — or{" "}
@@ -57,12 +62,12 @@ export function TodayFlightsPanel({ flights }: Props) {
           </Link>{" "}
           for off-schedule flying.
         </span>
-      </div>
+      </EmptyState>
     );
   }
 
   return (
-    <ul className="space-y-2">
+    <ul className="divide-y divide-border">
       {flights.map((f) => (
         <FlightCard key={f.id} flight={f} />
       ))}
@@ -72,8 +77,8 @@ export function TodayFlightsPanel({ flights }: Props) {
 
 function FlightCard({ flight }: { flight: FlightListItem }) {
   return (
-    <li className="rounded-lg border border-border bg-card p-4">
-      <div className="flex items-start justify-between gap-4">
+    <li className="px-5 py-4 transition-colors hover:bg-accent/40">
+      <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
             <span className="font-mono text-base font-bold text-foreground">
@@ -109,7 +114,7 @@ function FlightCard({ flight }: { flight: FlightListItem }) {
         </div>
         <Link
           href={`/flight-crew/preflight/${flight.id}`}
-          className="btn-caps shrink-0 rounded-md border border-primary/40 bg-background px-3 py-1.5 text-primary transition-colors hover:bg-primary/5 text-[0.72rem]"
+          className={cn(buttonOutline, "shrink-0 px-3 py-1.5")}
         >
           Begin Preflight →
         </Link>
@@ -119,7 +124,7 @@ function FlightCard({ flight }: { flight: FlightListItem }) {
 }
 
 function StatusBadge({ status }: { status: string }) {
-  const tone =
+  const tone: StatusTone =
     status === "released"
       ? "blue"
       : status === "scheduled"
@@ -127,27 +132,13 @@ function StatusBadge({ status }: { status: string }) {
         : status === "cancelled"
           ? "red"
           : "muted";
-  const cls =
-    tone === "blue"
-      ? "border-status-blue/40 bg-status-blue/10 text-status-blue"
-      : tone === "yellow"
-        ? "border-status-yellow/40 bg-status-yellow/10 text-status-yellow"
-        : tone === "red"
-          ? "border-status-red/40 bg-status-red/10 text-status-red"
-          : "border-border bg-muted text-muted-foreground";
   const label =
     status === "released"
       ? "Released"
       : status === "scheduled"
         ? "Scheduled"
         : status.charAt(0).toUpperCase() + status.slice(1);
-  return (
-    <span
-      className={`rounded-sm border px-1.5 py-0.5 text-[0.6rem] font-semibold uppercase tracking-[0.06em] ${cls}`}
-    >
-      {label}
-    </span>
-  );
+  return <StatusMark label={label} tone={tone} />;
 }
 
 function formatUtcTime(iso: string): string {

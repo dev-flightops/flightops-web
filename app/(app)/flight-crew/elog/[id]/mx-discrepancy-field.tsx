@@ -51,7 +51,7 @@ export function MxDiscrepancyField({
   }
 
   return (
-    <div className="rounded-lg border border-border bg-card p-4">
+    <div className="rounded-md border border-border p-4">
       <label
         htmlFor="mx-discrepancy"
         className="field-label"
@@ -71,7 +71,7 @@ export function MxDiscrepancyField({
         }
         onChange={(e) => setValue(e.target.value)}
         onBlur={commit}
-        className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs text-foreground placeholder:text-muted-foreground disabled:opacity-60"
+        className="ff-input px-3 py-2 text-xs"
       />
       <p className="mt-1 text-[0.65rem] text-muted-foreground">
         Auto-creates a work order in Maintenance on submit.

@@ -90,7 +90,7 @@ function MxHistoryPanel({
 
   if (history.length === 0) {
     return (
-      <div className="rounded-md border border-dashed border-border bg-card/40 px-4 py-6 text-center">
+      <div className="py-4 text-center">
         <p className="text-xs text-muted-foreground">
           No squawks on file for{" "}
           <span className="font-mono">{tail}</span> yet.
@@ -100,7 +100,7 @@ function MxHistoryPanel({
   }
 
   return (
-    <div className="rounded-lg border border-border bg-card p-4">
+    <div className="rounded-md border border-border p-4">
       <div className="mb-2 eyebrow">
         MX History — <span className="font-mono">{tail}</span> (last 10)
       </div>
@@ -128,15 +128,9 @@ function StatusBadge({
 }) {
   const cls =
     status === "resolved"
-      ? "bg-status-green/15 text-status-green"
+      ? "text-status-green"
       : status === "open"
-        ? "bg-status-red/15 text-status-red"
-        : "bg-status-yellow/15 text-status-yellow";
-  return (
-    <span
-      className={`rounded px-1.5 py-0.5 text-[0.6rem] font-semibold uppercase tracking-[0.06em] ${cls}`}
-    >
-      {status}
-    </span>
-  );
+        ? "text-status-red"
+        : "text-status-yellow";
+  return <span className={`status-mark text-[0.6rem] ${cls}`}>{status}</span>;
 }

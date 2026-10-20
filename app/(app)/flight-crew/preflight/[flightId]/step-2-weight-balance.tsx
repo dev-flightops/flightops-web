@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 
+import { linkCaps } from "@/components/ff/controls";
 import type { FlightDetail, WeightReturn } from "@/lib/api/types";
 import { payloadAllowance } from "@/lib/preflight/payload-allowance";
 
@@ -94,12 +95,8 @@ export function WeightAndBalanceStep({ flightId, flight, openReturn }: Props) {
   return (
     <section className="rounded-lg border border-border bg-card">
       <header className="border-b border-border px-5 py-3">
-        <p className="text-xs uppercase tracking-[0.08em] text-muted-foreground">
-          Step 2
-        </p>
-        <h2 className="text-base font-semibold text-foreground">
-          Weight and Balance Review
-        </h2>
+        <p className="eyebrow">Step 2</p>
+        <h2 className="caption-caps mt-1 text-lg text-foreground">Weight and Balance Review</h2>
       </header>
 
       <div className="space-y-4 px-5 py-4 text-sm">
@@ -109,7 +106,7 @@ export function WeightAndBalanceStep({ flightId, flight, openReturn }: Props) {
           to be re-planned — there is no override.
         </p>
 
-        <div className="rounded-lg border border-border bg-background px-4 py-3 text-xs">
+        <div className="rounded-md border border-border px-4 py-3 text-xs">
           <dl className="grid grid-cols-2 gap-x-6 gap-y-2">
             <Item label="Aircraft" value={flight.aircraft.tail_number} />
             <Item
@@ -183,7 +180,7 @@ export function WeightAndBalanceStep({ flightId, flight, openReturn }: Props) {
         ) : (
           <>
             <fieldset className="space-y-2">
-              <legend className="mb-2 text-xs font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+              <legend className="eyebrow mb-2">
                 Weight &amp; balance result
               </legend>
 
@@ -206,8 +203,8 @@ export function WeightAndBalanceStep({ flightId, flight, openReturn }: Props) {
             </fieldset>
 
             {verdict === "over" && (
-              <div className="space-y-3 rounded-md border border-status-red/40 bg-status-red/5 px-3 py-3">
-                <p className="text-xs text-status-red">
+              <div className="notice notice-red space-y-3">
+                <p className="text-xs font-semibold">
                   This flight cannot depart as loaded. Dispatch will
                   re-plan against the figure you give here.
                 </p>
@@ -227,7 +224,7 @@ export function WeightAndBalanceStep({ flightId, flight, openReturn }: Props) {
                     value={maxPayload}
                     onChange={(e) => setMaxPayload(e.target.value)}
                     placeholder="e.g. 1750"
-                    className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm text-foreground focus:border-status-red focus:outline-none"
+                    className="ff-input px-2 py-1.5 text-sm focus:border-status-red"
                   />
                 </div>
                 <div>
@@ -243,7 +240,7 @@ export function WeightAndBalanceStep({ flightId, flight, openReturn }: Props) {
                     value={note}
                     onChange={(e) => setNote(e.target.value)}
                     placeholder="Anything dispatch needs to know about the load"
-                    className="w-full rounded-md border border-border bg-background px-2 py-1 text-xs text-foreground focus:border-status-red focus:outline-none"
+                    className="ff-input px-2 py-1 text-xs focus:border-status-red"
                   />
                 </div>
               </div>
@@ -272,7 +269,7 @@ export function WeightAndBalanceStep({ flightId, flight, openReturn }: Props) {
         )}
 
         {error && (
-          <p role="alert" className="text-xs text-status-red">
+          <p role="alert" className="field-error">
             {error}
           </p>
         )}
@@ -289,10 +286,8 @@ function ReturnedNotice({
   onRevise: () => void;
 }) {
   return (
-    <div className="space-y-3 rounded-md border border-status-red/40 bg-status-red/5 px-4 py-3">
-      <p className="text-xs font-semibold uppercase tracking-[0.06em] text-status-red">
-        Returned to dispatch
-      </p>
+    <div className="notice notice-red space-y-3">
+      <p className="notice-label">Returned to dispatch</p>
       <p className="text-sm text-foreground">
         You can accept{" "}
         <strong className="font-mono">
@@ -308,7 +303,7 @@ function ReturnedNotice({
       <button
         type="button"
         onClick={onRevise}
-        className="text-xs font-semibold text-primary underline underline-offset-2 hover:brightness-110"
+        className={linkCaps}
       >
         Revise the figure
       </button>
@@ -331,14 +326,15 @@ function VerdictOption({
   title: string;
   detail: string;
 }) {
+  // The choice made shows on a 3px edge in its colour (#81), not a wash.
   const ring = checked
     ? tone === "green"
-      ? "border-status-green/60 bg-status-green/5"
-      : "border-status-red/60 bg-status-red/5"
-    : "border-border bg-card/40";
+      ? "border-l-status-green bg-accent/40"
+      : "border-l-status-red bg-accent/40"
+    : "border-l-input";
   return (
     <label
-      className={`flex cursor-pointer items-start gap-3 rounded-md border px-3 py-2.5 transition ${ring}`}
+      className={`flex cursor-pointer items-start gap-3 rounded-md border border-border border-l-[3px] px-3 py-2.5 transition-colors hover:bg-accent/40 ${ring}`}
     >
       <input
         type="radio"

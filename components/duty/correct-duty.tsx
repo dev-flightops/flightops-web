@@ -2,8 +2,10 @@
 
 import { useState } from "react";
 
+import { buttonOutline, buttonSolid, linkCaps } from "@/components/ff/controls";
 import { DateTimeWheel } from "@/components/ui/date-time-wheel";
 import type { DutyPeriodSummary } from "@/lib/api/types";
+import { cn } from "@/lib/utils";
 
 import {
   amendDutyAction,
@@ -125,7 +127,7 @@ export function CorrectDuty({
         <button
           type="button"
           onClick={start}
-          className="text-[0.65rem] font-semibold text-primary hover:underline"
+          className={linkCaps}
         >
           {triggerLabel}
         </button>
@@ -145,7 +147,7 @@ export function CorrectDuty({
         e.preventDefault();
         void submit();
       }}
-      className="mt-2 space-y-3 rounded-md border border-border bg-background p-3"
+      className="mt-2 space-y-3 rounded-lg border border-border bg-card p-4"
     >
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <DateTimeWheel
@@ -175,12 +177,12 @@ export function CorrectDuty({
             )}
           </div>
         ) : (
-          <div className="flex flex-col justify-center gap-1 rounded-md border border-dashed border-border p-3">
+          <div className="flex flex-col justify-center gap-1 rounded-md border border-border p-3">
             <p className="text-xs text-muted-foreground">Still on duty.</p>
             <button
               type="button"
               onClick={() => setClockOut(new Date(now))}
-              className="self-start text-[0.65rem] font-semibold text-primary hover:underline"
+              className={cn(linkCaps, "self-start")}
             >
               Add a duty-out time
             </button>
@@ -196,12 +198,12 @@ export function CorrectDuty({
           onChange={(e) => setReason(e.target.value)}
           maxLength={500}
           placeholder="e.g. forgot to clock out at end of shift"
-          className="mt-1 w-full rounded-md border border-border bg-card px-2 py-1.5 text-xs font-normal normal-case tracking-normal text-foreground"
+          className="ff-input mt-1 px-2 py-1.5 text-xs font-normal normal-case tracking-normal"
         />
       </label>
 
       {state.status === "error" ? (
-        <p role="alert" className="text-[0.65rem] text-status-red">
+        <p role="alert" className="field-error">
           {state.message}
         </p>
       ) : null}
@@ -217,14 +219,14 @@ export function CorrectDuty({
         <button
           type="submit"
           disabled={pending || !reason.trim()}
-          className="btn-caps rounded-md bg-primary px-3 py-1.5 text-primary-foreground hover:bg-brand-dark disabled:opacity-40 text-[0.68rem]"
+          className={cn(buttonSolid, "px-3 py-1.5 text-[0.72rem]")}
         >
           {pending ? "Saving…" : "Save correction"}
         </button>
         <button
           type="button"
           onClick={() => setOpen(false)}
-          className="text-[0.65rem] font-semibold text-muted-foreground hover:text-foreground"
+          className={cn(buttonOutline, "px-3 py-1.5 text-[0.72rem]")}
         >
           Cancel
         </button>
