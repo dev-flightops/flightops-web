@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useId, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 
 import { Spinner } from "@/components/ui/spinner";
@@ -68,12 +68,10 @@ export function WeightBalanceCard({
   const routeLabel = formatRoute(leg.origin_icao, leg.dest_icao);
 
   return (
-    <div className="rounded-lg border border-border bg-card p-4">
+    <div className="rounded-md border border-border p-4">
       <header className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
         <div className="flex items-baseline gap-2">
-          <span className="text-[0.7rem] font-semibold uppercase tracking-[0.08em] text-primary">
-            Leg {leg.leg_number} W&amp;B
-          </span>
+          <span className="panel-title">Leg {leg.leg_number} W&amp;B</span>
           <span className="text-[0.65rem] font-mono text-muted-foreground">
             {routeLabel}
           </span>
@@ -175,7 +173,7 @@ export function WeightBalanceCard({
         </p>
       )}
       {error && (
-        <p role="alert" className="mt-2 text-[0.65rem] text-status-red">
+        <p role="alert" className="field-error">
           {error}
         </p>
       )}
@@ -253,12 +251,13 @@ function formatRoute(
 
 // ---------- Field primitives ----------
 
-let nextFieldId = 0;
 function useFieldId(label: string): string {
-  // Stable per-mount id without pulling in useId — the slug from
-  // the label plus a per-instance counter is plenty for the small
-  // number of fields a W&B card renders.
-  return `wb-${label.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${++nextFieldId}`;
+  // React's id, the same on the server and in the browser. A module
+  // counter here numbered fields differently in each (the server's kept
+  // counting across requests), so hydration logged a mismatch, and every
+  // re-render handed a field a new id.
+  const uid = useId();
+  return `wb-${label.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${uid}`;
 }
 
 function NumberField({
@@ -294,7 +293,7 @@ function NumberField({
         disabled={disabled}
         onChange={(e) => onChange(e.target.value)}
         onBlur={onBlur}
-        className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-xs disabled:opacity-60"
+        className="ff-input px-3 py-1.5 text-xs"
       />
     </div>
   );

@@ -3,7 +3,9 @@
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 
+import { buttonOutline } from "@/components/ff/controls";
 import { Spinner } from "@/components/ui/spinner";
+import { cn } from "@/lib/utils";
 
 import { addLegAction } from "./legs-actions";
 
@@ -37,7 +39,7 @@ export function AddLegButton({ logId }: { logId: string }) {
       type="button"
       onClick={onClick}
       disabled={pending}
-      className="btn-caps inline-flex items-center gap-1.5 rounded-md border border-primary/40 bg-background px-3 py-1.5 text-primary hover:bg-primary/5 disabled:opacity-50 text-[0.72rem]"
+      className={cn(buttonOutline, "px-3 py-1.5")}
     >
       {pending && <Spinner size="xs" />}
       + Add Leg

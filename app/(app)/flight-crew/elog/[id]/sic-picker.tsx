@@ -80,7 +80,7 @@ export function SicPicker({
           setValue(e.target.value);
           commit(e.target.value);
         }}
-        className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs disabled:opacity-60"
+        className="ff-input px-3 py-2 text-xs"
       >
         <option value="">— No SIC (single-pilot flight)</option>
         {options.map((p) => (

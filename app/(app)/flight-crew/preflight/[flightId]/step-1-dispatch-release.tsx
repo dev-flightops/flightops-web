@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState, useTransition } from "react";
 
+import { buttonOutline } from "@/components/ff/controls";
 import type { FlightDetail } from "@/lib/api/types";
 import { cn } from "@/lib/utils";
 import { routeText } from "@/lib/route";
@@ -104,12 +105,8 @@ export function ReviewDispatchReleaseStep({ flightId, flight }: Props) {
   return (
     <section className="rounded-lg border border-border bg-card">
       <header className="border-b border-border px-5 py-3">
-        <p className="text-xs uppercase tracking-[0.08em] text-muted-foreground">
-          Step 1
-        </p>
-        <h2 className="text-base font-semibold text-foreground">
-          Review Dispatch Release
-        </h2>
+        <p className="eyebrow">Step 1</p>
+        <h2 className="caption-caps mt-1 text-lg text-foreground">Review Dispatch Release</h2>
       </header>
 
       {!isReleased ? (
@@ -145,10 +142,8 @@ export function ReviewDispatchReleaseStep({ flightId, flight }: Props) {
               {formatUtc(flight.scheduled_arrival_at)}
             </div>
             {flight.notes && (
-              <div className="border-l-2 border-status-yellow/40 bg-status-yellow/5 px-3 py-2 text-foreground">
-                <span className="font-semibold uppercase tracking-[0.06em] text-status-yellow">
-                  Dispatcher notes
-                </span>
+              <div className="notice notice-yellow">
+                <span className="notice-label">Dispatcher notes</span>
                 <p className="mt-1 whitespace-pre-wrap">{flight.notes}</p>
               </div>
             )}
@@ -160,7 +155,7 @@ export function ReviewDispatchReleaseStep({ flightId, flight }: Props) {
             </p>
             <a
               href={`/api/dispatch/${flight.id}/release.pdf`}
-              className="btn-caps inline-flex items-center gap-1 rounded-md border border-primary/40 bg-background px-3 py-1.5 text-primary hover:bg-primary/5 text-[0.72rem]"
+              className={cn(buttonOutline, "px-3 py-1.5")}
               target="_blank"
               rel="noopener"
             >
@@ -179,8 +174,8 @@ export function ReviewDispatchReleaseStep({ flightId, flight }: Props) {
             className={cn(
               "flex items-start gap-2 rounded-md border px-3 py-2 text-xs transition-colors",
               scrolledToBottom
-                ? "cursor-pointer border-border bg-card/40 text-foreground"
-                : "cursor-not-allowed border-border/50 bg-card/20 text-muted-foreground/50",
+                ? "cursor-pointer border-border text-foreground"
+                : "cursor-not-allowed border-border/50 text-muted-foreground/50",
             )}
             title={
               scrolledToBottom
@@ -212,7 +207,7 @@ export function ReviewDispatchReleaseStep({ flightId, flight }: Props) {
           </button>
 
           {error && (
-            <p role="alert" className="text-xs text-status-red">
+            <p role="alert" className="field-error">
               {error}
             </p>
           )}
@@ -229,17 +224,9 @@ function AwaitingReleasePanel({ flight }: { flight: FlightDetail }) {
       : "Awaiting dispatch release";
   return (
     <div className="space-y-3 px-5 py-6 text-sm">
-      <div
-        role="status"
-        className="flex flex-col items-start gap-2 rounded-lg border border-status-yellow/40 bg-status-yellow/10 px-4 py-3"
-      >
-        <div className="flex items-center gap-2 text-status-yellow">
-          <ClockIcon className="h-4 w-4" />
-          <span className="text-sm font-semibold uppercase tracking-wider">
-            {statusLabel}
-          </span>
-        </div>
-        <p className="text-xs text-foreground/80">
+      <div role="status" className="notice notice-yellow space-y-1.5">
+        <span className="notice-label">{statusLabel}</span>
+        <p className="text-xs text-foreground">
           The dispatch release for{" "}
           <span className="font-mono font-semibold">{flight.flight_number}</span>{" "}
           hasn&rsquo;t been generated yet. You can&rsquo;t acknowledge a
@@ -252,7 +239,7 @@ function AwaitingReleasePanel({ flight }: { flight: FlightDetail }) {
             : "Check back after the dispatcher completes the packet, or head back to the Flight Crew board and open another flight."}
         </p>
       </div>
-      <div className="rounded-md border border-border bg-background p-3 text-xs text-muted-foreground">
+      <div className="rounded-md border border-border p-3 text-xs text-muted-foreground">
         <div>
           <span className="font-mono font-semibold text-foreground">
             {flight.flight_number}
@@ -270,7 +257,7 @@ function AwaitingReleasePanel({ flight }: { flight: FlightDetail }) {
       </div>
       <Link
         href="/flight-crew"
-        className="btn-caps inline-flex items-center gap-1 rounded-md border border-input px-3 py-1.5 text-foreground hover:bg-accent text-[0.72rem]"
+        className={cn(buttonOutline, "px-3 py-1.5")}
       >
         ← Back to Flight Crew
       </Link>
@@ -281,37 +268,13 @@ function AwaitingReleasePanel({ flight }: { flight: FlightDetail }) {
 function ReleasePublishedBanner({ flight }: { flight: FlightDetail }) {
   const releasedByName = flight.released_by?.full_name ?? "Dispatcher";
   return (
-    <div
-      role="status"
-      className="flex flex-wrap items-center gap-2 rounded-lg border border-status-green/40 bg-status-green/10 px-3 py-2 text-xs"
-    >
-      <span className="font-semibold uppercase tracking-wider text-status-green">
-        ✓ Release published
-      </span>
-      <span className="text-foreground/80">
-        by {releasedByName}
-      </span>
+    <div role="status" className="notice notice-green">
+      <span className="notice-label">✓ Release published</span>
+      <span>by {releasedByName}</span>{" "}
       <span className="text-muted-foreground">
         · {flight.released_at ? formatReleasedAt(flight.released_at) : ""}
       </span>
     </div>
-  );
-}
-
-function ClockIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      viewBox="0 0 20 20"
-      fill="currentColor"
-      aria-hidden
-    >
-      <path
-        fillRule="evenodd"
-        d="M10 18a8 8 0 100-16 8 8 0 000 16zm.75-13a.75.75 0 00-1.5 0v5c0 .2.08.39.22.53l3 3a.75.75 0 101.06-1.06L10.75 9.69V5z"
-        clipRule="evenodd"
-      />
-    </svg>
   );
 }
 

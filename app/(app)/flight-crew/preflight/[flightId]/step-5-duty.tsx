@@ -96,12 +96,8 @@ export function DutyInConfirmStep({ flightId, duty }: Props) {
   return (
     <section className="rounded-lg border border-border bg-card">
       <header className="border-b border-border px-5 py-3">
-        <p className="text-xs uppercase tracking-[0.08em] text-muted-foreground">
-          Step 5
-        </p>
-        <h2 className="text-base font-semibold text-foreground">
-          Duty In Confirmation
-        </h2>
+        <p className="eyebrow">Step 5</p>
+        <h2 className="caption-caps mt-1 text-lg text-foreground">Duty In Confirmation</h2>
       </header>
 
       <div className="space-y-4 px-5 py-4 text-sm">
@@ -110,9 +106,7 @@ export function DutyInConfirmStep({ flightId, duty }: Props) {
             role="alert"
             className="notice notice-red"
           >
-            <p className="font-semibold uppercase tracking-[0.06em]">
-              Not clocked in
-            </p>
+            <p className="notice-label">Not clocked in</p>
             <p className="mt-1 text-foreground">
               A duty period has to be open before this leg can be
               signed off — it is what the 135.267 limits are measured
@@ -166,17 +160,12 @@ export function DutyInConfirmStep({ flightId, duty }: Props) {
                 {duty.warnings.map((w, i) => (
                   <li
                     key={i}
-                    className={cn(
-                      "rounded-md border px-3 py-2 text-xs",
-                      w.level === "red"
-                        ? "border-status-red/40 bg-status-red/10 text-status-red"
-                        : "border-status-yellow/40 bg-status-yellow/10 text-status-yellow",
-                    )}
+                    className={cn("notice text-xs", w.level === "red" ? "notice-red" : "notice-yellow")}
                   >
-                    <span className="font-semibold uppercase tracking-[0.06em]">
+                    <span className="notice-label">
                       {w.level === "red" ? "WARNING" : "Heads up"}
-                    </span>{" "}
-                    <span className="text-foreground">{w.message}</span>
+                    </span>
+                    {w.message}
                   </li>
                 ))}
               </ul>
@@ -187,7 +176,7 @@ export function DutyInConfirmStep({ flightId, duty }: Props) {
             )}
 
             {hasWarnings && (
-              <label className="flex items-start gap-2 rounded-md border border-border bg-card/40 px-3 py-2 text-xs text-foreground">
+              <label className="flex items-start gap-2 rounded-md border border-border px-3 py-2 text-xs text-foreground">
                 <input
                   type="checkbox"
                   checked={acknowledged}
@@ -211,7 +200,7 @@ export function DutyInConfirmStep({ flightId, duty }: Props) {
             </button>
 
             {error && (
-              <p role="alert" className="text-xs text-status-red">
+              <p role="alert" className="field-error">
                 {error}
               </p>
             )}

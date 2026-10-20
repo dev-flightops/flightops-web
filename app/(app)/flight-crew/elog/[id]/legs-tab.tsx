@@ -53,7 +53,7 @@ export function LegsTab({
       </div>
 
       {initialLegs.length === 0 && readOnly && (
-        <div className="rounded-md border border-dashed border-border bg-card/40 px-4 py-10 text-center">
+        <div className="py-6 text-center">
           <p className="text-xs text-muted-foreground">
             {logStatus === "submitted"
               ? "No legs on this submitted log."

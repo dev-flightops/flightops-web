@@ -44,7 +44,7 @@ export function CpReviewDecideButtons({
             setError(null);
             setOpen("approve");
           }}
-          className="rounded-md border border-status-green/40 bg-status-green/10 px-2.5 py-1 text-[0.65rem] font-semibold text-status-green hover:bg-status-green/15"
+          className="btn-caps rounded-md border border-status-green/60 px-2.5 py-1 text-[0.68rem] text-status-green hover:border-status-green"
         >
           Approve
         </button>
@@ -78,7 +78,11 @@ export function CpReviewDecideButtons({
     : "bg-status-yellow-fill text-white hover:brightness-95";
 
   return (
-    <div className="rounded-md border border-border bg-card p-2 text-[0.65rem] shadow-sm">
+    <div
+      className={`rounded-md border border-border border-l-[3px] bg-card p-3 text-[0.7rem] ${
+        isApprove ? "border-l-status-green" : "border-l-status-yellow"
+      }`}
+    >
       <div className="font-semibold text-foreground">{heading}</div>
       <p className="mt-0.5 text-muted-foreground">{subhead}</p>
       <label className="mt-1.5 block">
@@ -92,7 +96,7 @@ export function CpReviewDecideButtons({
           disabled={pending}
           onChange={(e) => setNote(e.target.value)}
           placeholder="Short rationale for the audit chain"
-          className="mt-0.5 w-full rounded border border-border bg-background px-2 py-1 disabled:opacity-60"
+          className="ff-input mt-0.5 px-2 py-1"
         />
       </label>
       <div className="mt-2 flex items-center gap-1.5">
@@ -115,7 +119,7 @@ export function CpReviewDecideButtons({
               router.refresh();
             });
           }}
-          className={`inline-flex items-center gap-1 rounded-md px-2.5 py-1 font-semibold disabled:opacity-50 ${confirmCls}`}
+          className={`btn-caps inline-flex items-center gap-1 rounded-md px-2.5 py-1 text-[0.68rem] disabled:opacity-50 ${confirmCls}`}
         >
           {pending && <Spinner size="xs" />}
           {isApprove ? "Approve" : "Decline"}
@@ -128,13 +132,13 @@ export function CpReviewDecideButtons({
             setNote("");
             setError(null);
           }}
-          className="btn-caps rounded-md border border-input px-2.5 py-1 text-foreground hover:bg-accent disabled:opacity-50"
+          className="btn-caps rounded-md border border-input px-2.5 py-1 text-[0.68rem] text-foreground hover:bg-accent disabled:opacity-50"
         >
           Cancel
         </button>
       </div>
       {error && (
-        <p role="alert" className="mt-1 text-status-red">
+        <p role="alert" className="field-error">
           {error}
         </p>
       )}

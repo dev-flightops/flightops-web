@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useTransition } from "react";
 
+import { buttonOutline } from "@/components/ff/controls";
 import type { CurrentDutyResponse } from "@/lib/api/types";
 import { cn } from "@/lib/utils";
 
@@ -104,14 +105,22 @@ export function DutyClockButton({ initial }: Props) {
     });
   };
 
+  // One quiet row, its state on a 3px left edge (#81): brand when off
+  // duty, red while on duty. The whole row stays the button, so the
+  // pilot's tap target is as wide as the page ("easy start stop button",
+  // the client, 8/28). The elapsed time reads as a figure, as the
+  // Flight Following stats show theirs.
+  const row =
+    "flex w-full items-center justify-between gap-4 rounded-lg border border-border border-l-[3px] bg-card px-5 py-4 text-left transition-colors hover:bg-accent disabled:opacity-60";
+
   return (
     <div className="space-y-2" ref={ref}>
       {isOnDuty && duty.open && armed ? (
         /* Armed. The elapsed time and the consequence are both on
            screen, because "are you sure?" on its own does not tell a
            pilot anything they did not already know. */
-        <div className="rounded-xl border border-status-red/50 bg-status-red/10 px-5 py-4">
-          <p className="text-base font-bold tracking-wide text-status-red">
+        <div className="rounded-lg border border-border border-l-[3px] border-l-status-red bg-card px-5 py-4">
+          <p className="font-display text-xl font-extrabold tracking-[0.03em] text-foreground">
             CLOSE THIS DUTY PERIOD?
           </p>
           <p className="mt-1 text-xs text-foreground">
@@ -121,19 +130,15 @@ export function DutyClockButton({ initial }: Props) {
             </span>
             . {resumeNote(duty.min_rest_hours)}
           </p>
-          <div className="mt-3 flex gap-2">
-            <button
-              type="button"
-              onClick={disarm}
-              className="rounded-md border border-border px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-card"
-            >
+          <div className="mt-4 flex flex-wrap gap-2">
+            <button type="button" onClick={disarm} className={cn(buttonOutline, "px-3 py-1.5")}>
               Keep working
             </button>
             <button
               type="button"
               onClick={handleClick}
               disabled={pending}
-              className="btn-caps rounded-md bg-status-red-fill px-3 py-1.5 text-white hover:brightness-95 disabled:opacity-60 text-[0.72rem]"
+              className="btn-caps rounded-md bg-status-red-fill px-3 py-1.5 text-[0.72rem] text-white hover:brightness-95 disabled:opacity-60"
             >
               {pending ? "Closing…" : "Close duty period"}
             </button>
@@ -144,21 +149,21 @@ export function DutyClockButton({ initial }: Props) {
           type="button"
           onClick={handleClick}
           disabled={pending}
-          className="flex w-full items-center justify-between gap-3 rounded-xl border border-status-red/40 bg-status-red/10 px-5 py-4 transition-colors hover:bg-status-red/15 disabled:opacity-60"
+          className={cn(row, "border-l-status-red")}
         >
-          <span className="flex items-center gap-3">
-            <ClockIcon className="h-6 w-6 text-status-red" />
-            <span className="flex flex-col items-start">
-              <span className="text-base font-bold tracking-wide text-status-red">
-                DUTY OUT
-              </span>
-              <span className="text-[0.7rem] text-muted-foreground">
-                Currently on duty — tap, then confirm
-              </span>
+          <span className="flex flex-col items-start">
+            <span className="font-display text-xl font-extrabold tracking-[0.03em] text-foreground">
+              DUTY OUT
+            </span>
+            <span className="mt-0.5 text-[0.75rem] text-muted-foreground">
+              Currently on duty — tap, then confirm
             </span>
           </span>
-          <span className="font-mono text-sm font-semibold text-status-red">
-            {formatElapsed(duty.open.elapsed_hours)}
+          <span className="flex flex-col items-end">
+            <span className="status-mark text-status-red">On duty</span>
+            <span className="mt-1 font-display text-2xl font-extrabold leading-none tabular-nums text-foreground">
+              {formatElapsed(duty.open.elapsed_hours)}
+            </span>
           </span>
         </button>
       ) : (
@@ -166,38 +171,29 @@ export function DutyClockButton({ initial }: Props) {
           type="button"
           onClick={handleClick}
           disabled={pending}
-          className="flex w-full items-center justify-between gap-3 rounded-xl border border-primary/40 bg-primary/10 px-5 py-4 transition-colors hover:bg-primary/15 disabled:opacity-60"
+          className={cn(row, "border-l-primary")}
         >
-          <span className="flex items-center gap-3">
-            <ClockIcon className="h-6 w-6 text-primary" />
-            <span className="flex flex-col items-start">
-              <span className="text-base font-bold tracking-wide text-primary">
-                DUTY IN
-              </span>
-              <span className="text-[0.7rem] text-muted-foreground">
-                Off duty — tap to start your day
-              </span>
+          <span className="flex flex-col items-start">
+            <span className="font-display text-xl font-extrabold tracking-[0.03em] text-foreground">
+              DUTY IN
+            </span>
+            <span className="mt-0.5 text-[0.75rem] text-muted-foreground">
+              Off duty — tap to start your day
             </span>
           </span>
+          <span className="status-mark text-muted-foreground">Off duty</span>
         </button>
       )}
 
       {duty.warnings.length > 0 && (
-        <ul className="space-y-1">
+        <ul className="space-y-2">
           {duty.warnings.map((w, i) => (
             <li
               key={i}
-              className={cn(
-                "rounded-md border px-3 py-2 text-xs",
-                w.level === "red"
-                  ? "border-status-red/40 bg-status-red/10 text-status-red"
-                  : "border-status-yellow/40 bg-status-yellow/10 text-status-yellow",
-              )}
+              className={cn("notice text-xs", w.level === "red" ? "notice-red" : "notice-yellow")}
             >
-              <span className="font-semibold uppercase tracking-[0.06em]">
-                {w.level === "red" ? "WARNING" : "Heads up"}
-              </span>
-              <span className="ml-2 text-foreground/90">{w.message}</span>
+              <span className="notice-label">{w.level === "red" ? "WARNING" : "Heads up"}</span>
+              {w.message}
             </li>
           ))}
         </ul>
@@ -219,30 +215,11 @@ export function DutyClockButton({ initial }: Props) {
       )}
 
       {error && (
-        <p role="alert" className="text-xs text-status-red">
+        <p role="alert" className="field-error">
           {error}
         </p>
       )}
     </div>
-  );
-}
-
-function ClockIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-      aria-hidden
-    >
-      <circle cx="12" cy="12" r="9" />
-      <polyline points="12 7 12 12 16 14" />
-    </svg>
   );
 }
 

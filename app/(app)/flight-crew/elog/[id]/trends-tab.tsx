@@ -45,7 +45,7 @@ export function TrendsTab({
         <h2 className="eyebrow">
           Trends
         </h2>
-        <div className="rounded-md border border-dashed border-border bg-card/40 px-4 py-10 text-center">
+        <div className="py-6 text-center">
           <p className="text-xs text-muted-foreground">No legs to monitor.</p>
           {!readOnly && (
             <p className="mt-2 text-[0.7rem] text-muted-foreground">
@@ -72,7 +72,7 @@ export function TrendsTab({
         </h2>
         <div
           role="status"
-          className="rounded-md border border-status-yellow/40 bg-status-yellow/[0.06] px-4 py-3 text-xs text-status-yellow"
+          className="notice notice-yellow"
         >
           Engine trend monitoring not configured for this airframe.
           Set the aircraft&apos;s airframe type (caravan / kingair /

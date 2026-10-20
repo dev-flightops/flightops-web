@@ -357,11 +357,12 @@ function scoreToRiskLevel(score: number): FratRiskLevel {
   return "extreme";
 }
 
+/** The band as a notice's tone (#81): its colour on the edge and label. */
 const RISK_BAND_CLASSES: Record<FratRiskLevel, string> = {
-  low: "border-status-green/40 bg-status-green/10 text-status-green",
-  medium: "border-status-yellow/40 bg-status-yellow/10 text-status-yellow",
-  high: "border-status-yellow/60 bg-status-yellow/15 text-status-yellow",
-  extreme: "border-status-red/40 bg-status-red/10 text-status-red",
+  low: "notice-green",
+  medium: "notice-yellow",
+  high: "notice-yellow",
+  extreme: "notice-red",
 };
 const RISK_LABEL: Record<FratRiskLevel, string> = {
   low: "LOW",
@@ -579,12 +580,8 @@ function FratQuestionnaire({
   return (
     <section className="rounded-lg border border-border bg-card">
       <header className="border-b border-border px-5 py-3">
-        <p className="text-xs uppercase tracking-[0.08em] text-muted-foreground">
-          Step 4
-        </p>
-        <h2 className="text-base font-semibold text-foreground">
-          Flight Risk Assessment Tool (FRAT)
-        </h2>
+        <p className="eyebrow">Step 4</p>
+        <h2 className="caption-caps mt-1 text-lg text-foreground">Flight Risk Assessment Tool (FRAT)</h2>
         <p className="mt-1 text-xs text-muted-foreground">
           Score each factor 0–5. Total determines risk level: LOW &lt;15 ·
           MEDIUM 15–24 · HIGH 25–34 · EXTREME 35+.
@@ -614,10 +611,8 @@ function FratQuestionnaire({
         {fratBlock?.eligible &&
         fratBlock.source_assessment_id &&
         fratBlock.source_answers ? (
-          <div className="rounded-md border border-status-green/40 bg-status-green/10 px-3 py-3 text-xs">
-            <p className="font-semibold uppercase tracking-[0.06em] text-status-green">
-              Your last FRAT can be carried to this leg
-            </p>
+          <div className="notice notice-green text-xs">
+            <p className="notice-label">Your last FRAT can be carried to this leg</p>
             <p className="mt-1 text-foreground">
               Filed at{" "}
               <span className="font-semibold">
@@ -647,7 +642,7 @@ function FratQuestionnaire({
             </button>
           </div>
         ) : fratBlock && fratBlock.reasons.length > 0 ? (
-          <div className="rounded-md border border-border bg-background px-3 py-2.5 text-[0.7rem] text-muted-foreground">
+          <div className="notice notice-gray text-muted-foreground">
             <span className="font-semibold text-foreground">
               A new assessment is needed for this leg.
             </span>{" "}
@@ -657,9 +652,7 @@ function FratQuestionnaire({
 
         {FACTOR_GROUPS.map((group) => (
           <div key={group.group}>
-            <h3 className="mb-2 text-[0.65rem] font-bold uppercase tracking-[0.08em] text-primary">
-              {group.group}
-            </h3>
+            <h3 className="panel-title mb-3 border-b border-border pb-2">{group.group}</h3>
             <div className="space-y-3">
               {group.factors.map((f) => (
                 <FactorRow
@@ -726,7 +719,7 @@ function FratQuestionnaire({
             rows={2}
             maxLength={2000}
             placeholder="What risk controls were applied for this flight…"
-            className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs text-foreground focus:border-primary focus:outline-none"
+            className="ff-input px-3 py-2 text-xs"
           />
         </div>
 
@@ -752,9 +745,9 @@ function FratQuestionnaire({
           <div
             role="alertdialog"
             aria-label="Confirm unassessed factors"
-            className="space-y-2 rounded-md border border-status-yellow/50 bg-status-yellow/10 px-3 py-3 text-xs"
+            className="notice notice-yellow space-y-2 text-xs"
           >
-            <p className="font-semibold uppercase tracking-[0.06em] text-status-yellow">
+            <p className="notice-label">
               {unassessed.length} factor
               {unassessed.length === 1 ? "" : "s"} not assessed
             </p>
@@ -778,7 +771,7 @@ function FratQuestionnaire({
               <button
                 type="button"
                 onClick={() => setConfirming(false)}
-                className="btn-caps rounded-md bg-primary px-3 py-1.5 text-white hover:bg-brand-dark"
+                className="btn-caps rounded-md bg-primary px-3 py-1.5 text-[0.72rem] text-white hover:bg-brand-dark"
               >
                 Go back and score them
               </button>
@@ -786,7 +779,7 @@ function FratQuestionnaire({
                 type="button"
                 disabled={pending}
                 onClick={() => submit(true)}
-                className="rounded-md border border-border px-3 py-1.5 font-semibold text-foreground hover:bg-card disabled:opacity-50"
+                className="btn-caps rounded-md border border-input px-3 py-1.5 text-[0.72rem] text-foreground hover:border-foreground disabled:opacity-50"
               >
                 They are genuinely zero — file it
               </button>
@@ -804,7 +797,7 @@ function FratQuestionnaire({
         )}
 
         {error && (
-          <p role="alert" className="text-xs text-status-red">
+          <p role="alert" className="field-error">
             {error}
           </p>
         )}
@@ -978,13 +971,18 @@ function Tile({
   valueClass?: string;
 }) {
   return (
-    <div className="rounded-lg border border-border bg-background px-3 py-2 text-center">
-      <div className={cn("text-xl font-bold text-foreground", valueClass)}>
+    // A figure, as the app's stat strips set them (#81): the value in the
+    // display face over a capitals label, a thin rule to its left.
+    <div className="flex min-w-0 flex-col border-l-2 border-input pl-3">
+      <div
+        className={cn(
+          "font-display text-[1.6rem] font-extrabold leading-none tabular-nums text-foreground",
+          valueClass,
+        )}
+      >
         {value}
       </div>
-      <div className="eyebrow">
-        {label}
-      </div>
+      <div className="eyebrow mt-1.5">{label}</div>
     </div>
   );
 }
@@ -1043,12 +1041,8 @@ function FratResultPanel({
   return (
     <section className="rounded-lg border border-border bg-card">
       <header className="border-b border-border px-5 py-3">
-        <p className="text-xs uppercase tracking-[0.08em] text-muted-foreground">
-          Step 4
-        </p>
-        <h2 className="text-base font-semibold text-foreground">
-          Flight Risk Assessment Tool (FRAT)
-        </h2>
+        <p className="eyebrow">Step 4</p>
+        <h2 className="caption-caps mt-1 text-lg text-foreground">Flight Risk Assessment Tool (FRAT)</h2>
       </header>
 
       <div className="space-y-4 px-5 py-4 text-sm">
@@ -1108,11 +1102,9 @@ function FratResultPanel({
              print "Not required" on the approval line. */
           <div
             role="alert"
-            className="rounded-md border border-status-red/50 bg-status-red/10 px-3 py-3 text-xs"
+            className="notice notice-red text-xs"
           >
-            <p className="font-semibold uppercase tracking-[0.06em] text-status-red">
-              Over company limits — this flight is a no-go
-            </p>
+            <p className="notice-label">Over company limits — this flight is a no-go</p>
             <p className="mt-1 text-foreground">
               {overLimits.length === 1 ? "This factor is" : "These factors are"}{" "}
               scored out of company limits:{" "}
@@ -1132,10 +1124,8 @@ function FratResultPanel({
             role="note"
             className="notice notice-yellow"
           >
-            <span className="font-semibold uppercase tracking-[0.06em]">
-              High risk —{" "}
-            </span>
-            <span className="text-foreground/90">
+            <span className="notice-label">High risk</span>
+            <span>
               Dispatch will review this packet and may hold the release. Feel
               free to call dispatch to discuss before you continue.
             </span>
@@ -1143,7 +1133,7 @@ function FratResultPanel({
         )}
 
         {assessment.mitigations && (
-          <div className="rounded-md border border-border bg-background px-3 py-2 text-xs">
+          <div className="rounded-md border border-border px-3 py-2 text-xs">
             <p className="mb-1 eyebrow">
               Mitigations applied
             </p>
@@ -1166,9 +1156,9 @@ function FratResultPanel({
             {assessment.authorizations.map((a) => (
               <li
                 key={a.id}
-                className="rounded-md border border-status-green/40 bg-status-green/5 px-3 py-2 text-xs"
+                className="notice notice-green text-xs"
               >
-                <span className="font-semibold uppercase tracking-[0.06em] text-status-green">
+                <span className="notice-label">
                   {a.kind === "dispatch_contact"
                     ? "Dispatch contact"
                     : "CP / DO authorization"}
@@ -1208,7 +1198,7 @@ function FratResultPanel({
         </button>
 
         {error && (
-          <p role="alert" className="text-xs text-status-red">
+          <p role="alert" className="field-error">
             {error}
           </p>
         )}
@@ -1254,8 +1244,8 @@ function FratAuthorizationForm({
   };
 
   return (
-    <div className={cn("space-y-2 rounded-md border px-3 py-3 text-xs", band)}>
-      <p className="font-semibold uppercase tracking-[0.06em]">
+    <div className={cn("notice space-y-2 text-xs", band)}>
+      <p className="notice-label">
         {kind === "dispatch_contact"
           ? "Dispatch contact required"
           : "CP / DO authorization required"}
@@ -1343,7 +1333,7 @@ function Field({
           onChange={(e) => onChange(e.target.value)}
           rows={2}
           placeholder={placeholder}
-          className="w-full rounded-md border border-border bg-background px-2 py-1 text-xs text-foreground focus:border-primary focus:outline-none"
+          className="ff-input px-2 py-1 text-xs"
         />
       ) : (
         <input
@@ -1351,7 +1341,7 @@ function Field({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
-          className="w-full rounded-md border border-border bg-background px-2 py-1 text-xs text-foreground focus:border-primary focus:outline-none"
+          className="ff-input px-2 py-1 text-xs"
         />
       )}
     </div>

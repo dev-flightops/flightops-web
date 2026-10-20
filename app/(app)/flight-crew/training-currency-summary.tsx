@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { EmptyState } from "@/components/ff/empty-state";
 import { ApiError } from "@/lib/api/client";
 import { getPilotComplianceProfile } from "@/lib/api/ops";
 import type {
@@ -58,11 +59,10 @@ export async function TrainingCurrencySummary({
 
   if (loadError) {
     return (
-      <div
-        role="alert"
-        className="rounded-lg border border-dashed border-border bg-card/50 px-5 py-6 text-sm text-muted-foreground"
-      >
-        {loadError}
+      <div className="p-5">
+        <div role="alert" className="notice notice-yellow">
+          {loadError}
+        </div>
       </div>
     );
   }
@@ -81,19 +81,21 @@ export async function TrainingCurrencySummary({
 
   if (rows.length === 0) {
     return (
-      <div className="rounded-lg border border-dashed border-border bg-card/50 px-5 py-6 text-sm text-muted-foreground">
+      <EmptyState>
         No currency items tracked yet. Once a Chief Pilot logs your first
         completion, your status badges show up here.
-      </div>
+      </EmptyState>
     );
   }
 
+  // Rows inside the page's Training currency panel (#81): no card of its
+  // own, the alert and the footnote on the panel's rules.
   return (
-    <div className="space-y-3">
+    <div>
       {nonCurrent.length > 0 && (
         <div
           role="alert"
-          className="notice notice-red text-sm"
+          className="notice notice-red m-5 text-sm"
         >
           <span className="font-semibold">
             You are non-current on{" "}
@@ -102,12 +104,12 @@ export async function TrainingCurrencySummary({
           Contact your Chief Pilot before your next flight.
         </div>
       )}
-      <div className="rounded-lg border border-border bg-card/50">
-        <ul className="divide-y divide-border/40">
+      <div className={nonCurrent.length > 0 ? "border-t border-border" : undefined}>
+        <ul className="divide-y divide-border">
           {rows.map(({ cell, item }) => (
             <li
               key={item.id}
-              className="flex items-center justify-between gap-3 px-4 py-2.5 text-xs"
+              className="flex items-center justify-between gap-3 px-5 py-3 text-xs"
             >
               <div className="min-w-0">
                 <div className="font-semibold text-foreground">
@@ -122,7 +124,7 @@ export async function TrainingCurrencySummary({
           ))}
         </ul>
       </div>
-      <p className="text-[0.65rem] text-muted-foreground">
+      <p className="border-t border-border px-5 py-3 text-[0.7rem] text-muted-foreground">
         Have a question about your currency? Contact your Chief Pilot, or
         open your{" "}
         <Link
@@ -153,9 +155,10 @@ function CurrencyBadge({
   ) {
     const count = cell.rolling_count ?? 0;
     const met = count >= item.rolling_threshold;
+    // The count itself in its status colour, not a tinted chip (#81).
     const cls = met
-      ? "rounded bg-status-green/15 px-2 py-0.5 font-mono text-[0.65rem] font-semibold text-status-green"
-      : "rounded bg-status-yellow/15 px-2 py-0.5 font-mono text-[0.65rem] font-semibold text-status-yellow";
+      ? "font-mono text-xs font-bold tabular-nums text-status-green"
+      : "font-mono text-xs font-bold tabular-nums text-status-yellow";
     return (
       <span className={cls}>
         {count}/{item.rolling_threshold}

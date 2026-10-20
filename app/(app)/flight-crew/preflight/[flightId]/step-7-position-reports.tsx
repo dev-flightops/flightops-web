@@ -50,12 +50,8 @@ export function PositionReportsStep({ flightId, flight }: Props) {
   return (
     <section className="rounded-lg border border-border bg-card">
       <header className="border-b border-border px-5 py-3">
-        <p className="text-xs uppercase tracking-[0.08em] text-muted-foreground">
-          Step 7
-        </p>
-        <h2 className="text-base font-semibold text-foreground">
-          Flight Following Position Reports
-        </h2>
+        <p className="eyebrow">Step 7</p>
+        <h2 className="caption-caps mt-1 text-lg text-foreground">Flight Following Position Reports</h2>
       </header>
 
       <div className="space-y-4 px-5 py-4 text-sm">
@@ -87,7 +83,7 @@ export function PositionReportsStep({ flightId, flight }: Props) {
           </ChecklistItem>
         </ul>
 
-        <label className="flex items-start gap-2 rounded-md border border-border bg-card/40 px-3 py-2 text-xs text-foreground">
+        <label className="flex items-start gap-2 rounded-md border border-border px-3 py-2 text-xs text-foreground">
           <input
             type="checkbox"
             checked={acknowledged}
@@ -110,7 +106,7 @@ export function PositionReportsStep({ flightId, flight }: Props) {
         </button>
 
         {error && (
-          <p role="alert" className="text-xs text-status-red">
+          <p role="alert" className="field-error">
             {error}
           </p>
         )}

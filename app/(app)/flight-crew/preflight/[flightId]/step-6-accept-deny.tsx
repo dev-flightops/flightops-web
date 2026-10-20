@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 
+import { buttonOutline } from "@/components/ff/controls";
 import type { PilotAcceptanceResponse } from "@/lib/api/types";
 import { cn } from "@/lib/utils";
 
@@ -108,12 +109,8 @@ export function AcceptOrDenyStep({ flightId, initial }: Props) {
   return (
     <section className="rounded-lg border border-border bg-card">
       <header className="border-b border-border px-5 py-3">
-        <p className="text-xs uppercase tracking-[0.08em] text-muted-foreground">
-          Step 6
-        </p>
-        <h2 className="text-base font-semibold text-foreground">
-          Accept or Deny Release
-        </h2>
+        <p className="eyebrow">Step 6</p>
+        <h2 className="caption-caps mt-1 text-lg text-foreground">Accept or Deny Release</h2>
       </header>
 
       <div className="space-y-4 px-5 py-4 text-sm">
@@ -122,9 +119,7 @@ export function AcceptOrDenyStep({ flightId, initial }: Props) {
             role="status"
             className="notice notice-green"
           >
-            <p className="font-semibold uppercase tracking-[0.06em]">
-              Release accepted
-            </p>
+            <p className="notice-label">Release accepted</p>
             <p className="mt-1 text-foreground">
               Logged at {formatUtcDate(latest!.created_at)}. Dispatcher has
               been notified.
@@ -166,18 +161,14 @@ export function AcceptOrDenyStep({ flightId, initial }: Props) {
             role="alert"
             className="notice notice-red"
           >
-            <p className="font-semibold uppercase tracking-[0.06em]">
-              Release denied
-            </p>
+            <p className="notice-label">Release denied</p>
             <p className="mt-1 text-foreground">
               You denied this release at {formatUtcDate(latest!.created_at)}.
               Dispatcher and Chief Pilot have been notified. Once the issue
               is resolved, re-submit by tapping ACCEPT below.
             </p>
-            <p className="mt-2 whitespace-pre-wrap rounded-md border border-status-red/40 bg-background px-2 py-1.5 text-foreground">
-              <span className="text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-status-red">
-                Your reason
-              </span>
+            <p className="mt-2 whitespace-pre-wrap border-l-2 border-status-red/60 pl-2.5 text-foreground">
+              <span className="eyebrow">Your reason</span>
               <br />
               {latest!.denied_reason}
             </p>
@@ -199,7 +190,7 @@ export function AcceptOrDenyStep({ flightId, initial }: Props) {
               type="button"
               disabled={pending}
               onClick={() => submit(true)}
-              className="rounded-md border-2 border-status-green/40 bg-status-green/10 px-4 py-4 text-base font-bold uppercase tracking-[0.04em] text-status-green transition-colors hover:bg-status-green/15 disabled:opacity-50"
+              className="btn-caps rounded-md bg-status-green-fill px-4 py-4 text-white transition hover:brightness-95 disabled:opacity-50"
             >
               {pending ? "Saving…" : "Accept release"}
             </button>
@@ -207,7 +198,7 @@ export function AcceptOrDenyStep({ flightId, initial }: Props) {
               type="button"
               disabled={pending}
               onClick={() => setMode("deny")}
-              className="rounded-md border-2 border-status-red/40 bg-status-red/10 px-4 py-4 text-base font-bold uppercase tracking-[0.04em] text-status-red transition-colors hover:bg-status-red/15 disabled:opacity-50"
+              className="btn-caps rounded-md border border-status-red/60 px-4 py-4 text-status-red transition-colors hover:border-status-red hover:bg-accent/40 disabled:opacity-50"
             >
               Deny release
             </button>
@@ -229,7 +220,7 @@ export function AcceptOrDenyStep({ flightId, initial }: Props) {
         )}
 
         {error && (
-          <p role="alert" className="text-xs text-status-red">
+          <p role="alert" className="field-error">
             {error}
           </p>
         )}
@@ -254,10 +245,8 @@ function DenyForm({
   const trimmedLen = value.trim().length;
   const canSubmit = trimmedLen >= MIN_DENY_REASON_LENGTH && !disabled;
   return (
-    <div className="space-y-2 rounded-md border border-status-red/40 bg-status-red/5 px-3 py-3 text-xs">
-      <p className="font-semibold uppercase tracking-[0.06em] text-status-red">
-        Reason for denial
-      </p>
+    <div className="notice notice-red space-y-2 text-xs">
+      <p className="notice-label">Reason for denial</p>
       <p className="text-foreground">
         Required ≥ {MIN_DENY_REASON_LENGTH} characters. Dispatcher + Chief
         Pilot see this verbatim. Be specific about what needs to change
@@ -269,7 +258,7 @@ function DenyForm({
         rows={3}
         maxLength={2000}
         placeholder="Open MEL on N207GE — need MX sign-off before I'll accept."
-        className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-xs text-foreground focus:border-status-red focus:outline-none"
+        className="ff-input px-2 py-1.5 text-xs focus:border-status-red"
       />
       <div className="flex items-center justify-between text-[0.65rem] text-muted-foreground">
         <span>
@@ -280,7 +269,7 @@ function DenyForm({
             type="button"
             onClick={onCancel}
             disabled={disabled}
-            className="rounded-md border border-border bg-card px-3 py-1 text-xs font-semibold text-foreground hover:bg-card/80 disabled:opacity-50"
+            className={cn(buttonOutline, "px-3 py-1 text-[0.68rem]")}
           >
             Cancel
           </button>
@@ -289,7 +278,7 @@ function DenyForm({
             disabled={!canSubmit}
             onClick={onSubmit}
             className={cn(
-              "rounded-md border-2 border-status-red/40 bg-status-red/15 px-3 py-1 text-xs font-bold uppercase tracking-[0.04em] text-status-red transition-colors hover:bg-status-red/15",
+              "btn-caps rounded-md bg-status-red-fill px-3 py-1 text-[0.68rem] text-white transition hover:brightness-95",
               !canSubmit && "opacity-50",
             )}
           >

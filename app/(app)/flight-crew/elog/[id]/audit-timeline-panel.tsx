@@ -33,17 +33,17 @@ export async function AuditTimelinePanel({ logId }: { logId: string }) {
 
   return (
     <details className="mt-4 rounded-lg border border-border bg-card">
-      <summary className="cursor-pointer list-none px-4 py-2 text-[0.65rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground hover:text-foreground">
+      <summary className="panel-title cursor-pointer list-none px-5 py-3 hover:text-foreground">
         <span className="select-none">
           History
           {!loadError && events.length > 0 && (
-            <span className="ml-2 rounded-full bg-muted/60 px-1.5 py-0.5 font-mono text-foreground">
+            <span className="ml-2 font-mono text-muted-foreground">
               {events.length}
             </span>
           )}
         </span>
       </summary>
-      <div className="border-t border-border/40 px-4 py-3">
+      <div className="border-t border-border px-5 py-4">
         {loadError ? (
           <p role="alert" className="text-xs text-muted-foreground">
             {loadError}
@@ -96,7 +96,7 @@ const KIND_LABELS: Record<AuditTimelineKind, string> = {
 function KindBadge({ kind }: { kind: AuditTimelineKind }) {
   const tone =
     kind === "submit"
-      ? "bg-status-green/15 text-status-green"
+      ? "bg-status-green"
       : kind === "reopen"
         ? "bg-status-yellow"
         : kind === "delete"
@@ -106,13 +106,11 @@ function KindBadge({ kind }: { kind: AuditTimelineKind }) {
             : kind === "cp_review_declined"
               ? "bg-status-yellow"
               : "bg-status-blue";
-  // Solid dot (was /15 tint — nearly invisible on the dark card).
-  // A small ring in the tone color keeps it visible against pale
-  // backgrounds too without needing per-theme adjustment.
+  // A solid square in the event's colour (#81), as the app marks a
+  // status; submit's was still a /15 tint, nearly invisible.
   return (
     <span
-      className={`mt-1.5 inline-block w-2 shrink-0 rounded-full ring-1 ring-inset ring-white/20 ${tone}`}
-      style={{ height: "0.5rem" }}
+      className={`mt-1.5 inline-block h-1.5 w-1.5 shrink-0 ${tone}`}
       aria-hidden="true"
     />
   );

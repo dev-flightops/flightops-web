@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { linkCaps } from "@/components/ff/controls";
 import { ApiError } from "@/lib/api/client";
 import {
   getCurrentDuty,
@@ -22,6 +23,7 @@ import { listFuelOrders, listSupplierBases } from "@/lib/api/ground";
 import { zoneFor } from "@/lib/format/local-time";
 import { fuelTypeForAircraft, supplierOptionsFor } from "@/lib/fuel";
 import { flightStops } from "@/lib/route";
+import { cn } from "@/lib/utils";
 import type {
   FratBlockEligibilityResponse,
   FratPrefillResponse,
@@ -233,7 +235,6 @@ export default async function PreflightPage({
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
-      <BackLink />
       <PreflightShell
         flight={flight}
         progress={progress}
@@ -253,11 +254,8 @@ export default async function PreflightPage({
 
 function BackLink() {
   return (
-    <Link
-      href="/flight-crew"
-      className="mb-4 inline-block text-sm text-muted-foreground hover:text-foreground hover:underline"
-    >
-      ← Flight Crew
+    <Link href="/flight-crew" className={cn(linkCaps, "mb-4 text-muted-foreground hover:text-foreground")}>
+      <span aria-hidden>‹</span> Flight Crew
     </Link>
   );
 }

@@ -100,10 +100,12 @@ const REDESIGNED = [
   "app/(app)/compliance/",
   "app/(app)/ramp-ops/",
   "app/(app)/eod/",
-  "app/(app)/flight-crew/history/",
   "components/dispatch/",
   "components/weather/",
   "components/village-wx/",
+  // Wave B2, Flight crew (#81).
+  "app/(app)/flight-crew/",
+  "components/duty/",
 ];
 
 describe("theme guards", () => {

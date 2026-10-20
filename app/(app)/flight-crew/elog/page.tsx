@@ -1,3 +1,6 @@
+import { EmptyState } from "@/components/ff/empty-state";
+import { PageHeader } from "@/components/ff/page-header";
+import { Panel } from "@/components/ff/panel";
 import { ApiError } from "@/lib/api/client";
 import { listAircraft, listFlightLogs, listFlights } from "@/lib/api/ops";
 import type {
@@ -72,33 +75,25 @@ export default async function FlightLogPage() {
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
-      <header className="mb-6">
-        <h1 className="page-title">
-          Electronic Flight Log
-        </h1>
-        <p className="mt-1 text-sm text-muted-foreground">{todayLong()}</p>
-      </header>
+      <PageHeader title="Electronic Flight Log" description={todayLong()} />
 
       {loadError ? (
-        <div
-          role="alert"
-          className="rounded-md border border-border bg-card px-4 py-6 text-center text-sm text-muted-foreground"
-        >
+        <div role="alert" className="notice notice-yellow">
           {loadError}
         </div>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-6">
           <ActiveDraftsPanel drafts={drafts} />
           {aircraft.length === 0 ? (
-            <div className="rounded-md border border-dashed border-border bg-card/40 px-4 py-10 text-center">
-              <p className="text-sm text-muted-foreground">
+            <Panel title="New Flight Log" flush>
+              <EmptyState>
                 No active aircraft on this tenant.
-              </p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                Activate one on the Maintenance page before starting a
-                flight log.
-              </p>
-            </div>
+                <span className="block pt-1 text-xs">
+                  Activate one on the Maintenance page before starting a
+                  flight log.
+                </span>
+              </EmptyState>
+            </Panel>
           ) : (
             <NewFlightLogForm
               aircraft={aircraft}

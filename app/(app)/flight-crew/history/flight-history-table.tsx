@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { linkCaps } from "@/components/ff/controls";
 import type { FlightLogResponse } from "@/lib/api/types";
 
 import { FLIGHT_TYPE_LABELS } from "../elog/[id]/flight-type-labels";
@@ -24,7 +25,7 @@ export function FlightHistoryTable({
 }) {
   if (logs.length === 0) {
     return (
-      <div className="rounded-md border border-dashed border-border bg-card/40 px-4 py-10 text-center">
+      <div className="rounded-lg border border-border bg-card px-5 py-8 text-center">
         <p className="text-sm text-muted-foreground">
           No flight logs in {fromDate} → {toDate}.
         </p>
@@ -43,7 +44,7 @@ export function FlightHistoryTable({
   }
 
   return (
-    <div className="overflow-x-auto rounded-md border border-border bg-card">
+    <div className="overflow-x-auto rounded-lg border border-border bg-card">
       <table className="w-full text-left text-xs">
         <thead className="ff-thead">
           <tr>
@@ -60,7 +61,7 @@ export function FlightHistoryTable({
           {logs.map((log) => (
             <tr
               key={log.id}
-              className="border-b border-border/60 last:border-b-0"
+              className="border-b border-border transition-colors last:border-b-0 hover:bg-accent/40"
             >
               <td className="px-3 py-2 font-mono">{log.flight_date}</td>
               <td className="px-3 py-2 font-mono">{log.log_number}</td>
@@ -75,17 +76,14 @@ export function FlightHistoryTable({
                 <StatusBadges log={log} />
               </td>
               <td className="px-3 py-2 text-right">
-                <Link
-                  href={`/flight-crew/elog/${log.id}`}
-                  className="text-primary hover:underline"
-                >
-                  Open →
+                <Link href={`/flight-crew/elog/${log.id}`} className={linkCaps}>
+                  Open <span aria-hidden>›</span>
                 </Link>
               </td>
             </tr>
           ))}
         </tbody>
-        <tfoot className="border-t-2 border-border bg-card/40 text-[0.7rem]">
+        <tfoot className="border-t border-border bg-muted/60 text-[0.7rem]">
           <tr>
             <td colSpan={5} className="px-3 py-2 text-right text-muted-foreground">
               {logs.length} log{logs.length === 1 ? "" : "s"}

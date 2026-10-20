@@ -140,7 +140,7 @@ export function CurrencyCountersField({
       : "Approaches, holds, and IFR time feed Spec 5 IFR currency. Leave blank if not flown / not yet entered.");
 
   return (
-    <div className="rounded-lg border border-border bg-card p-4">
+    <div className="rounded-md border border-border p-4">
       <div className="mb-2 flex items-baseline justify-between">
         <div className="eyebrow">
           {heading}
@@ -153,11 +153,13 @@ export function CurrencyCountersField({
       </div>
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
         {BASE_FIELDS.map((f) => (
-          <label key={f.key} className="block">
+          // Labels wrap to different heights in six columns; the field
+          // sits at the foot of its cell so the inputs line up (#81).
+          <label key={f.key} className="flex flex-col justify-end">
             <div className="eyebrow">
               {f.label}
               {f.hint ? (
-                <span className="ml-1 font-normal text-muted-foreground">
+                <span className="ml-1 font-normal normal-case tracking-normal text-muted-foreground">
                   ({f.hint})
                 </span>
               ) : null}
@@ -174,7 +176,7 @@ export function CurrencyCountersField({
                 setValues((v) => ({ ...v, [f.key]: e.target.value }))
               }
               onBlur={() => commit(f.key)}
-              className="mt-1 w-full rounded-md border border-border bg-background px-2 py-1.5 text-center font-mono text-sm tabular-nums text-foreground placeholder:text-muted-foreground disabled:opacity-60"
+              className="ff-input mt-1 px-2 py-1.5 text-center font-mono text-sm tabular-nums"
             />
           </label>
         ))}

@@ -31,7 +31,7 @@ export function DutyHistoryTable({
 }) {
   if (periods.length === 0) {
     return (
-      <div className="rounded-md border border-dashed border-border bg-card/40 px-4 py-10 text-center">
+      <div className="rounded-lg border border-border bg-card px-5 py-8 text-center">
         <p className="text-sm text-muted-foreground">No duty periods on file.</p>
         <p className="mt-2 text-xs text-muted-foreground">
           Clock In from the Flight Crew page once you start your day.
@@ -41,7 +41,7 @@ export function DutyHistoryTable({
   }
 
   return (
-    <div className="overflow-x-auto rounded-md border border-border bg-card">
+    <div className="overflow-x-auto rounded-lg border border-border bg-card">
       <table className="w-full text-left text-xs">
         <thead className="ff-thead">
           <tr>
@@ -57,7 +57,7 @@ export function DutyHistoryTable({
           {periods.map((p) => (
             <tr
               key={p.id}
-              className="border-b border-border/60 last:border-b-0"
+              className="border-b border-border transition-colors last:border-b-0 hover:bg-accent/40"
             >
               <td className="px-3 py-2 font-mono">{dateOnly(p.clock_in_at)}</td>
               <td className="px-3 py-2 font-mono">

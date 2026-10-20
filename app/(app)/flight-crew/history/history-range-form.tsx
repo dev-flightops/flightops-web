@@ -33,7 +33,7 @@ export function HistoryRangeForm({
           name="from"
           type="date"
           defaultValue={fromDate}
-          className="rounded-md border border-border bg-background px-3 py-1.5 text-xs text-foreground focus:border-primary focus:outline-none"
+          className="ff-input px-3 py-1.5 text-xs w-auto"
         />
       </div>
       <div>
@@ -48,7 +48,7 @@ export function HistoryRangeForm({
           name="to"
           type="date"
           defaultValue={toDate}
-          className="rounded-md border border-border bg-background px-3 py-1.5 text-xs text-foreground focus:border-primary focus:outline-none"
+          className="ff-input px-3 py-1.5 text-xs w-auto"
         />
       </div>
       <button

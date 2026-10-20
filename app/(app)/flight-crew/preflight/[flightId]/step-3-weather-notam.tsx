@@ -3,11 +3,11 @@
 import { useMemo, useState, useTransition } from "react";
 
 import type {
-  FlightCategory,
   FlightDetail,
   WeatherBatchResponse,
   WeatherReportResponse,
 } from "@/lib/api/types";
+import { FlightCategoryBadge } from "@/components/weather/flight-category-badge";
 import { cn } from "@/lib/utils";
 import { flightStops } from "@/lib/route";
 
@@ -114,12 +114,8 @@ export function WeatherAndNotamStep({ flightId, flight, weather }: Props) {
   return (
     <section className="rounded-lg border border-border bg-card">
       <header className="border-b border-border px-5 py-3">
-        <p className="text-xs uppercase tracking-[0.08em] text-muted-foreground">
-          Step 3
-        </p>
-        <h2 className="text-base font-semibold text-foreground">
-          Weather and NOTAM Review
-        </h2>
+        <p className="eyebrow">Step 3</p>
+        <h2 className="caption-caps mt-1 text-lg text-foreground">Weather and NOTAM Review</h2>
       </header>
 
       <div className="space-y-4 px-5 py-4 text-sm">
@@ -152,10 +148,8 @@ export function WeatherAndNotamStep({ flightId, flight, weather }: Props) {
               <li
                 key={icao}
                 className={cn(
-                  "rounded-lg border bg-background px-4 py-3 text-xs transition-colors",
-                  isAcked
-                    ? "border-status-green/40 bg-status-green/5"
-                    : "border-border",
+                  "rounded-md border border-border border-l-[3px] px-4 py-3 text-xs transition-colors",
+                  isAcked ? "border-l-status-green" : "border-l-input",
                 )}
               >
                 <div className="mb-2 flex flex-wrap items-baseline justify-between gap-2">
@@ -164,7 +158,7 @@ export function WeatherAndNotamStep({ flightId, flight, weather }: Props) {
                       {icao}
                     </span>
                     {metar?.flight_category && (
-                      <FlightCategoryPill category={metar.flight_category} />
+                      <FlightCategoryBadge category={metar.flight_category} />
                     )}
                     {metar?.alternate_required && (
                       <span
@@ -237,7 +231,7 @@ export function WeatherAndNotamStep({ flightId, flight, weather }: Props) {
         </button>
 
         {error && (
-          <p role="alert" className="text-xs text-status-red">
+          <p role="alert" className="field-error">
             {error}
           </p>
         )}
@@ -263,7 +257,7 @@ function MetarSummary({ metar }: { metar: WeatherReportResponse }) {
         />
       </div>
       <details className="rounded border border-border/60 bg-muted/[0.05] px-2 py-1">
-        <summary className="cursor-pointer text-[0.65rem] font-semibold uppercase tracking-wider text-muted-foreground">
+        <summary className="eyebrow cursor-pointer text-[0.65rem] hover:text-foreground">
           Raw METAR
         </summary>
         <p className="mt-1 whitespace-pre-wrap break-words font-mono text-[0.7rem] text-foreground">
@@ -277,7 +271,7 @@ function MetarSummary({ metar }: { metar: WeatherReportResponse }) {
 function TafBlock({ raw }: { raw: string }) {
   return (
     <details className="mt-2 rounded border border-border/60 bg-muted/[0.05] px-2 py-1">
-      <summary className="cursor-pointer text-[0.65rem] font-semibold uppercase tracking-wider text-muted-foreground">
+      <summary className="eyebrow cursor-pointer text-[0.65rem] hover:text-foreground">
         Raw TAF
       </summary>
       <p className="mt-1 whitespace-pre-wrap break-words font-mono text-[0.7rem] text-foreground">
@@ -289,10 +283,7 @@ function TafBlock({ raw }: { raw: string }) {
 
 function WeatherError({ kind, detail }: { kind: string; detail: string }) {
   return (
-    <div
-      role="alert"
-      className="mt-2 rounded border border-status-yellow/40 bg-status-yellow/10 px-2 py-1 text-[0.65rem] text-status-yellow"
-    >
+    <div role="alert" className="notice notice-yellow mt-2 text-[0.7rem]">
       {kind} unavailable — {detail}
     </div>
   );
@@ -301,32 +292,9 @@ function WeatherError({ kind, detail }: { kind: string; detail: string }) {
 function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <div className="text-[0.6rem] uppercase tracking-wider text-muted-foreground">
-        {label}
-      </div>
+      <div className="eyebrow text-[0.6rem]">{label}</div>
       <div className="font-mono text-foreground">{value}</div>
     </div>
-  );
-}
-
-function FlightCategoryPill({ category }: { category: FlightCategory }) {
-  const cls =
-    category === "VFR"
-      ? "border-status-green/40 bg-status-green/10 text-status-green"
-      : category === "MVFR"
-        ? "border-status-blue/40 bg-status-blue/10 text-status-blue"
-        : category === "IFR"
-          ? "border-status-yellow/40 bg-status-yellow/10 text-status-yellow"
-          : "border-status-red/40 bg-status-red/10 text-status-red";
-  return (
-    <span
-      className={cn(
-        "rounded-md border px-1.5 py-0.5 text-[0.6rem] font-semibold uppercase tracking-[0.06em]",
-        cls,
-      )}
-    >
-      {category}
-    </span>
   );
 }
 

@@ -46,29 +46,29 @@ export async function FlightInfoTab({
 
   const readOnly = log.status !== "draft" || !canEdit;
 
+  // Read-only facts as label and value, not as boxes that look like
+  // inputs (#81); the one thing to set, the SIC, under its own rule.
   return (
-    <div className="space-y-3">
-      <h2 className="eyebrow">
-        Flight Info
-      </h2>
+    <div className="space-y-5">
+      <h2 className="panel-title">Flight Info</h2>
 
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+      <div className="grid grid-cols-2 gap-x-6 gap-y-4 md:grid-cols-4">
         <ReadOnlyField label="Flight Number" value={log.flight_number ?? "—"} />
         <ReadOnlyField label="Log Number" value={log.log_number} mono />
         <ReadOnlyField label="Flight Type" value={FLIGHT_TYPE_LABELS[log.flight_type]} />
         <ReadOnlyField label="Date" value={log.flight_date} />
       </div>
 
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+      <div className="grid grid-cols-2 gap-x-6 gap-y-4 md:grid-cols-4">
         <ReadOnlyField label="Tail" value={log.aircraft.tail_number} mono />
         <ReadOnlyField label="Model" value={log.aircraft.model ?? "—"} />
         <ReadOnlyField label="Seats" value={String(log.aircraft.seats)} />
         <ReadOnlyField label="Created By (PIC)" value={log.created_by.full_name} />
       </div>
 
-      <div className="rounded-md border border-border bg-card/40 p-3">
+      <div className="border-t border-border pt-5">
         {rosterError ? (
-          <p role="alert" className="text-[0.7rem] text-status-yellow">
+          <p role="alert" className="notice notice-yellow">
             {rosterError}
           </p>
         ) : (
@@ -83,13 +83,13 @@ export async function FlightInfoTab({
       </div>
 
       {log.is_manual_entry && (
-        <p className="rounded-md border border-status-yellow/40 bg-status-yellow/[0.05] px-3 py-2 text-[0.7rem] text-status-yellow">
+        <p className="notice notice-yellow">
           This log was started without a dispatch packet. The MANUAL ENTRY
           badge is permanent and will appear in the flight history table.
         </p>
       )}
 
-      <p className="rounded-md border border-dashed border-border bg-card/40 px-3 py-2 text-[0.7rem] text-muted-foreground">
+      <p className="notice notice-gray text-muted-foreground">
         Editable Tab-1 fields (Hobbs start/end, total block/flight time, log
         page number) ship as a follow-up — they need their backend columns
         first.
@@ -108,17 +108,9 @@ function ReadOnlyField({
   mono?: boolean;
 }) {
   return (
-    <div>
-      <div className="mb-1 eyebrow">
-        {label}
-      </div>
-      <div
-        className={
-          mono
-            ? "rounded-md border border-border bg-background px-3 py-2 font-mono text-xs"
-            : "rounded-md border border-border bg-background px-3 py-2 text-xs"
-        }
-      >
+    <div className="min-w-0">
+      <div className="eyebrow mb-1">{label}</div>
+      <div className={mono ? "truncate font-mono text-sm text-foreground" : "truncate text-sm text-foreground"}>
         {value}
       </div>
     </div>

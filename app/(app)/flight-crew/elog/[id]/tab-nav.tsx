@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { tab, tabList } from "@/components/ff/controls";
 import { cn } from "@/lib/utils";
 
 import { TAB_KEYS, TAB_LABELS, type TabKey } from "./tabs";
@@ -21,12 +22,10 @@ export function TabNav({
    *  Today every tab lives on the same page with `?tab=…`. */
   logId: string;
 }) {
+  // The page's own tabs in the department nav's idiom (#81): words, the
+  // current one underlined in the brand's text tone.
   return (
-    <div
-      role="tablist"
-      aria-label="Flight log sections"
-      className="flex flex-wrap gap-1 overflow-x-auto border-b border-border pb-1"
-    >
+    <div role="tablist" aria-label="Flight log sections" className={tabList}>
       {TAB_KEYS.map((key, idx) => {
         const isActive = key === activeTab;
         const href = key === "info" ? `?` : `?tab=${key}`;
@@ -37,14 +36,13 @@ export function TabNav({
             role="tab"
             aria-selected={isActive}
             replace
-            className={cn(
-              "rounded-t-md border-b-2 px-3 py-1.5 text-xs font-semibold transition-colors whitespace-nowrap",
-              isActive
-                ? "border-primary text-primary"
-                : "border-transparent text-muted-foreground hover:text-foreground",
-            )}
+            className={cn(tab(isActive), "whitespace-nowrap")}
           >
-            {idx + 1}. {TAB_LABELS[key]}
+            {/* The tab is a flex box, which drops the space; the margin
+                draws it and the space keeps the name "1. Flight Info". */}
+            <span className="mr-1.5 font-mono text-[0.7rem] text-muted-foreground">{idx + 1}.</span>
+            {" "}
+            {TAB_LABELS[key]}
           </Link>
         );
       })}

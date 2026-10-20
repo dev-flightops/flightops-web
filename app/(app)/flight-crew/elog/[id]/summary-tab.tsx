@@ -1,3 +1,4 @@
+import { Stat, StatStrip } from "@/components/ff/stat-strip";
 import type { FlightLogLeg, FlightLogResponse } from "@/lib/api/types";
 
 import { CurrencyCountersField } from "./currency-counters-field";
@@ -39,7 +40,7 @@ export function SummaryTab({
       </h2>
 
       {summary.legCount === 0 ? (
-        <div className="rounded-md border border-dashed border-border bg-card/40 px-4 py-6 text-center text-xs text-muted-foreground">
+        <p className="py-2 text-sm text-muted-foreground">
           No legs entered yet.
           {!readOnly && (
             <>
@@ -48,10 +49,10 @@ export function SummaryTab({
               to see derived totals.
             </>
           )}
-        </div>
+        </p>
       ) : (
         <>
-          <div className="grid grid-cols-3 gap-3 rounded-lg border border-border bg-card/60 p-4 text-center">
+          <StatStrip label="Flight totals" className="mb-0">
             <BigTile
               label="Total Flight Time"
               value={summary.totalFlightHours}
@@ -67,9 +68,9 @@ export function SummaryTab({
               value={summary.totalHobbsHours}
               tone="yellow"
             />
-          </div>
+          </StatStrip>
 
-          <div className="grid grid-cols-3 gap-3 rounded-lg border border-border bg-card p-4 text-center sm:grid-cols-6">
+          <StatStrip label="Counts" className="mb-0 border-t border-border pt-4">
             <Counter label="Legs" value={summary.legCount} />
             <Counter label="Landings" value={summary.totalLandings} />
             <Counter
@@ -82,7 +83,7 @@ export function SummaryTab({
               value={formatGallons(summary.totalFuelGallons)}
               dim={summary.totalFuelGallons === null}
             />
-          </div>
+          </StatStrip>
 
           <p className="text-[0.65rem] text-muted-foreground">
             Tiles are derived from Tab 2 (Legs).
@@ -127,6 +128,8 @@ export function SummaryTab({
   );
 }
 
+// The totals as figures (#81), as the Flight Following stats show
+// theirs: the number in the display face, its colour on the rule.
 function BigTile({
   label,
   value,
@@ -136,25 +139,12 @@ function BigTile({
   value: number | null;
   tone: "green" | "blue" | "yellow";
 }) {
-  const toneCls =
-    tone === "green"
-      ? "text-status-green"
-      : tone === "blue"
-        ? "text-status-blue"
-        : "text-status-yellow";
   return (
-    <div>
-      <div className="eyebrow">
-        {label}
-      </div>
-      <div
-        className={`mt-1 font-mono text-2xl font-extrabold tabular-nums ${
-          value === null ? "text-muted-foreground" : toneCls
-        }`}
-      >
-        {value === null ? "—" : value.toFixed(1)}
-      </div>
-    </div>
+    <Stat
+      label={label}
+      value={value === null ? "—" : value.toFixed(1)}
+      tone={value === null ? "neutral" : tone}
+    />
   );
 }
 
@@ -167,20 +157,7 @@ function Counter({
   value: number | string;
   dim?: boolean;
 }) {
-  return (
-    <div>
-      <div className="eyebrow">
-        {label}
-      </div>
-      <div
-        className={`mt-1 font-mono text-base font-bold tabular-nums ${
-          dim ? "text-muted-foreground" : "text-foreground"
-        }`}
-      >
-        {value}
-      </div>
-    </div>
-  );
+  return <Stat label={label} value={value} tone={dim ? "neutral" : "gray"} />;
 }
 
 function formatGallons(g: number | null): string {
