@@ -48,7 +48,7 @@ export function StationRunwayForm({ station }: { station: StationListItem }) {
 
   const input = "ff-input w-full";
   const label =
-    "mb-1 block text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground";
+    "field-label";
   return (
     <section
       aria-labelledby={`${ids.name}-heading`}

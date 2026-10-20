@@ -32,7 +32,7 @@ export function EnrollMemberToggle({
       {open && (
         <div className="mb-5 rounded-lg border border-border bg-card p-5">
           <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+            <h2 className="eyebrow">
               {buttonLabel.replace(/^\+\s*/, "")}
             </h2>
           </div>

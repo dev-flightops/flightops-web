@@ -82,7 +82,7 @@ export function EnrollMemberForm({
               onChange={(e) => setCustomerQuery(e.target.value)}
               placeholder="Search by name, company, or email"
               autoComplete="off"
-              className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+              className="ff-input px-3 py-2 text-sm"
             />
             {filtered.length > 0 && (
               <ul className="absolute left-0 right-0 top-full z-10 mt-1 max-h-64 overflow-auto rounded-md border border-border bg-card shadow-lg">
@@ -126,7 +126,7 @@ export function EnrollMemberForm({
             name="enrolled_station"
             maxLength={10}
             placeholder="e.g. PANC"
-            className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm uppercase"
+            className="ff-input px-3 py-2 text-sm uppercase"
           />
         </label>
       </div>
@@ -139,7 +139,7 @@ export function EnrollMemberForm({
           name="notes"
           rows={2}
           maxLength={500}
-          className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+          className="ff-input px-3 py-2 text-sm"
         />
       </label>
 

@@ -1,4 +1,7 @@
 import Link from "next/link";
+
+import { linkCaps } from "@/components/ff/controls";
+import { cn } from "@/lib/utils";
 import { notFound } from "next/navigation";
 
 import { auth } from "@/auth";
@@ -88,9 +91,9 @@ export default async function FlightManifestPage({
       <div className="mb-4 text-xs">
         <Link
           href="/manifest"
-          className="text-muted-foreground hover:text-foreground"
+          className={cn(linkCaps, "text-muted-foreground hover:text-foreground")}
         >
-          ← Flight Schedule
+          <span aria-hidden>‹</span> Flight Schedule
         </Link>
       </div>
 
@@ -156,12 +159,10 @@ function FlightHeader({
   lock: React.ReactNode;
 }) {
   return (
-    <header className="mb-6 flex flex-col gap-3 border-b border-border pb-4 sm:flex-row sm:items-end sm:justify-between">
+    <header className="mb-6 flex flex-col gap-4 border-b border-border pb-5 sm:flex-row sm:items-end sm:justify-between">
       <div>
-        <div className="text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
-          Passenger Manifest
-        </div>
-        <h1 className="mt-0.5 page-title">
+        <p className="eyebrow mb-1">Passenger Manifest</p>
+        <h1 className="page-title">
           {flight.flight_number}
         </h1>
         <div className="mt-1 font-mono text-sm text-muted-foreground">
@@ -189,7 +190,7 @@ function FlightHeader({
 
 function TotalsStrip({ totals }: { totals: ManifestDetailResponse["totals"] }) {
   return (
-    <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-6">
+    <div className="mb-5 grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-4 lg:grid-cols-6">
       <Stat value={totals.pax_count} label="Passengers" />
       <Stat value={totals.revenue_pax} label="Revenue" />
       <Stat value={totals.crew_count} label="Crew" />
@@ -449,8 +450,8 @@ function Term({
 }) {
   return (
     <div className="flex flex-col">
-      <span className="text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">{label}</span>
-      <span className={`tabular-nums ${emphasis ? "text-xl font-bold" : "text-base font-semibold"} ${valueClass}`}>
+      <span className="eyebrow">{label}</span>
+      <span className={`tabular-nums ${emphasis ? "font-display text-xl font-extrabold" : "text-base font-semibold"} ${valueClass}`}>
         {value}
       </span>
       {note ? <span className="text-[0.6875rem] text-muted-foreground">{note}</span> : null}
@@ -472,18 +473,18 @@ function Stat({
   return (
     <div
       className={
-        "rounded-lg border bg-card px-3 py-2.5 " +
-        (emphasis ? "border-primary/40 bg-primary/5" : "border-border")
+        "flex min-w-0 flex-col border-l-2 py-1 pl-3 " +
+        (emphasis ? "border-primary" : "border-input")
       }
     >
       <div
         className={
-          "text-lg font-bold " + (valueClass || "text-foreground")
+          "font-display text-xl font-extrabold leading-none tabular-nums " + (valueClass || "text-foreground")
         }
       >
         {value}
       </div>
-      <div className="mt-0.5 text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
+      <div className="eyebrow mt-1.5">
         {label}
       </div>
     </div>
@@ -536,17 +537,17 @@ function EmptyState({ flightId }: { flightId: string }) {
 
 function FlightStatusBadge({ status }: { status: FlightStatus }) {
   const map: Record<FlightStatus, [string, string]> = {
-    scheduled: ["border-border bg-muted text-muted-foreground", "Scheduled"],
+    scheduled: ["text-muted-foreground", "Scheduled"],
     released: [
-      "border-status-blue/40 bg-status-blue/10 text-status-blue",
+      "text-status-blue",
       "Released",
     ],
     completed: [
-      "border-status-green/40 bg-status-green/10 text-status-green",
+      "text-status-green",
       "Completed",
     ],
     cancelled: [
-      "border-status-yellow/40 bg-status-yellow/10 text-status-yellow",
+      "text-status-yellow",
       "Cancelled",
     ],
   };
@@ -554,7 +555,7 @@ function FlightStatusBadge({ status }: { status: FlightStatus }) {
   return (
     <span
       className={
-        "rounded border px-2 py-0.5 text-xs font-semibold uppercase tracking-wider " +
+        "status-mark text-xs " +
         cls
       }
     >

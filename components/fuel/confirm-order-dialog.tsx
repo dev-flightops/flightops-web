@@ -79,7 +79,7 @@ export function ConfirmOrderDialog({
                 required
                 placeholder="Name of supplier rep"
                 maxLength={200}
-                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
+                className="ff-input px-3 py-2 text-sm"
               />
             </div>
 
@@ -96,7 +96,7 @@ export function ConfirmOrderDialog({
                 rows={3}
                 maxLength={2000}
                 placeholder="ETA, ramp position, etc."
-                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
+                className="ff-input px-3 py-2 text-sm"
               />
             </div>
 

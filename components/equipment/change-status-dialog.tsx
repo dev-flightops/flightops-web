@@ -96,7 +96,7 @@ export function ChangeStatusDialog({
                 id="status"
                 name="status"
                 defaultValue={currentStatus}
-                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
+                className="ff-input px-3 py-2 text-sm"
               >
                 {STATUSES.map((s) => (
                   <option key={s.value} value={s.value}>
@@ -118,7 +118,7 @@ export function ChangeStatusDialog({
                 name="status_note"
                 rows={3}
                 placeholder="e.g. hydraulic pump failure; parts on order"
-                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
+                className="ff-input px-3 py-2 text-sm"
               />
             </div>
 

@@ -94,7 +94,7 @@ export function NewCharterForm({
               onChange={(e) => setCustomerQuery(e.target.value)}
               placeholder="Search by name, company, or email"
               autoComplete="off"
-              className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+              className="ff-input px-3 py-2 text-sm"
             />
             {filtered.length > 0 && (
               <ul className="absolute left-0 right-0 top-full z-10 mt-1 max-h-64 overflow-auto rounded-md border border-border bg-card shadow-lg">
@@ -146,7 +146,7 @@ export function NewCharterForm({
             title="An airport code like PANC or A61"
             maxLength={4}
             placeholder="e.g. PANC"
-            className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm uppercase"
+            className="ff-input px-3 py-2 text-sm uppercase"
           />
         </label>
 
@@ -162,7 +162,7 @@ export function NewCharterForm({
             title="An airport code like PANC or A61"
             maxLength={4}
             placeholder="e.g. PABE"
-            className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm uppercase"
+            className="ff-input px-3 py-2 text-sm uppercase"
           />
         </label>
 
@@ -175,7 +175,7 @@ export function NewCharterForm({
             name="aircraft_type_requested"
             maxLength={100}
             placeholder="e.g. Cessna 208B Caravan"
-            className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+            className="ff-input px-3 py-2 text-sm"
           />
         </label>
       </div>
@@ -190,7 +190,7 @@ export function NewCharterForm({
             name="requested_date"
             required
             defaultValue={todayIso()}
-            className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+            className="ff-input px-3 py-2 text-sm"
           />
         </label>
 
@@ -203,7 +203,7 @@ export function NewCharterForm({
             name="requested_time"
             maxLength={20}
             placeholder="HH:MM or TBD"
-            className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+            className="ff-input px-3 py-2 text-sm"
           />
         </label>
 
@@ -214,7 +214,7 @@ export function NewCharterForm({
           <input
             type="date"
             name="return_date"
-            className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+            className="ff-input px-3 py-2 text-sm"
           />
         </label>
 
@@ -227,7 +227,7 @@ export function NewCharterForm({
             name="pax_count"
             min={1}
             defaultValue={1}
-            className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+            className="ff-input px-3 py-2 text-sm"
           />
         </label>
       </div>
@@ -240,7 +240,7 @@ export function NewCharterForm({
           name="notes"
           rows={2}
           maxLength={1000}
-          className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+          className="ff-input px-3 py-2 text-sm"
         />
       </label>
 

@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import { linkCaps } from "@/components/ff/controls";
+import { cn } from "@/lib/utils";
 import { loadZoneTable } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
 import { listWaiting, MAIL_CLASS_LABELS, mailDescription, type WaitingListResponse } from "@/lib/api/manifest";
@@ -45,11 +47,11 @@ export default async function WaitingMailFreightPage({
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 py-8">
       <div className="mb-4 text-xs">
-        <Link href="/manifest" className="text-muted-foreground hover:text-foreground">
-          ← Flight Schedule
+        <Link href="/manifest" className={cn(linkCaps, "text-muted-foreground hover:text-foreground")}>
+          <span aria-hidden>‹</span> Flight Schedule
         </Link>
       </div>
-      <header className="mb-5">
+      <header className="mb-6 border-b border-border pb-5">
         <h1 className="page-title">Mail &amp; Freight Waiting</h1>
         <p className="mt-1 max-w-3xl text-sm text-muted-foreground">
           {`What ground has on hand at each station before it is on a flight. Each flight’s manifest shows what is waiting for its route and suggests filling the weight left with it.`}

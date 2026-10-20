@@ -5,7 +5,9 @@ import {
 } from "@/lib/format/flight-time";
 import { notFound, redirect } from "next/navigation";
 
+import { linkCaps } from "@/components/ff/controls";
 import { ApiError } from "@/lib/api/client";
+import { cn } from "@/lib/utils";
 import {
   BOOKING_STATUS_LABELS,
   type Booking,
@@ -59,19 +61,17 @@ export default async function BookingDetailPage({
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
-      <header className="mb-6">
-        <p className="text-xs font-semibold uppercase tracking-[0.06em] text-muted-foreground">
-          <Link href="/reservations" className="hover:text-foreground">
-            ← Reservations
-          </Link>
-        </p>
+      <header className="mb-6 border-b border-border pb-5">
+        <Link href="/reservations" className={cn(linkCaps, "text-muted-foreground hover:text-foreground")}>
+          <span aria-hidden>‹</span> Reservations
+        </Link>
         <h1 className="mt-2 flex flex-wrap items-baseline gap-3 page-title">
           {booking.origin_icao} → {booking.destination_icao}
           <span className="text-sm font-normal text-muted-foreground">
             {formatZuluDateTime(booking.requested_departure_at)}
           </span>
         </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
           {BOOKING_STATUS_LABELS[booking.status]} · Filed{" "}
           {formatZuluDate(booking.created_at)} · Booking id{" "}
           <code className="rounded bg-muted/60 px-1 font-mono text-[0.7em]">

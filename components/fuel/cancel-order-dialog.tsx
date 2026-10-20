@@ -33,7 +33,7 @@ export function CancelOrderDialog({ orderId }: { orderId: string }) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="rounded-md border border-status-red/40 bg-status-red/10 px-3 py-1.5 text-xs font-semibold text-status-red hover:bg-status-red/15"
+        className="btn-caps rounded-md border px-3 py-1.5 border-status-red/60 text-[0.72rem] text-status-red hover:border-status-red"
       >
         Cancel order
       </button>
@@ -74,7 +74,7 @@ export function CancelOrderDialog({ orderId }: { orderId: string }) {
                 rows={4}
                 maxLength={2000}
                 placeholder="Aircraft swap, customer no-show, weather, etc."
-                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-status-red focus:outline-none"
+                className="ff-input px-3 py-2 text-sm focus:border-status-red"
               />
             </div>
 

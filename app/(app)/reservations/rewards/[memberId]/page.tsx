@@ -97,13 +97,13 @@ export default async function RewardsMemberDetailPage({
         </span>
       </nav>
 
-      <header className="mb-6 rounded-lg border border-border bg-card p-5">
+      <header className="mb-6 border-b border-border pb-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <h1 className="page-title">
               {member.customer_name ?? "—"}
             </h1>
-            <p className="mt-1 text-sm text-muted-foreground">
+            <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
               {member.member_number} · enrolled{" "}
               {formatDate(member.enrollment_date)}
               {member.enrolled_station ? ` at ${member.enrolled_station}` : ""}
@@ -112,25 +112,25 @@ export default async function RewardsMemberDetailPage({
           <TierBadge tier={member.tier} />
         </div>
 
-        <dl className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-4">
+        <dl className="mt-4 grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-4">
           <div>
-            <dt className="text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
+            <dt className="eyebrow">
               Balance
             </dt>
-            <dd className="mt-0.5 text-xl font-bold text-status-green">
+            <dd className="mt-1 font-display text-[1.75rem] font-extrabold leading-none tabular-nums text-foreground">
               {member.points_balance.toLocaleString("en-US")}
             </dd>
           </div>
           <div>
-            <dt className="text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
+            <dt className="eyebrow">
               Lifetime
             </dt>
-            <dd className="mt-0.5 text-xl font-bold">
+            <dd className="mt-1 font-display text-[1.75rem] font-extrabold leading-none tabular-nums">
               {member.lifetime_points.toLocaleString("en-US")}
             </dd>
           </div>
           <div>
-            <dt className="text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
+            <dt className="eyebrow">
               Active
             </dt>
             <dd
@@ -143,7 +143,7 @@ export default async function RewardsMemberDetailPage({
             </dd>
           </div>
           <div>
-            <dt className="text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
+            <dt className="eyebrow">
               Ledger entries
             </dt>
             <dd className="mt-0.5 text-sm font-semibold">
@@ -217,16 +217,16 @@ export default async function RewardsMemberDetailPage({
 function TierBadge({ tier }: { tier: RewardsTier }) {
   const cls =
     tier === "elite"
-      ? "border-status-red/40 bg-status-red/10 text-status-red"
+      ? "text-status-red"
       : tier === "gold"
-        ? "border-status-yellow/40 bg-status-yellow/10 text-status-yellow"
+        ? "text-status-yellow"
         : tier === "silver"
-          ? "border-status-blue/40 bg-status-blue/10 text-status-blue"
-          : "border-border bg-muted text-muted-foreground";
+          ? "text-status-blue"
+          : "text-muted-foreground";
   return (
     <span
       className={
-        "rounded border px-2 py-1 text-[0.75rem] font-semibold uppercase tracking-wider " +
+        "status-mark text-[0.75rem] " +
         cls
       }
     >

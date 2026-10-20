@@ -118,7 +118,7 @@ export function NewStationForm() {
             id="station_type"
             name="station_type"
             defaultValue="spoke_base"
-            className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
+            className="ff-input px-3 py-2 text-sm"
           >
             {STATION_TYPE_OPTIONS.map((opt) => (
               <option key={opt.value} value={opt.value}>
@@ -128,7 +128,7 @@ export function NewStationForm() {
           </select>
         </div>
         <label
-          className="flex cursor-pointer items-center gap-2 self-end rounded-md border border-border bg-card/40 px-3 py-2 text-xs text-foreground"
+          className="flex cursor-pointer items-center gap-2 self-end rounded-md border border-border px-3 py-2 text-xs text-foreground"
           title="Hub bases sort first in every dropdown and render as larger markers on the flight following map."
         >
           <input
@@ -140,7 +140,7 @@ export function NewStationForm() {
         </label>
       </div>
 
-      <label className="flex cursor-pointer items-center gap-2 rounded-md border border-border bg-card/40 px-3 py-2 text-xs text-foreground">
+      <label className="flex cursor-pointer items-center gap-2 rounded-md border border-border px-3 py-2 text-xs text-foreground">
         <input
           type="checkbox"
           name="has_reporting_function"
@@ -153,7 +153,7 @@ export function NewStationForm() {
       {/* Fuel section — collapses when fuel_available is off so an
           operator doesn't see fuel-type checkboxes for an unfueled
           spoke. */}
-      <div className="rounded-md border border-border bg-card/40 px-3 py-3">
+      <div className="rounded-md border border-border px-3 py-3">
         <label className="flex cursor-pointer items-center gap-2 text-xs text-foreground">
           <input
             type="checkbox"
@@ -209,7 +209,7 @@ export function NewStationForm() {
           rows={3}
           maxLength={2000}
           placeholder="Operational notes — runway condition flags, ramp restrictions, etc."
-          className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
+          className="ff-input px-3 py-2 text-sm"
         />
       </div>
 
@@ -250,7 +250,7 @@ function Field({
         name={name}
         type={type}
         aria-invalid={error ? "true" : undefined}
-        className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none aria-[invalid=true]:border-status-red"
+        className="ff-input px-3 py-2 text-sm aria-[invalid=true]:border-status-red"
         {...inputProps}
       />
       {error && (

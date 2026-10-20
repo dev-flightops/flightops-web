@@ -71,10 +71,10 @@ export default async function RewardsMembersPage() {
 
   return (
     <div className="mx-auto max-w-6xl px-4 sm:px-6 py-8">
-      <header className="mb-6 flex items-center justify-between gap-3">
+      <header className="mb-6 flex flex-wrap items-center justify-between gap-4 border-b border-border pb-5">
         <div>
           <h1 className="page-title">{programName}</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
             {activeCount} active member{activeCount === 1 ? "" : "s"}
           </p>
         </div>
@@ -156,16 +156,16 @@ export default async function RewardsMembersPage() {
 function TierBadge({ tier }: { tier: RewardsTier }) {
   const cls =
     tier === "elite"
-      ? "border-status-red/40 bg-status-red/10 text-status-red"
+      ? "text-status-red"
       : tier === "gold"
-        ? "border-status-yellow/40 bg-status-yellow/10 text-status-yellow"
+        ? "text-status-yellow"
         : tier === "silver"
-          ? "border-status-blue/40 bg-status-blue/10 text-status-blue"
-          : "border-border bg-muted text-muted-foreground";
+          ? "text-status-blue"
+          : "text-muted-foreground";
   return (
     <span
       className={
-        "rounded border px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider " +
+        "status-mark " +
         cls
       }
     >

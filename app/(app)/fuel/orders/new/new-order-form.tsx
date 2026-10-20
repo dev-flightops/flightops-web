@@ -161,7 +161,7 @@ export function NewFuelOrderForm({
           rows={3}
           maxLength={2000}
           placeholder="e.g. north ramp; contact captain before fueling"
-          className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
+          className="ff-input px-3 py-2 text-sm"
         />
       </div>
 
@@ -209,7 +209,7 @@ function Field({
         name={name}
         type={type}
         aria-invalid={error ? "true" : undefined}
-        className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none aria-[invalid=true]:border-status-red"
+        className="ff-input px-3 py-2 text-sm aria-[invalid=true]:border-status-red"
         {...inputProps}
       />
       {error && (
@@ -238,7 +238,7 @@ function SideInput({
     <div>
       <label
         htmlFor={name}
-        className="mb-1 block text-[0.55rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground"
+        className="field-label"
       >
         {label}
       </label>
@@ -253,7 +253,7 @@ function SideInput({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         aria-invalid={error ? "true" : undefined}
-        className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none aria-[invalid=true]:border-status-red"
+        className="ff-input px-3 py-2 text-sm aria-[invalid=true]:border-status-red"
       />
       {error && (
         <p role="alert" className="field-error">
@@ -291,7 +291,7 @@ function FieldSelect({
         name={name}
         required={required}
         aria-invalid={error ? "true" : undefined}
-        className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none aria-[invalid=true]:border-status-red"
+        className="ff-input px-3 py-2 text-sm aria-[invalid=true]:border-status-red"
       >
         {children}
       </select>

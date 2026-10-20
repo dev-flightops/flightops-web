@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import { segment, segmentGroup } from "@/components/ff/controls";
+
 import { AddFuelQualityTestDialog } from "@/components/fuel/quality/add-test-dialog";
 import { ApiError } from "@/lib/api/client";
 import {
@@ -87,12 +89,12 @@ export default async function FuelQualityPage({
         <span className="text-foreground">Quality Log</span>
       </nav>
 
-      <header className="mb-6 flex flex-wrap items-end justify-between gap-3">
+      <header className="mb-6 flex flex-wrap items-end justify-between gap-4 border-b border-border pb-5">
         <div>
           <h1 className="page-title">
             Fuel Quality Log
           </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
             Sump checks + supplier bulk samples. Part 135 compliance log
             — append-only, no edits.
           </p>
@@ -101,26 +103,23 @@ export default async function FuelQualityPage({
       </header>
 
       <div className="mb-4 flex flex-wrap items-center gap-3">
-        <Link
-          href="/fuel/quality"
-          className={
-            onlyFailures
-              ? "rounded-md border border-border bg-card px-2.5 py-1 text-xs hover:bg-accent"
-              : "rounded-md border border-primary bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary"
-          }
-        >
-          All tests
-        </Link>
-        <Link
-          href="/fuel/quality?failures=true"
-          className={
-            onlyFailures
-              ? "rounded-md border border-status-red bg-status-red/15 px-2.5 py-1 text-xs font-semibold text-status-red"
-              : "rounded-md border border-border bg-card px-2.5 py-1 text-xs hover:bg-accent"
-          }
-        >
-          Failures only
-        </Link>
+        {/* The filter as a segmented control (#83). */}
+        <div className={segmentGroup}>
+          <Link
+            href="/fuel/quality"
+            aria-current={onlyFailures ? undefined : "page"}
+            className={segment(!onlyFailures)}
+          >
+            All tests
+          </Link>
+          <Link
+            href="/fuel/quality?failures=true"
+            aria-current={onlyFailures ? "page" : undefined}
+            className={segment(onlyFailures)}
+          >
+            Failures only
+          </Link>
+        </div>
         {failuresInView > 0 && !onlyFailures && (
           <span className="text-[0.7rem] text-status-yellow">
             {failuresInView} of {tests.length} failed — review the failures
@@ -139,7 +138,7 @@ export default async function FuelQualityPage({
       )}
 
       {!loadError && tests.length === 0 && (
-        <div className="rounded-lg border border-dashed border-border bg-card/40 px-6 py-12 text-center">
+        <div className="rounded-lg border border-border bg-card px-5 py-8 text-center">
           <p className="text-sm text-muted-foreground">
             {onlyFailures
               ? "No failed tests on file. Clean run."
@@ -168,7 +167,7 @@ export default async function FuelQualityPage({
                   className={
                     t.result === "pass"
                       ? "border-b border-border align-top last:border-b-0 hover:bg-accent"
-                      : "border-b border-border align-top bg-status-red/[0.04] last:border-b-0 hover:bg-status-red/[0.08]"
+                      : "border-b border-border align-top shadow-[inset_3px_0_0_rgb(var(--status-red))] last:border-b-0 hover:bg-accent"
                   }
                 >
                   <td className="px-4 py-3 text-[0.75rem] text-muted-foreground">
@@ -230,16 +229,16 @@ function Findings({ test }: { test: FuelQualityTestResponse }) {
 
 function ResultChip({ result }: { result: FuelQualityResult }) {
   const palette: Record<FuelQualityResult, string> = {
-    pass: "border-status-green/40 bg-status-green/10 text-status-green",
-    fail: "border-status-red/40 bg-status-red/10 text-status-red",
+    pass: "text-status-green",
+    fail: "text-status-red",
     contamination_water:
-      "border-status-red/40 bg-status-red/10 text-status-red",
+      "text-status-red",
     contamination_particulate:
-      "border-status-red/40 bg-status-red/10 text-status-red",
+      "text-status-red",
   };
   return (
     <span
-      className={`rounded-sm border px-1.5 py-0.5 text-[0.6rem] font-semibold uppercase tracking-[0.08em] ${palette[result]}`}
+      className={`status-mark text-[0.6rem] ${palette[result]}`}
     >
       {RESULT_LABELS[result]}
     </span>

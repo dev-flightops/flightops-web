@@ -102,7 +102,7 @@ export default async function CharterPipelinePage({
 
   return (
     <div className="mx-auto max-w-6xl px-4 sm:px-6 py-8">
-      <header className="mb-6 flex items-center justify-between gap-3">
+      <header className="mb-6 flex flex-wrap items-center justify-between gap-4 border-b border-border pb-5">
         <h1 className="page-title">Charter Pipeline</h1>
         {loadError ? null : <NewCharterToggle customers={customers} />}
       </header>
@@ -204,27 +204,27 @@ export default async function CharterPipelinePage({
 function CharterStatusBadge({ status }: { status: CharterStatus }) {
   const map: Record<CharterStatus, [string, string]> = {
     request: [
-      "border-border bg-muted text-muted-foreground",
+      "text-muted-foreground",
       "Request",
     ],
     quoted: [
-      "border-status-blue/40 bg-status-blue/10 text-status-blue",
+      "text-status-blue",
       "Quoted",
     ],
     confirmed: [
-      "border-status-yellow/40 bg-status-yellow/10 text-status-yellow",
+      "text-status-yellow",
       "Confirmed",
     ],
     dispatched: [
-      "border-status-blue/40 bg-status-blue/10 text-status-blue",
+      "text-status-blue",
       "Dispatched",
     ],
     completed: [
-      "border-status-green/40 bg-status-green/10 text-status-green",
+      "text-status-green",
       "Completed",
     ],
     cancelled: [
-      "border-status-red/40 bg-status-red/10 text-status-red",
+      "text-status-red",
       "Cancelled",
     ],
   };
@@ -232,7 +232,7 @@ function CharterStatusBadge({ status }: { status: CharterStatus }) {
   return (
     <span
       className={
-        "rounded border px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider " +
+        "status-mark " +
         cls
       }
     >

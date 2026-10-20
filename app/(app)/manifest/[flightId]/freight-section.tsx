@@ -44,7 +44,7 @@ export function FreightSection({
   return (
     <section>
       <div className="mb-2 flex items-baseline gap-2 px-1">
-        <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{_TITLE[kind]}</h2>
+        <h2 className="eyebrow">{_TITLE[kind]}</h2>
         <span className="text-xs text-muted-foreground">
           {rows.length} item{rows.length === 1 ? "" : "s"} · {fmtLbs(pounds)} lb
         </span>

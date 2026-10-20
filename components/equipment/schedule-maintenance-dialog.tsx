@@ -85,7 +85,7 @@ export function ScheduleMaintenanceDialog({ unitId }: { unitId: string }) {
                 maxLength={300}
                 placeholder="100hr inspection"
                 aria-invalid={fieldError("title") ? "true" : undefined}
-                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none aria-[invalid=true]:border-status-red"
+                className="ff-input px-3 py-2 text-sm aria-[invalid=true]:border-status-red"
               />
               {fieldError("title") && (
                 <p className="field-error">
@@ -106,7 +106,7 @@ export function ScheduleMaintenanceDialog({ unitId }: { unitId: string }) {
                   id="item_type"
                   name="item_type"
                   defaultValue="service"
-                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
+                  className="ff-input px-3 py-2 text-sm"
                 >
                   {ITEM_TYPES.map((t) => (
                     <option key={t.value} value={t.value}>
@@ -126,7 +126,7 @@ export function ScheduleMaintenanceDialog({ unitId }: { unitId: string }) {
                   id="due_date"
                   name="due_date"
                   type="date"
-                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
+                  className="ff-input px-3 py-2 text-sm"
                 />
               </div>
             </div>
@@ -153,7 +153,7 @@ export function ScheduleMaintenanceDialog({ unitId }: { unitId: string }) {
                   aria-invalid={
                     fieldError("interval_days") ? "true" : undefined
                   }
-                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none aria-[invalid=true]:border-status-red"
+                  className="ff-input px-3 py-2 text-sm aria-[invalid=true]:border-status-red"
                 />
                 {fieldError("interval_days") && (
                   <p className="field-error">
@@ -175,7 +175,7 @@ export function ScheduleMaintenanceDialog({ unitId }: { unitId: string }) {
                   step="0.1"
                   min={0.1}
                   placeholder="100"
-                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
+                  className="ff-input px-3 py-2 text-sm"
                 />
               </div>
             </div>
@@ -192,11 +192,11 @@ export function ScheduleMaintenanceDialog({ unitId }: { unitId: string }) {
                 name="description"
                 rows={3}
                 placeholder="Specifics, references, notes."
-                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
+                className="ff-input px-3 py-2 text-sm"
               />
             </div>
 
-            <label className="flex cursor-pointer items-center gap-2 rounded-md border border-border bg-card/40 px-3 py-2 text-xs text-foreground">
+            <label className="flex cursor-pointer items-center gap-2 rounded-md border border-border px-3 py-2 text-xs text-foreground">
               <input
                 type="checkbox"
                 name="is_recurring"

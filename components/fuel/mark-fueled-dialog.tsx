@@ -39,7 +39,7 @@ export function MarkFueledDialog({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="inline-flex items-center gap-1.5 rounded-md border border-status-green/40 bg-status-green/10 px-3 py-1.5 text-xs font-semibold text-status-green hover:bg-status-green/15"
+        className="btn-caps inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 border-status-green/60 text-[0.72rem] text-status-green hover:border-status-green"
       >
         Mark fueled
       </button>
@@ -80,7 +80,7 @@ export function MarkFueledDialog({
                 required
                 placeholder="Ramp agent or supplier"
                 maxLength={200}
-                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-status-green focus:outline-none"
+                className="ff-input px-3 py-2 text-sm focus:border-status-green"
               />
             </div>
 
@@ -99,7 +99,7 @@ export function MarkFueledDialog({
                 min={0}
                 defaultValue={requestedGallons}
                 required
-                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-status-green focus:outline-none"
+                className="ff-input px-3 py-2 text-sm focus:border-status-green"
               />
               <p className="mt-1 text-[0.65rem] text-muted-foreground">
                 Requested {requestedGallons.toLocaleString()} gal.
@@ -117,7 +117,7 @@ export function MarkFueledDialog({
                 id="closed_by_source"
                 name="closed_by_source"
                 defaultValue="ramp"
-                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-status-green focus:outline-none"
+                className="ff-input px-3 py-2 text-sm focus:border-status-green"
               >
                 <option value="ramp">Ramp</option>
                 <option value="supplier">Supplier</option>
@@ -138,7 +138,7 @@ export function MarkFueledDialog({
                 rows={3}
                 maxLength={2000}
                 placeholder="Quality flag, short delivery, etc."
-                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-status-yellow focus:outline-none"
+                className="ff-input px-3 py-2 text-sm focus:border-status-yellow"
               />
             </div>
 

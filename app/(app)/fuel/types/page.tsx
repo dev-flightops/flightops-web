@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import { linkCaps } from "@/components/ff/controls";
+import { cn } from "@/lib/utils";
 import { ApiError } from "@/lib/api/client";
 import { listFuelTypes } from "@/lib/api/ground";
 import type { FuelTypeResponse } from "@/lib/api/types";
@@ -27,15 +29,15 @@ export default async function FuelTypesPage() {
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
-      <header className="mb-5">
+      <header className="mb-6 border-b border-border pb-5">
         <Link
           href="/fuel"
-          className="mb-2 inline-block text-xs text-muted-foreground hover:text-foreground hover:underline"
+          className={cn(linkCaps, "text-muted-foreground hover:text-foreground mb-2")}
         >
-          ← Fuel
+          <span aria-hidden>‹</span> Fuel
         </Link>
         <h1 className="page-title">Fuel Types</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
           Tenant catalog — Jet A, 100LL, mogas, etc.
         </p>
       </header>
@@ -48,7 +50,7 @@ export default async function FuelTypesPage() {
           {loadError}
         </div>
       ) : types.length === 0 ? (
-        <div className="rounded-lg border border-dashed border-border bg-card/40 px-4 py-16 text-center">
+        <div className="rounded-lg border border-border bg-card px-5 py-8 text-center">
           <p className="text-sm text-muted-foreground">
             No fuel types configured yet.
           </p>
@@ -83,11 +85,11 @@ export default async function FuelTypesPage() {
                   </td>
                   <td className="px-4 py-3">
                     {t.is_active ? (
-                      <span className="rounded-md border border-status-green/40 bg-status-green/10 px-2 py-0.5 text-[0.65rem] font-semibold text-status-green">
+                      <span className="status-mark text-status-green">
                         Active
                       </span>
                     ) : (
-                      <span className="rounded-md border border-border bg-card/60 px-2 py-0.5 text-[0.65rem] font-semibold text-muted-foreground">
+                      <span className="eyebrow">
                         Inactive
                       </span>
                     )}

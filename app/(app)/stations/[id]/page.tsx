@@ -1,4 +1,7 @@
 import Link from "next/link";
+
+import { linkCaps } from "@/components/ff/controls";
+import { cn } from "@/lib/utils";
 import { notFound } from "next/navigation";
 
 import { auth } from "@/auth";
@@ -133,9 +136,9 @@ function BackLink() {
   return (
     <Link
       href="/stations"
-      className="mb-4 inline-block text-sm text-muted-foreground hover:text-foreground hover:underline"
+      className={cn(linkCaps, "text-muted-foreground hover:text-foreground mb-4")}
     >
-      ← All Stations
+      <span aria-hidden>‹</span> All Stations
     </Link>
   );
 }
@@ -149,7 +152,7 @@ function Header({
 }) {
   const location = [station.city, station.state].filter(Boolean).join(", ");
   return (
-    <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
+    <div className="mb-6 flex flex-wrap items-start justify-between gap-4 border-b border-border pb-5">
       <div>
         <div className="flex flex-wrap items-center gap-2">
           <h1 className="page-title">
@@ -159,13 +162,13 @@ function Header({
             </span>
           </h1>
           {/* Spec 6 §"Add Station form / Station type" badge */}
-          <span className="rounded-md border border-border bg-card/60 px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+          <span className="eyebrow">
             {STATION_TYPE_LABELS[station.station_type]}
           </span>
           {station.is_hub && (
             <span
               title="Hub bases sort first in all dropdowns + render as larger markers on the flight following map."
-              className="rounded-md border border-border bg-muted px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground"
+              className="eyebrow"
             >
               Hub
             </span>
@@ -182,9 +185,7 @@ function Header({
       </div>
       <div className="flex flex-wrap items-center gap-2">
         {station.has_reporting_function ? (
-          <span className="rounded-md border border-status-green/40 bg-status-green/10 px-3 py-1 text-xs font-semibold text-status-green">
-            Weather board
-          </span>
+          <span className="status-mark text-status-green">Weather board</span>
         ) : null}
         {canAdmin ? (
           <StationActiveToggle
@@ -267,7 +268,7 @@ function IssuesSection({
         <p className="-mt-1 mb-2 text-xs text-muted-foreground">{note}</p>
       ) : null}
       {issues.length === 0 ? (
-        <div className="rounded-md border border-dashed border-border bg-card/40 px-4 py-8 text-center text-xs text-muted-foreground">
+        <div className="rounded-lg border border-border bg-card px-5 py-8 text-center text-xs text-muted-foreground">
           {emptyHint}
         </div>
       ) : (
@@ -346,7 +347,7 @@ function IssueRow({
         )}
       </div>
       {issue.resolution_notes && (
-        <p className="mt-2 rounded-md border border-status-green/30 bg-status-green/5 p-2 text-xs text-foreground">
+        <p className="notice notice-green mt-2">
           {issue.resolution_notes}
         </p>
       )}
@@ -360,18 +361,12 @@ function PriorityChip({
   priority: StationIssueResponse["priority"];
 }) {
   const map: Record<typeof priority, string> = {
-    low: "border-border bg-card/60 text-muted-foreground",
-    normal: "border-status-blue/40 bg-status-blue/10 text-status-blue",
-    high: "border-status-yellow/40 bg-status-yellow/10 text-status-yellow",
-    critical: "border-status-red/40 bg-status-red/10 text-status-red",
+    low: "eyebrow",
+    normal: "status-mark text-status-blue",
+    high: "status-mark text-status-yellow",
+    critical: "status-mark text-status-red",
   };
-  return (
-    <span
-      className={`rounded-md border px-2 py-0.5 text-[0.6rem] font-semibold uppercase ${map[priority]}`}
-    >
-      {priority}
-    </span>
-  );
+  return <span className={map[priority]}>{priority}</span>;
 }
 
 function StatusChip({
@@ -380,18 +375,12 @@ function StatusChip({
   status: StationIssueResponse["status"];
 }) {
   const map: Record<typeof status, string> = {
-    open: "border-status-red/40 bg-status-red/10 text-status-red",
-    in_progress: "border-status-yellow/40 bg-status-yellow/10 text-status-yellow",
-    resolved: "border-status-green/40 bg-status-green/10 text-status-green",
-    closed: "border-border bg-card/60 text-muted-foreground",
+    open: "status-mark text-status-red",
+    in_progress: "status-mark text-status-yellow",
+    resolved: "status-mark text-status-green",
+    closed: "eyebrow",
   };
-  return (
-    <span
-      className={`rounded-md border px-2 py-0.5 text-[0.6rem] font-semibold uppercase ${map[status]}`}
-    >
-      {status.replace("_", " ")}
-    </span>
-  );
+  return <span className={map[status]}>{status.replace("_", " ")}</span>;
 }
 
 function Field({ label, value }: { label: string; value: string }) {

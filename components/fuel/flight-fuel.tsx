@@ -34,17 +34,17 @@ import {
  */
 
 const STATUS_CLASS: Record<FuelOrderStatus, string> = {
-  ordered: "border-status-blue/40 bg-status-blue/10 text-status-blue",
-  confirmed: "border-status-blue/40 bg-status-blue/10 text-status-blue",
-  fueled: "border-status-green/40 bg-status-green/10 text-status-green",
-  discrepancy: "border-status-yellow/40 bg-status-yellow/10 text-status-yellow",
+  ordered: "text-status-blue",
+  confirmed: "text-status-blue",
+  fueled: "text-status-green",
+  discrepancy: "text-status-yellow",
   cancelled: "border-border bg-card text-muted-foreground",
 };
 
 const FIELD =
-  "w-full rounded-md border border-border bg-background px-2.5 py-1.5 text-sm text-foreground focus:border-primary focus:outline-none";
+  "ff-input px-2.5 py-1.5 text-sm";
 const LABEL =
-  "mb-1 block text-[0.65rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground";
+  "field-label";
 
 /** A side's gallons as typed. Blank stays unknown, so the action asks
  *  for both sides instead of reading it as 0. */
@@ -254,7 +254,7 @@ function OrderRow({
       <div className="flex flex-wrap items-center gap-2 text-sm">
         <span
           className={cn(
-            "rounded-md border px-1.5 py-0.5 text-[0.6rem] font-semibold uppercase tracking-[0.06em]",
+            "status-mark text-[0.6rem]",
             STATUS_CLASS[order.status],
           )}
         >

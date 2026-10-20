@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { auth } from "@/auth";
+import { buttonOutline, linkCaps } from "@/components/ff/controls";
 import { ApiError } from "@/lib/api/client";
 import { listGseUnits } from "@/lib/api/ground";
 import type {
@@ -110,12 +111,12 @@ export default async function EquipmentPage({
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
-      <header className="mb-5 flex flex-wrap items-end justify-between gap-3">
+      <header className="mb-6 flex flex-wrap items-end justify-between gap-4 border-b border-border pb-5">
         <div>
           <h1 className="page-title">
             Ground Support Equipment
           </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
             Equipment inventory, status, and service tracking
           </p>
         </div>
@@ -233,7 +234,7 @@ function Stats({
   stats: ReturnType<typeof computeStats>;
 }) {
   return (
-    <section className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
+    <section className="mb-5 grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-4">
       <Tile label="Total Units" value={stats.total} />
       <Tile
         label="Operational"
@@ -269,9 +270,9 @@ function Tile({
           ? "text-status-red"
           : "text-foreground";
   return (
-    <div className="rounded-lg border border-border bg-card px-4 py-3 text-center">
-      <div className={`text-2xl font-bold leading-none ${cls}`}>{value}</div>
-      <div className="mt-1.5 eyebrow">
+    <div className="flex min-w-0 flex-col border-l-2 border-input py-1 pl-3">
+      <div className={`font-display text-[1.75rem] font-extrabold leading-none tabular-nums ${cls}`}>{value}</div>
+      <div className="eyebrow mt-1.5">
         {label}
       </div>
     </div>
@@ -326,17 +327,11 @@ function Filters({
           })),
         ]}
       />
-      <button
-        type="submit"
-        className="rounded-md border border-border bg-card/60 px-3 py-2 text-xs font-semibold text-foreground hover:bg-border/40"
-      >
+      <button type="submit" className={buttonOutline}>
         Filter
       </button>
       {(status || type || stationFilter) && (
-        <Link
-          href="/equipment"
-          className="text-xs font-semibold text-status-red hover:underline"
-        >
+        <Link href="/equipment" className={linkCaps}>
           Clear
         </Link>
       )}
@@ -363,7 +358,7 @@ function FilterSelect({
       <select
         name={name}
         defaultValue={value}
-        className="rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
+        className="ff-input px-3 py-2 text-sm w-auto"
       >
         {options.map((o) => (
           <option key={o.value} value={o.value}>
@@ -390,13 +385,14 @@ function StationGroup({
       <div className="overflow-hidden rounded-lg border border-border bg-card">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-border text-left text-[0.6rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-              <th className="px-4 py-3">Unit</th>
-              <th className="px-4 py-3">Type</th>
-              <th className="px-4 py-3">Make / Model</th>
-              <th className="px-4 py-3">Status</th>
-              <th className="px-4 py-3">Next Service</th>
-              <th className="px-4 py-3 text-center">Squawks</th>
+            <tr className="border-b border-border text-left eyebrow">
+              {/* Shared widths, so the stations' tables line up down the page. */}
+              <th className="w-[22%] px-4 py-3">Unit</th>
+              <th className="w-[12%] px-4 py-3">Type</th>
+              <th className="w-[18%] px-4 py-3">Make / Model</th>
+              <th className="w-[16%] px-4 py-3">Status</th>
+              <th className="w-[12%] px-4 py-3">Next Service</th>
+              <th className="w-[10%] px-4 py-3 text-center">Squawks</th>
               <th className="px-4 py-3"></th>
             </tr>
           </thead>
@@ -428,7 +424,7 @@ function UnitRow({ unit }: { unit: GSEUnitListItem }) {
       </td>
       <td className="px-4 py-3 text-center">
         {unit.open_squawk_count > 0 ? (
-          <span className="rounded-md border border-status-yellow/40 bg-status-yellow/10 px-2 py-0.5 text-[0.65rem] font-semibold text-status-yellow">
+          <span className="status-mark text-status-yellow">
             {unit.open_squawk_count} open
           </span>
         ) : (
@@ -436,11 +432,8 @@ function UnitRow({ unit }: { unit: GSEUnitListItem }) {
         )}
       </td>
       <td className="px-4 py-3 text-right">
-        <Link
-          href={`/equipment/${unit.id}`}
-          className="text-sm font-medium text-primary hover:underline"
-        >
-          View →
+        <Link href={`/equipment/${unit.id}`} className={linkCaps}>
+          View <span aria-hidden>›</span>
         </Link>
       </td>
     </tr>
@@ -449,18 +442,13 @@ function UnitRow({ unit }: { unit: GSEUnitListItem }) {
 
 function UnitStatusChip({ status }: { status: GSEUnitStatus }) {
   const map: Record<GSEUnitStatus, string> = {
-    operational:
-      "border-status-green/40 bg-status-green/10 text-status-green",
-    maintenance:
-      "border-status-yellow/40 bg-status-yellow/10 text-status-yellow",
-    out_of_service:
-      "border-status-red/40 bg-status-red/10 text-status-red",
+    operational: "text-status-green",
+    maintenance: "text-status-yellow",
+    out_of_service: "text-status-red",
   };
   return (
-    <span
-      className={`rounded-md border px-2 py-0.5 text-[0.6rem] font-semibold uppercase ${map[status]}`}
-    >
-      {status.replace("_", " ")}
+    <span className={`status-mark ${map[status]}`}>
+      {status.replaceAll("_", " ")}
     </span>
   );
 }

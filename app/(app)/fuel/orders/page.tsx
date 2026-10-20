@@ -1,11 +1,13 @@
 import Link from "next/link";
 
+import { linkCaps } from "@/components/ff/controls";
 import { ApiError } from "@/lib/api/client";
 import { listFuelOrders } from "@/lib/api/ground";
 import type {
   FuelOrderResponse,
   FuelOrderStatus,
 } from "@/lib/api/types";
+import { cn } from "@/lib/utils";
 
 import { OrdersStatusFilter } from "./status-filter";
 
@@ -54,16 +56,16 @@ export default async function FuelOrdersPage({
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
-      <header className="mb-5 flex flex-wrap items-end justify-between gap-3">
+      <header className="mb-6 flex flex-wrap items-end justify-between gap-4 border-b border-border pb-5">
         <div>
           <Link
             href="/fuel"
-            className="mb-2 inline-block text-xs text-muted-foreground hover:text-foreground hover:underline"
+            className={cn(linkCaps, "text-muted-foreground hover:text-foreground mb-2")}
           >
-            ← Fuel
+            <span aria-hidden>‹</span> Fuel
           </Link>
           <h1 className="page-title">Fuel Orders</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
             {orders.length} order{orders.length === 1 ? "" : "s"}
             {status ? ` · status ${status}` : ""}
           </p>
@@ -86,7 +88,7 @@ export default async function FuelOrdersPage({
           {loadError}
         </div>
       ) : orders.length === 0 ? (
-        <div className="rounded-lg border border-dashed border-border bg-card/40 px-4 py-16 text-center">
+        <div className="rounded-lg border border-border bg-card px-5 py-8 text-center">
           <p className="text-sm text-muted-foreground">
             No fuel orders {status ? `with status ${status}` : "yet"}.
           </p>
@@ -157,9 +159,9 @@ function OrderRow({ order }: { order: FuelOrderResponse }) {
       <td className="px-4 py-3 text-right">
         <Link
           href={`/fuel/orders/${order.id}`}
-          className="text-sm font-medium text-primary hover:underline"
+          className={linkCaps}
         >
-          View →
+          View <span aria-hidden>›</span>
         </Link>
       </td>
     </tr>
@@ -168,16 +170,16 @@ function OrderRow({ order }: { order: FuelOrderResponse }) {
 
 function StatusChip({ status }: { status: FuelOrderStatus }) {
   const map: Record<FuelOrderStatus, string> = {
-    ordered: "border-status-blue/40 bg-status-blue/10 text-status-blue",
-    confirmed: "border-status-blue/40 bg-status-blue/10 text-status-blue",
-    fueled: "border-status-green/40 bg-status-green/10 text-status-green",
+    ordered: "text-status-blue",
+    confirmed: "text-status-blue",
+    fueled: "text-status-green",
     discrepancy:
-      "border-status-yellow/40 bg-status-yellow/10 text-status-yellow",
-    cancelled: "border-border bg-card/60 text-muted-foreground",
+      "text-status-yellow",
+    cancelled: "text-muted-foreground",
   };
   return (
     <span
-      className={`rounded-md border px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-[0.06em] ${map[status]}`}
+      className={`status-mark ${map[status]}`}
     >
       {status}
     </span>
