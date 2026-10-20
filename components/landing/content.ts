@@ -175,4 +175,4 @@ export const FOOTER_COLUMNS: { title: string; links: { label: string; href: stri
 ];
 
 export const PHOTO_CREDITS =
-  "Photography: Bureau of Land Management Alaska, U.S. Fish and Wildlife Service, National Park Service — public domain.";
+  "Photography: Bureau of Land Management Alaska and U.S. Fish and Wildlife Service, public domain.";
