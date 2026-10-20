@@ -84,7 +84,7 @@ export default async function DispatchIntelligencePage() {
         </p>
       ) : data ? (
         <>
-          <p className="mt-4 rounded-md border border-border bg-background px-3 py-2 text-xs text-muted-foreground">
+          <p className="mt-4 notice notice-gray text-muted-foreground">
             {data.advisory}
           </p>
 
@@ -101,7 +101,7 @@ export default async function DispatchIntelligencePage() {
                   // be recorded as airborne on two flights, and that is
                   // exactly the case the board is built to surface.
                   data-testid={`inbound-${ac.flight_id}`}
-                  className="rounded-xl border border-border bg-background/40 p-4"
+                  className="rounded-lg border border-border bg-background/40 p-4"
                 >
                   <header className="flex flex-wrap items-baseline justify-between gap-2">
                     <div className="flex flex-wrap items-baseline gap-2">

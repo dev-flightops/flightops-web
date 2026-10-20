@@ -55,7 +55,7 @@ export function BriefControls() {
         setTimeout(() => setRefreshing(false), 1200);
       }}
       disabled={refreshing}
-      className="rounded-md border border-border bg-card px-3 py-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground disabled:opacity-50"
+      className="btn-caps rounded-md border border-input px-3 py-1.5 text-[0.72rem] text-foreground hover:border-foreground disabled:opacity-50"
     >
       {refreshing ? "Refreshing…" : "Refresh"}
     </button>

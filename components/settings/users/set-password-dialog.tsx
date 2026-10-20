@@ -89,7 +89,7 @@ export function SetPasswordDialog({
                 minLength={8}
                 autoComplete="new-password"
                 aria-invalid={fieldError("password") ? "true" : undefined}
-                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none aria-[invalid=true]:border-status-red"
+                className="ff-input px-3 py-2 text-sm aria-[invalid=true]:border-status-red"
               />
               {fieldError("password") && (
                 <p

@@ -33,7 +33,7 @@ export function TrackedAircraftTable({
     <div className="flex-1 overflow-y-auto">
       <table className="w-full text-[0.7rem]">
         <thead className="sticky top-0 z-[1] bg-card">
-          <tr className="text-left text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+          <tr className="text-left eyebrow">
             <th className="px-2.5 py-1.5">Aircraft</th>
             <th className="px-2.5 py-1.5">Route</th>
             <th className="px-2.5 py-1.5">Alt</th>

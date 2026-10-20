@@ -37,6 +37,8 @@ vi.mock("@/lib/api/auth", () => ({
   listSsoProviders,
 }));
 
+import { DEPARTMENTS } from "@/components/app-shell/modules";
+
 import SettingsLandingPage from "./page";
 
 const seededTracking = {
@@ -61,7 +63,7 @@ beforeEach(() => {
 });
 
 describe("SettingsLandingPage (M2-G-46)", () => {
-  it("renders the four stat tiles + section cards", async () => {
+  it("renders the figures and the settings list", async () => {
     getCompanyProfile.mockResolvedValueOnce({
       id: "cp-1",
       legal_name: "Aurora Air LLC",
@@ -93,7 +95,7 @@ describe("SettingsLandingPage (M2-G-46)", () => {
     expect(
       screen.getByRole("heading", { name: /^settings$/i, level: 1 }),
     ).toBeInTheDocument();
-    // Short name renders in both the stat tile and the Company card sublabel
+    // The short name heads the page and stands against Company Profile.
     expect(screen.getAllByText("Aurora").length).toBeGreaterThan(0);
     expect(screen.getByText("3")).toBeInTheDocument();
     expect(screen.getByText("20 min")).toBeInTheDocument();
@@ -103,10 +105,10 @@ describe("SettingsLandingPage (M2-G-46)", () => {
       screen.getByRole("link", { name: /company profile/i }),
     ).toHaveAttribute("href", "/settings/company");
     expect(
-      screen.getByRole("link", { name: /manage bases/i }),
+      screen.getByRole("link", { name: /^bases/i }),
     ).toHaveAttribute("href", "/settings/bases");
     expect(
-      screen.getByRole("link", { name: /tracking config/i }),
+      screen.getByRole("link", { name: /^flight tracking/i }),
     ).toHaveAttribute("href", "/settings/flight-tracking");
   });
 
@@ -157,6 +159,24 @@ describe("SettingsLandingPage (M2-G-46)", () => {
     ).toHaveAttribute("href", "/settings/currency");
   });
 
+  it("has a row for every Settings page in the department nav", async () => {
+    // The landing used to leave Flight Risk, Load Teams, Costs and
+    // Billing out while the nav listed them (#86).
+    getCompanyProfile.mockResolvedValueOnce({ id: "cp-1", legal_name: null, short_name: null });
+    listCompanyBases.mockResolvedValueOnce({ items: [], total: 0 });
+    getFlightTrackingConfig.mockResolvedValueOnce(seededTracking);
+
+    const ui = await SettingsLandingPage();
+    render(ui);
+
+    const navHrefs = DEPARTMENTS.find((d) => d.id === "settings")!
+      .children.map((c) => c.href)
+      .filter((href): href is string => !!href && href !== "/settings");
+    const pageHrefs = screen.getAllByRole("link").map((a) => a.getAttribute("href"));
+    expect(navHrefs.length).toBeGreaterThan(10);
+    for (const href of navHrefs) expect(pageHrefs).toContain(href);
+  });
+
   it("soft-falls back when /users is forbidden (non-exec_admin)", async () => {
     getCompanyProfile.mockResolvedValueOnce({
       id: "cp-1",
@@ -186,7 +206,7 @@ describe("SettingsLandingPage (M2-G-46)", () => {
     render(ui);
 
     // Page still renders — no error banner, Users link still surfaces
-    // with "—" sublabel rather than a count.
+    // with "—" rather than a count.
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
     expect(
       screen.getByRole("link", { name: /^users/i }),

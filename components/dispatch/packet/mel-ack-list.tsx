@@ -121,21 +121,15 @@ function CategoryBadge({ category }: { category: string }) {
   // a glance. Unknown categories fall through to gray.
   const tone =
     category === "A"
-      ? "border-status-red/40 bg-status-red/15 text-status-red"
+      ? "text-status-red"
       : category === "B"
-        ? "border-status-orange/40 bg-status-orange/15 text-status-orange"
+        ? "text-status-orange"
         : category === "C"
-          ? "border-status-yellow/40 bg-status-yellow/15 text-status-yellow"
+          ? "text-status-yellow"
           : category === "D"
-            ? "border-status-blue/40 bg-status-blue/15 text-status-blue"
-            : "border-border bg-muted text-muted-foreground";
-  return (
-    <span
-      className={`rounded border px-1.5 py-0.5 text-[0.6rem] font-semibold uppercase tracking-[0.08em] ${tone}`}
-    >
-      Cat {category}
-    </span>
-  );
+            ? "text-status-blue"
+            : "text-muted-foreground";
+  return <span className={`status-mark ${tone}`}>Cat {category}</span>;
 }
 
 function formatDate(iso: string): string {

@@ -328,7 +328,7 @@ function Th({ children, className = "" }: { children: React.ReactNode; className
   return (
     <th
       scope="col"
-      className={`whitespace-nowrap px-3 py-2 text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground ${className || "text-center"}`}
+      className={`whitespace-nowrap px-3 py-2 eyebrow ${className || "text-center"}`}
     >
       {children}
     </th>

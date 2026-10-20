@@ -38,7 +38,7 @@ export function AirmanRecordCard({
     <section aria-labelledby="airman-record-heading">
       <h2
         id="airman-record-heading"
-        className="mt-6 mb-3 text-xs font-bold uppercase tracking-[0.08em] text-muted-foreground"
+        className="eyebrow mt-6 mb-3"
       >
         Airman record
         <span className="ml-2 font-normal normal-case tracking-normal text-muted-foreground">
@@ -77,12 +77,13 @@ export function AirmanRecordCard({
           </Field>
           <Field label="Ratings">
             {record.ratings.length > 0 ? (
-              <span className="flex flex-wrap gap-1">
+              <span className="flex flex-wrap justify-end gap-y-1">
+                {/* Ratings as caps words between rules (#86), not tags. */}
                 {record.ratings.map((r) => (
                   <span
                     key={r}
                     title={RATING_LABELS[r] ?? r}
-                    className="rounded border border-border bg-muted/60 px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider"
+                    className="border-l border-border px-1.5 text-[0.65rem] font-bold uppercase tracking-[0.08em] first:border-l-0 last:pr-0"
                   >
                     {ratingChipText(r)}
                   </span>
@@ -122,7 +123,7 @@ export function AirmanRecordCard({
         </p>
       ) : null}
 
-      <h3 className="mt-6 mb-2 text-xs font-bold uppercase tracking-[0.08em] text-muted-foreground">
+      <h3 className="mt-6 mb-2 eyebrow">
         Disqualifications
       </h3>
       {disqualifications.items.length === 0 ? (
@@ -130,7 +131,7 @@ export function AirmanRecordCard({
           No disqualifications recorded.
         </p>
       ) : (
-        <ul className="space-y-2">
+        <ul className="divide-y divide-border overflow-hidden rounded-lg border border-border bg-card">
           {disqualifications.items.map((d) => (
             <DisqualificationRow key={d.id} row={d} />
           ))}
@@ -144,21 +145,17 @@ function DisqualificationRow({ row }: { row: DisqualificationResponse }) {
   const isOpen = row.released_on === null;
   return (
     <li
-      className={
-        "rounded-lg border px-4 py-3 " +
-        (isOpen
-          ? "border-status-red/40 bg-status-red/[0.06]"
-          : "border-border bg-card")
-      }
+      // An open disqualification on a red edge (#86), not a red ground.
+      className={"px-4 py-3 " + (isOpen ? "border-l-[3px] border-l-status-red" : "")}
     >
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <span className="text-sm font-semibold">{row.reason}</span>
         <span
           className={
-            "rounded border px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider " +
+            "status-mark text-[0.65rem] " +
             (isOpen
-              ? "border-status-red/40 bg-status-red/10 text-status-red"
-              : "border-status-green/40 bg-status-green/10 text-status-green")
+              ? "text-status-red"
+              : "text-status-green")
           }
         >
           {isOpen ? "Open" : "Released"}

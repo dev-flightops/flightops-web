@@ -19,7 +19,7 @@ export function WeightReturnsPanel({ returns }: { returns: WeightReturn[] }) {
   if (returns.length === 0) return null;
 
   return (
-    <section className="rounded-xl border border-status-red/40 bg-status-red/5">
+    <section className="rounded-lg border border-status-red/40 bg-status-red/5">
       <header className="flex items-center justify-between border-b border-status-red/20 px-4 py-2.5">
         <h2 className="panel-title flex items-center gap-2">
           <span aria-hidden className="h-1.5 w-1.5 bg-status-red" />

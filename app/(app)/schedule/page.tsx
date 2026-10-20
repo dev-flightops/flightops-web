@@ -126,7 +126,7 @@ export default async function SchedulePage({
           {loadError}
         </div>
       ) : totalCount === 0 ? (
-        <div className="rounded-lg border border-dashed border-border bg-card/40 px-4 py-16 text-center">
+        <div className="rounded-lg border border-border bg-card px-5 py-8 text-center">
           <p className="text-sm text-muted-foreground">
             {flights.length === 0
               ? `No flights scheduled for ${date}.`

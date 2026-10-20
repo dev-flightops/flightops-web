@@ -236,7 +236,7 @@ export function CrewCalendarGrid({
             <tr className="border-b border-border">
               <th
                 scope="col"
-                className="sticky left-0 z-10 min-w-[170px] bg-card px-3 py-2 text-left text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground"
+                className="sticky left-0 z-10 min-w-[170px] bg-card px-3 py-2 text-left eyebrow"
               >
                 Crew
               </th>

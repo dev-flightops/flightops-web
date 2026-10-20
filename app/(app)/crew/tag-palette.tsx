@@ -43,7 +43,7 @@ export function TagPalette({
   return (
     <div className="mb-3 rounded-lg border border-border bg-card px-3 py-2">
       <div className="flex flex-wrap items-center gap-1.5">
-        <span className="mr-1 text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+        <span className="mr-1 eyebrow">
           Day tags
         </span>
         {active.map((t) => {

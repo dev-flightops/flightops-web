@@ -58,7 +58,7 @@ export default async function FlightFollowingNewPage() {
           {loadError}
         </div>
       ) : aircraft.length === 0 ? (
-        <div className="rounded-md border border-dashed border-border bg-card/40 px-4 py-10 text-center">
+        <div className="rounded-lg border border-border bg-card px-5 py-8 text-center">
           <p className="text-sm text-muted-foreground">
             No active aircraft on this tenant.
           </p>

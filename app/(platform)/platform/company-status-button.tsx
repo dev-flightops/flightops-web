@@ -19,7 +19,8 @@ export function CompanyStatusButton({ companyId, name, active }: { companyId: st
           type="button"
           onClick={() => setAsking(true)}
           className={
-            "text-xs font-semibold hover:underline " + (active ? "text-status-red" : "text-foreground/80")
+            "text-[0.68rem] font-bold uppercase tracking-[0.1em] underline-offset-4 hover:underline " +
+            (active ? "text-status-red" : "text-foreground")
           }
         >
           {verb}
@@ -45,15 +46,15 @@ export function CompanyStatusButton({ companyId, name, active }: { companyId: st
         type="submit"
         disabled={pending}
         className={
-          "rounded border px-2 py-0.5 text-xs font-semibold disabled:opacity-60 " +
+          "btn-caps rounded border px-2 py-0.5 text-[0.68rem] disabled:opacity-60 " +
           (active
-            ? "border-status-red/40 bg-status-red/10 text-status-red"
-            : "border-status-green/40 bg-status-green/10 text-status-green")
+            ? "border-status-red/60 text-status-red hover:border-status-red"
+            : "border-status-green/60 text-status-green hover:border-status-green")
         }
       >
         {verb}
       </button>
-      <button type="button" onClick={() => setAsking(false)} className="text-xs text-muted-foreground hover:underline">
+      <button type="button" onClick={() => setAsking(false)} className="text-[0.68rem] font-bold uppercase tracking-[0.1em] text-muted-foreground underline-offset-4 hover:underline">
         Cancel
       </button>
     </form>

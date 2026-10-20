@@ -65,11 +65,11 @@ export default async function DocumentRequirementsPage() {
         </span>
       </nav>
 
-      <header className="mb-4">
+      <header className="mb-6 border-b border-border pb-5">
         <h1 className="page-title">
           Document requirements
         </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
           The documents your operation requires of its staff. Each one
           appears on the Documents tab of every employee it applies to.
         </p>

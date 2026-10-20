@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { linkCaps } from "@/components/ff/controls";
 import { ApiError } from "@/lib/api/client";
 import {
   type BillingOverviewResponse,
@@ -80,11 +81,11 @@ export default async function SettingsBillingPage({
   return (
     <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6">
       <Breadcrumb />
-      <header className="mb-6">
+      <header className="mb-6 border-b border-border pb-5">
         <h1 className="page-title">
           Billing &amp; Subscription
         </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
           Plan, seats, billing dates and invoices for this company, as
           Stripe holds them.
         </p>
@@ -148,7 +149,7 @@ function CurrentSubscriptionCard({
 }) {
   if (!subscription) {
     return (
-      <section className="rounded-lg border border-dashed border-border bg-card/50 px-5 py-8 text-sm">
+      <section className="rounded-lg border border-border bg-card px-5 py-8 text-sm">
         <h2 className="text-base font-semibold text-foreground">
           No subscription yet
         </h2>
@@ -179,7 +180,7 @@ function CurrentSubscriptionCard({
     <section className="rounded-lg border border-border bg-card p-5">
       <div className="mb-4 flex flex-wrap items-baseline justify-between gap-3">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+          <p className="eyebrow">
             {ended ? "Last subscription" : "Current subscription"}
           </p>
           <h2 className="mt-1 text-xl font-bold text-foreground">
@@ -188,7 +189,7 @@ function CurrentSubscriptionCard({
         </div>
         <span
           className={
-            "rounded border px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider " +
+            "status-mark text-[0.65rem] " +
             statusPill.className
           }
         >
@@ -261,7 +262,7 @@ function InvoiceHistoryCard({ invoices }: { invoices: Invoice[] }) {
     <section className="rounded-lg border border-border bg-card p-5">
       <div className="mb-3 flex items-baseline justify-between gap-2">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+          <p className="eyebrow">
             Invoice history
           </p>
           <h2 className="mt-1 text-base font-semibold text-foreground">
@@ -276,7 +277,7 @@ function InvoiceHistoryCard({ invoices }: { invoices: Invoice[] }) {
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="border-b border-border text-left text-[0.65rem] uppercase tracking-[0.06em] text-muted-foreground">
+            <thead className="ff-thead">
               <tr>
                 <th className="px-2 py-2 font-semibold">Number</th>
                 <th className="px-2 py-2 font-semibold">Period</th>
@@ -300,7 +301,7 @@ function InvoiceHistoryCard({ invoices }: { invoices: Invoice[] }) {
                     <td className="px-2 py-2">
                       <span
                         className={
-                          "rounded border px-1.5 py-0.5 text-[0.6rem] font-semibold uppercase tracking-wider " +
+                          "status-mark text-[0.6rem] " +
                           pill.className
                         }
                       >
@@ -321,7 +322,7 @@ function InvoiceHistoryCard({ invoices }: { invoices: Invoice[] }) {
                           href={inv.hosted_invoice_url}
                           target="_blank"
                           rel="noopener"
-                          className="text-xs font-semibold text-primary hover:underline"
+                          className={linkCaps}
                         >
                           Pay →
                         </a>
@@ -330,7 +331,7 @@ function InvoiceHistoryCard({ invoices }: { invoices: Invoice[] }) {
                           href={inv.invoice_pdf_url}
                           target="_blank"
                           rel="noopener"
-                          className="text-xs font-semibold text-primary hover:underline"
+                          className={linkCaps}
                         >
                           ↓ PDF
                         </a>
@@ -339,7 +340,7 @@ function InvoiceHistoryCard({ invoices }: { invoices: Invoice[] }) {
                           href={inv.hosted_invoice_url}
                           target="_blank"
                           rel="noopener"
-                          className="text-xs font-semibold text-primary hover:underline"
+                          className={linkCaps}
                         >
                           View →
                         </a>
@@ -379,7 +380,7 @@ function PlanCatalogCard({
   const offerCheckout = billingReady && !live;
   return (
     <section className="rounded-lg border border-border bg-card p-5">
-      <p className="text-xs font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+      <p className="eyebrow">
         Plan catalog
       </p>
       <h2 className="mt-1 mb-4 text-base font-semibold text-foreground">
@@ -388,7 +389,7 @@ function PlanCatalogCard({
       {!billingReady ? (
         <p
           role="note"
-          className="mb-4 rounded-md border border-border bg-muted/60 px-3 py-2 text-xs text-muted-foreground"
+          className="mb-4 notice notice-gray text-xs text-muted-foreground"
         >
           Billing isn&rsquo;t set up on this system yet, so plans
           can&rsquo;t be bought or changed here. Ask your Peregrine
@@ -403,7 +404,7 @@ function PlanCatalogCard({
         !anyForSale && (
           <p
             role="note"
-            className="mb-4 rounded-md border border-border bg-muted/60 px-3 py-2 text-xs text-muted-foreground"
+            className="mb-4 notice notice-gray text-xs text-muted-foreground"
           >
             No plan can be bought here yet. Ask your Peregrine contact.
           </p>
@@ -416,10 +417,9 @@ function PlanCatalogCard({
             <div
               key={plan.id}
               className={
-                "rounded-lg border p-4 " +
-                (isCurrent
-                  ? "border-primary/60 bg-primary/5"
-                  : "border-border bg-background/50")
+                // The current plan on a brand edge (#86), not a brand tint.
+                "rounded-lg border bg-background/50 p-4 " +
+                (isCurrent ? "border-primary" : "border-border")
               }
             >
               <div className="mb-2 flex items-baseline justify-between gap-2">
@@ -427,7 +427,7 @@ function PlanCatalogCard({
                   {plan.name}
                 </span>
                 {isCurrent && (
-                  <span className="rounded border border-border bg-muted px-1.5 py-0.5 text-[0.6rem] font-semibold uppercase tracking-wider text-muted-foreground">
+                  <span className="eyebrow">
                     Current
                   </span>
                 )}
@@ -487,7 +487,7 @@ function CheckoutOutcomeBanner({ outcome }: { outcome: CheckoutOutcome }) {
   return (
     <div
       role="status"
-      className="mb-4 rounded-md border border-border/60 bg-muted/60 px-4 py-3 text-sm text-muted-foreground"
+      className="mb-4 notice notice-gray text-sm"
     >
       Checkout was cancelled — nothing charged. Pick a plan below when
       you&rsquo;re ready.
@@ -499,7 +499,7 @@ function PortalReturnBanner() {
   return (
     <div
       role="status"
-      className="mb-4 rounded-md border border-border/60 bg-muted/60 px-4 py-3 text-sm text-muted-foreground"
+      className="mb-4 notice notice-gray text-sm"
     >
       Welcome back from the Stripe portal. If you made a change, it
       may take a few seconds for the update to reach this page —
@@ -510,11 +510,11 @@ function PortalReturnBanner() {
 
 function AdminOnlyPanel() {
   return (
-    <section className="mb-6 rounded-xl border border-status-yellow/40 bg-status-yellow/10 px-5 py-6 text-sm">
-      <h2 className="text-base font-semibold text-status-yellow">
+    <section className="mb-6 notice notice-yellow text-sm">
+      <h2 className="notice-label">
         Billing is restricted
       </h2>
-      <p className="mt-1 text-xs text-foreground/80">
+      <p className="mt-1 text-xs">
         Only an Executive Admin or a Director of Operations can see
         billing. Ask one of them if you need the plan or invoices.
       </p>
@@ -525,7 +525,7 @@ function AdminOnlyPanel() {
 function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <div className="text-[0.6rem] uppercase tracking-wider text-muted-foreground">
+      <div className="eyebrow">
         {label}
       </div>
       <div className="mt-0.5 font-mono text-sm text-foreground">{value}</div>
@@ -535,11 +535,11 @@ function Stat({ label, value }: { label: string; value: string }) {
 
 function Breadcrumb() {
   return (
-    <nav className="mb-4 text-xs text-muted-foreground">
+    <nav aria-label="Breadcrumb" className="eyebrow mb-4 flex flex-wrap items-center">
       <Link href="/settings" className="hover:text-foreground">
         Settings
       </Link>
-      <span className="px-1.5">/</span>
+      <span aria-hidden className="px-1.5 text-muted-foreground">/</span>
       <span className="text-foreground">Billing</span>
     </nav>
   );
@@ -568,7 +568,7 @@ function _statusPill(status: string): { label: string; className: string } {
     case "trialing":
       return {
         label,
-        className: "border-status-green/40 bg-status-green/10 text-status-green",
+        className: "text-status-green",
       };
     case "past_due":
     case "unpaid":
@@ -577,18 +577,18 @@ function _statusPill(status: string): { label: string; className: string } {
       return {
         label,
         className:
-          "border-status-yellow/40 bg-status-yellow/10 text-status-yellow",
+          "text-status-yellow",
       };
     case "canceled":
     case "incomplete_expired":
       return {
         label,
-        className: "border-status-red/40 bg-status-red/10 text-status-red",
+        className: "text-status-red",
       };
     default:
       return {
         label,
-        className: "border-border bg-muted text-muted-foreground",
+        className: "text-muted-foreground",
       };
   }
 }
@@ -598,32 +598,32 @@ function _invoiceStatusPill(status: string): { label: string; className: string 
     case "paid":
       return {
         label: "Paid",
-        className: "border-status-green/40 bg-status-green/10 text-status-green",
+        className: "text-status-green",
       };
     case "open":
       return {
         label: "Open",
-        className: "border-status-blue/40 bg-status-blue/10 text-status-blue",
+        className: "text-status-blue",
       };
     case "uncollectible":
       return {
         label: "Uncollectible",
-        className: "border-status-red/40 bg-status-red/10 text-status-red",
+        className: "text-status-red",
       };
     case "void":
       return {
         label: "Void",
-        className: "border-border bg-muted text-muted-foreground",
+        className: "text-muted-foreground",
       };
     case "draft":
       return {
         label: "Draft",
-        className: "border-border bg-muted text-muted-foreground",
+        className: "text-muted-foreground",
       };
     default:
       return {
         label: status,
-        className: "border-border bg-muted text-muted-foreground",
+        className: "text-muted-foreground",
       };
   }
 }

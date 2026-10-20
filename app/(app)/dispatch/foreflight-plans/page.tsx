@@ -35,16 +35,16 @@ export default async function ForeFlightPlansPage() {
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6">
-      <nav className="mb-4 text-xs text-muted-foreground">
+      <nav aria-label="Breadcrumb" className="eyebrow mb-4 flex flex-wrap items-center">
         <Link href="/dispatch" className="hover:text-foreground">
           Dispatch
         </Link>
-        <span className="px-1.5">/</span>
+        <span aria-hidden className="px-1.5 text-muted-foreground">/</span>
         <span className="text-foreground">ForeFlight plans</span>
       </nav>
-      <header className="mb-6">
+      <header className="mb-6 border-b border-border pb-5">
         <h1 className="page-title">ForeFlight plans waiting</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
           Plans pilots made in ForeFlight that no single leg fits. Put each on its leg, so it shows on
           that flight&rsquo;s dispatch page beside Peregrine&rsquo;s weight and balance, or set it aside.
           Either choice stands when ForeFlight sends the plan again.

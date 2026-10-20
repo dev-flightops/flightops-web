@@ -63,16 +63,16 @@ function day(iso: string): string {
 function Provenance({ config }: { config: FratThresholdConfigResponse }) {
   if (config.adopted_at) {
     return (
-      <div className="rounded-xl border border-status-green/40 bg-status-green/5 p-4">
-        <h2 className="text-sm font-semibold text-status-green">
+      <div className="notice notice-green">
+        <h2 className="notice-label">
           Adopted by this operator
         </h2>
-        <p className="mt-1 text-xs text-muted-foreground">
+        <p className="mt-1 text-xs">
           Set by {config.adopted_by_name ?? "a user no longer on file"} on{" "}
           {day(config.adopted_at)}.
         </p>
         {config.rationale && (
-          <p className="mt-1.5 text-xs text-muted-foreground">
+          <p className="mt-1.5 text-xs">
             {config.rationale}
           </p>
         )}
@@ -80,11 +80,11 @@ function Provenance({ config }: { config: FratThresholdConfigResponse }) {
     );
   }
   return (
-    <div className="rounded-xl border border-status-yellow/40 bg-status-yellow/5 p-4">
-      <h2 className="text-sm font-semibold text-status-yellow">
+    <div className="notice notice-yellow">
+      <h2 className="notice-label">
         Nobody here has chosen these
       </h2>
-      <p className="mt-1 text-xs text-muted-foreground">
+      <p className="mt-1 text-xs">
         These are the values the platform ships with —{" "}
         {config.default_medium_entry_score} /{" "}
         {config.default_high_entry_score} /{" "}
@@ -154,34 +154,34 @@ export default async function FratThresholdsPage() {
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
-      <nav className="mb-3 text-xs text-muted-foreground">
+      <nav aria-label="Breadcrumb" className="eyebrow mb-4 flex flex-wrap items-center">
         <Link href="/settings" className="hover:text-foreground">
           Settings
         </Link>
-        <span className="mx-1">/</span>
-        <span>Flight Risk</span>
+        <span aria-hidden className="px-1.5 text-muted-foreground">/</span>
+        <span className="text-foreground">Flight Risk</span>
       </nav>
-      <header className="mb-4">
+      <header className="mb-6 border-b border-border pb-5">
         <h1 className="page-title">Flight Risk Thresholds</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
           Where Low, Medium, High and Extreme begin on the pre-flight
           risk assessment
         </p>
       </header>
 
       {!config ? (
-        <div className="rounded-xl border border-status-red/40 bg-status-red/5 p-4">
-          <p className="text-sm font-semibold text-status-red">
+        <div className="notice notice-red">
+          <p className="notice-label">
             The thresholds could not be loaded
           </p>
-          <p className="mt-1 text-xs text-muted-foreground">{loadError}</p>
+          <p className="mt-1 text-xs">{loadError}</p>
         </div>
       ) : (
         <>
           <div className="mb-5">
             <Provenance config={config} />
           </div>
-          <div className="rounded-lg border border-border bg-card p-4">
+          <div className="rounded-lg border border-border bg-card p-5">
             {canSet ? (
               <ThresholdForm
                 // The form keeps its own copy of the values while editing.

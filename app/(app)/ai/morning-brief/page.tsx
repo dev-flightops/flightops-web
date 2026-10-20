@@ -49,10 +49,12 @@ export default async function MorningBriefPage({
     const status = err instanceof ApiError ? err.status : 0;
     return (
       <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
-        <h1 className="page-title">Morning Ops Brief</h1>
+        <header className="mb-6 border-b border-border pb-5">
+          <h1 className="page-title">Morning Ops Brief</h1>
+        </header>
         <div
           role="alert"
-          className="mt-4 rounded-lg border border-border bg-card px-4 py-8 text-center text-sm text-muted-foreground"
+          className="rounded-lg border border-border bg-card px-4 py-8 text-center text-sm text-muted-foreground"
         >
           {status === 401
             ? "Your session expired — please sign in again."

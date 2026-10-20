@@ -43,9 +43,9 @@ import { assessDelayAction, type AssessResult } from "./actions";
  */
 
 function bandClasses(band: DelayRiskBand): string {
-  if (band === "high") return "bg-status-red/15 text-status-red";
-  if (band === "medium") return "bg-status-yellow/15 text-status-yellow";
-  return "bg-status-green/15 text-status-green";
+  if (band === "high") return "text-status-red";
+  if (band === "medium") return "text-status-yellow";
+  return "text-status-green";
 }
 
 function hhmmZ(iso: string): string {
@@ -62,7 +62,7 @@ function rate(value: number | null): string {
 function Measured({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <div className="text-[0.6rem] font-semibold uppercase tracking-wider text-muted-foreground">
+      <div className="eyebrow">
         {label}
       </div>
       <div className="text-sm tabular-nums text-foreground">{value}</div>
@@ -149,7 +149,7 @@ function Assessment({ data }: { data: DelayAssessment }) {
             </ul>
           )}
           {judgement.recommendation && (
-            <p className="rounded-md border border-status-blue/30 bg-status-blue/10 px-3 py-2 text-sm text-foreground">
+            <p className="notice notice-blue text-sm text-foreground">
               {judgement.recommendation}
             </p>
           )}
@@ -180,20 +180,20 @@ function FlightRow({ flight }: { flight: FlightListItem }) {
   const band = data?.judgement?.risk_band ?? null;
 
   return (
-    <li className="rounded-lg border border-border bg-card p-4">
+    <li className="p-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <div className="flex flex-wrap items-center gap-3">
             <span className="font-mono font-bold text-foreground">
               {flight.flight_number}
             </span>
-            <span className="text-sm text-primary">
+            <span className="text-sm text-foreground">
               {flight.origin} → {flight.destination}
             </span>
             <span className="text-xs tabular-nums text-muted-foreground">
               ETD {hhmmZ(flight.scheduled_departure_at)}
             </span>
-            <span className="rounded bg-muted px-2 py-0.5 font-mono text-[0.65rem] text-muted-foreground">
+            <span className="font-mono text-xs text-muted-foreground">
               {flight.aircraft.tail_number}
             </span>
           </div>
@@ -203,7 +203,7 @@ function FlightRow({ flight }: { flight: FlightListItem }) {
           {band && (
             <span
               className={
-                "rounded px-2 py-0.5 text-[0.65rem] font-semibold uppercase " +
+                "status-mark text-[0.65rem] " +
                 bandClasses(band)
               }
             >
@@ -214,7 +214,7 @@ function FlightRow({ flight }: { flight: FlightListItem }) {
             type="button"
             onClick={() => void assess()}
             disabled={pending}
-            className="rounded-md border border-status-purple/40 bg-status-purple/10 px-3 py-1.5 text-xs font-semibold text-status-purple hover:bg-status-purple/15 disabled:opacity-50"
+            className="btn-caps rounded-md border px-3 py-1.5 disabled:opacity-50 border-status-purple/60 text-[0.72rem] text-status-purple hover:border-status-purple"
           >
             {pending ? "Assessing…" : data ? "Re-assess" : "Assess"}
           </button>
@@ -245,7 +245,8 @@ export function FlightRiskList({ flights }: { flights: FlightListItem[] }) {
   }
 
   return (
-    <ul className="space-y-3">
+    // The day's flights as one list, a row each (#86), not a stack of cards.
+    <ul className="divide-y divide-border overflow-hidden rounded-lg border border-border bg-card">
       {flights.map((f) => (
         <FlightRow key={f.id} flight={f} />
       ))}

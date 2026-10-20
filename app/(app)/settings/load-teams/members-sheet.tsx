@@ -141,11 +141,11 @@ export function MembersSheet({
                 No members yet.
               </p>
             ) : (
-              <ul className="space-y-2">
+              <ul className="divide-y divide-border overflow-hidden rounded-md border border-border">
                 {sorted.map((m) => (
                   <li
                     key={m.id}
-                    className="flex items-center justify-between gap-3 rounded-md border border-border px-3 py-2"
+                    className="flex items-center justify-between gap-3 px-3 py-2"
                   >
                     <div className="min-w-0">
                       <p className="flex items-center gap-2 text-sm font-semibold text-foreground">
@@ -188,7 +188,7 @@ export function MembersSheet({
                   value={pick}
                   onChange={(e) => setPick(e.target.value)}
                   disabled={pending || members === null}
-                  className="min-w-0 flex-1 rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
+                  className="ff-input min-w-0 flex-1 px-3 py-2 text-sm"
                 >
                   <option value="">— Select Employee —</option>
                   {addable.map((p) => (

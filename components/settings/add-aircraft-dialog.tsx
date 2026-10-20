@@ -35,7 +35,7 @@ export function AddAircraftDialog() {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="inline-flex items-center gap-1.5 rounded-md bg-brand-primary px-3 py-2 text-xs font-semibold text-white hover:bg-brand-primary-dark"
+        className="btn-caps inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-2 text-white hover:bg-brand-dark text-[0.72rem]"
       >
         + Add Aircraft
       </button>
@@ -157,7 +157,7 @@ export function AddAircraftDialog() {
                 rows={2}
                 maxLength={200}
                 placeholder="Commuter seats · VIP interior · STC dual-pilot only"
-                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
+                className="ff-input px-3 py-2 text-sm"
               />
             </div>
 
@@ -173,7 +173,7 @@ export function AddAircraftDialog() {
               <button
                 type="submit"
                 disabled={pending}
-                className="inline-flex items-center gap-1.5 rounded-md bg-brand-primary px-4 py-2 text-xs font-semibold text-white hover:bg-brand-primary-dark disabled:opacity-60"
+                className="btn-caps inline-flex items-center gap-1.5 rounded-md bg-primary px-4 py-2 text-white hover:bg-brand-dark disabled:opacity-60 text-[0.72rem]"
               >
                 {pending && <Spinner size="xs" />}
                 {pending ? "Adding…" : "Add aircraft"}
@@ -210,7 +210,7 @@ function Field({
         id={name}
         name={name}
         aria-invalid={error ? "true" : undefined}
-        className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none aria-[invalid=true]:border-status-red"
+        className="ff-input px-3 py-2 text-sm aria-[invalid=true]:border-status-red"
         {...inputProps}
       />
       {error && (

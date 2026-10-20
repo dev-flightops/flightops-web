@@ -78,9 +78,9 @@ export default async function SettingsCostsPage() {
         <span className="text-foreground">Costs</span>
       </nav>
 
-      <header className="mb-5">
+      <header className="mb-6 border-b border-border pb-5">
         <h1 className="page-title">Aircraft Operating Cost Configuration</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
           Feeds directly into Dispatch AI Intelligence cost calculations
         </p>
       </header>
@@ -121,10 +121,10 @@ function AircraftCostsSection({
   const fuelLabel = (code: string | null | undefined) =>
     code ? (fuelTypes.find((f) => f.code.toLowerCase() === code.toLowerCase())?.label ?? code) : "—";
   return (
-    <section className="mb-5 rounded-lg border border-border bg-card px-4 py-4">
-      <div className="mb-3 eyebrow">
+    <section className="mb-5 rounded-lg border border-border bg-card p-5">
+      <h2 className="panel-title mb-3">
         Aircraft Type Operating Costs (per flight hour)
-      </div>
+      </h2>
       <div className="overflow-hidden rounded-lg border border-border bg-card">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
@@ -184,7 +184,7 @@ function AircraftCostsSection({
                       <td className="whitespace-nowrap px-4 py-3 font-mono text-xs text-foreground">
                         {pilotHourly === null ? "—" : `$${pilotHourly.toFixed(0)}`}
                       </td>
-                      <td className="whitespace-nowrap px-4 py-3 font-mono text-xs font-bold text-status-green">
+                      <td className="whitespace-nowrap px-4 py-3 font-mono text-xs font-bold text-foreground">
                         {directCost === null ? "—" : `$${directCost.toFixed(0)}`}
                         <span className="ml-1 font-normal text-muted-foreground">+ fuel</span>
                       </td>
@@ -202,7 +202,7 @@ function AircraftCostsSection({
       </p>
       {canEdit ? (
         <details className="mt-3">
-          <summary className="cursor-pointer text-xs text-primary">+ Add / Edit Aircraft Type</summary>
+          <summary className="cursor-pointer text-[0.68rem] font-bold uppercase tracking-[0.1em] text-primary">+ Add / Edit Aircraft Type</summary>
           <p className="mt-2 text-xs text-muted-foreground">
             {`Name the type by the aircraft’s airframe type (caravan, ga8, …), or its model when it has none; the suggestions list them. Dispatch Intelligence costs flights by it, and a manifest estimates a trip’s fuel from its fuel burn and fuel when dispatch hasn’t entered the fuel.`}
           </p>
@@ -215,24 +215,24 @@ function AircraftCostsSection({
 
 function FuelPricesSection({ rows }: { rows: FuelPriceRow[] }) {
   return (
-    <section className="mb-5 rounded-lg border border-border bg-card px-4 py-4">
-      <div className="mb-3 eyebrow">
+    <section className="mb-5 rounded-lg border border-border bg-card p-5">
+      <h2 className="panel-title mb-3">
         Fuel Prices by Base ($/gal)
-      </div>
+      </h2>
       {rows.length === 0 ? (
         <p className="text-sm text-muted-foreground">
           No fuel prices configured. Add one below.
         </p>
       ) : (
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-6">
+        <div className="grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-4 lg:grid-cols-6">
           {rows.map((r) => (
             <div
               key={r.id}
-              className="rounded border border-border bg-background px-3 py-2"
+              className="border-l-2 border-input py-0.5 pl-3"
             >
               <div className="font-mono text-sm font-semibold">{r.icao_code}</div>
-              <div className="text-status-green">
-                <span className="font-bold">${Number(r.price_per_gal).toFixed(2)}</span>
+              <div className="text-foreground">
+                <span className="font-bold tabular-nums">${Number(r.price_per_gal).toFixed(2)}</span>
                 <span className="ml-1 text-xs font-normal text-muted-foreground">
                   /gal · {r.fuel_type}
                 </span>
@@ -253,20 +253,20 @@ function FuelPricesSection({ rows }: { rows: FuelPriceRow[] }) {
 
 function LandingFeesSection({ rows }: { rows: LandingFeeRow[] }) {
   return (
-    <section className="rounded-lg border border-border bg-card px-4 py-4">
-      <div className="mb-3 eyebrow">
+    <section className="rounded-lg border border-border bg-card p-5">
+      <h2 className="panel-title mb-3">
         Landing Fees
-      </div>
+      </h2>
       {rows.length === 0 ? (
         <p className="text-sm text-muted-foreground">
           No landing fees configured. Add one below.
         </p>
       ) : (
-        <ul className="space-y-1">
+        <ul className="divide-y divide-border">
           {rows.map((r) => (
             <li
               key={r.id}
-              className="flex justify-between rounded bg-background px-2 py-1 text-sm"
+              className="flex justify-between py-1.5 text-sm"
             >
               <span className="font-mono">{r.icao_code}</span>
               <span className="text-muted-foreground">
@@ -283,20 +283,20 @@ function LandingFeesSection({ rows }: { rows: LandingFeeRow[] }) {
 
 function RoutesSection({ rows }: { rows: RouteFlightTimeRow[] }) {
   return (
-    <section className="rounded-lg border border-border bg-card px-4 py-4">
-      <div className="mb-3 eyebrow">
+    <section className="rounded-lg border border-border bg-card p-5">
+      <h2 className="panel-title mb-3">
         Route Flight Times
-      </div>
+      </h2>
       {rows.length === 0 ? (
         <p className="text-sm text-muted-foreground">
           No route flight times configured. Add one below.
         </p>
       ) : (
-        <ul className="space-y-1">
+        <ul className="divide-y divide-border">
           {rows.map((r) => (
             <li
               key={r.id}
-              className="flex justify-between rounded bg-background px-2 py-1 text-sm"
+              className="flex justify-between py-1.5 text-sm"
             >
               <span className="font-mono">
                 {r.origin_icao} → {r.dest_icao}
@@ -321,10 +321,10 @@ function CalculatorSection({
 }) {
   if (aircraft.length === 0 || fuelPrices.length === 0) {
     return (
-      <section className="rounded-lg border border-border bg-card px-4 py-4">
-        <div className="mb-3 eyebrow">
+      <section className="rounded-lg border border-border bg-card p-5">
+        <h2 className="panel-title mb-3">
           Cost Per Flight Hour Calculator
-        </div>
+        </h2>
         <p className="text-xs text-muted-foreground">
           Calculator populates once both Aircraft Type Costs and Fuel Prices by
           Base have data. Values include fuel + engine/prop reserves + mx + oil
@@ -334,10 +334,10 @@ function CalculatorSection({
     );
   }
   return (
-    <section className="rounded-lg border border-border bg-card px-4 py-4">
-      <div className="mb-3 eyebrow">
+    <section className="rounded-lg border border-border bg-card p-5">
+      <h2 className="panel-title mb-3">
         Cost Per Flight Hour Calculator
-      </div>
+      </h2>
       <p className="mb-3 text-xs text-muted-foreground">
         Total hourly rate by aircraft type and departure base
       </p>
@@ -373,7 +373,7 @@ function CalculatorSection({
                     return (
                       <td
                         key={fp.id}
-                        className="whitespace-nowrap px-4 py-3 font-mono text-xs text-status-green"
+                        className="whitespace-nowrap px-4 py-3 font-mono text-xs text-foreground"
                       >
                         {total === null ? "—" : `$${total.toFixed(0)}`}
                       </td>
@@ -404,7 +404,7 @@ function DisabledAddDetails({
 }) {
   return (
     <details className="mt-3">
-      <summary className="cursor-pointer text-xs text-primary">{label}</summary>
+      <summary className="cursor-pointer text-[0.68rem] font-bold uppercase tracking-[0.1em] text-primary">{label}</summary>
       <div className="mt-3 flex flex-wrap gap-2">
         {children.map((f) => (
           <label key={f.label} className="min-w-[120px]">
@@ -416,7 +416,7 @@ function DisabledAddDetails({
               placeholder={f.placeholder}
               disabled
               title={hint}
-              className="w-full cursor-not-allowed rounded-md border border-border bg-background px-2 py-1.5 text-sm disabled:opacity-100"
+              className="ff-input cursor-not-allowed px-2 py-1.5 text-sm disabled:opacity-100"
             />
           </label>
         ))}

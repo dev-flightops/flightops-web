@@ -81,8 +81,8 @@ export function ConfigureProviderDialog({
 
   const buttonClass =
     ctaVariant === "primary"
-      ? "inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-dark"
-      : "inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-accent";
+      ? "btn-caps inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-[0.72rem] text-white hover:bg-brand-dark"
+      : "btn-caps inline-flex items-center gap-1.5 rounded-md border border-input px-3 py-1.5 text-[0.72rem] text-foreground hover:border-foreground";
 
   return (
     <>
@@ -233,7 +233,7 @@ function SecretField({
           required
           autoComplete="new-password"
           aria-invalid={error ? "true" : undefined}
-          className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none aria-[invalid=true]:border-status-red"
+          className="ff-input px-3 py-2 text-sm aria-[invalid=true]:border-status-red"
         />
         {error && (
           <p role="alert" className="field-error">
@@ -269,7 +269,7 @@ function SecretField({
         <>
           <div
             role="status"
-            className="rounded-md border border-status-yellow/40 bg-status-yellow/10 px-3 py-2 text-[0.7rem] text-status-yellow"
+            className="notice notice-yellow text-[0.7rem]"
           >
             The stored secret will be cleared on save. The provider will
             keep its row but sign-in will fail until a new secret is
@@ -285,7 +285,7 @@ function SecretField({
           placeholder="•••••• (configured — leave blank to keep)"
           autoComplete="new-password"
           aria-invalid={error ? "true" : undefined}
-          className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none aria-[invalid=true]:border-status-red"
+          className="ff-input px-3 py-2 text-sm aria-[invalid=true]:border-status-red"
         />
       )}
       {error && (
@@ -320,7 +320,7 @@ function Field({
         id={name}
         name={name}
         aria-invalid={error ? "true" : undefined}
-        className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none aria-[invalid=true]:border-status-red"
+        className="ff-input px-3 py-2 text-sm aria-[invalid=true]:border-status-red"
         {...inputProps}
       />
       {error && (

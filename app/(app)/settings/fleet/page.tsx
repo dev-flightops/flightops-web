@@ -40,18 +40,18 @@ export default async function SettingsFleetPage() {
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
-      <nav className="mb-4 text-xs text-muted-foreground">
+      <nav aria-label="Breadcrumb" className="eyebrow mb-4 flex flex-wrap items-center">
         <Link href="/settings" className="hover:text-foreground">
           Settings
         </Link>
-        <span className="px-1.5">/</span>
+        <span aria-hidden className="px-1.5 text-muted-foreground">/</span>
         <span className="text-foreground">Fleet</span>
       </nav>
 
-      <header className="mb-6 flex items-end justify-between gap-4">
+      <header className="mb-6 flex flex-wrap items-end justify-between gap-4 border-b border-border pb-5">
         <div>
           <h1 className="page-title">Fleet</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
             Add, edit, and retire aircraft. Retired airframes preserve their
             flight history and can be reactivated.
           </p>
@@ -69,7 +69,7 @@ export default async function SettingsFleetPage() {
       )}
 
       {!loadError && aircraft.length === 0 && (
-        <div className="rounded-lg border border-dashed border-border bg-card/40 px-6 py-12 text-center">
+        <div className="rounded-lg border border-border bg-card px-5 py-8 text-center">
           <p className="text-sm text-muted-foreground">
             No aircraft yet. Add the first tail to get going.
           </p>
@@ -77,7 +77,7 @@ export default async function SettingsFleetPage() {
       )}
 
       {active.length > 0 && (
-        <section className="overflow-hidden rounded-lg border border-border bg-card">
+        <section className="overflow-x-auto rounded-lg border border-border bg-card">
           <FleetTable aircraft={active} variant="active" />
         </section>
       )}
@@ -87,7 +87,7 @@ export default async function SettingsFleetPage() {
           <h2 className="mb-2 eyebrow">
             Retired ({retired.length})
           </h2>
-          <div className="overflow-hidden rounded-lg border border-border bg-muted/60">
+          <div className="overflow-x-auto rounded-lg border border-border bg-muted/60">
             <FleetTable aircraft={retired} variant="retired" />
           </div>
         </section>

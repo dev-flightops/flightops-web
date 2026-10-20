@@ -33,10 +33,8 @@ export function personLabel(p: PersonOption): string {
 
 const DEFAULT_COLOR = "#60a5fa";
 
-const LABEL =
-  "mb-1 block text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground";
-const FIELD =
-  "w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none aria-[invalid=true]:border-status-red";
+const LABEL = "field-label";
+const FIELD = "ff-input px-3 py-2 text-sm aria-[invalid=true]:border-status-red";
 
 /** `<input type="color">` only takes #rrggbb; the API also allows #rgb. */
 function sixDigit(color: string): string {

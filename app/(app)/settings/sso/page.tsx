@@ -53,19 +53,19 @@ export default async function SettingsSsoPage() {
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6">
-      <nav className="mb-4 text-xs text-muted-foreground">
+      <nav aria-label="Breadcrumb" className="eyebrow mb-4 flex flex-wrap items-center">
         <Link href="/settings" className="hover:text-foreground">
           Settings
         </Link>
-        <span className="px-1.5">/</span>
+        <span aria-hidden className="px-1.5 text-muted-foreground">/</span>
         <span className="text-foreground">SSO & Integrations</span>
       </nav>
 
-      <header className="mb-6">
+      <header className="mb-6 border-b border-border pb-5">
         <h1 className="page-title">
           SSO & Integrations
         </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
           Per-tenant OAuth credentials for Google / Microsoft / Okta sign-in.
           Each tenant configures its own — credentials never leave this
           tenant.
@@ -91,7 +91,8 @@ export default async function SettingsSsoPage() {
       )}
 
       {!unauthorized && !loadError && (
-        <ul className="space-y-3">
+        // One list of providers, a row each (#86), not a stack of cards.
+        <ul className="divide-y divide-border overflow-hidden rounded-lg border border-border bg-card">
           {catalog.map((entry) => (
             <li key={entry.id}>
               <ProviderCard
@@ -105,10 +106,8 @@ export default async function SettingsSsoPage() {
 
       {!unauthorized && (
         <p className="mt-8 text-xs text-muted-foreground">
-          Notes: \`client_secret\` never leaves the server after it&apos;s
-          stored. At-rest encryption is a planned follow-up. Until the web Auth.js wiring lands in a separate
-          story, a connected provider here is admin-visible only —
-          users don&apos;t see the sign-in button yet.
+          The <code className="font-mono">client_secret</code>
+          {" never leaves the server after it's stored. At-rest encryption is a planned follow-up."}
         </p>
       )}
     </div>
@@ -124,7 +123,7 @@ function ProviderCard({
 }) {
   const status = providerStatus(existing);
   return (
-    <article className="rounded-lg border border-border bg-card p-5">
+    <article className="p-5">
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
@@ -214,10 +213,10 @@ function providerStatus(
 function StatusChip({ status }: { status: ProviderStatus }) {
   const palette: Record<ProviderStatus, string> = {
     connected:
-      "border-status-green/40 bg-status-green/10 text-status-green",
+      "text-status-green",
     "configured-inactive":
-      "border-status-yellow/40 bg-status-yellow/10 text-status-yellow",
-    "not-configured": "border-border bg-muted text-muted-foreground",
+      "text-status-yellow",
+    "not-configured": "text-muted-foreground",
   };
   const label: Record<ProviderStatus, string> = {
     connected: "Connected",
@@ -226,7 +225,7 @@ function StatusChip({ status }: { status: ProviderStatus }) {
   };
   return (
     <span
-      className={`rounded-sm border px-1.5 py-0.5 text-[0.6rem] font-semibold uppercase tracking-[0.08em] ${palette[status]}`}
+      className={`status-mark text-[0.6rem] ${palette[status]}`}
     >
       {label[status]}
     </span>
@@ -252,7 +251,7 @@ function Row({
         : "text-foreground";
   return (
     <div className="flex gap-2">
-      <dt className="shrink-0 text-[0.65rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+      <dt className="shrink-0 eyebrow">
         {label}
       </dt>
       <dd

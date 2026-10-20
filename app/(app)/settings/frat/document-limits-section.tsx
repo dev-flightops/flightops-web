@@ -112,9 +112,9 @@ export function DocumentLimitsSection({
   return (
     <section
       aria-labelledby={`${uid}-heading`}
-      className="mt-6 rounded-lg border border-border bg-card p-4"
+      className="mt-6 rounded-lg border border-border bg-card p-5"
     >
-      <h2 id={`${uid}-heading`} className="text-sm font-semibold">
+      <h2 id={`${uid}-heading`} className="panel-title">
         Limits from your documents
       </h2>
       <p className="mt-1 text-xs text-muted-foreground">
@@ -150,7 +150,7 @@ export function DocumentLimitsSection({
                 setDocumentId(e.target.value);
                 setError(null);
               }}
-              className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
+              className="ff-input px-3 py-2 text-sm"
             >
               {documents.map((d) => (
                 <option key={d.id} value={d.id}>
@@ -245,7 +245,7 @@ function ReadingResult({
         <div className="mt-2 overflow-x-auto rounded-lg border border-border">
           <table className="w-full border-collapse text-xs">
             <thead>
-              <tr className="border-b border-border bg-muted/60 text-left text-[0.6rem] uppercase tracking-[0.06em] text-muted-foreground">
+              <tr className="ff-thead">
                 <th scope="col" className="px-3 py-2">Limit</th>
                 <th scope="col" className="px-3 py-2">In the document</th>
                 <th scope="col" className="px-3 py-2">Set here now</th>
@@ -281,10 +281,8 @@ function ReadingResult({
                           <span className="font-mono">{amount(Number(now), p.unit)}</span>{" "}
                           <span
                             className={
-                              "rounded px-1 text-[0.6rem] font-semibold uppercase " +
-                              (same
-                                ? "bg-status-green/15 text-status-green"
-                                : "bg-status-yellow/15 text-status-yellow")
+                              "status-mark text-[0.6rem] " +
+                              (same ? "text-status-green" : "text-status-yellow")
                             }
                           >
                             {same ? "same" : "differs"}
@@ -364,7 +362,7 @@ function Decision({ proposal }: { proposal: LimitProposal }) {
   }
 
   const button =
-    "rounded-md border px-2 py-1 text-[0.7rem] font-semibold disabled:opacity-60";
+    "btn-caps rounded-md border px-2 py-1 text-[0.65rem] disabled:opacity-60";
   return (
     <div className="min-w-[9rem] space-y-1.5">
       {changing ? (
@@ -375,13 +373,13 @@ function Decision({ proposal }: { proposal: LimitProposal }) {
             step="any"
             value={value}
             onChange={(e) => setValue(e.target.value)}
-            className="w-20 rounded-md border border-border bg-background px-2 py-1 text-xs tabular-nums"
+            className="ff-input w-20 px-2 py-1 text-xs tabular-nums"
           />
           <button
             type="button"
             disabled={pending}
             onClick={() => decide(() => approveLimitAction(proposal.id, value))}
-            className={`${button} border-primary/50 bg-primary text-primary-foreground`}
+            className={`${button} border-primary bg-primary text-primary-foreground hover:bg-brand-dark`}
           >
             Approve {value}
           </button>
@@ -389,7 +387,7 @@ function Decision({ proposal }: { proposal: LimitProposal }) {
             type="button"
             disabled={pending}
             onClick={() => setChanging(false)}
-            className={`${button} border-border`}
+            className={`${button} border-input text-foreground hover:border-foreground`}
           >
             Cancel
           </button>
@@ -400,7 +398,7 @@ function Decision({ proposal }: { proposal: LimitProposal }) {
             type="button"
             disabled={pending}
             onClick={() => decide(() => approveLimitAction(proposal.id))}
-            className={`${button} border-primary/50 bg-primary text-primary-foreground`}
+            className={`${button} border-primary bg-primary text-primary-foreground hover:bg-brand-dark`}
             aria-label={`Approve ${proposal.label}: ${amount(Number(proposal.value), proposal.unit)}`}
           >
             Approve
@@ -409,7 +407,7 @@ function Decision({ proposal }: { proposal: LimitProposal }) {
             type="button"
             disabled={pending}
             onClick={() => setChanging(true)}
-            className={`${button} border-border`}
+            className={`${button} border-input text-foreground hover:border-foreground`}
             aria-label={`Change ${proposal.label} before approving`}
           >
             Change…
@@ -418,7 +416,7 @@ function Decision({ proposal }: { proposal: LimitProposal }) {
             type="button"
             disabled={pending}
             onClick={() => decide(() => rejectLimitAction(proposal.id))}
-            className={`${button} border-border text-status-red`}
+            className={`${button} border-status-red/60 text-status-red hover:border-status-red`}
             aria-label={`Reject ${proposal.label}`}
           >
             Reject

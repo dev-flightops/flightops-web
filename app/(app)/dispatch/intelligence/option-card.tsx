@@ -80,7 +80,7 @@ export function OptionCard({ option }: { option: DispatchOption }) {
             {option.summary}
           </span>
         </div>
-        <span className="text-[0.65rem] font-semibold uppercase tracking-wider text-muted-foreground">
+        <span className="eyebrow">
           {KIND_LABEL[option.kind] ?? option.kind}
         </span>
       </div>

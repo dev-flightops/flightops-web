@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
+import { linkCaps } from "@/components/ff/controls";
 import type { DocumentRequirementRow } from "@/lib/api/employee-documents";
 import type { RoleSummary } from "@/lib/api/types";
 
@@ -119,7 +120,7 @@ export function RequirementsTable({
                     <span className="text-sm font-semibold">{r.name}</span>
                     {r.required_on_hire && (
                       <span
-                        className="rounded border border-border px-1.5 py-0.5 text-[0.6rem] font-semibold uppercase tracking-wider text-muted-foreground"
+                        className="status-mark text-muted-foreground"
                         title="Shown on the checklist. Does not block activating a new hire."
                       >
                         On hire
@@ -156,7 +157,7 @@ export function RequirementsTable({
                   type="button"
                   disabled={pending}
                   onClick={() => run(() => retireRequirementAction(r.id))}
-                  className="text-[0.7rem] font-semibold text-status-red hover:underline disabled:opacity-50"
+                  className="text-[0.68rem] font-bold uppercase tracking-[0.1em] text-status-red underline-offset-4 hover:underline disabled:opacity-50"
                   title="Stops it appearing on checklists. Documents already filed against it stay readable."
                 >
                   Retire
@@ -169,14 +170,14 @@ export function RequirementsTable({
 
       {retired.length > 0 && (
         <details>
-          <summary className="cursor-pointer text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          <summary className="eyebrow cursor-pointer">
             {retired.length} retired
           </summary>
-          <ul className="mt-2 space-y-1">
+          <ul className="mt-2 divide-y divide-border rounded-lg border border-border">
             {retired.map((r) => (
               <li
                 key={r.id}
-                className="flex items-center justify-between rounded border border-border px-3 py-1.5 text-[0.7rem] text-muted-foreground"
+                className="flex items-center justify-between px-3 py-2 text-[0.7rem] text-muted-foreground"
               >
                 <span>{r.name}</span>
                 <button
@@ -185,7 +186,7 @@ export function RequirementsTable({
                   onClick={() =>
                     run(() => updateRequirementAction(r.id, { is_active: true }))
                   }
-                  className="font-semibold text-primary hover:underline disabled:opacity-50"
+                  className={`${linkCaps} disabled:opacity-50`}
                 >
                   Put back in use
                 </button>
@@ -237,7 +238,7 @@ function RequirementForm({
           reminder_days: Number(fd.get("reminder_days") ?? 30),
         });
       }}
-      className="space-y-3 rounded-lg border border-border bg-card px-4 py-3"
+      className="space-y-3 rounded-lg border border-border bg-card p-5"
     >
       <label className="block">
         <span className={LABEL}>Name *</span>
@@ -325,7 +326,5 @@ function RequirementForm({
   );
 }
 
-const LABEL =
-  "mb-1 block text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground";
-const INPUT =
-  "w-full rounded-md border border-border bg-background px-3 py-1.5 text-xs text-foreground focus:border-primary focus:outline-none";
+const LABEL = "field-label";
+const INPUT = "ff-input px-3 py-1.5 text-xs";

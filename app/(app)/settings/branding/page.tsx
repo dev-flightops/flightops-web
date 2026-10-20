@@ -34,17 +34,17 @@ export default async function SettingsBrandingPage() {
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
-      <nav className="mb-4 text-xs text-muted-foreground">
+      <nav aria-label="Breadcrumb" className="eyebrow mb-4 flex flex-wrap items-center">
         <Link href="/settings" className="hover:text-foreground">
           Settings
         </Link>
-        <span className="px-1.5">/</span>
+        <span aria-hidden className="px-1.5 text-muted-foreground">/</span>
         <span className="text-foreground">Branding</span>
       </nav>
 
-      <header className="mb-6">
+      <header className="mb-6 border-b border-border pb-5">
         <h1 className="page-title">Branding</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
           Override the platform&apos;s primary accent with your brand colors.
           Applied instantly across every module.
         </p>

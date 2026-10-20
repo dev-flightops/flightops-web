@@ -298,15 +298,15 @@ export function HelpPanel() {
             ref={dialogRef}
             role="dialog"
             aria-label="Help"
-            className="fixed right-0 top-0 z-50 flex h-full w-full flex-col border-l border-border bg-card shadow-xl sm:w-[26rem]"
+            className="fixed right-0 top-0 z-50 flex h-full w-full flex-col border-l border-border bg-card sm:w-[26rem]"
           >
             <div className="flex items-center justify-between border-b border-border px-4 py-3">
-              <h2 className="text-sm font-bold">Help</h2>
+              <h2 className="panel-title">Help</h2>
               <button
                 type="button"
                 onClick={() => setOpen(false)}
                 aria-label="Close help"
-                className="rounded px-2 py-1 text-xs text-muted-foreground hover:bg-accent hover:text-foreground"
+                className="btn-caps rounded px-2 py-1 text-[0.68rem] text-muted-foreground hover:text-foreground"
               >
                 Close
               </button>
@@ -319,7 +319,7 @@ export function HelpPanel() {
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Search help"
                 aria-label="Search help"
-                className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-xs text-foreground focus:border-primary focus:outline-none"
+                className="ff-input px-3 py-1.5 text-xs"
               />
             </div>
 

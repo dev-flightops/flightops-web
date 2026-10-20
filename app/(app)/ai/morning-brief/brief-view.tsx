@@ -59,7 +59,7 @@ function Big({
   tone?: string;
 }) {
   return (
-    <span className={"text-3xl font-bold tabular-nums " + tone}>{value}</span>
+    <span className={"font-display text-[2rem] font-extrabold leading-none tabular-nums " + tone}>{value}</span>
   );
 }
 
@@ -117,10 +117,10 @@ export function BriefView({
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6">
-      <header className="mb-4 flex flex-wrap items-start justify-between gap-3">
+      <header className="mb-6 flex flex-wrap items-start justify-between gap-4 border-b border-border pb-5">
         <div>
           <h1 className="page-title">Morning Ops Brief</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
             {heading} · {operator}
           </p>
         </div>
@@ -128,28 +128,29 @@ export function BriefView({
       </header>
 
       {alerts.length > 0 ? (
-        <div
+        <ul
           // Assertive: these are the reason somebody opened the page.
           role="alert"
-          className="mb-4 flex flex-wrap gap-2"
+          className="mb-4 space-y-2"
         >
+          {/* Each alert a notice on its status edge (#86), not a tinted pill. */}
           {alerts.map((a) => (
-            <span
+            <li
               key={a.text}
               className={
-                "rounded-lg border px-3 py-1.5 text-xs font-semibold " +
-                (a.severity === "critical"
-                  ? "border-status-red/40 bg-status-red/10 text-status-red"
-                  : "border-status-yellow/40 bg-status-yellow/10 text-status-yellow")
+                "notice text-xs font-semibold " +
+                (a.severity === "critical" ? "notice-red" : "notice-yellow")
               }
             >
-              {a.severity === "critical" ? "▲ " : "● "}
+              <span className="notice-label">
+                {a.severity === "critical" ? "Critical" : "Warning"}
+              </span>
               {a.text}
-            </span>
+            </li>
           ))}
-        </div>
+        </ul>
       ) : (
-        <p className="mb-4 rounded-lg border border-status-green/40 bg-status-green/10 px-3 py-1.5 text-xs font-semibold text-status-green">
+        <p className="notice notice-green mb-4 text-xs font-semibold">
           Nothing needs attention this morning.
         </p>
       )}
@@ -264,7 +265,7 @@ export function BriefView({
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
               <thead>
-                <tr className="border-b border-border text-muted-foreground">
+                <tr className="ff-thead">
                   <th scope="col" className="px-2 py-1.5 font-semibold">
                     Tail
                   </th>
@@ -291,9 +292,8 @@ export function BriefView({
                     <td className="px-2 py-1.5">
                       <span
                         className={
-                          item.overdue
-                            ? "font-semibold text-status-red"
-                            : "text-muted-foreground"
+                          "status-mark " +
+                          (item.overdue ? "text-status-red" : "text-muted-foreground")
                         }
                       >
                         {item.overdue ? "Overdue" : "Due"}
@@ -332,9 +332,9 @@ function CrewRow({
   return (
     <div className="flex items-center gap-2">
       <span className="w-20 flex-shrink-0 text-muted-foreground">{label}</span>
-      <span className="h-2 flex-1 overflow-hidden rounded-full bg-muted/60">
+      <span className="h-2 flex-1 overflow-hidden bg-muted/60">
         <span
-          className={"block h-full rounded-full " + tone}
+          className={"block h-full " + tone}
           // Zero stays invisible rather than showing a hairline that
           // reads as "some".
           style={{ width: `${percent}%` }}

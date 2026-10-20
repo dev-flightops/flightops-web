@@ -22,15 +22,15 @@ export function PasswordForm() {
         </p>
       ) : null}
       <label className="grid gap-1 text-xs">
-        Current Password
+        <span className="field-label">Current Password</span>
         <input name="current_password" type="password" required autoComplete="current-password" className={FIELD} />
       </label>
       <label className="grid gap-1 text-xs">
-        New Password (12 characters or more)
+        <span className="field-label">New Password (12 characters or more)</span>
         <input name="new_password" type="password" required minLength={12} autoComplete="new-password" className={FIELD} />
       </label>
       <label className="grid gap-1 text-xs">
-        New Password Again
+        <span className="field-label">New Password Again</span>
         <input name="confirm_password" type="password" required minLength={12} autoComplete="new-password" className={FIELD} />
       </label>
       <button

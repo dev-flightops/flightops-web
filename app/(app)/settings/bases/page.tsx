@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { SegmentLinks } from "@/components/ff/segment-links";
 import { AddBaseDialog } from "@/components/settings/add-base-dialog";
 import { DeactivateBaseButton } from "@/components/settings/deactivate-base-button";
 import { EditBaseDialog } from "@/components/settings/edit-base-dialog";
@@ -40,46 +41,32 @@ export default async function SettingsBasesPage({
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
-      <nav className="mb-4 text-xs text-muted-foreground">
+      <nav aria-label="Breadcrumb" className="eyebrow mb-4 flex flex-wrap items-center">
         <Link href="/settings" className="hover:text-foreground">
           Settings
         </Link>
-        <span className="px-1.5">/</span>
+        <span aria-hidden className="px-1.5 text-muted-foreground">/</span>
         <span className="text-foreground">Bases</span>
       </nav>
 
-      <header className="mb-6 flex items-end justify-between gap-4">
+      <header className="mb-6 flex flex-wrap items-end justify-between gap-4 border-b border-border pb-5">
         <div>
           <h1 className="page-title">Bases</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
             Master directory of ICAOs the operator works out of
           </p>
         </div>
         <AddBaseDialog />
       </header>
 
-      <div className="mb-4 flex items-center gap-3 text-xs text-muted-foreground">
-        <Link
-          href="/settings/bases"
-          className={
-            activeOnly
-              ? "rounded-md border border-border bg-card px-2.5 py-1 hover:bg-accent"
-              : "rounded-md border border-primary bg-primary/10 px-2.5 py-1 font-semibold text-primary"
-          }
-        >
-          All
-        </Link>
-        <Link
-          href="/settings/bases?active_only=true"
-          className={
-            activeOnly
-              ? "rounded-md border border-primary bg-primary/10 px-2.5 py-1 font-semibold text-primary"
-              : "rounded-md border border-border bg-card px-2.5 py-1 hover:bg-accent"
-          }
-        >
-          Active only
-        </Link>
-      </div>
+      <SegmentLinks
+        label="Which bases"
+        className="mb-4"
+        items={[
+          { href: "/settings/bases", label: "All", active: !activeOnly },
+          { href: "/settings/bases?active_only=true", label: "Active only", active: activeOnly },
+        ]}
+      />
 
       {loadError && (
         <div
@@ -91,7 +78,7 @@ export default async function SettingsBasesPage({
       )}
 
       {!loadError && bases.length === 0 && (
-        <div className="rounded-lg border border-dashed border-border bg-card/40 px-6 py-12 text-center">
+        <div className="rounded-lg border border-border bg-card px-5 py-8 text-center">
           <p className="text-sm text-muted-foreground">
             No bases yet. Add the first one to get going — start with your hub.
           </p>
@@ -99,7 +86,7 @@ export default async function SettingsBasesPage({
       )}
 
       {active.length > 0 && (
-        <section className="overflow-hidden rounded-lg border border-border bg-card">
+        <section className="overflow-x-auto rounded-lg border border-border bg-card">
           <BaseTable bases={active} />
         </section>
       )}
@@ -109,7 +96,7 @@ export default async function SettingsBasesPage({
           <h2 className="mb-2 eyebrow">
             Inactive ({inactive.length})
           </h2>
-          <div className="overflow-hidden rounded-lg border border-border bg-muted/60">
+          <div className="overflow-x-auto rounded-lg border border-border bg-muted/60">
             <BaseTable bases={inactive} muted />
           </div>
         </section>
@@ -148,7 +135,7 @@ function BaseTable({
                   {b.icao}
                 </span>
                 {b.is_hub && (
-                  <span className="rounded-sm border border-border bg-muted px-1.5 py-0.5 text-[0.55rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+                  <span className="status-mark text-muted-foreground">
                     Hub
                   </span>
                 )}

@@ -6,13 +6,14 @@ import { SignOutGlyph } from "@/components/ff/glyphs";
  * cannot drift apart.
  */
 
-/** 24×24 avatar + name, left-bordered like legacy. */
+/** The initial on a 24×24 square of the brand (#86: no round,
+ *  gradient avatar) + name, left-bordered like legacy. */
 export function IdentityCluster({ displayName }: { displayName: string }) {
   const initial = (displayName[0] ?? "U").toUpperCase();
   return (
     <div className="hidden items-center gap-2 border-l border-border pl-2 sm:flex">
       <div
-        className="flex h-6 w-6 items-center justify-center rounded-full border border-foreground/15 bg-gradient-to-br from-primary to-brand-dark text-[0.65rem] font-bold text-primary-foreground"
+        className="flex h-6 w-6 items-center justify-center rounded-sm bg-primary text-[0.65rem] font-bold text-primary-foreground"
         title={displayName}
         aria-hidden
       >

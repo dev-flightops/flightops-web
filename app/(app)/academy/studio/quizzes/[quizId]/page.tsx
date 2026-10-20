@@ -38,11 +38,11 @@ export default async function StudioQuizEditorPage({
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
-      <nav className="mb-4 text-xs text-muted-foreground">
-        <Link href="/academy/studio" className="hover:underline">
+      <nav aria-label="Breadcrumb" className="eyebrow mb-4 flex flex-wrap items-center">
+        <Link href="/academy/studio" className="hover:text-foreground">
           Studio
         </Link>
-        {" / "}
+        <span aria-hidden className="px-1.5 text-muted-foreground">/</span>
         <span className="text-foreground">Quiz</span>
       </nav>
       <header className="mb-6 border-b border-border pb-5">

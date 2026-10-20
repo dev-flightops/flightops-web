@@ -46,17 +46,12 @@ export function DunningBanner({
     <section
       role="alert"
       aria-live="polite"
-      className={
-        "mb-6 rounded-xl border p-4 " +
-        (copy.ended
-          ? "border-status-red/40 bg-status-red/5 text-status-red"
-          : "border-status-yellow/50 bg-status-yellow/10 text-status-yellow")
-      }
+      className={"mb-6 notice " + (copy.ended ? "notice-red" : "notice-yellow")}
     >
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-sm font-semibold">{copy.title}</p>
-          <p className="mt-1 text-xs text-foreground/80">{copy.body}</p>
+          <p className="notice-label">{copy.title}</p>
+          <p className="mt-1 text-xs">{copy.body}</p>
         </div>
         {!copy.ended && billingReady && managePaymentSlot && (
           <div className="flex-shrink-0">{managePaymentSlot}</div>
