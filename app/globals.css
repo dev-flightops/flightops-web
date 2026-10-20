@@ -3,78 +3,125 @@
 @tailwind utilities;
 
 /*
- * ONE THEME — the home page's design language, everywhere.
+ * THE THEME — dark first, light on request (#78).
  *
- * Until September 2026 the app had two design systems. The home page
- * was light, crimson-accented and editorial, but built from ~80
- * hardcoded colour literals, so none of it reached any other page.
- * Every other page was the legacy dispatch-platform dark navy
- * (#080c12) with a blue accent, forced by <html class="dark">. The
- * operator's words: "When we take this to pitch it needs to look like
- * a real software solution." So the home page's language is now the
- * theme, and every page gets it through these tokens.
+ * The client's direction (20 Oct): ForeFlight's aesthetic, dark first
+ * with a light mode the user picks. The values are ForeFlight's, read off
+ * their app and site: the app's navy ground (#101824), surface (#16212E),
+ * chrome (#23364D) and divider (#2D3844) in dark; the site's white,
+ * #F1F5F8 band and #212E39 slate in light. Two of theirs were lifted to
+ * reach WCAG AA: muted text (their #6D7C8E is 3.8:1 on a card; ours is
+ * #8A98A9, 5.5:1) and dark-mode red.
  *
- * LIGHT GROUND by default (:root). DARK is no longer a page theme — it
- * is an *ink island*: put `className="dark"` on a surface (the top bar,
- * the photo hero) and every token inside it resolves to ink values, so
- * shared components render correctly there without per-surface
- * overrides. That replaces the `!important` attribute-selector restyle
- * the home top bar used, one rule of which had already silently stopped
- * matching.
+ * DARK is the page theme (`:root`). LIGHT is `<html data-theme="light">`,
+ * set from the `fo-theme` cookie on the server so nothing flashes.
  *
- * ONE ACCENT — the tenant's brand, carried as bare RGB channels
- * (--brand-rgb) because that is the only form Tailwind 3 can put an
- * opacity modifier on. Defaults to Peregrine crimson; a tenant's own
- * colour arrives via <BrandThemeStyle>. `primary`, `ring` and `brand`
- * all resolve to it.
+ * Islands still work: `className="dark"` keeps a surface dark in either
+ * mode (the top bar, a photo hero). `className="light"` now means "the
+ * page's own ground": a panel opened from the dark top bar reads like
+ * the page it opens over, whichever mode that is.
  *
- * STATUS COLOURS are theme-aware channels too. The light values were
- * solved, not picked: each is the lightest shade of its hue that reaches
- * WCAG AA (4.5:1, with a 0.1 margin) on white, on the muted band and on
- * the hover accent — AND on its own /10 and /15 tint over each of those.
- * That is the `bg-status-x/10 text-status-x` chip pattern ~3,300 elements
- * use, and chips sit in banded tables and hovered rows, not only on
- * white; solving for white alone left them at ~4.1:1 there. Status red
- * is a scarlet (hue 5°) so it stays distinguishable from the crimson
- * brand (hue 358°).
+ * ONE ACCENT — the operator's brand, as RGB channels (Tailwind 3 can only
+ * put opacity modifiers on channels). In dark mode one colour cannot be
+ * both a fill under white text and text on navy, so it comes in two
+ * tones: `--brand-rgb` fills (buttons, tints) and `--brand-text-rgb` is
+ * text, borders and focus rings. tailwind.config.ts routes `text-primary`,
+ * `border-primary` and `ring` to the text tone, so no component changes.
+ * In light mode the two are the same colour. Defaults to Peregrine
+ * crimson; an operator's colour arrives via <BrandThemeStyle>.
+ *
+ * STATUS COLOURS are solved per mode: each clears AA (4.5:1) on the
+ * card, the band, the hover row and its own /15 tint over them. A solid
+ * status button or badge with white text on it uses the `-fill` tone
+ * (`bg-status-red-fill`): the bright dark-mode tones carry dark text,
+ * not white, so the fills are deeper and the same in both modes.
+ *
+ * `--chrome` (the top bar) is declared on the page theme only, never on
+ * an island, so the dark bar picks up the right navy for the mode.
  */
 @layer base {
-  /* `.light` re-declares the light ground, for a surface that opens from
-     inside an ink island — a dropdown panel hanging off the top bar
-     should read like every other panel in the app, not like the bar. */
+  /* DARK — the page theme, and every `.dark` island. `.light` means the
+     page ground, which in dark mode is this. */
   :root,
+  .dark,
   .light {
-    --background: 0 0% 100%;
-    --foreground: 0 0% 9%;
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 9%;
-    /* The home page's grey band (#f2f2f2), a hair cooler. */
-    --muted: 240 5% 96%;
-    --muted-foreground: 240 4% 41%;
-    --border: 240 6% 90%;
-    /* Stronger than --border: an input's edge is what says "type here". */
-    --input: 240 5% 82%;
-    --secondary: 240 5% 96%;
-    --secondary-foreground: 0 0% 9%;
-    /* A quiet hover tint for menus and rows — not the brand, which would
-       turn every hovered row solid crimson. */
-    --accent: 240 5% 95%;
-    --accent-foreground: 0 0% 9%;
+    --background: 216 38.5% 10.2%; /* #101824 */
+    --foreground: 0 0% 94.5%; /* #F1F1F1 */
+    --card: 212.5 35.3% 13.3%; /* #16212E */
+    --card-foreground: 0 0% 94.5%;
+    --popover: 212.3 33.3% 15.3%; /* #1A2634 */
+    --popover-foreground: 0 0% 94.5%;
+    --muted: 214.3 35.6% 11.6%; /* #131C28 */
+    --muted-foreground: 212.9 15.3% 60.2%; /* #8A98A9 */
+    --border: 211.3 20.4% 22.2%; /* #2D3844 */
+    --input: 213.1 19.2% 29.6%; /* #3D4A5A */
+    --secondary: 212.3 32.5% 15.7%; /* #1B2735 */
+    --secondary-foreground: 0 0% 94.5%;
+    --accent: 212.1 33.3% 16.5%; /* #1C2938 — hover rows */
+    --accent-foreground: 0 0% 94.5%;
     --primary-foreground: 0 0% 100%;
-    --destructive: 0 74% 42%;
+    --destructive: 0 62% 45%;
     --destructive-foreground: 0 0% 100%;
-    --radius: 0.5rem;
+    --raised: 212.9 37.5% 22%; /* #23364D */
+    --inset: 212.7 39.3% 22%; /* #22364E */
+    --radius: 0.25rem;
 
-    /* Brand — the single accent. */
+    /* Brand: crimson fills, its on-navy tone for text and rings. */
     --brand-rgb: 171 36 41;
     --brand-dark-rgb: 143 30 34;
-    --brand-light-rgb: 255 107 113;
+    --brand-light-rgb: 255 115 120;
+    --brand-text-rgb: 255 115 120;
     --brand-primary: #ab2429;
     --brand-primary-dark: #8f1e22;
 
-    /* Status on a light ground. */
+    /* Status on navy. */
+    --status-green: 52 211 153;
+    --status-yellow: 251 191 36;
+    --status-red: 250 128 128;
+    --status-blue: 96 165 250;
+    --status-gray: 154 164 177;
+    --status-orange: 251 146 60;
+    --status-purple: 192 132 252;
+    --status-teal: 94 234 212;
+
+    /* Status as a fill under white text: 4.9-7.6:1, both modes. */
+    --status-green-fill: 4 120 87; /* #047857 */
+    --status-yellow-fill: 161 98 7; /* #A16207 */
+    --status-red-fill: 196 43 43; /* #C42B2B */
+    --status-blue-fill: 29 78 216; /* #1D4ED8 */
+    --status-gray-fill: 75 85 99; /* #4B5563 */
+    --status-orange-fill: 194 65 12; /* #C2410C */
+    --status-purple-fill: 126 34 206; /* #7E22CE */
+    --status-teal-fill: 15 118 110; /* #0F766E */
+
+    --ink: 216 38.5% 10.2%;
+  }
+
+  /* LIGHT — the page theme when chosen, and `.light` inside it. */
+  [data-theme="light"],
+  [data-theme="light"] .light {
+    --background: 0 0% 100%;
+    --foreground: 207.5 26.7% 17.6%; /* #212E39 */
+    --card: 0 0% 100%;
+    --card-foreground: 207.5 26.7% 17.6%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 207.5 26.7% 17.6%;
+    --muted: 205.7 33.3% 95.9%; /* #F1F5F8 */
+    --muted-foreground: 208.6 10.3% 39.8%; /* #5B6670 */
+    --border: 210 25% 89%; /* #DCE3EA */
+    --input: 210 18.6% 76.9%; /* #B9C4CF */
+    --secondary: 205.7 33.3% 95.9%;
+    --secondary-foreground: 207.5 26.7% 17.6%;
+    --accent: 206.7 36% 95.1%; /* #EEF3F7 */
+    --accent-foreground: 207.5 26.7% 17.6%;
+    --primary-foreground: 0 0% 100%;
+    --destructive: 0 74% 42%;
+    --destructive-foreground: 0 0% 100%;
+    --raised: 0 0% 100%;
+    --inset: 205.7 33.3% 95.9%;
+
+    --brand-text-rgb: var(--brand-rgb);
+
     --status-green: 4 107 78;
     --status-yellow: 153 70 7;
     --status-red: 177 39 26;
@@ -83,41 +130,72 @@
     --status-orange: 167 56 10;
     --status-purple: 126 34 206;
     --status-teal: 14 106 99;
-
-    /* The ink used by the top bar and hero — near-black, not navy. */
-    --ink: 0 0% 4%;
   }
 
-  /* Ink islands. Neutral near-black — the home page's top bar and hero —
-     rather than the legacy navy. */
-  .dark {
-    --background: 0 0% 4%;
-    --foreground: 0 0% 93%;
-    --card: 0 0% 9%;
-    --card-foreground: 0 0% 93%;
-    --popover: 0 0% 9%;
-    --popover-foreground: 0 0% 93%;
-    --muted: 0 0% 8%;
-    --muted-foreground: 0 0% 64%;
-    --border: 0 0% 17%;
-    --input: 0 0% 22%;
-    --secondary: 0 0% 14%;
-    --secondary-foreground: 0 0% 93%;
-    --accent: 0 0% 13%;
-    --accent-foreground: 0 0% 93%;
-    --destructive: 0 75% 24%;
-    --destructive-foreground: 0 93% 82%;
-
-    /* Status on ink — the original dark-tuned values, which were right
-       for a dark ground. */
+  /* A dark island inside the light page keeps the navy palette (it must
+     come after the light block: both selectors weigh the same). */
+  [data-theme="light"] .dark {
+    --background: 216 38.5% 10.2%;
+    --foreground: 0 0% 94.5%;
+    --card: 212.5 35.3% 13.3%;
+    --card-foreground: 0 0% 94.5%;
+    --popover: 212.3 33.3% 15.3%;
+    --popover-foreground: 0 0% 94.5%;
+    --muted: 214.3 35.6% 11.6%;
+    --muted-foreground: 212.9 15.3% 60.2%;
+    --border: 211.3 20.4% 22.2%;
+    --input: 213.1 19.2% 29.6%;
+    --secondary: 212.3 32.5% 15.7%;
+    --secondary-foreground: 0 0% 94.5%;
+    --accent: 212.1 33.3% 16.5%;
+    --accent-foreground: 0 0% 94.5%;
+    --raised: 212.9 37.5% 22%;
+    --inset: 212.7 39.3% 22%;
+    --brand-text-rgb: var(--brand-light-rgb);
     --status-green: 52 211 153;
     --status-yellow: 251 191 36;
-    --status-red: 248 113 113;
+    --status-red: 250 128 128;
     --status-blue: 96 165 250;
     --status-gray: 154 164 177;
     --status-orange: 251 146 60;
     --status-purple: 192 132 252;
     --status-teal: 94 234 212;
+  }
+
+  /* A section band (#78): ForeFlight alternates white and #F1F5F8 on its
+     site; on navy the muted ground is too close to the page to read as a
+     band, so dark mode lifts it to the card colour. */
+  .band {
+    background-color: hsl(var(--card));
+  }
+  [data-theme="light"] .band {
+    background-color: hsl(var(--muted));
+  }
+
+  /* One of a pair of images, by mode — a product screenshot shown in the
+     theme the page is in (#78). */
+  [data-theme="light"] .theme-dark-only,
+  :root:not([data-theme="light"]) .theme-light-only {
+    display: none;
+  }
+
+  /* Quiet text on the top bar. The bar is a shade lighter than the card,
+     where the page's quiet tone falls to 4.2:1, so it is lifted to 5.6:1
+     (6.4:1 on the light mode's slate). Set inside the bar's island, so it
+     wins over the island's own tokens. */
+  .chrome-text {
+    --muted-foreground: 212.9 20% 70%; /* #A3B1C2 */
+  }
+
+  /* The top bar: the app's navy in dark mode, the site's slate in light.
+     Page-level only, so the bar's `.dark` island inherits the mode's. */
+  :root {
+    --chrome: 212.9 37.5% 22%; /* #23364D */
+    color-scheme: dark;
+  }
+  [data-theme="light"] {
+    --chrome: 207.5 26.7% 17.6%; /* #212E39 */
+    color-scheme: light;
   }
 }
 
@@ -125,7 +203,7 @@
   body {
     background-color: hsl(var(--background));
     color: hsl(var(--foreground));
-    font-feature-settings: "cv11", "ss01"; /* Inter stylistic alternates */
+    font-feature-settings: normal;
   }
 
   /* Slim scrollbar, kept from legacy. */
@@ -160,6 +238,48 @@
 
 @layer components {
   /*
+   * Typographic roles (#78) — ForeFlight's hierarchy. Display: their Gesta
+   * set heavy and UPPERCASE for titles and captions, Title Case for
+   * section heads. Text: their Proxima Nova, with UPPERCASE tracked labels
+   * and button text.
+   */
+  .page-title {
+    font-family: var(--font-display), var(--font-sans), sans-serif;
+    font-size: 1.75rem;
+    line-height: 1.15;
+    font-weight: 800;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+  }
+  .section-title {
+    font-family: var(--font-display), var(--font-sans), sans-serif;
+    font-size: 2.125rem;
+    line-height: 1.18;
+    font-weight: 800;
+    text-wrap: balance;
+  }
+  .caption-caps {
+    font-family: var(--font-display), var(--font-sans), sans-serif;
+    font-size: 0.9375rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .eyebrow {
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: hsl(var(--muted-foreground));
+  }
+  .btn-caps {
+    font-size: 0.8125rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  /*
    * The form field. Seventeen forms each declared their own copy of this
    * in a scoped <style> block — eleven distinct variants of one intent,
    * drifted by copy-paste. This is the one version: the majority's
@@ -171,7 +291,7 @@
     background: hsl(var(--background));
     color: hsl(var(--foreground));
     border: 1px solid hsl(var(--input));
-    border-radius: calc(var(--radius) - 2px);
+    border-radius: calc(var(--radius) - 1px);
     padding: 0.5rem 0.75rem;
     font-size: 0.8125rem;
     line-height: 1.35;
@@ -181,8 +301,8 @@
       box-shadow 0.15s;
   }
   .ff-input:focus:not(:disabled) {
-    border-color: rgb(var(--brand-rgb));
-    box-shadow: 0 0 0 3px rgb(var(--brand-rgb) / 0.14);
+    border-color: rgb(var(--brand-text-rgb));
+    box-shadow: 0 0 0 3px rgb(var(--brand-text-rgb) / 0.14);
   }
   .ff-input:disabled {
     opacity: 0.55;

@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { Button } from "@/components/ui/button";
+import { buttonOutline, buttonSolid } from "@/components/ff/controls";
 
 import { AutoClock } from "./auto-clock";
 
@@ -21,28 +21,32 @@ import { AutoClock } from "./auto-clock";
  */
 export function PageHeader() {
   return (
-    <div className="mb-4 flex flex-wrap items-start justify-between gap-4">
+    // ForeFlight's page head (#78): display title, a quiet line under it,
+    // actions as outlined and solid UPPERCASE buttons, a rule beneath.
+    <div className="mb-6 flex flex-wrap items-end justify-between gap-4 border-b border-border pb-5">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">
-          Flight Following
-        </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <h1 className="page-title">Flight Following</h1>
+        <p className="mt-2 text-sm text-muted-foreground">
           Live ops board · auto-refreshes every 60 s ·{" "}
-          <AutoClock />
+          <span className="font-mono tabular-nums text-foreground">
+            <AutoClock />
+          </span>
         </p>
       </div>
       <div className="flex flex-wrap gap-2">
-        <Button asChild variant="secondary" size="sm">
-          <Link href="/schedule" title="Published schedule + printable manifest">
-            Schedule
-          </Link>
-        </Button>
-        <Button asChild variant="secondary" size="sm">
-          <Link href="/flight-following/history">History</Link>
-        </Button>
-        <Button asChild size="sm">
-          <Link href="/flight-following/new">+ Open Flight</Link>
-        </Button>
+        <Link
+          href="/schedule"
+          title="Published schedule + printable manifest"
+          className={buttonOutline}
+        >
+          Schedule
+        </Link>
+        <Link href="/flight-following/history" className={buttonOutline}>
+          History
+        </Link>
+        <Link href="/flight-following/new" className={buttonSolid}>
+          Open Flight
+        </Link>
       </div>
     </div>
   );

@@ -2,7 +2,10 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { type ReactNode } from "react";
+import { type ReactNode, useCallback, useState } from "react";
+
+import { ThemeSwitch } from "@/components/theme/theme-switch";
+import { cn } from "@/lib/utils";
 
 import { DepartmentNav } from "./department-nav";
 
@@ -24,7 +27,12 @@ import { DepartmentNav } from "./department-nav";
  * stopped matching when the clock pill's title changed.
  *
  * Below it, on every page but /home (which has its department grid
- * instead), the light module strip.
+ * instead), the module strip.
+ *
+ * ForeFlight's chrome (#78): their app's navy bar (`bg-chrome` — the
+ * site's slate in light mode), the operator's logo when one is set, the
+ * name in the display face, the theme switch. The bar stays a `.dark`
+ * island in both modes, as ForeFlight's nav does.
  */
 export function AppShellHeader({
   brand,
@@ -34,8 +42,12 @@ export function AppShellHeader({
   opsPhone = null,
   homeHref = "/home/",
   showDepartmentNav = true,
+  logoUrl = null,
 }: {
   brand: string;
+  /** The operator's logo (Settings → Company). Most are drawn for white
+   *  paper, so it sits on a small light plate rather than on the navy. */
+  logoUrl?: string | null;
   actionsSlot?: ReactNode;
   /** Session roles, threaded from the server layout. Passed as a prop
    *  rather than read here: importing next-auth into a presentational
@@ -57,15 +69,23 @@ export function AppShellHeader({
 }) {
   const pathname = usePathname();
   const isHome = pathname === "/home" || pathname === "/home/";
+  // What the logo turned out to be, once it settles. A wordmark already
+  // spells the name, so the name beside it is left to screen readers; an
+  // emblem keeps it; a logo that will not load gives way to it.
+  const [logo, setLogo] = useState<{ url: string; shape: LogoShape } | null>(null);
+  const settleLogo = useCallback((url: string, shape: LogoShape) => {
+    setLogo((prev) => (prev?.url === url && prev.shape === shape ? prev : { url, shape }));
+  }, []);
+  const logoShape = logo && logo.url === logoUrl ? logo.shape : null;
 
   return (
     <header className="sticky top-0 z-40">
-      <div className="dark bg-background text-foreground">
-        <div className="mx-auto flex h-[52px] max-w-[100rem] items-stretch">
+      <div className="dark bg-chrome text-foreground">
+        <div className="chrome-text mx-auto flex h-14 max-w-[100rem] items-stretch">
           {showOpsChip && (
             <Link
               href="/reservations/"
-              className="flex items-center gap-2 bg-primary px-4 text-[0.8rem] font-semibold text-primary-foreground transition-colors hover:bg-brand-dark sm:px-6"
+              className="btn-caps flex items-center gap-2 bg-primary px-4 text-primary-foreground transition-colors hover:bg-brand-dark sm:px-6"
             >
               <SearchIcon />
               <span>Ops</span>
@@ -74,16 +94,26 @@ export function AppShellHeader({
 
           <Link
             href={homeHref}
-            className="flex min-w-0 items-center border-l border-border px-4 text-[0.8rem] font-semibold tracking-tight text-foreground transition-colors hover:text-foreground/80 sm:px-5"
+            className="flex min-w-0 items-center gap-3 px-4 text-foreground transition-colors hover:text-white sm:px-5"
           >
-            <span className="truncate">{brand}</span>
+            {logoUrl && logoShape !== "failed" ? (
+              <OperatorLogo key={logoUrl} src={logoUrl} onSettled={settleLogo} />
+            ) : null}
+            <span
+              className={cn(
+                "truncate font-display text-[0.95rem] font-extrabold uppercase tracking-[0.08em]",
+                logoShape === "wordmark" && "sr-only",
+              )}
+            >
+              {brand}
+            </span>
           </Link>
 
           <div className="flex flex-1 items-stretch justify-end">
             {opsPhone ? (
               <a
                 href={`tel:${opsPhone.replace(/[^0-9+]/g, "")}`}
-                className="hidden items-center gap-1.5 border-l border-border px-4 text-[0.78rem] font-medium text-muted-foreground transition-colors hover:text-foreground lg:flex"
+                className="hidden items-center gap-1.5 px-4 text-[0.78rem] font-semibold tabular-nums text-foreground transition-colors hover:text-white lg:flex"
               >
                 <PhoneIcon />
                 <span>{opsPhone}</span>
@@ -91,8 +121,12 @@ export function AppShellHeader({
             ) : null}
           </div>
 
+          <div className="hidden items-center px-3 md:flex">
+            <ThemeSwitch />
+          </div>
+
           {actionsSlot ? (
-            <div className="flex items-center border-l border-border pl-2 pr-3 sm:pl-3 sm:pr-4">
+            <div className="flex items-center border-l border-white/10 pl-2 pr-3 sm:pl-3 sm:pr-4">
               {actionsSlot}
             </div>
           ) : null}
@@ -101,6 +135,55 @@ export function AppShellHeader({
 
       {!isHome && showDepartmentNav && <DepartmentNav roles={roles} />}
     </header>
+  );
+}
+
+type LogoShape = "wordmark" | "emblem" | "failed";
+
+/** Wider than this, a logo is taken for a wordmark: one that spells the
+ *  operator's name (a lockup of mark and name runs 3-5:1, a mark alone
+ *  about 1:1). */
+const WORDMARK_RATIO = 2.2;
+
+/** The operator's logo on its plate. It reports what it turned out to be:
+ *  a logo that will not load takes the plate with it, since an empty white
+ *  box in the bar looks broken. */
+function OperatorLogo({
+  src,
+  onSettled,
+}: {
+  src: string;
+  onSettled: (url: string, shape: LogoShape) => void;
+}) {
+  const settle = useCallback(
+    (img: HTMLImageElement) =>
+      onSettled(src, img.naturalWidth / Math.max(1, img.naturalHeight) >= WORDMARK_RATIO ? "wordmark" : "emblem"),
+    [src, onSettled],
+  );
+  // A load that ended before hydration fired its event before React was
+  // listening; decode() settles for it all the same.
+  const probe = useCallback(
+    (img: HTMLImageElement | null) => {
+      img?.decode?.()?.then(
+        () => settle(img),
+        () => onSettled(src, "failed"),
+      );
+    },
+    [settle, onSettled, src],
+  );
+  return (
+    <span className="flex h-8 flex-shrink-0 items-center rounded-sm bg-white px-1.5">
+      {/* An operator-supplied URL on any host, so not next/image (which
+          would need every host configured). */}
+      <img
+        ref={probe}
+        src={src}
+        alt=""
+        onLoad={(e) => settle(e.currentTarget)}
+        onError={() => onSettled(src, "failed")}
+        className="h-6 w-auto max-w-[10rem] object-contain"
+      />
+    </span>
   );
 }
 

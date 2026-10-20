@@ -29,6 +29,16 @@ describe("BrandThemeStyle", () => {
     expect(css("#1d4ed8")).toMatch(/:root,\s*\.dark,\s*\.light\s*\{/);
   });
 
+  it("reads as text on navy and on white alike (#78)", () => {
+    // Dark theme and dark islands: the on-navy tone. Light theme: the
+    // brand itself, which is legible on white.
+    const out = css("#1d4ed8")!;
+    const light = /--brand-light-rgb: ([\d ]+);/.exec(out)![1];
+    expect(out).toContain(`--brand-text-rgb: ${light};`);
+    expect(out).toMatch(/\[data-theme="light"\], \[data-theme="light"\] \.light \{\s*--brand-text-rgb: 29 78 216;/);
+    expect(out).toMatch(/\[data-theme="light"\] \.dark \{\s*--brand-text-rgb: [\d ]+;/);
+  });
+
   it("keeps a hover shade the tenant chose rather than deriving one", () => {
     expect(css("#1d4ed8", "#0f2a80")).toContain("--brand-dark-rgb: 15 42 128");
   });

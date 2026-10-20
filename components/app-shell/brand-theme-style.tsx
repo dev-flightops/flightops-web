@@ -36,12 +36,24 @@ export function BrandThemeStyle({
     // Every island re-declares its palette, so each needs the tenant's
     // brand re-applied — or a panel opened from the dark top bar (a
     // `.light` island) would show Peregrine crimson to another tenant.
+    //
+    // Two tones (#78): fills keep the brand; text, borders and rings use
+    // its on-navy tone in the dark theme and in dark islands, and the
+    // brand itself on the light theme. Same selectors as globals.css,
+    // later in the document, so these win.
     <style>{`:root, .dark, .light {
       --brand-rgb: ${tones.rgb};
       --brand-dark-rgb: ${hoverRgb};
       --brand-light-rgb: ${tones.lightRgb};
+      --brand-text-rgb: ${tones.lightRgb};
       --brand-primary: ${tones.hex};
       --brand-primary-dark: ${hover?.hex ?? tones.hex};
+    }
+    [data-theme="light"], [data-theme="light"] .light {
+      --brand-text-rgb: ${tones.rgb};
+    }
+    [data-theme="light"] .dark {
+      --brand-text-rgb: ${tones.lightRgb};
     }`}</style>
   );
 }

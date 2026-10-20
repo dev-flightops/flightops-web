@@ -74,8 +74,8 @@ export function CpReviewDecideButtons({
       : "The log is soft-deleted. The audit row stays for review."
     : "The pilot can open a fresh request if circumstances change.";
   const confirmCls = isApprove
-    ? "bg-status-green text-white hover:brightness-95"
-    : "bg-status-yellow text-white hover:brightness-95";
+    ? "bg-status-green-fill text-white hover:brightness-95"
+    : "bg-status-yellow-fill text-white hover:brightness-95";
 
   return (
     <div className="rounded-md border border-border bg-card p-2 text-[0.65rem] shadow-sm">

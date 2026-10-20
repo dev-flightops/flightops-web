@@ -31,22 +31,14 @@ export function SafetyReportButton() {
 
   const href = `/safety/reports/new?return_url=${encodeURIComponent(pathname)}`;
 
+  // #78: a square red button with an UPPERCASE label, ForeFlight's
+  // idiom; the deep fill tone, so the white label reads in both modes.
   return (
     <Link
       href={href}
       aria-label="File a safety report"
-      className="fixed bottom-6 right-6 z-30 inline-flex items-center gap-2 rounded-[14px] bg-status-red px-[17.6px] py-[10.4px] text-[12.8px] font-bold text-white shadow-[0_4px_20px_0_rgb(var(--status-red)/0.35)] ring-1 ring-status-red/30 transition hover:-translate-y-0.5 hover:brightness-95"
+      className="btn-caps fixed bottom-6 right-6 z-30 inline-flex items-center rounded-md bg-status-red-fill px-4 py-2.5 text-white shadow-[0_2px_12px_rgb(0_0_0/0.35)] transition hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-status-red"
     >
-      <svg
-        width="18"
-        height="18"
-        viewBox="0 0 24 24"
-        fill="currentColor"
-        aria-hidden
-        className="flex-shrink-0"
-      >
-        <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-1 6h2v2h-2V7zm0 4h2v6h-2v-6z" />
-      </svg>
       Safety
     </Link>
   );

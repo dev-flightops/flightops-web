@@ -1,16 +1,30 @@
 import type { Metadata } from "next";
-import { Inter, JetBrains_Mono } from "next/font/google";
+import { Barlow_Semi_Condensed, Figtree, JetBrains_Mono } from "next/font/google";
+import { cookies } from "next/headers";
+
+import { ThemeProvider } from "@/components/theme/theme-provider";
+import { THEME_COOKIE, themeFromCookie } from "@/lib/theme/theme-mode";
 
 import "./globals.css";
 
-// Inter for UI, JetBrains Mono for codes (flight numbers, ICAO airports,
-// tail numbers). Matches the legacy dispatch-platform's typography choice.
-// Variable approach so Tailwind can resolve `font-sans` and `font-mono`.
-const fontSans = Inter({
+// Type (#78), ForeFlight's system on open-licence faces. ForeFlight sets
+// Proxima Nova and Gesta, both commercial; Figtree is the nearest open
+// geometric sans (with tabular figures, which the boards' times need) and
+// Barlow Semi Condensed the nearest to Gesta's heavy uppercase. Each is one
+// CSS variable, so licensed originals can replace them in one place.
+// JetBrains Mono stays for codes: flight numbers, ICAO airports, tails.
+const fontSans = Figtree({
   subsets: ["latin"],
   variable: "--font-sans",
   display: "swap",
-  weight: ["400", "500", "600", "700"],
+  weight: ["400", "500", "600", "700", "800"],
+});
+
+const fontDisplay = Barlow_Semi_Condensed({
+  subsets: ["latin"],
+  variable: "--font-display",
+  display: "swap",
+  weight: ["600", "700", "800"],
 });
 
 const fontMono = JetBrains_Mono({
@@ -25,20 +39,21 @@ export const metadata: Metadata = {
   description: "Multi-tenant Part 135 aviation dispatch and operations platform",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  // Dark unless the user chose light; read here so the first byte is right.
+  const theme = themeFromCookie((await cookies()).get(THEME_COOKIE)?.value);
   return (
     <html
       lang="en"
-      // No `dark` here any more. The page ground is the home page's light
-      // theme; dark is an ink island a surface opts into (see globals.css).
-      className={`${fontSans.variable} ${fontMono.variable}`}
+      data-theme={theme}
+      className={`${fontSans.variable} ${fontDisplay.variable} ${fontMono.variable}`}
     >
       <body className="min-h-screen bg-background text-foreground font-sans antialiased">
-        {children}
+        <ThemeProvider initial={theme}>{children}</ThemeProvider>
       </body>
     </html>
   );

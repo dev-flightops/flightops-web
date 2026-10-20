@@ -522,7 +522,7 @@ function FormButtons({
         className={cn(
           "inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold disabled:opacity-50",
           danger
-            ? "bg-status-red text-white hover:brightness-95"
+            ? "bg-status-red-fill text-white hover:brightness-95"
             : "bg-primary text-primary-foreground hover:bg-brand-dark",
         )}
       >

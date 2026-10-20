@@ -54,7 +54,7 @@ export function CheckInButton({
       type="button"
       onClick={onClick}
       disabled={pending}
-      className="mr-3 inline-flex items-center gap-1 text-[0.7rem] font-medium text-status-green hover:underline disabled:opacity-50"
+      className="mr-4 inline-flex items-center gap-1 text-[0.68rem] font-bold uppercase tracking-[0.1em] text-status-green underline-offset-4 hover:underline disabled:opacity-50"
     >
       {pending && <Spinner size="xs" />}
       {pending ? "Saving…" : label}

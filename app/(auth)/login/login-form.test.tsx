@@ -41,7 +41,10 @@ describe("LoginForm", () => {
     render(<LoginForm providers={[]} />);
     // The wordmark appears twice — the photo panel on desktop, the
     // compact block on phones — and CSS decides which one shows.
-    expect(screen.getAllByText("PEREGRINE").length).toBeGreaterThan(0);
+    // The wordmark links home to the landing page (#78); its letters are
+    // set in capitals by CSS, so it is found by the link it sits in.
+    expect(screen.getAllByRole("link", { name: "Peregrine Flight Ops, home" }).length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Peregrine").length).toBeGreaterThan(0);
     expect(screen.getByRole("heading", { level: 1, name: "Sign in" })).toBeInTheDocument();
     expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/password/i)).toBeInTheDocument();

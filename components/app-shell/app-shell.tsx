@@ -34,6 +34,8 @@ export interface AppShellProps {
   homeHref?: string;
   /** Staff navigation below the bar; off for an external login. */
   showDepartmentNav?: boolean;
+  /** The operator's logo (Settings → Company), shown in the bar (#78). */
+  logoUrl?: string | null;
 }
 
 export function AppShell({
@@ -45,6 +47,7 @@ export function AppShell({
   opsPhone = null,
   homeHref,
   showDepartmentNav,
+  logoUrl = null,
 }: AppShellProps) {
   return (
     <div className="flex min-h-screen flex-col">
@@ -59,6 +62,7 @@ export function AppShell({
         opsPhone={opsPhone}
         homeHref={homeHref}
         showDepartmentNav={showDepartmentNav}
+        logoUrl={logoUrl}
       />
       <main className="flex-1">{children}</main>
     </div>

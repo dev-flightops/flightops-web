@@ -39,43 +39,30 @@ export function SummaryStatsBar({
     }
   }
 
+  // A stat strip in ForeFlight's manner (#78): the count large in the
+  // display face, an UPPERCASE label under it, a thin status rule to the
+  // left — no tinted chips.
   return (
     <div
       role="group"
       aria-label="Flight summary"
-      className="mb-3 flex flex-wrap gap-2"
+      className="mb-5 grid grid-cols-2 gap-x-8 gap-y-4 sm:flex sm:flex-wrap"
     >
-      <Chip value={airborne} label="Airborne" tone="green" />
-      <Chip value={released} label="Released" tone="blue" />
-      <Chip value={planned} label="Planned" tone="grey" />
-      <Chip value={delayed} label="Delayed" tone="yellow" />
+      <Stat value={airborne} label="Airborne" tone="border-status-green" />
+      <Stat value={released} label="Released" tone="border-status-blue" />
+      <Stat value={planned} label="Planned" tone="border-input" />
+      <Stat value={delayed} label="Delayed" tone="border-status-yellow" />
     </div>
   );
 }
 
-function Chip({
-  value,
-  label,
-  tone,
-}: {
-  value: number;
-  label: string;
-  tone: "green" | "blue" | "grey" | "yellow";
-}) {
-  const colorClass =
-    tone === "green"
-      ? "border-status-green/40 bg-status-green/[0.08] text-status-green"
-      : tone === "blue"
-        ? "border-status-blue/40 bg-status-blue/[0.08] text-status-blue"
-        : tone === "yellow"
-          ? "border-status-yellow/40 bg-status-yellow/[0.08] text-status-yellow"
-          : "border-border bg-card text-muted-foreground";
+function Stat({ value, label, tone }: { value: number; label: string; tone: string }) {
   return (
-    <span
-      className={`inline-flex items-baseline gap-1.5 rounded-md border px-3 py-1.5 text-xs ${colorClass}`}
-    >
-      <span className="font-bold">{value}</span>
-      <span className="uppercase tracking-[0.06em]">{label}</span>
+    <span className={`flex flex-col border-l-2 pl-3 ${tone}`}>
+      <span className="font-display text-[1.75rem] font-extrabold leading-none tabular-nums text-foreground">
+        {value}
+      </span>
+      <span className="eyebrow mt-1.5">{label}</span>
     </span>
   );
 }

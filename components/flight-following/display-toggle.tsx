@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { cn } from "@/lib/utils";
+import { segment, segmentGroup } from "@/components/ff/controls";
 
 import {
   DISPLAY_LABELS,
@@ -27,7 +27,7 @@ export function DisplayToggle({
 }) {
   return (
     <div
-      className="flex gap-1 rounded-md border border-border p-0.5"
+      className={segmentGroup}
       role="tablist"
       aria-label="Flight following display mode"
     >
@@ -39,18 +39,8 @@ export function DisplayToggle({
             href={flightFollowingHref(view, display)}
             role="tab"
             aria-selected={isActive}
-            className={cn(
-              "rounded px-3 py-1 text-xs font-semibold transition-colors",
-              isActive
-                ? "bg-primary text-white"
-                : "text-muted-foreground hover:bg-accent hover:text-foreground",
-            )}
+            className={segment(isActive)}
           >
-            {display === "list" && (
-              <span aria-hidden className="mr-1">
-                ☰
-              </span>
-            )}
             {DISPLAY_LABELS[display]}
           </Link>
         );

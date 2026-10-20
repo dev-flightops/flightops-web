@@ -131,7 +131,7 @@ export function CompleteMaintenanceButton({
               <button
                 type="submit"
                 disabled={pending}
-                className="inline-flex items-center gap-1.5 rounded-md bg-status-green px-4 py-2 text-xs font-semibold text-white hover:brightness-95 disabled:opacity-60"
+                className="inline-flex items-center gap-1.5 rounded-md bg-status-green-fill px-4 py-2 text-xs font-semibold text-white hover:brightness-95 disabled:opacity-60"
               >
                 {pending && <Spinner size="xs" />}
                 {pending ? "Completing…" : "Mark complete"}

@@ -147,9 +147,9 @@ function LifecyclePrompt({
 
   const confirmCls =
     variant === "reopen"
-      ? "bg-status-yellow text-white hover:brightness-95"
+      ? "bg-status-yellow-fill text-white hover:brightness-95"
       : variant === "delete"
-        ? "bg-status-red text-white hover:brightness-95"
+        ? "bg-status-red-fill text-white hover:brightness-95"
         : "bg-primary text-white hover:bg-brand-dark";
 
   const explainer =

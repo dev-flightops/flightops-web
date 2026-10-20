@@ -14,11 +14,13 @@
  *
  * Two derived tones, so a tenant only has to pick one colour:
  *   dark  — hover/pressed state for solid brand buttons
- *   light — brand-coloured TEXT on the dark ink surfaces (top bar, photo
- *           hero). A deep brand colour as text on near-black fails
- *           contrast; the default crimson is 2.9:1 there. Same hue,
- *           fully saturated, lightness 71% — which is exactly the coral
- *           the home page already used on its hero eyebrow.
+ *   light — brand-coloured TEXT, borders and focus rings on navy: the
+ *           dark theme's page (#78), the top bar, a photo hero. A deep
+ *           brand colour as text on navy fails contrast; the default
+ *           crimson is 2.6:1 on a card. Same hue, fully saturated, made
+ *           just light enough to clear MIN_CONTRAST_ON_DARK on every
+ *           navy ground and on its own /10 and /15 tints over each — for
+ *           the default, the coral the home page used on its hero eyebrow.
  */
 
 import { contrastRatio } from "./contrast";
@@ -47,6 +49,13 @@ export interface BrandTones {
  * its hue and saturation. Peregrine crimson is 7.0:1 and is untouched.
  */
 export const MIN_CONTRAST_ON_WHITE = 5.2;
+
+/** The navy grounds brand text sits on in the dark theme (#78): the card,
+ *  the hover row and the top bar (app/globals.css). */
+export const DARK_GROUNDS = ["#16212e", "#1c2938", "#23364d"] as const;
+
+/** AA (4.5:1) with the same small margin MIN_CONTRAST_ON_WHITE keeps. */
+export const MIN_CONTRAST_ON_DARK = 4.6;
 
 const HEX = /^#[0-9a-f]{6}$/i;
 
@@ -125,6 +134,30 @@ function legible(rgb: [number, number, number]): {
   return { rgb: [0, 0, 0], adjusted: true };
 }
 
+/** `fill` laid over `ground` at `alpha`, as a `bg-primary/10` tint is. */
+function over(fill: [number, number, number], ground: string, alpha: number): string {
+  const g = hexToRgb(ground);
+  return toHex(fill.map((c, i) => Math.round(c * alpha + g[i] * (1 - alpha))) as [number, number, number]);
+}
+
+/** The brand made light enough to read on navy: its own hue, fully
+ *  saturated (a greyscale brand stays grey), lightened from its own
+ *  lightness until it clears MIN_CONTRAST_ON_DARK everywhere it is drawn. */
+function onNavy(fill: [number, number, number]): [number, number, number] {
+  const [h, s, l] = rgbToHsl(fill);
+  const sat = s < 0.08 ? 0 : 1;
+  // Every navy ground, and the brand's own tints over each: the top bar's
+  // chips sit on a tint over the bar, the lightest of the grounds.
+  const grounds = [...DARK_GROUNDS, ...DARK_GROUNDS.flatMap((g) => [over(fill, g, 0.1), over(fill, g, 0.15)])];
+  for (let lightness = l; lightness <= 1; lightness += 0.005) {
+    const candidate = hslToRgb([h, sat, lightness]);
+    if (grounds.every((g) => contrastRatio(toHex(candidate), g) >= MIN_CONTRAST_ON_DARK)) {
+      return candidate;
+    }
+  }
+  return [255, 255, 255];
+}
+
 export function brandTones(hex: string): BrandTones {
   const { rgb: base, adjusted } = legible(
     hexToRgb(isBrandHex(hex) ? hex : DEFAULT_BRAND),
@@ -132,9 +165,8 @@ export function brandTones(hex: string): BrandTones {
   const [h, s, l] = rgbToHsl(base);
   // Hover: 16% darker, clamped so a very dark brand still moves.
   const dark = hslToRgb([h, s, Math.max(0.12, l * 0.84)]);
-  // On-ink text: a greyscale brand stays greyscale rather than being
-  // saturated into an arbitrary hue.
-  const light = hslToRgb([h, s < 0.08 ? 0 : 1, 0.71]);
+  // Text on navy (#78).
+  const light = onNavy(base);
   return {
     rgb: channels(base),
     darkRgb: channels(dark),
