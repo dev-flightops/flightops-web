@@ -1,5 +1,10 @@
 import Link from "next/link";
 
+import { linkCaps } from "@/components/ff/controls";
+import { PageHeader } from "@/components/ff/page-header";
+import { Panel } from "@/components/ff/panel";
+import { cn } from "@/lib/utils";
+
 /**
  * /reports — the hub.
  *
@@ -112,53 +117,46 @@ const INTERCHANGE: Entry[] = [
 ];
 
 function Section({ title, entries }: { title: string; entries: Entry[] }) {
+  // A section of the directory (#82), as Home lists the departments: each
+  // report a row with what it shows under its name; one not built says so.
   return (
-    <section aria-label={title} className="mb-6">
-      <h2 className="mb-2 eyebrow">
-        {title}
-      </h2>
-      <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+    <Panel title={title} flush className="mb-6">
+      <ul className="divide-y divide-border">
         {entries.map((entry) => (
           <li key={entry.label}>
             {entry.href ? (
               <Link
                 href={entry.href}
-                className="block rounded-lg border border-border bg-card p-4 transition-colors hover:border-primary/50"
+                className="flex items-center justify-between gap-4 px-5 py-3 transition-colors hover:bg-accent/40"
               >
-                <p className="text-sm font-semibold">{entry.label}</p>
-                <p className="mt-0.5 text-xs text-muted-foreground">
-                  {entry.detail}
-                </p>
+                <span className="min-w-0">
+                  <span className="block text-sm font-semibold text-foreground">{entry.label}</span>
+                  <span className="mt-0.5 block text-xs text-muted-foreground">{entry.detail}</span>
+                </span>
+                <span aria-hidden className={cn(linkCaps, "shrink-0")}>
+                  Open ›
+                </span>
               </Link>
             ) : (
-              <div className="rounded-lg border border-border bg-card/40 p-4">
-                <p className="flex items-center gap-2 text-sm font-semibold text-muted-foreground">
-                  {entry.label}
-                  <span className="rounded border border-border px-1.5 py-0.5 text-[0.55rem] uppercase tracking-wider">
-                    Not built
-                  </span>
-                </p>
-                <p className="mt-0.5 text-xs text-muted-foreground">
-                  {entry.detail}
-                </p>
+              <div className="flex items-center justify-between gap-4 px-5 py-3">
+                <span className="min-w-0">
+                  <span className="block text-sm font-semibold text-muted-foreground">{entry.label}</span>
+                  <span className="mt-0.5 block text-xs text-muted-foreground">{entry.detail}</span>
+                </span>
+                <span className="status-mark shrink-0 text-muted-foreground">Not built</span>
               </div>
             )}
           </li>
         ))}
       </ul>
-    </section>
+    </Panel>
   );
 }
 
 export default function ReportsHubPage() {
   return (
     <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
-      <header className="mb-5">
-        <h1 className="page-title">Reports</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Executive analytics and regulatory filings
-        </p>
-      </header>
+      <PageHeader title="Reports" description="Executive analytics and regulatory filings" />
       <Section title="Executive" entries={EXECUTIVE} />
       <Section title="Regulatory" entries={REGULATORY} />
       <Section title="Interchange" entries={INTERCHANGE} />

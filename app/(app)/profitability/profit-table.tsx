@@ -36,7 +36,7 @@ export function ProfitTable({
 }) {
   if (rows.length === 0) {
     return (
-      <p className="rounded-lg border border-dashed border-border bg-card/40 px-4 py-10 text-center text-sm text-muted-foreground">
+      <p className="rounded-lg border border-border bg-card px-5 py-8 text-center text-sm text-muted-foreground">
         No flights on file for this period.
       </p>
     );

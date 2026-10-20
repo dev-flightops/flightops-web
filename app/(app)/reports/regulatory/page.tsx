@@ -1,5 +1,9 @@
 import Link from "next/link";
 
+import { linkCaps } from "@/components/ff/controls";
+import { PageHeader } from "@/components/ff/page-header";
+import { Panel } from "@/components/ff/panel";
+import { cn } from "@/lib/utils";
 /**
  * /reports/regulatory — the five filings.
  *
@@ -24,9 +28,6 @@ interface Filing {
   name: string;
   cadence: "Monthly" | "Quarterly";
   description: string;
-  /** Tailwind text colour for the cadence chip, matching legacy's
-   *  per-card accent. */
-  accent: string;
 }
 
 const FILINGS: Filing[] = [
@@ -36,7 +37,6 @@ const FILINGS: Filing[] = [
     cadence: "Monthly",
     description:
       "Air Carrier Statistics — mail volume by route and mail class for BTS reporting.",
-    accent: "text-status-blue",
   },
   {
     href: "/reports/regulatory/ps5500",
@@ -44,7 +44,6 @@ const FILINGS: Filing[] = [
     cadence: "Monthly",
     description:
       "USPS Air Contract Report — route completion rates, trips flown against trips scheduled, mail volume.",
-    accent: "text-status-green",
   },
   {
     href: "/reports/regulatory/cam",
@@ -52,7 +51,6 @@ const FILINGS: Filing[] = [
     cadence: "Monthly",
     description:
       "Contract Air Mail Performance — on-time rates, cancellations and mail delivery per route.",
-    accent: "text-status-yellow",
   },
   {
     href: "/reports/regulatory/form5394",
@@ -60,7 +58,6 @@ const FILINGS: Filing[] = [
     cadence: "Monthly",
     description:
       "Air Carrier Mail Transport Documentation — flight-level records of mail carried, weights and pieces.",
-    accent: "text-status-blue",
   },
   {
     href: "/reports/regulatory/dot41",
@@ -68,50 +65,45 @@ const FILINGS: Filing[] = [
     cadence: "Quarterly",
     description:
       "Operating statistics — passengers, cargo, mail, quoted revenue, aircraft block hours and fleet.",
-    accent: "text-status-green",
   },
 ];
 
 export default function RegulatoryHubPage() {
   return (
     <div className="mx-auto max-w-5xl px-4 sm:px-6 py-8">
-      <Link
-        href="/reports"
-        className="text-[0.65rem] font-semibold uppercase tracking-wider text-muted-foreground hover:text-foreground"
-      >
-        ← Reports
-      </Link>
-      <h1 className="mt-1 page-title text-foreground">
-        Regulatory Reports
-      </h1>
-      <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-        FAA, USPS and DOT return generators. Each one covers a single filing
-        period — a calendar month, or a quarter for Form 41 — and exports the
-        same figures to CSV. The period defaults to the one just gone, because
-        a period still in progress is not one anybody files.
-      </p>
+      <PageHeader
+        back={{ href: "/reports", label: "Reports" }}
+        title="Regulatory Reports"
+        description="FAA, USPS and DOT return generators. Each one covers a single filing period — a calendar month, or a quarter for Form 41 — and exports the same figures to CSV. The period defaults to the one just gone, because a period still in progress is not one anybody files."
+      />
 
-      <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {FILINGS.map((f) => (
-          <Link
-            key={f.href}
-            href={f.href}
-            className="rounded-lg border border-border bg-card p-5 transition-colors hover:border-primary"
-          >
-            <div className="flex items-baseline justify-between gap-2">
-              <h2 className="font-semibold text-foreground">{f.name}</h2>
-              <span
-                className={`text-[0.65rem] font-semibold uppercase tracking-wider ${f.accent}`}
+      {/* The filings as a list (#82), each a row with its cadence and what
+          it covers, as the Reports directory lists its reports. */}
+      <Panel flush>
+        <ul className="divide-y divide-border">
+          {FILINGS.map((f) => (
+            <li key={f.href}>
+              <Link
+                href={f.href}
+                className="flex items-start justify-between gap-4 px-5 py-4 transition-colors hover:bg-accent/40"
               >
-                {f.cadence}
-              </span>
-            </div>
-            <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
-              {f.description}
-            </p>
-          </Link>
-        ))}
-      </div>
+                <span className="min-w-0">
+                  <span className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                    <span className="text-sm font-semibold text-foreground">{f.name}</span>
+                    <span className="eyebrow">{f.cadence}</span>
+                  </span>
+                  <span className="mt-1 block text-xs leading-relaxed text-muted-foreground">
+                    {f.description}
+                  </span>
+                </span>
+                <span aria-hidden className={cn(linkCaps, "mt-0.5 shrink-0")}>
+                  Open ›
+                </span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </Panel>
 
       <p className="mt-6 max-w-2xl text-xs text-muted-foreground">
         Every mail figure is compiled from locked manifests only, and each

@@ -61,7 +61,7 @@ function Band({
       <h2 className="mb-2 eyebrow">
         {title}
       </h2>
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">{children}</div>
+      <div className="grid grid-cols-2 gap-x-6 gap-y-5 lg:grid-cols-4">{children}</div>
     </section>
   );
 }
@@ -80,9 +80,11 @@ function Kpi({
   tone?: string;
 }) {
   return (
-    <div className="rounded-lg border border-border bg-card p-4">
-      <p className={"text-2xl font-bold tabular-nums " + tone}>{value}</p>
-      <p className="mt-0.5 text-xs text-muted-foreground">{label}</p>
+    // A figure (#82): the value in the display face, its label in
+    // capitals, a thin rule to its left.
+    <div className="flex min-w-0 flex-col border-l-2 border-input pl-3">
+      <p className={"font-display text-[1.75rem] font-extrabold leading-none tabular-nums " + tone}>{value}</p>
+      <p className="eyebrow mt-1.5">{label}</p>
       {note ? <p className={"mt-0.5 text-[0.65rem] " + noteTone}>{note}</p> : null}
     </div>
   );
@@ -125,10 +127,10 @@ export function SummaryView({
         ← Reports
       </Link>
 
-      <header className="mb-5 flex flex-wrap items-start justify-between gap-3">
+      <header className="mb-6 flex flex-wrap items-start justify-between gap-4 border-b border-border pb-5">
         <div>
           <h1 className="page-title">Executive Summary</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
             {isoRange(s.period_start, s.period_end)} — 60-second snapshot
           </p>
         </div>

@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import { linkCaps } from "@/components/ff/controls";
+import { cn } from "@/lib/utils";
 import { PeriodControls } from "@/components/reports/period-controls";
 import { ApiError } from "@/lib/api/client";
 import { getProfitability, type ProfitabilityReport } from "@/lib/api/reports";
@@ -106,15 +108,15 @@ export default async function ProfitabilityPage({
 
   return (
     <div className="mx-auto max-w-6xl px-4 sm:px-6 py-8">
-      <header className="mb-5 flex flex-wrap items-end justify-between gap-3">
+      <header className="mb-6 flex flex-wrap items-end justify-between gap-4 border-b border-border pb-5">
         <div>
           <Link
             href="/reports"
-            className="text-[0.65rem] font-semibold uppercase tracking-wider text-muted-foreground hover:text-foreground"
+            className={cn(linkCaps, "text-muted-foreground hover:text-foreground")}
           >
-            ← Reports
+            <span aria-hidden>‹</span> Reports
           </Link>
-          <h1 className="mt-1 page-title text-foreground">
+          <h1 className="mt-1 page-title text-balance">
             Profitability
           </h1>
           {report && (
@@ -143,7 +145,7 @@ export default async function ProfitabilityPage({
         </p>
       ) : report ? (
         <>
-          <p className="mb-4 rounded-md border border-border bg-background px-3 py-2 text-xs text-muted-foreground">
+          <p className="mb-4 notice notice-gray text-muted-foreground">
             {report.advisory}
           </p>
 
@@ -261,7 +263,7 @@ export default async function ProfitabilityPage({
             </div>
           )}
 
-          <h2 className="mb-2 text-sm font-bold uppercase tracking-wider text-muted-foreground">
+          <h2 className="mb-2 eyebrow">
             By route
           </h2>
           <ProfitTable
@@ -270,7 +272,7 @@ export default async function ProfitabilityPage({
             rows={report.by_route}
           />
 
-          <h2 className="mb-2 mt-5 text-sm font-bold uppercase tracking-wider text-muted-foreground">
+          <h2 className="mb-2 mt-5 eyebrow">
             By aircraft
           </h2>
           <ProfitTable

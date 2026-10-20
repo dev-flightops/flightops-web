@@ -137,7 +137,7 @@ export function ExportControls({
             max={end}
             disabled={isPending}
             onChange={(e) => e.target.value && go({ start: e.target.value })}
-            className="rounded-md border border-border bg-card px-2 py-1.5 text-xs text-foreground"
+            className="ff-input px-2 py-1.5 text-xs w-auto"
           />
         </label>
         <label className="flex flex-col gap-1">
@@ -151,7 +151,7 @@ export function ExportControls({
             min={start}
             disabled={isPending}
             onChange={(e) => e.target.value && go({ end: e.target.value })}
-            className="rounded-md border border-border bg-card px-2 py-1.5 text-xs text-foreground"
+            className="ff-input px-2 py-1.5 text-xs w-auto"
           />
         </label>
         <label className="flex flex-col gap-1">
@@ -163,7 +163,7 @@ export function ExportControls({
             value={basis}
             disabled={isPending}
             onChange={(e) => go({ basis: e.target.value as SimBasis })}
-            className="rounded-md border border-border bg-card px-2 py-1.5 text-xs text-foreground"
+            className="ff-input px-2 py-1.5 text-xs w-auto"
           >
             <option value="schedule">Schedule — one per service</option>
             <option value="flights">Flights — one per departure</option>
@@ -178,7 +178,7 @@ export function ExportControls({
             value={effectiveFormat}
             disabled={isPending}
             onChange={(e) => setFormat(e.target.value as SimFormat)}
-            className="rounded-md border border-border bg-card px-2 py-1.5 text-xs text-foreground"
+            className="ff-input px-2 py-1.5 text-xs w-auto"
           >
             {(["csv", "fixed", "xml"] as SimFormat[]).map((f) => (
               <option

@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import { linkCaps } from "@/components/ff/controls";
+import { cn } from "@/lib/utils";
 /**
  * The parts every regulatory filing page repeats.
  *
@@ -19,19 +21,19 @@ export function FilingHeader({
   controls?: React.ReactNode;
 }) {
   return (
-    <header className="mb-6 flex flex-wrap items-end justify-between gap-3">
+    <header className="mb-6 flex flex-wrap items-end justify-between gap-4 border-b border-border pb-5">
       <div>
         <Link
           href="/reports/regulatory"
-          className="text-[0.65rem] font-semibold uppercase tracking-wider text-muted-foreground hover:text-foreground"
+          className={cn(linkCaps, "text-muted-foreground hover:text-foreground")}
         >
-          ← Regulatory
+          <span aria-hidden>‹</span> Regulatory
         </Link>
-        <h1 className="mt-1 page-title text-foreground">
+        <h1 className="mt-1 page-title text-balance">
           {title}
         </h1>
         {subtitle && (
-          <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>
+          <p className="mt-2 max-w-3xl text-sm text-muted-foreground">{subtitle}</p>
         )}
       </div>
       {controls}
@@ -42,7 +44,7 @@ export function FilingHeader({
 /** What the service says the figures are and are not. */
 export function FilingAdvisory({ text }: { text: string }) {
   return (
-    <p className="mb-4 rounded-md border border-border bg-background px-3 py-2 text-xs text-muted-foreground">
+    <p className="mb-4 notice notice-gray text-muted-foreground">
       {text}
     </p>
   );
@@ -99,7 +101,7 @@ export function FilingLoadError({ message }: { message: string }) {
 
 export function FilingEmpty({ children }: { children: React.ReactNode }) {
   return (
-    <p className="rounded-lg border border-dashed border-border bg-card/40 px-4 py-16 text-center text-sm text-muted-foreground">
+    <p className="rounded-lg border border-border bg-card px-5 py-8 text-center text-sm text-muted-foreground">
       {children}
     </p>
   );
@@ -140,7 +142,7 @@ export function FilingTable({
 }
 
 export const TH_CLASS =
-  "border-b border-border bg-background/40 text-left text-[0.6rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground";
+  "ff-thead";
 export const TD = "px-4 py-2.5 text-foreground";
 export const TD_NUM = "px-4 py-2.5 text-right tabular-nums text-foreground";
 export const TD_MONO = "px-4 py-2.5 font-mono text-foreground";

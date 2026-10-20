@@ -104,12 +104,12 @@ export default async function InvoicingPage({
 
   return (
     <div className="mx-auto max-w-6xl px-4 sm:px-6 py-8">
-      <header className="mb-6 flex flex-wrap items-end justify-between gap-3">
+      <header className="mb-6 flex flex-wrap items-end justify-between gap-4 border-b border-border pb-5">
         <div>
-          <h1 className="page-title text-foreground">
+          <h1 className="page-title text-balance">
             Invoices
           </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
             {total} invoice{total === 1 ? "" : "s"}
             {status ? ` · ${STATUS_LABELS[status].toLowerCase()}` : ""}
           </p>
@@ -119,10 +119,10 @@ export default async function InvoicingPage({
         {!loadError && <RaiseInvoices />}
         {!loadError && (
           <div className="text-right">
-            <div className="text-[0.65rem] font-semibold uppercase tracking-wider text-muted-foreground">
+            <div className="eyebrow">
               Outstanding
             </div>
-            <div className="text-xl font-bold tabular-nums text-foreground">
+            <div className="mt-1 font-display text-[1.75rem] font-extrabold leading-none tabular-nums text-foreground">
               {money(outstanding)}
             </div>
             {/* Said plainly: this covers the whole operation, or the
@@ -172,7 +172,7 @@ export default async function InvoicingPage({
                 <select
                   name="customer"
                   defaultValue={customer ?? ""}
-                  className="w-60 rounded-md border border-border bg-background px-3 py-1.5 text-sm text-foreground"
+                  className="ff-input w-60 px-3 py-1.5 text-sm"
                 >
                   <option value="">All customers</option>
                   {customers.map((c) => (
@@ -192,7 +192,7 @@ export default async function InvoicingPage({
           ) : null}
 
           {items.length === 0 ? (
-            <p className="rounded-lg border border-dashed border-border bg-card/40 px-4 py-16 text-center text-sm text-muted-foreground">
+            <p className="rounded-lg border border-border bg-card px-5 py-8 text-center text-sm text-muted-foreground">
               {status
                 ? `No ${STATUS_LABELS[status].toLowerCase()} invoices.`
                 : "No invoices yet. Raise a flown flight's invoices with Raise invoices above."}
@@ -271,12 +271,7 @@ export default async function InvoicingPage({
                           {money(inv.total_cents)}
                         </td>
                         <td className="px-4 py-2.5">
-                          <span
-                            className={
-                              "rounded px-2 py-0.5 text-[0.65rem] font-semibold uppercase " +
-                              statusClasses(inv.status)
-                            }
-                          >
+                          <span className={statusClasses(inv.status)}>
                             {STATUS_LABELS[inv.status]}
                           </span>
                         </td>

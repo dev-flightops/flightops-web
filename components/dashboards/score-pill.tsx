@@ -1,9 +1,10 @@
+import { StatusMark } from "@/components/ff/status-mark";
 import { cn } from "@/lib/utils";
 
 /**
- * Big rounded pill that surfaces the daily Ops Score — the headline
- * number at the top-right of the Executive view + the center of the
- * Ops Score view. Color tracks the score band:
+ * The daily Ops Score — the headline figure at the top-right of the
+ * Executive view and the centre of the Ops Score view. Since #82 it is a
+ * figure with its band as a status mark, not a pill. The band's colour:
  *
  *   90-100  excellent       (green)
  *   75-89   good            (light green / yellow-green)
@@ -27,33 +28,19 @@ export function ScorePill({
   band?: string | null;
 }) {
   const rating = band ? ratingForBand(band) : ratingFor(score);
+  // A figure with its rating as a status mark (#82), not a tinted pill:
+  // the score in the display face, the band in its colour beside it.
   return (
-    <div
-      className={cn(
-        "inline-flex items-baseline gap-2 rounded-full border px-4 py-1.5",
-        rating.bg,
-        rating.border,
-        size === "large" && "px-8 py-4",
-      )}
-    >
+    <div className={cn("inline-flex items-baseline gap-3", size === "large" && "flex-col items-center gap-2")}>
       <span
         className={cn(
-          "font-mono font-bold tabular-nums",
-          rating.text,
-          size === "large" ? "text-5xl" : "text-xl",
+          "font-display font-extrabold leading-none tabular-nums text-foreground",
+          size === "large" ? "text-6xl" : "text-[1.75rem]",
         )}
       >
         {score.toFixed(1)}
       </span>
-      <span
-        className={cn(
-          "font-semibold",
-          rating.text,
-          size === "large" ? "text-sm" : "text-[0.7rem]",
-        )}
-      >
-        {rating.label}
-      </span>
+      <StatusMark label={rating.label} tone={rating.tone} className={size === "large" ? "text-xs" : undefined} />
     </div>
   );
 }
@@ -78,28 +65,20 @@ function ratingFor(score: number) {
   if (score >= 90)
     return {
       label: "Excellent",
-      text: "text-status-green",
-      bg: "bg-status-green/10",
-      border: "border-status-green/30",
+      tone: "green" as const,
     };
   if (score >= 75)
     return {
       label: "Good",
-      text: "text-status-green",
-      bg: "bg-status-green/[0.06]",
-      border: "border-status-green/20",
+      tone: "green" as const,
     };
   if (score >= 60)
     return {
       label: "Fair",
-      text: "text-status-orange",
-      bg: "bg-status-orange/10",
-      border: "border-status-orange/30",
+      tone: "orange" as const,
     };
   return {
     label: "Needs Attention",
-    text: "text-status-red",
-    bg: "bg-status-red/10",
-    border: "border-status-red/30",
+    tone: "red" as const,
   };
 }

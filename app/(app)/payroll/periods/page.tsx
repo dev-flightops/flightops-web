@@ -78,9 +78,9 @@ export default async function PayrollPeriodsPage() {
         <span className="font-semibold text-primary">Pay Periods</span>
       </nav>
 
-      <header className="mb-5">
+      <header className="mb-6 border-b border-border pb-5">
         <h1 className="page-title">Pay Periods</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
           Group approved pay events into a period, lock the period, then
           export a CSV for your payroll provider.
         </p>
@@ -151,19 +151,19 @@ export default async function PayrollPeriodsPage() {
 function PeriodStatusBadge({ status }: { status: PayPeriodStatus }) {
   const map: Record<PayPeriodStatus, [string, string]> = {
     open: [
-      "border-border bg-muted text-muted-foreground",
+      "text-muted-foreground",
       "Open",
     ],
     review: [
-      "border-border bg-muted text-muted-foreground",
+      "text-muted-foreground",
       "Review",
     ],
     locked: [
-      "border-status-yellow/40 bg-status-yellow/10 text-status-yellow",
+      "text-status-yellow",
       "Locked",
     ],
     exported: [
-      "border-status-blue/40 bg-status-blue/10 text-status-blue",
+      "text-status-blue",
       "Exported",
     ],
   };
@@ -171,7 +171,7 @@ function PeriodStatusBadge({ status }: { status: PayPeriodStatus }) {
   return (
     <span
       className={
-        "rounded border px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider " +
+        "status-mark " +
         cls
       }
     >

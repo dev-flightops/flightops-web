@@ -162,7 +162,7 @@ export function InvoiceActions({
               setVoiding(true);
             }}
             disabled={pending !== null}
-            className="rounded-md border border-status-red/40 px-3 py-1.5 text-xs font-semibold text-status-red hover:bg-status-red/10 disabled:opacity-50"
+            className="btn-caps rounded-md border border-status-red/60 px-3 py-1.5 text-[0.72rem] text-status-red hover:border-status-red disabled:opacity-50"
           >
             Void
           </button>
@@ -274,7 +274,7 @@ export function InvoiceActions({
               onChange={(e) => setReason(e.target.value)}
               maxLength={500}
               placeholder="e.g. duplicate of INV-000004"
-              className="mt-1 w-full rounded-md border border-border bg-card px-2 py-1.5 text-xs font-normal normal-case tracking-normal text-foreground"
+              className="ff-input mt-1 px-2 py-1.5 text-xs font-normal normal-case tracking-normal"
             />
           </label>
           <p className="mt-1.5 text-[0.65rem] text-muted-foreground">

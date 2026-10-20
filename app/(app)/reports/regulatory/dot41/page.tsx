@@ -141,7 +141,7 @@ export default async function Dot41Page({
             </NotMeasuredNotice>
           )}
 
-          <h2 className="mb-2 mt-5 text-sm font-bold uppercase tracking-wider text-muted-foreground">
+          <h2 className="mb-2 mt-5 eyebrow">
             Flight operations
           </h2>
           <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
@@ -159,7 +159,7 @@ export default async function Dot41Page({
             />
           </div>
 
-          <h2 className="mb-2 text-sm font-bold uppercase tracking-wider text-muted-foreground">
+          <h2 className="mb-2 eyebrow">
             Traffic
           </h2>
           <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
@@ -206,11 +206,11 @@ export default async function Dot41Page({
             />
           </div>
 
-          <h2 className="mb-2 text-sm font-bold uppercase tracking-wider text-muted-foreground">
+          <h2 className="mb-2 eyebrow">
             By aircraft type
           </h2>
           {report.aircraft_types.length === 0 ? (
-            <p className="rounded-lg border border-dashed border-border bg-card/40 px-4 py-10 text-center text-sm text-muted-foreground">
+            <p className="rounded-lg border border-border bg-card px-5 py-8 text-center text-sm text-muted-foreground">
               No flights on file for {report.period_label}.
             </p>
           ) : (

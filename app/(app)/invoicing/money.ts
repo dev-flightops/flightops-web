@@ -55,10 +55,12 @@ export const STATUS_LABELS: Record<string, string> = {
  *  invoice is a closed matter, not a problem to act on, and red would
  *  put it in the same visual class as an overdue one. */
 export function statusClasses(status: string): string {
-  if (status === "paid") return "bg-status-green/15 text-status-green";
-  if (status === "sent") return "bg-status-blue/15 text-status-blue";
-  if (status === "draft") return "bg-status-yellow/15 text-status-yellow";
-  return "bg-muted text-muted-foreground";
+  // A status mark (#82): the word in its colour behind a square, not a
+  // tinted chip. `.status-mark` sets the capitals and the marker.
+  if (status === "paid") return "status-mark text-status-green";
+  if (status === "sent") return "status-mark text-status-blue";
+  if (status === "draft") return "status-mark text-status-yellow";
+  return "status-mark text-muted-foreground";
 }
 
 /** True when a sent invoice is past its due date. Compared as calendar

@@ -1,6 +1,7 @@
-import { AlertGlyph, CheckGlyph } from "@/components/ff/glyphs";
 import Link from "next/link";
 
+import { PageHeader } from "@/components/ff/page-header";
+import { CheckGlyph } from "@/components/ff/glyphs";
 import { AlertList } from "@/components/dashboards/alert-list";
 import { FleetAirworthinessPanel } from "@/components/dashboards/fleet-airworthiness-panel";
 import { StatTile } from "@/components/dashboards/stat-tile";
@@ -53,13 +54,13 @@ export default async function DispatcherDashboardPage() {
   return (
     <div className="container py-6">
 
-      <h1 className="page-title">Dispatcher Live View</h1>
-      <p className="mt-1 text-sm text-muted-foreground">
-        Active flights · crew legality · pending dispatch packets
-      </p>
+      <PageHeader
+        title="Dispatcher Live View"
+        description="Active flights · crew legality · pending dispatch packets"
+      />
 
       {/* Row 1 — 5-col stat tiles */}
-      <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5">
+      <div className="grid grid-cols-2 gap-x-6 gap-y-5 sm:grid-cols-3 md:grid-cols-5">
         <StatTile
           value={snapshot.airborneCount}
           label="Airborne"
@@ -91,12 +92,9 @@ export default async function DispatcherDashboardPage() {
       </div>
 
       {/* Row 2 — alerts */}
-      <section className="mt-5 rounded-lg border border-border bg-card p-5">
-        <div className="mb-3 flex items-baseline justify-between">
-          <h2 className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-muted-foreground">
-            <AlertGlyph className="h-3.5 w-3.5" aria-hidden />
-            Active Alerts
-          </h2>
+      <section className="mt-6 overflow-hidden rounded-lg border border-border bg-card p-5">
+        <div className="-mx-5 -mt-5 mb-4 flex flex-wrap items-baseline justify-between gap-2 border-b border-border px-5 py-3">
+          <h2 className="panel-title">Active Alerts</h2>
           <span className="text-[0.65rem] text-muted-foreground">
             {snapshot.alerts.length} live · 6 more alert types land with their services
           </span>
@@ -110,7 +108,7 @@ export default async function DispatcherDashboardPage() {
       {/* Row 3 — Live Ops Board */}
       <section className="mt-5 rounded-lg border border-border bg-card p-5">
         <div className="mb-3 flex items-baseline justify-between">
-          <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+          <h2 className="panel-title">
             Live Ops Board
           </h2>
           <Link
@@ -124,10 +122,10 @@ export default async function DispatcherDashboardPage() {
       </section>
 
       {/* Row 4 — 2-col: Pending dispatch + Fleet Availability */}
-      <div className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2">
-        <section className="rounded-lg border border-border bg-card p-5">
-          <div className="mb-3 flex items-baseline justify-between">
-            <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+      <div className="mt-6 grid grid-cols-1 items-start gap-5 md:grid-cols-2">
+        <section className="overflow-hidden rounded-lg border border-border bg-card p-5">
+          <div className="-mx-5 -mt-5 mb-4 flex flex-wrap items-baseline justify-between gap-2 border-b border-border px-5 py-3">
+            <h2 className="panel-title">
               Flights Needing Dispatch
             </h2>
             <Link
@@ -147,7 +145,7 @@ export default async function DispatcherDashboardPage() {
       </div>
 
       {/* Row 5 — 3-col footer panels (all backed by services not yet built) */}
-      <div className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-3">
+      <div className="mt-6 grid grid-cols-1 items-start gap-5 md:grid-cols-3">
         <FuturePanel
           title="Crew Currency"
           hint="Not built here yet — pilot currency is on Fleet Compliance."
@@ -163,7 +161,7 @@ function RecentOutcomesPanel() {
   return (
     <section className="rounded-lg border border-border bg-card p-5">
       <div className="mb-2 flex items-center justify-between">
-        <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+        <h2 className="panel-title">
           Recent Outcomes
         </h2>
         <Link
@@ -198,7 +196,7 @@ function LiveOpsTable({ flights }: { flights: FlightListItem[] }) {
     <div className="overflow-x-auto">
       <table className="w-full text-xs">
         <thead>
-          <tr className="border-b border-border text-left text-[0.65rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+          <tr className="ff-thead">
             <th className="px-2 py-2">Flight</th>
             <th className="px-2 py-2">Tail</th>
             <th className="px-2 py-2">Route</th>
@@ -265,7 +263,7 @@ function PendingDispatchTable({ flights }: { flights: FlightListItem[] }) {
     <div className="overflow-x-auto">
       <table className="w-full text-xs">
         <thead>
-          <tr className="border-b border-border text-left text-[0.65rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+          <tr className="ff-thead">
             <th className="px-2 py-2">Flight</th>
             <th className="px-2 py-2">Route</th>
             <th className="px-2 py-2">Tail</th>
@@ -302,7 +300,7 @@ function FuturePanel({ title, hint }: { title: string; hint: string }) {
   return (
     <section className="rounded-lg border border-border bg-card p-5">
       <div className="mb-2 flex items-center justify-between">
-        <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+        <h2 className="panel-title">
           {title}
         </h2>
       </div>
@@ -322,18 +320,18 @@ function StatusPill({ flight }: { flight: FlightListItem }) {
       ? "Planned"
       : flight.status.charAt(0).toUpperCase() + flight.status.slice(1);
   const styles = isAirborne
-    ? "bg-status-green/15 text-status-green"
+    ? "text-status-green"
     : flight.status === "released"
-      ? "bg-status-blue/15 text-status-blue"
+      ? "text-status-blue"
       : flight.status === "cancelled"
-        ? "bg-status-red/15 text-status-red"
+        ? "text-status-red"
         : flight.status === "completed"
-          ? "bg-muted text-muted-foreground"
-          : "bg-muted text-muted-foreground";
+          ? "text-muted-foreground"
+          : "text-muted-foreground";
   return (
     <span
       className={
-        "inline-flex rounded-md px-1.5 py-0.5 text-[0.6rem] font-bold uppercase tracking-[0.06em] " +
+        "status-mark " +
         styles
       }
     >

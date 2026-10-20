@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import { linkCaps } from "@/components/ff/controls";
+import { StatusMark } from "@/components/ff/status-mark";
 import type { BoardFlightItem } from "@/lib/api/types";
 
 /**
@@ -32,27 +34,25 @@ export function LiveOpsBoard({ board }: Props) {
     );
 
   return (
-    <section className="rounded-lg border border-border bg-card p-5">
-      <h2 className="mb-3 text-xs font-bold uppercase tracking-wider text-muted-foreground">
-        Live Ops Board
-      </h2>
+    <section className="overflow-hidden rounded-lg border border-border bg-card">
+      <h2 className="panel-title border-b border-border px-5 py-3">Live Ops Board</h2>
 
       {rows.length === 0 ? (
-        <p className="text-xs text-muted-foreground">
+        <p className="px-5 py-6 text-sm text-muted-foreground">
           No flights on today&apos;s board.
         </p>
       ) : (
         <div className="max-h-[560px] overflow-auto">
           <table className="w-full min-w-[560px] text-xs">
-            <thead className="sticky top-0 bg-card">
-              <tr className="text-left text-[0.65rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
-                <th className="py-1.5 pr-3">Flight</th>
-                <th className="py-1.5 pr-3">Tail</th>
-                <th className="py-1.5 pr-3">Route</th>
-                <th className="py-1.5 pr-3">PIC</th>
-                <th className="py-1.5 pr-3">Status</th>
-                <th className="py-1.5 pr-3">ETD</th>
-                <th className="py-1.5 pr-3">ETA</th>
+            <thead className="ff-thead sticky top-0">
+              <tr>
+                <th className="px-5 py-2">Flight</th>
+                <th className="py-2 pr-3">Tail</th>
+                <th className="py-2 pr-3">Route</th>
+                <th className="py-2 pr-3">PIC</th>
+                <th className="py-2 pr-3">Status</th>
+                <th className="py-2 pr-3">ETD</th>
+                <th className="py-2 pr-5">ETA</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
@@ -64,12 +64,9 @@ export function LiveOpsBoard({ board }: Props) {
         </div>
       )}
 
-      <div className="mt-3 flex justify-end border-t border-border pt-3 text-[0.65rem]">
-        <Link
-          href="/flight-following"
-          className="text-primary hover:underline"
-        >
-          Full ops board →
+      <div className="flex justify-end border-t border-border px-5 py-3">
+        <Link href="/flight-following" className={linkCaps}>
+          Full ops board <span aria-hidden>›</span>
         </Link>
       </div>
     </section>
@@ -78,22 +75,22 @@ export function LiveOpsBoard({ board }: Props) {
 
 function Row({ row }: { row: BoardFlightItem }) {
   return (
-    <tr className="text-foreground">
-      <td className="py-1.5 pr-3 font-semibold">{row.flight_number}</td>
-      <td className="py-1.5 pr-3 font-mono">{row.aircraft.tail_number}</td>
-      <td className="py-1.5 pr-3 font-mono text-muted-foreground">
+    <tr className="text-foreground transition-colors hover:bg-accent/40">
+      <td className="px-5 py-2 font-mono font-semibold">{row.flight_number}</td>
+      <td className="py-2 pr-3 font-mono">{row.aircraft.tail_number}</td>
+      <td className="py-2 pr-3 font-mono text-muted-foreground">
         {row.origin}→{row.destination}
       </td>
-      <td className="py-1.5 pr-3 text-muted-foreground">
+      <td className="py-2 pr-3 text-muted-foreground">
         {row.pic_name ?? "—"}
       </td>
-      <td className="py-1.5 pr-3">
+      <td className="py-2 pr-3">
         <StatusBadge row={row} />
       </td>
-      <td className="py-1.5 pr-3 font-mono">
+      <td className="py-2 pr-3 font-mono">
         {fmtZulu(row.scheduled_departure_at)}
       </td>
-      <td className="py-1.5 pr-3 font-mono">
+      <td className="py-2 pr-5 font-mono">
         {fmtZulu(row.scheduled_arrival_at)}
       </td>
     </tr>
@@ -101,46 +98,15 @@ function Row({ row }: { row: BoardFlightItem }) {
 }
 
 function StatusBadge({ row }: { row: BoardFlightItem }) {
-  if (row.is_overdue) {
-    return (
-      <span className="inline-flex items-center rounded bg-status-red/15 px-1.5 py-0.5 text-[0.65rem] font-semibold text-status-red">
-        Overdue
-      </span>
-    );
-  }
+  // A quiet mark (#82): the status in its colour behind a square.
+  if (row.is_overdue) return <StatusMark label="Overdue" tone="red" />;
   if (row.status === "released" && row.actual_departure_at) {
-    return (
-      <span className="inline-flex items-center rounded bg-status-green/15 px-1.5 py-0.5 text-[0.65rem] font-semibold text-status-green">
-        Airborne
-      </span>
-    );
+    return <StatusMark label="Airborne" tone="green" />;
   }
-  if (row.status === "released") {
-    return (
-      <span className="inline-flex items-center rounded bg-status-blue/15 px-1.5 py-0.5 text-[0.65rem] font-semibold text-status-blue">
-        Released
-      </span>
-    );
-  }
-  if (row.status === "completed") {
-    return (
-      <span className="inline-flex items-center rounded bg-muted px-1.5 py-0.5 text-[0.65rem] font-semibold text-muted-foreground">
-        Completed
-      </span>
-    );
-  }
-  if (row.status === "cancelled") {
-    return (
-      <span className="inline-flex items-center rounded bg-status-red/15 px-1.5 py-0.5 text-[0.65rem] font-semibold text-status-red">
-        Cancelled
-      </span>
-    );
-  }
-  return (
-    <span className="inline-flex items-center rounded bg-muted px-1.5 py-0.5 text-[0.65rem] font-semibold text-muted-foreground">
-      Planned
-    </span>
-  );
+  if (row.status === "released") return <StatusMark label="Released" tone="blue" />;
+  if (row.status === "completed") return <StatusMark label="Completed" tone="muted" />;
+  if (row.status === "cancelled") return <StatusMark label="Cancelled" tone="red" />;
+  return <StatusMark label="Planned" tone="muted" />;
 }
 
 function fmtZulu(iso: string): string {

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { AlertGlyph, InfoGlyph } from "@/components/ff/glyphs";
+import { linkCaps } from "@/components/ff/controls";
 
 import { cn } from "@/lib/utils";
 
@@ -90,7 +91,7 @@ export function AlertList({
             {alert.href && (
               <Link
                 href={alert.href}
-                className="flex-shrink-0 text-[0.7rem] font-medium text-primary hover:underline"
+                className={cn(linkCaps, "flex-shrink-0")}
               >
                 {alert.linkLabel ?? "details →"}
               </Link>

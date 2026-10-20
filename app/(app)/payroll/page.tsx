@@ -104,10 +104,10 @@ export default async function PayrollEventsPage({
 
   return (
     <div className="w-full px-4 py-6 sm:px-6">
-      <header className="mb-5 flex flex-wrap items-start justify-between gap-3">
+      <header className="mb-6 flex flex-wrap items-start justify-between gap-4 border-b border-border pb-5">
         <div>
           <h1 className="page-title">Pay Events</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
             {total} event{total === 1 ? "" : "s"}
           </p>
         </div>
@@ -218,19 +218,19 @@ export default async function PayrollEventsPage({
 function PayEventStatusBadge({ status }: { status: PayEventStatus }) {
   const map: Record<PayEventStatus, [string, string]> = {
     pending: [
-      "border-border bg-muted text-muted-foreground",
+      "text-muted-foreground",
       "Pending",
     ],
     approved: [
-      "border-status-green/40 bg-status-green/10 text-status-green",
+      "text-status-green",
       "Approved",
     ],
     rejected: [
-      "border-status-red/40 bg-status-red/10 text-status-red",
+      "text-status-red",
       "Rejected",
     ],
     exported: [
-      "border-status-blue/40 bg-status-blue/10 text-status-blue",
+      "text-status-blue",
       "Exported",
     ],
   };
@@ -238,7 +238,7 @@ function PayEventStatusBadge({ status }: { status: PayEventStatus }) {
   return (
     <span
       className={
-        "rounded border px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider " +
+        "status-mark " +
         cls
       }
     >

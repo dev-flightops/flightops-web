@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { PageHeader } from "@/components/ff/page-header";
 import { AlertList } from "@/components/dashboards/alert-list";
 import { StationPicker } from "@/components/dashboards/station-picker";
 import { StatTile } from "@/components/dashboards/stat-tile";
@@ -76,26 +77,23 @@ export default async function StationDashboardPage({
   return (
     <div className="container py-6">
 
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="page-title">
-            Station: <span className="font-mono">{station}</span>
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Per-station traffic, ground times, and turn metrics
-          </p>
-        </div>
-        <StationPicker
-          current={station}
-          options={bases.map((b) => ({
-            icao: b.icao,
-            label: `${b.icao} — ${b.display_name}`,
-          }))}
-        />
-      </div>
+      <PageHeader
+        eyebrow="Station"
+        title={station}
+        description="Per-station traffic, ground times, and turn metrics"
+        actions={
+          <StationPicker
+            current={station}
+            options={bases.map((b) => ({
+              icao: b.icao,
+              label: `${b.icao} — ${b.display_name}`,
+            }))}
+          />
+        }
+      />
 
       {/* Row 1 — 4-col stats */}
-      <div className="mt-5 grid grid-cols-2 gap-3 md:grid-cols-4">
+      <div className="grid grid-cols-2 gap-x-6 gap-y-5 md:grid-cols-4">
         <StatTile
           value={outbound.length}
           label="Scheduled Departures"
@@ -123,17 +121,17 @@ export default async function StationDashboardPage({
       </div>
 
       {/* Row 2 — 2-col: Inbound table + Alerts */}
-      <div className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2">
-        <section className="rounded-lg border border-border bg-card p-5">
-          <h2 className="mb-3 text-xs font-bold uppercase tracking-wider text-muted-foreground">
+      <div className="mt-6 grid grid-cols-1 items-start gap-5 md:grid-cols-2">
+        <section className="overflow-hidden rounded-lg border border-border bg-card p-5">
+          <h2 className="panel-title -mx-5 -mt-5 mb-4 border-b border-border px-5 py-3">
             Inbound Flights
           </h2>
           <StationFlightsTable flights={inbound} direction="in" />
         </section>
 
-        <section className="rounded-lg border border-border bg-card p-5">
-          <div className="mb-3 flex items-baseline justify-between">
-            <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+        <section className="overflow-hidden rounded-lg border border-border bg-card p-5">
+          <div className="-mx-5 -mt-5 mb-4 flex flex-wrap items-baseline justify-between gap-2 border-b border-border px-5 py-3">
+            <h2 className="panel-title">
               Active Alerts
             </h2>
             <span className="text-[0.65rem] text-muted-foreground">
@@ -150,7 +148,7 @@ export default async function StationDashboardPage({
       {/* Row 3 — All active flights at this station */}
       <section className="mt-5 rounded-lg border border-border bg-card p-5">
         <div className="mb-3 flex items-baseline justify-between">
-          <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+          <h2 className="panel-title">
             All Active Flights
           </h2>
           <Link
@@ -169,7 +167,7 @@ export default async function StationDashboardPage({
 
       {/* Row 4 — Network station summary (all bases, not just today's traffic) */}
       <section className="mt-5 rounded-lg border border-border bg-card p-5">
-        <h2 className="mb-3 text-xs font-bold uppercase tracking-wider text-muted-foreground">
+        <h2 className="mb-3 panel-title">
           Network Station Summary — Today
         </h2>
         <NetworkGrid
@@ -202,7 +200,7 @@ function StationFlightsTable({
     <div className="overflow-x-auto">
       <table className="w-full text-xs">
         <thead>
-          <tr className="border-b border-border text-left text-[0.65rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+          <tr className="ff-thead">
             <th className="px-2 py-2">Flight</th>
             <th className="px-2 py-2">Route</th>
             <th className="px-2 py-2">Tail</th>
@@ -284,11 +282,12 @@ function NetworkGrid({
           <Link
             key={b.icao}
             href={`/dashboards/station/?station=${b.icao}`}
+            aria-current={b.icao === currentStation ? "page" : undefined}
             className={
-              "rounded-md border p-3 text-xs transition-colors " +
+              "rounded-md border border-border border-l-[3px] p-3 text-xs transition-colors " +
               (b.icao === currentStation
-                ? "border-status-blue/40 bg-status-blue/[0.08]"
-                : "border-border bg-card hover:border-primary/30")
+                ? "border-l-primary bg-accent/40"
+                : "border-l-input bg-card hover:bg-accent/40")
             }
           >
             <p className="font-mono font-semibold text-foreground">{b.icao}</p>

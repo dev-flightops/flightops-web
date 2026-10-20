@@ -51,7 +51,7 @@ export function NewPayEventForm({ employees }: { employees: UserResponse[] }) {
             name="employee_user_id"
             required
             defaultValue=""
-            className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+            className="ff-input px-3 py-2 text-sm"
           >
             <option value="" disabled>
               Select an employee…
@@ -72,7 +72,7 @@ export function NewPayEventForm({ employees }: { employees: UserResponse[] }) {
             name="event_type"
             required
             defaultValue=""
-            className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+            className="ff-input px-3 py-2 text-sm"
           >
             <option value="" disabled>
               Select a type…
@@ -96,7 +96,7 @@ export function NewPayEventForm({ employees }: { employees: UserResponse[] }) {
             name="event_date"
             required
             defaultValue={todayIso()}
-            className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+            className="ff-input px-3 py-2 text-sm"
           />
         </label>
 
@@ -110,7 +110,7 @@ export function NewPayEventForm({ employees }: { employees: UserResponse[] }) {
             step="0.01"
             min="0"
             placeholder="e.g. 3.50"
-            className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+            className="ff-input px-3 py-2 text-sm"
           />
         </label>
 
@@ -124,7 +124,7 @@ export function NewPayEventForm({ employees }: { employees: UserResponse[] }) {
             step="0.01"
             min="0"
             placeholder="e.g. 250.00"
-            className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+            className="ff-input px-3 py-2 text-sm"
           />
         </label>
       </div>
@@ -144,7 +144,7 @@ export function NewPayEventForm({ employees }: { employees: UserResponse[] }) {
           name="description"
           maxLength={200}
           placeholder="e.g. GV101 PADU → PANC"
-          className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+          className="ff-input px-3 py-2 text-sm"
         />
       </label>
 
@@ -156,7 +156,7 @@ export function NewPayEventForm({ employees }: { employees: UserResponse[] }) {
           name="notes"
           rows={2}
           maxLength={500}
-          className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+          className="ff-input px-3 py-2 text-sm"
         />
       </label>
 

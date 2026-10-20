@@ -1,6 +1,7 @@
-import { CheckGlyph } from "@/components/ff/glyphs";
 import Link from "next/link";
 
+import { PageHeader } from "@/components/ff/page-header";
+import { CheckGlyph } from "@/components/ff/glyphs";
 import { AlertList } from "@/components/dashboards/alert-list";
 import { ScorePill } from "@/components/dashboards/score-pill";
 import { StatTile } from "@/components/dashboards/stat-tile";
@@ -86,19 +87,15 @@ export default async function DirectorOpsDashboardPage() {
   return (
     <div className="container py-6">
 
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="page-title">Director of Operations</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Real-time operational overview
-          </p>
-        </div>
-        <ScorePill score={opsScore} />
-      </div>
+      <PageHeader
+        title="Director of Operations"
+        description="Real-time operational overview"
+        actions={<ScorePill score={opsScore} />}
+      />
 
       {/* Row 1 — 6-col stat tiles. Airborne + Overdue come from the
           shared snapshot; the others derive from today's stats query. */}
-      <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-6">
+      <div className="grid grid-cols-2 gap-x-6 gap-y-5 sm:grid-cols-3 md:grid-cols-6">
         <StatTile
           value={snapshot.airborneCount}
           label="Airborne"
@@ -136,9 +133,9 @@ export default async function DirectorOpsDashboardPage() {
       </div>
 
       {/* Row 2 — 2-col: Alerts (left, narrow) + Active Flights (right) */}
-      <div className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-[280px_1fr]">
-        <section className="rounded-lg border border-border bg-card p-5">
-          <h2 className="mb-3 text-xs font-bold uppercase tracking-wider text-muted-foreground">
+      <div className="mt-6 grid grid-cols-1 items-start gap-5 md:grid-cols-[280px_1fr]">
+        <section className="overflow-hidden rounded-lg border border-border bg-card p-5">
+          <h2 className="panel-title -mx-5 -mt-5 mb-4 border-b border-border px-5 py-3">
             Alerts
           </h2>
           <AlertList
@@ -147,9 +144,9 @@ export default async function DirectorOpsDashboardPage() {
           />
         </section>
 
-        <section className="rounded-lg border border-border bg-card p-5">
-          <div className="mb-3 flex items-baseline justify-between">
-            <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+        <section className="overflow-hidden rounded-lg border border-border bg-card p-5">
+          <div className="-mx-5 -mt-5 mb-4 flex flex-wrap items-baseline justify-between gap-2 border-b border-border px-5 py-3">
+            <h2 className="panel-title">
               Active Flights
             </h2>
             <Link
@@ -164,10 +161,10 @@ export default async function DirectorOpsDashboardPage() {
       </div>
 
       {/* Row 3 — 2-col: Pending Dispatch + 8-Week Completion Trend */}
-      <div className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2">
-        <section className="rounded-lg border border-border bg-card p-5">
-          <div className="mb-3 flex items-baseline justify-between">
-            <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+      <div className="mt-6 grid grid-cols-1 items-start gap-5 md:grid-cols-2">
+        <section className="overflow-hidden rounded-lg border border-border bg-card p-5">
+          <div className="-mx-5 -mt-5 mb-4 flex flex-wrap items-baseline justify-between gap-2 border-b border-border px-5 py-3">
+            <h2 className="panel-title">
               Pending Dispatch
             </h2>
             <Link
@@ -192,9 +189,9 @@ export default async function DirectorOpsDashboardPage() {
           />
         </section>
 
-        <section className="rounded-lg border border-border bg-card p-5">
-          <div className="mb-3 flex items-baseline justify-between">
-            <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+        <section className="overflow-hidden rounded-lg border border-border bg-card p-5">
+          <div className="-mx-5 -mt-5 mb-4 flex flex-wrap items-baseline justify-between gap-2 border-b border-border px-5 py-3">
+            <h2 className="panel-title">
               8-Week Completion Trend
             </h2>
             <span className="text-[0.65rem] text-muted-foreground">
@@ -209,7 +206,7 @@ export default async function DirectorOpsDashboardPage() {
           The last two printed hardcoded zeros ("PICs current 0/0",
           "Extreme 0") under an "M3" pill, which was the only sign they
           were not real. They say they are not built now. */}
-      <div className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-3">
+      <div className="mt-6 grid grid-cols-1 items-start gap-5 md:grid-cols-3">
         <ListPanel
           title="Station Summary"
           rows={collectStations(todaysFlights.items)}
@@ -250,7 +247,7 @@ function FlightsTable({
     <div className="overflow-x-auto">
       <table className="w-full text-xs">
         <thead>
-          <tr className="border-b border-border text-left text-[0.65rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+          <tr className="ff-thead">
             <th className="px-2 py-2">Flight</th>
             <th className="px-2 py-2">Route</th>
             <th className="px-2 py-2">Tail</th>
@@ -298,37 +295,37 @@ function FlightsTable({
  */
 function FlightStatusBadge({ flight }: { flight: FlightListItem }) {
   const cls =
-    "inline-flex items-center rounded bg-opacity-15 px-1.5 py-0.5 text-[0.65rem] font-semibold";
+    "status-mark";
   if (flight.status === "released" && flight.actual_departure_at) {
     return (
-      <span className={`${cls} bg-status-green/15 text-status-green`}>
+      <span className={`${cls} text-status-green`}>
         Airborne
       </span>
     );
   }
   if (flight.status === "released") {
     return (
-      <span className={`${cls} bg-status-blue/15 text-status-blue`}>
+      <span className={`${cls} text-status-blue`}>
         Released
       </span>
     );
   }
   if (flight.status === "cancelled") {
     return (
-      <span className={`${cls} bg-status-red/15 text-status-red`}>
+      <span className={`${cls} text-status-red`}>
         Cancelled
       </span>
     );
   }
   if (flight.status === "completed") {
     return (
-      <span className={`${cls} bg-muted text-muted-foreground`}>
+      <span className={`${cls} text-muted-foreground`}>
         Completed
       </span>
     );
   }
   return (
-    <span className={`${cls} bg-muted text-muted-foreground`}>
+    <span className={`${cls} text-muted-foreground`}>
       Planned
     </span>
   );
@@ -382,9 +379,9 @@ function ListPanel({
   emptyHint?: string;
 }) {
   return (
-    <section className="rounded-lg border border-border bg-card p-5">
-      <div className="mb-3 flex items-baseline justify-between">
-        <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+    <section className="overflow-hidden rounded-lg border border-border bg-card p-5">
+      <div className="-mx-5 -mt-5 mb-4 flex flex-wrap items-baseline justify-between gap-2 border-b border-border px-5 py-3">
+        <h2 className="panel-title">
           {title}
         </h2>
       </div>

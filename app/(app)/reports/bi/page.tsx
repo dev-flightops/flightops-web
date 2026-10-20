@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { PageHeader } from "@/components/ff/page-header";
 import { ApiError } from "@/lib/api/client";
 import { getBiDashboard, type BiDashboard } from "@/lib/api/reports";
 
@@ -53,7 +54,7 @@ function Pct({ value }: { value: number | null }) {
 }
 
 const TH =
-  "border-b border-border bg-background/40 text-left text-[0.6rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground";
+  "ff-thead";
 
 export default async function BiPage() {
   let data: BiDashboard | null = null;
@@ -71,21 +72,15 @@ export default async function BiPage() {
 
   return (
     <div className="mx-auto max-w-6xl px-4 sm:px-6 py-8">
-      <Link
-        href="/reports"
-        className="text-[0.65rem] font-semibold uppercase tracking-wider text-muted-foreground hover:text-foreground"
-      >
-        ← Reports
-      </Link>
-      <h1 className="mt-1 page-title text-foreground">
-        Business Intelligence
-      </h1>
-      {data && (
-        <p className="mt-0.5 text-sm text-muted-foreground">
-          {data.months} months to {data.window_end} · no period control,
-          because seasonal demand needs the whole window
-        </p>
-      )}
+      <PageHeader
+        back={{ href: "/reports", label: "Reports" }}
+        title="Business Intelligence"
+        description={
+          data
+            ? `${data.months} months to ${data.window_end} · no period control, because seasonal demand needs the whole window`
+            : undefined
+        }
+      />
 
       {loadError ? (
         <p
@@ -96,20 +91,20 @@ export default async function BiPage() {
         </p>
       ) : data ? (
         <>
-          <p className="mt-4 rounded-md border border-border bg-background px-3 py-2 text-xs text-muted-foreground">
+          <p className="mt-4 notice notice-gray text-muted-foreground">
             {data.advisory}
           </p>
 
-          <h2 className="mb-2 mt-6 text-sm font-bold uppercase tracking-wider text-muted-foreground">
+          <h2 className="mb-2 mt-6 eyebrow">
             Seasonal demand
           </h2>
           <SeasonalBars months={data.seasonal} />
 
-          <h2 className="mb-2 mt-6 text-sm font-bold uppercase tracking-wider text-muted-foreground">
+          <h2 className="mb-2 mt-6 eyebrow">
             Load factor by route
           </h2>
           {data.load_factor_by_route.length === 0 ? (
-            <p className="rounded-lg border border-dashed border-border bg-card/40 px-4 py-10 text-center text-sm text-muted-foreground">
+            <p className="rounded-lg border border-border bg-card px-5 py-8 text-center text-sm text-muted-foreground">
               No flights in the window.
             </p>
           ) : (
@@ -197,7 +192,7 @@ export default async function BiPage() {
             </p>
           )}
 
-          <h2 className="mb-2 mt-6 text-sm font-bold uppercase tracking-wider text-muted-foreground">
+          <h2 className="mb-2 mt-6 eyebrow">
             Revenue per block hour, by type
           </h2>
           <div className="overflow-x-auto rounded-lg border border-border bg-card">
@@ -272,11 +267,11 @@ export default async function BiPage() {
             </table>
           </div>
 
-          <h2 className="mb-2 mt-6 text-sm font-bold uppercase tracking-wider text-muted-foreground">
+          <h2 className="mb-2 mt-6 eyebrow">
             Top customers
           </h2>
           {data.top_customers.length === 0 ? (
-            <p className="rounded-lg border border-dashed border-border bg-card/40 px-4 py-10 text-center text-sm text-muted-foreground">
+            <p className="rounded-lg border border-border bg-card px-5 py-8 text-center text-sm text-muted-foreground">
               No bookings in the window.
             </p>
           ) : (

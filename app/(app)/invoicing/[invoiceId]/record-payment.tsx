@@ -101,7 +101,7 @@ export function RecordPayment({
   }
 
   const labelClass =
-    "mb-1.5 block text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground";
+    "field-label";
 
   return (
     <div className="space-y-2">
