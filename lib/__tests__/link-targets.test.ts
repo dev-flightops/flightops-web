@@ -168,7 +168,9 @@ function resolvesUnder(root: string, segments: string[]): boolean {
 function routeExists(template: string): boolean {
   const path = template.split(/[?#]/)[0];
   const segments = path.replace(/^\/+|\/+$/g, "").split("/").filter(Boolean);
-  if (segments.length === 0) return false;
+  // "/" is a page of its own since the landing page (#78): a route
+  // group's page.tsx serves it.
+  if (segments.length === 0) return routeRoots().some((root) => resolvesUnder(root, []));
   if (segments[0] === "api") return resolvesUnder(API, segments.slice(1));
   return routeRoots().some((root) => resolvesUnder(root, segments));
 }

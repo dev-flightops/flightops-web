@@ -206,10 +206,42 @@ describe("theme guards", () => {
       for (const m of code(file).matchAll(/<h1\b[^>]*?className="([^"]*)"/g)) {
         const cls = m[1].split(/\s+/);
         if (cls.some((c) => c.startsWith("text-status-"))) continue;
-        const ok = ["text-2xl", "font-bold", "tracking-tight"].every((c) => cls.includes(c));
+        // `page-title` is the redesign's title (#78, globals.css); the
+        // trio is the September style, until the rollout converts it.
+        const ok = cls.includes("page-title") || ["text-2xl", "font-bold", "tracking-tight"].every((c) => cls.includes(c));
         const extra = cls.filter((c) => /^(?:(?:sm|md|lg):)?(?:text-(?:xs|sm|base|lg|xl|[3-9]xl)|font-(?:semibold|extrabold|black|medium))$/.test(c));
         if (!ok || extra.length) hits.push(`${file}: ${m[1]}`);
       }
+    }
+    expect(hits).toEqual([]);
+  });
+
+  it("keeps the redesigned surfaces free of pills and decorative gradients", () => {
+    // The client's brief (#78): no pill badges, no gradient-heavy
+    // backgrounds. A gradient is allowed only as a scrim: an aria-hidden
+    // layer over a photograph, there so the type on it reads. The list
+    // grows as the rollout reaches more of the app.
+    const surfaces = [
+      "app/(public)/",
+      "app/(auth)/login/",
+      "app/(app)/flight-following/",
+      "components/landing/",
+      "components/ff/",
+      "components/theme/",
+      "components/flight-following/",
+      "components/app-shell/app-shell-header.tsx",
+      "components/app-shell/department-nav.tsx",
+    ];
+    const hits: string[] = [];
+    for (const file of FILES.filter((f) => surfaces.some((s) => f.startsWith(s)))) {
+      code(file)
+        .split("\n")
+        .forEach((line, i) => {
+          if (/\brounded-full\b/.test(line)) hits.push(`${file}:${i + 1}  pill: ${line.trim().slice(0, 80)}`);
+          if (/\bbg-gradient-/.test(line) && !line.includes("aria-hidden")) {
+            hits.push(`${file}:${i + 1}  gradient that is not a scrim: ${line.trim().slice(0, 80)}`);
+          }
+        });
     }
     expect(hits).toEqual([]);
   });

@@ -89,8 +89,12 @@ export default async function AppGroupLayout({
   // hardcode +1 (555) 000-0000 in two places, which every tenant would
   // have seen.
   let opsPhone: string | null = null;
+  // The operator's logo for the top bar (#78) — the branding feature's
+  // other half, alongside the colours.
+  let logoUrl: string | null = null;
   try {
     const profile = await getCompanyProfile();
+    logoUrl = profile.logo_url?.trim() || null;
     brandTheme = {
       brand_primary_color: profile.brand_primary_color,
       brand_primary_dark_color: profile.brand_primary_dark_color,
@@ -132,6 +136,7 @@ export default async function AppGroupLayout({
         roles={sessionRoles}
         showOpsChip={rolesCanSeeModule("reservations", sessionRoles)}
         opsPhone={opsPhone}
+        logoUrl={logoUrl}
       >
         {children}
         {/* Spec: global Safety Report button, fixed bottom-right on every

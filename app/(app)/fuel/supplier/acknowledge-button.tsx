@@ -93,7 +93,7 @@ export function AcknowledgeButton({
               router.refresh();
             });
           }}
-          className="inline-flex items-center gap-1 rounded-md bg-status-green px-2.5 py-1 text-[0.65rem] font-semibold text-white hover:brightness-95 disabled:opacity-50"
+          className="inline-flex items-center gap-1 rounded-md bg-status-green-fill px-2.5 py-1 text-[0.65rem] font-semibold text-white hover:brightness-95 disabled:opacity-50"
         >
           {pending && <Spinner size="xs" />}
           Confirm

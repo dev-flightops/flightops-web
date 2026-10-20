@@ -43,7 +43,9 @@ const ROOTS = ["app", "components", "lib"];
 const UTILITY =
   "(?:text|bg|border|ring|outline|fill|stroke|decoration|shadow|from|via|to|accent|caret|divide|placeholder)";
 
-const USAGE = new RegExp(`\\b${UTILITY}-status-([a-z]+)`, "g");
+// A token may carry a suffix: `status-red-fill` (#78) is checked whole,
+// so a misspelt `status-red-fil` is not taken for `red`.
+const USAGE = new RegExp(`\\b${UTILITY}-status-([a-z]+(?:-[a-z]+)?)`, "g");
 
 const theme = tailwindConfig.theme?.extend?.colors as
   | Record<string, unknown>
@@ -95,13 +97,21 @@ describe("the status palette", () => {
     // deliberately, not silently.
     expect([...DEFINED].sort()).toEqual([
       "blue",
+      "blue-fill",
       "gray",
+      "gray-fill",
       "green",
+      "green-fill",
       "orange",
+      "orange-fill",
       "purple",
+      "purple-fill",
       "red",
+      "red-fill",
       "teal",
+      "teal-fill",
       "yellow",
+      "yellow-fill",
     ]);
   });
 
@@ -122,10 +132,10 @@ describe("the status palette", () => {
     // The guard's own guard: proves the regex matches the shape that
     // went wrong, rather than passing because it matches nothing.
     const sample =
-      'className="mt-1 text-status-amber" and "bg-status-yellow/10"';
+      'className="mt-1 text-status-amber" and "bg-status-yellow/10" and "bg-status-red-fil"';
     const tokens = [...sample.matchAll(USAGE)].map((m) => m[1]);
-    expect(tokens).toEqual(["amber", "yellow"]);
-    expect(tokens.filter((t) => !DEFINED.has(t))).toEqual(["amber"]);
+    expect(tokens).toEqual(["amber", "yellow", "red-fil"]);
+    expect(tokens.filter((t) => !DEFINED.has(t))).toEqual(["amber", "red-fil"]);
   });
 
   it("ignores identifiers and prose that merely contain the word", () => {

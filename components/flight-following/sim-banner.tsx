@@ -23,7 +23,7 @@ export function SimBanner({ positions }: { positions: PositionResponse[] }) {
   return (
     <div
       role="status"
-      className="pointer-events-none absolute inset-x-0 top-0 z-[1000] border-b border-status-yellow bg-status-yellow px-4 py-1 text-center text-[0.65rem] font-bold uppercase tracking-[0.15em] text-white"
+      className="pointer-events-none absolute inset-x-0 top-0 z-[1000] border-b border-status-yellow-fill bg-status-yellow-fill px-4 py-1 text-center text-[0.65rem] font-bold uppercase tracking-[0.15em] text-white"
     >
       Simulation mode — aircraft positions are simulated for demonstration
     </div>

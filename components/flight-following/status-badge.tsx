@@ -23,6 +23,10 @@ import type { FlightStatus } from "@/lib/api/types";
  * M2-M-14b — handled there by extending FlightStatus on the
  * backend. The "OVERDUE" pill is rendered alongside AIRBORNE by
  * the board row, not by this component.
+ *
+ * ForeFlight's quiet status (#78): the label in its status colour behind
+ * a small square marker — no tinted pill. The colour does the work; the
+ * marker keeps it findable for a reader who cannot tell the hues apart.
  */
 export function StatusBadge({
   status,
@@ -42,32 +46,33 @@ export function StatusBadge({
     status === "released" && actualDepartureAt === null
       ? RELEASED_ON_GROUND
       : STATUS_LABELS[status];
+  return <StatusMark label={config.label} className={config.className} />;
+}
+
+function StatusMark({ label, className }: { label: string; className: string }) {
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-[0.08em]",
-        config.className,
+        "inline-flex items-center gap-1.5 whitespace-nowrap text-[0.68rem] font-bold uppercase tracking-[0.1em]",
+        className,
       )}
     >
-      {config.label}
+      <span aria-hidden className="h-1.5 w-1.5 flex-shrink-0 bg-current" />
+      {label}
     </span>
   );
 }
 
 const RELEASED_ON_GROUND = {
   label: "Released",
-  className: "bg-status-yellow/15 text-status-yellow",
+  className: "text-status-yellow",
 };
 
 /** Red pill rendered next to AIRBORNE when the flight is past
  *  scheduled_arrival_at + 30 min. Kept as its own component so the
  *  legacy two-pill layout (`AIRBORNE  OVERDUE`) is easy to compose. */
 export function OverdueBadge() {
-  return (
-    <span className="inline-flex items-center rounded bg-status-red/15 px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-[0.08em] text-status-red">
-      Overdue
-    </span>
-  );
+  return <StatusMark label="Overdue" className="text-status-red" />;
 }
 
 const STATUS_LABELS: Record<
@@ -76,18 +81,18 @@ const STATUS_LABELS: Record<
 > = {
   scheduled: {
     label: "Planned",
-    className: "bg-status-blue/15 text-status-blue",
+    className: "text-status-blue",
   },
   released: {
     label: "Airborne",
-    className: "bg-status-green/15 text-status-green",
+    className: "text-status-green",
   },
   cancelled: {
     label: "Cancelled",
-    className: "bg-muted text-muted-foreground",
+    className: "text-muted-foreground",
   },
   completed: {
     label: "Landed",
-    className: "bg-muted text-muted-foreground",
+    className: "text-muted-foreground",
   },
 };

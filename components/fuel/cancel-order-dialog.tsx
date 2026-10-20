@@ -90,7 +90,7 @@ export function CancelOrderDialog({ orderId }: { orderId: string }) {
               <button
                 type="submit"
                 disabled={pending}
-                className="inline-flex items-center gap-1.5 rounded-md bg-status-red px-4 py-2 text-xs font-semibold text-white hover:brightness-95 disabled:opacity-60"
+                className="inline-flex items-center gap-1.5 rounded-md bg-status-red-fill px-4 py-2 text-xs font-semibold text-white hover:brightness-95 disabled:opacity-60"
               >
                 {pending && <Spinner size="xs" />}
                 {pending ? "Cancelling…" : "Cancel order"}

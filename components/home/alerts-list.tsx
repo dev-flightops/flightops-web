@@ -114,7 +114,7 @@ function AlertGroup({
       <summary className="flex cursor-pointer list-none items-center gap-2 rounded-lg py-0.5 outline-none [&::-webkit-details-marker]:hidden focus-visible:ring-2 focus-visible:ring-ring">
         <span
           className={`inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[0.7rem] font-bold tabular-nums ${
-            red ? "bg-status-red text-white" : "bg-status-yellow text-white"
+            red ? "bg-status-red-fill text-white" : "bg-status-yellow-fill text-white"
           }`}
         >
           {items.length}

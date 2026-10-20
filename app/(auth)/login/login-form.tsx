@@ -12,8 +12,12 @@ import type {
   SsoResolveProvider,
 } from "@/lib/api/types";
 
-import { HomeWordmark } from "@/components/home/home-brand";
-import { Button } from "@/components/ui/button";
+import Image from "next/image";
+import Link from "next/link";
+
+import { buttonSolid } from "@/components/ff/controls";
+import { Wordmark } from "@/components/landing/wordmark";
+import { cn } from "@/lib/utils";
 import { loginErrorMessage } from "@/lib/login-errors";
 
 import { resolveSsoAction } from "./actions";
@@ -125,33 +129,29 @@ function LoginInner({ providers }: { providers: ProviderSummary[] }) {
   const isSubmitting = form.formState.isSubmitting;
 
   return (
-    <div className="grid min-h-screen bg-background lg:grid-cols-2">
-      {/* The home page's hero, as an ink island. */}
-      <div
-        className="dark relative hidden overflow-hidden bg-cover text-foreground lg:flex lg:flex-col lg:justify-between lg:p-12"
-        style={{
-          backgroundImage:
-            // Dark at both ends: the headline sits at the bottom and the
-            // wordmark at the top, over what is bright sky in the photo.
-            "linear-gradient(to top, rgba(10,10,15,0.92) 0%, rgba(10,10,15,0.3) 45%, rgba(10,10,15,0.72) 100%), " +
-            "url('/images/home-hero.jpg'), " +
-            "linear-gradient(135deg, #2b1a1e 0%, #1a1214 50%, #0a0508 100%)",
-          backgroundColor: "#0a0508",
-          // The photo is landscape and this panel is portrait, so `cover`
-          // crops it hard; centred, the crop is dark tarmac and the
-          // aircraft (right of centre in the photo) is cut off.
-          backgroundPosition: "68% center",
-        }}
-      >
-        <HomeWordmark size={40} wordmark="PEREGRINE" subtitle="FLIGHT OPS" />
-        <div className="max-w-md">
-          <p className="text-[0.65rem] font-semibold uppercase tracking-[0.28em] text-brand-light">
-            Part 135 operations
-          </p>
-          <p className="mt-3 text-3xl font-bold leading-tight tracking-tight">
+    <div className="grid min-h-screen bg-background lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]">
+      {/* The landing page's hero (#78): the same photograph and scrim, the
+          type in the display face. A dark island in both modes. */}
+      <div className="dark relative hidden overflow-hidden bg-ink lg:flex lg:flex-col lg:justify-between lg:p-12">
+        <Image
+          src="/images/landing/hero-ramp-2400.jpg"
+          alt=""
+          fill
+          priority
+          sizes="60vw"
+          className="object-cover"
+          style={{ objectPosition: "38% 60%" }}
+        />
+        <div aria-hidden className="absolute inset-0 bg-gradient-to-t from-ink/90 via-ink/30 to-ink/70" />
+        <Link href="/" aria-label="Peregrine Flight Ops, home" className="relative self-start">
+          <Wordmark />
+        </Link>
+        <div className="relative max-w-lg">
+          <p className="eyebrow text-brand-light">Part 135 operations</p>
+          <p className="mt-3 text-balance font-display text-[2.4rem] font-extrabold uppercase leading-[1.06] tracking-[0.02em] text-white">
             Dispatch, flight following and compliance, in one place.
           </p>
-          <p className="mt-4 text-sm leading-relaxed text-foreground/75">
+          <p className="mt-4 text-[1.0625rem] leading-[1.7] text-white/90">
             Releases, crew, weather, maintenance and the records an
             inspector asks for — built for the way your bases fly.
           </p>
@@ -160,17 +160,13 @@ function LoginInner({ providers }: { providers: ProviderSummary[] }) {
 
       <div className="flex items-center justify-center px-6 py-12 sm:px-10">
         <div className="w-full max-w-[380px]">
-          <div className="mb-8 lg:hidden">
-            <HomeWordmark size={36} wordmark="PEREGRINE" subtitle="FLIGHT OPS" />
-          </div>
+          <Link href="/" aria-label="Peregrine Flight Ops, home" className="dark mb-10 inline-flex bg-chrome px-3 py-2 lg:hidden">
+            <Wordmark />
+          </Link>
 
-          <p className="text-[0.7rem] font-semibold uppercase tracking-[0.24em] text-primary">
-            Flight Operations
-          </p>
-          <h1 className="mt-2 text-2xl font-bold tracking-tight text-foreground">
-            Sign in
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="eyebrow text-primary">Flight Operations</p>
+          <h1 className="page-title mt-2 text-foreground">Sign in</h1>
+          <p className="mt-2 text-sm text-muted-foreground">
             Use your company account.
           </p>
 
@@ -265,14 +261,13 @@ function LoginInner({ providers }: { providers: ProviderSummary[] }) {
                 )}
               </div>
 
-              <Button
+              <button
                 type="submit"
-                size="lg"
                 disabled={isSubmitting}
-                className="mt-2 w-full"
+                className={cn(buttonSolid, "mt-2 w-full py-3")}
               >
                 {isSubmitting ? "Signing in…" : "Sign In"}
-              </Button>
+              </button>
             </form>
           </div>
 

@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ChevronRight, Home } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
@@ -19,8 +18,11 @@ import {
  * isn't under any department (e.g. the home page or login).
  *
  * Pattern is borrowed from the legacy dispatch-platform's department row:
- * a leading Home breadcrumb chevron, then sibling-module chips for the
+ * a leading Home breadcrumb chevron, then the sibling modules of the
  * department the user is currently inside.
+ *
+ * ForeFlight's tabs (#78): plain labels, the current one in full colour
+ * with a 2px underline in the brand's text tone — no filled pills.
  */
 export function DepartmentNav({ roles = [] }: { roles?: readonly string[] }) {
   const pathname = usePathname() ?? "/";
@@ -42,25 +44,24 @@ export function DepartmentNav({ roles = [] }: { roles?: readonly string[] }) {
 
   return (
     <div className="border-b border-border bg-background">
-      <div className="container flex items-center gap-1 px-3 py-1.5">
+      <div className="container flex h-11 items-stretch gap-2 px-3">
         <Link
           href="/home/"
-          className="flex-shrink-0 rounded-md p-1 text-muted-foreground hover:bg-accent hover:text-primary"
+          className="flex flex-shrink-0 items-center px-1 text-muted-foreground transition-colors hover:text-foreground"
           aria-label="Home"
         >
-          <Home className="h-3 w-3 opacity-60" aria-hidden />
+          <HomeGlyph />
         </Link>
-        <ChevronRight
-          className="h-3 w-3 flex-shrink-0 text-muted-foreground"
-          aria-hidden
-        />
+        <span className="flex items-center text-muted-foreground" aria-hidden>
+          <ChevronGlyph />
+        </span>
 
         {/* h-scroll on narrow widths instead of wrapping or clipping —
             keeps the row to a single line and lets the user swipe across
             the modules on phones. */}
         <nav
           aria-label={`${dept.label} modules`}
-          className="flex flex-1 items-center gap-0.5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          className="flex flex-1 items-stretch gap-5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         >
           {modules.map((module) => (
             <DepartmentNavItem
@@ -121,16 +122,17 @@ function DepartmentNavItem({
   // that generated no CSS, so the current module had no highlight at all.)
   const baseTone = isPurple
     ? isActive
-      ? "bg-status-purple/10 text-status-purple font-semibold"
-      : "text-status-purple hover:bg-status-purple/8"
+      ? "text-status-purple after:bg-status-purple"
+      : "text-status-purple hover:after:bg-status-purple/40"
     : isActive
-      ? "bg-primary/10 text-primary font-semibold"
-      : "text-muted-foreground hover:bg-accent hover:text-foreground";
+      ? "text-foreground after:bg-brand-ink"
+      : "text-muted-foreground hover:text-foreground";
 
   const className = cn(
-    "rounded-md px-2 py-1 text-[0.72rem] font-medium whitespace-nowrap transition-colors",
+    "relative flex items-center whitespace-nowrap text-[0.8125rem] font-semibold transition-colors",
+    "after:absolute after:inset-x-0 after:bottom-0 after:h-0.5",
     baseTone,
-    !isLive && "opacity-40 cursor-not-allowed hover:bg-transparent",
+    !isLive && "opacity-40 cursor-not-allowed",
   );
 
   const before = (
@@ -170,5 +172,22 @@ function DepartmentNavItem({
         {module.label}
       </Link>
     </>
+  );
+}
+
+/** Drawn, not from an icon set (#78): a roof and walls at 14px. */
+function HomeGlyph() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden>
+      <path d="M2.5 7.5 8 3l5.5 4.5M4 6.5V13h8V6.5" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function ChevronGlyph() {
+  return (
+    <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden>
+      <path d="m3.5 2 3 3-3 3" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
   );
 }

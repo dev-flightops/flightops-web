@@ -148,7 +148,7 @@ export function InvoiceActions({
             type="button"
             onClick={openMarkPaid}
             disabled={pending !== null}
-            className="rounded-md bg-status-green px-3 py-1.5 text-xs font-semibold text-white hover:brightness-95 disabled:opacity-50"
+            className="rounded-md bg-status-green-fill px-3 py-1.5 text-xs font-semibold text-white hover:brightness-95 disabled:opacity-50"
           >
             Mark paid
           </button>
@@ -244,7 +244,7 @@ export function InvoiceActions({
               disabled={
                 pending !== null || !method || !paidOn || paidOn > today
               }
-              className="rounded-md bg-status-green px-3 py-1.5 text-xs font-semibold text-white hover:brightness-95 disabled:opacity-40"
+              className="rounded-md bg-status-green-fill px-3 py-1.5 text-xs font-semibold text-white hover:brightness-95 disabled:opacity-40"
             >
               {pending === "paid" ? "Recording…" : "Confirm paid"}
             </button>
@@ -292,7 +292,7 @@ export function InvoiceActions({
                 })
               }
               disabled={pending !== null || reason.trim().length < 3}
-              className="rounded-md bg-status-red px-3 py-1.5 text-xs font-semibold text-white hover:brightness-95 disabled:opacity-40"
+              className="rounded-md bg-status-red-fill px-3 py-1.5 text-xs font-semibold text-white hover:brightness-95 disabled:opacity-40"
             >
               {pending === "void" ? "Voiding…" : "Confirm void"}
             </button>

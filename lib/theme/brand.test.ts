@@ -1,9 +1,14 @@
 import { describe, expect, it } from "vitest";
 
+import { readFileSync } from "node:fs";
+import path from "node:path";
+
 import {
   brandTones,
+  DARK_GROUNDS,
   DEFAULT_BRAND,
   isBrandHex,
+  MIN_CONTRAST_ON_DARK,
   MIN_CONTRAST_ON_WHITE,
 } from "./brand";
 import { contrastRatio } from "./contrast";
@@ -14,16 +19,45 @@ describe("brandTones", () => {
     expect(brandTones(DEFAULT_BRAND).rgb).toBe("171 36 41");
   });
 
-  it("derives the home page's hero coral as the on-ink tone", () => {
-    // #ff6b6f (255 107 111) is what the home hero used for its eyebrow on
-    // the dark photo — picked by eye, so its hue is a hair off the
-    // brand's. The derivation uses the brand's exact hue and lands on
-    // 255 107 113: imperceptibly different, and derived, which is what
-    // lets another tenant's colour work on the same surface.
+  it("derives the home page's hero coral as the on-navy tone", () => {
+    // #ff6b6f (255 107 111) was the home hero's eyebrow, picked by eye.
+    // The tone is now solved (#78): the brand's hue, fully saturated, just
+    // light enough for every navy ground — which lands a shade from it.
     const [r, g, b] = brandTones(DEFAULT_BRAND).lightRgb.split(" ").map(Number);
     for (const [got, want] of [[r, 255], [g, 107], [b, 111]]) {
-      expect(Math.abs(got - want)).toBeLessThanOrEqual(3);
+      expect(Math.abs(got - want)).toBeLessThanOrEqual(10);
     }
+  });
+
+  it("reads on every navy ground, and on its own tints, for any brand", () => {
+    const hex = (c: string) =>
+      "#" + c.split(" ").map((v) => Number(v).toString(16).padStart(2, "0")).join("");
+    for (const brand of [DEFAULT_BRAND, "#1d4ed8", "#1f6fb2", "#f5c518", "#046b4e", "#333333", "#7e22ce"]) {
+      const tones = brandTones(brand);
+      const text = hex(tones.lightRgb);
+      const fill = hex(tones.rgb);
+      const tint = (ground: string, alpha: number) => {
+        const f = fill.match(/\w\w/g)!.map((v) => parseInt(v, 16));
+        const g = ground.match(/\w\w/g)!.map((v) => parseInt(v, 16));
+        return "#" + f.map((c, i) => Math.round(c * alpha + g[i] * (1 - alpha)).toString(16).padStart(2, "0")).join("");
+      };
+      // A tint over the top bar is the lightest: a blue brand's chip there
+      // was 4.1:1 when only the card's tints were checked.
+      const tints = DARK_GROUNDS.flatMap((g) => [tint(g, 0.1), tint(g, 0.15)]);
+      for (const ground of [...DARK_GROUNDS, ...tints]) {
+        expect(contrastRatio(text, ground), `${brand} as text on ${ground}`).toBeGreaterThanOrEqual(MIN_CONTRAST_ON_DARK);
+      }
+    }
+  });
+
+  it("matches the default the stylesheet declares", () => {
+    // globals.css carries the default crimson's tones for a tenant with no
+    // brand set; they must be the ones this module derives.
+    const css = readFileSync(path.join(process.cwd(), "app/globals.css"), "utf8");
+    const { lightRgb, rgb } = brandTones(DEFAULT_BRAND);
+    expect(css).toContain(`--brand-rgb: ${rgb};`);
+    expect(css).toContain(`--brand-light-rgb: ${lightRgb};`);
+    expect(css).toContain(`--brand-text-rgb: ${lightRgb};`);
   });
 
   it("derives a darker hover tone in the same hue", () => {

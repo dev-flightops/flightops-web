@@ -117,15 +117,14 @@ export function NotificationsBell({
         <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
           <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z" />
         </svg>
-        {/* `light`: the bell sits in the ink bar, where the status tones
-            are the pale on-ink ones and white numerals fail on them. The
-            badge takes the light ground's solid tones instead. */}
+        {/* The status tones on the dark bar are the bright ones, which
+            white numerals fail on; the badge takes the deeper fill tones. */}
         {count > 0 && (
           <span
             data-testid="bell-count"
             className={
-              "light absolute -right-0.5 -top-0.5 min-w-[1rem] rounded-full px-1 text-[0.6rem] font-bold leading-4 text-white " +
-              (worst === "red" ? "bg-status-red" : "bg-status-yellow")
+              "absolute -right-0.5 -top-0.5 min-w-[1rem] rounded-sm px-1 text-[0.6rem] font-bold leading-4 text-white " +
+              (worst === "red" ? "bg-status-red-fill" : "bg-status-yellow-fill")
             }
           >
             {count}

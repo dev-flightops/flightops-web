@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { cn } from "@/lib/utils";
+import { segment, segmentGroup } from "@/components/ff/controls";
 
 import {
   VIEW_LABELS,
@@ -27,7 +27,7 @@ export function FilterTabs({
 }) {
   return (
     <div
-      className="flex flex-wrap gap-1"
+      className={segmentGroup}
       role="tablist"
       aria-label="Flight following date filter"
     >
@@ -39,12 +39,7 @@ export function FilterTabs({
             href={flightFollowingHref(view, display)}
             role="tab"
             aria-selected={isActive}
-            className={cn(
-              "rounded-md px-3 py-1.5 text-xs font-semibold transition-colors",
-              isActive
-                ? "bg-primary text-white"
-                : "text-muted-foreground hover:bg-accent hover:text-foreground",
-            )}
+            className={segment(isActive)}
           >
             {VIEW_LABELS[view]}
           </Link>

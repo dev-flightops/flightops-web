@@ -35,6 +35,10 @@ describe("guardRedirect — signed out", () => {
     expect(go("/login", undefined, { loggedIn: false })).toBeNull();
   });
 
+  it("shows the public landing page at / (#78)", () => {
+    expect(go("/", undefined, { loggedIn: false })).toBeNull();
+  });
+
   it("lets a server action through to fail on its own terms", () => {
     expect(
       go("/dispatch", undefined, { loggedIn: false, isServerAction: true }),
@@ -66,6 +70,10 @@ describe("guardRedirect — staff", () => {
 
   it("is sent home from /login", () => {
     expect(go("/login", staff)).toBe(STAFF_HOME);
+  });
+
+  it("is sent home from the landing page (#78)", () => {
+    expect(go("/", staff)).toBe(STAFF_HOME);
   });
 });
 

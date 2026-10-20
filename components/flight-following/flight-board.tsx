@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { buttonSolid, linkCaps } from "@/components/ff/controls";
 import type { BoardFlightItem } from "@/lib/api/types";
 import { formatBoth, formatZulu } from "@/lib/format/flight-time";
 import { flightStops } from "@/lib/route";
@@ -22,43 +23,37 @@ import { OverdueBadge, StatusBadge } from "./status-badge";
  * value in the muted style and reserve the green-emphasis style for
  * when actuals start arriving.
  *
- * Overdue rows get a soft red row tint and the OVERDUE pill next to
- * AIRBORNE, matching the legacy attention pattern.
- *
- * Empty state matches the legacy panel: faint plane glyph + CTA.
+ * ForeFlight's list (#78): an UPPERCASE band for the header, quiet
+ * dividers, generous rows, codes in mono. An overdue row is marked by a
+ * red edge down its left side and the OVERDUE status beside AIRBORNE —
+ * not by tinting the whole row, which on navy read as an error state.
  */
 export function FlightBoard({ flights }: { flights: BoardFlightItem[] }) {
   if (flights.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-border bg-card/40 py-16 text-center">
-        <div className="mb-3 text-3xl opacity-20" aria-hidden>
-          &#9992;
-        </div>
-        <p className="text-sm text-muted-foreground">No active flights.</p>
-        <Link
-          href="/flight-following/new"
-          className="mt-4 rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-dark"
-        >
-          + Open Flight
+      <div className="flex flex-col items-center justify-center border border-border bg-card py-16 text-center">
+        <p className="caption-caps text-muted-foreground">No active flights</p>
+        <Link href="/flight-following/new" className={`${buttonSolid} mt-5`}>
+          Open Flight
         </Link>
       </div>
     );
   }
 
   return (
-    <div className="overflow-hidden rounded-lg border border-border bg-card">
-      <table className="w-full text-xs">
-        <thead className="bg-muted/60">
-          <tr className="text-left text-[0.65rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-            <th className="px-3 py-2">Flight</th>
-            <th className="px-3 py-2">Aircraft</th>
-            <th className="px-3 py-2">Route</th>
-            <th className="px-3 py-2">PIC</th>
-            <th className="px-3 py-2">ETD / ATD</th>
-            <th className="px-3 py-2">ETA / ATA</th>
-            <th className="px-3 py-2">Status</th>
-            <th className="px-3 py-2">Contact</th>
-            <th className="px-3 py-2"></th>
+    <div className="overflow-x-auto border border-border bg-card">
+      <table className="w-full text-[0.8125rem]">
+        <thead className="bg-muted">
+          <tr className="eyebrow text-left">
+            <th className="px-4 py-3 font-bold">Flight</th>
+            <th className="px-4 py-3 font-bold">Aircraft</th>
+            <th className="px-4 py-3 font-bold">Route</th>
+            <th className="px-4 py-3 font-bold">PIC</th>
+            <th className="px-4 py-3 font-bold">ETD / ATD</th>
+            <th className="px-4 py-3 font-bold">ETA / ATA</th>
+            <th className="px-4 py-3 font-bold">Status</th>
+            <th className="px-4 py-3 font-bold">Contact</th>
+            <th className="px-4 py-3"></th>
           </tr>
         </thead>
         <tbody>
@@ -80,22 +75,23 @@ function FlightBoardRow({ flight }: { flight: BoardFlightItem }) {
     <tr
       className={
         flight.is_overdue
-          ? "border-t border-border bg-status-red/[0.06] hover:bg-status-red/[0.08]"
+          ? "border-t border-border shadow-[inset_3px_0_0_rgb(var(--status-red))] hover:bg-accent"
           : "border-t border-border hover:bg-accent"
       }
+      data-overdue={flight.is_overdue ? "true" : undefined}
     >
-      <td className="px-3 py-2.5 font-semibold text-foreground">
+      <td className="px-4 py-3.5 font-mono font-semibold text-foreground">
         {flight.flight_number || "—"}
       </td>
-      <td className="px-3 py-2.5">
+      <td className="px-4 py-3.5">
         <div className="font-mono text-foreground">
           {flight.aircraft.tail_number}
         </div>
-        <div className="text-[0.65rem] text-muted-foreground">
+        <div className="mt-0.5 text-xs text-muted-foreground">
           {flight.aircraft.model}
         </div>
       </td>
-      <td className="px-3 py-2.5">
+      <td className="px-4 py-3.5">
         <div className="font-mono text-foreground">
           {flightStops(flight).map((icao, i) => (
             <span key={`${icao}-${i}`}>
@@ -105,7 +101,7 @@ function FlightBoardRow({ flight }: { flight: BoardFlightItem }) {
           ))}
         </div>
         {hasPax && (
-          <div className="text-[0.65rem]">
+          <div className="mt-0.5 text-xs">
             <LoadIndicator
               pax={flight.pax_count}
               seats={flight.aircraft.seats}
@@ -114,7 +110,7 @@ function FlightBoardRow({ flight }: { flight: BoardFlightItem }) {
           </div>
         )}
       </td>
-      <td className="px-3 py-2.5 text-muted-foreground">
+      <td className="px-4 py-3.5 text-muted-foreground">
         {flight.pic_name ?? "—"}
       </td>
       <ScheduledActualCell
@@ -125,8 +121,8 @@ function FlightBoardRow({ flight }: { flight: BoardFlightItem }) {
         scheduled={arr}
         actualIso={flight.actual_arrival_at}
       />
-      <td className="px-3 py-2.5">
-        <div className="flex flex-wrap items-center gap-1">
+      <td className="px-4 py-3.5">
+        <div className="flex flex-col items-start gap-1">
           <StatusBadge
             status={flight.status}
             actualDepartureAt={flight.actual_departure_at}
@@ -134,7 +130,7 @@ function FlightBoardRow({ flight }: { flight: BoardFlightItem }) {
           {flight.is_overdue && <OverdueBadge />}
         </div>
       </td>
-      <td className="px-3 py-2.5">
+      <td className="px-4 py-3.5">
         <LastContactCell
           iso={flight.last_contact_at}
           airborne={
@@ -144,7 +140,7 @@ function FlightBoardRow({ flight }: { flight: BoardFlightItem }) {
           }
         />
       </td>
-      <td className="whitespace-nowrap px-3 py-2.5 text-right">
+      <td className="whitespace-nowrap px-4 py-3.5 text-right">
         {flight.status === "released" && flight.actual_departure_at === null && (
           <CheckInButton flightId={flight.id} event="depart" />
         )}
@@ -163,15 +159,12 @@ function FlightBoardRow({ flight }: { flight: BoardFlightItem }) {
         <span
           title="Per-flight documents are not built yet"
           aria-disabled="true"
-          className="mr-3 cursor-not-allowed text-[0.7rem] font-medium text-muted-foreground/40"
+          className="mr-4 cursor-not-allowed text-[0.68rem] font-bold uppercase tracking-[0.1em] text-muted-foreground/40"
         >
           Docs
         </span>
-        <Link
-          href={`/dispatch?flight=${flight.id}`}
-          className="text-[0.7rem] font-medium text-primary hover:underline"
-        >
-          Update →
+        <Link href={`/dispatch?flight=${flight.id}`} className={linkCaps}>
+          Update <span aria-hidden>›</span>
         </Link>
       </td>
     </tr>
@@ -250,18 +243,16 @@ function ScheduledActualCell({
   if (actualIso !== null) {
     const actual = formatBoth(actualIso);
     return (
-      <td className="px-3 py-2.5 text-status-green">
-        <div className="font-mono">{actual.local}</div>
-        <div className="font-mono text-[0.65rem]">{actual.zulu}</div>
+      <td className="px-4 py-3.5 text-status-green">
+        <div className="font-mono tabular-nums">{actual.local}</div>
+        <div className="mt-0.5 font-mono text-xs tabular-nums">{actual.zulu}</div>
       </td>
     );
   }
   return (
-    <td className="px-3 py-2.5 text-muted-foreground">
-      <div className="font-mono">{scheduled.local}</div>
-      <div className="font-mono text-[0.65rem]">
-        {scheduled.zulu}
-      </div>
+    <td className="px-4 py-3.5 text-muted-foreground">
+      <div className="font-mono tabular-nums text-foreground">{scheduled.local}</div>
+      <div className="mt-0.5 font-mono text-xs tabular-nums">{scheduled.zulu}</div>
     </td>
   );
 }

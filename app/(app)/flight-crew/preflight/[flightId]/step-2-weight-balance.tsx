@@ -254,7 +254,7 @@ export function WeightAndBalanceStep({ flightId, flight, openReturn }: Props) {
                 type="button"
                 disabled={!canReturn}
                 onClick={handleReturn}
-                className="inline-flex w-full items-center justify-center rounded-md bg-status-red px-4 py-2.5 text-sm font-semibold text-white transition-opacity hover:brightness-95 disabled:opacity-50"
+                className="inline-flex w-full items-center justify-center rounded-md bg-status-red-fill px-4 py-2.5 text-sm font-semibold text-white transition-opacity hover:brightness-95 disabled:opacity-50"
               >
                 {pending ? "Sending…" : "Send back to dispatch"}
               </button>

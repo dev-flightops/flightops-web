@@ -65,12 +65,15 @@ export function guardRedirect({
   if (OWN_AUTH_PREFIXES.some((p) => under(path, p))) return null;
 
   const isLoginPage = path === "/login" || path === "/login/";
+  // The public landing page (#78): the product's front door for anyone
+  // signed out; a signed-in user goes straight to their own home.
+  const isLanding = path === "/";
   if (!loggedIn) {
-    return isLoginPage || isServerAction ? null : "/login";
+    return isLoginPage || isLanding || isServerAction ? null : "/login";
   }
 
   const staff = isStaffSession(roles);
-  if (isLoginPage) return staff ? STAFF_HOME : EXTERNAL_HOME;
+  if (isLoginPage || isLanding) return staff ? STAFF_HOME : EXTERNAL_HOME;
   if (!staff && !isExternalPath(path)) return EXTERNAL_HOME;
   return null;
 }
