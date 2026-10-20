@@ -41,7 +41,7 @@ export function PlatformLoginForm() {
       <button
         type="submit"
         disabled={pending}
-        className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-primary px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-dark disabled:opacity-60"
+        className="btn-caps inline-flex w-full items-center justify-center gap-2 rounded-md bg-primary px-4 py-2.5 text-white hover:bg-brand-dark disabled:opacity-60"
       >
         {pending && <Spinner size="xs" />}
         {pending ? "Signing in…" : "Sign in"}

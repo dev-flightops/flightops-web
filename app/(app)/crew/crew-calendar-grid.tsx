@@ -207,7 +207,7 @@ export function CrewCalendarGrid({
           <button
             type="button"
             onClick={() => setTarget({ kind: "new" })}
-            className="rounded-md bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground hover:bg-brand-dark"
+            className="btn-caps rounded-md bg-primary px-3 py-2 text-primary-foreground hover:bg-brand-dark"
           >
             + Add Assignment
           </button>

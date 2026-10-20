@@ -61,7 +61,7 @@ export default async function MySafetyReportsPage() {
         </div>
         <Link
           href="/safety/reports/new"
-          className="rounded-md border border-primary/40 bg-background px-3 py-1.5 text-xs font-semibold text-primary hover:bg-primary/5"
+          className="btn-caps rounded-md border border-primary/40 bg-background px-3 py-1.5 text-primary hover:bg-primary/5 text-[0.72rem]"
         >
           + File a Safety Report
         </Link>
@@ -105,7 +105,7 @@ export default async function MySafetyReportsPage() {
                 >
                   <div className="min-w-0 flex-1">
                     <div className="mb-1 flex flex-wrap items-baseline gap-2">
-                      <span className="text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+                      <span className="eyebrow">
                         {SAFETY_REPORT_TYPE_LABELS[r.report_type]}
                         {r.is_anonymous ? " · Anonymous" : ""}
                       </span>
@@ -140,7 +140,7 @@ export default async function MySafetyReportsPage() {
               >
                 <div className="min-w-0 flex-1">
                   <div className="mb-1 flex flex-wrap items-baseline gap-2">
-                    <span className="text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+                    <span className="eyebrow">
                       {HAZARD_SEVERITY_LABELS[h.severity]} ·{" "}
                       {HAZARD_CATEGORY_LABELS[h.category]}
                     </span>

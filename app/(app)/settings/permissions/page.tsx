@@ -109,7 +109,7 @@ export default async function SettingsPermissionsPage() {
                     <p className="mt-1 text-sm text-muted-foreground">
                       {role.description}
                     </p>
-                    <p className="mt-2 text-[0.65rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+                    <p className="mt-2 eyebrow">
                       {count} active {count === 1 ? "user" : "users"}
                     </p>
                   </div>

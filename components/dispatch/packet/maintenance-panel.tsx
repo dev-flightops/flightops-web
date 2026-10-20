@@ -219,10 +219,7 @@ function VerdictBadge({ isAirworthy }: { isAirworthy: boolean }) {
   return (
     <span
       className={
-        "rounded-md px-1.5 py-0.5 text-[0.6rem] font-bold uppercase tracking-[0.06em] " +
-        (isAirworthy
-          ? "bg-status-green/15 text-status-green"
-          : "bg-status-red/15 text-status-red")
+        "status-mark " + (isAirworthy ? "text-status-green" : "text-status-red")
       }
       title={
         isAirworthy
@@ -282,7 +279,7 @@ function IssueGroup({
             }
           >
             <span
-              className={"mt-1.5 inline-block h-1.5 w-1.5 rounded-full " + dotClass}
+              className={"mt-1.5 inline-block h-1.5 w-1.5 " + dotClass}
               aria-hidden
             />
             <div className="min-w-0 flex-1">

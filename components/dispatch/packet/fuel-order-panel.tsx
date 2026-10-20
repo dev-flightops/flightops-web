@@ -82,7 +82,7 @@ export async function FuelOrderPanel({
     <SectionPanel title="Fuel" accent="yellow">
       <dl className="mb-3 grid grid-cols-2 gap-x-4 gap-y-1 text-xs sm:grid-cols-3">
         <div>
-          <dt className="text-[0.65rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+          <dt className="eyebrow">
             Fuel type
           </dt>
           <dd className="font-mono text-foreground">
@@ -93,13 +93,13 @@ export async function FuelOrderPanel({
           </dd>
         </div>
         <div>
-          <dt className="text-[0.65rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+          <dt className="eyebrow">
             Supplier at {baseCode}
           </dt>
           <dd className="text-foreground">{preferred?.supplierName ?? "—"}</dd>
         </div>
         <div>
-          <dt className="text-[0.65rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+          <dt className="eyebrow">
             Price
           </dt>
           <dd className="font-mono text-foreground">

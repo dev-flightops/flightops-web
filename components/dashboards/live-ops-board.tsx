@@ -32,7 +32,7 @@ export function LiveOpsBoard({ board }: Props) {
     );
 
   return (
-    <section className="rounded-xl border border-border bg-card p-5">
+    <section className="rounded-lg border border-border bg-card p-5">
       <h2 className="mb-3 text-xs font-bold uppercase tracking-wider text-muted-foreground">
         Live Ops Board
       </h2>

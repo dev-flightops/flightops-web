@@ -120,13 +120,13 @@ export default async function HousingPage() {
         <div className="flex flex-wrap items-center gap-2">
           <Link
             href="/housing/reports"
-            className="rounded-md border border-border bg-card px-3 py-2 text-xs font-semibold text-foreground/80 hover:bg-accent"
+            className="btn-caps rounded-md border border-input px-3 py-2 text-foreground hover:bg-accent text-[0.72rem]"
           >
             Reports
           </Link>
           <Link
             href="/housing/calendar"
-            className="rounded-md border border-border bg-card px-3 py-2 text-xs font-semibold text-foreground/80 hover:bg-accent"
+            className="btn-caps rounded-md border border-input px-3 py-2 text-foreground hover:bg-accent text-[0.72rem]"
           >
             Calendar →
           </Link>
@@ -199,7 +199,7 @@ function UnitsSection({
   if (units.length === 0) return null;
   return (
     <section>
-      <h2 className="mb-2 text-[0.65rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+      <h2 className="mb-2 eyebrow">
         {title} · {units.length}
       </h2>
       <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">

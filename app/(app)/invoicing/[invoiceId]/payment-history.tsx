@@ -190,7 +190,7 @@ export function PaymentHistory({
               type="button"
               onClick={() => void confirm(target)}
               disabled={pending || reason.trim().length < 3}
-              className="rounded-md bg-status-red-fill px-3 py-1.5 text-xs font-semibold text-white hover:brightness-95 disabled:opacity-40"
+              className="btn-caps rounded-md bg-status-red-fill px-3 py-1.5 text-white hover:brightness-95 disabled:opacity-40 text-[0.72rem]"
             >
               {pending ? "Voiding…" : "Confirm void"}
             </button>

@@ -34,7 +34,7 @@ export function LoadPlanApply({
         <button
           type="submit"
           disabled={pending}
-          className="rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-dark disabled:opacity-60"
+          className="btn-caps rounded-md bg-primary px-3 py-1.5 text-white hover:bg-brand-dark disabled:opacity-60 text-[0.72rem]"
         >
           {pending ? "Loading…" : `Load ${Math.round(Number(totalLbs)).toLocaleString()} lb onto ${flightNumber}`}
         </button>

@@ -195,7 +195,7 @@ export function FlightFuel({
         <button
           type="button"
           onClick={() => setOrdering(true)}
-          className="rounded-md border border-primary/40 bg-background px-3 py-1.5 text-xs font-semibold text-primary hover:bg-primary/5"
+          className="btn-caps rounded-md border border-primary/40 bg-background px-3 py-1.5 text-primary hover:bg-primary/5 text-[0.72rem]"
         >
           {openOrders.length > 0 ? "Order more fuel" : "Order fuel"}
         </button>

@@ -154,14 +154,14 @@ export default async function RewardsMemberDetailPage({
       </header>
 
       <section className="mb-6">
-        <h2 className="mb-3 text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+        <h2 className="mb-3 eyebrow">
           Record transaction
         </h2>
         <TransactionForm memberId={member.id} />
       </section>
 
       <section>
-        <h2 className="mb-3 text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+        <h2 className="mb-3 eyebrow">
           Ledger
         </h2>
         {transactions.length === 0 ? (

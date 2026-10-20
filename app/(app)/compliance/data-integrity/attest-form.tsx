@@ -92,7 +92,7 @@ export function AttestForm({
           title={
             tooShort ? "Describe the review before signing it" : undefined
           }
-          className="rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-dark disabled:opacity-40"
+          className="btn-caps rounded-md bg-primary px-3 py-1.5 text-white hover:bg-brand-dark disabled:opacity-40 text-[0.72rem]"
         >
           {busy ? "Recording…" : "Record this review"}
         </button>

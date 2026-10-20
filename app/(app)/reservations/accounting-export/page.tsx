@@ -191,7 +191,7 @@ function Activity({
       ) : (
       <div className="overflow-hidden rounded-lg border border-border bg-card">
         <div className="flex items-center justify-between border-b border-border px-4 py-2">
-          <h2 className="text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+          <h2 className="eyebrow">
             Flight Activity
           </h2>
           <p className="text-xs text-muted-foreground">
@@ -294,7 +294,7 @@ function ExportCsvButton({
     return (
       <span
         aria-disabled
-        className="flex cursor-not-allowed items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white opacity-60"
+        className="btn-caps flex cursor-not-allowed items-center gap-2 rounded-md bg-primary px-4 py-2 text-white opacity-60"
       >
         {icon}
         Export CSV (0 rows)
@@ -306,7 +306,7 @@ function ExportCsvButton({
     <a
       href={csvHref}
       download={filename}
-      className="flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-brand-dark"
+      className="btn-caps flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-white hover:bg-brand-dark"
     >
       {icon}
       Export CSV ({total} rows)
@@ -340,7 +340,7 @@ function StatTile({
   return (
     <div className="rounded-lg border border-border bg-card px-4 py-4 text-center">
       <p className={"text-2xl font-bold " + valueCls}>{value}</p>
-      <p className="mt-1 text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+      <p className="mt-1 eyebrow">
         {label}
       </p>
     </div>

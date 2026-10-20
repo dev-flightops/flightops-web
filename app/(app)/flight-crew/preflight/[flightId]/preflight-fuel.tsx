@@ -34,7 +34,7 @@ export function PreflightFuel({
   return (
     <section
       aria-labelledby="preflight-fuel-heading"
-      className="mt-6 rounded-xl border border-border bg-card p-5"
+      className="mt-6 rounded-lg border border-border bg-card p-5"
     >
       <h2
         id="preflight-fuel-heading"

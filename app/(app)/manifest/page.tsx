@@ -181,7 +181,7 @@ export default async function FlightSchedulePage({
           </button>
           <Link
             href="/flight-following/new"
-            className="rounded-md bg-primary px-3 py-2 text-sm font-semibold text-white hover:bg-brand-dark"
+            className="btn-caps rounded-md bg-primary px-3 py-2 text-white hover:bg-brand-dark"
           >
             + New Flight
           </Link>
@@ -244,7 +244,7 @@ export default async function FlightSchedulePage({
             </select>
             <button
               type="submit"
-              className="rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-dark"
+              className="btn-caps rounded-md bg-primary px-3 py-1.5 text-white hover:bg-brand-dark text-[0.72rem]"
             >
               Filter
             </button>
@@ -266,7 +266,7 @@ export default async function FlightSchedulePage({
           </p>
           <Link
             href="/flight-following/new"
-            className="inline-block rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-brand-dark"
+            className="btn-caps inline-block rounded-md bg-primary px-4 py-2 text-white hover:bg-brand-dark"
           >
             Schedule First Flight
           </Link>

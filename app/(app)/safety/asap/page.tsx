@@ -65,7 +65,7 @@ export default async function AsapHubPage() {
         </div>
         <Link
           href="/safety/reports/new?type=asap"
-          className="rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-dark"
+          className="btn-caps rounded-md bg-primary px-3 py-1.5 text-white hover:bg-brand-dark text-[0.72rem]"
         >
           + File ASAP Report
         </Link>
@@ -129,7 +129,7 @@ function MouPanel({ docs }: { docs: DocumentRow[] | null }) {
   return (
     <section className="mb-5 rounded-lg border border-border bg-card p-5">
       <header className="mb-3 flex items-center justify-between gap-2">
-        <h2 className="text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+        <h2 className="eyebrow">
           FAA / ASAP MOU Documents
         </h2>
         <Link href="/documents" className="text-xs font-semibold text-primary hover:underline">
@@ -158,7 +158,7 @@ function MouPanel({ docs }: { docs: DocumentRow[] | null }) {
                   href={downloadUrl(d.id)}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="rounded-md border border-border bg-background px-2.5 py-1 font-semibold text-foreground/80 hover:bg-accent"
+                  className="btn-caps rounded-md border border-input px-2.5 py-1 text-foreground hover:bg-accent"
                 >
                   View
                 </a>

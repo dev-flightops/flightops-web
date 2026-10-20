@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 
+import { segment, segmentGroup } from "@/components/ff/controls";
 import type { FlightStatus } from "@/lib/api/types";
 
 const OPTIONS: { value: FlightStatus; label: string }[] = [
@@ -40,30 +41,26 @@ export function StatusFilter({
     <div
       role="group"
       aria-label="Status filter"
-      className="mb-4 flex flex-wrap items-center gap-2"
+      className="mb-4 flex flex-wrap items-center gap-3"
     >
-      <span className="text-[0.65rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
-        Show
+      <span className="eyebrow">Show</span>
+      <span className={segmentGroup}>
+        {OPTIONS.map((o) => {
+          const on = statuses.length === 0 || statuses.includes(o.value);
+          return (
+            <button
+              key={o.value}
+              type="button"
+              onClick={() => toggle(o.value)}
+              disabled={isPending}
+              aria-pressed={on}
+              className={segment(on)}
+            >
+              {o.label}
+            </button>
+          );
+        })}
       </span>
-      {OPTIONS.map((o) => {
-        const on = statuses.length === 0 || statuses.includes(o.value);
-        return (
-          <button
-            key={o.value}
-            type="button"
-            onClick={() => toggle(o.value)}
-            disabled={isPending}
-            aria-pressed={on}
-            className={`rounded-md border px-2.5 py-1 text-[0.7rem] font-semibold uppercase tracking-[0.06em] transition-colors ${
-              on
-                ? "border-primary bg-primary/10 text-primary"
-                : "border-border bg-card text-muted-foreground hover:bg-accent"
-            }`}
-          >
-            {o.label}
-          </button>
-        );
-      })}
     </div>
   );
 }

@@ -1,6 +1,6 @@
+import { segment, segmentGroup } from "@/components/ff/controls";
 import Link from "next/link";
 
-import { cn } from "@/lib/utils";
 
 /**
  * Status filter tabs shared between the /maintenance/mel and
@@ -42,7 +42,7 @@ export function StatusFilterTabs<S extends string>({
     <div
       role="tablist"
       aria-label="Status filter"
-      className="flex flex-wrap gap-1"
+      className={segmentGroup}
     >
       {options.map((opt) => {
         const isActive = opt.value === activeStatus;
@@ -52,12 +52,7 @@ export function StatusFilterTabs<S extends string>({
             href={buildHref(opt.value)}
             role="tab"
             aria-selected={isActive}
-            className={cn(
-              "rounded-md px-3 py-1.5 text-xs font-semibold transition-colors",
-              isActive
-                ? "bg-primary text-white"
-                : "text-muted-foreground hover:bg-accent hover:text-foreground",
-            )}
+            className={segment(isActive)}
           >
             {opt.label}
           </Link>

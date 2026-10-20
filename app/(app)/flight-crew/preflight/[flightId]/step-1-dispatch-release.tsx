@@ -102,7 +102,7 @@ export function ReviewDispatchReleaseStep({ flightId, flight }: Props) {
   };
 
   return (
-    <section className="rounded-xl border border-border bg-card">
+    <section className="rounded-lg border border-border bg-card">
       <header className="border-b border-border px-5 py-3">
         <p className="text-xs uppercase tracking-[0.08em] text-muted-foreground">
           Step 1
@@ -160,7 +160,7 @@ export function ReviewDispatchReleaseStep({ flightId, flight }: Props) {
             </p>
             <a
               href={`/api/dispatch/${flight.id}/release.pdf`}
-              className="inline-flex items-center gap-1 rounded-md border border-primary/40 bg-background px-3 py-1.5 text-xs font-semibold text-primary hover:bg-primary/5"
+              className="btn-caps inline-flex items-center gap-1 rounded-md border border-primary/40 bg-background px-3 py-1.5 text-primary hover:bg-primary/5 text-[0.72rem]"
               target="_blank"
               rel="noopener"
             >
@@ -206,7 +206,7 @@ export function ReviewDispatchReleaseStep({ flightId, flight }: Props) {
             type="button"
             disabled={!canSubmit}
             onClick={handleSubmit}
-            className="inline-flex w-full items-center justify-center rounded-md bg-primary px-4 py-2.5 text-sm font-semibold text-white transition-opacity hover:bg-brand-dark disabled:opacity-50"
+            className="btn-caps inline-flex w-full items-center justify-center rounded-md bg-primary px-4 py-2.5 text-white transition-opacity hover:bg-brand-dark disabled:opacity-50"
           >
             {pending ? "Saving…" : "Continue to Step 2 →"}
           </button>
@@ -270,7 +270,7 @@ function AwaitingReleasePanel({ flight }: { flight: FlightDetail }) {
       </div>
       <Link
         href="/flight-crew"
-        className="inline-flex items-center gap-1 rounded-md border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground/80 hover:bg-accent"
+        className="btn-caps inline-flex items-center gap-1 rounded-md border border-input px-3 py-1.5 text-foreground hover:bg-accent text-[0.72rem]"
       >
         ← Back to Flight Crew
       </Link>

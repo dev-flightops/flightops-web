@@ -36,7 +36,7 @@ export function AircraftFilter({
 
   return (
     <div className="flex flex-wrap items-center gap-1.5">
-      <span className="text-[0.6rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+      <span className="eyebrow">
         Aircraft:
       </span>
       <Pill

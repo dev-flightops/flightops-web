@@ -93,7 +93,7 @@ export default async function CustomerDetailPage({
         <DetailRow label="Phone" value={customer.phone ?? "—"} />
         {customer.notes ? (
           <div>
-            <div className="text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+            <div className="eyebrow">
               Notes
             </div>
             <p className="mt-1 whitespace-pre-wrap text-sm text-foreground/90">
@@ -105,13 +105,13 @@ export default async function CustomerDetailPage({
 
       <section className="rounded-lg border border-border bg-card p-5">
         <header className="mb-3 flex items-baseline justify-between">
-          <h2 className="text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+          <h2 className="eyebrow">
             Booking history
           </h2>
           {!customer.archived_at ? (
             <Link
               href={`/reservations/bookings/new?customer=${customer.id}`}
-              className="rounded-md border border-primary/40 bg-background px-2 py-1 text-[0.6875rem] font-semibold text-primary hover:bg-primary/5"
+              className="btn-caps rounded-md border border-primary/40 bg-background px-2 py-1 text-primary hover:bg-primary/5 text-[0.68rem]"
             >
               + New booking for this customer
             </Link>
@@ -156,7 +156,7 @@ export default async function CustomerDetailPage({
           <header className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
             <h2
               id="customer-invoices"
-              className="text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground"
+              className="eyebrow"
             >
               Invoices
             </h2>
@@ -199,7 +199,7 @@ export default async function CustomerDetailPage({
 function DetailRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="grid grid-cols-[8rem_1fr] gap-2 text-sm">
-      <span className="text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+      <span className="eyebrow">
         {label}
       </span>
       <span>{value}</span>

@@ -51,12 +51,14 @@ export const CELL_STATE_LABELS: Record<TypeCellState, string> = {
   not_authorised: "Not authorised",
 };
 
-/** Green, yellow and red are the currency board's current, grace and
+/** A position's state as a coloured mark (#80): the code in its status
+ *  colour behind a square marker (`.status-mark`), not a tinted tag.
+ *  Green, yellow and red are the currency board's current, grace and
  *  non-current. */
 export const CELL_TONES: Record<TypeCellState, string> = {
-  current: "bg-status-green/15 text-status-green",
-  grace: "bg-status-yellow/15 text-status-yellow",
-  non_current: "bg-status-red/15 text-status-red",
+  current: "status-mark text-status-green",
+  grace: "status-mark text-status-yellow",
+  non_current: "status-mark text-status-red",
   not_authorised: "text-muted-foreground",
 };
 

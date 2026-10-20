@@ -92,24 +92,17 @@ export function AssignTeamDropdown({
         type="button"
         onClick={() => setOpen((v) => !v)}
         disabled={pending}
-        className={
-          currentTeam
-            ? "inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-[0.65rem] font-semibold hover:brightness-110 disabled:opacity-60"
-            : "inline-flex items-center gap-1.5 rounded-md border border-border bg-card/40 px-2.5 py-1 text-[0.65rem] font-semibold text-foreground hover:bg-accent disabled:opacity-60"
-        }
-        style={
-          currentTeam
-            ? {
-                borderColor: currentTeam.color_code,
-                backgroundColor: `${currentTeam.color_code}22`,
-                color: currentTeam.color_code,
-              }
-            : undefined
-        }
+        // The team's colour is its own data, chosen freely, so it marks a
+        // swatch rather than the text (#80): an amber team as text on its
+        // own tint read 1.9:1 in light mode.
+        className="inline-flex items-center gap-1.5 rounded-md border border-input px-2.5 py-1 text-[0.65rem] font-semibold text-foreground hover:bg-accent disabled:opacity-60"
         aria-haspopup="menu"
         aria-expanded={open}
       >
         {pending && <Spinner size="xs" />}
+        {currentTeam ? (
+          <span aria-hidden className="h-2 w-2 shrink-0" style={{ backgroundColor: currentTeam.color_code }} />
+        ) : null}
         {currentTeam ? currentTeam.team_name : "Assign team"}
         <span aria-hidden className="text-[0.5rem] opacity-70">
           ▾

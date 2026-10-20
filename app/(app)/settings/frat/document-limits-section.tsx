@@ -112,7 +112,7 @@ export function DocumentLimitsSection({
   return (
     <section
       aria-labelledby={`${uid}-heading`}
-      className="mt-6 rounded-xl border border-border bg-card p-4"
+      className="mt-6 rounded-lg border border-border bg-card p-4"
     >
       <h2 id={`${uid}-heading`} className="text-sm font-semibold">
         Limits from your documents
@@ -163,7 +163,7 @@ export function DocumentLimitsSection({
             type="button"
             onClick={read}
             disabled={pending || running || !documentId}
-            className="inline-flex items-center gap-2 rounded-md bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground hover:bg-brand-dark disabled:opacity-60"
+            className="btn-caps inline-flex items-center gap-2 rounded-md bg-primary px-3 py-2 text-primary-foreground hover:bg-brand-dark disabled:opacity-60"
           >
             {(pending || running) && <Spinner size="xs" />}
             {running ? "Reading…" : reading ? "Read again" : "Read limits"}

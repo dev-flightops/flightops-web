@@ -86,7 +86,7 @@ export function RequirementsTable({
             setError(null);
             setAdding((v) => !v);
           }}
-          className="rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-dark"
+          className="btn-caps rounded-md bg-primary px-3 py-1.5 text-white hover:bg-brand-dark text-[0.72rem]"
         >
           {adding ? "Cancel" : "+ New requirement"}
         </button>
@@ -317,7 +317,7 @@ function RequirementForm({
       <button
         type="submit"
         disabled={pending}
-        className="rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-dark disabled:opacity-50"
+        className="btn-caps rounded-md bg-primary px-3 py-1.5 text-white hover:bg-brand-dark disabled:opacity-50 text-[0.72rem]"
       >
         {pending ? "Saving…" : "Create requirement"}
       </button>

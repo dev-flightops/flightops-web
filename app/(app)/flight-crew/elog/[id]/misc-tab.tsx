@@ -49,7 +49,7 @@ export async function MiscTab({
 
   return (
     <div className="space-y-4">
-      <h2 className="text-[0.7rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+      <h2 className="eyebrow">
         Misc
       </h2>
 
@@ -101,7 +101,7 @@ function MxHistoryPanel({
 
   return (
     <div className="rounded-lg border border-border bg-card p-4">
-      <div className="mb-2 text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+      <div className="mb-2 eyebrow">
         MX History — <span className="font-mono">{tail}</span> (last 10)
       </div>
       <ul className="divide-y divide-border/40 text-xs">

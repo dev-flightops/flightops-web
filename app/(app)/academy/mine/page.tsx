@@ -77,7 +77,7 @@ function EnrollmentGroup({
 }) {
   return (
     <section>
-      <h2 className="mb-2 text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+      <h2 className="mb-2 eyebrow">
         {label}
       </h2>
       <ul className="space-y-2">

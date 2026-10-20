@@ -20,10 +20,8 @@ interface ChipDef {
   key: "fully_current" | "early_month" | "grace_month" | "non_current";
   label: string;
   filterStatus: CurrencyStatus | null;
-  /** Tailwind text + border color when this chip is the active filter. */
-  activeClasses: string;
-  /** Tailwind classes when not active. */
-  idleClasses: string;
+  /** The figure's rule colour, as the Flight Following stats draw it. */
+  rule: string;
 }
 
 const CHIPS: ChipDef[] = [
@@ -36,35 +34,25 @@ const CHIPS: ChipDef[] = [
     // pilots with no urgent items still show up on the grid by
     // default (no filter) anyway.
     filterStatus: "due_this_month",
-    activeClasses:
-      "border-status-green/60 bg-status-green/15 text-status-green",
-    idleClasses:
-      "border-status-green/30 bg-status-green/5 text-status-green hover:bg-status-green/10",
+    rule: "border-status-green",
   },
   {
     key: "early_month",
     label: "Early Month",
     filterStatus: "early_month",
-    activeClasses: "border-status-teal/60 bg-status-teal/15 text-status-teal",
-    idleClasses:
-      "border-status-teal/30 bg-status-teal/5 text-status-teal hover:bg-status-teal/10",
+    rule: "border-status-teal",
   },
   {
     key: "grace_month",
     label: "Grace Month",
     filterStatus: "grace_month",
-    activeClasses:
-      "border-status-yellow/60 bg-status-yellow/15 text-status-yellow",
-    idleClasses:
-      "border-status-yellow/30 bg-status-yellow/5 text-status-yellow hover:bg-status-yellow/10",
+    rule: "border-status-yellow",
   },
   {
     key: "non_current",
     label: "Non-Current",
     filterStatus: "non_current",
-    activeClasses: "border-status-red/60 bg-status-red/15 text-status-red",
-    idleClasses:
-      "border-status-red/30 bg-status-red/5 text-status-red hover:bg-status-red/10",
+    rule: "border-status-red",
   },
 ];
 
@@ -79,7 +67,10 @@ export function SummaryChips({
   view?: ComplianceView;
 }) {
   return (
-    <div className="mb-4 flex flex-wrap gap-2">
+    // The counts as figures (#80), each a filter: the number in the display
+    // face, a capitals label, the status colour as a rule to its left; the
+    // active one sits on a ground.
+    <div className="mb-5 flex flex-wrap gap-x-2 gap-y-3">
       {CHIPS.map((chip) => {
         const isActive = chip.filterStatus === active;
         const params = new URLSearchParams();
@@ -96,12 +87,14 @@ export function SummaryChips({
             href={href}
             replace
             aria-pressed={isActive}
-            className={`flex items-center gap-2 rounded-md border px-3 py-1.5 text-xs font-semibold ${
-              isActive ? chip.activeClasses : chip.idleClasses
+            className={`flex min-w-[8.5rem] flex-col border-l-2 py-1 pl-3 pr-4 transition-colors hover:bg-accent ${chip.rule} ${
+              isActive ? "bg-accent" : ""
             }`}
           >
-            <span className="text-base font-bold">{chips[chip.key]}</span>
-            <span>{chip.label}</span>
+            <span className="font-display text-[1.6rem] font-extrabold leading-none tabular-nums text-foreground">
+              {chips[chip.key]}
+            </span>
+            <span className="eyebrow mt-1.5">{chip.label}</span>
           </Link>
         );
       })}

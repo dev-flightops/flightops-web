@@ -112,7 +112,7 @@ export default async function DocumentDetailPage({
             </p>
           )}
           {doc.is_archived && (
-            <span className="mt-2 inline-block rounded border border-status-yellow/40 bg-status-yellow/10 px-2 py-0.5 text-xs font-semibold uppercase tracking-wider text-status-yellow">
+            <span className="status-mark text-status-yellow mt-2">
               Archived
             </span>
           )}
@@ -121,7 +121,7 @@ export default async function DocumentDetailPage({
           {currentVersion && (
             <a
               href={downloadUrl(doc.id)}
-              className="rounded-md border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground/80 hover:bg-accent"
+              className="btn-caps rounded-md border border-input px-3 py-1.5 text-foreground hover:bg-accent text-[0.72rem]"
             >
               ↓ Download current (v{currentVersion.version_number})
             </a>
@@ -263,7 +263,7 @@ function VersionsCard({
                         v{v.version_number}
                       </span>
                       {v.id === currentId && (
-                        <span className="ml-2 rounded border border-status-green/40 bg-status-green/10 px-1.5 py-0.5 text-[0.6rem] font-semibold uppercase tracking-wider text-status-green">
+                        <span className="status-mark text-status-green ml-2">
                           Current
                         </span>
                       )}

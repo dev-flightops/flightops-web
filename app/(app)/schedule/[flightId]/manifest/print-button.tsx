@@ -14,7 +14,7 @@ export function PrintButton() {
       <button
         type="button"
         onClick={() => window.print()}
-        className="rounded-md border border-primary/40 bg-background px-3 py-1.5 font-semibold text-primary hover:bg-primary/5"
+        className="btn-caps rounded-md border border-primary/40 bg-background px-3 py-1.5 text-primary hover:bg-primary/5"
       >
         Print release sheet
       </button>

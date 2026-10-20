@@ -19,9 +19,10 @@ import type { CurrencyStatus } from "@/lib/api/types";
 
 export interface StatusToken {
   label: string;
-  /** Compact pill class — used in grid cells. */
+  /** Compact mark — used in grid cells. A coloured capitals word behind
+   *  a square marker (`.status-mark`, #80), not a tinted pill. */
   pill: string;
-  /** Larger badge class — used in the alert banner + row chips. */
+  /** The same mark at row size — used in the alert banner + row chips. */
   badge: string;
   /** Background tint for the row when this is the overall status. */
   rowTint: string;
@@ -30,44 +31,39 @@ export interface StatusToken {
 export const STATUS_TOKENS: Record<CurrencyStatus, StatusToken> = {
   not_started: {
     label: "Not Started",
-    pill: "rounded bg-muted px-1.5 py-0.5 text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground",
-    badge:
-      "rounded bg-muted px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground",
+    // Nothing to say yet: plain muted capitals, no marker.
+    pill: "text-[0.6rem] font-semibold uppercase tracking-[0.1em] text-muted-foreground",
+    badge: "text-[0.68rem] font-semibold uppercase tracking-[0.1em] text-muted-foreground",
     rowTint: "",
   },
   upcoming: {
     label: "Upcoming",
-    pill: "rounded bg-status-blue/15 px-1.5 py-0.5 text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-status-blue",
-    badge:
-      "rounded bg-status-blue/15 px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-[0.06em] text-status-blue",
+    pill: "status-mark text-[0.6rem] text-status-blue",
+    badge: "status-mark text-status-blue",
     rowTint: "",
   },
   early_month: {
     label: "Early",
-    pill: "rounded bg-status-teal/15 px-1.5 py-0.5 text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-status-teal",
-    badge:
-      "rounded bg-status-teal/15 px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-[0.06em] text-status-teal",
+    pill: "status-mark text-[0.6rem] text-status-teal",
+    badge: "status-mark text-status-teal",
     rowTint: "",
   },
   due_this_month: {
     label: "Due This Month",
-    pill: "rounded bg-status-green/15 px-1.5 py-0.5 text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-status-green",
-    badge:
-      "rounded bg-status-green/15 px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-[0.06em] text-status-green",
+    pill: "status-mark text-[0.6rem] text-status-green",
+    badge: "status-mark text-status-green",
     rowTint: "",
   },
   grace_month: {
     label: "Grace",
-    pill: "rounded bg-status-yellow/15 px-1.5 py-0.5 text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-status-yellow",
-    badge:
-      "rounded bg-status-yellow/15 px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-[0.06em] text-status-yellow",
+    pill: "status-mark text-[0.6rem] text-status-yellow",
+    badge: "status-mark text-status-yellow",
     rowTint: "bg-status-yellow/[0.03]",
   },
   non_current: {
     label: "Non-Current",
-    pill: "rounded bg-status-red/15 px-1.5 py-0.5 text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-status-red",
-    badge:
-      "rounded bg-status-red/15 px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-[0.06em] text-status-red",
+    pill: "status-mark text-[0.6rem] text-status-red",
+    badge: "status-mark text-status-red",
     rowTint: "bg-status-red/[0.04]",
   },
 };

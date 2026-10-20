@@ -112,7 +112,7 @@ export function WeatherAndNotamStep({ flightId, flight, weather }: Props) {
   const weatherServiceDown = weather === null;
 
   return (
-    <section className="rounded-xl border border-border bg-card">
+    <section className="rounded-lg border border-border bg-card">
       <header className="border-b border-border px-5 py-3">
         <p className="text-xs uppercase tracking-[0.08em] text-muted-foreground">
           Step 3
@@ -168,7 +168,7 @@ export function WeatherAndNotamStep({ flightId, flight, weather }: Props) {
                     )}
                     {metar?.alternate_required && (
                       <span
-                        className="rounded-md border border-status-yellow/40 bg-status-yellow/10 px-1.5 py-0.5 text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-status-yellow"
+                        className="status-mark text-status-yellow"
                         title="FAR 91.169: current METAR below alternate-required threshold (ceiling <2000 ft OR vis <3 SM)"
                       >
                         Alternate required
@@ -182,7 +182,7 @@ export function WeatherAndNotamStep({ flightId, flight, weather }: Props) {
                     )}
                   </div>
                   {isAcked && (
-                    <span className="rounded-md border border-status-green/40 bg-status-green/10 px-2 py-0.5 text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-status-green">
+                    <span className="status-mark text-status-green">
                       Acknowledged
                     </span>
                   )}
@@ -231,7 +231,7 @@ export function WeatherAndNotamStep({ flightId, flight, weather }: Props) {
           type="button"
           disabled={!canSubmit}
           onClick={handleSubmit}
-          className="inline-flex w-full items-center justify-center rounded-md bg-primary px-4 py-2.5 text-sm font-semibold text-white transition-opacity hover:bg-brand-dark disabled:opacity-50"
+          className="btn-caps inline-flex w-full items-center justify-center rounded-md bg-primary px-4 py-2.5 text-white transition-opacity hover:bg-brand-dark disabled:opacity-50"
         >
           {pending ? "Saving…" : "Continue to Step 4 →"}
         </button>

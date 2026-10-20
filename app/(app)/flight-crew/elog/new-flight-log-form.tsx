@@ -69,7 +69,7 @@ export function NewFlightLogForm({
 
   return (
     <form action={action} className="rounded-lg border border-border bg-card p-4">
-      <h2 className="mb-3 text-[0.7rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+      <h2 className="mb-3 eyebrow">
         New Flight Log
       </h2>
 
@@ -155,7 +155,7 @@ export function NewFlightLogForm({
           type="submit"
           disabled={pending || !aircraftId}
           aria-disabled={!aircraftId || pending}
-          className="inline-flex items-center gap-1.5 rounded-md bg-primary px-4 py-2 text-xs font-semibold text-white hover:bg-brand-dark disabled:cursor-not-allowed disabled:opacity-50"
+          className="btn-caps inline-flex items-center gap-1.5 rounded-md bg-primary px-4 py-2 text-white hover:bg-brand-dark disabled:cursor-not-allowed disabled:opacity-50 text-[0.72rem]"
           title={!aircraftId ? "Pick an aircraft first" : undefined}
         >
           {pending && <Spinner size="xs" />}

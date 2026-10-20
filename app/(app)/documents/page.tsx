@@ -158,7 +158,7 @@ export default async function DocumentsPage({
             >
               Required reading
               {requiredReadingPending > 0 && (
-                <span className="inline-flex min-w-[1.25rem] items-center justify-center rounded-full bg-primary px-1.5 text-[0.65rem] font-bold text-white">
+                <span className="btn-caps inline-flex min-w-[1.25rem] items-center justify-center rounded-full bg-primary px-1.5 text-white text-[0.68rem]">
                   {requiredReadingPending}
                 </span>
               )}
@@ -209,7 +209,7 @@ function CategorySection({
 }) {
   return (
     <section>
-      <h2 className="mb-2 text-[0.65rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+      <h2 className="mb-2 eyebrow">
         {category} · {docs.length}
       </h2>
       <ul className="divide-y divide-border overflow-hidden rounded-lg border border-border bg-card">
@@ -229,7 +229,7 @@ function CategorySection({
                   </p>
                 )}
                 {d.is_compliance_source && (
-                  <span className="mt-1 inline-block rounded bg-status-orange/10 px-1.5 py-0.5 text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-status-orange">
+                  <span className="status-mark text-status-orange mt-1">
                     Compliance Source
                   </span>
                 )}

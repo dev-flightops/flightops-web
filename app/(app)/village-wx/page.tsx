@@ -1,3 +1,4 @@
+import { PageHeader } from "@/components/ff/page-header";
 import { auth } from "@/auth";
 import { AddAirportDialog } from "@/components/village-wx/add-airport-dialog";
 import { formatZuluDateTime } from "@/lib/format/flight-time";
@@ -74,27 +75,22 @@ export default async function VillageWxPage({
     <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
       <AutoRefresh />
 
-      <header className="mb-6 flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="page-title">
-            Village Weather Board
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Field conditions for rural airports · Auto-refreshes every 5
-            minutes
-          </p>
-        </div>
-        {canReport ? (
-          <div className="flex items-center gap-2">
-            <AddReportDialog airports={activeAirports} />
-            <AddAirportDialog />
-          </div>
-        ) : (
-          <p className="max-w-sm text-right text-xs text-muted-foreground">
-            Only {VILLAGE_REPORTER_NAMES} can file village reports.
-          </p>
-        )}
-      </header>
+      <PageHeader
+        title="Village Weather Board"
+        description="Field conditions for rural airports · Auto-refreshes every 5 minutes"
+        actions={
+          canReport ? (
+            <>
+              <AddReportDialog airports={activeAirports} />
+              <AddAirportDialog />
+            </>
+          ) : (
+            <p className="max-w-sm text-right text-xs text-muted-foreground">
+              Only {VILLAGE_REPORTER_NAMES} can file village reports.
+            </p>
+          )
+        }
+      />
 
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-4 text-[0.7rem] text-muted-foreground">
@@ -132,7 +128,7 @@ export default async function VillageWxPage({
 
       {grouped.map(([region, rows]) => (
         <section key={region} className="mb-6">
-          <h2 className="mb-2 text-[0.6rem] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
+          <h2 className="mb-2 eyebrow">
             {region}
           </h2>
           <ul className="space-y-2">
@@ -180,7 +176,7 @@ function ReportCard({
             <div className="flex items-center gap-2">
               <span
                 aria-hidden
-                className={`inline-block h-2 w-2 rounded-full ${accent.dot}`}
+                className={`inline-block h-1.5 w-1.5 ${accent.dot}`}
               />
               <h3 className="text-sm font-semibold text-foreground">
                 {airport.name}
@@ -299,7 +295,7 @@ function CategoryLegend() {
           <span key={c} className="flex items-center gap-1.5">
             <span
               aria-hidden
-              className={`inline-block h-2 w-2 rounded-full ${a.dot}`}
+              className={`inline-block h-1.5 w-1.5 ${a.dot}`}
             />
             <span className="font-semibold text-foreground">{c}</span>
           </span>

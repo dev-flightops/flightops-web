@@ -128,7 +128,7 @@ export default async function SettingsUsersPage() {
 
       {!unauthorized && inactive.length > 0 && (
         <section className="mt-6">
-          <h2 className="mb-2 text-[0.65rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+          <h2 className="mb-2 eyebrow">
             Inactive ({inactive.length})
           </h2>
           <div className="overflow-hidden rounded-lg border border-border bg-muted/60">

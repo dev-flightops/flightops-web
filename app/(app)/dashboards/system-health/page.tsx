@@ -167,7 +167,7 @@ export default async function SystemHealthDashboardPage() {
       </div>
 
       {/* Service status cards */}
-      <section className="mt-5 rounded-xl border border-border bg-card p-5">
+      <section className="mt-5 rounded-lg border border-border bg-card p-5">
         <div className="space-y-2">
           {cards.map((c) => (
             <StatusCard key={c.title} {...c} />
@@ -176,7 +176,7 @@ export default async function SystemHealthDashboardPage() {
       </section>
 
       {/* Quick navigation */}
-      <section className="mt-5 rounded-xl border border-border bg-card p-5">
+      <section className="mt-5 rounded-lg border border-border bg-card p-5">
         <h2 className="mb-4 text-xs font-bold uppercase tracking-wider text-muted-foreground">
           Quick Navigation
         </h2>
@@ -190,7 +190,7 @@ export default async function SystemHealthDashboardPage() {
       </section>
 
       {/* Platform metadata footer */}
-      <section className="mt-5 rounded-xl border border-border bg-card p-5 text-xs text-muted-foreground">
+      <section className="mt-5 rounded-lg border border-border bg-card p-5 text-xs text-muted-foreground">
         <dl className="space-y-1.5">
           <Meta
             label="Platform"
@@ -258,7 +258,7 @@ function StatusCard({
 }) {
   const badge =
     state === "ok" ? (
-      <span className="rounded bg-status-green/15 px-1.5 py-0.5 text-[0.6rem] font-bold uppercase tracking-wider text-status-green">
+      <span className="status-mark text-status-green">
         OK
       </span>
     ) : state === "info" ? (
@@ -266,7 +266,7 @@ function StatusCard({
         INFO
       </span>
     ) : (
-      <span className="rounded bg-status-red/15 px-1.5 py-0.5 text-[0.6rem] font-bold uppercase tracking-wider text-status-red">
+      <span className="status-mark text-status-red">
         ERROR
       </span>
     );

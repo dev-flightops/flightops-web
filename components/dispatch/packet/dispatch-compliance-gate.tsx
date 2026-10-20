@@ -383,7 +383,7 @@ function PilotLine({
 }) {
   return (
     <div className="flex flex-wrap items-baseline gap-3 text-xs">
-      <span className="text-[0.65rem] font-bold uppercase tracking-[0.1em] text-muted-foreground">
+      <span className="eyebrow">
         {SEAT_LABEL[seat]}
       </span>
       <span className="font-semibold text-foreground">{pilot.full_name}</span>
@@ -427,7 +427,7 @@ function TypeStandingLine({
         : "Not checked at release: aircraft qualifications are off in Settings → Currency.";
   return (
     <p className="mt-2 flex flex-wrap items-baseline gap-x-2 text-xs">
-      <span className="text-[0.65rem] font-bold uppercase tracking-[0.1em] text-muted-foreground">
+      <span className="eyebrow">
         Aircraft
       </span>
       <span className={`font-semibold ${tone}`}>
@@ -467,7 +467,7 @@ function FindingsList({
           className="flex items-start gap-2 text-foreground/90"
         >
           <span
-            className={`mt-1 inline-block h-1.5 w-1.5 shrink-0 rounded-full ${dotClass}`}
+            className={`mt-1 inline-block h-1.5 w-1.5 shrink-0 ${dotClass}`}
             aria-hidden
           />
           <span>
@@ -491,7 +491,7 @@ function Dot({ color }: { color: "green" | "yellow" | "red" }) {
         : "bg-status-green";
   return (
     <span
-      className={`inline-block h-2.5 w-2.5 rounded-full ${cls}`}
+      className={`inline-block h-2.5 w-2.5 ${cls}`}
       aria-hidden
     />
   );

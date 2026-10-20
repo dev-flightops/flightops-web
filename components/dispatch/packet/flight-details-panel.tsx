@@ -277,7 +277,7 @@ function Field({
         )}
         {help && (
           <span
-            className="ml-1 inline-flex h-3.5 w-3.5 cursor-help items-center justify-center rounded-full border border-muted-foreground/40 text-[0.55rem] font-bold text-muted-foreground"
+            className="ml-1 inline-flex h-3.5 w-3.5 cursor-help items-center justify-center rounded-sm border border-muted-foreground/40 text-[0.55rem] font-bold text-muted-foreground"
             title={help}
             role="img"
             aria-label={help}

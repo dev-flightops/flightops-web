@@ -1,5 +1,4 @@
-import Link from "next/link";
-
+import { PageHeader } from "@/components/ff/page-header";
 import { ApiError } from "@/lib/api/client";
 import { getDispatchSuggestions, type DispatchSuggestions } from "@/lib/api/ops";
 
@@ -66,19 +65,15 @@ export default async function DispatchIntelligencePage() {
 
   return (
     <div className="mx-auto max-w-5xl px-4 sm:px-6 py-8">
-      <Link
-        href="/dispatch"
-        className="text-[0.65rem] font-semibold uppercase tracking-wider text-muted-foreground hover:text-foreground"
-      >
-        ← Dispatch
-      </Link>
-      <h1 className="mt-1 page-title text-foreground">Dispatch Intelligence</h1>
-      {data && (
-        <p className="mt-1 text-sm text-muted-foreground">
-          {data.inbound.length} aircraft airborne · {data.turn_minutes}-minute
-          turn assumed · as at {hhmmZ(data.generated_at)}
-        </p>
-      )}
+      <PageHeader
+        back={{ href: "/dispatch", label: "Dispatch" }}
+        title="Dispatch Intelligence"
+        description={
+          data
+            ? `${data.inbound.length} aircraft airborne · ${data.turn_minutes}-minute turn assumed · as at ${hhmmZ(data.generated_at)}`
+            : undefined
+        }
+      />
 
       {loadError ? (
         <p
@@ -137,7 +132,7 @@ export default async function DispatchIntelligencePage() {
                     // either late or has a missing arrival record.
                     <p
                       role="status"
-                      className="mt-2 rounded border border-status-yellow/30 bg-status-yellow/10 px-2 py-1 text-[0.7rem] text-status-yellow"
+                      className="notice notice-yellow mt-2 text-[0.7rem]"
                     >
                       Still airborne past its scheduled arrival. Departure
                       times below are measured from now rather than from the
@@ -151,9 +146,9 @@ export default async function DispatchIntelligencePage() {
                         <li
                           key={b.code}
                           data-testid={`ac-blocker-${b.code}`}
-                          className="rounded border border-status-red/30 bg-status-red/10 px-2 py-1 text-[0.7rem] text-status-red"
+                          className="notice notice-red text-[0.7rem]"
                         >
-                          <span className="font-semibold uppercase tracking-wider">
+                          <span className="notice-label text-status-red">
                             {b.source}
                           </span>{" "}
                           — {b.detail}

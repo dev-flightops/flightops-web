@@ -375,7 +375,7 @@ export default async function SimExportPage({
 
       {report && (
         <>
-          <div className="mb-4 rounded-xl border border-border bg-card p-4">
+          <div className="mb-4 rounded-lg border border-border bg-card p-4">
             <ExportControls
               carrier={report.carrier}
               start={start}
@@ -453,7 +453,7 @@ export default async function SimExportPage({
           </div>
 
           {records === 0 ? (
-            <div className="rounded-xl border border-border bg-card p-6 text-center">
+            <div className="rounded-lg border border-border bg-card p-6 text-center">
               <p className="text-sm font-semibold">
                 No flights in this window
               </p>

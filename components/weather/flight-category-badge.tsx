@@ -2,7 +2,7 @@ import { cn } from "@/lib/utils";
 import type { FlightCategory } from "@/lib/api/types";
 
 /**
- * FAA flight-category pill (VFR / MVFR / IFR / LIFR).
+ * FAA flight-category mark (VFR / MVFR / IFR / LIFR).
  *
  * Color scheme matches aviationweather.gov:
  *   VFR   green     ceiling ≥ 3000 ft AND vis ≥ 5 SM
@@ -19,19 +19,19 @@ const FLIGHT_CATEGORY_STYLE: Record<
   { className: string; title: string }
 > = {
   VFR: {
-    className: "bg-status-green/15 text-status-green",
+    className: "text-status-green",
     title: "VFR — ceiling ≥ 3000 ft and visibility ≥ 5 SM",
   },
   MVFR: {
-    className: "bg-status-blue/15 text-status-blue",
+    className: "text-status-blue",
     title: "Marginal VFR — ceiling 1000–3000 ft or visibility 3–5 SM",
   },
   IFR: {
-    className: "bg-status-red/15 text-status-red",
+    className: "text-status-red",
     title: "IFR — ceiling 500–1000 ft or visibility 1–3 SM",
   },
   LIFR: {
-    className: "bg-status-purple/15 text-status-purple",
+    className: "text-status-purple",
     title: "Low IFR — ceiling < 500 ft or visibility < 1 SM",
   },
 };
@@ -44,17 +44,11 @@ export function FlightCategoryBadge({
   size?: "md" | "lg";
 }) {
   const { className, title } = FLIGHT_CATEGORY_STYLE[category];
-  const sizeClass =
-    size === "lg"
-      ? "px-2 py-0.5 text-[0.7rem]"
-      : "px-1.5 py-0.5 text-[0.6rem]";
+  // The category in its chart colour behind a square marker (#80), as
+  // ForeFlight marks a station: no tinted pill.
   return (
     <span
-      className={cn(
-        "rounded-md font-bold uppercase tracking-[0.08em]",
-        sizeClass,
-        className,
-      )}
+      className={cn("status-mark", size === "lg" ? "text-[0.75rem]" : "text-[0.62rem]", className)}
       title={title}
     >
       {category}

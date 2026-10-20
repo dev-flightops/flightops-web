@@ -83,7 +83,7 @@ export default async function WorkOrdersPage({
         <div className="flex gap-2">
           <Link
             href="/maintenance"
-            className="rounded-md border border-border bg-card px-3 py-2 text-xs font-semibold text-foreground hover:bg-accent"
+            className="btn-caps rounded-md border border-input px-3 py-2 text-foreground hover:bg-accent text-[0.72rem]"
           >
             Fleet
           </Link>
@@ -92,7 +92,7 @@ export default async function WorkOrdersPage({
             disabled
             aria-disabled="true"
             title={BACKEND_HINT_ADD}
-            className="cursor-not-allowed rounded-md bg-primary px-3 py-2 text-xs font-semibold text-white disabled:opacity-100"
+            className="btn-caps cursor-not-allowed rounded-md bg-primary px-3 py-2 text-white disabled:opacity-100 text-[0.72rem]"
           >
             + New Work Order
           </button>
@@ -201,14 +201,14 @@ export default async function WorkOrdersPage({
 function PriorityBadge({ priority }: { priority: string }) {
   if (priority === "aog") {
     return (
-      <span className="rounded border border-status-red/40 bg-status-red/10 px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider text-status-red">
+      <span className="status-mark text-status-red">
         AOG
       </span>
     );
   }
   if (priority === "high") {
     return (
-      <span className="rounded border border-status-yellow/40 bg-status-yellow/10 px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider text-status-yellow">
+      <span className="status-mark text-status-yellow">
         High
       </span>
     );

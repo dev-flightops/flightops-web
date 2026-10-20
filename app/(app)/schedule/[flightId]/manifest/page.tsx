@@ -246,7 +246,7 @@ function Field({
 }) {
   return (
     <div>
-      <dt className="text-[0.6rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+      <dt className="eyebrow">
         {label}
       </dt>
       <dd className={`m-0 mt-0.5 ${mono ? "font-mono" : ""}`}>{value}</dd>

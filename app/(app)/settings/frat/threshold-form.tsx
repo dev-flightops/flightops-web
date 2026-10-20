@@ -230,7 +230,7 @@ export function ThresholdForm({
       </div>
 
       <div>
-        <p className="mb-1.5 text-[0.6rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+        <p className="mb-1.5 eyebrow">
           How a total score lands
         </p>
         {ordered ? (
@@ -277,7 +277,7 @@ export function ThresholdForm({
           Our single engine x wind limits are 30kts multi engines are
           35kts. That's a company limit." */}
       <div className="border-t border-border pt-5">
-        <p className="text-[0.6rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+        <p className="eyebrow">
           Company operating limits
         </p>
         <p className="mt-1 text-[0.68rem] text-muted-foreground">
@@ -388,7 +388,7 @@ export function ThresholdForm({
           limits grid: a limit scores one factor of one assessment,
           this decides how long a whole assessment stays usable. */}
       <div className="rounded-lg border border-border bg-background/40 px-4 py-3">
-        <p className="text-[0.6rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+        <p className="eyebrow">
           Carrying a FRAT across legs
         </p>
         <div className="mt-3 grid gap-4 sm:grid-cols-2">
@@ -455,7 +455,7 @@ export function ThresholdForm({
           type="button"
           onClick={submit}
           disabled={pending || !savable}
-          className="rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-dark disabled:opacity-40"
+          className="btn-caps rounded-md bg-primary px-3 py-1.5 text-white hover:bg-brand-dark disabled:opacity-40 text-[0.72rem]"
         >
           {pending
             ? "Saving…"

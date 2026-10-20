@@ -1,3 +1,5 @@
+import { tab, tabList } from "@/components/ff/controls";
+import { PageHeader } from "@/components/ff/page-header";
 import Link from "next/link";
 
 import { ApiError } from "@/lib/api/client";
@@ -45,14 +47,10 @@ export default async function FlightCrewHistoryPage({
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
-      <header className="mb-4">
-        <h1 className="page-title">
-          My History
-        </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Your flight and duty records. Per-tab; defaults to the last 30 days.
-        </p>
-      </header>
+      <PageHeader
+        title="My History"
+        description="Your flight and duty records. Per-tab; defaults to the last 30 days."
+      />
 
       <TabNav activeTab={activeTab} fromDate={fromDate} toDate={toDate} />
 
@@ -116,7 +114,7 @@ function TabNav({
     <div
       role="tablist"
       aria-label="History sections"
-      className="flex gap-1 border-b border-border pb-1"
+      className={tabList}
     >
       {HISTORY_TAB_KEYS.map((key) => {
         const isActive = key === activeTab;
@@ -134,11 +132,7 @@ function TabNav({
             role="tab"
             aria-selected={isActive}
             replace
-            className={
-              isActive
-                ? "rounded-t-md border-b-2 border-primary px-3 py-1.5 text-xs font-semibold text-primary"
-                : "rounded-t-md border-b-2 border-transparent px-3 py-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground"
-            }
+            className={tab(isActive)}
           >
             {HISTORY_TAB_LABELS[key]}
           </Link>

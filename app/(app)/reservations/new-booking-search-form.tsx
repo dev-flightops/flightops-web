@@ -238,7 +238,7 @@ export function NewBookingSearchForm({
   return (
     <form
       onSubmit={onSubmit}
-      className="rounded-xl border border-border bg-card p-4"
+      className="rounded-lg border border-border bg-card p-4"
     >
       {/* Row 1 — Trip type / Adults / Children / Customer / Coupon */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-[auto_auto_auto_1fr_10rem]">
@@ -459,7 +459,7 @@ export function NewBookingSearchForm({
         </button>
         <button
           type="submit"
-          className="rounded-md bg-primary px-5 py-2 text-sm font-semibold text-white hover:bg-brand-dark"
+          className="btn-caps rounded-md bg-primary px-5 py-2 text-white hover:bg-brand-dark"
         >
           Search Flights
         </button>

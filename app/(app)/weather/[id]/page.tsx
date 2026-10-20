@@ -1,3 +1,6 @@
+import { cn } from "@/lib/utils";
+import { linkCaps } from "@/components/ff/controls";
+import { PageHeader } from "@/components/ff/page-header";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -76,11 +79,8 @@ export default async function WeatherBriefingDetailPage({
 
 function BackLink() {
   return (
-    <Link
-      href="/weather"
-      className="mb-4 inline-block text-sm text-muted-foreground hover:text-foreground hover:underline"
-    >
-      ← Briefing History
+    <Link href="/weather" className={cn(linkCaps, "mb-3 text-muted-foreground hover:text-foreground")}>
+      <span aria-hidden>‹</span> Briefing History
     </Link>
   );
 }
@@ -99,10 +99,10 @@ function Header({ briefing }: { briefing: WeatherBriefingResponse }) {
     hour12: false,
   })} AKD`;
   return (
-    <div className="mb-6 flex items-start justify-between gap-4">
-      <div>
-        <h1 className="page-title">Weather Briefing</h1>
-        <p className="text-sm text-muted-foreground">
+    <PageHeader
+      title="Weather Briefing"
+      description={
+        <>
           <span>{briefing.airports.join(", ")}</span>
           {briefing.flight && (
             <>
@@ -119,18 +119,15 @@ function Header({ briefing }: { briefing: WeatherBriefingResponse }) {
           {" · "}
           {stamp}
           {" · briefed by "}
-          <span className="text-foreground">
-            {briefing.briefed_by.full_name}
-          </span>
-        </p>
-      </div>
-      {briefing.worst_flight_category && (
-        <FlightCategoryBadge
-          category={briefing.worst_flight_category}
-          size="lg"
-        />
-      )}
-    </div>
+          <span className="text-foreground">{briefing.briefed_by.full_name}</span>
+        </>
+      }
+      actions={
+        briefing.worst_flight_category ? (
+          <FlightCategoryBadge category={briefing.worst_flight_category} size="lg" />
+        ) : undefined
+      }
+    />
   );
 }
 
@@ -139,7 +136,7 @@ function MetarPanel({ briefing }: { briefing: WeatherBriefingResponse }) {
   if (!text) return null;
   return (
     <div className="mb-4 rounded-lg border border-border bg-card p-4">
-      <h2 className="mb-3 font-semibold">METARs</h2>
+      <h2 className="panel-title mb-3">METARs</h2>
       <pre className="overflow-x-auto whitespace-pre-wrap rounded-md bg-background p-4 font-mono text-xs text-foreground">
         {text}
       </pre>
@@ -152,7 +149,7 @@ function TafPanel({ briefing }: { briefing: WeatherBriefingResponse }) {
   if (!text) return null;
   return (
     <div className="mb-4 rounded-lg border border-border bg-card p-4">
-      <h2 className="mb-3 font-semibold">TAFs</h2>
+      <h2 className="panel-title mb-3">TAFs</h2>
       <pre className="overflow-x-auto whitespace-pre-wrap rounded-md bg-background p-4 font-mono text-xs text-foreground">
         {text}
       </pre>
@@ -164,7 +161,7 @@ function Notes({ notes }: { notes: string | null }) {
   if (!notes) return null;
   return (
     <div className="rounded-lg border border-border bg-card p-4">
-      <h2 className="mb-3 font-semibold">Dispatcher Notes</h2>
+      <h2 className="panel-title mb-3">Dispatcher Notes</h2>
       <p className="whitespace-pre-wrap text-sm text-foreground">{notes}</p>
     </div>
   );

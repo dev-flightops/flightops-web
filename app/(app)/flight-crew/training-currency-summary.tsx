@@ -60,7 +60,7 @@ export async function TrainingCurrencySummary({
     return (
       <div
         role="alert"
-        className="rounded-xl border border-dashed border-border bg-card/50 px-5 py-6 text-sm text-muted-foreground"
+        className="rounded-lg border border-dashed border-border bg-card/50 px-5 py-6 text-sm text-muted-foreground"
       >
         {loadError}
       </div>
@@ -81,7 +81,7 @@ export async function TrainingCurrencySummary({
 
   if (rows.length === 0) {
     return (
-      <div className="rounded-xl border border-dashed border-border bg-card/50 px-5 py-6 text-sm text-muted-foreground">
+      <div className="rounded-lg border border-dashed border-border bg-card/50 px-5 py-6 text-sm text-muted-foreground">
         No currency items tracked yet. Once a Chief Pilot logs your first
         completion, your status badges show up here.
       </div>
@@ -102,7 +102,7 @@ export async function TrainingCurrencySummary({
           Contact your Chief Pilot before your next flight.
         </div>
       )}
-      <div className="rounded-xl border border-border bg-card/50">
+      <div className="rounded-lg border border-border bg-card/50">
         <ul className="divide-y divide-border/40">
           {rows.map(({ cell, item }) => (
             <li

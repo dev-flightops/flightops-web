@@ -32,13 +32,13 @@ export function CorrectiveActionPanel({
   return (
     <section className="mb-6 rounded-lg border border-border bg-card p-5">
       <header className="mb-3 flex items-center justify-between gap-2">
-        <h2 className="text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+        <h2 className="eyebrow">
           Corrective Actions
         </h2>
         {canOpen ? (
           <Link
             href={openHref}
-            className="rounded-md border border-primary/40 bg-background px-2 py-1 text-[0.6875rem] font-semibold text-primary hover:bg-primary/5"
+            className="btn-caps rounded-md border border-primary/40 bg-background px-2 py-1 text-primary hover:bg-primary/5 text-[0.68rem]"
           >
             + Open a CAPA
           </Link>
@@ -92,7 +92,7 @@ function DueChip({
   const overdue = dueDate < today;
   if (!overdue) return null;
   return (
-    <span className="inline-flex items-center rounded border border-status-red/40 bg-status-red/10 px-1.5 py-0.5 text-[0.6rem] font-semibold uppercase tracking-wider text-status-red">
+    <span className="status-mark text-status-red">
       Overdue
     </span>
   );

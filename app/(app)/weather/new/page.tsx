@@ -1,5 +1,4 @@
-import Link from "next/link";
-
+import { PageHeader } from "@/components/ff/page-header";
 import { ApiError } from "@/lib/api/client";
 import { listAircraft, listFlights } from "@/lib/api/ops";
 import type { AircraftListItem, FlightListItem } from "@/lib/api/types";
@@ -43,15 +42,7 @@ export default async function NewBriefingPage() {
 
   return (
     <div className="mx-auto max-w-2xl px-4 sm:px-6 py-8">
-      <Link
-        href="/weather"
-        className="mb-4 inline-block text-sm text-muted-foreground hover:text-foreground hover:underline"
-      >
-        ← Briefing History
-      </Link>
-      <h1 className="mb-6 page-title">
-        New Weather Briefing
-      </h1>
+      <PageHeader back={{ href: "/weather", label: "Briefing History" }} title="New Weather Briefing" />
 
       {loadError && (
         <div

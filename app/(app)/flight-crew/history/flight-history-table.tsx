@@ -104,18 +104,18 @@ function StatusBadges({ log }: { log: FlightLogResponse }) {
   return (
     <span className="inline-flex flex-wrap gap-1">
       {log.status === "draft" ? (
-        <span className="rounded bg-status-yellow/15 px-1.5 py-0.5 text-[0.6rem] font-semibold uppercase tracking-[0.08em] text-status-yellow">
+        <span className="status-mark text-status-yellow">
           Draft
         </span>
       ) : (
-        <span className="rounded bg-status-green/15 px-1.5 py-0.5 text-[0.6rem] font-semibold uppercase tracking-[0.08em] text-status-green">
+        <span className="status-mark text-status-green">
           Submitted
         </span>
       )}
       {log.is_manual_entry && (
         <span
           title="Started without a dispatch packet"
-          className="rounded border border-status-yellow/40 bg-status-yellow/10 px-1.5 py-0.5 text-[0.6rem] font-semibold uppercase tracking-[0.08em] text-status-yellow"
+          className="status-mark text-status-yellow"
         >
           Manual Entry
         </span>

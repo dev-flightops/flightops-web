@@ -48,7 +48,7 @@ export function AcknowledgeButton({
         <span className="font-mono">{tail}</span>
       </div>
       <label className="block">
-        <span className="text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+        <span className="eyebrow">
           Your name *
         </span>
         <input
@@ -62,7 +62,7 @@ export function AcknowledgeButton({
         />
       </label>
       <label className="block">
-        <span className="text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+        <span className="eyebrow">
           Note (optional)
         </span>
         <input
@@ -93,7 +93,7 @@ export function AcknowledgeButton({
               router.refresh();
             });
           }}
-          className="inline-flex items-center gap-1 rounded-md bg-status-green-fill px-2.5 py-1 text-[0.65rem] font-semibold text-white hover:brightness-95 disabled:opacity-50"
+          className="btn-caps inline-flex items-center gap-1 rounded-md bg-status-green-fill px-2.5 py-1 text-white hover:brightness-95 disabled:opacity-50 text-[0.68rem]"
         >
           {pending && <Spinner size="xs" />}
           Confirm
@@ -107,7 +107,7 @@ export function AcknowledgeButton({
             setNote("");
             setError(null);
           }}
-          className="rounded-md border border-border bg-background px-2.5 py-1 text-[0.65rem] font-semibold text-foreground hover:bg-accent disabled:opacity-50"
+          className="btn-caps rounded-md border border-input px-2.5 py-1 text-foreground hover:bg-accent disabled:opacity-50 text-[0.68rem]"
         >
           Cancel
         </button>

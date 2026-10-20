@@ -38,7 +38,7 @@ export function StatusControls({
 
   return (
     <section className="rounded-lg border border-border bg-card p-5">
-      <h2 className="mb-3 text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+      <h2 className="mb-3 eyebrow">
         Status (Safety Officer only)
       </h2>
 
@@ -91,7 +91,7 @@ export function StatusControls({
           <button
             type="submit"
             disabled={pending}
-            className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-brand-dark disabled:opacity-60"
+            className="btn-caps rounded-md bg-primary px-4 py-2 text-white hover:bg-brand-dark disabled:opacity-60"
           >
             {pending ? "Saving…" : "Apply"}
           </button>

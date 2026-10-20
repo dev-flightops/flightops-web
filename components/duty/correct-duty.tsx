@@ -217,7 +217,7 @@ export function CorrectDuty({
         <button
           type="submit"
           disabled={pending || !reason.trim()}
-          className="rounded-md bg-primary px-3 py-1.5 text-[0.65rem] font-semibold text-primary-foreground hover:bg-brand-dark disabled:opacity-40"
+          className="btn-caps rounded-md bg-primary px-3 py-1.5 text-primary-foreground hover:bg-brand-dark disabled:opacity-40 text-[0.68rem]"
         >
           {pending ? "Saving…" : "Save correction"}
         </button>

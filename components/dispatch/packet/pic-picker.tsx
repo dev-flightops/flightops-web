@@ -145,7 +145,7 @@ export function PicPicker({
           <span
             aria-hidden
             className={
-              "inline-block h-2 w-2 shrink-0 rounded-full " +
+              "inline-block h-2 w-2 shrink-0 " +
               (selectedDot === "green"
                 ? "bg-status-green"
                 : selectedDot === "yellow"

@@ -38,7 +38,7 @@ export function WeightBalanceTab({
   if (initialLegs.length === 0) {
     return (
       <div className="space-y-3">
-        <h2 className="text-[0.7rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+        <h2 className="eyebrow">
           Weight &amp; Balance
         </h2>
         <div className="rounded-md border border-dashed border-border bg-card/40 px-4 py-10 text-center">
@@ -65,7 +65,7 @@ export function WeightBalanceTab({
   return (
     <div className="space-y-4">
       <div>
-        <h2 className="text-[0.7rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+        <h2 className="eyebrow">
           Weight &amp; Balance
         </h2>
         <p className="mt-1 text-[0.7rem] text-muted-foreground">

@@ -1,3 +1,5 @@
+import { PageHeader } from "@/components/ff/page-header";
+import { SegmentLinks } from "@/components/ff/segment-links";
 import { ApiError } from "@/lib/api/client";
 import {
   getTypeQualificationGrid,
@@ -53,23 +55,27 @@ export default async function TypeQualificationsPage({
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
-      <header className="mb-5">
-        <h1 className="page-title">Aircraft Qualifications</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          The positions each pilot is authorised to fly, by aircraft type. A
-          position is current while the check rides on its type are in date.
-        </p>
-        {grid ? (
-          <p className="mt-2 text-xs text-muted-foreground">
-            <span className="font-semibold text-foreground">
-              Release check: {grid.enforced ? "on" : "off"}.
-            </span>{" "}
-            {grid.enforced
-              ? "Release is refused for a PIC not current as PIC on the aircraft's type, unless a supervisor overrides it."
-              : "Release doesn't check these yet. The Director of Operations or an Exec Admin turns it on in Settings → Currency."}
-          </p>
-        ) : null}
-      </header>
+      <PageHeader
+        title="Aircraft Qualifications"
+        description={
+          <>
+            <p>
+              The positions each pilot is authorised to fly, by aircraft type. A
+              position is current while the check rides on its type are in date.
+            </p>
+            {grid ? (
+              <p className="mt-2 text-xs">
+                <span className="font-semibold text-foreground">
+                  Release check: {grid.enforced ? "on" : "off"}.
+                </span>{" "}
+                {grid.enforced
+                  ? "Release is refused for a PIC not current as PIC on the aircraft's type, unless a supervisor overrides it."
+                  : "Release doesn't check these yet. The Director of Operations or an Exec Admin turns it on in Settings → Currency."}
+              </p>
+            ) : null}
+          </>
+        }
+      />
 
       {loadError ? (
         <p
@@ -94,23 +100,18 @@ export default async function TypeQualificationsPage({
           ) : null}
 
           {stations.length > 1 ? (
-            <nav
-              aria-label="Filter by base"
-              className="mb-4 flex flex-wrap items-center gap-1.5 text-xs"
-            >
-              <FilterChip href="/compliance/type-qualifications" active={!code}>
-                All bases
-              </FilterChip>
-              {stations.map((s) => (
-                <FilterChip
-                  key={s}
-                  href={`/compliance/type-qualifications?station=${encodeURIComponent(s)}`}
-                  active={code === s}
-                >
-                  {s}
-                </FilterChip>
-              ))}
-            </nav>
+            <SegmentLinks
+              label="Filter by base"
+              className="mb-4"
+              items={[
+                { href: "/compliance/type-qualifications", label: "All bases", active: !code },
+                ...stations.map((s) => ({
+                  href: `/compliance/type-qualifications?station=${encodeURIComponent(s)}`,
+                  label: s,
+                  active: code === s,
+                })),
+              ]}
+            />
           ) : null}
 
           <QualificationGrid airframeTypes={grid?.airframe_types ?? []} pilots={shown} />
@@ -118,30 +119,5 @@ export default async function TypeQualificationsPage({
         </>
       )}
     </div>
-  );
-}
-
-function FilterChip({
-  href,
-  active,
-  children,
-}: {
-  href: string;
-  active: boolean;
-  children: React.ReactNode;
-}) {
-  return (
-    <a
-      href={href}
-      aria-current={active ? "page" : undefined}
-      className={
-        "rounded-md border px-2.5 py-1 font-semibold transition " +
-        (active
-          ? "border-primary/50 bg-primary/10 text-primary"
-          : "border-border bg-card text-muted-foreground hover:text-foreground")
-      }
-    >
-      {children}
-    </a>
   );
 }

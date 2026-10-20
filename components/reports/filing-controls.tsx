@@ -53,7 +53,7 @@ function ExportButton({
       onClick={onClick}
       disabled={busy || disabled}
       title={disabled ? "Nothing to export for this period" : undefined}
-      className="ml-1 rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-dark disabled:opacity-40"
+      className="btn-caps ml-1 rounded-md bg-primary px-3 py-1.5 text-white hover:bg-brand-dark disabled:opacity-40 text-[0.72rem]"
     >
       {busy ? "Preparing…" : "Export CSV"}
     </button>
@@ -77,7 +77,7 @@ function StepButton({
       onClick={onClick}
       disabled={disabled}
       aria-label={label}
-      className="rounded-md border border-border bg-card px-2 py-1.5 text-xs font-semibold text-foreground hover:bg-accent disabled:opacity-60"
+      className="btn-caps rounded-md border border-input px-2 py-1.5 text-foreground hover:bg-accent disabled:opacity-60 text-[0.72rem]"
     >
       {glyph}
     </button>

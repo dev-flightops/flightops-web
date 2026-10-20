@@ -1,3 +1,6 @@
+import { buttonOutline } from "@/components/ff/controls";
+import { PageHeader } from "@/components/ff/page-header";
+import { Stat, StatStrip } from "@/components/ff/stat-strip";
 import Link from "next/link";
 
 import { StatusBadge } from "@/components/flight-following/status-badge";
@@ -110,22 +113,15 @@ export default async function EodPage() {
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
-      <header className="mb-5 flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="page-title text-foreground">
-            End-of-Day Closeout
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {todayUtcLong()} UTC
-          </p>
-        </div>
-        <Link
-          href="/flight-following"
-          className="rounded-md border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-accent"
-        >
-          ← Back to Board
-        </Link>
-      </header>
+      <PageHeader
+        title="End-of-Day Closeout"
+        description={`${todayUtcLong()} UTC`}
+        actions={
+          <Link href="/flight-following" className={buttonOutline}>
+            ← Back to Board
+          </Link>
+        }
+      />
 
       {loadError ? (
         <div
@@ -186,48 +182,12 @@ function StatTiles({
   flags: number;
 }) {
   return (
-    <div className="mb-5 grid grid-cols-2 gap-3 md:grid-cols-4">
-      <Tile value={String(completed)} label="Flights Completed" tone="green" />
-      <Tile value={blockHours} label="Block Hours (scheduled)" tone="blue" />
-      <Tile
-        value={String(airborne)}
-        label="Still Airborne"
-        tone={airborne > 0 ? "yellow" : "muted"}
-      />
-      <Tile
-        value={String(flags)}
-        label="Flags"
-        tone={flags > 0 ? "red" : "muted"}
-      />
-    </div>
-  );
-}
-
-function Tile({
-  value,
-  label,
-  tone,
-}: {
-  value: string;
-  label: string;
-  tone: "green" | "blue" | "yellow" | "red" | "muted";
-}) {
-  const toneClass = {
-    green: "text-status-green",
-    blue: "text-status-blue",
-    yellow: "text-status-yellow",
-    red: "text-status-red",
-    muted: "text-muted-foreground",
-  }[tone];
-  return (
-    <div className="rounded-lg border border-border bg-card py-3 text-center">
-      <div className={`text-2xl font-bold tabular-nums ${toneClass}`}>
-        {value}
-      </div>
-      <div className="text-[0.65rem] uppercase tracking-[0.06em] text-muted-foreground">
-        {label}
-      </div>
-    </div>
+    <StatStrip label="Today's closeout">
+      <Stat value={completed} label="Flights Completed" tone="green" />
+      <Stat value={blockHours} label="Block Hours (scheduled)" tone="blue" />
+      <Stat value={airborne} label="Still Airborne" tone={airborne > 0 ? "yellow" : "neutral"} />
+      <Stat value={flags} label="Flags" tone={flags > 0 ? "red" : "neutral"} />
+    </StatStrip>
   );
 }
 
@@ -407,22 +367,23 @@ function Section({
   wide?: boolean;
   children: React.ReactNode;
 }) {
-  const toneClass = {
-    green: "text-status-green",
-    yellow: "text-status-yellow",
-    red: "text-status-red",
-    muted: "text-foreground",
+  // A panel (#80): the title in quiet capitals, the section's colour as a
+  // small square before it rather than coloured title text.
+  const markClass = {
+    green: "bg-status-green",
+    yellow: "bg-status-yellow",
+    red: "bg-status-red",
+    muted: "bg-input",
   }[tone];
   return (
     <section
-      className={`rounded-lg border border-border bg-card p-4 ${wide ? "lg:col-span-2" : ""}`}
+      className={`overflow-hidden rounded-lg border border-border bg-card ${wide ? "lg:col-span-2" : ""}`}
     >
-      <h2
-        className={`mb-3 text-[0.7rem] font-semibold uppercase tracking-[0.08em] ${toneClass}`}
-      >
+      <h2 className="panel-title flex items-center gap-2 border-b border-border px-4 py-2.5">
+        <span aria-hidden className={`h-1.5 w-1.5 ${markClass}`} />
         {title}
       </h2>
-      {children}
+      <div className="p-4">{children}</div>
     </section>
   );
 }

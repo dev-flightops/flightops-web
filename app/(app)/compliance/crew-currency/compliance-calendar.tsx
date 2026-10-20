@@ -228,7 +228,7 @@ export function ComplianceCalendar({
 
       {rolling.length > 0 && (
         <div className="rounded-lg border border-border bg-card p-3">
-          <div className="mb-2 text-[0.65rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+          <div className="mb-2 eyebrow">
             Rolling-window items (no calendar anchor)
           </div>
           <ul className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 lg:grid-cols-3">
@@ -288,7 +288,7 @@ function FocusedMonthView({
         </div>
         <Link
           href={backHref}
-          className="rounded-md border border-border bg-card px-3 py-1.5 text-[0.7rem] font-semibold text-foreground hover:bg-accent"
+          className="btn-caps rounded-md border border-input px-3 py-1.5 text-foreground hover:bg-accent text-[0.68rem]"
         >
           ← Back to 12-month view
         </Link>

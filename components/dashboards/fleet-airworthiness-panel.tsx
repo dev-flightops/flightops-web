@@ -38,7 +38,7 @@ export function FleetAirworthinessPanel({
   const pendingRts = active.filter((r) => !r.is_airworthy).length;
 
   return (
-    <section className="rounded-xl border border-border bg-card p-5">
+    <section className="rounded-lg border border-border bg-card p-5">
       <h2 className="mb-3 text-xs font-bold uppercase tracking-wider text-muted-foreground">
         {title}
       </h2>
@@ -134,7 +134,7 @@ function StatusBadge({
         : "text-status-red";
   return (
     <span className={`inline-flex items-center gap-1.5 text-xs ${textClass}`}>
-      <span className={`h-2 w-2 rounded-full ${dotClass}`} aria-hidden />
+      <span className={`h-2 w-2 ${dotClass}`} aria-hidden />
       {label}
     </span>
   );

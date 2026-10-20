@@ -43,7 +43,7 @@ export function MarkFueledButton({
           setError(null);
           setOpen(true);
         }}
-        className="rounded-md border border-primary/40 bg-background px-3 py-1 text-[0.65rem] font-semibold text-primary hover:bg-primary/5"
+        className="btn-caps rounded-md border border-primary/40 bg-background px-3 py-1 text-primary hover:bg-primary/5 text-[0.68rem]"
       >
         Mark Fueled
       </button>
@@ -57,7 +57,7 @@ export function MarkFueledButton({
         <span className="font-mono">{tail}</span>
       </div>
       <label className="block">
-        <span className="text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+        <span className="eyebrow">
           Your name *
         </span>
         <input
@@ -71,7 +71,7 @@ export function MarkFueledButton({
         />
       </label>
       <label className="block">
-        <span className="text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+        <span className="eyebrow">
           Actual gallons *
         </span>
         <input
@@ -90,7 +90,7 @@ export function MarkFueledButton({
         </span>
       </label>
       <label className="block">
-        <span className="text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+        <span className="eyebrow">
           Discrepancy note (optional)
         </span>
         <input
@@ -126,7 +126,7 @@ export function MarkFueledButton({
               router.refresh();
             });
           }}
-          className="inline-flex items-center gap-1 rounded-md bg-primary px-2.5 py-1 text-[0.65rem] font-semibold text-white hover:bg-brand-dark disabled:opacity-50"
+          className="btn-caps inline-flex items-center gap-1 rounded-md bg-primary px-2.5 py-1 text-white hover:bg-brand-dark disabled:opacity-50 text-[0.68rem]"
         >
           {pending && <Spinner size="xs" />}
           Confirm
@@ -140,7 +140,7 @@ export function MarkFueledButton({
             setReason("");
             setError(null);
           }}
-          className="rounded-md border border-border bg-background px-2.5 py-1 text-[0.65rem] font-semibold text-foreground hover:bg-accent disabled:opacity-50"
+          className="btn-caps rounded-md border border-input px-2.5 py-1 text-foreground hover:bg-accent disabled:opacity-50 text-[0.68rem]"
         >
           Cancel
         </button>

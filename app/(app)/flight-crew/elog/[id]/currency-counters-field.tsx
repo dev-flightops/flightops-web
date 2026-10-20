@@ -142,7 +142,7 @@ export function CurrencyCountersField({
   return (
     <div className="rounded-lg border border-border bg-card p-4">
       <div className="mb-2 flex items-baseline justify-between">
-        <div className="text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+        <div className="eyebrow">
           {heading}
         </div>
         {pending && (
@@ -154,7 +154,7 @@ export function CurrencyCountersField({
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
         {BASE_FIELDS.map((f) => (
           <label key={f.key} className="block">
-            <div className="text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+            <div className="eyebrow">
               {f.label}
               {f.hint ? (
                 <span className="ml-1 font-normal text-muted-foreground">

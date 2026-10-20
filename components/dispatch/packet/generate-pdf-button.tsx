@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import type { FlightDetail } from "@/lib/api/types";
 import { flightStops } from "@/lib/route";
+import { cn } from "@/lib/utils";
 
 /**
  * Generate-PDF action on the /dispatch/ packet form. The PDF is the
@@ -32,7 +33,7 @@ import { flightStops } from "@/lib/route";
  */
 
 const BUTTON_CLASS =
-  "inline-flex items-center gap-1.5 rounded-md bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground";
+  "btn-caps inline-flex items-center gap-1.5 rounded-md bg-primary px-4 py-2 text-[0.72rem] text-primary-foreground";
 
 const PdfIcon = () => (
   <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
@@ -122,7 +123,7 @@ export function GeneratePdfButton({
         type="button"
         disabled
         title={hardBlockReason}
-        className={`${BUTTON_CLASS} cursor-not-allowed border border-status-red/40 bg-status-red/10 text-status-red opacity-90 hover:bg-status-red/10`}
+        className={cn(BUTTON_CLASS, "cursor-not-allowed border border-status-red/60 bg-transparent text-status-red")}
       >
         <PdfIcon />
         Generate PDF — blocked
@@ -218,7 +219,7 @@ export function GeneratePdfButton({
               type="button"
               onClick={() => setOpen(false)}
               disabled={isPending}
-              className="inline-flex h-9 items-center rounded-md border border-border bg-transparent px-4 text-sm font-medium hover:bg-accent disabled:opacity-60"
+              className="btn-caps inline-flex h-9 items-center rounded-md border border-input bg-transparent px-4 hover:bg-accent disabled:opacity-60"
             >
               Cancel
             </button>
@@ -226,7 +227,7 @@ export function GeneratePdfButton({
               type="button"
               onClick={handleConfirm}
               disabled={isPending}
-              className="inline-flex h-9 items-center rounded-md bg-primary px-4 text-sm font-semibold text-primary-foreground hover:bg-brand-dark disabled:opacity-60"
+              className="btn-caps inline-flex h-9 items-center rounded-md bg-primary px-4 text-primary-foreground hover:bg-brand-dark disabled:opacity-60"
             >
               {isPending ? "Releasing…" : "Release & generate"}
             </button>

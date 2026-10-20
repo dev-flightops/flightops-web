@@ -1,3 +1,5 @@
+import { PageHeader } from "@/components/ff/page-header";
+import { Stat, StatStrip, type StatTone } from "@/components/ff/stat-strip";
 import type {
   CurrencyItemRef,
   PilotCurrencyCell,
@@ -37,43 +39,21 @@ export function ProfileHeader({
   const compliancePct = computeCompliancePercent(cells);
 
   return (
-    <div className="rounded-lg border border-border bg-card p-4">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="page-title">
-            {pilot.full_name}
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">{pilot.email}</p>
-        </div>
-        <span className={overallToken.badge}>{overallToken.label}</span>
-      </div>
-
-      <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <Stat label="Compliance" value={`${compliancePct}%`} accent={complianceAccent(overallStatus)} />
-        <Stat label="Early" value={stats.early_month} accent="text-status-teal" />
-        <Stat label="Grace" value={stats.grace_month} accent="text-status-yellow" />
-        <Stat label="Non-Current" value={stats.non_current} accent="text-status-red" />
-      </div>
-    </div>
-  );
-}
-
-function Stat({
-  label,
-  value,
-  accent,
-}: {
-  label: string;
-  value: number | string;
-  accent: string;
-}) {
-  return (
-    <div className="rounded-md border border-border bg-background px-3 py-2 text-center">
-      <div className={`text-lg font-bold ${accent}`}>{value}</div>
-      <div className="text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
-        {label}
-      </div>
-    </div>
+    <>
+      <PageHeader
+        back={{ href: "/compliance/crew-currency", label: "Back to compliance board" }}
+        eyebrow="Pilot"
+        title={pilot.full_name}
+        description={pilot.email}
+        actions={<span className={overallToken.badge}>{overallToken.label}</span>}
+      />
+      <StatStrip label="Currency summary">
+        <Stat label="Compliance" value={`${compliancePct}%`} tone={complianceTone(overallStatus)} />
+        <Stat label="Early" value={stats.early_month} tone="teal" />
+        <Stat label="Grace" value={stats.grace_month} tone="yellow" />
+        <Stat label="Non-Current" value={stats.non_current} tone="red" />
+      </StatStrip>
+    </>
   );
 }
 
@@ -114,9 +94,9 @@ function computeCompliancePercent(cells: PilotCurrencyCell[]): number {
   return Math.round((compliant / cells.length) * 100);
 }
 
-function complianceAccent(status: CurrencyStatus): string {
-  if (status === "non_current") return "text-status-red";
-  if (status === "grace_month") return "text-status-yellow";
-  if (status === "not_started") return "text-muted-foreground";
-  return "text-status-green";
+function complianceTone(status: CurrencyStatus): StatTone {
+  if (status === "non_current") return "red";
+  if (status === "grace_month") return "yellow";
+  if (status === "not_started") return "neutral";
+  return "green";
 }

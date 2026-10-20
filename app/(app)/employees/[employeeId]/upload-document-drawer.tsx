@@ -60,7 +60,7 @@ export function UploadDocumentDrawer({
           setError(null);
           setOpen(true);
         }}
-        className="rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-dark"
+        className="btn-caps rounded-md bg-primary px-3 py-1.5 text-white hover:bg-brand-dark text-[0.72rem]"
       >
         + Upload
       </button>
@@ -167,14 +167,14 @@ export function UploadDocumentDrawer({
                 <button
                   type="submit"
                   disabled={pending}
-                  className="rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-dark disabled:opacity-50"
+                  className="btn-caps rounded-md bg-primary px-3 py-1.5 text-white hover:bg-brand-dark disabled:opacity-50 text-[0.72rem]"
                 >
                   {pending ? "Uploading…" : "Upload"}
                 </button>
                 <button
                   type="button"
                   onClick={() => setOpen(false)}
-                  className="rounded-md border border-border px-3 py-1.5 text-xs font-semibold text-foreground/80 hover:bg-accent"
+                  className="btn-caps rounded-md border border-input px-3 py-1.5 text-foreground hover:bg-accent text-[0.72rem]"
                 >
                   Cancel
                 </button>

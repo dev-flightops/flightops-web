@@ -52,7 +52,7 @@ export default async function ExecutiveSummaryPage({
         <h1 className="page-title">Executive Summary</h1>
         <div
           role="alert"
-          className="mt-4 rounded-xl border border-border bg-card px-4 py-8 text-center text-sm text-muted-foreground"
+          className="mt-4 rounded-lg border border-border bg-card px-4 py-8 text-center text-sm text-muted-foreground"
         >
           {status === 401
             ? "Your session expired — please sign in again."

@@ -192,7 +192,7 @@ export default async function RamperPhotosPage({
         )}
 
         <div className="mt-3 border-t border-border pt-3">
-          <div className="mb-1.5 text-[0.7rem] font-bold uppercase tracking-[0.06em] text-muted-foreground">
+          <div className="mb-1.5 eyebrow">
             Required Photos
           </div>
           <ul className="space-y-1 text-sm">

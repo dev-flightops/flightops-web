@@ -124,14 +124,14 @@ export function CompleteMaintenanceButton({
                 type="button"
                 onClick={() => setOpen(false)}
                 disabled={pending}
-                className="rounded-md border border-border bg-card px-3 py-2 text-xs font-semibold text-foreground hover:bg-accent"
+                className="btn-caps rounded-md border border-input px-3 py-2 text-foreground hover:bg-accent text-[0.72rem]"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={pending}
-                className="inline-flex items-center gap-1.5 rounded-md bg-status-green-fill px-4 py-2 text-xs font-semibold text-white hover:brightness-95 disabled:opacity-60"
+                className="btn-caps inline-flex items-center gap-1.5 rounded-md bg-status-green-fill px-4 py-2 text-white hover:brightness-95 disabled:opacity-60 text-[0.72rem]"
               >
                 {pending && <Spinner size="xs" />}
                 {pending ? "Completing…" : "Mark complete"}

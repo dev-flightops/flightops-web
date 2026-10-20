@@ -72,7 +72,7 @@ export default async function MyCapasPage() {
                     <div className="mb-0.5 flex flex-wrap items-baseline gap-2">
                       <span className="font-semibold">{c.title}</span>
                       {overdue ? (
-                        <span className="rounded border border-status-red/40 bg-status-red/10 px-1.5 py-0.5 text-[0.6rem] font-semibold uppercase tracking-wider text-status-red">
+                        <span className="status-mark text-status-red">
                           Overdue
                         </span>
                       ) : null}

@@ -164,7 +164,7 @@ function LifecyclePrompt({
       <div className="font-semibold text-foreground">{panelTitle}</div>
       <p className="mt-0.5 text-[0.65rem] text-muted-foreground">{explainer}</p>
       <label className="mt-2 block">
-        <span className="text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+        <span className="eyebrow">
           Reason (optional)
         </span>
         <textarea
@@ -211,7 +211,7 @@ function LifecyclePrompt({
             setReason("");
             setError(null);
           }}
-          className="rounded-md border border-border bg-background px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-accent disabled:opacity-50"
+          className="btn-caps rounded-md border border-input px-3 py-1.5 text-foreground hover:bg-accent disabled:opacity-50 text-[0.72rem]"
         >
           Cancel
         </button>

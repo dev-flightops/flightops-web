@@ -31,7 +31,7 @@ export function NewUnitDrawer() {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="rounded-md bg-primary px-3 py-2 text-xs font-semibold text-white hover:bg-brand-dark"
+        className="btn-caps rounded-md bg-primary px-3 py-2 text-white hover:bg-brand-dark text-[0.72rem]"
       >
         + New House
       </button>
@@ -114,14 +114,14 @@ export function NewUnitDrawer() {
                 <button
                   type="button"
                   onClick={() => setOpen(false)}
-                  className="rounded-md border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground/80 hover:bg-accent"
+                  className="btn-caps rounded-md border border-input px-3 py-1.5 text-foreground hover:bg-accent text-[0.72rem]"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={pending}
-                  className="rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-dark disabled:opacity-60"
+                  className="btn-caps rounded-md bg-primary px-3 py-1.5 text-white hover:bg-brand-dark disabled:opacity-60 text-[0.72rem]"
                 >
                   {pending ? "Creating…" : "Create unit"}
                 </button>

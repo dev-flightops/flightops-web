@@ -58,7 +58,7 @@ export function KeyManager({ keys }: { keys: ApiKeyRow[] }) {
 
       <form
         action={createAction}
-        className="rounded-xl border border-border bg-card p-4"
+        className="rounded-lg border border-border bg-card p-4"
       >
         <h2 className="mb-3 text-sm font-semibold text-foreground">
           Issue a new key
@@ -97,7 +97,7 @@ export function KeyManager({ keys }: { keys: ApiKeyRow[] }) {
           <button
             type="submit"
             disabled={creating}
-            className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-brand-dark disabled:opacity-60 sm:mt-[1.35rem]"
+            className="btn-caps rounded-md bg-primary px-4 py-2 text-white hover:bg-brand-dark disabled:opacity-60 sm:mt-[1.35rem]"
           >
             {creating ? "Issuing…" : "Issue key"}
           </button>
@@ -161,7 +161,7 @@ function NewKeyPanel({ plaintext, name }: { plaintext: string; name: string }) {
               () => setCopied(false),
             );
           }}
-          className="rounded-md bg-status-green-fill px-3 py-2 text-xs font-semibold text-white hover:brightness-95"
+          className="btn-caps rounded-md bg-status-green-fill px-3 py-2 text-white hover:brightness-95 text-[0.72rem]"
         >
           {copied ? "Copied" : "Copy"}
         </button>

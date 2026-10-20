@@ -171,7 +171,7 @@ export function LogCompletionModal({
             <button
               type="submit"
               disabled={pending || state.status === "success"}
-              className="inline-flex items-center gap-1.5 rounded-md bg-primary px-4 py-2 text-xs font-semibold text-white hover:bg-brand-dark disabled:opacity-50"
+              className="btn-caps inline-flex items-center gap-1.5 rounded-md bg-primary px-4 py-2 text-white hover:bg-brand-dark disabled:opacity-50 text-[0.72rem]"
             >
               {pending && <Spinner size="xs" />}
               {pending ? "Saving…" : "Save Completion"}

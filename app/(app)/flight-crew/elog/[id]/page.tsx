@@ -226,7 +226,7 @@ function ManualEntryBadge() {
   return (
     <span
       title="Pilot started this log without a dispatch packet (ferry, training, historical entry)."
-      className="rounded border border-status-yellow/40 bg-status-yellow/10 px-1.5 py-0.5 text-[0.6rem] font-semibold uppercase tracking-[0.08em] text-status-yellow"
+      className="status-mark text-status-yellow"
     >
       Manual Entry
     </span>

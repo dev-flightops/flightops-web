@@ -215,7 +215,7 @@ function EditingBanner({
       <button
         type="button"
         onClick={onCancel}
-        className="rounded border border-border bg-background px-2 py-0.5 text-[0.7rem] font-semibold text-foreground/80 hover:bg-accent"
+        className="btn-caps rounded border border-input px-2 py-0.5 text-foreground hover:bg-accent text-[0.68rem]"
       >
         Cancel edit
       </button>
@@ -225,7 +225,7 @@ function EditingBanner({
 
 function FlightContextBar({ flight }: { flight: FlightDetail }) {
   return (
-    <header className="mb-4 rounded-xl border border-border bg-card px-4 py-3">
+    <header className="mb-4 rounded-lg border border-border bg-card px-4 py-3">
       <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
         <span className="font-mono text-lg font-bold text-foreground">
           {flight.flight_number}
@@ -393,7 +393,7 @@ const STEP_LABELS_BY_NUMBER: Record<number, string> = {
 function StepStubPanel({ stepNumber }: { stepNumber: number }) {
   const label = STEP_LABELS_BY_NUMBER[stepNumber] ?? `Step ${stepNumber}`;
   return (
-    <section className="rounded-xl border border-dashed border-border bg-card/40 px-5 py-8 text-center">
+    <section className="rounded-lg border border-dashed border-border bg-card/40 px-5 py-8 text-center">
       <p className="text-xs uppercase tracking-[0.08em] text-muted-foreground">
         Step {stepNumber}
       </p>

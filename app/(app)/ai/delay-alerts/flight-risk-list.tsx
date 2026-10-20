@@ -77,7 +77,7 @@ function Assessment({ data }: { data: DelayAssessment }) {
       <p className="text-[0.65rem] text-primary">{data.advisory}</p>
 
       <div>
-        <h4 className="mb-1.5 text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+        <h4 className="mb-1.5 eyebrow">
           Measured · last {data.window_days} days
         </h4>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -126,7 +126,7 @@ function Assessment({ data }: { data: DelayAssessment }) {
 
       {judgement ? (
         <div className="space-y-2">
-          <h4 className="text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+          <h4 className="eyebrow">
             Reading
           </h4>
           {judgement.historical_context && (

@@ -49,7 +49,7 @@ export function NotamAcknowledgmentPanel({
         title="NOTAM Acknowledgment"
         titleAction={
           <span
-            className="rounded-md border border-status-yellow/40 bg-status-yellow/10 px-2 py-0.5 text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-status-yellow"
+            className="status-mark text-status-yellow"
             title="The FAA NOTAM feed isn't connected yet. This records that you reviewed NOTAMs outside the app."
           >
             Manual acknowledgment
@@ -107,11 +107,11 @@ export function NotamAcknowledgmentPanel({
       titleAction={
         <div className="flex items-center gap-2">
           {allAcked ? (
-            <span className="rounded-md border border-status-green/40 bg-status-green/10 px-2 py-0.5 text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-status-green">
+            <span className="status-mark text-status-green">
               {icaos.length}/{icaos.length} acknowledged
             </span>
           ) : (
-            <span className="rounded-md border border-status-yellow/40 bg-status-yellow/10 px-2 py-0.5 text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-status-yellow">
+            <span className="status-mark text-status-yellow">
               {acked.size}/{icaos.length} acknowledged
             </span>
           )}
@@ -177,7 +177,7 @@ export function NotamAcknowledgmentPanel({
             type="button"
             onClick={ackAll}
             disabled={isPending}
-            className="rounded-md border border-primary/40 bg-background px-3 py-1 text-[0.7rem] font-semibold text-primary hover:bg-primary/5 disabled:opacity-60"
+            className="btn-caps rounded-md border border-primary/40 bg-background px-3 py-1 text-primary hover:bg-primary/5 disabled:opacity-60 text-[0.68rem]"
           >
             Acknowledge all
           </button>

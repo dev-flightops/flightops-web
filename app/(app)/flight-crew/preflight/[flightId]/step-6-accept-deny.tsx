@@ -106,7 +106,7 @@ export function AcceptOrDenyStep({ flightId, initial }: Props) {
   };
 
   return (
-    <section className="rounded-xl border border-border bg-card">
+    <section className="rounded-lg border border-border bg-card">
       <header className="border-b border-border px-5 py-3">
         <p className="text-xs uppercase tracking-[0.08em] text-muted-foreground">
           Step 6
@@ -154,7 +154,7 @@ export function AcceptOrDenyStep({ flightId, initial }: Props) {
               type="button"
               onClick={() => advanceAfterAccept()}
               disabled={pending}
-              className="mt-2.5 rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-dark disabled:opacity-50"
+              className="btn-caps mt-2.5 rounded-md bg-primary px-3 py-1.5 text-white hover:bg-brand-dark disabled:opacity-50 text-[0.72rem]"
             >
               {pending ? "Recording…" : "Continue to Step 7 →"}
             </button>

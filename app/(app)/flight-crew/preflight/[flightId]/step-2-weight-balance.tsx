@@ -92,7 +92,7 @@ export function WeightAndBalanceStep({ flightId, flight, openReturn }: Props) {
   };
 
   return (
-    <section className="rounded-xl border border-border bg-card">
+    <section className="rounded-lg border border-border bg-card">
       <header className="border-b border-border px-5 py-3">
         <p className="text-xs uppercase tracking-[0.08em] text-muted-foreground">
           Step 2
@@ -254,7 +254,7 @@ export function WeightAndBalanceStep({ flightId, flight, openReturn }: Props) {
                 type="button"
                 disabled={!canReturn}
                 onClick={handleReturn}
-                className="inline-flex w-full items-center justify-center rounded-md bg-status-red-fill px-4 py-2.5 text-sm font-semibold text-white transition-opacity hover:brightness-95 disabled:opacity-50"
+                className="btn-caps inline-flex w-full items-center justify-center rounded-md bg-status-red-fill px-4 py-2.5 text-white transition-opacity hover:brightness-95 disabled:opacity-50"
               >
                 {pending ? "Sending…" : "Send back to dispatch"}
               </button>
@@ -263,7 +263,7 @@ export function WeightAndBalanceStep({ flightId, flight, openReturn }: Props) {
                 type="button"
                 disabled={!canContinue}
                 onClick={handleContinue}
-                className="inline-flex w-full items-center justify-center rounded-md bg-primary px-4 py-2.5 text-sm font-semibold text-white transition-opacity hover:bg-brand-dark disabled:opacity-50"
+                className="btn-caps inline-flex w-full items-center justify-center rounded-md bg-primary px-4 py-2.5 text-white transition-opacity hover:bg-brand-dark disabled:opacity-50"
               >
                 {pending ? "Saving…" : "Continue to Step 3 →"}
               </button>
@@ -366,7 +366,7 @@ function VerdictOption({
 function Item({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <dt className="text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+      <dt className="eyebrow">
         {label}
       </dt>
       <dd className="m-0 font-mono text-foreground">{value}</dd>

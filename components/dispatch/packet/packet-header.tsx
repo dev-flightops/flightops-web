@@ -1,3 +1,6 @@
+import { buttonOutline, buttonSolid } from "@/components/ff/controls";
+import { PageHeader } from "@/components/ff/page-header";
+import { cn } from "@/lib/utils";
 import Link from "next/link";
 
 import type { FlightDetail } from "@/lib/api/types";
@@ -24,74 +27,63 @@ export function PacketHeader({
   const canRelease = flight?.status === "scheduled";
 
   return (
-    <div className="mb-5 flex flex-wrap items-end justify-between gap-2">
-      <div>
-        <h1 className="page-title text-foreground">
-          Flight Dispatch Packet
-        </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          {tenantName} · FAR 135 Dispatch Release
-        </p>
-      </div>
+    <PageHeader
+      title="Flight Dispatch Packet"
+      description={`${tenantName} · FAR 135 Dispatch Release`}
+      actions={
+        <>
+          {canRelease ? (
+            // Anchor scrolls to the existing release section in the right
+            // column. The actual state mutation lives on the ReleaseButton
+            // there; legacy renders the same "switch" label as a button
+            // that does the same hand-off.
+            <a href="#release-actions" className={cn(buttonOutline, "border-primary text-primary")}>
+              Switch to Release Mode →
+            </a>
+          ) : (
+            <span
+              title={
+                flight
+                  ? `This flight is ${flight.status} — nothing to release.`
+                  : "Pick a scheduled flight to enable release."
+              }
+              className="status-mark mr-2 text-primary"
+            >
+              Planning mode
+            </span>
+          )}
 
-      <div className="flex flex-wrap items-center gap-2">
-        {canRelease ? (
-          // Anchor scrolls to the existing release section in the right
-          // column. The actual state mutation lives on the ReleaseButton
-          // there; legacy renders the same "switch" label as a button
-          // that does the same hand-off.
-          <a
-            href="#release-actions"
-            className="inline-flex items-center gap-1 rounded-md border border-primary bg-primary/[0.08] px-3 py-1.5 text-[0.72rem] font-semibold text-primary hover:bg-primary/[0.14]"
+          {/* Building a flight was only reachable from Flight Following,
+              under the label "Open Flight". Dispatch is where a
+              dispatcher goes to work a flight, so it is also where they
+              go when the flight does not exist yet — the client reported
+              being "mostly unsuccessful in building flight" on 9/9. Same
+              single form, linked from where the need arises. */}
+          <Link href="/flight-following/new" className={buttonSolid}>
+            + New Flight
+          </Link>
+
+          {/* AI Assistant — disabled, M4 (ai-service). */}
+          <button
+            type="button"
+            disabled
+            title="AI Assistant · Coming in M4"
+            className={cn(buttonOutline, "cursor-not-allowed border-status-purple/40 text-status-purple")}
           >
-            Switch to Release Mode →
-          </a>
-        ) : (
-          <span
-            title={
-              flight
-                ? `This flight is ${flight.status} — nothing to release.`
-                : "Pick a scheduled flight to enable release."
-            }
-            className="inline-flex items-center gap-1.5 rounded-md border border-primary/30 bg-primary/5 px-3 py-1.5 text-[0.72rem] font-semibold text-primary"
+            AI Assistant
+          </button>
+
+          {/* History — disabled, M3 (no dispatch-packet history table yet). */}
+          <button
+            type="button"
+            disabled
+            title="Packet history · Coming in M3"
+            className={cn(buttonOutline, "cursor-not-allowed")}
           >
-            Planning Mode
-          </span>
-        )}
-
-        {/* Building a flight was only reachable from Flight Following,
-            under the label "Open Flight". Dispatch is where a
-            dispatcher goes to work a flight, so it is also where they
-            go when the flight does not exist yet — the client reported
-            being "mostly unsuccessful in building flight" on 9/9. Same
-            single form, linked from where the need arises. */}
-        <Link
-          href="/flight-following/new"
-          className="inline-flex items-center gap-1 rounded-md bg-primary px-3 py-1.5 text-[0.72rem] font-semibold text-white hover:bg-brand-dark"
-        >
-          + New Flight
-        </Link>
-
-        {/* AI Assistant — disabled, M4 (ai-service). */}
-        <button
-          type="button"
-          disabled
-          title="AI Assistant · Coming in M4"
-          className="inline-flex cursor-not-allowed items-center gap-1.5 rounded-md border border-status-purple/40 bg-transparent px-3 py-1.5 text-xs font-semibold text-status-purple opacity-60"
-        >
-          AI Assistant
-        </button>
-
-        {/* History — disabled, M3 (no dispatch-packet history table yet). */}
-        <button
-          type="button"
-          disabled
-          title="Packet history · Coming in M3"
-          className="inline-flex cursor-not-allowed items-center gap-1 rounded-md border border-border bg-transparent px-3 py-1.5 text-xs font-semibold text-foreground opacity-60"
-        >
-          History
-        </button>
-      </div>
-    </div>
+            History
+          </button>
+        </>
+      }
+    />
   );
 }

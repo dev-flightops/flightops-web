@@ -131,7 +131,7 @@ export default async function SettingsLoadTeamsPage({
                 ? "/settings/load-teams"
                 : "/settings/load-teams?status=all"
             }
-            className="rounded-md border border-border bg-card px-3 py-2 text-sm font-semibold text-foreground hover:bg-accent"
+            className="btn-caps rounded-md border border-input px-3 py-2 text-foreground hover:bg-accent"
           >
             {statusFilter === "all" ? "Hide Inactive" : "Show Inactive"}
           </Link>
@@ -242,7 +242,7 @@ function BaseSection({
           {stationName ? `${base} — ${stationName}` : base}
         </h2>
         <div className="flex items-center gap-3">
-          <span className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+          <span className="eyebrow">
             {teams.length} team{teams.length === 1 ? "" : "s"}
           </span>
           <TeamDialog

@@ -124,14 +124,14 @@ export default async function StationDashboardPage({
 
       {/* Row 2 — 2-col: Inbound table + Alerts */}
       <div className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2">
-        <section className="rounded-xl border border-border bg-card p-5">
+        <section className="rounded-lg border border-border bg-card p-5">
           <h2 className="mb-3 text-xs font-bold uppercase tracking-wider text-muted-foreground">
             Inbound Flights
           </h2>
           <StationFlightsTable flights={inbound} direction="in" />
         </section>
 
-        <section className="rounded-xl border border-border bg-card p-5">
+        <section className="rounded-lg border border-border bg-card p-5">
           <div className="mb-3 flex items-baseline justify-between">
             <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
               Active Alerts
@@ -148,7 +148,7 @@ export default async function StationDashboardPage({
       </div>
 
       {/* Row 3 — All active flights at this station */}
-      <section className="mt-5 rounded-xl border border-border bg-card p-5">
+      <section className="mt-5 rounded-lg border border-border bg-card p-5">
         <div className="mb-3 flex items-baseline justify-between">
           <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
             All Active Flights
@@ -168,7 +168,7 @@ export default async function StationDashboardPage({
       </section>
 
       {/* Row 4 — Network station summary (all bases, not just today's traffic) */}
-      <section className="mt-5 rounded-xl border border-border bg-card p-5">
+      <section className="mt-5 rounded-lg border border-border bg-card p-5">
         <h2 className="mb-3 text-xs font-bold uppercase tracking-wider text-muted-foreground">
           Network Station Summary — Today
         </h2>

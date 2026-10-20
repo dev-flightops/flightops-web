@@ -141,7 +141,7 @@ export default async function BookingDetailPage({
         ) : null}
         {booking.notes ? (
           <div>
-            <div className="text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+            <div className="eyebrow">
               Notes
             </div>
             <p className="mt-1 whitespace-pre-wrap text-sm text-foreground/90">
@@ -155,7 +155,7 @@ export default async function BookingDetailPage({
       booking.cancelled_at ||
       booking.completed_at ? (
         <section className="mb-6 rounded-lg border border-border bg-card p-5">
-          <h2 className="mb-3 text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+          <h2 className="mb-3 eyebrow">
             Lifecycle history
           </h2>
           <ul className="space-y-2 text-xs">
@@ -230,7 +230,7 @@ function DetailRow({
 }) {
   return (
     <div className="grid grid-cols-[8rem_1fr] gap-2 text-sm">
-      <span className="text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+      <span className="eyebrow">
         {label}
       </span>
       {href ? (

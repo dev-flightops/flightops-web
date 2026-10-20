@@ -55,7 +55,7 @@ function TonePicker({
           />
           <span
             className={cn(
-              "block h-6 w-6 rounded-full border-2 border-transparent peer-checked:border-foreground peer-focus-visible:ring-2 peer-focus-visible:ring-primary",
+              "block h-6 w-6 rounded-sm border-2 border-transparent peer-checked:border-foreground peer-focus-visible:ring-2 peer-focus-visible:ring-primary",
               TAG_SWATCH[tone],
             )}
           />

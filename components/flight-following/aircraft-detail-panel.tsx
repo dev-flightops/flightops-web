@@ -110,7 +110,7 @@ export function AircraftDetailPanel({
         {hasFlight ? (
           <Link
             href={`/dispatch?flight=${position.flight_id}`}
-            className="rounded-md bg-primary px-3 py-2 text-center text-[0.7rem] font-semibold text-white hover:bg-brand-dark"
+            className="btn-caps rounded-md bg-primary px-3 py-2 text-center text-white hover:bg-brand-dark text-[0.68rem]"
           >
             Open Dispatch Packet →
           </Link>
@@ -125,7 +125,7 @@ export function AircraftDetailPanel({
             type="button"
             onClick={onShowTrack}
             disabled={isTrackLoading}
-            className="inline-flex w-full items-center justify-center gap-1.5 rounded-md border border-primary/40 bg-background px-2 py-1.5 text-[0.65rem] font-semibold uppercase tracking-[0.06em] text-primary hover:bg-primary/5 disabled:opacity-50"
+            className="btn-caps inline-flex w-full items-center justify-center gap-1.5 rounded-md border border-primary/40 bg-background px-2 py-1.5 text-primary hover:bg-primary/5 disabled:opacity-50 text-[0.68rem]"
           >
             {isTrackLoading && <Spinner size="xs" />}
             {isTrackLoading ? "Loading track…" : "Show flight track"}
@@ -135,7 +135,7 @@ export function AircraftDetailPanel({
           <button
             type="button"
             onClick={onClearTrack}
-            className="w-full rounded-md border border-border bg-muted/60 px-2 py-1.5 text-[0.65rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground hover:bg-accent"
+            className="btn-caps w-full rounded-md border border-input px-2 py-1.5 text-muted-foreground hover:bg-accent text-[0.68rem]"
           >
             Clear track
           </button>

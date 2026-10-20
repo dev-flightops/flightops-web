@@ -303,7 +303,7 @@ function NumberField({
 function Derived({ label, hint }: { label: string; hint: string }) {
   return (
     <div>
-      <div className="text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+      <div className="eyebrow">
         {label}
       </div>
       <div className="text-[0.65rem] italic text-muted-foreground">

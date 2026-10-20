@@ -123,7 +123,7 @@ export function InvoiceActions({
           type="button"
           onClick={() => void download()}
           disabled={pending !== null}
-          className="rounded-md border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-accent disabled:opacity-50"
+          className="btn-caps rounded-md border border-input px-3 py-1.5 text-foreground hover:bg-accent disabled:opacity-50 text-[0.72rem]"
         >
           {pending === "pdf" ? "Building…" : "Download PDF"}
         </button>
@@ -135,7 +135,7 @@ export function InvoiceActions({
               void run("send", () => sendInvoiceAction(invoiceId))
             }
             disabled={pending !== null}
-            className="rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-dark disabled:opacity-50"
+            className="btn-caps rounded-md bg-primary px-3 py-1.5 text-white hover:bg-brand-dark disabled:opacity-50 text-[0.72rem]"
           >
             {/* Says what it does: nothing is emailed yet, the invoice
                 is only recorded as sent (#25, item 8). */}
@@ -148,7 +148,7 @@ export function InvoiceActions({
             type="button"
             onClick={openMarkPaid}
             disabled={pending !== null}
-            className="rounded-md bg-status-green-fill px-3 py-1.5 text-xs font-semibold text-white hover:brightness-95 disabled:opacity-50"
+            className="btn-caps rounded-md bg-status-green-fill px-3 py-1.5 text-white hover:brightness-95 disabled:opacity-50 text-[0.72rem]"
           >
             Mark paid
           </button>
@@ -244,7 +244,7 @@ export function InvoiceActions({
               disabled={
                 pending !== null || !method || !paidOn || paidOn > today
               }
-              className="rounded-md bg-status-green-fill px-3 py-1.5 text-xs font-semibold text-white hover:brightness-95 disabled:opacity-40"
+              className="btn-caps rounded-md bg-status-green-fill px-3 py-1.5 text-white hover:brightness-95 disabled:opacity-40 text-[0.72rem]"
             >
               {pending === "paid" ? "Recording…" : "Confirm paid"}
             </button>
@@ -292,7 +292,7 @@ export function InvoiceActions({
                 })
               }
               disabled={pending !== null || reason.trim().length < 3}
-              className="rounded-md bg-status-red-fill px-3 py-1.5 text-xs font-semibold text-white hover:brightness-95 disabled:opacity-40"
+              className="btn-caps rounded-md bg-status-red-fill px-3 py-1.5 text-white hover:brightness-95 disabled:opacity-40 text-[0.72rem]"
             >
               {pending === "void" ? "Voiding…" : "Confirm void"}
             </button>

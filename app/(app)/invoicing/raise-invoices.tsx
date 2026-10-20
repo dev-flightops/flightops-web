@@ -90,7 +90,7 @@ export function RaiseInvoices() {
         aria-expanded={open}
         aria-controls={open ? panelId : undefined}
         onClick={() => (open ? setOpen(false) : void openPanel())}
-        className="ml-auto self-center rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-dark"
+        className="btn-caps ml-auto self-center rounded-md bg-primary px-3 py-1.5 text-white hover:bg-brand-dark text-[0.72rem]"
       >
         Raise invoices
       </button>
@@ -151,7 +151,7 @@ export function RaiseInvoices() {
                   type="button"
                   onClick={() => void raise()}
                   disabled={!flightId || pending}
-                  className="rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-dark disabled:opacity-50"
+                  className="btn-caps rounded-md bg-primary px-3 py-1.5 text-white hover:bg-brand-dark disabled:opacity-50 text-[0.72rem]"
                 >
                   {pending ? "Raising…" : "Raise"}
                 </button>
@@ -239,7 +239,7 @@ function RaiseOutcome({
                   {money(inv.totalCents)}
                 </span>
                 {inv.hasUnpricedLines && (
-                  <span className="rounded bg-status-yellow/15 px-1.5 py-0.5 text-[0.6rem] font-semibold uppercase text-status-yellow">
+                  <span className="status-mark text-status-yellow">
                     needs pricing
                   </span>
                 )}

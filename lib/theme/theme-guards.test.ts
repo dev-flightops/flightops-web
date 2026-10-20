@@ -75,7 +75,7 @@ function classStrings(file: string): { text: string; index: number }[] {
   }));
 }
 
-/** The surfaces the redesign has reached (#78, #79): pills, non-scrim
+/** The surfaces the redesign has reached (#78, #79, #80): pills, non-scrim
  *  gradients and tinted badge chips stay out of them. The list grows with
  *  each wave of the rollout. */
 const REDESIGNED = [
@@ -91,6 +91,19 @@ const REDESIGNED = [
   "components/flight-following/",
   "components/app-shell/app-shell-header.tsx",
   "components/app-shell/department-nav.tsx",
+  // Wave B, Operations (#80).
+  "app/(app)/dispatch/",
+  "app/(app)/schedule/",
+  "app/(app)/weather/",
+  "app/(app)/village-wx/",
+  "app/(app)/crew/",
+  "app/(app)/compliance/",
+  "app/(app)/ramp-ops/",
+  "app/(app)/eod/",
+  "app/(app)/flight-crew/history/",
+  "components/dispatch/",
+  "components/weather/",
+  "components/village-wx/",
 ];
 
 describe("theme guards", () => {

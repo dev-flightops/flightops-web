@@ -552,7 +552,7 @@ function CheckboxField({
   // Night Landings / Pilot Flying to its left.
   return (
     <div>
-      <div className="mb-1 text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+      <div className="mb-1 eyebrow">
         Overnight?
       </div>
       <label className="inline-flex h-9 cursor-pointer items-center gap-2 rounded-md border border-border bg-background px-3 text-xs text-foreground">

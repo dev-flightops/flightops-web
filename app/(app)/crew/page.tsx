@@ -1,6 +1,9 @@
 import Link from "next/link";
 
 import { auth } from "@/auth";
+import { buttonOutline } from "@/components/ff/controls";
+import { PageHeader } from "@/components/ff/page-header";
+import { SegmentLinks } from "@/components/ff/segment-links";
 import { ApiError } from "@/lib/api/client";
 import { getCrewCalendar, type CrewCalendar } from "@/lib/api/crew-calendar";
 import { todayIsoDay } from "@/lib/iso-day";
@@ -43,8 +46,7 @@ function baseChoices(bases: string[], station: string | null): string[] {
   return station && !bases.includes(station) ? [...bases, station].sort() : bases;
 }
 
-const NAV_LINK =
-  "rounded-md border border-border bg-card px-3 py-1.5 text-sm font-semibold text-foreground hover:bg-accent";
+const NAV_LINK = cn(buttonOutline, "px-3 py-1.5");
 
 export default async function CrewCalendarPage({
   searchParams,
@@ -74,19 +76,17 @@ export default async function CrewCalendarPage({
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
-      <header className="mb-5">
-        <h1 className="page-title">Crew Calendar</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Who is rostered where, on which aircraft type, and when.
-        </p>
-      </header>
+      <PageHeader
+        title="Crew Calendar"
+        description="Who is rostered where, on which aircraft type, and when."
+      />
 
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <nav aria-label="Month" className="flex items-center gap-2">
           <Link href={href(shiftMonth(month, -1), station)} className={NAV_LINK} aria-label="Previous month">
             ←
           </Link>
-          <h2 className="min-w-[10rem] text-center text-lg font-semibold">
+          <h2 className="min-w-[11rem] text-center font-display text-xl font-extrabold uppercase tracking-[0.03em]">
             {monthLabel(month)}
           </h2>
           <Link href={href(shiftMonth(month, 1), station)} className={NAV_LINK} aria-label="Next month">
@@ -100,23 +100,14 @@ export default async function CrewCalendarPage({
         </nav>
 
         {calendar && calendar.bases.length > 0 && (
-          <nav aria-label="Base" className="flex flex-wrap gap-1.5">
-            {[null, ...baseChoices(calendar.bases, station)].map((code) => (
-              <Link
-                key={code ?? "all"}
-                href={href(month, code)}
-                aria-current={code === station ? "page" : undefined}
-                className={cn(
-                  "rounded-md border px-2.5 py-1 text-xs font-semibold",
-                  code === station
-                    ? "border-primary bg-primary text-primary-foreground"
-                    : "border-border bg-card text-foreground hover:bg-accent",
-                )}
-              >
-                {code ?? "All bases"}
-              </Link>
-            ))}
-          </nav>
+          <SegmentLinks
+            label="Base"
+            items={[null, ...baseChoices(calendar.bases, station)].map((code) => ({
+              href: href(month, code),
+              label: code ?? "All bases",
+              active: code === station,
+            }))}
+          />
         )}
       </div>
 
