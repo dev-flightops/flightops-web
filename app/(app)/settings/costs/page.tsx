@@ -2,6 +2,9 @@ import Link from "next/link";
 
 import { getOperatingCosts } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
+import { listFuelTypes } from "@/lib/api/ground";
+import { listAircraft } from "@/lib/api/ops";
+import { AircraftTypeForm } from "./aircraft-type-form";
 import type {
   AircraftCostRow,
   FuelPriceRow,
@@ -22,10 +25,11 @@ import type {
  *   4. Cost Per Flight Hour Calculator (aircraft × base matrix,
  *      only when both above sections have data)
  *
- * Add/Edit dialogs land in a follow-up — the endpoints exist
- * (POST /settings/costs/aircraft-type, /fuel-price, /landing-fee,
- * /route + DELETE /settings/costs/{resource}/{id}) but the modal
- * UI isn't wired yet. Header controls stay disabled until then.
+ * The aircraft type form works (#75): the load plan needs each type's
+ * burn rate and fuel to estimate a trip's fuel, so it had to. The fuel
+ * price, landing fee and route forms are still a follow-up — their
+ * endpoints exist (POST /settings/costs/{fuel-price,landing-fee,route},
+ * DELETE /settings/costs/{resource}/{id}) but the UI isn't wired yet.
  */
 
 const BACKEND_HINT_EDIT =
@@ -47,6 +51,17 @@ export default async function SettingsCostsPage() {
           ? "Exec Admin role required to view operating cost configuration."
           : "Operating costs unavailable. Try refreshing in a moment.";
   }
+
+  // For the aircraft type form: the company's fuels, and the names to
+  // suggest as types: each aircraft's airframe type, else its model, which
+  // is how costing and the fuel estimate look a type up. Either can fail
+  // without losing the page.
+  const [fuelTypes, fleet] = await Promise.all([
+    listFuelTypes().then((r) => r.items.map((f) => ({ code: f.code, label: f.label }))).catch(() => []),
+    listAircraft()
+      .then((r) => [...new Set(r.items.map((a) => a.airframe_type || a.model).filter((m): m is string => !!m))])
+      .catch(() => [] as string[]),
+  ]);
 
   const aircraft = data?.aircraft_costs ?? [];
   const fuelPrices = data?.fuel_prices ?? [];
@@ -79,7 +94,7 @@ export default async function SettingsCostsPage() {
         </div>
       ) : null}
 
-      <AircraftCostsSection rows={aircraft} />
+      <AircraftCostsSection rows={aircraft} fuelTypes={fuelTypes} fleetTypes={fleet} canEdit={!loadError} />
       <FuelPricesSection rows={fuelPrices} />
 
       <div className="mb-5 grid grid-cols-1 gap-5 lg:grid-cols-2">
@@ -92,7 +107,19 @@ export default async function SettingsCostsPage() {
   );
 }
 
-function AircraftCostsSection({ rows }: { rows: AircraftCostRow[] }) {
+function AircraftCostsSection({
+  rows,
+  fuelTypes,
+  fleetTypes,
+  canEdit,
+}: {
+  rows: AircraftCostRow[];
+  fuelTypes: { code: string; label: string }[];
+  fleetTypes: string[];
+  canEdit: boolean;
+}) {
+  const fuelLabel = (code: string | null | undefined) =>
+    code ? (fuelTypes.find((f) => f.code.toLowerCase() === code.toLowerCase())?.label ?? code) : "—";
   return (
     <section className="mb-5 rounded-lg border border-border bg-card px-4 py-4">
       <div className="mb-3 text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
@@ -105,6 +132,7 @@ function AircraftCostsSection({ rows }: { rows: AircraftCostRow[] }) {
               <tr>
                 <th scope="col" className="px-4 py-2 font-semibold">Type</th>
                 <th scope="col" className="px-4 py-2 font-semibold">Fuel GPH</th>
+                <th scope="col" className="px-4 py-2 font-semibold">Fuel</th>
                 <th scope="col" className="px-4 py-2 font-semibold">Engine Rsv</th>
                 <th scope="col" className="px-4 py-2 font-semibold">Prop Rsv</th>
                 <th scope="col" className="px-4 py-2 font-semibold">Mx Rsv</th>
@@ -118,7 +146,7 @@ function AircraftCostsSection({ rows }: { rows: AircraftCostRow[] }) {
             <tbody className="divide-y divide-border">
               {rows.length === 0 ? (
                 <tr>
-                  <td colSpan={10} className="px-4 py-8 text-center text-sm text-muted-foreground">
+                  <td colSpan={11} className="px-4 py-8 text-center text-sm text-muted-foreground">
                     No aircraft types configured. Add one below.
                   </td>
                 </tr>
@@ -134,6 +162,7 @@ function AircraftCostsSection({ rows }: { rows: AircraftCostRow[] }) {
                       <td className="whitespace-nowrap px-4 py-3 font-mono text-xs">
                         {r.fuel_burn_gph ?? "—"}
                       </td>
+                      <td className="whitespace-nowrap px-4 py-3 text-xs">{fuelLabel(r.fuel_type_code)}</td>
                       <td className="whitespace-nowrap px-4 py-3 font-mono text-xs">
                         {formatDollar(r.engine_reserve_hr)}
                       </td>
@@ -171,19 +200,15 @@ function AircraftCostsSection({ rows }: { rows: AircraftCostRow[] }) {
         * Cost/hr excludes fuel — fuel varies by base. Total = fuel (GPH ×
         base price) + reserves + crew.
       </p>
-      <DisabledAddDetails label="+ Add / Edit Aircraft Type" hint={BACKEND_HINT_EDIT}>
-        {[
-          { label: "Aircraft Type", placeholder: "Cessna 208B" },
-          { label: "Fuel Burn (GPH)", placeholder: "65", type: "number" },
-          { label: "Engine Reserve $/hr", placeholder: "175", type: "number" },
-          { label: "Prop Reserve $/hr", placeholder: "25", type: "number" },
-          { label: "Mx Reserve $/hr", placeholder: "100", type: "number" },
-          { label: "Oil & Consumables $/hr", placeholder: "12", type: "number" },
-          { label: "Pilot Pay $/day", placeholder: "350", type: "number" },
-          { label: "Avg Duty Hours/day", placeholder: "8", type: "number" },
-          { label: "Insurance $/hr", placeholder: "0", type: "number" },
-        ]}
-      </DisabledAddDetails>
+      {canEdit ? (
+        <details className="mt-3">
+          <summary className="cursor-pointer text-xs text-primary">+ Add / Edit Aircraft Type</summary>
+          <p className="mt-2 text-xs text-muted-foreground">
+            {`Name the type by the aircraft’s airframe type (caravan, ga8, …), or its model when it has none; the suggestions list them. Dispatch Intelligence costs flights by it, and a manifest estimates a trip’s fuel from its fuel burn and fuel when dispatch hasn’t entered the fuel.`}
+          </p>
+          <AircraftTypeForm rows={rows} fuelTypes={fuelTypes} fleetTypes={fleetTypes} />
+        </details>
+      ) : null}
     </section>
   );
 }

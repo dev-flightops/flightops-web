@@ -7,6 +7,7 @@ import { ApiError } from "@/lib/api/client";
 import {
   addCargo,
   addPax,
+  applyLoadPlan,
   createManifest,
   deleteCargo,
   deletePax,
@@ -362,4 +363,56 @@ export async function savePlannedFuelAction(
     message: lbs ? `Planned fuel set to ${Number(lbs).toLocaleString()} lb.` : "Planned fuel cleared.",
     attempt,
   };
+}
+
+const _loadItems = z
+  .array(
+    z.object({
+      waiting_load_id: z.string().uuid(),
+      weight_lbs: z.string().refine((v) => Number.isFinite(Number(v)) && Number(v) > 0),
+      pieces: z.number().int().min(1),
+    }),
+  )
+  .min(1)
+  .max(100);
+
+/** Why ops refused a fill, by its refusal code. */
+const _LOAD_REFUSALS: [string, string][] = [
+  ["over_weight_left", "That no longer fits: the weight left has changed. Refresh the page for a new suggestion."],
+  ["fuel_unknown", "Enter the planned fuel first, so the weight left counts the fuel."],
+  ["no_useful_load", "Set the aircraft’s useful load first."],
+  ["waiting_load_not_on_this_route", "Some of it is no longer waiting for this route. Refresh the page."],
+  ["more_than_is_waiting", "Some of it has been loaded elsewhere since. Refresh the page."],
+];
+
+/** Put the suggested waiting mail and freight on the manifest (#75). */
+export async function applyLoadPlanAction(
+  prev: ManifestFormState,
+  formData: FormData,
+): Promise<ManifestFormState> {
+  const attempt = prev.attempt + 1;
+  const fail = (message: string): ManifestFormState => ({ status: "error", message, attempt });
+  const flightId = _id.safeParse(formData.get("flight_id"));
+  let items: unknown;
+  try {
+    items = JSON.parse(String(formData.get("items") ?? ""));
+  } catch {
+    items = null;
+  }
+  const parsed = _loadItems.safeParse(items);
+  if (!flightId.success || !parsed.success) return fail("This form lost track of its flight. Refresh the page.");
+  try {
+    await applyLoadPlan(flightId.data, parsed.data);
+  } catch (err) {
+    if (err instanceof ApiError) {
+      const known = _LOAD_REFUSALS.find(([code]) => err.message.includes(code));
+      if (known) return fail(known[1]);
+    }
+    return fail(_refusal(err, _ANY_STAFF));
+  }
+  revalidatePath(_page(flightId.data));
+  revalidatePath("/manifest/waiting");
+  const lbs = parsed.data.reduce((sum, i) => sum + Number(i.weight_lbs), 0);
+  const flight = String(formData.get("flight_number") ?? "the flight");
+  return { status: "ok", message: `Loaded ${Math.round(lbs).toLocaleString()} lb onto ${flight}.`, attempt };
 }

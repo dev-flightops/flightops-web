@@ -53,6 +53,9 @@ export interface AircraftListItem {
   make: string | null;
   serial_number: string | null;
   year: number | null;
+  /** The name operating costs go by: costing and the manifest's fuel
+   *  estimate look a type up by it, else by the model (#75). */
+  airframe_type?: string | null;
 }
 
 export interface AircraftListResponse {
