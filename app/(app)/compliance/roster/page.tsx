@@ -1,3 +1,5 @@
+import { PageHeader } from "@/components/ff/page-header";
+import { SegmentLinks } from "@/components/ff/segment-links";
 import { ApiError } from "@/lib/api/client";
 import { getPilotRoster } from "@/lib/api/ops";
 import type { PilotRosterResponse } from "@/lib/api/types";
@@ -52,12 +54,10 @@ export default async function PilotRosterPage({
 
   return (
     <div className="mx-auto max-w-[100rem] px-4 py-8 sm:px-6">
-      <header className="mb-5">
-        <h1 className="page-title">Pilot Roster</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Crew currency and FAR 135.265 flight-time position, by base.
-        </p>
-      </header>
+      <PageHeader
+        title="Pilot Roster"
+        description="Crew currency and FAR 135.265 flight-time position, by base."
+      />
 
       {loadError ? (
         <p
@@ -83,23 +83,18 @@ export default async function PilotRosterPage({
           ) : null}
 
           {stations.length > 1 ? (
-            <nav
-              aria-label="Filter by base"
-              className="mb-4 flex flex-wrap items-center gap-1.5 text-xs"
-            >
-              <FilterChip href="/compliance/roster" active={!station}>
-                All bases
-              </FilterChip>
-              {stations.map((s) => (
-                <FilterChip
-                  key={s}
-                  href={`/compliance/roster?station=${encodeURIComponent(s)}`}
-                  active={station === s}
-                >
-                  {s}
-                </FilterChip>
-              ))}
-            </nav>
+            <SegmentLinks
+              label="Filter by base"
+              className="mb-4"
+              items={[
+                { href: "/compliance/roster", label: "All bases", active: !station },
+                ...stations.map((s) => ({
+                  href: `/compliance/roster?station=${encodeURIComponent(s)}`,
+                  label: s,
+                  active: station === s,
+                })),
+              ]}
+            />
           ) : null}
 
           <RosterTable
@@ -109,30 +104,5 @@ export default async function PilotRosterPage({
         </>
       )}
     </div>
-  );
-}
-
-function FilterChip({
-  href,
-  active,
-  children,
-}: {
-  href: string;
-  active: boolean;
-  children: React.ReactNode;
-}) {
-  return (
-    <a
-      href={href}
-      aria-current={active ? "page" : undefined}
-      className={
-        "rounded-md border px-2.5 py-1 font-semibold transition " +
-        (active
-          ? "border-primary/50 bg-primary/10 text-primary"
-          : "border-border bg-card text-muted-foreground hover:text-foreground")
-      }
-    >
-      {children}
-    </a>
   );
 }

@@ -241,7 +241,7 @@ export function OpenFlightForm({
         <button
           type="submit"
           disabled={pending}
-          className="inline-flex items-center justify-center gap-1.5 rounded-md bg-primary px-4 py-2 text-xs font-semibold text-white hover:bg-brand-dark disabled:opacity-50"
+          className="btn-caps inline-flex items-center justify-center gap-1.5 rounded-md bg-primary px-4 py-2 text-white hover:bg-brand-dark disabled:opacity-50 text-[0.72rem]"
         >
           {pending && <Spinner size="xs" />}
           {pending ? "Opening…" : "Open Flight"}

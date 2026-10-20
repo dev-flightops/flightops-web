@@ -1,3 +1,4 @@
+import { PageHeader } from "@/components/ff/page-header";
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
@@ -37,23 +38,17 @@ export default async function FlightFollowingNewPage() {
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
-      <div className="mb-6">
-        <Link
-          href="/flight-following"
-          className="text-xs text-muted-foreground hover:text-foreground hover:underline"
-        >
-          ← Flight Following
-        </Link>
-        <h1 className="mt-1 page-title">
-          Open New Flight
-        </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Adds the flight to the schedule with status{" "}
-          <span className="font-semibold text-foreground">Planned</span>.
-          Release through the dispatch packet once the briefing is
-          complete.
-        </p>
-      </div>
+      <PageHeader
+        back={{ href: "/flight-following", label: "Flight Following" }}
+        title="Open New Flight"
+        description={
+          <>
+            Adds the flight to the schedule with status{" "}
+            <span className="font-semibold text-foreground">Planned</span>. Release
+            through the dispatch packet once the briefing is complete.
+          </>
+        }
+      />
 
       {loadError ? (
         <div

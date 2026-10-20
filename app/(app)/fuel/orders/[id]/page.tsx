@@ -232,7 +232,7 @@ function MetaGrid({ order }: { order: FuelOrderResponse }) {
 
       {order.special_instructions && (
         <div className="mt-3 border-t border-border pt-3 text-sm">
-          <p className="text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+          <p className="eyebrow">
             Special instructions
           </p>
           <p className="mt-1 whitespace-pre-wrap text-foreground">
@@ -243,7 +243,7 @@ function MetaGrid({ order }: { order: FuelOrderResponse }) {
 
       {order.confirmed_note && (
         <div className="mt-3 border-t border-border pt-3 text-sm">
-          <p className="text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+          <p className="eyebrow">
             Confirmation note
           </p>
           <p className="mt-1 whitespace-pre-wrap text-foreground">
@@ -350,7 +350,7 @@ function Field({
 }) {
   return (
     <div>
-      <dt className="text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+      <dt className="eyebrow">
         {label}
       </dt>
       <dd className={`m-0 mt-0.5 ${mono ? "font-mono" : ""} text-sm`}>{value}</dd>

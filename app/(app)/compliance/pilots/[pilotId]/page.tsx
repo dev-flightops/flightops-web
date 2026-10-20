@@ -1,6 +1,4 @@
 import { notFound } from "next/navigation";
-import Link from "next/link";
-
 import { ApiError } from "@/lib/api/client";
 import {
   getAirmanRecord,
@@ -97,13 +95,6 @@ export default async function PilotComplianceProfilePage({
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
-      <Link
-        href="/compliance/crew-currency"
-        className="mb-3 inline-block text-xs font-semibold text-primary hover:underline"
-      >
-        ← Back to compliance board
-      </Link>
-
       <ProfileHeader
         pilot={profile.pilot}
         overallToken={overallToken}
@@ -112,9 +103,7 @@ export default async function PilotComplianceProfilePage({
         items={profile.items}
       />
 
-      <h2 className="mt-6 mb-3 text-xs font-bold uppercase tracking-[0.08em] text-muted-foreground">
-        Currency items
-      </h2>
+      <h2 className="eyebrow mb-3 mt-6">Currency items</h2>
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
         {profile.items.map((item) => {
           const cell = profile.cells.find(

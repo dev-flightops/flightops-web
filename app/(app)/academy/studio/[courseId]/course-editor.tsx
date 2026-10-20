@@ -104,7 +104,7 @@ function ComplianceLinkPicker({
   return (
     <section className="rounded-lg border border-border bg-card p-4">
       <div className="mb-2 flex items-center justify-between gap-3">
-        <h2 className="text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+        <h2 className="eyebrow">
           Compliance link
         </h2>
         {linkedItem ? (
@@ -151,7 +151,7 @@ function ComplianceLinkPicker({
         <button
           type="submit"
           disabled={pending || selectedId === (course.linked_currency_item_id ?? "")}
-          className="rounded-md border border-border bg-muted/60 px-3 py-1.5 text-xs font-semibold hover:bg-accent disabled:opacity-60"
+          className="btn-caps rounded-md border border-input px-3 py-1.5 hover:bg-accent disabled:opacity-60 text-[0.72rem]"
         >
           {pending ? "Saving…" : "Save"}
         </button>
@@ -192,7 +192,7 @@ function PublishStatusPicker({ course }: { course: CourseDetail }) {
   );
   return (
     <section className="rounded-lg border border-border bg-card p-4">
-      <h2 className="mb-3 text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+      <h2 className="mb-3 eyebrow">
         Publish status
       </h2>
       {state.status === "error" && state.message ? (
@@ -224,7 +224,7 @@ function PublishStatusPicker({ course }: { course: CourseDetail }) {
         <button
           type="submit"
           disabled={pending}
-          className="rounded-md border border-border bg-muted/60 px-3 py-1.5 text-xs font-semibold hover:bg-accent disabled:opacity-60"
+          className="btn-caps rounded-md border border-input px-3 py-1.5 hover:bg-accent disabled:opacity-60 text-[0.72rem]"
         >
           {pending ? "Saving…" : "Save"}
         </button>
@@ -236,7 +236,7 @@ function PublishStatusPicker({ course }: { course: CourseDetail }) {
 function LessonList({ course }: { course: CourseDetail }) {
   return (
     <section className="rounded-lg border border-border bg-card p-4">
-      <h2 className="mb-3 text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+      <h2 className="mb-3 eyebrow">
         Lessons
       </h2>
       {course.lessons.length === 0 ? (
@@ -305,7 +305,7 @@ function QuizAffordance({
             ? state.message
             : "Create a quiz on this lesson"
         }
-        className="rounded-md border border-border bg-muted/60 px-2 py-1 text-[0.6875rem] font-semibold hover:bg-accent disabled:opacity-60"
+        className="btn-caps rounded-md border border-input px-2 py-1 hover:bg-accent disabled:opacity-60 text-[0.68rem]"
       >
         {pending ? "…" : "Attach Quiz"}
       </button>
@@ -347,7 +347,7 @@ function LessonRow({
           <button
             type="button"
             onClick={() => setEditing((v) => !v)}
-            className="rounded-md border border-border bg-muted/60 px-2 py-1 text-[0.6875rem] font-semibold hover:bg-accent"
+            className="btn-caps rounded-md border border-input px-2 py-1 hover:bg-accent text-[0.68rem]"
           >
             {editing ? "Close" : "Edit"}
           </button>
@@ -393,7 +393,7 @@ function LessonRow({
             <button
               type="submit"
               disabled={pending}
-              className="rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-dark disabled:opacity-60"
+              className="btn-caps rounded-md bg-primary px-3 py-1.5 text-white hover:bg-brand-dark disabled:opacity-60 text-[0.72rem]"
             >
               {pending ? "Saving…" : "Save lesson"}
             </button>
@@ -419,7 +419,7 @@ function AddLessonForm({ courseId }: { courseId: string }) {
   );
   return (
     <section className="rounded-lg border border-status-blue/30 bg-status-blue/5 p-4">
-      <h2 className="mb-3 text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+      <h2 className="mb-3 eyebrow">
         Add a lesson
       </h2>
       {state.status === "error" && state.message ? (
@@ -445,7 +445,7 @@ function AddLessonForm({ courseId }: { courseId: string }) {
           <button
             type="submit"
             disabled={pending}
-            className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-brand-dark disabled:opacity-60"
+            className="btn-caps rounded-md bg-primary px-4 py-2 text-white hover:bg-brand-dark disabled:opacity-60"
           >
             {pending ? "Adding…" : "Add lesson"}
           </button>

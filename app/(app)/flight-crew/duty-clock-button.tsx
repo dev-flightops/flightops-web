@@ -133,7 +133,7 @@ export function DutyClockButton({ initial }: Props) {
               type="button"
               onClick={handleClick}
               disabled={pending}
-              className="rounded-md bg-status-red-fill px-3 py-1.5 text-xs font-semibold text-white hover:brightness-95 disabled:opacity-60"
+              className="btn-caps rounded-md bg-status-red-fill px-3 py-1.5 text-white hover:brightness-95 disabled:opacity-60 text-[0.72rem]"
             >
               {pending ? "Closing…" : "Close duty period"}
             </button>

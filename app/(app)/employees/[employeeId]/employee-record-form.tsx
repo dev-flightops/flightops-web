@@ -336,7 +336,7 @@ export function EmployeeRecordForm({
           <button
             type="submit"
             disabled={pending}
-            className="rounded-md bg-primary px-4 py-2 text-xs font-semibold text-white hover:bg-brand-dark disabled:opacity-50"
+            className="btn-caps rounded-md bg-primary px-4 py-2 text-white hover:bg-brand-dark disabled:opacity-50 text-[0.72rem]"
           >
             {pending ? "Saving…" : "Save Changes"}
           </button>
@@ -381,7 +381,7 @@ function Card({
   return (
     <section
       aria-labelledby={headingId}
-      className="rounded-xl border border-border bg-card p-5"
+      className="rounded-lg border border-border bg-card p-5"
     >
       <h2
         id={headingId}

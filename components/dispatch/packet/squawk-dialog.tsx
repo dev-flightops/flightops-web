@@ -219,9 +219,9 @@ export function SquawkDialog({ aircraftId, tailNumber }: SquawkDialogProps) {
               {severity === "grounding" && (
                 <div
                   role="alert"
-                  className="sm:col-span-2 flex items-start gap-2 rounded-md border border-status-red/40 bg-status-red/10 px-3 py-2 text-xs text-status-red"
+                  className="notice notice-red sm:col-span-2 flex items-start gap-2"
                 >
-                  <AlertGlyph className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+                  <AlertGlyph className="mt-0.5 h-4 w-4 shrink-0 text-status-red" />
                   <span>
                     This will block dispatch on{" "}
                     <span className="font-mono font-semibold">{tailNumber}</span>{" "}

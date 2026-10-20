@@ -111,7 +111,7 @@ export default async function EnrollmentLessonPage({
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[16rem_1fr]">
         <aside>
-          <h2 className="mb-2 text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+          <h2 className="mb-2 eyebrow">
             Lessons
           </h2>
           <ol className="space-y-1">

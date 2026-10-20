@@ -68,7 +68,7 @@ function Panel({
       aria-label={title}
       className="rounded-lg border border-border bg-card p-4"
     >
-      <h3 className="mb-2 text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+      <h3 className="mb-2 eyebrow">
         {title}
       </h3>
       {children}

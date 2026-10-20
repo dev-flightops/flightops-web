@@ -99,7 +99,7 @@ export function RightColumn({
             type="button"
             disabled
             title="AI Review · Coming in M4"
-            className="inline-flex cursor-not-allowed items-center gap-1.5 rounded-md border border-status-purple/40 bg-transparent px-4 py-2 text-xs font-semibold text-status-purple opacity-60"
+            className="btn-caps inline-flex cursor-not-allowed items-center gap-1.5 rounded-md border border-status-purple/40 px-4 py-2 text-[0.72rem] text-status-purple opacity-60"
           >
             AI Review
           </button>

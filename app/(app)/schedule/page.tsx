@@ -1,5 +1,8 @@
 import Link from "next/link";
 
+import { buttonOutline, buttonSolid, linkCaps } from "@/components/ff/controls";
+import { PageHeader } from "@/components/ff/page-header";
+import { StatusMark, type StatusTone } from "@/components/ff/status-mark";
 import { ApiError } from "@/lib/api/client";
 import { listFlights } from "@/lib/api/ops";
 import type {
@@ -91,39 +94,27 @@ export default async function SchedulePage({
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
-      <header className="mb-5 flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="page-title">
-            Flight Schedule
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Published schedule for {date} (UTC) — {totalCount} flight
-            {totalCount === 1 ? "" : "s"}
-          </p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <DatePicker defaultValue={date} statuses={statusesParam ?? ""} />
-          {/* The form lives under Flight Following and is called "Open
-              Flight", which is where nobody looks for it: the client
-              reported being "mostly unsuccessful in building flight"
-              on 9/9. The schedule is the page you are on when you
-              notice a flight is missing, so the way to add one belongs
-              here. One form still, linked from where the need arises. */}
-          <Link
-            href="/flight-following/new"
-            className="rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-dark"
-          >
-            + New Flight
-          </Link>
-          <Link
-            href="/flight-following"
-            className="rounded-md border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-accent"
-            title="Switch to live tracking view"
-          >
-            Live →
-          </Link>
-        </div>
-      </header>
+      <PageHeader
+        title="Flight Schedule"
+        description={`Published schedule for ${date} (UTC) — ${totalCount} flight${totalCount === 1 ? "" : "s"}`}
+        actions={
+          <>
+            <DatePicker defaultValue={date} statuses={statusesParam ?? ""} />
+            {/* The form lives under Flight Following and is called "Open
+                Flight", which is where nobody looks for it: the client
+                reported being "mostly unsuccessful in building flight"
+                on 9/9. The schedule is the page you are on when you
+                notice a flight is missing, so the way to add one belongs
+                here. One form still, linked from where the need arises. */}
+            <Link href="/flight-following/new" className={buttonSolid}>
+              + New Flight
+            </Link>
+            <Link href="/flight-following" className={buttonOutline} title="Switch to live tracking view">
+              Live →
+            </Link>
+          </>
+        }
+      />
 
       <StatusFilter date={date} statuses={statuses} />
 
@@ -181,9 +172,9 @@ function BaseGroup({
 }) {
   return (
     <section>
-      <h2 className="mb-2 flex items-baseline gap-3 text-sm font-semibold tracking-wide">
-        <span className="font-mono text-foreground">{base}</span>
-        <span className="text-xs font-normal text-muted-foreground">
+      <h2 className="mb-2 flex items-baseline gap-3">
+        <span className="font-mono text-sm font-semibold text-foreground">{base}</span>
+        <span className="eyebrow">
           {flights.length} flight{flights.length === 1 ? "" : "s"} from this
           base
         </span>
@@ -254,9 +245,9 @@ function FlightRow({ flight }: { flight: FlightListItem }) {
           href={`/schedule/${flight.id}/manifest`}
           target="_blank"
           rel="noopener noreferrer"
-          className="rounded-md border border-primary/40 bg-background px-2.5 py-1 text-xs font-semibold text-primary hover:bg-primary/5"
+          className={linkCaps}
         >
-          Print
+          Print <span aria-hidden>›</span>
         </Link>
       </td>
     </tr>
@@ -264,19 +255,13 @@ function FlightRow({ flight }: { flight: FlightListItem }) {
 }
 
 function StatusBadge({ status }: { status: FlightStatus }) {
-  const tone: Record<FlightStatus, string> = {
-    scheduled: "border-border bg-card text-muted-foreground",
-    released: "border-status-blue/40 bg-status-blue/10 text-status-blue",
-    cancelled: "border-status-red/40 bg-status-red/10 text-status-red",
-    completed: "border-status-green/40 bg-status-green/10 text-status-green",
+  const tone: Record<FlightStatus, StatusTone> = {
+    scheduled: "muted",
+    released: "blue",
+    cancelled: "red",
+    completed: "green",
   };
-  return (
-    <span
-      className={`rounded-md border px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-[0.06em] ${tone[status]}`}
-    >
-      {STATUS_LABEL[status]}
-    </span>
-  );
+  return <StatusMark label={STATUS_LABEL[status]} tone={tone[status]} />;
 }
 
 function formatHm(iso: string): string {

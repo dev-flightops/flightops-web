@@ -58,7 +58,7 @@ export default async function PortalCharterPage({
         <StatusBadge status={charter.status} />
       </div>
 
-      <dl className="mb-5 grid grid-cols-2 gap-4 rounded-xl border border-border bg-card p-5 sm:grid-cols-3">
+      <dl className="mb-5 grid grid-cols-2 gap-4 rounded-lg border border-border bg-card p-5 sm:grid-cols-3">
         <Detail label="Passengers" value={String(charter.pax_count)} />
         <Detail label="Cargo" value={`${charter.cargo_lbs} lbs`} />
         <Detail
@@ -81,7 +81,7 @@ export default async function PortalCharterPage({
       </dl>
 
       {charter.quoted_total_cents != null && (
-        <div className="mb-5 rounded-xl border border-border bg-card p-5">
+        <div className="mb-5 rounded-lg border border-border bg-card p-5">
           <h2 className="mb-3 text-sm font-semibold text-foreground">
             Quote
           </h2>

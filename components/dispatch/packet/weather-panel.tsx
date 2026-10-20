@@ -244,7 +244,7 @@ function MetarSummaryAndGrid({ report }: { report: WeatherReportResponse }) {
 function FieldCell({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <dt className="text-[0.6rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+      <dt className="eyebrow">
         {label}
       </dt>
       <dd className="m-0 text-sm font-bold text-foreground">{value}</dd>
@@ -261,7 +261,7 @@ function ReportBlock({
 }) {
   return (
     <div>
-      <p className="mb-0.5 text-[0.6rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+      <p className="mb-0.5 eyebrow">
         {label}
       </p>
       {outcome.ok && outcome.report.kind === "pirep" && !outcome.report.raw ? (
@@ -287,17 +287,18 @@ function ReportBlock({
 
 // ---- Tag / badge components --------------------------------------------------
 
+// The stop's role as a quiet label (#80), not a tinted tag.
 const ROLE_TAG_STYLE: Record<RouteRole, string> = {
-  DEPARTURE: "bg-status-blue/15 text-status-blue",
-  "EN ROUTE": "bg-muted text-muted-foreground",
-  DESTINATION: "bg-status-blue/15 text-status-blue",
+  DEPARTURE: "text-status-blue",
+  "EN ROUTE": "text-muted-foreground",
+  DESTINATION: "text-status-blue",
 };
 
 function RoleTag({ role }: { role: RouteRole }) {
   return (
     <span
       className={
-        "rounded-md px-1.5 py-0.5 text-[0.6rem] font-bold uppercase tracking-[0.08em] " +
+        "status-mark text-[0.6rem] " +
         ROLE_TAG_STYLE[role]
       }
     >

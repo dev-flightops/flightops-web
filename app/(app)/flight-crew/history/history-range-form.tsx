@@ -53,7 +53,7 @@ export function HistoryRangeForm({
       </div>
       <button
         type="submit"
-        className="rounded-md bg-primary px-4 py-1.5 text-xs font-semibold text-white hover:bg-brand-dark"
+        className="btn-caps rounded-md bg-primary px-4 py-1.5 text-white hover:bg-brand-dark text-[0.72rem]"
       >
         Apply
       </button>

@@ -297,7 +297,7 @@ export function RequestForm({
       </div>
 
       <fieldset>
-        <legend className="mb-1 text-[0.6rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+        <legend className="mb-1 eyebrow">
           Records to include
         </legend>
         <p className="mb-2 text-[0.65rem] text-muted-foreground">
@@ -342,7 +342,7 @@ export function RequestForm({
               ? "Fill in the requestor, receipt time, period and reason, and pick at least one record set"
               : undefined
           }
-          className="rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-dark disabled:opacity-40"
+          className="btn-caps rounded-md bg-primary px-3 py-1.5 text-white hover:bg-brand-dark disabled:opacity-40 text-[0.72rem]"
         >
           {busy ? "Producing…" : "Produce and record"}
         </button>

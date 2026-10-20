@@ -34,9 +34,9 @@ function Card({
   return (
     <section
       aria-label={title}
-      className="flex flex-col rounded-xl border border-border bg-card p-4"
+      className="flex flex-col rounded-lg border border-border bg-card p-4"
     >
-      <h2 className="mb-3 text-[0.65rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+      <h2 className="mb-3 eyebrow">
         {title}
       </h2>
       <div className="flex flex-1 flex-col items-center justify-center">
@@ -251,9 +251,9 @@ export function BriefView({
 
       <section
         aria-label="Maintenance due this week"
-        className="mt-3 rounded-xl border border-border bg-card p-4"
+        className="mt-3 rounded-lg border border-border bg-card p-4"
       >
-        <h2 className="mb-3 text-[0.65rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+        <h2 className="mb-3 eyebrow">
           Maintenance Due This Week ({maintenance_due.length})
         </h2>
         {maintenance_due.length === 0 ? (

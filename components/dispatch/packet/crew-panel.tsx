@@ -138,7 +138,7 @@ export function CrewPanel({
   }
 
   return (
-    <section className="rounded-xl border border-border bg-card">
+    <section className="rounded-lg border border-border bg-card">
       <header className="flex items-baseline justify-between border-b border-border px-5 py-3">
         <h2 className="text-xs font-bold uppercase tracking-[0.08em] text-muted-foreground">
           Crew
@@ -163,7 +163,7 @@ export function CrewPanel({
             <span className="flex min-w-0 flex-1 items-center gap-2">
               {picCandidate ? (
                 <span
-                  className={`h-2 w-2 shrink-0 rounded-full ${DOT_CLASS[STATUS_TO_DOT[picCandidate.status]]}`}
+                  className={`h-2 w-2 shrink-0 ${DOT_CLASS[STATUS_TO_DOT[picCandidate.status]]}`}
                   aria-hidden="true"
                 />
               ) : null}
@@ -214,7 +214,7 @@ export function CrewPanel({
                   <span className="flex min-w-0 flex-1 items-center gap-2">
                     {current ? (
                       <span
-                        className={`h-2 w-2 shrink-0 rounded-full ${DOT_CLASS[STATUS_TO_DOT[current.status]]}`}
+                        className={`h-2 w-2 shrink-0 ${DOT_CLASS[STATUS_TO_DOT[current.status]]}`}
                         aria-hidden="true"
                       />
                     ) : null}

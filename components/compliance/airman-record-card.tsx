@@ -194,7 +194,7 @@ function Panel({
   return (
     <div className="rounded-lg border border-border bg-card px-4 py-3">
       <div className="mb-2 flex items-baseline justify-between gap-2">
-        <h3 className="text-[0.65rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+        <h3 className="eyebrow">
           {title}
         </h3>
         {subtitle ? (

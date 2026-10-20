@@ -202,7 +202,7 @@ export default async function FlightCrewPage() {
         {session?.user?.id ? (
           <TrainingCurrencySummary pilotUserId={session.user.id} />
         ) : (
-          <div className="rounded-xl border border-dashed border-border bg-card/50 px-5 py-6 text-sm text-muted-foreground">
+          <div className="rounded-lg border border-dashed border-border bg-card/50 px-5 py-6 text-sm text-muted-foreground">
             Sign in to see your currency.
           </div>
         )}

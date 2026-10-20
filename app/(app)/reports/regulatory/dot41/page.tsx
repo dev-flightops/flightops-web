@@ -45,7 +45,7 @@ function Stat({
 }) {
   return (
     <div className="rounded-lg border border-border bg-card px-4 py-3">
-      <p className="text-[0.6rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+      <p className="eyebrow">
         {label}
       </p>
       <p className="mt-1 text-xl font-semibold tabular-nums text-foreground">

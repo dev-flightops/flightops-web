@@ -20,7 +20,7 @@ export function RoleCheckboxGroup({
   const selected = new Set(defaultSelected);
   return (
     <div>
-      <div className="mb-1 text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+      <div className="mb-1 eyebrow">
         Roles
       </div>
       <ul

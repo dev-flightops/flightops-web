@@ -45,7 +45,7 @@ export function PostFlightLogStep({ flightId, flight }: Props) {
   };
 
   return (
-    <section className="rounded-xl border border-border bg-card">
+    <section className="rounded-lg border border-border bg-card">
       <header className="border-b border-border px-5 py-3">
         <p className="text-xs uppercase tracking-[0.08em] text-muted-foreground">
           Step 8
@@ -95,7 +95,7 @@ export function PostFlightLogStep({ flightId, flight }: Props) {
           type="button"
           disabled={pending}
           onClick={handleComplete}
-          className="inline-flex w-full items-center justify-center rounded-md bg-status-green-fill px-4 py-2.5 text-sm font-semibold text-white transition-opacity hover:brightness-95 disabled:opacity-50"
+          className="btn-caps inline-flex w-full items-center justify-center rounded-md bg-status-green-fill px-4 py-2.5 text-white transition-opacity hover:brightness-95 disabled:opacity-50"
         >
           {pending ? "Saving…" : "Mark preflight complete ✓"}
         </button>

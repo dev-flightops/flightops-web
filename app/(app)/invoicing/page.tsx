@@ -184,7 +184,7 @@ export default async function InvoicingPage({
               </label>
               <button
                 type="submit"
-                className="rounded-md border border-border bg-muted/60 px-3 py-1.5 text-sm font-semibold text-foreground hover:bg-accent"
+                className="btn-caps rounded-md border border-input px-3 py-1.5 text-foreground hover:bg-accent"
               >
                 Filter
               </button>
@@ -230,7 +230,7 @@ export default async function InvoicingPage({
                             // Flagged here, not only on the detail
                             // page: it cannot be sent, and finding that
                             // out after opening it is a wasted trip.
-                            <span className="ml-2 rounded bg-status-yellow/15 px-1.5 py-0.5 text-[0.6rem] font-semibold uppercase text-status-yellow">
+                            <span className="status-mark text-status-yellow ml-2">
                               needs pricing
                             </span>
                           )}

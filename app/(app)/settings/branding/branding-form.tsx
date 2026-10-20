@@ -81,7 +81,7 @@ export function BrandingForm({
         action={extractAction}
         className="rounded-lg border border-border bg-card p-4"
       >
-        <div className="mb-2 text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+        <div className="mb-2 eyebrow">
           Suggest from your website
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -96,7 +96,7 @@ export function BrandingForm({
           <button
             type="submit"
             disabled={extractPending}
-            className="inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-3 py-2 text-xs font-semibold text-foreground hover:bg-accent disabled:opacity-60"
+            className="btn-caps inline-flex items-center gap-1.5 rounded-md border border-input px-3 py-2 text-foreground hover:bg-accent disabled:opacity-60 text-[0.72rem]"
           >
             {extractPending && <Spinner size="xs" />}
             {extractPending ? "Extracting…" : "Suggest colors"}

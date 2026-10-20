@@ -1,3 +1,5 @@
+import { segment, segmentGroup } from "@/components/ff/controls";
+import { cn } from "@/lib/utils";
 import Link from "next/link";
 
 /**
@@ -38,7 +40,7 @@ export function ViewSwitcher({
   return (
     <nav
       aria-label="Compliance view"
-      className="mb-3 inline-flex rounded-md border border-border bg-card p-0.5 text-xs"
+      className={cn(segmentGroup, "mb-3")}
     >
       {COMPLIANCE_VIEWS.map((view) => {
         const params = new URLSearchParams();
@@ -53,12 +55,7 @@ export function ViewSwitcher({
             key={view}
             href={href}
             aria-current={isActive ? "page" : undefined}
-            className={
-              "rounded-sm px-3 py-1.5 font-semibold transition-colors " +
-              (isActive
-                ? "bg-primary/10 text-primary"
-                : "text-muted-foreground hover:text-foreground")
-            }
+            className={segment(isActive)}
           >
             {LABELS[view]}
           </Link>

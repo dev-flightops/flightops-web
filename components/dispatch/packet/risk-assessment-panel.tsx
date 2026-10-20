@@ -56,7 +56,7 @@ export function RiskAssessmentPanel({
         )}
       </div>
 
-      <h3 className="mt-3 text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+      <h3 className="mt-3 eyebrow">
         Operational concerns
       </h3>
       <ul className="mt-1 space-y-0.5 text-xs text-foreground">
@@ -103,7 +103,7 @@ export function RiskAssessmentPanel({
                   <td className="px-2 py-1.5">
                     {row.comment}
                     {row.source === "dispatcher" && (
-                      <span className="ml-1 rounded bg-status-blue/15 px-1 text-[0.6rem] font-semibold text-status-blue">
+                      <span className="status-mark ml-1.5 text-[0.6rem] text-status-blue">
                         set by dispatcher
                       </span>
                     )}

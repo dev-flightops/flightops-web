@@ -162,7 +162,7 @@ export function QueryView({
         on anything that matters.
       </p>
 
-      <div className="rounded-xl border border-border bg-card p-4">
+      <div className="rounded-lg border border-border bg-card p-4">
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -186,7 +186,7 @@ export function QueryView({
           <button
             type="submit"
             disabled={pending || !draft.trim()}
-            className="rounded-md bg-primary px-5 py-2 text-xs font-semibold text-white hover:bg-brand-dark disabled:opacity-40"
+            className="btn-caps rounded-md bg-primary px-5 py-2 text-white hover:bg-brand-dark disabled:opacity-40 text-[0.72rem]"
           >
             {pending ? "Asking…" : "Ask"}
           </button>
@@ -216,9 +216,9 @@ export function QueryView({
       {entities.length > 0 ? (
         <section
           aria-label="What I can answer about"
-          className="mt-6 rounded-xl border border-border bg-card p-4"
+          className="mt-6 rounded-lg border border-border bg-card p-4"
         >
-          <h2 className="mb-2 text-[0.65rem] font-bold uppercase tracking-[0.08em] text-muted-foreground">
+          <h2 className="mb-2 eyebrow">
             What I can answer about
           </h2>
           {/* Straight from the service, so this and the classifier
@@ -244,7 +244,7 @@ function TurnBlock({ turn }: { turn: Turn }) {
   return (
     <section
       aria-label={`Answer to: ${turn.question}`}
-      className="rounded-xl border border-border bg-card"
+      className="rounded-lg border border-border bg-card"
     >
       <header className="flex flex-wrap items-baseline justify-between gap-2 border-b border-border px-4 py-2.5">
         <p className="text-sm font-semibold">{turn.question}</p>

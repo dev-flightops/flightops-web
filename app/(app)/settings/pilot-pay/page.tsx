@@ -89,7 +89,7 @@ export default async function SettingsPilotPayPage() {
 
       <Link
         href="/settings"
-        className="inline-block rounded-md border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground hover:bg-accent"
+        className="btn-caps inline-block rounded-md border border-input px-4 py-2 text-foreground hover:bg-accent"
       >
         Back to Settings
       </Link>
@@ -100,7 +100,7 @@ export default async function SettingsPilotPayPage() {
 function PayRateSection({ rates }: { rates: PayRateRow[] }) {
   return (
     <section className="mb-5 rounded-lg border border-border bg-card px-4 py-4">
-      <div className="mb-3 text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+      <div className="mb-3 eyebrow">
         Pay Rate Table
       </div>
       <p className="mb-3 text-xs text-muted-foreground">
@@ -138,7 +138,7 @@ function PayRateSection({ rates }: { rates: PayRateRow[] }) {
                           Daily
                         </span>
                       ) : (
-                        <span className="rounded border border-status-green/40 bg-status-green/10 px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider text-status-green">
+                        <span className="status-mark text-status-green">
                           Flight Hourly
                         </span>
                       )}
@@ -221,7 +221,7 @@ function PayRateSection({ rates }: { rates: PayRateRow[] }) {
             disabled
             aria-disabled="true"
             title={BACKEND_HINT_ADD}
-            className="h-[34px] cursor-not-allowed rounded-md bg-primary px-3 text-xs font-semibold text-white disabled:opacity-100"
+            className="btn-caps h-[34px] cursor-not-allowed rounded-md bg-primary px-3 text-white disabled:opacity-100 text-[0.72rem]"
           >
             + Add Rate
           </button>
@@ -234,7 +234,7 @@ function PayRateSection({ rates }: { rates: PayRateRow[] }) {
 function PayModifierSection({ modifiers }: { modifiers: PayModifierRow[] }) {
   return (
     <section className="mb-5 rounded-lg border border-border bg-card px-4 py-4">
-      <div className="mb-3 text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+      <div className="mb-3 eyebrow">
         Daily Modifiers
       </div>
       <p className="mb-3 text-xs text-muted-foreground">
@@ -320,7 +320,7 @@ function PayModifierSection({ modifiers }: { modifiers: PayModifierRow[] }) {
             disabled
             aria-disabled="true"
             title={BACKEND_HINT_ADD}
-            className="h-[34px] cursor-not-allowed rounded-md bg-primary px-3 text-xs font-semibold text-white disabled:opacity-100"
+            className="btn-caps h-[34px] cursor-not-allowed rounded-md bg-primary px-3 text-white disabled:opacity-100 text-[0.72rem]"
           >
             + Add Modifier
           </button>

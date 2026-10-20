@@ -114,7 +114,7 @@ const INTERCHANGE: Entry[] = [
 function Section({ title, entries }: { title: string; entries: Entry[] }) {
   return (
     <section aria-label={title} className="mb-6">
-      <h2 className="mb-2 text-[0.65rem] font-bold uppercase tracking-[0.08em] text-muted-foreground">
+      <h2 className="mb-2 eyebrow">
         {title}
       </h2>
       <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2">
@@ -123,7 +123,7 @@ function Section({ title, entries }: { title: string; entries: Entry[] }) {
             {entry.href ? (
               <Link
                 href={entry.href}
-                className="block rounded-xl border border-border bg-card p-4 transition-colors hover:border-primary/50"
+                className="block rounded-lg border border-border bg-card p-4 transition-colors hover:border-primary/50"
               >
                 <p className="text-sm font-semibold">{entry.label}</p>
                 <p className="mt-0.5 text-xs text-muted-foreground">
@@ -131,7 +131,7 @@ function Section({ title, entries }: { title: string; entries: Entry[] }) {
                 </p>
               </Link>
             ) : (
-              <div className="rounded-xl border border-border bg-card/40 p-4">
+              <div className="rounded-lg border border-border bg-card/40 p-4">
                 <p className="flex items-center gap-2 text-sm font-semibold text-muted-foreground">
                   {entry.label}
                   <span className="rounded border border-border px-1.5 py-0.5 text-[0.55rem] uppercase tracking-wider">

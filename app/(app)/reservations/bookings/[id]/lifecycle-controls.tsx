@@ -110,7 +110,7 @@ function QuoteForm({
         <button
           type="submit"
           disabled={pending}
-          className="rounded-md bg-primary px-3 py-2 text-xs font-semibold text-white hover:bg-brand-dark disabled:opacity-60"
+          className="btn-caps rounded-md bg-primary px-3 py-2 text-white hover:bg-brand-dark disabled:opacity-60 text-[0.72rem]"
         >
           {pending ? "Saving…" : "Send Quote"}
         </button>
@@ -158,7 +158,7 @@ function CompleteForm({ bookingId }: { bookingId: string }) {
         <button
           type="submit"
           disabled={pending}
-          className="rounded-md border border-border bg-muted/60 px-3 py-2 text-xs font-semibold text-foreground/80 hover:bg-accent disabled:opacity-60"
+          className="btn-caps rounded-md border border-input px-3 py-2 text-foreground hover:bg-accent disabled:opacity-60 text-[0.72rem]"
         >
           {pending ? "Saving…" : "Mark Completed"}
         </button>
@@ -234,7 +234,7 @@ function ActionCard({
         (tone === "danger" ? "border-status-red/30" : "border-border")
       }
     >
-      <h2 className="mb-3 text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+      <h2 className="mb-3 eyebrow">
         {title}
       </h2>
       {children}

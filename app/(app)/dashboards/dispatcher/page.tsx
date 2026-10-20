@@ -91,7 +91,7 @@ export default async function DispatcherDashboardPage() {
       </div>
 
       {/* Row 2 — alerts */}
-      <section className="mt-5 rounded-xl border border-border bg-card p-5">
+      <section className="mt-5 rounded-lg border border-border bg-card p-5">
         <div className="mb-3 flex items-baseline justify-between">
           <h2 className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-muted-foreground">
             <AlertGlyph className="h-3.5 w-3.5" aria-hidden />
@@ -108,7 +108,7 @@ export default async function DispatcherDashboardPage() {
       </section>
 
       {/* Row 3 — Live Ops Board */}
-      <section className="mt-5 rounded-xl border border-border bg-card p-5">
+      <section className="mt-5 rounded-lg border border-border bg-card p-5">
         <div className="mb-3 flex items-baseline justify-between">
           <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
             Live Ops Board
@@ -125,14 +125,14 @@ export default async function DispatcherDashboardPage() {
 
       {/* Row 4 — 2-col: Pending dispatch + Fleet Availability */}
       <div className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2">
-        <section className="rounded-xl border border-border bg-card p-5">
+        <section className="rounded-lg border border-border bg-card p-5">
           <div className="mb-3 flex items-baseline justify-between">
             <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
               Flights Needing Dispatch
             </h2>
             <Link
               href="/dispatch/"
-              className="rounded-md bg-primary px-3 py-1 text-[0.7rem] font-semibold text-primary-foreground hover:bg-brand-dark"
+              className="btn-caps rounded-md bg-primary px-3 py-1 text-primary-foreground hover:bg-brand-dark text-[0.68rem]"
             >
               + New Packet
             </Link>
@@ -161,7 +161,7 @@ export default async function DispatcherDashboardPage() {
 
 function RecentOutcomesPanel() {
   return (
-    <section className="rounded-xl border border-border bg-card p-5">
+    <section className="rounded-lg border border-border bg-card p-5">
       <div className="mb-2 flex items-center justify-between">
         <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
           Recent Outcomes
@@ -300,7 +300,7 @@ function PendingDispatchTable({ flights }: { flights: FlightListItem[] }) {
 
 function FuturePanel({ title, hint }: { title: string; hint: string }) {
   return (
-    <section className="rounded-xl border border-border bg-card p-5">
+    <section className="rounded-lg border border-border bg-card p-5">
       <div className="mb-2 flex items-center justify-between">
         <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
           {title}

@@ -1,6 +1,9 @@
+import { buttonSolid, linkCaps } from "@/components/ff/controls";
+import { EmptyState } from "@/components/ff/empty-state";
+import { PageHeader } from "@/components/ff/page-header";
+import { Panel } from "@/components/ff/panel";
 import Link from "next/link";
 
-import { Button } from "@/components/ui/button";
 import { FlightCategoryBadge } from "@/components/weather/flight-category-badge";
 import { ApiError } from "@/lib/api/client";
 import { listWeatherBriefings } from "@/lib/api/weather";
@@ -64,19 +67,15 @@ export default async function WeatherBriefingsPage() {
 
   return (
     <div className="mx-auto max-w-5xl px-4 sm:px-6 py-8">
-      <div className="mb-8 flex items-center justify-between">
-        <div>
-          <h1 className="page-title">
-            Weather Briefings
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            Stored weather briefings for your operation
-          </p>
-        </div>
-        <Button asChild>
-          <Link href="/weather/new">+ New Briefing</Link>
-        </Button>
-      </div>
+      <PageHeader
+        title="Weather Briefings"
+        description="Stored weather briefings for your operation"
+        actions={
+          <Link href="/weather/new" className={buttonSolid}>
+            + New Briefing
+          </Link>
+        }
+      />
 
       {loadError ? (
         <div
@@ -86,14 +85,17 @@ export default async function WeatherBriefingsPage() {
           {loadError}
         </div>
       ) : briefings.length === 0 ? (
-        <div className="rounded-lg border border-border bg-card px-4 py-16 text-center">
-          <p className="mb-4 text-lg text-muted-foreground">
+        <Panel flush>
+          <EmptyState
+            action={
+              <Link href="/weather/new" className={buttonSolid}>
+                Create First Briefing
+              </Link>
+            }
+          >
             No briefings yet.
-          </p>
-          <Button asChild>
-            <Link href="/weather/new">Create First Briefing</Link>
-          </Button>
-        </div>
+          </EmptyState>
+        </Panel>
       ) : (
         <BriefingsTable briefings={briefings} />
       )}
@@ -110,7 +112,7 @@ function BriefingsTable({
     <div className="overflow-hidden rounded-lg border border-border bg-card">
       <table className="w-full text-sm">
         <thead>
-          <tr className="border-b border-border text-left text-[0.6rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+          <tr className="ff-thead">
             <th className="px-4 py-3">Date / Time</th>
             <th className="px-4 py-3">Airports</th>
             <th className="px-4 py-3">Flight</th>
@@ -146,11 +148,8 @@ function BriefingsTable({
                 {b.briefed_by.full_name}
               </td>
               <td className="px-4 py-3 text-right">
-                <Link
-                  href={`/weather/${b.id}`}
-                  className="text-sm font-medium text-primary hover:underline"
-                >
-                  View →
+                <Link href={`/weather/${b.id}`} className={linkCaps}>
+                  View <span aria-hidden>›</span>
                 </Link>
               </td>
             </tr>

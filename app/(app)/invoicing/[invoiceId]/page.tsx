@@ -103,12 +103,12 @@ export default async function InvoiceDetailPage({
               {STATUS_LABELS[invoice.status]}
             </span>
             {overdue && (
-              <span className="rounded bg-status-red/15 px-2 py-0.5 text-[0.65rem] font-semibold uppercase text-status-red">
+              <span className="status-mark text-status-red">
                 overdue
               </span>
             )}
             {invoice.has_unpriced_lines && (
-              <span className="rounded bg-status-yellow/15 px-2 py-0.5 text-[0.65rem] font-semibold uppercase text-status-yellow">
+              <span className="status-mark text-status-yellow">
                 needs pricing
               </span>
             )}
@@ -166,7 +166,7 @@ export default async function InvoiceDetailPage({
                 <td className="px-4 py-2.5 text-foreground">
                   {line.description}
                   {line.unpriced && (
-                    <span className="ml-2 rounded bg-status-yellow/15 px-1.5 py-0.5 text-[0.6rem] font-semibold uppercase text-status-yellow">
+                    <span className="status-mark text-status-yellow ml-2">
                       no price
                     </span>
                   )}

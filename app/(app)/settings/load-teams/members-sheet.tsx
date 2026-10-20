@@ -107,7 +107,7 @@ export function MembersSheet({
         type="button"
         onClick={() => onOpenChange(true)}
         aria-label={`Members of ${team.team_name}`}
-        className="rounded border border-border bg-transparent px-2.5 py-1 text-[0.65rem] font-semibold text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary"
+        className="btn-caps rounded border border-input bg-transparent px-2.5 py-1 text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary text-[0.68rem]"
       >
         Members
       </button>
@@ -151,7 +151,7 @@ export function MembersSheet({
                       <p className="flex items-center gap-2 text-sm font-semibold text-foreground">
                         <span className="truncate">{m.user.full_name}</span>
                         {m.user.id === leadId && (
-                          <span className="rounded border border-status-green/30 bg-status-green/10 px-1.5 py-px text-[0.55rem] font-bold uppercase tracking-[0.04em] text-status-green">
+                          <span className="status-mark text-status-green">
                             Lead
                           </span>
                         )}
@@ -201,7 +201,7 @@ export function MembersSheet({
                   type="button"
                   onClick={add}
                   disabled={pending || !pick}
-                  className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-md bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground hover:bg-brand-dark disabled:opacity-60"
+                  className="btn-caps inline-flex items-center gap-1.5 whitespace-nowrap rounded-md bg-primary px-3 py-2 text-primary-foreground hover:bg-brand-dark disabled:opacity-60"
                 >
                   {pending && <Spinner size="xs" />}+ Add
                 </button>

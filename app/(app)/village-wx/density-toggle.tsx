@@ -2,6 +2,8 @@
 
 import { useRouter } from "next/navigation";
 
+import { segment, segmentGroup } from "@/components/ff/controls";
+
 /**
  * Compact / Expanded density toggle. Server reads the URL param, server
  * component renders the right card variant — this client only updates
@@ -13,36 +15,20 @@ export function DensityToggle({ active }: { active: "compact" | "expanded" }) {
     const qs = next === "compact" ? "" : "?density=expanded";
     router.push(`/village-wx${qs}`);
   };
+  // ForeFlight's segmented control (#80).
   return (
-    <div
-      role="group"
-      aria-label="Card density"
-      className="inline-flex overflow-hidden rounded-md border border-border bg-card"
-    >
-      <button
-        type="button"
-        onClick={() => set("compact")}
-        aria-pressed={active === "compact"}
-        className={
-          active === "compact"
-            ? "border-r border-border bg-primary px-3 py-1 text-xs font-semibold text-white"
-            : "border-r border-border px-3 py-1 text-xs font-semibold text-foreground hover:bg-accent"
-        }
-      >
-        Compact
-      </button>
-      <button
-        type="button"
-        onClick={() => set("expanded")}
-        aria-pressed={active === "expanded"}
-        className={
-          active === "expanded"
-            ? "bg-primary px-3 py-1 text-xs font-semibold text-white"
-            : "px-3 py-1 text-xs font-semibold text-foreground hover:bg-accent"
-        }
-      >
-        Expanded
-      </button>
+    <div role="group" aria-label="Card density" className={segmentGroup}>
+      {(["compact", "expanded"] as const).map((v) => (
+        <button
+          key={v}
+          type="button"
+          onClick={() => set(v)}
+          aria-pressed={active === v}
+          className={segment(active === v)}
+        >
+          {v === "compact" ? "Compact" : "Expanded"}
+        </button>
+      ))}
     </div>
   );
 }

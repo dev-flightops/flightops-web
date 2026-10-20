@@ -148,7 +148,7 @@ function CurrentSubscriptionCard({
 }) {
   if (!subscription) {
     return (
-      <section className="rounded-xl border border-dashed border-border bg-card/50 px-5 py-8 text-sm">
+      <section className="rounded-lg border border-dashed border-border bg-card/50 px-5 py-8 text-sm">
         <h2 className="text-base font-semibold text-foreground">
           No subscription yet
         </h2>
@@ -176,7 +176,7 @@ function CurrentSubscriptionCard({
   const endedOn = subscription.canceled_at ?? subscription.current_period_end;
 
   return (
-    <section className="rounded-xl border border-border bg-card p-5">
+    <section className="rounded-lg border border-border bg-card p-5">
       <div className="mb-4 flex flex-wrap items-baseline justify-between gap-3">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.06em] text-muted-foreground">
@@ -258,7 +258,7 @@ function CurrentSubscriptionCard({
 
 function InvoiceHistoryCard({ invoices }: { invoices: Invoice[] }) {
   return (
-    <section className="rounded-xl border border-border bg-card p-5">
+    <section className="rounded-lg border border-border bg-card p-5">
       <div className="mb-3 flex items-baseline justify-between gap-2">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.06em] text-muted-foreground">
@@ -378,7 +378,7 @@ function PlanCatalogCard({
   const anyForSale = billingReady && plans.some((p) => p.checkout_available);
   const offerCheckout = billingReady && !live;
   return (
-    <section className="rounded-xl border border-border bg-card p-5">
+    <section className="rounded-lg border border-border bg-card p-5">
       <p className="text-xs font-semibold uppercase tracking-[0.06em] text-muted-foreground">
         Plan catalog
       </p>

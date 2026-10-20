@@ -86,13 +86,13 @@ export function DutyHistoryTable({
 function StatusBadge({ isOpen }: { isOpen: boolean }) {
   if (isOpen) {
     return (
-      <span className="rounded bg-status-yellow/15 px-1.5 py-0.5 text-[0.6rem] font-semibold uppercase tracking-[0.08em] text-status-yellow">
+      <span className="status-mark text-status-yellow">
         Open
       </span>
     );
   }
   return (
-    <span className="rounded bg-status-green/15 px-1.5 py-0.5 text-[0.6rem] font-semibold uppercase tracking-[0.08em] text-status-green">
+    <span className="status-mark text-status-green">
       Closed
     </span>
   );

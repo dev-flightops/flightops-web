@@ -89,7 +89,7 @@ export default async function RequiredReadingPage() {
       )}
 
       {feed.total === 0 && !loadError && (
-        <div className="rounded-xl border border-dashed border-border bg-card/50 px-5 py-10 text-center text-sm text-muted-foreground">
+        <div className="rounded-lg border border-dashed border-border bg-card/50 px-5 py-10 text-center text-sm text-muted-foreground">
           You&rsquo;re all caught up. When an admin flips a document into the
           required-reading queue, it&rsquo;ll show up here.
         </div>

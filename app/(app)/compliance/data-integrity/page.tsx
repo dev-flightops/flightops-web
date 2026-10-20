@@ -1,3 +1,7 @@
+import { Notice } from "@/components/ff/notice";
+import { PageHeader } from "@/components/ff/page-header";
+import { Panel } from "@/components/ff/panel";
+import { Stat, StatStrip } from "@/components/ff/stat-strip";
 import Link from "next/link";
 
 import { auth } from "@/auth";
@@ -73,10 +77,10 @@ const STATUS_TONE: Record<CycleStatus, string> = {
   overdue: "text-status-red",
 };
 
-const STATUS_BORDER: Record<CycleStatus, string> = {
-  current: "border-status-green/40 bg-status-green/5",
-  due: "border-status-yellow/40 bg-status-yellow/5",
-  overdue: "border-status-red/40 bg-status-red/5",
+const STATUS_NOTICE: Record<CycleStatus, string> = {
+  current: "notice-green",
+  due: "notice-yellow",
+  overdue: "notice-red",
 };
 
 const STATUS_LABEL: Record<CycleStatus, string> = {
@@ -99,12 +103,13 @@ function ROLE(role: string): string {
 function CycleBanner({ audit }: { audit: IntegrityAudit }) {
   const status = audit.cycle_status;
   return (
-    <div className={`rounded-xl border p-4 ${STATUS_BORDER[status]}`}>
-      <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-        <h2 className={`text-sm font-bold ${STATUS_TONE[status]}`}>
+    // A notice in the cycle's colour (#80): the status as its label.
+    <div className={`notice ${STATUS_NOTICE[status]}`}>
+      <div className="flex flex-wrap items-baseline gap-x-1 gap-y-1">
+        <h2 className={`notice-label ${STATUS_TONE[status]}`}>
           {STATUS_LABEL[status]}
         </h2>
-        <p className="text-xs text-muted-foreground">
+        <p>
           {audit.last_attested_at ? (
             <>
               Last reviewed {day(audit.last_attested_at)} —{" "}
@@ -118,35 +123,7 @@ function CycleBanner({ audit }: { audit: IntegrityAudit }) {
           )}
         </p>
       </div>
-      <p className="mt-2 text-xs text-muted-foreground">{audit.advisory}</p>
-    </div>
-  );
-}
-
-function Tally({
-  label,
-  value,
-  sub,
-  tone,
-}: {
-  label: string;
-  value: number;
-  sub: string;
-  tone?: string;
-}) {
-  return (
-    <div className="rounded-lg border border-border bg-card px-3 py-2">
-      <p className="text-[0.55rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-        {label}
-      </p>
-      <p
-        className={`mt-0.5 text-lg font-semibold tabular-nums ${
-          value > 0 && tone ? tone : "text-foreground"
-        }`}
-      >
-        {value}
-      </p>
-      <p className="mt-0.5 text-[0.65rem] text-muted-foreground">{sub}</p>
+      <p className="mt-1.5 text-muted-foreground">{audit.advisory}</p>
     </div>
   );
 }
@@ -177,7 +154,7 @@ function FindingRow({ finding }: { finding: IntegrityFinding }) {
             {finding.label}
             <span
               title={SCOPE_WHY[finding.scope]}
-              className="ml-2 rounded border border-border px-1.5 py-0.5 text-[0.55rem] font-normal uppercase tracking-wider text-muted-foreground"
+              className="eyebrow ml-2 text-[0.6rem]"
             >
               {SCOPE_LABEL[finding.scope]}
             </span>
@@ -223,13 +200,11 @@ function Group({
   if (findings.length === 0) return null;
   return (
     <section aria-label={title} className="mb-4">
-      <h2 className="text-[0.65rem] font-bold uppercase tracking-[0.08em] text-muted-foreground">
-        {title}
-      </h2>
+      <h2 className="eyebrow">{title}</h2>
       <p className="mb-2 mt-0.5 text-[0.7rem] text-muted-foreground">
         {blurb}
       </p>
-      <ul className="rounded-xl border border-border bg-card">
+      <ul className="rounded-lg border border-border bg-card">
         {findings.map((f) => (
           <FindingRow key={f.key} finding={f} />
         ))}
@@ -258,13 +233,10 @@ export default async function DataIntegrityPage() {
   if (!audit) {
     return (
       <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6">
-        <h1 className="page-title">Data Integrity Review</h1>
-        <div className="mt-4 rounded-xl border border-status-red/40 bg-status-red/5 p-4">
-          <p className="text-sm font-semibold text-status-red">
-            The audit could not be built
-          </p>
-          <p className="mt-1 text-xs text-muted-foreground">{loadError}</p>
-        </div>
+        <PageHeader title="Data Integrity Review" />
+        <Notice tone="red" label="The audit could not be built">
+          {loadError}
+        </Notice>
       </div>
     );
   }
@@ -276,33 +248,29 @@ export default async function DataIntegrityPage() {
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6">
-      <header className="mb-4">
-        <h1 className="page-title">Data Integrity Review</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          The {audit.cycle_days}-day audit required by the General
-          Operations Manual · window {day(audit.window_start)} to{" "}
-          {day(audit.window_end)}
-        </p>
-      </header>
+      <PageHeader
+        title="Data Integrity Review"
+        description={`The ${audit.cycle_days}-day audit required by the General Operations Manual · window ${day(audit.window_start)} to ${day(audit.window_end)}`}
+      />
 
       <div className="mb-4">
         <CycleBanner audit={audit} />
       </div>
 
-      <div className="mb-5 grid grid-cols-2 gap-2">
-        <Tally
-          label="Contradictions"
+      <StatStrip label="Findings">
+        <Stat
           value={audit.contradictions}
-          sub="records disagree — at least one is wrong"
-          tone="text-status-red"
+          label="Contradictions"
+          tone={audit.contradictions > 0 ? "red" : "neutral"}
+          hint="records disagree — at least one is wrong"
         />
-        <Tally
-          label="Omissions"
+        <Stat
           value={audit.omissions}
-          sub="something required is absent"
-          tone="text-status-yellow"
+          label="Omissions"
+          tone={audit.omissions > 0 ? "yellow" : "neutral"}
+          hint="something required is absent"
         />
-      </div>
+      </StatStrip>
 
       <Group
         title="Contradictions"
@@ -315,11 +283,7 @@ export default async function DataIntegrityPage() {
         findings={omissions}
       />
 
-      <section
-        aria-label="Record the review"
-        className="mt-6 rounded-xl border border-border bg-card p-4"
-      >
-        <h2 className="mb-1 text-sm font-semibold">Record the review</h2>
+      <Panel title="Record the review" className="mt-6">
         <p className="mb-3 text-[0.7rem] text-muted-foreground">
           The manual makes the Director of Operations responsible and
           requires the reviewer&rsquo;s identity and a timestamp to be
@@ -334,13 +298,11 @@ export default async function DataIntegrityPage() {
           canSign={canSign}
           attestAction={attestAction}
         />
-      </section>
+      </Panel>
 
       {audit.recent.length > 0 && (
         <section aria-label="Review history" className="mt-6">
-          <h2 className="mb-2 text-[0.65rem] font-bold uppercase tracking-[0.08em] text-muted-foreground">
-            Recent reviews
-          </h2>
+          <h2 className="eyebrow mb-2">Recent reviews</h2>
           <ul className="space-y-2">
             {audit.recent.map((a) => (
               <li

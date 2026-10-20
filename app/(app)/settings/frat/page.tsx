@@ -104,7 +104,7 @@ function ReadOnlyBands({ config }: { config: FratThresholdConfigResponse }) {
   const { extreme_entry_score: e, max_total_score: max } = config;
   return (
     <div>
-      <p className="mb-2 text-[0.6rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+      <p className="mb-2 eyebrow">
         How a total score lands
       </p>
       <ul className="space-y-1 text-xs">
@@ -181,7 +181,7 @@ export default async function FratThresholdsPage() {
           <div className="mb-5">
             <Provenance config={config} />
           </div>
-          <div className="rounded-xl border border-border bg-card p-4">
+          <div className="rounded-lg border border-border bg-card p-4">
             {canSet ? (
               <ThresholdForm
                 // The form keeps its own copy of the values while editing.

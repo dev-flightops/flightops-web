@@ -78,7 +78,7 @@ export function FleetCard({ summary }: { summary: FleetAircraftSummary }) {
         </div>
         <Link
           href={`/maintenance/aircraft/${summary.aircraft.id}`}
-          className="shrink-0 rounded-md border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-accent"
+          className="btn-caps shrink-0 rounded-md border border-input px-3 py-1.5 text-foreground hover:bg-accent text-[0.72rem]"
         >
           Details →
         </Link>

@@ -268,7 +268,7 @@ function StatTile({
       >
         {value}
       </div>
-      <div className="mt-1.5 text-[0.6rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+      <div className="mt-1.5 eyebrow">
         {label}
       </div>
     </div>

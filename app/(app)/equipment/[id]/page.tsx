@@ -474,7 +474,7 @@ function UnitStatusChip({
 function Field({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <dt className="text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+      <dt className="eyebrow">
         {label}
       </dt>
       <dd className="m-0 mt-0.5 font-mono text-sm text-foreground">{value}</dd>

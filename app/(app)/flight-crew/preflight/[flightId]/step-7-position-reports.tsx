@@ -48,7 +48,7 @@ export function PositionReportsStep({ flightId, flight }: Props) {
   };
 
   return (
-    <section className="rounded-xl border border-border bg-card">
+    <section className="rounded-lg border border-border bg-card">
       <header className="border-b border-border px-5 py-3">
         <p className="text-xs uppercase tracking-[0.08em] text-muted-foreground">
           Step 7
@@ -104,7 +104,7 @@ export function PositionReportsStep({ flightId, flight }: Props) {
           type="button"
           disabled={!canSubmit}
           onClick={handleSubmit}
-          className="inline-flex w-full items-center justify-center rounded-md bg-primary px-4 py-2.5 text-sm font-semibold text-white transition-opacity hover:bg-brand-dark disabled:opacity-50"
+          className="btn-caps inline-flex w-full items-center justify-center rounded-md bg-primary px-4 py-2.5 text-white transition-opacity hover:bg-brand-dark disabled:opacity-50"
         >
           {pending ? "Saving…" : "Continue to Step 8 →"}
         </button>

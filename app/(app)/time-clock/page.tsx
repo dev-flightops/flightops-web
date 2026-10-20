@@ -69,7 +69,7 @@ export default async function TimeClockPage() {
         </div>
         <Link
           href="/flight-crew/elog"
-          className="rounded-md bg-primary px-3 py-2 text-xs font-semibold text-white hover:bg-brand-dark"
+          className="btn-caps rounded-md bg-primary px-3 py-2 text-white hover:bg-brand-dark text-[0.72rem]"
         >
           Open Flight Log →
         </Link>
@@ -160,7 +160,7 @@ function StatItem({
 }) {
   return (
     <div>
-      <div className="text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+      <div className="eyebrow">
         {label}
       </div>
       <div

@@ -215,7 +215,7 @@ function Attachment({ report }: { report: SafetyReport }) {
         href={href}
         target="_blank"
         rel="noopener noreferrer"
-        className="inline-flex rounded-md border border-border bg-background px-3 py-1.5 text-xs font-semibold text-foreground/80 hover:bg-accent"
+        className="btn-caps inline-flex rounded-md border border-input px-3 py-1.5 text-foreground hover:bg-accent text-[0.72rem]"
       >
         View PDF: {file.filename}
       </a>
@@ -238,7 +238,7 @@ function Attachment({ report }: { report: SafetyReport }) {
 function Panel({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section className="rounded-lg border border-border bg-card p-5">
-      <h2 className="mb-2 text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+      <h2 className="mb-2 eyebrow">
         {title}
       </h2>
       {children}
@@ -250,7 +250,7 @@ function Detail({ label, value }: { label: string; value: string | null | undefi
   if (!value) return null;
   return (
     <div>
-      <dt className="text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">{label}</dt>
+      <dt className="eyebrow">{label}</dt>
       <dd className="text-foreground">{value}</dd>
     </div>
   );

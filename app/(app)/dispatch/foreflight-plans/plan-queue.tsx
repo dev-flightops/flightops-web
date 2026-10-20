@@ -124,7 +124,7 @@ export function PlanQueue({ plans }: { plans: QueuedPlan[] }) {
     );
   }
   return (
-    <ul aria-label="ForeFlight plans waiting" className="divide-y divide-border rounded-xl border border-border bg-card">
+    <ul aria-label="ForeFlight plans waiting" className="divide-y divide-border rounded-lg border border-border bg-card">
       {plans.map((plan) => (
         <QueuedPlanRow key={plan.id} plan={plan} />
       ))}

@@ -34,7 +34,7 @@ export function SummaryTab({
 
   return (
     <div className="space-y-4">
-      <h2 className="text-[0.7rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+      <h2 className="eyebrow">
         Flight Summary — Totals
       </h2>
 
@@ -144,7 +144,7 @@ function BigTile({
         : "text-status-yellow";
   return (
     <div>
-      <div className="text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+      <div className="eyebrow">
         {label}
       </div>
       <div
@@ -169,7 +169,7 @@ function Counter({
 }) {
   return (
     <div>
-      <div className="text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+      <div className="eyebrow">
         {label}
       </div>
       <div

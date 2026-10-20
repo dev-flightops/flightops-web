@@ -43,7 +43,7 @@ export function LessonPlayer({
   return (
     <article>
       <header className="mb-4">
-        <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+        <p className="eyebrow">
           Lesson {String(lesson.ordinal + 1).padStart(2, "0")}
         </p>
         <h2 className="mt-1 text-xl font-bold tracking-tight">
@@ -87,7 +87,7 @@ export function LessonPlayer({
           <div className="flex flex-col items-end gap-1">
             <Link
               href={`/academy/enrollments/${enrollmentId}/quiz/${lesson.quiz_id}?lesson=${lesson.id}`}
-              className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-brand-dark"
+              className="btn-caps rounded-md bg-primary px-4 py-2 text-white hover:bg-brand-dark"
             >
               Take Quiz →
             </Link>
@@ -107,7 +107,7 @@ export function LessonPlayer({
             <button
               type="submit"
               disabled={pending}
-              className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-brand-dark disabled:opacity-60"
+              className="btn-caps rounded-md bg-primary px-4 py-2 text-white hover:bg-brand-dark disabled:opacity-60"
             >
               {pending ? "Saving…" : "Mark Complete"}
             </button>

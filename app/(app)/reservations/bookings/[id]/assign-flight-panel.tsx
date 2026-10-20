@@ -79,7 +79,7 @@ export function AssignFlightPanel({
       aria-label="Flight assignment"
       className="mb-6 rounded-lg border border-border bg-card p-5"
     >
-      <h2 className="mb-3 text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+      <h2 className="mb-3 eyebrow">
         Flight
       </h2>
 
@@ -177,7 +177,7 @@ export function AssignFlightPanel({
           type="button"
           onClick={() => void assign(selected)}
           disabled={!selected || pending}
-          className="mt-3 rounded-md bg-primary px-4 py-2 text-xs font-semibold text-white hover:bg-brand-dark disabled:opacity-40"
+          className="btn-caps mt-3 rounded-md bg-primary px-4 py-2 text-white hover:bg-brand-dark disabled:opacity-40 text-[0.72rem]"
         >
           {pending ? "Assigning…" : "Assign to flight"}
         </button>

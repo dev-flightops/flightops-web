@@ -48,7 +48,7 @@ export async function FlightInfoTab({
 
   return (
     <div className="space-y-3">
-      <h2 className="text-[0.7rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+      <h2 className="eyebrow">
         Flight Info
       </h2>
 
@@ -109,7 +109,7 @@ function ReadOnlyField({
 }) {
   return (
     <div>
-      <div className="mb-1 text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+      <div className="mb-1 eyebrow">
         {label}
       </div>
       <div

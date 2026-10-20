@@ -108,14 +108,14 @@ function MoveBaseForm({
             type="button"
             onClick={onClose}
             disabled={pending}
-            className="rounded-md border border-border bg-card px-3 py-2 text-sm font-semibold text-foreground hover:bg-accent disabled:opacity-60"
+            className="btn-caps rounded-md border border-input px-3 py-2 text-foreground hover:bg-accent disabled:opacity-60"
           >
             Cancel
           </button>
           <button
             type="submit"
             disabled={pending || !station || station === member.station}
-            className="inline-flex items-center gap-2 rounded-md bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground hover:bg-brand-dark disabled:opacity-60"
+            className="btn-caps inline-flex items-center gap-2 rounded-md bg-primary px-3 py-2 text-primary-foreground hover:bg-brand-dark disabled:opacity-60"
           >
             {pending && <Spinner size="xs" />}
             Move

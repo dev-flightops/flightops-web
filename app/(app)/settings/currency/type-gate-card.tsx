@@ -92,7 +92,7 @@ export function TypeGateCard({
                 type="button"
                 onClick={() => change(!on)}
                 disabled={pending}
-                className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 font-semibold text-primary-foreground hover:bg-brand-dark disabled:opacity-60"
+                className="btn-caps inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-primary-foreground hover:bg-brand-dark disabled:opacity-60"
               >
                 {pending && <Spinner size="xs" />}
                 {on ? "Turn off" : "Turn on"}
@@ -110,7 +110,7 @@ export function TypeGateCard({
             <button
               type="button"
               onClick={() => setConfirming(true)}
-              className="rounded-md border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-accent"
+              className="btn-caps rounded-md border border-input px-3 py-1.5 text-foreground hover:bg-accent text-[0.72rem]"
             >
               {on ? "Turn off…" : "Turn on…"}
             </button>

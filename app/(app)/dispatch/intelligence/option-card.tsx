@@ -68,11 +68,11 @@ export function OptionCard({ option }: { option: DispatchOption }) {
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <div className="flex items-baseline gap-2">
           {blocked ? (
-            <span className="rounded border border-status-yellow/40 bg-status-yellow/10 px-1.5 py-0.5 text-[0.6rem] font-semibold uppercase tracking-wider text-status-yellow">
+            <span className="status-mark text-status-yellow">
               Blocked
             </span>
           ) : (
-            <span className="rounded bg-primary px-1.5 py-0.5 text-[0.65rem] font-bold tabular-nums text-white">
+            <span className="btn-caps rounded bg-primary px-1.5 py-0.5 tabular-nums text-white text-[0.68rem]">
               {option.rank}
             </span>
           )}

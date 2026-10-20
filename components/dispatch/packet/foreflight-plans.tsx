@@ -247,7 +247,7 @@ export function ForeFlightPlansWaitingBanner({ count }: { count: number }) {
   return (
     <section
       aria-label="ForeFlight plans waiting for a flight"
-      className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-border bg-card px-4 py-2.5"
+      className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border bg-card px-4 py-2.5"
     >
       <p className="text-xs">
         <span className="font-semibold uppercase tracking-[0.06em] text-status-yellow">ForeFlight plans</span>

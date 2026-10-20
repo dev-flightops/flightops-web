@@ -118,7 +118,7 @@ export function AsapReviewForm({ reportId, review }: { reportId: string; review:
       <button
         type="submit"
         disabled={pending}
-        className="rounded-md bg-primary px-4 py-2 text-xs font-semibold text-white hover:bg-brand-dark disabled:opacity-60 md:col-span-2"
+        className="btn-caps rounded-md bg-primary px-4 py-2 text-white hover:bg-brand-dark disabled:opacity-60 md:col-span-2 text-[0.72rem]"
       >
         {pending ? "Saving…" : "Save Review"}
       </button>

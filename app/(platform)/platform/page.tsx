@@ -97,11 +97,11 @@ function CompanyTable({ companies }: { companies: Company[] }) {
               </td>
               <td className="whitespace-nowrap px-3 py-2.5">
                 {c.is_active ? (
-                  <span className="rounded border border-status-green/40 bg-status-green/10 px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider text-status-green">
+                  <span className="status-mark text-status-green">
                     Active
                   </span>
                 ) : (
-                  <span className="rounded border border-status-red/40 bg-status-red/10 px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider text-status-red">
+                  <span className="status-mark text-status-red">
                     Suspended
                   </span>
                 )}

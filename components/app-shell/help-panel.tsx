@@ -72,7 +72,7 @@ function Section({
 }) {
   return (
     <section className="mb-4">
-      <h3 className="mb-1 text-[0.6rem] font-bold uppercase tracking-[0.08em] text-muted-foreground">
+      <h3 className="mb-1 eyebrow">
         {heading}
       </h3>
       {children}

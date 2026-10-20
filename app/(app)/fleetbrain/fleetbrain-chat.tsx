@@ -98,7 +98,7 @@ export function FleetBrainChat({ examples }: { examples: string[] }) {
             autoComplete="off"
             maxLength={500}
             placeholder="Ask FleetBrain anything about your operation..."
-            className="flex-1 rounded-xl border border-border bg-card px-4 py-2.5 text-sm focus:border-primary focus:outline-none"
+            className="flex-1 rounded-lg border border-border bg-card px-4 py-2.5 text-sm focus:border-primary focus:outline-none"
           />
           <button
             type="submit"

@@ -75,7 +75,7 @@ export function TypeQualificationsCard({
                 onClick={() =>
                   setDialog({ kind: "check", airframeType: firstType, check: "competency" })
                 }
-                className="rounded-md border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-accent"
+                className="btn-caps rounded-md border border-input px-3 py-1.5 text-foreground hover:bg-accent text-[0.72rem]"
               >
                 Record check ride
               </button>
@@ -86,7 +86,7 @@ export function TypeQualificationsCard({
                 onClick={() =>
                   setDialog({ kind: "authorise", airframeType: firstType, position: "pic" })
                 }
-                className="rounded-md border border-primary/40 bg-background px-3 py-1.5 text-xs font-semibold text-primary hover:bg-primary/5"
+                className="btn-caps rounded-md border border-primary/40 bg-background px-3 py-1.5 text-primary hover:bg-primary/5 text-[0.72rem]"
               >
                 + Authorise
               </button>
@@ -209,7 +209,7 @@ function PositionCell({
   return (
     <span className="inline-flex items-center gap-0.5">
       <span
-        className={`rounded px-1.5 py-0.5 font-mono text-[0.65rem] font-semibold ${CELL_TONES[cell.state]}`}
+        className={`font-mono ${CELL_TONES[cell.state]}`}
         title={`${what}: ${CELL_STATE_LABELS[cell.state]} — authorised ${cell.authorised_on}`}
       >
         {cell.authorised_on}
@@ -262,7 +262,7 @@ function CheckCell({
           onClick={onRecord}
           aria-label={`Record ${label}`}
           title={`Record ${label}`}
-          className="shrink-0 rounded border border-border px-1.5 py-0.5 text-[0.65rem] font-semibold text-muted-foreground hover:bg-accent hover:text-foreground"
+          className="btn-caps shrink-0 rounded border border-input px-1.5 py-0.5 text-muted-foreground hover:bg-accent hover:text-foreground text-[0.68rem]"
         >
           Record
         </button>

@@ -158,7 +158,7 @@ export function QuizRunner({ enrollmentId, quiz, backToLessonHref }: Props) {
         <button
           type="submit"
           disabled={pending || !allAnswered}
-          className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-brand-dark disabled:cursor-not-allowed disabled:opacity-60"
+          className="btn-caps rounded-md bg-primary px-4 py-2 text-white shadow-sm hover:bg-brand-dark disabled:cursor-not-allowed disabled:opacity-60"
         >
           {pending ? "Submitting…" : "Submit answers"}
         </button>
@@ -255,13 +255,13 @@ function ResultView({
         <button
           type="button"
           onClick={onRetake}
-          className="rounded-md border border-border bg-card px-3 py-1.5 text-xs font-semibold hover:bg-accent"
+          className="btn-caps rounded-md border border-input px-3 py-1.5 hover:bg-accent text-[0.72rem]"
         >
           Retake
         </button>
         <Link
           href={backToLessonHref}
-          className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-brand-dark"
+          className="btn-caps rounded-md bg-primary px-4 py-2 text-white shadow-sm hover:bg-brand-dark"
         >
           Back to lesson →
         </Link>

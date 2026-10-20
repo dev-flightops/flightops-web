@@ -45,7 +45,7 @@ export function TodayFlightsPanel({ flights }: Props) {
     // out loud: a pilot who expects to be flying should ring dispatch
     // rather than assume the page is broken.
     return (
-      <div className="rounded-xl border border-dashed border-border bg-card/50 px-5 py-8 text-center text-sm text-muted-foreground">
+      <div className="rounded-lg border border-dashed border-border bg-card/50 px-5 py-8 text-center text-sm text-muted-foreground">
         You&apos;re not rostered on any flights just now.{" "}
         <span className="block pt-1 text-xs">
           If you&apos;re expecting to fly, check with dispatch — or{" "}
@@ -109,7 +109,7 @@ function FlightCard({ flight }: { flight: FlightListItem }) {
         </div>
         <Link
           href={`/flight-crew/preflight/${flight.id}`}
-          className="shrink-0 rounded-md border border-primary/40 bg-background px-3 py-1.5 text-xs font-semibold text-primary transition-colors hover:bg-primary/5"
+          className="btn-caps shrink-0 rounded-md border border-primary/40 bg-background px-3 py-1.5 text-primary transition-colors hover:bg-primary/5 text-[0.72rem]"
         >
           Begin Preflight →
         </Link>

@@ -124,7 +124,7 @@ export function LoadTeamPicker({
             type="button"
             disabled={pending}
             onClick={() => run(null)}
-            className="rounded-md border border-border px-2 py-1 text-xs font-semibold text-muted-foreground transition-colors hover:border-status-red/40 hover:text-status-red disabled:opacity-50"
+            className="btn-caps rounded-md border border-input px-2 py-1 text-muted-foreground transition-colors hover:border-status-red/40 hover:text-status-red disabled:opacity-50 text-[0.72rem]"
           >
             Clear
             <span className="sr-only"> load team {assigned.name}</span>
@@ -149,7 +149,7 @@ function CardBody({ card }: { card: LoadTeamCard }) {
     <>
       <span
         aria-hidden
-        className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full"
+        className="mt-1 h-2.5 w-2.5 shrink-0"
         style={{ backgroundColor: card.color }}
       />
       <span className="min-w-0">

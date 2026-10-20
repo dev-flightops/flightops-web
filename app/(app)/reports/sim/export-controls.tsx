@@ -127,7 +127,7 @@ export function ExportControls({
     <div>
       <div className="flex flex-wrap items-end gap-2">
         <label className="flex flex-col gap-1">
-          <span className="text-[0.6rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+          <span className="eyebrow">
             From
           </span>
           <input
@@ -141,7 +141,7 @@ export function ExportControls({
           />
         </label>
         <label className="flex flex-col gap-1">
-          <span className="text-[0.6rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+          <span className="eyebrow">
             To
           </span>
           <input
@@ -155,7 +155,7 @@ export function ExportControls({
           />
         </label>
         <label className="flex flex-col gap-1">
-          <span className="text-[0.6rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+          <span className="eyebrow">
             Records
           </span>
           <select
@@ -170,7 +170,7 @@ export function ExportControls({
           </select>
         </label>
         <label className="flex flex-col gap-1">
-          <span className="text-[0.6rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+          <span className="eyebrow">
             Format
           </span>
           <select
@@ -201,7 +201,7 @@ export function ExportControls({
               ? "Nothing to export in this window"
               : undefined
           }
-          className="rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-dark disabled:opacity-40"
+          className="btn-caps rounded-md bg-primary px-3 py-1.5 text-white hover:bg-brand-dark disabled:opacity-40 text-[0.72rem]"
         >
           {busy ? "Preparing…" : `Download ${FORMAT_LABEL[effectiveFormat]}`}
         </button>

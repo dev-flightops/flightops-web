@@ -61,7 +61,7 @@ export default async function CustomersListPage({
         </div>
         <Link
           href="/customers/new"
-          className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-brand-dark"
+          className="btn-caps rounded-md bg-primary px-4 py-2 text-white hover:bg-brand-dark"
         >
           + New Customer
         </Link>
@@ -99,7 +99,7 @@ export default async function CustomersListPage({
           </label>
           <button
             type="submit"
-            className="rounded-md border border-border bg-card px-3 py-2 text-xs font-semibold text-foreground/80 hover:bg-accent"
+            className="btn-caps rounded-md border border-input px-3 py-2 text-foreground hover:bg-accent text-[0.72rem]"
           >
             Filter
           </button>
@@ -198,7 +198,7 @@ function CustomerTable({
                       Archived
                     </span>
                   ) : (
-                    <span className="rounded border border-status-green/40 bg-status-green/10 px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider text-status-green">
+                    <span className="status-mark text-status-green">
                       Active
                     </span>
                   )}

@@ -73,7 +73,7 @@ export default async function OpsScoreDashboardPage({
       </div>
 
       {/* Central dial + score-band legend */}
-      <section className="mt-5 rounded-xl border border-border bg-card p-8 text-center">
+      <section className="mt-5 rounded-lg border border-border bg-card p-8 text-center">
         <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
           Today&apos;s Ops Score
         </p>
@@ -116,7 +116,7 @@ export default async function OpsScoreDashboardPage({
       </section>
 
       {/* Pillar breakdown */}
-      <section className="mt-5 rounded-xl border border-border bg-card p-5">
+      <section className="mt-5 rounded-lg border border-border bg-card p-5">
         <h2 className="mb-4 text-xs font-bold uppercase tracking-wider text-muted-foreground">
           Score Breakdown
         </h2>
@@ -139,7 +139,7 @@ export default async function OpsScoreDashboardPage({
       </section>
 
       {/* Methodology — legacy uses concrete scoring rules, not dev notes */}
-      <section className="mt-5 rounded-xl border border-border bg-card p-5">
+      <section className="mt-5 rounded-lg border border-border bg-card p-5">
         <h2 className="mb-3 text-xs font-bold uppercase tracking-wider text-muted-foreground">
           Score Methodology
         </h2>
@@ -178,7 +178,7 @@ export default async function OpsScoreDashboardPage({
       </section>
 
       {/* 8-week trend */}
-      <section className="mt-5 rounded-xl border border-border bg-card p-5">
+      <section className="mt-5 rounded-lg border border-border bg-card p-5">
         <h2 className="mb-3 text-xs font-bold uppercase tracking-wider text-muted-foreground">
           8-Week Completion Trend
         </h2>
@@ -230,7 +230,7 @@ function ScoreBand({
           : "bg-status-red";
   return (
     <span className="inline-flex items-center gap-1.5">
-      <span className={`h-2 w-2 rounded-full ${dotClass}`} aria-hidden />
+      <span className={`h-2 w-2 ${dotClass}`} aria-hidden />
       {label}
     </span>
   );

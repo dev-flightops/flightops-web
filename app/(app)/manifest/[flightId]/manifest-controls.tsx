@@ -24,7 +24,7 @@ export function CreateManifestButton({ flightId }: { flightId: string }) {
       <button
         type="submit"
         disabled={pending}
-        className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-brand-dark disabled:opacity-60"
+        className="btn-caps rounded-md bg-primary px-4 py-2 text-white hover:bg-brand-dark disabled:opacity-60"
       >
         {pending ? "Creating…" : "Create Manifest"}
       </button>
@@ -71,7 +71,7 @@ export function LockManifestButton({ flightId, flightNumber }: { flightId: strin
         <button
           type="submit"
           disabled={pending}
-          className="rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-dark disabled:opacity-60"
+          className="btn-caps rounded-md bg-primary px-3 py-1.5 text-white hover:bg-brand-dark disabled:opacity-60 text-[0.72rem]"
         >
           {pending ? "Locking…" : "Lock It"}
         </button>

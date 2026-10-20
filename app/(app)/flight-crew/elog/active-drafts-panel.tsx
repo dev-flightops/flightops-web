@@ -46,7 +46,7 @@ export function ActiveDraftsPanel({
                   · {log.flight_date}
                 </span>
               </div>
-              <span className="rounded bg-status-yellow/15 px-1.5 py-0.5 text-[0.6rem] font-semibold uppercase tracking-[0.08em] text-status-yellow">
+              <span className="status-mark text-status-yellow">
                 Draft
               </span>
             </Link>

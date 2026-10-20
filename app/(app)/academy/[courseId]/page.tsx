@@ -85,7 +85,7 @@ export default async function CourseDetailPage({
       <EnrolCtaSection course={course} enrollment={myEnrollment} />
 
       <section className="mt-6 rounded-lg border border-border bg-card p-5">
-        <h2 className="mb-3 text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+        <h2 className="mb-3 eyebrow">
           Lessons
         </h2>
         {course.lessons.length === 0 ? (
@@ -105,13 +105,13 @@ export default async function CourseDetailPage({
                   className="flex items-baseline justify-between gap-3 rounded-md border border-border bg-background/40 px-3 py-2 text-sm"
                 >
                   <div className="min-w-0 flex-1">
-                    <span className="text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+                    <span className="eyebrow">
                       {String(idx + 1).padStart(2, "0")}
                     </span>{" "}
                     <span className="font-semibold">{l.title}</span>
                   </div>
                   {done ? (
-                    <span className="rounded border border-status-green/40 bg-status-green/10 px-1.5 py-0.5 text-[0.6rem] font-semibold uppercase tracking-wider text-status-green">
+                    <span className="status-mark text-status-green">
                       ✓ Done
                     </span>
                   ) : null}
@@ -142,7 +142,7 @@ function EnrolCtaSection({
         </div>
         <Link
           href={`/academy/enrollments/${enrollment.id}`}
-          className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-brand-dark"
+          className="btn-caps rounded-md bg-primary px-4 py-2 text-white hover:bg-brand-dark"
         >
           Continue →
         </Link>

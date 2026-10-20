@@ -70,7 +70,7 @@ export default async function FuelOrdersPage({
         </div>
         <Link
           href="/fuel/orders/new"
-          className="rounded-md border border-primary/40 bg-background px-3 py-1.5 text-xs font-semibold text-primary hover:bg-primary/5"
+          className="btn-caps rounded-md border border-primary/40 bg-background px-3 py-1.5 text-primary hover:bg-primary/5 text-[0.72rem]"
         >
           + Order Fuel
         </Link>
@@ -93,7 +93,7 @@ export default async function FuelOrdersPage({
           {!status && (
             <Link
               href="/fuel/orders/new"
-              className="mt-4 inline-block rounded-md border border-primary/40 bg-background px-3 py-1.5 text-xs font-semibold text-primary hover:bg-primary/5"
+              className="btn-caps mt-4 inline-block rounded-md border border-primary/40 bg-background px-3 py-1.5 text-primary hover:bg-primary/5 text-[0.72rem]"
             >
               + Order Fuel
             </Link>

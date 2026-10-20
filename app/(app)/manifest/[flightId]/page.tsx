@@ -178,7 +178,7 @@ function FlightHeader({
         <FlightStatusBadge status={flight.status} />
         <Link
           href={`/dispatch?flight=${flight.id}`}
-          className="rounded-md border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground/80 hover:bg-accent"
+          className="btn-caps rounded-md border border-input px-3 py-1.5 text-foreground hover:bg-accent text-[0.72rem]"
         >
           Open Dispatch Packet →
         </Link>

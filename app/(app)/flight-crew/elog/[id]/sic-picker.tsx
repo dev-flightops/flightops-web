@@ -63,7 +63,7 @@ export function SicPicker({
   return (
     <div>
       <div className="mb-1 flex items-baseline justify-between">
-        <span className="text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+        <span className="eyebrow">
           SIC / Check Airman / Instructor / Advisory
         </span>
         {pending && (

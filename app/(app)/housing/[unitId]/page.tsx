@@ -119,7 +119,7 @@ export default async function HousingUnitDetailPage({
               </>
             )}
             {!unit.is_active && (
-              <span className="rounded border border-status-yellow/40 bg-status-yellow/10 px-2 py-0.5 text-xs font-semibold uppercase tracking-wider text-status-yellow">
+              <span className="status-mark text-status-yellow">
                 Inactive
               </span>
             )}
@@ -316,7 +316,7 @@ function BookingsCard({
                           Cancelled
                         </span>
                       ) : (
-                        <span className="rounded border border-status-green/40 bg-status-green/10 px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider text-status-green">
+                        <span className="status-mark text-status-green">
                           Active
                         </span>
                       )}

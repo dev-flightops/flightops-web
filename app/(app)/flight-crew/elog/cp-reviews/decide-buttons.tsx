@@ -54,7 +54,7 @@ export function CpReviewDecideButtons({
             setError(null);
             setOpen("decline");
           }}
-          className="rounded-md border border-border bg-background px-2.5 py-1 text-[0.65rem] font-semibold text-foreground hover:bg-accent"
+          className="btn-caps rounded-md border border-input px-2.5 py-1 text-foreground hover:bg-accent text-[0.68rem]"
         >
           Decline
         </button>
@@ -82,7 +82,7 @@ export function CpReviewDecideButtons({
       <div className="font-semibold text-foreground">{heading}</div>
       <p className="mt-0.5 text-muted-foreground">{subhead}</p>
       <label className="mt-1.5 block">
-        <span className="text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+        <span className="eyebrow">
           Note (optional)
         </span>
         <input
@@ -128,7 +128,7 @@ export function CpReviewDecideButtons({
             setNote("");
             setError(null);
           }}
-          className="rounded-md border border-border bg-background px-2.5 py-1 font-semibold text-foreground hover:bg-accent disabled:opacity-50"
+          className="btn-caps rounded-md border border-input px-2.5 py-1 text-foreground hover:bg-accent disabled:opacity-50"
         >
           Cancel
         </button>

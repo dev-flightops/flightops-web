@@ -83,7 +83,7 @@ export default async function SettingsCurrencyPage() {
         <div className="flex flex-wrap gap-2">
           <Link
             href="/compliance/crew-currency"
-            className="rounded-md border border-border bg-card px-3 py-2 text-xs font-semibold text-foreground hover:bg-accent"
+            className="btn-caps rounded-md border border-input px-3 py-2 text-foreground hover:bg-accent text-[0.72rem]"
           >
             ← Fleet Board
           </Link>
@@ -92,7 +92,7 @@ export default async function SettingsCurrencyPage() {
             disabled
             aria-disabled="true"
             title={BACKEND_HINT_WRITE}
-            className="cursor-not-allowed rounded-md bg-primary px-3 py-2 text-xs font-semibold text-white disabled:opacity-100"
+            className="btn-caps cursor-not-allowed rounded-md bg-primary px-3 py-2 text-white disabled:opacity-100 text-[0.72rem]"
           >
             + New Custom Item
           </button>
@@ -136,7 +136,7 @@ function ItemsList({
 }) {
   return (
     <section className="mb-5">
-      <h2 className="mb-3 text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+      <h2 className="mb-3 eyebrow">
         {label}
       </h2>
       {items.length === 0 ? (

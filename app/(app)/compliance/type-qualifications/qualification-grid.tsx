@@ -113,7 +113,7 @@ function PositionChip({ cell }: { cell: TypeQualificationCell }) {
   ];
   return (
     <span
-      className={`rounded px-1.5 py-0.5 text-[0.65rem] font-semibold ${CELL_TONES[cell.state]}`}
+      className={CELL_TONES[cell.state]}
       title={lines.join("\n")}
     >
       {POSITION_SHORT[cell.position]}
@@ -126,7 +126,7 @@ export function QualificationLegend() {
     <p className="mt-3 flex flex-wrap items-center gap-3 text-[0.7rem] text-muted-foreground">
       {(["current", "grace", "non_current"] as const).map((state) => (
         <span key={state} className="inline-flex items-center gap-1.5">
-          <span className={`rounded px-1.5 py-0.5 font-semibold ${CELL_TONES[state]}`}>
+          <span className={CELL_TONES[state]}>
             PIC
           </span>
           {CELL_STATE_LABELS[state]}

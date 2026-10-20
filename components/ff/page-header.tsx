@@ -45,7 +45,8 @@ export function PageHeader({
         {eyebrow ? <p className="eyebrow mb-1">{eyebrow}</p> : null}
         <h1 className="page-title text-balance">{title}</h1>
         {description ? (
-          <p className="mt-2 max-w-3xl text-sm text-muted-foreground">{description}</p>
+          // A div, so a description can carry its own paragraphs.
+          <div className="mt-2 max-w-3xl text-sm text-muted-foreground">{description}</div>
         ) : null}
       </div>
       {actions ? <div className="flex flex-wrap items-center gap-2">{actions}</div> : null}

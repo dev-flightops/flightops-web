@@ -105,7 +105,7 @@ export default async function RamperPage() {
           <div className="text-2xl font-bold leading-none text-foreground">
             {totalTasks}
           </div>
-          <div className="mt-1 text-[0.6rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+          <div className="mt-1 eyebrow">
             Open tasks
           </div>
         </div>

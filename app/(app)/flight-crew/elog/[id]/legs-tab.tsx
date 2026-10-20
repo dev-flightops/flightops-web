@@ -38,7 +38,7 @@ export function LegsTab({
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="text-[0.7rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+          <h2 className="eyebrow">
             Legs
           </h2>
           <p className="mt-1 text-[0.7rem] text-muted-foreground">

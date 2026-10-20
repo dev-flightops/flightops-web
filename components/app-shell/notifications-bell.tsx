@@ -136,7 +136,7 @@ export function NotificationsBell({
         <div
           role="dialog"
           aria-label="Notifications"
-          className="light absolute right-0 z-50 mt-1 w-[22rem] overflow-hidden rounded-xl border border-border bg-card text-card-foreground shadow-lg"
+          className="light absolute right-0 z-50 mt-1 w-[22rem] overflow-hidden rounded-lg border border-border bg-card text-card-foreground shadow-lg"
         >
           <div className="flex items-baseline justify-between border-b border-border px-3 py-2">
             <p className="text-xs font-semibold">
@@ -174,7 +174,7 @@ export function NotificationsBell({
               >
                 <div className="flex items-start gap-2">
                   <span
-                    className={`mt-1 h-1.5 w-1.5 shrink-0 rounded-full ${SEVERITY_DOT[alert.severity]}`}
+                    className={`mt-1 h-1.5 w-1.5 shrink-0 ${SEVERITY_DOT[alert.severity]}`}
                     aria-hidden
                   />
                   <div className="min-w-0 flex-1">

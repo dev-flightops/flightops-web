@@ -289,13 +289,13 @@ function FilingForm({
         <button
           type="submit"
           disabled={pending}
-          className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-brand-dark disabled:opacity-60"
+          className="btn-caps rounded-md bg-primary px-4 py-2 text-white hover:bg-brand-dark disabled:opacity-60"
         >
           {pending ? "Submitting…" : "Submit Report"}
         </button>
         <Link
           href={cancelHref}
-          className="rounded-md border border-border bg-background px-4 py-2 text-sm font-semibold text-foreground/80 hover:bg-accent"
+          className="btn-caps rounded-md border border-input px-4 py-2 text-foreground hover:bg-accent"
         >
           Cancel
         </Link>

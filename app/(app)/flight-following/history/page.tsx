@@ -1,5 +1,4 @@
-import Link from "next/link";
-
+import { PageHeader } from "@/components/ff/page-header";
 import { StatusBadge } from "@/components/flight-following/status-badge";
 import { AircraftFilter } from "@/components/maintenance/aircraft-filter";
 import { StatusFilterTabs } from "@/components/maintenance/status-filter-tabs";
@@ -102,21 +101,11 @@ export default async function FlightFollowingHistoryPage({
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
-      <div className="mb-6">
-        <Link
-          href="/flight-following"
-          className="text-xs text-muted-foreground hover:text-foreground hover:underline"
-        >
-          ← Flight Following
-        </Link>
-        <h1 className="mt-1 page-title">
-          Flight History
-        </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Completed and cancelled flights with real ATD / ATA + flown
-          block hours. Filter by date range and tail.
-        </p>
-      </div>
+      <PageHeader
+        back={{ href: "/flight-following", label: "Flight Following" }}
+        title="Flight History"
+        description="Completed and cancelled flights with real ATD / ATA + flown block hours. Filter by date range and tail."
+      />
 
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <StatusFilterTabs<Range>

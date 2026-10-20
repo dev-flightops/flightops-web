@@ -48,7 +48,7 @@ export function StopsEditor({
             aria-label={`Leg ${i + 2}`}
           >
             <div className="mb-2 flex items-baseline justify-between gap-2">
-              <p className="text-[0.65rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+              <p className="eyebrow">
                 Leg {i + 2} · from <span className="font-mono">{from}</span>
               </p>
               <button
@@ -103,7 +103,7 @@ export function StopsEditor({
       <button
         type="button"
         onClick={() => onChange([...stops, { destination: "", departure: "", arrival: "" }])}
-        className="rounded-md border border-primary/40 bg-background px-3 py-1.5 text-xs font-semibold text-primary hover:bg-primary/5"
+        className="btn-caps rounded-md border border-primary/40 bg-background px-3 py-1.5 text-primary hover:bg-primary/5 text-[0.72rem]"
       >
         + Add stop
       </button>

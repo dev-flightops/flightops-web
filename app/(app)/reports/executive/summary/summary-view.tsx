@@ -58,7 +58,7 @@ function Band({
 }) {
   return (
     <section aria-label={title} className="mb-5">
-      <h2 className="mb-2 text-[0.65rem] font-bold uppercase tracking-[0.08em] text-muted-foreground">
+      <h2 className="mb-2 eyebrow">
         {title}
       </h2>
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">{children}</div>
@@ -80,7 +80,7 @@ function Kpi({
   tone?: string;
 }) {
   return (
-    <div className="rounded-xl border border-border bg-card p-4">
+    <div className="rounded-lg border border-border bg-card p-4">
       <p className={"text-2xl font-bold tabular-nums " + tone}>{value}</p>
       <p className="mt-0.5 text-xs text-muted-foreground">{label}</p>
       {note ? <p className={"mt-0.5 text-[0.65rem] " + noteTone}>{note}</p> : null}
@@ -234,7 +234,7 @@ export function SummaryView({
 
       <section
         aria-label="Current against prior period"
-        className="overflow-x-auto rounded-xl border border-border bg-card"
+        className="overflow-x-auto rounded-lg border border-border bg-card"
       >
         <table className="w-full text-left text-xs">
           <caption className="px-4 pt-3 text-left text-[0.65rem] text-muted-foreground">

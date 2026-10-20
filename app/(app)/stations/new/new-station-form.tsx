@@ -167,7 +167,7 @@ export function NewStationForm() {
 
         {fuelAvailable && (
           <fieldset className="mt-3 space-y-2 border-t border-border pt-3">
-            <legend className="text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+            <legend className="eyebrow">
               Fuel types available
             </legend>
             <label className="flex items-center gap-2 text-xs text-foreground">
@@ -216,7 +216,7 @@ export function NewStationForm() {
       <button
         type="submit"
         disabled={pending}
-        className="inline-flex w-full items-center justify-center gap-1.5 rounded-md bg-primary px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-dark disabled:opacity-50"
+        className="btn-caps inline-flex w-full items-center justify-center gap-1.5 rounded-md bg-primary px-4 py-2.5 text-white hover:bg-brand-dark disabled:opacity-50"
       >
         {pending && <Spinner size="xs" />}
         {pending ? "Adding station…" : "Add station"}

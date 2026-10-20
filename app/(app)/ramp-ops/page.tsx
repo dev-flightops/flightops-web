@@ -1,3 +1,4 @@
+import { StatusMark, type StatusTone } from "@/components/ff/status-mark";
 import Link from "next/link";
 import { formatZulu } from "@/lib/format/flight-time";
 
@@ -151,8 +152,8 @@ function PageHeader({
     day: "numeric",
   });
   return (
-    <header className="mb-6 flex flex-wrap items-end justify-between gap-3">
-      <div className="flex items-center gap-3">
+    <header className="mb-6 flex flex-wrap items-end justify-between gap-3 border-b border-border pb-5">
+      <div className="flex flex-wrap items-center gap-3">
         <h1 className="page-title">Ramp Operations</h1>
         <BaseFilter bases={bases} active={baseFilter} />
       </div>
@@ -178,7 +179,7 @@ function FlightsColumn({
   return (
     <section>
       <header className="mb-3 flex items-baseline justify-between">
-        <h2 className="text-lg font-semibold">Today&apos;s Flights</h2>
+        <h2 className="caption-caps text-foreground">Today&apos;s Flights</h2>
         <span className="text-[0.7rem] text-muted-foreground">
           Click Assign team to place a flight
         </span>
@@ -259,7 +260,7 @@ function TeamsColumn({
   return (
     <section>
       <header className="mb-3 flex items-baseline justify-between">
-        <h2 className="text-lg font-semibold">Load Teams</h2>
+        <h2 className="caption-caps text-foreground">Load Teams</h2>
         {baseFilter && (
           <span className="text-[0.7rem] text-muted-foreground">
             Filtered to {baseFilter}
@@ -379,23 +380,12 @@ function EmptyCard({ children }: { children: React.ReactNode }) {
 }
 
 function StatusChip({ status }: { status: string }) {
-  const palette: Record<string, string> = {
-    scheduled: "border-border bg-muted text-muted-foreground",
-    released:
-      "border-status-blue/40 bg-status-blue/10 text-status-blue",
-    completed:
-      "border-status-green/40 bg-status-green/10 text-status-green",
-    cancelled: "border-border bg-muted text-muted-foreground",
+  // A quiet mark (#80): the status in its colour behind a square.
+  const tone: Record<string, StatusTone> = {
+    released: "blue",
+    completed: "green",
   };
-  return (
-    <span
-      className={`shrink-0 rounded-sm border px-1.5 py-0.5 text-[0.55rem] font-semibold uppercase tracking-[0.08em] ${
-        palette[status] ?? "border-border bg-muted text-muted-foreground"
-      }`}
-    >
-      {status}
-    </span>
-  );
+  return <StatusMark label={status} tone={tone[status] ?? "muted"} className="shrink-0 text-[0.6rem]" />;
 }
 
 // Zulu, via the shared helper. The hand-rolled version this replaced

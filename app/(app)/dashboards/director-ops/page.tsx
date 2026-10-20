@@ -137,7 +137,7 @@ export default async function DirectorOpsDashboardPage() {
 
       {/* Row 2 — 2-col: Alerts (left, narrow) + Active Flights (right) */}
       <div className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-[280px_1fr]">
-        <section className="rounded-xl border border-border bg-card p-5">
+        <section className="rounded-lg border border-border bg-card p-5">
           <h2 className="mb-3 text-xs font-bold uppercase tracking-wider text-muted-foreground">
             Alerts
           </h2>
@@ -147,7 +147,7 @@ export default async function DirectorOpsDashboardPage() {
           />
         </section>
 
-        <section className="rounded-xl border border-border bg-card p-5">
+        <section className="rounded-lg border border-border bg-card p-5">
           <div className="mb-3 flex items-baseline justify-between">
             <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
               Active Flights
@@ -165,14 +165,14 @@ export default async function DirectorOpsDashboardPage() {
 
       {/* Row 3 — 2-col: Pending Dispatch + 8-Week Completion Trend */}
       <div className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2">
-        <section className="rounded-xl border border-border bg-card p-5">
+        <section className="rounded-lg border border-border bg-card p-5">
           <div className="mb-3 flex items-baseline justify-between">
             <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
               Pending Dispatch
             </h2>
             <Link
               href="/dispatch/"
-              className="rounded-md bg-primary px-3 py-1 text-[0.7rem] font-semibold text-primary-foreground hover:bg-brand-dark"
+              className="btn-caps rounded-md bg-primary px-3 py-1 text-primary-foreground hover:bg-brand-dark text-[0.68rem]"
             >
               + New Packet
             </Link>
@@ -192,7 +192,7 @@ export default async function DirectorOpsDashboardPage() {
           />
         </section>
 
-        <section className="rounded-xl border border-border bg-card p-5">
+        <section className="rounded-lg border border-border bg-card p-5">
           <div className="mb-3 flex items-baseline justify-between">
             <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
               8-Week Completion Trend
@@ -382,7 +382,7 @@ function ListPanel({
   emptyHint?: string;
 }) {
   return (
-    <section className="rounded-xl border border-border bg-card p-5">
+    <section className="rounded-lg border border-border bg-card p-5">
       <div className="mb-3 flex items-baseline justify-between">
         <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
           {title}

@@ -33,7 +33,7 @@ export function DayPicker({ date }: { date: string }) {
         onClick={() => shift(-1)}
         disabled={isPending}
         aria-label="Previous day"
-        className="rounded-md border border-border bg-card px-2 py-1.5 text-xs font-semibold text-foreground hover:bg-accent disabled:opacity-60"
+        className="btn-caps rounded-md border border-input px-2 py-1.5 text-foreground hover:bg-accent disabled:opacity-60 text-[0.72rem]"
       >
         ←
       </button>
@@ -50,7 +50,7 @@ export function DayPicker({ date }: { date: string }) {
         onClick={() => shift(1)}
         disabled={isPending}
         aria-label="Next day"
-        className="rounded-md border border-border bg-card px-2 py-1.5 text-xs font-semibold text-foreground hover:bg-accent disabled:opacity-60"
+        className="btn-caps rounded-md border border-input px-2 py-1.5 text-foreground hover:bg-accent disabled:opacity-60 text-[0.72rem]"
       >
         →
       </button>

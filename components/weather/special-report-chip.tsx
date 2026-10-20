@@ -12,7 +12,7 @@ export function SpecialReportChip({ raw }: { raw: string }) {
   return (
     <span
       title="Special report: issued between the hourly METARs because conditions changed"
-      className="rounded-md border border-status-yellow/40 bg-status-yellow/10 px-1.5 py-0.5 font-mono text-[0.65rem] font-semibold text-status-yellow"
+      className="status-mark font-mono text-[0.65rem] tracking-[0.04em] text-status-yellow"
     >
       {label}
     </span>

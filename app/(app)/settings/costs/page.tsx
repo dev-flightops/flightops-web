@@ -122,7 +122,7 @@ function AircraftCostsSection({
     code ? (fuelTypes.find((f) => f.code.toLowerCase() === code.toLowerCase())?.label ?? code) : "—";
   return (
     <section className="mb-5 rounded-lg border border-border bg-card px-4 py-4">
-      <div className="mb-3 text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+      <div className="mb-3 eyebrow">
         Aircraft Type Operating Costs (per flight hour)
       </div>
       <div className="overflow-hidden rounded-lg border border-border bg-card">
@@ -216,7 +216,7 @@ function AircraftCostsSection({
 function FuelPricesSection({ rows }: { rows: FuelPriceRow[] }) {
   return (
     <section className="mb-5 rounded-lg border border-border bg-card px-4 py-4">
-      <div className="mb-3 text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+      <div className="mb-3 eyebrow">
         Fuel Prices by Base ($/gal)
       </div>
       {rows.length === 0 ? (
@@ -254,7 +254,7 @@ function FuelPricesSection({ rows }: { rows: FuelPriceRow[] }) {
 function LandingFeesSection({ rows }: { rows: LandingFeeRow[] }) {
   return (
     <section className="rounded-lg border border-border bg-card px-4 py-4">
-      <div className="mb-3 text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+      <div className="mb-3 eyebrow">
         Landing Fees
       </div>
       {rows.length === 0 ? (
@@ -284,7 +284,7 @@ function LandingFeesSection({ rows }: { rows: LandingFeeRow[] }) {
 function RoutesSection({ rows }: { rows: RouteFlightTimeRow[] }) {
   return (
     <section className="rounded-lg border border-border bg-card px-4 py-4">
-      <div className="mb-3 text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+      <div className="mb-3 eyebrow">
         Route Flight Times
       </div>
       {rows.length === 0 ? (
@@ -322,7 +322,7 @@ function CalculatorSection({
   if (aircraft.length === 0 || fuelPrices.length === 0) {
     return (
       <section className="rounded-lg border border-border bg-card px-4 py-4">
-        <div className="mb-3 text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+        <div className="mb-3 eyebrow">
           Cost Per Flight Hour Calculator
         </div>
         <p className="text-xs text-muted-foreground">
@@ -335,7 +335,7 @@ function CalculatorSection({
   }
   return (
     <section className="rounded-lg border border-border bg-card px-4 py-4">
-      <div className="mb-3 text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+      <div className="mb-3 eyebrow">
         Cost Per Flight Hour Calculator
       </div>
       <p className="mb-3 text-xs text-muted-foreground">
@@ -426,7 +426,7 @@ function DisabledAddDetails({
             disabled
             aria-disabled="true"
             title={hint}
-            className="cursor-not-allowed rounded-md bg-primary px-3 py-2 text-xs font-semibold text-white disabled:opacity-100"
+            className="btn-caps cursor-not-allowed rounded-md bg-primary px-3 py-2 text-white disabled:opacity-100 text-[0.72rem]"
           >
             Save
           </button>

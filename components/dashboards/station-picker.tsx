@@ -28,7 +28,7 @@ export function StationPicker({
 
   return (
     <label className="flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2">
-      <span className="text-[0.65rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+      <span className="eyebrow">
         Station:
       </span>
       <select

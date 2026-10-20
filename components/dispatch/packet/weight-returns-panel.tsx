@@ -21,10 +21,11 @@ export function WeightReturnsPanel({ returns }: { returns: WeightReturn[] }) {
   return (
     <section className="rounded-xl border border-status-red/40 bg-status-red/5">
       <header className="flex items-center justify-between border-b border-status-red/20 px-4 py-2.5">
-        <h2 className="text-xs font-semibold uppercase tracking-[0.06em] text-status-red">
+        <h2 className="panel-title flex items-center gap-2">
+          <span aria-hidden className="h-1.5 w-1.5 bg-status-red" />
           Returned over weight
         </h2>
-        <span className="rounded-md border border-status-red/40 bg-status-red/10 px-2 py-0.5 text-xs font-semibold text-status-red">
+        <span className="font-display text-lg font-extrabold tabular-nums text-status-red">
           {returns.length}
         </span>
       </header>

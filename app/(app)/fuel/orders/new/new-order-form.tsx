@@ -108,7 +108,7 @@ export function NewFuelOrderForm({
 
       <div>
         <div className="mb-1 flex items-baseline justify-between">
-          <span className="text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+          <span className="eyebrow">
             Gallons per side <span className="text-status-red">*</span>
           </span>
           <span
@@ -168,7 +168,7 @@ export function NewFuelOrderForm({
       <button
         type="submit"
         disabled={pending || suppliers.length === 0 || fuelTypes.length === 0}
-        className="inline-flex w-full items-center justify-center gap-1.5 rounded-md bg-primary px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-dark disabled:opacity-50"
+        className="btn-caps inline-flex w-full items-center justify-center gap-1.5 rounded-md bg-primary px-4 py-2.5 text-white hover:bg-brand-dark disabled:opacity-50"
       >
         {pending && <Spinner size="xs" />}
         {pending ? "Placing order…" : "Place fuel order"}

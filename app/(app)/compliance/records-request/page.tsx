@@ -1,3 +1,6 @@
+import { Notice } from "@/components/ff/notice";
+import { PageHeader } from "@/components/ff/page-header";
+import { Panel } from "@/components/ff/panel";
 import Link from "next/link";
 
 import { ApiError } from "@/lib/api/client";
@@ -61,9 +64,7 @@ function minute(iso: string): string {
 
 function AgencyChip({ agency }: { agency: string }) {
   return (
-    <span className="rounded border border-border px-1.5 py-0.5 text-[0.55rem] font-semibold uppercase tracking-wider text-muted-foreground">
-      {agency}
-    </span>
+    <span className="eyebrow text-[0.6rem]">{agency}</span>
   );
 }
 
@@ -145,13 +146,10 @@ export default async function RecordsRequestPage() {
   if (!catalogue) {
     return (
       <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6">
-        <h1 className="page-title">Records Request</h1>
-        <div className="mt-4 rounded-xl border border-status-red/40 bg-status-red/5 p-4">
-          <p className="text-sm font-semibold text-status-red">
-            The disclosure catalogue could not be loaded
-          </p>
-          <p className="mt-1 text-xs text-muted-foreground">{loadError}</p>
-        </div>
+        <PageHeader title="Records Request" />
+        <Notice tone="red" label="The disclosure catalogue could not be loaded">
+          {loadError}
+        </Notice>
       </div>
     );
   }
@@ -160,39 +158,27 @@ export default async function RecordsRequestPage() {
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6">
-      <header className="mb-4">
-        <h1 className="page-title">Records Request</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Producing records for an authorised requestor, within the{" "}
-          {catalogue.deadline_hours}-hour commitment in the General
-          Operations Manual
-        </p>
-      </header>
+      <PageHeader
+        title="Records Request"
+        description={`Producing records for an authorised requestor, within the ${catalogue.deadline_hours}-hour commitment in the General Operations Manual`}
+      />
 
-      <div className="mb-5 rounded-xl border border-border bg-card p-4">
-        <p className="text-xs text-muted-foreground">
-          Recording the request and producing the bundle are one action.
-          The archive carries a cover sheet naming the requestor, the
-          scope, a row count and a SHA-256 for every file, and the log
-          below keeps the same details with the hours it took.
-        </p>
-      </div>
+      <Notice tone="gray" className="mb-5">
+        Recording the request and producing the bundle are one action. The
+        archive carries a cover sheet naming the requestor, the scope, a row
+        count and a SHA-256 for every file, and the log below keeps the same
+        details with the hours it took.
+      </Notice>
 
-      <section
-        aria-label="Produce a bundle"
-        className="mb-6 rounded-xl border border-border bg-card p-4"
-      >
-        <h2 className="mb-3 text-sm font-semibold">
-          The written request
-        </h2>
+      <Panel title="The written request" className="mb-6">
         <RequestForm
           categories={catalogue.categories}
           deadlineHours={catalogue.deadline_hours}
         />
-      </section>
+      </Panel>
 
       <section aria-label="Not produced here" className="mb-6">
-        <h2 className="text-[0.65rem] font-bold uppercase tracking-[0.08em] text-muted-foreground">
+        <h2 className="eyebrow">
           Not produced here
         </h2>
         <p className="mb-2 mt-0.5 text-[0.7rem] text-muted-foreground">
@@ -200,7 +186,7 @@ export default async function RecordsRequestPage() {
           their absence is not mistaken for their non-existence. A
           requestor who needs one of them has to ask for it separately.
         </p>
-        <ul className="rounded-xl border border-border bg-card">
+        <ul className="rounded-lg border border-border bg-card">
           {catalogue.excluded.map((x) => (
             <li
               key={x.title}
@@ -217,7 +203,7 @@ export default async function RecordsRequestPage() {
       </section>
 
       <section aria-label="Disclosure log">
-        <h2 className="text-[0.65rem] font-bold uppercase tracking-[0.08em] text-muted-foreground">
+        <h2 className="eyebrow">
           Disclosure log
         </h2>
         <p className="mb-2 mt-0.5 text-[0.7rem] text-muted-foreground">

@@ -115,7 +115,7 @@ export default async function CertificatesPage({
       )}
 
       {!loadError && total === 0 && (
-        <div className="rounded-xl border border-dashed border-border bg-card/50 px-5 py-10 text-center text-sm text-muted-foreground">
+        <div className="rounded-lg border border-dashed border-border bg-card/50 px-5 py-10 text-center text-sm text-muted-foreground">
           {wantAll
             ? "No certificates have been issued in this tenant yet."
             : "No certificates yet. Complete a course to earn your first one."}

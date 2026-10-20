@@ -33,7 +33,7 @@ function QuizMetaCard({ quiz }: { quiz: QuizAdminResponse }) {
   );
   return (
     <section className="rounded-lg border border-border bg-card p-4">
-      <h2 className="mb-3 text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+      <h2 className="mb-3 eyebrow">
         Quiz details
       </h2>
       {state.status === "error" && state.message ? (
@@ -42,7 +42,7 @@ function QuizMetaCard({ quiz }: { quiz: QuizAdminResponse }) {
       <form action={formAction} className="space-y-3">
         <input type="hidden" name="quiz_id" value={quiz.id} />
         <label className="block">
-          <span className="text-[0.65rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+          <span className="eyebrow">
             Title
           </span>
           <input
@@ -54,7 +54,7 @@ function QuizMetaCard({ quiz }: { quiz: QuizAdminResponse }) {
           />
         </label>
         <label className="block">
-          <span className="text-[0.65rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+          <span className="eyebrow">
             Instructions (optional)
           </span>
           <textarea
@@ -67,7 +67,7 @@ function QuizMetaCard({ quiz }: { quiz: QuizAdminResponse }) {
           />
         </label>
         <label className="block max-w-xs">
-          <span className="text-[0.65rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+          <span className="eyebrow">
             Pass threshold (%)
           </span>
           <input
@@ -84,7 +84,7 @@ function QuizMetaCard({ quiz }: { quiz: QuizAdminResponse }) {
           <button
             type="submit"
             disabled={pending}
-            className="rounded-md border border-border bg-muted/60 px-3 py-1.5 text-xs font-semibold hover:bg-accent disabled:opacity-60"
+            className="btn-caps rounded-md border border-input px-3 py-1.5 hover:bg-accent disabled:opacity-60 text-[0.72rem]"
           >
             {pending ? "Saving…" : "Save"}
           </button>
@@ -97,7 +97,7 @@ function QuizMetaCard({ quiz }: { quiz: QuizAdminResponse }) {
 function QuestionListCard({ quiz }: { quiz: QuizAdminResponse }) {
   return (
     <section className="rounded-lg border border-border bg-card p-4">
-      <h2 className="mb-3 text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+      <h2 className="mb-3 eyebrow">
         Questions ({quiz.questions.length})
       </h2>
       {quiz.questions.length === 0 ? (
@@ -141,7 +141,7 @@ function QuestionRow({
           <button
             type="button"
             onClick={() => setEditing((v) => !v)}
-            className="rounded-md border border-border bg-muted/60 px-2 py-1 text-[0.6875rem] font-semibold hover:bg-accent"
+            className="btn-caps rounded-md border border-input px-2 py-1 hover:bg-accent text-[0.68rem]"
           >
             {editing ? "Close" : "Edit"}
           </button>
@@ -260,7 +260,7 @@ function QuestionForm({
         <input type="hidden" name="question_id" value={question.id} />
       ) : null}
       <label className="block">
-        <span className="text-[0.65rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+        <span className="eyebrow">
           Prompt
         </span>
         <textarea
@@ -274,7 +274,7 @@ function QuestionForm({
       </label>
       <div>
         <div className="mb-1 flex items-center justify-between">
-          <span className="text-[0.65rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+          <span className="eyebrow">
             Options (2–6)
           </span>
           <button
@@ -323,7 +323,7 @@ function QuestionForm({
         </ul>
       </div>
       <label className="block">
-        <span className="text-[0.65rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+        <span className="eyebrow">
           Explanation (optional — shown after learner submits)
         </span>
         <textarea
@@ -339,7 +339,7 @@ function QuestionForm({
           <button
             type="button"
             onClick={onDone}
-            className="rounded-md border border-border bg-transparent px-3 py-1.5 text-xs font-semibold hover:bg-accent"
+            className="btn-caps rounded-md border border-input bg-transparent px-3 py-1.5 hover:bg-accent text-[0.72rem]"
           >
             Cancel
           </button>
@@ -347,7 +347,7 @@ function QuestionForm({
         <button
           type="submit"
           disabled={pending}
-          className="rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-dark disabled:opacity-60"
+          className="btn-caps rounded-md bg-primary px-3 py-1.5 text-white hover:bg-brand-dark disabled:opacity-60 text-[0.72rem]"
         >
           {pending ? "Saving…" : isEdit ? "Save question" : "Add question"}
         </button>
@@ -359,7 +359,7 @@ function QuestionForm({
 function AddQuestionCard({ quizId }: { quizId: string }) {
   return (
     <section className="rounded-lg border border-border bg-card p-4">
-      <h2 className="mb-3 text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+      <h2 className="mb-3 eyebrow">
         Add question
       </h2>
       <QuestionForm quizId={quizId} />

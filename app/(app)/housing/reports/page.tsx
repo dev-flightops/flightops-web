@@ -225,7 +225,7 @@ export default async function HousingReportsPage({
         </label>
         <button
           type="submit"
-          className="rounded-md border border-border bg-muted/60 px-4 py-2 text-sm font-semibold text-foreground hover:bg-accent"
+          className="btn-caps rounded-md border border-input px-4 py-2 text-foreground hover:bg-accent"
         >
           Generate
         </button>
@@ -366,7 +366,7 @@ function HistoryTable({ rows }: { rows: ReturnType<typeof employeeHistory> }) {
               <td className={`${TD} font-semibold`}>
                 {r.employee}
                 {r.isCancelled && (
-                  <span className="ml-2 rounded bg-status-red/10 px-1.5 py-0.5 text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-status-red">
+                  <span className="status-mark text-status-red ml-2">
                     Cancelled
                   </span>
                 )}
@@ -417,7 +417,7 @@ function CostTable({ report }: { report: ReturnType<typeof costByEmployee> }) {
   return (
     <div className="space-y-3">
       <div className="rounded-lg border border-border bg-card px-4 py-3">
-        <div className="text-[0.65rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+        <div className="eyebrow">
           Total housing cost
         </div>
         <div className="mt-0.5 text-2xl font-bold tabular-nums text-foreground">

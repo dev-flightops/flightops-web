@@ -74,7 +74,7 @@ function ReportBlock({
 }) {
   return (
     <div>
-      <p className="mb-0.5 text-[0.6rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+      <p className="mb-0.5 eyebrow">
         {label}
       </p>
       {outcome.ok && outcome.report ? (

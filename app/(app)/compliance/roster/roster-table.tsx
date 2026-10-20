@@ -230,7 +230,7 @@ function AircraftQualifications({
           {positions.map((p) => (
             <span
               key={p.position}
-              className={`rounded px-1 font-semibold ${CELL_TONES[p.state]}`}
+              className={CELL_TONES[p.state]}
               title={`${POSITION_LABELS[p.position]} on ${typeLabel(type)}: ${CELL_STATE_LABELS[p.state]}`}
             >
               {POSITION_SHORT[p.position]}

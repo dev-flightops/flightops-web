@@ -72,7 +72,7 @@ export function FlightResults({
         {results.origin} → {results.destination} ·{" "}
         {formatDay(results.search_date)} · {results.pax_count} pax
       </p>
-      <div className="overflow-x-auto rounded-xl border border-border bg-card">
+      <div className="overflow-x-auto rounded-lg border border-border bg-card">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-border text-left text-[0.65rem] uppercase tracking-[0.06em] text-muted-foreground">
@@ -110,7 +110,7 @@ export function FlightResults({
                   {f.is_available ? (
                     <Link
                       href={bookingHref(f)}
-                      className="rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-dark"
+                      className="btn-caps rounded-md bg-primary px-3 py-1.5 text-white hover:bg-brand-dark text-[0.72rem]"
                     >
                       Book
                     </Link>

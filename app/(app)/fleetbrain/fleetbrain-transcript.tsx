@@ -131,7 +131,7 @@ export function FleetBrainTranscript({
           classifier that knows twelve things. */}
       <div className="flex gap-3">
         <BrainMark />
-        <div className="max-w-xl rounded-xl border border-border bg-card px-4 py-3">
+        <div className="max-w-xl rounded-lg border border-border bg-card px-4 py-3">
           <p className="text-sm">
             I can answer questions about your operation in real time. Try
             asking:
@@ -224,14 +224,14 @@ function Answer({
         </div>
       ) : null}
 
-      <div className="rounded-xl border border-border bg-card px-4 py-3">
+      <div className="rounded-lg border border-border bg-card px-4 py-3">
         <p className="whitespace-pre-line text-sm">{answer.summary}</p>
       </div>
 
       {answer.rows.length > 0 ? (
         // Its own scroller: a nine-column answer must not push the
         // page sideways.
-        <div className="mt-2 overflow-x-auto rounded-xl border border-border bg-card">
+        <div className="mt-2 overflow-x-auto rounded-lg border border-border bg-card">
           <table className="w-full text-left text-xs">
             <thead>
               <tr className="border-b border-border text-muted-foreground">
