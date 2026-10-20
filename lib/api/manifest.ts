@@ -47,6 +47,8 @@ export interface ManifestCargoRow {
   consignee: string | null;
   tracking_number: string | null;
   notes: string | null;
+  /** The waiting load it was taken from (#75), if any. */
+  waiting_load_id?: string | null;
 }
 
 export interface ManifestTotals {
@@ -62,8 +64,23 @@ export interface ManifestTotals {
   total_payload_lbs: string;
 }
 
+/** The trip fuel ops works out when dispatch hasn't entered planned fuel
+ *  (#75): burn × (flight time, doubled for a round trip, + reserve). */
+export interface FuelEstimate {
+  lbs: string | null;
+  gallons: string | null;
+  burn_gph: string | null;
+  fuel_type_code: string | null;
+  /** One way, from the flight's schedule. */
+  flight_minutes: number | null;
+  round_trip: boolean;
+  reserve_minutes: number;
+  /** What it needs and doesn't have, in words a dispatcher can act on. */
+  missing: string[];
+}
+
 /** What is left of the aircraft's useful load for mail and freight (#74):
- *  useful load − crew − planned fuel − payload. */
+ *  useful load − crew − fuel − payload. */
 export interface ManifestLoad {
   /** The aircraft's useful load; null when it isn't set. */
   useful_load_lbs: number | null;
@@ -72,12 +89,15 @@ export interface ManifestLoad {
    *  crew at standard weights. "none": no crew anywhere. */
   crew_basis: "manifest" | "standard" | "none";
   crew_count: number;
-  /** Null until dispatch enters the planned fuel. */
+  /** The planned fuel, else the trip's estimate (#75); null when neither. */
   fuel_lbs: string | null;
   payload_lbs: string;
   /** Null without a useful load; before fuel while fuel_counted is false. */
   remaining_lbs: string | null;
   fuel_counted: boolean;
+  /** Where the fuel figure came from (#75). */
+  fuel_basis?: "planned" | "estimated" | null;
+  fuel_estimate?: FuelEstimate | null;
 }
 
 export interface ManifestDetailResponse {
@@ -230,4 +250,108 @@ export async function updateCargo(
 
 export async function deleteCargo(cargoId: string): Promise<void> {
   return apiFetch<void>(`/manifest/cargo/${cargoId}`, { method: "DELETE" });
+}
+
+// ---- Waiting mail & freight and the load plan (#75) -------------------------
+
+export type WaitingStatus = "waiting" | "loaded" | "cancelled";
+
+/** Mail or freight on hand at a station, before it is on any flight. Its
+ *  weight and pieces are what is still on the ground. */
+export interface WaitingLoadRow {
+  id: string;
+  station_icao: string;
+  destination_icao: string;
+  mail_class: MailClass | null;
+  description: string;
+  weight_lbs: string;
+  pieces: number;
+  shipper: string | null;
+  consignee: string | null;
+  notes: string | null;
+  status: WaitingStatus;
+  received_at: string;
+}
+
+export interface WaitingRouteTotal {
+  station_icao: string;
+  destination_icao: string;
+  entries: number;
+  weight_lbs: string;
+  pieces: number;
+}
+
+export interface WaitingListResponse {
+  items: WaitingLoadRow[];
+  routes: WaitingRouteTotal[];
+}
+
+export interface WaitingLoadInput {
+  station_icao: string;
+  destination_icao: string;
+  mail_class: MailClass | null;
+  description: string | null;
+  weight_lbs: string;
+  pieces: number;
+  shipper: string | null;
+  consignee: string | null;
+  notes: string | null;
+}
+
+export async function listWaiting(
+  params: { station?: string; destination?: string; status?: WaitingStatus | "all" } = {},
+): Promise<WaitingListResponse> {
+  const search = new URLSearchParams();
+  if (params.station) search.set("station", params.station);
+  if (params.destination) search.set("destination", params.destination);
+  if (params.status) search.set("status", params.status);
+  const qs = search.toString() ? `?${search.toString()}` : "";
+  return apiFetch<WaitingListResponse>(`/manifest/waiting${qs}`);
+}
+
+export async function createWaiting(body: WaitingLoadInput): Promise<WaitingLoadRow> {
+  return apiFetch<WaitingLoadRow>("/manifest/waiting", { method: "POST", body: JSON.stringify(body) });
+}
+
+export async function cancelWaiting(id: string): Promise<WaitingLoadRow> {
+  return apiFetch<WaitingLoadRow>(`/manifest/waiting/${id}/cancel`, { method: "POST" });
+}
+
+export interface LoadPlanTake {
+  waiting_load_id: string;
+  description: string;
+  mail_class: MailClass | null;
+  weight_lbs: string;
+  pieces: number;
+  /** The whole entry, of which this is part or all. */
+  of_weight_lbs: string;
+  of_pieces: number;
+}
+
+export type LoadPlanBlock = "locked" | "no_useful_load" | "fuel_unknown" | "nothing_waiting" | "no_room";
+
+export interface LoadPlanResponse {
+  flight_id: string;
+  origin: string;
+  destinations: string[];
+  load: ManifestLoad;
+  waiting: WaitingLoadRow[];
+  suggestion: LoadPlanTake[];
+  suggested_lbs: string;
+  left_after_lbs: string | null;
+  blocked: LoadPlanBlock | null;
+}
+
+export async function getLoadPlan(flightId: string): Promise<LoadPlanResponse> {
+  return apiFetch<LoadPlanResponse>(`/manifest/flights/${flightId}/load-plan`);
+}
+
+export async function applyLoadPlan(
+  flightId: string,
+  items: { waiting_load_id: string; weight_lbs: string; pieces: number }[],
+): Promise<ManifestDetailResponse> {
+  return apiFetch<ManifestDetailResponse>(`/manifest/flights/${flightId}/load-plan/apply`, {
+    method: "POST",
+    body: JSON.stringify({ items }),
+  });
 }

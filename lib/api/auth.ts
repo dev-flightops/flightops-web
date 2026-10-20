@@ -192,6 +192,8 @@ export interface AircraftCostRow {
   pilot_daily_rate: string | null;
   avg_duty_hrs: string | null;
   insurance_hr: string | null;
+  /** The fuel the type burns, by fuel type code (#75). */
+  fuel_type_code?: string | null;
 }
 
 export interface FuelPriceRow {
@@ -228,7 +230,30 @@ export async function getOperatingCosts(): Promise<OperatingCostsResponse> {
 
 // Upserts + deletes reuse the same endpoints legacy defined at
 // /settings/costs/{aircraft-type,fuel-price,landing-fee,route}.
-// Not wired to UI yet — the Add/Edit dialogs land in a follow-up.
+// The aircraft type row is wired to Settings → Costs (#75); the others
+// are still a follow-up.
+
+/** Everything an aircraft type row holds. The API replaces the row's cost
+ *  fields with what is sent, so the form sends them all. */
+export interface AircraftCostInput {
+  aircraft_type: string;
+  fuel_burn_gph: string | null;
+  fuel_type_code: string | null;
+  engine_reserve_hr: string | null;
+  prop_reserve_hr: string | null;
+  maintenance_hr: string | null;
+  oil_consumables_hr: string | null;
+  pilot_daily_rate: string | null;
+  avg_duty_hrs: string | null;
+  insurance_hr: string | null;
+}
+
+export async function upsertAircraftCost(body: AircraftCostInput): Promise<AircraftCostRow> {
+  return apiFetch<AircraftCostRow>("/auth/settings/costs/aircraft-type", {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+}
 
 export async function updateCompanyBase(
   baseId: string,
