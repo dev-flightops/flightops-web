@@ -122,14 +122,15 @@ export const HELP_ENTRIES: HelpEntry[] = [
     route: "/dispatch/intelligence",
     title: "Dispatch Intelligence",
     whatItDoes:
-      "Suggests which aircraft could fly a next leg, ranked, with the reason for each. Aircraft that cannot legally be flown are shown with the reason and carry no rank at all.",
+      "Suggests which aircraft could fly a next leg, ranked, with the reason for each — including a run for passengers, mail and freight waiting where it lands with no flight to take them. Aircraft that cannot legally be flown are shown with the reason and carry no rank at all.",
     howToUse: [
       "Open it with an airborne aircraft in the operation; the page lists the feasible options.",
-      "Read each option's reason before its rank. The rank comes from a documented precedence, not a score.",
-      "Anything shown as blocked names what blocks it — grounded, MEL overdue, hundred-hour overdue, annual overdue.",
+      "Read each option's reason before its rank. The rank comes from a documented precedence, not a score: a scheduled flight with passengers booked, then a run for what is waiting, then a scheduled flight with nothing booked, then repositioning, then hold.",
+      "A waiting-load run says what it can take — passengers by seats and weight, then mail and freight in USPS priority order — sized at planning weights with the trip's fuel, and when it is back. It is blocked when the pilot would be past the company duty limit by then.",
+      "Anything shown as blocked names what blocks it — grounded, MEL overdue, hundred-hour overdue, annual overdue, the pilot's duty limit.",
     ],
     connectsTo:
-      "Reads the flight board for what is airborne, the fleet's airworthiness for what can legally fly, and the shared cost model for the cost of an hour.",
+      "Reads the flight board for what is airborne, the fleet's airworthiness for what can legally fly, bookings without a flight and the mail and freight waiting list for what a run could carry, and the shared cost model for the cost of an hour and a type's fuel burn.",
     worthKnowing: [
       "There is no 0-100 score, deliberately. Legacy scored options on a single scale that priced legal bars in the same currency as revenue, so with enough passengers booked an aircraft that could not legally fly outranked one that could.",
       "There is no approve button yet. Creating the flight from an option writes, and that deserves its own change rather than being bolted onto a read-only board.",

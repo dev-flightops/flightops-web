@@ -879,6 +879,22 @@ export interface DispatchCost {
   missing: string[];
 }
 
+/** What a run for waiting passengers, mail and freight can take (#76),
+ *  at planning weights until check-in. Decimals arrive as strings. */
+export interface DispatchRunLoad {
+  pax_waiting: number;
+  pax_taken: number;
+  waiting_lbs: string;
+  /** null when the run can't be sized; `missing` says why. */
+  taken_lbs: string | null;
+  fuel_lbs: string | null;
+  /** One way. */
+  flight_minutes: number | null;
+  /** Back where it started, out and back with a turn. */
+  back_at: string | null;
+  missing: string[];
+}
+
 export interface DispatchOption {
   option_id: string;
   kind: string;
@@ -890,6 +906,8 @@ export interface DispatchOption {
   pax_count: number;
   cargo_lbs: number;
   source_flight_id: string | null;
+  /** For a run for waiting passengers, mail and freight (#76). */
+  run?: DispatchRunLoad | null;
   /** Empty means dispatchable. Non-empty means shown and explained,
    *  but carrying no rank. */
   blockers: DispatchBlocker[];

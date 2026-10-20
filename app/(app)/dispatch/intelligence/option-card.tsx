@@ -15,9 +15,14 @@ import type { DispatchOption } from "@/lib/api/ops";
 
 const KIND_LABEL: Record<string, string> = {
   continue_schedule: "Scheduled flight",
+  waiting_run: "Waiting load",
   reposition_home: "Reposition",
   hold: "Hold",
 };
+
+function lbs(value: string | number): string {
+  return Math.round(Number(value)).toLocaleString("en-US");
+}
 
 /** UTC HH:MM. Proposed departures are compared against a schedule, so
  *  rendering them in the viewer's zone would shift them. */
@@ -117,9 +122,33 @@ export function OptionCard({ option }: { option: DispatchOption }) {
 
       <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-border pt-2 text-[0.7rem] text-muted-foreground">
         {option.proposed_etd && <span>ETD {hhmmZ(option.proposed_etd)}</span>}
-        {option.pax_count > 0 && <span>{option.pax_count} pax</span>}
-        {option.cargo_lbs > 0 && (
-          <span>{option.cargo_lbs.toLocaleString("en-US")} lb cargo</span>
+        {option.run ? (
+          // A run says how much of what is waiting it takes, and when it
+          // is back; its weights are planning figures until check-in.
+          <>
+            {option.run.back_at && <span>back {hhmmZ(option.run.back_at)}</span>}
+            {option.run.pax_waiting > 0 && (
+              <span>
+                {option.run.pax_taken === option.run.pax_waiting
+                  ? `${option.run.pax_taken} pax`
+                  : `${option.run.pax_taken} of ${option.run.pax_waiting} pax`}
+              </span>
+            )}
+            {Number(option.run.waiting_lbs) > 0 && (
+              <span>
+                {option.run.taken_lbs === null
+                  ? `${lbs(option.run.waiting_lbs)} lb mail & freight waiting, not sized`
+                  : `${lbs(option.run.taken_lbs)} of ${lbs(option.run.waiting_lbs)} lb mail & freight`}
+              </span>
+            )}
+          </>
+        ) : (
+          <>
+            {option.pax_count > 0 && <span>{option.pax_count} pax</span>}
+            {option.cargo_lbs > 0 && (
+              <span>{option.cargo_lbs.toLocaleString("en-US")} lb cargo</span>
+            )}
+          </>
         )}
         {option.cost.configured && option.cost.total_cents !== null ? (
           <span className="tabular-nums">
