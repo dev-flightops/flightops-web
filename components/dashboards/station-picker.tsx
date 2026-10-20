@@ -27,14 +27,12 @@ export function StationPicker({
   };
 
   return (
-    <label className="flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2">
-      <span className="eyebrow">
-        Station:
-      </span>
+    <label className="flex items-center gap-2">
+      <span className="eyebrow">Station</span>
       <select
         value={current}
         onChange={onChange}
-        className="cursor-pointer bg-transparent text-xs text-foreground focus:outline-none"
+        className="ff-input w-auto cursor-pointer py-1.5 text-xs"
         aria-label="Select station"
       >
         {options.map((o) => (

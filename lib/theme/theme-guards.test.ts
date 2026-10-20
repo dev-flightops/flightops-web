@@ -106,6 +106,15 @@ const REDESIGNED = [
   // Wave B2, Flight crew (#81).
   "app/(app)/flight-crew/",
   "components/duty/",
+  // Wave C, Admin (#82).
+  "app/(app)/dashboards/",
+  "app/(app)/reports/",
+  "app/(app)/invoicing/",
+  "app/(app)/payroll/",
+  "app/(app)/accounting/",
+  "app/(app)/profitability/",
+  "components/dashboards/",
+  "components/reports/",
 ];
 
 describe("theme guards", () => {

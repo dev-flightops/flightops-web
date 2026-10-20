@@ -129,7 +129,7 @@ export function RaiseInvoices() {
             </label>
             {flights && flights.length > 0 && (
               <>
-                <label className="block min-w-[16rem] flex-1 text-[0.65rem] font-semibold uppercase tracking-wider text-muted-foreground">
+                <label className="block min-w-[16rem] flex-1 eyebrow">
                   Flown flight
                   <select
                     value={flightId}
@@ -219,7 +219,7 @@ function RaiseOutcome({
   return (
     <div className="mt-3 space-y-3 text-sm">
       <div>
-        <h3 className="text-[0.65rem] font-semibold uppercase tracking-wider text-muted-foreground">
+        <h3 className="eyebrow">
           {created.length === 0
             ? "No new invoices"
             : `Created ${created.length} draft invoice${created.length === 1 ? "" : "s"}`}
@@ -251,7 +251,7 @@ function RaiseOutcome({
 
       {skipped.length > 0 && (
         <div>
-          <h3 className="text-[0.65rem] font-semibold uppercase tracking-wider text-muted-foreground">
+          <h3 className="eyebrow">
             Not invoiced
           </h3>
           <ul className="mt-1 space-y-0.5">

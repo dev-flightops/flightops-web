@@ -59,7 +59,7 @@ export function PillarBar({
           </span>
         </div>
       </div>
-      <div className="h-1.5 overflow-hidden rounded-full bg-muted">
+      <div className="h-1.5 overflow-hidden bg-muted">
         <div
           className={cn("h-full transition-all", tone)}
           style={{ width: `${pct}%` }}

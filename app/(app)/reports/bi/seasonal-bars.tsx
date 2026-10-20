@@ -77,7 +77,7 @@ export function SeasonalBars({ months }: { months: SeasonalMonth[] }) {
           Flights, passengers, revenue and load factor by month
         </caption>
         <thead>
-          <tr className="border-b border-border text-left text-[0.6rem] uppercase tracking-wider text-muted-foreground">
+          <tr className="ff-thead">
             <th scope="col" className="py-1.5">
               Month
             </th>

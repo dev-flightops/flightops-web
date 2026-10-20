@@ -1,7 +1,8 @@
-import { linkCaps } from "@/components/ff/controls";
-import { AlertGlyph, CheckGlyph } from "@/components/ff/glyphs";
 import Link from "next/link";
 
+import { PageHeader } from "@/components/ff/page-header";
+import { linkCaps } from "@/components/ff/controls";
+import { StatusMark } from "@/components/ff/status-mark";
 import { getCompanyProfile } from "@/lib/api/auth";
 import { PLATFORM_SERVICES, healthPath } from "@/lib/platform-services";
 import { listFlights } from "@/lib/api/ops";
@@ -156,15 +157,15 @@ export default async function SystemHealthDashboardPage() {
   return (
     <div className="container py-6">
 
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="page-title">System Health</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+      <PageHeader
+        title="System Health"
+        description={
+          <>
             As of <span className="font-mono">{asOf}</span> UTC
-          </p>
-        </div>
-        <OverallStatusPill ok={allOk} degraded={degradedCount} />
-      </div>
+          </>
+        }
+        actions={<OverallStatusPill ok={allOk} degraded={degradedCount} />}
+      />
 
       {/* Service status cards */}
       <section className="mt-5 rounded-lg border border-border bg-card p-5">
@@ -177,7 +178,7 @@ export default async function SystemHealthDashboardPage() {
 
       {/* Quick navigation */}
       <section className="mt-5 rounded-lg border border-border bg-card p-5">
-        <h2 className="mb-4 text-xs font-bold uppercase tracking-wider text-muted-foreground">
+        <h2 className="mb-4 panel-title">
           Quick Navigation
         </h2>
         <div className="flex flex-wrap gap-x-6 gap-y-3">
@@ -231,20 +232,9 @@ function OverallStatusPill({
   ok: boolean;
   degraded: number;
 }) {
-  if (ok) {
-    return (
-      <span className="inline-flex items-center gap-1.5 rounded-full border border-status-green/30 bg-status-green/10 px-3 py-1 text-xs font-semibold text-status-green">
-        <CheckGlyph className="h-3.5 w-3.5" />
-        All Systems OK
-      </span>
-    );
-  }
-  return (
-    <span className="inline-flex items-center gap-1.5 rounded-full border border-status-red/30 bg-status-red/10 px-3 py-1 text-xs font-semibold text-status-red">
-      <AlertGlyph className="h-3.5 w-3.5" />
-      {degraded} Degraded
-    </span>
-  );
+  // The overall state as a status mark (#82), not a tinted pill.
+  if (ok) return <StatusMark label="All Systems OK" tone="green" className="text-xs" />;
+  return <StatusMark label={`${degraded} Degraded`} tone="red" className="text-xs" />;
 }
 
 function StatusCard({
@@ -262,7 +252,7 @@ function StatusCard({
         OK
       </span>
     ) : state === "info" ? (
-      <span className="rounded bg-muted px-1.5 py-0.5 text-[0.6rem] font-bold uppercase tracking-wider text-muted-foreground">
+      <span className="status-mark text-status-blue">
         INFO
       </span>
     ) : (
@@ -280,7 +270,7 @@ function StatusCard({
 
   return (
     <div
-      className={`rounded border-l-4 ${borderTone} bg-background/40 px-4 py-3`}
+      className={`rounded-sm border-l-[3px] ${borderTone} bg-muted/60 px-4 py-3`}
     >
       <div className="flex items-center justify-between">
         <span className="text-sm font-semibold text-foreground">{title}</span>

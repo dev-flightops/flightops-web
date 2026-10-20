@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import { linkCaps } from "@/components/ff/controls";
+
 import type { FleetAircraftSummary } from "@/lib/api/types";
 
 /**
@@ -38,14 +40,12 @@ export function FleetAirworthinessPanel({
   const pendingRts = active.filter((r) => !r.is_airworthy).length;
 
   return (
-    <section className="rounded-lg border border-border bg-card p-5">
-      <h2 className="mb-3 text-xs font-bold uppercase tracking-wider text-muted-foreground">
-        {title}
-      </h2>
+    <section className="overflow-hidden rounded-lg border border-border bg-card">
+      <h2 className="panel-title border-b border-border px-5 py-3">{title}</h2>
 
-      <div className="max-h-[560px] space-y-1.5 overflow-y-auto pr-2">
+      <div className="max-h-[560px] space-y-0.5 overflow-y-auto px-3 py-3">
         {active.length === 0 ? (
-          <p className="text-xs text-muted-foreground">No aircraft on file.</p>
+          <p className="px-2 py-3 text-sm text-muted-foreground">No aircraft on file.</p>
         ) : (
           active
             .slice()
@@ -56,17 +56,14 @@ export function FleetAirworthinessPanel({
         )}
       </div>
 
-      <div className="mt-3 flex items-baseline justify-between border-t border-border pt-3 text-[0.65rem] text-muted-foreground">
+      <div className="flex flex-wrap items-baseline justify-between gap-2 border-t border-border px-5 py-3 text-[0.7rem] text-muted-foreground">
         <span>
           <span className="text-foreground">{openSquawks}</span> open squawks ·{" "}
           <span className="text-foreground">{pendingRts}</span> pending RTS ·{" "}
           <span className="text-foreground">{openMels}</span> MEL deferred
         </span>
-        <Link
-          href="/maintenance"
-          className="text-primary hover:underline"
-        >
-          Maintenance →
+        <Link href="/maintenance" className={linkCaps}>
+          Maintenance <span aria-hidden>›</span>
         </Link>
       </div>
     </section>
@@ -97,7 +94,7 @@ function Row({ row }: { row: FleetAircraftSummary }) {
   return (
     <Link
       href={`/maintenance/aircraft/${row.aircraft.id}`}
-      className="flex items-center gap-2 rounded px-1 py-0.5 text-xs hover:bg-primary/5"
+      className="flex items-center gap-2 rounded-sm px-2 py-1 text-xs transition-colors hover:bg-accent"
     >
       <span className="w-16 flex-shrink-0 font-mono font-semibold text-foreground">
         {tail}

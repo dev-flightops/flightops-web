@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import { PageHeader } from "@/components/ff/page-header";
+
 import { ApiError } from "@/lib/api/client";
 import {
   getSimExport,
@@ -81,7 +83,7 @@ function days(frequency: string): string {
 }
 
 const TH =
-  "px-2 py-1.5 text-left text-[0.6rem] font-bold uppercase tracking-[0.06em] text-muted-foreground";
+  "px-2 py-2 text-left";
 
 function TD({
   children,
@@ -115,13 +117,16 @@ function Count({
   tone?: "amber";
 }) {
   return (
-    <div className="rounded-lg border border-border bg-card px-3 py-2">
-      <p className="text-[0.55rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-        {label}
-      </p>
+    <div
+      className={
+        "flex min-w-0 flex-col border-l-2 pl-3 " +
+        (tone === "amber" ? "border-status-yellow" : "border-input")
+      }
+    >
+      <p className="eyebrow">{label}</p>
       <p
         className={
-          "mt-0.5 text-lg font-semibold tabular-nums " +
+          "mt-1 font-display text-xl font-extrabold leading-none tabular-nums " +
           (tone === "amber" ? "text-status-yellow" : "text-foreground")
         }
       >
@@ -134,11 +139,9 @@ function Count({
 
 function CarrierCodeMissing() {
   return (
-    <div className="rounded-xl border border-status-yellow/40 bg-status-yellow/5 p-4">
-      <h2 className="text-sm font-semibold text-status-yellow">
-        No carrier code is set for this operator
-      </h2>
-      <p className="mt-1.5 text-xs text-muted-foreground">
+    <div className="notice notice-yellow">
+      <h2 className="notice-label">No carrier code is set for this operator</h2>
+      <p className="mt-1.5 text-xs">
         A schedule export is filed under the carrier code, and whatever
         ingests it keys on that code to decide whose flights these are.
         A guessed one would not produce a slightly wrong file — it would
@@ -146,7 +149,7 @@ function CarrierCodeMissing() {
         somewhere you cannot see it and with nothing marking it as a
         guess. So nothing is generated until the code is set.
       </p>
-      <p className="mt-2 text-xs text-muted-foreground">
+      <p className="mt-2 text-xs">
         Set the two-character IATA or three-character ICAO designator on{" "}
         <Link
           href="/settings/company"
@@ -162,7 +165,7 @@ function CarrierCodeMissing() {
 
 function ScheduleTable({ report }: { report: SimExport }) {
   return (
-    <div className="overflow-x-auto rounded-xl border border-border">
+    <div className="overflow-x-auto rounded-lg border border-border bg-card">
       <table className="w-full min-w-[54rem] border-collapse">
         <caption className="sr-only">
           Recurring services in the export window
@@ -235,7 +238,7 @@ function ScheduleTable({ report }: { report: SimExport }) {
 
 function FlightsTable({ report }: { report: SimExport }) {
   return (
-    <div className="overflow-x-auto rounded-xl border border-border">
+    <div className="overflow-x-auto rounded-lg border border-border bg-card">
       <table className="w-full min-w-[58rem] border-collapse">
         <caption className="sr-only">Departures in the export window</caption>
         <thead className="ff-thead">
@@ -347,29 +350,18 @@ export default async function SimExportPage({
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
-      <Link
-        href="/reports"
-        className="mb-3 inline-block text-xs text-muted-foreground hover:text-foreground"
-      >
-        ← Reports
-      </Link>
-      <header className="mb-4">
-        <h1 className="page-title">Schedule Export</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          SIM / OAG schedule data, and a per-departure extract for
-          accounting
-          {report ? ` · carrier ${report.carrier}` : ""}
-        </p>
-      </header>
+      <PageHeader
+        back={{ href: "/reports", label: "Reports" }}
+        title="Schedule Export"
+        description={`SIM / OAG schedule data, and a per-departure extract for accounting${report ? ` · carrier ${report.carrier}` : ""}`}
+      />
 
       {carrierMissing && <CarrierCodeMissing />}
 
       {loadError && (
-        <div className="rounded-xl border border-status-red/40 bg-status-red/5 p-4">
-          <p className="text-sm font-semibold text-status-red">
-            The export could not be built
-          </p>
-          <p className="mt-1 text-xs text-muted-foreground">{loadError}</p>
+        <div role="alert" className="notice notice-red">
+          <p className="notice-label">The export could not be built</p>
+          <p className="mt-1 text-xs">{loadError}</p>
         </div>
       )}
 
@@ -410,7 +402,7 @@ export default async function SimExportPage({
             )}
           </p>
 
-          <div className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-5">
+          <div className="mb-5 grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-5">
             <Count
               label={basis === "schedule" ? "Services" : "Departures"}
               value={records}

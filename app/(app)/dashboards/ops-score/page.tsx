@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import { PageHeader } from "@/components/ff/page-header";
+import { linkCaps } from "@/components/ff/controls";
 import { getOpsScore, type OpsScorePillar } from "@/lib/api/reports";
 import { PillarBar } from "@/components/dashboards/pillar-bar";
 import { ScorePill } from "@/components/dashboards/score-pill";
@@ -57,30 +59,23 @@ export default async function OpsScoreDashboardPage({
   return (
     <div className="container py-6">
 
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="page-title">
-            Daily Operations Score
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">{longDate}</p>
-        </div>
-        <Link
-          href="/dashboards/system-health"
-          className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline"
-        >
-          System Health →
-        </Link>
-      </div>
+      <PageHeader
+        title="Daily Operations Score"
+        description={longDate}
+        actions={
+          <Link href="/dashboards/system-health" className={linkCaps}>
+            System Health <span aria-hidden>›</span>
+          </Link>
+        }
+      />
 
       {/* Central dial + score-band legend */}
-      <section className="mt-5 rounded-lg border border-border bg-card p-8 text-center">
-        <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-          Today&apos;s Ops Score
-        </p>
+      <section className="rounded-lg border border-border bg-card p-8 text-center">
+        <p className="eyebrow">Today&apos;s Ops Score</p>
         {scoreError && (
           <p
             role="alert"
-            className="mx-auto mt-3 max-w-md rounded-md border border-status-red/30 bg-status-red/10 px-4 sm:px-6 py-2 text-xs text-status-red"
+            className="notice notice-red mx-auto mt-3 max-w-md text-left"
           >
             {scoreError}
           </p>
@@ -117,7 +112,7 @@ export default async function OpsScoreDashboardPage({
 
       {/* Pillar breakdown */}
       <section className="mt-5 rounded-lg border border-border bg-card p-5">
-        <h2 className="mb-4 text-xs font-bold uppercase tracking-wider text-muted-foreground">
+        <h2 className="mb-4 panel-title">
           Score Breakdown
         </h2>
         <div className="space-y-5">
@@ -140,7 +135,7 @@ export default async function OpsScoreDashboardPage({
 
       {/* Methodology — legacy uses concrete scoring rules, not dev notes */}
       <section className="mt-5 rounded-lg border border-border bg-card p-5">
-        <h2 className="mb-3 text-xs font-bold uppercase tracking-wider text-muted-foreground">
+        <h2 className="mb-3 panel-title">
           Score Methodology
         </h2>
         <div className="grid grid-cols-1 gap-4 text-xs text-muted-foreground sm:grid-cols-2 md:grid-cols-5">
@@ -179,7 +174,7 @@ export default async function OpsScoreDashboardPage({
 
       {/* 8-week trend */}
       <section className="mt-5 rounded-lg border border-border bg-card p-5">
-        <h2 className="mb-3 text-xs font-bold uppercase tracking-wider text-muted-foreground">
+        <h2 className="mb-3 panel-title">
           8-Week Completion Trend
         </h2>
         <CompletionTrend opsScore={opsScore} />

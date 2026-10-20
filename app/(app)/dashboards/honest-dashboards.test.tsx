@@ -60,11 +60,7 @@ afterEach(cleanup);
 /** The tile whose label is `label` — its value sits beside it. */
 function tile(label: string): HTMLElement {
   const el = screen.getByText(label);
-  let node: HTMLElement | null = el;
-  while (node && !node.className?.toString().includes("rounded")) {
-    node = node.parentElement;
-  }
-  return node ?? el;
+  return (el.closest("[data-stat-tile]") as HTMLElement | null) ?? el;
 }
 
 function expectNoMilestonePills() {

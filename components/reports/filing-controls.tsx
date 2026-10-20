@@ -167,7 +167,7 @@ export function MonthlyFilingControls({
             goTo(y, m);
           }}
           disabled={isPending}
-          className="rounded-md border border-border bg-background px-2 py-1.5 text-xs text-foreground focus:border-primary focus:outline-none disabled:opacity-60"
+          className="ff-input px-2 py-1.5 text-xs w-auto"
         />
         <StepButton
           label="Next month"
@@ -258,7 +258,7 @@ export function QuarterlyFilingControls({
             goTo(Number(m[1]), Number(m[2]));
           }}
           disabled={isPending}
-          className="rounded-md border border-border bg-background px-2 py-1.5 text-xs text-foreground focus:border-primary focus:outline-none disabled:opacity-60"
+          className="ff-input px-2 py-1.5 text-xs w-auto"
         >
           {/* The viewed quarter and the eight around it. Enough to
               reach last year's filings without a year picker. */}

@@ -28,7 +28,7 @@ export function NewPeriodForm() {
           type="date"
           name="period_start"
           required
-          className="rounded-md border border-border bg-background px-3 py-2 text-sm"
+          className="ff-input px-3 py-2 text-sm w-auto"
         />
       </label>
       <label className="block">
@@ -39,7 +39,7 @@ export function NewPeriodForm() {
           type="date"
           name="period_end"
           required
-          className="rounded-md border border-border bg-background px-3 py-2 text-sm"
+          className="ff-input px-3 py-2 text-sm w-auto"
         />
       </label>
       <label className="block flex-1 min-w-[10rem]">
@@ -51,7 +51,7 @@ export function NewPeriodForm() {
           name="notes"
           maxLength={200}
           placeholder="Optional — e.g. Bi-weekly #14"
-          className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+          className="ff-input px-3 py-2 text-sm"
         />
       </label>
       <button

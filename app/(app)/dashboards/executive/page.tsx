@@ -1,4 +1,7 @@
+import Link from "next/link";
 
+import { linkCaps } from "@/components/ff/controls";
+import { PageHeader } from "@/components/ff/page-header";
 import { AlertList } from "@/components/dashboards/alert-list";
 import { FleetAirworthinessPanel } from "@/components/dashboards/fleet-airworthiness-panel";
 import { LiveOpsBoard } from "@/components/dashboards/live-ops-board";
@@ -85,22 +88,20 @@ export default async function ExecutiveDashboardPage() {
   return (
     <div className="container py-6">
 
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="page-title">Executive Overview</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {currentTenantName} — {currentTenantName}
-          </p>
-        </div>
-        <ScorePill score={opsScore} />
-      </div>
+      {/* The operator's name once, above the title; the line under the
+          title printed it twice ("Name — Name"). */}
+      <PageHeader
+        eyebrow={currentTenantName}
+        title="Executive Overview"
+        actions={<ScorePill score={opsScore} />}
+      />
 
       {/* Row 1 — 5-col headline stat tiles.
           Tones match legacy peregrineflight: brand colors are stable
           per-metric, not status-driven. Aircraft Airborne stays blue
           even at 0; Flights Today + Fleet Airworthy stay green; the
           M3/M4-blocked tiles (Crew, Overrides) stay muted. */}
-      <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5">
+      <div className="grid grid-cols-2 gap-x-6 gap-y-5 sm:grid-cols-3 md:grid-cols-5">
         <StatTile
           value={snapshot.airborneCount}
           label="Aircraft Airborne"
@@ -128,7 +129,7 @@ export default async function ExecutiveDashboardPage() {
           and each tile takes a stable brand color per legacy: green
           revenue/margin, blue rev-per-hour, yellow forecast, purple AR,
           and the analytics → arrow stays neutral. */}
-      <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-6">
+      <div className="mt-6 grid grid-cols-2 gap-x-6 gap-y-5 border-t border-border pt-5 sm:grid-cols-3 md:grid-cols-6">
         {/* The five money tiles were literal "$0" and "0%" — an executive
             reading them would take the operation for broke. They are not
             wired; the Executive Summary report computes these figures. */}
@@ -147,10 +148,10 @@ export default async function ExecutiveDashboardPage() {
       </div>
 
       {/* Row 3 — 2-col: alerts + ops-score pillars */}
-      <div className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2">
-        <section className="rounded-lg border border-border bg-card p-5">
-          <div className="mb-3 flex items-baseline justify-between">
-            <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+      <div className="mt-6 grid grid-cols-1 items-start gap-5 md:grid-cols-2">
+        <section className="overflow-hidden rounded-lg border border-border bg-card p-5">
+          <div className="-mx-5 -mt-5 mb-4 flex flex-wrap items-baseline justify-between gap-2 border-b border-border px-5 py-3">
+            <h2 className="panel-title">
               Active Alerts
             </h2>
             <span className="text-[0.65rem] text-muted-foreground">
@@ -163,15 +164,15 @@ export default async function ExecutiveDashboardPage() {
           />
         </section>
 
-        <section className="rounded-lg border border-border bg-card p-5">
-          <div className="mb-3 flex items-baseline justify-between">
-            <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+        <section className="overflow-hidden rounded-lg border border-border bg-card p-5">
+          <div className="-mx-5 -mt-5 mb-4 flex flex-wrap items-baseline justify-between gap-2 border-b border-border px-5 py-3">
+            <h2 className="panel-title">
               Daily Operations Score —{" "}
               <span className="text-foreground">{opsScore.toFixed(1)}/100</span>
             </h2>
-            <span className="text-[0.65rem] text-muted-foreground">
-              details →
-            </span>
+            <Link href="/dashboards/ops-score" className={linkCaps}>
+              Details <span aria-hidden>›</span>
+            </Link>
           </div>
           <div className="space-y-3">
             <PillarBar
@@ -204,7 +205,7 @@ export default async function ExecutiveDashboardPage() {
       </div>
 
       {/* Row 4 — 2-col: fleet airworthiness list + live ops board */}
-      <div className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2">
+      <div className="mt-6 grid grid-cols-1 items-start gap-5 md:grid-cols-2">
         <FleetAirworthinessPanel fleet={snapshot.fleet} />
         <LiveOpsBoard board={snapshot.board} />
       </div>

@@ -6,13 +6,12 @@ import { cn } from "@/lib/utils";
  * The "stat tile" that lives in the row of headline numbers at the top
  * of every dashboard view, ported from the legacy `stat_tile` macro:
  *
- *   ┌──────────────┐
- *   │      8       │  ← 3xl bold value, color overridable
- *   │   Airborne   │  ← tiny uppercase label
- *   │  in flight   │  ← optional secondary line
- *   └──────────────┘
+ *   │ 8            ← the figure, in the display face
+ *   │ AIRBORNE     ← capitals label
+ *   │ in flight    ← optional secondary line
  *
- * `tone` picks the value color; `default` keeps it neutral foreground.
+ * Since #82 it is a figure, not a card: a 2px rule to its left in the
+ * tile's tone, as the Flight Following stats are drawn.
  * Passing `href` makes the tile a `<Link>` so the user can click through
  * to the underlying detail view (e.g. "8 Airborne" → /following/?status=airborne).
  *
@@ -31,27 +30,30 @@ type StatTileTone =
   | "purple"
   | "muted";
 
-const VALUE_TONE: Record<StatTileTone, string> = {
-  default: "text-foreground",
-  blue:    "text-status-blue",
-  green:   "text-status-green",
-  yellow:  "text-status-yellow",
-  orange:  "text-status-orange",
-  red:     "text-status-red",
-  purple:  "text-status-purple",
-  muted:   "text-muted-foreground",
+/** The tone is the rule's colour (#82), as the app's stat strips draw a
+ *  figure; the number stays in the text colour so it reads at full
+ *  contrast. `muted` marks a figure that is not wired yet. */
+const RULE_TONE: Record<StatTileTone, string> = {
+  default: "border-input",
+  blue:    "border-status-blue",
+  green:   "border-status-green",
+  yellow:  "border-status-yellow",
+  orange:  "border-status-orange",
+  red:     "border-status-red",
+  purple:  "border-status-purple",
+  muted:   "border-input",
 };
 
 /**
- * Value size. `large` (default) is the 30px headline number used on the
- * top tile row; `small` is the 18px money number used on the financial
- * row, matching legacy peregrineflight's two-tier sizing.
+ * Value size. `large` (default) is the headline figure on the top row;
+ * `small` is the money figure on the financial row, keeping legacy
+ * peregrineflight's two tiers.
  */
 type StatTileSize = "large" | "small";
 
 const VALUE_SIZE: Record<StatTileSize, string> = {
-  large: "text-3xl leading-9",
-  small: "text-lg leading-6",
+  large: "text-[1.75rem]",
+  small: "text-xl",
 };
 
 interface StatTileProps {
@@ -73,38 +75,38 @@ export function StatTile({
 }: StatTileProps) {
   const content = (
     <>
-      <div
+      <span
         className={cn(
-          "font-bold tabular-nums",
+          "font-display font-extrabold leading-none tabular-nums",
           VALUE_SIZE[size],
-          VALUE_TONE[tone],
+          tone === "muted" ? "text-muted-foreground" : "text-foreground",
         )}
       >
         {value}
-      </div>
-      <div className="mt-1 text-xs font-normal text-muted-foreground">
-        {label}
-      </div>
-      {sub && (
-        <div className="mt-1 text-xs text-muted-foreground">
-          {sub}
-        </div>
-      )}
+      </span>
+      <span className="eyebrow mt-1.5">{label}</span>
+      {sub && <span className="mt-0.5 text-xs text-muted-foreground">{sub}</span>}
     </>
   );
 
   const className = cn(
-    "rounded-xl border border-border bg-card p-5 text-center transition-colors",
-    href && "hover:border-primary/30 hover:bg-card/80 cursor-pointer",
+    "flex min-w-0 flex-col border-l-2 py-1 pl-3 transition-colors",
+    RULE_TONE[tone],
+    href && "cursor-pointer hover:bg-accent/40",
   );
 
   if (href) {
     return (
-      <Link href={href} className={className}>
+      <Link href={href} className={className} data-stat-tile="">
         {content}
       </Link>
     );
   }
 
-  return <div className={className}>{content}</div>;
+  // `data-stat-tile` marks the figure for tests that read a tile's parts.
+  return (
+    <div className={className} data-stat-tile="">
+      {content}
+    </div>
+  );
 }

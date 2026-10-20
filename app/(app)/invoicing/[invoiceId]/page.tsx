@@ -1,3 +1,5 @@
+import { linkCaps } from "@/components/ff/controls";
+import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -83,23 +85,18 @@ export default async function InvoiceDetailPage({
     <div className="mx-auto max-w-4xl px-4 sm:px-6 py-8">
       <Link
         href="/invoicing"
-        className="text-[0.65rem] font-semibold uppercase tracking-wider text-muted-foreground hover:text-foreground"
+        className={cn(linkCaps, "text-muted-foreground hover:text-foreground")}
       >
-        ← Invoices
+        <span aria-hidden>‹</span> Invoices
       </Link>
 
-      <header className="mt-1 mb-6 flex flex-wrap items-start justify-between gap-4">
+      <header className="mb-6 mt-3 flex flex-wrap items-start justify-between gap-4 border-b border-border pb-5">
         <div>
-          <h1 className="font-mono page-title text-foreground">
+          <h1 className="page-title text-balance">
             {invoice.invoice_number}
           </h1>
-          <div className="mt-1.5 flex flex-wrap items-center gap-2">
-            <span
-              className={
-                "rounded px-2 py-0.5 text-[0.65rem] font-semibold uppercase " +
-                statusClasses(invoice.status)
-              }
-            >
+          <div className="mt-2 flex flex-wrap items-center gap-3">
+            <span className={statusClasses(invoice.status)}>
               {STATUS_LABELS[invoice.status]}
             </span>
             {overdue && (
@@ -125,8 +122,8 @@ export default async function InvoiceDetailPage({
       </header>
 
       {invoice.status === "void" && (
-        <p className="mb-4 rounded-md border border-border bg-background px-3 py-2 text-sm text-muted-foreground">
-          <span className="font-semibold text-foreground">Voided.</span>{" "}
+        <p className="notice notice-gray mb-4 text-sm text-muted-foreground">
+          <span className="notice-label">Voided</span>
           {invoice.void_reason ?? "No reason recorded."}
         </p>
       )}
@@ -230,13 +227,13 @@ export default async function InvoiceDetailPage({
           <div className="mb-3 flex flex-wrap items-start justify-between gap-4">
             <h2
               id="payments-heading"
-              className="text-[0.65rem] font-semibold uppercase tracking-wider text-muted-foreground"
+              className="eyebrow"
             >
               Payments
             </h2>
             <dl className="flex gap-6 text-right">
               <div>
-                <dt className="text-[0.6rem] font-semibold uppercase tracking-wider text-muted-foreground">
+                <dt className="eyebrow">
                   Paid
                 </dt>
                 <dd className="text-sm font-semibold tabular-nums text-foreground">
@@ -244,7 +241,7 @@ export default async function InvoiceDetailPage({
                 </dd>
               </div>
               <div>
-                <dt className="text-[0.6rem] font-semibold uppercase tracking-wider text-muted-foreground">
+                <dt className="eyebrow">
                   Outstanding
                 </dt>
                 <dd className="text-sm font-semibold tabular-nums text-foreground">
@@ -275,7 +272,7 @@ export default async function InvoiceDetailPage({
 
       {invoice.notes && (
         <section className="mt-4 rounded-lg border border-border bg-card p-5">
-          <h2 className="mb-1 text-[0.65rem] font-semibold uppercase tracking-wider text-muted-foreground">
+          <h2 className="mb-1 eyebrow">
             Notes
           </h2>
           <p className="text-sm text-foreground">{invoice.notes}</p>
@@ -294,7 +291,7 @@ function Field({
 }) {
   return (
     <div>
-      <div className="text-[0.6rem] font-semibold uppercase tracking-wider text-muted-foreground">
+      <div className="eyebrow">
         {label}
       </div>
       <div className="mt-0.5 text-sm text-foreground">{children}</div>

@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import { linkCaps } from "@/components/ff/controls";
+import { cn } from "@/lib/utils";
 import { ApiError } from "@/lib/api/client";
 import { getT100Report, type T100Report } from "@/lib/api/reports";
 
@@ -65,19 +67,19 @@ export default async function T100Page({
 
   return (
     <div className="mx-auto max-w-5xl px-4 sm:px-6 py-8">
-      <header className="mb-6 flex flex-wrap items-end justify-between gap-3">
+      <header className="mb-6 flex flex-wrap items-end justify-between gap-4 border-b border-border pb-5">
         <div>
           <Link
             href="/reports"
-            className="text-[0.65rem] font-semibold uppercase tracking-wider text-muted-foreground hover:text-foreground"
+            className={cn(linkCaps, "text-muted-foreground hover:text-foreground")}
           >
-            ← Reports
+            <span aria-hidden>‹</span> Reports
           </Link>
-          <h1 className="mt-1 page-title text-foreground">
+          <h1 className="mt-1 page-title text-balance">
             T-100 — Mail Traffic
           </h1>
           {report && (
-            <p className="mt-1 text-sm text-muted-foreground">
+            <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
               {report.period_label} · {report.total_departures} departure
               {report.total_departures === 1 ? "" : "s"} carrying mail
             </p>
@@ -104,7 +106,7 @@ export default async function T100Page({
         </p>
       ) : report ? (
         <>
-          <p className="mb-4 rounded-md border border-border bg-background px-3 py-2 text-xs text-muted-foreground">
+          <p className="mb-4 notice notice-gray text-muted-foreground">
             {report.advisory}
           </p>
 
@@ -127,7 +129,7 @@ export default async function T100Page({
           )}
 
           {report.rows.length === 0 ? (
-            <p className="rounded-lg border border-dashed border-border bg-card/40 px-4 py-16 text-center text-sm text-muted-foreground">
+            <p className="rounded-lg border border-border bg-card px-5 py-8 text-center text-sm text-muted-foreground">
               No mail carried on a locked manifest in {report.period_label}.
             </p>
           ) : (

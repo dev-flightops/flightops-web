@@ -1,5 +1,5 @@
-import Link from "next/link";
 
+import { PageHeader } from "@/components/ff/page-header";
 import { ApiError } from "@/lib/api/client";
 import { listUsers } from "@/lib/api/auth";
 import type { UserResponse } from "@/lib/api/types";
@@ -32,25 +32,11 @@ export default async function NewPayEventPage() {
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
-      <nav aria-label="Breadcrumb" className="mb-4 text-xs">
-        <Link
-          href="/payroll"
-          className="text-muted-foreground hover:text-foreground"
-        >
-          Pay Events
-        </Link>
-        <span aria-hidden className="px-1.5 text-muted-foreground">
-          /
-        </span>
-        <span className="font-semibold text-primary">New</span>
-      </nav>
-
-      <h1 className="mb-1 page-title">New Pay Event</h1>
-      <p className="mb-5 text-sm text-muted-foreground">
-        Record a compensable event for an employee. New events land in
-        pending status and need Approve before they can roll into a
-        locked pay period.
-      </p>
+      <PageHeader
+        back={{ href: "/payroll", label: "Pay Events" }}
+        title="New Pay Event"
+        description="Record a compensable event for an employee. New events land in pending status and need Approve before they can roll into a locked pay period."
+      />
 
       {loadError ? (
         <div

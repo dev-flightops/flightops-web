@@ -100,13 +100,13 @@ export default async function AccountingPage({
 
   return (
     <div className="mx-auto max-w-6xl px-4 sm:px-6 py-8">
-      <header className="mb-6 flex flex-wrap items-end justify-between gap-3">
+      <header className="mb-6 flex flex-wrap items-end justify-between gap-4 border-b border-border pb-5">
         <div>
-          <h1 className="page-title text-foreground">
+          <h1 className="page-title text-balance">
             Accounting
           </h1>
           {summary && (
-            <p className="mt-1 text-sm text-muted-foreground">
+            <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
               {summary.period_label} · {summary.block_hours.toFixed(1)} block
               hours
             </p>
@@ -131,7 +131,7 @@ export default async function AccountingPage({
         </p>
       ) : summary ? (
         <>
-          <p className="mb-4 rounded-md border border-border bg-background px-3 py-2 text-xs text-muted-foreground">
+          <p className="mb-4 notice notice-gray text-muted-foreground">
             {summary.note}
           </p>
 
@@ -177,7 +177,7 @@ export default async function AccountingPage({
 
           <section
             aria-label="Cost and margin"
-            className="mb-2 grid grid-cols-1 gap-4 sm:grid-cols-3"
+            className="mb-2 grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-3"
           >
             <Figure label="Cost" sub="modelled from operating rates" cents={summary.cost_cents} />
             <Figure
@@ -185,11 +185,11 @@ export default async function AccountingPage({
               sub="booked less cost"
               cents={summary.profit_cents}
             />
-            <div className="rounded-lg border border-border bg-card px-4 py-3">
-              <div className="text-[0.65rem] font-semibold uppercase tracking-wider text-muted-foreground">
+            <div className="flex min-w-0 flex-col border-l-2 border-input pl-3">
+              <div className="eyebrow">
                 Margin
               </div>
-              <div className="mt-0.5 text-2xl font-bold tabular-nums text-foreground">
+              <div className="mt-1 font-display text-[1.75rem] font-extrabold leading-none tabular-nums text-foreground">
                 {summary.margin_pct === null ? "—" : `${summary.margin_pct}%`}
               </div>
               <div className="mt-0.5 text-[0.65rem] text-muted-foreground">
@@ -231,7 +231,7 @@ export default async function AccountingPage({
 
       {/* ---- AR aging ---- */}
       <section aria-label="Accounts receivable" className="mt-2">
-        <h2 className="mb-1 text-sm font-bold uppercase tracking-wider text-muted-foreground">
+        <h2 className="mb-1 eyebrow">
           Accounts receivable
         </h2>
 
@@ -246,26 +246,26 @@ export default async function AccountingPage({
           <>
             <p className="mb-3 text-xs text-muted-foreground">{aging.note}</p>
 
-            <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-5">
+            <div className="mb-5 grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-5">
               {aging.buckets.map((b) => (
                 <div
                   key={b.key}
                   className={
-                    "rounded-lg border px-3 py-2.5 " +
+                    "flex min-w-0 flex-col border-l-2 pl-3 " +
                     // Only the oldest band is coloured. Making every
                     // bucket red turns the page into noise and hides
                     // the one that actually needs a phone call.
                     (b.key === "d90_plus" && b.outstanding_cents > 0
-                      ? "border-status-red/40 bg-status-red/10"
-                      : "border-border bg-card")
+                      ? "border-status-red"
+                      : "border-input")
                   }
                 >
-                  <div className="text-[0.6rem] font-semibold uppercase tracking-wider text-muted-foreground">
+                  <div className="eyebrow">
                     {b.label}
                   </div>
                   <div
                     className={
-                      "mt-0.5 text-lg font-bold tabular-nums " +
+                      "mt-1 font-display text-xl font-extrabold leading-none tabular-nums " +
                       (b.key === "d90_plus" && b.outstanding_cents > 0
                         ? "text-status-red"
                         : "text-foreground")
@@ -296,7 +296,7 @@ export default async function AccountingPage({
             </div>
 
             {aging.invoices.length === 0 ? (
-              <p className="rounded-lg border border-dashed border-border bg-card/40 px-4 py-10 text-center text-sm text-muted-foreground">
+              <p className="rounded-lg border border-border bg-card px-5 py-8 text-center text-sm text-muted-foreground">
                 Nothing outstanding.
               </p>
             ) : (
@@ -386,11 +386,11 @@ function Figure({
   cents: number;
 }) {
   return (
-    <div className="rounded-lg border border-border bg-card px-4 py-3">
-      <div className="text-[0.65rem] font-semibold uppercase tracking-wider text-muted-foreground">
+    <div className="flex min-w-0 flex-col border-l-2 border-input pl-3">
+      <div className="eyebrow">
         {label}
       </div>
-      <div className="mt-0.5 text-2xl font-bold tabular-nums text-foreground">
+      <div className="mt-1 font-display text-[1.75rem] font-extrabold leading-none tabular-nums text-foreground">
         {money(cents)}
       </div>
       <div className="mt-0.5 text-[0.65rem] text-muted-foreground">{sub}</div>

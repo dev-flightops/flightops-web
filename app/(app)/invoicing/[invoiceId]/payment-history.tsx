@@ -83,7 +83,7 @@ export function PaymentHistory({
               Payments on invoice {invoiceNumber}
             </caption>
             <thead>
-              <tr className="border-b border-border text-left text-[0.6rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+              <tr className="ff-thead">
                 <th scope="col" className="py-2 pr-4">Received</th>
                 <th scope="col" className="py-2 pr-4">Method</th>
                 <th scope="col" className="py-2 pr-4">Reference</th>
@@ -129,7 +129,7 @@ export function PaymentHistory({
                               onClick={() => start(p.id)}
                               disabled={pending}
                               aria-label={`Void payment of ${label}`}
-                              className="rounded border border-status-red/40 px-1.5 py-0.5 text-[0.65rem] font-semibold text-status-red hover:bg-status-red/10 disabled:opacity-50"
+                              className="btn-caps rounded-sm border border-status-red/60 px-1.5 py-0.5 text-[0.62rem] text-status-red hover:border-status-red disabled:opacity-50"
                             >
                               Void
                             </button>
