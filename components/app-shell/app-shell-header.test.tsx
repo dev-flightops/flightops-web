@@ -36,6 +36,19 @@ describe("the top bar's operator logo", () => {
     expect(screen.getByText("Sample Air")).not.toHaveClass("sr-only");
   });
 
+  it("keeps the plate hidden until the logo has loaded", () => {
+    // The demo's dead logo URL is slow to fail: the empty plate showed
+    // for as long as the request took.
+    const { container } = render(
+      <AppShellHeader brand="Sample Air" logoUrl="https://example.test/slow.png" showDepartmentNav={false} />,
+    );
+    const plate = container.querySelector("img")!.parentElement!;
+    expect(plate).toHaveClass("hidden");
+    expect(screen.getByText("Sample Air")).not.toHaveClass("sr-only");
+    load(container, 220, 48);
+    expect(container.querySelector("img")!.parentElement).not.toHaveClass("hidden");
+  });
+
   it("drops the plate when the logo will not load, keeping the name", () => {
     // The demo's logo URL was dead: the bar showed an empty white box.
     const { container } = render(

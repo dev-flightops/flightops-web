@@ -97,7 +97,7 @@ export function AppShellHeader({
             className="flex min-w-0 items-center gap-3 px-4 text-foreground transition-colors hover:text-white sm:px-5"
           >
             {logoUrl && logoShape !== "failed" ? (
-              <OperatorLogo key={logoUrl} src={logoUrl} onSettled={settleLogo} />
+              <OperatorLogo key={logoUrl} src={logoUrl} shown={logoShape !== null} onSettled={settleLogo} />
             ) : null}
             <span
               className={cn(
@@ -147,12 +147,17 @@ const WORDMARK_RATIO = 2.2;
 
 /** The operator's logo on its plate. It reports what it turned out to be:
  *  a logo that will not load takes the plate with it, since an empty white
- *  box in the bar looks broken. */
+ *  box in the bar looks broken. The plate stays hidden until the image has
+ *  loaded (it still fetches while hidden), so a slow failure never shows
+ *  the box at all. */
 function OperatorLogo({
   src,
+  shown,
   onSettled,
 }: {
   src: string;
+  /** False until the image has loaded. */
+  shown: boolean;
   onSettled: (url: string, shape: LogoShape) => void;
 }) {
   const settle = useCallback(
@@ -172,7 +177,7 @@ function OperatorLogo({
     [settle, onSettled, src],
   );
   return (
-    <span className="flex h-8 flex-shrink-0 items-center rounded-sm bg-white px-1.5">
+    <span className={cn("flex h-8 flex-shrink-0 items-center rounded-sm bg-white px-1.5", !shown && "hidden")}>
       {/* An operator-supplied URL on any host, so not next/image (which
           would need every host configured). */}
       <img
