@@ -67,7 +67,7 @@ export default async function RequiredReadingPage() {
         <p className="text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
           Documents
         </p>
-        <h1 className="mt-0.5 text-2xl font-bold tracking-tight">
+        <h1 className="mt-0.5 page-title">
           Required Reading
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
@@ -82,7 +82,7 @@ export default async function RequiredReadingPage() {
       {loadError && (
         <div
           role="alert"
-          className="mb-4 rounded-lg border border-status-red/40 bg-status-red/10 px-4 py-3 text-sm text-status-red"
+          className="mb-4 notice notice-red text-sm"
         >
           {loadError}
         </div>

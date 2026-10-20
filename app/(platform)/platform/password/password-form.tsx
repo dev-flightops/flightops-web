@@ -12,7 +12,7 @@ export function PasswordForm() {
   return (
     <form key={state.attempt} action={formAction} aria-label="Change password" className="grid gap-3">
       {state.status === "error" && state.message ? (
-        <div role="alert" className="rounded-md border border-status-red/40 bg-status-red/10 px-3 py-2 text-xs text-status-red">
+        <div role="alert" className="notice notice-red">
           {state.message}
         </div>
       ) : null}

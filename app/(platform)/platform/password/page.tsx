@@ -17,7 +17,7 @@ export default async function PlatformPasswordPage() {
           ← Companies
         </Link>
       </div>
-      <h1 className="text-2xl font-bold tracking-tight">Change Password</h1>
+      <h1 className="page-title">Change Password</h1>
       <p className="mt-1 mb-5 text-sm text-muted-foreground">{session.email}</p>
       <div className="rounded-lg border border-border bg-card p-5">
         <PasswordForm />

@@ -43,7 +43,7 @@ export default async function ForeFlightPlansPage() {
         <span className="text-foreground">ForeFlight plans</span>
       </nav>
       <header className="mb-6">
-        <h1 className="text-2xl font-bold tracking-tight">ForeFlight plans waiting</h1>
+        <h1 className="page-title">ForeFlight plans waiting</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Plans pilots made in ForeFlight that no single leg fits. Put each on its leg, so it shows on
           that flight&rsquo;s dispatch page beside Peregrine&rsquo;s weight and balance, or set it aside.
@@ -57,7 +57,7 @@ export default async function ForeFlightPlansPage() {
       ) : loadError || !plans ? (
         <p
           role="alert"
-          className="rounded-md border border-status-red/40 bg-status-red/10 px-3 py-3 text-xs text-status-red"
+          className="notice notice-red"
         >
           {loadError ?? "The waiting plans couldn't be loaded."}
         </p>

@@ -54,7 +54,7 @@ export default async function TypeQualificationsPage({
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
       <header className="mb-5">
-        <h1 className="text-2xl font-bold tracking-tight">Aircraft Qualifications</h1>
+        <h1 className="page-title">Aircraft Qualifications</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           The positions each pilot is authorised to fly, by aircraft type. A
           position is current while the check rides on its type are in date.
@@ -74,7 +74,7 @@ export default async function TypeQualificationsPage({
       {loadError ? (
         <p
           role="alert"
-          className="rounded-lg border border-status-red/40 bg-status-red/10 px-4 py-3 text-sm text-status-red"
+          className="notice notice-red text-sm"
         >
           {loadError}
         </p>
@@ -83,7 +83,7 @@ export default async function TypeQualificationsPage({
           {lapsed > 0 ? (
             <p
               role="status"
-              className="mb-4 rounded-lg border border-status-red/40 bg-status-red/10 px-4 py-2.5 text-sm text-status-red"
+              className="mb-4 notice notice-red text-sm"
             >
               <strong className="font-semibold">
                 {lapsed} authorised position{lapsed === 1 ? " is" : "s are"} not

@@ -50,7 +50,7 @@ export default async function ForeFlightSettingsPage() {
         <span className="text-foreground">ForeFlight</span>
       </nav>
       <header className="mb-6">
-        <h1 className="text-2xl font-bold tracking-tight">ForeFlight</h1>
+        <h1 className="page-title">ForeFlight</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Send the company&rsquo;s scheduled flights to ForeFlight Dispatch, so pilots plan on flights
           that already carry their crew and load, and bring their plans back onto the flights.
@@ -64,7 +64,7 @@ export default async function ForeFlightSettingsPage() {
       ) : loadError || !connection ? (
         <p
           role="alert"
-          className="rounded-md border border-status-red/40 bg-status-red/10 px-3 py-3 text-xs text-status-red"
+          className="notice notice-red"
         >
           {loadError ?? "The ForeFlight connection couldn't be loaded."}
         </p>

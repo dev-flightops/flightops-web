@@ -53,7 +53,7 @@ export default async function PilotRosterPage({
   return (
     <div className="mx-auto max-w-[100rem] px-4 py-8 sm:px-6">
       <header className="mb-5">
-        <h1 className="text-2xl font-bold tracking-tight">Pilot Roster</h1>
+        <h1 className="page-title">Pilot Roster</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Crew currency and FAR 135.265 flight-time position, by base.
         </p>
@@ -62,7 +62,7 @@ export default async function PilotRosterPage({
       {loadError ? (
         <p
           role="alert"
-          className="rounded-lg border border-status-red/40 bg-status-red/10 px-4 py-3 text-sm text-status-red"
+          className="notice notice-red text-sm"
         >
           {loadError}
         </p>
@@ -71,7 +71,7 @@ export default async function PilotRosterPage({
           {overLimit > 0 ? (
             <p
               role="status"
-              className="mb-4 rounded-lg border border-status-red/40 bg-status-red/10 px-4 py-2.5 text-sm text-status-red"
+              className="mb-4 notice notice-red text-sm"
             >
               <strong className="font-semibold">
                 {overLimit} pilot{overLimit === 1 ? " is" : "s are"} out of

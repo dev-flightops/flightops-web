@@ -37,7 +37,7 @@ export function AcademyHeader({
           </svg>
         </div>
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
+          <h1 className="page-title">{title}</h1>
           {description ? (
             <p className="mt-1 text-sm text-muted-foreground">{description}</p>
           ) : null}

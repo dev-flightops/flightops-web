@@ -112,7 +112,7 @@ export default async function EquipmentPage({
     <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
       <header className="mb-5 flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">
+          <h1 className="page-title">
             Ground Support Equipment
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">

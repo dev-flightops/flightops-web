@@ -200,7 +200,7 @@ function Field({
 }) {
   return (
     <label className="block">
-      <span className="mb-1 block text-[0.65rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+      <span className="field-label">
         {label}
         {required && <span className="ml-1 text-status-red">*</span>}
       </span>

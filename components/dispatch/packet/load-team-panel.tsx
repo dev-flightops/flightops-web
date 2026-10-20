@@ -70,7 +70,7 @@ export async function LoadTeamPanel({
       <SectionPanel title="Load Team" accent="blue">
         <p
           role="alert"
-          className="rounded-md border border-status-yellow/40 bg-status-yellow/10 px-3 py-2 text-xs text-status-yellow"
+          className="notice notice-yellow"
         >
           {status === 401
             ? "Session expired — sign in again to load teams."

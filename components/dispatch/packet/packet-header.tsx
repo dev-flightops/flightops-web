@@ -1,4 +1,3 @@
-import { Sparkles } from "lucide-react";
 import Link from "next/link";
 
 import type { FlightDetail } from "@/lib/api/types";
@@ -27,7 +26,7 @@ export function PacketHeader({
   return (
     <div className="mb-5 flex flex-wrap items-end justify-between gap-2">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-foreground">
+        <h1 className="page-title text-foreground">
           Flight Dispatch Packet
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
@@ -80,7 +79,6 @@ export function PacketHeader({
           title="AI Assistant · Coming in M4"
           className="inline-flex cursor-not-allowed items-center gap-1.5 rounded-md border border-status-purple/40 bg-transparent px-3 py-1.5 text-xs font-semibold text-status-purple opacity-60"
         >
-          <Sparkles className="h-3.5 w-3.5" aria-hidden />
           AI Assistant
         </button>
 

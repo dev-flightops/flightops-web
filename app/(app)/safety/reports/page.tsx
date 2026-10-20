@@ -53,7 +53,7 @@ export default async function SafetyReportsPage({
     <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
       <header className="mb-5 flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Safety Reports</h1>
+          <h1 className="page-title">Safety Reports</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Everything filed with the red Safety button, newest first.
           </p>
@@ -129,7 +129,7 @@ function ReportTable({ reports, total }: { reports: SafetyReport[]; total: numbe
     <div className="overflow-hidden rounded-lg border border-border bg-card">
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
-          <thead className="border-b border-border bg-muted/60 text-left text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
+          <thead className="ff-thead">
             <tr>
               <th scope="col" className="px-4 py-2.5 font-semibold">Date</th>
               <th scope="col" className="px-4 py-2.5 font-semibold">Type</th>

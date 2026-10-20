@@ -53,7 +53,7 @@ export function DocumentsFilterBar({
     >
       <div className="grid grid-cols-1 gap-4 md:grid-cols-[1fr_minmax(220px,280px)_auto] md:items-end">
         <label className="block min-w-0">
-          <span className="mb-1.5 block text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+          <span className="field-label">
             Search
           </span>
           <input
@@ -66,7 +66,7 @@ export function DocumentsFilterBar({
         </label>
 
         <label className="block min-w-0">
-          <span className="mb-1.5 block text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+          <span className="field-label">
             Category
           </span>
           <select

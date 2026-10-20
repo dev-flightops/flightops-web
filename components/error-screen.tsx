@@ -3,7 +3,7 @@
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { signOut } from "next-auth/react";
-import { AlertCircle, LogIn, RefreshCw } from "lucide-react";
+import { AlertGlyph, RefreshGlyph, SignInGlyph } from "@/components/ff/glyphs";
 
 import { Button } from "@/components/ui/button";
 
@@ -96,7 +96,7 @@ export function ErrorScreen({
 
   return (
     <main className="container flex min-h-[60vh] flex-col items-center justify-center gap-4 py-12 text-center">
-      <AlertCircle className="h-10 w-10 text-destructive" />
+      <AlertGlyph className="h-10 w-10 text-destructive" />
       <h1 className="text-2xl font-semibold tracking-tight">
         {isSessionExpired ? "Session expired" : "Something went wrong"}
       </h1>
@@ -109,12 +109,12 @@ export function ErrorScreen({
       <div className="mt-2 flex gap-2">
         {isSessionExpired ? (
           <Button onClick={handleReLogin} disabled={isPending}>
-            <LogIn className="h-4 w-4" />
+            <SignInGlyph className="h-4 w-4" />
             {isPending ? "Signing in…" : "Sign in again"}
           </Button>
         ) : (
           <Button onClick={reset}>
-            <RefreshCw className="h-4 w-4" />
+            <RefreshGlyph className="h-4 w-4" />
             Try again
           </Button>
         )}

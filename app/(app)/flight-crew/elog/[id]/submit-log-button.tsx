@@ -49,7 +49,7 @@ export function SubmitLogButton({ logId }: { logId: string }) {
         Submit Log
       </button>
       {state.status === "error" && (
-        <p role="alert" className="mt-1 text-[0.65rem] text-status-red">
+        <p role="alert" className="field-error">
           {state.message}
         </p>
       )}

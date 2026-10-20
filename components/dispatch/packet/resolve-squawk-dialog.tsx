@@ -2,7 +2,6 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Wrench } from "lucide-react";
 
 import { resolveSquawkAction } from "@/app/(app)/dispatch/maintenance-actions";
 import { Button } from "@/components/ui/button";
@@ -75,7 +74,6 @@ export function ResolveSquawkDialog({
         onClick={() => setOpen(true)}
         className="gap-1.5"
       >
-        <Wrench className="h-3.5 w-3.5" />
         Resolve
       </Button>
 

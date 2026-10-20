@@ -94,7 +94,7 @@ export default async function SupplierPortalPage({
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
       <header className="mb-5">
-        <h1 className="text-2xl font-bold tracking-tight">
+        <h1 className="page-title">
           Supplier Portal — Fuel Orders
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
@@ -130,7 +130,7 @@ function SupplierOrderTable({ orders }: { orders: FuelOrderResponse[] }) {
   return (
     <div className="overflow-hidden rounded-lg border border-border bg-card">
       <table className="w-full text-xs">
-        <thead className="bg-muted/60 text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+        <thead className="ff-thead">
           <tr>
             <th className="px-3 py-2 text-left">Requested</th>
             <th className="px-3 py-2 text-left">Tail</th>

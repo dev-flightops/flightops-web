@@ -65,7 +65,7 @@ export function ScheduleMaintenanceDialog({ unitId }: { unitId: string }) {
             {state.status === "api-error" && (
               <div
                 role="alert"
-                className="rounded-md border border-status-red/40 bg-status-red/10 px-3 py-2 text-xs text-status-red"
+                className="notice notice-red"
               >
                 {state.message}
               </div>
@@ -74,7 +74,7 @@ export function ScheduleMaintenanceDialog({ unitId }: { unitId: string }) {
             <div>
               <label
                 htmlFor="title"
-                className="mb-1 block text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground"
+                className="field-label"
               >
                 Title <span className="text-status-red">*</span>
               </label>
@@ -88,7 +88,7 @@ export function ScheduleMaintenanceDialog({ unitId }: { unitId: string }) {
                 className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none aria-[invalid=true]:border-status-red"
               />
               {fieldError("title") && (
-                <p className="mt-1 text-[0.65rem] text-status-red">
+                <p className="field-error">
                   {fieldError("title")}
                 </p>
               )}
@@ -98,7 +98,7 @@ export function ScheduleMaintenanceDialog({ unitId }: { unitId: string }) {
               <div>
                 <label
                   htmlFor="item_type"
-                  className="mb-1 block text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground"
+                  className="field-label"
                 >
                   Type
                 </label>
@@ -118,7 +118,7 @@ export function ScheduleMaintenanceDialog({ unitId }: { unitId: string }) {
               <div>
                 <label
                   htmlFor="due_date"
-                  className="mb-1 block text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground"
+                  className="field-label"
                 >
                   Due date (optional)
                 </label>
@@ -140,7 +140,7 @@ export function ScheduleMaintenanceDialog({ unitId }: { unitId: string }) {
               <div>
                 <label
                   htmlFor="interval_days"
-                  className="mb-1 block text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground"
+                  className="field-label"
                 >
                   Interval (days)
                 </label>
@@ -156,7 +156,7 @@ export function ScheduleMaintenanceDialog({ unitId }: { unitId: string }) {
                   className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none aria-[invalid=true]:border-status-red"
                 />
                 {fieldError("interval_days") && (
-                  <p className="mt-1 text-[0.65rem] text-status-red">
+                  <p className="field-error">
                     {fieldError("interval_days")}
                   </p>
                 )}
@@ -164,7 +164,7 @@ export function ScheduleMaintenanceDialog({ unitId }: { unitId: string }) {
               <div>
                 <label
                   htmlFor="interval_hours"
-                  className="mb-1 block text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground"
+                  className="field-label"
                 >
                   Interval (hours)
                 </label>
@@ -183,7 +183,7 @@ export function ScheduleMaintenanceDialog({ unitId }: { unitId: string }) {
             <div>
               <label
                 htmlFor="description"
-                className="mb-1 block text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground"
+                className="field-label"
               >
                 Description (optional)
               </label>

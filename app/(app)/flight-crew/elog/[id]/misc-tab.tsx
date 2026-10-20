@@ -81,7 +81,7 @@ function MxHistoryPanel({
     return (
       <div
         role="alert"
-        className="rounded-md border border-status-yellow/40 bg-status-yellow/10 px-4 py-2.5 text-xs text-status-yellow"
+        className="notice notice-yellow"
       >
         {error}
       </div>

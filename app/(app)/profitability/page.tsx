@@ -114,7 +114,7 @@ export default async function ProfitabilityPage({
           >
             ← Reports
           </Link>
-          <h1 className="mt-1 text-2xl font-bold tracking-tight text-foreground">
+          <h1 className="mt-1 page-title text-foreground">
             Profitability
           </h1>
           {report && (
@@ -137,7 +137,7 @@ export default async function ProfitabilityPage({
       {loadError ? (
         <p
           role="alert"
-          className="rounded-md border border-status-red/30 bg-status-red/10 px-3 py-2 text-sm text-status-red"
+          className="notice notice-red text-sm"
         >
           {loadError}
         </p>
@@ -218,7 +218,7 @@ export default async function ProfitabilityPage({
             // reaching a board pack unchallenged.
             <div
               role="status"
-              className="mb-4 rounded-lg border border-status-yellow/40 bg-status-yellow/10 px-3 py-2 text-xs text-status-yellow"
+              className="mb-4 notice notice-yellow"
             >
               <p className="font-semibold">
                 These figures are incomplete, and here is exactly how.

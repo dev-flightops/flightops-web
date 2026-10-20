@@ -44,7 +44,7 @@ export default async function StationsPage() {
     <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
       <header className="mb-6 flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Stations</h1>
+          <h1 className="page-title">Stations</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             ICAO master list — runway data, reporting flag, and the
             station-issue tracker.

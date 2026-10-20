@@ -1,6 +1,5 @@
 "use client";
 
-import { Sparkles } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
@@ -56,7 +55,7 @@ export function AiToolsMenu({ tools }: { tools: AiTool[] }) {
         aria-label="AI Assistant"
         className="hidden items-center justify-center rounded-md bg-transparent p-2 text-status-purple hover:bg-foreground/8 sm:inline-flex"
       >
-        <Sparkles className="h-4 w-4" aria-hidden />
+        <span aria-hidden className="text-[0.7rem] font-bold uppercase tracking-[0.14em]">AI</span>
       </Link>
     );
   }
@@ -72,7 +71,7 @@ export function AiToolsMenu({ tools }: { tools: AiTool[] }) {
         aria-expanded={open}
         className="inline-flex items-center justify-center rounded-md bg-transparent p-2 text-status-purple hover:bg-foreground/8"
       >
-        <Sparkles className="h-4 w-4" aria-hidden />
+        <span aria-hidden className="text-[0.7rem] font-bold uppercase tracking-[0.14em]">AI</span>
       </button>
 
       {open && (

@@ -58,7 +58,7 @@ export default async function FuelSuppliersPage() {
           >
             ← Fuel
           </Link>
-          <h1 className="text-2xl font-bold tracking-tight">
+          <h1 className="page-title">
             Suppliers & Pricing
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">

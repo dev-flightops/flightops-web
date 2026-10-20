@@ -100,7 +100,7 @@ export default async function RewardsMemberDetailPage({
       <header className="mb-6 rounded-lg border border-border bg-card p-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">
+            <h1 className="page-title">
               {member.customer_name ?? "—"}
             </h1>
             <p className="mt-1 text-sm text-muted-foreground">
@@ -172,7 +172,7 @@ export default async function RewardsMemberDetailPage({
           <div className="overflow-hidden rounded-lg border border-border bg-card">
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
-                <thead className="border-b border-border bg-muted/60 text-left text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
+                <thead className="ff-thead">
                   <tr>
                     <th scope="col" className="px-4 py-2.5 font-semibold">When</th>
                     <th scope="col" className="px-4 py-2.5 font-semibold">Type</th>

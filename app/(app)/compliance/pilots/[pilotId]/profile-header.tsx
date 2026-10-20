@@ -40,7 +40,7 @@ export function ProfileHeader({
     <div className="rounded-lg border border-border bg-card p-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">
+          <h1 className="page-title">
             {pilot.full_name}
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">{pilot.email}</p>

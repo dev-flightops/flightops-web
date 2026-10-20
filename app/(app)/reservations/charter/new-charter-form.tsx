@@ -66,7 +66,7 @@ export function NewCharterForm({
       <div>
         <label
           htmlFor="charter-customer-input"
-          className="mb-1 block text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground"
+          className="field-label"
         >
           Customer
         </label>
@@ -130,7 +130,7 @@ export function NewCharterForm({
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <label className="block">
-          <span className="mb-1 block text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+          <span className="field-label">
             From (ICAO)
           </span>
           <input
@@ -151,7 +151,7 @@ export function NewCharterForm({
         </label>
 
         <label className="block">
-          <span className="mb-1 block text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+          <span className="field-label">
             To (ICAO)
           </span>
           <input
@@ -167,7 +167,7 @@ export function NewCharterForm({
         </label>
 
         <label className="block">
-          <span className="mb-1 block text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+          <span className="field-label">
             Aircraft type (optional)
           </span>
           <input
@@ -182,7 +182,7 @@ export function NewCharterForm({
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
         <label className="block">
-          <span className="mb-1 block text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+          <span className="field-label">
             Requested date
           </span>
           <input
@@ -195,7 +195,7 @@ export function NewCharterForm({
         </label>
 
         <label className="block">
-          <span className="mb-1 block text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+          <span className="field-label">
             Time
           </span>
           <input
@@ -208,7 +208,7 @@ export function NewCharterForm({
         </label>
 
         <label className="block">
-          <span className="mb-1 block text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+          <span className="field-label">
             Return date
           </span>
           <input
@@ -219,7 +219,7 @@ export function NewCharterForm({
         </label>
 
         <label className="block">
-          <span className="mb-1 block text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+          <span className="field-label">
             Pax
           </span>
           <input
@@ -233,7 +233,7 @@ export function NewCharterForm({
       </div>
 
       <label className="block">
-        <span className="mb-1 block text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+        <span className="field-label">
           Notes
         </span>
         <textarea
@@ -247,7 +247,7 @@ export function NewCharterForm({
       {state.status === "error" && state.message ? (
         <div
           role="alert"
-          className="rounded-md border border-status-red/40 bg-status-red/10 px-3 py-2 text-xs text-status-red"
+          className="notice notice-red"
         >
           {state.message}
         </div>
@@ -255,7 +255,7 @@ export function NewCharterForm({
       {state.status === "ok" && state.message ? (
         <div
           role="status"
-          className="rounded-md border border-status-green/40 bg-status-green/10 px-3 py-2 text-xs text-status-green"
+          className="notice notice-green"
         >
           {state.message}
         </div>

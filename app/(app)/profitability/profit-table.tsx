@@ -47,7 +47,7 @@ export function ProfitTable({
       <table className="w-full text-sm">
         <caption className="sr-only">{caption}</caption>
         <thead>
-          <tr className="border-b border-border bg-background/40 text-left text-[0.6rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+          <tr className="ff-thead">
             <th scope="col" className="px-4 py-3">
               {firstColumn}
             </th>

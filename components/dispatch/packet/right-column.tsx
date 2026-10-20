@@ -1,4 +1,3 @@
-import { Sparkles } from "lucide-react";
 
 import { DownloadPdfButton } from "@/components/dispatch/download-pdf-button";
 import { EditFlightDialog } from "@/components/dispatch/edit-flight-dialog";
@@ -102,7 +101,6 @@ export function RightColumn({
             title="AI Review · Coming in M4"
             className="inline-flex cursor-not-allowed items-center gap-1.5 rounded-md border border-status-purple/40 bg-transparent px-4 py-2 text-xs font-semibold text-status-purple opacity-60"
           >
-            <Sparkles className="h-3.5 w-3.5" aria-hidden />
             AI Review
           </button>
 

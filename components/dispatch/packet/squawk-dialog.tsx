@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { AlertTriangle, Plus } from "lucide-react";
+import { AlertGlyph, PlusGlyph } from "@/components/ff/glyphs";
 import { z } from "zod";
 
 import { createSquawkAction } from "@/app/(app)/dispatch/maintenance-actions";
@@ -125,7 +125,7 @@ export function SquawkDialog({ aircraftId, tailNumber }: SquawkDialogProps) {
         onClick={() => setOpen(true)}
         className="gap-1.5"
       >
-        <Plus className="h-3.5 w-3.5" />
+        <PlusGlyph className="h-3.5 w-3.5" />
         Squawk
       </Button>
 
@@ -221,7 +221,7 @@ export function SquawkDialog({ aircraftId, tailNumber }: SquawkDialogProps) {
                   role="alert"
                   className="sm:col-span-2 flex items-start gap-2 rounded-md border border-status-red/40 bg-status-red/10 px-3 py-2 text-xs text-status-red"
                 >
-                  <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+                  <AlertGlyph className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
                   <span>
                     This will block dispatch on{" "}
                     <span className="font-mono font-semibold">{tailNumber}</span>{" "}

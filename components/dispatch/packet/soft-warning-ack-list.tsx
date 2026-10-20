@@ -1,6 +1,6 @@
 "use client";
 
-import { Loader2 } from "lucide-react";
+import { SpinnerGlyph } from "@/components/ff/glyphs";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 
@@ -114,7 +114,7 @@ export function SoftWarningAckList({
       })}
       {pending && (
         <li className="flex items-center gap-1 text-[0.6rem] text-muted-foreground">
-          <Loader2 className="h-3 w-3 animate-spin" aria-hidden /> Saving…
+          <SpinnerGlyph className="h-3 w-3 animate-spin" aria-hidden /> Saving…
         </li>
       )}
     </ul>

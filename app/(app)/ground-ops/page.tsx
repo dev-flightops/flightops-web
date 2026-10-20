@@ -1,4 +1,3 @@
-import { Fuel, MapPin, Plane, Truck } from "lucide-react";
 import Link from "next/link";
 
 import { ApiError } from "@/lib/api/client";
@@ -73,7 +72,7 @@ export default async function GroundOpsHubPage() {
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
       <header className="mb-6">
-        <h1 className="text-2xl font-bold tracking-tight">
+        <h1 className="page-title">
           Ground Operations
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
@@ -84,7 +83,7 @@ export default async function GroundOpsHubPage() {
       {loadError && (
         <div
           role="alert"
-          className="mb-4 rounded-md border border-status-yellow/40 bg-status-yellow/10 px-3 py-2 text-xs text-status-yellow"
+          className="mb-4 notice notice-yellow"
         >
           {loadError}
         </div>
@@ -113,7 +112,6 @@ export default async function GroundOpsHubPage() {
 
       <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <SectionCard
-          icon={<Plane className="h-6 w-6 text-primary" strokeWidth={1.5} />}
           title="Ramp Operations"
           blurb="Mobile-optimized flight board for ramp agents. Track turnarounds, confirm loads, capture photos, manage fuel orders."
           links={[
@@ -129,7 +127,6 @@ export default async function GroundOpsHubPage() {
           ]}
         />
         <SectionCard
-          icon={<MapPin className="h-6 w-6 text-primary" strokeWidth={1.5} />}
           title="Station Management"
           blurb="Airport and base master data. Runway information, station issues, and operational notes."
           links={[
@@ -145,7 +142,6 @@ export default async function GroundOpsHubPage() {
           ]}
         />
         <SectionCard
-          icon={<Truck className="h-6 w-6 text-primary" strokeWidth={1.5} />}
           title="Ground Support Equipment"
           blurb="Equipment inventory, service tracking, and squawk management for tugs, GPUs, fuel trucks, and more."
           links={[
@@ -161,7 +157,6 @@ export default async function GroundOpsHubPage() {
           ]}
         />
         <SectionCard
-          icon={<Fuel className="h-6 w-6 text-primary" strokeWidth={1.5} />}
           title="Fuel Management"
           blurb="Order fuel, manage suppliers, track pricing, and view fuel reports across all bases."
           links={[L.orderFuel, L.fuelOrders, L.suppliers, L.fuelQuality]}
@@ -203,19 +198,16 @@ interface SectionLink extends GroundOpsLink {
 }
 
 function SectionCard({
-  icon,
   title,
   blurb,
   links,
 }: {
-  icon: React.ReactNode;
   title: string;
   blurb: string;
   links: SectionLink[];
 }) {
   return (
     <article className="rounded-lg border border-border bg-card p-5">
-      <div className="mb-2">{icon}</div>
       <h3 className="text-base font-semibold">{title}</h3>
       <p className="mt-1 text-xs text-muted-foreground">{blurb}</p>
       <ul className="mt-3 space-y-1.5">

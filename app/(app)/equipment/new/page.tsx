@@ -41,12 +41,12 @@ export default async function NewEquipmentPage() {
       >
         ← Equipment
       </Link>
-      <h1 className="mb-6 text-2xl font-bold tracking-tight">Add Equipment</h1>
+      <h1 className="mb-6 page-title">Add Equipment</h1>
 
       {loadError && (
         <div
           role="alert"
-          className="mb-4 rounded-md border border-status-yellow/40 bg-status-yellow/10 px-3 py-2 text-xs text-status-yellow"
+          className="mb-4 notice notice-yellow"
         >
           {loadError}
         </div>

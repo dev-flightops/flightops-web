@@ -16,7 +16,7 @@ export function PrintButton() {
         onClick={() => window.print()}
         className="rounded-md border border-primary/40 bg-background px-3 py-1.5 font-semibold text-primary hover:bg-primary/5"
       >
-        🖨 Print release sheet
+        Print release sheet
       </button>
     </div>
   );

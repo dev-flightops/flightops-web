@@ -33,7 +33,7 @@ export function useTypeToConfirm({
 
   const input = (
     <label className="block">
-      <span className="mb-1.5 block text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+      <span className="field-label">
         {label} —{" "}
         <span className="font-mono text-foreground">{expected}</span>
       </span>

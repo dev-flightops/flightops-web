@@ -109,7 +109,7 @@ export default async function HousingUnitDetailPage({
           <div className="text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
             Housing Unit
           </div>
-          <h1 className="mt-0.5 text-2xl font-bold tracking-tight">{unit.name}</h1>
+          <h1 className="mt-0.5 page-title">{unit.name}</h1>
           <div className="mt-1 flex flex-wrap items-baseline gap-2 text-sm text-muted-foreground">
             <span className="font-mono">{unit.station}</span>
             {unit.address && (
@@ -192,7 +192,7 @@ function RoomsCard({
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="border-b border-border bg-muted/60 text-left text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
+              <thead className="ff-thead">
                 <tr>
                   <th className="px-3 py-2.5 font-semibold">Room</th>
                   <th className="px-3 py-2.5 font-semibold">Type</th>
@@ -274,7 +274,7 @@ function BookingsCard({
       <div className="overflow-hidden rounded-lg border border-border bg-card">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="border-b border-border bg-muted/60 text-left text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
+            <thead className="ff-thead">
               <tr>
                 <th className="px-3 py-2.5 font-semibold">Room</th>
                 <th className="px-3 py-2.5 font-semibold">Employee</th>

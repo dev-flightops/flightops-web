@@ -32,7 +32,7 @@ export default async function PlatformCompaniesPage() {
           <div className="text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
             Platform Administration
           </div>
-          <h1 className="mt-0.5 text-2xl font-bold tracking-tight">Companies</h1>
+          <h1 className="mt-0.5 page-title">Companies</h1>
         </div>
         <div className="flex items-center gap-3 text-xs">
           <span className="text-muted-foreground">{session.full_name}</span>
@@ -56,7 +56,7 @@ export default async function PlatformCompaniesPage() {
         {result.ok ? (
           <CompanyTable companies={result.body.items} />
         ) : (
-          <div role="alert" className="rounded-lg border border-status-red/40 bg-status-red/10 px-4 py-3 text-sm text-status-red">
+          <div role="alert" className="notice notice-red text-sm">
             {`The companies couldn't be loaded (HTTP ${result.status}). Refresh to try again.`}
           </div>
         )}
@@ -76,7 +76,7 @@ function CompanyTable({ companies }: { companies: Company[] }) {
   return (
     <div className="overflow-x-auto rounded-lg border border-border bg-card">
       <table className="w-full text-sm">
-        <thead className="border-b border-border bg-muted/60 text-left text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
+        <thead className="ff-thead">
           <tr>
             <th className="px-3 py-2.5 font-semibold">Company</th>
             <th className="px-3 py-2.5 font-semibold">Short Name</th>

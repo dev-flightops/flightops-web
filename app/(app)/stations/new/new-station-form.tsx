@@ -39,7 +39,7 @@ export function NewStationForm() {
       {state.status === "api-error" && (
         <div
           role="alert"
-          className="rounded-md border border-status-red/40 bg-status-red/10 px-3 py-2 text-xs text-status-red"
+          className="notice notice-red"
         >
           {state.message}
         </div>
@@ -110,7 +110,7 @@ export function NewStationForm() {
         <div>
           <label
             htmlFor="station_type"
-            className="mb-1 block text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground"
+            className="field-label"
           >
             Station type <span className="text-status-red">*</span>
           </label>
@@ -199,7 +199,7 @@ export function NewStationForm() {
       <div>
         <label
           htmlFor="notes"
-          className="mb-1 block text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground"
+          className="field-label"
         >
           Notes (optional)
         </label>
@@ -240,7 +240,7 @@ function Field({
     <div>
       <label
         htmlFor={name}
-        className="mb-1 block text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground"
+        className="field-label"
       >
         {label}
         {inputProps.required && <span className="text-status-red"> *</span>}
@@ -254,7 +254,7 @@ function Field({
         {...inputProps}
       />
       {error && (
-        <p role="alert" className="mt-1 text-[0.65rem] text-status-red">
+        <p role="alert" className="field-error">
           {error}
         </p>
       )}

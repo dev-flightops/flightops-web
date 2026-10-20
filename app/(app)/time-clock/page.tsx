@@ -60,7 +60,7 @@ export default async function TimeClockPage() {
     <div className="w-full px-4 py-6 sm:px-6">
       <header className="mb-6 flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Time Clock</h1>
+          <h1 className="page-title">Time Clock</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             {open
               ? `On duty since ${formatTime(open.clock_in_at)} — ${open.elapsed_hours.toFixed(1)}h`
@@ -78,7 +78,7 @@ export default async function TimeClockPage() {
       {loadError ? (
         <div
           role="alert"
-          className="rounded-md border border-status-yellow/40 bg-status-yellow/10 px-3 py-3 text-xs text-status-yellow"
+          className="notice notice-yellow"
         >
           {loadError}
         </div>
@@ -197,7 +197,7 @@ function RecentPunches({ history }: { history: DutyPeriodSummary[] }) {
       </div>
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
-          <thead className="border-b border-border bg-muted/60 text-left text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
+          <thead className="ff-thead">
             <tr>
               <th scope="col" className="px-4 py-2.5 font-semibold">Clock in</th>
               <th scope="col" className="px-4 py-2.5 font-semibold">Clock out</th>

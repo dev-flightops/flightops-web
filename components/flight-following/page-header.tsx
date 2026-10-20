@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { buttonOutline, buttonSolid } from "@/components/ff/controls";
+import { PageHeader as Header } from "@/components/ff/page-header";
 
 import { AutoClock } from "./auto-clock";
 
@@ -21,33 +22,29 @@ import { AutoClock } from "./auto-clock";
  */
 export function PageHeader() {
   return (
-    // ForeFlight's page head (#78): display title, a quiet line under it,
-    // actions as outlined and solid UPPERCASE buttons, a rule beneath.
-    <div className="mb-6 flex flex-wrap items-end justify-between gap-4 border-b border-border pb-5">
-      <div>
-        <h1 className="page-title">Flight Following</h1>
-        <p className="mt-2 text-sm text-muted-foreground">
+    <Header
+      title="Flight Following"
+      description={
+        <>
           Live ops board · auto-refreshes every 60 s ·{" "}
           <span className="font-mono tabular-nums text-foreground">
             <AutoClock />
           </span>
-        </p>
-      </div>
-      <div className="flex flex-wrap gap-2">
-        <Link
-          href="/schedule"
-          title="Published schedule + printable manifest"
-          className={buttonOutline}
-        >
-          Schedule
-        </Link>
-        <Link href="/flight-following/history" className={buttonOutline}>
-          History
-        </Link>
-        <Link href="/flight-following/new" className={buttonSolid}>
-          Open Flight
-        </Link>
-      </div>
-    </div>
+        </>
+      }
+      actions={
+        <>
+          <Link href="/schedule" title="Published schedule + printable manifest" className={buttonOutline}>
+            Schedule
+          </Link>
+          <Link href="/flight-following/history" className={buttonOutline}>
+            History
+          </Link>
+          <Link href="/flight-following/new" className={buttonSolid}>
+            Open Flight
+          </Link>
+        </>
+      }
+    />
   );
 }

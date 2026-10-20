@@ -192,7 +192,7 @@ export default async function PreflightPage({
         <BackLink />
         <div
           role="alert"
-          className="rounded-lg border border-status-yellow/40 bg-status-yellow/10 px-4 py-3 text-sm text-status-yellow"
+          className="notice notice-yellow text-sm"
         >
           {loadError}
         </div>

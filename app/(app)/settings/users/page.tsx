@@ -75,7 +75,7 @@ export default async function SettingsUsersPage() {
 
       <header className="mb-6 flex items-end justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">User Management</h1>
+          <h1 className="page-title">User Management</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             {/* Subhead: "{tenant} — N account{s}", matches legacy
                 peregrineflight's user-management page. Drops the tenant
@@ -90,7 +90,7 @@ export default async function SettingsUsersPage() {
       {unauthorized && (
         <div
           role="alert"
-          className="rounded-md border border-status-yellow/40 bg-status-yellow/10 px-3 py-3 text-xs text-status-yellow"
+          className="notice notice-yellow"
         >
           You need the Executive Admin role to manage users. Ask another
           exec admin to grant you the role.
@@ -100,7 +100,7 @@ export default async function SettingsUsersPage() {
       {loadError && (
         <div
           role="alert"
-          className="mb-4 rounded-md border border-status-yellow/40 bg-status-yellow/10 px-3 py-2 text-xs text-status-yellow"
+          className="mb-4 notice notice-yellow"
         >
           {loadError}
         </div>
@@ -173,7 +173,7 @@ function UsersTable({
 }) {
   return (
     <table className="w-full text-sm">
-      <thead className="border-b border-border bg-muted/60 text-[0.6rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+      <thead className="ff-thead">
         <tr>
           <th scope="col" className="px-4 py-2 text-left">User</th>
           <th scope="col" className="px-4 py-2 text-left">Roles</th>

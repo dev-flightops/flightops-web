@@ -113,7 +113,7 @@ export function ConfigureProviderDialog({
             {state.status === "api-error" && (
               <div
                 role="alert"
-                className="rounded-md border border-status-red/40 bg-status-red/10 px-3 py-2 text-xs text-status-red"
+                className="notice notice-red"
               >
                 {state.message}
               </div>
@@ -221,7 +221,7 @@ function SecretField({
       <div>
         <label
           htmlFor="client_secret"
-          className="mb-1 block text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground"
+          className="field-label"
         >
           {label}
           <span className="text-status-red"> *</span>
@@ -236,7 +236,7 @@ function SecretField({
           className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none aria-[invalid=true]:border-status-red"
         />
         {error && (
-          <p role="alert" className="mt-1 text-[0.65rem] text-status-red">
+          <p role="alert" className="field-error">
             {error}
           </p>
         )}
@@ -249,7 +249,7 @@ function SecretField({
       <div className="mb-1 flex items-center justify-between">
         <label
           htmlFor="client_secret_change"
-          className="block text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground"
+          className="field-label mb-0"
         >
           {label}
         </label>
@@ -289,7 +289,7 @@ function SecretField({
         />
       )}
       {error && (
-        <p role="alert" className="mt-1 text-[0.65rem] text-status-red">
+        <p role="alert" className="field-error">
           {error}
         </p>
       )}
@@ -311,7 +311,7 @@ function Field({
     <div>
       <label
         htmlFor={name}
-        className="mb-1 block text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground"
+        className="field-label"
       >
         {label}
         {inputProps.required && <span className="text-status-red"> *</span>}
@@ -324,7 +324,7 @@ function Field({
         {...inputProps}
       />
       {error && (
-        <p role="alert" className="mt-1 text-[0.65rem] text-status-red">
+        <p role="alert" className="field-error">
           {error}
         </p>
       )}

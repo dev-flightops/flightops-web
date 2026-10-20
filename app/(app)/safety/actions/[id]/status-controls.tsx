@@ -45,7 +45,7 @@ export function StatusControls({
       {state.status === "error" && state.message ? (
         <div
           role="alert"
-          className="mb-3 rounded-md border border-status-red/40 bg-status-red/10 px-3 py-2 text-xs text-status-red"
+          className="mb-3 notice notice-red"
         >
           {state.message}
         </div>
@@ -54,7 +54,7 @@ export function StatusControls({
       <form action={formAction} className="space-y-3">
         <input type="hidden" name="capa_id" value={capaId} />
         <label className="min-w-0 block">
-          <span className="mb-1.5 block text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+          <span className="field-label">
             Move to
           </span>
           <select
@@ -73,7 +73,7 @@ export function StatusControls({
 
         {requiresClosureReason(nextStatus) ? (
           <label className="block">
-            <span className="mb-1.5 block text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+            <span className="field-label">
               Closure reason (required)
             </span>
             <textarea

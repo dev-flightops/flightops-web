@@ -34,12 +34,7 @@ export default function MxIntelligencePage() {
       >
         ← Maintenance
       </Link>
-      <h1 className="mt-1 flex items-center gap-2 text-2xl font-bold tracking-tight text-foreground">
-        <span aria-hidden className="text-status-purple">
-          ✦
-        </span>
-        MX Intelligence
-      </h1>
+      <h1 className="mt-1 page-title text-foreground">MX Intelligence</h1>
       <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
         Troubleshooting and pattern analysis over this operator&rsquo;s own
         maintenance records. It reads the fleet, the squawk history, open work

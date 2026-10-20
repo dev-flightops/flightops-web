@@ -127,7 +127,7 @@ export function OverrideDialog({
             {apiError && (
               <div
                 role="alert"
-                className="rounded-md border border-status-red/40 bg-status-red/10 px-3 py-2 text-xs text-status-red"
+                className="notice notice-red"
               >
                 {apiError}
               </div>
@@ -153,7 +153,7 @@ export function OverrideDialog({
             <div>
               <label
                 htmlFor="supervisor_cert_number"
-                className="mb-1 block text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground"
+                className="field-label"
               >
                 Supervisor cert number <span className="text-status-red">*</span>
               </label>
@@ -169,7 +169,7 @@ export function OverrideDialog({
                 aria-invalid={fieldError("supervisor_cert_number") ? "true" : undefined}
               />
               {fieldError("supervisor_cert_number") && (
-                <p role="alert" className="mt-1 text-[0.65rem] text-status-red">
+                <p role="alert" className="field-error">
                   {fieldError("supervisor_cert_number")}
                 </p>
               )}
@@ -208,7 +208,7 @@ export function OverrideDialog({
                 aria-invalid={fieldError("reason") ? "true" : undefined}
               />
               {fieldError("reason") && (
-                <p role="alert" className="mt-1 text-[0.65rem] text-status-red">
+                <p role="alert" className="field-error">
                   {fieldError("reason")}
                 </p>
               )}

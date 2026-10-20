@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { X } from "lucide-react";
+import { CloseGlyph } from "@/components/ff/glyphs";
 
 import { Spinner } from "@/components/ui/spinner";
 import type { PositionResponse } from "@/lib/api/types";
@@ -65,7 +65,7 @@ export function AircraftDetailPanel({
           aria-label="Close aircraft details"
           className="rounded p-1 text-muted-foreground hover:bg-border/40 hover:text-foreground"
         >
-          <X className="h-3.5 w-3.5" aria-hidden />
+          <CloseGlyph className="h-3.5 w-3.5" aria-hidden />
         </button>
       </header>
 

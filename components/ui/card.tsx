@@ -2,11 +2,8 @@ import * as React from "react";
 
 import { cn } from "@/lib/utils";
 
-// Mirrors the legacy `.panel` treatment:
-//   - 12px corner radius (`rounded-xl`)
-//   - panel background (--card)
-//   - subtle border (--border)
-//   - hover lifts the border to accent at 30% (matches `.panel-hover`)
+// One quiet frame (#79), as components/ff/panel.tsx draws a section: the
+// card ground, a 1px border, ForeFlight's near-square corners, no shadow.
 // Hover style is opt-in via a className prop so non-interactive cards (e.g.
 // dashboard stat tiles) don't shimmer on hover.
 const Card = React.forwardRef<
@@ -16,7 +13,7 @@ const Card = React.forwardRef<
   <div
     ref={ref}
     className={cn(
-      "rounded-xl border border-border bg-card text-card-foreground transition-colors",
+      "rounded-lg border border-border bg-card text-card-foreground transition-colors",
       className,
     )}
     {...props}
@@ -36,18 +33,14 @@ const CardHeader = React.forwardRef<
 ));
 CardHeader.displayName = "CardHeader";
 
-// Tighter heading scale than shadcn default — legacy uses ~1rem semibold
-// for panel titles, not the 2rem display size shadcn ships.
+// A panel's title: small tracked capitals (#79), `.panel-title` in globals.css.
 const CardTitle = React.forwardRef<
   HTMLHeadingElement,
   React.HTMLAttributes<HTMLHeadingElement>
 >(({ className, ...props }, ref) => (
   <h3
     ref={ref}
-    className={cn(
-      "text-base font-semibold leading-tight tracking-tight",
-      className,
-    )}
+    className={cn("panel-title", className)}
     {...props}
   />
 ));

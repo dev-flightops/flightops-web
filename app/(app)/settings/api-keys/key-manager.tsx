@@ -65,7 +65,7 @@ export function KeyManager({ keys }: { keys: ApiKeyRow[] }) {
         </h2>
         <div className="grid gap-4 sm:grid-cols-[2fr_1fr_auto] sm:items-start">
           <label className="block">
-            <span className="mb-1 block text-[0.65rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+            <span className="field-label">
               Name
             </span>
             <input
@@ -80,7 +80,7 @@ export function KeyManager({ keys }: { keys: ApiKeyRow[] }) {
             )}
           </label>
           <label className="block">
-            <span className="mb-1 block text-[0.65rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+            <span className="field-label">
               Expires (optional)
             </span>
             <input

@@ -148,7 +148,7 @@ function CourseTable({ courses, total }: { courses: Course[]; total: number }) {
     <div className="overflow-hidden rounded-lg border border-border bg-card">
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
-          <thead className="border-b border-border bg-muted/60 text-left text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
+          <thead className="ff-thead">
             <tr>
               <th scope="col" className="px-4 py-2.5 font-semibold">
                 Title

@@ -54,7 +54,7 @@ export function CancelOrderDialog({ orderId }: { orderId: string }) {
             {state.status === "api-error" && (
               <div
                 role="alert"
-                className="rounded-md border border-status-red/40 bg-status-red/10 px-3 py-2 text-xs text-status-red"
+                className="notice notice-red"
               >
                 {state.message}
               </div>
@@ -63,7 +63,7 @@ export function CancelOrderDialog({ orderId }: { orderId: string }) {
             <div>
               <label
                 htmlFor="cancel_reason"
-                className="mb-1 block text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground"
+                className="field-label"
               >
                 Reason <span className="text-status-red">*</span>
               </label>

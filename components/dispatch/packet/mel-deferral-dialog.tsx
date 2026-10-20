@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Plus } from "lucide-react";
+import { PlusGlyph } from "@/components/ff/glyphs";
 import { z } from "zod";
 
 import { createMelDeferralAction } from "@/app/(app)/dispatch/maintenance-actions";
@@ -198,7 +198,7 @@ export function MelDeferralDialog({
         onClick={() => setOpen(true)}
         className="gap-1.5"
       >
-        <Plus className="h-3.5 w-3.5" />
+        <PlusGlyph className="h-3.5 w-3.5" />
         MEL deferral
       </Button>
 

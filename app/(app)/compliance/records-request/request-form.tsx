@@ -69,7 +69,7 @@ function Label({
   return (
     <label
       htmlFor={htmlFor}
-      className="mb-1 block text-[0.6rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground"
+      className="field-label"
     >
       {children}
     </label>

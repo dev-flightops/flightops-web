@@ -1,14 +1,5 @@
-import {
-  AlertCircle,
-  Calendar,
-  CheckCircle2,
-  ClipboardList,
-  CloudSun,
-  type LucideIcon,
-  Radio,
-  Settings as SettingsIcon,
-  Wrench,
-} from "lucide-react";
+import { linkCaps } from "@/components/ff/controls";
+import { AlertGlyph, CheckGlyph } from "@/components/ff/glyphs";
 import Link from "next/link";
 
 import { getCompanyProfile } from "@/lib/api/auth";
@@ -167,7 +158,7 @@ export default async function SystemHealthDashboardPage() {
 
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">System Health</h1>
+          <h1 className="page-title">System Health</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             As of <span className="font-mono">{asOf}</span> UTC
           </p>
@@ -189,26 +180,12 @@ export default async function SystemHealthDashboardPage() {
         <h2 className="mb-4 text-xs font-bold uppercase tracking-wider text-muted-foreground">
           Quick Navigation
         </h2>
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-          {QUICK_NAV.map((q) => {
-            const Icon = q.icon;
-            return (
-              <Link
-                key={q.href}
-                href={q.href}
-                className="flex flex-col items-center gap-2 rounded-lg border border-border bg-background/40 p-4 text-center transition-colors hover:border-primary/40 hover:bg-primary/[0.04]"
-              >
-                <Icon
-                  className="h-6 w-6 text-primary"
-                  aria-hidden
-                  strokeWidth={1.5}
-                />
-                <span className="text-xs font-medium text-foreground">
-                  {q.label}
-                </span>
-              </Link>
-            );
-          })}
+        <div className="flex flex-wrap gap-x-6 gap-y-3">
+          {QUICK_NAV.map((q) => (
+            <Link key={q.href} href={q.href} className={linkCaps}>
+              {q.label} <span aria-hidden>›</span>
+            </Link>
+          ))}
         </div>
       </section>
 
@@ -257,14 +234,14 @@ function OverallStatusPill({
   if (ok) {
     return (
       <span className="inline-flex items-center gap-1.5 rounded-full border border-status-green/30 bg-status-green/10 px-3 py-1 text-xs font-semibold text-status-green">
-        <CheckCircle2 className="h-3.5 w-3.5" aria-hidden />
+        <CheckGlyph className="h-3.5 w-3.5" />
         All Systems OK
       </span>
     );
   }
   return (
     <span className="inline-flex items-center gap-1.5 rounded-full border border-status-red/30 bg-status-red/10 px-3 py-1 text-xs font-semibold text-status-red">
-      <AlertCircle className="h-3.5 w-3.5" aria-hidden />
+      <AlertGlyph className="h-3.5 w-3.5" />
       {degraded} Degraded
     </span>
   );
@@ -327,21 +304,15 @@ function formatTime(iso: string): string {
   return iso.slice(11, 16) + "Z";
 }
 
-// Quick Navigation grid — mirrors legacy's six-cell layout, mapped to
-// our actual routes (we don't have a Recognition module yet; Settings
-// is the closest analogue for the admin shelf, and Schedule replaces
-// the "Crew" cell since /crew is M3). Icons come from lucide-react
-// because emoji glyphs fall back to missing-glyph boxes on systems
-// without an emoji font installed.
-const QUICK_NAV: {
-  label: string;
-  icon: LucideIcon;
-  href: string;
-}[] = [
-  { label: "Dispatch", icon: ClipboardList, href: "/dispatch" },
-  { label: "Flight Following", icon: Radio, href: "/flight-following" },
-  { label: "Maintenance", icon: Wrench, href: "/maintenance" },
-  { label: "Schedule", icon: Calendar, href: "/schedule" },
-  { label: "Weather", icon: CloudSun, href: "/weather" },
-  { label: "Settings", icon: SettingsIcon, href: "/settings" },
+// Quick navigation — legacy's six destinations, mapped to our routes (no
+// Recognition module yet; Settings is the closest analogue for the admin
+// shelf, and Schedule replaces the "Crew" cell). As words since #79: the
+// brief rules out stock icon sets.
+const QUICK_NAV: { label: string; href: string }[] = [
+  { label: "Dispatch", href: "/dispatch" },
+  { label: "Flight Following", href: "/flight-following" },
+  { label: "Maintenance", href: "/maintenance" },
+  { label: "Schedule", href: "/schedule" },
+  { label: "Weather", href: "/weather" },
+  { label: "Settings", href: "/settings" },
 ];

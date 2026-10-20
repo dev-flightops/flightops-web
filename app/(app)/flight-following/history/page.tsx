@@ -109,7 +109,7 @@ export default async function FlightFollowingHistoryPage({
         >
           ← Flight Following
         </Link>
-        <h1 className="mt-1 text-2xl font-bold tracking-tight">
+        <h1 className="mt-1 page-title">
           Flight History
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
@@ -162,7 +162,7 @@ function FlightHistoryTable({ flights }: { flights: FlightListItem[] }) {
   return (
     <div className="overflow-hidden rounded-lg border border-border bg-card">
       <table className="w-full text-xs">
-        <thead className="bg-muted/60">
+        <thead className="ff-thead">
           <tr className="text-left text-[0.65rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
             <th className="px-3 py-2">Flight</th>
             <th className="px-3 py-2">Aircraft</th>

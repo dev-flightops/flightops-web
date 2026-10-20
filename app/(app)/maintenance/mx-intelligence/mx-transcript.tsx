@@ -135,7 +135,7 @@ export function MxTranscript({
           {turn.error ? (
             <p
               role="alert"
-              className="rounded-md border border-status-red/30 bg-status-red/10 px-3 py-2 text-sm text-status-red"
+              className="notice notice-red text-sm"
             >
               {turn.error}
             </p>

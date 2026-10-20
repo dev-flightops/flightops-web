@@ -71,22 +71,16 @@ export function AlertsList({ alerts }: { alerts: OperationalAlert[] }) {
   })).filter((g) => g.items.length > 0);
 
   return (
-    <section className="rounded-xl border border-border bg-card">
-      <header className="flex flex-wrap items-baseline justify-between gap-2 border-b border-border px-5 py-4">
-        <h2 className="text-lg font-bold tracking-tight text-foreground">
-          Active alerts
-        </h2>
-        <span className="text-xs text-muted-foreground">
-          {alerts.length === 0
-            ? "Nothing needs attention"
-            : `${alerts.length} open · 6 more alert types land with their services`}
-        </span>
+    <section className="overflow-hidden rounded-lg border border-border bg-card">
+      <header className="flex flex-wrap items-baseline justify-between gap-2 border-b border-border px-5 py-3">
+        <h2 className="panel-title">Active alerts</h2>
+        {alerts.length > 0 ? <span className="eyebrow">{alerts.length} open</span> : null}
       </header>
 
       {alerts.length === 0 ? (
-        <p className="px-5 py-8 text-center text-sm text-muted-foreground">
-          Nothing from the wired sources — the fleet is airworthy, no flights
-          are overdue, and no MELs expire in the next 48 hours.
+        <p className="px-5 py-8 text-sm text-muted-foreground">
+          Nothing needs attention: the fleet is airworthy, no flights are
+          overdue, and no MELs expire in the next 48 hours.
         </p>
       ) : (
         <div className="divide-y divide-border">
@@ -111,9 +105,9 @@ function AlertGroup({
 
   return (
     <details className="group/disc px-5 py-3.5">
-      <summary className="flex cursor-pointer list-none items-center gap-2 rounded-lg py-0.5 outline-none [&::-webkit-details-marker]:hidden focus-visible:ring-2 focus-visible:ring-ring">
+      <summary className="flex cursor-pointer list-none items-center gap-2 rounded-md py-0.5 outline-none [&::-webkit-details-marker]:hidden focus-visible:ring-2 focus-visible:ring-ring">
         <span
-          className={`inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[0.7rem] font-bold tabular-nums ${
+          className={`inline-flex h-5 min-w-5 items-center justify-center rounded-sm px-1.5 text-[0.7rem] font-bold tabular-nums ${
             red ? "bg-status-red-fill text-white" : "bg-status-yellow-fill text-white"
           }`}
         >
@@ -140,7 +134,7 @@ function AlertGroup({
           <li key={a.id}>
             <Link
               href={a.href}
-              className="group flex items-center justify-between gap-3 rounded-lg px-3 py-2 text-sm transition-colors hover:bg-accent"
+              className="group flex items-center justify-between gap-3 rounded-md px-3 py-2 text-sm transition-colors hover:bg-accent"
             >
               <span className="flex min-w-0 items-baseline gap-2">
                 <span className="truncate font-medium text-foreground">

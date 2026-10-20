@@ -113,7 +113,7 @@ export function RaiseInvoices() {
           </p>
 
           <div className="mt-3 flex flex-wrap items-end gap-2">
-            <label className="block text-[0.65rem] font-semibold uppercase tracking-wider text-muted-foreground">
+            <label className="field-label mb-0">
               Flown on (UTC)
               <input
                 type="date"
@@ -169,7 +169,7 @@ export function RaiseInvoices() {
           {loadError ? (
             <p
               role="alert"
-              className="mt-3 rounded-md border border-status-red/30 bg-status-red/10 px-3 py-2 text-xs text-status-red"
+              className="mt-3 notice notice-red"
             >
               {loadError}
             </p>
@@ -197,7 +197,7 @@ export function RaiseInvoices() {
             {result.status === "error" && (
               <p
                 role="alert"
-                className="mt-3 rounded-md border border-status-red/30 bg-status-red/10 px-3 py-2 text-xs text-status-red"
+                className="mt-3 notice notice-red"
               >
                 {result.message}
               </p>

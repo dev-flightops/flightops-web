@@ -69,7 +69,7 @@ export default async function OpenCapaPage({
             ← Back to {sourceLabel}
           </Link>
         </p>
-        <h1 className="mt-2 text-2xl font-bold tracking-tight">
+        <h1 className="mt-2 page-title">
           Open a Corrective Action
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">

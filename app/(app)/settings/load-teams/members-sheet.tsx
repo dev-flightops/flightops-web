@@ -1,6 +1,6 @@
 "use client";
 
-import { X } from "lucide-react";
+import { CloseGlyph } from "@/components/ff/glyphs";
 import { useId, useState, useTransition } from "react";
 
 import {
@@ -126,7 +126,7 @@ export function MembersSheet({
             {error && (
               <p
                 role="alert"
-                className="rounded-md border border-status-red/40 bg-status-red/10 px-3 py-2 text-xs text-status-red"
+                className="notice notice-red"
               >
                 {error}
               </p>
@@ -169,7 +169,7 @@ export function MembersSheet({
                       aria-label={`Remove ${m.user.full_name}`}
                       className="shrink-0 rounded-md border border-border p-1 text-muted-foreground transition-colors hover:border-status-red/40 hover:text-status-red disabled:opacity-50"
                     >
-                      <X className="h-3.5 w-3.5" />
+                      <CloseGlyph className="h-3.5 w-3.5" />
                     </button>
                   </li>
                 ))}

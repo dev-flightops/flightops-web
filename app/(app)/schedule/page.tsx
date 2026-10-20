@@ -93,7 +93,7 @@ export default async function SchedulePage({
     <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
       <header className="mb-5 flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">
+          <h1 className="page-title">
             Flight Schedule
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
@@ -191,7 +191,7 @@ function BaseGroup({
       <div className="overflow-hidden rounded-lg border border-border bg-card">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-border bg-background/40 text-left text-[0.6rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+            <tr className="ff-thead">
               <th className="px-4 py-3">Flight</th>
               <th className="px-4 py-3">Route</th>
               <th className="px-4 py-3">Aircraft</th>
@@ -256,7 +256,7 @@ function FlightRow({ flight }: { flight: FlightListItem }) {
           rel="noopener noreferrer"
           className="rounded-md border border-primary/40 bg-background px-2.5 py-1 text-xs font-semibold text-primary hover:bg-primary/5"
         >
-          🖨 Print
+          Print
         </Link>
       </td>
     </tr>

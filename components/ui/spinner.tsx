@@ -1,10 +1,9 @@
-import { Loader2 } from "lucide-react";
-
+import { SpinnerGlyph } from "@/components/ff/glyphs";
 import { cn } from "@/lib/utils";
 
 /**
- * Standard loading spinner — lucide Loader2 with the Tailwind
- * `animate-spin` utility. Three sizes track the rest of the UI scale
+ * Standard loading spinner — the app's own ring glyph (#79) with the
+ * Tailwind `animate-spin` utility. Three sizes track the rest of the UI scale
  * (xs in inline subtitles, sm next to button text, md in large
  * placeholder panels). The Spinner is purely visual, so it carries
  * `aria-hidden`; callers should provide a `<span class="sr-only">`
@@ -26,10 +25,7 @@ export function Spinner({
   className?: string;
 }) {
   return (
-    <Loader2
-      className={cn("animate-spin", SIZE_CLASS[size], className)}
-      aria-hidden
-    />
+    <SpinnerGlyph className={cn("animate-spin", SIZE_CLASS[size], className)} />
   );
 }
 

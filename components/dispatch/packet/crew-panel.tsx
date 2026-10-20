@@ -1,6 +1,6 @@
 "use client";
 
-import { Loader2, X } from "lucide-react";
+import { CloseGlyph, SpinnerGlyph } from "@/components/ff/glyphs";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
@@ -237,7 +237,7 @@ export function CrewPanel({
                     aria-label={`Remove ${assigned.user.full_name} as ${label}`}
                     className="shrink-0 rounded-md border border-border p-1 text-muted-foreground transition-colors hover:border-status-red/40 hover:text-status-red disabled:opacity-50"
                   >
-                    <X className="h-3.5 w-3.5" />
+                    <CloseGlyph className="h-3.5 w-3.5" />
                   </button>
                 </>
               ) : (
@@ -272,7 +272,7 @@ export function CrewPanel({
 
       {pending ? (
         <p className="flex items-center gap-2 border-t border-border px-5 py-2 text-xs text-muted-foreground">
-          <Loader2 className="h-3 w-3 animate-spin" aria-hidden="true" />
+          <SpinnerGlyph className="h-3 w-3 animate-spin" aria-hidden="true" />
           Updating crew…
         </p>
       ) : null}

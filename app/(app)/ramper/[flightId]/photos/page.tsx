@@ -108,7 +108,7 @@ export default async function RamperPhotosPage({
       >
         <div className="flex items-start justify-between gap-2">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">
+            <h1 className="page-title">
               {flight.flight_number ?? "—"}
             </h1>
             <p className="mt-0.5 text-sm font-semibold text-primary">
@@ -158,7 +158,7 @@ export default async function RamperPhotosPage({
         {photosError && (
           <p
             role="alert"
-            className="mt-3 rounded-md border border-status-yellow/40 bg-status-yellow/10 px-3 py-2 text-xs text-status-yellow"
+            className="mt-3 notice notice-yellow"
           >
             {photosError}
           </p>

@@ -173,7 +173,7 @@ export function PaymentHistory({
             payment received {target.received_on}? It stays in the history,
             marked voided, and stops counting as paid.
           </p>
-          <label className="mt-2 block text-[0.65rem] font-semibold uppercase tracking-wider text-muted-foreground">
+          <label className="field-label mb-0 mt-2">
             Why is it being voided?
             <input
               type="text"
@@ -208,7 +208,7 @@ export function PaymentHistory({
       {state.status === "error" && (
         <p
           role="alert"
-          className="rounded-md border border-status-red/30 bg-status-red/10 px-3 py-2 text-xs text-status-red"
+          className="notice notice-red"
         >
           {state.message}
         </p>

@@ -60,7 +60,7 @@ export async function FuelOrderPanel({
       <SectionPanel title="Fuel" accent="yellow">
         <p
           role="alert"
-          className="rounded-md border border-status-yellow/40 bg-status-yellow/10 px-3 py-2 text-xs text-status-yellow"
+          className="notice notice-yellow"
         >
           {status === 401
             ? "Session expired — sign in again to see fuel."

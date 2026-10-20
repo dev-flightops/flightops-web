@@ -50,7 +50,7 @@ export async function NewBookingDrawerContent({
 
       <div className="px-6 py-5">
         {customers.length === 0 ? (
-          <div className="rounded-md border border-status-yellow/40 bg-status-yellow/10 px-3 py-2 text-xs text-status-yellow">
+          <div className="notice notice-yellow">
             No customers yet. Add one from{" "}
             <a href="/customers/new" className="font-semibold underline">
               /customers/new

@@ -73,7 +73,7 @@ export function CompleteMaintenanceButton({
             {state.status === "api-error" && (
               <div
                 role="alert"
-                className="rounded-md border border-status-red/40 bg-status-red/10 px-3 py-2 text-xs text-status-red"
+                className="notice notice-red"
               >
                 {state.message}
               </div>
@@ -82,7 +82,7 @@ export function CompleteMaintenanceButton({
             <div>
               <label
                 htmlFor="completed_date"
-                className="mb-1 block text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground"
+                className="field-label"
               >
                 Completed on <span className="text-status-red">*</span>
               </label>
@@ -99,7 +99,7 @@ export function CompleteMaintenanceButton({
             <div>
               <label
                 htmlFor="completed_hours"
-                className="mb-1 block text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground"
+                className="field-label"
               >
                 Hours at completion (optional)
               </label>

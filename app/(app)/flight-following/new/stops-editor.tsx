@@ -139,7 +139,7 @@ function StopField({
     <div>
       <label
         htmlFor={id}
-        className="mb-1 block text-[0.65rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground"
+        className="field-label"
       >
         {label}
         <span className="text-status-red"> *</span>
@@ -161,7 +161,7 @@ function StopField({
       />
       {hint && <p className="mt-1 font-mono text-[0.65rem] text-muted-foreground">{hint}</p>}
       {error && (
-        <p id={`${id}-error`} role="alert" className="mt-1 text-[0.65rem] text-status-red">
+        <p id={`${id}-error`} role="alert" className="field-error">
           {error}
         </p>
       )}

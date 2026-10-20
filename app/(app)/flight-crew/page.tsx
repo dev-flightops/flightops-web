@@ -138,7 +138,7 @@ export default async function FlightCrewPage() {
         <p className="text-xs uppercase tracking-[0.08em] text-muted-foreground">
           Flight Crew
         </p>
-        <h1 className="mt-1 text-2xl font-bold tracking-tight">
+        <h1 className="mt-1 page-title">
           {greeting}
           {firstName ? `, ${firstName}` : ""}
         </h1>
@@ -178,14 +178,14 @@ export default async function FlightCrewPage() {
         {unauthorized ? (
           <div
             role="alert"
-            className="rounded-md border border-status-yellow/40 bg-status-yellow/10 px-3 py-3 text-xs text-status-yellow"
+            className="notice notice-yellow"
           >
             You don&apos;t have permission to see the assigned-flights list.
           </div>
         ) : loadError ? (
           <div
             role="alert"
-            className="rounded-md border border-status-yellow/40 bg-status-yellow/10 px-3 py-3 text-xs text-status-yellow"
+            className="notice notice-yellow"
           >
             {loadError}
           </div>

@@ -226,7 +226,7 @@ export function EmployeeRecordForm({
 
       <header className="mb-4 flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <h1 className="truncate text-2xl font-bold tracking-tight">
+          <h1 className="truncate page-title">
             {displayName}
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>
@@ -251,7 +251,7 @@ export function EmployeeRecordForm({
         {state.status === "error" ? (
           <p
             role="alert"
-            className="rounded-lg border border-status-red/40 bg-status-red/10 px-4 py-2.5 text-sm text-status-red"
+            className="notice notice-red text-sm"
           >
             {state.error}
           </p>
@@ -259,7 +259,7 @@ export function EmployeeRecordForm({
         {state.status === "saved" ? (
           <p
             role="status"
-            className="rounded-lg border border-status-green/40 bg-status-green/10 px-4 py-2.5 text-sm text-status-green"
+            className="notice notice-green text-sm"
           >
             Saved.
           </p>
@@ -408,7 +408,7 @@ function FieldLabel({
   return (
     <label
       htmlFor={htmlFor}
-      className="mb-1 block text-[0.65rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground"
+      className="field-label"
     >
       {children}
     </label>
@@ -424,7 +424,7 @@ function Field({
 }) {
   return (
     <div>
-      <span className="mb-1 block text-[0.65rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+      <span className="field-label">
         {label}
       </span>
       {children}

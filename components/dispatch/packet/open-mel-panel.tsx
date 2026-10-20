@@ -50,7 +50,7 @@ export async function OpenMelPanel({
     return (
       <div
         role="alert"
-        className="rounded-md border border-status-yellow/40 bg-status-yellow/10 px-5 py-3.5 text-xs text-status-yellow"
+        className="notice notice-yellow"
       >
         {loadError}
       </div>

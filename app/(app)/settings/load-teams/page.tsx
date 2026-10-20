@@ -110,7 +110,7 @@ export default async function SettingsLoadTeamsPage({
 
       <header className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Load Teams</h1>
+          <h1 className="page-title">Load Teams</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Manage ramp and load crew teams by base
           </p>
@@ -153,13 +153,12 @@ export default async function SettingsLoadTeamsPage({
       {loadError ? (
         <div
           role="alert"
-          className="rounded-md border border-status-yellow/40 bg-status-yellow/10 px-3 py-3 text-xs text-status-yellow"
+          className="notice notice-yellow"
         >
           {loadError}
         </div>
       ) : teams.length === 0 ? (
         <div className="rounded-lg border border-border bg-card px-6 py-10 text-center">
-          <div className="mx-auto mb-2 text-2xl opacity-30">👥</div>
           <p className="text-sm text-muted-foreground">
             {statusFilter === "all"
               ? "No load teams yet."

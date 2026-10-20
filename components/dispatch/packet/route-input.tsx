@@ -2,7 +2,7 @@
 
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
-import { X } from "lucide-react";
+import { CloseGlyph } from "@/components/ff/glyphs";
 
 import { parseRouteText, routeToParam } from "@/lib/route";
 
@@ -75,7 +75,7 @@ export function RouteInput({ defaultText }: { defaultText: string }) {
           title="Clear route — Weather will fall back to the flight's origin + destination"
           className="absolute right-2 top-2 inline-flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground transition hover:bg-accent hover:text-foreground"
         >
-          <X className="h-3.5 w-3.5" />
+          <CloseGlyph className="h-3.5 w-3.5" />
         </button>
       )}
     </div>

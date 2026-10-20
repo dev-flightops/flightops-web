@@ -14,7 +14,7 @@ export default async function ChiefPilotDashboardPage() {
   return (
     <div className="container py-6">
 
-      <h1 className="text-2xl font-bold tracking-tight">Chief Pilot</h1>
+      <h1 className="page-title">Chief Pilot</h1>
       <p className="mt-1 text-sm text-muted-foreground">
         Crew readiness, safety, and flight operations oversight
       </p>

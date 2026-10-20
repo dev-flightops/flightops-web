@@ -121,13 +121,13 @@ export function UploadRampPhotoForm({ flightId }: { flightId: string }) {
       {(sizeError || state.status === "error") && (
         <p
           role="alert"
-          className="rounded-md border border-status-red/40 bg-status-red/10 px-3 py-2 text-xs text-status-red"
+          className="notice notice-red"
         >
           {sizeError ?? (state.status === "error" ? state.message : null)}
         </p>
       )}
       {state.status === "ok" && !sizeError && (
-        <p className="rounded-md border border-status-green/40 bg-status-green/10 px-3 py-2 text-xs text-status-green">
+        <p className="notice notice-green">
           Photo uploaded.
         </p>
       )}

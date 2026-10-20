@@ -117,7 +117,7 @@ export default async function EmployeeDetailPage({
           ← Employees
         </Link>
         <header className="mb-4">
-          <h1 className="truncate text-2xl font-bold tracking-tight">
+          <h1 className="truncate page-title">
             {employee.preferred_name?.trim() || employee.full_name}
           </h1>
         </header>

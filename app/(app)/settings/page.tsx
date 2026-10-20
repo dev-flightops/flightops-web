@@ -1,14 +1,3 @@
-import {
-  Building2,
-  KeyRound,
-  MapPin,
-  Palette,
-  Plane,
-  Satellite,
-  Users,
-  Wallet,
-  type LucideIcon,
-} from "lucide-react";
 import Link from "next/link";
 
 import { ApiError } from "@/lib/api/client";
@@ -88,7 +77,7 @@ export default async function SettingsLandingPage() {
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
       <header className="mb-6">
-        <h1 className="text-2xl font-bold tracking-tight">Settings</h1>
+        <h1 className="page-title">Settings</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Tenant-wide configuration: company identity, bases, flight tracking,
           users, and integrations
@@ -98,7 +87,7 @@ export default async function SettingsLandingPage() {
       {loadError && (
         <div
           role="alert"
-          className="mb-4 rounded-md border border-status-yellow/40 bg-status-yellow/10 px-3 py-2 text-xs text-status-yellow"
+          className="mb-4 notice notice-yellow"
         >
           {loadError}
         </div>
@@ -125,7 +114,6 @@ export default async function SettingsLandingPage() {
 
       <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <SectionCard
-          icon={Building2}
           title="Company"
           blurb="Legal name, address, contacts, Part 135 certificate."
           links={[
@@ -138,7 +126,6 @@ export default async function SettingsLandingPage() {
           ]}
         />
         <SectionCard
-          icon={MapPin}
           title="Bases"
           blurb="Master directory of ICAOs the operator works out of. Hub + active flags drive what other modules show."
           links={[
@@ -150,7 +137,6 @@ export default async function SettingsLandingPage() {
           ]}
         />
         <SectionCard
-          icon={Plane}
           title="Fleet"
           blurb="Add, edit, and retire aircraft. Seats and useful load feed the Fleet Board and load planning."
           links={[
@@ -162,7 +148,6 @@ export default async function SettingsLandingPage() {
           ]}
         />
         <SectionCard
-          icon={Palette}
           title="Branding"
           blurb="Your brand colors, applied across every module. Buttons, links, and accents pick up your primary hex."
           links={[
@@ -174,7 +159,6 @@ export default async function SettingsLandingPage() {
           ]}
         />
         <SectionCard
-          icon={Satellite}
           title="Flight Tracking"
           blurb="Overdue threshold, polling cadence, simulation mode, Spider Tracks AFF."
           links={[
@@ -189,7 +173,6 @@ export default async function SettingsLandingPage() {
           ]}
         />
         <SectionCard
-          icon={Users}
           title="Users & Permissions"
           blurb="Invite users, assign roles, manage per-tenant permissions."
           links={[
@@ -213,7 +196,6 @@ export default async function SettingsLandingPage() {
           ]}
         />
         <SectionCard
-          icon={KeyRound}
           title="SSO & Integrations"
           blurb="Sign-in providers (Google / Okta / Entra ID) and the flight-planning tools your pilots use."
           links={[
@@ -233,7 +215,6 @@ export default async function SettingsLandingPage() {
           ]}
         />
         <SectionCard
-          icon={KeyRound}
           title="Public API"
           blurb="Issue and revoke keys for partner access to the read-only Public API."
           links={[
@@ -245,7 +226,6 @@ export default async function SettingsLandingPage() {
           ]}
         />
         <SectionCard
-          icon={Wallet}
           title="Pilot Pay & Currency"
           blurb="Pay rates, per-diem, currency items + due-date catalog."
           links={[
@@ -304,22 +284,16 @@ interface SectionLink {
 }
 
 function SectionCard({
-  icon: Icon,
   title,
   blurb,
   links,
 }: {
-  icon: LucideIcon;
   title: string;
   blurb: string;
   links: SectionLink[];
 }) {
   return (
     <article className="rounded-lg border border-border bg-card p-5">
-      <Icon
-        className="mb-2 h-5 w-5 text-muted-foreground"
-        aria-hidden
-      />
       <h3 className="text-base font-semibold">{title}</h3>
       <p className="mt-1 text-xs text-muted-foreground">{blurb}</p>
       <ul className="mt-3 space-y-1.5">

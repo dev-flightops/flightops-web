@@ -25,7 +25,7 @@ export default async function NewStationPage() {
       >
         ← Stations
       </Link>
-      <h1 className="mb-6 text-2xl font-bold tracking-tight">Add Station</h1>
+      <h1 className="mb-6 page-title">Add Station</h1>
       <div className="rounded-lg border border-border bg-card p-4">
         <NewStationForm />
       </div>

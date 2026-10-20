@@ -162,7 +162,7 @@ export default async function HousingReportsPage({
       </nav>
 
       <header className="mb-4">
-        <h1 className="text-2xl font-bold tracking-tight">Housing Reports</h1>
+        <h1 className="page-title">Housing Reports</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Occupancy, employee history and cost over a date range —{" "}
           {nights} night{nights === 1 ? "" : "s"}
@@ -202,7 +202,7 @@ export default async function HousingReportsPage({
       >
         <input type="hidden" name="tab" value={tab} />
         <label className="block">
-          <span className="mb-1.5 block text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+          <span className="field-label">
             From
           </span>
           <input
@@ -213,7 +213,7 @@ export default async function HousingReportsPage({
           />
         </label>
         <label className="block">
-          <span className="mb-1.5 block text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+          <span className="field-label">
             To
           </span>
           <input
@@ -240,7 +240,7 @@ export default async function HousingReportsPage({
       {backwards ? (
         <div
           role="alert"
-          className="rounded-md border border-status-yellow/40 bg-status-yellow/10 px-3 py-3 text-xs text-status-yellow"
+          className="notice notice-yellow"
         >
           The start date is after the end date, so there is no period to
           report on. Swap them and press Generate.
@@ -248,7 +248,7 @@ export default async function HousingReportsPage({
       ) : loadError ? (
         <div
           role="alert"
-          className="rounded-md border border-status-yellow/40 bg-status-yellow/10 px-3 py-3 text-xs text-status-yellow"
+          className="notice notice-yellow"
         >
           {loadError}
         </div>

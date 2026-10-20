@@ -94,7 +94,7 @@ export function SicPicker({
         into their currency records on submit.
       </p>
       {error && (
-        <p role="alert" className="mt-1 text-[0.6rem] text-status-red">
+        <p role="alert" className="field-error">
           {error}
         </p>
       )}

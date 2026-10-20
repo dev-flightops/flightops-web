@@ -10,6 +10,7 @@ import {
   shiftIsoDay,
   todayIsoDay,
 } from "@/lib/iso-day";
+import { SearchGlyph } from "@/components/ff/glyphs";
 
 /**
  * Fleet-board chrome — title, view toggle, per-day navigator, metrics
@@ -60,7 +61,7 @@ export function FleetBoardChrome({
     <>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          <h1 className="text-2xl font-bold tracking-tight">Fleet Board</h1>
+          <h1 className="page-title">Fleet Board</h1>
           <div className="flex overflow-hidden rounded-md border border-border">
             {(["list", "board", "split"] as const).map((v) => {
               const params = new URLSearchParams({ d: isoDay });
@@ -119,7 +120,7 @@ export function FleetBoardChrome({
       <div className="mt-4 flex flex-wrap items-center gap-2">
         <div className="relative flex-1 min-w-[16rem]">
           <span className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground">
-            🔍
+            <SearchGlyph size={14} />
           </span>
           <input
             type="search"

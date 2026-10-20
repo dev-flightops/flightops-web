@@ -103,7 +103,7 @@ export default async function DocumentDetailPage({
           <div className="text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
             Document · {doc.category}
           </div>
-          <h1 className="mt-0.5 truncate text-2xl font-bold tracking-tight">
+          <h1 className="mt-0.5 truncate page-title">
             {doc.title}
           </h1>
           {doc.description && (
@@ -237,7 +237,7 @@ function VersionsCard({
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="border-b border-border bg-muted/60 text-left text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
+              <thead className="ff-thead">
                 <tr>
                   <th className="px-3 py-2.5 font-semibold">Version</th>
                   <th className="px-3 py-2.5 font-semibold">File</th>

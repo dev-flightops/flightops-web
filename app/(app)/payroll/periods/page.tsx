@@ -79,7 +79,7 @@ export default async function PayrollPeriodsPage() {
       </nav>
 
       <header className="mb-5">
-        <h1 className="text-2xl font-bold tracking-tight">Pay Periods</h1>
+        <h1 className="page-title">Pay Periods</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Group approved pay events into a period, lock the period, then
           export a CSV for your payroll provider.
@@ -93,7 +93,7 @@ export default async function PayrollPeriodsPage() {
       {loadError ? (
         <div
           role="alert"
-          className="rounded-md border border-status-yellow/40 bg-status-yellow/10 px-3 py-3 text-xs text-status-yellow"
+          className="notice notice-yellow"
         >
           {loadError}
         </div>
@@ -105,7 +105,7 @@ export default async function PayrollPeriodsPage() {
         <div className="overflow-hidden rounded-lg border border-border bg-card">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="border-b border-border bg-muted/60 text-left text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
+              <thead className="ff-thead">
                 <tr>
                   <th scope="col" className="px-4 py-2.5 font-semibold">Period</th>
                   <th scope="col" className="px-4 py-2.5 font-semibold">Status</th>

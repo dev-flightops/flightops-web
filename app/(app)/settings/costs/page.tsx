@@ -79,7 +79,7 @@ export default async function SettingsCostsPage() {
       </nav>
 
       <header className="mb-5">
-        <h1 className="text-2xl font-bold tracking-tight">Aircraft Operating Cost Configuration</h1>
+        <h1 className="page-title">Aircraft Operating Cost Configuration</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Feeds directly into Dispatch AI Intelligence cost calculations
         </p>
@@ -88,7 +88,7 @@ export default async function SettingsCostsPage() {
       {loadError ? (
         <div
           role="alert"
-          className="mb-5 rounded-md border border-status-yellow/40 bg-status-yellow/10 px-3 py-3 text-xs text-status-yellow"
+          className="mb-5 notice notice-yellow"
         >
           {loadError}
         </div>
@@ -128,7 +128,7 @@ function AircraftCostsSection({
       <div className="overflow-hidden rounded-lg border border-border bg-card">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="border-b border-border bg-muted/60 text-left text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
+            <thead className="ff-thead">
               <tr>
                 <th scope="col" className="px-4 py-2 font-semibold">Type</th>
                 <th scope="col" className="px-4 py-2 font-semibold">Fuel GPH</th>
@@ -344,7 +344,7 @@ function CalculatorSection({
       <div className="overflow-hidden rounded-lg border border-border bg-card">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="border-b border-border bg-muted/60 text-left text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
+            <thead className="ff-thead">
               <tr>
                 <th scope="col" className="px-4 py-2 font-semibold">Aircraft</th>
                 {fuelPrices.map((fp) => (
@@ -408,7 +408,7 @@ function DisabledAddDetails({
       <div className="mt-3 flex flex-wrap gap-2">
         {children.map((f) => (
           <label key={f.label} className="min-w-[120px]">
-            <span className="mb-1 block text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+            <span className="field-label">
               {f.label}
             </span>
             <input

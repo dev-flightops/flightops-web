@@ -1,4 +1,4 @@
-import { LogOut } from "lucide-react";
+import { SignOutGlyph } from "@/components/ff/glyphs";
 
 /**
  * Who is signed in, and the way out — the end of the top bar for staff
@@ -34,7 +34,7 @@ export function SignOutButton({ action }: { action: () => Promise<void> }) {
         aria-label="Sign out"
       >
         <span className="hidden sm:inline">Sign out</span>
-        <LogOut className="h-3 w-3 sm:hidden" aria-hidden />
+        <SignOutGlyph className="h-3 w-3 sm:hidden" aria-hidden />
       </button>
     </form>
   );

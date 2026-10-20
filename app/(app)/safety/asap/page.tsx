@@ -58,7 +58,7 @@ export default async function AsapHubPage() {
       </p>
       <header className="mb-5 mt-2 flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Aviation Safety Action Program (ASAP)</h1>
+          <h1 className="page-title">Aviation Safety Action Program (ASAP)</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Report filing · ERC review · FAA MOU · Decision tracking
           </p>

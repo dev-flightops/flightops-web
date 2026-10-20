@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Check } from "lucide-react";
+import { CheckGlyph } from "@/components/ff/glyphs";
 
 import { closeMelDeferralAction } from "@/app/(app)/dispatch/maintenance-actions";
 import { Button } from "@/components/ui/button";
@@ -73,7 +73,7 @@ export function CloseMelDialog({
         onClick={() => setOpen(true)}
         className="gap-1.5"
       >
-        <Check className="h-3.5 w-3.5" />
+        <CheckGlyph className="h-3.5 w-3.5" />
         Close
       </Button>
 

@@ -88,7 +88,7 @@ export function ReportIssueDialog({
             {state.status === "api-error" && (
               <div
                 role="alert"
-                className="rounded-md border border-status-red/40 bg-status-red/10 px-3 py-2 text-xs text-status-red"
+                className="notice notice-red"
               >
                 {state.message}
               </div>
@@ -97,7 +97,7 @@ export function ReportIssueDialog({
             <div>
               <label
                 htmlFor="title"
-                className="mb-1 block text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground"
+                className="field-label"
               >
                 Title <span className="text-status-red">*</span>
               </label>
@@ -111,7 +111,7 @@ export function ReportIssueDialog({
                 className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none aria-[invalid=true]:border-status-red"
               />
               {fieldError("title") && (
-                <p className="mt-1 text-[0.65rem] text-status-red">
+                <p className="field-error">
                   {fieldError("title")}
                 </p>
               )}
@@ -120,7 +120,7 @@ export function ReportIssueDialog({
             <div>
               <label
                 htmlFor="description"
-                className="mb-1 block text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground"
+                className="field-label"
               >
                 Description <span className="text-status-red">*</span>
               </label>
@@ -134,7 +134,7 @@ export function ReportIssueDialog({
                 className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none aria-[invalid=true]:border-status-red"
               />
               {fieldError("description") && (
-                <p className="mt-1 text-[0.65rem] text-status-red">
+                <p className="field-error">
                   {fieldError("description")}
                 </p>
               )}
@@ -144,7 +144,7 @@ export function ReportIssueDialog({
               <div>
                 <label
                   htmlFor="category"
-                  className="mb-1 block text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground"
+                  className="field-label"
                 >
                   Category
                 </label>
@@ -164,7 +164,7 @@ export function ReportIssueDialog({
               <div>
                 <label
                   htmlFor="priority"
-                  className="mb-1 block text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground"
+                  className="field-label"
                 >
                   Priority
                 </label>
@@ -186,7 +186,7 @@ export function ReportIssueDialog({
             <div>
               <label
                 htmlFor="assigned_to"
-                className="mb-1 block text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground"
+                className="field-label"
               >
                 Assigned to (optional)
               </label>

@@ -1,7 +1,8 @@
 "use client";
 
-import { useActionState, useEffect, useMemo, useState } from "react";
+import { type CSSProperties, useActionState, useEffect, useMemo, useState } from "react";
 
+import { buttonSolid, segment, segmentGroup } from "@/components/ff/controls";
 import { Spinner } from "@/components/ui/spinner";
 import { brandTones, DEFAULT_BRAND } from "@/lib/theme/brand";
 
@@ -56,11 +57,17 @@ export function BrandingForm({
     () => brandTones(_validHex(primary) ?? DEFAULT_BRAND),
     [primary],
   );
-  const previewPrimary = tones.hex;
-  const previewDark = useMemo(() => {
+  const previewDarkRgb = useMemo(() => {
     const hover = _validHex(primaryDark);
-    return hover ? brandTones(hover).hex : _channelsToHex(tones.darkRgb);
+    return hover ? brandTones(hover).rgb : tones.darkRgb;
   }, [primaryDark, tones]);
+  // The variables BrandThemeStyle would set, scoped to the preview box;
+  // `.brand-preview` (globals.css) picks the text tone per theme from them.
+  const previewVars = {
+    "--brand-rgb": tones.rgb,
+    "--brand-dark-rgb": previewDarkRgb,
+    "--brand-light-rgb": tones.lightRgb,
+  } as CSSProperties;
 
   const fieldError = (k: string) =>
     state.status === "field-errors" ? state.errors[k] : undefined;
@@ -112,7 +119,7 @@ export function BrandingForm({
         {state.status === "api-error" && (
           <div
             role="alert"
-            className="rounded-md border border-status-red/40 bg-status-red/10 px-3 py-2 text-xs text-status-red"
+            className="notice notice-red"
           >
             {state.message}
           </div>
@@ -120,7 +127,7 @@ export function BrandingForm({
         {state.status === "saved" && (
           <div
             role="status"
-            className="rounded-md border border-status-green/40 bg-status-green/10 px-3 py-2 text-xs text-status-green"
+            className="notice notice-green"
           >
             Brand theme saved. Applied across the app.
           </div>
@@ -145,48 +152,35 @@ export function BrandingForm({
         />
       </div>
 
-      {/* Live preview — updates as the user types */}
+      {/* Live preview — updates as the user types. It paints with the app's
+          own classes and the brand variables scoped to this box, so it shows
+          what the app will: the colour as a fill, and for text the tone the
+          theme uses (lighter on the dark navy, the colour itself in light). */}
       <div className="rounded-lg border border-border bg-card p-5">
-        <div className="mb-3 text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-          Preview
-        </div>
-        <div className="flex flex-wrap items-center gap-3">
-          <button
-            type="button"
-            className="rounded-md px-4 py-2 text-xs font-semibold text-white transition-colors"
-            style={{ backgroundColor: previewPrimary }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = previewDark;
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = previewPrimary;
-            }}
-          >
+        <div className="eyebrow mb-3">Preview</div>
+        <div className="brand-preview flex flex-wrap items-center gap-x-6 gap-y-3" style={previewVars}>
+          <button type="button" className={buttonSolid}>
             Primary button
           </button>
           <a
             href="#preview"
             onClick={(e) => e.preventDefault()}
-            className="text-xs font-semibold underline-offset-2 hover:underline"
-            style={{ color: previewPrimary }}
+            className="text-sm font-semibold text-primary underline-offset-4 hover:underline"
           >
             Text link
           </a>
-          <span
-            className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[0.65rem] font-semibold uppercase tracking-wider"
-            style={{
-              color: previewPrimary,
-              borderColor: previewPrimary,
-              backgroundColor: `${previewPrimary}14`,
-            }}
-          >
-            Chip / badge
+          <span className="relative py-1 text-[0.8125rem] font-semibold text-foreground after:absolute after:inset-x-0 after:-bottom-0.5 after:h-0.5 after:bg-brand-ink">
+            Current tab
+          </span>
+          <span className={segmentGroup}>
+            <span className={segment(true)}>Today</span>
+            <span className={segment(false)}>Tomorrow</span>
           </span>
         </div>
         {tones.adjusted && (
           <p role="status" className="mt-3 text-xs text-muted-foreground">
-            {primary} is too light for white text on buttons, so the app
-            uses a deeper shade of it ({tones.hex}), shown here.
+            {primary} is too light to read everywhere the app uses it, so
+            the app uses a deeper shade of it ({tones.hex}), shown here.
           </p>
         )}
       </div>
@@ -226,7 +220,7 @@ function ColorField({
     <div>
       <label
         htmlFor={name}
-        className="mb-1 block text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground"
+        className="field-label"
       >
         {label}
       </label>
@@ -254,7 +248,7 @@ function ColorField({
         />
       </div>
       {error ? (
-        <p role="alert" className="mt-1 text-[0.65rem] text-status-red">
+        <p role="alert" className="field-error">
           {error}
         </p>
       ) : (
@@ -266,16 +260,4 @@ function ColorField({
 
 function _validHex(v: string): string | null {
   return /^#[0-9A-Fa-f]{6}([0-9A-Fa-f]{2})?$/.test(v.trim()) ? v.trim() : null;
-}
-
-/** "143 30 34" → "#8f1e22". The preview appends an alpha byte to its
- *  colours, so it needs hex rather than rgb(). */
-function _channelsToHex(channels: string): string {
-  return (
-    "#" +
-    channels
-      .split(" ")
-      .map((c) => Number(c).toString(16).padStart(2, "0"))
-      .join("")
-  );
 }

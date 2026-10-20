@@ -66,7 +66,7 @@ export function ReportSquawkDialog({ unitId }: { unitId: string }) {
             {state.status === "api-error" && (
               <div
                 role="alert"
-                className="rounded-md border border-status-red/40 bg-status-red/10 px-3 py-2 text-xs text-status-red"
+                className="notice notice-red"
               >
                 {state.message}
               </div>
@@ -75,7 +75,7 @@ export function ReportSquawkDialog({ unitId }: { unitId: string }) {
             <div>
               <label
                 htmlFor="description"
-                className="mb-1 block text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground"
+                className="field-label"
               >
                 Description <span className="text-status-red">*</span>
               </label>
@@ -89,7 +89,7 @@ export function ReportSquawkDialog({ unitId }: { unitId: string }) {
                 className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-status-yellow focus:outline-none aria-[invalid=true]:border-status-red"
               />
               {fieldError("description") && (
-                <p className="mt-1 text-[0.65rem] text-status-red">
+                <p className="field-error">
                   {fieldError("description")}
                 </p>
               )}
@@ -98,7 +98,7 @@ export function ReportSquawkDialog({ unitId }: { unitId: string }) {
             <div>
               <label
                 htmlFor="reported_date"
-                className="mb-1 block text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground"
+                className="field-label"
               >
                 Reported on <span className="text-status-red">*</span>
               </label>

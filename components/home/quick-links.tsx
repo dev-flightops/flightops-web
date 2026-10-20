@@ -1,15 +1,15 @@
 import Link from "next/link";
 
+import { linkCaps } from "@/components/ff/controls";
 import { cn } from "@/lib/utils";
 
 /**
- * Bottom shortcut strip on the home page. Pixel-match for the legacy
- * `.dash-strip`: top border separator, centered chips, tiny uppercase-ish
- * copy.
+ * The shortcut row at the foot of the home page (legacy's `.dash-strip`),
+ * set as ForeFlight's caps links since #79. Legacy's gold Settings is gone:
+ * the brief asks for one accent.
  *
  * Each entry can be `live` (renders as Link) or any future milestone
- * (renders as a non-interactive span with a tooltip). Settings in the
- * legacy is highlighted gold — preserved here via `accent: "gold"`.
+ * (renders as a non-interactive span with a tooltip).
  */
 
 import type { Role } from "@/lib/roles";
@@ -21,8 +21,6 @@ export interface QuickLink {
   label: string;
   href: string;
   status: ModuleStatus;
-  /** Optional color emphasis. Currently only "gold" used (for Settings). */
-  accent?: "gold";
   /** Roles that see this link. Absent means everyone. Kept in step with
    *  DEPARTMENT_ROLES / MODULE_ROLES in components/app-shell/modules.ts —
    *  a shortcut into a module the nav hides is the same bug twice. */
@@ -83,7 +81,6 @@ export const HOME_QUICK_LINKS: QuickLink[] = [
     label: "Settings",
     href: "/settings",
     status: "live",
-    accent: "gold",
     roles: ["exec_admin"],
   },
 ];
@@ -91,37 +88,30 @@ export const HOME_QUICK_LINKS: QuickLink[] = [
 export function QuickLinks({ links }: { links: QuickLink[] }) {
   if (links.length === 0) return null;
 
+  // Shortcuts as ForeFlight's caps links (#79), in a row under a label.
   return (
-    <div className="mt-8 flex flex-wrap items-center justify-center gap-2 border-t border-border pt-6">
-      {links.map((link) => (
-        <QuickLinkChip key={link.label} link={link} />
-      ))}
-    </div>
+    <nav aria-label="Shortcuts" className="mt-10 border-t border-border pt-5">
+      <p className="eyebrow mb-3">Shortcuts</p>
+      <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
+        {links.map((link) => (
+          <QuickLinkItem key={link.label} link={link} />
+        ))}
+      </div>
+    </nav>
   );
 }
 
-function QuickLinkChip({ link }: { link: QuickLink }) {
-  const isLive = link.status === "live";
-  const className = cn(
-    "rounded-md px-2.5 py-1.5 text-[0.68rem] font-semibold tracking-[0.02em] transition-colors",
-    isLive
-      ? "text-muted-foreground hover:bg-primary/8 hover:text-primary"
-      : "cursor-not-allowed text-muted-foreground/50",
-    link.accent === "gold" && isLive && "text-status-yellow",
-    link.accent === "gold" && !isLive && "cursor-not-allowed text-status-yellow/40",
-  );
-
-  if (isLive) {
+function QuickLinkItem({ link }: { link: QuickLink }) {
+  if (link.status === "live") {
     return (
-      <Link href={link.href} className={className}>
+      <Link href={link.href} className={linkCaps}>
         {link.label}
       </Link>
     );
   }
-
   return (
     <span
-      className={className}
+      className={cn(linkCaps, "cursor-not-allowed text-muted-foreground hover:no-underline")}
       aria-disabled="true"
       title={moduleStatusHint(link.status) ?? undefined}
     >

@@ -181,7 +181,7 @@ export function CurrencyCountersField({
       </div>
       <p className="mt-2 text-[0.65rem] text-muted-foreground">{blurb}</p>
       {error && (
-        <p role="alert" className="mt-1 text-[0.65rem] text-status-red">
+        <p role="alert" className="field-error">
           {error}
         </p>
       )}

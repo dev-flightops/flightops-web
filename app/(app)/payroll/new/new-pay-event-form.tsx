@@ -44,7 +44,7 @@ export function NewPayEventForm({ employees }: { employees: UserResponse[] }) {
     <form action={formAction} className="space-y-4 rounded-lg border border-border bg-card p-5">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <label className="block">
-          <span className="mb-1 block text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+          <span className="field-label">
             Employee
           </span>
           <select
@@ -65,7 +65,7 @@ export function NewPayEventForm({ employees }: { employees: UserResponse[] }) {
         </label>
 
         <label className="block">
-          <span className="mb-1 block text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+          <span className="field-label">
             Event Type
           </span>
           <select
@@ -88,7 +88,7 @@ export function NewPayEventForm({ employees }: { employees: UserResponse[] }) {
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <label className="block">
-          <span className="mb-1 block text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+          <span className="field-label">
             Event Date
           </span>
           <input
@@ -101,7 +101,7 @@ export function NewPayEventForm({ employees }: { employees: UserResponse[] }) {
         </label>
 
         <label className="block">
-          <span className="mb-1 block text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+          <span className="field-label">
             Hours
           </span>
           <input
@@ -115,7 +115,7 @@ export function NewPayEventForm({ employees }: { employees: UserResponse[] }) {
         </label>
 
         <label className="block">
-          <span className="mb-1 block text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+          <span className="field-label">
             Amount ($)
           </span>
           <input
@@ -136,7 +136,7 @@ export function NewPayEventForm({ employees }: { employees: UserResponse[] }) {
       </p>
 
       <label className="block">
-        <span className="mb-1 block text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+        <span className="field-label">
           Description
         </span>
         <input
@@ -149,7 +149,7 @@ export function NewPayEventForm({ employees }: { employees: UserResponse[] }) {
       </label>
 
       <label className="block">
-        <span className="mb-1 block text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+        <span className="field-label">
           Notes
         </span>
         <textarea
@@ -163,7 +163,7 @@ export function NewPayEventForm({ employees }: { employees: UserResponse[] }) {
       {state.status === "error" && state.message ? (
         <div
           role="alert"
-          className="rounded-md border border-status-red/40 bg-status-red/10 px-3 py-2 text-xs text-status-red"
+          className="notice notice-red"
         >
           {state.message}
         </div>
@@ -171,7 +171,7 @@ export function NewPayEventForm({ employees }: { employees: UserResponse[] }) {
       {state.status === "ok" && state.message ? (
         <div
           role="status"
-          className="rounded-md border border-status-green/40 bg-status-green/10 px-3 py-2 text-xs text-status-green"
+          className="notice notice-green"
         >
           {state.message} — redirecting…
         </div>

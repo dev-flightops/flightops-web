@@ -45,7 +45,7 @@ export default async function NewPayEventPage() {
         <span className="font-semibold text-primary">New</span>
       </nav>
 
-      <h1 className="mb-1 text-2xl font-bold tracking-tight">New Pay Event</h1>
+      <h1 className="mb-1 page-title">New Pay Event</h1>
       <p className="mb-5 text-sm text-muted-foreground">
         Record a compensable event for an employee. New events land in
         pending status and need Approve before they can roll into a
@@ -55,7 +55,7 @@ export default async function NewPayEventPage() {
       {loadError ? (
         <div
           role="alert"
-          className="rounded-md border border-status-yellow/40 bg-status-yellow/10 px-3 py-3 text-xs text-status-yellow"
+          className="notice notice-yellow"
         >
           {loadError}
         </div>

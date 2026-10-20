@@ -717,7 +717,7 @@ function FratQuestionnaire({
         </div>
 
         <div>
-          <label className="mb-1 block text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+          <label className="field-label">
             Mitigations applied (optional)
           </label>
           <textarea
@@ -1130,7 +1130,7 @@ function FratResultPanel({
         {risk === "high" && overLimits.length === 0 && (
           <p
             role="note"
-            className="rounded-md border border-status-yellow/40 bg-status-yellow/10 px-3 py-2 text-xs text-status-yellow"
+            className="notice notice-yellow"
           >
             <span className="font-semibold uppercase tracking-[0.06em]">
               High risk —{" "}
@@ -1334,7 +1334,7 @@ function Field({
 }) {
   return (
     <div>
-      <label className="mb-0.5 block text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+      <label className="field-label mb-0.5">
         {label}
       </label>
       {multiline ? (

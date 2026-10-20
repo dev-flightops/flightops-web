@@ -76,7 +76,7 @@ export default async function DelayAlertsPage({
     <div className="mx-auto max-w-5xl px-4 sm:px-6 py-8">
       <header className="mb-6 flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">
+          <h1 className="page-title text-foreground">
             Predictive Delay Alerts
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
@@ -92,13 +92,13 @@ export default async function DelayAlertsPage({
       {loadError ? (
         <p
           role="alert"
-          className="rounded-md border border-status-red/30 bg-status-red/10 px-3 py-2 text-sm text-status-red"
+          className="notice notice-red text-sm"
         >
           {loadError}
         </p>
       ) : (
         <>
-          <p className="mb-4 rounded-md border border-status-blue/30 bg-status-blue/10 px-3 py-2 text-xs text-status-blue">
+          <p className="mb-4 notice notice-blue">
             Each assessment reads that flight&apos;s own route history and its
             aircraft&apos;s squawk and MEL state. Run it per flight, when you
             want it.

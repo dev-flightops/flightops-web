@@ -11,7 +11,7 @@ export default function NewCustomerPage() {
             ← Customers
           </Link>
         </p>
-        <h1 className="mt-2 text-2xl font-bold tracking-tight">
+        <h1 className="mt-2 page-title">
           New Customer
         </h1>
       </header>

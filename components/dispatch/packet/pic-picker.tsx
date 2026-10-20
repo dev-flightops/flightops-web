@@ -1,6 +1,6 @@
 "use client";
 
-import { Loader2 } from "lucide-react";
+import { SpinnerGlyph } from "@/components/ff/glyphs";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
@@ -155,7 +155,7 @@ export function PicPicker({
           />
         )}
         {pending && (
-          <Loader2 className="ml-1 h-3 w-3 animate-spin" aria-hidden />
+          <SpinnerGlyph className="ml-1 h-3 w-3 animate-spin" aria-hidden />
         )}
       </label>
       <select

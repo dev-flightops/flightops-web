@@ -157,7 +157,7 @@ export function TeamDialog({
             {result?.status === "error" && (
               <p
                 role="alert"
-                className="rounded-md border border-status-red/40 bg-status-red/10 px-3 py-2 text-xs text-status-red"
+                className="notice notice-red"
               >
                 {result.message}
               </p>
@@ -178,7 +178,7 @@ export function TeamDialog({
                 {...invalid("team_name")}
               />
               {fieldError("team_name") && (
-                <p id={errorId("team_name")} className="mt-1 text-[0.65rem] text-status-red">
+                <p id={errorId("team_name")} className="field-error">
                   {fieldError("team_name")}
                 </p>
               )}
@@ -204,7 +204,7 @@ export function TeamDialog({
                 ))}
               </select>
               {fieldError("base_icao") && (
-                <p id={errorId("base_icao")} className="mt-1 text-[0.65rem] text-status-red">
+                <p id={errorId("base_icao")} className="field-error">
                   {fieldError("base_icao")}
                 </p>
               )}
@@ -267,7 +267,7 @@ export function TeamDialog({
                 {...invalid("notes")}
               />
               {fieldError("notes") && (
-                <p id={errorId("notes")} className="mt-1 text-[0.65rem] text-status-red">
+                <p id={errorId("notes")} className="field-error">
                   {fieldError("notes")}
                 </p>
               )}

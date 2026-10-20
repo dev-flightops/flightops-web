@@ -108,7 +108,7 @@ export default async function CertificatesPage({
       {loadError && (
         <div
           role="alert"
-          className="mb-4 rounded-md border border-status-red/40 bg-status-red/10 px-3 py-2 text-sm text-status-red"
+          className="mb-4 notice notice-red text-sm"
         >
           {loadError}
         </div>

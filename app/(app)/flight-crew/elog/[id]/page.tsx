@@ -94,7 +94,7 @@ export default async function FlightLogDetailPage({
       <header className="mb-4 flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
-            <h1 className="text-2xl font-bold tracking-tight">
+            <h1 className="page-title">
               <span className="font-mono">{log.log_number}</span>
             </h1>
             <StatusPill status={log.status} />

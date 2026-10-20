@@ -1,6 +1,6 @@
 "use client";
 
-import { Loader2 } from "lucide-react";
+import { SpinnerGlyph } from "@/components/ff/glyphs";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTransition, type ReactNode } from "react";
@@ -79,7 +79,7 @@ export function LoadFromSchedule({
       <div className="mb-1.5 flex flex-wrap items-center justify-between gap-2">
         <label
           htmlFor="load-from-schedule-select"
-          className="block text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground"
+          className="field-label mb-0"
         >
           Scheduled Flight
         </label>
@@ -91,7 +91,7 @@ export function LoadFromSchedule({
               aria-live="polite"
               className="mr-1 flex items-center gap-1 text-[0.65rem] font-medium text-primary"
             >
-              <Loader2 className="h-3 w-3 animate-spin" aria-hidden />
+              <SpinnerGlyph className="h-3 w-3 animate-spin" aria-hidden />
               Loading…
             </span>
           )}

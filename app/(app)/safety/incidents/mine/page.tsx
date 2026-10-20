@@ -31,7 +31,7 @@ export default async function MyIncidentsPage() {
               ← Incidents
             </Link>
           </p>
-          <h1 className="mt-2 text-2xl font-bold tracking-tight">
+          <h1 className="mt-2 page-title">
             My Incident Reports
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">

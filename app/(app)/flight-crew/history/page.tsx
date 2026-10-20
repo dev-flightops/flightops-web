@@ -46,7 +46,7 @@ export default async function FlightCrewHistoryPage({
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
       <header className="mb-4">
-        <h1 className="text-2xl font-bold tracking-tight">
+        <h1 className="page-title">
           My History
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">

@@ -94,7 +94,7 @@ function QuoteForm({
       <form action={formAction} className="flex flex-wrap items-end gap-2">
         <input type="hidden" name="booking_id" value={bookingId} />
         <label className="min-w-0 flex-1">
-          <span className="mb-1.5 block text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+          <span className="field-label">
             Quote (USD)
           </span>
           <input
@@ -189,7 +189,7 @@ function CancelForm({
       <form action={formAction} className="space-y-3">
         <input type="hidden" name="booking_id" value={bookingId} />
         <label className="block">
-          <span className="mb-1.5 block text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+          <span className="field-label">
             Reason (required)
           </span>
           <textarea
@@ -246,7 +246,7 @@ function ErrorBanner({ message }: { message: string }) {
   return (
     <div
       role="alert"
-      className="mb-3 rounded-md border border-status-red/40 bg-status-red/10 px-3 py-2 text-xs text-status-red"
+      className="mb-3 notice notice-red"
     >
       {message}
     </div>

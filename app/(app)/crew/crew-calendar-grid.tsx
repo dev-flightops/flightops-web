@@ -29,6 +29,7 @@ import { MoveBaseDialog } from "./move-base-dialog";
 import { ManageTagsDialog, NewTagDialog } from "./tag-dialogs";
 import { TagLegend, TagPalette, type PaintTool } from "./tag-palette";
 import { shortTagLabel, TAG_TONE } from "./tag-tones";
+import { AlertGlyph } from "@/components/ff/glyphs";
 
 /** A press-and-drag across one pilot's days, before it is painted. */
 interface Drag {
@@ -513,9 +514,7 @@ function EntryBlock({
   const text = (
     <>
       {warning && span >= 3 && (
-        <span aria-hidden className="mr-0.5 text-status-red">
-          ⚠
-        </span>
+        <AlertGlyph size={11} data-mark="warning" className="mr-0.5 inline-block align-[-1px] text-status-red" />
       )}
       {span >= 3 ? label : DUTY_SHORT[entry.duty_type]}
     </>

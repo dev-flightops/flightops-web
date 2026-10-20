@@ -171,7 +171,7 @@ export function InvoiceActions({
 
       {canSend && hasUnpricedLines && (
         // In place of the button, not as an error after clicking it.
-        <p className="rounded-md border border-status-yellow/30 bg-status-yellow/10 px-3 py-2 text-xs text-status-yellow">
+        <p className="notice notice-yellow">
           This invoice has a line with no price, so it can&apos;t be marked
           as sent. Set the cargo rate in Settings → Company, then void
           this draft and raise the flight&apos;s invoices again.
@@ -188,7 +188,7 @@ export function InvoiceActions({
             as one payment and closes the invoice.
           </p>
           <div className="mt-2 grid grid-cols-2 gap-2">
-            <label className="block text-[0.65rem] font-semibold uppercase tracking-wider text-muted-foreground">
+            <label className="field-label mb-0">
               Method
               <select
                 value={method}
@@ -203,7 +203,7 @@ export function InvoiceActions({
                 ))}
               </select>
             </label>
-            <label className="block text-[0.65rem] font-semibold uppercase tracking-wider text-muted-foreground">
+            <label className="field-label mb-0">
               Received
               <input
                 type="date"
@@ -213,7 +213,7 @@ export function InvoiceActions({
                 className="ff-input mt-1 font-normal normal-case tracking-normal"
               />
             </label>
-            <label className="col-span-2 block text-[0.65rem] font-semibold uppercase tracking-wider text-muted-foreground">
+            <label className="field-label col-span-2 mb-0">
               Reference
               <input
                 type="text"
@@ -266,7 +266,7 @@ export function InvoiceActions({
           is open takes the option away. */}
       {canVoid && voiding && (
         <div className="rounded-md border border-border bg-background p-3">
-          <label className="block text-[0.65rem] font-semibold uppercase tracking-wider text-muted-foreground">
+          <label className="field-label mb-0">
             Why is it being voided?
             <input
               type="text"
@@ -313,7 +313,7 @@ export function InvoiceActions({
       {state.status === "error" && (
         <p
           role="alert"
-          className="rounded-md border border-status-red/30 bg-status-red/10 px-3 py-2 text-xs text-status-red"
+          className="notice notice-red"
         >
           {state.message}
         </p>

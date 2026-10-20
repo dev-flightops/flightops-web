@@ -56,7 +56,7 @@ function Shell({ children }: { children: React.ReactNode }) {
       >
         ← Settings
       </Link>
-      <h1 className="text-2xl font-bold tracking-tight text-foreground">
+      <h1 className="page-title text-foreground">
         Public API keys
       </h1>
       <p className="mb-6 mt-1 max-w-2xl text-sm text-muted-foreground">

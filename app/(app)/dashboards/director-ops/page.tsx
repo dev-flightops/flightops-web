@@ -1,4 +1,4 @@
-import { CheckCircle2 } from "lucide-react";
+import { CheckGlyph } from "@/components/ff/glyphs";
 import Link from "next/link";
 
 import { AlertList } from "@/components/dashboards/alert-list";
@@ -88,7 +88,7 @@ export default async function DirectorOpsDashboardPage() {
 
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Director of Operations</h1>
+          <h1 className="page-title">Director of Operations</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Real-time operational overview
           </p>
@@ -182,7 +182,7 @@ export default async function DirectorOpsDashboardPage() {
             compact
             emptyHint={
               <span className="inline-flex items-center gap-1.5">
-                <CheckCircle2
+                <CheckGlyph
                   className="h-3.5 w-3.5 text-status-green"
                   aria-hidden
                 />

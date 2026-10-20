@@ -84,7 +84,7 @@ export default async function SafetyHazardDetailPage({
             ← {canTriage ? "Safety SMS" : "My Reports"}
           </Link>
         </p>
-        <h1 className="mt-2 flex flex-wrap items-baseline gap-3 text-2xl font-bold tracking-tight">
+        <h1 className="mt-2 flex flex-wrap items-baseline gap-3 page-title">
           Hazard {HAZARD_SEVERITY_LABELS[hazard.severity]}
           <span className="text-sm font-normal text-muted-foreground">
             {HAZARD_CATEGORY_LABELS[hazard.category]}
@@ -101,7 +101,7 @@ export default async function SafetyHazardDetailPage({
       {filed === "1" ? (
         <div
           role="status"
-          className="mb-4 rounded-md border border-status-green/40 bg-status-green/10 px-3 py-2 text-xs text-status-green"
+          className="mb-4 notice notice-green"
         >
           Report filed. The Safety Officer has been notified.
         </div>

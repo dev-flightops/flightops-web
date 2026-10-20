@@ -50,7 +50,7 @@ export default async function WaitingMailFreightPage({
         </Link>
       </div>
       <header className="mb-5">
-        <h1 className="text-2xl font-bold tracking-tight">Mail &amp; Freight Waiting</h1>
+        <h1 className="page-title">Mail &amp; Freight Waiting</h1>
         <p className="mt-1 max-w-3xl text-sm text-muted-foreground">
           {`What ground has on hand at each station before it is on a flight. Each flight’s manifest shows what is waiting for its route and suggests filling the weight left with it.`}
         </p>

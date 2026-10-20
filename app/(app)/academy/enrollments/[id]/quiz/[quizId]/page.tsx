@@ -85,7 +85,7 @@ export default async function QuizPage({
             ← Back to lesson
           </Link>
         </p>
-        <h1 className="mt-2 text-2xl font-bold tracking-tight">
+        <h1 className="mt-2 page-title">
           {quiz.title}
         </h1>
         {quiz.instructions ? (
@@ -103,7 +103,7 @@ export default async function QuizPage({
       {passingAttempt ? (
         <div
           role="status"
-          className="mb-4 rounded-lg border border-status-green/40 bg-status-green/10 px-4 py-3 text-sm text-status-green"
+          className="mb-4 notice notice-green text-sm"
         >
           <p className="font-semibold">
             You already passed this quiz —{" "}
@@ -117,7 +117,7 @@ export default async function QuizPage({
       ) : priorAttempts.length > 0 ? (
         <div
           role="status"
-          className="mb-4 rounded-lg border border-status-yellow/40 bg-status-yellow/10 px-4 py-3 text-sm text-status-yellow"
+          className="mb-4 notice notice-yellow text-sm"
         >
           <p className="font-semibold">
             {priorAttempts.length} prior attempt{priorAttempts.length === 1 ? "" : "s"}

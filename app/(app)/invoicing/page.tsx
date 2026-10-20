@@ -106,7 +106,7 @@ export default async function InvoicingPage({
     <div className="mx-auto max-w-6xl px-4 sm:px-6 py-8">
       <header className="mb-6 flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">
+          <h1 className="page-title text-foreground">
             Invoices
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
@@ -139,7 +139,7 @@ export default async function InvoicingPage({
       {loadError ? (
         <p
           role="alert"
-          className="rounded-md border border-status-red/30 bg-status-red/10 px-3 py-2 text-sm text-status-red"
+          className="notice notice-red text-sm"
         >
           {loadError}
         </p>
@@ -201,7 +201,7 @@ export default async function InvoicingPage({
             <div className="overflow-x-auto rounded-lg border border-border bg-card">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-border bg-background/40 text-left text-[0.6rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+                  <tr className="ff-thead">
                     <th scope="col" className="px-4 py-3">Invoice</th>
                     <th scope="col" className="px-4 py-3">Customer</th>
                     <th scope="col" className="px-4 py-3">Flight</th>

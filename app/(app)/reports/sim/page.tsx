@@ -167,7 +167,7 @@ function ScheduleTable({ report }: { report: SimExport }) {
         <caption className="sr-only">
           Recurring services in the export window
         </caption>
-        <thead className="bg-muted/60">
+        <thead className="ff-thead">
           <tr>
             <th className={TH}>Flight</th>
             <th className={TH}>Service</th>
@@ -238,7 +238,7 @@ function FlightsTable({ report }: { report: SimExport }) {
     <div className="overflow-x-auto rounded-xl border border-border">
       <table className="w-full min-w-[58rem] border-collapse">
         <caption className="sr-only">Departures in the export window</caption>
-        <thead className="bg-muted/60">
+        <thead className="ff-thead">
           <tr>
             <th className={TH}>Date</th>
             <th className={TH}>Flight</th>
@@ -354,7 +354,7 @@ export default async function SimExportPage({
         ← Reports
       </Link>
       <header className="mb-4">
-        <h1 className="text-2xl font-bold tracking-tight">Schedule Export</h1>
+        <h1 className="page-title">Schedule Export</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           SIM / OAG schedule data, and a per-departure extract for
           accounting

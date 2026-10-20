@@ -27,7 +27,7 @@ export function FilingHeader({
         >
           ← Regulatory
         </Link>
-        <h1 className="mt-1 text-2xl font-bold tracking-tight text-foreground">
+        <h1 className="mt-1 page-title text-foreground">
           {title}
         </h1>
         {subtitle && (
@@ -59,7 +59,7 @@ export function DraftManifestWarning({ count }: { count: number }) {
   return (
     <p
       role="status"
-      className="mb-4 rounded-md border border-status-yellow/30 bg-status-yellow/10 px-3 py-2 text-xs text-status-yellow"
+      className="mb-4 notice notice-yellow"
     >
       {count} manifest{one ? " is" : "s are"} still in draft for this period and{" "}
       {one ? "its" : "their"} mail is not counted below. Lock{" "}
@@ -79,7 +79,7 @@ export function NotMeasuredNotice({ children }: { children: React.ReactNode }) {
   return (
     <p
       role="status"
-      className="mb-4 rounded-md border border-status-yellow/30 bg-status-yellow/10 px-3 py-2 text-xs text-status-yellow"
+      className="mb-4 notice notice-yellow"
     >
       {children}
     </p>
@@ -90,7 +90,7 @@ export function FilingLoadError({ message }: { message: string }) {
   return (
     <p
       role="alert"
-      className="rounded-md border border-status-red/30 bg-status-red/10 px-3 py-2 text-sm text-status-red"
+      className="notice notice-red text-sm"
     >
       {message}
     </p>

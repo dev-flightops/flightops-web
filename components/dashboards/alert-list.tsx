@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { AlertOctagon, AlertTriangle, Info } from "lucide-react";
+import { AlertGlyph, InfoGlyph } from "@/components/ff/glyphs";
 
 import { cn } from "@/lib/utils";
 
@@ -29,22 +29,22 @@ export interface AlertItem {
 
 const SEVERITY_STYLES: Record<
   AlertSeverity,
-  { wrap: string; iconTone: string; icon: typeof AlertOctagon }
+  { wrap: string; iconTone: string; icon: typeof AlertGlyph }
 > = {
   critical: {
     wrap: "border-l-status-red bg-status-red/[0.08]",
     iconTone: "text-status-red",
-    icon: AlertOctagon,
+    icon: AlertGlyph,
   },
   warning: {
     wrap: "border-l-status-orange bg-status-orange/[0.06]",
     iconTone: "text-status-orange",
-    icon: AlertTriangle,
+    icon: AlertGlyph,
   },
   info: {
     wrap: "border-l-status-blue bg-status-blue/[0.06]",
     iconTone: "text-status-blue",
-    icon: Info,
+    icon: InfoGlyph,
   },
 };
 

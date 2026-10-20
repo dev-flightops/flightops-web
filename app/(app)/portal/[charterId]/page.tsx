@@ -46,7 +46,7 @@ export default async function PortalCharterPage({
 
       <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="font-mono text-2xl font-bold tracking-tight text-foreground">
+          <h1 className="font-mono page-title text-foreground">
             {charter.reference}
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">

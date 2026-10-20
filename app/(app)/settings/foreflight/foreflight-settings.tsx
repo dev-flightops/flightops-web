@@ -40,7 +40,7 @@ function Alert({ children }: { children: React.ReactNode }) {
   return (
     <p
       role="alert"
-      className="mt-3 rounded-md border border-status-red/40 bg-status-red/10 px-3 py-2 text-xs text-status-red"
+      className="mt-3 notice notice-red"
     >
       {children}
     </p>

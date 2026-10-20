@@ -19,7 +19,7 @@ export default async function SettingsFlightTrackingPage() {
       <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
         <Breadcrumb />
         <header className="mb-6">
-          <h1 className="text-2xl font-bold tracking-tight">
+          <h1 className="page-title">
             Flight Tracking
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
@@ -41,7 +41,7 @@ export default async function SettingsFlightTrackingPage() {
         <Breadcrumb />
         <div
           role="alert"
-          className="rounded-md border border-status-yellow/40 bg-status-yellow/10 px-3 py-2 text-xs text-status-yellow"
+          className="notice notice-yellow"
         >
           {message}
         </div>

@@ -65,7 +65,7 @@ export default async function IncidentDetailPage({
             ← {canTriage ? "Incidents" : "My Incident Reports"}
           </Link>
         </p>
-        <h1 className="mt-2 flex flex-wrap items-baseline gap-3 text-2xl font-bold tracking-tight">
+        <h1 className="mt-2 flex flex-wrap items-baseline gap-3 page-title">
           Incident {HAZARD_SEVERITY_LABELS[incident.severity]}
           <span className="text-sm font-normal text-muted-foreground">
             {INCIDENT_CATEGORY_LABELS[incident.category]}
@@ -82,7 +82,7 @@ export default async function IncidentDetailPage({
       {filed === "1" ? (
         <div
           role="status"
-          className="mb-4 rounded-md border border-status-green/40 bg-status-green/10 px-3 py-2 text-xs text-status-green"
+          className="mb-4 notice notice-green"
         >
           Incident filed. The Safety Officer has been notified.
         </div>
