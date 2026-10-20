@@ -56,12 +56,12 @@ export default async function CertificateDetailPage({
       </header>
 
       <article
-        className="rounded-2xl border-2 border-status-yellow/40 bg-card px-6 py-8 shadow-sm sm:px-10 sm:py-12"
+        className="rounded-lg border border-border border-t-[3px] border-t-status-yellow bg-card px-6 py-8 sm:px-10 sm:py-12"
         aria-label="Certificate of completion"
       >
         <div className="mb-6 flex items-start justify-between gap-4">
           <div>
-            <p className="text-[0.65rem] uppercase tracking-[0.1em] text-status-yellow">
+            <p className="eyebrow">
               Peregrine Academy
             </p>
             <h1 className="mt-1 page-title">
@@ -70,7 +70,7 @@ export default async function CertificateDetailPage({
           </div>
           <span
             className={
-              "rounded border px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider " +
+              "status-mark text-[0.65rem] " +
               status.className
             }
           >
@@ -81,7 +81,7 @@ export default async function CertificateDetailPage({
         <p className="text-sm text-muted-foreground">
           This certifies that
         </p>
-        <p className="mt-1 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+        <p className="mt-1 font-display text-3xl font-extrabold uppercase tracking-[0.02em] text-foreground sm:text-4xl">
           {cert.user.full_name}
         </p>
         <p className="mt-1 text-xs text-muted-foreground">
@@ -156,7 +156,7 @@ function _certStatus(
   if (expiresAt === null) {
     return {
       label: "Never expires",
-      className: "border-border bg-muted text-muted-foreground",
+      className: "text-muted-foreground",
     };
   }
   const ms = new Date(expiresAt).getTime() - now;
@@ -164,20 +164,20 @@ function _certStatus(
   if (days < 0) {
     return {
       label: "Expired",
-      className: "border-status-red/40 bg-status-red/10 text-status-red",
+      className: "text-status-red",
     };
   }
   if (days <= 60) {
     return {
       label: `Expires in ${days}d`,
       className:
-        "border-status-yellow/40 bg-status-yellow/10 text-status-yellow",
+        "text-status-yellow",
     };
   }
   return {
     label: "Valid",
     className:
-      "border-status-green/40 bg-status-green/10 text-status-green",
+      "text-status-green",
   };
 }
 

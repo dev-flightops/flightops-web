@@ -37,10 +37,9 @@ export function StatusFilter({ current }: { current: string }) {
             type="button"
             onClick={() => setStatus(o.value)}
             className={
-              "rounded-md border px-3 py-1.5 text-xs font-semibold transition " +
-              (active
-                ? "border-primary bg-primary/10 text-primary"
-                : "border-border bg-card text-foreground/80 hover:bg-accent")
+              active
+                ? "btn-caps rounded-md bg-primary px-3 py-1.5 text-[0.68rem] text-primary-foreground"
+                : "btn-caps rounded-md border border-input px-3 py-1.5 text-[0.68rem] text-muted-foreground hover:border-foreground hover:text-foreground"
             }
           >
             {o.label}

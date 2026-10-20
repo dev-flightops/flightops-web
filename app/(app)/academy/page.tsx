@@ -99,7 +99,7 @@ export default async function CourseLibraryPage({
             name="q"
             defaultValue={q}
             placeholder="Search courses…"
-            className="rounded-md border border-border bg-background px-3 py-1.5 text-xs outline-none focus:border-primary"
+            className="ff-input px-3 py-1.5 text-xs w-auto"
           />
           <button
             type="submit"
@@ -204,10 +204,10 @@ function StatusChip({
       href={href}
       aria-current={active ? "page" : undefined}
       className={
-        "rounded-md border px-2.5 py-1 text-xs font-semibold transition " +
-        (active
-          ? "border-primary bg-primary/10 text-primary"
-          : "border-border bg-card text-muted-foreground hover:text-foreground")
+        // A filter choice in caps (#85): the chosen one filled in the brand.
+        active
+          ? "btn-caps rounded-md bg-primary px-3 py-1.5 text-[0.68rem] text-primary-foreground"
+          : "btn-caps rounded-md border border-input px-3 py-1.5 text-[0.68rem] text-muted-foreground hover:border-foreground hover:text-foreground"
       }
     >
       {label}
@@ -274,7 +274,7 @@ function SidebarItem({
       className={
         "flex items-baseline justify-between gap-2 rounded-md px-2 py-1.5 transition " +
         (active
-          ? "bg-primary/10 text-primary"
+          ? "bg-accent text-foreground shadow-[inset_3px_0_0_rgb(var(--brand-text-rgb))]"
           : "text-muted-foreground hover:bg-accent hover:text-foreground") +
         (bold ? " font-semibold text-foreground" : "")
       }
@@ -400,12 +400,12 @@ function PublishBadge({ status }: { status: CoursePublishStatus }) {
   if (status === "published") return null; // Common case — no badge.
   const cls =
     status === "draft"
-      ? "border-status-yellow/40 bg-status-yellow/10 text-status-yellow"
-      : "border-border bg-muted text-muted-foreground";
+      ? "text-status-yellow"
+      : "text-muted-foreground";
   return (
     <span
       className={
-        "rounded border px-1.5 py-0.5 text-[0.6rem] font-semibold uppercase tracking-wider " +
+        "status-mark text-[0.6rem] " +
         cls
       }
     >

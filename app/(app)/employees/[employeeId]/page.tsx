@@ -1,4 +1,7 @@
 import Link from "next/link";
+
+import { linkCaps } from "@/components/ff/controls";
+import { cn } from "@/lib/utils";
 import { notFound } from "next/navigation";
 
 import { auth } from "@/auth";
@@ -110,13 +113,10 @@ export default async function EmployeeDetailPage({
   if (tab === "documents") {
     return (
       <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6">
-        <Link
-          href="/employees"
-          className="mb-3 inline-block text-xs font-semibold text-primary hover:underline"
-        >
-          ← Employees
+        <Link href="/employees" className={cn(linkCaps, "text-muted-foreground hover:text-foreground")}>
+          <span aria-hidden>‹</span> Employees
         </Link>
-        <header className="mb-4">
+        <header className="mb-6 border-b border-border pb-5">
           <h1 className="truncate page-title">
             {employee.preferred_name?.trim() || employee.full_name}
           </h1>

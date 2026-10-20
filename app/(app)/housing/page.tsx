@@ -65,29 +65,20 @@ export default async function HousingPage() {
 
   return (
     <div className="w-full px-4 py-6 sm:px-6">
-      <nav aria-label="Breadcrumb" className="mb-4 flex items-center text-xs">
+      <nav aria-label="Breadcrumb" className="eyebrow mb-4 flex flex-wrap items-center">
         <Link
           href="/home"
-          aria-label="Home"
-          className="inline-flex items-center text-muted-foreground hover:text-foreground"
+          className="hover:text-foreground"
         >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            fill="currentColor"
-            className="h-3.5 w-3.5"
-            aria-hidden
-          >
-            <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" />
-          </svg>
+          Home
         </Link>
         <span aria-hidden className="px-1.5 text-muted-foreground">
           ›
         </span>
-        <span className="font-semibold text-primary">Housing</span>
+        <span className="text-foreground">Housing</span>
       </nav>
 
-      <header className="mb-4 flex flex-wrap items-start justify-between gap-3">
+      <header className="mb-6 flex flex-wrap items-start justify-between gap-4 border-b border-border pb-5">
         <div>
           <h1 className="page-title">
             Housing Management
@@ -243,7 +234,7 @@ function UnitCard({
           {unit.color_accent && (
             <span
               aria-hidden
-              className="mt-1 inline-block h-4 w-4 rounded-full border border-border"
+              className="mt-1 inline-block h-4 w-4 rounded-sm border border-border"
               style={{ backgroundColor: unit.color_accent }}
               title={unit.color_accent}
             />

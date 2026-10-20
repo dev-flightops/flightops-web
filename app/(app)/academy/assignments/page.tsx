@@ -200,15 +200,15 @@ function AssignmentsTable({ enrollments }: { enrollments: Enrollment[] }) {
 function StatusBadge({ status }: { status: Enrollment["status"] }) {
   const map: Record<Enrollment["status"], string> = {
     in_progress:
-      "border-status-yellow/40 bg-status-yellow/10 text-status-yellow",
-    completed: "border-status-green/40 bg-status-green/10 text-status-green",
-    expired: "border-status-red/40 bg-status-red/10 text-status-red",
+      "text-status-yellow",
+    completed: "text-status-green",
+    expired: "text-status-red",
   };
   return (
     <span
       className={
-        "rounded border px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider " +
-        (map[status] ?? "border-border bg-muted text-muted-foreground")
+        "status-mark text-[0.65rem] " +
+        (map[status] ?? "text-muted-foreground")
       }
     >
       {ENROLLMENT_STATUS_LABELS[status] ?? status}

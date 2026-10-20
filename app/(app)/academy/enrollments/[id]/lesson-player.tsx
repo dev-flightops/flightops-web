@@ -42,11 +42,11 @@ export function LessonPlayer({
 
   return (
     <article>
-      <header className="mb-4">
+      <header className="mb-6 border-b border-border pb-5">
         <p className="eyebrow">
           Lesson {String(lesson.ordinal + 1).padStart(2, "0")}
         </p>
-        <h2 className="mt-1 text-xl font-bold tracking-tight">
+        <h2 className="caption-caps mt-1 text-xl text-foreground">
           {lesson.title}
         </h2>
       </header>
@@ -72,7 +72,7 @@ export function LessonPlayer({
 
       <div className="mt-6 flex flex-wrap items-center justify-end gap-2">
         {isDone ? (
-          <span className="inline-flex items-center rounded border border-status-green/40 bg-status-green/10 px-2 py-1 text-xs font-semibold text-status-green">
+          <span className="status-mark text-xs text-status-green">
             ✓ Completed
           </span>
         ) : locked ? (

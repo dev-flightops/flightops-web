@@ -86,7 +86,7 @@ export function EditUnitDrawer({ unit }: { unit: HousingUnit }) {
             if (e.target === e.currentTarget) setOpen(false);
           }}
         >
-          <div className="h-full w-full max-w-md overflow-y-auto border-l border-border bg-card p-5 shadow-xl">
+          <div className="h-full w-full max-w-md overflow-y-auto border-l border-border bg-card p-5">
             <div className="mb-3 flex items-start justify-between gap-3">
               <div>
                 <h2 className="text-sm font-bold">Edit House</h2>

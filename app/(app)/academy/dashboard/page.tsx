@@ -112,7 +112,7 @@ function StatCards({
   const completionRate = total > 0 ? Math.round((completedCount / total) * 100) : 0;
 
   return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+    <div className="grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-4">
       <StatCard
         value={activeCourseCount}
         label="Active Courses"
@@ -171,10 +171,10 @@ function StatCard({
   return (
     <Link
       href={href}
-      className="block rounded-lg border border-border bg-card px-3 py-3 transition-colors hover:bg-accent"
+      className="block border-l-2 border-input py-1 pl-3 transition-colors hover:bg-accent/40"
     >
-      <div className={"text-2xl font-bold " + toneClass}>{value}</div>
-      <div className="mt-0.5 text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
+      <div className={"font-display text-[1.75rem] font-extrabold leading-none tabular-nums " + toneClass}>{value}</div>
+      <div className="eyebrow mt-1.5">
         {label}
       </div>
       <div className="mt-0.5 text-[0.7rem] text-muted-foreground">
@@ -195,7 +195,7 @@ function RecentCompletionsCard({ completed }: { completed: Enrollment[] }) {
   return (
     <section>
       <div className="mb-2 flex items-baseline justify-between px-1">
-        <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+        <h2 className="eyebrow">
           Recent Completions
         </h2>
         <Link
@@ -243,7 +243,7 @@ function ExpiringSoonCard({ enrollments }: { enrollments: Enrollment[] }) {
   return (
     <section>
       <div className="mb-2 flex items-baseline justify-between px-1">
-        <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+        <h2 className="eyebrow">
           Certs Expiring Soon
         </h2>
         <Link
@@ -293,15 +293,15 @@ function ExpiringSoonCard({ enrollments }: { enrollments: Enrollment[] }) {
 function StatusBadge({ status }: { status: Enrollment["status"] }) {
   const map: Record<Enrollment["status"], string> = {
     in_progress:
-      "border-status-yellow/40 bg-status-yellow/10 text-status-yellow",
-    completed: "border-status-green/40 bg-status-green/10 text-status-green",
-    expired: "border-status-red/40 bg-status-red/10 text-status-red",
+      "text-status-yellow",
+    completed: "text-status-green",
+    expired: "text-status-red",
   };
   return (
     <span
       className={
-        "flex-shrink-0 rounded border px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider " +
-        (map[status] ?? "border-border bg-muted text-muted-foreground")
+        "status-mark flex-shrink-0 text-[0.65rem] " +
+        (map[status] ?? "text-muted-foreground")
       }
     >
       {ENROLLMENT_STATUS_LABELS[status] ?? status}
@@ -312,15 +312,15 @@ function StatusBadge({ status }: { status: Enrollment["status"] }) {
 function ExpiryBadge({ days }: { days: number }) {
   const tone =
     days <= 7
-      ? "border-status-red/40 bg-status-red/10 text-status-red"
+      ? "text-status-red"
       : days <= 14
-        ? "border-status-yellow/60 bg-status-yellow/15 text-status-yellow"
-        : "border-status-yellow/40 bg-status-yellow/10 text-status-yellow";
+        ? "text-status-yellow"
+        : "text-status-yellow";
   const label = days <= 0 ? "Today" : `${days}d left`;
   return (
     <span
       className={
-        "flex-shrink-0 rounded border px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider " +
+        "status-mark flex-shrink-0 text-[0.65rem] " +
         tone
       }
     >

@@ -46,7 +46,7 @@ export function NewUnitDrawer() {
             if (e.target === e.currentTarget) setOpen(false);
           }}
         >
-          <div className="h-full w-full max-w-md overflow-y-auto border-l border-border bg-card p-5 shadow-xl">
+          <div className="h-full w-full max-w-md overflow-y-auto border-l border-border bg-card p-5">
             <header className="mb-4 flex items-start justify-between gap-3">
               <div>
                 <h2 className="text-base font-bold">New Housing Unit</h2>
@@ -165,7 +165,7 @@ function TextField({
         placeholder={placeholder}
         required={required}
         autoComplete={autoComplete}
-        className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-xs text-foreground focus:border-primary focus:outline-none"
+        className="ff-input px-3 py-1.5 text-xs"
       />
       {hint && (
         <p className="mt-1 text-[0.65rem] text-muted-foreground">{hint}</p>
@@ -196,7 +196,7 @@ function TextAreaField({
         name={name}
         rows={3}
         placeholder={placeholder}
-        className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-xs text-foreground focus:border-primary focus:outline-none"
+        className="ff-input px-3 py-1.5 text-xs"
       />
     </div>
   );
@@ -220,7 +220,7 @@ function ColorField({ name, label }: { name: string; label: string }) {
           placeholder={DEFAULT_UNIT_COLOR}
           value={value}
           onChange={(e) => setValue(e.target.value)}
-          className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-xs text-foreground focus:border-primary focus:outline-none"
+          className="ff-input px-3 py-1.5 text-xs"
         />
         <span
           aria-hidden

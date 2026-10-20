@@ -81,43 +81,34 @@ export default async function HousingCalendarPage({
 
   return (
     <div className="w-full px-4 py-6 sm:px-6">
-      <nav aria-label="Breadcrumb" className="mb-4 flex items-center text-xs">
+      <nav aria-label="Breadcrumb" className="eyebrow mb-4 flex flex-wrap items-center">
         <Link
           href="/home"
-          aria-label="Home"
-          className="inline-flex items-center text-muted-foreground hover:text-foreground"
+          className="hover:text-foreground"
         >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            fill="currentColor"
-            className="h-3.5 w-3.5"
-            aria-hidden
-          >
-            <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" />
-          </svg>
+          Home
         </Link>
         <span aria-hidden className="px-1.5 text-muted-foreground">
           ›
         </span>
         <Link
           href="/housing"
-          className="text-muted-foreground hover:text-foreground"
+          className="hover:text-foreground"
         >
           Housing
         </Link>
         <span aria-hidden className="px-1.5 text-muted-foreground">
           ›
         </span>
-        <span className="font-semibold text-primary">Calendar</span>
+        <span className="text-foreground">Calendar</span>
       </nav>
 
-      <header className="mb-4 flex flex-wrap items-start justify-between gap-3">
+      <header className="mb-6 flex flex-wrap items-start justify-between gap-4 border-b border-border pb-5">
         <div>
           <h1 className="page-title">
             Housing Calendar
           </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
             Week of {fmtDay(anchor, "long")} · rooms × days
           </p>
         </div>
@@ -220,14 +211,15 @@ function CalendarGrid({
     <div className="overflow-x-auto rounded-lg border border-border bg-card">
       <table className="w-full min-w-[900px] table-fixed text-xs">
         <thead>
-          <tr className="border-b border-border bg-muted/60 text-left text-[0.65rem] uppercase tracking-[0.06em] text-muted-foreground">
+          <tr className="ff-thead">
             <th className="w-56 px-3 py-2.5 font-semibold">Unit / Room</th>
             {days.map((d) => (
               <th
                 key={d.toISOString()}
+                aria-current={isoDay(d) === todayIso ? "date" : undefined}
                 className={
                   "px-2 py-2.5 text-center font-semibold " +
-                  (isoDay(d) === todayIso ? "bg-primary/10 text-primary" : "")
+                  (isoDay(d) === todayIso ? "bg-accent text-foreground shadow-[inset_0_-2px_0_rgb(var(--brand-text-rgb))]" : "")
                 }
               >
                 <div>{fmtDay(d, "short")}</div>

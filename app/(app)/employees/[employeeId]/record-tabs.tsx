@@ -50,7 +50,7 @@ export function RecordTabs({
         Documents
         {outstanding !== undefined && outstanding > 0 && (
           <span
-            className="ml-1.5 rounded-full bg-status-yellow/15 px-1.5 py-0.5 text-[0.6rem] font-bold text-status-yellow"
+            className="status-mark ml-1.5 text-status-yellow"
             title={`${outstanding} document${outstanding === 1 ? "" : "s"} needing attention`}
           >
             {outstanding}
@@ -65,7 +65,7 @@ export function RecordTabs({
           className="-mb-px cursor-not-allowed px-3 py-2 text-xs font-semibold text-muted-foreground/50"
         >
           {label}
-          <span className="ml-1.5 rounded border border-border px-1 py-0.5 text-[0.55rem] uppercase tracking-wider">
+          <span className="status-mark ml-1.5">
             Not built
           </span>
         </span>

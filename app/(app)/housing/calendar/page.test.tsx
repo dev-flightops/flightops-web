@@ -296,8 +296,8 @@ describe("week navigation", () => {
       .getAllByRole("columnheader")
       .slice(1);
     // Wednesday is index 2 of a Monday-anchored week.
-    expect(heads[2].className).toMatch(/bg-primary/);
-    expect(heads[0].className).not.toMatch(/bg-primary/);
+    expect(heads[2]).toHaveAttribute("aria-current", "date");
+    expect(heads[0]).not.toHaveAttribute("aria-current");
   });
 });
 

@@ -72,10 +72,10 @@ export default async function EmployeesPage({
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
-      <header className="mb-6 flex flex-wrap items-start justify-between gap-3">
+      <header className="mb-6 flex flex-wrap items-start justify-between gap-4 border-b border-border pb-5">
         <div>
           <h1 className="page-title">Employees</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
             {filtered.length} record{filtered.length === 1 ? "" : "s"}
           </p>
         </div>
@@ -98,7 +98,7 @@ export default async function EmployeesPage({
           {loadError}
         </div>
       ) : filtered.length === 0 ? (
-        <div className="rounded-lg border border-dashed border-border bg-card/40 px-6 py-12 text-center">
+        <div className="rounded-lg border border-border bg-card px-5 py-8 text-center">
           <p className="text-sm text-muted-foreground">
             {statusFilter === "terminated"
               ? "No terminated employees."
@@ -190,10 +190,10 @@ function EmployeesTable({
                 <td className="whitespace-nowrap px-4 py-3">
                   <span
                     className={
-                      "rounded border px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider " +
+                      "status-mark text-[0.65rem] " +
                       (u.is_active
-                        ? "border-status-green/40 bg-status-green/10 text-status-green"
-                        : "border-border bg-muted text-muted-foreground")
+                        ? "text-status-green"
+                        : "text-muted-foreground")
                     }
                   >
                     {u.is_active
