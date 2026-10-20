@@ -73,10 +73,10 @@ export default async function WorkOrdersPage({
 
   return (
     <div className="mx-auto max-w-6xl px-4 sm:px-6 py-8">
-      <header className="mb-5 flex items-center justify-between gap-3">
+      <header className="mb-6 flex flex-wrap items-center justify-between gap-4 border-b border-border pb-5">
         <div>
           <h1 className="page-title">Work Orders</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
             {orders.length} order{orders.length === 1 ? "" : "s"}
           </p>
         </div>
@@ -170,7 +170,7 @@ export default async function WorkOrdersPage({
                       </td>
                       <td className="px-4 py-3 text-xs">{wo.title}</td>
                       <td className="whitespace-nowrap px-4 py-3">
-                        <span className="rounded border border-border bg-muted px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider text-muted-foreground">
+                        <span className="eyebrow">
                           {wo.wo_type.replace(/_/g, " ")}
                         </span>
                       </td>
@@ -214,7 +214,7 @@ function PriorityBadge({ priority }: { priority: string }) {
     );
   }
   return (
-    <span className="rounded border border-border bg-muted px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider text-muted-foreground">
+    <span className="eyebrow">
       Normal
     </span>
   );
@@ -223,14 +223,14 @@ function PriorityBadge({ priority }: { priority: string }) {
 function StatusBadge({ status }: { status: string }) {
   const cls =
     status === "completed"
-      ? "border-status-green/40 bg-status-green/10 text-status-green"
+      ? "text-status-green"
       : status === "in_progress"
-        ? "border-status-blue/40 bg-status-blue/10 text-status-blue"
+        ? "text-status-blue"
         : status === "awaiting_parts"
-          ? "border-status-yellow/40 bg-status-yellow/10 text-status-yellow"
+          ? "text-status-yellow"
           : status === "closed"
-            ? "border-border bg-muted text-muted-foreground"
-            : "border-status-blue/40 bg-status-blue/10 text-status-blue";
+            ? "text-muted-foreground"
+            : "text-status-blue";
   const label =
     status === "in_progress"
       ? "In Progress"
@@ -240,7 +240,7 @@ function StatusBadge({ status }: { status: string }) {
   return (
     <span
       className={
-        "rounded border px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider " +
+        "status-mark text-[0.65rem] " +
         cls
       }
     >

@@ -38,7 +38,7 @@ export function CorrectiveActionPanel({
         {canOpen ? (
           <Link
             href={openHref}
-            className="btn-caps rounded-md border border-primary/40 bg-background px-2 py-1 text-primary hover:bg-primary/5 text-[0.68rem]"
+            className="btn-caps rounded-md border border-input px-2 py-1 text-foreground hover:border-foreground text-[0.68rem]"
           >
             + Open a CAPA
           </Link>
@@ -54,7 +54,7 @@ export function CorrectiveActionPanel({
             <li key={c.id}>
               <Link
                 href={`/safety/actions/${c.id}`}
-                className="flex flex-wrap items-baseline justify-between gap-3 rounded-md border border-border bg-background/40 px-3 py-2 text-sm hover:bg-accent"
+                className="flex flex-wrap items-baseline justify-between gap-3 rounded-md border border-border px-3 py-2 text-sm hover:bg-accent"
               >
                 <div className="min-w-0 flex-1">
                   <div className="mb-0.5 flex flex-wrap items-baseline gap-2">
@@ -66,7 +66,7 @@ export function CorrectiveActionPanel({
                     {new Date(c.due_date).toLocaleDateString()}
                   </p>
                 </div>
-                <span className="whitespace-nowrap rounded border border-border bg-muted px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider text-muted-foreground">
+                <span className="whitespace-nowrap eyebrow">
                   {CAPA_STATUS_LABELS[c.status]}
                 </span>
               </Link>

@@ -65,7 +65,7 @@ export function UploadVersionDrawer({
             if (e.target === e.currentTarget) setOpen(false);
           }}
         >
-          <div className="h-full w-full max-w-md overflow-y-auto border-l border-border bg-card p-5 shadow-xl">
+          <div className="h-full w-full max-w-md overflow-y-auto border-l border-border bg-card p-5">
             <header className="mb-4 flex items-start justify-between gap-3">
               <div>
                 <h2 className="text-base font-bold">Upload New Version</h2>
@@ -134,7 +134,7 @@ export function UploadVersionDrawer({
                   name="notes"
                   type="text"
                   placeholder="e.g. Rev 3.2 — updated MEL section"
-                  className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-xs text-foreground focus:border-primary focus:outline-none"
+                  className="ff-input px-3 py-1.5 text-xs"
                 />
               </label>
 

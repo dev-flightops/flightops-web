@@ -1,4 +1,8 @@
 import Link from "next/link";
+
+import { linkCaps } from "@/components/ff/controls";
+import { cn } from "@/lib/utils";
+import { segment, segmentGroup } from "@/components/ff/controls";
 import { hasAnyRole, roleGate } from "@/lib/roles";
 import { redirect } from "next/navigation";
 
@@ -96,17 +100,15 @@ export default async function CapaBoardPage({
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
-      <header className="mb-6 flex flex-wrap items-end justify-between gap-3">
+      <header className="mb-6 flex flex-wrap items-end justify-between gap-4 border-b border-border pb-5">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.06em] text-muted-foreground">
-            <Link href="/safety" className="hover:text-foreground">
-              ← Safety SMS
-            </Link>
-          </p>
+          <Link href="/safety" className={cn(linkCaps, "text-muted-foreground hover:text-foreground")}>
+          <span aria-hidden>‹</span> Safety SMS
+        </Link>
           <h1 className="mt-2 page-title">
             Corrective Actions
           </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
             Follow-through tasks against hazards and incidents. Sorted
             soonest-due first.
           </p>
@@ -122,7 +124,7 @@ export default async function CapaBoardPage({
       <div className="mb-4 flex flex-wrap items-center gap-3">
         <nav
           aria-label="Filter by status"
-          className="flex flex-wrap items-center gap-1.5"
+          className={segmentGroup}
         >
           {STATUS_FILTERS.map((f) => {
             const isActive = f.key === activeFilter.key;
@@ -136,12 +138,7 @@ export default async function CapaBoardPage({
                 key={f.key}
                 href={href}
                 aria-current={isActive ? "page" : undefined}
-                className={
-                  "rounded-md border px-2.5 py-1 text-xs font-semibold transition " +
-                  (isActive
-                    ? "border-primary bg-primary/10 text-primary"
-                    : "border-border bg-card text-muted-foreground hover:text-foreground")
-                }
+                className={segment(isActive)}
               >
                 {f.label}
               </Link>
@@ -193,10 +190,10 @@ function OverdueToggle({
       href={href}
       aria-pressed={overdueOnly}
       className={
-        "rounded-md border px-2.5 py-1 text-xs font-semibold transition " +
+        "btn-caps rounded-md border px-2.5 py-1.5 text-[0.68rem] transition-colors " +
         (overdueOnly
-          ? "border-status-red bg-status-red/15 text-status-red"
-          : "border-border bg-card text-muted-foreground hover:text-foreground")
+          ? "border-status-red text-status-red"
+          : "border-input text-muted-foreground hover:text-foreground")
       }
     >
       {overdueOnly ? "✓ Overdue only" : "Overdue only"}
@@ -282,12 +279,12 @@ function CapaTable({
                   <td className="whitespace-nowrap px-4 py-3">
                     <span
                       className={
-                        "inline-flex items-center rounded border px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider " +
+                        "status-mark text-[0.65rem] " +
                         (c.status === "in_progress"
-                          ? "border-status-yellow bg-status-yellow/15 text-status-yellow"
+                          ? "text-status-yellow"
                           : c.status === "open"
-                            ? "border-status-blue bg-status-blue/15 text-status-blue"
-                            : "border-border bg-muted text-muted-foreground")
+                            ? "text-status-blue"
+                            : "text-muted-foreground")
                       }
                     >
                       {CAPA_STATUS_LABELS[c.status]}
@@ -307,7 +304,7 @@ function CapaTable({
           </tbody>
         </table>
       </div>
-      <footer className="border-t border-border px-4 py-2 text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
+      <footer className="eyebrow border-t border-border px-4 py-2">
         {total} corrective action{total === 1 ? "" : "s"}
       </footer>
     </div>

@@ -46,7 +46,7 @@ export default async function MaintenanceLandingPage() {
           {loadError}
         </div>
       ) : items.length === 0 ? (
-        <div className="rounded-md border border-dashed border-border bg-card/40 px-4 py-16 text-center">
+        <div className="rounded-lg border border-border bg-card px-5 py-8 text-center">
           <div className="mb-3 text-3xl opacity-20" aria-hidden>
             &#9874;
           </div>

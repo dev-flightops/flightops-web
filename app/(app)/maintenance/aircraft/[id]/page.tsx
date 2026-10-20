@@ -1,4 +1,6 @@
 import Link from "next/link";
+
+import { linkCaps } from "@/components/ff/controls";
 import { notFound } from "next/navigation";
 
 import { MelTable } from "@/components/maintenance/mel-table";
@@ -137,12 +139,9 @@ export default async function AircraftDetailPage({
 
 function BackLink() {
   return (
-    <Link
-      href="/maintenance"
-      className="mb-4 inline-block text-xs text-muted-foreground hover:text-foreground hover:underline"
-    >
-      ← Fleet
-    </Link>
+    <Link href="/maintenance" className={cn(linkCaps, "text-muted-foreground hover:text-foreground")}>
+          <span aria-hidden>‹</span> Fleet
+        </Link>
   );
 }
 
@@ -176,12 +175,12 @@ function AircraftHeader({
   const subParts = [model ?? "No details", ttafLabel].filter(Boolean);
 
   return (
-    <header className="flex flex-wrap items-end justify-between gap-3 border-b border-border pb-4">
+    <header className="flex flex-wrap items-end justify-between gap-4 border-b border-border pb-5">
       <div>
-        <h1 className="font-mono page-title text-foreground">
+        <h1 className="page-title text-balance">
           {verdict.aircraft.tail_number}
         </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
           {subParts.join(" · ")}
         </p>
         {summary?.special_notes && (
@@ -219,10 +218,10 @@ function VerdictPill({
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded px-2 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.08em]",
+        "status-mark text-[0.65rem]",
         grounded
-          ? "bg-status-red/15 text-status-red"
-          : "bg-status-green/15 text-status-green",
+          ? "text-status-red"
+          : "text-status-green",
       )}
     >
       {grounded ? "Grounded" : "Airworthy"}
@@ -240,9 +239,9 @@ function Stat({
   tone: "red" | "yellow" | "muted";
 }) {
   const toneClass = {
-    red: "bg-status-red/15 text-status-red",
-    yellow: "bg-status-yellow/15 text-status-yellow",
-    muted: "bg-muted text-muted-foreground",
+    red: "text-status-red",
+    yellow: "text-status-yellow",
+    muted: "text-muted-foreground",
   }[tone];
   return (
     <span

@@ -85,7 +85,7 @@ export default async function StationsPage() {
 
 function StationsTable({ stations }: { stations: StationListItem[] }) {
   return (
-    <div className="overflow-hidden rounded-lg border border-border bg-card">
+    <div className="overflow-x-auto rounded-lg border border-border bg-card">
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b border-border text-left eyebrow">

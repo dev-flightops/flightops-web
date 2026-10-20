@@ -1,5 +1,8 @@
 import Link from "next/link";
 
+import { linkCaps } from "@/components/ff/controls";
+import { cn } from "@/lib/utils";
+
 import { MxChat } from "./mx-chat";
 
 /**
@@ -28,21 +31,20 @@ const EXAMPLES = [
 export default function MxIntelligencePage() {
   return (
     <div className="mx-auto max-w-4xl px-4 sm:px-6 py-8">
-      <Link
-        href="/maintenance"
-        className="text-[0.65rem] font-semibold uppercase tracking-wider text-muted-foreground hover:text-foreground"
-      >
-        ← Maintenance
-      </Link>
-      <h1 className="mt-1 page-title text-foreground">MX Intelligence</h1>
-      <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-        Troubleshooting and pattern analysis over this operator&rsquo;s own
-        maintenance records. It reads the fleet, the squawk history, open work
-        orders and open MEL items — and tells you what it read, so an answer
-        can be checked against its evidence.
-      </p>
+      <header className="mb-6 border-b border-border pb-5">
+        <Link href="/maintenance" className={cn(linkCaps, "mb-3 text-muted-foreground hover:text-foreground")}>
+          <span aria-hidden>‹</span> Maintenance
+        </Link>
+        <h1 className="page-title text-balance">MX Intelligence</h1>
+        <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
+          Troubleshooting and pattern analysis over this operator&rsquo;s own
+          maintenance records. It reads the fleet, the squawk history, open work
+          orders and open MEL items — and tells you what it read, so an answer
+          can be checked against its evidence.
+        </p>
+      </header>
 
-      <div className="mt-6">
+      <div>
         <MxChat examples={EXAMPLES} />
       </div>
     </div>

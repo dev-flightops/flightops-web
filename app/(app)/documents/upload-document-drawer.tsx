@@ -78,7 +78,7 @@ export function UploadDocumentDrawer({
             if (e.target === e.currentTarget) setOpen(false);
           }}
         >
-          <div className="h-full w-full max-w-md overflow-y-auto border-l border-border bg-card p-5 shadow-xl">
+          <div className="h-full w-full max-w-md overflow-y-auto border-l border-border bg-card p-5">
             <header className="mb-4 flex items-start justify-between gap-3">
               <div>
                 <h2 className="text-base font-bold">Upload Document</h2>
@@ -141,12 +141,12 @@ export function UploadDocumentDrawer({
                   type="text"
                   required
                   placeholder="General Operations Manual"
-                  className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-xs text-foreground focus:border-primary focus:outline-none"
+                  className="ff-input px-3 py-1.5 text-xs"
                 />
               </Field>
 
               <Field label="Category">
-                <select name="category" defaultValue="General" className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-xs text-foreground focus:border-primary focus:outline-none">
+                <select name="category" defaultValue="General" className="ff-input px-3 py-1.5 text-xs">
                   <option value="General">General</option>
                   {DOCUMENT_CATEGORIES.filter((c) => c.value).map((c) => (
                     <option key={c.value} value={c.label}>
@@ -161,7 +161,7 @@ export function UploadDocumentDrawer({
                   name="description"
                   rows={3}
                   placeholder="Short summary — what does this cover?"
-                  className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-xs text-foreground focus:border-primary focus:outline-none"
+                  className="ff-input px-3 py-1.5 text-xs"
                 />
               </Field>
 
@@ -199,7 +199,7 @@ export function UploadDocumentDrawer({
                   name="upload_notes"
                   type="text"
                   placeholder="e.g. Rev 3.1 — Bethel base added"
-                  className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-xs text-foreground focus:border-primary focus:outline-none"
+                  className="ff-input px-3 py-1.5 text-xs"
                 />
               </Field>
 

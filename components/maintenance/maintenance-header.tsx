@@ -74,12 +74,12 @@ export const MAINTENANCE_ACTIONS: ActionButton[] = [
 
 export function MaintenanceHeader() {
   return (
-    <header className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+    <header className="mb-6 flex flex-col gap-4 border-b border-border pb-5 sm:flex-row sm:items-end sm:justify-between">
       <div>
-        <h1 className="page-title text-foreground">
+        <h1 className="page-title text-balance">
           Fleet Management
         </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
           Aircraft, maintenance, work orders, and vendors
         </p>
       </div>

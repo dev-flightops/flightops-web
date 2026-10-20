@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import { linkCaps } from "@/components/ff/controls";
+import { cn } from "@/lib/utils";
 import { ApiError } from "@/lib/api/client";
 import {
   HAZARD_SEVERITY_LABELS,
@@ -24,24 +26,22 @@ export default async function MyIncidentsPage() {
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6">
-      <header className="mb-6 flex flex-wrap items-end justify-between gap-3">
+      <header className="mb-6 flex flex-wrap items-end justify-between gap-4 border-b border-border pb-5">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.06em] text-muted-foreground">
-            <Link href="/safety/incidents" className="hover:text-foreground">
-              ← Incidents
-            </Link>
-          </p>
+          <Link href="/safety/incidents" className={cn(linkCaps, "text-muted-foreground hover:text-foreground")}>
+          <span aria-hidden>‹</span> Incidents
+        </Link>
           <h1 className="mt-2 page-title">
             My Incident Reports
           </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
             Every incident you&rsquo;ve filed, with the Safety Officer&rsquo;s
             status.
           </p>
         </div>
         <Link
           href="/safety/incidents/report"
-          className="btn-caps rounded-md border border-primary/40 bg-background px-3 py-1.5 text-primary hover:bg-primary/5 text-[0.72rem]"
+          className="btn-caps rounded-md border border-input px-3 py-1.5 text-foreground hover:border-foreground text-[0.72rem]"
         >
           + File an Incident
         </Link>
@@ -82,7 +82,7 @@ export default async function MyIncidentsPage() {
                     {i.description}
                   </p>
                 </div>
-                <span className="whitespace-nowrap rounded border border-border bg-muted px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider text-muted-foreground">
+                <span className="whitespace-nowrap eyebrow">
                   {HAZARD_STATUS_LABELS[i.status]}
                 </span>
               </Link>

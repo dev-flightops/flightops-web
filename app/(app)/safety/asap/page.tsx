@@ -1,4 +1,7 @@
 import Link from "next/link";
+
+import { linkCaps } from "@/components/ff/controls";
+import { cn } from "@/lib/utils";
 import { redirect } from "next/navigation";
 
 import { auth } from "@/auth";
@@ -51,15 +54,13 @@ export default async function AsapHubPage() {
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
-      <p className="text-xs font-semibold uppercase tracking-[0.06em] text-muted-foreground">
-        <Link href="/safety/dashboard" className="hover:text-foreground">
-          ← SMS Dashboard
+      <Link href="/safety/dashboard" className={cn(linkCaps, "text-muted-foreground hover:text-foreground")}>
+          <span aria-hidden>‹</span> SMS Dashboard
         </Link>
-      </p>
-      <header className="mb-5 mt-2 flex flex-wrap items-end justify-between gap-3">
+      <header className="mb-6 mt-3 flex flex-wrap items-end justify-between gap-4 border-b border-border pb-5">
         <div>
           <h1 className="page-title">Aviation Safety Action Program (ASAP)</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
             Report filing · ERC review · FAA MOU · Decision tracking
           </p>
         </div>
@@ -82,7 +83,7 @@ export default async function AsapHubPage() {
         <>
           <DecisionCards counts={hub.counts} />
           <MouPanel docs={mou} />
-          <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">ASAP Reports</h2>
+          <h2 className="mb-3 eyebrow">ASAP Reports</h2>
           {hub.items.length === 0 ? (
             <div className="rounded-lg border border-border bg-card px-4 py-8 text-center">
               <p className="text-sm text-muted-foreground">No ASAP reports filed yet.</p>
@@ -112,11 +113,11 @@ const DECISION_TONE: Record<AsapDecision, string> = {
 
 function DecisionCards({ counts }: { counts: AsapHub["counts"] }) {
   return (
-    <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-5">
+    <div className="mb-6 grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-5">
       {ASAP_DECISIONS.map((d) => (
-        <div key={d} className="rounded-lg border border-border bg-card px-3 py-3">
-          <div className={`text-2xl font-bold tabular-nums ${DECISION_TONE[d]}`}>{counts[d] ?? 0}</div>
-          <div className="mt-0.5 text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
+        <div key={d} className="flex min-w-0 flex-col border-l-2 border-input py-1 pl-3">
+          <div className={`font-display text-[1.75rem] font-extrabold leading-none tabular-nums ${DECISION_TONE[d]}`}>{counts[d] ?? 0}</div>
+          <div className="eyebrow mt-1.5">
             {ASAP_DECISION_CARD_LABELS[d]}
           </div>
         </div>
@@ -238,15 +239,15 @@ function ReportCard({ report, review }: { report: SafetyReport; review: AsapRevi
 function DecisionBadge({ decision, reviewed }: { decision: AsapDecision; reviewed: boolean }) {
   const tone =
     decision === "pending"
-      ? "border-status-yellow/50 bg-status-yellow/15 text-status-yellow"
+      ? "text-status-yellow"
       : decision === "accepted" || decision === "accepted_ns"
-        ? "border-status-green/50 bg-status-green/10 text-status-green"
+        ? "text-status-green"
         : decision === "excluded"
-          ? "border-status-red/50 bg-status-red/10 text-status-red"
-          : "border-border bg-muted text-muted-foreground";
+          ? "text-status-red"
+          : "text-muted-foreground";
   return (
     <span
-      className={`inline-flex shrink-0 items-center rounded border px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider ${tone}`}
+      className={`status-mark shrink-0 text-[0.65rem] ${tone}`}
     >
       {reviewed ? ASAP_DECISION_LABELS[decision] : "Pending Review"}
     </span>

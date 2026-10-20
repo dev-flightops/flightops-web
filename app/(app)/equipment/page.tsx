@@ -382,7 +382,7 @@ function StationGroup({
       <h2 className="mb-2 text-sm font-semibold tracking-wide text-foreground">
         {stationLabel}
       </h2>
-      <div className="overflow-hidden rounded-lg border border-border bg-card">
+      <div className="overflow-x-auto rounded-lg border border-border bg-card">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-border text-left eyebrow">

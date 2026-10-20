@@ -69,10 +69,12 @@ function Pill({
     <Link
       href={href}
       aria-current={active ? "page" : undefined}
+      // A tail as a selectable mark (#84): the chosen one filled in the
+      // brand, the rest quiet; the list wraps, as tails can run long.
       className={
         active
-          ? "rounded-md border border-primary bg-primary/10 px-2 py-1 font-mono text-[0.65rem] font-semibold text-primary"
-          : "rounded-md border border-border bg-card px-2 py-1 font-mono text-[0.65rem] font-semibold text-muted-foreground hover:bg-accent hover:text-foreground"
+          ? "rounded-md bg-primary px-2 py-1 font-mono text-[0.68rem] font-semibold text-primary-foreground"
+          : "rounded-md border border-input px-2 py-1 font-mono text-[0.68rem] font-semibold text-muted-foreground hover:border-foreground hover:text-foreground"
       }
     >
       {label}

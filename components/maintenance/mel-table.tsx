@@ -38,7 +38,7 @@ export function MelTable({
 }) {
   if (items.length === 0) {
     return (
-      <div className="rounded-md border border-dashed border-border bg-card/40 px-4 py-8 text-center text-xs text-muted-foreground">
+      <div className="rounded-lg border border-border bg-card px-5 py-8 text-center text-xs text-muted-foreground">
         {emptyMessage}
       </div>
     );
@@ -46,10 +46,10 @@ export function MelTable({
 
   const now = Date.now();
   return (
-    <div className="overflow-hidden rounded-lg border border-border bg-card">
+    <div className="overflow-x-auto rounded-lg border border-border bg-card">
       <table className="w-full text-xs">
         <thead className="ff-thead">
-          <tr className="text-left text-[0.6rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+          <tr className="text-left eyebrow">
             {showAircraft && <th className="px-3 py-2">Aircraft</th>}
             <th className="px-3 py-2">ATA</th>
             <th className="px-3 py-2">Description</th>
@@ -150,10 +150,10 @@ function MelRow({
       <td className="px-3 py-2.5">
         <span
           className={cn(
-            "inline-flex items-center rounded px-1.5 py-0.5 text-[0.6rem] font-semibold uppercase tracking-[0.08em]",
+            "status-mark text-[0.6rem]",
             isClosed
-              ? "bg-muted text-muted-foreground"
-              : "bg-status-yellow/15 text-status-yellow",
+              ? "text-muted-foreground"
+              : "text-status-yellow",
           )}
         >
           {isClosed ? "Closed" : "Open"}

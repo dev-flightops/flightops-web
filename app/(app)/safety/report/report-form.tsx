@@ -136,7 +136,7 @@ export function ReportForm({ stations }: { stations: StationListItem[] }) {
         />
       </Field>
 
-      <label className="flex items-start gap-2 rounded-md border border-border bg-card/40 px-3 py-2.5">
+      <label className="flex items-start gap-2 rounded-md border border-border px-3 py-2.5">
         <input
           type="checkbox"
           name="is_anonymous"

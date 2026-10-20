@@ -33,14 +33,14 @@ export default async function NewSafetyReportPage({
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
-      <header className="mb-6">
-        <p className="text-xs font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+      <header className="mb-6 border-b border-border pb-5">
+        <p className="eyebrow">
           <Link href={returnTo ?? home} className="hover:text-foreground">
             {returnTo ? "← Back" : home === "/safety/reports" ? "← Safety Reports" : "← My Reports"}
           </Link>
         </p>
         <h1 className="mt-2 page-title">File Safety Report</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
           Anything that worried you: a hazard, a near miss, a fatigue concern, a suggestion. It goes
           straight to the safety team, and you can follow it under My Reports.
         </p>

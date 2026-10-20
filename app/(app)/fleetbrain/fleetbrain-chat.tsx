@@ -4,7 +4,6 @@ import { useRef, useState } from "react";
 
 import { askAction } from "./actions";
 import {
-  BrainMark,
   FleetBrainTranscript,
   type Turn,
 } from "./fleetbrain-transcript";
@@ -66,14 +65,11 @@ export function FleetBrainChat({ examples }: { examples: string[] }) {
       className="mx-auto flex max-w-4xl flex-col px-4 py-6 sm:px-6"
       style={{ minHeight: "calc(100vh - 140px)" }}
     >
-      <header className="mb-5 flex items-center gap-3">
-        <BrainMark size={36} />
-        <div>
-          <h1 className="page-title">FleetBrain</h1>
-          <p className="text-sm text-muted-foreground">
-            AI copilot — ask anything about your operation
-          </p>
-        </div>
+      <header className="mb-6 border-b border-border pb-5">
+        <h1 className="page-title">FleetBrain</h1>
+        <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
+          AI copilot — ask anything about your operation
+        </p>
       </header>
 
       <FleetBrainTranscript turns={turns} examples={examples} onPick={ask} />
@@ -98,12 +94,12 @@ export function FleetBrainChat({ examples }: { examples: string[] }) {
             autoComplete="off"
             maxLength={500}
             placeholder="Ask FleetBrain anything about your operation..."
-            className="flex-1 rounded-lg border border-border bg-card px-4 py-2.5 text-sm focus:border-primary focus:outline-none"
+            className="ff-input flex-1 rounded-lg px-4 py-2.5 text-sm"
           />
           <button
             type="submit"
             disabled={pending || !draft.trim()}
-            className="rounded-xl bg-primary px-5 py-2.5 text-white hover:bg-brand-dark disabled:opacity-40"
+            className="rounded-lg bg-primary px-5 py-2.5 text-white hover:bg-brand-dark disabled:opacity-40"
           >
             <span className="sr-only">{pending ? "Asking" : "Ask"}</span>
             <svg

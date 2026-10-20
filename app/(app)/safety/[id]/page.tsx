@@ -75,8 +75,8 @@ export default async function SafetyHazardDetailPage({
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
-      <header className="mb-6">
-        <p className="text-xs font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+      <header className="mb-6 border-b border-border pb-5">
+        <p className="eyebrow">
           <Link
             href={canTriage ? "/safety" : "/safety/mine"}
             className="hover:text-foreground"
@@ -90,7 +90,7 @@ export default async function SafetyHazardDetailPage({
             {HAZARD_CATEGORY_LABELS[hazard.category]}
           </span>
         </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
           Filed {new Date(hazard.created_at).toLocaleString()} —{" "}
           {hazard.is_anonymous && !hazard.reporter
             ? "Anonymous reporter"

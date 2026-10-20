@@ -98,12 +98,12 @@ export default async function DocumentDetailPage({
         </span>
       </nav>
 
-      <header className="mb-5 flex flex-col gap-3 border-b border-border pb-4 sm:flex-row sm:items-end sm:justify-between">
+      <header className="mb-5 flex flex-col gap-3 border-b border-border pb-5 sm:flex-row sm:items-end sm:justify-between">
         <div className="min-w-0">
-          <div className="text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
+          <div className="eyebrow mb-1">
             Document · {doc.category}
           </div>
-          <h1 className="mt-0.5 truncate page-title">
+          <h1 className="truncate page-title">
             {doc.title}
           </h1>
           {doc.description && (
@@ -164,7 +164,7 @@ function MetaStrip({
   versionCount: number;
 }) {
   return (
-    <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
+    <div className="mb-6 grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-4">
       <StatCard label="Versions" value={String(versionCount)} />
       <StatCard
         label="Current version"
@@ -188,17 +188,18 @@ function StatCard({
   small?: boolean;
 }) {
   return (
-    <div className="rounded-lg border border-border bg-card px-3 py-2">
+    // A figure on a rule (#84), as the app's stat strips draw one.
+    <div className="flex min-w-0 flex-col border-l-2 border-input py-1 pl-3">
       <div
         className={
-          "font-bold text-foreground " +
-          (small ? "truncate text-sm" : "text-lg")
+          "text-foreground " +
+          (small ? "truncate text-sm font-semibold" : "font-display text-xl font-extrabold leading-none tabular-nums")
         }
         title={value}
       >
         {value}
       </div>
-      <div className="mt-0.5 text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
+      <div className="eyebrow mt-1.5">
         {label}
       </div>
     </div>
@@ -221,7 +222,7 @@ function VersionsCard({
   return (
     <section>
       <div className="mb-2 flex items-baseline gap-2 px-1">
-        <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+        <h2 className="eyebrow">
           Version History
         </h2>
         <span className="text-xs text-muted-foreground">

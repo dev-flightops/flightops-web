@@ -88,7 +88,7 @@ export function MxTranscript({
 }) {
   if (turns.length === 0) {
     return (
-      <div className="rounded-lg border border-dashed border-border bg-card/40 px-5 py-10 text-center">
+      <div className="rounded-lg border border-border bg-card px-5 py-8 text-center">
         <p className="text-sm font-semibold text-foreground">
           Ask about a squawk, a recurring defect, or an aircraft that is down.
         </p>
@@ -104,7 +104,7 @@ export function MxTranscript({
               key={e}
               type="button"
               onClick={() => onExample(e)}
-              className="rounded-full border border-border bg-card px-3 py-1.5 text-xs text-foreground hover:border-primary"
+              className="rounded-md border border-input px-3 py-1.5 text-xs text-foreground hover:border-foreground"
             >
               {e}
             </button>
@@ -155,7 +155,7 @@ export function MxTranscript({
           ) : (
             <p
               role="status"
-              className="rounded-lg border border-border bg-card/40 px-4 py-3 text-sm text-muted-foreground"
+              className="rounded-lg border border-border px-4 py-3 text-sm text-muted-foreground"
             >
               Reading the maintenance records…
             </p>

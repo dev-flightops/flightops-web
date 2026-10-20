@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import { linkCaps } from "@/components/ff/controls";
+import { cn } from "@/lib/utils";
 import { ApiError } from "@/lib/api/client";
 import { listStations } from "@/lib/api/ground";
 import type { StationListItem } from "@/lib/api/types";
@@ -26,16 +28,14 @@ export default async function IncidentReportPage() {
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-8 sm:px-6">
-      <header className="mb-6">
-        <p className="text-xs font-semibold uppercase tracking-[0.06em] text-muted-foreground">
-          <Link href="/safety/incidents" className="hover:text-foreground">
-            ← Incidents
-          </Link>
-        </p>
+      <header className="mb-6 border-b border-border pb-5">
+        <Link href="/safety/incidents" className={cn(linkCaps, "text-muted-foreground hover:text-foreground")}>
+          <span aria-hidden>‹</span> Incidents
+        </Link>
         <h1 className="mt-2 page-title">
           File an Incident
         </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
           Report an event that has already occurred. Injury + damage
           answers are required so the Safety Officer sees the impact at
           a glance — write &ldquo;none&rdquo; if there weren&rsquo;t any.

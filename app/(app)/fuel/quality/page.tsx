@@ -148,7 +148,7 @@ export default async function FuelQualityPage({
       )}
 
       {tests.length > 0 && (
-        <section className="overflow-hidden rounded-lg border border-border bg-card">
+        <section className="overflow-x-auto rounded-lg border border-border bg-card">
           <table className="w-full text-sm">
             <thead className="ff-thead">
               <tr>
