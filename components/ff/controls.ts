@@ -7,13 +7,15 @@ import { cn } from "@/lib/utils";
  * buttons that are solid or outlined — never pills.
  */
 
-/** The group: one border around every segment. */
-export const segmentGroup = "inline-flex items-stretch overflow-hidden rounded-md border border-input";
+/** The group: one border around every segment. On a narrow screen a long
+ *  group scrolls inside its frame rather than widening the page (#83). */
+export const segmentGroup =
+  "inline-flex max-w-full items-stretch overflow-x-auto rounded-md border border-input";
 
 /** One segment; `active` fills it with the brand. */
 export function segment(active: boolean): string {
   return cn(
-    "inline-flex items-center px-3 py-1.5 text-[0.68rem] font-bold uppercase tracking-[0.1em] transition-colors",
+    "inline-flex shrink-0 items-center whitespace-nowrap px-3 py-1.5 text-[0.68rem] font-bold uppercase tracking-[0.1em] transition-colors",
     "border-l border-input first:border-l-0",
     "focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary",
     active ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-accent hover:text-foreground",

@@ -30,7 +30,7 @@ export default async function PortalPage() {
     const status = err instanceof ApiError ? err.status : 0;
     return (
       <Shell>
-        <div className="rounded-lg border border-status-red/40 bg-status-red/5 p-4">
+        <div className="notice notice-red">
           <p className="text-sm text-status-red">
             {status === 401
               ? "Your session expired — please sign in again."
@@ -72,7 +72,7 @@ export default async function PortalPage() {
         <div className="overflow-x-auto rounded-lg border border-border bg-card">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-border text-left text-[0.65rem] uppercase tracking-[0.06em] text-muted-foreground">
+              <tr className="ff-thead">
                 <th className="px-4 py-3">Reference</th>
                 <th className="px-4 py-3">Route</th>
                 <th className="px-4 py-3">Date</th>
@@ -133,12 +133,12 @@ function Shell({
 }) {
   return (
     <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
-      <h1 className="page-title text-foreground">
-        My Charter Flights
-      </h1>
-      <p className="mb-6 mt-1 text-sm text-muted-foreground">
-        {name ?? "Your charter flights with Peregrine Flight Ops"}
-      </p>
+      <header className="mb-6 border-b border-border pb-5">
+        <h1 className="page-title text-balance">My Charter Flights</h1>
+        <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
+          {name ?? "Your charter flights with Peregrine Flight Ops"}
+        </p>
+      </header>
       {children}
     </div>
   );

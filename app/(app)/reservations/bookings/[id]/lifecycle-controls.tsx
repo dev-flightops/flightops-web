@@ -134,7 +134,7 @@ function ConfirmForm({ bookingId }: { bookingId: string }) {
         <button
           type="submit"
           disabled={pending}
-          className="rounded-md border border-status-green bg-status-green/15 px-3 py-2 text-xs font-semibold text-status-green hover:bg-status-green/15 disabled:opacity-60"
+          className="btn-caps rounded-md border px-3 py-2 disabled:opacity-60 border-status-green/60 text-[0.72rem] text-status-green hover:border-status-green"
         >
           {pending ? "Confirming…" : "Confirm"}
         </button>
@@ -208,7 +208,7 @@ function CancelForm({
           <button
             type="submit"
             disabled={pending || reason.trim() === "" || !isConfirmed}
-            className="rounded-md border border-status-red/60 bg-status-red/15 px-3 py-2 text-xs font-semibold text-status-red hover:bg-status-red/15 disabled:opacity-60"
+            className="btn-caps rounded-md border px-3 py-2 disabled:opacity-60 border-status-red/60 text-[0.72rem] text-status-red hover:border-status-red"
           >
             {pending ? "Cancelling…" : "Cancel Booking"}
           </button>

@@ -1,4 +1,7 @@
 import Link from "next/link";
+
+import { linkCaps } from "@/components/ff/controls";
+import { cn } from "@/lib/utils";
 import { notFound } from "next/navigation";
 
 import { ApiError } from "@/lib/api/client";
@@ -39,17 +42,17 @@ export default async function PortalCharterPage({
     <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
       <Link
         href="/portal"
-        className="mb-4 inline-block text-sm text-muted-foreground hover:text-foreground"
+        className={cn(linkCaps, "text-muted-foreground hover:text-foreground mb-4")}
       >
-        ← My flights
+        <span aria-hidden>‹</span> My flights
       </Link>
 
-      <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
+      <div className="mb-6 flex flex-wrap items-start justify-between gap-4 border-b border-border pb-5">
         <div>
-          <h1 className="font-mono page-title text-foreground">
+          <h1 className="page-title text-balance">
             {charter.reference}
           </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
             {charter.origin_icao} → {charter.destination_icao} ·{" "}
             {formatDate(charter.requested_date)}
             {charter.requested_time ? ` · ${charter.requested_time}` : ""}
@@ -87,7 +90,7 @@ export default async function PortalCharterPage({
           </h2>
           <div className="flex items-baseline justify-between border-t border-border pt-2">
             <span className="text-sm text-muted-foreground">Total</span>
-            <span className="text-lg font-bold text-status-green">
+            <span className="font-display text-xl font-extrabold tabular-nums text-foreground">
               {formatQuote(charter.quoted_total_cents)}
             </span>
           </div>

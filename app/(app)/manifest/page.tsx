@@ -162,10 +162,10 @@ export default async function FlightSchedulePage({
 
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 py-8">
-      <header className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <header className="mb-6 flex flex-col gap-4 border-b border-border pb-5 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="page-title">Flight Schedule</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
             Scheduling, manifest, and multi-stop routing
           </p>
         </div>
@@ -188,7 +188,7 @@ export default async function FlightSchedulePage({
         </div>
       </header>
 
-      <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div className="mb-5 grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-4">
         <StatCard
           value={String(todayFlights.length)}
           label="Today's Flights"
@@ -233,7 +233,7 @@ export default async function FlightSchedulePage({
             <select
               name="status"
               defaultValue={statusFilter ?? ""}
-              className="rounded-md border border-border bg-background px-2 py-1.5 text-xs"
+              className="ff-input px-2 py-1.5 text-xs w-auto"
             >
               <option value="">All Status</option>
               {STATUSES.map((s) => (
@@ -297,17 +297,17 @@ function StatCard({
   small?: boolean;
 }) {
   return (
-    <div className="rounded-lg border border-border bg-card px-4 py-3">
+    <div className="flex min-w-0 flex-col border-l-2 border-input py-1 pl-3">
       <div
         className={
-          (small ? "text-sm font-semibold" : "text-2xl font-bold ") +
+          (small ? "text-sm font-semibold" : "font-display text-[1.75rem] font-extrabold leading-none tabular-nums") +
           " " +
           (valueClass || "text-foreground")
         }
       >
         {value}
       </div>
-      <div className="mt-0.5 text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
+      <div className="eyebrow mt-1.5">
         {label}
       </div>
     </div>
@@ -404,17 +404,17 @@ function DayBlock({
 
 function FlightStatusBadge({ status }: { status: FlightStatus }) {
   const map: Record<FlightStatus, [string, string]> = {
-    scheduled: ["border-border bg-muted text-muted-foreground", "Scheduled"],
+    scheduled: ["text-muted-foreground", "Scheduled"],
     released: [
-      "border-status-blue/40 bg-status-blue/10 text-status-blue",
+      "text-status-blue",
       "Released",
     ],
     completed: [
-      "border-status-green/40 bg-status-green/10 text-status-green",
+      "text-status-green",
       "Completed",
     ],
     cancelled: [
-      "border-status-yellow/40 bg-status-yellow/10 text-status-yellow",
+      "text-status-yellow",
       "Cancelled",
     ],
   };
@@ -422,7 +422,7 @@ function FlightStatusBadge({ status }: { status: FlightStatus }) {
   return (
     <span
       className={
-        "rounded border px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider " +
+        "status-mark " +
         cls
       }
     >

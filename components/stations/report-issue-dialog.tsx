@@ -108,7 +108,7 @@ export function ReportIssueDialog({
                 maxLength={300}
                 placeholder="Belt loader #2 hydraulics weak"
                 aria-invalid={fieldError("title") ? "true" : undefined}
-                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none aria-[invalid=true]:border-status-red"
+                className="ff-input px-3 py-2 text-sm aria-[invalid=true]:border-status-red"
               />
               {fieldError("title") && (
                 <p className="field-error">
@@ -131,7 +131,7 @@ export function ReportIssueDialog({
                 rows={4}
                 placeholder="What's happening, when did you notice, who's affected."
                 aria-invalid={fieldError("description") ? "true" : undefined}
-                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none aria-[invalid=true]:border-status-red"
+                className="ff-input px-3 py-2 text-sm aria-[invalid=true]:border-status-red"
               />
               {fieldError("description") && (
                 <p className="field-error">
@@ -152,7 +152,7 @@ export function ReportIssueDialog({
                   id="category"
                   name="category"
                   defaultValue="other"
-                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
+                  className="ff-input px-3 py-2 text-sm"
                 >
                   {CATEGORIES.map((c) => (
                     <option key={c.value} value={c.value}>
@@ -172,7 +172,7 @@ export function ReportIssueDialog({
                   id="priority"
                   name="priority"
                   defaultValue="normal"
-                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
+                  className="ff-input px-3 py-2 text-sm"
                 >
                   {PRIORITIES.map((p) => (
                     <option key={p.value} value={p.value}>
@@ -195,7 +195,7 @@ export function ReportIssueDialog({
                 name="assigned_to"
                 maxLength={200}
                 placeholder="e.g. Marc"
-                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
+                className="ff-input px-3 py-2 text-sm"
               />
             </div>
 

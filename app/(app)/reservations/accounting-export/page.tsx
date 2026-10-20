@@ -96,7 +96,7 @@ export default async function AccountingExportPage({
   if (forbidden) {
     return (
       <div className="mx-auto max-w-screen-xl px-4 sm:px-6 py-8">
-        <header className="mb-6">
+        <header className="mb-6 border-b border-border pb-5">
           <PageTitle />
         </header>
         <p
@@ -114,7 +114,7 @@ export default async function AccountingExportPage({
 
   return (
     <div className="mx-auto max-w-screen-xl px-4 sm:px-6 py-8">
-      <header className="mb-6 flex items-start justify-between gap-3">
+      <header className="mb-6 flex flex-wrap items-start justify-between gap-4 border-b border-border pb-5">
         <PageTitle />
         {rows.length > 0 ? (
           <ExportCsvButton rows={rows} filename={csvFilename(start, end)} />
@@ -227,7 +227,7 @@ function Activity({
                     </td>
                     <td className="whitespace-nowrap px-4 py-3 text-xs">
                       {r.flight_type ? (
-                        <span className="rounded border border-border bg-muted px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase text-muted-foreground">
+                        <span className="eyebrow">
                           {r.flight_type}
                         </span>
                       ) : (
@@ -318,7 +318,7 @@ function PageTitle() {
   return (
     <div>
       <h1 className="page-title">Accounting Export</h1>
-      <p className="mt-1 text-sm text-muted-foreground">
+      <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
         Review completed flight activity, then export a CSV for your
         accounting software.
       </p>
@@ -338,9 +338,9 @@ function StatTile({
   const valueCls =
     color === "blue" ? "text-status-blue" : "text-foreground";
   return (
-    <div className="rounded-lg border border-border bg-card px-4 py-4 text-center">
-      <p className={"text-2xl font-bold " + valueCls}>{value}</p>
-      <p className="mt-1 eyebrow">
+    <div className="flex min-w-0 flex-col border-l-2 border-input py-1 pl-3">
+      <p className={"font-display text-[1.75rem] font-extrabold leading-none tabular-nums " + valueCls}>{value}</p>
+      <p className="eyebrow mt-1.5">
         {label}
       </p>
     </div>

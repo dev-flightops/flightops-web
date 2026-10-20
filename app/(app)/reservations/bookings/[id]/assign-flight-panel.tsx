@@ -102,12 +102,7 @@ export function AssignFlightPanel({
       {message ? (
         <p
           role={failed ? "alert" : "status"}
-          className={
-            "mt-2 rounded-md px-3 py-1.5 text-xs " +
-            (failed
-              ? "bg-status-red/10 text-status-red"
-              : "bg-status-green/10 text-status-green")
-          }
+          className={"notice mt-2 " + (failed ? "notice-red" : "notice-green")}
         >
           {message}
         </p>

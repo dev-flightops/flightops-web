@@ -93,19 +93,19 @@ export default async function RamperPage() {
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
-      <header className="mb-6 flex items-end justify-between gap-4">
+      <header className="mb-6 flex flex-wrap items-end justify-between gap-4 border-b border-border pb-5">
         <div>
           <h1 className="page-title">Ramper</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
             Your worklist — fuel orders, departing aircraft, and squawks
             that need attention right now
           </p>
         </div>
-        <div className="rounded-md border border-border bg-card px-4 py-2 text-center">
-          <div className="text-2xl font-bold leading-none text-foreground">
+        <div className="flex min-w-0 flex-col border-l-2 border-input py-1 pl-3">
+          <div className="font-display text-[1.75rem] font-extrabold leading-none tabular-nums text-foreground">
             {totalTasks}
           </div>
-          <div className="mt-1 eyebrow">
+          <div className="eyebrow mt-1.5">
             Open tasks
           </div>
         </div>
@@ -239,7 +239,7 @@ function Section({
       <header className="mb-2 flex items-center justify-between">
         <h2 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.06em] text-foreground">
           {title}
-          <span className="rounded-sm border border-border bg-muted px-1.5 py-0.5 text-[0.55rem] font-semibold text-muted-foreground">
+          <span className="eyebrow">
             {count}
           </span>
         </h2>
@@ -251,7 +251,7 @@ function Section({
         </Link>
       </header>
       {count === 0 ? (
-        <p className="rounded-md border border-dashed border-border bg-card/40 px-4 py-3 text-xs text-muted-foreground">
+        <p className="notice notice-gray text-muted-foreground">
           {emptyHint}
         </p>
       ) : (
@@ -278,12 +278,12 @@ function TaskRow({
 }) {
   const ctaClass =
     tone === "yellow"
-      ? "border-status-yellow/40 bg-status-yellow/10 text-status-yellow"
+      ? "text-status-yellow"
       : tone === "blue"
-        ? "border-status-blue/40 bg-status-blue/10 text-status-blue"
+        ? "text-status-blue"
         : tone === "red"
-          ? "border-status-red/40 bg-status-red/10 text-status-red"
-          : "border-border bg-muted/60 text-foreground";
+          ? "text-status-red"
+          : "text-primary";
   return (
     <li className="border-b border-border last:border-b-0">
       <Link
@@ -295,9 +295,9 @@ function TaskRow({
           <div className="text-[0.7rem] text-muted-foreground">{secondary}</div>
         </div>
         <span
-          className={`shrink-0 rounded-md border px-2 py-1 text-[0.65rem] font-semibold ${ctaClass}`}
+          className={`shrink-0 text-[0.68rem] font-bold uppercase tracking-[0.1em] ${ctaClass}`}
         >
-          {cta} →
+          {cta} <span aria-hidden>›</span>
         </span>
       </Link>
     </li>

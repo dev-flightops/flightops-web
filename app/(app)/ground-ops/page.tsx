@@ -71,11 +71,11 @@ export default async function GroundOpsHubPage() {
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
-      <header className="mb-6">
+      <header className="mb-6 border-b border-border pb-5">
         <h1 className="page-title">
           Ground Operations
         </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
           Ramp operations, station management, and ground support equipment
         </p>
       </header>
@@ -89,7 +89,7 @@ export default async function GroundOpsHubPage() {
         </div>
       )}
 
-      <section className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+      <section className="mb-6 grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-3 lg:grid-cols-6">
         <StatTile label="Flights Today" value={flightsToday} />
         <StatTile label="Stations" value={stationCount} />
         <StatTile
@@ -182,11 +182,11 @@ function StatTile({
         ? "text-status-red"
         : "text-foreground";
   return (
-    <div className="rounded-lg border border-border bg-card px-4 py-3 text-center">
-      <div className={`text-2xl font-bold leading-none ${valueClass}`}>
+    <div className="flex min-w-0 flex-col border-l-2 border-input py-1 pl-3">
+      <div className={`font-display text-[1.75rem] font-extrabold leading-none tabular-nums ${valueClass}`}>
         {value}
       </div>
-      <div className="mt-1.5 eyebrow">
+      <div className="eyebrow mt-1.5">
         {label}
       </div>
     </div>
@@ -238,8 +238,8 @@ function SectionLinkRow({ link }: { link: SectionLink }) {
         <span
           className={
             link.badge.tone === "red"
-              ? "rounded-md border border-status-red/40 bg-status-red/10 px-2 py-0.5 text-[0.65rem] font-semibold text-status-red"
-              : "rounded-md border border-status-yellow/40 bg-status-yellow/10 px-2 py-0.5 text-[0.65rem] font-semibold text-status-yellow"
+              ? "status-mark text-status-red"
+              : "status-mark text-status-yellow"
           }
         >
           {link.badge.text}
@@ -247,7 +247,7 @@ function SectionLinkRow({ link }: { link: SectionLink }) {
       ) : isLive ? (
         <span className="text-xs text-muted-foreground">→</span>
       ) : (
-        <span className="rounded-md border border-border bg-card/60 px-2 py-0.5 text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+        <span className="eyebrow">
           Soon
         </span>
       )}
@@ -255,7 +255,7 @@ function SectionLinkRow({ link }: { link: SectionLink }) {
   );
 
   const baseClass =
-    "flex items-center justify-between rounded-md border border-border bg-card/40 px-3 py-2.5 text-sm text-foreground";
+    "flex items-center justify-between rounded-md border border-border px-3 py-2.5 text-sm text-foreground";
 
   if (isLive) {
     return (

@@ -41,7 +41,7 @@ export function ResolveIssueButton({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="rounded-md border border-status-green/40 bg-status-green/10 px-2.5 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.06em] text-status-green hover:bg-status-green/15"
+        className="btn-caps rounded-md border px-2.5 py-1 border-status-green/60 text-[0.72rem] text-status-green hover:border-status-green"
       >
         Resolve
       </button>
@@ -81,7 +81,7 @@ export function ResolveIssueButton({
                 required
                 rows={4}
                 placeholder="What was done to clear this issue?"
-                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-status-green focus:outline-none"
+                className="ff-input px-3 py-2 text-sm focus:border-status-green"
               />
             </div>
 

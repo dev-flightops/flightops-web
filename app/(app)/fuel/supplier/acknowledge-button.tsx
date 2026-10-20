@@ -34,7 +34,7 @@ export function AcknowledgeButton({
           setError(null);
           setOpen(true);
         }}
-        className="rounded-md border border-status-green/40 bg-status-green/10 px-3 py-1 text-[0.65rem] font-semibold text-status-green hover:bg-status-green/15"
+        className="btn-caps rounded-md border px-3 py-1 border-status-green/60 text-[0.72rem] text-status-green hover:border-status-green"
       >
         Acknowledge
       </button>
@@ -57,7 +57,7 @@ export function AcknowledgeButton({
           maxLength={200}
           disabled={pending}
           onChange={(e) => setName(e.target.value)}
-          className="mt-0.5 w-full rounded border border-border bg-background px-2 py-1 text-xs disabled:opacity-60"
+          className="ff-input mt-0.5 px-2 py-1 text-xs"
           placeholder="e.g. Sarah at AvFuel"
         />
       </label>
@@ -71,7 +71,7 @@ export function AcknowledgeButton({
           maxLength={500}
           disabled={pending}
           onChange={(e) => setNote(e.target.value)}
-          className="mt-0.5 w-full rounded border border-border bg-background px-2 py-1 text-xs disabled:opacity-60"
+          className="ff-input mt-0.5 px-2 py-1 text-xs"
           placeholder="e.g. Truck dispatched, ETA 30min"
         />
       </label>

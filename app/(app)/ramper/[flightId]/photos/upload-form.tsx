@@ -58,7 +58,7 @@ export function UploadRampPhotoForm({ flightId }: { flightId: string }) {
           name="photo_type"
           defaultValue="secured_load"
           disabled={pending}
-          className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/30 disabled:opacity-60"
+          className="ff-input rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-primary/30"
         >
           {PHOTO_TYPES.map((t) => (
             <option key={t.value} value={t.value}>
@@ -83,14 +83,14 @@ export function UploadRampPhotoForm({ flightId }: { flightId: string }) {
             capture="environment"
             required
             disabled={pending}
-            className="w-full rounded-xl border border-border bg-background px-2 py-2 text-xs disabled:opacity-60"
+            className="w-full rounded-lg border border-border bg-background px-2 py-2 text-xs disabled:opacity-60"
           />
         </div>
         <button
           type="submit"
           disabled={pending}
           aria-label="Upload photo"
-          className="flex h-[52px] w-[52px] flex-shrink-0 items-center justify-center rounded-2xl border-2 border-primary/30 bg-primary/10 text-primary transition-colors hover:bg-primary/15 active:bg-primary/35 disabled:opacity-50"
+          className="flex h-[52px] w-[52px] flex-shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground transition-colors hover:bg-brand-dark disabled:opacity-50"
         >
           {pending ? (
             <span className="text-[0.55rem] font-bold uppercase">Sending</span>
@@ -115,7 +115,7 @@ export function UploadRampPhotoForm({ flightId }: { flightId: string }) {
         name="notes"
         placeholder="Notes (optional)"
         disabled={pending}
-        className="w-full rounded-xl border border-border bg-background px-3 py-2 text-xs outline-none focus:border-primary focus:ring-2 focus:ring-primary/30 disabled:opacity-60"
+        className="ff-input rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-primary/30"
       />
 
       {(sizeError || state.status === "error") && (

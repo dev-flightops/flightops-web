@@ -42,10 +42,10 @@ export default async function StationsPage() {
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
-      <header className="mb-6 flex flex-wrap items-end justify-between gap-3">
+      <header className="mb-6 flex flex-wrap items-end justify-between gap-4 border-b border-border pb-5">
         <div>
           <h1 className="page-title">Stations</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
             ICAO master list — runway data, reporting flag, and the
             station-issue tracker.
           </p>
@@ -88,7 +88,7 @@ function StationsTable({ stations }: { stations: StationListItem[] }) {
     <div className="overflow-hidden rounded-lg border border-border bg-card">
       <table className="w-full text-sm">
         <thead>
-          <tr className="border-b border-border text-left text-[0.6rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+          <tr className="border-b border-border text-left eyebrow">
             <th className="px-4 py-3">ICAO</th>
             <th className="px-4 py-3">Name</th>
             <th className="px-4 py-3">Longest Runway</th>
@@ -120,11 +120,11 @@ function StationsTable({ stations }: { stations: StationListItem[] }) {
               </td>
               <td className="px-4 py-3 text-center">
                 {s.has_reporting_function ? (
-                  <span className="rounded-md border border-status-green/40 bg-status-green/10 px-2 py-0.5 text-[0.65rem] font-semibold text-status-green">
+                  <span className="status-mark text-status-green">
                     YES
                   </span>
                 ) : (
-                  <span className="rounded-md border border-status-red/40 bg-status-red/10 px-2 py-0.5 text-[0.65rem] font-semibold text-status-red">
+                  <span className="status-mark text-status-red">
                     NO
                   </span>
                 )}
@@ -163,12 +163,12 @@ function RunwayCell({ station }: { station: StationListItem }) {
       )}
       {len.toLocaleString()} × {width} ft
       {len < 2500 && (
-        <span className="ml-2 rounded-md border border-status-red/40 bg-status-red/10 px-1.5 py-0.5 text-[0.6rem] font-semibold text-status-red">
+        <span className="status-mark ml-2 text-status-red">
           SHORT
         </span>
       )}
       {len >= 2500 && len < 4000 && (
-        <span className="ml-2 rounded-md border border-status-yellow/40 bg-status-yellow/10 px-1.5 py-0.5 text-[0.6rem] font-semibold text-status-yellow">
+        <span className="status-mark ml-2 text-status-yellow">
           CAUTION
         </span>
       )}
@@ -182,20 +182,20 @@ function SourceCell({ station }: { station: StationListItem }) {
   }
   if (station.runway_source === "faa_api") {
     return (
-      <span className="rounded-md border border-border bg-muted px-2 py-0.5 text-[0.65rem] font-semibold text-muted-foreground">
+      <span className="eyebrow">
         FAA API
       </span>
     );
   }
   if (station.runway_source === "manual") {
     return (
-      <span className="rounded-md border border-status-green/40 bg-status-green/10 px-2 py-0.5 text-[0.65rem] font-semibold text-status-green">
+      <span className="status-mark text-status-green">
         Manual
       </span>
     );
   }
   return (
-    <span className="rounded-md border border-border bg-card/60 px-2 py-0.5 text-[0.65rem] font-semibold text-muted-foreground">
+    <span className="eyebrow">
       Seeded
     </span>
   );
@@ -206,7 +206,7 @@ function IssueChip({ count }: { count: number }) {
     return <span className="text-xs text-muted-foreground">—</span>;
   }
   return (
-    <span className="rounded-md border border-status-yellow/40 bg-status-yellow/10 px-2 py-0.5 text-[0.65rem] font-semibold text-status-yellow">
+    <span className="status-mark text-status-yellow">
       {count} open
     </span>
   );

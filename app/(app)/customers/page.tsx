@@ -52,10 +52,10 @@ export default async function CustomersListPage({
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
-      <header className="mb-6 flex flex-wrap items-start justify-between gap-3">
+      <header className="mb-6 flex flex-wrap items-start justify-between gap-4 border-b border-border pb-5">
         <div>
           <h1 className="page-title">Customers</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
             Individual · Corporate · Government · Non-Profit
           </p>
         </div>
@@ -194,7 +194,7 @@ function CustomerTable({
                 </td>
                 <td className="whitespace-nowrap px-4 py-3">
                   {c.archived_at ? (
-                    <span className="rounded border border-border bg-muted px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider text-muted-foreground">
+                    <span className="eyebrow">
                       Archived
                     </span>
                   ) : (
@@ -216,7 +216,7 @@ function CustomerTable({
           </tbody>
         </table>
       </div>
-      <footer className="border-t border-border px-4 py-2 text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
+      <footer className="eyebrow border-t border-border px-4 py-2">
         {total} customer{total === 1 ? "" : "s"}
       </footer>
     </div>
@@ -226,16 +226,16 @@ function CustomerTable({
 function CustomerTypePill({ type }: { type: CustomerType }) {
   const cls =
     type === "corporate"
-      ? "border-status-blue/40 bg-status-blue/10 text-status-blue"
+      ? "text-status-blue"
       : type === "government"
-        ? "border-status-purple/40 bg-status-purple/10 text-status-purple"
+        ? "text-status-purple"
         : type === "non_profit"
-          ? "border-status-green/40 bg-status-green/10 text-status-green"
-          : "border-border bg-muted text-muted-foreground";
+          ? "text-status-green"
+          : "text-muted-foreground";
   return (
     <span
       className={
-        "rounded border px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider " +
+        "status-mark " +
         cls
       }
     >

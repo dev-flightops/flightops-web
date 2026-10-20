@@ -98,9 +98,9 @@ export default async function RamperPhotosPage({
       </Link>
 
       <div
-        className="mb-3 rounded-2xl border-2 border-border bg-card p-4"
+        className="mb-3 rounded-lg border border-border bg-card p-4"
         style={{
-          borderLeftWidth: 5,
+          borderLeftWidth: 3,
           borderLeftColor: flight.status === "completed"
             ? "rgb(var(--status-blue))"
             : "rgb(var(--status-green))",
@@ -121,7 +121,7 @@ export default async function RamperPhotosPage({
           </div>
           <span
             className={
-              "rounded-lg px-2.5 py-1 text-[0.7rem] font-bold uppercase tracking-[0.04em] " +
+              "status-mark text-[0.7rem] " +
               statusBadgeClass(flight.status)
             }
           >
@@ -145,11 +145,11 @@ export default async function RamperPhotosPage({
         Photos ({photos.length})
       </div>
 
-      <div className="rounded-2xl border-2 border-border bg-card p-4">
+      <div className="rounded-lg border border-border bg-card p-4">
         {canUpload ? (
           <UploadRampPhotoForm flightId={flightId} />
         ) : (
-          <p className="rounded-md border border-border bg-card px-3 py-2 text-xs text-muted-foreground">
+          <p className="notice notice-gray text-muted-foreground">
             Ground Ops, dispatchers, the Chief Pilot, the Director of
             Operations or an Exec Admin upload ramp photos.
           </p>
@@ -221,13 +221,13 @@ export default async function RamperPhotosPage({
 function statusBadgeClass(status: string): string {
   switch (status) {
     case "completed":
-      return "bg-status-blue/15 text-status-blue";
+      return "text-status-blue";
     case "released":
-      return "bg-status-yellow/15 text-status-yellow";
+      return "text-status-yellow";
     case "cancelled":
-      return "bg-status-red/15 text-status-red";
+      return "text-status-red";
     default:
-      return "bg-status-green/15 text-status-green";
+      return "text-status-green";
   }
 }
 

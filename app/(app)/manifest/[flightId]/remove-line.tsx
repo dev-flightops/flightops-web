@@ -49,7 +49,7 @@ export function RemoveLine({
       <button
         type="submit"
         disabled={pending}
-        className="rounded border border-status-red/40 bg-status-red/10 px-2 py-0.5 text-xs font-semibold text-status-red disabled:opacity-60"
+        className="status-mark disabled:opacity-60 text-status-red"
       >
         Remove
       </button>

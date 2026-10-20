@@ -46,7 +46,7 @@ export function LockManifestButton({ flightId, flightNumber }: { flightId: strin
         <button
           type="button"
           onClick={() => setAsking(true)}
-          className="rounded-md border border-status-yellow/40 bg-status-yellow/10 px-3 py-1.5 text-xs font-semibold text-status-yellow hover:bg-status-yellow/20"
+          className="btn-caps rounded-md border px-3 py-1.5 border-status-yellow/60 text-[0.72rem] text-status-yellow hover:border-status-yellow"
         >
           Lock Manifest
         </button>
@@ -58,7 +58,7 @@ export function LockManifestButton({ flightId, flightNumber }: { flightId: strin
     <form
       action={formAction}
       onSubmit={() => setAsking(false)}
-      className="flex max-w-md flex-col items-end gap-2 rounded-md border border-status-yellow/40 bg-status-yellow/10 p-3"
+      className="notice notice-yellow flex max-w-md flex-col items-end gap-2"
     >
       <input type="hidden" name="flight_id" value={flightId} />
       <p className="text-right text-xs text-foreground">

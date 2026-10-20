@@ -115,6 +115,19 @@ const REDESIGNED = [
   "app/(app)/profitability/",
   "components/dashboards/",
   "components/reports/",
+  // Wave D, Reservations and ground (#83).
+  "app/(app)/reservations/",
+  "app/(app)/customers/",
+  "app/(app)/portal/",
+  "app/(app)/fuel/",
+  "app/(app)/manifest/",
+  "app/(app)/ground-ops/",
+  "app/(app)/stations/",
+  "app/(app)/ramper/",
+  "app/(app)/equipment/",
+  "components/fuel/",
+  "components/stations/",
+  "components/equipment/",
 ];
 
 describe("theme guards", () => {

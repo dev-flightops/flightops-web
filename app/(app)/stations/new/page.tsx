@@ -1,4 +1,7 @@
 import Link from "next/link";
+
+import { linkCaps } from "@/components/ff/controls";
+import { cn } from "@/lib/utils";
 import { redirect } from "next/navigation";
 
 import { auth } from "@/auth";
@@ -21,11 +24,11 @@ export default async function NewStationPage() {
     <div className="mx-auto max-w-2xl px-4 py-8 sm:px-6">
       <Link
         href="/stations"
-        className="mb-4 inline-block text-sm text-muted-foreground hover:text-foreground hover:underline"
+        className={cn(linkCaps, "text-muted-foreground hover:text-foreground mb-4")}
       >
-        ← Stations
+        <span aria-hidden>‹</span> Stations
       </Link>
-      <h1 className="mb-6 page-title">Add Station</h1>
+      <h1 className="page-title mb-6 border-b border-border pb-5">Add Station</h1>
       <div className="rounded-lg border border-border bg-card p-4">
         <NewStationForm />
       </div>

@@ -35,16 +35,15 @@ const PORTAL_STATUS_LABELS: Record<CharterStatus, string> = {
 export function StatusBadge({ status }: { status: CharterStatus }) {
   const tone =
     status === "completed"
-      ? "bg-status-green/15 text-status-green"
+      ? "text-status-green"
       : status === "confirmed" || status === "dispatched"
-        ? "bg-status-yellow/15 text-status-yellow"
+        ? "text-status-yellow"
         : status === "cancelled"
-          ? "bg-status-red/15 text-status-red"
-          : "bg-muted text-muted-foreground";
+          ? "text-status-red"
+          : "text-muted-foreground";
+  // A status mark (#83): the word in its colour behind a square.
   return (
-    <span
-      className={`inline-flex rounded px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-[0.06em] ${tone}`}
-    >
+    <span className={`status-mark ${tone}`}>
       {PORTAL_STATUS_LABELS[status] ?? status}
     </span>
   );

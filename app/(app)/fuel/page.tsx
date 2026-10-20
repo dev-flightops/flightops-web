@@ -39,9 +39,9 @@ export default async function FuelLandingPage() {
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
-      <header className="mb-6">
+      <header className="mb-6 border-b border-border pb-5">
         <h1 className="page-title">Fuel Management</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
           Order fuel, manage suppliers, track pricing, view orders across all
           bases
         </p>
@@ -56,7 +56,7 @@ export default async function FuelLandingPage() {
         </div>
       )}
 
-      <section className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <section className="mb-6 grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-4">
         <StatTile label="Open orders" value={openOrders} accent={openOrders > 0 ? "yellow" : undefined} />
         <StatTile label="Suppliers" value={activeSuppliers} />
         <StatTile label="Fuel types" value={activeTypes} />
@@ -103,9 +103,9 @@ function StatTile({
   const valueClass =
     accent === "yellow" ? "text-status-yellow" : "text-foreground";
   return (
-    <div className="rounded-lg border border-border bg-card px-4 py-3 text-center">
-      <div className={`text-2xl font-bold leading-none ${valueClass}`}>{value}</div>
-      <div className="mt-1.5 eyebrow">
+    <div className="flex min-w-0 flex-col border-l-2 border-input py-1 pl-3">
+      <div className={`font-display text-[1.75rem] font-extrabold leading-none tabular-nums ${valueClass}`}>{value}</div>
+      <div className="eyebrow mt-1.5">
         {label}
       </div>
     </div>
@@ -140,7 +140,7 @@ function SectionCard({
               className={
                 link.primary
                   ? "flex items-center justify-between rounded-md border border-primary/40 bg-background px-3 py-2.5 text-sm font-semibold text-primary hover:bg-primary/5"
-                  : "flex items-center justify-between rounded-md border border-border bg-card/40 px-3 py-2.5 text-sm text-foreground hover:border-primary/60 hover:bg-primary/5"
+                  : "flex items-center justify-between rounded-md border border-border px-3 py-2.5 text-sm text-foreground hover:border-primary/60 hover:bg-primary/5"
               }
             >
               <span>

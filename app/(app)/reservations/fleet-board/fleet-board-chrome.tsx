@@ -59,7 +59,7 @@ export function FleetBoardChrome({
 
   return (
     <>
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="mb-5 flex flex-wrap items-center justify-between gap-3 border-b border-border pb-5">
         <div className="flex items-center gap-3">
           <h1 className="page-title">Fleet Board</h1>
           <div className="flex overflow-hidden rounded-md border border-border">
@@ -108,10 +108,10 @@ export function FleetBoardChrome({
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="rounded-md border border-border bg-muted px-2.5 py-1 text-xs font-semibold text-muted-foreground">
+          <span className="status-mark text-muted-foreground">
             {flightsCount} flight{flightsCount === 1 ? "" : "s"}
           </span>
-          <span className="rounded-md border border-status-green/40 bg-status-green/10 px-2.5 py-1 text-xs font-semibold text-status-green">
+          <span className="status-mark text-status-green">
             {bookedSeats}/{totalSeats} seats
           </span>
         </div>
@@ -127,7 +127,7 @@ export function FleetBoardChrome({
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search passenger, flight, ref…"
-            className="w-full rounded-md border border-border bg-background pl-8 pr-3 py-1.5 text-xs outline-none focus:border-primary"
+            className="ff-input pl-8 pr-3 py-1.5 text-xs"
           />
         </div>
 

@@ -74,13 +74,9 @@ export default async function SupplierPortalPage({
   if (notAuthorized) {
     return (
       <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
-        <div className="rounded-lg border border-status-yellow/40 bg-status-yellow/10 px-6 py-8 text-center">
-          <h1 className="text-base font-bold tracking-tight text-status-yellow">
-            Supplier Portal
-          </h1>
-          <p className="mt-2 text-sm text-foreground">
-            This area is for fuel-supplier accounts only.
-          </p>
+        <h1 className="page-title mb-6 border-b border-border pb-5">Supplier Portal</h1>
+        <div className="notice notice-yellow">
+          <p className="notice-label">This area is for fuel-supplier accounts only.</p>
           <p className="mt-1 text-xs text-muted-foreground">
             If you're a supplier rep and you're seeing this in error, ask
             your operations contact to bind your account to your supplier
@@ -93,11 +89,11 @@ export default async function SupplierPortalPage({
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
-      <header className="mb-5">
+      <header className="mb-6 border-b border-border pb-5">
         <h1 className="page-title">
           Supplier Portal — Fuel Orders
         </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
           Acknowledge new orders so the requesting dispatcher knows you
           have it. Fueled / closeout is handled by ramp staff after
           delivery.
@@ -114,7 +110,7 @@ export default async function SupplierPortalPage({
           {loadError}
         </div>
       ) : orders.length === 0 ? (
-        <div className="rounded-md border border-dashed border-border bg-card/40 px-4 py-8 text-center text-sm text-muted-foreground">
+        <div className="rounded-lg border border-border bg-card px-5 py-8 text-center text-sm text-muted-foreground">
           {status
             ? `No orders in ${status} status.`
             : "No orders in your inbox right now."}
@@ -144,14 +140,10 @@ function SupplierOrderTable({ orders }: { orders: FuelOrderResponse[] }) {
           </tr>
         </thead>
         <tbody>
-          {orders.map((o, idx) => (
+          {orders.map((o) => (
             <tr
               key={o.id}
-              className={
-                idx % 2 === 0
-                  ? "border-t border-border/60"
-                  : "border-t border-border/60 bg-card/40"
-              }
+              className="border-t border-border transition-colors hover:bg-accent/40"
             >
               <td className="px-3 py-2 font-mono text-[0.65rem] text-muted-foreground">
                 {o.requested_at.slice(0, 10)}
@@ -213,18 +205,16 @@ function SupplierOrderTable({ orders }: { orders: FuelOrderResponse[] }) {
 function StatusBadge({ status }: { status: FuelOrderStatus }) {
   const tone =
     status === "ordered"
-      ? "bg-status-yellow/15 text-status-yellow"
+      ? "text-status-yellow"
       : status === "confirmed"
-        ? "bg-status-blue/15 text-status-blue"
+        ? "text-status-blue"
         : status === "fueled"
-          ? "bg-status-green/15 text-status-green"
+          ? "text-status-green"
           : status === "discrepancy"
-            ? "bg-status-red/15 text-status-red"
-            : "bg-muted text-muted-foreground";
+            ? "text-status-red"
+            : "text-muted-foreground";
   return (
-    <span
-      className={`rounded px-1.5 py-0.5 text-[0.6rem] font-semibold uppercase tracking-[0.06em] ${tone}`}
-    >
+    <span className={`status-mark text-[0.6rem] ${tone}`}>
       {status}
     </span>
   );

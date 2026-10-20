@@ -1,4 +1,7 @@
 import Link from "next/link";
+
+import { linkCaps } from "@/components/ff/controls";
+import { cn } from "@/lib/utils";
 import { notFound } from "next/navigation";
 
 import { auth } from "@/auth";
@@ -127,9 +130,9 @@ function BackLink() {
   return (
     <Link
       href="/equipment"
-      className="mb-4 inline-block text-sm text-muted-foreground hover:text-foreground hover:underline"
+      className={cn(linkCaps, "text-muted-foreground hover:text-foreground mb-4")}
     >
-      ← Equipment
+      <span aria-hidden>‹</span> Equipment
     </Link>
   );
 }
@@ -158,10 +161,10 @@ function Header({
   canWrite: boolean;
 }) {
   return (
-    <div className="mb-6 flex items-start justify-between gap-4">
+    <div className="mb-6 flex flex-wrap items-start justify-between gap-4 border-b border-border pb-5">
       <div>
         <h1 className="page-title">{unit.name}</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
           {EQUIPMENT_TYPE_LABELS[unit.equipment_type]}
           {unit.station && (
             <>
@@ -253,7 +256,7 @@ function MaintenanceSection({
         </p>
       ) : null}
       {items.length === 0 ? (
-        <div className="rounded-md border border-dashed border-border bg-card/40 px-4 py-8 text-center text-xs text-muted-foreground">
+        <div className="rounded-lg border border-border bg-card px-5 py-8 text-center text-xs text-muted-foreground">
           {canWrite
             ? "No scheduled maintenance items. Use the + Schedule MX button above to add one."
             : "No scheduled maintenance items."}
@@ -262,7 +265,7 @@ function MaintenanceSection({
         <div className="overflow-hidden rounded-lg border border-border bg-card">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-border text-left text-[0.6rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+              <tr className="border-b border-border text-left eyebrow">
                 <th className="px-4 py-3">Item</th>
                 <th className="px-4 py-3">Type</th>
                 <th className="px-4 py-3">Interval</th>
@@ -359,7 +362,7 @@ function SquawksSection({
         <p className="-mt-1 mb-2 text-xs text-muted-foreground">{note}</p>
       ) : null}
       {squawks.length === 0 ? (
-        <div className="rounded-md border border-dashed border-border bg-card/40 px-4 py-8 text-center text-xs text-muted-foreground">
+        <div className="rounded-lg border border-border bg-card px-5 py-8 text-center text-xs text-muted-foreground">
           {emptyHint}
         </div>
       ) : (
@@ -401,7 +404,7 @@ function SquawksSection({
                 )}
               </div>
               {sq.resolution_notes && (
-                <p className="mt-2 rounded-md border border-status-green/30 bg-status-green/5 p-2 text-xs text-foreground">
+                <p className="notice notice-green mt-2">
                   {sq.resolution_notes}
                 </p>
               )}
@@ -415,14 +418,14 @@ function SquawksSection({
 
 function MxStatusChip({ status }: { status: GSEMxStatus }) {
   const map: Record<GSEMxStatus, string> = {
-    current: "border-status-green/40 bg-status-green/10 text-status-green",
+    current: "text-status-green",
     due_soon:
-      "border-status-yellow/40 bg-status-yellow/10 text-status-yellow",
-    overdue: "border-status-red/40 bg-status-red/10 text-status-red",
+      "text-status-yellow",
+    overdue: "text-status-red",
   };
   return (
     <span
-      className={`rounded-md border px-2 py-0.5 text-[0.6rem] font-semibold uppercase ${map[status]}`}
+      className={`status-mark text-[0.6rem] ${map[status]}`}
     >
       {status.replace("_", " ")}
     </span>
@@ -431,14 +434,14 @@ function MxStatusChip({ status }: { status: GSEMxStatus }) {
 
 function SquawkStatusChip({ status }: { status: GSESquawkResponse["status"] }) {
   const map: Record<GSESquawkResponse["status"], string> = {
-    open: "border-status-red/40 bg-status-red/10 text-status-red",
+    open: "text-status-red",
     in_progress:
-      "border-status-yellow/40 bg-status-yellow/10 text-status-yellow",
-    resolved: "border-status-green/40 bg-status-green/10 text-status-green",
+      "text-status-yellow",
+    resolved: "text-status-green",
   };
   return (
     <span
-      className={`rounded-md border px-2 py-0.5 text-[0.6rem] font-semibold uppercase ${map[status]}`}
+      className={`status-mark text-[0.6rem] ${map[status]}`}
     >
       {status.replace("_", " ")}
     </span>
@@ -454,17 +457,17 @@ function UnitStatusChip({
 }) {
   const map: Record<GSEUnitStatus, string> = {
     operational:
-      "border-status-green/40 bg-status-green/10 text-status-green",
+      "text-status-green",
     maintenance:
-      "border-status-yellow/40 bg-status-yellow/10 text-status-yellow",
+      "text-status-yellow",
     out_of_service:
-      "border-status-red/40 bg-status-red/10 text-status-red",
+      "text-status-red",
   };
   const sizing =
-    size === "lg" ? "px-3 py-1 text-xs" : "px-2 py-0.5 text-[0.6rem]";
+    size === "lg" ? "text-xs" : "text-[0.6rem]";
   return (
     <span
-      className={`rounded-md border font-semibold uppercase ${sizing} ${map[status]}`}
+      className={`status-mark ${sizing} ${map[status]}`}
     >
       {status.replace("_", " ")}
     </span>

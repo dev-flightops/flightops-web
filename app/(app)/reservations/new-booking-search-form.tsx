@@ -472,7 +472,7 @@ export function NewBookingSearchForm({
       {searchError && (
         <p
           role="status"
-          className="mt-4 rounded-lg border border-status-yellow/40 bg-status-yellow/5 p-3 text-sm text-status-yellow"
+          className="notice notice-yellow mt-4 text-sm"
         >
           {searchError}
         </p>

@@ -46,7 +46,7 @@ export function AcctExportFilterBar({
           type="date"
           name="start"
           defaultValue={start}
-          className="w-40 rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/30"
+          className="ff-input w-40 px-3 py-2 text-sm focus:ring-2 focus:ring-primary/30"
         />
       </label>
       <label>
@@ -55,7 +55,7 @@ export function AcctExportFilterBar({
           type="date"
           name="end"
           defaultValue={end}
-          className="w-40 rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/30"
+          className="ff-input w-40 px-3 py-2 text-sm focus:ring-2 focus:ring-primary/30"
         />
       </label>
       {customers.length > 0 ? (
@@ -64,7 +64,7 @@ export function AcctExportFilterBar({
           <select
             name="customer"
             defaultValue={customer}
-            className="w-56 rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/30"
+            className="ff-input w-56 px-3 py-2 text-sm focus:ring-2 focus:ring-primary/30"
           >
             <option value="">All customers</option>
             {customers.map((c) => (

@@ -41,7 +41,7 @@ export function TransactionForm({ memberId }: { memberId: string }) {
           name="transaction_type"
           defaultValue=""
           required
-          className="rounded-md border border-border bg-background px-3 py-2 text-sm"
+          className="ff-input px-3 py-2 text-sm w-auto"
         >
           <option value="" disabled>
             Select…
@@ -65,7 +65,7 @@ export function TransactionForm({ memberId }: { memberId: string }) {
           name="points"
           required
           placeholder="e.g. 500 or -100"
-          className="w-40 rounded-md border border-border bg-background px-3 py-2 text-sm"
+          className="ff-input w-40 px-3 py-2 text-sm"
         />
       </label>
 
@@ -78,7 +78,7 @@ export function TransactionForm({ memberId }: { memberId: string }) {
           name="description"
           maxLength={500}
           placeholder="Optional — e.g. PGR101 booking"
-          className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+          className="ff-input px-3 py-2 text-sm"
         />
       </label>
 

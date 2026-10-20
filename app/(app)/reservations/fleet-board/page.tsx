@@ -239,7 +239,7 @@ function ListView({
                     {b.origin_icao} → {b.destination_icao}
                   </span>
                   {b.aircraft ? (
-                    <span className="rounded border border-border bg-muted px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider text-muted-foreground">
+                    <span className="eyebrow">
                       {b.aircraft.tail_number}
                     </span>
                   ) : null}
@@ -525,18 +525,18 @@ function _kLbs(lbs: number): string {
 function StatusChip({ status }: { status: Booking["status"] }) {
   const cls =
     status === "requested"
-      ? "border-status-blue bg-status-blue/15 text-status-blue"
+      ? "text-status-blue"
       : status === "quoted"
-        ? "border-status-yellow bg-status-yellow/15 text-status-yellow"
+        ? "text-status-yellow"
         : status === "confirmed"
-          ? "border-status-green bg-status-green/15 text-status-green"
+          ? "text-status-green"
           : status === "cancelled"
-            ? "border-status-red/40 bg-status-red/10 text-status-red"
-            : "border-border bg-muted text-muted-foreground";
+            ? "text-status-red"
+            : "text-muted-foreground";
   return (
     <span
       className={
-        "inline-flex items-center rounded border px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider " +
+        "status-mark " +
         cls
       }
     >

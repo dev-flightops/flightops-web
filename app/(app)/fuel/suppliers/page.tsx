@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import { linkCaps } from "@/components/ff/controls";
+import { cn } from "@/lib/utils";
 import { ApiError } from "@/lib/api/client";
 import {
   listFuelSuppliers,
@@ -50,18 +52,18 @@ export default async function FuelSuppliersPage() {
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
-      <header className="mb-5 flex flex-wrap items-end justify-between gap-3">
+      <header className="mb-6 flex flex-wrap items-end justify-between gap-4 border-b border-border pb-5">
         <div>
           <Link
             href="/fuel"
-            className="mb-2 inline-block text-xs text-muted-foreground hover:text-foreground hover:underline"
+            className={cn(linkCaps, "text-muted-foreground hover:text-foreground mb-2")}
           >
-            ← Fuel
+            <span aria-hidden>‹</span> Fuel
           </Link>
           <h1 className="page-title">
             Suppliers & Pricing
           </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
             Vendor directory with contract pricing per base + fuel type
           </p>
         </div>
@@ -75,7 +77,7 @@ export default async function FuelSuppliersPage() {
           {loadError}
         </div>
       ) : suppliers.length === 0 ? (
-        <div className="rounded-lg border border-dashed border-border bg-card/40 px-4 py-16 text-center">
+        <div className="rounded-lg border border-border bg-card px-5 py-8 text-center">
           <p className="text-sm text-muted-foreground">
             No suppliers configured yet.
           </p>
@@ -113,7 +115,7 @@ function SupplierCard({
           <h2 className="text-base font-semibold text-foreground">
             {supplier.name}
             {!supplier.is_active && (
-              <span className="ml-2 rounded-md border border-border bg-card/60 px-2 py-0.5 text-[0.6rem] font-semibold uppercase text-muted-foreground">
+              <span className="ml-2 eyebrow">
                 Inactive
               </span>
             )}
@@ -125,21 +127,21 @@ function SupplierCard({
           </p>
         </div>
         {supplier.billing_terms && (
-          <span className="rounded-md border border-border bg-card/60 px-2 py-0.5 text-[0.65rem] font-semibold text-muted-foreground">
+          <span className="eyebrow">
             {supplier.billing_terms}
           </span>
         )}
       </header>
 
       {pricing.length === 0 ? (
-        <p className="rounded-md border border-dashed border-border bg-card/40 px-3 py-3 text-xs text-muted-foreground">
+        <p className="notice notice-gray text-muted-foreground">
           No pricing rows configured for this supplier.
         </p>
       ) : (
         <div className="overflow-hidden rounded-md border border-border">
           <table className="w-full text-xs">
             <thead>
-              <tr className="border-b border-border bg-background/40 text-left text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+              <tr className="border-b border-border bg-background/40 text-left eyebrow">
                 <th className="px-3 py-2">Base</th>
                 <th className="px-3 py-2">Fuel</th>
                 <th className="px-3 py-2 text-right">Price / gal</th>
@@ -174,7 +176,7 @@ function SupplierCard({
                   </td>
                   <td className="px-3 py-2">
                     {p.is_default && (
-                      <span className="rounded-md border border-border bg-muted px-2 py-0.5 text-[0.6rem] font-semibold text-muted-foreground">
+                      <span className="eyebrow">
                         Default
                       </span>
                     )}

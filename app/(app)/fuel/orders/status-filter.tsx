@@ -2,6 +2,9 @@
 
 import Link from "next/link";
 
+import { segment, segmentGroup } from "@/components/ff/controls";
+import { cn } from "@/lib/utils";
+
 import type { FuelOrderStatus } from "@/lib/api/types";
 
 const OPTIONS: { value: FuelOrderStatus | ""; label: string }[] = [
@@ -22,7 +25,7 @@ export function OrdersStatusFilter({
     <div
       role="group"
       aria-label="Status filter"
-      className="mb-4 flex flex-wrap gap-2"
+      className={cn(segmentGroup, "mb-4")}
     >
       {OPTIONS.map((o) => {
         const on = (active ?? "") === o.value;
@@ -30,11 +33,8 @@ export function OrdersStatusFilter({
           <Link
             key={o.value || "all"}
             href={o.value ? `/fuel/orders?status=${o.value}` : "/fuel/orders"}
-            className={`rounded-md border px-2.5 py-1 text-[0.7rem] font-semibold uppercase tracking-[0.06em] transition-colors ${
-              on
-                ? "border-primary bg-primary/10 text-primary"
-                : "border-border bg-card text-muted-foreground hover:bg-accent"
-            }`}
+            aria-current={on ? "page" : undefined}
+            className={segment(on)}
           >
             {o.label}
           </Link>

@@ -1,4 +1,7 @@
 import Link from "next/link";
+
+import { linkCaps } from "@/components/ff/controls";
+import { cn } from "@/lib/utils";
 import { notFound } from "next/navigation";
 
 import { auth } from "@/auth";
@@ -97,21 +100,21 @@ function BackLink() {
   return (
     <Link
       href="/fuel/orders"
-      className="mb-4 inline-block text-sm text-muted-foreground hover:text-foreground hover:underline"
+      className={cn(linkCaps, "text-muted-foreground hover:text-foreground mb-4")}
     >
-      ← Fuel Orders
+      <span aria-hidden>‹</span> Fuel Orders
     </Link>
   );
 }
 
 function Header({ order }: { order: FuelOrderResponse }) {
   return (
-    <div className="mb-4 flex items-start justify-between gap-3">
+    <div className="mb-6 flex flex-wrap items-start justify-between gap-4 border-b border-border pb-5">
       <div>
         <h1 className="page-title">
           Fuel order — <span className="font-mono">{order.n_number}</span>
         </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
           <span className="font-mono">{order.base_code}</span> ·{" "}
           {order.supplier_name_snapshot} · {order.fuel_type_label_snapshot} ·{" "}
           {order.requested_quantity_gallons.toLocaleString()} gal
@@ -145,7 +148,7 @@ function ActionsRow({
 }) {
   if (!canConfirm && !canMarkFueled && !canCancel) {
     return (
-      <p className="mb-4 rounded-md border border-border bg-card/40 px-3 py-2 text-xs text-muted-foreground">
+      <p className="notice notice-gray mb-4 text-muted-foreground">
         This order is in a terminal state — no further actions.
       </p>
     );
@@ -253,10 +256,8 @@ function MetaGrid({ order }: { order: FuelOrderResponse }) {
       )}
 
       {order.discrepancy_reason && (
-        <div className="mt-3 rounded-md border border-status-yellow/40 bg-status-yellow/[0.06] p-3 text-sm">
-          <p className="text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-status-yellow">
-            Discrepancy
-          </p>
+        <div className="notice notice-yellow mt-3 text-sm">
+          <p className="notice-label">Discrepancy</p>
           <p className="mt-1 whitespace-pre-wrap text-foreground">
             {order.discrepancy_reason}
           </p>
@@ -264,10 +265,8 @@ function MetaGrid({ order }: { order: FuelOrderResponse }) {
       )}
 
       {order.cancel_reason && (
-        <div className="mt-3 rounded-md border border-status-red/40 bg-status-red/[0.06] p-3 text-sm">
-          <p className="text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-status-red">
-            Cancelled
-          </p>
+        <div className="notice notice-red mt-3 text-sm">
+          <p className="notice-label">Cancelled</p>
           <p className="mt-1 whitespace-pre-wrap text-foreground">
             {order.cancel_reason}
           </p>
@@ -322,17 +321,17 @@ function StatusChip({
   large?: boolean;
 }) {
   const map: Record<FuelOrderStatus, string> = {
-    ordered: "border-status-blue/40 bg-status-blue/10 text-status-blue",
-    confirmed: "border-status-blue/40 bg-status-blue/10 text-status-blue",
-    fueled: "border-status-green/40 bg-status-green/10 text-status-green",
+    ordered: "text-status-blue",
+    confirmed: "text-status-blue",
+    fueled: "text-status-green",
     discrepancy:
-      "border-status-yellow/40 bg-status-yellow/10 text-status-yellow",
-    cancelled: "border-border bg-card/60 text-muted-foreground",
+      "text-status-yellow",
+    cancelled: "text-muted-foreground",
   };
-  const size = large ? "px-3 py-1 text-xs" : "px-2 py-0.5 text-[0.65rem]";
+  const size = large ? "text-xs" : "text-[0.65rem]";
   return (
     <span
-      className={`rounded-md border font-semibold uppercase tracking-[0.06em] ${size} ${map[status]}`}
+      className={`status-mark ${size} ${map[status]}`}
     >
       {status}
     </span>

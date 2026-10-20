@@ -66,7 +66,7 @@ export function MarkFueledButton({
           maxLength={200}
           disabled={pending}
           onChange={(e) => setName(e.target.value)}
-          className="mt-0.5 w-full rounded border border-border bg-background px-2 py-1 text-xs disabled:opacity-60"
+          className="ff-input mt-0.5 px-2 py-1 text-xs"
           placeholder="e.g. Sarah at AvFuel"
         />
       </label>
@@ -82,7 +82,7 @@ export function MarkFueledButton({
           value={gallons}
           disabled={pending}
           onChange={(e) => setGallons(e.target.value)}
-          className="mt-0.5 w-full rounded border border-border bg-background px-2 py-1 text-xs disabled:opacity-60"
+          className="ff-input mt-0.5 px-2 py-1 text-xs"
           placeholder={String(requestedGallons)}
         />
         <span className="text-[0.6rem] text-muted-foreground">
@@ -99,7 +99,7 @@ export function MarkFueledButton({
           maxLength={2000}
           disabled={pending}
           onChange={(e) => setReason(e.target.value)}
-          className="mt-0.5 w-full rounded border border-border bg-background px-2 py-1 text-xs disabled:opacity-60"
+          className="ff-input mt-0.5 px-2 py-1 text-xs"
           placeholder="e.g. Off-spec grade, contamination"
         />
       </label>

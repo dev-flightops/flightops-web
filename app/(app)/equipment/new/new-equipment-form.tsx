@@ -152,7 +152,7 @@ export function NewEquipmentForm({
           rows={3}
           maxLength={2000}
           placeholder="Special handling notes, purchase context, etc."
-          className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
+          className="ff-input px-3 py-2 text-sm"
         />
       </div>
 
@@ -193,7 +193,7 @@ function Field({
         name={name}
         type={type}
         aria-invalid={error ? "true" : undefined}
-        className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none aria-[invalid=true]:border-status-red"
+        className="ff-input px-3 py-2 text-sm aria-[invalid=true]:border-status-red"
         {...inputProps}
       />
       {error && (
@@ -235,7 +235,7 @@ function FieldSelect({
         defaultValue={defaultValue}
         required={required}
         aria-invalid={error ? "true" : undefined}
-        className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none aria-[invalid=true]:border-status-red"
+        className="ff-input px-3 py-2 text-sm aria-[invalid=true]:border-status-red"
       >
         {children}
       </select>

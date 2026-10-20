@@ -45,7 +45,7 @@ export function ReportSquawkDialog({ unitId }: { unitId: string }) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="rounded-md border border-status-yellow bg-status-yellow/15 px-3 py-1.5 text-xs font-semibold text-status-yellow hover:bg-status-yellow/15"
+        className="btn-caps rounded-md border px-3 py-1.5 border-status-yellow/60 text-[0.72rem] text-status-yellow hover:border-status-yellow"
       >
         + Report squawk
       </button>
@@ -86,7 +86,7 @@ export function ReportSquawkDialog({ unitId }: { unitId: string }) {
                 rows={4}
                 placeholder="What's wrong with the unit?"
                 aria-invalid={fieldError("description") ? "true" : undefined}
-                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-status-yellow focus:outline-none aria-[invalid=true]:border-status-red"
+                className="ff-input px-3 py-2 text-sm focus:border-status-yellow aria-[invalid=true]:border-status-red"
               />
               {fieldError("description") && (
                 <p className="field-error">
@@ -108,7 +108,7 @@ export function ReportSquawkDialog({ unitId }: { unitId: string }) {
                 type="date"
                 required
                 defaultValue={todayLocalIsoDate()}
-                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-status-yellow focus:outline-none"
+                className="ff-input px-3 py-2 text-sm focus:border-status-yellow"
               />
             </div>
 

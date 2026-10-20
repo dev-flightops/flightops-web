@@ -57,16 +57,16 @@ export function StationActiveToggle({ stationId, initial, icaoCode }: Props) {
         onClick={flip}
         disabled={pending}
         className={cn(
-          "rounded-md border px-3 py-1 text-xs font-semibold transition-colors disabled:opacity-50",
+          "btn-caps rounded-md border px-3 py-1.5 text-[0.72rem] transition-colors disabled:opacity-50",
           active
-            ? "border-status-yellow/40 bg-status-yellow/10 text-status-yellow hover:bg-status-yellow/15"
-            : "border-status-green/40 bg-status-green/10 text-status-green hover:bg-status-green/15",
+            ? "border-status-yellow/60 text-status-yellow hover:border-status-yellow"
+            : "border-status-green/60 text-status-green hover:border-status-green",
         )}
       >
         {pending ? "Saving…" : active ? "Deactivate" : "Reactivate"}
       </button>
       {error && (
-        <span role="alert" className="text-[0.65rem] text-status-red">
+        <span role="alert" className="field-error">
           {error}
         </span>
       )}

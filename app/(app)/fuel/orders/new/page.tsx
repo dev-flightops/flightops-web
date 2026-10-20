@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import { linkCaps } from "@/components/ff/controls";
+import { cn } from "@/lib/utils";
 import { ApiError } from "@/lib/api/client";
 import { listFuelSuppliers, listFuelTypes } from "@/lib/api/ground";
 import type {
@@ -30,11 +32,11 @@ export default async function NewFuelOrderPage() {
     <div className="mx-auto max-w-2xl px-4 py-8 sm:px-6">
       <Link
         href="/fuel/orders"
-        className="mb-4 inline-block text-sm text-muted-foreground hover:text-foreground hover:underline"
+        className={cn(linkCaps, "text-muted-foreground hover:text-foreground mb-4")}
       >
-        ← Fuel Orders
+        <span aria-hidden>‹</span> Fuel Orders
       </Link>
-      <h1 className="mb-6 page-title">Order Fuel</h1>
+      <h1 className="page-title mb-6 border-b border-border pb-5">Order Fuel</h1>
 
       {loadError && (
         <div

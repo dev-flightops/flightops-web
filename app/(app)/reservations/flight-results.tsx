@@ -75,7 +75,7 @@ export function FlightResults({
       <div className="overflow-x-auto rounded-lg border border-border bg-card">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-border text-left text-[0.65rem] uppercase tracking-[0.06em] text-muted-foreground">
+            <tr className="ff-thead">
               <th className="px-4 py-3">Flight</th>
               <th className="px-4 py-3">Departs</th>
               <th className="px-4 py-3">Aircraft</th>
