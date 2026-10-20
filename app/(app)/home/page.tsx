@@ -1,13 +1,18 @@
+import Link from "next/link";
+
 import { auth } from "@/auth";
+import { DEPARTMENTS, departmentForPath, type DepartmentId } from "@/components/app-shell/modules";
+import { PageHeader } from "@/components/ff/page-header";
+import { Stat, StatStrip } from "@/components/ff/stat-strip";
 import { ActiveAlertsPanel } from "@/components/home/active-alerts-panel";
-import { HomeHero } from "@/components/home/home-hero";
-import { HomeModuleCard } from "@/components/home/home-module-card";
 import { HOME_QUICK_LINKS, QuickLinks } from "@/components/home/quick-links";
 import {
   HOME_MODULES,
   HOME_MODULE_ROLES,
+  moduleStatusHint,
+  type HomeModule,
 } from "@/components/home/module-catalog";
-import { getCompanyProfile, listMyTenants } from "@/lib/api/auth";
+import { listMyTenants } from "@/lib/api/auth";
 import { getFlightStats } from "@/lib/api/ops";
 import { loadOperationalSnapshot } from "@/lib/dashboards/operational-snapshot";
 import { currentGreeting, firstNameFrom } from "@/lib/greeting";
@@ -36,48 +41,30 @@ const ALERT_VIEWING_ROLES = roleGate(
   "safety_officer",
 );
 
-/** Split a tenant's display name into wordmark + subtitle for the
- *  logo band. First word becomes the wordmark, the rest joined
- *  becomes the subtitle. Falls back to the neutral product wordmark
- *  when the tenant name is missing or single-word. */
-function wordmarkFromName(name: string | undefined): {
-  wordmark: string | undefined;
-  subtitle: string | undefined;
-} {
-  if (!name) return { wordmark: undefined, subtitle: undefined };
-  const parts = name.trim().split(/\s+/);
-  if (parts.length === 1) {
-    return { wordmark: parts[0].toUpperCase(), subtitle: undefined };
-  }
-  return {
-    wordmark: parts[0].toUpperCase(),
-    subtitle: parts.slice(1).join(" ").toUpperCase(),
-  };
-}
-
 /**
- * /home — pitch landing.
+ * /home — the first page after sign-in (#79).
  *
- * The top bar comes from the app shell, as on every page — this page's
- * own design, which the whole app now shares. Layout:
+ * ForeFlight's idiom, per Greg's choice (20 Oct): no photo band and no
+ * grid of icon tiles. In order:
  *
- *   1. HomeHero          — brand band + photo hero (an ink island) +
- *                          the tenant's ops line, when they have one
- *   3. Active Alerts     — unchanged, role-gated (M2 spec)
- *   4. Departments       — white surface with HomeModuleCard tiles
- *   5. Quick links       — unchanged footer strip
+ *   1. The greeting, with the operator's name above it.
+ *   2. Today's figures: airborne, on the ground, aircraft on hold.
+ *   3. Active alerts: role-gated, as the M2 spec has it.
+ *   4. The departments as a directory: each home entry under the nav
+ *      department its route belongs to, a plain link with its one-line
+ *      description; the unbuilt ones muted and marked "Soon".
+ *   5. Shortcuts.
+ *
+ * Which entries a user sees is the client's home matrix
+ * (HOME_MODULE_ROLES), unchanged; only their presentation moved.
  */
 export default async function HomePage() {
-  const [session, tenantsResponse, stats, snapshot, profile] = await Promise.all([
+  const [session, tenantsResponse, stats, snapshot] = await Promise.all([
     auth(),
     listMyTenants().catch(() => ({ tenants: [] })),
     getFlightStats().catch(() => null),
     loadOperationalSnapshot(),
-    // The layout fetches this too; Next memoises identical GETs within a
-    // request, so it is one call.
-    getCompanyProfile().catch(() => null),
   ]);
-  const opsPhone = profile?.ops_phone?.trim() || null;
 
   const currentTenant =
     tenantsResponse.tenants.find((t) => t.is_current) ??
@@ -127,51 +114,91 @@ export default async function HomePage() {
 
 
 
+  const groups = directoryGroups(visibleModules);
+  const live = visibleModules.filter((m) => m.status === "live").length;
+
   return (
-    <div>
-      <HomeHero
-        tenantName={currentTenant?.name ?? "FlightOps"}
-        wordmark={wordmarkFromName(currentTenant?.name).wordmark}
-        wordmarkSubtitle={wordmarkFromName(currentTenant?.name).subtitle}
-        greeting={greeting}
-        firstName={firstName}
-        airborne={airborne}
-        onGround={onGround}
-        acftHold={acftHold}
-        opsPhone={opsPhone}
+    <div className="mx-auto max-w-6xl px-4 pb-16 pt-8 sm:px-8">
+      <PageHeader
+        eyebrow={currentTenant?.name}
+        title={firstName ? `${greeting}, ${firstName}` : greeting}
       />
 
-      <div className="mx-auto max-w-6xl px-4 pb-16 sm:px-8">
-        {canSeeAlerts && (
-          <div className="pt-8">
-            <ActiveAlertsPanel />
-          </div>
-        )}
+      <StatStrip label="Today's operation">
+        <Stat value={airborne} label="Airborne" tone="green" />
+        <Stat value={onGround} label="On the ground" tone="blue" />
+        <Stat value={acftHold} label="Aircraft on hold" tone={acftHold > 0 ? "red" : "neutral"} />
+      </StatStrip>
 
-        <section className="pt-10">
-          <div className="mb-6 flex items-baseline justify-between border-b border-border pb-4">
-            <div>
-              <h2 className="text-2xl font-bold tracking-tight text-foreground">
-                Departments
-              </h2>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Every module in the platform, one click away.
-              </p>
+      {canSeeAlerts && <ActiveAlertsPanel />}
+
+      <section aria-labelledby="departments-heading" className="mt-10">
+        <div className="mb-6 flex flex-wrap items-baseline justify-between gap-2 border-b border-border pb-3">
+          <h2 id="departments-heading" className="caption-caps text-foreground">
+            Departments
+          </h2>
+          <span className="eyebrow">
+            {live} live · {visibleModules.length - live} coming
+          </span>
+        </div>
+        <div className="grid gap-x-10 gap-y-9 sm:grid-cols-2 lg:grid-cols-3">
+          {groups.map((group) => (
+            <div key={group.id} className="min-w-0">
+              <h3 className="eyebrow mb-3 border-b border-border pb-2">{group.label}</h3>
+              <ul className="space-y-3.5">
+                {group.modules.map((module) => (
+                  <li key={module.id}>
+                    <DirectoryEntry module={module} />
+                  </li>
+                ))}
+              </ul>
             </div>
-            <span className="text-[0.7rem] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-              {visibleModules.filter((m) => m.status === "live").length} live ·{" "}
-              {visibleModules.filter((m) => m.status !== "live").length} coming
-            </span>
-          </div>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {visibleModules.map((module) => (
-              <HomeModuleCard key={module.id} module={module} />
-            ))}
-          </div>
-        </section>
+          ))}
+        </div>
+      </section>
 
-        <QuickLinks links={visibleQuickLinks} />
-      </div>
+      <QuickLinks links={visibleQuickLinks} />
+    </div>
+  );
+}
+
+/** Home entries the nav does not place (crew housing) and where they go. */
+const DEPARTMENT_OVERRIDES: Record<string, DepartmentId> = {
+  // Crew housing is an employee service; the nav has no housing department.
+  housing: "hr",
+};
+
+/** The visible entries under their nav departments, in the nav's order. */
+function directoryGroups(modules: HomeModule[]) {
+  const byDept = new Map<DepartmentId, HomeModule[]>();
+  for (const m of modules) {
+    const dept = DEPARTMENT_OVERRIDES[m.id] ?? departmentForPath(m.href)?.id;
+    if (!dept) continue;
+    byDept.set(dept, [...(byDept.get(dept) ?? []), m]);
+  }
+  return DEPARTMENTS.filter((d) => byDept.has(d.id)).map((d) => ({
+    id: d.id,
+    label: d.label,
+    modules: byDept.get(d.id)!,
+  }));
+}
+
+function DirectoryEntry({ module }: { module: HomeModule }) {
+  if (module.status === "live") {
+    return (
+      <Link href={module.href} className="group block">
+        <span className="text-sm font-semibold text-foreground transition-colors group-hover:text-primary">
+          {module.label}
+        </span>
+        <span className="mt-0.5 block text-xs text-muted-foreground">{module.sub}</span>
+      </Link>
+    );
+  }
+  return (
+    <div title={moduleStatusHint(module.status) ?? undefined} aria-disabled="true">
+      <span className="text-sm font-semibold text-muted-foreground">{module.label}</span>
+      <span className="eyebrow ml-2">Soon</span>
+      <span className="mt-0.5 block text-xs text-muted-foreground">{module.sub}</span>
     </div>
   );
 }

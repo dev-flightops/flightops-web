@@ -75,6 +75,24 @@ function classStrings(file: string): { text: string; index: number }[] {
   }));
 }
 
+/** The surfaces the redesign has reached (#78, #79): pills, non-scrim
+ *  gradients and tinted badge chips stay out of them. The list grows with
+ *  each wave of the rollout. */
+const REDESIGNED = [
+  "app/(public)/",
+  "app/(auth)/login/",
+  "app/(app)/flight-following/",
+  "app/(app)/home/",
+  "components/landing/",
+  "components/ff/",
+  "components/theme/",
+  "components/ui/",
+  "components/home/",
+  "components/flight-following/",
+  "components/app-shell/app-shell-header.tsx",
+  "components/app-shell/department-nav.tsx",
+];
+
 describe("theme guards", () => {
   it("scans the app", () => {
     // Guards the guard: an empty file list passes every rule below.
@@ -97,10 +115,6 @@ describe("theme guards", () => {
         "SSO buttons carry the providers' mandated brand colours; the photo panel's gradient fallback.",
       "app/global-error.tsx":
         "Renders when the root layout failed, without the app stylesheet — inline light-theme values.",
-      "components/home/home-hero.tsx":
-        "The hero photo's overlay gradient and its missing-photo fallback.",
-      "components/home/module-catalog.ts":
-        "Module tile icon colours, solved for 3:1 on their tiles.",
       "app/(app)/schedule/[flightId]/manifest/page.tsx":
         "Print stylesheet: black on white regardless of theme.",
       "app/(app)/settings/branding/branding-form.tsx":
@@ -191,12 +205,11 @@ describe("theme guards", () => {
   it("gives every page title the one title style", () => {
     // Titles came in 25 variants (xl to 3xl, bold to extrabold); a title
     // changed size as you moved between pages. Exceptions are not page
-    // titles: the 404 numeral, the home hero, the release sheet's
-    // letterhead, the error screen, and headings inside "not
-    // authorised" notice cards (text-status-*).
+    // titles: the 404 numeral, the release sheet's letterhead, the error
+    // screen, and headings inside "not authorised" notice cards
+    // (text-status-*).
     const allow = new Set([
       "app/not-found.tsx",
-      "components/home/home-hero.tsx",
       "components/error-screen.tsx",
       "app/(app)/schedule/[flightId]/manifest/page.tsx",
     ]);
@@ -206,9 +219,9 @@ describe("theme guards", () => {
       for (const m of code(file).matchAll(/<h1\b[^>]*?className="([^"]*)"/g)) {
         const cls = m[1].split(/\s+/);
         if (cls.some((c) => c.startsWith("text-status-"))) continue;
-        // `page-title` is the redesign's title (#78, globals.css); the
-        // trio is the September style, until the rollout converts it.
-        const ok = cls.includes("page-title") || ["text-2xl", "font-bold", "tracking-tight"].every((c) => cls.includes(c));
+        // `page-title` is the redesign's title (#78, globals.css); #79
+        // converted the September trio on every page, so it is the only one.
+        const ok = cls.includes("page-title");
         const extra = cls.filter((c) => /^(?:(?:sm|md|lg):)?(?:text-(?:xs|sm|base|lg|xl|[3-9]xl)|font-(?:semibold|extrabold|black|medium))$/.test(c));
         if (!ok || extra.length) hits.push(`${file}: ${m[1]}`);
       }
@@ -221,17 +234,7 @@ describe("theme guards", () => {
     // backgrounds. A gradient is allowed only as a scrim: an aria-hidden
     // layer over a photograph, there so the type on it reads. The list
     // grows as the rollout reaches more of the app.
-    const surfaces = [
-      "app/(public)/",
-      "app/(auth)/login/",
-      "app/(app)/flight-following/",
-      "components/landing/",
-      "components/ff/",
-      "components/theme/",
-      "components/flight-following/",
-      "components/app-shell/app-shell-header.tsx",
-      "components/app-shell/department-nav.tsx",
-    ];
+    const surfaces = REDESIGNED;
     const hits: string[] = [];
     for (const file of FILES.filter((f) => surfaces.some((s) => f.startsWith(s)))) {
       code(file)
@@ -242,6 +245,37 @@ describe("theme guards", () => {
             hits.push(`${file}:${i + 1}  gradient that is not a scrim: ${line.trim().slice(0, 80)}`);
           }
         });
+    }
+    expect(hits).toEqual([]);
+  });
+
+  it("draws no stock icon set", () => {
+    // The brief rules out generic icon sets (#79): glyphs come from
+    // components/ff/glyphs.tsx, drawn for this app, and most things are
+    // said in words.
+    const hits = scan(/from\s+"lucide-react"/g);
+    expect(show(hits)).toEqual([]);
+  });
+
+  it("uses no emoji as icons", () => {
+    // ✈ ✦ ⚠ 🔍 🖨 stood in for icons; the brief rules emoji out (#79).
+    // ✓ ✗ ✕ stay: they are typographic marks in the text, not pictures.
+    const hits = scan(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{2712}\u{2714}\u{2716}\u{2718}-\u{27BF}\u{2B50}\u{2B55}]/gu);
+    expect(show(hits)).toEqual([]);
+  });
+
+  it("says a status without a tinted chip on the redesigned surfaces", () => {
+    // ForeFlight says a status as a coloured word behind a square marker
+    // (StatusMark, Badge); a tinted, rounded capitals chip is the pill the
+    // brief rules out (#79).
+    const hits: string[] = [];
+    for (const file of FILES.filter((f) => REDESIGNED.some((s) => f.startsWith(s)))) {
+      for (const str of classStrings(file)) {
+        const t = str.text;
+        if (/(?<![\w:/-])bg-status-[a-z]+\/(?:8|10|12|15)\b/.test(t) && /\brounded/.test(t) && /\buppercase\b/.test(t)) {
+          hits.push(`${file}: ${t.trim().slice(0, 90)}`);
+        }
+      }
     }
     expect(hits).toEqual([]);
   });

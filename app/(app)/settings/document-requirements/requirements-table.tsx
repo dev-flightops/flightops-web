@@ -64,7 +64,7 @@ export function RequirementsTable({
       {error && (
         <p
           role="alert"
-          className="rounded-md border border-status-red/40 bg-status-red/10 px-3 py-2 text-xs text-status-red"
+          className="notice notice-red"
         >
           {error}
         </p>

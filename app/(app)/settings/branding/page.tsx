@@ -43,7 +43,7 @@ export default async function SettingsBrandingPage() {
       </nav>
 
       <header className="mb-6">
-        <h1 className="text-2xl font-bold tracking-tight">Branding</h1>
+        <h1 className="page-title">Branding</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Override the platform&apos;s primary accent with your brand colors.
           Applied instantly across every module.
@@ -53,7 +53,7 @@ export default async function SettingsBrandingPage() {
       {loadError && (
         <div
           role="alert"
-          className="mb-4 rounded-md border border-status-yellow/40 bg-status-yellow/10 px-3 py-2 text-xs text-status-yellow"
+          className="mb-4 notice notice-yellow"
         >
           {loadError}
         </div>

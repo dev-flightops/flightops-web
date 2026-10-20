@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import { Plane } from "lucide-react";
+import { PlusGlyph } from "@/components/ff/glyphs";
 
 import { Button } from "./button";
 
@@ -30,7 +30,7 @@ export const WithIcon: Story = {
   args: {
     children: (
       <>
-        <Plane className="h-4 w-4" />
+        <PlusGlyph className="h-4 w-4" />
         Release dispatch
       </>
     ),
@@ -38,5 +38,5 @@ export const WithIcon: Story = {
 };
 
 export const IconOnly: Story = {
-  args: { size: "icon", children: <Plane className="h-4 w-4" />, "aria-label": "Dispatch" },
+  args: { size: "icon", children: <PlusGlyph className="h-4 w-4" />, "aria-label": "Add" },
 };

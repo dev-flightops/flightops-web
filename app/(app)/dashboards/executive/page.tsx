@@ -1,4 +1,3 @@
-import { Activity, Clock, Plane, ShieldCheck, Users } from "lucide-react";
 
 import { AlertList } from "@/components/dashboards/alert-list";
 import { FleetAirworthinessPanel } from "@/components/dashboards/fleet-airworthiness-panel";
@@ -88,7 +87,7 @@ export default async function ExecutiveDashboardPage() {
 
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Executive Overview</h1>
+          <h1 className="page-title">Executive Overview</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             {currentTenantName} — {currentTenantName}
           </p>
@@ -179,31 +178,26 @@ export default async function ExecutiveDashboardPage() {
               label="Completion Factor"
               score={completionPillar}
               max={25}
-              icon={<Plane className="h-3.5 w-3.5 text-muted-foreground" />}
             />
             <PillarBar
               label="On-Time Performance"
               score={onTimePillar}
               max={25}
-              icon={<Clock className="h-3.5 w-3.5 text-muted-foreground" />}
             />
             <PillarBar
               label="Crew Compliance"
               score={0}
               max={20}
-              icon={<Users className="h-3.5 w-3.5 text-muted-foreground" />}
             />
             <PillarBar
               label="Fleet Airworthiness"
               score={fleetPillar}
               max={20}
-              icon={<Activity className="h-3.5 w-3.5 text-muted-foreground" />}
             />
             <PillarBar
               label="Safety Indicators"
               score={0}
               max={10}
-              icon={<ShieldCheck className="h-3.5 w-3.5 text-muted-foreground" />}
             />
           </div>
         </section>

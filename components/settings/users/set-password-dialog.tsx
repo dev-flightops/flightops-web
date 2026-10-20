@@ -68,7 +68,7 @@ export function SetPasswordDialog({
             {state.status === "api-error" && (
               <div
                 role="alert"
-                className="rounded-md border border-status-red/40 bg-status-red/10 px-3 py-2 text-xs text-status-red"
+                className="notice notice-red"
               >
                 {state.message}
               </div>
@@ -77,7 +77,7 @@ export function SetPasswordDialog({
             <div>
               <label
                 htmlFor="password"
-                className="mb-1 block text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground"
+                className="field-label"
               >
                 New password <span className="text-status-red">*</span>
               </label>
@@ -94,7 +94,7 @@ export function SetPasswordDialog({
               {fieldError("password") && (
                 <p
                   role="alert"
-                  className="mt-1 text-[0.65rem] text-status-red"
+                  className="field-error"
                 >
                   {fieldError("password")}
                 </p>

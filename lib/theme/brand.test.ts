@@ -50,6 +50,22 @@ describe("brandTones", () => {
     }
   });
 
+  it("reads on its own selected tint in the light theme, for any brand", () => {
+    // The demo's #EA0029 cleared 5.2:1 under white text yet read 4.4:1 as
+    // text on its /10 tint: selected tabs failed AA in light mode (#79).
+    const tint = (fill: string, ground: string) => {
+      const f = fill.match(/\w\w/g)!.map((v) => parseInt(v, 16));
+      const g = ground.match(/\w\w/g)!.map((v) => parseInt(v, 16));
+      return "#" + f.map((c, i) => Math.round(c * 0.1 + g[i] * 0.9).toString(16).padStart(2, "0")).join("");
+    };
+    for (const brand of [DEFAULT_BRAND, "#ea0029", "#1f6fb2", "#f5c518", "#046b4e", "#7e22ce"]) {
+      const { hex } = brandTones(brand);
+      for (const ground of ["#ffffff", "#f1f5f8"]) {
+        expect(contrastRatio(hex, tint(hex, ground)), `${brand} on its tint over ${ground}`).toBeGreaterThanOrEqual(4.5);
+      }
+    }
+  });
+
   it("matches the default the stylesheet declares", () => {
     // globals.css carries the default crimson's tones for a tenant with no
     // brand set; they must be the ones this module derives.

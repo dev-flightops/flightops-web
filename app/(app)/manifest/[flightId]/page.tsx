@@ -138,7 +138,7 @@ function LockedBanner({ manifest }: { manifest: ManifestDetailResponse }) {
   return (
     <div
       role="status"
-      className="mb-6 rounded-lg border border-status-green/40 bg-status-green/10 px-4 py-3 text-sm text-status-green"
+      className="mb-6 notice notice-green text-sm"
     >
       <span className="font-semibold">Manifest locked.</span>{" "}
       {manifest.locked_at
@@ -161,7 +161,7 @@ function FlightHeader({
         <div className="text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
           Passenger Manifest
         </div>
-        <h1 className="mt-0.5 text-2xl font-bold tracking-tight">
+        <h1 className="mt-0.5 page-title">
           {flight.flight_number}
         </h1>
         <div className="mt-1 font-mono text-sm text-muted-foreground">

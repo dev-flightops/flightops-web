@@ -172,6 +172,17 @@
     background-color: hsl(var(--muted));
   }
 
+  /* The Settings → Branding preview (#79): its box carries the picked
+     colour's variables inline, and this picks the text tone from them the
+     way the page theme does — the on-navy tone in dark, the colour itself
+     in light. */
+  .brand-preview {
+    --brand-text-rgb: var(--brand-light-rgb);
+  }
+  [data-theme="light"] .brand-preview {
+    --brand-text-rgb: var(--brand-rgb);
+  }
+
   /* One of a pair of images, by mode — a product screenshot shown in the
      theme the page is in (#78). */
   [data-theme="light"] .theme-dark-only,
@@ -277,6 +288,80 @@
     font-weight: 700;
     letter-spacing: 0.08em;
     text-transform: uppercase;
+  }
+
+  /*
+   * The rollout's shared pieces (#79). Classes rather than components where
+   * the markup already exists in a hundred places and only its look
+   * changes; see components/ff/ for the ones with structure.
+   */
+
+  /* A panel's title: small tracked capitals in the text colour. */
+  .panel-title {
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: hsl(var(--foreground));
+  }
+
+  /* A form field's label, ForeFlight's eyebrow over the field. */
+  .field-label {
+    display: block;
+    margin-bottom: 0.3rem;
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: hsl(var(--muted-foreground));
+  }
+  .field-error {
+    margin-top: 0.3rem;
+    font-size: 0.75rem;
+    color: rgb(var(--status-red));
+  }
+
+  /* A message: a status-coloured edge and a faint ground of the same; the
+     text in the page's colour, so it reads at full contrast. Block layout,
+     so a link or a bold word inside the message flows with the text. */
+  .notice {
+    display: block;
+    border-left: 3px solid rgb(var(--status-blue));
+    border-radius: 0 calc(var(--radius) - 1px) calc(var(--radius) - 1px) 0;
+    padding: 0.55rem 0.8rem;
+    font-size: 0.75rem;
+    line-height: 1.55;
+    color: hsl(var(--foreground));
+    background-color: rgb(var(--status-blue) / 0.08);
+  }
+  .notice-label {
+    display: inline-block;
+    margin-right: 0.6rem;
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+  .notice-red { border-left-color: rgb(var(--status-red)); background-color: rgb(var(--status-red) / 0.08); }
+  .notice-red .notice-label { color: rgb(var(--status-red)); }
+  .notice-yellow { border-left-color: rgb(var(--status-yellow)); background-color: rgb(var(--status-yellow) / 0.08); }
+  .notice-yellow .notice-label { color: rgb(var(--status-yellow)); }
+  .notice-green { border-left-color: rgb(var(--status-green)); background-color: rgb(var(--status-green) / 0.08); }
+  .notice-green .notice-label { color: rgb(var(--status-green)); }
+  .notice-blue .notice-label { color: rgb(var(--status-blue)); }
+  .notice-gray { border-left-color: rgb(var(--status-gray)); background-color: rgb(var(--status-gray) / 0.08); }
+  .notice-gray .notice-label { color: hsl(var(--muted-foreground)); }
+
+  /* A list's column heads, as the Flight Following board sets them. */
+  .ff-thead {
+    border-bottom: 1px solid hsl(var(--border));
+    background-color: hsl(var(--muted));
+    text-align: left;
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: hsl(var(--muted-foreground));
   }
 
   /*

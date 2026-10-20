@@ -108,7 +108,7 @@ function Header({ order }: { order: FuelOrderResponse }) {
   return (
     <div className="mb-4 flex items-start justify-between gap-3">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">
+        <h1 className="page-title">
           Fuel order — <span className="font-mono">{order.n_number}</span>
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">

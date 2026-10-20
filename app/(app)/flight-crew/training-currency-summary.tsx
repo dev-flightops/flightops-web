@@ -93,7 +93,7 @@ export async function TrainingCurrencySummary({
       {nonCurrent.length > 0 && (
         <div
           role="alert"
-          className="rounded-md border border-status-red/40 bg-status-red/10 px-4 py-3 text-sm text-status-red"
+          className="notice notice-red text-sm"
         >
           <span className="font-semibold">
             You are non-current on{" "}

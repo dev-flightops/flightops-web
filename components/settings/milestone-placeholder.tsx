@@ -1,4 +1,4 @@
-import { CalendarClock } from "lucide-react";
+import { ClockGlyph } from "@/components/ff/glyphs";
 import Link from "next/link";
 
 interface MilestonePlaceholderProps {
@@ -48,13 +48,13 @@ export function SettingsMilestonePlaceholder({
       </nav>
 
       <header className="mb-5">
-        <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
+        <h1 className="page-title">{title}</h1>
         <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>
       </header>
 
       <section className="rounded-xl border border-dashed border-border bg-muted/60 p-6">
         <div className="flex items-start gap-4">
-          <CalendarClock className="h-5 w-5 flex-shrink-0 text-muted-foreground" />
+          <ClockGlyph className="h-5 w-5 flex-shrink-0 text-muted-foreground" />
           <div className="space-y-3">
             <p className="text-sm font-medium">
               Available after{" "}

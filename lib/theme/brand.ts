@@ -117,17 +117,33 @@ const toHex = (rgb: [number, number, number]) =>
   "#" + rgb.map((v) => v.toString(16).padStart(2, "0")).join("");
 
 /** The colour, darkened just enough to clear MIN_CONTRAST_ON_WHITE. */
+/** The light theme's grounds for brand text with its "selected" tint:
+ *  the page and the pale band (app/globals.css). */
+const LIGHT_GROUNDS = ["#ffffff", "#f1f5f8"] as const;
+
+/** Whether `rgb` reads in the light theme: white text on it, and it as
+ *  text on its own /10 tint over each light ground. The 5.2:1 floor was
+ *  meant to cover the tint by itself, but not every hue: the demo's red
+ *  cleared 5.2 and still read 4.4:1 on its tint (#79). */
+function readsInLight(rgb: [number, number, number]): boolean {
+  const hex = toHex(rgb);
+  return (
+    contrastRatio("#ffffff", hex) >= MIN_CONTRAST_ON_WHITE &&
+    LIGHT_GROUNDS.every((g) => contrastRatio(hex, over(rgb, g, 0.1)) >= MIN_CONTRAST_ON_DARK)
+  );
+}
+
 function legible(rgb: [number, number, number]): {
   rgb: [number, number, number];
   adjusted: boolean;
 } {
-  if (contrastRatio("#ffffff", toHex(rgb)) >= MIN_CONTRAST_ON_WHITE) {
+  if (readsInLight(rgb)) {
     return { rgb, adjusted: false };
   }
   const [h, s, l] = rgbToHsl(rgb);
   for (let lightness = l; lightness > 0; lightness -= 0.005) {
     const candidate = hslToRgb([h, s, lightness]);
-    if (contrastRatio("#ffffff", toHex(candidate)) >= MIN_CONTRAST_ON_WHITE) {
+    if (readsInLight(candidate)) {
       return { rgb: candidate, adjusted: true };
     }
   }

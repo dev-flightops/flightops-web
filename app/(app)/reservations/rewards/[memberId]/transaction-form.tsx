@@ -34,7 +34,7 @@ export function TransactionForm({ memberId }: { memberId: string }) {
       className="flex flex-wrap items-end gap-3 rounded-lg border border-border bg-card p-4"
     >
       <label className="block">
-        <span className="mb-1 block text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+        <span className="field-label">
           Type
         </span>
         <select
@@ -57,7 +57,7 @@ export function TransactionForm({ memberId }: { memberId: string }) {
       </label>
 
       <label className="block">
-        <span className="mb-1 block text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+        <span className="field-label">
           Points
         </span>
         <input
@@ -70,7 +70,7 @@ export function TransactionForm({ memberId }: { memberId: string }) {
       </label>
 
       <label className="block flex-1 min-w-[12rem]">
-        <span className="mb-1 block text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+        <span className="field-label">
           Description
         </span>
         <input

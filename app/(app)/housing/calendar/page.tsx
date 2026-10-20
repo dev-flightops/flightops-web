@@ -114,7 +114,7 @@ export default async function HousingCalendarPage({
 
       <header className="mb-4 flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">
+          <h1 className="page-title">
             Housing Calendar
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
@@ -132,7 +132,7 @@ export default async function HousingCalendarPage({
       {loadError ? (
         <div
           role="alert"
-          className="rounded-md border border-status-yellow/40 bg-status-yellow/10 px-3 py-3 text-xs text-status-yellow"
+          className="notice notice-yellow"
         >
           {loadError}
         </div>

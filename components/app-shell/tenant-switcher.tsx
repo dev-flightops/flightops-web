@@ -1,6 +1,6 @@
 "use client";
 
-import { Building2, Check, ChevronDown } from "lucide-react";
+import { CheckGlyph, ChevronDownGlyph } from "@/components/ff/glyphs";
 import { useRef } from "react";
 
 import { useTenant } from "@/lib/tenant";
@@ -54,10 +54,9 @@ export function TenantSwitcher() {
           if (!isMultiTenant) e.preventDefault();
         }}
       >
-        <Building2 className="h-4 w-4 text-muted-foreground" aria-hidden />
         <span className="truncate max-w-[180px]">{currentTenant.name}</span>
         {isMultiTenant && (
-          <ChevronDown
+          <ChevronDownGlyph
             className="h-4 w-4 text-muted-foreground transition-transform group-open:rotate-180"
             aria-hidden
           />
@@ -93,7 +92,7 @@ export function TenantSwitcher() {
                   </span>
                 </span>
                 {isCurrent && (
-                  <Check className="h-4 w-4 text-primary" aria-hidden />
+                  <CheckGlyph className="h-4 w-4 text-primary" aria-hidden />
                 )}
               </button>
             );

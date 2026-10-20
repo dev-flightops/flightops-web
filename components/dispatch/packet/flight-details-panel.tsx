@@ -267,7 +267,7 @@ function Field({
       <label
         htmlFor={htmlFor}
         title={fullTitle}
-        className="mb-1.5 block truncate text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground"
+        className="field-label truncate"
       >
         {label}
         {hint && (

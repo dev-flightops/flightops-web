@@ -24,7 +24,7 @@ export function HistoryRangeForm({
       <div>
         <label
           htmlFor="from"
-          className="mb-1 block text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground"
+          className="field-label"
         >
           From
         </label>
@@ -39,7 +39,7 @@ export function HistoryRangeForm({
       <div>
         <label
           htmlFor="to"
-          className="mb-1 block text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground"
+          className="field-label"
         >
           To
         </label>

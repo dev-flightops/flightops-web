@@ -89,7 +89,7 @@ export default async function IncidentsInboxPage({
               ← Safety SMS
             </Link>
           </p>
-          <h1 className="mt-2 text-2xl font-bold tracking-tight">Incidents</h1>
+          <h1 className="mt-2 page-title">Incidents</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Events that have occurred — bird strikes, near-misses, gear events,
             spills. File one below or triage the inbox.
@@ -173,7 +173,7 @@ function IncidentTable({
     <div className="overflow-hidden rounded-lg border border-border bg-card">
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
-          <thead className="border-b border-border bg-muted/60 text-left text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
+          <thead className="ff-thead">
             <tr>
               <th scope="col" className="px-4 py-2.5 font-semibold">
                 Occurred

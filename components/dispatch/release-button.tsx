@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Send } from "lucide-react";
+import { SendGlyph } from "@/components/ff/glyphs";
 
 import { releaseFlightAction } from "@/app/(app)/dispatch/[flightId]/actions";
 import { Button } from "@/components/ui/button";
@@ -96,7 +96,7 @@ export function ReleaseButton({
         title={hardBlockReason ?? undefined}
         aria-describedby={hardBlockReason ? "release-blocked-reason" : undefined}
       >
-        <Send className="h-4 w-4" />
+        <SendGlyph className="h-4 w-4" />
         {hardBlockReason ? "Release — blocked" : "Release dispatch"}
       </Button>
 

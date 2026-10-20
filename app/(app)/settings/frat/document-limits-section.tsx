@@ -139,7 +139,7 @@ export function DocumentLimitsSection({
           <div className="min-w-0 flex-1">
             <label
               htmlFor={`${uid}-document`}
-              className="mb-1 block text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground"
+              className="field-label"
             >
               Document
             </label>
@@ -174,7 +174,7 @@ export function DocumentLimitsSection({
       {error && (
         <p
           role="alert"
-          className="mt-3 rounded-md border border-status-red/40 bg-status-red/10 px-3 py-2 text-xs text-status-red"
+          className="mt-3 notice notice-red"
         >
           {error}
         </p>
@@ -214,7 +214,7 @@ function ReadingResult({
     return (
       <p
         role="alert"
-        className="mt-3 rounded-md border border-status-yellow/40 bg-status-yellow/10 px-3 py-2 text-xs text-status-yellow"
+        className="mt-3 notice notice-yellow"
       >
         The last reading failed: {FAILURES[reading.error ?? ""] ?? "something went wrong"}.
         Read it again.

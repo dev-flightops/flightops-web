@@ -103,7 +103,7 @@ export default async function CapaBoardPage({
               ← Safety SMS
             </Link>
           </p>
-          <h1 className="mt-2 text-2xl font-bold tracking-tight">
+          <h1 className="mt-2 page-title">
             Corrective Actions
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
@@ -217,7 +217,7 @@ function CapaTable({
     <div className="overflow-hidden rounded-lg border border-border bg-card">
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
-          <thead className="border-b border-border bg-muted/60 text-left text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
+          <thead className="ff-thead">
             <tr>
               <th scope="col" className="px-4 py-2.5 font-semibold">
                 Due

@@ -47,7 +47,7 @@ export default async function SupplierInboxPage() {
     <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
       <header className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">
+          <h1 className="page-title">
             Fuel Supplier Portal
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
@@ -65,7 +65,7 @@ export default async function SupplierInboxPage() {
       {loadError ? (
         <div
           role="alert"
-          className="rounded-md border border-status-red/40 bg-status-red/10 px-4 py-3 text-sm text-status-red"
+          className="notice notice-red text-sm"
         >
           {loadError}
         </div>
@@ -134,7 +134,7 @@ function OrdersTable({
   return (
     <div className="overflow-hidden rounded-lg border border-border bg-card">
       <table className="w-full text-xs">
-        <thead className="bg-muted/60 text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+        <thead className="ff-thead">
           <tr>
             <th className="px-3 py-2 text-left">Operator / Supplier</th>
             <th className="px-3 py-2 text-left">Aircraft</th>

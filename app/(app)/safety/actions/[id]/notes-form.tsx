@@ -52,7 +52,7 @@ export function NotesForm({
       {state.status === "error" && state.message ? (
         <div
           role="alert"
-          className="mb-3 rounded-md border border-status-red/40 bg-status-red/10 px-3 py-2 text-xs text-status-red"
+          className="mb-3 notice notice-red"
         >
           {state.message}
         </div>
@@ -60,7 +60,7 @@ export function NotesForm({
       {state.status === "ok" ? (
         <div
           role="status"
-          className="mb-3 rounded-md border border-status-green/40 bg-status-green/10 px-3 py-2 text-xs text-status-green"
+          className="mb-3 notice notice-green"
         >
           Saved.
         </div>

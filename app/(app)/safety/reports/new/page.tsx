@@ -39,7 +39,7 @@ export default async function NewSafetyReportPage({
             {returnTo ? "← Back" : home === "/safety/reports" ? "← Safety Reports" : "← My Reports"}
           </Link>
         </p>
-        <h1 className="mt-2 text-2xl font-bold tracking-tight">File Safety Report</h1>
+        <h1 className="mt-2 page-title">File Safety Report</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Anything that worried you: a hazard, a near miss, a fatigue concern, a suggestion. It goes
           straight to the safety team, and you can follow it under My Reports.

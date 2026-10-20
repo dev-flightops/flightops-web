@@ -72,12 +72,7 @@ export default async function DispatchIntelligencePage() {
       >
         ← Dispatch
       </Link>
-      <h1 className="mt-1 flex items-center gap-2 text-2xl font-bold tracking-tight text-foreground">
-        <span aria-hidden className="text-status-purple">
-          ✦
-        </span>
-        Dispatch Intelligence
-      </h1>
+      <h1 className="mt-1 page-title text-foreground">Dispatch Intelligence</h1>
       {data && (
         <p className="mt-1 text-sm text-muted-foreground">
           {data.inbound.length} aircraft airborne · {data.turn_minutes}-minute
@@ -88,7 +83,7 @@ export default async function DispatchIntelligencePage() {
       {loadError ? (
         <p
           role="alert"
-          className="mt-5 rounded-md border border-status-red/30 bg-status-red/10 px-3 py-2 text-sm text-status-red"
+          className="mt-5 notice notice-red text-sm"
         >
           {loadError}
         </p>

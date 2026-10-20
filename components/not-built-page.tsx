@@ -33,7 +33,7 @@ export function NotBuiltPage({
       >
         ← Maintenance
       </Link>
-      <h1 className="mt-2 text-2xl font-bold tracking-tight">{title}</h1>
+      <h1 className="mt-2 page-title">{title}</h1>
       <p className="mt-1 text-sm text-muted-foreground">{summary}</p>
       <div
         role="status"

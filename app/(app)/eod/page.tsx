@@ -112,7 +112,7 @@ export default async function EodPage() {
     <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
       <header className="mb-5 flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">
+          <h1 className="page-title text-foreground">
             End-of-Day Closeout
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
@@ -240,7 +240,7 @@ function CompletedSection({ flights }: { flights: FlightListItem[] }) {
         </p>
       ) : (
         <table className="w-full text-xs">
-          <thead className="text-left text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+          <thead className="ff-thead">
             <tr>
               <th className="px-2 py-1">Flight</th>
               <th className="px-2 py-1">Aircraft</th>
@@ -281,7 +281,7 @@ function AirborneSection({ flights }: { flights: FlightListItem[] }) {
         </p>
       ) : (
         <table className="w-full text-xs">
-          <thead className="text-left text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+          <thead className="ff-thead">
             <tr>
               <th className="px-2 py-1">Flight</th>
               <th className="px-2 py-1">Aircraft</th>
@@ -361,7 +361,7 @@ function PlannedSection({ flights }: { flights: FlightListItem[] }) {
   return (
     <Section title="Planned — Not Yet Departed" tone="muted" wide>
       <table className="w-full text-xs">
-        <thead className="text-left text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+        <thead className="ff-thead">
           <tr>
             <th className="px-2 py-1">Flight</th>
             <th className="px-2 py-1">Aircraft</th>

@@ -224,7 +224,7 @@ function FlightRow({ flight }: { flight: FlightListItem }) {
       {result && result.status !== "ok" && (
         <p
           role="alert"
-          className="mt-2 rounded-md border border-status-red/30 bg-status-red/10 px-3 py-1.5 text-xs text-status-red"
+          className="mt-2 notice notice-red"
         >
           {result.message}
         </p>

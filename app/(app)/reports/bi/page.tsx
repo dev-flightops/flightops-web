@@ -77,7 +77,7 @@ export default async function BiPage() {
       >
         ← Reports
       </Link>
-      <h1 className="mt-1 text-2xl font-bold tracking-tight text-foreground">
+      <h1 className="mt-1 page-title text-foreground">
         Business Intelligence
       </h1>
       {data && (
@@ -90,7 +90,7 @@ export default async function BiPage() {
       {loadError ? (
         <p
           role="alert"
-          className="mt-5 rounded-md border border-status-red/30 bg-status-red/10 px-3 py-2 text-sm text-status-red"
+          className="mt-5 notice notice-red text-sm"
         >
           {loadError}
         </p>

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ChevronRight, Plane } from "lucide-react";
+import { ChevronRightGlyph } from "@/components/ff/glyphs";
 
 import {
   Card,
@@ -33,10 +33,9 @@ export function FlightCard({ flight }: { flight: FlightListItem }) {
           <Field label="Arrival" value={formatDate(flight.scheduled_arrival_at)} />
           <div className="flex items-center justify-between sm:justify-end gap-2">
             <span className="flex items-center gap-1.5 text-muted-foreground">
-              <Plane className="h-4 w-4" />
               <span className="font-mono">{flight.aircraft.tail_number}</span>
             </span>
-            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+            <ChevronRightGlyph className="h-4 w-4 text-muted-foreground" />
           </div>
         </CardContent>
       </Card>

@@ -459,7 +459,7 @@ function ErrorBanner({ message }: { message: string }) {
   return (
     <div
       role="alert"
-      className="mb-2 rounded-md border border-status-red/40 bg-status-red/10 px-3 py-2 text-xs text-status-red"
+      className="mb-2 notice notice-red"
     >
       {message}
     </div>

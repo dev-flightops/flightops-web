@@ -58,7 +58,7 @@ export default async function InvoiceDetailPage({
         <div className="mx-auto max-w-3xl px-4 sm:px-6 py-8">
           <p
             role="alert"
-            className="rounded-md border border-status-red/30 bg-status-red/10 px-3 py-2 text-sm text-status-red"
+            className="notice notice-red text-sm"
           >
             Invoicing is limited to executive admins and the director of
             operations.
@@ -90,7 +90,7 @@ export default async function InvoiceDetailPage({
 
       <header className="mt-1 mb-6 flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="font-mono text-2xl font-bold tracking-tight text-foreground">
+          <h1 className="font-mono page-title text-foreground">
             {invoice.invoice_number}
           </h1>
           <div className="mt-1.5 flex flex-wrap items-center gap-2">
@@ -150,7 +150,7 @@ export default async function InvoiceDetailPage({
             Lines on invoice {invoice.invoice_number}
           </caption>
           <thead>
-            <tr className="border-b border-border bg-background/40 text-left text-[0.6rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+            <tr className="ff-thead">
               <th scope="col" className="px-4 py-3">Description</th>
               <th scope="col" className="px-4 py-3 text-right">Qty</th>
               <th scope="col" className="px-4 py-3 text-right">Unit</th>

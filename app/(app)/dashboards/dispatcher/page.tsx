@@ -1,4 +1,4 @@
-import { AlertTriangle, CheckCircle2 } from "lucide-react";
+import { AlertGlyph, CheckGlyph } from "@/components/ff/glyphs";
 import Link from "next/link";
 
 import { AlertList } from "@/components/dashboards/alert-list";
@@ -53,7 +53,7 @@ export default async function DispatcherDashboardPage() {
   return (
     <div className="container py-6">
 
-      <h1 className="text-2xl font-bold tracking-tight">Dispatcher Live View</h1>
+      <h1 className="page-title">Dispatcher Live View</h1>
       <p className="mt-1 text-sm text-muted-foreground">
         Active flights · crew legality · pending dispatch packets
       </p>
@@ -94,7 +94,7 @@ export default async function DispatcherDashboardPage() {
       <section className="mt-5 rounded-xl border border-border bg-card p-5">
         <div className="mb-3 flex items-baseline justify-between">
           <h2 className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-muted-foreground">
-            <AlertTriangle className="h-3.5 w-3.5" aria-hidden />
+            <AlertGlyph className="h-3.5 w-3.5" aria-hidden />
             Active Alerts
           </h2>
           <span className="text-[0.65rem] text-muted-foreground">
@@ -252,7 +252,7 @@ function PendingDispatchTable({ flights }: { flights: FlightListItem[] }) {
   if (flights.length === 0) {
     return (
       <p className="inline-flex w-full items-center justify-center gap-1.5 py-6 text-center text-xs text-muted-foreground">
-        <CheckCircle2
+        <CheckGlyph
           className="h-3.5 w-3.5 text-status-green"
           aria-hidden
         />

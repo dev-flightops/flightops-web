@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Pencil } from "lucide-react";
+import { EditGlyph } from "@/components/ff/glyphs";
 import { z } from "zod";
 
 import { updateFlightAction } from "@/app/(app)/dispatch/[flightId]/actions";
@@ -181,7 +181,7 @@ export function EditFlightDialog({
   return (
     <>
       <Button variant="outline" onClick={() => setOpen(true)}>
-        <Pencil className="h-4 w-4" />
+        <EditGlyph className="h-4 w-4" />
         Edit
       </Button>
 

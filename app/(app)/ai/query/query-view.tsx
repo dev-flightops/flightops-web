@@ -146,7 +146,7 @@ export function QueryView({
   return (
     <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6">
       <header className="mb-4">
-        <h1 className="text-2xl font-bold tracking-tight">Intelligence Query</h1>
+        <h1 className="page-title">Intelligence Query</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Ask about your operation in plain English
         </p>

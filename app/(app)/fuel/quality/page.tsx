@@ -89,7 +89,7 @@ export default async function FuelQualityPage({
 
       <header className="mb-6 flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">
+          <h1 className="page-title">
             Fuel Quality Log
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
@@ -132,7 +132,7 @@ export default async function FuelQualityPage({
       {loadError && (
         <div
           role="alert"
-          className="mb-4 rounded-md border border-status-yellow/40 bg-status-yellow/10 px-3 py-2 text-xs text-status-yellow"
+          className="mb-4 notice notice-yellow"
         >
           {loadError}
         </div>
@@ -151,7 +151,7 @@ export default async function FuelQualityPage({
       {tests.length > 0 && (
         <section className="overflow-hidden rounded-lg border border-border bg-card">
           <table className="w-full text-sm">
-            <thead className="border-b border-border bg-muted/60 text-[0.6rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+            <thead className="ff-thead">
               <tr>
                 <th scope="col" className="px-4 py-2 text-left">Tested</th>
                 <th scope="col" className="px-4 py-2 text-left">Where</th>

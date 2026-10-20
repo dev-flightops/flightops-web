@@ -62,7 +62,7 @@ export default async function FuelOrdersPage({
           >
             ← Fuel
           </Link>
-          <h1 className="text-2xl font-bold tracking-tight">Fuel Orders</h1>
+          <h1 className="page-title">Fuel Orders</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             {orders.length} order{orders.length === 1 ? "" : "s"}
             {status ? ` · status ${status}` : ""}
@@ -103,7 +103,7 @@ export default async function FuelOrdersPage({
         <div className="overflow-hidden rounded-lg border border-border bg-card">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-border bg-background/40 text-left text-[0.6rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+              <tr className="ff-thead">
                 <th className="px-4 py-3">Aircraft</th>
                 <th className="px-4 py-3">Base</th>
                 <th className="px-4 py-3">Supplier</th>

@@ -34,7 +34,7 @@ export default async function FuelTypesPage() {
         >
           ← Fuel
         </Link>
-        <h1 className="text-2xl font-bold tracking-tight">Fuel Types</h1>
+        <h1 className="page-title">Fuel Types</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Tenant catalog — Jet A, 100LL, mogas, etc.
         </p>
@@ -61,7 +61,7 @@ export default async function FuelTypesPage() {
         <div className="overflow-hidden rounded-lg border border-border bg-card">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-border bg-background/40 text-left text-[0.6rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+              <tr className="ff-thead">
                 <th className="px-4 py-3">Code</th>
                 <th className="px-4 py-3">Label</th>
                 <th className="px-4 py-3 text-right">Sort order</th>

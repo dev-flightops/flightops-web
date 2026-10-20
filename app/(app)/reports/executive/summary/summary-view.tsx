@@ -127,7 +127,7 @@ export function SummaryView({
 
       <header className="mb-5 flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Executive Summary</h1>
+          <h1 className="page-title">Executive Summary</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             {isoRange(s.period_start, s.period_end)} — 60-second snapshot
           </p>
@@ -141,7 +141,7 @@ export function SummaryView({
       {costIncomplete ? (
         <p
           role="status"
-          className="mb-5 rounded-lg border border-status-yellow/40 bg-status-yellow/10 px-3 py-2 text-xs text-status-yellow"
+          className="mb-5 notice notice-yellow"
         >
           {s.basis.cost_factors_on_file === 0
             ? "No operating-cost factors are on file, so cost and margin below are incomplete. Add them under Settings → Costs."

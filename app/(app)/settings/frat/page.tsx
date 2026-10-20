@@ -162,7 +162,7 @@ export default async function FratThresholdsPage() {
         <span>Flight Risk</span>
       </nav>
       <header className="mb-4">
-        <h1 className="text-2xl font-bold tracking-tight">Flight Risk Thresholds</h1>
+        <h1 className="page-title">Flight Risk Thresholds</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Where Low, Medium, High and Extreme begin on the pre-flight
           risk assessment

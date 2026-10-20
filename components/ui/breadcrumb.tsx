@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ChevronRight } from "lucide-react";
+import { ChevronRightGlyph } from "@/components/ff/glyphs";
 import type { ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
@@ -44,7 +44,7 @@ export function Breadcrumb({ segments, icon, className }: BreadcrumbProps) {
       {segments.map((segment, index) => (
         <span key={`${segment.label}-${index}`} className="flex items-center gap-1">
           {index > 0 && (
-            <ChevronRight className="h-3 w-3 opacity-50" aria-hidden />
+            <ChevronRightGlyph className="h-3 w-3 opacity-50" aria-hidden />
           )}
           {segment.href ? (
             <Link

@@ -8,7 +8,7 @@ import { QuickLinks, type QuickLink } from "./quick-links";
 const links: QuickLink[] = [
   { label: "Live Dispatch", href: "/dispatch", status: "live" },
   { label: "Future Reports", href: "/reports/", status: "m4" },
-  { label: "Settings", href: "/settings/", status: "m4", accent: "gold" },
+  { label: "Settings", href: "/settings/", status: "m4" },
 ];
 
 describe("QuickLinks", () => {

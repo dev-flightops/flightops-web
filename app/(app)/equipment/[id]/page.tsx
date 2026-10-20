@@ -160,7 +160,7 @@ function Header({
   return (
     <div className="mb-6 flex items-start justify-between gap-4">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">{unit.name}</h1>
+        <h1 className="page-title">{unit.name}</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           {EQUIPMENT_TYPE_LABELS[unit.equipment_type]}
           {unit.station && (

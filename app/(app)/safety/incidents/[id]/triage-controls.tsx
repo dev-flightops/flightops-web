@@ -48,7 +48,7 @@ export function IncidentTriageControls({
       {state.status === "error" && state.message ? (
         <div
           role="alert"
-          className="mb-3 rounded-md border border-status-red/40 bg-status-red/10 px-3 py-2 text-xs text-status-red"
+          className="mb-3 notice notice-red"
         >
           {state.message}
         </div>
@@ -58,7 +58,7 @@ export function IncidentTriageControls({
         <input type="hidden" name="incident_id" value={incidentId} />
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <label className="min-w-0">
-            <span className="mb-1.5 block text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+            <span className="field-label">
               Move to
             </span>
             <select
@@ -78,7 +78,7 @@ export function IncidentTriageControls({
 
         {nextStatus === "closed" ? (
           <label className="block">
-            <span className="mb-1.5 block text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+            <span className="field-label">
               Closure reason (required)
             </span>
             <textarea

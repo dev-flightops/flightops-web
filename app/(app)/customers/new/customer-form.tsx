@@ -24,7 +24,7 @@ export function CustomerForm() {
       {state.status === "error" && state.message ? (
         <div
           role="alert"
-          className="rounded-md border border-status-red/40 bg-status-red/10 px-3 py-2 text-xs text-status-red"
+          className="notice notice-red"
         >
           {state.message}
         </div>
@@ -131,13 +131,13 @@ function Field({
     <div className="min-w-0">
       <label
         htmlFor={name}
-        className="mb-1.5 block text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground"
+        className="field-label"
       >
         {label}
       </label>
       {children}
       {error ? (
-        <p className="mt-1 text-[0.6875rem] text-status-red">{error}</p>
+        <p className="field-error">{error}</p>
       ) : null}
     </div>
   );

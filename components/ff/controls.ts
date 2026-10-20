@@ -35,3 +35,18 @@ export const buttonOutline = cn(
 /** A text link in ForeFlight's idiom: UPPERCASE, tracked, the brand's text tone. */
 export const linkCaps =
   "inline-flex items-center gap-1 text-[0.68rem] font-bold uppercase tracking-[0.1em] text-primary hover:underline underline-offset-4";
+
+/** A page's own tabs (#79), in the department nav's idiom: words, the
+ *  current one in the text colour with a 2px rule under it in the brand's
+ *  text tone. For switching sections of one page; filters and views use
+ *  `segment`. */
+export const tabList = "flex flex-wrap items-stretch gap-x-6 border-b border-border";
+
+export function tab(active: boolean): string {
+  return cn(
+    "relative inline-flex items-center py-2.5 text-[0.8125rem] font-semibold transition-colors",
+    "after:absolute after:inset-x-0 after:-bottom-px after:h-0.5",
+    "focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary",
+    active ? "text-foreground after:bg-brand-ink" : "text-muted-foreground hover:text-foreground",
+  );
+}

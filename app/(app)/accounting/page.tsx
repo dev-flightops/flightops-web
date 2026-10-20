@@ -102,7 +102,7 @@ export default async function AccountingPage({
     <div className="mx-auto max-w-6xl px-4 sm:px-6 py-8">
       <header className="mb-6 flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">
+          <h1 className="page-title text-foreground">
             Accounting
           </h1>
           {summary && (
@@ -125,7 +125,7 @@ export default async function AccountingPage({
       {loadError ? (
         <p
           role="alert"
-          className="rounded-md border border-status-red/30 bg-status-red/10 px-3 py-2 text-sm text-status-red"
+          className="notice notice-red text-sm"
         >
           {loadError}
         </p>
@@ -162,7 +162,7 @@ export default async function AccountingPage({
             // for, which is a month-end job rather than a statistic (#29).
             <p
               role="status"
-              className="mb-4 rounded-md border border-status-yellow/30 bg-status-yellow/10 px-3 py-2 text-xs text-status-yellow"
+              className="mb-4 notice notice-yellow"
             >
               <span className="font-semibold">
                 {summary.uninvoiced_flights} flight{summary.uninvoiced_flights === 1 ? "" : "s"} flown
@@ -238,7 +238,7 @@ export default async function AccountingPage({
         {agingError ? (
           <p
             role="alert"
-            className="rounded-md border border-status-red/30 bg-status-red/10 px-3 py-2 text-sm text-status-red"
+            className="notice notice-red text-sm"
           >
             {agingError}
           </p>
@@ -306,7 +306,7 @@ export default async function AccountingPage({
                     Outstanding invoices as of {aging.as_of}
                   </caption>
                   <thead>
-                    <tr className="border-b border-border bg-background/40 text-left text-[0.6rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+                    <tr className="ff-thead">
                       <th scope="col" className="px-4 py-3">Invoice</th>
                       <th scope="col" className="px-4 py-3">Customer</th>
                       <th scope="col" className="px-4 py-3">Due</th>

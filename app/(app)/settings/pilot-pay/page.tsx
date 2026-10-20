@@ -69,7 +69,7 @@ export default async function SettingsPilotPayPage() {
         <span className="font-semibold text-primary">Pilot Pay</span>
       </nav>
 
-      <h1 className="mb-1 text-2xl font-bold tracking-tight">Pilot Pay Rates &amp; Modifiers</h1>
+      <h1 className="mb-1 page-title">Pilot Pay Rates &amp; Modifiers</h1>
       <p className="mb-5 text-sm text-muted-foreground">
         Configure pay rate tables by seniority, airframe, and role. Add daily
         modifiers for medevac, night ops, and other situations.
@@ -78,7 +78,7 @@ export default async function SettingsPilotPayPage() {
       {loadError ? (
         <div
           role="alert"
-          className="mb-5 rounded-md border border-status-yellow/40 bg-status-yellow/10 px-3 py-3 text-xs text-status-yellow"
+          className="mb-5 notice notice-yellow"
         >
           {loadError}
         </div>
@@ -110,7 +110,7 @@ function PayRateSection({ rates }: { rates: PayRateRow[] }) {
       <div className="mb-4 overflow-hidden rounded-lg border border-border bg-card">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="border-b border-border bg-muted/60 text-left text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
+            <thead className="ff-thead">
               <tr>
                 <th scope="col" className="px-4 py-2 font-semibold">Type</th>
                 <th scope="col" className="px-4 py-2 font-semibold">Pilot</th>
@@ -244,7 +244,7 @@ function PayModifierSection({ modifiers }: { modifiers: PayModifierRow[] }) {
       <div className="mb-4 overflow-hidden rounded-lg border border-border bg-card">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="border-b border-border bg-muted/60 text-left text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
+            <thead className="ff-thead">
               <tr>
                 <th scope="col" className="px-4 py-2 font-semibold">Modifier</th>
                 <th scope="col" className="px-4 py-2 font-semibold">Label</th>
@@ -373,7 +373,7 @@ function Field({
 }) {
   return (
     <label className={width}>
-      <span className="mb-1 block text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+      <span className="field-label">
         {label}
       </span>
       {children}

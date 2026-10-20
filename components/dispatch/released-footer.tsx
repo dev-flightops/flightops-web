@@ -1,4 +1,4 @@
-import { CheckCircle2 } from "lucide-react";
+import { CheckGlyph } from "@/components/ff/glyphs";
 
 import { formatDate } from "@/lib/utils";
 import type { UserRef } from "@/lib/api/types";
@@ -14,7 +14,7 @@ export function ReleasedFooter({ releasedAt, releasedBy }: ReleasedFooterProps) 
       className="flex items-center gap-3 rounded-lg border border-status-green/30 bg-status-green/10 px-4 py-3 text-sm"
       data-testid="released-footer"
     >
-      <CheckCircle2 className="h-5 w-5 flex-shrink-0 text-status-green" />
+      <CheckGlyph className="h-5 w-5 flex-shrink-0 text-status-green" />
       <div>
         <p className="font-medium">Released</p>
         <p className="text-muted-foreground">

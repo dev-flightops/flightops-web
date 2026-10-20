@@ -79,7 +79,7 @@ export function ChangeStatusDialog({
             {state.status === "api-error" && (
               <div
                 role="alert"
-                className="rounded-md border border-status-red/40 bg-status-red/10 px-3 py-2 text-xs text-status-red"
+                className="notice notice-red"
               >
                 {state.message}
               </div>
@@ -88,7 +88,7 @@ export function ChangeStatusDialog({
             <div>
               <label
                 htmlFor="status"
-                className="mb-1 block text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground"
+                className="field-label"
               >
                 New status <span className="text-status-red">*</span>
               </label>
@@ -109,7 +109,7 @@ export function ChangeStatusDialog({
             <div>
               <label
                 htmlFor="status_note"
-                className="mb-1 block text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground"
+                className="field-label"
               >
                 Note (optional — recommended for maintenance / out-of-service)
               </label>

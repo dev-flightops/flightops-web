@@ -133,7 +133,7 @@ export function WeatherAndNotamStep({ flightId, flight, weather }: Props) {
         {weatherServiceDown && (
           <div
             role="alert"
-            className="rounded-md border border-status-yellow/40 bg-status-yellow/10 px-3 py-2 text-xs text-status-yellow"
+            className="notice notice-yellow"
           >
             Weather-service is unreachable — METAR / TAF cards can&rsquo;t
             render right now. Pull the data in your usual source

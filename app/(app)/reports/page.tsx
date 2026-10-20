@@ -154,7 +154,7 @@ export default function ReportsHubPage() {
   return (
     <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
       <header className="mb-5">
-        <h1 className="text-2xl font-bold tracking-tight">Reports</h1>
+        <h1 className="page-title">Reports</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Executive analytics and regulatory filings
         </p>

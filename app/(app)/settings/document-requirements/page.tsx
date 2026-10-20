@@ -66,7 +66,7 @@ export default async function DocumentRequirementsPage() {
       </nav>
 
       <header className="mb-4">
-        <h1 className="text-2xl font-bold tracking-tight">
+        <h1 className="page-title">
           Document requirements
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
@@ -78,7 +78,7 @@ export default async function DocumentRequirementsPage() {
       {loadError ? (
         <div
           role="alert"
-          className="rounded-md border border-status-yellow/40 bg-status-yellow/10 px-3 py-3 text-xs text-status-yellow"
+          className="notice notice-yellow"
         >
           {loadError}
         </div>

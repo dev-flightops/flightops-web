@@ -19,7 +19,7 @@ export default async function SettingsCompanyPage() {
       <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6">
         <Breadcrumb />
         <header className="mb-6">
-          <h1 className="text-2xl font-bold tracking-tight">Company Profile</h1>
+          <h1 className="page-title">Company Profile</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Legal name, mailing address, contacts, Part 135 certificate,
             and how invoices are priced and dated
@@ -39,7 +39,7 @@ export default async function SettingsCompanyPage() {
         <Breadcrumb />
         <div
           role="alert"
-          className="rounded-md border border-status-yellow/40 bg-status-yellow/10 px-3 py-2 text-xs text-status-yellow"
+          className="notice notice-yellow"
         >
           {message}
         </div>

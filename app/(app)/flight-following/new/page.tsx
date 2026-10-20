@@ -44,7 +44,7 @@ export default async function FlightFollowingNewPage() {
         >
           ← Flight Following
         </Link>
-        <h1 className="mt-1 text-2xl font-bold tracking-tight">
+        <h1 className="mt-1 page-title">
           Open New Flight
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">

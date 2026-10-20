@@ -66,7 +66,7 @@ export default async function WeatherBriefingsPage() {
     <div className="mx-auto max-w-5xl px-4 sm:px-6 py-8">
       <div className="mb-8 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">
+          <h1 className="page-title">
             Weather Briefings
           </h1>
           <p className="text-sm text-muted-foreground">

@@ -188,7 +188,7 @@ export function CorrectDuty({
         )}
       </div>
 
-      <label className="block text-[0.65rem] font-semibold uppercase tracking-wider text-muted-foreground">
+      <label className="field-label mb-0">
         Why
         <input
           type="text"

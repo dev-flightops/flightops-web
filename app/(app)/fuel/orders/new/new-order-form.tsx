@@ -50,7 +50,7 @@ export function NewFuelOrderForm({
       {state.status === "api-error" && (
         <div
           role="alert"
-          className="rounded-md border border-status-red/40 bg-status-red/10 px-3 py-2 text-xs text-status-red"
+          className="notice notice-red"
         >
           {state.message}
         </div>
@@ -151,7 +151,7 @@ export function NewFuelOrderForm({
       <div>
         <label
           htmlFor="special_instructions"
-          className="mb-1 block text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground"
+          className="field-label"
         >
           Special instructions (optional)
         </label>
@@ -199,7 +199,7 @@ function Field({
     <div>
       <label
         htmlFor={name}
-        className="mb-1 block text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground"
+        className="field-label"
       >
         {label}
         {inputProps.required && <span className="text-status-red"> *</span>}
@@ -213,7 +213,7 @@ function Field({
         {...inputProps}
       />
       {error && (
-        <p role="alert" className="mt-1 text-[0.65rem] text-status-red">
+        <p role="alert" className="field-error">
           {error}
         </p>
       )}
@@ -256,7 +256,7 @@ function SideInput({
         className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none aria-[invalid=true]:border-status-red"
       />
       {error && (
-        <p role="alert" className="mt-1 text-[0.65rem] text-status-red">
+        <p role="alert" className="field-error">
           {error}
         </p>
       )}
@@ -281,7 +281,7 @@ function FieldSelect({
     <div>
       <label
         htmlFor={name}
-        className="mb-1 block text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground"
+        className="field-label"
       >
         {label}
         {required && <span className="text-status-red"> *</span>}
@@ -296,7 +296,7 @@ function FieldSelect({
         {children}
       </select>
       {error && (
-        <p role="alert" className="mt-1 text-[0.65rem] text-status-red">
+        <p role="alert" className="field-error">
           {error}
         </p>
       )}

@@ -75,7 +75,7 @@ export default async function CrewCalendarPage({
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
       <header className="mb-5">
-        <h1 className="text-2xl font-bold tracking-tight">Crew Calendar</h1>
+        <h1 className="page-title">Crew Calendar</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Who is rostered where, on which aircraft type, and when.
         </p>
@@ -123,7 +123,7 @@ export default async function CrewCalendarPage({
       {loadError ? (
         <p
           role="alert"
-          className="rounded-md border border-status-red/40 bg-status-red/10 px-4 py-3 text-sm text-status-red"
+          className="notice notice-red text-sm"
         >
           {loadError}
         </p>

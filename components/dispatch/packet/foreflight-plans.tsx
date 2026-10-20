@@ -104,7 +104,7 @@ function TheirWeightAndBalance({ plan }: { plan: ToolPlan }) {
       {plan.within_limits ? (
         <p className="mt-1 text-xs text-status-green">Within every limit ForeFlight has.</p>
       ) : (
-        <div className="mt-1 text-xs text-status-red">
+        <div className="field-error">
           <p className="font-semibold">Outside ForeFlight&rsquo;s limits:</p>
           <ul className="list-disc pl-4">
             {plan.limit_issues.map((issue) => (
@@ -131,7 +131,7 @@ function PlanCard({ plan, disagrees }: { plan: ExternalPlan; disagrees: boolean 
       {disagrees && (
         <p
           role="alert"
-          className="mb-2 rounded-md border border-status-red/40 bg-status-red/10 px-3 py-2 text-xs text-status-red"
+          className="mb-2 notice notice-red"
         >
           ForeFlight&rsquo;s weight and balance disagrees with Peregrine&rsquo;s. Peregrine&rsquo;s check is the
           record: find out which load is right before this flight goes.

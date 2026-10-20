@@ -1,6 +1,5 @@
 "use client";
 
-import { Fuel } from "lucide-react";
 import { useActionState, useEffect, useState } from "react";
 
 import {
@@ -42,7 +41,6 @@ export function MarkFueledDialog({
         onClick={() => setOpen(true)}
         className="inline-flex items-center gap-1.5 rounded-md border border-status-green/40 bg-status-green/10 px-3 py-1.5 text-xs font-semibold text-status-green hover:bg-status-green/15"
       >
-        <Fuel className="h-3.5 w-3.5" aria-hidden />
         Mark fueled
       </button>
 
@@ -63,7 +61,7 @@ export function MarkFueledDialog({
             {state.status === "api-error" && (
               <div
                 role="alert"
-                className="rounded-md border border-status-red/40 bg-status-red/10 px-3 py-2 text-xs text-status-red"
+                className="notice notice-red"
               >
                 {state.message}
               </div>
@@ -72,7 +70,7 @@ export function MarkFueledDialog({
             <div>
               <label
                 htmlFor="fueled_by_name"
-                className="mb-1 block text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground"
+                className="field-label"
               >
                 Fueled by <span className="text-status-red">*</span>
               </label>
@@ -89,7 +87,7 @@ export function MarkFueledDialog({
             <div>
               <label
                 htmlFor="actual_quantity_gallons"
-                className="mb-1 block text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground"
+                className="field-label"
               >
                 Actual gallons <span className="text-status-red">*</span>
               </label>
@@ -111,7 +109,7 @@ export function MarkFueledDialog({
             <div>
               <label
                 htmlFor="closed_by_source"
-                className="mb-1 block text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground"
+                className="field-label"
               >
                 Closed by
               </label>
@@ -130,7 +128,7 @@ export function MarkFueledDialog({
             <div>
               <label
                 htmlFor="discrepancy_reason"
-                className="mb-1 block text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground"
+                className="field-label"
               >
                 Discrepancy reason (forces discrepancy state)
               </label>

@@ -101,7 +101,7 @@ export default async function AccountingExportPage({
         </header>
         <p
           role="alert"
-          className="rounded-md border border-status-red/30 bg-status-red/10 px-3 py-2 text-sm text-status-red"
+          className="notice notice-red text-sm"
         >
           The accounting export is limited to executive admins and the
           director of operations.
@@ -132,7 +132,7 @@ export default async function AccountingExportPage({
       {loadError ? (
         <div
           role="alert"
-          className="mb-5 rounded-md border border-status-yellow/40 bg-status-yellow/10 px-3 py-3 text-xs text-status-yellow"
+          className="mb-5 notice notice-yellow"
         >
           {loadError}
         </div>
@@ -201,7 +201,7 @@ function Activity({
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="border-b border-border bg-muted/60 text-left text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
+            <thead className="ff-thead">
               <tr>
                 <th scope="col" className="px-4 py-2 font-semibold">Date</th>
                 <th scope="col" className="px-4 py-2 font-semibold">Flight #</th>
@@ -317,7 +317,7 @@ function ExportCsvButton({
 function PageTitle() {
   return (
     <div>
-      <h1 className="text-2xl font-bold tracking-tight">Accounting Export</h1>
+      <h1 className="page-title">Accounting Export</h1>
       <p className="mt-1 text-sm text-muted-foreground">
         Review completed flight activity, then export a CSV for your
         accounting software.

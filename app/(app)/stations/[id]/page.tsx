@@ -152,7 +152,7 @@ function Header({
     <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
       <div>
         <div className="flex flex-wrap items-center gap-2">
-          <h1 className="text-2xl font-bold tracking-tight">
+          <h1 className="page-title">
             <span className="font-mono">{station.icao_code}</span>
             <span className="ml-3 font-normal text-muted-foreground">
               {station.name}

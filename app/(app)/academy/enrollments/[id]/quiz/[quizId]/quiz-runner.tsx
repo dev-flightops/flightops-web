@@ -98,7 +98,7 @@ export function QuizRunner({ enrollmentId, quiz, backToLessonHref }: Props) {
       {error && (
         <div
           role="alert"
-          className="rounded-lg border border-status-red/40 bg-status-red/10 px-4 py-3 text-sm text-status-red"
+          className="notice notice-red text-sm"
         >
           {error}
         </div>

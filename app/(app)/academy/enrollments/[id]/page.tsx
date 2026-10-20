@@ -90,7 +90,7 @@ export default async function EnrollmentLessonPage({
             ← {course.title}
           </Link>
         </p>
-        <h1 className="mt-2 flex flex-wrap items-baseline gap-3 text-2xl font-bold tracking-tight">
+        <h1 className="mt-2 flex flex-wrap items-baseline gap-3 page-title">
           {course.title}
           <span className="text-sm font-normal text-muted-foreground">
             {COURSE_CATEGORY_LABELS[course.category]}

@@ -73,7 +73,7 @@ export default async function T100Page({
           >
             ← Reports
           </Link>
-          <h1 className="mt-1 text-2xl font-bold tracking-tight text-foreground">
+          <h1 className="mt-1 page-title text-foreground">
             T-100 — Mail Traffic
           </h1>
           {report && (
@@ -98,7 +98,7 @@ export default async function T100Page({
       {loadError ? (
         <p
           role="alert"
-          className="rounded-md border border-status-red/30 bg-status-red/10 px-3 py-2 text-sm text-status-red"
+          className="notice notice-red text-sm"
         >
           {loadError}
         </p>
@@ -114,7 +114,7 @@ export default async function T100Page({
             // to announce that before it is filed, not after.
             <p
               role="status"
-              className="mb-4 rounded-md border border-status-yellow/30 bg-status-yellow/10 px-3 py-2 text-xs text-status-yellow"
+              className="mb-4 notice notice-yellow"
             >
               {report.draft_manifests_excluded} manifest
               {report.draft_manifests_excluded === 1 ? " is" : "s are"} still in
@@ -137,7 +137,7 @@ export default async function T100Page({
                   T-100 mail traffic for {report.period_label}
                 </caption>
                 <thead>
-                  <tr className="border-b border-border bg-background/40 text-left text-[0.6rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+                  <tr className="ff-thead">
                     <th scope="col" className="px-4 py-3">
                       Origin
                     </th>

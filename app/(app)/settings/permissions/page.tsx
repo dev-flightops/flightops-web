@@ -62,7 +62,7 @@ export default async function SettingsPermissionsPage() {
       </nav>
 
       <header className="mb-6">
-        <h1 className="text-2xl font-bold tracking-tight">Permissions</h1>
+        <h1 className="page-title">Permissions</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Roles available in FlightOps and which ones can access the Admin
           portal (dashboards, analytics, user management).
@@ -72,7 +72,7 @@ export default async function SettingsPermissionsPage() {
       {unauthorized && (
         <div
           role="alert"
-          className="rounded-md border border-status-yellow/40 bg-status-yellow/10 px-3 py-3 text-xs text-status-yellow"
+          className="notice notice-yellow"
         >
           You need the Executive Admin role to see the permissions catalog.
         </div>
@@ -81,7 +81,7 @@ export default async function SettingsPermissionsPage() {
       {loadError && (
         <div
           role="alert"
-          className="mb-4 rounded-md border border-status-yellow/40 bg-status-yellow/10 px-3 py-2 text-xs text-status-yellow"
+          className="mb-4 notice notice-yellow"
         >
           {loadError}
         </div>

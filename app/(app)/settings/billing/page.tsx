@@ -81,7 +81,7 @@ export default async function SettingsBillingPage({
     <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6">
       <Breadcrumb />
       <header className="mb-6">
-        <h1 className="text-2xl font-bold tracking-tight">
+        <h1 className="page-title">
           Billing &amp; Subscription
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
@@ -98,7 +98,7 @@ export default async function SettingsBillingPage({
       {loadError && (
         <div
           role="alert"
-          className="mb-4 rounded-md border border-status-yellow/40 bg-status-yellow/10 px-3 py-2 text-xs text-status-yellow"
+          className="mb-4 notice notice-yellow"
         >
           {loadError}
         </div>
@@ -235,7 +235,7 @@ function CurrentSubscriptionCard({
           {subscription.cancel_at_period_end && (
             <div
               role="status"
-              className="mt-4 rounded-md border border-status-yellow/40 bg-status-yellow/10 px-3 py-2 text-xs text-status-yellow"
+              className="mt-4 notice notice-yellow"
             >
               Cancels at end of current period. No further invoices will be
               generated after {_fmtDate(subscription.current_period_end)}.
@@ -474,7 +474,7 @@ function CheckoutOutcomeBanner({ outcome }: { outcome: CheckoutOutcome }) {
     return (
       <div
         role="status"
-        className="mb-4 rounded-md border border-status-green/40 bg-status-green/10 px-4 py-3 text-sm text-status-green"
+        className="mb-4 notice notice-green text-sm"
       >
         <p className="font-semibold">Checkout complete — processing your subscription.</p>
         <p className="mt-0.5 text-xs text-foreground/80">

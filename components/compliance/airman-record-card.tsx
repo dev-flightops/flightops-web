@@ -52,7 +52,7 @@ export function AirmanRecordCard({
       {open.length > 0 ? (
         <p
           role="status"
-          className="mb-3 rounded-lg border border-status-red/40 bg-status-red/10 px-4 py-2.5 text-sm text-status-red"
+          className="mb-3 notice notice-red text-sm"
         >
           <strong className="font-semibold">
             Currently disqualified

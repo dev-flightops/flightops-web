@@ -95,7 +95,7 @@ export default async function RamperPage() {
     <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
       <header className="mb-6 flex items-end justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Ramper</h1>
+          <h1 className="page-title">Ramper</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Your worklist — fuel orders, departing aircraft, and squawks
             that need attention right now
@@ -114,7 +114,7 @@ export default async function RamperPage() {
       {errors.length > 0 && (
         <div
           role="alert"
-          className="mb-4 rounded-md border border-status-yellow/40 bg-status-yellow/10 px-3 py-2 text-xs text-status-yellow"
+          className="mb-4 notice notice-yellow"
         >
           {errors.join(" ")}
         </div>
@@ -172,7 +172,7 @@ export default async function RamperPage() {
             href={`/ramper/${f.id}/photos`}
             primary={`${f.flight_number} • ${f.origin} → ${f.destination}`}
             secondary={`${f.aircraft.tail_number} • ${f.pax_count} pax • ${formatTime(f.scheduled_departure_at)}`}
-            cta="📷 Photos"
+            cta="Photos"
             tone="blue"
           />
         ))}

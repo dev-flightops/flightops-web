@@ -50,7 +50,7 @@ export default async function SettingsFleetPage() {
 
       <header className="mb-6 flex items-end justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Fleet</h1>
+          <h1 className="page-title">Fleet</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Add, edit, and retire aircraft. Retired airframes preserve their
             flight history and can be reactivated.
@@ -62,7 +62,7 @@ export default async function SettingsFleetPage() {
       {loadError && (
         <div
           role="alert"
-          className="mb-4 rounded-md border border-status-yellow/40 bg-status-yellow/10 px-3 py-2 text-xs text-status-yellow"
+          className="mb-4 notice notice-yellow"
         >
           {loadError}
         </div>
@@ -105,7 +105,7 @@ function FleetTable({
 }) {
   return (
     <table className="w-full text-sm">
-      <thead className="border-b border-border bg-muted/60 text-[0.6rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+      <thead className="ff-thead">
         <tr>
           <th scope="col" className="px-4 py-2 text-left">Tail</th>
           <th scope="col" className="px-4 py-2 text-left">Model</th>

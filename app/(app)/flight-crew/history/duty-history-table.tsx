@@ -43,7 +43,7 @@ export function DutyHistoryTable({
   return (
     <div className="overflow-x-auto rounded-md border border-border bg-card">
       <table className="w-full text-left text-xs">
-        <thead className="border-b border-border bg-card/60 text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+        <thead className="ff-thead">
           <tr>
             <th className="px-3 py-2">Date</th>
             <th className="px-3 py-2">Duty In</th>

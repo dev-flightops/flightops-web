@@ -1,4 +1,4 @@
-import { cn } from "@/lib/utils";
+import { StatusMark, type StatusTone } from "@/components/ff/status-mark";
 import type { FlightStatus } from "@/lib/api/types";
 
 /**
@@ -46,53 +46,36 @@ export function StatusBadge({
     status === "released" && actualDepartureAt === null
       ? RELEASED_ON_GROUND
       : STATUS_LABELS[status];
-  return <StatusMark label={config.label} className={config.className} />;
+  return <StatusMark label={config.label} tone={config.tone} />;
 }
 
-function StatusMark({ label, className }: { label: string; className: string }) {
-  return (
-    <span
-      className={cn(
-        "inline-flex items-center gap-1.5 whitespace-nowrap text-[0.68rem] font-bold uppercase tracking-[0.1em]",
-        className,
-      )}
-    >
-      <span aria-hidden className="h-1.5 w-1.5 flex-shrink-0 bg-current" />
-      {label}
-    </span>
-  );
-}
-
-const RELEASED_ON_GROUND = {
+const RELEASED_ON_GROUND: { label: string; tone: StatusTone } = {
   label: "Released",
-  className: "text-status-yellow",
+  tone: "yellow",
 };
 
 /** Red pill rendered next to AIRBORNE when the flight is past
  *  scheduled_arrival_at + 30 min. Kept as its own component so the
  *  legacy two-pill layout (`AIRBORNE  OVERDUE`) is easy to compose. */
 export function OverdueBadge() {
-  return <StatusMark label="Overdue" className="text-status-red" />;
+  return <StatusMark label="Overdue" tone="red" />;
 }
 
-const STATUS_LABELS: Record<
-  FlightStatus,
-  { label: string; className: string }
-> = {
+const STATUS_LABELS: Record<FlightStatus, { label: string; tone: StatusTone }> = {
   scheduled: {
     label: "Planned",
-    className: "text-status-blue",
+    tone: "blue",
   },
   released: {
     label: "Airborne",
-    className: "text-status-green",
+    tone: "green",
   },
   cancelled: {
     label: "Cancelled",
-    className: "text-muted-foreground",
+    tone: "muted",
   },
   completed: {
     label: "Landed",
-    className: "text-muted-foreground",
+    tone: "muted",
   },
 };

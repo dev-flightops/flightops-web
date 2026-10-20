@@ -62,7 +62,7 @@ export default async function SettingsSsoPage() {
       </nav>
 
       <header className="mb-6">
-        <h1 className="text-2xl font-bold tracking-tight">
+        <h1 className="page-title">
           SSO & Integrations
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
@@ -75,7 +75,7 @@ export default async function SettingsSsoPage() {
       {unauthorized && (
         <div
           role="alert"
-          className="mb-4 rounded-md border border-status-yellow/40 bg-status-yellow/10 px-3 py-3 text-xs text-status-yellow"
+          className="mb-4 notice notice-yellow"
         >
           You need the Executive Admin role to manage SSO providers.
         </div>
@@ -84,7 +84,7 @@ export default async function SettingsSsoPage() {
       {loadError && (
         <div
           role="alert"
-          className="mb-4 rounded-md border border-status-yellow/40 bg-status-yellow/10 px-3 py-2 text-xs text-status-yellow"
+          className="mb-4 notice notice-yellow"
         >
           {loadError}
         </div>

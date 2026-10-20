@@ -21,7 +21,7 @@ export function NewPeriodForm() {
   return (
     <form action={formAction} className="flex flex-wrap items-end gap-3">
       <label className="block">
-        <span className="mb-1 block text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+        <span className="field-label">
           Period Start
         </span>
         <input
@@ -32,7 +32,7 @@ export function NewPeriodForm() {
         />
       </label>
       <label className="block">
-        <span className="mb-1 block text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+        <span className="field-label">
           Period End
         </span>
         <input
@@ -43,7 +43,7 @@ export function NewPeriodForm() {
         />
       </label>
       <label className="block flex-1 min-w-[10rem]">
-        <span className="mb-1 block text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+        <span className="field-label">
           Notes
         </span>
         <input

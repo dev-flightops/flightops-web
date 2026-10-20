@@ -233,7 +233,7 @@ function LoginInner({ providers }: { providers: ProviderSummary[] }) {
                   {...form.register("email")}
                 />
                 {form.formState.errors.email && (
-                  <p className="mt-1 text-xs text-status-red" role="alert">
+                  <p className="field-error" role="alert">
                     {form.formState.errors.email.message}
                   </p>
                 )}
@@ -255,7 +255,7 @@ function LoginInner({ providers }: { providers: ProviderSummary[] }) {
                   {...form.register("password")}
                 />
                 {form.formState.errors.password && (
-                  <p className="mt-1 text-xs text-status-red" role="alert">
+                  <p className="field-error" role="alert">
                     {form.formState.errors.password.message}
                   </p>
                 )}

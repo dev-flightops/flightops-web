@@ -190,7 +190,7 @@ describe("CrewCalendarGrid — aircraft qualifications (#46)", () => {
     const chip = screen.getByRole("button", {
       name: /^Alice Pilot: Flying · CARAVAN · N208PA · PABE, .*\. No current position on CARAVAN\. Edit$/,
     });
-    expect(chip).toHaveTextContent("⚠");
+    expect(chip.querySelector('[data-mark="warning"]')).not.toBeNull();
     expect(chip.getAttribute("title")).toContain("No current position on CARAVAN");
     expect(chip.className).toContain("ring-status-red");
   });
@@ -211,9 +211,9 @@ describe("CrewCalendarGrid — aircraft qualifications (#46)", () => {
   it("leaves a qualified or unchecked assignment unmarked", () => {
     for (const mark of [true, null]) {
       const { unmount } = render(<CrewCalendarGrid calendar={withMark(mark)} canEdit />);
-      expect(screen.getByRole("button", { name: /^Alice Pilot: Flying/ })).not.toHaveTextContent(
-        "⚠",
-      );
+      expect(
+        screen.getByRole("button", { name: /^Alice Pilot: Flying/ }).querySelector('[data-mark="warning"]'),
+      ).toBeNull();
       unmount();
     }
   });

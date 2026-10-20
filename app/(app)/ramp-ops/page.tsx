@@ -111,7 +111,7 @@ export default async function RampOpsPage({
       {errors.length > 0 && (
         <div
           role="alert"
-          className="mb-4 rounded-md border border-status-yellow/40 bg-status-yellow/10 px-3 py-2 text-xs text-status-yellow"
+          className="mb-4 notice notice-yellow"
         >
           {errors.join(" ")}
         </div>
@@ -153,7 +153,7 @@ function PageHeader({
   return (
     <header className="mb-6 flex flex-wrap items-end justify-between gap-3">
       <div className="flex items-center gap-3">
-        <h1 className="text-2xl font-bold tracking-tight">Ramp Operations</h1>
+        <h1 className="page-title">Ramp Operations</h1>
         <BaseFilter bases={bases} active={baseFilter} />
       </div>
       <div className="text-xs text-muted-foreground">

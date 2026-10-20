@@ -107,7 +107,7 @@ export function AnalysisPanel() {
           disabled={pending}
           className="rounded-md border border-status-purple/40 bg-status-purple/10 px-4 py-2 text-xs font-semibold text-status-purple hover:bg-status-purple/15 disabled:opacity-50"
         >
-          {pending ? "Analysing…" : "✦ Run AI Analysis"}
+          {pending ? "Analysing…" : "Run AI Analysis"}
         </button>
         {pending && (
           <span role="status" className="text-xs text-muted-foreground">
@@ -120,7 +120,7 @@ export function AnalysisPanel() {
       {result && result.status !== "ok" && (
         <p
           role="alert"
-          className="rounded-md border border-status-red/30 bg-status-red/10 px-3 py-2 text-sm text-status-red"
+          className="notice notice-red text-sm"
         >
           {result.message}
         </p>
@@ -129,7 +129,7 @@ export function AnalysisPanel() {
       {data && (
         <>
           {/* From the payload, not written here — see the note above. */}
-          <p className="rounded-md border border-status-blue/30 bg-status-blue/10 px-3 py-2 text-xs text-status-blue">
+          <p className="notice notice-blue">
             {data.advisory}
           </p>
 
@@ -153,7 +153,7 @@ export function AnalysisPanel() {
             // guarding against here.
             <p
               role="status"
-              className="rounded-md border border-status-yellow/30 bg-status-yellow/10 px-3 py-2 text-xs text-status-yellow"
+              className="notice notice-yellow"
             >
               This analysis read a sample of the window —{" "}
               {data.reports_omitted} report

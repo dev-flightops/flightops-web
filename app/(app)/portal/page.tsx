@@ -133,7 +133,7 @@ function Shell({
 }) {
   return (
     <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
-      <h1 className="text-2xl font-bold tracking-tight text-foreground">
+      <h1 className="page-title text-foreground">
         My Charter Flights
       </h1>
       <p className="mb-6 mt-1 text-sm text-muted-foreground">

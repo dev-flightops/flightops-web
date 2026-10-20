@@ -92,7 +92,7 @@ export function CompanyForm({ profile }: { profile: CompanyProfileResponse }) {
       {state.status === "api-error" && (
         <div
           role="alert"
-          className="rounded-md border border-status-red/40 bg-status-red/10 px-3 py-2 text-xs text-status-red"
+          className="notice notice-red"
         >
           {state.message}
         </div>
@@ -100,7 +100,7 @@ export function CompanyForm({ profile }: { profile: CompanyProfileResponse }) {
       {state.status === "saved" && (
         <div
           role="status"
-          className="rounded-md border border-status-green/40 bg-status-green/10 px-3 py-2 text-xs text-status-green"
+          className="notice notice-green"
         >
           Saved.
         </div>
@@ -319,7 +319,7 @@ function Field({
     <div>
       <label
         htmlFor={name}
-        className="mb-1 block text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground"
+        className="field-label"
       >
         {label}
       </label>
@@ -338,7 +338,7 @@ function Field({
         </p>
       )}
       {error && (
-        <p role="alert" className="mt-1 text-[0.65rem] text-status-red">
+        <p role="alert" className="field-error">
           {error}
         </p>
       )}

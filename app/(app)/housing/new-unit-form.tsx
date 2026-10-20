@@ -153,7 +153,7 @@ function TextField({
     <div>
       <label
         htmlFor={`field-${name}`}
-        className="mb-1 block text-[0.65rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground"
+        className="field-label"
       >
         {label}
         {required && <span className="ml-1 text-status-red">*</span>}
@@ -187,7 +187,7 @@ function TextAreaField({
     <div>
       <label
         htmlFor={`field-${name}`}
-        className="mb-1 block text-[0.65rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground"
+        className="field-label"
       >
         {label}
       </label>
@@ -208,7 +208,7 @@ function ColorField({ name, label }: { name: string; label: string }) {
     <div>
       <label
         htmlFor={`field-${name}`}
-        className="mb-1 block text-[0.65rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground"
+        className="field-label"
       >
         {label}
       </label>

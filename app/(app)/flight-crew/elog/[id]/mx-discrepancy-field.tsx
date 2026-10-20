@@ -54,7 +54,7 @@ export function MxDiscrepancyField({
     <div className="rounded-lg border border-border bg-card p-4">
       <label
         htmlFor="mx-discrepancy"
-        className="mb-1 block text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground"
+        className="field-label"
       >
         MX Discrepancy
       </label>
@@ -82,7 +82,7 @@ export function MxDiscrepancyField({
         </p>
       )}
       {error && (
-        <p role="alert" className="mt-1 text-[0.65rem] text-status-red">
+        <p role="alert" className="field-error">
           {error}
         </p>
       )}

@@ -1,3 +1,4 @@
+import { Stat, StatStrip } from "@/components/ff/stat-strip";
 import type { BoardFlightItem } from "@/lib/api/types";
 
 /**
@@ -43,26 +44,11 @@ export function SummaryStatsBar({
   // display face, an UPPERCASE label under it, a thin status rule to the
   // left — no tinted chips.
   return (
-    <div
-      role="group"
-      aria-label="Flight summary"
-      className="mb-5 grid grid-cols-2 gap-x-8 gap-y-4 sm:flex sm:flex-wrap"
-    >
-      <Stat value={airborne} label="Airborne" tone="border-status-green" />
-      <Stat value={released} label="Released" tone="border-status-blue" />
-      <Stat value={planned} label="Planned" tone="border-input" />
-      <Stat value={delayed} label="Delayed" tone="border-status-yellow" />
-    </div>
-  );
-}
-
-function Stat({ value, label, tone }: { value: number; label: string; tone: string }) {
-  return (
-    <span className={`flex flex-col border-l-2 pl-3 ${tone}`}>
-      <span className="font-display text-[1.75rem] font-extrabold leading-none tabular-nums text-foreground">
-        {value}
-      </span>
-      <span className="eyebrow mt-1.5">{label}</span>
-    </span>
+    <StatStrip label="Flight summary" className="mb-5">
+      <Stat value={airborne} label="Airborne" tone="green" />
+      <Stat value={released} label="Released" tone="blue" />
+      <Stat value={planned} label="Planned" />
+      <Stat value={delayed} label="Delayed" tone="yellow" />
+    </StatStrip>
   );
 }

@@ -517,12 +517,12 @@ function Field({
 }) {
   return (
     <div className="min-w-0">
-      <label className="mb-1.5 block text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+      <label className="field-label">
         {label}
       </label>
       {children}
       {error && (
-        <p role="alert" className="mt-1 text-[0.6875rem] text-status-red">
+        <p role="alert" className="field-error">
           {error}
         </p>
       )}

@@ -46,7 +46,7 @@ export default async function NewBookingPage({
             ← Reservations
           </Link>
         </p>
-        <h1 className="mt-2 text-2xl font-bold tracking-tight">
+        <h1 className="mt-2 page-title">
           New Booking
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
@@ -56,7 +56,7 @@ export default async function NewBookingPage({
       </header>
 
       {customers.length === 0 ? (
-        <div className="mb-4 rounded-md border border-status-yellow/40 bg-status-yellow/10 px-3 py-2 text-xs text-status-yellow">
+        <div className="mb-4 notice notice-yellow">
           No customers yet.{" "}
           <Link
             href="/customers/new"

@@ -1,22 +1,8 @@
-import { Activity, Clock, Plane, Shield, Stethoscope, Users } from "lucide-react";
 import Link from "next/link";
 
 import { getOpsScore, type OpsScorePillar } from "@/lib/api/reports";
 import { PillarBar } from "@/components/dashboards/pillar-bar";
 import { ScorePill } from "@/components/dashboards/score-pill";
-
-/** Icon per pillar, keyed by the service's `key`. Unknown keys get no
- *  icon rather than a wrong one — a pillar the service adds later
- *  should appear unadorned, not mislabelled. */
-function pillarIcon(key: string) {
-  const cls = "h-3.5 w-3.5 text-muted-foreground";
-  if (key === "completion") return <Plane className={cls} aria-hidden />;
-  if (key === "on_time") return <Clock className={cls} aria-hidden />;
-  if (key === "crew") return <Users className={cls} aria-hidden />;
-  if (key === "fleet") return <Activity className={cls} aria-hidden />;
-  if (key === "safety") return <Shield className={cls} aria-hidden />;
-  return undefined;
-}
 
 export default async function OpsScoreDashboardPage({
   searchParams,
@@ -73,7 +59,7 @@ export default async function OpsScoreDashboardPage({
 
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">
+          <h1 className="page-title">
             Daily Operations Score
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">{longDate}</p>
@@ -82,7 +68,6 @@ export default async function OpsScoreDashboardPage({
           href="/dashboards/system-health"
           className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline"
         >
-          <Stethoscope className="h-3.5 w-3.5" aria-hidden />
           System Health →
         </Link>
       </div>
@@ -146,7 +131,6 @@ export default async function OpsScoreDashboardPage({
               label={p.label}
               score={p.score}
               max={p.max}
-              icon={pillarIcon(p.key)}
               context={p.context}
               notMeasured={p.not_measured}
             />
@@ -161,27 +145,22 @@ export default async function OpsScoreDashboardPage({
         </h2>
         <div className="grid grid-cols-1 gap-4 text-xs text-muted-foreground sm:grid-cols-2 md:grid-cols-5">
           <Methodology
-            icon={<Plane className="h-3.5 w-3.5" aria-hidden />}
             title="Completion Factor (25 pts)"
             body="Flights that landed or completed vs flights that should have been done today. Remaining scheduled flights are excluded — they are not yet judged. Weather cancellations are noted but still counted."
           />
           <Methodology
-            icon={<Clock className="h-3.5 w-3.5" aria-hidden />}
             title="On-Time Performance (25 pts)"
             body="Arrivals within 15 minutes of ETA. Delays caused by weather, ATC, or cascading previous legs are excluded from the penalty — those are not within the operation's control."
           />
           <Methodology
-            icon={<Users className="h-3.5 w-3.5" aria-hidden />}
             title="Crew Compliance (20 pts)"
             body="Starts at 20. Deducts 2 pts per expired medical certificate, 0.5 pts per certificate expiring within 30 days. An expired certificate that is not a medical also counts at the 0.5 tier — it cannot be cheaper than one merely approaching. Floors at 0."
           />
           <Methodology
-            icon={<Activity className="h-3.5 w-3.5" aria-hidden />}
             title="Fleet Airworthiness (20 pts)"
             body="Starts at 20. Deducts proportionally per aircraft on RTS Hold, smaller deduction per aircraft with open squawks but not on hold."
           />
           <Methodology
-            icon={<Shield className="h-3.5 w-3.5" aria-hidden />}
             title="Safety Indicators (10 pts)"
             body="Starts at 10. Deducts 2 pts per currently overdue flight. The 3 pts allocated to diversions and returns-to-departure are withheld rather than awarded: a flight record has no actual destination, so a diversion cannot be detected, and scoring it as clean would assert something we cannot see. This is not a safety compliance score — it is a signal of unusual events that warrant leadership attention."
           />
@@ -225,21 +204,10 @@ export default async function OpsScoreDashboardPage({
   );
 }
 
-function Methodology({
-  icon,
-  title,
-  body,
-}: {
-  icon: React.ReactNode;
-  title: string;
-  body: string;
-}) {
+function Methodology({ title, body }: { title: string; body: string }) {
   return (
     <div>
-      <p className="mb-1 flex items-center gap-1.5 font-semibold text-foreground">
-        {icon}
-        {title}
-      </p>
+      <p className="mb-1 font-semibold text-foreground">{title}</p>
       <p>{body}</p>
     </div>
   );

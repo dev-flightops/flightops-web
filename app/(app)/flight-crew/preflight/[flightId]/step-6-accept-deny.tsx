@@ -120,7 +120,7 @@ export function AcceptOrDenyStep({ flightId, initial }: Props) {
         {isAccepted && (
           <div
             role="status"
-            className="rounded-md border border-status-green/40 bg-status-green/10 px-3 py-3 text-xs text-status-green"
+            className="notice notice-green"
           >
             <p className="font-semibold uppercase tracking-[0.06em]">
               Release accepted
@@ -164,7 +164,7 @@ export function AcceptOrDenyStep({ flightId, initial }: Props) {
         {isDenied && (
           <div
             role="alert"
-            className="rounded-md border border-status-red/40 bg-status-red/10 px-3 py-3 text-xs text-status-red"
+            className="notice notice-red"
           >
             <p className="font-semibold uppercase tracking-[0.06em]">
               Release denied

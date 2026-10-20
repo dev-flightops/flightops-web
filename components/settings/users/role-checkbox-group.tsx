@@ -51,7 +51,7 @@ export function RoleCheckboxGroup({
         ))}
       </ul>
       {error && (
-        <p role="alert" className="mt-1 text-[0.65rem] text-status-red">
+        <p role="alert" className="field-error">
           {error}
         </p>
       )}
