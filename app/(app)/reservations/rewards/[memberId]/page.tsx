@@ -84,15 +84,15 @@ export default async function RewardsMemberDetailPage({
 
   return (
     <div className="mx-auto max-w-5xl px-4 sm:px-6 py-8">
-      <nav aria-label="Breadcrumb" className="mb-4 text-xs">
+      <nav aria-label="Breadcrumb" className="eyebrow mb-4 flex flex-wrap items-center">
         <Link
           href="/reservations/rewards"
-          className="text-muted-foreground hover:text-foreground"
+          className="hover:text-foreground"
         >
           {programName}
         </Link>
         <span aria-hidden className="px-1.5 text-muted-foreground">/</span>
-        <span className="font-semibold text-primary">
+        <span className="text-foreground">
           {member.member_number}
         </span>
       </nav>

@@ -108,35 +108,26 @@ export default async function SafetyDashboardPage() {
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
-      <nav aria-label="Breadcrumb" className="mb-4 flex items-center text-xs">
+      <nav aria-label="Breadcrumb" className="eyebrow mb-4 flex flex-wrap items-center">
         <Link
           href="/home"
-          aria-label="Home"
-          className="inline-flex items-center text-muted-foreground hover:text-foreground"
+          className="hover:text-foreground"
         >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            fill="currentColor"
-            className="h-3.5 w-3.5"
-            aria-hidden
-          >
-            <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" />
-          </svg>
+          Home
         </Link>
         <span aria-hidden className="px-1.5 text-muted-foreground">
           ›
         </span>
         <Link
           href="/safety"
-          className="text-muted-foreground hover:text-foreground"
+          className="hover:text-foreground"
         >
           Safety
         </Link>
         <span aria-hidden className="px-1.5 text-muted-foreground">
           ›
         </span>
-        <span className="font-semibold text-primary">Dashboard</span>
+        <span className="text-foreground">Dashboard</span>
       </nav>
 
       <header className="mb-5 flex flex-col gap-3 border-b border-border pb-5 sm:flex-row sm:items-end sm:justify-between">

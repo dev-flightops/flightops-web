@@ -115,7 +115,7 @@ export default async function CertificatesPage({
       )}
 
       {!loadError && total === 0 && (
-        <div className="rounded-lg border border-dashed border-border bg-card/50 px-5 py-10 text-center text-sm text-muted-foreground">
+        <div className="rounded-lg border border-border bg-card px-5 py-8 text-center text-sm text-muted-foreground">
           {wantAll
             ? "No certificates have been issued in this tenant yet."
             : "No certificates yet. Complete a course to earn your first one."}
@@ -172,7 +172,7 @@ function CertRow({
           </span>
           <span
             className={
-              "rounded border px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider " +
+              "status-mark text-[0.65rem] " +
               expiryClass.className
             }
           >
@@ -198,10 +198,9 @@ function ScopeTab({
       href={href}
       aria-current={active ? "page" : undefined}
       className={
-        "rounded-md border px-3 py-1 text-xs font-semibold transition " +
-        (active
-          ? "border-primary bg-primary/10 text-primary"
-          : "border-border bg-card text-foreground/80 hover:bg-accent")
+        active
+          ? "btn-caps rounded-md bg-primary px-3 py-1.5 text-[0.68rem] text-primary-foreground"
+          : "btn-caps rounded-md border border-input px-3 py-1.5 text-[0.68rem] text-muted-foreground hover:border-foreground hover:text-foreground"
       }
     >
       {label}
@@ -219,7 +218,7 @@ function _expiryClass(
   if (expiresAt === null) {
     return {
       label: "Never expires",
-      className: "border-border bg-muted text-muted-foreground",
+      className: "text-muted-foreground",
     };
   }
   const ms = new Date(expiresAt).getTime() - now;
@@ -227,19 +226,19 @@ function _expiryClass(
   if (days < 0) {
     return {
       label: `Expired ${-days}d ago`,
-      className: "border-status-red/40 bg-status-red/10 text-status-red",
+      className: "text-status-red",
     };
   }
   if (days <= 60) {
     return {
       label: `Expires in ${days}d`,
       className:
-        "border-status-yellow/40 bg-status-yellow/10 text-status-yellow",
+        "text-status-yellow",
     };
   }
   return {
     label: `Valid · ${_fmtDate(expiresAt)}`,
-    className: "border-status-green/40 bg-status-green/10 text-status-green",
+    className: "text-status-green",
   };
 }
 

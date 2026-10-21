@@ -1,6 +1,9 @@
 "use client";
 
 import Link from "next/link";
+
+import { linkCaps } from "@/components/ff/controls";
+import { cn } from "@/lib/utils";
 import { useEffect, useRef, useState } from "react";
 
 import { AirmanRecordCard } from "@/components/compliance/airman-record-card";
@@ -217,26 +220,23 @@ export function EmployeeRecordForm({
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-6 sm:px-6">
-      <Link
-        href="/employees"
-        className="mb-3 inline-block text-xs font-semibold text-primary hover:underline"
-      >
-        ← Employees
-      </Link>
+      <Link href="/employees" className={cn(linkCaps, "text-muted-foreground hover:text-foreground")}>
+          <span aria-hidden>‹</span> Employees
+        </Link>
 
-      <header className="mb-4 flex flex-wrap items-start justify-between gap-3">
+      <header className="mb-6 flex flex-wrap items-start justify-between gap-4 border-b border-border pb-5">
         <div className="min-w-0">
           <h1 className="truncate page-title">
             {displayName}
           </h1>
-          <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>
+          <p className="mt-2 max-w-3xl text-sm text-muted-foreground">{subtitle}</p>
         </div>
         <span
           className={
-            "rounded border px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider " +
+            "status-mark text-[0.65rem] " +
             (employee.is_active
-              ? "border-status-green/40 bg-status-green/10 text-status-green"
-              : "border-border bg-muted text-muted-foreground")
+              ? "text-status-green"
+              : "text-muted-foreground")
           }
         >
           {employee.is_active ? "Active" : "Inactive"}
@@ -597,7 +597,7 @@ function Certifications({
       <section aria-labelledby="certifications-heading" className="mb-5">
         <h2
           id="certifications-heading"
-          className="mb-2 text-xs font-bold uppercase tracking-[0.08em] text-muted-foreground"
+          className="mb-2 eyebrow"
         >
           Certifications
         </h2>

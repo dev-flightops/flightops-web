@@ -95,7 +95,7 @@ function EnrollmentGroup({
                 <div className="min-w-0 flex-1">
                   <div className="mb-1 flex flex-wrap items-baseline gap-2">
                     <span className="font-semibold">{e.course.title}</span>
-                    <span className="text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
+                    <span className="eyebrow">
                       {COURSE_CATEGORY_LABELS[e.course.category]}
                     </span>
                   </div>
@@ -110,12 +110,12 @@ function EnrollmentGroup({
                 </div>
                 <span
                   className={
-                    "whitespace-nowrap rounded border px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider " +
+                    "status-mark whitespace-nowrap text-[0.65rem] " +
                     (e.status === "in_progress"
-                      ? "border-status-blue bg-status-blue/15 text-status-blue"
+                      ? "text-status-blue"
                       : e.status === "completed"
-                        ? "border-status-green bg-status-green/15 text-status-green"
-                        : "border-status-yellow bg-status-yellow/15 text-status-yellow")
+                        ? "text-status-green"
+                        : "text-status-yellow")
                   }
                 >
                   {ENROLLMENT_STATUS_LABELS[e.status]}

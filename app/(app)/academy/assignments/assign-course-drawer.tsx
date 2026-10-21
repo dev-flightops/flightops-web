@@ -146,7 +146,7 @@ export function AssignCourseDrawer({ courses, users }: Props) {
               <select
                 value={courseId}
                 onChange={(e) => setCourseId(e.target.value)}
-                className="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-xs text-foreground focus:border-primary focus:outline-none"
+                className="ff-input mt-1 px-3 py-2 text-xs"
                 disabled={pending}
               >
                 <option value="">— Select a course —</option>
@@ -190,13 +190,13 @@ export function AssignCourseDrawer({ courses, users }: Props) {
                     value={nameFilter}
                     onChange={(e) => setNameFilter(e.target.value)}
                     placeholder="Search by name or email"
-                    className="rounded-md border border-border bg-background px-3 py-1.5 text-xs text-foreground focus:border-primary focus:outline-none"
+                    className="ff-input px-3 py-1.5 text-xs w-auto"
                     disabled={pending}
                   />
                   <select
                     value={roleFilter}
                     onChange={(e) => setRoleFilter(e.target.value)}
-                    className="rounded-md border border-border bg-background px-3 py-1.5 text-xs text-foreground focus:border-primary focus:outline-none"
+                    className="ff-input px-3 py-1.5 text-xs w-auto"
                     disabled={pending}
                   >
                     <option value="">All roles</option>
@@ -256,10 +256,7 @@ export function AssignCourseDrawer({ courses, users }: Props) {
                 <div
                   role="status"
                   className={
-                    "mt-4 rounded-md border px-3 py-2 text-xs " +
-                    (result.ok
-                      ? "border-status-green/40 bg-status-green/10 text-status-green"
-                      : "border-status-yellow/40 bg-status-yellow/10 text-status-yellow")
+                    "notice mt-4 " + (result.ok ? "notice-green" : "notice-yellow")
                   }
                 >
                   {result.error ? (

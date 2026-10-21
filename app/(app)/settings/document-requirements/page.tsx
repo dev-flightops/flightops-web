@@ -50,17 +50,17 @@ export default async function DocumentRequirementsPage() {
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6">
-      <nav aria-label="Breadcrumb" className="mb-4 flex items-center text-xs">
+      <nav aria-label="Breadcrumb" className="eyebrow mb-4 flex flex-wrap items-center">
         <Link
           href="/settings"
-          className="text-muted-foreground hover:text-foreground"
+          className="hover:text-foreground"
         >
           Settings
         </Link>
         <span aria-hidden className="px-1.5 text-muted-foreground">
           ›
         </span>
-        <span className="font-semibold text-primary">
+        <span className="text-foreground">
           Document requirements
         </span>
       </nav>

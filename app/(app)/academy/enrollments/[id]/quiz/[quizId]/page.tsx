@@ -1,4 +1,7 @@
 import Link from "next/link";
+
+import { linkCaps } from "@/components/ff/controls";
+import { cn } from "@/lib/utils";
 import { notFound, redirect } from "next/navigation";
 
 import {
@@ -79,12 +82,10 @@ export default async function QuizPage({
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
-      <header className="mb-6">
-        <p className="text-xs font-semibold uppercase tracking-[0.06em] text-muted-foreground">
-          <Link href={backToLessonHref} className="hover:text-foreground">
-            ← Back to lesson
-          </Link>
-        </p>
+      <header className="mb-6 border-b border-border pb-5">
+        <Link href={backToLessonHref} className={cn(linkCaps, "text-muted-foreground hover:text-foreground")}>
+          <span aria-hidden>‹</span> Back to lesson
+        </Link>
         <h1 className="mt-2 page-title">
           {quiz.title}
         </h1>
@@ -158,11 +159,9 @@ function NotYourQuiz({
     : `/academy/enrollments/${enrollmentId}`;
   return (
     <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
-      <p className="text-xs font-semibold uppercase tracking-[0.06em] text-muted-foreground">
-        <Link href={back} className="hover:text-foreground">
-          ← Back to lesson
+      <Link href={back} className={cn(linkCaps, "text-muted-foreground hover:text-foreground")}>
+          <span aria-hidden>‹</span> Back to lesson
         </Link>
-      </p>
       <div
         role="status"
         className="mt-4 rounded-lg border border-border bg-muted/60 px-4 py-3 text-sm"

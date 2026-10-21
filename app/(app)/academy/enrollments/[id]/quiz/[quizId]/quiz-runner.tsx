@@ -1,6 +1,9 @@
 "use client";
 
 import Link from "next/link";
+
+import { linkCaps } from "@/components/ff/controls";
+import { cn } from "@/lib/utils";
 import { useState, useTransition } from "react";
 
 import type {
@@ -126,7 +129,7 @@ export function QuizRunner({ enrollmentId, quiz, backToLessonHref }: Props) {
                       className={
                         "flex cursor-pointer items-start gap-2 rounded-md border px-3 py-2 text-sm transition " +
                         (answers[qIdx] === oIdx
-                          ? "border-primary/60 bg-primary/10"
+                          ? "border-primary bg-accent"
                           : "border-border hover:bg-accent")
                       }
                     >
@@ -149,16 +152,13 @@ export function QuizRunner({ enrollmentId, quiz, backToLessonHref }: Props) {
         ))}
       </ol>
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <Link
-          href={backToLessonHref}
-          className="text-xs font-semibold text-muted-foreground hover:text-foreground"
-        >
-          ← Back to lesson
+        <Link href={backToLessonHref} className={cn(linkCaps, "text-muted-foreground hover:text-foreground")}>
+          <span aria-hidden>‹</span> Back to lesson
         </Link>
         <button
           type="submit"
           disabled={pending || !allAnswered}
-          className="btn-caps rounded-md bg-primary px-4 py-2 text-white shadow-sm hover:bg-brand-dark disabled:cursor-not-allowed disabled:opacity-60"
+          className="btn-caps rounded-md bg-primary px-4 py-2 text-white hover:bg-brand-dark disabled:cursor-not-allowed disabled:opacity-60"
         >
           {pending ? "Submitting…" : "Submit answers"}
         </button>
@@ -185,10 +185,7 @@ function ResultView({
       <div
         role="status"
         className={
-          "rounded-lg border px-5 py-4 " +
-          (result.is_pass
-            ? "border-status-green/40 bg-status-green/10"
-            : "border-status-red/40 bg-status-red/10")
+          "notice px-5 py-4 " + (result.is_pass ? "notice-green" : "notice-red")
         }
       >
         <p
@@ -216,10 +213,9 @@ function ResultView({
             <li
               key={pq.question_id}
               className={
-                "rounded-lg border px-4 py-3 text-sm " +
-                (pq.is_correct
-                  ? "border-status-green/30 bg-status-green/5"
-                  : "border-status-red/30 bg-status-red/5")
+                // Each answer on an edge in its colour (#85), not a wash.
+                "rounded-md border border-border border-l-[3px] px-4 py-3 text-sm " +
+                (pq.is_correct ? "border-l-status-green" : "border-l-status-red")
               }
             >
               <p className="font-semibold text-foreground">
@@ -261,7 +257,7 @@ function ResultView({
         </button>
         <Link
           href={backToLessonHref}
-          className="btn-caps rounded-md bg-primary px-4 py-2 text-white shadow-sm hover:bg-brand-dark"
+          className="btn-caps rounded-md bg-primary px-4 py-2 text-white hover:bg-brand-dark"
         >
           Back to lesson →
         </Link>

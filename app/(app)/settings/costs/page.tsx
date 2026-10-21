@@ -70,12 +70,12 @@ export default async function SettingsCostsPage() {
 
   return (
     <div className="mx-auto max-w-6xl px-4 sm:px-6 py-8">
-      <nav aria-label="Breadcrumb" className="mb-4 text-xs">
-        <Link href="/settings" className="text-muted-foreground hover:text-foreground">
+      <nav aria-label="Breadcrumb" className="eyebrow mb-4 flex flex-wrap items-center">
+        <Link href="/settings" className="hover:text-foreground">
           Settings
         </Link>
         <span aria-hidden className="px-1.5 text-muted-foreground">/</span>
-        <span className="font-semibold text-primary">Costs</span>
+        <span className="text-foreground">Costs</span>
       </nav>
 
       <header className="mb-5">

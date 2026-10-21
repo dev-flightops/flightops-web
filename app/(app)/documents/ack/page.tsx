@@ -40,7 +40,7 @@ export default async function RequiredReadingPage() {
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6">
-      <nav aria-label="Breadcrumb" className="mb-4 flex items-center text-xs">
+      <nav aria-label="Breadcrumb" className="eyebrow mb-4 flex flex-wrap items-center">
         <Link
           href="/home"
           aria-label="Home"
@@ -53,14 +53,14 @@ export default async function RequiredReadingPage() {
         </span>
         <Link
           href="/documents"
-          className="text-muted-foreground hover:text-foreground"
+          className="hover:text-foreground"
         >
           Documents
         </Link>
         <span aria-hidden className="px-1.5 text-muted-foreground">
           ›
         </span>
-        <span className="font-semibold text-primary">Required Reading</span>
+        <span className="text-foreground">Required Reading</span>
       </nav>
 
       <header className="mb-6 border-b border-border pb-5">

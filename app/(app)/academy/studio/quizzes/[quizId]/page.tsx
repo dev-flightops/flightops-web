@@ -45,11 +45,11 @@ export default async function StudioQuizEditorPage({
         {" / "}
         <span className="text-foreground">Quiz</span>
       </nav>
-      <header className="mb-6">
+      <header className="mb-6 border-b border-border pb-5">
         <h1 className="page-title">
           Quiz Editor
         </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
           Author the questions learners will see. Pass threshold below
           controls the minimum score for a passing attempt.
         </p>

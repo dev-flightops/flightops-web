@@ -129,10 +129,10 @@ function QuestionRow({
   );
 
   return (
-    <li className="rounded-md border border-border bg-background/40 p-3">
+    <li className="rounded-md border border-border p-3">
       <div className="mb-2 flex items-baseline justify-between gap-2">
         <span className="text-sm font-semibold">
-          <span className="text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
+          <span className="eyebrow">
             {String(question.ordinal).padStart(2, "0")}.
           </span>{" "}
           {question.prompt}
@@ -151,7 +151,7 @@ function QuestionRow({
             <button
               type="submit"
               disabled={delPending}
-              className="rounded-md border border-status-red/40 bg-status-red/10 px-2 py-1 text-[0.6875rem] font-semibold text-status-red hover:bg-status-red/15 disabled:opacity-60"
+              className="btn-caps rounded-md border px-2 py-1 disabled:opacity-60 border-status-red/60 text-[0.72rem] text-status-red hover:border-status-red"
             >
               {delPending ? "…" : "Delete"}
             </button>
@@ -369,7 +369,7 @@ function AddQuestionCard({ quizId }: { quizId: string }) {
 
 function DangerZone({ quizId }: { quizId: string }) {
   return (
-    <section className="rounded-lg border border-status-red/30 bg-status-red/5 p-4">
+    <section className="notice notice-red">
       <h2 className="mb-2 text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-status-red">
         Danger zone
       </h2>
@@ -381,7 +381,7 @@ function DangerZone({ quizId }: { quizId: string }) {
         <input type="hidden" name="quiz_id" value={quizId} />
         <button
           type="submit"
-          className="rounded-md border border-status-red/40 bg-status-red/10 px-3 py-1.5 text-xs font-semibold text-status-red hover:bg-status-red/15"
+          className="btn-caps rounded-md border px-3 py-1.5 border-status-red/60 text-[0.72rem] text-status-red hover:border-status-red"
         >
           Delete quiz
         </button>
@@ -394,7 +394,7 @@ function ErrorBanner({ message }: { message: string }) {
   return (
     <p
       role="alert"
-      className="mb-3 rounded-md border border-status-red/40 bg-status-red/10 px-2 py-1 text-[0.6875rem] font-semibold text-status-red"
+      className="notice notice-red mb-3"
     >
       {message}
     </p>

@@ -135,6 +135,11 @@ const REDESIGNED = [
   "app/(app)/fleetbrain/",
   "components/maintenance/",
   "components/safety/",
+  // Wave F, People (#85).
+  "app/(app)/employees/",
+  "app/(app)/time-clock/",
+  "app/(app)/housing/",
+  "app/(app)/academy/",
 ];
 
 describe("theme guards", () => {

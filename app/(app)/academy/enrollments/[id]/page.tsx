@@ -81,7 +81,7 @@ export default async function EnrollmentLessonPage({
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
-      <header className="mb-6">
+      <header className="mb-6 border-b border-border pb-5">
         <p className="text-xs font-semibold uppercase tracking-[0.06em] text-muted-foreground">
           <Link
             href={`/academy/${course.id}`}
@@ -97,7 +97,7 @@ export default async function EnrollmentLessonPage({
           </span>
           <StatusChip status={enrollment.status} />
         </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
           {enrollment.completed_lessons} of {enrollment.total_lessons}{" "}
           lesson{enrollment.total_lessons === 1 ? "" : "s"} complete
           {enrollment.completed_at
@@ -125,8 +125,8 @@ export default async function EnrollmentLessonPage({
                     className={
                       "block rounded-md border px-2 py-1.5 text-xs " +
                       (isActive
-                        ? "border-primary/40 bg-primary/10 text-primary"
-                        : "border-border bg-card text-foreground/80 hover:bg-accent")
+                        ? "border-primary bg-accent text-foreground"
+                        : "border-border text-foreground/80 hover:bg-accent")
                     }
                   >
                     <div className="flex items-baseline justify-between gap-2">
@@ -172,14 +172,14 @@ export default async function EnrollmentLessonPage({
 function StatusChip({ status }: { status: Enrollment["status"] }) {
   const cls =
     status === "in_progress"
-      ? "border-status-blue bg-status-blue/15 text-status-blue"
+      ? "text-status-blue"
       : status === "completed"
-        ? "border-status-green bg-status-green/15 text-status-green"
-        : "border-status-yellow bg-status-yellow/15 text-status-yellow";
+        ? "text-status-green"
+        : "text-status-yellow";
   return (
     <span
       className={
-        "inline-flex items-center rounded border px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider " +
+        "status-mark text-[0.65rem] " +
         cls
       }
     >

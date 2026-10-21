@@ -123,7 +123,7 @@ function ChecklistRow({
   const { requirement, state, days_to_expiry: days, current, superseded } = item;
   const token =
     DOCUMENT_STATE_TOKENS[state as DocumentState] ??
-    "border-border bg-muted text-muted-foreground";
+    "text-muted-foreground";
   const label =
     DOCUMENT_STATE_LABELS[state as DocumentState] ?? state;
   const needsAction = NEEDS_ACTION.has(state as DocumentState);
@@ -138,7 +138,7 @@ function ChecklistRow({
             </span>
             <span
               className={
-                "rounded border px-1.5 py-0.5 text-[0.6rem] font-semibold uppercase tracking-wider " +
+                "status-mark text-[0.6rem] " +
                 token
               }
             >
@@ -146,7 +146,7 @@ function ChecklistRow({
             </span>
             {requirement.required_on_hire && (
               <span
-                className="rounded border border-border px-1.5 py-0.5 text-[0.6rem] font-semibold uppercase tracking-wider text-muted-foreground"
+                className="eyebrow"
                 title="The operator marks this as required before a new hire starts"
               >
                 On hire
@@ -189,7 +189,7 @@ function ChecklistRow({
 
       {superseded.length > 0 && (
         <details className="mt-2">
-          <summary className="cursor-pointer text-[0.65rem] font-semibold uppercase tracking-wider text-muted-foreground">
+          <summary className="cursor-pointer eyebrow">
             {superseded.length} earlier upload
             {superseded.length === 1 ? "" : "s"}
           </summary>

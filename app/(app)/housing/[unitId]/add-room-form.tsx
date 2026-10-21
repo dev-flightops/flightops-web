@@ -47,7 +47,7 @@ export function AddRoomDrawer({ unitId }: { unitId: string }) {
             if (e.target === e.currentTarget) setOpen(false);
           }}
         >
-          <div className="h-full w-full max-w-md overflow-y-auto border-l border-border bg-card p-5 shadow-xl">
+          <div className="h-full w-full max-w-md overflow-y-auto border-l border-border bg-card p-5">
             <header className="mb-4 flex items-start justify-between gap-3">
               <div>
                 <h2 className="text-base font-bold">Add Room</h2>
@@ -74,7 +74,7 @@ export function AddRoomDrawer({ unitId }: { unitId: string }) {
                     type="text"
                     required
                     placeholder="101"
-                    className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-xs text-foreground focus:border-primary focus:outline-none"
+                    className="ff-input px-3 py-1.5 text-xs"
                   />
                 </Field>
                 <Field label="Capacity">
@@ -84,7 +84,7 @@ export function AddRoomDrawer({ unitId }: { unitId: string }) {
                     min={1}
                     step={1}
                     defaultValue={1}
-                    className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-xs text-foreground focus:border-primary focus:outline-none"
+                    className="ff-input px-3 py-1.5 text-xs"
                   />
                 </Field>
               </div>
@@ -94,7 +94,7 @@ export function AddRoomDrawer({ unitId }: { unitId: string }) {
                   <select
                     name="room_type"
                     defaultValue="single"
-                    className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-xs text-foreground focus:border-primary focus:outline-none"
+                    className="ff-input px-3 py-1.5 text-xs"
                   >
                     {ROOM_TYPES.map((t) => (
                       <option key={t} value={t}>
@@ -107,7 +107,7 @@ export function AddRoomDrawer({ unitId }: { unitId: string }) {
                   <select
                     name="status"
                     defaultValue="available"
-                    className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-xs text-foreground focus:border-primary focus:outline-none"
+                    className="ff-input px-3 py-1.5 text-xs"
                   >
                     {ROOM_STATUSES.map((s) => (
                       <option key={s} value={s}>
@@ -125,12 +125,12 @@ export function AddRoomDrawer({ unitId }: { unitId: string }) {
                   min={0}
                   step="0.01"
                   placeholder="0.00"
-                  className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-xs text-foreground focus:border-primary focus:outline-none"
+                  className="ff-input px-3 py-1.5 text-xs"
                 />
               </Field>
 
               <fieldset className="rounded-md border border-border p-3">
-                <legend className="px-1 text-[0.65rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+                <legend className="px-1 eyebrow">
                   Amenities
                 </legend>
                 <div className="grid grid-cols-2 gap-1.5">
@@ -146,7 +146,7 @@ export function AddRoomDrawer({ unitId }: { unitId: string }) {
                   name="amenities"
                   type="text"
                   placeholder="e.g. king bed, workspace"
-                  className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-xs text-foreground focus:border-primary focus:outline-none"
+                  className="ff-input px-3 py-1.5 text-xs"
                 />
               </Field>
 
@@ -155,7 +155,7 @@ export function AddRoomDrawer({ unitId }: { unitId: string }) {
                   name="notes"
                   rows={3}
                   placeholder="Access, quirks, contact info…"
-                  className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-xs text-foreground focus:border-primary focus:outline-none"
+                  className="ff-input px-3 py-1.5 text-xs"
                 />
               </Field>
 

@@ -108,7 +108,7 @@ function ComplianceLinkPicker({
           Compliance link
         </h2>
         {linkedItem ? (
-          <span className="rounded border border-border bg-muted px-2 py-0.5 text-[0.6rem] font-semibold uppercase tracking-wider text-muted-foreground">
+          <span className="eyebrow">
             Fires {linkedItem.code || linkedItem.regulation || "linked item"}
           </span>
         ) : null}
@@ -131,7 +131,7 @@ function ComplianceLinkPicker({
           name="linked_currency_item_id"
           value={selectedId}
           onChange={(e) => setSelectedId(e.target.value)}
-          className="min-w-[16rem] rounded-md border border-border bg-background px-3 py-1.5 text-xs outline-none focus:border-primary"
+          className="ff-input min-w-[16rem] px-3 py-1.5 text-xs"
           aria-label="Linked currency item"
         >
           <option value="">— No link —</option>
@@ -206,7 +206,7 @@ function PublishStatusPicker({ course }: { course: CourseDetail }) {
           onChange={(e) =>
             setStatus(e.target.value as CoursePublishStatus)
           }
-          className="rounded-md border border-border bg-background px-3 py-1.5 text-xs outline-none focus:border-primary"
+          className="ff-input px-3 py-1.5 text-xs w-auto"
         >
           {COURSE_PUBLISH_STATUSES.map((s) => (
             <option key={s} value={s}>
@@ -287,7 +287,7 @@ function QuizAffordance({
     return (
       <Link
         href={`/academy/studio/quizzes/${lesson.quiz_id}`}
-        className="rounded-md border border-status-purple/40 bg-status-purple/10 px-2 py-1 text-[0.6875rem] font-semibold text-status-purple hover:bg-status-purple/15"
+        className="btn-caps rounded-md border px-2 py-1 border-status-purple/60 text-[0.72rem] text-status-purple hover:border-status-purple"
       >
         Edit Quiz
       </Link>
@@ -334,10 +334,10 @@ function LessonRow({
   );
 
   return (
-    <li className="rounded-md border border-border bg-background/40 p-3">
+    <li className="rounded-md border border-border p-3">
       <div className="mb-2 flex items-baseline justify-between gap-2">
         <span className="text-sm font-semibold">
-          <span className="text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
+          <span className="eyebrow">
             {String(displayNumber).padStart(2, "0")}.
           </span>{" "}
           {lesson.title}
@@ -357,7 +357,7 @@ function LessonRow({
             <button
               type="submit"
               disabled={delPending}
-              className="rounded-md border border-status-red/40 bg-status-red/10 px-2 py-1 text-[0.6875rem] font-semibold text-status-red hover:bg-status-red/15 disabled:opacity-60"
+              className="btn-caps rounded-md border px-2 py-1 disabled:opacity-60 border-status-red/60 text-[0.72rem] text-status-red hover:border-status-red"
             >
               {delPending ? "…" : "Delete"}
             </button>
@@ -418,7 +418,7 @@ function AddLessonForm({ courseId }: { courseId: string }) {
     _initial,
   );
   return (
-    <section className="rounded-lg border border-status-blue/30 bg-status-blue/5 p-4">
+    <section className="notice notice-blue">
       <h2 className="mb-3 eyebrow">
         Add a lesson
       </h2>

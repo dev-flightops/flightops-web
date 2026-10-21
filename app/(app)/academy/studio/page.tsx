@@ -82,7 +82,7 @@ export default async function StudioPage() {
             </button>
             <Link
               href="/academy/studio/new"
-              className="btn-caps rounded-md bg-primary px-4 py-2 text-primary-foreground shadow-sm hover:bg-brand-dark"
+              className="btn-caps rounded-md bg-primary px-4 py-2 text-primary-foreground hover:bg-brand-dark"
             >
               + Blank Course
             </Link>
@@ -188,12 +188,12 @@ function CourseTable({ courses, total }: { courses: Course[]; total: number }) {
                 <td className="whitespace-nowrap px-4 py-3">
                   <span
                     className={
-                      "rounded border px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider " +
+                      "status-mark text-[0.65rem] " +
                       (c.publish_status === "published"
-                        ? "border-status-green/40 bg-status-green/10 text-status-green"
+                        ? "text-status-green"
                         : c.publish_status === "draft"
-                          ? "border-status-yellow/40 bg-status-yellow/10 text-status-yellow"
-                          : "border-border bg-muted text-muted-foreground")
+                          ? "text-status-yellow"
+                          : "text-muted-foreground")
                     }
                   >
                     {COURSE_PUBLISH_STATUS_LABELS[c.publish_status]}

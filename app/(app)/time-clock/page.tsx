@@ -58,10 +58,10 @@ export default async function TimeClockPage() {
 
   return (
     <div className="w-full px-4 py-6 sm:px-6">
-      <header className="mb-6 flex flex-wrap items-start justify-between gap-3">
+      <header className="mb-6 flex flex-wrap items-start justify-between gap-4 border-b border-border pb-5">
         <div>
           <h1 className="page-title">Time Clock</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
             {open
               ? `On duty since ${formatTime(open.clock_in_at)} — ${open.elapsed_hours.toFixed(1)}h`
               : "Not on duty"}
@@ -136,8 +136,8 @@ function StatusCard({ current }: { current: CurrentDutyResponse | null }) {
               className={
                 "rounded px-2 py-1 text-xs " +
                 (w.level === "red"
-                  ? "bg-status-red/15 text-status-red"
-                  : "bg-status-yellow/15 text-status-yellow")
+                  ? "text-status-red"
+                  : "text-status-yellow")
               }
             >
               {w.message}
@@ -192,7 +192,7 @@ function RecentPunches({ history }: { history: DutyPeriodSummary[] }) {
   }
   return (
     <div className="overflow-hidden rounded-lg border border-border bg-card">
-      <div className="border-b border-border px-4 py-2 text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+      <div className="panel-title border-b border-border px-4 py-2.5">
         Recent punches
       </div>
       <div className="overflow-x-auto">
@@ -225,10 +225,10 @@ function RecentPunches({ history }: { history: DutyPeriodSummary[] }) {
                 <td className="whitespace-nowrap px-4 py-3 align-top">
                   <span
                     className={
-                      "rounded border px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider " +
+                      "status-mark text-[0.65rem] " +
                       (p.is_open
-                        ? "border-status-green/40 bg-status-green/10 text-status-green"
-                        : "border-border bg-muted text-muted-foreground")
+                        ? "text-status-green"
+                        : "text-muted-foreground")
                     }
                   >
                     {p.is_open ? "Open" : "Closed"}
