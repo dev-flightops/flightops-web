@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 
 import { buttonOutline, linkCaps } from "@/components/ff/controls";
 import { CheckGlyph } from "@/components/ff/glyphs";
+import { SquawkDialog } from "@/components/dispatch/packet/squawk-dialog";
 import { PageHeader } from "@/components/ff/page-header";
 import { Panel } from "@/components/ff/panel";
 import { cn } from "@/lib/utils";
@@ -235,6 +236,14 @@ function FlightContextBar({ flight }: { flight: FlightDetail }) {
       back={{ href: "/flight-crew", label: "Flight Crew" }}
       eyebrow="Preflight"
       title={flight.flight_number}
+      // A defect found on the walk-around or the run-up is squawked
+      // against this flight's aircraft, from every step (#92).
+      actions={
+        <SquawkDialog
+          aircraftId={flight.aircraft.id}
+          tailNumber={flight.aircraft.tail_number}
+        />
+      }
       description={
         <>
           <span className="font-mono font-semibold text-foreground">
