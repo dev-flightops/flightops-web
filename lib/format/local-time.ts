@@ -120,6 +120,34 @@ export function localClock(iso: string, timeZone: string): string {
   return `${utcToLocalInput(iso, timeZone).slice(11, 16)} ${zoneAbbreviation(timeZone, at)}`;
 }
 
+/** "Oct 21" in `timeZone`, or "Oct 21, 2026" with the year: the
+ *  calendar day there, which an evening in Alaska does not share with
+ *  UTC. */
+export function localDate(
+  iso: string,
+  timeZone: string,
+  { withYear = false }: { withYear?: boolean } = {},
+): string {
+  const at = new Date(iso);
+  if (Number.isNaN(at.getTime())) return iso;
+  return at.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    ...(withYear ? { year: "numeric" as const } : {}),
+    timeZone,
+  });
+}
+
+/** "Oct 21, 14:30 AKDT" for an instant, in `timeZone`. */
+export function localDateTime(
+  iso: string,
+  timeZone: string,
+  options: { withYear?: boolean } = {},
+): string {
+  if (Number.isNaN(new Date(iso).getTime())) return iso;
+  return `${localDate(iso, timeZone, options)}, ${localClock(iso, timeZone)}`;
+}
+
 /** "= 19:30Z", what a typed local time is in UTC; "" until it parses. */
 export function zuluHint(local: string, timeZone: string): string {
   const iso = localToUtcIso(local, timeZone);

@@ -3,6 +3,8 @@ import { describe, expect, it } from "vitest";
 import {
   DEFAULT_TIME_ZONE,
   localClock,
+  localDate,
+  localDateTime,
   localToUtcIso,
   utcToLocalInput,
   zoneAbbreviation,
@@ -89,5 +91,29 @@ describe("labels", () => {
   it("shows a typed time in Zulu, with the UTC date", () => {
     expect(zuluHint("2026-10-11T18:45", ALASKA)).toBe("= 02:45Z 2026-10-12");
     expect(zuluHint("", ALASKA)).toBe("");
+  });
+});
+
+describe("localDate / localDateTime", () => {
+  // 01:30Z on the 22nd is the evening of the 21st in Alaska.
+  const evening = "2026-10-22T01:30:00Z";
+
+  it("shows the day and time where it happened, not in UTC", () => {
+    expect(localDateTime(evening, ALASKA)).toBe("Oct 21, 17:30 AKDT");
+    expect(localDate(evening, ALASKA)).toBe("Oct 21");
+  });
+
+  it("adds the year when asked", () => {
+    expect(localDateTime(evening, ALASKA, { withYear: true })).toBe("Oct 21, 2026, 17:30 AKDT");
+    expect(localDate(evening, ALASKA, { withYear: true })).toBe("Oct 21, 2026");
+  });
+
+  it("reads an offset as the API sends it", () => {
+    expect(localDateTime("2026-10-22T01:30:00+00:00", ALASKA)).toBe("Oct 21, 17:30 AKDT");
+  });
+
+  it("leaves a value it cannot read as it is", () => {
+    expect(localDateTime("not a time", ALASKA)).toBe("not a time");
+    expect(localDate("", ALASKA)).toBe("");
   });
 });

@@ -3,12 +3,14 @@
 import { redirect } from "next/navigation";
 import { z } from "zod";
 
+import { loadZoneTable } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
 import {
   HAZARD_SEVERITIES,
   INCIDENT_CATEGORIES,
   submitIncident,
 } from "@/lib/api/safety";
+import { localToUtcIso, zoneFor } from "@/lib/format/local-time";
 
 const _schema = z.object({
   category: z.enum(INCIDENT_CATEGORIES as unknown as [string, ...string[]]),
@@ -30,6 +32,8 @@ const _schema = z.object({
     .min(1, "Damage impact required — write \"none\" if none.")
     .max(4000),
   station_id: z.string().uuid().optional().or(z.literal("")),
+  // The station's ICAO, for the zone the time was typed in.
+  station_icao: z.string().trim().max(4).optional(),
   location_free_text: z.string().trim().max(200).optional(),
   immediate_action_taken: z.string().trim().max(4000).optional(),
   is_anonymous: z.string().optional(),
@@ -53,6 +57,7 @@ export async function submitIncidentAction(
     injury_summary: formData.get("injury_summary") ?? "",
     damage_summary: formData.get("damage_summary") ?? "",
     station_id: formData.get("station_id") ?? "",
+    station_icao: formData.get("station_icao") ?? "",
     location_free_text: formData.get("location_free_text") ?? "",
     immediate_action_taken: formData.get("immediate_action_taken") ?? "",
     is_anonymous: formData.get("is_anonymous") ?? "",
@@ -74,14 +79,16 @@ export async function submitIncidentAction(
 
   const v = parsed.data;
 
-  // The <input type="datetime-local"> value is naive (no timezone).
-  // Treat it as the reporter's local time and convert to ISO with the
-  // server's offset. `new Date("2026-07-17T14:30")` already interprets
-  // it as local in Node.
-  let occurredAt: string;
-  try {
-    occurredAt = new Date(v.occurred_at_local).toISOString();
-  } catch {
+  // The <input type="datetime-local"> value is naive (no timezone). It
+  // is local to the station, or to the company's base when there is no
+  // station, as flight times are (#68). It used to go through
+  // `new Date()`, which reads it in the server's zone: UTC on Vercel, so
+  // an incident at 14:30 in Alaska was saved as 14:30Z (#72).
+  const occurredAt = localToUtcIso(
+    v.occurred_at_local,
+    zoneFor(await loadZoneTable(), v.station_icao),
+  );
+  if (!occurredAt) {
     return {
       status: "error",
       message: "Invalid occurrence time.",
