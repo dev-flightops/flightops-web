@@ -120,7 +120,7 @@ export default async function ProfitabilityPage({
             Profitability
           </h1>
           {report && (
-            <p className="mt-0.5 text-sm text-muted-foreground">
+            <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
               {report.period_label} ·{" "}
               {report.block_hours.toLocaleString("en-US")} block hours
             </p>

@@ -72,10 +72,10 @@ export default async function SettingsCurrencyPage() {
         <span className="text-foreground">Currency</span>
       </nav>
 
-      <header className="mb-5 flex flex-wrap items-center justify-between gap-2">
+      <header className="mb-6 flex flex-wrap items-center justify-between gap-4 border-b border-border pb-5">
         <div>
           <h1 className="page-title">Currency Items — Manage</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
             Company-specific catalog. Changes apply to future calculations only —
             existing records are preserved.
           </p>
@@ -183,10 +183,10 @@ function ItemsList({
                     <td className="whitespace-nowrap px-4 py-3">
                       <span
                         className={
-                          "rounded border px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider " +
+                          "status-mark text-[0.65rem] " +
                           (i.is_active
-                            ? "border-status-green/40 bg-status-green/10 text-status-green"
-                            : "border-border bg-muted text-muted-foreground")
+                            ? "text-status-green"
+                            : "text-muted-foreground")
                         }
                       >
                         {i.is_active ? "Active" : "Inactive"}
@@ -211,11 +211,11 @@ function FlagPills({ item }: { item: CurrencyItemRef }) {
   if (item.is_initial_only) pills.push("Initial");
   if (pills.length === 0) return <span className="text-xs text-muted-foreground">—</span>;
   return (
-    <div className="flex flex-wrap gap-1">
+    <div className="flex flex-wrap gap-y-1">
       {pills.map((p) => (
         <span
           key={p}
-          className="rounded border border-border bg-muted px-1.5 py-0.5 text-[0.6rem] font-semibold uppercase tracking-wider text-muted-foreground"
+          className="eyebrow border-l border-border px-2 first:border-l-0 first:pl-0"
         >
           {p}
         </span>

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { PageHeader } from "@/components/ff/page-header";
 import { linkCaps } from "@/components/ff/controls";
 import { getOpsScore, type OpsScorePillar } from "@/lib/api/reports";
+import { CompletionTrendNotMeasured } from "@/components/dashboards/completion-trend-not-measured";
 import { PillarBar } from "@/components/dashboards/pillar-bar";
 import { ScorePill } from "@/components/dashboards/score-pill";
 
@@ -177,23 +178,7 @@ export default async function OpsScoreDashboardPage({
         <h2 className="mb-3 panel-title">
           8-Week Completion Trend
         </h2>
-        <CompletionTrend opsScore={opsScore} />
-        <div className="mt-3 space-y-1 text-[0.7rem] text-muted-foreground">
-          <p>
-            Based on recorded DispatchOutcomes. Flights without outcomes are not
-            counted.
-          </p>
-          <p>
-            Record outcomes in{" "}
-            <Link
-              href="/flight-following/history"
-              className="text-primary hover:underline"
-            >
-              Dispatch History
-            </Link>{" "}
-            or they are captured automatically when Flight Following closes.
-          </p>
-        </div>
+        <CompletionTrendNotMeasured />
       </section>
     </div>
   );
@@ -228,45 +213,5 @@ function ScoreBand({
       <span className={`h-2 w-2 ${dotClass}`} aria-hidden />
       {label}
     </span>
-  );
-}
-
-function CompletionTrend({ opsScore }: { opsScore: number }) {
-  // 8 week-start labels ending with the most recent Monday — "W{MM}/{DD}"
-  // matches legacy peregrineflight's trend axis. Bars stay at a thin
-  // placeholder height until DispatchOutcomes aggregation lands; only
-  // the current week shows the live ops score for visual continuity.
-  const labels: { key: string; pct: number }[] = [];
-  const now = new Date();
-  const monday = new Date(
-    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()),
-  );
-  const day = monday.getUTCDay();
-  const daysSinceMon = day === 0 ? 6 : day - 1;
-  monday.setUTCDate(monday.getUTCDate() - daysSinceMon);
-  for (let i = 7; i >= 0; i--) {
-    const d = new Date(monday);
-    d.setUTCDate(d.getUTCDate() - i * 7);
-    const mm = String(d.getUTCMonth() + 1).padStart(2, "0");
-    const dd = String(d.getUTCDate()).padStart(2, "0");
-    labels.push({ key: `W${mm}/${dd}`, pct: i === 0 ? opsScore : 0 });
-  }
-  return (
-    <div className="flex h-32 items-end justify-between gap-2">
-      {labels.map(({ key, pct }) => (
-        <div key={key} className="flex flex-1 flex-col items-center gap-1">
-          <span className="text-[0.6rem] text-muted-foreground">
-            {pct > 0 ? `${pct.toFixed(0)}%` : "0%"}
-          </span>
-          <div
-            className="w-full rounded-t bg-status-blue/60"
-            style={{ height: `${Math.max(pct, 2)}%` }}
-          />
-          <span className="font-mono text-[0.6rem] text-muted-foreground">
-            {key}
-          </span>
-        </div>
-      ))}
-    </div>
   );
 }

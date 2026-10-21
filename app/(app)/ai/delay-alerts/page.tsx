@@ -74,12 +74,12 @@ export default async function DelayAlertsPage({
 
   return (
     <div className="mx-auto max-w-5xl px-4 sm:px-6 py-8">
-      <header className="mb-6 flex flex-wrap items-end justify-between gap-3">
+      <header className="mb-6 flex flex-wrap items-end justify-between gap-4 border-b border-border pb-5">
         <div>
-          <h1 className="page-title text-foreground">
+          <h1 className="page-title text-balance">
             Predictive Delay Alerts
           </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
             {assessable.length} flight{assessable.length === 1 ? "" : "s"} on{" "}
             {date} (UTC)
             {flights.length !== assessable.length &&

@@ -88,9 +88,9 @@ describe("the alert banner", () => {
     // Scoped to the banner: "grace" also appears as a crew row label.
     const banner = within(screen.getByRole("alert"));
     expect(banner.getByText(/aircraft grounded/).className).toMatch(
-      /status-red/,
+      /notice-red/,
     );
-    expect(banner.getByText(/grace month/).className).toMatch(/status-yellow/);
+    expect(banner.getByText(/grace month/).className).toMatch(/notice-yellow/);
   });
 
   it("says so plainly when there is nothing wrong", () => {

@@ -47,10 +47,10 @@ export function TeamActiveButton({
         disabled={pending}
         aria-label={`${active ? "Deactivate" : "Reactivate"} ${teamName}`}
         className={cn(
-          "rounded border bg-transparent px-2.5 py-1 text-[0.65rem] font-semibold transition-colors disabled:opacity-50",
+          "btn-caps rounded border px-2.5 py-1 text-[0.68rem] transition-colors disabled:opacity-50",
           active
-            ? "border-border text-muted-foreground hover:border-status-red/40 hover:text-status-red"
-            : "border-status-green/40 text-status-green hover:bg-status-green/10",
+            ? "border-input text-muted-foreground hover:border-status-red hover:text-status-red"
+            : "border-status-green/60 text-status-green hover:border-status-green",
         )}
       >
         {pending ? "Saving…" : active ? "Deactivate" : "Reactivate"}

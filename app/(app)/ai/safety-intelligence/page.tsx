@@ -1,3 +1,4 @@
+import { Stat, StatStrip } from "@/components/ff/stat-strip";
 import { ApiError } from "@/lib/api/client";
 import { listHazards, listIncidents } from "@/lib/api/safety";
 import type { HazardReport, Incident } from "@/lib/api/safety";
@@ -49,19 +50,6 @@ const WINDOW_DAYS = 90;
  *  if it were the whole picture. */
 const FETCH_LIMIT = 200;
 
-function StatCard({ value, label }: { value: number; label: string }) {
-  return (
-    <div className="rounded-lg border border-border bg-card px-4 py-3">
-      <div className="text-2xl font-bold tabular-nums text-foreground">
-        {value}
-      </div>
-      <div className="mt-0.5 text-[0.65rem] font-semibold uppercase tracking-wider text-muted-foreground">
-        {label}
-      </div>
-    </div>
-  );
-}
-
 function BreakdownPanel({
   title,
   rows,
@@ -89,7 +77,7 @@ function BreakdownPanel({
               className="flex items-center justify-between gap-2 py-1.5 text-sm"
             >
               <span className="text-foreground">{label}</span>
-              <span className="rounded bg-muted px-2 py-0.5 text-[0.65rem] font-semibold tabular-nums text-muted-foreground">
+              <span className="font-mono text-sm tabular-nums text-foreground">
                 {count}
               </span>
             </li>
@@ -144,11 +132,11 @@ export default async function SafetyIntelligencePage() {
 
   return (
     <div className="mx-auto max-w-5xl px-4 sm:px-6 py-8">
-      <header className="mb-6">
-        <h1 className="page-title text-foreground">
+      <header className="mb-6 border-b border-border pb-5">
+        <h1 className="page-title text-balance">
           Safety Intelligence
         </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
           Pattern analysis of the last {WINDOW_DAYS} days · {all.length} report
           {all.length === 1 ? "" : "s"} in window
         </p>
@@ -174,12 +162,12 @@ export default async function SafetyIntelligencePage() {
             </p>
           )}
 
-          <div className="mb-6 grid grid-cols-2 gap-4 md:grid-cols-4">
-            <StatCard value={all.length} label={`Reports (${WINDOW_DAYS}d)`} />
-            <StatCard value={open} label="Open" />
-            <StatCard value={byType.length} label="Categories" />
-            <StatCard value={byLocation.length} label="Locations" />
-          </div>
+          <StatStrip label="Safety reports at a glance">
+            <Stat value={all.length} label={`Reports (${WINDOW_DAYS}d)`} />
+            <Stat value={open} label="Open" />
+            <Stat value={byType.length} label="Categories" />
+            <Stat value={byLocation.length} label="Locations" />
+          </StatStrip>
 
           <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2">
             <BreakdownPanel

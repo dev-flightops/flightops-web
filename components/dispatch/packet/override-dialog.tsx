@@ -178,7 +178,7 @@ export function OverrideDialog({
             <div>
               <label
                 htmlFor="reason"
-                className="mb-1 flex items-baseline justify-between gap-2 text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground"
+                className="mb-1 flex items-baseline justify-between gap-2 eyebrow"
               >
                 <span>
                   Reason <span className="text-status-red">*</span>

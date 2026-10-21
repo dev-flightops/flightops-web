@@ -115,7 +115,7 @@ export default async function VillageWxPage({
       )}
 
       {!loadError && board.length === 0 && (
-        <div className="rounded-lg border border-dashed border-border bg-card/40 px-6 py-12 text-center">
+        <div className="rounded-lg border border-border bg-card px-5 py-8 text-center">
           <p className="text-sm text-muted-foreground">
             No village airports configured. Add one to get started.
           </p>
@@ -308,11 +308,7 @@ function CategoryLegend() {
 function CategoryBadge({ category }: { category: FlightCategory }) {
   const a = categoryAccent(category);
   return (
-    <span
-      className={`shrink-0 rounded-sm border px-1.5 py-0.5 text-[0.6rem] font-semibold uppercase tracking-[0.08em] ${a.badge}`}
-    >
-      {category}
-    </span>
+    <span className={`status-mark shrink-0 ${a.badge}`}>{category}</span>
   );
 }
 
@@ -333,38 +329,35 @@ function categoryAccent(category: FlightCategory | null) {
         leftBorder: "border-l-status-green",
         border: "border-border",
         dot: "bg-status-green",
-        badge:
-          "border-status-green/40 bg-status-green/10 text-status-green",
+        badge: "text-status-green",
       };
     case "MVFR":
       return {
         leftBorder: "border-l-status-blue",
         border: "border-border",
         dot: "bg-status-blue",
-        badge:
-          "border-status-blue/40 bg-status-blue/10 text-status-blue",
+        badge: "text-status-blue",
       };
     case "IFR":
       return {
         leftBorder: "border-l-status-red",
         border: "border-border",
         dot: "bg-status-red",
-        badge: "border-status-red/40 bg-status-red/10 text-status-red",
+        badge: "text-status-red",
       };
     case "LIFR":
       return {
         leftBorder: "border-l-status-purple",
         border: "border-border",
         dot: "bg-status-purple",
-        badge:
-          "border-status-purple/40 bg-status-purple/10 text-status-purple",
+        badge: "text-status-purple",
       };
     default:
       return {
         leftBorder: "border-l-border",
         border: "border-border",
         dot: "bg-muted-foreground/50",
-        badge: "border-border bg-muted text-muted-foreground",
+        badge: "text-muted-foreground",
       };
   }
 }

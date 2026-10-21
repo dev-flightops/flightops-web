@@ -113,7 +113,7 @@ export function AppShellHeader({
             {opsPhone ? (
               <a
                 href={`tel:${opsPhone.replace(/[^0-9+]/g, "")}`}
-                className="hidden items-center gap-1.5 px-4 text-[0.78rem] font-semibold tabular-nums text-foreground transition-colors hover:text-white lg:flex"
+                className="hidden items-center gap-1.5 whitespace-nowrap px-4 text-[0.78rem] font-semibold tabular-nums text-foreground transition-colors hover:text-white lg:flex"
               >
                 <PhoneIcon />
                 <span>{opsPhone}</span>

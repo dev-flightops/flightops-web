@@ -256,7 +256,7 @@ function Th({
       scope="col"
       title={title}
       className={
-        "whitespace-nowrap px-3 py-2 text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground " +
+        "whitespace-nowrap px-3 py-2 eyebrow " +
         (className || "text-center")
       }
     >

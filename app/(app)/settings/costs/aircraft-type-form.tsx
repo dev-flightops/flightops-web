@@ -19,8 +19,8 @@ const FIELDS: { name: Exclude<keyof AircraftCostRow, "id" | "aircraft_type" | "f
   { name: "insurance_hr", label: "Insurance $/h", placeholder: "0" },
 ];
 
-const LABEL = "flex flex-col gap-1 text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground";
-const INPUT = "rounded-md border border-border bg-background px-2 py-1.5 text-sm font-normal normal-case tracking-normal text-foreground";
+const LABEL = "flex flex-col gap-1 text-[0.6875rem] font-bold uppercase tracking-[0.12em] text-muted-foreground";
+const INPUT = "ff-input px-2 py-1.5 text-sm font-normal normal-case tracking-normal";
 
 type Values = Record<string, string>;
 

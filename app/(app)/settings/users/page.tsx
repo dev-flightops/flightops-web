@@ -65,18 +65,18 @@ export default async function SettingsUsersPage() {
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
-      <nav className="mb-4 text-xs text-muted-foreground">
+      <nav aria-label="Breadcrumb" className="eyebrow mb-4 flex flex-wrap items-center">
         <Link href="/settings" className="hover:text-foreground">
           Settings
         </Link>
-        <span className="px-1.5">/</span>
+        <span aria-hidden className="px-1.5 text-muted-foreground">/</span>
         <span className="text-foreground">Users</span>
       </nav>
 
-      <header className="mb-6 flex items-end justify-between gap-4">
+      <header className="mb-6 flex flex-wrap items-end justify-between gap-4 border-b border-border pb-5">
         <div>
           <h1 className="page-title">User Management</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
             {/* Subhead: "{tenant} — N account{s}", matches legacy
                 peregrineflight's user-management page. Drops the tenant
                 prefix gracefully if listMyTenants failed. */}
@@ -107,7 +107,7 @@ export default async function SettingsUsersPage() {
       )}
 
       {!unauthorized && !loadError && users.length === 0 && (
-        <div className="rounded-lg border border-dashed border-border bg-card/40 px-6 py-12 text-center">
+        <div className="rounded-lg border border-border bg-card px-5 py-8 text-center">
           <p className="text-sm text-muted-foreground">
             No users yet. Add the first one to get going — start with
             yourself or another exec admin.
@@ -116,7 +116,7 @@ export default async function SettingsUsersPage() {
       )}
 
       {!unauthorized && active.length > 0 && (
-        <section className="overflow-hidden rounded-lg border border-border bg-card">
+        <section className="overflow-x-auto rounded-lg border border-border bg-card">
           <UsersTable
             users={active}
             roles={roles}
@@ -131,7 +131,7 @@ export default async function SettingsUsersPage() {
           <h2 className="mb-2 eyebrow">
             Inactive ({inactive.length})
           </h2>
-          <div className="overflow-hidden rounded-lg border border-border bg-muted/60">
+          <div className="overflow-x-auto rounded-lg border border-border bg-muted/60">
             <UsersTable
               users={inactive}
               roles={roles}
@@ -194,7 +194,7 @@ function UsersTable({
                   <span className="flex items-center gap-2 font-semibold text-foreground">
                     {u.full_name}
                     {isSelf && (
-                      <span className="rounded-sm border border-border bg-muted px-1.5 py-0.5 text-[0.55rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+                      <span className="status-mark text-muted-foreground">
                         You
                       </span>
                     )}
@@ -210,11 +210,12 @@ function UsersTable({
                     No roles
                   </span>
                 ) : (
-                  <div className="flex flex-wrap gap-1">
+                  <div className="flex flex-wrap gap-y-1 text-[0.68rem] font-semibold uppercase tracking-[0.08em] text-foreground">
+                    {/* Roles as caps words between rules (#86), not tags. */}
                     {u.roles.map((r) => (
                       <span
                         key={r}
-                        className="rounded-sm border border-border bg-muted/60 px-1.5 py-0.5 text-[0.65rem] font-semibold text-foreground"
+                        className="border-l border-border px-2 first:border-l-0 first:pl-0"
                       >
                         {roleLabel(r)}
                       </span>

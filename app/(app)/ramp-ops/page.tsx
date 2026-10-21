@@ -373,7 +373,7 @@ function TeamCard({
 
 function EmptyCard({ children }: { children: React.ReactNode }) {
   return (
-    <div className="rounded-md border border-dashed border-border bg-card/40 px-4 py-8 text-center text-xs text-muted-foreground">
+    <div className="rounded-lg border border-border bg-card px-5 py-8 text-center text-xs text-muted-foreground">
       {children}
     </div>
   );

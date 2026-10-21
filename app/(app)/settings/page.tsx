@@ -1,5 +1,10 @@
 import Link from "next/link";
 
+import { ChevronRightGlyph } from "@/components/ff/glyphs";
+import { Notice } from "@/components/ff/notice";
+import { PageHeader } from "@/components/ff/page-header";
+import { Panel } from "@/components/ff/panel";
+import { Stat, StatStrip } from "@/components/ff/stat-strip";
 import { ApiError } from "@/lib/api/client";
 import {
   getCompanyProfile,
@@ -13,11 +18,9 @@ import { listAircraft } from "@/lib/api/ops";
 /**
  * /settings — Settings landing.
  *
- * Foundational tenant settings: Company profile, Bases directory, Flight
- * Tracking thresholds, Users + Permissions, SSO. Pilot Pay + Currency
- * cards stay dim (M3).
+ * Every company setting, grouped, with where each one stands now.
  *
- * The Users count tile soft-falls back to "—" when the caller isn't
+ * The Users count soft-falls back to "—" when the caller isn't
  * exec_admin — the rest of the landing is readable by any role, but the
  * /settings/users endpoint requires exec_admin. We don't want a 403 to
  * blank the whole page.
@@ -74,273 +77,196 @@ export default async function SettingsLandingPage() {
     // SSO sublabel either way.
   }
 
+  // A settings list (#86), as ForeFlight lays its own out: groups under
+  // caps heads, one row per page with what it is and where it stands
+  // now, instead of a grid of cards. Every Settings page in the
+  // department nav has its row.
+  const sections: { title: string; rows: SettingsRow[] }[] = [
+    {
+      title: "Company",
+      rows: [
+        {
+          label: "Company Profile",
+          blurb: "Legal name, address, contacts, Part 135 certificate.",
+          value: companyName ?? "Not configured",
+          href: "/settings/company",
+        },
+        {
+          label: "Brand Theme",
+          blurb: "Your brand colors on buttons, links and accents in every module.",
+          value: "Primary + hover colors",
+          href: "/settings/branding",
+        },
+        {
+          label: "Billing",
+          blurb: "Plan, seats, billing dates and invoices.",
+          href: "/settings/billing",
+        },
+      ],
+    },
+    {
+      title: "Operations",
+      rows: [
+        {
+          label: "Bases",
+          blurb: "The ICAOs the operator works out of. Hub and active flags drive what other modules show.",
+          value: `${basesCount} active`,
+          href: "/settings/bases",
+        },
+        {
+          label: "Fleet",
+          blurb: "Add, edit and retire aircraft. Seats and useful load feed the Fleet Board and load planning.",
+          value: `${activeAircraft} active`,
+          href: "/settings/fleet",
+        },
+        {
+          label: "Flight Tracking",
+          blurb: "Overdue threshold, polling cadence, simulation mode, Spider Tracks AFF.",
+          value: overdueMinutes === null ? "—" : `${overdueMinutes}-min overdue alert`,
+          href: "/settings/flight-tracking",
+        },
+        {
+          label: "Flight Risk",
+          blurb: "Where Low, Medium, High and Extreme begin on the pre-flight risk assessment.",
+          href: "/settings/frat",
+        },
+        {
+          label: "Load Teams",
+          blurb: "Ramp and load crew teams by base.",
+          href: "/settings/load-teams",
+        },
+        {
+          label: "Costs",
+          blurb: "Aircraft operating costs behind the cost figures in Dispatch AI Intelligence.",
+          href: "/settings/costs",
+        },
+      ],
+    },
+    {
+      title: "People",
+      rows: [
+        {
+          label: "Users",
+          blurb: "Invite users and assign their roles.",
+          value: usersTotal === null ? "—" : `${usersTotal} total`,
+          href: "/settings/users",
+        },
+        {
+          label: "Permissions",
+          blurb: "The role catalog and what each role may do.",
+          href: "/settings/permissions",
+        },
+        {
+          label: "Document requirements",
+          blurb: "What staff must file.",
+          href: "/settings/document-requirements",
+        },
+        {
+          label: "Pilot Pay",
+          blurb: "Pay rates and per diem.",
+          href: "/settings/pilot-pay",
+        },
+        {
+          label: "Currency Items",
+          blurb: "The currency catalog and its due-date rules.",
+          href: "/settings/currency",
+        },
+      ],
+    },
+    {
+      title: "Integrations",
+      rows: [
+        {
+          label: "SSO Providers",
+          blurb: "Sign-in through Google, Okta or Entra ID.",
+          value: ssoConnected === 0 ? "None connected" : `${ssoConnected} active`,
+          href: "/settings/sso",
+        },
+        {
+          label: "ForeFlight",
+          blurb: "Send scheduled flights to ForeFlight Dispatch.",
+          href: "/settings/foreflight",
+        },
+        {
+          label: "API Keys",
+          blurb: "Issue, review and revoke keys for partner access to the read-only Public API.",
+          href: "/settings/api-keys",
+        },
+      ],
+    },
+  ];
+
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
-      <header className="mb-6">
-        <h1 className="page-title">Settings</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Tenant-wide configuration: company identity, bases, flight tracking,
-          users, and integrations
-        </p>
-      </header>
+      <PageHeader
+        eyebrow={companyName ?? undefined}
+        title="Settings"
+        description="Company-wide configuration: company identity, bases, flight tracking, users and integrations"
+      />
 
       {loadError && (
-        <div
-          role="alert"
-          className="mb-4 notice notice-yellow"
-        >
+        <Notice tone="yellow" role="alert" className="mb-4">
           {loadError}
-        </div>
+        </Notice>
       )}
 
-      <section className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <StatTile
-          label="Company"
-          value={companyName ?? "—"}
-        />
-        <StatTile label="Bases" value={basesCount} />
-        <StatTile
+      <StatStrip label="Settings at a glance">
+        <Stat value={basesCount} label="Bases" />
+        <Stat value={activeAircraft} label="Active aircraft" />
+        <Stat
+          value={overdueMinutes === null ? "—" : `${overdueMinutes} min`}
           label="Overdue threshold"
-          value={
-            overdueMinutes === null ? "—" : `${overdueMinutes} min`
-          }
         />
-        <StatTile
-          label="Tracking"
+        <Stat
           value={simMode === null ? "—" : simMode ? "Simulation" : "Live"}
-          accent={simMode ? "yellow" : undefined}
+          label="Tracking"
+          tone={simMode ? "yellow" : "neutral"}
         />
-      </section>
+      </StatStrip>
 
-      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <SectionCard
-          title="Company"
-          blurb="Legal name, address, contacts, Part 135 certificate."
-          links={[
-            {
-              label: "Company Profile",
-              sublabel: companyName ?? "Not configured",
-              href: "/settings/company",
-              primary: true,
-            },
-          ]}
-        />
-        <SectionCard
-          title="Bases"
-          blurb="Master directory of ICAOs the operator works out of. Hub + active flags drive what other modules show."
-          links={[
-            {
-              label: "Manage Bases",
-              sublabel: `${basesCount} active`,
-              href: "/settings/bases",
-            },
-          ]}
-        />
-        <SectionCard
-          title="Fleet"
-          blurb="Add, edit, and retire aircraft. Seats and useful load feed the Fleet Board and load planning."
-          links={[
-            {
-              label: "Manage Fleet",
-              sublabel: `${activeAircraft} active`,
-              href: "/settings/fleet",
-            },
-          ]}
-        />
-        <SectionCard
-          title="Branding"
-          blurb="Your brand colors, applied across every module. Buttons, links, and accents pick up your primary hex."
-          links={[
-            {
-              label: "Brand Theme",
-              sublabel: "Primary + hover colors",
-              href: "/settings/branding",
-            },
-          ]}
-        />
-        <SectionCard
-          title="Flight Tracking"
-          blurb="Overdue threshold, polling cadence, simulation mode, Spider Tracks AFF."
-          links={[
-            {
-              label: "Tracking Config",
-              sublabel:
-                overdueMinutes === null
-                  ? "—"
-                  : `${overdueMinutes}-min overdue alert`,
-              href: "/settings/flight-tracking",
-            },
-          ]}
-        />
-        <SectionCard
-          title="Users & Permissions"
-          blurb="Invite users, assign roles, manage per-tenant permissions."
-          links={[
-            {
-              label: "Users",
-              sublabel:
-                usersTotal === null ? "—" : `${usersTotal} total`,
-              href: "/settings/users",
-              primary: true,
-            },
-            {
-              label: "Permissions",
-              sublabel: "Role catalog",
-              href: "/settings/permissions",
-            },
-            {
-              label: "Document requirements",
-              sublabel: "What staff must file",
-              href: "/settings/document-requirements",
-            },
-          ]}
-        />
-        <SectionCard
-          title="SSO & Integrations"
-          blurb="Sign-in providers (Google / Okta / Entra ID) and the flight-planning tools your pilots use."
-          links={[
-            {
-              label: "SSO Providers",
-              sublabel:
-                ssoConnected === 0
-                  ? "None connected"
-                  : `${ssoConnected} active`,
-              href: "/settings/sso",
-            },
-            {
-              label: "ForeFlight",
-              sublabel: "Send scheduled flights to Dispatch",
-              href: "/settings/foreflight",
-            },
-          ]}
-        />
-        <SectionCard
-          title="Public API"
-          blurb="Issue and revoke keys for partner access to the read-only Public API."
-          links={[
-            {
-              label: "API Keys",
-              sublabel: "Issue, review, revoke",
-              href: "/settings/api-keys",
-            },
-          ]}
-        />
-        <SectionCard
-          title="Pilot Pay & Currency"
-          blurb="Pay rates, per-diem, currency items + due-date catalog."
-          links={[
-            // Both shipped in M2's tail and sat here as disabled
-            // "Coming in M3" rows afterwards — the settings hub
-            // advertising two of its own live pages as unbuilt.
-            {
-              label: "Pilot Pay",
-              sublabel: "Pay rates and per-diem",
-              href: "/settings/pilot-pay",
-            },
-            {
-              label: "Currency Items",
-              sublabel: "Currency catalogue and due-date rules",
-              href: "/settings/currency",
-            },
-          ]}
-        />
-      </section>
-    </div>
-  );
-}
-
-function StatTile({
-  label,
-  value,
-  accent,
-}: {
-  label: string;
-  value: number | string;
-  accent?: "yellow";
-}) {
-  const valueClass =
-    accent === "yellow" ? "text-status-yellow" : "text-foreground";
-  return (
-    <div className="rounded-lg border border-border bg-card px-4 py-3 text-center">
-      <div
-        className={`truncate text-xl font-bold leading-tight ${valueClass}`}
-        title={String(value)}
-      >
-        {value}
-      </div>
-      <div className="mt-1.5 eyebrow">
-        {label}
+      <div className="grid items-start gap-6 lg:grid-cols-2">
+        {sections.map((section) => (
+          <Panel key={section.title} title={section.title} flush>
+            <ul className="divide-y divide-border">
+              {section.rows.map((row) => (
+                <li key={row.href}>
+                  <SettingsLink row={row} />
+                </li>
+              ))}
+            </ul>
+          </Panel>
+        ))}
       </div>
     </div>
   );
 }
 
-interface SectionLink {
+interface SettingsRow {
   label: string;
-  sublabel?: string;
-  href?: string;
-  primary?: boolean;
-  disabled?: boolean;
-}
-
-function SectionCard({
-  title,
-  blurb,
-  links,
-}: {
-  title: string;
   blurb: string;
-  links: SectionLink[];
-}) {
+  /** Where the setting stands now, when the landing knows it. */
+  value?: string;
+  href: string;
+}
+
+function SettingsLink({ row }: { row: SettingsRow }) {
   return (
-    <article className="rounded-lg border border-border bg-card p-5">
-      <h3 className="text-base font-semibold">{title}</h3>
-      <p className="mt-1 text-xs text-muted-foreground">{blurb}</p>
-      <ul className="mt-3 space-y-1.5">
-        {links.map((link) => {
-          if (link.disabled || !link.href) {
-            return (
-              <li key={`${link.label}-${link.sublabel ?? "x"}`}>
-                <span
-                  aria-disabled="true"
-                  className="flex cursor-not-allowed items-center justify-between rounded-md border border-dashed border-border bg-card/40 px-3 py-2.5 text-sm text-muted-foreground"
-                >
-                  <span>
-                    <span className="font-semibold">{link.label}</span>
-                    {link.sublabel && (
-                      <span className="ml-2 text-xs font-normal">
-                        {link.sublabel}
-                      </span>
-                    )}
-                  </span>
-                </span>
-              </li>
-            );
-          }
-          return (
-            <li key={`${link.label}-${link.href}`}>
-              <Link
-                href={link.href}
-                className={
-                  link.primary
-                    ? "flex items-center justify-between rounded-md border border-primary/40 bg-background px-3 py-2.5 text-sm font-semibold text-primary hover:bg-primary/5"
-                    : "flex items-center justify-between rounded-md border border-border bg-card/40 px-3 py-2.5 text-sm text-foreground hover:border-primary/60 hover:bg-primary/5"
-                }
-              >
-                <span>
-                  <span className="font-semibold">{link.label}</span>
-                  {link.sublabel && (
-                    <span className="ml-2 text-xs font-normal text-muted-foreground">
-                      {link.sublabel}
-                    </span>
-                  )}
-                </span>
-                <span className="text-xs text-muted-foreground">→</span>
-              </Link>
-            </li>
-          );
-        })}
-      </ul>
-    </article>
+    <Link
+      href={row.href}
+      className="group flex items-center gap-4 px-5 py-3.5 transition-colors hover:bg-accent focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary"
+    >
+      <span className="min-w-0 flex-1">
+        <span className="block text-sm font-semibold text-foreground group-hover:text-primary">
+          {row.label}
+        </span>
+        <span className="mt-0.5 block text-xs text-muted-foreground">{row.blurb}</span>
+      </span>
+      {row.value ? (
+        <span className="max-w-[40%] truncate text-right text-sm text-muted-foreground" title={row.value}>
+          {row.value}
+        </span>
+      ) : null}
+      <ChevronRightGlyph className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
+    </Link>
   );
 }

@@ -78,7 +78,7 @@ export function AiToolsMenu({ tools }: { tools: AiTool[] }) {
         <div
           role="menu"
           aria-label="AI tools"
-          className="light absolute right-0 top-full z-50 mt-1 w-56 rounded-lg border border-status-purple/30 bg-card p-2 text-card-foreground shadow-lg"
+          className="light absolute right-0 top-full z-50 mt-1 w-56 rounded-md border border-border bg-card p-1 text-card-foreground shadow-md"
         >
           <p className="px-2 py-1 text-[0.65rem] font-bold uppercase tracking-[0.06em] text-status-purple">
             AI Tools
@@ -89,7 +89,7 @@ export function AiToolsMenu({ tools }: { tools: AiTool[] }) {
               role="menuitem"
               href={t.href}
               onClick={() => setOpen(false)}
-              className="block rounded-md px-2 py-1.5 text-xs font-semibold text-foreground hover:bg-status-purple/10"
+              className="block rounded-sm px-2 py-1.5 text-xs font-semibold text-foreground hover:bg-accent"
             >
               {t.label}
             </Link>

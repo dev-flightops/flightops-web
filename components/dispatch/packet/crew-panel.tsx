@@ -140,7 +140,7 @@ export function CrewPanel({
   return (
     <section className="rounded-lg border border-border bg-card">
       <header className="flex items-baseline justify-between border-b border-border px-5 py-3">
-        <h2 className="text-xs font-bold uppercase tracking-[0.08em] text-muted-foreground">
+        <h2 className="eyebrow">
           Crew
         </h2>
         {!bySeat.has("pic") ? (

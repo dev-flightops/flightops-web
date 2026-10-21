@@ -176,7 +176,7 @@ export function SpotlightSearch() {
               );
               return (
                 <section key={group.key}>
-                  <h3 className="border-b border-border/50 bg-muted/60 px-4 py-1.5 text-[0.6rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+                  <h3 className="border-b border-border/50 bg-muted/60 px-4 py-1.5 eyebrow">
                     {group.label}
                   </h3>
                   <ul>

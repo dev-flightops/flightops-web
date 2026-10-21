@@ -75,72 +75,11 @@ function classStrings(file: string): { text: string; index: number }[] {
   }));
 }
 
-/** The surfaces the redesign has reached (#78, #79, #80): pills, non-scrim
- *  gradients and tinted badge chips stay out of them. The list grows with
- *  each wave of the rollout. */
-const REDESIGNED = [
-  "app/(public)/",
-  "app/(auth)/login/",
-  "app/(app)/flight-following/",
-  "app/(app)/home/",
-  "components/landing/",
-  "components/ff/",
-  "components/theme/",
-  "components/ui/",
-  "components/home/",
-  "components/flight-following/",
-  "components/app-shell/app-shell-header.tsx",
-  "components/app-shell/department-nav.tsx",
-  // Wave B, Operations (#80).
-  "app/(app)/dispatch/",
-  "app/(app)/schedule/",
-  "app/(app)/weather/",
-  "app/(app)/village-wx/",
-  "app/(app)/crew/",
-  "app/(app)/compliance/",
-  "app/(app)/ramp-ops/",
-  "app/(app)/eod/",
-  "components/dispatch/",
-  "components/weather/",
-  "components/village-wx/",
-  // Wave B2, Flight crew (#81).
-  "app/(app)/flight-crew/",
-  "components/duty/",
-  // Wave C, Admin (#82).
-  "app/(app)/dashboards/",
-  "app/(app)/reports/",
-  "app/(app)/invoicing/",
-  "app/(app)/payroll/",
-  "app/(app)/accounting/",
-  "app/(app)/profitability/",
-  "components/dashboards/",
-  "components/reports/",
-  // Wave D, Reservations and ground (#83).
-  "app/(app)/reservations/",
-  "app/(app)/customers/",
-  "app/(app)/portal/",
-  "app/(app)/fuel/",
-  "app/(app)/manifest/",
-  "app/(app)/ground-ops/",
-  "app/(app)/stations/",
-  "app/(app)/ramper/",
-  "app/(app)/equipment/",
-  "components/fuel/",
-  "components/stations/",
-  "components/equipment/",
-  // Wave E, Maintenance and safety (#84).
-  "app/(app)/maintenance/",
-  "app/(app)/safety/",
-  "app/(app)/documents/",
-  "app/(app)/fleetbrain/",
-  "components/maintenance/",
-  "components/safety/",
-  // Wave F, People (#85).
-  "app/(app)/employees/",
-  "app/(app)/time-clock/",
-  "app/(app)/housing/",
-  "app/(app)/academy/",
-];
+/** The surfaces the redesign has reached: pills, non-scrim gradients and
+ *  tinted badge chips stay out of them. The list grew with each wave of
+ *  the rollout (#78–#85); wave G (#86) finished it, so it is the whole
+ *  app, and a new page starts on the redesign. */
+const REDESIGNED = ROOTS.map((root) => `${root}/`);
 
 describe("theme guards", () => {
   it("scans the app", () => {
@@ -254,12 +193,11 @@ describe("theme guards", () => {
   it("gives every page title the one title style", () => {
     // Titles came in 25 variants (xl to 3xl, bold to extrabold); a title
     // changed size as you moved between pages. Exceptions are not page
-    // titles: the 404 numeral, the release sheet's letterhead, the error
-    // screen, and headings inside "not authorised" notice cards
-    // (text-status-*).
+    // titles: the 404 numeral, the release sheet's letterhead, and
+    // headings inside "not authorised" notice cards (text-status-*). The
+    // error screen's title took the page title in #86.
     const allow = new Set([
       "app/not-found.tsx",
-      "components/error-screen.tsx",
       "app/(app)/schedule/[flightId]/manifest/page.tsx",
     ]);
     const hits: string[] = [];
@@ -322,6 +260,29 @@ describe("theme guards", () => {
       for (const str of classStrings(file)) {
         const t = str.text;
         if (/(?<![\w:/-])bg-status-[a-z]+\/(?:8|10|12|15)\b/.test(t) && /\brounded/.test(t) && /\buppercase\b/.test(t)) {
+          hits.push(`${file}: ${t.trim().slice(0, 90)}`);
+        }
+      }
+    }
+    expect(hits).toEqual([]);
+  });
+
+  it("says a tag without a box", () => {
+    // The rule above misses a chip whose tint sits in a separate tone
+    // string, and grey or outlined ones; #86 still found them on
+    // equipment, station issues, squawks, MEL and flight categories. A
+    // status is a StatusMark, a neutral tag an eyebrow: neither is a
+    // small capitals word in a rounded box.
+    const hits: string[] = [];
+    for (const file of FILES.filter((f) => REDESIGNED.some((s) => f.startsWith(s)))) {
+      for (const str of classStrings(file)) {
+        const t = str.text;
+        if (
+          /\brounded(?:-(?:sm|md|lg))?(?![\w-])/.test(t) &&
+          /\b(?:uppercase|eyebrow)\b/.test(t) &&
+          /(?<![\w:-])py-(?:0|0\.5|px)\b/.test(t) &&
+          /(?<![\w:/-])(?:border|bg-)/.test(t)
+        ) {
           hits.push(`${file}: ${t.trim().slice(0, 90)}`);
         }
       }

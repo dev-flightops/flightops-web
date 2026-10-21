@@ -27,7 +27,7 @@ export default async function SupplierLoginPage() {
         <h1 className="page-title">
           Fuel Supplier Portal
         </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
           Sign in to see and act on the fuel orders addressed to your
           company across every operator you serve.
         </p>

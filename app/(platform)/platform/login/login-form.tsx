@@ -6,9 +6,8 @@ import { Spinner } from "@/components/ui/spinner";
 
 import { platformLoginAction, type PlatformLoginState } from "./actions";
 
-const FIELD =
-  "w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none";
-const LABEL = "mb-1 block text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground";
+const FIELD = "ff-input text-sm";
+const LABEL = "field-label";
 
 export function PlatformLoginForm() {
   const [state, action, pending] = useActionState<PlatformLoginState, FormData>(platformLoginAction, {

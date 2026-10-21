@@ -261,7 +261,7 @@ export function CompanyForm({ profile }: { profile: CompanyProfileResponse }) {
           id="notes"
           {...bind("notes")}
           rows={3}
-          className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
+          className="ff-input px-3 py-2 text-sm"
         />
       </Section>
 
@@ -269,7 +269,7 @@ export function CompanyForm({ profile }: { profile: CompanyProfileResponse }) {
         <button
           type="submit"
           disabled={pending}
-          className="inline-flex items-center justify-center gap-1.5 rounded-md bg-brand-primary px-5 py-2.5 text-sm font-semibold text-white hover:bg-brand-primary-dark disabled:opacity-50"
+          className="btn-caps inline-flex items-center justify-center gap-1.5 rounded-md bg-primary px-5 py-2.5 text-white hover:bg-brand-dark disabled:opacity-50"
         >
           {pending && <Spinner size="xs" />}
           {pending ? "Saving…" : "Save changes"}
@@ -288,7 +288,7 @@ function Section({
 }) {
   return (
     <fieldset className="space-y-4 rounded-lg border border-border bg-card p-5">
-      <legend className="px-2 text-[0.65rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+      <legend className="px-2 eyebrow">
         {title}
       </legend>
       {children}
@@ -329,7 +329,7 @@ function Field({
         type={type}
         aria-invalid={error ? "true" : undefined}
         aria-describedby={hintId}
-        className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none aria-[invalid=true]:border-status-red"
+        className="ff-input px-3 py-2 text-sm aria-[invalid=true]:border-status-red"
         {...inputProps}
       />
       {hint && (

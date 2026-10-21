@@ -42,18 +42,18 @@ import { runSafetyAnalysisAction, type AnalyseResult } from "./actions";
  */
 
 function riskClasses(level: SafetyRiskLevel): string {
-  if (level === "high") return "bg-status-red/15 text-status-red";
-  if (level === "medium") return "bg-status-yellow/15 text-status-yellow";
-  return "bg-status-green/15 text-status-green";
+  if (level === "high") return "text-status-red";
+  if (level === "medium") return "text-status-yellow";
+  return "text-status-green";
 }
 
 function trendClasses(trend: SafetyTrend): string {
   // Rising is the one that needs attention; declining is good news in
   // this context, so it takes the green rather than the red a "down"
   // arrow would suggest elsewhere.
-  if (trend === "rising") return "bg-status-red/15 text-status-red";
-  if (trend === "declining") return "bg-status-green/15 text-status-green";
-  return "bg-muted text-muted-foreground";
+  if (trend === "rising") return "text-status-red";
+  if (trend === "declining") return "text-status-green";
+  return "text-muted-foreground";
 }
 
 function Panel({
@@ -105,7 +105,7 @@ export function AnalysisPanel() {
           type="button"
           onClick={() => void run()}
           disabled={pending}
-          className="rounded-md border border-status-purple/40 bg-status-purple/10 px-4 py-2 text-xs font-semibold text-status-purple hover:bg-status-purple/15 disabled:opacity-50"
+          className="btn-caps rounded-md border px-4 py-2 disabled:opacity-50 border-status-purple/60 text-[0.72rem] text-status-purple hover:border-status-purple"
         >
           {pending ? "Analysing…" : "Run AI Analysis"}
         </button>
@@ -165,7 +165,7 @@ export function AnalysisPanel() {
           {data.note && (
             <p
               role="status"
-              className="rounded-md border border-border bg-background px-3 py-2 text-sm text-muted-foreground"
+              className="notice notice-gray text-sm text-muted-foreground"
             >
               {data.note}
             </p>
@@ -233,7 +233,7 @@ export function AnalysisPanel() {
                         <li key={h.location} className="py-1.5">
                           <div className="flex items-center justify-between gap-2 text-sm">
                             <span className="text-foreground">{h.location}</span>
-                            <span className="rounded bg-status-yellow/15 px-2 py-0.5 text-[0.65rem] font-semibold tabular-nums text-status-yellow">
+                            <span className="status-mark tabular-nums text-status-yellow">
                               {h.report_count}
                             </span>
                           </div>
@@ -258,7 +258,7 @@ export function AnalysisPanel() {
                       <li key={i.issue} className="flex items-start gap-3 py-2">
                         <span
                           className={
-                            "mt-0.5 shrink-0 rounded px-2 py-0.5 text-[0.65rem] font-semibold uppercase " +
+                            "status-mark mt-0.5 shrink-0 text-[0.65rem] " +
                             riskClasses(i.risk_level)
                           }
                         >
@@ -288,7 +288,7 @@ export function AnalysisPanel() {
                         <div className="flex items-center gap-2">
                           <span
                             className={
-                              "rounded px-2 py-0.5 text-[0.65rem] font-semibold uppercase " +
+                              "status-mark text-[0.65rem] " +
                               riskClasses(f.priority)
                             }
                           >

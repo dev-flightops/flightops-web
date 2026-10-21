@@ -215,7 +215,7 @@ export function DateTimeWheel({
 
   return (
     <fieldset className="min-w-0">
-      <legend className="mb-1 text-[0.65rem] font-semibold uppercase tracking-wider text-muted-foreground">
+      <legend className="mb-1 eyebrow">
         {label}
       </legend>
       <div className="grid grid-cols-[1.7fr_1fr_1fr] gap-1 rounded-md border border-border bg-card p-1">

@@ -5,7 +5,7 @@ import type { ReactNode } from "react";
  * Mirrors the legacy `.panel` + `.section-title` pattern used throughout
  * `dispatch-platform-main/templates/dispatch/form.html`:
  *
- *   <div class="panel mb-4">                          ← rounded-xl border bg-card p-5
+ *   <div class="panel mb-4">                          ← rounded-lg border bg-card p-5
  *     <p class="section-title mb-3">Flight Details</p> ← tiny uppercase eyebrow
  *     ...content...
  *   </div>
@@ -51,7 +51,7 @@ export function SectionPanel({
   return (
     <div
       className={cn(
-        "rounded-xl border border-border bg-card p-5",
+        "rounded-lg border border-border bg-card p-5",
         accent && ACCENT_BORDER[accent],
         className,
       )}

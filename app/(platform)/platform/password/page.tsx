@@ -1,6 +1,6 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 
+import { PageHeader } from "@/components/ff/page-header";
 import { getPlatformSession } from "@/lib/api/platform-session";
 
 import { PasswordForm } from "./password-form";
@@ -12,13 +12,11 @@ export default async function PlatformPasswordPage() {
 
   return (
     <div className="mx-auto max-w-sm px-4 sm:px-6 py-8">
-      <div className="mb-4 text-xs">
-        <Link href="/platform" className="text-muted-foreground hover:text-foreground">
-          ← Companies
-        </Link>
-      </div>
-      <h1 className="page-title">Change Password</h1>
-      <p className="mt-1 mb-5 text-sm text-muted-foreground">{session.email}</p>
+      <PageHeader
+        back={{ href: "/platform", label: "Companies" }}
+        title="Change Password"
+        description={session.email}
+      />
       <div className="rounded-lg border border-border bg-card p-5">
         <PasswordForm />
       </div>

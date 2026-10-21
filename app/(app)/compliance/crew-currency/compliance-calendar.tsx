@@ -164,7 +164,7 @@ export function ComplianceCalendar({
               <div className="mb-2 flex items-baseline justify-between">
                 <Link
                   href={monthDrillHref(m.key, statusFilter)}
-                  className="text-[0.65rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground hover:text-primary"
+                  className="eyebrow hover:text-primary"
                   aria-label={
                     entries.length > 0
                       ? `See all ${entries.length} findings in ${m.label}`
@@ -294,7 +294,7 @@ function FocusedMonthView({
         </Link>
       </div>
       {sorted.length === 0 ? (
-        <div className="rounded-md border border-dashed border-border bg-card/40 px-4 py-8 text-center text-sm text-muted-foreground">
+        <div className="rounded-lg border border-border bg-card px-5 py-8 text-center text-sm text-muted-foreground">
           Nothing anchored to this month.
         </div>
       ) : (

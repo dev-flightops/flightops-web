@@ -18,7 +18,7 @@ const TONE_STYLES: Record<NonNullable<StatCardProps["tone"]>, string> = {
 };
 
 // Mirrors the legacy `.stat-card`:
-//   - rounded-xl panel (12px corners)
+//   - rounded-lg panel (4px corners)
 //   - tabular-nums numeric, centered text
 //   - tiny uppercase label below the value
 // Numeric value is rendered with the mono font so digits align nicely across

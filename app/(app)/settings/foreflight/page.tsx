@@ -42,23 +42,23 @@ export default async function ForeFlightSettingsPage() {
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6">
-      <nav className="mb-4 text-xs text-muted-foreground">
+      <nav aria-label="Breadcrumb" className="eyebrow mb-4 flex flex-wrap items-center">
         <Link href="/settings" className="hover:text-foreground">
           Settings
         </Link>
-        <span className="px-1.5">/</span>
+        <span aria-hidden className="px-1.5 text-muted-foreground">/</span>
         <span className="text-foreground">ForeFlight</span>
       </nav>
-      <header className="mb-6">
+      <header className="mb-6 border-b border-border pb-5">
         <h1 className="page-title">ForeFlight</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
           Send the company&rsquo;s scheduled flights to ForeFlight Dispatch, so pilots plan on flights
           that already carry their crew and load, and bring their plans back onto the flights.
           Peregrine&rsquo;s own weight and balance check stays the record.
         </p>
       </header>
       {!canChange ? (
-        <p className="rounded-md border border-border bg-muted/60 px-3 py-3 text-xs text-muted-foreground">
+        <p className="notice notice-gray text-muted-foreground">
           The Director of Operations or an Exec Admin connects ForeFlight.
         </p>
       ) : loadError || !connection ? (

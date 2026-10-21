@@ -71,7 +71,7 @@ export function RiskAssessmentPanel({
             Risk assessment: severity times likelihood for each factor
           </caption>
           <thead>
-            <tr className="border-b border-border bg-muted/60 text-left text-[0.6rem] uppercase tracking-[0.06em] text-muted-foreground">
+            <tr className="ff-thead">
               <th scope="col" className="px-2 py-1.5">Risk factor</th>
               <th scope="col" className="px-1.5 py-1.5 text-center">Sev</th>
               <th scope="col" className="px-1.5 py-1.5 text-center">Lik</th>

@@ -17,11 +17,11 @@ export function CreateCompanyForm() {
   const sent = state.status === "error" ? state.values : undefined;
 
   return (
-    <div className="rounded-lg border border-border bg-card p-4">
-      <h2 className="text-sm font-semibold">Create a Company</h2>
+    <div className="rounded-lg border border-border bg-card p-5">
+      <h2 className="panel-title">Create a Company</h2>
       {state.status === "ok" && state.created ? (
-        <div role="status" className="mt-3 rounded-md border border-status-green/40 bg-status-green/10 px-3 py-3 text-sm">
-          <p className="font-semibold text-status-green">{state.created.name} is set up.</p>
+        <div role="status" className="notice notice-green mt-3 text-sm">
+          <p className="notice-label">{state.created.name} is set up.</p>
           <p className="mt-1">
             Exec Admin <span className="font-mono">{state.created.admin_email}</span>, one-time password:{" "}
             <span className="select-all rounded bg-background px-1.5 py-0.5 font-mono font-semibold">
@@ -48,11 +48,11 @@ export function CreateCompanyForm() {
         className="mt-3 grid gap-3 sm:grid-cols-2"
       >
         <label className="grid gap-1 text-xs">
-          Company Name *
+          <span className="field-label">Company Name *</span>
           <input name="name" required maxLength={120} defaultValue={sent?.name ?? ""} className={FIELD} />
         </label>
         <label className="grid gap-1 text-xs">
-          Short Name
+          <span className="field-label">Short Name</span>
           <input
             name="slug"
             maxLength={60}
@@ -62,11 +62,11 @@ export function CreateCompanyForm() {
           />
         </label>
         <label className="grid gap-1 text-xs">
-          Exec Admin&apos;s Name *
+          <span className="field-label">Exec Admin&apos;s Name *</span>
           <input name="admin_name" required maxLength={120} defaultValue={sent?.admin_name ?? ""} className={FIELD} />
         </label>
         <label className="grid gap-1 text-xs">
-          Exec Admin&apos;s Email *
+          <span className="field-label">Exec Admin&apos;s Email *</span>
           <input
             name="admin_email"
             type="email"

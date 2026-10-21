@@ -43,7 +43,7 @@ export function TrackingForm({
       )}
 
       <fieldset className="space-y-4 rounded-lg border border-border bg-card p-5">
-        <legend className="px-2 text-[0.65rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+        <legend className="px-2 eyebrow">
           Thresholds
         </legend>
 
@@ -72,7 +72,7 @@ export function TrackingForm({
       </fieldset>
 
       <fieldset className="space-y-4 rounded-lg border border-border bg-card p-5">
-        <legend className="px-2 text-[0.65rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+        <legend className="px-2 eyebrow">
           Provider
         </legend>
 
@@ -194,7 +194,7 @@ function Field({
         id={name}
         name={name}
         aria-invalid={error ? "true" : undefined}
-        className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none aria-[invalid=true]:border-status-red"
+        className="ff-input px-3 py-2 text-sm aria-[invalid=true]:border-status-red"
         {...inputProps}
       />
       {error && (

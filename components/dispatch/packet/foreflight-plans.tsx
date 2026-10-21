@@ -139,9 +139,7 @@ function PlanCard({ plan, disagrees }: { plan: ExternalPlan; disagrees: boolean 
       )}
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <p className="text-sm font-semibold">{heading}</p>
-        <span className="rounded bg-muted px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
-          {MATCH_LABEL[plan.match] ?? plan.match}
-        </span>
+        <span className="eyebrow">{MATCH_LABEL[plan.match] ?? plan.match}</span>
       </div>
       <dl className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 text-xs sm:grid-cols-4">
         <div>

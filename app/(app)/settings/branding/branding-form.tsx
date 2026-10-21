@@ -91,7 +91,7 @@ export function BrandingForm({
             placeholder="e.g. yourairline.com"
             spellCheck={false}
             autoComplete="off"
-            className="min-w-0 flex-1 rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
+            className="ff-input min-w-0 flex-1 px-3 py-2 text-sm"
           />
           <button
             type="submit"
@@ -189,7 +189,7 @@ export function BrandingForm({
         <button
           type="submit"
           disabled={pending}
-          className="inline-flex items-center gap-1.5 rounded-md bg-brand-primary px-4 py-2 text-xs font-semibold text-white hover:bg-brand-primary-dark disabled:opacity-60"
+          className="btn-caps inline-flex items-center gap-1.5 rounded-md bg-primary px-4 py-2 text-white hover:bg-brand-dark disabled:opacity-60 text-[0.72rem]"
         >
           {pending && <Spinner size="xs" />}
           {pending ? "Saving…" : "Save brand theme"}
@@ -235,7 +235,7 @@ function ColorField({
           maxLength={9}
           spellCheck={false}
           aria-invalid={error ? "true" : undefined}
-          className="flex-1 rounded-md border border-border bg-background px-3 py-2 font-mono text-sm text-foreground focus:border-primary focus:outline-none aria-[invalid=true]:border-status-red"
+          className="ff-input flex-1 px-3 py-2 font-mono text-sm aria-[invalid=true]:border-status-red"
         />
         <span
           className="h-9 w-9 flex-shrink-0 rounded-md border border-border"

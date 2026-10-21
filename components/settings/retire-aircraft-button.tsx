@@ -42,7 +42,7 @@ export function RetireAircraftButton({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="rounded-md border border-status-red/40 bg-status-red/10 px-2.5 py-1 text-[0.7rem] font-semibold text-status-red hover:bg-status-red/15"
+        className="btn-caps rounded-md border px-2.5 py-1 border-status-red/60 text-[0.72rem] text-status-red hover:border-status-red"
       >
         Retire
       </button>
@@ -107,7 +107,7 @@ export function ReactivateAircraftButton({ aircraftId }: { aircraftId: string })
       <button
         type="submit"
         disabled={pending}
-        className="inline-flex items-center gap-1.5 rounded-md border border-status-green/40 bg-status-green/10 px-2.5 py-1 text-[0.7rem] font-semibold text-status-green hover:bg-status-green/15 disabled:opacity-60"
+        className="btn-caps inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 disabled:opacity-60 border-status-green/60 text-[0.72rem] text-status-green hover:border-status-green"
       >
         {pending && <Spinner size="xs" />}
         {pending ? "…" : "Reactivate"}

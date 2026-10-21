@@ -53,17 +53,17 @@ export default async function SettingsPermissionsPage() {
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6">
-      <nav className="mb-4 text-xs text-muted-foreground">
+      <nav aria-label="Breadcrumb" className="eyebrow mb-4 flex flex-wrap items-center">
         <Link href="/settings" className="hover:text-foreground">
           Settings
         </Link>
-        <span className="px-1.5">/</span>
+        <span aria-hidden className="px-1.5 text-muted-foreground">/</span>
         <span className="text-foreground">Permissions</span>
       </nav>
 
-      <header className="mb-6">
+      <header className="mb-6 border-b border-border pb-5">
         <h1 className="page-title">Permissions</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
           Roles available in FlightOps and which ones can access the Admin
           portal (dashboards, analytics, user management).
         </p>
@@ -88,21 +88,19 @@ export default async function SettingsPermissionsPage() {
       )}
 
       {!unauthorized && !loadError && (
-        <ul className="space-y-3">
+        // The roles as one list, a row each (#86), not a stack of cards.
+        <ul className="divide-y divide-border overflow-hidden rounded-lg border border-border bg-card">
           {roles.map((role) => {
             const count = activeUserCount(role.id);
             return (
-              <li
-                key={role.id}
-                className="rounded-lg border border-border bg-card p-4"
-              >
+              <li key={role.id} className="p-4">
                 <div className="flex items-start justify-between gap-4">
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
                       <h2 className="text-base font-semibold text-foreground">
                         {role.label}
                       </h2>
-                      <code className="rounded-sm border border-border bg-muted px-1.5 py-0.5 font-mono text-[0.65rem] text-muted-foreground">
+                      <code className="font-mono text-[0.65rem] text-muted-foreground">
                         {role.id}
                       </code>
                     </div>

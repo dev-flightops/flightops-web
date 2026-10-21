@@ -43,7 +43,7 @@ export function ChooseCheckoutButton({
           min={1}
           max={seatLimit ?? undefined}
           defaultValue={defaultSeatCount}
-          className="w-16 rounded border border-border bg-background px-2 py-1 text-xs text-foreground"
+          className="ff-input w-16 px-2 py-1 text-xs"
         />
       </label>
       <button

@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 
+import { buttonOutline, linkCaps } from "@/components/ff/controls";
 import { listCompanies, type Company } from "@/lib/api/platform";
 import { clearPlatformSession, getPlatformSession } from "@/lib/api/platform-session";
 
@@ -27,20 +28,18 @@ export default async function PlatformCompaniesPage() {
 
   return (
     <div className="mx-auto max-w-5xl px-4 sm:px-6 py-8">
-      <header className="mb-6 flex flex-col gap-3 border-b border-border pb-4 sm:flex-row sm:items-end sm:justify-between">
+      <header className="mb-6 flex flex-col gap-3 border-b border-border pb-5 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <div className="text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
-            Platform Administration
-          </div>
-          <h1 className="mt-0.5 page-title">Companies</h1>
+          <p className="eyebrow mb-1">Platform Administration</p>
+          <h1 className="page-title">Companies</h1>
         </div>
-        <div className="flex items-center gap-3 text-xs">
+        <div className="flex flex-wrap items-center gap-4 text-xs">
           <span className="text-muted-foreground">{session.full_name}</span>
-          <a href="/platform/password" className="font-semibold text-foreground/80 hover:underline">
+          <a href="/platform/password" className={linkCaps}>
             Change Password
           </a>
           <form action={platformLogoutAction}>
-            <button type="submit" className="font-semibold text-foreground/80 hover:underline">
+            <button type="submit" className={buttonOutline}>
               Sign Out
             </button>
           </form>
@@ -50,7 +49,7 @@ export default async function PlatformCompaniesPage() {
       <CreateCompanyForm />
 
       <section className="mt-6">
-        <h2 className="mb-2 px-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+        <h2 className="eyebrow mb-2">
           All Companies
         </h2>
         {result.ok ? (

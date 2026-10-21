@@ -69,11 +69,13 @@ export default async function SettingsPilotPayPage() {
         <span className="text-foreground">Pilot Pay</span>
       </nav>
 
-      <h1 className="mb-1 page-title">Pilot Pay Rates &amp; Modifiers</h1>
-      <p className="mb-5 text-sm text-muted-foreground">
-        Configure pay rate tables by seniority, airframe, and role. Add daily
-        modifiers for medevac, night ops, and other situations.
-      </p>
+      <header className="mb-6 border-b border-border pb-5">
+        <h1 className="page-title">Pilot Pay Rates &amp; Modifiers</h1>
+        <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
+          Configure pay rate tables by seniority, airframe, and role. Add daily
+          modifiers for medevac, night ops, and other situations.
+        </p>
+      </header>
 
       {loadError ? (
         <div
@@ -99,10 +101,10 @@ export default async function SettingsPilotPayPage() {
 
 function PayRateSection({ rates }: { rates: PayRateRow[] }) {
   return (
-    <section className="mb-5 rounded-lg border border-border bg-card px-4 py-4">
-      <div className="mb-3 eyebrow">
+    <section className="mb-5 rounded-lg border border-border bg-card p-5">
+      <h2 className="panel-title mb-3">
         Pay Rate Table
-      </div>
+      </h2>
       <p className="mb-3 text-xs text-muted-foreground">
         Rates are matched by priority: pilot-specific + airframe &gt; pilot-specific + any airframe &gt; company default + airframe &gt; company default. Seniority range filters narrow further. Most specific match wins.
       </p>
@@ -134,7 +136,7 @@ function PayRateSection({ rates }: { rates: PayRateRow[] }) {
                   <tr key={r.id} className="hover:bg-accent">
                     <td className="whitespace-nowrap px-4 py-3 text-xs">
                       {r.rate_type === "daily" ? (
-                        <span className="rounded border border-border bg-muted px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider text-muted-foreground">
+                        <span className="eyebrow">
                           Daily
                         </span>
                       ) : (
@@ -160,7 +162,7 @@ function PayRateSection({ rates }: { rates: PayRateRow[] }) {
                         ? `${r.year_of_service_min ?? 0}–${r.year_of_service_max ?? "99"} yrs`
                         : "Any"}
                     </td>
-                    <td className="whitespace-nowrap px-4 py-3 text-xs font-semibold text-status-green">
+                    <td className="whitespace-nowrap px-4 py-3 text-xs font-semibold tabular-nums text-foreground">
                       ${Number(r.rate_amount).toFixed(2)}
                       {r.rate_type === "flight_hourly" ? "/hr" : "/day"}
                     </td>
@@ -190,7 +192,7 @@ function PayRateSection({ rates }: { rates: PayRateRow[] }) {
       </div>
 
       <div className="border-t border-border pt-3">
-        <div className="mb-2 text-xs font-semibold text-muted-foreground">Add Pay Rate</div>
+        <div className="eyebrow mb-2">Add Pay Rate</div>
         <div className="flex flex-wrap items-end gap-2">
           <Field label="Type" width="w-36">
             <DisabledSelect options={RATE_TYPES} />
@@ -233,10 +235,10 @@ function PayRateSection({ rates }: { rates: PayRateRow[] }) {
 
 function PayModifierSection({ modifiers }: { modifiers: PayModifierRow[] }) {
   return (
-    <section className="mb-5 rounded-lg border border-border bg-card px-4 py-4">
-      <div className="mb-3 eyebrow">
+    <section className="mb-5 rounded-lg border border-border bg-card p-5">
+      <h2 className="panel-title mb-3">
         Daily Modifiers
-      </div>
+      </h2>
       <p className="mb-3 text-xs text-muted-foreground">
         Modifiers auto-apply when conditions are detected (medevac flight type, night arrival, training). Custom modifiers can be applied manually to pay events.
       </p>
@@ -272,7 +274,7 @@ function PayModifierSection({ modifiers }: { modifiers: PayModifierRow[] }) {
                     <td className="whitespace-nowrap px-4 py-3 text-xs">
                       <ModifierTypeBadge type={m.modifier_type} />
                     </td>
-                    <td className="whitespace-nowrap px-4 py-3 text-xs font-semibold text-status-yellow">
+                    <td className="whitespace-nowrap px-4 py-3 text-xs font-semibold tabular-nums text-foreground">
                       {formatModifierValue(m)}
                     </td>
                     <td className="whitespace-nowrap px-4 py-3 text-right">
@@ -295,7 +297,7 @@ function PayModifierSection({ modifiers }: { modifiers: PayModifierRow[] }) {
       </div>
 
       <div className="border-t border-border pt-3">
-        <div className="mb-2 text-xs font-semibold text-muted-foreground">Add Modifier</div>
+        <div className="eyebrow mb-2">Add Modifier</div>
         <div className="flex flex-wrap items-end gap-2">
           <Field label="Modifier" width="w-40">
             <DisabledSelect
@@ -333,10 +335,10 @@ function PayModifierSection({ modifiers }: { modifiers: PayModifierRow[] }) {
 function ModifierTypeBadge({ type }: { type: string }) {
   const cls =
     type === "flat"
-      ? "border-status-blue/40 bg-status-blue/10 text-status-blue"
+      ? "text-status-blue"
       : type === "multiplier"
-        ? "border-status-yellow/40 bg-status-yellow/10 text-status-yellow"
-        : "border-status-green/40 bg-status-green/10 text-status-green";
+        ? "text-status-yellow"
+        : "text-status-green";
   const label =
     type === "flat"
       ? "Flat"
@@ -346,7 +348,7 @@ function ModifierTypeBadge({ type }: { type: string }) {
   return (
     <span
       className={
-        "rounded border px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider " +
+        "status-mark text-[0.65rem] " +
         cls
       }
     >
@@ -394,7 +396,7 @@ function DisabledInput({
       placeholder={placeholder}
       disabled
       title={BACKEND_HINT_ADD}
-      className="w-full cursor-not-allowed rounded-md border border-border bg-background px-2 py-1.5 text-sm disabled:opacity-100"
+      className="ff-input cursor-not-allowed px-2 py-1.5 text-sm disabled:opacity-100"
     />
   );
 }
@@ -408,7 +410,7 @@ function DisabledSelect({
     <select
       disabled
       title={BACKEND_HINT_ADD}
-      className="w-full cursor-not-allowed rounded-md border border-border bg-background px-2 py-1.5 text-sm disabled:opacity-100"
+      className="ff-input cursor-not-allowed px-2 py-1.5 text-sm disabled:opacity-100"
     >
       {options.map((o) => (
         <option key={o.value} value={o.value}>

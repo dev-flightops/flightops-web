@@ -39,20 +39,20 @@ export function SettingsMilestonePlaceholder({
 }: MilestonePlaceholderProps) {
   return (
     <div className="mx-auto max-w-3xl px-4 py-6 sm:px-6">
-      <nav className="mb-4 text-xs text-muted-foreground">
+      <nav aria-label="Breadcrumb" className="eyebrow mb-4 flex flex-wrap items-center">
         <Link href="/settings" className="hover:text-foreground">
           Settings
         </Link>
-        <span className="px-1.5">/</span>
+        <span aria-hidden className="px-1.5 text-muted-foreground">/</span>
         <span className="text-foreground">{breadcrumb}</span>
       </nav>
 
-      <header className="mb-5">
+      <header className="mb-6 border-b border-border pb-5">
         <h1 className="page-title">{title}</h1>
-        <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>
+        <p className="mt-2 max-w-3xl text-sm text-muted-foreground">{subtitle}</p>
       </header>
 
-      <section className="rounded-xl border border-dashed border-border bg-muted/60 p-6">
+      <section className="rounded-lg border border-dashed border-border bg-muted/60 p-6">
         <div className="flex items-start gap-4">
           <ClockGlyph className="h-5 w-5 flex-shrink-0 text-muted-foreground" />
           <div className="space-y-3">

@@ -89,7 +89,7 @@ export function ComplianceList({
 
   if (entries.length === 0) {
     return (
-      <div className="rounded-md border border-dashed border-border bg-card/40 px-4 py-8 text-center text-sm text-muted-foreground">
+      <div className="rounded-lg border border-border bg-card px-5 py-8 text-center text-sm text-muted-foreground">
         {statusFilter
           ? `No pilots in ${STATUS_TOKENS[statusFilter].label.toLowerCase()} status right now.`
           : "Every pilot is fully current. Nothing to flag."}

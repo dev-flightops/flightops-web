@@ -28,9 +28,9 @@ import {
  */
 
 const BUTTON =
-  "inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-accent disabled:opacity-60";
+  "btn-caps inline-flex items-center gap-1.5 rounded-md border border-input px-3 py-1.5 text-foreground hover:bg-accent disabled:opacity-60 text-[0.72rem]";
 const PRIMARY =
-  "inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:bg-brand-dark disabled:opacity-60";
+  "btn-caps inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-primary-foreground hover:bg-brand-dark disabled:opacity-60 text-[0.72rem]";
 
 function when(iso: string | null): string {
   return iso ? `${iso.slice(0, 16).replace("T", " ")}Z` : "never";
@@ -50,7 +50,7 @@ function Alert({ children }: { children: React.ReactNode }) {
 function CheckResult({ check }: { check: ForeFlightCheck }) {
   if (check.error) return <Alert>{check.error}</Alert>;
   return (
-    <div className="mt-3 rounded-md border border-border bg-muted/60 px-3 py-2 text-xs">
+    <div className="mt-3 notice notice-gray text-xs">
       <p>
         Connected to <span className="font-semibold">{check.account_name ?? "the ForeFlight account"}</span>:{" "}
         {check.aircraft} aircraft and {check.crew} crew there.
@@ -85,7 +85,7 @@ function SendResult({ sent }: { sent: ForeFlightSend }) {
     [sent.failed, "failed"],
   ].filter(([n]) => (n as number) > 0);
   return (
-    <div className="mt-3 rounded-md border border-border bg-muted/60 px-3 py-2 text-xs">
+    <div className="mt-3 notice notice-gray text-xs">
       <p>
         {parts.length === 0
           ? "No flights scheduled in the next 72 hours."
@@ -111,7 +111,7 @@ function FetchResult({ fetched }: { fetched: ForeFlightFetch }) {
     [fetched.failed, "couldn't be read"],
   ].filter(([n]) => (n as number) > 0);
   return (
-    <div className="mt-3 rounded-md border border-border bg-muted/60 px-3 py-2 text-xs">
+    <div className="mt-3 notice notice-gray text-xs">
       <p>
         {fetched.fetched === 0 && fetched.failed === 0
           ? "Nothing changed in ForeFlight since the last fetch."
@@ -198,8 +198,8 @@ export function ForeFlightSettings({
 
   return (
     <div className="space-y-6">
-      <section aria-labelledby="ff-connection" className="rounded-lg border border-border bg-card p-4">
-        <h2 id="ff-connection" className="text-sm font-bold tracking-tight">
+      <section aria-labelledby="ff-connection" className="rounded-lg border border-border bg-card p-5">
+        <h2 id="ff-connection" className="panel-title">
           Connection
         </h2>
         <p className="mt-1 text-xs text-muted-foreground">
@@ -210,10 +210,10 @@ export function ForeFlightSettings({
         <p className="mt-2 text-xs">
           <span
             className={
-              "mr-2 rounded px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-[0.06em] " +
+              "status-mark mr-2 text-[0.65rem] " +
               (connection.has_key && connection.account_name && !connection.last_error
-                ? "bg-status-green/15 text-status-green"
-                : "bg-muted text-muted-foreground")
+                ? "text-status-green"
+                : "text-muted-foreground")
             }
           >
             {connection.has_key ? "Key saved" : "No key"}
@@ -274,8 +274,8 @@ export function ForeFlightSettings({
         {check && <CheckResult check={check} />}
       </section>
 
-      <section aria-labelledby="ff-sending" className="rounded-lg border border-border bg-card p-4">
-        <h2 id="ff-sending" className="text-sm font-bold tracking-tight">
+      <section aria-labelledby="ff-sending" className="rounded-lg border border-border bg-card p-5">
+        <h2 id="ff-sending" className="panel-title">
           Send scheduled flights to ForeFlight
         </h2>
         <p className="mt-1 text-xs text-muted-foreground">
@@ -287,8 +287,8 @@ export function ForeFlightSettings({
         <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
           <span
             className={
-              "rounded px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-[0.06em] " +
-              (connection.send_flights ? "bg-status-green/15 text-status-green" : "bg-muted text-muted-foreground")
+              "status-mark text-[0.65rem] " +
+              (connection.send_flights ? "text-status-green" : "text-muted-foreground")
             }
           >
             {connection.send_flights ? "On" : "Off"}
@@ -314,8 +314,8 @@ export function ForeFlightSettings({
         {sent && <SendResult sent={sent} />}
       </section>
 
-      <section aria-labelledby="ff-plans" className="rounded-lg border border-border bg-card p-4">
-        <h2 id="ff-plans" className="text-sm font-bold tracking-tight">
+      <section aria-labelledby="ff-plans" className="rounded-lg border border-border bg-card p-5">
+        <h2 id="ff-plans" className="panel-title">
           Bring pilots&rsquo; plans back
         </h2>
         <p className="mt-1 text-xs text-muted-foreground">
@@ -329,8 +329,8 @@ export function ForeFlightSettings({
         <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
           <span
             className={
-              "rounded px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-[0.06em] " +
-              (connection.bring_plans ? "bg-status-green/15 text-status-green" : "bg-muted text-muted-foreground")
+              "status-mark text-[0.65rem] " +
+              (connection.bring_plans ? "text-status-green" : "text-muted-foreground")
             }
           >
             {connection.bring_plans ? "On" : "Off"}
@@ -366,30 +366,32 @@ export function ForeFlightSettings({
       </section>
 
       {connection.problems.length > 0 && (
-        <section aria-labelledby="ff-problems" className="rounded-lg border border-border bg-card p-4">
-          <h2 id="ff-problems" className="text-sm font-bold tracking-tight">
+        <section aria-labelledby="ff-problems" className="rounded-lg border border-border bg-card p-5">
+          <h2 id="ff-problems" className="panel-title">
             Legs that need attention
           </h2>
-          <table className="mt-2 w-full text-left text-xs">
-            <thead className="text-muted-foreground">
+          <div className="mt-3 overflow-x-auto rounded-md border border-border">
+          <table className="w-full text-left text-xs">
+            <thead className="ff-thead">
               <tr>
-                <th className="py-1 pr-3 font-semibold">Flight</th>
-                <th className="py-1 pr-3 font-semibold">Leg</th>
-                <th className="py-1 pr-3 font-semibold">Departs</th>
-                <th className="py-1 font-semibold">What happened</th>
+                <th className="px-3 py-2">Flight</th>
+                <th className="px-3 py-2">Leg</th>
+                <th className="px-3 py-2">Departs</th>
+                <th className="px-3 py-2">What happened</th>
               </tr>
             </thead>
             <tbody>
               {connection.problems.map((p) => (
                 <tr key={`${p.flight_id}-${p.leg_sequence}`} className="border-t border-border">
-                  <td className="py-1 pr-3 font-mono">{p.flight_number}</td>
-                  <td className="py-1 pr-3">{p.leg_sequence}</td>
-                  <td className="py-1 pr-3">{when(p.departs_at)}</td>
-                  <td className={"py-1 " + (p.state === "failed" ? "text-status-red" : "")}>{p.message}</td>
+                  <td className="px-3 py-2 font-mono">{p.flight_number}</td>
+                  <td className="px-3 py-2">{p.leg_sequence}</td>
+                  <td className="px-3 py-2">{when(p.departs_at)}</td>
+                  <td className={"px-3 py-2 " + (p.state === "failed" ? "text-status-red" : "")}>{p.message}</td>
                 </tr>
               ))}
             </tbody>
           </table>
+          </div>
         </section>
       )}
       {error && <Alert>{error}</Alert>}

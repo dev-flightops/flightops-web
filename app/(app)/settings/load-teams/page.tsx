@@ -1,10 +1,12 @@
 import Link from "next/link";
 
+import { tab, tabList } from "@/components/ff/controls";
 import { listStaff } from "@/lib/api/auth";
 import { formatRole } from "@/lib/roles";
 import { listLoadTeams, listStations } from "@/lib/api/ground";
 import { ApiError } from "@/lib/api/client";
 import type { LoadTeamResponse } from "@/lib/api/types";
+import { cn } from "@/lib/utils";
 
 import { MembersSheet } from "./members-sheet";
 import { TeamActiveButton } from "./team-active-button";
@@ -108,22 +110,22 @@ export default async function SettingsLoadTeamsPage({
         <span className="text-foreground">Load Teams</span>
       </nav>
 
-      <header className="mb-6 flex flex-wrap items-center justify-between gap-3">
+      <header className="mb-6 flex flex-wrap items-center justify-between gap-4 border-b border-border pb-5">
         <div>
           <h1 className="page-title">Load Teams</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
             Manage ramp and load crew teams by base
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <NotBuilt className="rounded-md border border-border bg-card px-3 py-2 text-sm font-semibold text-foreground">
+          <NotBuilt className="btn-caps rounded-md border border-input px-3 py-2 text-foreground">
             Fleet Report
           </NotBuilt>
           <TeamDialog
             stations={stations}
             people={people}
             trigger="+ Add Team"
-            triggerClassName="rounded-md bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground hover:bg-brand-dark"
+            triggerClassName="btn-caps rounded-md bg-primary px-3 py-2 text-primary-foreground hover:bg-brand-dark"
           />
           <Link
             href={
@@ -138,16 +140,10 @@ export default async function SettingsLoadTeamsPage({
         </div>
       </header>
 
-      <div className="mb-4 flex gap-1 border-b-2 border-border">
-        <span className="-mb-0.5 border-b-2 border-primary px-4 py-2 text-xs font-semibold text-primary">
-          Teams
-        </span>
-        <NotBuilt className="-mb-0.5 border-b-2 border-transparent px-4 py-2 text-xs font-semibold text-muted-foreground">
-          Reminders
-        </NotBuilt>
-        <NotBuilt className="-mb-0.5 border-b-2 border-transparent px-4 py-2 text-xs font-semibold text-muted-foreground">
-          Activity Log
-        </NotBuilt>
+      <div className={cn(tabList, "mb-6")}>
+        <span className={tab(true)}>Teams</span>
+        <NotBuilt className={tab(false)}>Reminders</NotBuilt>
+        <NotBuilt className={tab(false)}>Activity Log</NotBuilt>
       </div>
 
       {loadError ? (
@@ -238,7 +234,7 @@ function BaseSection({
   return (
     <section aria-label={`${base} load teams`}>
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2 border-b border-border pb-2">
-        <h2 className="text-sm font-bold uppercase tracking-[0.04em] text-primary">
+        <h2 className="panel-title">
           {stationName ? `${base} — ${stationName}` : base}
         </h2>
         <div className="flex items-center gap-3">
@@ -250,23 +246,38 @@ function BaseSection({
             stations={stations}
             people={people}
             trigger={`+ Add Team at ${base}`}
-            triggerClassName="rounded border border-border bg-transparent px-2.5 py-1 text-[0.65rem] font-semibold text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary"
+            triggerClassName="btn-caps rounded border border-input px-2.5 py-1 text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary text-[0.68rem]"
           />
         </div>
       </div>
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
-        {teams.map((t) => (
-          <TeamCard key={t.id} team={t} stations={stations} people={people} />
-        ))}
+      {/* The base's teams as one table (#86), not a grid of cards. */}
+      <div className="overflow-x-auto rounded-lg border border-border bg-card">
+        <table className="w-full text-sm">
+          <thead className="ff-thead">
+            <tr>
+              {/* Shared widths, so the bases' tables line up down the page. */}
+              <th scope="col" className="w-[30%] px-4 py-2">Team</th>
+              <th scope="col" className="w-[22%] px-4 py-2">Lead</th>
+              <th scope="col" className="w-[10%] px-4 py-2 text-right">Members</th>
+              <th scope="col" className="w-[12%] px-4 py-2">Status</th>
+              <th scope="col" className="px-4 py-2 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {teams.map((t) => (
+              <TeamRow key={t.id} team={t} stations={stations} people={people} />
+            ))}
+          </tbody>
+        </table>
       </div>
     </section>
   );
 }
 
 const CARD_BUTTON =
-  "rounded border border-border bg-transparent px-2.5 py-1 text-[0.65rem] font-semibold text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary";
+  "btn-caps rounded border border-input px-2.5 py-1 text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary text-[0.68rem]";
 
-function TeamCard({
+function TeamRow({
   team,
   stations,
   people,
@@ -276,63 +287,57 @@ function TeamCard({
   people: PersonOption[] | null;
 }) {
   return (
-    <div className="relative overflow-hidden rounded-lg border border-border bg-card p-3 pl-4 transition-colors hover:border-primary/30">
-      <span
-        className="absolute left-0 top-0 bottom-0 w-1.5"
-        style={{ background: team.color_code }}
-        aria-hidden
-      />
-      <div className="flex items-center justify-between gap-2">
-        <span className="text-sm font-bold">{team.team_name}</span>
+    <tr className="border-b border-border align-top last:border-b-0 hover:bg-accent">
+      <td className="px-4 py-3">
+        <div className="flex items-center gap-2">
+          {/* The team's own colour, as a swatch: a data colour is never text. */}
+          <span
+            className="h-3 w-3 flex-shrink-0 rounded-sm"
+            style={{ background: team.color_code }}
+            aria-hidden
+          />
+          <span className="font-semibold text-foreground">{team.team_name}</span>
+        </div>
+        {team.notes && (
+          <p className="mt-1 text-[0.7rem] text-muted-foreground">{team.notes}</p>
+        )}
+      </td>
+      <td className="whitespace-nowrap px-4 py-3">
+        {team.team_lead ? (
+          team.team_lead.full_name
+        ) : (
+          <span className="text-status-yellow">No Lead Assigned</span>
+        )}
+      </td>
+      <td className="px-4 py-3 text-right tabular-nums">{team.member_count}</td>
+      <td className="px-4 py-3">
         <span
           className={
-            "rounded px-2 py-0.5 text-[0.55rem] font-bold uppercase tracking-[0.03em] " +
-            (team.is_active
-              ? "border border-status-green/30 bg-status-green/10 text-status-green"
-              : "border border-status-red/30 bg-status-red/10 text-status-red")
+            "status-mark " + (team.is_active ? "text-status-green" : "text-status-red")
           }
         >
           {team.is_active ? "Active" : "Inactive"}
         </span>
-      </div>
-      <div className="mt-1 text-xs">
-        Lead:{" "}
-        {team.team_lead ? (
-          <span className="font-semibold text-status-green">
-            {team.team_lead.full_name}
-          </span>
-        ) : (
-          <span className="italic text-status-yellow">No Lead Assigned</span>
-        )}
-      </div>
-      <div className="mt-1 text-[0.72rem] text-muted-foreground">
-        <strong className="text-foreground">{team.member_count}</strong>{" "}
-        member{team.member_count === 1 ? "" : "s"} · {team.base_icao}
-      </div>
-      {team.notes && (
-        <p className="mt-1 text-[0.65rem] text-muted-foreground">
-          {team.notes}
-        </p>
-      )}
-      <div className="mt-2 flex flex-wrap gap-1">
-        <TeamDialog
-          team={team}
-          stations={stations}
-          people={people}
-          trigger="Edit"
-          triggerLabel={`Edit ${team.team_name}`}
-          triggerClassName={CARD_BUTTON}
-        />
-        <MembersSheet team={team} people={people} />
-        <NotBuilt className="rounded border border-border px-2.5 py-1 text-[0.65rem] font-semibold text-muted-foreground">
-          Performance
-        </NotBuilt>
-        <TeamActiveButton
-          teamId={team.id}
-          teamName={team.team_name}
-          active={team.is_active}
-        />
-      </div>
-    </div>
+      </td>
+      <td className="px-4 py-3">
+        <div className="flex flex-wrap justify-end gap-1">
+          <TeamDialog
+            team={team}
+            stations={stations}
+            people={people}
+            trigger="Edit"
+            triggerLabel={`Edit ${team.team_name}`}
+            triggerClassName={CARD_BUTTON}
+          />
+          <MembersSheet team={team} people={people} />
+          <NotBuilt className={CARD_BUTTON}>Performance</NotBuilt>
+          <TeamActiveButton
+            teamId={team.id}
+            teamName={team.team_name}
+            active={team.is_active}
+          />
+        </div>
+      </td>
+    </tr>
   );
 }

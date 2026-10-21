@@ -135,7 +135,7 @@ export default async function FlightFollowingHistoryPage({
           {loadError}
         </div>
       ) : filtered.length === 0 ? (
-        <div className="rounded-md border border-dashed border-border bg-card/40 px-4 py-16 text-center">
+        <div className="rounded-lg border border-border bg-card px-5 py-8 text-center">
           <p className="text-sm text-muted-foreground">
             No completed or cancelled flights in this range.
           </p>
@@ -152,7 +152,7 @@ function FlightHistoryTable({ flights }: { flights: FlightListItem[] }) {
     <div className="overflow-x-auto rounded-lg border border-border bg-card">
       <table className="w-full text-xs">
         <thead className="ff-thead">
-          <tr className="text-left text-[0.65rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+          <tr className="text-left eyebrow">
             <th className="px-3 py-2">Flight</th>
             <th className="px-3 py-2">Aircraft</th>
             <th className="px-3 py-2">Route</th>

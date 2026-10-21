@@ -1,5 +1,5 @@
-import Link from "next/link";
-
+import { Notice } from "@/components/ff/notice";
+import { PageHeader } from "@/components/ff/page-header";
 import { ApiError } from "@/lib/api/client";
 import { listApiKeys } from "@/lib/api/api-keys";
 
@@ -27,15 +27,13 @@ export default async function ApiKeysPage() {
     const status = err instanceof ApiError ? err.status : 0;
     return (
       <Shell>
-        <div className="rounded-lg border border-status-yellow/40 bg-status-yellow/5 p-4">
-          <p className="text-sm text-status-yellow">
-            {status === 403
-              ? "API keys are managed by an Exec Admin."
-              : status === 401
-                ? "Your session expired — please sign in again."
-                : "Couldn't load API keys. Try again in a moment."}
-          </p>
-        </div>
+        <Notice tone="yellow">
+          {status === 403
+            ? "API keys are managed by an Exec Admin."
+            : status === 401
+              ? "Your session expired — please sign in again."
+              : "Couldn't load API keys. Try again in a moment."}
+        </Notice>
       </Shell>
     );
   }
@@ -50,21 +48,11 @@ export default async function ApiKeysPage() {
 function Shell({ children }: { children: React.ReactNode }) {
   return (
     <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6">
-      <Link
-        href="/settings"
-        className="mb-4 inline-block text-sm text-muted-foreground hover:text-foreground"
-      >
-        ← Settings
-      </Link>
-      <h1 className="page-title text-foreground">
-        Public API keys
-      </h1>
-      <p className="mb-6 mt-1 max-w-2xl text-sm text-muted-foreground">
-        Keys authenticate partner access to the read-only Public API —
-        flights, fleet and bookings for your operation only, and crew and
-        duty for a key issued with them. Each key is scoped to this
-        operator and can be revoked at any time.
-      </p>
+      <PageHeader
+        back={{ href: "/settings", label: "Settings" }}
+        title="Public API keys"
+        description="Keys authenticate partner access to the read-only Public API — flights, fleet and bookings for your operation only, and crew and duty for a key issued with them. Each key is scoped to this operator and can be revoked at any time."
+      />
       {children}
     </div>
   );

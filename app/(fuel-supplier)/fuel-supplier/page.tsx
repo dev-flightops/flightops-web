@@ -45,12 +45,12 @@ export default async function SupplierInboxPage() {
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
-      <header className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+      <header className="mb-6 flex flex-col gap-3 border-b border-border pb-5 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="page-title">
             Fuel Supplier Portal
           </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
             Signed in as{" "}
             <span className="font-semibold text-foreground">
               {session.full_name}
@@ -82,7 +82,7 @@ export default async function SupplierInboxPage() {
 
 function EmptyBindingsPanel() {
   return (
-    <div className="rounded-lg border border-dashed border-border bg-card/40 px-5 py-10 text-center">
+    <div className="rounded-lg border border-border bg-card px-5 py-8 text-center">
       <h2 className="text-sm font-semibold text-foreground">
         No active tenants
       </h2>
@@ -97,7 +97,7 @@ function EmptyBindingsPanel() {
 
 function EmptyInboxPanel() {
   return (
-    <div className="rounded-lg border border-dashed border-border bg-card/40 px-5 py-10 text-center">
+    <div className="rounded-lg border border-border bg-card px-5 py-8 text-center">
       <h2 className="text-sm font-semibold text-foreground">Inbox clear</h2>
       <p className="mt-2 text-xs text-muted-foreground">
         No fuel orders waiting for you right now. New orders appear
@@ -189,7 +189,7 @@ function OrdersTable({
 
 function TenantChip({ label }: { label: string }) {
   return (
-    <span className="inline-flex items-center rounded bg-muted px-1.5 py-0.5 text-[0.6rem] font-semibold uppercase tracking-[0.05em] text-muted-foreground">
+    <span className="status-mark text-muted-foreground text-[0.6rem]">
       {label}
     </span>
   );
@@ -198,17 +198,17 @@ function TenantChip({ label }: { label: string }) {
 function StatusPill({ status }: { status: string }) {
   const tone =
     status === "ordered"
-      ? "bg-status-yellow/15 text-status-yellow"
+      ? "text-status-yellow"
       : status === "confirmed"
-        ? "bg-status-blue/15 text-status-blue"
+        ? "text-status-blue"
         : status === "fueled"
-          ? "bg-status-green/15 text-status-green"
+          ? "text-status-green"
           : status === "discrepancy"
-            ? "bg-status-red/15 text-status-red"
-            : "bg-muted text-muted-foreground";
+            ? "text-status-red"
+            : "text-muted-foreground";
   return (
     <span
-      className={`inline-flex items-center rounded px-1.5 py-0.5 text-[0.6rem] font-semibold uppercase tracking-[0.05em] ${tone}`}
+      className={`status-mark text-[0.6rem] ${tone}`}
     >
       {status}
     </span>

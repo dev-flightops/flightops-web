@@ -51,11 +51,11 @@ export function TypeGateCard({
   return (
     <section
       aria-labelledby="type-gate-heading"
-      className="mb-6 rounded-lg border border-border bg-card p-4"
+      className="mb-6 rounded-lg border border-border bg-card p-5"
     >
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0 max-w-2xl">
-          <h2 id="type-gate-heading" className="text-sm font-bold tracking-tight">
+          <h2 id="type-gate-heading" className="panel-title">
             Aircraft qualifications at release
           </h2>
           <p className="mt-1 text-xs text-muted-foreground">
@@ -72,8 +72,8 @@ export function TypeGateCard({
           <p className="mt-2 text-xs">
             <span
               className={
-                "mr-2 rounded px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-[0.06em] " +
-                (on ? "bg-status-green/15 text-status-green" : "bg-muted text-muted-foreground")
+                "status-mark mr-2 text-[0.65rem] " +
+                (on ? "text-status-green" : "text-muted-foreground")
               }
             >
               {on ? "On" : "Off"}
@@ -101,7 +101,7 @@ export function TypeGateCard({
                 type="button"
                 onClick={() => setConfirming(false)}
                 disabled={pending}
-                className="rounded-md border border-border px-3 py-1.5 font-semibold"
+                className="btn-caps rounded-md border border-input px-3 py-1.5 text-[0.72rem] text-foreground hover:border-foreground"
               >
                 Cancel
               </button>

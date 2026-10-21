@@ -92,7 +92,7 @@ export function AdminAccessToggle({ roleId, initial, locked }: Props) {
         <span
           aria-hidden
           className={cn(
-            "relative inline-flex h-5 w-9 items-center rounded-full transition-colors",
+            "relative inline-flex h-5 w-9 items-center rounded-sm transition-colors",
             enabled
               ? "bg-primary/80"
               : "bg-muted-foreground/30",
@@ -101,7 +101,7 @@ export function AdminAccessToggle({ roleId, initial, locked }: Props) {
         >
           <span
             className={cn(
-              "absolute inline-block h-3.5 w-3.5 transform rounded-full bg-background shadow transition-transform",
+              "absolute inline-block h-3.5 w-3.5 transform rounded-[1px] bg-background transition-transform",
               enabled ? "translate-x-[1.2rem]" : "translate-x-[0.15rem]",
             )}
           />

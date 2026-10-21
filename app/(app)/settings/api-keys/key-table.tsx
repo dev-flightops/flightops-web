@@ -24,7 +24,7 @@ export function KeyTable({
     <div className="overflow-x-auto rounded-lg border border-border bg-card">
       <table className="w-full text-sm">
         <thead>
-          <tr className="border-b border-border text-left text-[0.65rem] uppercase tracking-[0.06em] text-muted-foreground">
+          <tr className="ff-thead">
             <th className="px-4 py-3">Name</th>
             <th className="px-4 py-3">Key</th>
             <th className="px-4 py-3">Reads</th>
@@ -85,19 +85,19 @@ export function KeyTable({
  */
 export function KeyStatus({ row }: { row: ApiKeyRow }) {
   const base =
-    "inline-flex rounded px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-[0.06em]";
+    "status-mark text-[0.65rem]";
   if (row.revoked_at) {
     return (
-      <span className={`${base} bg-status-red/15 text-status-red`}>Revoked</span>
+      <span className={`${base} text-status-red`}>Revoked</span>
     );
   }
   if (row.expires_at && new Date(row.expires_at).getTime() <= Date.now()) {
     return (
-      <span className={`${base} bg-muted text-muted-foreground`}>Expired</span>
+      <span className={`${base} text-muted-foreground`}>Expired</span>
     );
   }
   return (
-    <span className={`${base} bg-status-green/15 text-status-green`}>Active</span>
+    <span className={`${base} text-status-green`}>Active</span>
   );
 }
 

@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import { PageHeader } from "@/components/ff/page-header";
+
 /**
  * The page for a feature legacy has and this platform has not built.
  *
@@ -27,27 +29,19 @@ export function NotBuiltPage({
 }) {
   return (
     <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
-      <Link
-        href="/maintenance"
-        className="text-xs font-semibold uppercase tracking-[0.06em] text-muted-foreground hover:text-foreground"
-      >
-        ← Maintenance
-      </Link>
-      <h1 className="mt-2 page-title">{title}</h1>
-      <p className="mt-1 text-sm text-muted-foreground">{summary}</p>
-      <div
-        role="status"
-        className="mt-6 rounded-lg border border-border bg-muted/60 px-4 py-3 text-sm"
-      >
-        <p className="font-semibold text-foreground">
-          This isn&apos;t built yet.
-        </p>
+      <PageHeader
+        back={{ href: "/maintenance", label: "Maintenance" }}
+        title={title}
+        description={summary}
+      />
+      <div role="status" className="notice notice-gray text-sm">
+        <p className="notice-label">This isn&apos;t built yet.</p>
         {meanwhile ? (
-          <p className="mt-0.5 text-muted-foreground">
+          <p className="mt-1">
             {meanwhile.text}{" "}
             <Link
               href={meanwhile.href}
-              className="font-medium text-primary hover:underline"
+              className="font-semibold text-primary underline-offset-4 hover:underline"
             >
               {meanwhile.label}
             </Link>

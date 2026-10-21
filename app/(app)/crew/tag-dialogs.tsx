@@ -23,7 +23,7 @@ import { createTagAction, updateTagAction } from "./actions";
 import { TAG_SWATCH, TAG_TONE } from "./tag-tones";
 
 const LABEL =
-  "mb-1 block text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground";
+  "mb-1 block eyebrow";
 const FIELD =
   "w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none";
 const SECONDARY =

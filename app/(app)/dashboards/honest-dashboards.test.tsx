@@ -49,11 +49,22 @@ vi.mock("@/lib/api/auth", () => ({
     ],
   })),
 }));
+vi.mock("@/lib/api/reports", () => ({
+  getOpsScore: vi.fn(async () => ({
+    as_of: "2026-10-20",
+    score: 97,
+    max_achievable: 97,
+    band: "excellent",
+    pillars: [],
+    advisory: "",
+  })),
+}));
 
 import ChiefPilotDashboardPage from "./chief-pilot/page";
 import DirectorOpsDashboardPage from "./director-ops/page";
 import DispatcherDashboardPage from "./dispatcher/page";
 import ExecutiveDashboardPage from "./executive/page";
+import OpsScoreDashboardPage from "./ops-score/page";
 
 afterEach(cleanup);
 
@@ -120,6 +131,18 @@ describe("director of operations dashboard", () => {
       screen.getByText(/not built here yet — pilot currency is on fleet compliance/i),
     ).toBeInTheDocument();
     expectNoMilestonePills();
+  });
+});
+
+describe("ops score dashboard", () => {
+  it("does not chart weeks nothing computed", async () => {
+    render(await OpsScoreDashboardPage({ searchParams: Promise.resolve({}) }));
+    expect(screen.getByText("Not computed yet")).toBeInTheDocument();
+    // Seven weeks at 0%, and the day's score passed off as this week's
+    // completion.
+    expect(screen.queryByText("0%")).toBeNull();
+    expect(screen.queryByText("97%")).toBeNull();
+    expect(screen.queryByText(/based on recorded dispatchoutcomes/i)).toBeNull();
   });
 });
 

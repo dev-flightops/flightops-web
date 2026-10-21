@@ -73,7 +73,7 @@ function Field({
         step={step}
         value={value}
         onChange={(e) => onChange(Number(e.target.value))}
-        className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm tabular-nums text-foreground focus:border-primary focus:outline-none"
+        className="ff-input px-3 py-2 text-sm tabular-nums"
       />
       <p className="mt-1 text-[0.65rem] text-muted-foreground">{hint}</p>
       {source && (
@@ -441,7 +441,7 @@ export function ThresholdForm({
           value={rationale}
           onChange={(e) => setRationale(e.target.value)}
           placeholder="Chief Pilot review, September 2026 — tightened the Extreme band after two flights that should have routed to the DO."
-          className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs text-foreground focus:border-primary focus:outline-none"
+          className="ff-input px-3 py-2 text-xs"
         />
         <p className="mt-1 text-[0.65rem] text-muted-foreground">
           Optional. Recorded with your name and the date, because

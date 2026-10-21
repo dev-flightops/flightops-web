@@ -143,9 +143,7 @@ export function PaymentHistory({
                           colSpan={4}
                           className="pb-2 text-xs text-muted-foreground [overflow-wrap:anywhere]"
                         >
-                          <span className="mr-1.5 rounded bg-muted px-1.5 py-0.5 text-[0.6rem] font-semibold uppercase text-muted-foreground">
-                            Voided
-                          </span>
+                          <span className="eyebrow mr-1.5">Voided</span>
                           {p.voided_at?.slice(0, 10)}: {p.void_reason}
                         </td>
                       </tr>
