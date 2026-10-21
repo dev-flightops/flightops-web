@@ -207,8 +207,10 @@ function FlightActionsRow({
     flight.released_at &&
     flight.released_by
   ) {
+    // Who released it on one line, the actions under it: beside the
+    // release line, three buttons stacked in the column's width (#90).
     return (
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="space-y-3">
         <div className="flex items-center gap-3">
           <StatusBadge status={flight.status} />
           <ReleasedFooter
