@@ -1196,6 +1196,11 @@ export interface CompanyProfileResponse {
   cargo_rate_per_lb: string | null;
   invoice_tax_rate: string | null;
   invoice_terms_days: number | null;
+  /** Off for a company invoicing in another system (#95): landings raise
+   *  no invoices. With the last change. */
+  invoicing_in_peregrine?: boolean;
+  invoicing_changed_at?: string | null;
+  invoicing_changed_by_user_id?: string | null;
   /** Per-tenant display name for the loyalty program. Operators brand
    *  it themselves — "Miles", "Frequent Flyer", a name in their own
    *  language — and a fresh tenant sees "Rewards Program" until they
@@ -1232,6 +1237,7 @@ export interface CompanyProfileUpdateRequest {
   invoice_tax_rate?: string | null;
   /** 0 to 365. */
   invoice_terms_days?: number | null;
+  invoicing_in_peregrine?: boolean;
   rewards_program_name?: string;
   /** #RRGGBB or #RRGGBBAA. Empty string clears the override. */
   brand_primary_color?: string | null;

@@ -110,6 +110,14 @@ describe("raisedFrom", () => {
 });
 
 describe("explainRaiseError", () => {
+  it("says the company invoices outside Peregrine (#95)", () => {
+    expect(
+      explainRaiseError(new ApiError(409, "/x", '{"detail":"invoicing_off"}')),
+    ).toBe(
+      "This company invoices outside Peregrine, so nothing is raised here. Turn invoicing on under Settings → Company to raise invoices.",
+    );
+  });
+
   it("says another raise is running, in words", () => {
     expect(
       explainRaiseError(

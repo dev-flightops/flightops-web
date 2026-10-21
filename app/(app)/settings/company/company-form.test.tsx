@@ -143,3 +143,25 @@ describe("Notes (#41)", () => {
     await expectNoA11yViolations(container);
   });
 });
+
+describe("Invoicing outside Peregrine (#95)", () => {
+  it("is on by default, and an older profile without the switch reads as on", () => {
+    render(<CompanyForm profile={profile()} />);
+    expect(screen.getByRole("checkbox", { name: /Invoice customers in Peregrine/ })).toBeChecked();
+  });
+
+  it("sends the switch whether ticked or not", async () => {
+    const user = userEvent.setup();
+    const { container } = render(<CompanyForm profile={profile({ invoicing_in_peregrine: true })} />);
+    const hidden = container.querySelector<HTMLInputElement>('input[name="invoicing_in_peregrine"]');
+    expect(hidden?.value).toBe("true");
+    await user.click(screen.getByRole("checkbox", { name: /Invoice customers in Peregrine/ }));
+    expect(hidden?.value).toBe("false");
+  });
+
+  it("shows a company that invoices elsewhere as off", () => {
+    render(<CompanyForm profile={profile({ invoicing_in_peregrine: false })} />);
+    expect(screen.getByRole("checkbox", { name: /Invoice customers in Peregrine/ })).not.toBeChecked();
+  });
+});
+
