@@ -33,7 +33,8 @@ export function FirstClassMedicalCard({
   /** RELEASE_POLICY_ADMINS: the Director of Operations or an Exec Admin. */
   canChange: boolean;
 }) {
-  const saved = settings.first_class_medical_types;
+  // Absent from a backend older than #87, which this may deploy before.
+  const saved = settings.first_class_medical_types ?? [];
   const [chosen, setChosen] = useState<string[]>(saved);
   // A type chosen before its last aircraft left the fleet stays listed, so
   // it can be unticked: the server refuses a list naming it.

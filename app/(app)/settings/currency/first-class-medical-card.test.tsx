@@ -100,4 +100,16 @@ describe("FirstClassMedicalCard", () => {
       expect(setFirstClassMedicalTypesAction).toHaveBeenCalledWith(["navajo"]),
     );
   });
+
+  it("shows nothing chosen when the backend does not send the list yet", () => {
+    const older = {
+      enforce_type_qualifications: false,
+      type_qualifications_changed_at: null,
+      type_qualifications_changed_by: null,
+    } as unknown as ComplianceSettings;
+    render(<FirstClassMedicalCard settings={older} fleetTypes={FLEET} canChange />);
+    expect(screen.getByRole("checkbox", { name: /navajo/i })).not.toBeChecked();
+    expect(screen.getByText("No aircraft chosen yet.")).toBeInTheDocument();
+  });
 });
+
