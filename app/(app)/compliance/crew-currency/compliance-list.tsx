@@ -174,6 +174,14 @@ function AnchorCell({
     }
     return <span className="text-[0.65rem] text-muted-foreground">—</span>;
   }
+  // A medical has an expiry date, not a base month (#87).
+  if (item.interval_type === "medical_hard_expiry" && cell.base_month_due) {
+    return (
+      <span className="font-mono text-[0.65rem] text-foreground">
+        Expires {cell.base_month_due}
+      </span>
+    );
+  }
   if (cell.status === "grace_month" && cell.grace_month_end) {
     const days = daysUntil(cell.grace_month_end);
     return (

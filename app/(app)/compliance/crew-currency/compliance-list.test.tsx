@@ -192,4 +192,26 @@ describe("ComplianceList", () => {
     );
     expect(screen.getByText(/1\/3 · 2 short/)).toBeInTheDocument();
   });
+
+  it("shows a medical's expiry date, not a base month (#87)", () => {
+    const items = [
+      calendarItem({
+        id: "m-1",
+        code: "medical_certificate",
+        name: "Medical Certificate",
+        interval_type: "medical_hard_expiry",
+      }),
+    ];
+    const rows = [
+      row("p-1", "Alice", [
+        cell("m-1", "due_this_month", {
+          last_completed_date: "2025-10-14",
+          base_month_due: "2026-10-31",
+          grace_month_end: "2026-10-31",
+        }),
+      ]),
+    ];
+    render(<ComplianceList items={items} rows={rows} statusFilter={null} />);
+    expect(screen.getByText("Expires 2026-10-31")).toBeInTheDocument();
+  });
 });

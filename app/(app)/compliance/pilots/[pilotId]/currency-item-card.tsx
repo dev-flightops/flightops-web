@@ -36,6 +36,11 @@ export function CurrencyItemCard({
 }) {
   const token = STATUS_TOKENS[cell.status];
   const isRolling = item.interval_type === "rolling_days";
+  const isMedical = item.interval_type === "medical_hard_expiry";
+  // A medical logged before #87 stored its expiry as the completion date;
+  // it records no exam.
+  const examOnFile =
+    cell.last_completed_date !== null && cell.last_completed_date !== cell.base_month_due;
 
   return (
     <div className="rounded-lg border border-border bg-card p-4">
@@ -54,11 +59,21 @@ export function CurrencyItemCard({
       </div>
 
       <dl className="mt-3 grid grid-cols-2 gap-x-3 gap-y-1.5 text-[0.7rem]">
-        <Field
-          label="Last Completed"
-          value={cell.last_completed_date ?? "—"}
-        />
-        {isRolling ? (
+        {isMedical ? (
+          <>
+            <Field
+              label="Exam"
+              value={examOnFile ? (cell.last_completed_date ?? "—") : "—"}
+            />
+            <Field label="Expires" value={cell.base_month_due ?? "—"} />
+          </>
+        ) : (
+          <Field
+            label="Last Completed"
+            value={cell.last_completed_date ?? "—"}
+          />
+        )}
+        {isMedical ? null : isRolling ? (
           <Field
             label="Window"
             value={
@@ -73,7 +88,7 @@ export function CurrencyItemCard({
             value={formatMonth(cell.base_month_due)}
           />
         )}
-        {!isRolling && (
+        {!isRolling && !isMedical && (
           <Field
             label="Grace Ends"
             value={cell.grace_month_end ?? "—"}
