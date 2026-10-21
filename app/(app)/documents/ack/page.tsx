@@ -63,14 +63,14 @@ export default async function RequiredReadingPage() {
         <span className="font-semibold text-primary">Required Reading</span>
       </nav>
 
-      <header className="mb-6 border-b border-border pb-4">
-        <p className="text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
+      <header className="mb-6 border-b border-border pb-5">
+        <p className="eyebrow mb-1">
           Documents
         </p>
-        <h1 className="mt-0.5 page-title">
+        <h1 className="page-title">
           Required Reading
         </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
           {feed.total === 0
             ? "No documents in the required-reading queue right now."
             : `${feed.pending} pending · ${
@@ -89,7 +89,7 @@ export default async function RequiredReadingPage() {
       )}
 
       {feed.total === 0 && !loadError && (
-        <div className="rounded-lg border border-dashed border-border bg-card/50 px-5 py-10 text-center text-sm text-muted-foreground">
+        <div className="rounded-lg border border-border bg-card px-5 py-8 text-center text-sm text-muted-foreground">
           You&rsquo;re all caught up. When an admin flips a document into the
           required-reading queue, it&rsquo;ll show up here.
         </div>
@@ -130,7 +130,7 @@ function Section({
   return (
     <section className="mb-6">
       <div className="mb-2 flex items-baseline gap-2 px-1">
-        <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+        <h2 className="eyebrow">
           {title}
         </h2>
         <span className="text-xs text-muted-foreground">
@@ -162,10 +162,10 @@ function RowCard({
 
   const badgeClass =
     tone === "acknowledged"
-      ? "border-status-green/40 bg-status-green/10 text-status-green"
+      ? "text-status-green"
       : staleAck
-        ? "border-status-yellow/40 bg-status-yellow/10 text-status-yellow"
-        : "border-status-blue/40 bg-status-blue/10 text-status-blue";
+        ? "text-status-yellow"
+        : "text-status-blue";
   const badgeLabel =
     tone === "acknowledged"
       ? `Acked v${status.acknowledged_version_number ?? status.current_version_number}`
@@ -194,7 +194,7 @@ function RowCard({
         </div>
         <div className="flex items-center gap-3 sm:flex-col sm:items-end sm:gap-1">
           <span
-            className={`rounded border px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider ${badgeClass}`}
+            className={`status-mark text-[0.65rem] ${badgeClass}`}
           >
             {badgeLabel}
           </span>

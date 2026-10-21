@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import { linkCaps } from "@/components/ff/controls";
+import { cn } from "@/lib/utils";
 import { ApiError } from "@/lib/api/client";
 import {
   CAPA_STATUS_LABELS,
@@ -29,16 +31,14 @@ export default async function MyCapasPage() {
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6">
-      <header className="mb-6">
-        <p className="text-xs font-semibold uppercase tracking-[0.06em] text-muted-foreground">
-          <Link href="/safety" className="hover:text-foreground">
-            ← Safety SMS
-          </Link>
-        </p>
+      <header className="mb-6 border-b border-border pb-5">
+        <Link href="/safety" className={cn(linkCaps, "text-muted-foreground hover:text-foreground")}>
+          <span aria-hidden>‹</span> Safety SMS
+        </Link>
         <h1 className="mt-2 page-title">
           My Corrective Actions
         </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
           CAPAs assigned to you. Log progress from the detail page — the
           Safety Officer sees your notes on the board.
         </p>
@@ -82,7 +82,7 @@ export default async function MyCapasPage() {
                       {c.opened_by.full_name}
                     </p>
                   </div>
-                  <span className="whitespace-nowrap rounded border border-border bg-muted px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider text-muted-foreground">
+                  <span className="whitespace-nowrap eyebrow">
                     {CAPA_STATUS_LABELS[c.status]}
                   </span>
                 </Link>

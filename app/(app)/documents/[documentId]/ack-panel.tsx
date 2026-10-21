@@ -60,7 +60,7 @@ export function AckPanel({
     return (
       <div
         role="status"
-        className="mb-5 flex items-start gap-3 rounded-lg border border-status-green/40 bg-status-green/10 px-4 py-3"
+        className="notice notice-green mb-5 flex items-start gap-3"
       >
         <CheckIcon className="mt-0.5 h-5 w-5 flex-shrink-0 text-status-green" />
         <div className="text-sm">
@@ -79,10 +79,7 @@ export function AckPanel({
   return (
     <div
       className={
-        "mb-5 rounded-lg border px-4 py-3 " +
-        (staleAck
-          ? "border-status-yellow/40 bg-status-yellow/10"
-          : "border-status-blue/40 bg-status-blue/10")
+        "notice mb-5 " + (staleAck ? "notice-yellow" : "notice-blue")
       }
     >
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">

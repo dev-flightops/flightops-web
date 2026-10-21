@@ -98,7 +98,7 @@ export function ComplianceList({
   }
 
   return (
-    <div className="overflow-hidden rounded-lg border border-border bg-card">
+    <div className="overflow-x-auto rounded-lg border border-border bg-card">
       <table className="w-full text-xs">
         <thead className="ff-thead">
           <tr>

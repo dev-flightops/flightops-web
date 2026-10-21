@@ -109,7 +109,7 @@ function BriefingsTable({
   briefings: WeatherBriefingListItem[];
 }) {
   return (
-    <div className="overflow-hidden rounded-lg border border-border bg-card">
+    <div className="overflow-x-auto rounded-lg border border-border bg-card">
       <table className="w-full text-sm">
         <thead>
           <tr className="ff-thead">

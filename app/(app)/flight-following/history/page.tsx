@@ -149,7 +149,7 @@ export default async function FlightFollowingHistoryPage({
 
 function FlightHistoryTable({ flights }: { flights: FlightListItem[] }) {
   return (
-    <div className="overflow-hidden rounded-lg border border-border bg-card">
+    <div className="overflow-x-auto rounded-lg border border-border bg-card">
       <table className="w-full text-xs">
         <thead className="ff-thead">
           <tr className="text-left text-[0.65rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">

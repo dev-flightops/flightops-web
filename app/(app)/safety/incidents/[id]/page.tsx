@@ -56,8 +56,8 @@ export default async function IncidentDetailPage({
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
-      <header className="mb-6">
-        <p className="text-xs font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+      <header className="mb-6 border-b border-border pb-5">
+        <p className="eyebrow">
           <Link
             href={canTriage ? "/safety/incidents" : "/safety/incidents/mine"}
             className="hover:text-foreground"
@@ -71,7 +71,7 @@ export default async function IncidentDetailPage({
             {INCIDENT_CATEGORY_LABELS[incident.category]}
           </span>
         </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
           Occurred {new Date(incident.occurred_at).toLocaleString()} —{" "}
           {incident.is_anonymous && !incident.reporter
             ? "Anonymous reporter"

@@ -63,8 +63,8 @@ export default async function OpenCapaPage({
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-8 sm:px-6">
-      <header className="mb-6">
-        <p className="text-xs font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+      <header className="mb-6 border-b border-border pb-5">
+        <p className="eyebrow">
           <Link href={backHref} className="hover:text-foreground">
             ← Back to {sourceLabel}
           </Link>
@@ -72,7 +72,7 @@ export default async function OpenCapaPage({
         <h1 className="mt-2 page-title">
           Open a Corrective Action
         </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
           Track the follow-through work needed to prevent this{" "}
           {sourceLabel} from recurring. Assign to an owner and give it a
           due date.

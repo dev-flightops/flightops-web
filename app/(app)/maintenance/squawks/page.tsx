@@ -78,11 +78,11 @@ export default async function SquawksListPage({
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
-      <header className="mb-6">
+      <header className="mb-6 border-b border-border pb-5">
         <h1 className="page-title">
           Squawks
         </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
           Pilot- and mechanic-reported discrepancies across the fleet.
           Most recent first.
         </p>

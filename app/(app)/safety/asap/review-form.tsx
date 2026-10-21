@@ -42,7 +42,7 @@ export function AsapReviewForm({ reportId, review }: { reportId: string; review:
       {state.status === "error" && state.message ? (
         <div
           role="alert"
-          className="rounded-md border border-status-red/40 bg-status-red/10 px-3 py-2 text-xs text-status-red md:col-span-2"
+          className="notice notice-red text-xs md:col-span-2"
         >
           {state.message}
         </div>

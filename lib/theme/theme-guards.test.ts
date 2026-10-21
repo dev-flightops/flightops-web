@@ -128,6 +128,13 @@ const REDESIGNED = [
   "components/fuel/",
   "components/stations/",
   "components/equipment/",
+  // Wave E, Maintenance and safety (#84).
+  "app/(app)/maintenance/",
+  "app/(app)/safety/",
+  "app/(app)/documents/",
+  "app/(app)/fleetbrain/",
+  "components/maintenance/",
+  "components/safety/",
 ];
 
 describe("theme guards", () => {

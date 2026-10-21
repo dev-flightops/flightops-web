@@ -51,10 +51,10 @@ export default async function SafetyReportsPage({
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
-      <header className="mb-5 flex flex-wrap items-end justify-between gap-3">
+      <header className="mb-6 flex flex-wrap items-end justify-between gap-4 border-b border-border pb-5">
         <div>
           <h1 className="page-title">Safety Reports</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
             Everything filed with the red Safety button, newest first.
           </p>
         </div>
@@ -174,7 +174,7 @@ function ReportTable({ reports, total }: { reports: SafetyReport[]; total: numbe
           </tbody>
         </table>
       </div>
-      <footer className="border-t border-border px-4 py-2 text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
+      <footer className="eyebrow border-t border-border px-4 py-2">
         {total} report{total === 1 ? "" : "s"}
         {total > reports.length ? ` · newest ${reports.length} shown` : ""}
       </footer>

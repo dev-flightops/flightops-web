@@ -35,17 +35,17 @@ export function SquawksTable({
 }) {
   if (items.length === 0) {
     return (
-      <div className="rounded-md border border-dashed border-border bg-card/40 px-4 py-8 text-center text-xs text-muted-foreground">
+      <div className="rounded-lg border border-border bg-card px-5 py-8 text-center text-xs text-muted-foreground">
         {emptyMessage}
       </div>
     );
   }
 
   return (
-    <div className="overflow-hidden rounded-lg border border-border bg-card">
+    <div className="overflow-x-auto rounded-lg border border-border bg-card">
       <table className="w-full text-xs">
         <thead className="ff-thead">
-          <tr className="text-left text-[0.6rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+          <tr className="text-left eyebrow">
             {showAircraft && <th className="px-3 py-2">Aircraft</th>}
             <th className="px-3 py-2">Title</th>
             <th className="px-3 py-2">Severity</th>
@@ -140,22 +140,22 @@ function SeverityPill({ severity }: { severity: SquawkSeverity }) {
   const config: Record<SquawkSeverity, { label: string; className: string }> = {
     grounding: {
       label: "Grounding",
-      className: "bg-status-red/15 text-status-red",
+      className: "text-status-red",
     },
     major: {
       label: "Major",
-      className: "bg-status-yellow/15 text-status-yellow",
+      className: "text-status-yellow",
     },
     minor: {
       label: "Minor",
-      className: "bg-muted text-muted-foreground",
+      className: "text-muted-foreground",
     },
   };
   const c = config[severity];
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded px-1.5 py-0.5 text-[0.6rem] font-semibold uppercase tracking-[0.08em]",
+        "status-mark text-[0.6rem]",
         c.className,
       )}
     >
@@ -167,9 +167,5 @@ function SeverityPill({ severity }: { severity: SquawkSeverity }) {
 function StatusChip({ status }: { status: SquawkResponse["status"] }) {
   const label =
     status === "in_progress" ? "In progress" : status === "open" ? "Open" : "Resolved";
-  return (
-    <span className="inline-flex items-center rounded bg-muted px-1.5 py-0.5 font-mono text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
-      {label}
-    </span>
-  );
+  return <span className="eyebrow">{label}</span>;
 }

@@ -1,4 +1,7 @@
 import Link from "next/link";
+
+import { linkCaps } from "@/components/ff/controls";
+import { cn } from "@/lib/utils";
 import { notFound, redirect } from "next/navigation";
 
 import { auth } from "@/auth";
@@ -64,12 +67,10 @@ export default async function CapaDetailPage({
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
-      <header className="mb-6">
-        <p className="text-xs font-semibold uppercase tracking-[0.06em] text-muted-foreground">
-          <Link href="/safety/actions" className="hover:text-foreground">
-            ← Corrective Actions
-          </Link>
-        </p>
+      <header className="mb-6 border-b border-border pb-5">
+        <Link href="/safety/actions" className={cn(linkCaps, "text-muted-foreground hover:text-foreground")}>
+          <span aria-hidden>‹</span> Corrective Actions
+        </Link>
         <h1 className="mt-2 flex flex-wrap items-baseline gap-3 page-title">
           {capa.title}
           <span
@@ -81,7 +82,7 @@ export default async function CapaDetailPage({
             {overdue ? "Overdue" : CAPA_STATUS_LABELS[capa.status]}
           </span>
         </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
           Opened {new Date(capa.created_at).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" })} by{" "}
           {capa.opened_by.full_name} — linked to a{" "}
           <Link href={sourceHref} className="text-primary hover:underline">

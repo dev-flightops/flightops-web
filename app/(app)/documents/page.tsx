@@ -121,12 +121,12 @@ export default async function DocumentsPage({
         <span className="font-semibold text-primary">Documents</span>
       </nav>
 
-      <header className="mb-4 flex flex-wrap items-start justify-between gap-3">
+      <header className="mb-6 flex flex-wrap items-start justify-between gap-4 border-b border-border pb-5">
         <div>
           <h1 className="page-title">
             Document Library
           </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
             Company manuals, regulations, safety bulletins, and compliance
             references — {total} document{total === 1 ? "" : "s"}
             {/* The category count has to describe the same set the
@@ -150,15 +150,15 @@ export default async function DocumentsPage({
             <Link
               href="/documents/ack"
               className={
-                "inline-flex items-center gap-2 rounded-md border px-3 py-1.5 text-xs font-semibold transition " +
+                "btn-caps inline-flex items-center gap-2 rounded-md border px-3 py-1.5 text-[0.72rem] transition-colors " +
                 (requiredReadingPending > 0
-                  ? "border-primary/40 bg-primary/10 text-primary hover:bg-primary/20"
-                  : "border-border bg-card text-muted-foreground hover:bg-accent")
+                  ? "border-primary text-foreground hover:bg-accent"
+                  : "border-input text-muted-foreground hover:border-foreground hover:text-foreground")
               }
             >
               Required reading
               {requiredReadingPending > 0 && (
-                <span className="btn-caps inline-flex min-w-[1.25rem] items-center justify-center rounded-full bg-primary px-1.5 text-white text-[0.68rem]">
+                <span className="btn-caps inline-flex min-w-[1.25rem] items-center justify-center rounded-sm bg-primary px-1.5 text-primary-foreground text-[0.68rem]">
                   {requiredReadingPending}
                 </span>
               )}

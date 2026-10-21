@@ -42,8 +42,8 @@ export default async function SafetyReportPage({
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-8 sm:px-6">
-      <header className="mb-6">
-        <p className="text-xs font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+      <header className="mb-6 border-b border-border pb-5">
+        <p className="eyebrow">
           <Link
             href={returnTo ?? "/safety"}
             className="hover:text-foreground"
@@ -54,7 +54,7 @@ export default async function SafetyReportPage({
         <h1 className="mt-2 page-title">
           File a Hazard
         </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
           Safety reports go straight to the Safety Officer&rsquo;s triage
           inbox. Everything you file is confidential — you can request
           your name be hidden with the &ldquo;anonymous&rdquo; checkbox

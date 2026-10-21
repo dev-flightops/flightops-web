@@ -48,11 +48,11 @@ export interface Turn {
  * class from prose quoting one.
  */
 export const BADGE_CLASS: Record<string, string> = {
-  green: "border-status-green/40 bg-status-green/10 text-status-green",
-  amber: "border-status-yellow/40 bg-status-yellow/10 text-status-yellow",
-  red: "border-status-red/40 bg-status-red/10 text-status-red",
-  blue: "border-status-blue/40 bg-status-blue/10 text-status-blue",
-  grey: "border-border bg-muted text-muted-foreground",
+  green: "text-status-green",
+  amber: "text-status-yellow",
+  red: "text-status-red",
+  blue: "text-status-blue",
+  grey: "text-muted-foreground",
 };
 
 /** Values legacy colour-codes inside the table. Kept to the ones that
@@ -77,7 +77,7 @@ export function BrainMark({ size = 28 }: { size?: number }) {
     <span
       aria-hidden
       style={{ width: size, height: size }}
-      className="flex flex-shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-status-purple"
+      className="flex flex-shrink-0 items-center justify-center rounded-md bg-primary"
     >
       <svg
         width={size * 0.5}
@@ -105,8 +105,8 @@ export function SuggestionButton({
       type="button"
       onClick={() => onPick(label)}
       className={
-        "rounded-lg border border-status-purple/20 bg-status-purple/5 px-3 py-1.5 " +
-        "text-xs text-status-purple transition-colors hover:bg-status-purple/12 " +
+        // A suggestion as an outlined button (#84), not a tinted chip.
+        "rounded-md border border-input px-3 py-1.5 text-xs text-foreground transition-colors hover:border-foreground " +
         (block ? "block w-full text-left" : "")
       }
     >
@@ -162,13 +162,13 @@ function TurnBlock({
     <div>
       {/* Asked */}
       <div className="mb-3 flex justify-end gap-3">
-        <div className="max-w-lg rounded-xl bg-primary/12 px-4 py-2">
+        <div className="max-w-lg rounded-lg bg-primary/12 px-4 py-2">
           <p className="text-sm">{turn.query}</p>
           <p className="mt-0.5 text-[0.65rem] text-muted-foreground">
             {turn.at}
           </p>
         </div>
-        <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-muted text-[0.6rem] font-bold text-muted-foreground">
+        <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md bg-muted text-[0.6rem] font-bold text-muted-foreground">
           You
         </span>
       </div>
@@ -180,7 +180,7 @@ function TurnBlock({
           {turn.error ? (
             <p
               role="alert"
-              className="rounded-xl border border-status-red/40 bg-status-red/10 px-4 py-3 text-sm text-status-red"
+              className="notice notice-red text-sm"
             >
               {turn.error}
             </p>
@@ -214,7 +214,7 @@ function Answer({
             <span
               key={b.text}
               className={
-                "rounded border px-2 py-0.5 text-[0.65rem] font-semibold " +
+                "status-mark text-[0.65rem] " +
                 (BADGE_CLASS[b.color] ?? BADGE_CLASS.grey)
               }
             >

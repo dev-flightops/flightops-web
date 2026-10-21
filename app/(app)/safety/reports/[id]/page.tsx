@@ -83,13 +83,13 @@ export default async function SafetyReportPage({
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
-      <p className="text-xs font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+      <p className="eyebrow">
         <Link href={back.href} className="hover:text-foreground">
           {back.label}
         </Link>
       </p>
 
-      <header className="mb-5 mt-2 flex flex-wrap items-start justify-between gap-3">
+      <header className="mb-6 mt-3 flex flex-wrap items-start justify-between gap-4 border-b border-border pb-5">
         <div className="min-w-0">
           <h1 className="page-title">{report.title}</h1>
           <div className="mt-1.5 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">

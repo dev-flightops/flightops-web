@@ -85,7 +85,7 @@ export function MxChat({ examples }: { examples: string[] }) {
             disabled={pending}
             placeholder="Describe the symptom, or ask about a tail"
             aria-label="Maintenance question"
-            className="flex-1 rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none disabled:opacity-60"
+            className="ff-input flex-1 px-3 py-2 text-sm"
           />
           <button
             type="submit"
@@ -98,7 +98,7 @@ export function MxChat({ examples }: { examples: string[] }) {
         <div className="flex items-center gap-2">
           <label
             htmlFor="mx-tail"
-            className="text-[0.65rem] font-semibold uppercase tracking-wider text-muted-foreground"
+            className="eyebrow"
           >
             Scope to tail
           </label>
@@ -109,7 +109,7 @@ export function MxChat({ examples }: { examples: string[] }) {
             disabled={pending}
             placeholder="optional — e.g. N200PA"
             maxLength={12}
-            className="w-40 rounded-md border border-border bg-background px-2 py-1 font-mono text-xs uppercase text-foreground placeholder:normal-case placeholder:font-sans placeholder:text-muted-foreground focus:border-primary focus:outline-none disabled:opacity-60"
+            className="ff-input w-40 px-2 py-1 font-mono text-xs uppercase placeholder:normal-case placeholder:font-sans"
           />
           <span className="text-[0.65rem] text-muted-foreground">
             Narrows the records read, so a question about one aircraft is not

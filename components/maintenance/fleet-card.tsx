@@ -32,7 +32,7 @@ export function FleetCard({ summary }: { summary: FleetAircraftSummary }) {
   return (
     <article
       className={cn(
-        "rounded-xl border border-border p-5",
+        "rounded-lg border border-border p-5",
         // Out of service reads from the ground and the grounding chip,
         // not from fading the card: the grounded aircraft is the one
         // whose reason most needs to be legible.
@@ -172,27 +172,27 @@ const AIRFRAME_PALETTE: Record<
 > = {
   c207: {
     abbr: "C207",
-    className: "bg-status-green/15 text-status-green border border-status-green/30",
+    className: "text-status-green",
   },
   caravan: {
     abbr: "CARA",
-    className: "bg-status-orange/15 text-status-orange border border-status-orange/30",
+    className: "text-status-orange",
   },
   pa31: {
     abbr: "PA31",
-    className: "bg-status-blue/15 text-status-blue border border-status-blue/30",
+    className: "text-status-blue",
   },
   kingair: {
     abbr: "K200",
-    className: "bg-status-purple/15 text-status-purple border border-status-purple/30",
+    className: "text-status-purple",
   },
   ga8: {
     abbr: "GA8",
-    className: "bg-status-yellow/15 text-status-yellow border border-status-yellow/30",
+    className: "text-status-yellow",
   },
   navajo: {
     abbr: "NAV",
-    className: "bg-status-red/15 text-status-red border border-status-red/30",
+    className: "text-status-red",
   },
 };
 
@@ -204,7 +204,7 @@ function AirframeChip({ airframeType }: { airframeType: string }) {
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded px-1.5 py-0.5 text-[0.6rem] font-bold uppercase tracking-[0.05em]",
+        "status-mark text-[0.6rem]",
         entry.className,
       )}
     >
@@ -215,7 +215,7 @@ function AirframeChip({ airframeType }: { airframeType: string }) {
 
 function BaseBadge({ base }: { base: string }) {
   return (
-    <span className="rounded bg-muted px-1.5 py-0.5 text-[0.6rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+    <span className="eyebrow">
       {base}
     </span>
   );
@@ -253,27 +253,27 @@ function groundingChipConfig(reason: string | null): {
   className: string;
 } {
   const base =
-    "rounded px-1.5 py-0.5 text-[0.6rem] font-semibold uppercase tracking-[0.08em]";
+    "status-mark text-[0.6rem]";
   switch (reason) {
     case "mel_expired":
       return {
         label: "MEL Expired",
-        className: `${base} bg-status-yellow/15 text-status-yellow border border-status-yellow/30`,
+        className: `${base} text-status-yellow`,
       };
     case "fuel_hold":
       return {
         label: "Fuel Hold",
-        className: `${base} bg-status-yellow/15 text-status-yellow border border-status-yellow/30`,
+        className: `${base} text-status-yellow`,
       };
     case "manual":
       return {
         label: "Grounded",
-        className: `${base} bg-status-red/15 text-status-red border border-status-red/30`,
+        className: `${base} text-status-red`,
       };
     default:
       return {
         label: "Inactive",
-        className: `${base} bg-muted text-muted-foreground`,
+        className: `${base} text-muted-foreground`,
       };
   }
 }
@@ -332,14 +332,14 @@ function Badge({
   children: React.ReactNode;
 }) {
   const toneClass = {
-    red: "bg-status-red/15 text-status-red",
-    yellow: "bg-status-yellow/15 text-status-yellow",
-    green: "bg-status-green/15 text-status-green",
+    red: "text-status-red",
+    yellow: "text-status-yellow",
+    green: "text-status-green",
   }[tone];
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded px-2 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.08em]",
+        "status-mark text-[0.65rem]",
         toneClass,
       )}
     >

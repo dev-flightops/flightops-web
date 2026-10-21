@@ -139,15 +139,15 @@ export default async function SafetyDashboardPage() {
         <span className="font-semibold text-primary">Dashboard</span>
       </nav>
 
-      <header className="mb-5 flex flex-col gap-3 border-b border-border pb-4 sm:flex-row sm:items-end sm:justify-between">
+      <header className="mb-5 flex flex-col gap-3 border-b border-border pb-5 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <div className="text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
+          <div className="eyebrow mb-1">
             Safety SMS
           </div>
-          <h1 className="mt-0.5 page-title">
+          <h1 className="page-title">
             Safety Dashboard
           </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
             Open safety reports, hazards, incidents and corrective actions
             across the tenant — one glance surface for Safety Officers + Chief
             Pilots.
@@ -246,7 +246,7 @@ function StatCards({
   ).length;
 
   return (
-    <div className={"grid grid-cols-2 gap-3 " + (reportSummary ? "sm:grid-cols-5" : "sm:grid-cols-4")}>
+    <div className={"grid grid-cols-2 gap-x-6 gap-y-4 " + (reportSummary ? "sm:grid-cols-5" : "sm:grid-cols-4")}>
       {reportSummary ? (
         <StatCard
           value={reportSummary.open}
@@ -322,10 +322,10 @@ function StatCard({
   return (
     <Link
       href={href}
-      className="block rounded-lg border border-border bg-card px-3 py-3 transition-colors hover:bg-accent"
+      className="block border-l-2 border-input py-1 pl-3 transition-colors hover:bg-accent/40"
     >
-      <div className={"text-2xl font-bold " + toneClass}>{value}</div>
-      <div className="mt-0.5 text-[0.6875rem] uppercase tracking-[0.06em] text-muted-foreground">
+      <div className={"font-display text-[1.75rem] font-extrabold leading-none tabular-nums " + toneClass}>{value}</div>
+      <div className="eyebrow mt-1.5">
         {label}
       </div>
       <div className="mt-0.5 text-[0.7rem] text-muted-foreground">
@@ -342,7 +342,7 @@ function ReportTrendCard({ summary }: { summary: SafetyReportSummary }) {
   return (
     <section>
       <div className="mb-2 flex items-baseline justify-between px-1">
-        <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+        <h2 className="eyebrow">
           Safety Reports — 6 Month Trend
         </h2>
       </div>
@@ -374,7 +374,7 @@ function RecentReportsCard({ reports }: { reports: SafetyReport[] }) {
   return (
     <section>
       <div className="mb-2 flex items-baseline justify-between px-1">
-        <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+        <h2 className="eyebrow">
           Recent Reports
         </h2>
         <Link href="/safety/reports" className="text-[0.7rem] font-semibold text-primary hover:underline">
@@ -422,7 +422,7 @@ function RecentHazardsCard({ hazards }: { hazards: HazardReport[] }) {
   return (
     <section>
       <div className="mb-2 flex items-baseline justify-between px-1">
-        <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+        <h2 className="eyebrow">
           Recent Open Hazards
         </h2>
         <Link
@@ -473,7 +473,7 @@ function RecentIncidentsCard({ incidents }: { incidents: Incident[] }) {
   return (
     <section>
       <div className="mb-2 flex items-baseline justify-between px-1">
-        <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+        <h2 className="eyebrow">
           Recent Open Incidents
         </h2>
         <Link
@@ -524,7 +524,7 @@ function OverdueCapasCard({ capas }: { capas: CorrectiveAction[] }) {
   return (
     <section>
       <div className="mb-2 flex items-baseline justify-between px-1">
-        <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+        <h2 className="eyebrow">
           Past-Due CAPAs
         </h2>
         <Link
@@ -595,28 +595,28 @@ function OverdueCapasCard({ capas }: { capas: CorrectiveAction[] }) {
 
 function SeverityBadge({ severity }: { severity: HazardSeverity }) {
   const map: Record<HazardSeverity, [string, string]> = {
-    low: ["border-status-green/40 bg-status-green/10 text-status-green", "Low"],
+    low: ["text-status-green", "Low"],
     medium: [
-      "border-status-yellow/40 bg-status-yellow/10 text-status-yellow",
+      "text-status-yellow",
       "Medium",
     ],
     high: [
-      "border-status-yellow/60 bg-status-yellow/15 text-status-yellow",
+      "text-status-yellow",
       "High",
     ],
     critical: [
-      "border-status-red/40 bg-status-red/10 text-status-red",
+      "text-status-red",
       "Critical",
     ],
   };
   const [cls, label] = map[severity] ?? [
-    "border-border bg-muted text-muted-foreground",
+    "text-muted-foreground",
     HAZARD_SEVERITY_LABELS[severity] ?? severity,
   ];
   return (
     <span
       className={
-        "flex-shrink-0 rounded border px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider " +
+        "status-mark flex-shrink-0 text-[0.65rem] " +
         cls
       }
     >
@@ -627,16 +627,16 @@ function SeverityBadge({ severity }: { severity: HazardSeverity }) {
 
 function CapaStatusBadge({ status }: { status: CorrectiveAction["status"] }) {
   const map: Record<CorrectiveAction["status"], string> = {
-    open: "border-status-red/40 bg-status-red/10 text-status-red",
+    open: "text-status-red",
     in_progress:
-      "border-status-yellow/40 bg-status-yellow/10 text-status-yellow",
-    closed: "border-status-green/40 bg-status-green/10 text-status-green",
+      "text-status-yellow",
+    closed: "text-status-green",
   };
   return (
     <span
       className={
-        "rounded border px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider " +
-        (map[status] ?? "border-border bg-muted text-muted-foreground")
+        "status-mark text-[0.65rem] " +
+        (map[status] ?? "text-muted-foreground")
       }
     >
       {CAPA_STATUS_LABELS[status] ?? status}
