@@ -1,5 +1,6 @@
 "use client";
 
+import type { FlightLoad } from "@/lib/api/manifest";
 import { useEffect, useState } from "react";
 
 import { buttonOutline, linkCaps } from "@/components/ff/controls";
@@ -45,6 +46,8 @@ interface Props {
   /** Latest pilot Accept/Deny if any — null when no submission yet. */
   acceptance: PilotAcceptanceResponse | null;
   weightReturn: WeightReturn | null;
+  /** Step 2's weight and balance (#111). Null when it couldn't be read. */
+  flightLoad?: FlightLoad | null;
   /** METAR + TAF for the routing airports, fetched server-side. Null
    *  when the weather-service failed — Step 3 falls back to a
    *  "data unavailable" state and still lets the pilot ack that
@@ -92,6 +95,7 @@ export function PreflightShell({
   frat,
   acceptance,
   weightReturn,
+  flightLoad = null,
   weather,
   fratConfig,
   fratPrefill,
@@ -180,6 +184,7 @@ export function PreflightShell({
           frat={frat}
           acceptance={acceptance}
           weightReturn={weightReturn}
+          flightLoad={flightLoad}
           weather={weather}
           fratConfig={fratConfig}
           fratPrefill={fratPrefill}
@@ -321,6 +326,7 @@ function ActiveStep({
   frat,
   acceptance,
   weightReturn,
+  flightLoad,
   weather,
   fratConfig,
   fratPrefill,
@@ -333,6 +339,7 @@ function ActiveStep({
   frat: FratAssessmentResponse | null;
   acceptance: PilotAcceptanceResponse | null;
   weightReturn: WeightReturn | null;
+  flightLoad: FlightLoad | null;
   weather: WeatherBatchResponse | null;
   fratConfig: FratThresholdConfigResponse | null;
   fratPrefill: FratPrefillResponse | null;
@@ -347,6 +354,7 @@ function ActiveStep({
           flightId={flightId}
           flight={flight}
           openReturn={weightReturn}
+          load={flightLoad}
         />
       );
     case 3:

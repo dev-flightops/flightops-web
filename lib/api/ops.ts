@@ -270,6 +270,12 @@ export interface AircraftCreatePayload {
   airframe_type?: string | null;
   base?: string | null;
   special_notes?: string | null;
+  /** From the weight and balance record (#111). With both, the useful
+   *  load is worked out from them. */
+  max_gross_weight_lbs?: number | null;
+  empty_weight_lbs?: number | null;
+  /** Knots true, for the new-flight form's leg times (#108). */
+  cruise_speed_kt?: number | null;
 }
 
 export interface AircraftUpdatePayload {
@@ -280,6 +286,12 @@ export interface AircraftUpdatePayload {
   base?: string | null;
   special_notes?: string | null;
   is_active?: boolean;
+  /** From the weight and balance record (#111). With both, the useful
+   *  load is worked out from them. */
+  max_gross_weight_lbs?: number | null;
+  empty_weight_lbs?: number | null;
+  /** Knots true, for the new-flight form's leg times (#108). */
+  cruise_speed_kt?: number | null;
 }
 
 export async function createAircraft(payload: AircraftCreatePayload) {

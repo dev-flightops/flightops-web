@@ -110,6 +110,36 @@ export function AddAircraftDialog() {
               Passenger seats leave out the pilot&rsquo;s and co-pilot&rsquo;s seats. Useful load is
               the max gross weight less the empty weight.
             </p>
+            <div className="grid gap-4 sm:grid-cols-3">
+              <Field
+                name="max_gross_weight_lbs"
+                label="Max gross weight (lbs)"
+                type="number"
+                min={1}
+                max={200_000}
+                error={fieldError("max_gross_weight_lbs")}
+              />
+              <Field
+                name="empty_weight_lbs"
+                label="Empty weight (lbs)"
+                type="number"
+                min={1}
+                max={200_000}
+                error={fieldError("empty_weight_lbs")}
+              />
+              <Field
+                name="cruise_speed_kt"
+                label="Cruise speed (kt)"
+                type="number"
+                min={40}
+                max={600}
+                error={fieldError("cruise_speed_kt")}
+              />
+            </div>
+            <p className="-mt-2 text-xs text-muted-foreground">
+              With max gross and empty weight, the useful load is worked out from them. The cruise
+              speed fills in each leg&rsquo;s time on a new flight.
+            </p>
 
             {/* HALT-2 — airframe identity. Grouped as its own row because
                 these three read together on the fleet card:

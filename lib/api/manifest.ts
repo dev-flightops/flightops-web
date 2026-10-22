@@ -98,6 +98,31 @@ export interface ManifestLoad {
   /** Where the fuel figure came from (#75). */
   fuel_basis?: "planned" | "estimated" | null;
   fuel_estimate?: FuelEstimate | null;
+  /** From the aircraft's weight and balance record, when both are
+   *  recorded; the useful load is then their difference (#111). */
+  max_gross_weight_lbs?: number | null;
+  empty_weight_lbs?: number | null;
+}
+
+export interface PassengerTally {
+  count: number;
+  weight_lbs: string;
+  baggage_lbs: string;
+}
+
+/** `GET /manifest/flights/{id}/load` (#111): the pilot's weight and
+ *  balance, before or after there is a manifest. */
+export interface FlightLoad {
+  flight_id: string;
+  has_manifest: boolean;
+  /** The flight's booked passenger count, for when there is no manifest. */
+  booked_passengers: number;
+  /** Checked in or boarded, at their weighed weights (#103). */
+  checked_in: PassengerTally;
+  /** Still to check in, at their booked weights. */
+  to_check_in: PassengerTally;
+  cargo_lbs: string;
+  load: ManifestLoad;
 }
 
 export interface ManifestDetailResponse {
@@ -186,6 +211,11 @@ export async function getFlightManifest(
   flightId: string,
 ): Promise<ManifestDetailResponse> {
   return apiFetch<ManifestDetailResponse>(`/manifest/flights/${flightId}`);
+}
+
+/** The pilot's weight and balance for a flight (#111), manifest or not. */
+export async function getFlightLoad(flightId: string): Promise<FlightLoad> {
+  return apiFetch<FlightLoad>(`/manifest/flights/${flightId}/load`);
 }
 
 /** Start the flight's manifest, as a draft. 409 if it already has one. */
