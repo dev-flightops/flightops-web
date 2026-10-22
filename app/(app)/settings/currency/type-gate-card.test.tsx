@@ -14,6 +14,9 @@ const OFF: ComplianceSettings = {
   enforce_type_qualifications: false,
   type_qualifications_changed_at: null,
   type_qualifications_changed_by: null,
+  first_class_medical_types: [],
+  first_class_medical_changed_at: null,
+  first_class_medical_changed_by: null,
 };
 const ON: ComplianceSettings = {
   enforce_type_qualifications: true,
@@ -23,6 +26,9 @@ const ON: ComplianceSettings = {
     full_name: "Drew Director",
     email: "do@example.test",
   },
+  first_class_medical_types: [],
+  first_class_medical_changed_at: null,
+  first_class_medical_changed_by: null,
 };
 
 beforeEach(() => {

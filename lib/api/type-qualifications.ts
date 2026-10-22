@@ -138,6 +138,11 @@ export interface ComplianceSettings {
   enforce_type_qualifications: boolean;
   type_qualifications_changed_at: string | null;
   type_qualifications_changed_by: UserRef | null;
+  /** Aircraft types (the fleet's slugs) whose PIC needs a first-class
+   *  medical, still valid for ATP flying (#87). */
+  first_class_medical_types: string[];
+  first_class_medical_changed_at: string | null;
+  first_class_medical_changed_by: UserRef | null;
 }
 
 export async function getComplianceSettings(): Promise<ComplianceSettings> {
@@ -151,4 +156,15 @@ export async function updateComplianceSettings(body: {
     method: "PUT",
     body: JSON.stringify(body),
   });
+}
+
+/** PUT /ops/compliance/settings/first-class-medical-types — the whole
+ *  list; each must be one of the fleet's types (#87). */
+export async function updateFirstClassMedicalTypes(
+  airframeTypes: string[],
+): Promise<ComplianceSettings> {
+  return apiFetch<ComplianceSettings>(
+    "/ops/compliance/settings/first-class-medical-types",
+    { method: "PUT", body: JSON.stringify({ airframe_types: airframeTypes }) },
+  );
 }

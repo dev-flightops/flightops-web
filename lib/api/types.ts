@@ -1830,7 +1830,15 @@ export interface LogCompletionRequest {
   /** The aircraft type a competency or instrument check was flown in, so
    *  it also counts for that type's qualifications (#45). */
   airframe_type?: string | null;
+  /** Required on the medical certificate, refused elsewhere (#87): the
+   *  class the examination granted. `completion_date` is then the exam,
+   *  and the server works out the expiry (14 CFR 61.23). */
+  medical_class?: MedicalExamClass | null;
 }
+
+/** The classes a medical examination can grant, for logging one (#87).
+ *  BasicMed is not available under Part 135. */
+export type MedicalExamClass = "first" | "second" | "third";
 
 export interface LogCompletionResponse {
   completion_id: string;

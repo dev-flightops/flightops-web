@@ -169,4 +169,56 @@ describe("logCompletionAction", () => {
     expect(result.status).toBe("field-errors");
     expect(logCurrencyCompletion).not.toHaveBeenCalled();
   });
+
+  it("sends a medical's class with its exam date (#87)", async () => {
+    logCurrencyCompletion.mockResolvedValueOnce({
+      completion_id: "c-2",
+      cell: { status: "upcoming" },
+    });
+
+    const result = await logCompletionAction(
+      { status: "idle" },
+      makeFormData({ medical_class: "second", examiner_cert_number: "", result: "" }),
+    );
+
+    expect(result.status).toBe("success");
+    expect(logCurrencyCompletion).toHaveBeenCalledWith(
+      expect.objectContaining({ completion_date: "2026-06-15", medical_class: "second" }),
+    );
+  });
+
+  it("sends no class on other items", async () => {
+    logCurrencyCompletion.mockResolvedValueOnce({
+      completion_id: "c-3",
+      cell: { status: "upcoming" },
+    });
+    await logCompletionAction({ status: "idle" }, makeFormData());
+    expect(logCurrencyCompletion).toHaveBeenCalledWith(
+      expect.objectContaining({ medical_class: null }),
+    );
+  });
+
+  it("maps medical_class_required to a field error on the class", async () => {
+    logCurrencyCompletion.mockRejectedValueOnce(
+      new TestApiError(
+        400,
+        "/ops/compliance/completions",
+        JSON.stringify({ detail: "medical_class_required" }),
+      ),
+    );
+    const result = await logCompletionAction({ status: "idle" }, makeFormData());
+    expect(result.status).toBe("field-errors");
+    if (result.status === "field-errors") {
+      expect(result.errors.medical_class).toBe("Pick the class on the medical certificate");
+    }
+  });
+
+  it("refuses a class the form does not offer", async () => {
+    const result = await logCompletionAction(
+      { status: "idle" },
+      makeFormData({ medical_class: "basicmed" }),
+    );
+    expect(result.status).toBe("field-errors");
+    expect(logCurrencyCompletion).not.toHaveBeenCalled();
+  });
 });
