@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { linkCaps } from "@/components/ff/controls";
 import { cn } from "@/lib/utils";
+import { loadZoneTable } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
 import { listStations } from "@/lib/api/ground";
 import type { StationListItem } from "@/lib/api/types";
@@ -17,6 +18,8 @@ import { IncidentReportForm } from "./report-form";
  * that the current lib/api doesn't wrap).
  */
 export default async function IncidentReportPage() {
+  // The time is typed local to the station, or the company's base (#72).
+  const zones = loadZoneTable();
   let stations: StationListItem[] = [];
   try {
     stations = (await listStations({ limit: 200 })).items;
@@ -42,7 +45,11 @@ export default async function IncidentReportPage() {
         </p>
       </header>
 
-      <IncidentReportForm stations={stations} />
+      <IncidentReportForm
+        stations={stations}
+        zones={await zones}
+        now={new Date().toISOString()}
+      />
     </div>
   );
 }

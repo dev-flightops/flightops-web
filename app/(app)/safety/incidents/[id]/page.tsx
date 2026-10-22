@@ -4,6 +4,7 @@ import { notFound, redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { hasAnyRole } from "@/lib/roles";
 import { MANAGE_ROLES, TRIAGE_ROLES } from "@/lib/safety-roles";
+import { loadZoneTable } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
 import {
   HAZARD_SEVERITY_LABELS,
@@ -13,6 +14,8 @@ import {
   getIncident,
   listCapasForSource,
 } from "@/lib/api/safety";
+import { formatZuluDateTime } from "@/lib/format/flight-time";
+import { localDateTime, zoneFor } from "@/lib/format/local-time";
 import { IncidentTriageControls } from "./triage-controls";
 import { CorrectiveActionPanel } from "@/components/safety/corrective-action-panel";
 
@@ -31,6 +34,9 @@ export default async function IncidentDetailPage({
   const canTriage = hasAnyRole([...roles], TRIAGE_ROLES);
   const canManageCapas = hasAnyRole([...roles], MANAGE_ROLES);
 
+  // Times show local to the incident's station, or the company's base
+  // (#72), as the occurrence was typed.
+  const zones = loadZoneTable();
   let incident: Incident;
   try {
     incident = await getIncident(id);
@@ -54,6 +60,9 @@ export default async function IncidentDetailPage({
     }
   }
 
+  const timeZone = zoneFor(await zones, incident.station?.icao_code);
+  const at = (iso: string) => localDateTime(iso, timeZone, { withYear: true });
+
   return (
     <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
       <header className="mb-6 border-b border-border pb-5">
@@ -72,7 +81,7 @@ export default async function IncidentDetailPage({
           </span>
         </h1>
         <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
-          Occurred {new Date(incident.occurred_at).toLocaleString()} —{" "}
+          Occurred {at(incident.occurred_at)} ({formatZuluDateTime(incident.occurred_at)}) —{" "}
           {incident.is_anonymous && !incident.reporter
             ? "Anonymous reporter"
             : incident.reporter?.full_name ?? "Unknown reporter"}
@@ -131,14 +140,14 @@ export default async function IncidentDetailPage({
             {incident.triaged_at ? (
               <li>
                 <span className="font-semibold">Triaged</span> —{" "}
-                {new Date(incident.triaged_at).toLocaleString()} by{" "}
+                {at(incident.triaged_at)} by{" "}
                 {incident.triaged_by?.full_name ?? "unknown"}
               </li>
             ) : null}
             {incident.closed_at ? (
               <li>
                 <span className="font-semibold">Closed</span> —{" "}
-                {new Date(incident.closed_at).toLocaleString()} by{" "}
+                {at(incident.closed_at)} by{" "}
                 {incident.closed_by?.full_name ?? "unknown"}
                 {incident.closed_reason ? (
                   <p className="mt-1 whitespace-pre-wrap text-muted-foreground">
