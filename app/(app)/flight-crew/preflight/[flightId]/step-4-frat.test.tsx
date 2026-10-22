@@ -666,3 +666,51 @@ describe("over company limits", () => {
     expect(screen.queryByText(/no-go/i)).not.toBeInTheDocument();
   });
 });
+
+// ---- #88: never below the dispatch packet --------------------------------------
+
+describe("the dispatch packet's level", () => {
+  const PREFILL: FratPrefillResponse = {
+    flight_id: "f-1",
+    suggestions: [
+      { factor: "wx_ceiling", score: 4, source: "lowest ceiling 800 against a 1000 ft floor" },
+      { factor: "wx_vis", score: 4, source: "lowest visibility 1.8 against a 3.0 sm floor" },
+      { factor: "wx_wind", score: 2, source: "12 kt at PABE against a 30 kt company limit" },
+    ],
+    crosswind_limit_kt: 30,
+    near_limit_entry_kt: 20,
+    vfr_min_ceiling_ft: 1000,
+    vfr_min_visibility_sm: 3,
+    packet_risk_level: "high",
+  };
+
+  it("raises the questionnaire's level to the packet's, and says why (PGR701)", () => {
+    renderStep({ ...singleEngine, fratPrefill: PREFILL });
+    // 4 + 4 + 2 is 10: LOW on the bands, HIGH on the packet.
+    expect(screen.getByText("HIGH")).toBeInTheDocument();
+    expect(screen.queryByText("LOW")).not.toBeInTheDocument();
+    expect(
+      screen.getByText(/Raised to HIGH by the dispatch packet, which rated this flight HIGH at release/),
+    ).toHaveTextContent("The score alone is LOW.");
+  });
+
+  it("says nothing before the flight is released", () => {
+    renderStep({ ...singleEngine, fratPrefill: { ...PREFILL, packet_risk_level: null } });
+    expect(screen.getByText("LOW")).toBeInTheDocument();
+    expect(screen.queryByText(/dispatch packet/)).not.toBeInTheDocument();
+  });
+
+  it("shows the packet's level beside a filed assessment", () => {
+    renderStep({
+      initial: {
+        ...filedOverLimits([]),
+        answers: { wx_ceiling: 4, wx_vis: 4, wx_wind: 2 },
+        total_score: 10,
+        risk_level: "high",
+        score_risk_level: "low",
+        packet_risk_level: "high",
+      },
+    });
+    expect(screen.getByText(/Raised to HIGH by the dispatch packet/)).toBeInTheDocument();
+  });
+});

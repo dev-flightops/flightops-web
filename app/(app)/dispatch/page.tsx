@@ -33,6 +33,7 @@ import {
   getFlight,
   getPicCompliance,
   listAircraft,
+  getWeatherMinimums,
   listFlights,
   listWeightReturns,
 } from "@/lib/api/ops";
@@ -299,6 +300,12 @@ export default async function DispatchPage({
   if (selectedFlight && icaos.length > 0) {
     weatherFreshness = await getRouteFreshness(icaos).catch(() => null);
   }
+  // #89 — for an aircraft the company lists as not IFR certified, the
+  // route held against its dispatch minimums, as release will hold it.
+  // Soft-fails like freshness: release refuses server-side regardless.
+  const weatherMinimums = selectedFlight
+    ? await getWeatherMinimums(selectedFlight.id).catch(() => null)
+    : null;
 
   // The dispatch risk matrix (#50): scored by ops from the flight's weather
   // and airport data, which loadDispatchRisk gathers. Both columns use it:
@@ -328,6 +335,7 @@ export default async function DispatchPage({
     notamAckedIcaos,
     weatherFreshness,
     staleWeatherAcknowledged,
+    weatherMinimums,
   });
 
   return (
@@ -432,6 +440,7 @@ export default async function DispatchPage({
             icaos={icaos}
             notamAckedIcaos={notamAckedIcaos}
             weatherFreshness={weatherFreshness}
+            weatherMinimums={weatherMinimums}
             staleWeatherAcknowledged={staleWeatherAcknowledged}
             canSignOffMaintenance={hasAnyRole(viewerRoles, AIRWORTHINESS_WRITERS)}
             risk={risk}

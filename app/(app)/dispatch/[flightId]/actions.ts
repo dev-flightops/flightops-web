@@ -12,6 +12,8 @@ import {
   type FlightUpdatePayload,
 } from "@/lib/api/ops";
 
+import { belowMinimumsFromError } from "@/lib/frat/weather-minimums";
+
 import {
   extractBlockingSummary,
   extractMissingIcaos,
@@ -146,6 +148,18 @@ export async function releaseFlightAction(
           error: missing
             ? `Release blocked — NOTAMs not acknowledged for ${missing}. Check the box for each stop and try again.`
             : "Release blocked — every stop needs a NOTAM acknowledgment before release.",
+        };
+      }
+      // #89: an aircraft that is not IFR certified, below the company's
+      // dispatch minimums at a stop. Nothing to acknowledge: name where.
+      if (err.message.includes("below_weather_minimums")) {
+        const reason = belowMinimumsFromError(err.message);
+        return {
+          ok: false,
+          error: `Release blocked — ${
+            reason ??
+            "the weather is below the company's dispatch minimums for aircraft not IFR certified."
+          }`,
         };
       }
       // HALT-2 stale-weather gate. Backend sends:

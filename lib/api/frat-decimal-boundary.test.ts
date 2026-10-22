@@ -45,6 +45,10 @@ const WIRE_CONFIG = {
   default_crosswind_multi_engine_kt: 35,
   default_crosswind_near_margin_kt: 10,
   default_vfr_min_ceiling_ft: 1000,
+  dispatch_min_ceiling_ft: 600,
+  dispatch_min_visibility_sm: "2.0",
+  default_dispatch_min_ceiling_ft: 600,
+  default_dispatch_min_visibility_sm: "2.0",
   block_validity_hours: 4,
   default_block_validity_hours: 4,
 };
@@ -55,6 +59,9 @@ describe("FRAT decimal fields at the client boundary", () => {
     const config = await getFratThresholds();
     expect(config.vfr_min_visibility_sm).toBe(3);
     expect(typeof config.vfr_min_visibility_sm).toBe("number");
+    // The dispatch minimums (#89) are Decimal too.
+    expect(config.dispatch_min_visibility_sm).toBe(2);
+    expect(config.default_dispatch_min_visibility_sm).toBe(2);
   });
 
   it("coerces the shipped default too", async () => {
@@ -82,9 +89,12 @@ describe("FRAT decimal fields at the client boundary", () => {
       crosswind_near_margin_kt: 10,
       vfr_min_ceiling_ft: 1000,
       vfr_min_visibility_sm: 3,
+      dispatch_min_ceiling_ft: 600,
+      dispatch_min_visibility_sm: 2,
       block_validity_hours: 4,
     });
     expect(saved.vfr_min_visibility_sm).toBe(3);
+    expect(saved.dispatch_min_visibility_sm).toBe(2);
   });
 
   it("coerces the prefill's copy of the floor", async () => {
@@ -97,11 +107,14 @@ describe("FRAT decimal fields at the client boundary", () => {
       near_limit_entry_kt: 20,
       vfr_min_ceiling_ft: 1000,
       vfr_min_visibility_sm: "3.0",
+      dispatch_min_ceiling_ft: 600,
+      dispatch_min_visibility_sm: "2.0",
     });
     const prefill = await getFratPrefill("f-1", {
       observations: [],
       is_ifr: false,
     });
     expect(prefill.vfr_min_visibility_sm).toBe(3);
+    expect(prefill.dispatch_min_visibility_sm).toBe(2);
   });
 });

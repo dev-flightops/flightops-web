@@ -45,6 +45,11 @@ function config(over: Partial<FratThresholdConfigResponse> = {}) {
     default_crosswind_near_margin_kt: 10,
     default_vfr_min_ceiling_ft: 1000,
     default_vfr_min_visibility_sm: 3,
+    // The client's GOM (#89).
+    dispatch_min_ceiling_ft: 600,
+    dispatch_min_visibility_sm: 2,
+    default_dispatch_min_ceiling_ft: 600,
+    default_dispatch_min_visibility_sm: 2,
     block_validity_hours: 4,
     default_block_validity_hours: 4,
     ...over,
@@ -164,6 +169,8 @@ describe("saving", () => {
       nearMarginKt: 10,
       vfrMinCeilingFt: 1000,
       vfrMinVisibilitySm: 3,
+      dispatchMinCeilingFt: 600,
+      dispatchMinVisibilitySm: 2,
       blockValidityHours: 4,
       rationale: "Tightened after review.",
     });
@@ -476,5 +483,26 @@ describe("ThresholdForm — limits approved from a document (#48)", () => {
     await userEvent.clear(input);
     await userEvent.type(input, "28");
     expect(screen.getByText(/Changed here: saving sets it by hand/)).toBeInTheDocument();
+  });
+
+  it("saves the dispatch minimums with the rest of the policy (#89)", async () => {
+    const user = userEvent.setup();
+    const action = form();
+    const ceiling = screen.getByLabelText(/Dispatch minimum ceiling/i);
+    await user.clear(ceiling);
+    await user.type(ceiling, "700");
+    await user.click(screen.getByRole("button", { name: /FRAT policy/i }));
+    expect(action).toHaveBeenCalledWith(
+      expect.objectContaining({ dispatchMinCeilingFt: 700, dispatchMinVisibilitySm: 2 }),
+    );
+  });
+
+  it("will not save a dispatch minimum out of range", async () => {
+    const user = userEvent.setup();
+    form();
+    const visibility = screen.getByLabelText(/Dispatch minimum visibility/i);
+    await user.clear(visibility);
+    await user.type(visibility, "12");
+    expect(screen.getByRole("button", { name: /FRAT policy/i })).toBeDisabled();
   });
 });

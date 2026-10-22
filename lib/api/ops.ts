@@ -3,7 +3,7 @@
  */
 
 import { apiFetch } from "./client";
-import { asNumber } from "./decimal";
+import { asNumber, asNumberOrNull } from "./decimal";
 import type { PacketWeather } from "./dispatch-risk";
 import type {
   AccountingExportResponse,
@@ -60,6 +60,7 @@ import type {
   ReleaseResponse,
   StepCompletionRequest,
   StepCompletionResponse,
+  WeatherMinimumsView,
   WeightReturn,
   WeightReturnCreateRequest,
   WeightReturnListResponse,
@@ -138,6 +139,12 @@ export async function createFlight(
 
 export async function getFlight(flightId: string): Promise<FlightDetail> {
   return apiFetch<FlightDetail>(`/ops/flights/${flightId}`);
+}
+
+/** The dispatch minimums' verdict on a flight (#89): what release would
+ *  decide now, for an aircraft the company lists as not IFR certified. */
+export async function getWeatherMinimums(flightId: string): Promise<WeatherMinimumsView> {
+  return apiFetch<WeatherMinimumsView>(`/ops/flights/${flightId}/weather-minimums`);
 }
 
 export async function releaseFlight(
@@ -554,6 +561,7 @@ export async function getFratPrefill(
   return {
     ...prefill,
     vfr_min_visibility_sm: asNumber(prefill.vfr_min_visibility_sm),
+    dispatch_min_visibility_sm: asNumberOrNull(prefill.dispatch_min_visibility_sm),
   };
 }
 

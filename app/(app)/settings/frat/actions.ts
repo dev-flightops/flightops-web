@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 
 import { ApiError, SessionExpiredError } from "@/lib/api/client";
 import { setFratThresholds } from "@/lib/api/auth";
+import { updateVfrOnlyTypes } from "@/lib/api/type-qualifications";
 
 /**
  * Saving one operator's FRAT policy.
@@ -45,6 +46,11 @@ export interface FratPolicyInput {
   /** "Anything vfr under 1000 ft or 3 miles should be elevated risk." */
   vfrMinCeilingFt: number;
   vfrMinVisibilitySm: number;
+  /** The client's GOM (#89): "a minimum of 600 ft ceilings and 2 sm of
+   *  visibility for VFR flight in IFR conditions". Below either one,
+   *  aircraft not IFR certified are not released. */
+  dispatchMinCeilingFt: number;
+  dispatchMinVisibilitySm: number;
   /** "4 hours or any condition that increases risk." Zero turns blocks
    *  off, which is a policy rather than a missing value. */
   blockValidityHours: number;
@@ -64,6 +70,8 @@ export async function saveFratThresholdsAction(
     blockValidityHours,
     vfrMinCeilingFt,
     vfrMinVisibilitySm,
+    dispatchMinCeilingFt,
+    dispatchMinVisibilitySm,
     rationale,
   } = input;
 
@@ -130,6 +138,26 @@ export async function saveFratThresholdsAction(
       message: "The VFR visibility floor has to be between 0 and 10 miles.",
     };
   }
+  if (
+    !Number.isInteger(dispatchMinCeilingFt) ||
+    dispatchMinCeilingFt < 0 ||
+    dispatchMinCeilingFt > 10000
+  ) {
+    return {
+      status: "error",
+      message: "The dispatch minimum ceiling has to be whole feet between 0 and 10,000.",
+    };
+  }
+  if (
+    !Number.isFinite(dispatchMinVisibilitySm) ||
+    dispatchMinVisibilitySm < 0 ||
+    dispatchMinVisibilitySm > 10
+  ) {
+    return {
+      status: "error",
+      message: "The dispatch minimum visibility has to be between 0 and 10 miles.",
+    };
+  }
 
   if (
     !Number.isInteger(blockValidityHours) ||
@@ -156,6 +184,8 @@ export async function saveFratThresholdsAction(
       crosswind_near_margin_kt: nearMarginKt,
       vfr_min_ceiling_ft: vfrMinCeilingFt,
       vfr_min_visibility_sm: vfrMinVisibilitySm,
+      dispatch_min_ceiling_ft: dispatchMinCeilingFt,
+      dispatch_min_visibility_sm: dispatchMinVisibilitySm,
       block_validity_hours: blockValidityHours,
       rationale: rationale.trim() || null,
     });
@@ -176,4 +206,40 @@ export async function saveFratThresholdsAction(
     }
     return { status: "error", message: "Could not reach auth-service." };
   }
+}
+
+export type TypesResult = { ok: true } | { ok: false; error: string };
+
+/** The aircraft types that are not IFR certified (#89). */
+export async function setVfrOnlyTypesAction(airframeTypes: string[]): Promise<TypesResult> {
+  try {
+    await updateVfrOnlyTypes(airframeTypes);
+  } catch (err) {
+    if (err instanceof SessionExpiredError) {
+      return { ok: false, error: "Your session expired — please sign in again." };
+    }
+    if (err instanceof ApiError) {
+      if (err.status === 401) {
+        return { ok: false, error: "Your session expired — please sign in again." };
+      }
+      if (err.status === 403) {
+        return {
+          ok: false,
+          error: "Only the Director of Operations or an Exec Admin can change this.",
+        };
+      }
+      if (err.status === 400) {
+        return {
+          ok: false,
+          error: "One of those types is not in the fleet any more. Reload and try again.",
+        };
+      }
+      return { ok: false, error: `Couldn't save (HTTP ${err.status}). Try again.` };
+    }
+    return { ok: false, error: "Couldn't save. Try again." };
+  }
+  for (const path of ["/settings/frat", "/dispatch", "/flight-crew"]) {
+    revalidatePath(path);
+  }
+  return { ok: true };
 }

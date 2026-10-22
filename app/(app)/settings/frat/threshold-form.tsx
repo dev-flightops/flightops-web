@@ -136,6 +136,12 @@ export function ThresholdForm({
   const [vfrMinVisibilitySm, setVfrMinVisibilitySm] = useState(
     config.vfr_min_visibility_sm,
   );
+  const [dispatchMinCeilingFt, setDispatchMinCeilingFt] = useState(
+    config.dispatch_min_ceiling_ft,
+  );
+  const [dispatchMinVisibilitySm, setDispatchMinVisibilitySm] = useState(
+    config.dispatch_min_visibility_sm,
+  );
   const [blockValidityHours, setBlockValidityHours] = useState(
     config.block_validity_hours,
   );
@@ -156,6 +162,10 @@ export function ThresholdForm({
     vfrMinCeilingFt <= 10000 &&
     vfrMinVisibilitySm >= 0 &&
     vfrMinVisibilitySm <= 10 &&
+    dispatchMinCeilingFt >= 0 &&
+    dispatchMinCeilingFt <= 10000 &&
+    dispatchMinVisibilitySm >= 0 &&
+    dispatchMinVisibilitySm <= 10 &&
     blockValidityHours >= 0 &&
     blockValidityHours <= 24;
   const savable = ordered && marginFits && limitsInRange;
@@ -169,6 +179,8 @@ export function ThresholdForm({
     nearMarginKt === config.default_crosswind_near_margin_kt &&
     vfrMinCeilingFt === config.default_vfr_min_ceiling_ft &&
     vfrMinVisibilitySm === config.default_vfr_min_visibility_sm &&
+    dispatchMinCeilingFt === config.default_dispatch_min_ceiling_ft &&
+    dispatchMinVisibilitySm === config.default_dispatch_min_visibility_sm &&
     blockValidityHours === config.default_block_validity_hours;
 
   // Widths as percentages of the reachable maximum, so the bar is to
@@ -192,6 +204,8 @@ export function ThresholdForm({
       nearMarginKt,
       vfrMinCeilingFt,
       vfrMinVisibilitySm,
+      dispatchMinCeilingFt,
+      dispatchMinVisibilitySm,
       blockValidityHours,
       rationale,
     });
@@ -374,6 +388,38 @@ export function ThresholdForm({
             onChange={setVfrMinVisibilitySm}
           />
         </div>
+
+        {/* The client's GOM, 20 Oct 2026 (#89): "For dispatchable flight
+            we need a minimum of 600 ft ceilings and 2 sm of visibility
+            for VFR flight in IFR conditions." */}
+        <div className="mt-4 grid gap-4 sm:grid-cols-2">
+          <Field
+            name="dispatch_min_ceiling_ft"
+            source={config.sources?.["dispatch_min_ceiling_ft"]}
+            label="Dispatch minimum ceiling (ft)"
+            hint="Below this, aircraft not IFR certified are not released."
+            value={dispatchMinCeilingFt}
+            min={0}
+            max={10000}
+            step={100}
+            onChange={setDispatchMinCeilingFt}
+          />
+          <Field
+            name="dispatch_min_visibility_sm"
+            source={config.sources?.["dispatch_min_visibility_sm"]}
+            label="Dispatch minimum visibility (sm)"
+            hint="At the departure, the destination or any stop between."
+            value={dispatchMinVisibilitySm}
+            min={0}
+            max={10}
+            step={0.5}
+            onChange={setDispatchMinVisibilitySm}
+          />
+        </div>
+        <p className="mt-2 text-[0.65rem] text-muted-foreground">
+          Which aircraft are not IFR certified is set below. For them the FRAT
+          scores weather under these minimums over company limits, a no-go.
+        </p>
 
         <p className="mt-2 text-[0.65rem] text-muted-foreground">
           IFR flights below approach minimums are elevated risk too, and
