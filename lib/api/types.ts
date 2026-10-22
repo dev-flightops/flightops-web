@@ -1975,6 +1975,10 @@ export interface VillageAirportResponse {
   region: string | null;
   is_active: boolean;
   notes: string | null;
+  /** Whether an instrument approach can be flown here (#110). Without one
+   *  the company's dispatch minimums hold every flight here. */
+  has_instrument_approach?: boolean;
+  instrument_approach_changed_at?: string | null;
 }
 
 export interface VillageAirportListResponse {
@@ -2417,6 +2421,9 @@ export interface MinimumsObservation {
 export interface MinimumsStation {
   icao: string;
   below: boolean;
+  /** Why the minimums hold this stop (#110): the aircraft isn't IFR
+   *  certified, or the field has no instrument approach. */
+  reason?: "not_ifr_certified" | "no_instrument_approach" | null;
   /** Empty when the stop has no weather to compare. */
   observations: MinimumsObservation[];
 }

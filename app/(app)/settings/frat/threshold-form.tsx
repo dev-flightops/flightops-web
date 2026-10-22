@@ -397,7 +397,7 @@ export function ThresholdForm({
             name="dispatch_min_ceiling_ft"
             source={config.sources?.["dispatch_min_ceiling_ft"]}
             label="Dispatch minimum ceiling (ft)"
-            hint="Below this, aircraft not IFR certified are not released."
+            hint="Below this, aircraft not IFR certified are not released, nor is any aircraft at a village without an instrument approach."
             value={dispatchMinCeilingFt}
             min={0}
             max={10000}
@@ -417,8 +417,10 @@ export function ThresholdForm({
           />
         </div>
         <p className="mt-2 text-[0.65rem] text-muted-foreground">
-          Which aircraft are not IFR certified is set below. For them the FRAT
-          scores weather under these minimums over company limits, a no-go.
+          Which aircraft are not IFR certified is set below; which villages
+          have an instrument approach, under Weather → Village Wx. For them
+          the FRAT scores weather under these minimums over company limits,
+          a no-go.
         </p>
 
         <p className="mt-2 text-[0.65rem] text-muted-foreground">
