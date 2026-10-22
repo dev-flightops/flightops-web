@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { TestApiError, listCustomerInvoices, listCustomers } = vi.hoisted(() => {
+const { TestApiError, listCustomerInvoices, listCustomers, getCompanyProfile } = vi.hoisted(() => {
   class TestApiError extends Error {
     constructor(
       public status: number,
@@ -11,11 +11,17 @@ const { TestApiError, listCustomerInvoices, listCustomers } = vi.hoisted(() => {
       super(message);
     }
   }
-  return { TestApiError, listCustomerInvoices: vi.fn(), listCustomers: vi.fn() };
+  return {
+    TestApiError,
+    listCustomerInvoices: vi.fn(),
+    listCustomers: vi.fn(),
+    getCompanyProfile: vi.fn(),
+  };
 });
 vi.mock("@/lib/api/client", () => ({ ApiError: TestApiError }));
 vi.mock("@/lib/api/customer-invoices", () => ({ listCustomerInvoices }));
 vi.mock("@/lib/api/reservations", () => ({ listCustomers }));
+vi.mock("@/lib/api/auth", () => ({ getCompanyProfile }));
 vi.mock("./raise-actions", () => ({
   raiseInvoicesAction: vi.fn(),
   flownFlightsOnAction: vi.fn(),
@@ -36,6 +42,7 @@ async function renderPage(status?: string) {
 beforeEach(() => {
   vi.clearAllMocks();
   listCustomers.mockResolvedValue({ items: [], total: 0 });
+  getCompanyProfile.mockResolvedValue({ invoicing_in_peregrine: true });
 });
 
 describe("/invoicing", () => {
@@ -95,4 +102,22 @@ describe("/invoicing filtered by customer (#30)", () => {
     expect(screen.queryByLabelText("Customer")).toBeNull();
     expect(screen.getByText(/all invoices/)).toBeInTheDocument();
   });
+
+  it("says when the company invoices outside Peregrine, and offers no raise (#95)", async () => {
+    getCompanyProfile.mockResolvedValue({ invoicing_in_peregrine: false });
+    listCustomerInvoices.mockResolvedValue({ items: [], total: 0, outstanding_cents: 0 });
+    await renderPage();
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "This company invoices outside Peregrine, so landings raise no invoices",
+    );
+    expect(screen.queryByRole("button", { name: "Raise invoices" })).not.toBeInTheDocument();
+  });
+
+  it("keeps Raise invoices when the profile cannot be read", async () => {
+    getCompanyProfile.mockRejectedValue(new TestApiError(500, "/auth/settings/company", "down"));
+    listCustomerInvoices.mockResolvedValue({ items: [], total: 0, outstanding_cents: 0 });
+    await renderPage();
+    expect(screen.getByRole("button", { name: "Raise invoices" })).toBeInTheDocument();
+  });
 });
+

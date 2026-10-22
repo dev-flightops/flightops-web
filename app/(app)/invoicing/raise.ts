@@ -95,6 +95,9 @@ const REFUSALS: Record<string, string> = {
   flight_has_not_flown:
     "That flight has not flown yet, so there is nothing to invoice.",
   flight_not_found: "That flight no longer exists.",
+  invoicing_off:
+    "This company invoices outside Peregrine, so nothing is raised here. " +
+    "Turn invoicing on under Settings → Company to raise invoices.",
 };
 
 export function explainRaiseError(err: unknown): string {

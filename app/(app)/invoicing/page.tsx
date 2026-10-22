@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { getCompanyProfile } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
 import { listCustomers } from "@/lib/api/reservations";
 import {
@@ -81,6 +82,11 @@ export default async function InvoicingPage({
     customerParam && /^[0-9a-f-]{36}$/i.test(customerParam) ? customerParam : undefined;
   const customers = await customerOptions();
   const customerName = customers.find((c) => c.id === customer)?.name;
+  // The company may invoice outside Peregrine (#95). Losing the profile
+  // reads as on, the default, rather than hiding Raise invoices.
+  const invoicingOn = await getCompanyProfile()
+    .then((p) => p.invoicing_in_peregrine !== false)
+    .catch(() => true);
 
   let items: CustomerInvoice[] = [];
   let total = 0;
@@ -116,7 +122,7 @@ export default async function InvoicingPage({
         </div>
         {/* Where legacy had "+ New Invoice". Hidden with the list when
             the list is refused: the same two roles may raise. */}
-        {!loadError && <RaiseInvoices />}
+        {!loadError && invoicingOn && <RaiseInvoices />}
         {!loadError && (
           <div className="text-right">
             <div className="eyebrow">
@@ -135,6 +141,18 @@ export default async function InvoicingPage({
           </div>
         )}
       </header>
+
+      {!invoicingOn && (
+        <div role="status" className="notice notice-yellow mb-6 text-sm">
+          This company invoices outside Peregrine, so landings raise no invoices
+          and flights close out without them. Invoices already raised stay here.
+          Turn invoicing on under{" "}
+          <Link href="/settings/company" className="font-semibold text-primary hover:underline">
+            Settings → Company
+          </Link>
+          .
+        </div>
+      )}
 
       {loadError ? (
         <p

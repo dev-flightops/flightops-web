@@ -108,6 +108,11 @@ const Schema = z.object({
     parseTermsDays,
     "Whole days from 0 to 365.",
   ),
+  // The invoicing switch (#95), sent by the form as "true" or "false".
+  invoicing_in_peregrine: z
+    .enum(["true", "false"])
+    .optional()
+    .transform((v) => (v === undefined ? undefined : v === "true")),
 });
 
 export type UpdateCompanyState =

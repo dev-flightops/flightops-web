@@ -28,6 +28,7 @@ const FIELDS = [
   "cargo_rate_per_lb",
   "invoice_tax_percent",
   "invoice_terms_days",
+  "invoicing_in_peregrine",
   "notes",
 ] as const;
 type FieldName = (typeof FIELDS)[number];
@@ -41,6 +42,9 @@ function toValues(p: CompanyProfileResponse): Values {
       values[name] = taxPercentFromFraction(p.invoice_tax_rate);
     } else if (name === "invoice_terms_days") {
       values[name] = p.invoice_terms_days == null ? "" : String(p.invoice_terms_days);
+    } else if (name === "invoicing_in_peregrine") {
+      // On unless the company turned it off (#95); an older backend sends nothing.
+      values[name] = p.invoicing_in_peregrine === false ? "false" : "true";
     } else {
       values[name] = p[name] ?? "";
     }
@@ -223,6 +227,31 @@ export function CompanyForm({ profile }: { profile: CompanyProfileResponse }) {
           with. Blank is a real state for each, and the hints say what
           it does, because a cargo line with no rate cannot be sent. */}
       <Section title="Invoicing">
+        {/* The switch (#95): a company still invoicing in another system
+            closes out flights the same, with no invoices raised here. The
+            hidden field always sends it, as an unticked box sends nothing. */}
+        <input type="hidden" name="invoicing_in_peregrine" value={values.invoicing_in_peregrine} />
+        <label className="flex items-start gap-2 text-xs">
+          <input
+            type="checkbox"
+            className="mt-0.5"
+            checked={values.invoicing_in_peregrine === "true"}
+            onChange={(e) =>
+              setValues((v) => ({
+                ...v,
+                invoicing_in_peregrine: e.target.checked ? "true" : "false",
+              }))
+            }
+          />
+          <span>
+            <span className="font-semibold text-foreground">Invoice customers in Peregrine</span>
+            <span className="block text-muted-foreground">
+              Turn off while the company still invoices in another system: flights
+              close out the same, landings raise no invoices, and Raise invoices is
+              refused. Invoices already raised are kept.
+            </span>
+          </span>
+        </label>
         <div className="grid gap-4 sm:grid-cols-3">
           <Field
             {...bind("cargo_rate_per_lb")}

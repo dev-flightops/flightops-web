@@ -107,3 +107,24 @@ describe("the invoicing fields", () => {
     });
   });
 });
+
+describe("invoicing outside Peregrine (#95)", () => {
+  it("sends the switch as a boolean", async () => {
+    await updateCompanyAction(IDLE, form({ invoicing_in_peregrine: "false" }));
+    expect(updateCompanyProfile).toHaveBeenLastCalledWith({ invoicing_in_peregrine: false });
+    await updateCompanyAction(IDLE, form({ invoicing_in_peregrine: "true" }));
+    expect(updateCompanyProfile).toHaveBeenLastCalledWith({ invoicing_in_peregrine: true });
+  });
+
+  it("leaves it alone when the form does not send it", async () => {
+    await updateCompanyAction(IDLE, form({ legal_name: "Example Air LLC" }));
+    expect(updateCompanyProfile).toHaveBeenLastCalledWith({ legal_name: "Example Air LLC" });
+  });
+
+  it("refuses anything else", async () => {
+    const state = await updateCompanyAction(IDLE, form({ invoicing_in_peregrine: "maybe" }));
+    expect(state.status).toBe("field-errors");
+    expect(updateCompanyProfile).not.toHaveBeenCalled();
+  });
+});
+
