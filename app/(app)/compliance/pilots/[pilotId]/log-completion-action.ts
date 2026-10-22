@@ -37,6 +37,11 @@ const Schema = z
       .enum(["pass", "fail"])
       .optional()
       .or(z.literal("").transform(() => undefined)),
+    // Only the medical's form has it; the server requires it there (#87).
+    medical_class: z
+      .enum(["first", "second", "third"])
+      .optional()
+      .or(z.literal("").transform(() => undefined)),
     score: z
       .string()
       .optional()
@@ -99,6 +104,7 @@ export async function logCompletionAction(
       result: parsed.data.result ?? null,
       score: scoreNum,
       notes: parsed.data.notes ?? null,
+      medical_class: parsed.data.medical_class ?? null,
     });
 
     revalidatePath("/compliance/crew-currency");
@@ -169,6 +175,9 @@ function mapDetailToField(detail: string): Record<string, string> | null {
   }
   if (detail === "examiner_cert_required") {
     return { examiner_cert_number: "Examiner cert required for this item" };
+  }
+  if (detail === "medical_class_required" || detail === "unknown_medical_class") {
+    return { medical_class: "Pick the class on the medical certificate" };
   }
   return null;
 }

@@ -6,11 +6,12 @@ import { EmptyState } from "@/components/ff/empty-state";
 import { PageHeader } from "@/components/ff/page-header";
 import { Panel } from "@/components/ff/panel";
 import { ApiError } from "@/lib/api/client";
-import { getCurrentDuty, listFlights } from "@/lib/api/ops";
+import { getCurrentDuty, listAircraft, listFlights } from "@/lib/api/ops";
 import type { CurrentDutyResponse, FlightListItem } from "@/lib/api/types";
 import { currentGreeting, firstNameFrom } from "@/lib/greeting";
 
 import { CorrectDuty } from "@/components/duty/correct-duty";
+import { SquawkDialog, type AircraftChoice } from "@/components/dispatch/packet/squawk-dialog";
 
 import { DutyClockButton } from "./duty-clock-button";
 import { TodayFlightsPanel } from "./today-flights-panel";
@@ -73,6 +74,17 @@ export default async function FlightCrewPage() {
   const greeting = currentGreeting();
 
   let duty: CurrentDutyResponse = DUTY_OFFLINE_DEFAULT;
+
+  // The fleet for the squawk form (#92). Losing it costs the pilot the
+  // squawk button, not the page.
+  const aircraft: AircraftChoice[] = await listAircraft()
+    .then((r) =>
+      r.items
+        .filter((a) => a.is_active)
+        .map((a) => ({ id: a.id, tail_number: a.tail_number, model: a.model }))
+        .sort((a, b) => a.tail_number.localeCompare(b.tail_number)),
+    )
+    .catch(() => []);
 
   try {
     // Three UTC days, not one, and the browser decides which of them
@@ -156,6 +168,23 @@ export default async function FlightCrewPage() {
           </div>
         )}
       </section>
+
+      {/* At the aircraft (#92). The client: pilots duty in, then
+          preflight and run up in the morning, before they have a flight,
+          so a squawk cannot wait for a flight's preflight or packet. */}
+      {aircraft.length > 0 && (
+        <Panel
+          title="At the aircraft"
+          actions={<SquawkDialog choices={aircraft} />}
+          className="mb-8"
+        >
+          <p className="text-xs text-muted-foreground">
+            Found something on the preflight or the run-up? Squawk it here. A
+            grounding squawk takes the aircraft out of service at once, and no
+            flight on it can be released until maintenance returns it to service.
+          </p>
+        </Panel>
+      )}
 
       {/* 2. My Flights today + 3. + Create Flight Log */}
       <Panel

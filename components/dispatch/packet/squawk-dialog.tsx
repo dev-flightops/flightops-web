@@ -29,6 +29,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 const schema = z.object({
+  aircraft_id: z.string().min(1, "Pick the aircraft"),
   title: z
     .string()
     .min(1, "Required")
@@ -52,9 +53,20 @@ function nowAsLocalInput(): string {
   return new Date().toISOString().slice(0, 16);
 }
 
+export interface AircraftChoice {
+  id: string;
+  tail_number: string;
+  model?: string | null;
+}
+
 export interface SquawkDialogProps {
-  aircraftId: string;
-  tailNumber: string;
+  /** The aircraft the squawk is against: the flight's, on the dispatch
+   *  packet and the preflight. */
+  aircraftId?: string;
+  tailNumber?: string;
+  /** The pilot's home (#92): at the morning run-up there is often no
+   *  flight yet, so the pilot picks the aircraft in the form. */
+  choices?: AircraftChoice[];
 }
 
 /**
@@ -68,15 +80,24 @@ export interface SquawkDialogProps {
  * A warning strip appears when severity=grounding is selected so the user
  * realises they're about to ground the aircraft from the dispatch side.
  */
-export function SquawkDialog({ aircraftId, tailNumber }: SquawkDialogProps) {
+export function SquawkDialog({ aircraftId, tailNumber, choices }: SquawkDialogProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
+  const blank = (): FormValues => ({
+    aircraft_id: aircraftId ?? "",
+    title: "",
+    description: "",
+    severity: "minor",
+    reported_at: nowAsLocalInput(),
+  });
+
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
+      aircraft_id: aircraftId ?? "",
       title: "",
       description: "",
       severity: "minor",
@@ -85,23 +106,21 @@ export function SquawkDialog({ aircraftId, tailNumber }: SquawkDialogProps) {
   });
 
   const severity = form.watch("severity");
+  const chosenId = form.watch("aircraft_id");
+  const tail =
+    tailNumber ?? choices?.find((a) => a.id === chosenId)?.tail_number ?? "the aircraft";
 
   const closeAndReset = () => {
     setOpen(false);
     setError(null);
-    form.reset({
-      title: "",
-      description: "",
-      severity: "minor",
-      reported_at: nowAsLocalInput(),
-    });
+    form.reset(blank());
   };
 
   const onSubmit = (values: FormValues) => {
     setError(null);
     startTransition(async () => {
       const result = await createSquawkAction({
-        aircraft_id: aircraftId,
+        aircraft_id: values.aircraft_id,
         reported_at: localInputToIso(values.reported_at),
         title: values.title,
         description: values.description,
@@ -135,7 +154,9 @@ export function SquawkDialog({ aircraftId, tailNumber }: SquawkDialogProps) {
       >
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle>New squawk · {tailNumber}</DialogTitle>
+            <DialogTitle>
+              {tailNumber ? `New squawk · ${tailNumber}` : "New squawk"}
+            </DialogTitle>
             <DialogDescription>
               File a maintenance discrepancy. Reporter is auto-set from your
               login. Severity drives whether the squawk blocks dispatch.
@@ -147,6 +168,33 @@ export function SquawkDialog({ aircraftId, tailNumber }: SquawkDialogProps) {
               onSubmit={form.handleSubmit(onSubmit)}
               className="grid gap-3 sm:grid-cols-2"
             >
+              {choices && (
+                <FormField
+                  control={form.control}
+                  name="aircraft_id"
+                  render={({ field }) => (
+                    <FormItem className="sm:col-span-2">
+                      <FormLabel>Aircraft</FormLabel>
+                      <FormControl>
+                        <select
+                          {...field}
+                          className="flex h-9 w-full rounded-lg border border-border bg-background px-3 py-2 text-[0.8125rem] focus-visible:outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20"
+                        >
+                          <option value="">Select…</option>
+                          {choices.map((a) => (
+                            <option key={a.id} value={a.id}>
+                              {a.tail_number}
+                              {a.model ? ` · ${a.model}` : ""}
+                            </option>
+                          ))}
+                        </select>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
+
               <FormField
                 control={form.control}
                 name="title"
@@ -224,7 +272,7 @@ export function SquawkDialog({ aircraftId, tailNumber }: SquawkDialogProps) {
                   <AlertGlyph className="mt-0.5 h-4 w-4 shrink-0 text-status-red" />
                   <span>
                     This will block dispatch on{" "}
-                    <span className="font-mono font-semibold">{tailNumber}</span>{" "}
+                    <span className="font-mono font-semibold">{tail}</span>{" "}
                     until the squawk is resolved or the item is deferred via a
                     new MEL entry.
                   </span>

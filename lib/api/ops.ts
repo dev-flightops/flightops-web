@@ -186,11 +186,28 @@ export async function releaseFlight(
   });
 }
 
-/** Transition a flight from `scheduled` → `cancelled` (M2-M-18).
- *  Used by the M2-G-25 EOD page's bulk "Cancel stale flights" action. */
-export async function cancelFlight(flightId: string): Promise<FlightDetail> {
+/** Cancel a flight that has not departed (M2-M-18). Used by the
+ *  M2-G-25 EOD page's bulk "Cancel stale flights" action, and from the
+ *  packet for a released flight (#90), which needs the reason. */
+export async function cancelFlight(
+  flightId: string,
+  reason?: string,
+): Promise<FlightDetail> {
   return apiFetch<FlightDetail>(`/ops/flights/${flightId}/cancel`, {
     method: "POST",
+    ...(reason ? { body: JSON.stringify({ reason }) } : {}),
+  });
+}
+
+/** Take a release back before the flight departs (#90): the flight
+ *  returns to scheduled and needs a new release. */
+export async function pullBackRelease(
+  flightId: string,
+  reason: string,
+): Promise<FlightDetail> {
+  return apiFetch<FlightDetail>(`/ops/flights/${flightId}/pull-back-release`, {
+    method: "POST",
+    body: JSON.stringify({ reason }),
   });
 }
 
