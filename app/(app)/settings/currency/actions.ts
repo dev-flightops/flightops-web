@@ -3,7 +3,10 @@
 import { revalidatePath } from "next/cache";
 
 import { ApiError } from "@/lib/api/client";
-import { updateComplianceSettings } from "@/lib/api/type-qualifications";
+import {
+  updateComplianceSettings,
+  updateFirstClassMedicalTypes,
+} from "@/lib/api/type-qualifications";
 
 /**
  * The company switch for aircraft qualifications at release (#46).
@@ -42,6 +45,36 @@ export async function setTypeQualificationGateAction(
     "/compliance/type-qualifications",
     "/crew",
   ]) {
+    revalidatePath(path);
+  }
+  return { ok: true };
+}
+
+/** The aircraft types whose PIC needs a first-class medical (#87). */
+export async function setFirstClassMedicalTypesAction(
+  airframeTypes: string[],
+): Promise<ActionResult> {
+  try {
+    await updateFirstClassMedicalTypes(airframeTypes);
+  } catch (err) {
+    if (err instanceof ApiError) {
+      if (err.status === 401) {
+        return { ok: false, error: "Your session expired — please sign in again." };
+      }
+      if (err.status === 403) {
+        return {
+          ok: false,
+          error: "Only the Director of Operations or an Exec Admin can change this.",
+        };
+      }
+      if (err.status === 400) {
+        return { ok: false, error: "One of those types is not in the fleet any more. Reload and try again." };
+      }
+      return { ok: false, error: `Couldn't save (HTTP ${err.status}). Try again.` };
+    }
+    return { ok: false, error: "Couldn't save. Try again." };
+  }
+  for (const path of ["/settings/currency", "/dispatch", "/crew"]) {
     revalidatePath(path);
   }
   return { ok: true };

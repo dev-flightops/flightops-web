@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { linkCaps } from "@/components/ff/controls";
 import { cn } from "@/lib/utils";
+import { loadZoneTable } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
 import {
   HAZARD_SEVERITY_LABELS,
@@ -10,8 +11,11 @@ import {
   type Incident,
   listMyIncidents,
 } from "@/lib/api/safety";
+import { localDate, zoneFor } from "@/lib/format/local-time";
 
 export default async function MyIncidentsPage() {
+  // The day the incident happened where it happened (#72).
+  const zones = loadZoneTable();
   let incidents: Incident[] = [];
   let loadError: string | null = null;
   try {
@@ -23,6 +27,8 @@ export default async function MyIncidentsPage() {
         ? "Your session expired — please sign in again."
         : "Feed unavailable. Try refreshing in a moment.";
   }
+
+  const zoneTable = await zones;
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6">
@@ -75,7 +81,7 @@ export default async function MyIncidentsPage() {
                       {INCIDENT_CATEGORY_LABELS[i.category]}
                     </span>
                     <span className="text-[0.6875rem] text-muted-foreground">
-                      Occurred {new Date(i.occurred_at).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" })}
+                      Occurred {localDate(i.occurred_at, zoneFor(zoneTable, i.station?.icao_code), { withYear: true })}
                     </span>
                   </div>
                   <p className="line-clamp-2 text-foreground/90">

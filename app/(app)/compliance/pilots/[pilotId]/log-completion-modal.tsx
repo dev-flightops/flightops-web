@@ -24,6 +24,12 @@ import {
  *   - Notes               (optional)
  *   - Document upload     (deferred — needs an R2 / blob endpoint)
  *
+ * A medical is logged as its examination (#87): the exam date and the
+ * class it granted, and the server works out the expiry from them and
+ * the pilot's date of birth (14 CFR 61.23). Asking for a completion date
+ * that could not be in the future made every medical expire the day it
+ * was entered.
+ *
  * The modal is intentionally simple — no portal, no escape-key
  * listener, no focus-trap. Spec 5 doesn't call them out and the
  * legacy dialog is similarly bare; we'll layer those in once the
@@ -57,6 +63,7 @@ export function LogCompletionModal({
     state.status === "field-errors" ? state.errors[key] : undefined;
 
   const today = new Date().toISOString().slice(0, 10);
+  const isMedical = item.interval_type === "medical_hard_expiry";
 
   return (
     <div
@@ -94,7 +101,7 @@ export function LogCompletionModal({
 
           <Field
             name="completion_date"
-            label="Completion Date"
+            label={isMedical ? "Exam Date" : "Completion Date"}
             type="date"
             defaultValue={today}
             max={today}
@@ -102,11 +109,34 @@ export function LogCompletionModal({
             error={fieldError("completion_date")}
           />
 
+          {isMedical && (
+            <>
+              <FieldSelect
+                name="medical_class"
+                label="Class"
+                required
+                error={fieldError("medical_class")}
+              >
+                <option value="">Select…</option>
+                <option value="first">First class</option>
+                <option value="second">Second class</option>
+                <option value="third">Third class</option>
+              </FieldSelect>
+              <p className="text-[0.65rem] text-muted-foreground">
+                The expiry is worked out from the exam (14 CFR 61.23): a first
+                or second class is good for commercial flying to the end of the
+                12th month; a third class is not valid for it. Aircraft that need
+                a first-class medical for ATP flying are set in Settings →
+                Currency, using the date of birth on the employee record.
+              </p>
+            </>
+          )}
+
           <Field
             name="completed_by"
-            label="Completed By / Instructor"
+            label={isMedical ? "Examiner (AME)" : "Completed By / Instructor"}
             type="text"
-            placeholder="Examiner Jane Doe"
+            placeholder={isMedical ? "Dr. Jane Doe, AME" : "Examiner Jane Doe"}
             required
             error={fieldError("completed_by")}
           />
@@ -135,13 +165,15 @@ export function LogCompletionModal({
             </FieldSelect>
           )}
 
-          <Field
-            name="score"
-            label="Score (optional)"
-            type="number"
-            step="0.1"
-            error={fieldError("score")}
-          />
+          {!isMedical && (
+            <Field
+              name="score"
+              label="Score (optional)"
+              type="number"
+              step="0.1"
+              error={fieldError("score")}
+            />
+          )}
 
           <FieldTextarea
             name="notes"

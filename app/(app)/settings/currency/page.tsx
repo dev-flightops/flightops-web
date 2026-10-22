@@ -1,12 +1,13 @@
 import Link from "next/link";
 
 import { auth } from "@/auth";
-import { listCurrencyItems } from "@/lib/api/ops";
+import { listAircraft, listCurrencyItems } from "@/lib/api/ops";
 import { ApiError } from "@/lib/api/client";
 import { getComplianceSettings } from "@/lib/api/type-qualifications";
-import type { CurrencyItemRef } from "@/lib/api/types";
+import type { AircraftListItem, CurrencyItemRef } from "@/lib/api/types";
 import { RELEASE_POLICY_ADMINS, hasAnyRole } from "@/lib/roles";
 
+import { FirstClassMedicalCard, type FleetType } from "./first-class-medical-card";
 import { TypeGateCard } from "./type-gate-card";
 
 /**
@@ -53,9 +54,12 @@ export default async function SettingsCurrencyPage() {
 
   // The release switch (#46) soft-fails on its own: losing it should
   // cost the reader the card, not the catalogue.
-  const [gate, session] = await Promise.all([
+  const [gate, session, aircraft] = await Promise.all([
     getComplianceSettings().catch(() => null),
     auth(),
+    listAircraft()
+      .then((r) => r.items)
+      .catch(() => [] as AircraftListItem[]),
   ]);
   const canChangeGate = hasAnyRole(session?.roles ?? [], RELEASE_POLICY_ADMINS);
 
@@ -100,6 +104,13 @@ export default async function SettingsCurrencyPage() {
       </header>
 
       {gate ? <TypeGateCard settings={gate} canChange={canChangeGate} /> : null}
+      {gate ? (
+        <FirstClassMedicalCard
+          settings={gate}
+          fleetTypes={fleetTypes(aircraft)}
+          canChange={canChangeGate}
+        />
+      ) : null}
 
       {loadError ? (
         <div
@@ -223,3 +234,20 @@ function FlagPills({ item }: { item: CurrencyItemRef }) {
     </div>
   );
 }
+
+/** The fleet's aircraft types, as release judges them (#87): each slug
+ *  once, labelled with the models that fly under it. */
+function fleetTypes(aircraft: AircraftListItem[]): FleetType[] {
+  const models = new Map<string, Set<string>>();
+  for (const a of aircraft) {
+    const slug = (a.airframe_type ?? "").trim().toLowerCase();
+    if (!slug) continue;
+    const set = models.get(slug) ?? new Set<string>();
+    if (a.model) set.add(a.model);
+    models.set(slug, set);
+  }
+  return [...models.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([slug, set]) => ({ slug, label: [...set].sort().join(", ") }));
+}
+

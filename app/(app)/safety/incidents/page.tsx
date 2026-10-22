@@ -7,6 +7,7 @@ import { hasAnyRole, roleGate } from "@/lib/roles";
 import { redirect } from "next/navigation";
 
 import { auth } from "@/auth";
+import { loadZoneTable } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
 import {
   HAZARD_SEVERITY_LABELS,
@@ -15,6 +16,7 @@ import {
   type Incident,
   listIncidents,
 } from "@/lib/api/safety";
+import { localDateTime, type ZoneTable, zoneFor } from "@/lib/format/local-time";
 
 const TRIAGE_ROLES = roleGate(
   "safety_officer",
@@ -56,6 +58,9 @@ export default async function IncidentsInboxPage({
   const activeFilter =
     STATUS_FILTERS.find((f) => f.key === filterKey) ?? STATUS_FILTERS[0];
 
+  // Times show local to the incident's station, or the company's base
+  // (#72), as they were typed.
+  const zones = loadZoneTable();
   let incidents: Incident[] = [];
   let total = 0;
   let loadError: string | null = null;
@@ -153,7 +158,7 @@ export default async function IncidentsInboxPage({
           </p>
         </div>
       ) : (
-        <IncidentTable incidents={incidents} total={total} />
+        <IncidentTable incidents={incidents} total={total} zones={await zones} />
       )}
     </div>
   );
@@ -162,9 +167,11 @@ export default async function IncidentsInboxPage({
 function IncidentTable({
   incidents,
   total,
+  zones,
 }: {
   incidents: Incident[];
   total: number;
+  zones: ZoneTable;
 }) {
   return (
     <div className="overflow-hidden rounded-lg border border-border bg-card">
@@ -199,12 +206,7 @@ function IncidentTable({
             {incidents.map((i) => (
               <tr key={i.id} className="hover:bg-accent">
                 <td className="whitespace-nowrap px-4 py-3 text-xs text-muted-foreground">
-                  {new Date(i.occurred_at).toLocaleString(undefined, {
-                    month: "short",
-                    day: "numeric",
-                    hour: "numeric",
-                    minute: "2-digit",
-                  })}
+                  {localDateTime(i.occurred_at, zoneFor(zones, i.station?.icao_code))}
                 </td>
                 <td className="px-4 py-3">
                   <SeverityChip severity={i.severity} />
