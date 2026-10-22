@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { TestApiError, releaseFlight, packetWeatherFor } = vi.hoisted(() => {
+const { TestApiError, releaseFlight, packetWeatherFor, cancelFlight, pullBackRelease } = vi.hoisted(() => {
   class TestApiError extends Error {
     constructor(
       public status: number,
@@ -10,14 +10,29 @@ const { TestApiError, releaseFlight, packetWeatherFor } = vi.hoisted(() => {
       super(message);
     }
   }
-  return { TestApiError, releaseFlight: vi.fn(), packetWeatherFor: vi.fn() };
+  return {
+    TestApiError,
+    releaseFlight: vi.fn(),
+    packetWeatherFor: vi.fn(),
+    cancelFlight: vi.fn(),
+    pullBackRelease: vi.fn(),
+  };
 });
 vi.mock("@/lib/api/client", () => ({ ApiError: TestApiError }));
-vi.mock("@/lib/api/ops", () => ({ releaseFlight, updateFlight: vi.fn() }));
+vi.mock("@/lib/api/ops", () => ({
+  releaseFlight,
+  updateFlight: vi.fn(),
+  cancelFlight,
+  pullBackRelease,
+}));
 vi.mock("@/lib/api/dispatch-risk", () => ({ packetWeatherFor }));
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 
-import { releaseFlightAction } from "./actions";
+import {
+  cancelReleasedFlightAction,
+  pullBackReleaseAction,
+  releaseFlightAction,
+} from "./actions";
 
 /**
  * What a dispatcher reads when the release is refused. The three at the
@@ -88,3 +103,48 @@ describe("releaseFlightAction refusals", () => {
     expect(!result.ok && result.error).toMatch(/assigned PIC has hard-block currency items/);
   });
 });
+
+describe("pulling back or cancelling a release (#90)", () => {
+  beforeEach(() => {
+    cancelFlight.mockReset();
+    pullBackRelease.mockReset();
+  });
+
+  it("sends the reason with the pull-back and the cancellation", async () => {
+    pullBackRelease.mockResolvedValueOnce({});
+    cancelFlight.mockResolvedValueOnce({});
+    expect(await pullBackReleaseAction("f-1", "PABE below minimums")).toEqual({ ok: true });
+    expect(pullBackRelease).toHaveBeenCalledWith("f-1", "PABE below minimums");
+    expect(await cancelReleasedFlightAction("f-1", "Customer cancelled")).toEqual({ ok: true });
+    expect(cancelFlight).toHaveBeenCalledWith("f-1", "Customer cancelled");
+  });
+
+  it("says a departed flight can no longer be pulled back", async () => {
+    pullBackRelease.mockRejectedValueOnce(
+      new TestApiError(409, "/ops/flights/f-1/pull-back-release", JSON.stringify({ detail: "flight_already_departed" })),
+    );
+    expect(await pullBackReleaseAction("f-1", "too late")).toEqual({
+      ok: false,
+      error: "This flight has departed, so its release can no longer be taken back.",
+    });
+  });
+
+  it("says when the flight is no longer released", async () => {
+    cancelFlight.mockRejectedValueOnce(
+      new TestApiError(409, "/ops/flights/f-1/cancel", JSON.stringify({ detail: "flight_not_cancellable_in_status_cancelled" })),
+    );
+    expect(await cancelReleasedFlightAction("f-1", "Customer cancelled")).toEqual({
+      ok: false,
+      error: "This flight is no longer released. Refresh to see where it stands.",
+    });
+  });
+
+  it("says who may do it", async () => {
+    pullBackRelease.mockRejectedValueOnce(new TestApiError(403, "/ops/flights/f-1/pull-back-release", "{}"));
+    expect(await pullBackReleaseAction("f-1", "weather")).toEqual({
+      ok: false,
+      error: "Only a dispatcher or an Exec Admin can do this.",
+    });
+  });
+});
+

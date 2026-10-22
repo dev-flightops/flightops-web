@@ -157,6 +157,31 @@ describe("RightColumn / flight-actions row", () => {
     ).not.toBeInTheDocument();
   });
 
+  it("offers pull back and cancel on a released flight, to dispatch, before departure (#90)", () => {
+    const released = baseFlight({
+      status: "released",
+      released_at: "2026-06-01T15:00:00Z",
+      released_by: { id: "u-1", full_name: "Demo Dispatcher", email: "demo@local" },
+    });
+    const { rerender } = render(<RightColumn flight={released} canEditRisk />);
+    expect(screen.getByRole("button", { name: "Pull back release" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Cancel flight" })).toBeInTheDocument();
+
+    // Not for someone who cannot release.
+    rerender(<RightColumn flight={released} />);
+    expect(screen.queryByRole("button", { name: "Pull back release" })).not.toBeInTheDocument();
+
+    // Not once the flight has departed.
+    rerender(
+      <RightColumn
+        flight={{ ...released, actual_departure_at: "2026-06-01T16:00:00Z" }}
+        canEditRisk
+      />,
+    );
+    expect(screen.queryByRole("button", { name: "Pull back release" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Cancel flight" })).not.toBeInTheDocument();
+  });
+
   it("renders 'no actions available' for cancelled / completed flights", () => {
     render(<RightColumn flight={baseFlight({ status: "cancelled" })} />);
     expect(screen.getByText(/^cancelled$/i)).toBeInTheDocument();

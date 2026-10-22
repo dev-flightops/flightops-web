@@ -5,6 +5,8 @@ import { revalidatePath } from "next/cache";
 import { ApiError } from "@/lib/api/client";
 import { packetWeatherFor } from "@/lib/api/dispatch-risk";
 import {
+  cancelFlight,
+  pullBackRelease,
   releaseFlight,
   updateFlight,
   type FlightUpdatePayload,
@@ -216,3 +218,50 @@ export async function updateFlightAction(
   revalidatePath("/dispatch");
   return { ok: true };
 }
+
+/** Take a release back before departure (#90). */
+export async function pullBackReleaseAction(
+  flightId: string,
+  reason: string,
+): Promise<ActionResult> {
+  try {
+    await pullBackRelease(flightId, reason);
+  } catch (err) {
+    return { ok: false, error: withdrawError(err) };
+  }
+  revalidatePath(`/dispatch/${flightId}`);
+  revalidatePath("/dispatch");
+  return { ok: true };
+}
+
+/** Cancel a released flight before departure (#90). */
+export async function cancelReleasedFlightAction(
+  flightId: string,
+  reason: string,
+): Promise<ActionResult> {
+  try {
+    await cancelFlight(flightId, reason);
+  } catch (err) {
+    return { ok: false, error: withdrawError(err) };
+  }
+  revalidatePath(`/dispatch/${flightId}`);
+  revalidatePath("/dispatch");
+  return { ok: true };
+}
+
+function withdrawError(err: unknown): string {
+  if (!(err instanceof ApiError)) return "Couldn't save. Please try again.";
+  if (err.status === 401) return "Your session expired — please sign in again.";
+  if (err.status === 403) return "Only a dispatcher or an Exec Admin can do this.";
+  if (err.status === 422 || err.message.includes("reason_required")) {
+    return "Give the reason, in a few words at least.";
+  }
+  if (err.message.includes("flight_already_departed")) {
+    return "This flight has departed, so its release can no longer be taken back.";
+  }
+  if (err.message.includes("flight_not_released") || err.message.includes("not_cancellable")) {
+    return "This flight is no longer released. Refresh to see where it stands.";
+  }
+  return `Save failed (HTTP ${err.status}).`;
+}
+

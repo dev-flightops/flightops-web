@@ -4,6 +4,7 @@ import { EditFlightDialog } from "@/components/dispatch/edit-flight-dialog";
 import { ReleaseButton } from "@/components/dispatch/release-button";
 import { ReleasedFooter } from "@/components/dispatch/released-footer";
 import { StatusBadge } from "@/components/dispatch/status-badge";
+import { WithdrawRelease } from "@/components/dispatch/withdraw-release";
 import { flightStops } from "@/lib/route";
 import type { DispatchRisk } from "@/lib/api/dispatch-risk";
 import type { AircraftListItem, FlightDetail } from "@/lib/api/types";
@@ -87,6 +88,8 @@ export function RightColumn({
             notamAckedIcaos={notamAckedIcaos}
             staleWeatherAcknowledged={staleWeatherAcknowledged}
             acknowledgedWarnings={acknowledgedWarnings}
+            // The same roles release, cancel and pull back (#90).
+            canDispatch={canEditRisk}
           />
         </div>
       )}
@@ -136,7 +139,9 @@ export function RightColumn({
  * is scheduled / released / cancelled / completed.
  *
  *   scheduled  → [status pill] [Edit] [Release dispatch]
- *   released   → [status pill] + ReleasedFooter strip + [Download PDF]
+ *   released   → [status pill] + ReleasedFooter strip + [Download PDF],
+ *                and before departure, for dispatch, [Pull back release]
+ *                [Cancel flight] (#90)
  *   cancelled/
  *   completed  → [status pill] + small "no actions available" hint
  */
@@ -150,6 +155,7 @@ function FlightActionsRow({
   notamAckedIcaos = [],
   staleWeatherAcknowledged = false,
   acknowledgedWarnings = [],
+  canDispatch = false,
 }: {
   flight: FlightDetail;
   aircraft: AircraftListItem[];
@@ -166,6 +172,8 @@ function FlightActionsRow({
   notamAckedIcaos?: string[];
   staleWeatherAcknowledged?: boolean;
   acknowledgedWarnings?: string[];
+  /** DISPATCH_WRITERS: may pull a release back or cancel the flight (#90). */
+  canDispatch?: boolean;
 }) {
   if (flight.status === "scheduled") {
     return (
@@ -199,8 +207,10 @@ function FlightActionsRow({
     flight.released_at &&
     flight.released_by
   ) {
+    // Who released it on one line, the actions under it: beside the
+    // release line, three buttons stacked in the column's width (#90).
     return (
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="space-y-3">
         <div className="flex items-center gap-3">
           <StatusBadge status={flight.status} />
           <ReleasedFooter
@@ -208,7 +218,12 @@ function FlightActionsRow({
             releasedBy={flight.released_by}
           />
         </div>
-        <DownloadPdfButton flightId={flight.id} />
+        <div className="flex flex-wrap items-center gap-2">
+          {canDispatch && !flight.actual_departure_at && (
+            <WithdrawRelease flightId={flight.id} flightNumber={flight.flight_number} />
+          )}
+          <DownloadPdfButton flightId={flight.id} />
+        </div>
       </div>
     );
   }
