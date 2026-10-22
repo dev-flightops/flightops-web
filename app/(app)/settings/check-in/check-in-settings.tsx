@@ -167,20 +167,20 @@ export function CheckInSettings({
           <p className="text-sm text-muted-foreground">No fields of your own yet.</p>
         ) : (
           <div className="overflow-x-auto">
-            <table className="data-table w-full text-sm">
-              <thead>
+            <table className="w-full text-sm">
+              <thead className="ff-thead">
                 <tr>
-                  <th scope="col">Field</th>
-                  <th scope="col">Key</th>
-                  <th scope="col">Type</th>
-                  <th scope="col">Required</th>
-                  <th scope="col">In Use</th>
+                  <th scope="col" className="px-3 py-2.5">Field</th>
+                  <th scope="col" className="px-3 py-2.5">Key</th>
+                  <th scope="col" className="px-3 py-2.5">Type</th>
+                  <th scope="col" className="px-3 py-2.5">Required</th>
+                  <th scope="col" className="px-3 py-2.5">In Use</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-border">
                 {fields.map((f) => (
                   <tr key={f.id} className={f.is_active ? undefined : "opacity-60"}>
-                    <td>
+                    <td className="px-3 py-2.5">
                       {f.field_label}
                       {f.field_type === "dropdown" && f.field_options ? (
                         <span className="block text-xs text-muted-foreground">
@@ -188,9 +188,9 @@ export function CheckInSettings({
                         </span>
                       ) : null}
                     </td>
-                    <td className="font-mono text-xs">{f.field_key}</td>
-                    <td className="text-xs capitalize">{f.field_type}</td>
-                    <td>
+                    <td className="px-3 py-2.5 font-mono text-xs">{f.field_key}</td>
+                    <td className="px-3 py-2.5 text-xs capitalize">{f.field_type}</td>
+                    <td className="px-3 py-2.5">
                       <input
                         type="checkbox"
                         aria-label={`${f.field_label} required`}
@@ -201,7 +201,7 @@ export function CheckInSettings({
                         }
                       />
                     </td>
-                    <td>
+                    <td className="px-3 py-2.5">
                       <input
                         type="checkbox"
                         aria-label={`${f.field_label} in use`}

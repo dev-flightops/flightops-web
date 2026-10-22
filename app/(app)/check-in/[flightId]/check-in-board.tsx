@@ -50,6 +50,14 @@ const lbs = (v: string | number | null | undefined) =>
 const time = (iso: string | null) =>
   iso ? new Date(iso).toISOString().slice(11, 16) + "Z" : "";
 
+const TICKET_LABEL: Record<string, string> = {
+  revenue: "Revenue",
+  comp: "Comp",
+  employee: "Employee",
+  standby: "Standby",
+  cargo_only: "Cargo-only",
+};
+
 type Dialogs =
   | { kind: "check-in"; pax: CheckInPax }
   | { kind: "no-show"; pax: CheckInPax }
@@ -200,38 +208,38 @@ export function CheckInBoard({ initial, canAct }: { initial: CheckInView; canAct
       </StatStrip>
 
       <section aria-labelledby="pax-heading">
-        <h2 id="pax-heading" className="section-title mb-2">
+        <h2 id="pax-heading" className="panel-title mb-2">
           Passengers
         </h2>
         {view.passengers.length === 0 ? (
           <p className="text-sm text-muted-foreground">No passengers on this flight&rsquo;s manifest.</p>
         ) : (
           <div className="overflow-x-auto rounded-lg border border-border bg-card">
-            <table className="data-table w-full text-sm">
-              <thead>
+            <table className="w-full text-sm">
+              <thead className="ff-thead">
                 <tr>
-                  <th scope="col">Passenger</th>
-                  <th scope="col">Seat</th>
-                  <th scope="col">Ticket</th>
-                  <th scope="col" className="text-right">
+                  <th scope="col" className={TH}>Passenger</th>
+                  <th scope="col" className={TH}>Seat</th>
+                  <th scope="col" className={TH}>Ticket</th>
+                  <th scope="col" className={cn(TH, "text-right")}>
                     Bags
                   </th>
-                  <th scope="col" className="text-right">
+                  <th scope="col" className={cn(TH, "text-right")}>
                     Weight
                   </th>
-                  <th scope="col">Status</th>
-                  <th scope="col" className="text-right">
+                  <th scope="col" className={TH}>Status</th>
+                  <th scope="col" className={cn(TH, "text-right")}>
                     <span className="sr-only">Actions</span>
                   </th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-border">
                 {view.passengers.map((p) => {
                   const status = statusOf(p);
                   const weighed = p.planned_weight_lbs !== null && p.planned_weight_lbs !== p.weight_lbs;
                   return (
-                    <tr key={p.id} className={cn(p.check_in_status === "no_show" && "opacity-60")}>
-                      <td>
+                    <tr key={p.id} className={cn("hover:bg-accent", p.check_in_status === "no_show" && "opacity-60")}>
+                      <td className={TD}>
                         <span className="font-semibold">
                           {p.last_name}, {p.first_name}
                         </span>
@@ -242,16 +250,16 @@ export function CheckInBoard({ initial, canAct }: { initial: CheckInView; canAct
                         ) : null}
                         {p.notes ? <span className="block text-xs text-muted-foreground">{p.notes}</span> : null}
                       </td>
-                      <td className="font-mono text-xs">{p.seat_number ?? "—"}</td>
-                      <td className="text-xs capitalize">{p.ticket_type.replace("_", " ")}</td>
-                      <td className="text-right font-mono text-xs">{p.bags_count ?? "—"}</td>
-                      <td className="whitespace-nowrap text-right font-mono text-xs">
+                      <td className={cn(TD, "font-mono text-xs")}>{p.seat_number ?? "—"}</td>
+                      <td className={cn(TD, "text-xs capitalize")}>{p.ticket_type.replace("_", " ")}</td>
+                      <td className={cn(TD, "text-right font-mono text-xs")}>{p.bags_count ?? "—"}</td>
+                      <td className={cn(TD, "whitespace-nowrap text-right font-mono text-xs")}>
                         {lbs(p.weight_lbs)}
                         {weighed ? (
                           <span className="block text-muted-foreground">{`booked ${lbs(p.planned_weight_lbs)}`}</span>
                         ) : null}
                       </td>
-                      <td className="whitespace-nowrap">
+                      <td className={cn(TD, "whitespace-nowrap")}>
                         <StatusMark label={status.label} tone={status.tone} />
                         {p.check_in_status === "no_show" ? (
                           <span className="block text-xs text-muted-foreground">{reasonLabel(p.no_show_reason)}</span>
@@ -263,7 +271,7 @@ export function CheckInBoard({ initial, canAct }: { initial: CheckInView; canAct
                           </span>
                         ) : null}
                       </td>
-                      <td className="whitespace-nowrap text-right">
+                      <td className={cn(TD, "whitespace-nowrap text-right")}>
                         {open ? (
                           <RowActions
                             pax={p}
@@ -342,6 +350,9 @@ export function CheckInBoard({ initial, canAct }: { initial: CheckInView; canAct
     </div>
   );
 }
+
+const TH = "px-3 py-2.5";
+const TD = "px-3 py-2.5 align-top";
 
 const ACTION = "text-[0.68rem] font-bold uppercase tracking-[0.1em] hover:underline underline-offset-4 disabled:opacity-50";
 
@@ -473,7 +484,7 @@ function CheckInDialog({
         <DialogHeader>
           <DialogTitle>{`${editing ? "Edit Check-in" : "Check In"}: ${pax.first_name} ${pax.last_name}`}</DialogTitle>
           <DialogDescription>
-            {`${pax.ticket_type.replace("_", " ")} ticket, booked at ${lbs(pax.planned_weight_lbs ?? pax.weight_lbs)} with ${lbs(pax.planned_baggage_lbs ?? pax.baggage_lbs)} of bags.`}
+            {`${TICKET_LABEL[pax.ticket_type] ?? pax.ticket_type} ticket, booked at ${lbs(pax.planned_weight_lbs ?? pax.weight_lbs)} with ${lbs(pax.planned_baggage_lbs ?? pax.baggage_lbs)} of bags.`}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={submit} className="space-y-4">
