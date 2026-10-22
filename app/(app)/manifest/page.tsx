@@ -385,6 +385,14 @@ function DayBlock({
                     <FlightStatusBadge status={f.status} />
                   </td>
                   <td className="whitespace-nowrap px-4 py-3 text-right">
+                    {f.status === "cancelled" ? null : (
+                      <Link
+                        href={`/check-in/${f.id}`}
+                        className="mr-4 text-xs font-semibold text-primary hover:underline"
+                      >
+                        Check-in →
+                      </Link>
+                    )}
                     <Link
                       href={`/manifest/${f.id}`}
                       className="text-xs font-semibold text-primary hover:underline"

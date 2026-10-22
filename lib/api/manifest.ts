@@ -32,6 +32,10 @@ export interface ManifestPaxRow {
   contact_phone: string | null;
   contact_email: string | null;
   notes: string | null;
+  /** Where they are at gate check-in (#103); a no-show is out of the
+   *  totals. Absent from servers that predate it. */
+  check_in_status?: "booked" | "checked_in" | "boarded" | "no_show";
+  no_show_reason?: string | null;
 }
 
 export interface ManifestCargoRow {
