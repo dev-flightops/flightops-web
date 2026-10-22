@@ -109,7 +109,7 @@ function FleetTable({
         <tr>
           <th scope="col" className="px-4 py-2 text-left">Tail</th>
           <th scope="col" className="px-4 py-2 text-left">Model</th>
-          <th scope="col" className="px-4 py-2 text-right">Seats</th>
+          <th scope="col" className="px-4 py-2 text-right">Passenger Seats</th>
           <th scope="col" className="px-4 py-2 text-right">Useful load</th>
           <th scope="col" className="px-4 py-2 text-right">Actions</th>
         </tr>

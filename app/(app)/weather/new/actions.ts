@@ -65,7 +65,7 @@ export async function createBriefingAction(
   if (parsed.data.airports.length === 0) {
     return {
       status: "field-errors",
-      errors: { airports_raw: "Enter at least one valid 3–4 letter ICAO." },
+      errors: { airports_raw: "Enter at least one 3- or 4-character airport code (ICAO or FAA)." },
     };
   }
   if (parsed.data.airports.length > 10) {

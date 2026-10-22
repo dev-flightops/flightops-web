@@ -11,6 +11,11 @@ vi.mock("./sic-picker", () => ({
     <div data-testid="sic-picker" data-readonly={String(readOnly)} />
   ),
 }));
+vi.mock("./flight-type-picker", () => ({
+  FlightTypePicker: ({ initialType }: { initialType: string }) => (
+    <div data-testid="flight-type-picker" data-type={initialType} />
+  ),
+}));
 
 import { FlightInfoTab } from "./flight-info-tab";
 
@@ -40,5 +45,26 @@ describe("FlightInfoTab: who picks the SIC (29 Sep)", () => {
   it("is read-only when the caller may not change the draft", async () => {
     render(await FlightInfoTab({ log: makeLog(), canEdit: false }));
     expect(screen.getByTestId("sic-picker")).toHaveAttribute("data-readonly", "true");
+  });
+});
+
+describe("FlightInfoTab: the flight type (#104)", () => {
+  it("can be changed on a draft by whoever may edit it", async () => {
+    render(await FlightInfoTab({ log: makeLog() }));
+    expect(screen.getByTestId("flight-type-picker")).toHaveAttribute("data-type", "advisory");
+  });
+
+  it("is plain text on a submitted log, or for someone who may only read it", async () => {
+    for (const props of [{ log: makeLog({ status: "submitted" }) }, { log: makeLog(), canEdit: false }]) {
+      const { unmount } = render(await FlightInfoTab(props));
+      expect(screen.queryByTestId("flight-type-picker")).toBeNull();
+      expect(screen.getByText("Advisory")).toBeInTheDocument();
+      unmount();
+    }
+  });
+
+  it("no longer shows the developer note about Tab 1 fields", async () => {
+    render(await FlightInfoTab({ log: makeLog() }));
+    expect(screen.queryByText(/ship as a follow-up/)).toBeNull();
   });
 });

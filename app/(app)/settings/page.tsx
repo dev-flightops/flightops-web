@@ -115,7 +115,7 @@ export default async function SettingsLandingPage() {
         },
         {
           label: "Fleet",
-          blurb: "Add, edit and retire aircraft. Seats and useful load feed the Fleet Board and load planning.",
+          blurb: "Add, edit and retire aircraft. Passenger seats and useful load feed the Fleet Board and load planning.",
           value: `${activeAircraft} active`,
           href: "/settings/fleet",
         },

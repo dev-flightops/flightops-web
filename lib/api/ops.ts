@@ -239,6 +239,9 @@ export interface FlightUpdatePayload {
   pax_count?: number;
   cargo_lbs?: number;
   notes?: string | null;
+  /** Replace the route (#106): two or more legs make it multi-stop and
+   *  set the endpoints from them; [] makes it a single leg again. */
+  legs?: FlightLegPayload[];
 }
 
 export async function updateFlight(

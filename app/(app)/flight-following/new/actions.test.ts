@@ -112,6 +112,37 @@ describe("createFlightAction", () => {
     expect(result.status).toBe("field-errors");
   });
 
+  it("takes FAA identifiers with digits, as for Levelock (9Z8), at either end and as a stop (#105)", async () => {
+    createFlight.mockResolvedValueOnce({});
+    const fd = makeFormData({ origin: "pakn", destination: "9z8" });
+    fd.append("stop_destination", "pakn");
+    fd.append("stop_departure", "2026-07-01T16:30");
+    fd.append("stop_arrival", "2026-07-01T17:00");
+    await expect(createFlightAction({ status: "idle" }, fd)).rejects.toThrow("NEXT_REDIRECT");
+    const arg = createFlight.mock.calls[0][0];
+    expect(arg.legs.map((l: { origin: string; destination: string }) => `${l.origin}-${l.destination}`)).toEqual([
+      "PAKN-9Z8",
+      "9Z8-PAKN",
+    ]);
+  });
+
+  it("puts a seat refusal under Passengers (#107)", async () => {
+    createFlight.mockReset().mockRejectedValueOnce(
+      new TestApiError(
+        409,
+        "/ops/flights",
+        JSON.stringify({
+          detail: { error: "more_passengers_than_seats", tail_number: "N503PA", seats: 9, passengers: 10 },
+        }),
+      ),
+    );
+    const result = await createFlightAction({ status: "idle" }, makeFormData({ pax_count: "10" }));
+    expect(result).toMatchObject({
+      status: "field-errors",
+      errors: { pax_count: expect.stringMatching(/^N503PA has 9 passenger seats/) },
+    });
+  });
+
   it("maps backend aircraft_not_active to a Maintenance hint", async () => {
     createFlight.mockReset().mockRejectedValueOnce(
       new TestApiError(
@@ -310,7 +341,7 @@ describe("createFlightAction — multi-leg routes (client, 27 Sep)", () => {
       status: "field-errors",
       errors: {
         stop_0_departure: "Departs before the leg before it lands",
-        stop_1_destination: "3- or 4-letter ICAO code",
+        stop_1_destination: "3- or 4-character airport code (ICAO or FAA)",
         stop_1_arrival: "Arrival must be after departure",
       },
       stops: [

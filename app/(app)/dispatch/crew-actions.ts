@@ -45,9 +45,14 @@ export async function assignCrewAction(
   flightId: string,
   userId: string,
   crewRole: CrewRole,
+  options: { replace?: boolean } = {},
 ): Promise<CrewActionResult> {
   try {
-    await assignFlightCrew(flightId, { user_id: userId, crew_role: crewRole });
+    await assignFlightCrew(flightId, {
+      user_id: userId,
+      crew_role: crewRole,
+      ...(options.replace ? { replace: true } : {}),
+    });
     revalidatePath("/dispatch");
     // The pilot's own page reads the same rows, and a dispatcher who
     // rosters someone expects them to see it without waiting for a cache

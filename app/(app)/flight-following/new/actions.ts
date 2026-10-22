@@ -6,6 +6,7 @@ import { z } from "zod";
 import { loadZoneTable } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
 import { createFlight } from "@/lib/api/ops";
+import { passengerSeatsRefusal } from "@/lib/flights/passenger-seats";
 import { localToUtcIso, zoneFor } from "@/lib/format/local-time";
 
 /**
@@ -16,6 +17,11 @@ import { localToUtcIso, zoneFor } from "@/lib/format/local-time";
  * object the client can render under the relevant inputs.
  */
 
+/** ICAO or FAA: the client's villages include FAA-only fields such as
+ *  Levelock, 9Z8, which the letters-only check refused (#105). */
+const AIRPORT_CODE = /^[A-Z0-9]{3,4}$/;
+const AIRPORT_CODE_MESSAGE = "3- or 4-character airport code (ICAO or FAA)";
+
 const FlightCreateSchema = z
   .object({
     flight_number: z
@@ -24,16 +30,8 @@ const FlightCreateSchema = z
       .min(1, "Flight number is required")
       .max(12, "Max 12 characters"),
     aircraft_id: z.string().uuid("Pick an aircraft"),
-    origin: z
-      .string()
-      .trim()
-      .toUpperCase()
-      .regex(/^[A-Z]{3,4}$/, "3- or 4-letter ICAO code"),
-    destination: z
-      .string()
-      .trim()
-      .toUpperCase()
-      .regex(/^[A-Z]{3,4}$/, "3- or 4-letter ICAO code"),
+    origin: z.string().trim().toUpperCase().regex(AIRPORT_CODE, AIRPORT_CODE_MESSAGE),
+    destination: z.string().trim().toUpperCase().regex(AIRPORT_CODE, AIRPORT_CODE_MESSAGE),
     scheduled_departure_at: z
       .string()
       .min(1, "Departure time is required"),
@@ -136,8 +134,8 @@ function stopErrors(
   }
   let previousArrival = firstArrival;
   stops.forEach((stop, i) => {
-    if (!/^[A-Z]{3,4}$/.test(stop.destination)) {
-      errors[`stop_${i}_destination`] = "3- or 4-letter ICAO code";
+    if (!AIRPORT_CODE.test(stop.destination)) {
+      errors[`stop_${i}_destination`] = AIRPORT_CODE_MESSAGE;
     }
     if (!stop.departure) {
       errors[`stop_${i}_departure`] = "Departure time is required";
@@ -282,6 +280,10 @@ export async function createFlightAction(
           values,
           stops,
         };
+      }
+      const overSeats = passengerSeatsRefusal(err);
+      if (overSeats) {
+        return { status: "field-errors", errors: { pax_count: overSeats }, values, stops };
       }
       return {
         status: "api-error",

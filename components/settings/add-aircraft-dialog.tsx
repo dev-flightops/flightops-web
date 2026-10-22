@@ -82,7 +82,7 @@ export function AddAircraftDialog() {
             <div className="grid gap-4 sm:grid-cols-3">
               <Field
                 name="seats"
-                label="Seats"
+                label="Passenger seats"
                 type="number"
                 min={1}
                 max={999}
@@ -106,6 +106,10 @@ export function AddAircraftDialog() {
                 error={fieldError("base")}
               />
             </div>
+            <p className="-mt-2 text-xs text-muted-foreground">
+              Passenger seats leave out the pilot&rsquo;s and co-pilot&rsquo;s seats. Useful load is
+              the max gross weight less the empty weight.
+            </p>
 
             {/* HALT-2 — airframe identity. Grouped as its own row because
                 these three read together on the fleet card:

@@ -150,7 +150,7 @@ export function OpenFlightForm({
         </FieldSelect>
         <Field
           name="origin"
-          label="Origin ICAO"
+          label="Origin"
           required
           placeholder="PANC"
           defaultValue={submitted("origin")}
@@ -162,7 +162,7 @@ export function OpenFlightForm({
         />
         <Field
           name="destination"
-          label={stops.length > 0 ? "Leg 1 destination ICAO" : "Destination ICAO"}
+          label={stops.length > 0 ? "Leg 1 destination" : "Destination"}
           required
           placeholder="PAEN"
           defaultValue={submitted("destination")}

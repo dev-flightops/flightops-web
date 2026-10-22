@@ -103,14 +103,16 @@ export function PicPicker({
     setError(null);
     startTransition(async () => {
       if (flightId) {
-        // Persist first. If the assignment is refused — someone else is
-        // already PIC — the URL should not move either, or the
-        // compliance gate would start describing a pilot who is not on
-        // the flight.
+        // Persist first. If the assignment is refused, the URL should
+        // not move either, or the compliance gate would start describing
+        // a pilot who is not on the flight. Picking a different pilot
+        // means "this one instead": the old PIC is stood down in the
+        // same step (#109), where the dispatcher used to have to clear
+        // the picker first.
         const result =
           next === ""
             ? await unassignCrewAction(flightId, currentPicId ?? "")
-            : await assignCrewAction(flightId, next, "pic");
+            : await assignCrewAction(flightId, next, "pic", { replace: true });
         if (!result.ok) {
           setError(result.error);
           return;
