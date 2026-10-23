@@ -140,7 +140,24 @@ describe("PicPicker — persisting the choice", () => {
       screen.getByLabelText("Pilot in Command"),
       sarah.pilot.id,
     );
-    expect(assignCrewAction).toHaveBeenCalledWith("f-1", sarah.pilot.id, "pic");
+    expect(assignCrewAction).toHaveBeenCalledWith("f-1", sarah.pilot.id, "pic", {
+      replace: true,
+    });
+  });
+
+  it("swaps the PIC in one step, without clearing the picker first (#109)", async () => {
+    render(
+      <PicPicker
+        options={[sarah, bob, alice]}
+        currentPicId={sarah.pilot.id}
+        flightId="f-1"
+      />,
+    );
+    await userEvent.selectOptions(screen.getByLabelText("Pilot in Command"), bob.pilot.id);
+    expect(unassignCrewAction).not.toHaveBeenCalled();
+    expect(assignCrewAction).toHaveBeenCalledTimes(1);
+    expect(assignCrewAction).toHaveBeenCalledWith("f-1", bob.pilot.id, "pic", { replace: true });
+    expect(replace).toHaveBeenCalled();
   });
 
   it("stands the pilot down when the selection is cleared", async () => {

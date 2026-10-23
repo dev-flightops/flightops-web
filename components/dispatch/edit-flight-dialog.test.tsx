@@ -142,6 +142,36 @@ describe("EditFlightDialog", () => {
     });
   });
 
+  it("adds a stop to a one-leg flight, departing when the first leg lands (#106)", async () => {
+    updateFlightAction.mockReset().mockResolvedValue({ ok: true });
+    const user = userEvent.setup();
+    render(<EditFlightDialog flight={baseFlight} aircraft={[aircraft207]} zones={ZONES} />);
+    await user.click(screen.getByRole("button", { name: /edit/i }));
+    await user.click(screen.getByRole("button", { name: "+ Add Stop" }));
+    expect(screen.getByLabelText("Leg 2 Departure (AKDT)")).toHaveValue("2026-06-01T08:00");
+    await user.type(screen.getByLabelText("Leg 2 Destination"), "padu");
+    fireEvent.change(screen.getByLabelText("Leg 2 Arrival (AKDT)"), {
+      target: { value: "2026-06-01T10:00" },
+    });
+    await user.click(screen.getByRole("button", { name: /save changes/i }));
+    expect(updateFlightAction).toHaveBeenLastCalledWith(baseFlight.id, {
+      legs: [
+        {
+          origin: "PADU",
+          destination: "PANC",
+          scheduled_departure_at: "2026-06-01T14:00:00Z",
+          scheduled_arrival_at: "2026-06-01T16:00:00Z",
+        },
+        {
+          origin: "PANC",
+          destination: "PADU",
+          scheduled_departure_at: "2026-06-01T16:00:00Z",
+          scheduled_arrival_at: "2026-06-01T18:00:00Z",
+        },
+      ],
+    });
+  });
+
   it("closes without calling the server action when no fields changed", async () => {
     updateFlightAction.mockReset();
     const user = userEvent.setup();
@@ -178,22 +208,78 @@ describe("EditFlightDialog — a multi-leg flight", () => {
     ],
   };
 
-  it("shows the route as its legs and keeps it out of the change", async () => {
-    // Moving one end of a multi-leg route on its own would leave the
-    // legs disagreeing with it; the API refuses (flight_has_legs).
+  it("shows every leg, and a passengers-only edit leaves the route alone", async () => {
     updateFlightAction.mockResolvedValue({ ok: true });
     const user = userEvent.setup();
-    render(<EditFlightDialog flight={multiLeg} aircraft={[aircraft207, aircraft510]} />);
+    render(<EditFlightDialog flight={multiLeg} aircraft={[aircraft207, aircraft510]} zones={ZONES} />);
     await user.click(screen.getByRole("button", { name: /edit/i }));
-    expect(screen.getByText(/This flight has 2 legs \(PABE → PAHP → PASM\)/)).toBeInTheDocument();
-    expect(screen.getByLabelText(/Origin/)).toHaveAttribute("readonly");
-    expect(screen.getByLabelText(/Arrival/)).toHaveAttribute("readonly");
+    expect(screen.getByLabelText("Origin")).toHaveValue("PABE");
+    expect(screen.getByLabelText("Leg 1 Destination")).toHaveValue("PAHP");
+    expect(screen.getByLabelText("Leg 2 Destination")).toHaveValue("PASM");
+    expect(screen.getByLabelText("Leg 2 Departure (AKDT)")).toHaveValue("2026-06-01T07:00");
 
     const pax = screen.getByLabelText(/passengers/i);
     await user.clear(pax);
     await user.type(pax, "6");
     await user.click(screen.getByRole("button", { name: /save changes/i }));
     expect(updateFlightAction).toHaveBeenLastCalledWith(multiLeg.id, { pax_count: 6 });
+  });
+
+  it("changes a stop and sends the whole route (#106)", async () => {
+    updateFlightAction.mockReset().mockResolvedValue({ ok: true });
+    const user = userEvent.setup();
+    render(<EditFlightDialog flight={multiLeg} aircraft={[aircraft207]} zones={ZONES} />);
+    await user.click(screen.getByRole("button", { name: /edit/i }));
+    const dest = screen.getByLabelText("Leg 2 Destination");
+    await user.clear(dest);
+    await user.type(dest, "9z8");
+    await user.click(screen.getByRole("button", { name: /save changes/i }));
+    expect(updateFlightAction).toHaveBeenLastCalledWith(multiLeg.id, {
+      legs: [
+        {
+          origin: "PABE",
+          destination: "PAHP",
+          scheduled_departure_at: "2026-06-01T14:00:00Z",
+          scheduled_arrival_at: "2026-06-01T14:40:00Z",
+        },
+        {
+          origin: "PAHP",
+          destination: "9Z8",
+          scheduled_departure_at: "2026-06-01T15:00:00Z",
+          scheduled_arrival_at: "2026-06-01T15:35:00Z",
+        },
+      ],
+    });
+  });
+
+  it("takes the stops off, making it one leg again", async () => {
+    updateFlightAction.mockReset().mockResolvedValue({ ok: true });
+    const user = userEvent.setup();
+    render(<EditFlightDialog flight={multiLeg} aircraft={[aircraft207]} zones={ZONES} />);
+    await user.click(screen.getByRole("button", { name: /edit/i }));
+    await user.click(screen.getByRole("button", { name: "Remove leg 2" }));
+    expect(screen.queryByLabelText("Leg 2 Destination")).toBeNull();
+    await user.click(screen.getByRole("button", { name: /save changes/i }));
+    expect(updateFlightAction).toHaveBeenLastCalledWith(multiLeg.id, {
+      legs: [],
+      origin: "PABE",
+      destination: "PAHP",
+      scheduled_departure_at: "2026-06-01T14:00:00Z",
+      scheduled_arrival_at: "2026-06-01T14:40:00Z",
+    });
+  });
+
+  it("refuses a stop that departs before the leg before it lands", async () => {
+    updateFlightAction.mockReset();
+    const user = userEvent.setup();
+    render(<EditFlightDialog flight={multiLeg} aircraft={[aircraft207]} zones={ZONES} />);
+    await user.click(screen.getByRole("button", { name: /edit/i }));
+    fireEvent.change(screen.getByLabelText("Leg 2 Departure (AKDT)"), {
+      target: { value: "2026-06-01T06:30" },
+    });
+    await user.click(screen.getByRole("button", { name: /save changes/i }));
+    expect(await screen.findByText("Departs before the leg before it lands")).toBeInTheDocument();
+    expect(updateFlightAction).not.toHaveBeenCalled();
   });
 
   it("does not send the times back even when they do not round-trip", async () => {

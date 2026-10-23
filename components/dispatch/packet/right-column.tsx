@@ -1,5 +1,6 @@
 
 import { DownloadPdfButton } from "@/components/dispatch/download-pdf-button";
+import { CancelFlight } from "@/components/dispatch/cancel-flight";
 import { EditFlightDialog } from "@/components/dispatch/edit-flight-dialog";
 import { ReleaseButton } from "@/components/dispatch/release-button";
 import { ReleasedFooter } from "@/components/dispatch/released-footer";
@@ -181,6 +182,9 @@ function FlightActionsRow({
         <div className="flex flex-wrap items-center gap-3">
           <StatusBadge status={flight.status} />
           <EditFlightDialog flight={flight} aircraft={aircraft} zones={zones} />
+          {canDispatch ? (
+            <CancelFlight flightId={flight.id} flightNumber={flight.flight_number} />
+          ) : null}
           <ReleaseButton
             flightId={flight.id}
             flightNumber={flight.flight_number}

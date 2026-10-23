@@ -85,7 +85,7 @@ describe("createBriefingAction", () => {
 
     expect(result.status).toBe("field-errors");
     if (result.status === "field-errors") {
-      expect(result.errors.airports_raw).toMatch(/valid 3–4 letter ICAO/i);
+      expect(result.errors.airports_raw).toMatch(/3- or 4-character airport code/i);
     }
     expect(createWeatherBriefing).not.toHaveBeenCalled();
   });

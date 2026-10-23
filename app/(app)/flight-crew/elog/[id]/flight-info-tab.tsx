@@ -4,12 +4,13 @@ import { getComplianceBoard } from "@/lib/api/ops";
 import type { FlightLogResponse, UserRef } from "@/lib/api/types";
 
 import { FLIGHT_TYPE_LABELS } from "./flight-type-labels";
+import { FlightTypePicker } from "./flight-type-picker";
 import { SicPicker } from "./sic-picker";
 
 /**
  * Tab 1 — Flight Info. Read-only render of the fields on the
- * FlightLog row plus the editable SIC picker (when the log is in
- * draft state).
+ * FlightLog row plus the editable flight type (#104) and SIC picker
+ * (when the log is in draft state).
  *
  * Mirrors the top half of legacy log_page.html Tab 1 — same field
  * order so a pilot moving between systems stays oriented.
@@ -55,7 +56,11 @@ export async function FlightInfoTab({
       <div className="grid grid-cols-2 gap-x-6 gap-y-4 md:grid-cols-4">
         <ReadOnlyField label="Flight Number" value={log.flight_number ?? "—"} />
         <ReadOnlyField label="Log Number" value={log.log_number} mono />
-        <ReadOnlyField label="Flight Type" value={FLIGHT_TYPE_LABELS[log.flight_type]} />
+        {readOnly ? (
+          <ReadOnlyField label="Flight Type" value={FLIGHT_TYPE_LABELS[log.flight_type]} />
+        ) : (
+          <FlightTypePicker logId={log.id} initialType={log.flight_type} />
+        )}
         <ReadOnlyField label="Date" value={log.flight_date} />
       </div>
 
@@ -88,12 +93,6 @@ export async function FlightInfoTab({
           badge is permanent and will appear in the flight history table.
         </p>
       )}
-
-      <p className="notice notice-gray text-muted-foreground">
-        Editable Tab-1 fields (Hobbs start/end, total block/flight time, log
-        page number) ship as a follow-up — they need their backend columns
-        first.
-      </p>
     </div>
   );
 }

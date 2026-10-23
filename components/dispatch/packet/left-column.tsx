@@ -86,7 +86,9 @@ export async function LeftColumn({
           One ICAO per line — origin first, destination last. Blur (or
           Cmd/Ctrl-Enter) refreshes the Weather panel for every stop.
         </p>
-        <RouteInput defaultText={icaos.join("\n")} />
+        {/* Keyed to the route so an edited flight's new stops (#106)
+            replace what the box was first given, not only on reload. */}
+        <RouteInput key={icaos.join(",")} defaultText={icaos.join("\n")} />
       </SectionPanel>
 
       <WeatherPanel icaos={icaos} />

@@ -11,6 +11,7 @@ import {
   updateFlight,
   type FlightUpdatePayload,
 } from "@/lib/api/ops";
+import { passengerSeatsRefusal } from "@/lib/flights/passenger-seats";
 
 import { belowMinimumsFromError } from "@/lib/frat/weather-minimums";
 
@@ -223,6 +224,8 @@ export async function updateFlightAction(
           error: "This flight has several legs; its route and times are set per leg.",
         };
       }
+      const overSeats = passengerSeatsRefusal(err);
+      if (overSeats) return { ok: false, error: overSeats };
       return { ok: false, error: `Save failed (HTTP ${err.status}).` };
     }
     return { ok: false, error: "Save failed. Please try again." };
@@ -260,6 +263,24 @@ export async function cancelReleasedFlightAction(
   }
   revalidatePath(`/dispatch/${flightId}`);
   revalidatePath("/dispatch");
+  return { ok: true };
+}
+
+/** Cancel a flight that hasn't been released (#106): one planned by
+ *  mistake, or no longer needed. The reason is optional here; the
+ *  flight stays on record as cancelled, nothing is deleted. */
+export async function cancelScheduledFlightAction(
+  flightId: string,
+  reason: string,
+): Promise<ActionResult> {
+  try {
+    await cancelFlight(flightId, reason.trim() || undefined);
+  } catch (err) {
+    return { ok: false, error: withdrawError(err) };
+  }
+  revalidatePath(`/dispatch/${flightId}`);
+  revalidatePath("/dispatch");
+  revalidatePath("/flight-following");
   return { ok: true };
 }
 

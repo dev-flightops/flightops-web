@@ -23,6 +23,7 @@ import {
   type PaxInput,
   type TicketType,
 } from "@/lib/api/manifest";
+import { passengerSeatsRefusal } from "@/lib/flights/passenger-seats";
 
 export interface ManifestFormState {
   status: "idle" | "ok" | "error";
@@ -135,6 +136,8 @@ function _refusal(err: unknown, denied: string): string {
     if (err.status === 401) return "Your session expired. Sign in again, then retry.";
     if (err.status === 403) return denied;
     if (err.status === 404) return "This manifest has changed since the page loaded. Refresh the page.";
+    const overSeats = passengerSeatsRefusal(err);
+    if (overSeats) return overSeats;
     if (err.status === 409) return "This manifest is locked, so it can't be changed.";
     if (err.status === 422) return "Check the fields and try again.";
     return `That was not saved (HTTP ${err.status}).`;

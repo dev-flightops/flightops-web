@@ -35,8 +35,8 @@ describe("StopsEditor", () => {
     render(<Harness />);
     await user.click(screen.getByRole("button", { name: "+ Add stop" }));
     expect(screen.getByRole("group", { name: "Leg 2" })).toHaveTextContent("Leg 2 · from PAHP");
-    await user.type(screen.getByLabelText(/Destination ICAO/), "pasm");
-    expect(screen.getByLabelText(/Destination ICAO/)).toHaveValue("PASM");
+    await user.type(screen.getByLabelText(/Destination/), "pasm");
+    expect(screen.getByLabelText(/Destination/)).toHaveValue("PASM");
     await user.click(screen.getByRole("button", { name: "+ Add stop" }));
     expect(screen.getByRole("group", { name: "Leg 3" })).toHaveTextContent("Leg 3 · from PASM");
   });

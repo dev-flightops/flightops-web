@@ -281,6 +281,9 @@ export interface FlightLogUpdateRequest {
   sic_holds?: number | null;
   sic_ifr_actual_minutes?: number | null;
   sic_ifr_simulated_minutes?: number | null;
+  /** Tab 1's select (#104); it can be changed while the log is a
+   *  draft, never cleared. */
+  flight_type?: FlightType;
 }
 
 export interface FlightLogListResponse {

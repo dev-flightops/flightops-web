@@ -64,7 +64,7 @@ export function StopsEditor({
               <StopField
                 id={`stop-${i}-destination`}
                 name="stop_destination"
-                label="Destination ICAO"
+                label="Destination"
                 value={stop.destination}
                 onChange={(v) => set(i, { destination: v.toUpperCase() })}
                 error={errors[`stop_${i}_destination`]}

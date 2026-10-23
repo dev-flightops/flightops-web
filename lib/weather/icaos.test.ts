@@ -24,12 +24,17 @@ describe("parseIcaos", () => {
     expect(parseIcaos("PANC PAEN panc")).toEqual(["PANC", "PAEN"]);
   });
 
-  it("drops anything that isn't 3-4 letters", () => {
-    expect(parseIcaos("PA P PANI 12 PA12 KLAX !!  PANC")).toEqual([
+  it("drops anything that isn't 3-4 letters or digits", () => {
+    expect(parseIcaos("PA P PANI 12 PA12 KLAX !!  PANC P-AB")).toEqual([
       "PANI",
+      "PA12",
       "KLAX",
       "PANC",
     ]);
+  });
+
+  it("keeps FAA identifiers with digits, such as Levelock's 9Z8 (#105)", () => {
+    expect(parseIcaos("pakn 9z8 z13")).toEqual(["PAKN", "9Z8", "Z13"]);
   });
 
   it("returns an empty array for empty / whitespace-only input", () => {

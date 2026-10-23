@@ -65,7 +65,14 @@ export async function listFlightCrew(
 
 export async function assignFlightCrew(
   flightId: string,
-  input: { user_id: string; crew_role: CrewRole; notes?: string | null },
+  input: {
+    user_id: string;
+    crew_role: CrewRole;
+    notes?: string | null;
+    /** PIC only: stand down the PIC already on the flight in the same
+     *  step (#109). Without it ops refuses a second PIC with 409. */
+    replace?: boolean;
+  },
 ): Promise<CrewAssignment> {
   return apiFetch<CrewAssignment>(`/ops/flights/${flightId}/crew`, {
     method: "POST",
