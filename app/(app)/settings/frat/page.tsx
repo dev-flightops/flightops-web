@@ -5,7 +5,11 @@ import { ApiError } from "@/lib/api/client";
 import { getFratThresholds } from "@/lib/api/auth";
 import { getLatestLimitReading, type LimitReading } from "@/lib/api/document-limits";
 import { listDocuments } from "@/lib/api/documents";
-import type { FratThresholdConfigResponse } from "@/lib/api/types";
+import { listAircraft } from "@/lib/api/ops";
+import { getComplianceSettings } from "@/lib/api/type-qualifications";
+import type { AircraftListItem, FratThresholdConfigResponse } from "@/lib/api/types";
+import { fleetTypes } from "@/lib/fleet-types";
+import { RELEASE_POLICY_ADMINS, hasAnyRole } from "@/lib/roles";
 
 import { saveFratThresholdsAction } from "./actions";
 import {
@@ -13,6 +17,7 @@ import {
   type ComplianceDocument,
 } from "./document-limits-section";
 import { ThresholdForm } from "./threshold-form";
+import { VfrOnlyCard } from "./vfr-only-card";
 
 /**
  * /settings/frat — where this operator's flight-risk bands begin.
@@ -151,6 +156,16 @@ export default async function FratThresholdsPage() {
   // Reading documents for these limits is for those who set them (#47).
   // Soft-fail: losing it costs the section, not the thresholds.
   const sources = canSet && config ? await complianceSources() : null;
+  // The types the dispatch minimums bind (#89) live in ops' compliance
+  // settings, as #87's first-class list does. Soft-fail: losing them
+  // costs the card.
+  const [compliance, aircraft] = await Promise.all([
+    getComplianceSettings().catch(() => null),
+    listAircraft()
+      .then((r) => r.items)
+      .catch(() => [] as AircraftListItem[]),
+  ]);
+  const canChangeTypes = hasAnyRole(session?.roles ?? [], RELEASE_POLICY_ADMINS);
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
@@ -196,6 +211,19 @@ export default async function FratThresholdsPage() {
               <ReadOnlyBands config={config} />
             )}
           </div>
+          {compliance && (
+            <div className="mt-5">
+              <VfrOnlyCard
+                settings={compliance}
+                fleetTypes={fleetTypes(aircraft)}
+                canChange={canChangeTypes}
+                minimums={{
+                  ceilingFt: config.dispatch_min_ceiling_ft,
+                  visibilitySm: config.dispatch_min_visibility_sm,
+                }}
+              />
+            </div>
+          )}
           {sources && (
             <DocumentLimitsSection
               documents={sources.documents}
@@ -206,6 +234,8 @@ export default async function FratThresholdsPage() {
                 crosswind_near_margin_kt: config.crosswind_near_margin_kt,
                 vfr_min_ceiling_ft: config.vfr_min_ceiling_ft,
                 vfr_min_visibility_sm: config.vfr_min_visibility_sm,
+                dispatch_min_ceiling_ft: config.dispatch_min_ceiling_ft,
+                dispatch_min_visibility_sm: config.dispatch_min_visibility_sm,
               }}
             />
           )}

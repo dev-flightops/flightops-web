@@ -143,6 +143,11 @@ export interface ComplianceSettings {
   first_class_medical_types: string[];
   first_class_medical_changed_at: string | null;
   first_class_medical_changed_by: UserRef | null;
+  /** Aircraft types that are not IFR certified, held to the dispatch
+   *  minimums at release (#89). Absent from servers that predate it. */
+  vfr_only_types?: string[];
+  vfr_only_changed_at?: string | null;
+  vfr_only_changed_by?: UserRef | null;
 }
 
 export async function getComplianceSettings(): Promise<ComplianceSettings> {
@@ -167,4 +172,15 @@ export async function updateFirstClassMedicalTypes(
     "/ops/compliance/settings/first-class-medical-types",
     { method: "PUT", body: JSON.stringify({ airframe_types: airframeTypes }) },
   );
+}
+
+/** PUT /ops/compliance/settings/vfr-only-types — the whole list of types
+ *  that are not IFR certified; each must be one of the fleet's (#89). */
+export async function updateVfrOnlyTypes(
+  airframeTypes: string[],
+): Promise<ComplianceSettings> {
+  return apiFetch<ComplianceSettings>("/ops/compliance/settings/vfr-only-types", {
+    method: "PUT",
+    body: JSON.stringify({ airframe_types: airframeTypes }),
+  });
 }

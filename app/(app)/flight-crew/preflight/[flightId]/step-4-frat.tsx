@@ -357,6 +357,40 @@ function scoreToRiskLevel(score: number): FratRiskLevel {
   return "extreme";
 }
 
+const RISK_ORDER: FratRiskLevel[] = ["low", "medium", "high", "extreme"];
+
+/** The higher of two levels. The FRAT is filed at no lower a level than
+ *  the dispatch packet the flight was released on (#88): the client saw
+ *  "risk HIGH on dispatch packet. Then Risk low on the FRAT." The server
+ *  applies the same rule when it files the assessment. */
+function higherRisk(
+  a: FratRiskLevel,
+  b: FratRiskLevel | null | undefined,
+): FratRiskLevel {
+  if (!b) return a;
+  return RISK_ORDER.indexOf(b) > RISK_ORDER.indexOf(a) ? b : a;
+}
+
+/** Why the level is what it is, when the dispatch packet had a say. */
+function PacketLevelNote({
+  level,
+  scoreLevel,
+  packetLevel,
+}: {
+  level: FratRiskLevel;
+  scoreLevel: FratRiskLevel | null | undefined;
+  packetLevel: FratRiskLevel | null | undefined;
+}) {
+  if (!packetLevel) return null;
+  return (
+    <p className="text-[0.7rem] text-muted-foreground">
+      {scoreLevel && level !== scoreLevel
+        ? `Raised to ${RISK_LABEL[level]} by the dispatch packet, which rated this flight ${RISK_LABEL[packetLevel]} at release: the FRAT is filed at no lower a level. The score alone is ${RISK_LABEL[scoreLevel]}.`
+        : `The dispatch packet rated this flight ${RISK_LABEL[packetLevel]} at release.`}
+    </p>
+  );
+}
+
 /** The band as a notice's tone (#81): its colour on the edge and label. */
 const RISK_BAND_CLASSES: Record<FratRiskLevel, string> = {
   low: "notice-green",
@@ -475,7 +509,9 @@ function FratQuestionnaire({
     () => Object.values(answers).reduce((sum, v) => sum + v, 0),
     [answers],
   );
-  const risk = scoreToRiskLevel(total);
+  const scoreRisk = scoreToRiskLevel(total);
+  const packetRisk = fratPrefill?.packet_risk_level ?? null;
+  const risk = higherRisk(scoreRisk, packetRisk);
 
   /**
    * Factors sitting at 0 that nobody has actually assessed.
@@ -708,6 +744,7 @@ function FratQuestionnaire({
             }
           />
         </div>
+        <PacketLevelNote level={risk} scoreLevel={scoreRisk} packetLevel={packetRisk} />
 
         <div>
           <label className="field-label">
@@ -1089,6 +1126,11 @@ function FratResultPanel({
             }
           />
         </div>
+        <PacketLevelNote
+          level={risk}
+          scoreLevel={assessment.score_risk_level}
+          packetLevel={assessment.packet_risk_level}
+        />
 
         {overLimits.length > 0 && (
           /* The operator, 25 September:

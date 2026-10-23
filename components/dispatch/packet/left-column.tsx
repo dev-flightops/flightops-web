@@ -1,5 +1,5 @@
 import type { DispatchRisk } from "@/lib/api/dispatch-risk";
-import type { FlightDetail, RouteFreshness } from "@/lib/api/types";
+import type { FlightDetail, RouteFreshness, WeatherMinimumsView } from "@/lib/api/types";
 
 import { AlternateReviewPanel } from "./alternate-review-panel";
 import { FuelOrderPanel } from "./fuel-order-panel";
@@ -15,6 +15,7 @@ import {
 import { RouteInput } from "./route-input";
 import { SectionPanel } from "./section-panel";
 import { StaleWeatherAck } from "./stale-weather-ack";
+import { WeatherMinimumsNotice } from "./weather-minimums-notice";
 import { WeatherPanel } from "./weather-panel";
 
 /**
@@ -51,6 +52,7 @@ export async function LeftColumn({
   icaos,
   notamAckedIcaos,
   weatherFreshness,
+  weatherMinimums = null,
   staleWeatherAcknowledged,
   canSignOffMaintenance = false,
   risk = null,
@@ -65,6 +67,9 @@ export async function LeftColumn({
    *  failed — the ack control hides, matching the release gate, which
    *  also declines to block on a verdict it could not obtain. */
   weatherFreshness: RouteFreshness | null;
+  /** The dispatch minimums' verdict (#89); null with no flight or when
+   *  the call failed. */
+  weatherMinimums?: WeatherMinimumsView | null;
   staleWeatherAcknowledged: boolean;
   /** Maintenance sign-off (AIRWORTHINESS_WRITERS): defer, close, resolve. */
   canSignOffMaintenance?: boolean;
@@ -85,6 +90,11 @@ export async function LeftColumn({
       </SectionPanel>
 
       <WeatherPanel icaos={icaos} />
+
+      {/* #89: under the weather it judges, above the stale-weather box,
+          since no acknowledgment clears it. Nothing for an aircraft the
+          company hasn't listed as not IFR certified. */}
+      <WeatherMinimumsNotice minimums={weatherMinimums} />
 
       {/* Sits directly under the weather it refers to — the dispatcher
           reads the stale METAR, then ticks the box, without hunting for

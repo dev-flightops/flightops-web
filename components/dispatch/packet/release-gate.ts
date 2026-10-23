@@ -1,4 +1,9 @@
-import type { PicComplianceResponse, RouteFreshness } from "@/lib/api/types";
+import type {
+  PicComplianceResponse,
+  RouteFreshness,
+  WeatherMinimumsView,
+} from "@/lib/api/types";
+import { minimumsBlockReason } from "@/lib/frat/weather-minimums";
 
 import { unacknowledgedNotamIcaos } from "./notam-acks";
 import { seatWarnings } from "./soft-warning-ack-parser";
@@ -32,7 +37,11 @@ import { seatWarnings } from "./soft-warning-ack-parser";
  *   3. NOTAMs              → block until every routed ICAO is ack'd
  *                           (?notams_acked=...), enforcing the promise
  *                           the NOTAM panel makes on screen.
- *   4. Stale / missing weather → block until acknowledged
+ *   4. Below the company's dispatch minimums, for an aircraft that is
+ *                           not IFR certified (#89) → block. No
+ *                           acknowledgment clears it; the server holds
+ *                           it before the stale-weather gate, as here.
+ *   5. Stale / missing weather → block until acknowledged
  *                           (?stale_wx_ack=1). Legacy orders this last
  *                           too (modules/dispatch/form.html), so a
  *                           dispatcher clears currency, then NOTAMs,
@@ -66,6 +75,9 @@ export function computeHardBlockReason(input: {
   weatherFreshness: RouteFreshness | null;
   /** `?stale_wx_ack=1` — dispatcher ticked the weather acknowledgment. */
   staleWeatherAcknowledged: boolean;
+  /** ops `GET /flights/{id}/weather-minimums` (#89). Null when the call
+   *  failed: as for freshness, release still refuses server-side. */
+  weatherMinimums?: WeatherMinimumsView | null;
 }): string | null {
   const {
     picCompliance,
@@ -78,6 +90,7 @@ export function computeHardBlockReason(input: {
     notamAckedIcaos,
     weatherFreshness,
     staleWeatherAcknowledged,
+    weatherMinimums = null,
   } = input;
 
   if (hasSelectedFlight && !picAssigned) {
@@ -115,6 +128,9 @@ export function computeHardBlockReason(input: {
       return `NOTAMs not acknowledged for ${unackedIcaos.join(", ")} — review each stop and check the box before release.`;
     }
   }
+
+  const belowMinimums = hasSelectedFlight ? minimumsBlockReason(weatherMinimums) : null;
+  if (belowMinimums) return belowMinimums;
 
   if (
     hasSelectedFlight &&

@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { TestApiError, createFlight, redirectSpy, loadZoneTable } = vi.hoisted(() => {
+const { TestApiError, createFlight, getWeatherMinimums, redirectSpy, loadZoneTable } = vi.hoisted(() => {
   class TestApiError extends Error {
     constructor(
       public status: number,
@@ -13,6 +13,7 @@ const { TestApiError, createFlight, redirectSpy, loadZoneTable } = vi.hoisted(()
   return {
     TestApiError,
     createFlight: vi.fn(),
+    getWeatherMinimums: vi.fn(),
     // Bases with zones: the departure base's decides how times are read.
     loadZoneTable: vi.fn(async () => ({
       byIcao: { PADU: "America/Anchorage", PADK: "America/Adak" },
@@ -30,7 +31,7 @@ const { TestApiError, createFlight, redirectSpy, loadZoneTable } = vi.hoisted(()
   };
 });
 vi.mock("@/lib/api/client", () => ({ ApiError: TestApiError }));
-vi.mock("@/lib/api/ops", () => ({ createFlight }));
+vi.mock("@/lib/api/ops", () => ({ createFlight, getWeatherMinimums }));
 vi.mock("@/lib/api/auth", () => ({ loadZoneTable }));
 vi.mock("next/navigation", () => ({ redirect: redirectSpy }));
 
@@ -38,6 +39,7 @@ import { createFlightAction } from "./actions";
 
 beforeEach(() => {
   createFlight.mockReset();
+  getWeatherMinimums.mockReset();
   redirectSpy.mockClear();
 });
 
@@ -331,5 +333,37 @@ describe("createFlightAction — multi-leg routes (client, 27 Sep)", () => {
       status: "field-errors",
       errors: { stops: "A flight can have at most 9 legs." },
     });
+  });
+});
+
+describe("createFlightAction and the dispatch minimums (#89)", () => {
+  const OPENED = { id: "f-1", scheduled_departure_at: "2026-07-01T22:00:00Z" };
+
+  it("lands on the packet when the weather is below the minimums", async () => {
+    createFlight.mockResolvedValueOnce(OPENED);
+    getWeatherMinimums.mockResolvedValueOnce({ applies: true, below: true, stations: [] });
+    await expect(createFlightAction({ status: "idle" }, makeFormData())).rejects.toThrow(
+      "NEXT_REDIRECT",
+    );
+    expect(getWeatherMinimums).toHaveBeenCalledWith("f-1");
+    expect(redirectSpy).toHaveBeenCalledWith("/dispatch?flight=f-1&date=2026-07-01");
+  });
+
+  it("goes back to the board when they are met, or don't apply", async () => {
+    createFlight.mockResolvedValueOnce(OPENED);
+    getWeatherMinimums.mockResolvedValueOnce({ applies: false, below: false, stations: [] });
+    await expect(createFlightAction({ status: "idle" }, makeFormData())).rejects.toThrow(
+      "NEXT_REDIRECT",
+    );
+    expect(redirectSpy).toHaveBeenCalledWith("/flight-following");
+  });
+
+  it("goes back to the board when the check can't be made", async () => {
+    createFlight.mockResolvedValueOnce(OPENED);
+    getWeatherMinimums.mockRejectedValueOnce(new Error("ops down"));
+    await expect(createFlightAction({ status: "idle" }, makeFormData())).rejects.toThrow(
+      "NEXT_REDIRECT",
+    );
+    expect(redirectSpy).toHaveBeenCalledWith("/flight-following");
   });
 });

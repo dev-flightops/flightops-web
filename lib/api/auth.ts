@@ -307,6 +307,13 @@ function normalizeFratConfig(
     default_vfr_min_visibility_sm: asNumber(
       config.default_vfr_min_visibility_sm,
     ),
+    // A backend older than #89 sends neither: the GOM's minimums stand in.
+    dispatch_min_ceiling_ft: config.dispatch_min_ceiling_ft ?? 600,
+    dispatch_min_visibility_sm: asNumber(config.dispatch_min_visibility_sm ?? 2),
+    default_dispatch_min_ceiling_ft: config.default_dispatch_min_ceiling_ft ?? 600,
+    default_dispatch_min_visibility_sm: asNumber(
+      config.default_dispatch_min_visibility_sm ?? 2,
+    ),
   };
 }
 
