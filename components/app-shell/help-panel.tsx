@@ -6,6 +6,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
 import { DEPARTMENTS } from "@/components/app-shell/modules";
+import { useAssistant } from "@/components/assistant/assistant-context";
+import { BotGlyph } from "@/components/ff/glyphs";
 import { formatRole } from "@/lib/roles";
 import {
   HELP_ENTRIES,
@@ -40,6 +42,12 @@ import {
  * is in front of them. Legacy opens on a general guide and makes you
  * navigate; this opens on the article for the route you are on, and
  * falls back to search when there is not one.
+ *
+ * ASK (#114)
+ *
+ * Questions go to Peregrine Assistant, the chat above the Safety button,
+ * which answers from these articles and the guides and FAQ on /help. The
+ * panel opens it too, so a reader who comes here to ask finds it.
  *
  * WHEN THERE IS NO ARTICLE IT SAYS SO
  *
@@ -220,6 +228,7 @@ export function HelpPanel() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
+  const assistant = useAssistant();
   const buttonRef = useRef<HTMLDivElement>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
 
@@ -302,15 +311,40 @@ export function HelpPanel() {
           >
             <div className="flex items-center justify-between border-b border-border px-4 py-3">
               <h2 className="panel-title">Help</h2>
-              <button
-                type="button"
-                onClick={() => setOpen(false)}
-                aria-label="Close help"
-                className="btn-caps rounded px-2 py-1 text-[0.68rem] text-muted-foreground hover:text-foreground"
-              >
-                Close
-              </button>
+              <div className="flex items-center gap-1">
+                <Link
+                  href="/help"
+                  onClick={() => setOpen(false)}
+                  className="btn-caps rounded px-2 py-1 text-[0.68rem] text-primary hover:underline"
+                >
+                  All help
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => setOpen(false)}
+                  aria-label="Close help"
+                  className="btn-caps rounded px-2 py-1 text-[0.68rem] text-muted-foreground hover:text-foreground"
+                >
+                  Close
+                </button>
+              </div>
             </div>
+
+            {assistant && (
+              <div className="border-b border-border px-4 py-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setOpen(false);
+                    assistant.setOpen(true);
+                  }}
+                  className="btn-caps inline-flex w-full items-center justify-center gap-2 rounded-md bg-primary px-3 py-2 text-[0.68rem] text-primary-foreground transition hover:brightness-110"
+                >
+                  <BotGlyph size={14} />
+                  Ask Peregrine Assistant
+                </button>
+              </div>
+            )}
 
             <div className="border-b border-border px-4 py-2">
               <input

@@ -179,3 +179,18 @@ export function SpinnerGlyph(props: GlyphProps) {
     </Glyph>
   );
 }
+
+/** Peregrine Assistant (#114): a robot's head with an antenna, the
+ *  chat launcher's and the assistant's mark. */
+export function BotGlyph(props: GlyphProps) {
+  return (
+    <Glyph {...props}>
+      <rect x="2.5" y="5" width="11" height="8.5" />
+      <path d="M8 5V2.8" />
+      <circle cx="8" cy="2" r="1" fill="currentColor" stroke="none" />
+      <path d="M5.8 8.6h.01M10.2 8.6h.01" strokeWidth={2} />
+      <path d="M6 11.2h4" />
+      <path d="M.8 8v3M15.2 8v3" />
+    </Glyph>
+  );
+}

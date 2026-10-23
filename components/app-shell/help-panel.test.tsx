@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
@@ -8,6 +8,9 @@ vi.mock("next/navigation", () => ({
 }));
 
 import { HELP_ENTRIES } from "@/lib/help/catalogue";
+
+import { AssistantProvider } from "@/components/assistant/assistant-context";
+import { AssistantWidget } from "@/components/assistant/assistant-widget";
 
 import { HelpPanel } from "./help-panel";
 
@@ -288,5 +291,29 @@ describe("the richer article fields", () => {
     const user = open("/safety/mine");
     await user.click(screen.getByRole("button", { name: "Help" }));
     expect(screen.queryByText("Written for")).not.toBeInTheDocument();
+  });
+});
+
+describe("ask (#114)", () => {
+  it("opens Peregrine Assistant, and closes itself", async () => {
+    pathname = "/reports/bi";
+    render(
+      <AssistantProvider name="Dana" roles={["dispatcher"]}>
+        <HelpPanel />
+        <AssistantWidget />
+      </AssistantProvider>,
+    );
+    const user = userEvent.setup();
+    await user.click(screen.getByRole("button", { name: "Help" }));
+    const help = screen.getByRole("dialog", { name: "Help" });
+    await user.click(within(help).getByRole("button", { name: "Ask Peregrine Assistant" }));
+    expect(screen.getByRole("dialog", { name: "Peregrine Assistant" })).toBeInTheDocument();
+    expect(screen.queryByRole("dialog", { name: "Help" })).not.toBeInTheDocument();
+  });
+
+  it("has no Ask button outside the staff layout", async () => {
+    const user = open("/reports/bi");
+    await user.click(screen.getByRole("button", { name: "Help" }));
+    expect(screen.queryByRole("button", { name: "Ask Peregrine Assistant" })).not.toBeInTheDocument();
   });
 });

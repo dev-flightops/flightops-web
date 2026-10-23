@@ -1,3 +1,4 @@
+import { OpenAssistantButton } from "@/components/assistant/open-assistant-button";
 import { buttonOutline, buttonSolid } from "@/components/ff/controls";
 import { PageHeader } from "@/components/ff/page-header";
 import { cn } from "@/lib/utils";
@@ -7,7 +8,8 @@ import type { FlightDetail } from "@/lib/api/types";
 
 /**
  * Top header of the dispatch packet page — title on the left, action
- * buttons (mode toggle, AI Assistant, History) on the right.
+ * buttons (mode toggle, AI Assistant, History) on the right. AI
+ * Assistant opens Peregrine Assistant (#114).
  *
  * Matches the legacy `templates/dispatch/form.html` top row. The mode
  * toggle is context-aware: in Planning Mode (no flight, or a flight
@@ -63,15 +65,13 @@ export function PacketHeader({
             + New Flight
           </Link>
 
-          {/* AI Assistant — disabled, M4 (ai-service). */}
-          <button
-            type="button"
-            disabled
-            title="AI Assistant · Coming in M4"
-            className={cn(buttonOutline, "cursor-not-allowed border-status-purple/40 text-status-purple")}
+          {/* AI Assistant opens Peregrine Assistant (#114). */}
+          <OpenAssistantButton
+            className={cn(buttonOutline, "border-status-purple/40 text-status-purple")}
+            disabledClassName={cn(buttonOutline, "cursor-not-allowed border-status-purple/40 text-status-purple")}
           >
             AI Assistant
-          </button>
+          </OpenAssistantButton>
 
           {/* History — disabled, M3 (no dispatch-packet history table yet). */}
           <button
