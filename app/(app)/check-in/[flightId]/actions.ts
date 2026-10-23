@@ -17,6 +17,7 @@ import {
 } from "@/lib/api/check-in";
 import { ApiError, SessionExpiredError } from "@/lib/api/client";
 import { addPax } from "@/lib/api/manifest";
+import { passengerSeatsRefusal } from "@/lib/flights/passenger-seats";
 
 import { refusalMessage } from "./messages";
 
@@ -106,6 +107,10 @@ export async function addWalkUpAction(
     });
   } catch (err) {
     if (err instanceof ApiError) {
+      // The aircraft's passenger seats (#107) before a locked manifest:
+      // both are 409s.
+      const overSeats = passengerSeatsRefusal(err);
+      if (overSeats) return { ok: false, error: overSeats };
       if (err.status === 409) {
         return { ok: false, error: "The manifest is locked, so no one can be added." };
       }
