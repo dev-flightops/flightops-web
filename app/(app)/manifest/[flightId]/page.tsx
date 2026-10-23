@@ -178,6 +178,12 @@ function FlightHeader({
         {lock}
         <FlightStatusBadge status={flight.status} />
         <Link
+          href={`/check-in/${flight.id}`}
+          className="btn-caps rounded-md border border-input px-3 py-1.5 text-foreground hover:bg-accent text-[0.72rem]"
+        >
+          Gate Check-in →
+        </Link>
+        <Link
           href={`/dispatch?flight=${flight.id}`}
           className="btn-caps rounded-md border border-input px-3 py-1.5 text-foreground hover:bg-accent text-[0.72rem]"
         >
