@@ -3,6 +3,7 @@ import { auth } from "@/auth";
 import { AddAirportDialog } from "@/components/village-wx/add-airport-dialog";
 import { formatZuluDateTime } from "@/lib/format/flight-time";
 import { AddReportDialog } from "@/components/village-wx/add-report-dialog";
+import { ApproachToggle } from "@/components/village-wx/approach-toggle";
 import { ApiError } from "@/lib/api/client";
 import type {
   FlightCategory,
@@ -10,7 +11,13 @@ import type {
   VillageWeatherReportResponse,
 } from "@/lib/api/types";
 import { getVillageBoard, listVillageAirports } from "@/lib/api/weather";
-import { hasAnyRole, VILLAGE_WX_REPORTERS } from "@/lib/roles";
+import { hasAnyRole, RELEASE_POLICY_ADMINS, VILLAGE_WX_REPORTERS } from "@/lib/roles";
+import {
+  villageAge,
+  villageSky,
+  villageStaleness,
+  villageWind,
+} from "@/lib/village-weather-format";
 
 import { AutoRefresh } from "./auto-refresh";
 import { DensityToggle } from "./density-toggle";
@@ -35,8 +42,6 @@ import { DensityToggle } from "./density-toggle";
 const VILLAGE_REPORTER_NAMES =
   "dispatchers, pilots, Ground Ops, reservations agents, the Chief Pilot, the Director of Operations or an Exec Admin";
 
-const STALE_YELLOW_MS = 2 * 60 * 60 * 1000;
-const STALE_RED_MS = 4 * 60 * 60 * 1000;
 const UNGROUPED_LABEL = "Unassigned";
 
 export default async function VillageWxPage({
@@ -45,7 +50,9 @@ export default async function VillageWxPage({
   searchParams: Promise<{ density?: string }>;
 }) {
   const { density } = await searchParams;
-  const canReport = hasAnyRole((await auth())?.roles ?? [], VILLAGE_WX_REPORTERS);
+  const roles = (await auth())?.roles ?? [];
+  const canReport = hasAnyRole(roles, VILLAGE_WX_REPORTERS);
+  const canSetApproach = hasAnyRole(roles, RELEASE_POLICY_ADMINS);
   const view: "compact" | "expanded" =
     density === "expanded" ? "expanded" : "compact";
 
@@ -134,7 +141,7 @@ export default async function VillageWxPage({
           <ul className="space-y-2">
             {rows.map((row) => (
               <li key={row.airport.id}>
-                <ReportCard row={row} view={view} now={now} />
+                <ReportCard row={row} view={view} now={now} canSetApproach={canSetApproach} />
               </li>
             ))}
           </ul>
@@ -151,17 +158,20 @@ function ReportCard({
   row,
   view,
   now,
+  canSetApproach = false,
 }: {
   row: VillageBoardRow;
   view: "compact" | "expanded";
   now: number;
+  /** RELEASE_POLICY_ADMINS: may say whether an approach can be flown (#110). */
+  canSetApproach?: boolean;
 }) {
   const { airport, latest_report: r } = row;
   const accent = categoryAccent(r?.flight_category ?? null);
-  const stale = r ? staleness(new Date(r.reported_at).getTime(), now) : null;
+  const stale = r ? villageStaleness(new Date(r.reported_at).getTime(), now) : null;
 
   const ageLabel = r
-    ? formatAge(now - new Date(r.reported_at).getTime())
+    ? villageAge(now - new Date(r.reported_at).getTime())
     : null;
   const reporterName =
     r?.reported_by?.full_name ?? r?.reported_by_name ?? null;
@@ -192,6 +202,12 @@ function ReportCard({
                 No report yet — file the first observation.
               </p>
             )}
+            <ApproachToggle
+              airportId={airport.id}
+              icao={airport.icao}
+              hasApproach={Boolean(airport.has_instrument_approach)}
+              canSet={canSetApproach}
+            />
           </div>
           {r?.flight_category && (
             <CategoryBadge category={r.flight_category} />
@@ -227,8 +243,8 @@ function Conditions({
   report: VillageWeatherReportResponse;
   view: "compact" | "expanded";
 }) {
-  const skyLine = formatSky(report);
-  const windLine = formatWind(report);
+  const skyLine = villageSky(report);
+  const windLine = villageWind(report);
   const altPiece = report.altimeter_in_hg
     ? `${report.altimeter_in_hg.toFixed(2)}"`
     : null;
@@ -364,68 +380,12 @@ function categoryAccent(category: FlightCategory | null) {
 
 // ---------- Formatting helpers --------------------------------------------
 
-function formatSky(r: VillageWeatherReportResponse): string | null {
-  const cloud = r.cloud_cover;
-  // Legacy peregrineflight renders ceiling as a bare number ("1000ft"),
-  // not the US-locale-grouped "1,000ft". Pilots scan ceilings at a
-  // glance — the comma adds visual noise without aiding readability
-  // at the typical 200–10,000 ft range.
-  const ceiling = r.ceiling_ft != null ? `${r.ceiling_ft}ft` : null;
-  const vis = r.visibility_sm != null ? formatVis(r.visibility_sm) : null;
-
-  const left = [cloud, ceiling].filter(Boolean).join(" ");
-  const right = vis ? `Vis ${vis}` : null;
-  const combined = [left || null, right].filter(Boolean).join(" · ");
-  return combined || null;
-}
-
-function formatVis(sm: number): string {
-  if (sm < 0.25) return "< 1/4SM";
-  if (sm < 1) {
-    // Render as a fraction the dispatcher recognizes.
-    const frac = Math.round(sm * 4) / 4;
-    if (frac === 0.25) return "1/4SM";
-    if (frac === 0.5) return "1/2SM";
-    if (frac === 0.75) return "3/4SM";
-  }
-  return `${sm}SM`;
-}
-
-function formatWind(r: VillageWeatherReportResponse): string | null {
-  if (r.wind_speed_kt == null && r.wind_dir_deg == null) return null;
-  if (r.wind_speed_kt === 0) return "Calm";
-  const dir =
-    r.wind_dir_deg != null
-      ? String(r.wind_dir_deg).padStart(3, "0") + "°"
-      : "VRB";
-  const speed = r.wind_speed_kt != null ? `${r.wind_speed_kt}kt` : "";
-  const gust = r.wind_gust_kt ? `G${r.wind_gust_kt}` : "";
-  return `Wind ${dir}/${speed}${gust}`;
-}
-
 // Observation times are Zulu. That is the convention every METAR and TAF
 // on this page is already published in, and a weather stamp rendered in
 // some other clock — silently, with no suffix — is the one thing on a
 // weather board you cannot afford. The version this replaced passed no
 // timeZone, so on a server component it rendered in the host's.
 const formatStamp = formatZuluDateTime;
-
-function formatAge(ms: number): string {
-  if (ms < 60_000) return "<1m";
-  const minutes = Math.floor(ms / 60_000);
-  if (minutes < 60) return `${minutes}m`;
-  const hours = minutes / 60;
-  if (hours < 24) return `${hours.toFixed(hours < 10 ? 1 : 0)}h`;
-  const days = hours / 24;
-  return `${days.toFixed(days < 10 ? 1 : 0)}d`;
-}
-
-function staleness(reportedAtMs: number, nowMs: number): "yellow" | "red" | null {
-  const age = nowMs - reportedAtMs;
-  if (age > STALE_RED_MS) return "red";
-  if (age > STALE_YELLOW_MS) return "yellow";
-  return null;
-}
 
 function groupByRegion(rows: VillageBoardRow[]): [string, VillageBoardRow[]][] {
   const buckets = new Map<string, VillageBoardRow[]>();

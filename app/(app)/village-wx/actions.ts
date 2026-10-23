@@ -6,6 +6,7 @@ import { z } from "zod";
 import {
   createVillageAirport,
   createVillageWeatherReport,
+  setVillageInstrumentApproach,
 } from "@/lib/api/weather";
 import { ApiError } from "@/lib/api/client";
 
@@ -179,4 +180,35 @@ export async function addVillageAirportAction(
   }
   revalidatePath("/village-wx");
   return { status: "ok" };
+}
+
+export type ApproachResult = { ok: true } | { ok: false; error: string };
+
+/** Say whether an instrument approach can be flown at a village airport
+ *  (#110). Without one the company's dispatch minimums hold every flight
+ *  there, so it is the Director of Operations' or an Exec Admin's. */
+export async function setInstrumentApproachAction(
+  airportId: string,
+  hasInstrumentApproach: boolean,
+): Promise<ApproachResult> {
+  try {
+    await setVillageInstrumentApproach(airportId, hasInstrumentApproach);
+  } catch (err) {
+    if (err instanceof ApiError) {
+      if (err.status === 401) {
+        return { ok: false, error: "Your session expired — please sign in again." };
+      }
+      if (err.status === 403) {
+        return {
+          ok: false,
+          error: "Only the Director of Operations or an Exec Admin can change this.",
+        };
+      }
+      return { ok: false, error: `That wasn't saved (HTTP ${err.status}).` };
+    }
+    return { ok: false, error: "That wasn't saved. Try again." };
+  }
+  revalidatePath("/village-wx");
+  revalidatePath("/dispatch");
+  return { ok: true };
 }

@@ -364,3 +364,63 @@ describe("overridesOnRecord", () => {
     expect(overridesOnRecord(null)).toBe(false);
   });
 });
+
+// ---- #89: dispatch minimums for aircraft not IFR certified -------------------
+
+describe("computeHardBlockReason — dispatch minimums", () => {
+  const BELOW = {
+    applies: true,
+    airframe_type: "c207",
+    min_ceiling_ft: 600,
+    min_visibility_sm: "2.0",
+    below: true,
+    stations: [
+      {
+        icao: "PABE",
+        below: true,
+        observations: [
+          {
+            source: "metar" as const,
+            observed_at: "2026-10-20T16:39:00Z",
+            ceiling_ft: 500,
+            visibility_sm: 1.5,
+            below_ceiling: true,
+            below_visibility: true,
+          },
+        ],
+      },
+    ],
+  };
+
+  it("blocks below the minimums, naming the stop and the numbers", () => {
+    const reason = computeHardBlockReason({ ...CLEAR, weatherMinimums: BELOW });
+    expect(reason).toBe(
+      "Below the company's dispatch minimums for aircraft not IFR certified (600 ft / 2 sm): " +
+        "PABE ceiling 500 ft, visibility 1.5 sm. No release until it comes up, or move the " +
+        "flight to an IFR-certified aircraft.",
+    );
+  });
+
+  it("is not cleared by acknowledging stale weather, and comes before it", () => {
+    const reason = computeHardBlockReason({
+      ...CLEAR,
+      weatherMinimums: BELOW,
+      weatherFreshness: freshness({
+        acknowledgment_required: true,
+        stations_requiring_acknowledgment: ["PABE"],
+      }),
+      staleWeatherAcknowledged: true,
+    });
+    expect(reason).toMatch(/dispatch minimums/);
+  });
+
+  it("does not block when they are met, don't apply, or couldn't be read", () => {
+    expect(
+      computeHardBlockReason({ ...CLEAR, weatherMinimums: { ...BELOW, below: false } }),
+    ).toBeNull();
+    expect(
+      computeHardBlockReason({ ...CLEAR, weatherMinimums: { ...BELOW, applies: false } }),
+    ).toBeNull();
+    expect(computeHardBlockReason({ ...CLEAR, weatherMinimums: null })).toBeNull();
+  });
+});
