@@ -51,6 +51,11 @@ vi.mock("@/components/village-wx/add-airport-dialog", () => ({
 vi.mock("./auto-refresh", () => ({
   AutoRefresh: () => null,
 }));
+vi.mock("@/components/village-wx/approach-toggle", () => ({
+  ApproachToggle: ({ icao, hasApproach, canSet }: { icao: string; hasApproach: boolean; canSet: boolean }) => (
+    <div data-testid={`approach-${icao}`} data-has={String(hasApproach)} data-can-set={String(canSet)} />
+  ),
+}));
 vi.mock("./density-toggle", () => ({
   DensityToggle: ({ active }: { active: string }) => (
     <div data-testid="density-toggle" data-active={active} />
@@ -290,4 +295,25 @@ describe("VillageWxPage: who reports village weather (29 Sep)", () => {
       ).toBeInTheDocument();
     },
   );
+});
+
+describe("VillageWxPage: instrument approaches (#110)", () => {
+  it("shows each airport's approach, and only release policy admins may change it", async () => {
+    getVillageBoard.mockResolvedValue({
+      items: [
+        row({ id: "a-1", icao: "PAII", name: "Egegik", has_instrument_approach: false }),
+        row({ id: "a-2", icao: "PAEM", name: "Emmonak", has_instrument_approach: true }),
+      ],
+      total: 2,
+    });
+    const { unmount } = await renderPage();
+    expect(screen.getByTestId("approach-PAII")).toHaveAttribute("data-has", "false");
+    expect(screen.getByTestId("approach-PAEM")).toHaveAttribute("data-has", "true");
+    expect(screen.getByTestId("approach-PAII")).toHaveAttribute("data-can-set", "false");
+    unmount();
+
+    auth.mockResolvedValueOnce({ roles: ["director_of_operations"] });
+    await renderPage();
+    expect(screen.getByTestId("approach-PAII")).toHaveAttribute("data-can-set", "true");
+  });
 });

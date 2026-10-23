@@ -5,14 +5,16 @@ import type {
 } from "@/lib/api/types";
 
 /**
- * The company's dispatch minimums in words (#89).
+ * The company's dispatch minimums in words (#89, #110).
  *
  * The client's GOM: "For dispatchable flight we need a minimum of 600 ft
  * ceilings and 2 sm of visibility for VFR flight in IFR conditions", and
  * an aircraft that is not IFR certified must not be dispatched below
- * them at the departure or the destination. Release refuses it
- * (409 `below_weather_minimums`); the dispatch packet says so first, and
- * Open New Flight after creating one. One wording for all three.
+ * them at the departure or the destination. Nor may any aircraft at a
+ * field without an instrument approach, which is reached VFR (#110).
+ * Release refuses it (409 `below_weather_minimums`); the dispatch packet
+ * says so first, and Open New Flight after creating one. One wording for
+ * all three.
  */
 
 /** "600 ft / 2 sm". */
@@ -47,14 +49,37 @@ export function belowSummary(stations: MinimumsStation[]): string {
     .join("; ");
 }
 
-/** Why the packet's Release is held, or null when it isn't (#89). */
+/** True when the stops are held for the aircraft's type, not for want of
+ *  an instrument approach (#110). A stop from before #110 says no reason,
+ *  and was held for the type. */
+export function heldForType(stations: MinimumsStation[]): boolean {
+  return stations.every((s) => (s.reason ?? "not_ifr_certified") === "not_ifr_certified");
+}
+
+/** "PAEM" or "PAEM and PAII": the stops held for want of an approach. */
+export function withoutApproach(stations: MinimumsStation[]): string {
+  const icaos = stations.filter((s) => s.reason === "no_instrument_approach").map((s) => s.icao);
+  return icaos.length > 1
+    ? `${icaos.slice(0, -1).join(", ")} and ${icaos[icaos.length - 1]}`
+    : (icaos[0] ?? "");
+}
+
+/** Why the packet's Release is held, or null when it isn't (#89, #110). */
 export function minimumsBlockReason(view: WeatherMinimumsView | null | undefined): string | null {
   if (!view?.applies || !view.below) return null;
+  const label = minimumsLabel(view.min_ceiling_ft, view.min_visibility_sm);
+  if (heldForType(view.stations)) {
+    return (
+      `Below the company's dispatch minimums for aircraft not IFR certified ` +
+      `(${label}): ${belowSummary(view.stations)}. No release until it comes up, or move the ` +
+      `flight to an IFR-certified aircraft.`
+    );
+  }
+  const below = view.stations.filter((s) => s.below);
   return (
-    `Below the company's dispatch minimums for aircraft not IFR certified ` +
-    `(${minimumsLabel(view.min_ceiling_ft, view.min_visibility_sm)}): ` +
-    `${belowSummary(view.stations)}. No release until it comes up, or move the ` +
-    `flight to an IFR-certified aircraft.`
+    `Below the company's dispatch minimums (${label}) at a field without an instrument ` +
+    `approach: ${belowSummary(view.stations)}. ${withoutApproach(below)} can only be reached ` +
+    `VFR, whatever the aircraft: no release until the weather there comes up.`
   );
 }
 

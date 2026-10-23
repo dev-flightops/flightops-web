@@ -1,8 +1,14 @@
 import { FlightCategoryBadge } from "@/components/weather/flight-category-badge";
 import { SpecialReportChip } from "@/components/weather/special-report-chip";
 import { ApiError } from "@/lib/api/client";
-import { batchWeather } from "@/lib/api/weather";
-import type { WeatherReportResponse } from "@/lib/api/types";
+import { batchWeather, getVillageBoard } from "@/lib/api/weather";
+import type { VillageBoardRow, WeatherReportResponse } from "@/lib/api/types";
+import {
+  villageAge,
+  villageSky,
+  villageStaleness,
+  villageWind,
+} from "@/lib/village-weather-format";
 import {
   fieldFormat,
   metarAge,
@@ -56,6 +62,11 @@ export async function WeatherPanel({ icaos }: { icaos: string[] }) {
   const truncated = uniq.length > MAX_STOPS;
   const stops = truncated ? uniq.slice(0, MAX_STOPS) : uniq;
 
+  // The village observers' reports (#110): the client put one in for
+  // PAII and it never reached the brief. The board is a convenience here,
+  // so a failure leaves the METARs standing alone.
+  const villageBoard = getVillageBoard().catch(() => null);
+
   // One round-trip — backend fans out concurrently to AWC.
   let batch;
   try {
@@ -99,12 +110,20 @@ export async function WeatherPanel({ icaos }: { icaos: string[] }) {
     .sort()
     .pop();
 
+  const villages = new Map<string, VillageBoardRow>();
+  for (const row of (await villageBoard)?.items ?? []) {
+    villages.set(row.airport.icao.trim().toUpperCase(), row);
+  }
+  const now = Date.now();
+
   const cards = stops.map((icao, idx) => ({
     icao,
     role: routeRoleFor(idx, stops.length),
     metar: outcomeFor(icao, "metar", lookup, errorLookup),
     taf: outcomeFor(icao, "taf", lookup, errorLookup),
     pireps: outcomeFor(icao, "pirep", lookup, errorLookup),
+    village: villages.get(icao.trim().toUpperCase()) ?? null,
+    now,
   }));
 
   return (
@@ -163,18 +182,25 @@ function AirportWeather({
   metar,
   taf,
   pireps,
+  village,
+  now,
 }: {
   icao: string;
   role: RouteRole | null;
   metar: FetchOutcome;
   taf: FetchOutcome;
   pireps: FetchOutcome;
+  /** The stop's row on the Village Weather Board, when it's a village. */
+  village: VillageBoardRow | null;
+  now: number;
 }) {
   return (
     <div className="rounded-md border border-border bg-card/40 p-4">
       <AirportHeader icao={icao} role={role} metar={metar} />
 
       {metar.ok && <MetarSummaryAndGrid report={metar.report} />}
+
+      {village ? <VillageReport row={village} now={now} /> : null}
 
       <div className="mt-3 space-y-3">
         <ReportBlock label="METAR" outcome={metar} />
@@ -217,6 +243,58 @@ function AirportHeader({
           METAR age: {metarAge(metar.report.parsed_at)}
         </span>
       )}
+    </div>
+  );
+}
+
+/** The village observer's latest report, for a quick reference beside
+ *  the METAR (#110), and whether the field has an instrument approach. */
+function VillageReport({ row, now }: { row: VillageBoardRow; now: number }) {
+  const r = row.latest_report;
+  const noApproach = row.airport.has_instrument_approach === false;
+  const reportedAt = r ? new Date(r.reported_at).getTime() : 0;
+  const stale = r ? villageStaleness(reportedAt, now) : null;
+  const who = r ? (r.reported_by?.full_name ?? r.reported_by_name) : null;
+  const conditions = r
+    ? [
+        r.flight_category,
+        villageSky(r),
+        villageWind(r),
+        r.temperature_c != null ? `${r.temperature_c}°C` : null,
+        r.altimeter_in_hg != null ? `${r.altimeter_in_hg.toFixed(2)}"` : null,
+      ]
+        .filter(Boolean)
+        .join(" · ")
+    : "";
+  return (
+    <div className="mt-3 border-l-[3px] border-l-status-blue pl-3">
+      <p className="eyebrow">Village Report</p>
+      {r ? (
+        <>
+          <p className="mt-1 text-sm font-semibold text-foreground">{conditions || "—"}</p>
+          {r.notes ? <p className="text-xs text-foreground">{r.notes}</p> : null}
+          <p
+            className={`mt-0.5 text-[0.7rem] ${
+              stale === "red"
+                ? "text-status-red"
+                : stale === "yellow"
+                  ? "text-status-yellow"
+                  : "text-muted-foreground"
+            }`}
+          >
+            {`${utcHm(r.reported_at)}${who ? ` by ${who}` : ""} · ${villageAge(now - reportedAt)} ago${
+              stale === "red" ? " — older than 4 hours" : stale === "yellow" ? " — older than 2 hours" : ""
+            }`}
+          </p>
+        </>
+      ) : (
+        <p className="mt-1 text-xs text-muted-foreground">No report from the village yet.</p>
+      )}
+      {noApproach ? (
+        <p className="mt-1 text-[0.7rem] text-muted-foreground">
+          No instrument approach: the company&rsquo;s dispatch minimums hold every flight here.
+        </p>
+      ) : null}
     </div>
   );
 }

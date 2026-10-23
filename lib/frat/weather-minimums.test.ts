@@ -2,7 +2,13 @@ import { describe, expect, it } from "vitest";
 
 import type { MinimumsStation } from "@/lib/api/types";
 
-import { belowMinimumsFromError, belowSummary, minimumsLabel } from "./weather-minimums";
+import {
+  belowMinimumsFromError,
+  belowSummary,
+  heldForType,
+  minimumsLabel,
+  withoutApproach,
+} from "./weather-minimums";
 
 const STATIONS: MinimumsStation[] = [
   {
@@ -72,5 +78,54 @@ describe("dispatch minimums in words (#89)", () => {
   it("gives up on anything else", () => {
     expect(belowMinimumsFromError("not json")).toBeNull();
     expect(belowMinimumsFromError(JSON.stringify({ detail: { error: "other" } }))).toBeNull();
+  });
+});
+
+describe("dispatch minimums at a field without an instrument approach (#110)", () => {
+  it("says so in release's refusal, for any aircraft", () => {
+    const body = JSON.stringify({
+      detail: {
+        error: "below_weather_minimums",
+        min_ceiling_ft: 600,
+        min_visibility_sm: 2,
+        stations: [
+          {
+            icao: "PAII",
+            below: true,
+            reason: "no_instrument_approach",
+            observations: [
+              {
+                source: "field_report",
+                observed_at: null,
+                ceiling_ft: 500,
+                visibility_sm: 3,
+                below_ceiling: true,
+                below_visibility: false,
+              },
+            ],
+          },
+        ],
+      },
+    });
+    expect(belowMinimumsFromError(body)).toBe(
+      "Below the company's dispatch minimums (600 ft / 2 sm) at a field without an instrument " +
+        "approach: PAII ceiling 500 ft (village report). PAII can only be reached VFR, whatever " +
+        "the aircraft: no release until the weather there comes up.",
+    );
+  });
+
+  it("keeps the type's wording where every stop is held for the type", () => {
+    expect(
+      heldForType([
+        { icao: "PABE", below: false, reason: "not_ifr_certified", observations: [] },
+        { icao: "PAEM", below: true, observations: [] },
+      ]),
+    ).toBe(true);
+    expect(
+      withoutApproach([
+        { icao: "PAII", below: true, reason: "no_instrument_approach", observations: [] },
+        { icao: "9Z8", below: true, reason: "no_instrument_approach", observations: [] },
+      ]),
+    ).toBe("PAII and 9Z8");
   });
 });

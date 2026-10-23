@@ -76,3 +76,56 @@ describe("WeatherMinimumsNotice (#89)", () => {
     expect(alert).toHaveTextContent("can’t be released until the weather comes up");
   });
 });
+
+describe("WeatherMinimumsNotice — a field without an instrument approach (#110)", () => {
+  const PAII: WeatherMinimumsView = {
+    applies: true,
+    airframe_type: "caravan",
+    min_ceiling_ft: 600,
+    min_visibility_sm: "2.0",
+    below: true,
+    stations: [
+      {
+        icao: "PAII",
+        below: true,
+        reason: "no_instrument_approach",
+        observations: [
+          {
+            source: "field_report",
+            observed_at: null,
+            ceiling_ft: 500,
+            visibility_sm: 3,
+            below_ceiling: true,
+            below_visibility: false,
+          },
+        ],
+      },
+    ],
+  };
+
+  it("says the field has no approach, not that the Caravan isn't IFR certified", () => {
+    render(<WeatherMinimumsNotice minimums={PAII} />);
+    const alert = screen.getByRole("alert");
+    expect(alert).toHaveTextContent(
+      "PAII ceiling 500 ft (village report). There’s no instrument approach at PAII, so it’s reached VFR whatever the aircraft, and the company’s dispatch minimums there are 600 ft / 2 sm.",
+    );
+    expect(alert).not.toHaveTextContent(/not IFR certified/);
+  });
+
+  it("says where it held and was met", () => {
+    render(
+      <WeatherMinimumsNotice
+        minimums={{
+          ...PAII,
+          below: false,
+          stations: [{ ...PAII.stations[0], below: false, observations: [] }],
+        }}
+      />,
+    );
+    expect(
+      screen.getByText(
+        "No instrument approach at PAII: held to the company’s dispatch minimums of 600 ft / 2 sm there, and met on the latest weather (no current report at PAII).",
+      ),
+    ).toBeInTheDocument();
+  });
+});
