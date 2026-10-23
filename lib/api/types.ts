@@ -1366,6 +1366,13 @@ export interface FratThresholdConfigResponse {
    *  An OR — either one alone is enough. */
   vfr_min_ceiling_ft: number;
   vfr_min_visibility_sm: number;
+  /** The dispatch minimums for aircraft that are not IFR certified
+   *  (#89): the client's GOM, "a minimum of 600 ft ceilings and 2 sm of
+   *  visibility for VFR flight in IFR conditions". Below either one at
+   *  any stop, release refuses those types; which types they are is
+   *  ops' compliance settings (`vfr_only_types`). */
+  dispatch_min_ceiling_ft: number;
+  dispatch_min_visibility_sm: number;
   /** How long a filed FRAT can be carried to a later leg. The
    *  operator, 22 Sep 2026, on what breaks a block: "4 hours or any
    *  condition that increases risk." Zero switches blocks off — every
@@ -1378,6 +1385,8 @@ export interface FratThresholdConfigResponse {
   default_crosswind_near_margin_kt: number;
   default_vfr_min_ceiling_ft: number;
   default_vfr_min_visibility_sm: number;
+  default_dispatch_min_ceiling_ft: number;
+  default_dispatch_min_visibility_sm: number;
   default_block_validity_hours: number;
   /** Where each company limit came from, for those a person approved
    *  from a company document (#48). A limit set by hand has none. */
@@ -1399,6 +1408,10 @@ export interface FratThresholdConfigUpdateRequest {
   crosswind_near_margin_kt: number;
   vfr_min_ceiling_ft: number;
   vfr_min_visibility_sm: number;
+  /** Optional on the server only so an older screen that sends neither
+   *  keeps them; this app always sends both. */
+  dispatch_min_ceiling_ft: number;
+  dispatch_min_visibility_sm: number;
   block_validity_hours: number;
   rationale?: string | null;
 }
@@ -1546,7 +1559,16 @@ export interface FratAssessmentResponse {
   pilot_user_id: string;
   answers: Record<string, number>;
   total_score: number;
+  /** The level the flight is filed at, and the approval it needs: the
+   *  higher of the band the total falls in and the dispatch packet's
+   *  level at release (#88). */
   risk_level: FratRiskLevel;
+  /** The band the total falls in on its own. Absent from servers that
+   *  predate #88. */
+  score_risk_level?: FratRiskLevel | null;
+  /** The dispatch packet's overall risk as released; null before
+   *  release. */
+  packet_risk_level?: FratRiskLevel | null;
   mitigations: string | null;
   /** Factors the pilot scored at the operator's out-of-company-limits
    *  mark. Any one of them makes the flight a no-go, independently of
@@ -1956,6 +1978,10 @@ export interface VillageAirportResponse {
   region: string | null;
   is_active: boolean;
   notes: string | null;
+  /** Whether an instrument approach can be flown here (#110). Without one
+   *  the company's dispatch minimums hold every flight here. */
+  has_instrument_approach?: boolean;
+  instrument_approach_changed_at?: string | null;
 }
 
 export interface VillageAirportListResponse {
@@ -2373,7 +2399,47 @@ export interface FratPrefillResponse {
   near_limit_entry_kt: number | null;
   vfr_min_ceiling_ft: number;
   vfr_min_visibility_sm: number;
+  /** The dispatch minimums, when they bind this aircraft: one that is
+   *  not IFR certified (#89). Null otherwise. */
+  dispatch_min_ceiling_ft?: number | null;
+  dispatch_min_visibility_sm?: number | null;
+  /** The dispatch packet's overall risk as released (#88): the FRAT is
+   *  filed at no lower a level. Null before release. */
+  packet_risk_level?: FratRiskLevel | null;
 }
 
 /** A duty position on an aircraft type (#45), as 135ACM names them. */
 export type TypePosition = "pic" | "sic" | "instructor" | "check_airman" | "advisory";
+
+/** One report at one stop, held against the dispatch minimums (#89). */
+export interface MinimumsObservation {
+  source: "metar" | "field_report";
+  observed_at: string | null;
+  ceiling_ft: number | null;
+  visibility_sm: number | null;
+  below_ceiling: boolean;
+  below_visibility: boolean;
+}
+
+export interface MinimumsStation {
+  icao: string;
+  below: boolean;
+  /** Why the minimums hold this stop (#110): the aircraft isn't IFR
+   *  certified, or the field has no instrument approach. */
+  reason?: "not_ifr_certified" | "no_instrument_approach" | null;
+  /** Empty when the stop has no weather to compare. */
+  observations: MinimumsObservation[];
+}
+
+/** `GET /ops/flights/{id}/weather-minimums` (#89): what release would
+ *  decide now. `applies` is false for an aircraft whose type the company
+ *  has not listed as not IFR certified; nothing is checked then. */
+export interface WeatherMinimumsView {
+  applies: boolean;
+  airframe_type: string | null;
+  min_ceiling_ft: number | null;
+  /** Decimal on the backend: may arrive as a string. */
+  min_visibility_sm: number | string | null;
+  below: boolean;
+  stations: MinimumsStation[];
+}

@@ -5,7 +5,7 @@ import { z } from "zod";
 
 import { loadZoneTable } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
-import { createFlight } from "@/lib/api/ops";
+import { createFlight, getWeatherMinimums } from "@/lib/api/ops";
 import { passengerSeatsRefusal } from "@/lib/flights/passenger-seats";
 import { localToUtcIso, zoneFor } from "@/lib/format/local-time";
 
@@ -15,6 +15,12 @@ import { localToUtcIso, zoneFor } from "@/lib/format/local-time";
  * Validates the form payload, calls POST /ops/flights, then redirects
  * to /flight-following on success. Errors come back as a structured
  * object the client can render under the relevant inputs.
+ *
+ * A flight opened on an aircraft that is not IFR certified while the
+ * weather at a stop is below the company's dispatch minimums (#89) is
+ * still created, since it is often booked before the weather is known,
+ * but the dispatcher lands on its packet, where the reason it can't be
+ * released is the first thing under the weather.
  */
 
 /** ICAO or FAA: the client's villages include FAA-only fields such as
@@ -212,8 +218,9 @@ export async function createFlightAction(
   }
   const last = legs[legs.length - 1];
 
+  let opened: { id: string; day: string } | null = null;
   try {
-    await createFlight({
+    const flight = await createFlight({
       flight_number: parsed.data.flight_number,
       aircraft_id: parsed.data.aircraft_id,
       origin: firstLeg.origin,
@@ -225,6 +232,9 @@ export async function createFlightAction(
       notes: parsed.data.notes ?? null,
       ...(legs.length > 1 ? { legs } : {}),
     });
+    if (flight?.id) {
+      opened = { id: flight.id, day: (flight.scheduled_departure_at ?? "").slice(0, 10) };
+    }
   } catch (err) {
     if (err instanceof ApiError) {
       if (err.status === 401) {
@@ -300,7 +310,16 @@ export async function createFlightAction(
     };
   }
 
+  // The warning is best-effort: the flight exists either way, and
+  // release holds it server-side.
+  const minimums = opened
+    ? await getWeatherMinimums(opened.id).catch(() => null)
+    : null;
+
   // Success — redirect outside the try/catch (NEXT_REDIRECT throws
   // intentionally and we don't want it caught by the API error handler).
+  if (opened && minimums?.below) {
+    redirect(`/dispatch?flight=${opened.id}&date=${opened.day}`);
+  }
   redirect("/flight-following");
 }

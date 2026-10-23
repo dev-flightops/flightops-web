@@ -145,11 +145,10 @@ export const FUELERS = roleGate(
   "exec_admin",
 );
 
-/** Lock a flight's manifest (#62). A lock is final, so it is legacy's
- *  close-boarding roles' call: its CSA is the Reservations Agent here,
- *  station staff and rampers Ground Ops. Building the manifest is open
- *  to any staff. */
-export const MANIFEST_LOCKERS = roleGate(
+/** Check passengers in at the gate, mark no-shows, board and close
+ *  boarding (#103). Legacy's check-in roles: its CSA is the Reservations
+ *  Agent here, station staff and rampers Ground Ops. */
+export const CHECKIN_ROLES = roleGate(
   "ground_ops",
   "reservations_agent",
   "dispatcher",
@@ -157,6 +156,15 @@ export const MANIFEST_LOCKERS = roleGate(
   "director_of_operations",
   "exec_admin",
 );
+
+/** Settings → Check-in: what a check-in must capture (legacy's check-in
+ *  CONFIG_ROLES). */
+export const CHECKIN_CONFIG = roleGate("chief_pilot", "director_of_operations", "exec_admin");
+
+/** Lock a flight's manifest (#62). A lock is final, and legacy locks it
+ *  when boarding closes, so it is the check-in roles' call. Building the
+ *  manifest is open to any staff. */
+export const MANIFEST_LOCKERS = CHECKIN_ROLES;
 
 /** Change the crew calendar: assignments and a pilot's home base (#43).
  *  Legacy let any signed-in user edit anyone's schedule. */

@@ -131,6 +131,21 @@ export async function createVillageAirport(
   });
 }
 
+/** Whether an instrument approach can be flown at a village airport
+ *  (#110). The Director of Operations' or an Exec Admin's to set. */
+export async function setVillageInstrumentApproach(
+  airportId: string,
+  hasInstrumentApproach: boolean,
+): Promise<VillageAirportResponse> {
+  return apiFetch<VillageAirportResponse>(
+    `/weather/village-airports/${airportId}/instrument-approach`,
+    {
+      method: "PUT",
+      body: JSON.stringify({ has_instrument_approach: hasInstrumentApproach }),
+    },
+  );
+}
+
 export async function listVillageReportsForAirport(
   airportId: string,
   limit = 20,

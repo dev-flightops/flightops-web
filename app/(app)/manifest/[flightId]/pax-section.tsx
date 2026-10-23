@@ -85,7 +85,7 @@ export function PassengersSection({
               </thead>
               <tbody className="divide-y divide-border">
                 {_sorted(rows).map((p) => (
-                  <tr key={p.id} className="hover:bg-accent">
+                  <tr key={p.id} className={p.check_in_status === "no_show" ? "opacity-60 hover:bg-accent" : "hover:bg-accent"}>
                     <td className="whitespace-nowrap px-3 py-2.5 font-mono text-xs">{p.seat_number ?? "—"}</td>
                     <td className="whitespace-nowrap px-3 py-2.5 font-medium">{p.last_name}</td>
                     <td className="whitespace-nowrap px-3 py-2.5">{p.first_name}</td>
@@ -98,6 +98,10 @@ export function PassengersSection({
                       <div className="flex flex-wrap gap-1">
                         {p.is_crew && <Flag label="CREW" tone="blue" />}
                         {p.is_unaccompanied_minor && <Flag label="UM" tone="yellow" />}
+                        {/* Out of the totals above (#103). */}
+                        {p.check_in_status === "no_show" && <Flag label="NO-SHOW" tone="red" />}
+                        {p.check_in_status === "checked_in" && <Flag label="CHECKED IN" tone="green" />}
+                        {p.check_in_status === "boarded" && <Flag label="BOARDED" tone="blue" />}
                       </div>
                     </td>
                     <td className="whitespace-nowrap px-3 py-2.5 text-xs text-muted-foreground">
