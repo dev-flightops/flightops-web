@@ -259,3 +259,101 @@ describe("an already-returned flight", () => {
     expect(screen.getByLabelText(/max payload/i)).toHaveValue(1750);
   });
 });
+
+describe("the client's payload arithmetic (#111)", () => {
+  const LOAD = {
+    flight_id: "f-1",
+    has_manifest: true,
+    booked_passengers: 6,
+    checked_in: { count: 5, weight_lbs: "960.0", baggage_lbs: "100.0" },
+    to_check_in: { count: 1, weight_lbs: "180.0", baggage_lbs: "20.0" },
+    cargo_lbs: "300.0",
+    load: {
+      useful_load_lbs: 3727,
+      max_gross_weight_lbs: 9062,
+      empty_weight_lbs: 5335,
+      crew_lbs: "190",
+      crew_basis: "standard" as const,
+      crew_count: 1,
+      fuel_lbs: "754",
+      payload_lbs: "1560.0",
+      remaining_lbs: "1223.0",
+      fuel_counted: true,
+      fuel_basis: "estimated" as const,
+      fuel_estimate: {
+        lbs: "754",
+        gallons: "112.5",
+        burn_gph: "54",
+        fuel_type_code: "jet_a",
+        flight_minutes: 40,
+        round_trip: true,
+        reserve_minutes: 45,
+        missing: [],
+      },
+    },
+  };
+
+  const row = (label: string) => screen.getByRole("rowheader", { name: new RegExp(`^${label}`) }).closest("tr");
+
+  it("deducts empty weight, pilot and recommended fuel from max gross", () => {
+    render(<WeightAndBalanceStep flightId="f-1" flight={FLIGHT} openReturn={null} load={LOAD} />);
+    expect(row("Max gross weight")).toHaveTextContent("9,062 lb");
+    expect(row("− Empty weight")).toHaveTextContent("5,335 lb");
+    expect(row("− Pilot and crew")).toHaveTextContent("standard weight");
+    expect(row("− Pilot and crew")).toHaveTextContent("190 lb");
+    expect(row("− Fuel")).toHaveTextContent(
+      "Fuel estimated: round trip, 40 min each way (no Jet A at the destination) + 45 min reserve at 54 gal/h = 112.5 gal of Jet A.",
+    );
+    expect(row("− Fuel")).toHaveTextContent("754 lb");
+    expect(row("= Max payload")).toHaveTextContent("2,783 lb");
+    // The aircraft's bare useful load is no longer shown as the max payload.
+    expect(screen.queryByText("2,000 lbs")).toBeNull();
+  });
+
+  it("shows the checked-in passengers' weight, the rest, and the margin", () => {
+    render(<WeightAndBalanceStep flightId="f-1" flight={FLIGHT} openReturn={null} load={LOAD} />);
+    expect(row("Passengers checked in")).toHaveTextContent("5 at their weighed weights, 100 lb of it bags");
+    expect(row("Passengers checked in")).toHaveTextContent("1,060 lb");
+    expect(row("Still to check in")).toHaveTextContent("1 at their booked weights");
+    expect(row("Cargo and mail")).toHaveTextContent("300 lb");
+    expect(row("= Load")).toHaveTextContent("1,560 lb");
+    expect(screen.getByText("1,223 lb under the max payload.")).toBeInTheDocument();
+  });
+
+  it("says how far over, in red", () => {
+    render(
+      <WeightAndBalanceStep
+        flightId="f-1"
+        flight={FLIGHT}
+        openReturn={null}
+        load={{ ...LOAD, load: { ...LOAD.load, remaining_lbs: "-140.0" } }}
+      />,
+    );
+    expect(screen.getByText("Over the max payload by 140 lb.")).toHaveClass("text-status-red");
+  });
+
+  it("before a manifest, says there are no weights yet", () => {
+    render(
+      <WeightAndBalanceStep
+        flightId="f-1"
+        flight={FLIGHT}
+        openReturn={null}
+        load={{ ...LOAD, has_manifest: false }}
+      />,
+    );
+    expect(row("Passengers")).toHaveTextContent("6 booked; no manifest yet, so no weights");
+    expect(screen.queryByText(/under the max payload/)).toBeNull();
+  });
+
+  it("asks for the aircraft's weights when it has none", () => {
+    render(
+      <WeightAndBalanceStep
+        flightId="f-1"
+        flight={FLIGHT}
+        openReturn={null}
+        load={{ ...LOAD, load: { ...LOAD.load, useful_load_lbs: null } }}
+      />,
+    );
+    expect(screen.getByText(/N100PA has no max gross and empty weight/)).toBeInTheDocument();
+  });
+});

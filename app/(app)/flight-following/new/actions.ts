@@ -96,6 +96,8 @@ export interface SubmittedStop {
   destination: string;
   departure: string;
   arrival: string;
+  /** The form's way home on a round trip (#108); the form only. */
+  returning?: boolean;
 }
 
 export type CreateFlightFormState =

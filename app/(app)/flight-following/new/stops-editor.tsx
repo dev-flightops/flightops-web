@@ -24,6 +24,7 @@ export function StopsEditor({
   firstDestination,
   errors,
   timeZone,
+  hints = [],
 }: {
   stops: SubmittedStop[];
   onChange: (stops: SubmittedStop[]) => void;
@@ -32,6 +33,9 @@ export function StopsEditor({
   errors: Record<string, string>;
   /** The zone the whole route is typed in: the departure base's. */
   timeZone: string;
+  /** Under each stop's destination: the airport's name, and the leg's
+   *  distance and time (#108). */
+  hints?: (string | undefined)[];
 }) {
   const tz = zoneAbbreviation(timeZone);
   const set = (i: number, patch: Partial<SubmittedStop>) =>
@@ -70,6 +74,7 @@ export function StopsEditor({
                 error={errors[`stop_${i}_destination`]}
                 maxLength={4}
                 placeholder="PASM"
+                hint={hints[i]}
               />
               <StopField
                 id={`stop-${i}-departure`}

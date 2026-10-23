@@ -18,6 +18,7 @@ import {
   isIfrPlanned,
   observationsFromWeather,
 } from "@/lib/frat/observations";
+import { getFlightLoad, type FlightLoad } from "@/lib/api/manifest";
 import { batchWeather } from "@/lib/api/weather";
 import { listFuelOrders, listSupplierBases } from "@/lib/api/ground";
 import { zoneFor } from "@/lib/format/local-time";
@@ -87,6 +88,7 @@ export default async function PreflightPage({
   let frat: FratAssessmentResponse | null = null;
   let acceptance: PilotAcceptanceResponse | null = null;
   let weightReturn: WeightReturn | null = null;
+  let flightLoad: FlightLoad | null = null;
   let weather: WeatherBatchResponse | null = null;
   let fratConfig: FratThresholdConfigResponse | null = null;
   let fratPrefill: FratPrefillResponse | null = null;
@@ -105,6 +107,7 @@ export default async function PreflightPage({
       acceptanceResult,
       weightReturnResult,
       fratConfigResult,
+      flightLoadResult,
     ] = await Promise.all([
         getFlight(flightId),
         getPreflightProgress(flightId),
@@ -127,6 +130,10 @@ export default async function PreflightPage({
         // factor says the limit is unavailable and the pilot scores it
         // by hand, which is what they did before any of this existed.
         getFratThresholds().catch(() => null),
+        // Step 2's weight and balance (#111): useful load less crew,
+        // fuel and the manifest's payload. Best-effort: without it the
+        // step shows the aircraft's useful load, as before.
+        getFlightLoad(flightId).catch(() => null),
       ]);
     flight = flightResult;
     progress = progressResult;
@@ -134,6 +141,7 @@ export default async function PreflightPage({
     frat = fratResult;
     acceptance = acceptanceResult;
     weightReturn = weightReturnResult;
+    flightLoad = flightLoadResult;
     fratConfig = fratConfigResult;
     // Step 3 weather — depends on the flight's routing airports, so
     // it fires after the flight fetch. Non-fatal: if the
@@ -242,6 +250,7 @@ export default async function PreflightPage({
         frat={frat}
         acceptance={acceptance}
         weightReturn={weightReturn}
+        flightLoad={flightLoad}
         weather={weather}
         fratConfig={fratConfig}
         fratPrefill={fratPrefill}

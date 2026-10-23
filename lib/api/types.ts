@@ -56,6 +56,12 @@ export interface AircraftListItem {
   /** The name operating costs go by: costing and the manifest's fuel
    *  estimate look a type up by it, else by the model (#75). */
   airframe_type?: string | null;
+  /** From the weight and balance record (#111). With both, the useful
+   *  load (`max_payload_lbs`) is their difference. */
+  max_gross_weight_lbs?: number | null;
+  empty_weight_lbs?: number | null;
+  /** Knots true, for the new-flight form's leg times (#108). */
+  cruise_speed_kt?: number | null;
 }
 
 export interface AircraftListResponse {

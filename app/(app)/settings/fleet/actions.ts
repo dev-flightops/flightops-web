@@ -103,7 +103,25 @@ const CreateSchema = z.object({
   make: nullableTrimmed(100),
   serial_number: nullableTrimmed(100),
   year: nullableIntRange(1903, 2100, "Enter a 4-digit year (1903-2100)."),
+  // From the weight and balance record (#111); the cruise speed works
+  // out the new-flight form's leg times (#108).
+  max_gross_weight_lbs: nullableIntMax(200_000),
+  empty_weight_lbs: nullableIntMax(200_000),
+  cruise_speed_kt: nullableIntRange(40, 600, "Cruise speed must be 40-600 kt."),
 });
+
+/** Empty at or above max gross is a typo; the API refuses it too. */
+function _weightErrors(data: {
+  max_gross_weight_lbs?: number | null;
+  empty_weight_lbs?: number | null;
+}): Record<string, string> | null {
+  const gross = data.max_gross_weight_lbs;
+  const empty = data.empty_weight_lbs;
+  if (gross != null && empty != null && empty >= gross) {
+    return { empty_weight_lbs: "Empty weight must be less than the max gross weight." };
+  }
+  return null;
+}
 
 const UpdateSchema = CreateSchema.omit({ tail_number: true }).extend({
   is_active: z
@@ -168,6 +186,8 @@ export async function createAircraftAction(
   if (!parsed.success) {
     return { status: "field-errors", errors: _formatErrors(parsed.error) };
   }
+  const weightErrors = _weightErrors(parsed.data);
+  if (weightErrors) return { status: "field-errors", errors: weightErrors };
   try {
     await createAircraft(parsed.data);
   } catch (err) {
@@ -192,6 +212,8 @@ export async function updateAircraftAction(
   if (!parsed.success) {
     return { status: "field-errors", errors: _formatErrors(parsed.error) };
   }
+  const weightErrors = _weightErrors(parsed.data);
+  if (weightErrors) return { status: "field-errors", errors: weightErrors };
   try {
     await updateAircraft(aircraftId, parsed.data);
   } catch (err) {
