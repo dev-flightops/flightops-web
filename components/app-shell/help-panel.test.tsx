@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
@@ -8,6 +8,9 @@ vi.mock("next/navigation", () => ({
 }));
 
 import { HELP_ENTRIES } from "@/lib/help/catalogue";
+
+import { AssistantProvider } from "@/components/assistant/assistant-context";
+import { AssistantWidget } from "@/components/assistant/assistant-widget";
 
 import { HelpPanel } from "./help-panel";
 
@@ -292,35 +295,25 @@ describe("the richer article fields", () => {
 });
 
 describe("ask (#114)", () => {
-  it("switches to Ask, asks about the page under the drawer, and keeps the conversation", async () => {
-    const fetchMock = vi.fn().mockResolvedValue(
-      new Response(
-        'data: {"type":"text","text":"Pick a report."}\n\ndata: {"type":"done","stop_reason":"end_turn"}\n\n',
-        { status: 200, headers: { "Content-Type": "text/event-stream" } },
-      ),
+  it("opens Peregrine Assistant, and closes itself", async () => {
+    pathname = "/reports/bi";
+    render(
+      <AssistantProvider name="Dana" roles={["dispatcher"]}>
+        <HelpPanel />
+        <AssistantWidget />
+      </AssistantProvider>,
     );
-    vi.stubGlobal("fetch", fetchMock);
-    try {
-      const user = open("/reports/bi");
-      await user.click(screen.getByRole("button", { name: "Help" }));
-      await user.click(screen.getByRole("tab", { name: "Ask" }));
-      await user.type(screen.getByLabelText("Your question"), "What is this page for?");
-      await user.click(screen.getByRole("button", { name: "Ask" }));
-      expect(await screen.findByText("Pick a report.")).toBeInTheDocument();
-      expect(JSON.parse(fetchMock.mock.calls[0][1].body).messages[0].page).toEqual({
-        route: "/reports/bi",
-        title: "Business Intelligence",
-      });
+    const user = userEvent.setup();
+    await user.click(screen.getByRole("button", { name: "Help" }));
+    const help = screen.getByRole("dialog", { name: "Help" });
+    await user.click(within(help).getByRole("button", { name: "Ask Peregrine Assistant" }));
+    expect(screen.getByRole("dialog", { name: "Peregrine Assistant" })).toBeInTheDocument();
+    expect(screen.queryByRole("dialog", { name: "Help" })).not.toBeInTheDocument();
+  });
 
-      // Closed and opened again, the conversation is still there.
-      await user.click(screen.getByRole("button", { name: "Close help" }));
-      await user.click(screen.getByRole("button", { name: "Help" }));
-      expect(screen.getByText("Pick a report.")).toBeInTheDocument();
-
-      await user.click(screen.getByRole("tab", { name: "This page" }));
-      expect(screen.getByTestId("help-article-/reports/bi")).toBeInTheDocument();
-    } finally {
-      vi.unstubAllGlobals();
-    }
+  it("has no Ask button outside the staff layout", async () => {
+    const user = open("/reports/bi");
+    await user.click(screen.getByRole("button", { name: "Help" }));
+    expect(screen.queryByRole("button", { name: "Ask Peregrine Assistant" })).not.toBeInTheDocument();
   });
 });

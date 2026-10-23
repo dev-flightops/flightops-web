@@ -6,9 +6,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
 import { DEPARTMENTS } from "@/components/app-shell/modules";
-import { segment, segmentGroup } from "@/components/ff/controls";
-import { AskPanel } from "@/components/help/ask-panel";
-import { useHelpChat } from "@/components/help/use-help-chat";
+import { useAssistant } from "@/components/assistant/assistant-context";
+import { BotGlyph } from "@/components/ff/glyphs";
 import { formatRole } from "@/lib/roles";
 import {
   HELP_ENTRIES,
@@ -46,10 +45,9 @@ import {
  *
  * ASK (#114)
  *
- * The second tab answers questions from the same articles, the guides
- * and the FAQ on /help, through the help assistant. Its conversation
- * is held here rather than in the drawer, so it survives the drawer
- * closing and the reader moving between pages.
+ * Questions go to Peregrine Assistant, the chat above the Safety button,
+ * which answers from these articles and the guides and FAQ on /help. The
+ * panel opens it too, so a reader who comes here to ask finds it.
  *
  * WHEN THERE IS NO ARTICLE IT SAYS SO
  *
@@ -229,20 +227,12 @@ function Article({
 export function HelpPanel() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
-  const [mode, setMode] = useState<"page" | "ask">("page");
   const [query, setQuery] = useState("");
-  const chat = useHelpChat();
+  const assistant = useAssistant();
   const buttonRef = useRef<HTMLDivElement>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
 
   const contextual = useMemo(() => helpFor(pathname ?? "/"), [pathname]);
-  // What a question is asked from: the page under the drawer, named as
-  // its article or the nav names it.
-  const page = useMemo(() => {
-    const route = pathname ?? "/";
-    const title = contextual?.title ?? labelFor(route);
-    return title === route ? { route } : { route, title };
-  }, [pathname, contextual]);
   const results = useMemo(() => searchHelp(query), [query]);
   const searching = query.trim().length >= 2;
 
@@ -340,109 +330,94 @@ export function HelpPanel() {
               </div>
             </div>
 
-            <div className="border-b border-border px-4 py-2">
-              <div className={segmentGroup} role="tablist" aria-label="Help">
+            {assistant && (
+              <div className="border-b border-border px-4 py-2">
                 <button
                   type="button"
-                  role="tab"
-                  aria-selected={mode === "page"}
-                  onClick={() => setMode("page")}
-                  className={segment(mode === "page")}
+                  onClick={() => {
+                    setOpen(false);
+                    assistant.setOpen(true);
+                  }}
+                  className="btn-caps inline-flex w-full items-center justify-center gap-2 rounded-md bg-primary px-3 py-2 text-[0.68rem] text-primary-foreground transition hover:brightness-110"
                 >
-                  This page
-                </button>
-                <button
-                  type="button"
-                  role="tab"
-                  aria-selected={mode === "ask"}
-                  onClick={() => setMode("ask")}
-                  className={segment(mode === "ask")}
-                >
-                  Ask
+                  <BotGlyph size={14} />
+                  Ask Peregrine Assistant
                 </button>
               </div>
+            )}
+
+            <div className="border-b border-border px-4 py-2">
+              <input
+                type="search"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search help"
+                aria-label="Search help"
+                className="ff-input px-3 py-1.5 text-xs"
+              />
             </div>
 
-            {mode === "ask" ? (
-              <div className="min-h-0 flex-1">
-                <AskPanel chat={chat} page={page} onNavigate={() => setOpen(false)} />
-              </div>
-            ) : (
-              <>
-                <div className="border-b border-border px-4 py-2">
-                  <input
-                    type="search"
-                    value={query}
-                    onChange={(e) => setQuery(e.target.value)}
-                    placeholder="Search help"
-                    aria-label="Search help"
-                    className="ff-input px-3 py-1.5 text-xs"
+            <div className="flex-1 overflow-y-auto px-4 py-3">
+              {searching ? (
+                results.length === 0 ? (
+                  <p className="text-xs text-muted-foreground">
+                    Nothing written about &ldquo;{query.trim()}&rdquo; yet.{" "}
+                    {HELP_ENTRIES.length} pages have articles so far.
+                  </p>
+                ) : (
+                  <ul className="space-y-3">
+                    {results.map((entry) => (
+                      <li
+                        key={entry.route}
+                        data-testid={`help-result-${entry.route}`}
+                      >
+                        <Link
+                          href={entry.route}
+                          onClick={() => setOpen(false)}
+                          className="text-xs font-semibold hover:text-primary"
+                        >
+                          {entry.title}
+                        </Link>
+                        <p className="mt-0.5 text-[0.68rem] leading-relaxed text-muted-foreground">
+                          {entry.whatItDoes}
+                        </p>
+                      </li>
+                    ))}
+                  </ul>
+                )
+              ) : contextual ? (
+                <div data-testid={`help-article-${contextual.route}`}>
+                  <Article
+                    entry={contextual}
+                    onNavigate={() => setOpen(false)}
                   />
                 </div>
-
-                <div className="flex-1 overflow-y-auto px-4 py-3">
-                  {searching ? (
-                    results.length === 0 ? (
-                      <p className="text-xs text-muted-foreground">
-                        Nothing written about &ldquo;{query.trim()}&rdquo; yet.{" "}
-                        {HELP_ENTRIES.length} pages have articles so far.
-                      </p>
-                    ) : (
-                      <ul className="space-y-3">
-                        {results.map((entry) => (
-                          <li
-                            key={entry.route}
-                            data-testid={`help-result-${entry.route}`}
-                          >
-                            <Link
-                              href={entry.route}
-                              onClick={() => setOpen(false)}
-                              className="text-xs font-semibold hover:text-primary"
-                            >
-                              {entry.title}
-                            </Link>
-                            <p className="mt-0.5 text-[0.68rem] leading-relaxed text-muted-foreground">
-                              {entry.whatItDoes}
-                            </p>
-                          </li>
-                        ))}
-                      </ul>
-                    )
-                  ) : contextual ? (
-                    <div data-testid={`help-article-${contextual.route}`}>
-                      <Article
-                        entry={contextual}
-                        onNavigate={() => setOpen(false)}
-                      />
-                    </div>
-                  ) : (
-                    <div data-testid="help-no-article">
-                      <p className="text-xs leading-relaxed text-muted-foreground">
-                        No help written for{" "}
-                        <span className="font-mono text-foreground">
-                          {pathname}
-                        </span>{" "}
-                        yet. {HELP_ENTRIES.length} pages have articles so far —
-                        search above, or start from one of these.
-                      </p>
-                      <ul className="mt-3 space-y-1">
-                        {HELP_ENTRIES.map((entry) => (
-                          <li key={entry.route}>
-                            <Link
-                              href={entry.route}
-                              onClick={() => setOpen(false)}
-                              className="text-xs text-primary hover:underline"
-                            >
-                              {entry.title}
-                            </Link>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
+              ) : (
+                <div data-testid="help-no-article">
+                  <p className="text-xs leading-relaxed text-muted-foreground">
+                    No help written for{" "}
+                    <span className="font-mono text-foreground">
+                      {pathname}
+                    </span>{" "}
+                    yet. {HELP_ENTRIES.length} pages have articles so far —
+                    search above, or start from one of these.
+                  </p>
+                  <ul className="mt-3 space-y-1">
+                    {HELP_ENTRIES.map((entry) => (
+                      <li key={entry.route}>
+                        <Link
+                          href={entry.route}
+                          onClick={() => setOpen(false)}
+                          className="text-xs text-primary hover:underline"
+                        >
+                          {entry.title}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
-              </>
-            )}
+              )}
+            </div>
           </div>,
           document.body,
         )}

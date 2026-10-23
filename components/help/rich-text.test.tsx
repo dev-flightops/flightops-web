@@ -55,3 +55,15 @@ describe("RichText", () => {
     expect(isAppPath("https://evil.example")).toBe(false);
   });
 });
+
+describe("numbered lists the answer interrupts", () => {
+  it("go on from their own number", () => {
+    const { container } = render(
+      <RichText text={"1. Open it.\n2. Check in.\n- a point\n3. Board."} />,
+    );
+    const lists = container.querySelectorAll("ol");
+    expect(lists).toHaveLength(2);
+    expect(lists[0]).not.toHaveAttribute("start");
+    expect(lists[1]).toHaveAttribute("start", "3");
+  });
+});

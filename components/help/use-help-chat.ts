@@ -47,15 +47,15 @@ function failureFor(status: number, code?: string, retryAfter?: string | null): 
     return `That's a lot of questions in a short time. Ask again in ${minutes} minute${minutes === 1 ? "" : "s"}.`;
   }
   if (status === 503 && code === "anthropic_not_configured") {
-    return "Peregrine Help isn't set up on this system yet.";
+    return "Peregrine Assistant isn't set up on this system yet.";
   }
-  return "Peregrine Help couldn't answer just now. Try again.";
+  return "Peregrine Assistant couldn't answer just now. Try again.";
 }
 
 function failureForEvent(code: string): string {
-  if (code === "anthropic_rate_limited") return "Peregrine Help is busy. Try again in a minute.";
+  if (code === "anthropic_rate_limited") return "Peregrine Assistant is busy. Try again in a minute.";
   if (code === "anthropic_timeout") return "That took too long to answer. Try again.";
-  return "Peregrine Help couldn't answer just now. Try again.";
+  return "Peregrine Assistant couldn't answer just now. Try again.";
 }
 
 export function useHelpChat() {
@@ -145,7 +145,7 @@ export function useHelpChat() {
               ended = true;
               answer(content, event.stop_reason === "max_tokens" ? "cut" : undefined);
             } else if (event.type === "refusal") {
-              takeBack("Peregrine Help can't answer that one. Try asking it another way.");
+              takeBack("Peregrine Assistant can't answer that one. Try asking it another way.");
               return;
             } else {
               takeBack(failureForEvent(event.code));
@@ -156,7 +156,7 @@ export function useHelpChat() {
         if (!ended) takeBack("The answer was cut off on the way. Try again.");
       } catch {
         if (!controller.signal.aborted) {
-          takeBack("Couldn't reach Peregrine Help. Check your connection and try again.");
+          takeBack("Couldn't reach Peregrine Assistant. Check your connection and try again.");
         }
       } finally {
         if (controllerRef.current === controller) {

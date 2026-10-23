@@ -43,7 +43,7 @@ export default function HelpPage() {
     <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6">
       <PageHeader
         title="Help"
-        description="How Peregrine works, job by job. On a computer or tablet, the ? at the top of every page opens that page's help, and Ask answers questions."
+        description="How Peregrine works, job by job. Ask AI, above the Safety button on every page, answers questions from this help; the ? at the top opens the help for the page you are on."
       />
 
       <div className="space-y-6">

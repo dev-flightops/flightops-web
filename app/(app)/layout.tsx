@@ -1,5 +1,7 @@
 import { auth, signOut } from "@/auth";
 import { AppShell } from "@/components/app-shell/app-shell";
+import { AssistantProvider } from "@/components/assistant/assistant-context";
+import { AssistantWidget } from "@/components/assistant/assistant-widget";
 import { HeaderActions } from "@/components/app-shell/header-actions";
 import { ExternalActions } from "@/components/app-shell/identity";
 import { BrandThemeStyle } from "@/components/app-shell/brand-theme-style";
@@ -130,21 +132,30 @@ export default async function AppGroupLayout({
         primary={brandTheme.brand_primary_color}
         primaryDark={brandTheme.brand_primary_dark_color}
       />
-      <AppShell
-        brand={brand}
-        actionsSlot={actionsSlot}
+      {/* #114: around the whole shell, so the ? panel in the top bar and
+          the launcher above Safety open the one conversation. */}
+      <AssistantProvider
+        name={session?.user?.name?.trim().split(/\s+/)[0] || null}
         roles={sessionRoles}
-        showOpsChip={rolesCanSeeModule("reservations", sessionRoles)}
-        opsPhone={opsPhone}
-        logoUrl={logoUrl}
       >
-        {children}
-        {/* Spec: global Safety Report button, fixed bottom-right on every
-            page. Mounted at the layout so it survives client-side
-            navigation between routes inside the (app) group. */}
-        <SafetyReportButton />
-        <DatePickerAffordance />
-      </AppShell>
+        <AppShell
+          brand={brand}
+          actionsSlot={actionsSlot}
+          roles={sessionRoles}
+          showOpsChip={rolesCanSeeModule("reservations", sessionRoles)}
+          opsPhone={opsPhone}
+          logoUrl={logoUrl}
+        >
+          {children}
+          {/* Spec: global Safety Report button, fixed bottom-right on every
+              page. Mounted at the layout so it survives client-side
+              navigation between routes inside the (app) group. */}
+          <SafetyReportButton />
+          {/* #114: Peregrine Assistant, stacked above Safety. */}
+          <AssistantWidget />
+          <DatePickerAffordance />
+        </AppShell>
+      </AssistantProvider>
     </TenantProvider>
   );
 }

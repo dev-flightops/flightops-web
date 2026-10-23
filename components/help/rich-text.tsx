@@ -56,7 +56,7 @@ function inline(text: string, onNavigate?: () => void): ReactNode[] {
   return out;
 }
 
-type Block = { kind: "p" | "ol" | "ul"; lines: string[] };
+type Block = { kind: "p" | "ol" | "ul"; lines: string[]; start?: number };
 
 function blocks(text: string): Block[] {
   const out: Block[] = [];
@@ -82,7 +82,11 @@ function blocks(text: string): Block[] {
     if (!line) {
       close();
     } else if (numbered) {
-      into("ol").lines.push(numbered[1]);
+      const list = into("ol");
+      // A list the answer interrupted (a step with points under it)
+      // goes on from its own number rather than starting again at 1.
+      list.start ??= Number(numbered[0].split(/[.)]/)[0]);
+      list.lines.push(numbered[1]);
     } else if (bullet) {
       into("ul").lines.push(bullet[1]);
     } else if (heading) {
@@ -116,6 +120,7 @@ export function RichText({
         return (
           <List
             key={i}
+            start={block.kind === "ol" && block.start !== 1 ? block.start : undefined}
             className={cn("space-y-1 pl-5", block.kind === "ol" ? "list-decimal" : "list-disc")}
           >
             {block.lines.map((line, j) => (
