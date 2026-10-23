@@ -2,6 +2,8 @@ import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import type {
+  VillageBoardResponse,
+  VillageBoardRow,
   WeatherBatchResponse,
   WeatherReportResponse,
 } from "@/lib/api/types";
@@ -9,7 +11,7 @@ import type {
 // Same hoisting + ApiError stub as before — vi.mock factories run before
 // top-level code, and we still need to short-circuit the @/lib/api/client
 // → next-auth → next/server import chain.
-const { TestApiError, batchWeather } = vi.hoisted(() => {
+const { TestApiError, batchWeather, getVillageBoard } = vi.hoisted(() => {
   class TestApiError extends Error {
     constructor(
       public status: number,
@@ -19,10 +21,14 @@ const { TestApiError, batchWeather } = vi.hoisted(() => {
       super(message);
     }
   }
-  return { TestApiError, batchWeather: vi.fn() };
+  return {
+    TestApiError,
+    batchWeather: vi.fn(),
+    getVillageBoard: vi.fn(async (): Promise<VillageBoardResponse> => ({ items: [], total: 0 })),
+  };
 });
 vi.mock("@/lib/api/client", () => ({ ApiError: TestApiError }));
-vi.mock("@/lib/api/weather", () => ({ batchWeather }));
+vi.mock("@/lib/api/weather", () => ({ batchWeather, getVillageBoard }));
 
 import { WeatherPanel } from "./weather-panel";
 
@@ -439,5 +445,71 @@ describe("WeatherPanel", () => {
       screen.getByText(/No current METAR for this airport/i),
     ).toBeInTheDocument();
     expect(screen.queryByText("Ceiling")).not.toBeInTheDocument();
+  });
+});
+
+describe("WeatherPanel — village reports (#110)", () => {
+  const village = (): VillageBoardRow & {
+    latest_report: NonNullable<VillageBoardRow["latest_report"]>;
+  } => ({
+    airport: {
+      id: "va-1",
+      icao: "PAII",
+      name: "Egegik",
+      region: "Bristol Bay",
+      is_active: true,
+      notes: null,
+      has_instrument_approach: false,
+      instrument_approach_changed_at: null,
+    },
+    latest_report: {
+      id: "r-1",
+      village_airport_id: "va-1",
+      reported_by: { id: "u-1", full_name: "Owen Staley" },
+      reported_by_name: null,
+      reported_at: new Date(Date.now() - 65 * 60_000).toISOString(),
+      cloud_cover: "OVC",
+      ceiling_ft: 500,
+      visibility_sm: 3,
+      wind_dir_deg: 120,
+      wind_speed_kt: 12,
+      wind_gust_kt: 28,
+      temperature_c: -2,
+      altimeter_in_hg: 29.92,
+      notes: "Fog over the river",
+      flight_category: "IFR",
+    },
+  });
+
+  it("shows the stop's village report under its METAR, and that it has no approach", async () => {
+    getVillageBoard.mockResolvedValueOnce({ items: [village()], total: 1 });
+    batchWeather.mockReset().mockResolvedValueOnce(
+      makeBatch([
+        { icao: "PAKN", kind: "metar" },
+        { icao: "PAII", kind: "metar" },
+      ]),
+    );
+    render(await WeatherPanel({ icaos: ["PAKN", "PAII"] }));
+    expect(screen.getAllByText("Village Report")).toHaveLength(1);
+    expect(
+      screen.getByText('IFR · OVC 500ft · Vis 3SM · Wind 120°/12ktG28 · -2°C · 29.92"'),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Fog over the river")).toBeInTheDocument();
+    expect(screen.getByText(/by Owen Staley · 1\.1h ago$/)).toBeInTheDocument();
+    expect(screen.getByText(/No instrument approach/)).toBeInTheDocument();
+  });
+
+  it("flags a report older than two hours, and stands without the board", async () => {
+    const old = village();
+    old.latest_report.reported_at = new Date(Date.now() - 150 * 60_000).toISOString();
+    getVillageBoard.mockResolvedValueOnce({ items: [old], total: 1 });
+    batchWeather.mockReset().mockResolvedValueOnce(makeBatch([{ icao: "PAII", kind: "metar" }]));
+    render(await WeatherPanel({ icaos: ["PAII"] }));
+    expect(screen.getByText(/older than 2 hours$/)).toBeInTheDocument();
+
+    getVillageBoard.mockRejectedValueOnce(new Error("down"));
+    batchWeather.mockReset().mockResolvedValueOnce(makeBatch([{ icao: "PAII", kind: "metar" }]));
+    render(await WeatherPanel({ icaos: ["PAII"] }));
+    expect(screen.getAllByText("Village Report")).toHaveLength(1);
   });
 });

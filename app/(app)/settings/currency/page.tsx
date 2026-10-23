@@ -5,9 +5,10 @@ import { listAircraft, listCurrencyItems } from "@/lib/api/ops";
 import { ApiError } from "@/lib/api/client";
 import { getComplianceSettings } from "@/lib/api/type-qualifications";
 import type { AircraftListItem, CurrencyItemRef } from "@/lib/api/types";
+import { fleetTypes } from "@/lib/fleet-types";
 import { RELEASE_POLICY_ADMINS, hasAnyRole } from "@/lib/roles";
 
-import { FirstClassMedicalCard, type FleetType } from "./first-class-medical-card";
+import { FirstClassMedicalCard } from "./first-class-medical-card";
 import { TypeGateCard } from "./type-gate-card";
 
 /**
@@ -233,21 +234,5 @@ function FlagPills({ item }: { item: CurrencyItemRef }) {
       ))}
     </div>
   );
-}
-
-/** The fleet's aircraft types, as release judges them (#87): each slug
- *  once, labelled with the models that fly under it. */
-function fleetTypes(aircraft: AircraftListItem[]): FleetType[] {
-  const models = new Map<string, Set<string>>();
-  for (const a of aircraft) {
-    const slug = (a.airframe_type ?? "").trim().toLowerCase();
-    if (!slug) continue;
-    const set = models.get(slug) ?? new Set<string>();
-    if (a.model) set.add(a.model);
-    models.set(slug, set);
-  }
-  return [...models.entries()]
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([slug, set]) => ({ slug, label: [...set].sort().join(", ") }));
 }
 

@@ -131,6 +131,11 @@ export default async function SettingsLandingPage() {
           href: "/settings/frat",
         },
         {
+          label: "Check-in",
+          blurb: "What gate check-in must capture, no-show fees, standby and walk-ups, and your own fields.",
+          href: "/settings/check-in",
+        },
+        {
           label: "Load Teams",
           blurb: "Ramp and load crew teams by base.",
           href: "/settings/load-teams",
