@@ -94,6 +94,7 @@ export function EditAircraftDialog({ aircraft }: { aircraft: AircraftListItem })
                 placeholder="PANC"
                 autoCapitalize="characters"
                 spellCheck={false}
+                defaultValue={aircraft.base ?? ""}
                 error={fieldError("base")}
               />
             </div>
@@ -171,6 +172,7 @@ export function EditAircraftDialog({ aircraft }: { aircraft: AircraftListItem })
               label="Airframe slug"
               placeholder="caravan"
               spellCheck={false}
+              defaultValue={aircraft.airframe_type ?? ""}
               error={fieldError("airframe_type")}
             />
 
@@ -186,6 +188,7 @@ export function EditAircraftDialog({ aircraft }: { aircraft: AircraftListItem })
                 name="special_notes"
                 rows={2}
                 maxLength={200}
+                defaultValue={aircraft.special_notes ?? ""}
                 className="ff-input px-3 py-2 text-sm"
               />
             </div>

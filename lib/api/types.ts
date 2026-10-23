@@ -62,6 +62,10 @@ export interface AircraftListItem {
   empty_weight_lbs?: number | null;
   /** Knots true, for the new-flight form's leg times (#108). */
   cruise_speed_kt?: number | null;
+  /** The edit form fills these in, so a save leaves them as they were
+   *  (#115): without them every save blanked them. */
+  base?: string | null;
+  special_notes?: string | null;
 }
 
 export interface AircraftListResponse {
