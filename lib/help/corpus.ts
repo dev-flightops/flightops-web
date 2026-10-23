@@ -31,7 +31,9 @@ export function helpCorpus(): string {
     "Link: /help#workflow",
   ];
   WORKFLOW.forEach((stage, i) =>
-    out.push(`${i + 1}. **${stage.title}** (${stage.who}; page ${stage.page}): ${stage.what}`),
+    out.push(
+      `${i + 1}. **${stage.title}** (${stage.who}; page ${stage.pageLabel}, ${stage.page}): ${stage.what}`,
+    ),
   );
 
   out.push("", "## How-to guides");

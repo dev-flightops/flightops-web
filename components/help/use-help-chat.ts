@@ -64,10 +64,14 @@ export function useHelpChat() {
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const controllerRef = useRef<AbortController | null>(null);
+  // State updates only on the next render, so two quick Enters would both
+  // see `busy` false; the ref sees the first at once.
+  const inFlight = useRef(false);
 
   const reset = useCallback(() => {
     controllerRef.current?.abort();
     controllerRef.current = null;
+    inFlight.current = false;
     setTurns([]);
     setBusy(false);
     setNotice(null);
@@ -76,7 +80,8 @@ export function useHelpChat() {
   const ask = useCallback(
     async (question: string, page: PageRef) => {
       const text = question.trim();
-      if (!text || busy) return;
+      if (!text || busy || inFlight.current) return;
+      inFlight.current = true;
       const history = turns.filter((t) => t.state !== "streaming");
       const asked: ChatTurn = { role: "user", content: text, page };
       setTurns([...history, asked, { role: "assistant", content: "", state: "streaming" }]);
@@ -156,6 +161,7 @@ export function useHelpChat() {
       } finally {
         if (controllerRef.current === controller) {
           controllerRef.current = null;
+          inFlight.current = false;
           setBusy(false);
         }
       }

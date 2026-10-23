@@ -147,3 +147,16 @@ describe("AskPanel", () => {
     await waitFor(() => expect(screen.getByTestId("ask-empty")).toBeInTheDocument());
   });
 });
+
+describe("asking twice at once", () => {
+  it("sends one question, not two", async () => {
+    fetchMock.mockResolvedValue(events({ type: "text", text: "Once." }, { type: "done", stop_reason: "end_turn" }));
+    render(<Harness />);
+    fireEvent.change(screen.getByLabelText("Your question"), { target: { value: "Q?" } });
+    const box = screen.getByLabelText("Your question");
+    fireEvent.keyDown(box, { key: "Enter" });
+    fireEvent.keyDown(box, { key: "Enter" });
+    await screen.findByText("Once.");
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+});

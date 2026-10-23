@@ -23,6 +23,9 @@ import { formatRole, type Role } from "@/lib/roles";
  * explain; this links to each from the foot.
  */
 
+/** A linked section stops below the sticky top bar, not under it. */
+const ANCHOR = "scroll-mt-20";
+
 const ROLE_GROUPS: { label: string; roles: Role[] }[] = [
   { label: "Dispatch", roles: ["dispatcher"] },
   { label: "Pilots", roles: ["pilot", "crew_member", "check_airman"] },
@@ -40,21 +43,21 @@ export default function HelpPage() {
     <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6">
       <PageHeader
         title="Help"
-        description="How Peregrine works, job by job. Press ? at the top of any page for that page's help, or to ask a question."
+        description="How Peregrine works, job by job. On a computer or tablet, the ? at the top of every page opens that page's help, and Ask answers questions."
       />
 
       <div className="space-y-6">
-        <Panel title="From booking to invoice" id="workflow">
+        <Panel title="From booking to invoice" id="workflow" className={ANCHOR}>
           <ol className="space-y-4">
             {WORKFLOW.map((stage, i) => (
-              <li key={stage.slug} id={`workflow-${stage.slug}`}>
+              <li key={stage.slug} id={`workflow-${stage.slug}`} className={ANCHOR}>
                 <p className="text-sm font-semibold">
                   {i + 1}. {stage.title}
                 </p>
                 <p className="eyebrow mt-0.5">
                   {stage.who} ·{" "}
                   <Link href={stage.page} className="text-primary hover:underline">
-                    {stage.page}
+                    {stage.pageLabel}
                   </Link>
                 </p>
                 <RichText text={stage.what} className="mt-1 text-sm text-muted-foreground" />
@@ -63,7 +66,7 @@ export default function HelpPage() {
           </ol>
         </Panel>
 
-        <Panel title="Guides by role" id="guides">
+        <Panel title="Guides by role" id="guides" className={ANCHOR}>
           <div className="grid gap-5 sm:grid-cols-2">
             {ROLE_GROUPS.map((group) => (
               <section key={group.label}>
@@ -86,7 +89,7 @@ export default function HelpPage() {
         </Panel>
 
         {GUIDES.map((guide) => (
-          <Panel key={guide.slug} title={guide.title} id={`guide-${guide.slug}`}>
+          <Panel key={guide.slug} title={guide.title} id={`guide-${guide.slug}`} className={ANCHOR}>
             <p className="text-sm text-muted-foreground">{guide.summary}</p>
             <ol className="mt-3 list-decimal space-y-1.5 pl-5 text-sm">
               {guide.steps.map((step) => (
@@ -113,10 +116,10 @@ export default function HelpPage() {
           </Panel>
         ))}
 
-        <Panel title="Troubleshooting and FAQ" id="faq">
+        <Panel title="Troubleshooting and FAQ" id="faq" className={ANCHOR}>
           <div className="space-y-5">
             {FAQ.map((entry) => (
-              <section key={entry.slug} id={`faq-${entry.slug}`}>
+              <section key={entry.slug} id={`faq-${entry.slug}`} className={ANCHOR}>
                 <h3 className="text-sm font-semibold">{entry.question}</h3>
                 <RichText text={entry.answer} className="mt-1 text-sm text-muted-foreground" />
                 {entry.points && entry.points.length > 0 && (
@@ -133,7 +136,7 @@ export default function HelpPage() {
           </div>
         </Panel>
 
-        <Panel title="Page by page" id="pages">
+        <Panel title="Page by page" id="pages" className={ANCHOR}>
           <p className="mb-3 text-sm text-muted-foreground">
             Each of these pages has its own help in the ? panel.
           </p>
