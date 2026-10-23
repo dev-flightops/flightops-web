@@ -290,3 +290,37 @@ describe("the richer article fields", () => {
     expect(screen.queryByText("Written for")).not.toBeInTheDocument();
   });
 });
+
+describe("ask (#114)", () => {
+  it("switches to Ask, asks about the page under the drawer, and keeps the conversation", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(
+        'data: {"type":"text","text":"Pick a report."}\n\ndata: {"type":"done","stop_reason":"end_turn"}\n\n',
+        { status: 200, headers: { "Content-Type": "text/event-stream" } },
+      ),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    try {
+      const user = open("/reports/bi");
+      await user.click(screen.getByRole("button", { name: "Help" }));
+      await user.click(screen.getByRole("tab", { name: "Ask" }));
+      await user.type(screen.getByLabelText("Your question"), "What is this page for?");
+      await user.click(screen.getByRole("button", { name: "Ask" }));
+      expect(await screen.findByText("Pick a report.")).toBeInTheDocument();
+      expect(JSON.parse(fetchMock.mock.calls[0][1].body).messages[0].page).toEqual({
+        route: "/reports/bi",
+        title: "Business Intelligence",
+      });
+
+      // Closed and opened again, the conversation is still there.
+      await user.click(screen.getByRole("button", { name: "Close help" }));
+      await user.click(screen.getByRole("button", { name: "Help" }));
+      expect(screen.getByText("Pick a report.")).toBeInTheDocument();
+
+      await user.click(screen.getByRole("tab", { name: "This page" }));
+      expect(screen.getByTestId("help-article-/reports/bi")).toBeInTheDocument();
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+});
