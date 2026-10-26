@@ -54,6 +54,7 @@ const CATEGORY_LABEL: Record<OperationalAlert["category"], string> = {
   flight_overdue: "Flights overdue",
   mel_expiring: "MELs expiring within 48 hours",
   safety_report_new: "New safety reports",
+  seat_open: "Seats a no-show opened",
 };
 
 // Order the groups by what stops an aeroplane leaving, not alphabetically.
@@ -62,6 +63,7 @@ const CATEGORY_ORDER: OperationalAlert["category"][] = [
   "flight_overdue",
   "mel_expiring",
   "safety_report_new",
+  "seat_open",
 ];
 
 export function AlertsList({ alerts }: { alerts: OperationalAlert[] }) {

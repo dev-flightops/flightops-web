@@ -98,9 +98,32 @@ describe("passengers (#62)", () => {
       contact_phone: null,
       contact_email: null,
       notes: null,
+      boards_at: null,
+      leaves_at: null,
+      is_waitlist: false,
     });
     expect(state).toEqual({ status: "ok", message: "Added Ann Quill.", attempt: 1 });
     expect(api.revalidatePath).toHaveBeenCalledWith(`/manifest/${FLIGHT}`);
+  });
+
+  it("sends the stops they board and deplane at, and the waitlist (#120)", async () => {
+    api.addPax.mockResolvedValueOnce({});
+    await savePaxAction(IDLE, pax({ boards_at: "PAHP", leaves_at: "PABE", is_waitlist: "on" }));
+    expect(api.addPax).toHaveBeenCalledWith(
+      FLIGHT,
+      expect.objectContaining({ boards_at: "PAHP", leaves_at: "PABE", is_waitlist: true }),
+    );
+  });
+
+  it("says when the stops aren't on the route (#120)", async () => {
+    api.addPax.mockRejectedValueOnce(
+      new api.TestApiError(422, "/x", JSON.stringify({ detail: { error: "stops_not_on_route" } })),
+    );
+    const state = await savePaxAction(IDLE, pax({ boards_at: "PAHP", leaves_at: "PAVA" }));
+    expect(state).toMatchObject({
+      status: "error",
+      message: "Pick stops on this flight's route, deplaning after boarding.",
+    });
   });
 
   it("saves an edit whole, so an emptied field is cleared", async () => {
