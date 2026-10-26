@@ -53,12 +53,12 @@ export const CELL_STATE_LABELS: Record<TypeCellState, string> = {
 
 /** A position's state as a coloured mark (#80): the code in its status
  *  colour behind a square marker (`.status-mark`), not a tinted tag.
- *  Green, yellow and red are the currency board's current, grace and
- *  non-current. */
+ *  The currency board's GOM levels (#66): green current, red grace (an
+ *  alert), magenta not current (critical). */
 export const CELL_TONES: Record<TypeCellState, string> = {
   current: "status-mark text-status-green",
-  grace: "status-mark text-status-yellow",
-  non_current: "status-mark text-status-red",
+  grace: "status-mark text-status-red",
+  non_current: "status-mark text-status-magenta",
   not_authorised: "text-muted-foreground",
 };
 

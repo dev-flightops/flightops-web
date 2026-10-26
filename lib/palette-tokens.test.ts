@@ -98,10 +98,13 @@ describe("the status palette", () => {
     expect([...DEFINED].sort()).toEqual([
       "blue",
       "blue-fill",
+      // The GOM's currency levels (#66): Gold aware, Magenta critical.
+      "gold",
       "gray",
       "gray-fill",
       "green",
       "green-fill",
+      "magenta",
       "orange",
       "orange-fill",
       "purple",
