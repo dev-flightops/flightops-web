@@ -285,3 +285,28 @@ describe("PicPicker: a pilot the release would refuse isn't offered (#91)", () =
     expect(screen.queryByText(/Not available as PIC/)).toBeNull();
   });
 });
+
+describe("PicPicker: when nobody is available (#91)", () => {
+  it("says no pilot is available, and keeps each reason list short with a link to the record", async () => {
+    const many = Array.from({ length: 14 }, (_, i) => `Item ${i + 1}: Not on file: no record entered yet.`);
+    render(
+      <PicPicker
+        options={[sarah]}
+        currentPicId={null}
+        flightId="f-1"
+        availability={[{ pilot: sarah.pilot, available: false, reasons: many, warnings: [] }]}
+      />,
+    );
+    expect(screen.getByRole("option", { name: "No pilot available" })).toBeInTheDocument();
+    await userEvent.click(screen.getByText("Not available as PIC (1)"));
+    expect(screen.getByRole("link", { name: "Sarah Kessler" })).toHaveAttribute(
+      "href",
+      `/compliance/pilots/${sarah.pilot.id}`,
+    );
+    expect(
+      screen.getByText(
+        "— Item 1: Not on file: no record entered yet.; Item 2: Not on file: no record entered yet.; and 12 more",
+      ),
+    ).toBeInTheDocument();
+  });
+});

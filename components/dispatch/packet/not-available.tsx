@@ -1,4 +1,13 @@
+import Link from "next/link";
+
 import type { CrewOption } from "@/lib/api/ops";
+
+/** The first two reasons and how many more: a pilot with every record
+ *  still to enter has a dozen, and the record lists them all. */
+function summary(reasons: string[]): string {
+  if (reasons.length <= 2) return reasons.join("; ");
+  return `${reasons.slice(0, 2).join("; ")}; and ${reasons.length - 2} more`;
+}
 
 /**
  * The pilots a seat doesn't offer, and why (#91). The client, 21 Oct: "The
@@ -17,8 +26,13 @@ export function NotAvailableList({ seat, options }: { seat: string; options: Cre
       <ul className="mt-1 space-y-1">
         {out.map((o) => (
           <li key={o.pilot.id}>
-            <span className="font-semibold text-foreground">{o.pilot.full_name}</span>
-            <span className="text-muted-foreground">{` — ${o.reasons.join("; ")}`}</span>
+            <Link
+              href={`/compliance/pilots/${o.pilot.id}`}
+              className="font-semibold text-foreground hover:underline"
+            >
+              {o.pilot.full_name}
+            </Link>
+            <span className="text-muted-foreground">{` — ${summary(o.reasons)}`}</span>
           </li>
         ))}
       </ul>

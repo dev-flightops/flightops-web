@@ -185,7 +185,9 @@ export function PicPicker({
       >
         <option value="">
           {options.length === 0
-            ? "No pilots on roster"
+            ? roster.length > 0
+              ? "No pilot available"
+              : "No pilots on roster"
             : "— Select a pilot —"}
         </option>
         {options.map((opt) => (
