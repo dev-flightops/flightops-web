@@ -30,6 +30,23 @@ describe("passengerSeatsRefusal (#107)", () => {
     );
   });
 
+  it("names the leg on a flight with stops (#120)", () => {
+    expect(
+      passengerSeatsRefusal(
+        seats({
+          error: "more_passengers_than_seats",
+          tail_number: "N503PA",
+          seats: 9,
+          passengers: 10,
+          leg: "PAHP-PABE",
+        }),
+      ),
+    ).toBe(
+      "N503PA has 9 passenger seats, and this would make 10 passengers from PAHP to PABE. Someone " +
+        "in the co-pilot seat must be a company check airman, entered as crew.",
+    );
+  });
+
   it("leaves every other error to its caller", () => {
     expect(passengerSeatsRefusal(seats("manifest is locked"))).toBeNull();
     expect(passengerSeatsRefusal(seats({ error: "flight_full" }))).toBeNull();

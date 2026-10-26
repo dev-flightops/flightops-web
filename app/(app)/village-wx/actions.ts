@@ -71,7 +71,8 @@ const ReportSchema = z.object({
 
 export type VillageActionState =
   | { status: "idle" }
-  | { status: "ok" }
+  /** `reportId`: the report just filed, for its photos (#121). */
+  | { status: "ok"; reportId?: string }
   | { status: "field-errors"; errors: Record<string, string> }
   | { status: "api-error"; message: string };
 
@@ -133,13 +134,14 @@ export async function fileVillageReportAction(
   if (!parsed.success) {
     return { status: "field-errors", errors: _formatErrors(parsed.error) };
   }
+  let reportId: string;
   try {
-    await createVillageWeatherReport(parsed.data);
+    reportId = (await createVillageWeatherReport(parsed.data)).id;
   } catch (err) {
     return _apiErrorState(err, "file the report");
   }
   revalidatePath("/village-wx");
-  return { status: "ok" };
+  return { status: "ok", reportId };
 }
 
 const AirportSchema = z.object({

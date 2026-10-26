@@ -8,6 +8,7 @@ import { GET as versionDownload } from "./documents/[documentId]/versions/[versi
 import { GET as employeeDocumentDownload } from "./employee-documents/[documentId]/download/route";
 import { GET as rampPhoto } from "./ramp-photos/[photoId]/route";
 import { GET as safetyReportAttachment } from "./safety-reports/[id]/attachment/route";
+import { GET as villagePhoto } from "./village-photos/[photoId]/route";
 
 /**
  * The route handlers that hand a backend file to the browser.
@@ -169,5 +170,41 @@ describe("safety report attachment", () => {
     fetchMock.mockResolvedValue(new Response("", { status: 404 }));
     const res = await call(route);
     expect(await res.text()).toBe("That attachment is no longer on file.");
+  });
+});
+
+// Kept in the database, never a bucket, so there is no redirect to pass on.
+describe("village report photo (#121)", () => {
+  const call = () =>
+    villagePhoto(new Request("https://app.example/x"), { params: Promise.resolve({ photoId: "v-1" }) });
+
+  it("asks the weather service with the session's token", async () => {
+    fetchMock.mockResolvedValue(new Response("jpeg", { status: 200 }));
+    await call();
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toBe("https://gw.example/weather/village-photos/v-1");
+    expect(init.headers.Authorization).toBe("Bearer tok");
+  });
+
+  it("serves it as the JPEG it is, held a day by this browser alone", async () => {
+    fetchMock.mockResolvedValue(new Response("jpeg", { status: 200, headers: { "Content-Type": "text/html" } }));
+    const res = await call();
+    expect(await res.text()).toBe("jpeg");
+    expect(res.headers.get("content-type")).toBe("image/jpeg");
+    expect(res.headers.get("x-content-type-options")).toBe("nosniff");
+    expect(res.headers.get("cache-control")).toBe("private, max-age=86400");
+  });
+
+  it("says a missing photo plainly", async () => {
+    fetchMock.mockResolvedValue(new Response("", { status: 404 }));
+    const res = await call();
+    expect(res.status).toBe(404);
+    expect(await res.text()).toBe("That photo is no longer on file.");
+  });
+
+  it("refuses without a session", async () => {
+    auth.mockResolvedValue(null);
+    expect((await call()).status).toBe(401);
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 });
