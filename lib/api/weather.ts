@@ -131,6 +131,23 @@ export async function createVillageAirport(
   });
 }
 
+/** Correct a village airport (#130): its identifier, name, region or
+ *  notes. Its reports stay with it. */
+export async function updateVillageAirport(
+  airportId: string,
+  body: { icao?: string; name?: string; region?: string | null; notes?: string | null },
+): Promise<VillageAirportResponse> {
+  return apiFetch<VillageAirportResponse>(`/weather/village-airports/${airportId}`, {
+    method: "PATCH",
+    body: JSON.stringify(body),
+  });
+}
+
+/** Take a village airport off the board (#130). Its reports are kept. */
+export async function retireVillageAirport(airportId: string): Promise<void> {
+  await apiFetch<void>(`/weather/village-airports/${airportId}`, { method: "DELETE" });
+}
+
 /** Whether an instrument approach can be flown at a village airport
  *  (#110). The Director of Operations' or an Exec Admin's to set. */
 export async function setVillageInstrumentApproach(
