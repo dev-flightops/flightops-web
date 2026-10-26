@@ -10,7 +10,7 @@ import { flightStops } from "@/lib/route";
 
 import { apiFetch } from "./client";
 import { getFlight } from "./ops";
-import type { WeatherBatchResponse } from "./types";
+import type { WeatherBatchResponse, WeatherReportResponse } from "./types";
 import { batchWeather } from "./weather";
 
 export type RiskLevel = "LOW" | "MEDIUM" | "HIGH";
@@ -70,6 +70,10 @@ export interface DispatchRisk {
   concerns: string[];
   summary: string;
   inputs: DispatchRiskInputs;
+  /** Each stop's weather and where it came from (#117), route order. */
+  stops?: StopWeather[];
+  /** Some stop's weather used isn't certified: say so (#117). */
+  non_certified_weather?: boolean;
   automatic: {
     reporting: AutoAnswer;
     night: AutoAnswer;
@@ -103,6 +107,23 @@ export interface AreaForecastRegion {
   region: string;
 }
 
+/** An FAA WeatherCam site's reading as ops takes it (#117). Not certified:
+ *  "vwos" is the site's visual weather observation, "estimate" the
+ *  cameras' estimated visibility alone. */
+export interface WeatherCamIn {
+  site_name: string;
+  kind: "vwos" | "estimate";
+  observed_at: string;
+  raw: string | null;
+  reports_sky: boolean;
+  ceiling_ft: number | null;
+  visibility_sm: number | null;
+  wind_direction_deg: number | null;
+  wind_speed_kt: number | null;
+  wind_gust_kt: number | null;
+  page_url: string | null;
+}
+
 export interface RiskStopIn {
   ident: string;
   metar: string | null;
@@ -115,6 +136,28 @@ export interface RiskStopIn {
     longitude: number | null;
     runways: Array<Omit<AirportRunway, "surface">>;
   };
+  weathercam?: WeatherCamIn | null;
+}
+
+/** Where a stop's weather came from (#117). Each element is the worst of
+ *  the METAR, the FAA WeatherCam and the village report, and names which
+ *  ("METAR", "FAA WeatherCam", "FAA WeatherCam estimate", "village
+ *  report"). `source` is the first of them used. A null ceiling with a
+ *  `ceiling_from` is a clear sky. */
+export interface StopWeather {
+  ident: string;
+  source: "metar" | "weathercam" | "village" | null;
+  certified: boolean;
+  /** e.g. "METAR and village report, not certified". */
+  described: string;
+  ceiling_ft: number | null;
+  ceiling_from: string | null;
+  visibility_sm: number | null;
+  visibility_from: string | null;
+  wind_direction: string | null;
+  wind_kt: number | null;
+  wind_gust_kt: number | null;
+  wind_from: string | null;
 }
 
 /** The area forecast for a region, as weather-service returns it (#51). */
@@ -132,8 +175,11 @@ export interface PacketWeather {
   area_forecast: AreaForecast | null;
 }
 
-/** weather-service caps a batch at 30 (three kinds a stop) and /airports at 12. */
+/** weather-service caps a batch at 40 (four kinds a stop) and /airports at 12. */
 const MAX_STOPS = 10;
+/** The FAA WeatherCams page is read in a browser (#117): its readings
+ *  wait no longer than this, and the METARs don't wait on them at all. */
+const WEATHERCAM_TIMEOUT_MS = 12000;
 /** The release and the print don't wait longer than this for the packet's
  *  weather. A cold cache under load took over 8 s on the test stack. */
 const PACKET_WEATHER_TIMEOUT_MS = 15000;
@@ -177,6 +223,47 @@ export async function patchDispatchRiskInputs(
 }
 
 /**
+ * Each stop's FAA WeatherCam reading (#117), in a batch of its own so the
+ * METARs never wait on the FAA's page. Null when it can't be had in time;
+ * a stop without a site is simply absent.
+ */
+export async function weatherCamsFor(icaos: string[]): Promise<WeatherBatchResponse | null> {
+  if (icaos.length === 0) return null;
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<null>((resolve) => {
+    timer = setTimeout(() => resolve(null), WEATHERCAM_TIMEOUT_MS);
+  });
+  try {
+    return await Promise.race([
+      batchWeather(icaos.map((icao) => ({ icao, kind: "wxcam" as const }))),
+      timeout,
+    ]);
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+/** A WeatherCam reading from the weather service, as ops takes it. */
+export function weatherCamIn(report: WeatherReportResponse | undefined): WeatherCamIn | null {
+  if (!report || report.kind !== "wxcam" || !report.observed_at) return null;
+  return {
+    site_name: report.site_name ?? "",
+    kind: report.estimate ? "estimate" : "vwos",
+    observed_at: report.observed_at,
+    raw: report.estimate ? null : report.raw,
+    reports_sky: Boolean(report.reports_sky),
+    ceiling_ft: report.ceiling_ft,
+    visibility_sm: report.visibility_sm,
+    wind_direction_deg: report.wind_direction_deg,
+    wind_speed_kt: report.wind_speed_kt,
+    wind_gust_kt: report.wind_gust_kt,
+    page_url: report.site_url ?? null,
+  };
+}
+
+/**
  * Each stop's weather and airport record, as ops wants them. A stop the
  * weather service couldn't answer for goes without: ops then scores what
  * it can and says what it couldn't.
@@ -185,6 +272,7 @@ export function riskStops(
   stops: string[],
   weather: WeatherBatchResponse | null,
   airports: AirportInfo[] | null,
+  cams: WeatherBatchResponse | null = null,
 ): RiskStopIn[] {
   const raw = (icao: string, kind: string) =>
     weather?.items.find((i) => i.icao === icao && i.kind === kind)?.raw ?? null;
@@ -195,6 +283,7 @@ export function riskStops(
       metar: raw(icao, "metar"),
       taf: raw(icao, "taf"),
       pireps: raw(icao, "pirep"),
+      weathercam: weatherCamIn(cams?.items.find((i) => i.icao === icao && i.kind === "wxcam")),
       ...(airport && {
         airport: {
           found: airport.found,
@@ -215,7 +304,7 @@ export function riskStops(
 /** Each stop's weather and airport record, gathered from weather-service. */
 async function gatherStops(stops: string[]): Promise<RiskStopIn[]> {
   const unique = [...new Set(stops)].slice(0, MAX_STOPS);
-  const [weather, airports] = await Promise.all([
+  const [weather, airports, cams] = await Promise.all([
     batchWeather(
       unique.flatMap((icao) => [
         { icao, kind: "metar" as const },
@@ -224,8 +313,9 @@ async function gatherStops(stops: string[]): Promise<RiskStopIn[]> {
       ]),
     ).catch(() => null),
     getAirports(unique).catch(() => null),
+    weatherCamsFor(unique),
   ]);
-  return riskStops(unique, weather, airports);
+  return riskStops(unique, weather, airports, cams);
 }
 
 /** Gather the flight's weather and airport data, then have ops score it. */

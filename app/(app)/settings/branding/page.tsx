@@ -6,7 +6,8 @@ import { ApiError } from "@/lib/api/client";
 import { BrandingForm } from "./branding-form";
 
 /**
- * /settings/branding — per-tenant brand colors.
+ * /settings/branding — per-tenant brand colors, and the image behind
+ * Home (#118).
  *
  * First slice of the M3 AI-branded-theming feature (roadmap #12). MVP is
  * two hex color inputs (primary + primary-dark). Follow-up PRs add font
@@ -19,11 +20,13 @@ export const dynamic = "force-dynamic";
 export default async function SettingsBrandingPage() {
   let primary: string | null = null;
   let primaryDark: string | null = null;
+  let homeImage: string | null = null;
   let loadError: string | null = null;
   try {
     const profile = await getCompanyProfile();
     primary = profile.brand_primary_color;
     primaryDark = profile.brand_primary_dark_color;
+    homeImage = profile.home_image_url ?? null;
   } catch (err) {
     const status = err instanceof ApiError ? err.status : 0;
     loadError =
@@ -45,8 +48,8 @@ export default async function SettingsBrandingPage() {
       <header className="mb-6 border-b border-border pb-5">
         <h1 className="page-title">Branding</h1>
         <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
-          Override the platform&apos;s primary accent with your brand colors.
-          Applied instantly across every module.
+          Your brand colors across every module, and your image behind
+          Home. Applied as soon as you save.
         </p>
       </header>
 
@@ -63,6 +66,7 @@ export default async function SettingsBrandingPage() {
         <BrandingForm
           initialPrimary={primary}
           initialPrimaryDark={primaryDark}
+          initialHomeImage={homeImage}
         />
       )}
     </div>

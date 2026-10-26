@@ -1,6 +1,7 @@
 "use client";
 
 import type { FlightLoad } from "@/lib/api/manifest";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 
 import { buttonOutline, linkCaps } from "@/components/ff/controls";
@@ -242,12 +243,19 @@ function FlightContextBar({ flight }: { flight: FlightDetail }) {
       eyebrow="Preflight"
       title={flight.flight_number}
       // A defect found on the walk-around or the run-up is squawked
-      // against this flight's aircraft, from every step (#92).
+      // against this flight's aircraft, from every step (#92). At a
+      // village without an agent, the pilot checks the passengers in
+      // (#119).
       actions={
-        <SquawkDialog
-          aircraftId={flight.aircraft.id}
-          tailNumber={flight.aircraft.tail_number}
-        />
+        <>
+          <Link href={`/check-in/${flight.id}`} className={buttonOutline}>
+            Check in passengers
+          </Link>
+          <SquawkDialog
+            aircraftId={flight.aircraft.id}
+            tailNumber={flight.aircraft.tail_number}
+          />
+        </>
       }
       description={
         <>

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Barlow_Semi_Condensed, Figtree, JetBrains_Mono } from "next/font/google";
+import localFont from "next/font/local";
 import { cookies } from "next/headers";
 
 import { ThemeProvider } from "@/components/theme/theme-provider";
@@ -13,25 +13,33 @@ import "./globals.css";
 // Barlow Semi Condensed the nearest to Gesta's heavy uppercase. Each is one
 // CSS variable, so licensed originals can replace them in one place.
 // JetBrains Mono stays for codes: flight numbers, ICAO airports, tails.
-const fontSans = Figtree({
-  subsets: ["latin"],
+//
+// The files are in app/fonts (#116, how they were cut is in its README):
+// builds used to download them from Google Fonts, and now and then failed
+// to. The weights are the ones we had from Google. Mono stays at 400-500:
+// a wider range would change how bold codes are drawn.
+const fontSans = localFont({
+  src: "./fonts/figtree.woff2",
   variable: "--font-sans",
   display: "swap",
-  weight: ["400", "500", "600", "700", "800"],
+  weight: "400 800",
 });
 
-const fontDisplay = Barlow_Semi_Condensed({
-  subsets: ["latin"],
+const fontDisplay = localFont({
+  src: [
+    { path: "./fonts/barlow-semi-condensed-600.woff2", weight: "600" },
+    { path: "./fonts/barlow-semi-condensed-700.woff2", weight: "700" },
+    { path: "./fonts/barlow-semi-condensed-800.woff2", weight: "800" },
+  ],
   variable: "--font-display",
   display: "swap",
-  weight: ["600", "700", "800"],
 });
 
-const fontMono = JetBrains_Mono({
-  subsets: ["latin"],
+const fontMono = localFont({
+  src: "./fonts/jetbrains-mono.woff2",
   variable: "--font-mono",
   display: "swap",
-  weight: ["400", "500"],
+  weight: "400 500",
 });
 
 export const metadata: Metadata = {
