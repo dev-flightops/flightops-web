@@ -657,6 +657,18 @@ export async function getComplianceBoard(
   return apiFetch<ComplianceBoardResponse>(`/ops/compliance/board${tail}`);
 }
 
+/** Set a pilot's weight on their record for weight and balance (#125);
+ *  null clears it. The pilot themselves, or a crew manager. */
+export async function setPilotWeight(
+  pilotId: string,
+  weightLbs: number | null,
+): Promise<PilotProfileResponse> {
+  return apiFetch<PilotProfileResponse>(`/ops/compliance/pilots/${pilotId}/weight`, {
+    method: "PUT",
+    body: JSON.stringify({ weight_lbs: weightLbs }),
+  });
+}
+
 /** Per-pilot currency profile — header + all-item cells. */
 export async function getPilotComplianceProfile(
   pilotId: string,

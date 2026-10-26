@@ -1891,6 +1891,10 @@ export interface PilotProfileResponse {
   overall_status: CurrencyStatus;
   cells: PilotCurrencyCell[];
   items: CurrencyItemRef[];
+  /** The pilot's weight for weight and balance (#125): sent only to the
+   *  pilot and the crew managers, who can change it. */
+  weight_lbs?: number | null;
+  can_edit_weight?: boolean;
 }
 
 export interface LogCompletionRequest {
