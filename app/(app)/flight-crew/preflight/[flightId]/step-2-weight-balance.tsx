@@ -6,7 +6,7 @@ import { linkCaps } from "@/components/ff/controls";
 import type { FlightLoad } from "@/lib/api/manifest";
 import type { FlightDetail, WeightReturn } from "@/lib/api/types";
 import { crewWeightNote } from "@/lib/flights/crew-weight";
-import { fuelEstimateLine } from "@/lib/flights/fuel-estimate";
+import { fuelEstimateLine, fuelPlanningNote } from "@/lib/flights/fuel-estimate";
 import { payloadAllowance } from "@/lib/preflight/payload-allowance";
 
 import { completeStepAction, returnFlightOverWeightAction } from "./actions";
@@ -318,7 +318,7 @@ function LoadBreakdown({ flight, data }: { flight: FlightDetail; data: FlightLoa
     load.fuel_basis === "planned"
       ? "planned by dispatch"
       : load.fuel_basis === "estimated" && load.fuel_estimate
-        ? `recommended. ${fuelEstimateLine(load.fuel_estimate)}`
+        ? `recommended. ${fuelEstimateLine(load.fuel_estimate)} ${fuelPlanningNote(load.fuel_estimate, flight)}`
         : load.fuel_estimate?.missing.length
           ? `not worked out: set ${load.fuel_estimate.missing.join(" and ")}`
           : "not worked out";

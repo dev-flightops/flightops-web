@@ -128,3 +128,19 @@ describe("invoicing outside Peregrine (#95)", () => {
   });
 });
 
+
+describe("the ground time at each stop (#126)", () => {
+  it("sends whole minutes", async () => {
+    await updateCompanyAction(IDLE, form({ ground_minutes: " 20 " }));
+    expect(updateCompanyProfile).toHaveBeenCalledWith({ ground_minutes: 20 });
+  });
+
+  it.each(["", "241", "12.5", "-5"])("refuses %j on the field", async (value) => {
+    const state = await updateCompanyAction(IDLE, form({ ground_minutes: value }));
+    expect(state).toEqual({
+      status: "field-errors",
+      errors: { ground_minutes: "Whole minutes from 0 to 240." },
+    });
+    expect(updateCompanyProfile).not.toHaveBeenCalled();
+  });
+});
