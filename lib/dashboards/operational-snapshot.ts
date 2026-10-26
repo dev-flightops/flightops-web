@@ -24,6 +24,11 @@
  *                                    whoever may review it. Everyone else
  *                                    is refused by the service, which
  *                                    reads as no reports here.
+ *   - listOpenSeats()              — a seat a no-show opened (#120): "let
+ *                                    the Hooper agent/dispatch know". Ops
+ *                                    shows an agent only the openings from
+ *                                    their station, and refuses anyone not
+ *                                    checking passengers in.
  *
  * Spec sources NOT used (need M3+ services):
  *   pilot_currency_records, corrective_actions,
@@ -32,6 +37,7 @@
 
 import { getFlightBoard } from "@/lib/api/flight-following";
 import { getFleetAirworthiness, listMelItems } from "@/lib/api/maintenance";
+import { listOpenSeats, type Opening } from "@/lib/api/open-seats";
 import { SAFETY_REPORT_TYPE_LABELS, listSafetyReports } from "@/lib/api/safety-reports";
 import type {
   BoardFlightItem,
@@ -46,7 +52,8 @@ export interface OperationalAlert {
     | "aircraft_grounded"
     | "flight_overdue"
     | "mel_expiring"
-    | "safety_report_new";
+    | "safety_report_new"
+    | "seat_open";
   title: string;
   detail: string;
   /** Permalink to the source record. */
@@ -85,11 +92,12 @@ export interface OperationalSnapshot {
 const TWO_DAYS_MS = 2 * 24 * 60 * 60 * 1000;
 
 export async function loadOperationalSnapshot(): Promise<OperationalSnapshot> {
-  const [fleet, openMels, board, newReports] = await Promise.all([
+  const [fleet, openMels, board, newReports, openings] = await Promise.all([
     getFleetAirworthiness().catch(() => null),
     listMelItems({ status: "open" }).catch(() => null),
     getFlightBoard("today").catch(() => null),
     listSafetyReports({ status: "open", limit: 50 }).catch(() => null),
+    listOpenSeats().catch(() => null),
   ]);
 
   const alerts: OperationalAlert[] = [];
@@ -179,6 +187,26 @@ export async function loadOperationalSnapshot(): Promise<OperationalSnapshot> {
     }
   }
 
+  // A seat a no-show opened (#120), with who is waiting for it.
+  if (openings) {
+    for (const opening of openings) {
+      alerts.push({
+        id: `seat-open-${opening.flight_id}`,
+        severity: "yellow",
+        category: "seat_open",
+        title: `Seat open — ${opening.flight_number}`,
+        detail: [
+          opening.legs.map((l) => `${l.origin} → ${l.destination} ${l.open} open`).join(", "),
+          waitingSummary(opening),
+        ].join(" · "),
+        href: `/check-in/${opening.flight_id}`,
+        scopedToIcao: opening.legs[0]?.origin,
+        // The latest no-show: a newer one brings a dismissed alert back.
+        occurredAt: opening.occurred_at,
+      });
+    }
+  }
+
   alerts.sort((a, b) =>
     a.severity === b.severity ? 0 : a.severity === "red" ? -1 : 1,
   );
@@ -241,4 +269,19 @@ export function scopeSnapshotToIcao(
       (f) => f.origin === normalized || f.destination === normalized,
     ),
   };
+}
+
+/** "2 waiting: 1 texted, 1 without a phone". */
+export function waitingSummary(opening: Opening): string {
+  const waiting = opening.waiting;
+  if (waiting.length === 0) return "no one waiting";
+  const texted = waiting.filter((p) => p.text?.status === "sent").length;
+  const kept = waiting.filter((p) => p.text && p.text.status !== "sent").length;
+  const noPhone = waiting.filter((p) => !p.phone).length;
+  const parts = [
+    texted ? `${texted} texted` : null,
+    kept ? `${kept} ${kept === 1 ? "text" : "texts"} not sent` : null,
+    noPhone ? `${noPhone} without a phone` : null,
+  ].filter(Boolean);
+  return `${waiting.length} waiting${parts.length ? `: ${parts.join(", ")}` : ""}`;
 }

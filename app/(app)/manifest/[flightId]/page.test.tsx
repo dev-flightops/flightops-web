@@ -185,6 +185,36 @@ describe("manifest entry (#62)", () => {
   });
 });
 
+describe("pickups by stop (#120)", () => {
+  it("shows the seats on each leg of a flight with stops, and asks where each boards", async () => {
+    mocks.auth.mockResolvedValue({ roles: ["dispatcher"] });
+    mocks.getFlight.mockResolvedValue({ ...flight, origin: "PABE", destination: "PABE", stops: ["PABE", "PAVA", "PAHP", "PABE"] });
+    mocks.getFlightManifest.mockResolvedValue({
+      ...manifest("draft"),
+      legs: [
+        { origin: "PABE", destination: "PAVA", held: 0, open: 9 },
+        { origin: "PAVA", destination: "PAHP", held: 5, open: 4 },
+        { origin: "PAHP", destination: "PABE", held: 9, open: 0 },
+      ],
+    });
+    await renderPage();
+    const seats = screen.getByRole("region", { name: "Seats by leg" });
+    const rows = within(seats).getAllByRole("row").slice(1);
+    expect(rows.map((r) => r.textContent)).toEqual(["1  PABE → PAVA09", "2  PAVA → PAHP54", "3  PAHP → PABE90"]);
+    expect(within(section("Passengers & Crew")).getByText("PABE → PABE")).toBeTruthy();
+  });
+
+  it("has no leg table for a flight of one leg", async () => {
+    mocks.auth.mockResolvedValue({ roles: ["dispatcher"] });
+    mocks.getFlightManifest.mockResolvedValue({
+      ...manifest("draft"),
+      legs: [{ origin: "PANC", destination: "PABE", held: 1, open: 8 }],
+    });
+    await renderPage();
+    expect(screen.queryByRole("region", { name: "Seats by leg" })).toBeNull();
+  });
+});
+
 describe("weight left for mail and freight (#74)", () => {
   function panel(): HTMLElement {
     return screen.getByRole("region", { name: "Load" });

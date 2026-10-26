@@ -25,23 +25,28 @@ function _sorted(rows: ManifestPaxRow[]): ManifestPaxRow[] {
 /**
  * Legacy's "Passengers & Crew" block: the table, "+ Add Passenger"
  * opening the form below it, and Edit and Remove on each row while the
- * manifest is a draft. Its waitlist and per-leg segments are not here:
- * a FlightOps manifest is who flew (#62).
+ * manifest is a draft. On a flight with stops each passenger has the stop
+ * they board at and the one they deplane at, and anyone can wait on
+ * legacy's waitlist (#120).
  */
 export function PassengersSection({
   flightId,
   rows,
   editable,
+  stops = [],
 }: {
   flightId: string;
   rows: ManifestPaxRow[];
   editable: boolean;
+  /** The flight's route, in order. */
+  stops?: string[];
 }) {
   // "add", the id of the passenger being edited, or null when closed.
   const [open, setOpen] = useState<string | null>(null);
   const editing = open && open !== "add" ? (rows.find((p) => p.id === open) ?? null) : null;
   const formOpen = editable && (open === "add" || editing !== null);
   const crew = rows.filter((p) => p.is_crew).length;
+  const withStops = stops.length > 2;
 
   return (
     <section>
@@ -76,6 +81,7 @@ export function PassengersSection({
                   <th className={TH}>Last</th>
                   <th className={TH}>First</th>
                   <th className={TH}>Ticket</th>
+                  {withStops ? <th className={TH}>Stops</th> : null}
                   <th className={`${TH} text-right`}>Weight</th>
                   <th className={`${TH} text-right`}>Baggage</th>
                   <th className={TH}>Flags</th>
@@ -92,12 +98,18 @@ export function PassengersSection({
                     <td className="whitespace-nowrap px-3 py-2.5">
                       <TicketBadge ticket={p.ticket_type} />
                     </td>
+                    {withStops ? (
+                      <td className="whitespace-nowrap px-3 py-2.5 font-mono text-xs">
+                        {p.boards_at ?? stops[0]} → {p.leaves_at ?? stops[stops.length - 1]}
+                      </td>
+                    ) : null}
                     <td className="whitespace-nowrap px-3 py-2.5 text-right font-mono text-xs">{fmtLbs(p.weight_lbs)}</td>
                     <td className="whitespace-nowrap px-3 py-2.5 text-right font-mono text-xs">{fmtLbs(p.baggage_lbs)}</td>
                     <td className="whitespace-nowrap px-3 py-2.5">
                       <div className="flex flex-wrap gap-1">
                         {p.is_crew && <Flag label="CREW" tone="blue" />}
                         {p.is_unaccompanied_minor && <Flag label="UM" tone="yellow" />}
+                        {p.is_waitlist && p.check_in_status !== "no_show" && <Flag label="WAITLIST" tone="yellow" />}
                         {/* Out of the totals above (#103). */}
                         {p.check_in_status === "no_show" && <Flag label="NO-SHOW" tone="red" />}
                         {p.check_in_status === "checked_in" && <Flag label="CHECKED IN" tone="green" />}
@@ -134,7 +146,7 @@ export function PassengersSection({
         )}
       </div>
       {formOpen ? (
-        <PaxForm key={open} flightId={flightId} pax={editing} onClose={() => setOpen(null)} />
+        <PaxForm key={open} flightId={flightId} pax={editing} stops={withStops ? stops : []} onClose={() => setOpen(null)} />
       ) : null}
     </section>
   );
@@ -145,10 +157,13 @@ export function PassengersSection({
 function PaxForm({
   flightId,
   pax,
+  stops,
   onClose,
 }: {
   flightId: string;
   pax: ManifestPaxRow | null;
+  /** A multi-stop flight's route; empty for one leg, which has no pickers. */
+  stops: string[];
   onClose: () => void;
 }) {
   const [state, formAction, pending] = useActionState(savePaxAction, _initial);
@@ -219,6 +234,36 @@ function PaxForm({
           ))}
         </select>
       </label>
+      {stops.length > 0 ? (
+        <>
+          {/* Legacy's leg pickers, by stop: a route that changes keeps
+              everyone at the airport they asked for. */}
+          <label className="grid gap-1 text-xs">
+            Boards at
+            <select name="boards_at" defaultValue={value("boards_at", pax?.boards_at ?? stops[0])} className={FIELD}>
+              {stops.slice(0, -1).map((icao, i) => (
+                <option key={`${icao}-${i}`} value={icao}>
+                  {`Leg ${i + 1}: ${icao}`}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="grid gap-1 text-xs">
+            Deplanes at
+            <select
+              name="leaves_at"
+              defaultValue={value("leaves_at", pax?.leaves_at ?? stops[stops.length - 1])}
+              className={FIELD}
+            >
+              {stops.slice(1).map((icao, i) => (
+                <option key={`${icao}-${i}`} value={icao}>
+                  {`Leg ${i + 1}: ${icao}`}
+                </option>
+              ))}
+            </select>
+          </label>
+        </>
+      ) : null}
       <label className="grid gap-1 text-xs">
         Phone
         <input name="contact_phone" type="tel" maxLength={32} defaultValue={value("contact_phone", pax?.contact_phone)} className={FIELD} />
@@ -239,6 +284,10 @@ function PaxForm({
           className="accent-primary"
         />
         Unaccompanied minor
+      </label>
+      <label className="flex items-center gap-2 text-xs">
+        <input type="checkbox" name="is_waitlist" defaultChecked={checked("is_waitlist", pax?.is_waitlist)} className="accent-primary" />
+        Waitlist: waits for a seat
       </label>
       <label className="col-span-full grid gap-1 text-xs">
         Notes
