@@ -11,6 +11,7 @@ const actions = vi.hoisted(() => ({
   noShowAction: vi.fn(),
   openBoardingAction: vi.fn(),
   promoteAction: vi.fn(),
+  refreshAction: vi.fn(),
   resetAction: vi.fn(),
 }));
 vi.mock("./actions", () => actions);
@@ -104,7 +105,16 @@ function view(over: Partial<CheckInView> = {}): CheckInView {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  window.localStorage.clear();
+  Object.defineProperty(window.navigator, "onLine", { configurable: true, get: () => true });
 });
+
+/** The phone's list (#119): every row, as a phone shows it. */
+const phoneList = () => within(screen.getAllByRole("list")[0]);
+
+function offline(isOffline: boolean) {
+  Object.defineProperty(window.navigator, "onLine", { configurable: true, get: () => !isOffline });
+}
 
 describe("CheckInBoard (#103)", () => {
   it("shows the counts and planned against actual weight", () => {
@@ -121,7 +131,7 @@ describe("CheckInBoard (#103)", () => {
     });
     actions.checkInAction.mockResolvedValue({ ok: true, view: after });
     render(<CheckInBoard initial={view()} canAct />);
-    fireEvent.click(screen.getByRole("button", { name: "Check in Ana Andrews" }));
+    fireEvent.click(within(screen.getByRole("table")).getByRole("button", { name: "Check in Ana Andrews" }));
 
     const dialog = await screen.findByRole("dialog");
     // Not answered for them: legacy pre-ticked "No hazmat".
@@ -143,13 +153,13 @@ describe("CheckInBoard (#103)", () => {
       custom_fields: { village: "Emmonak" },
     });
     await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
-    expect(screen.getByText("Checked in")).toBeInTheDocument();
+    expect(within(screen.getByRole("table")).getByText("Checked in")).toBeInTheDocument();
   });
 
   it("keeps the dialog open with the server's refusal", async () => {
     actions.checkInAction.mockResolvedValue({ ok: false, error: "Still needed: Bag count." });
     render(<CheckInBoard initial={view()} canAct />);
-    fireEvent.click(screen.getByRole("button", { name: "Check in Ana Andrews" }));
+    fireEvent.click(within(screen.getByRole("table")).getByRole("button", { name: "Check in Ana Andrews" }));
     const dialog = await screen.findByRole("dialog");
     fireEvent.click(within(dialog).getByRole("button", { name: "Check In Passenger" }));
     expect(await within(dialog).findByText("Still needed: Bag count.")).toBeInTheDocument();
@@ -158,7 +168,7 @@ describe("CheckInBoard (#103)", () => {
   it("marks a no-show with a reason, saying about the fee and the bags", async () => {
     actions.noShowAction.mockResolvedValue({ ok: true, view: view() });
     render(<CheckInBoard initial={view()} canAct />);
-    fireEvent.click(screen.getByRole("button", { name: "No-show Ana Andrews" }));
+    fireEvent.click(within(screen.getByRole("table")).getByRole("button", { name: "No-show Ana Andrews" }));
     const dialog = await screen.findByRole("dialog");
     // Standby, no seat is recorded when boarding closes, not chosen here.
     expect(within(dialog).queryByRole("option", { name: "Standby, no seat" })).not.toBeInTheDocument();
@@ -166,7 +176,8 @@ describe("CheckInBoard (#103)", () => {
     expect(within(dialog).getByText(/Make sure the ramp takes them off/)).toBeInTheDocument();
     fireEvent.click(within(dialog).getByRole("button", { name: "Confirm No-show" }));
     await waitFor(() =>
-      expect(actions.noShowAction).toHaveBeenCalledWith("f-1", "p-ana", "did_not_appear", null),
+      // A step taken with signal is the server's now: no time of its own (#119).
+      expect(actions.noShowAction).toHaveBeenCalledWith("f-1", "p-ana", "did_not_appear", null, undefined),
     );
   });
 
@@ -183,8 +194,9 @@ describe("CheckInBoard (#103)", () => {
         canAct
       />,
     );
-    expect(screen.getByRole("button", { name: "Promote Sam Standby" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Board Ana Andrews" })).toBeInTheDocument();
+    const table = within(screen.getByRole("table"));
+    expect(table.getByRole("button", { name: "Promote Sam Standby" })).toBeInTheDocument();
+    expect(table.getByRole("button", { name: "Board Ana Andrews" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Close Boarding" })).toBeInTheDocument();
   });
 
@@ -226,3 +238,120 @@ describe("CheckInBoard (#103)", () => {
     expect(screen.getByRole("link", { name: /Open the manifest/ })).toHaveAttribute("href", "/manifest/f-1");
   });
 });
+
+describe("on a phone, and without signal (#119)", () => {
+  const NOTHING_REQUIRED = {
+    require_actual_weight: false,
+    require_actual_bag_weight: false,
+    require_bags_count: false,
+    require_id_verification: false,
+    require_hazmat_declaration: false,
+    require_seat_assignment: false,
+    no_show_fee: null,
+    standby_enabled: true,
+    allow_walk_up: true,
+    lock_manifest_on_close: true,
+  };
+
+  it("checks in with one tap when the company requires nothing more", async () => {
+    const after = view({ rules: NOTHING_REQUIRED, fields: [], passengers: [pax({ check_in_status: "checked_in" })] });
+    actions.checkInAction.mockResolvedValue({ ok: true, view: after });
+    render(<CheckInBoard initial={view({ rules: NOTHING_REQUIRED, fields: [] })} canAct />);
+    fireEvent.click(phoneList().getByRole("button", { name: "Check in Ana Andrews" }));
+    await waitFor(() => expect(actions.checkInAction).toHaveBeenCalled());
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(actions.checkInAction.mock.calls[0].slice(0, 2)).toEqual(["f-1", "p-ana"]);
+  });
+
+  it("boards with the box beside the name once boarding is open", async () => {
+    const checkedIn = view({ boarding_opened_at: "2026-10-22T18:00:00Z", passengers: [pax({ check_in_status: "checked_in" })] });
+    const boarded = view({ ...checkedIn, passengers: [pax({ check_in_status: "boarded" })] });
+    actions.boardAction.mockResolvedValue({ ok: true, view: boarded });
+    render(<CheckInBoard initial={checkedIn} canAct />);
+    const box = phoneList().getByRole("checkbox", { name: "Board Ana Andrews" });
+    expect(box).toHaveAttribute("aria-checked", "false");
+    fireEvent.click(box);
+    await waitFor(() =>
+      expect(phoneList().getByRole("checkbox", { name: "Ana Andrews on board" })).toHaveAttribute("aria-checked", "true"),
+    );
+  });
+
+  it("keeps a tap without signal, shows it, and sends it with its time once back", async () => {
+    const checkedIn = view({ boarding_opened_at: "2026-10-22T18:00:00Z", passengers: [pax({ check_in_status: "checked_in" })] });
+    const boarded = view({ ...checkedIn, passengers: [pax({ check_in_status: "boarded" })] });
+    actions.boardAction.mockResolvedValue({ ok: true, view: boarded });
+    offline(true);
+    render(<CheckInBoard initial={checkedIn} canAct />);
+    fireEvent.click(phoneList().getByRole("checkbox", { name: "Board Ana Andrews" }));
+
+    expect(actions.boardAction).not.toHaveBeenCalled();
+    expect(screen.getByRole("status")).toHaveTextContent("1 step is waiting for signal");
+    expect(phoneList().getByText("Waiting for signal")).toBeInTheDocument();
+    expect(phoneList().getByRole("checkbox", { name: "Ana Andrews on board" })).toBeInTheDocument();
+    expect(JSON.parse(window.localStorage.getItem("fo-check-in-queue:f-1")!)).toHaveLength(1);
+
+    offline(false);
+    window.dispatchEvent(new Event("online"));
+    await waitFor(() => expect(actions.boardAction).toHaveBeenCalled());
+    const [flightId, paxId, at] = actions.boardAction.mock.calls[0];
+    expect([flightId, paxId]).toEqual(["f-1", "p-ana"]);
+    expect(Number.isNaN(Date.parse(at))).toBe(false);
+    await waitFor(() => expect(screen.queryByText(/waiting for signal/)).not.toBeInTheDocument());
+    expect(window.localStorage.getItem("fo-check-in-queue:f-1")).toBeNull();
+  });
+
+  it("keeps a tap when the send fails for want of signal, and says what was refused later", async () => {
+    const checkedIn = view({ boarding_opened_at: "2026-10-22T18:00:00Z", passengers: [pax({ check_in_status: "checked_in" })] });
+    actions.boardAction.mockRejectedValueOnce(new TypeError("Failed to fetch"));
+    render(<CheckInBoard initial={checkedIn} canAct />);
+    fireEvent.click(phoneList().getByRole("checkbox", { name: "Board Ana Andrews" }));
+    await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent("1 step is waiting"));
+
+    actions.boardAction.mockResolvedValueOnce({ ok: false, error: "Boarding is closed." });
+    actions.refreshAction.mockResolvedValueOnce({ ok: true, view: checkedIn });
+    fireEvent.click(screen.getByRole("button", { name: "Send now ›" }));
+    await waitFor(() => expect(screen.getByRole("alert")).toHaveTextContent("Ana Andrews: Boarding is closed."));
+    expect(actions.refreshAction).toHaveBeenCalledWith("f-1");
+  });
+
+  it("keeps a tap the server couldn't take yet, rather than dropping it", async () => {
+    const checkedIn = view({ boarding_opened_at: "2026-10-22T18:00:00Z", passengers: [pax({ check_in_status: "checked_in" })] });
+    offline(true);
+    render(<CheckInBoard initial={checkedIn} canAct />);
+    fireEvent.click(phoneList().getByRole("checkbox", { name: "Board Ana Andrews" }));
+    offline(false);
+    actions.boardAction.mockResolvedValueOnce({ ok: false, error: "Your session expired — please sign in again.", retry: true });
+    fireEvent.click(screen.getByRole("button", { name: "Send now ›" }));
+    await waitFor(() => expect(screen.getByRole("alert")).toHaveTextContent("Your session expired"));
+    expect(screen.getByRole("status")).toHaveTextContent("1 step is waiting");
+    expect(JSON.parse(window.localStorage.getItem("fo-check-in-queue:f-1")!)).toHaveLength(1);
+  });
+
+  it("keeps a tap made while the one before it is on its way", async () => {
+    const checkedIn = view({ passengers: [pax({ check_in_status: "checked_in" })] });
+    let finishOpening: (r: unknown) => void = () => {};
+    actions.openBoardingAction.mockReturnValueOnce(new Promise((resolve) => (finishOpening = resolve)));
+    const opened = view({ ...checkedIn, boarding_opened_at: "2026-10-22T18:00:00Z" });
+    actions.boardAction.mockResolvedValue({ ok: true, view: { ...opened, passengers: [pax({ check_in_status: "boarded" })] } });
+    render(<CheckInBoard initial={checkedIn} canAct />);
+    fireEvent.click(screen.getByRole("button", { name: "Begin Boarding" }));
+    // Boarding shows open at once; the board tap goes behind it.
+    fireEvent.click(phoneList().getByRole("checkbox", { name: "Board Ana Andrews" }));
+    expect(actions.boardAction).not.toHaveBeenCalled();
+    finishOpening({ ok: true, view: opened });
+    await waitFor(() => expect(actions.boardAction).toHaveBeenCalled());
+    await waitFor(() => expect(window.localStorage.getItem("fo-check-in-queue:f-1")).toBeNull());
+  });
+
+  it("picks up what an earlier visit kept", async () => {
+    window.localStorage.setItem(
+      "fo-check-in-queue:f-1",
+      JSON.stringify([{ kind: "no-show", paxId: "p-ana", reason: "did_not_appear", notes: null, at: "2026-10-22T18:01:00Z" }]),
+    );
+    offline(true);
+    render(<CheckInBoard initial={view()} canAct />);
+    await waitFor(() => expect(within(screen.getByRole("table")).getByText("No-show")).toBeInTheDocument());
+    expect(screen.getByRole("status")).toHaveTextContent("1 step is waiting");
+  });
+});
+

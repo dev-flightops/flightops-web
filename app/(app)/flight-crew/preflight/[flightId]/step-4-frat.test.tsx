@@ -714,3 +714,76 @@ describe("the dispatch packet's level", () => {
     expect(screen.getByText(/Raised to HIGH by the dispatch packet/)).toBeInTheDocument();
   });
 });
+
+// ---- #117: where the weather came from -----------------------------------------------
+
+describe("the weather each stop was scored on", () => {
+  const STOP = {
+    certified: true,
+    described: "METAR",
+    ceiling_ft: null,
+    ceiling_from: "METAR",
+    visibility_sm: 10,
+    visibility_from: "METAR",
+    wind_direction: "360",
+    wind_kt: 5,
+    wind_gust_kt: null,
+    wind_from: "METAR",
+  };
+  const PREFILL: FratPrefillResponse = {
+    flight_id: "f-1",
+    suggestions: [
+      {
+        factor: "wx_ceiling",
+        score: 4,
+        source: "lowest ceiling 600 ft at PAEE (FAA WeatherCam, not certified) against a 1000 ft floor",
+      },
+      {
+        factor: "wx_icing",
+        score: 4,
+        source:
+          "light icing PIREP near PABE (official PIREPs within 50 nm of each stop, last 3 hours)",
+      },
+    ],
+    crosswind_limit_kt: 30,
+    near_limit_entry_kt: 20,
+    vfr_min_ceiling_ft: 1000,
+    vfr_min_visibility_sm: 3,
+    stops: [
+      { ...STOP, ident: "PABE", source: "metar" },
+      {
+        ...STOP,
+        ident: "PAEE",
+        source: "weathercam",
+        certified: false,
+        described: "FAA WeatherCam, not certified",
+        ceiling_ft: 600,
+        ceiling_from: "FAA WeatherCam",
+      },
+    ],
+    non_certified_weather: true,
+  };
+
+  it("lists each stop's source and gives the OpSpecs notice", () => {
+    renderStep({ ...singleEngine, fratPrefill: PREFILL });
+    expect(screen.getByText("Weather used")).toBeInTheDocument();
+    expect(screen.getByText("Official METAR/TAF")).toBeInTheDocument();
+    expect(screen.getByText("FAA WeatherCam · Not certified")).toBeInTheDocument();
+    expect(screen.getByText("Not certified weather")).toBeInTheDocument();
+    // The PIREPs' icing suggestion is prefilled like the others.
+    expect(screen.getByText(/light icing PIREP near PABE/)).toBeInTheDocument();
+  });
+
+  it("gives no notice when every stop is on its METAR", () => {
+    renderStep({
+      ...singleEngine,
+      fratPrefill: {
+        ...PREFILL,
+        stops: [{ ...STOP, ident: "PABE", source: "metar" }],
+        non_certified_weather: false,
+      },
+    });
+    expect(screen.getByText("Official METAR/TAF")).toBeInTheDocument();
+    expect(screen.queryByText("Not certified weather")).not.toBeInTheDocument();
+  });
+});

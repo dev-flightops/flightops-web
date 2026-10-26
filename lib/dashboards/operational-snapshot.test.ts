@@ -5,6 +5,7 @@ const api = vi.hoisted(() => ({
   listMelItems: vi.fn(),
   getFlightBoard: vi.fn(),
   listSafetyReports: vi.fn(),
+  listOpenSeats: vi.fn(),
 }));
 vi.mock("@/lib/api/maintenance", () => ({
   getFleetAirworthiness: api.getFleetAirworthiness,
@@ -17,8 +18,11 @@ vi.mock("@/lib/api/safety-reports", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/lib/api/safety-reports")>()),
   listSafetyReports: api.listSafetyReports,
 }));
+vi.mock("@/lib/api/open-seats", () => ({ listOpenSeats: api.listOpenSeats }));
 
-import { loadOperationalSnapshot } from "./operational-snapshot";
+import type { Opening, OpeningPassenger } from "@/lib/api/open-seats";
+
+import { loadOperationalSnapshot, waitingSummary } from "./operational-snapshot";
 
 function report(id: string, risk_level: "high" | "medium" | null) {
   return {
@@ -36,6 +40,7 @@ beforeEach(() => {
   api.listMelItems.mockResolvedValue({ items: [] });
   api.getFlightBoard.mockResolvedValue({ items: [] });
   api.listSafetyReports.mockReset();
+  api.listOpenSeats.mockReset().mockResolvedValue([]);
 });
 
 describe("new safety report alerts (#58)", () => {
@@ -61,5 +66,82 @@ describe("new safety report alerts (#58)", () => {
     api.listSafetyReports.mockRejectedValue(new Error("403"));
     const { alerts } = await loadOperationalSnapshot();
     expect(alerts).toEqual([]);
+  });
+});
+
+function waiting(name: string, over: Partial<OpeningPassenger> = {}): OpeningPassenger {
+  return { id: name, name, boards_at: "PAHP", leaves_at: "PABE", phone: "(907) 555-0100", text: null, ...over };
+}
+
+function opening(over: Partial<Opening> = {}): Opening {
+  return {
+    flight_id: "f-900",
+    flight_number: "PGR900",
+    tail_number: "N503PA",
+    scheduled_departure_at: "2026-10-26T18:00:00Z",
+    stops: ["PABE", "PAVA", "PAHP", "PABE"],
+    legs: [
+      { origin: "PAVA", destination: "PAHP", open: 5 },
+      { origin: "PAHP", destination: "PABE", open: 1 },
+    ],
+    no_shows: [waiting("Rider, C1", { boards_at: "PAVA" })],
+    waiting: [],
+    occurred_at: "2026-10-26T18:40:00Z",
+    can_text: false,
+    ...over,
+  };
+}
+
+const text = (status: "sent" | "not_sent" | "failed") => ({
+  id: "t",
+  to_name: "x",
+  to_phone: "x",
+  body: "x",
+  status,
+  reason: status === "not_sent" ? "no_account" : null,
+  sent_at: null,
+  created_at: "2026-10-26T18:41:00Z",
+});
+
+describe("seat open alerts (#120)", () => {
+  it("raises one per flight with a seat a no-show opened, for the gate page", async () => {
+    api.listSafetyReports.mockResolvedValue({ items: [], total: 0 });
+    api.listOpenSeats.mockResolvedValue([
+      opening({ waiting: [waiting("Rider, Sam", { text: text("sent") }), waiting("Rider, Nell", { phone: null })] }),
+    ]);
+    const { alerts } = await loadOperationalSnapshot();
+    expect(alerts).toEqual([
+      {
+        id: "seat-open-f-900",
+        severity: "yellow",
+        category: "seat_open",
+        title: "Seat open — PGR900",
+        detail: "PAVA → PAHP 5 open, PAHP → PABE 1 open · 2 waiting: 1 texted, 1 without a phone",
+        href: "/check-in/f-900",
+        scopedToIcao: "PAVA",
+        occurredAt: "2026-10-26T18:40:00Z",
+      },
+    ]);
+  });
+
+  it("raises nothing for someone ops won't show openings to", async () => {
+    api.listSafetyReports.mockResolvedValue({ items: [], total: 0 });
+    api.listOpenSeats.mockRejectedValue(new Error("403"));
+    expect((await loadOperationalSnapshot()).alerts).toEqual([]);
+  });
+
+  it("sums up who is waiting and how they were told", () => {
+    expect(waitingSummary(opening())).toBe("no one waiting");
+    expect(
+      waitingSummary(
+        opening({
+          waiting: [
+            waiting("a", { text: text("not_sent") }),
+            waiting("b", { text: text("failed") }),
+            waiting("c"),
+          ],
+        }),
+      ),
+    ).toBe("3 waiting: 2 texts not sent");
   });
 });
