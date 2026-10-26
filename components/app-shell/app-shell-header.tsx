@@ -110,7 +110,7 @@ export function AppShellHeader({
               >
                 {brand}
               </span>
-              <span className="truncate text-[0.625rem] font-semibold leading-tight tracking-[0.04em] text-muted-foreground">
+              <span className="truncate text-[0.65rem] font-medium leading-tight text-muted-foreground">
                 Powered by Peregrine
               </span>
             </span>
