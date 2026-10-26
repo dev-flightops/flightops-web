@@ -1616,8 +1616,20 @@ export interface FratAssessmentResponse {
   /** null means the assessment predates the column; `[]` means the
    *  pilot was asked and affirmed nothing. */
   affirmed_zero_factors: string[] | null;
+  /** The pilot's answers on the approach minimums, on an IFR flight
+   *  (#124). Null or absent when the question wasn't asked. */
+  approach_minimums?: ApproachMinimums | null;
   created_at: string;
   authorizations: FratAuthorizationResponse[];
+}
+
+/** On an IFR flight the FRAT asks the pilot, who has the approach plates,
+ *  whether the forecast at arrival is at or above the approach minimums
+ *  (#124). 14 CFR 135.219: below them the flight may not take off under
+ *  IFR, so a "no" is scored over company limits. */
+export interface ApproachMinimums {
+  ceiling: boolean;
+  visibility: boolean;
 }
 
 export interface FratSubmitRequest {
@@ -1636,6 +1648,9 @@ export interface FratSubmitRequest {
    *  must be present in `answers` with a value of 0, or the submit is
    *  a 422. */
   affirmed_zero_factors?: string[];
+  /** On an IFR flight (#124). A `false` must come with that factor scored
+   *  5, or the submit is a 422. */
+  approach_minimums?: ApproachMinimums;
 }
 
 export interface FratAuthorizeRequest {
@@ -2447,6 +2462,9 @@ export interface FratPrefillResponse {
   stops?: StopWeather[];
   /** Some stop's weather used isn't certified. */
   non_certified_weather?: boolean;
+  /** An IFR flight landing where there is an instrument approach: the
+   *  pilot answers on the approach minimums (#124). */
+  asks_approach_minimums?: boolean;
 }
 
 /** A duty position on an aircraft type (#45), as 135ACM names them. */
