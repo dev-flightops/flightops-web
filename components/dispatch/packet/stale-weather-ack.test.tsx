@@ -112,7 +112,7 @@ describe("StaleWeatherAck", () => {
         acknowledged={false}
       />,
     );
-    expect(screen.getByText(/PAKN: no weather on file/)).toBeInTheDocument();
+    expect(screen.getByText(/PAKN: no METAR or village report/)).toBeInTheDocument();
   });
 
   it("renders long ages in hours rather than making the reader divide", () => {

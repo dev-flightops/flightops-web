@@ -19,6 +19,7 @@ import {
   observationsFromWeather,
 } from "@/lib/frat/observations";
 import { getFlightLoad, type FlightLoad } from "@/lib/api/manifest";
+import { riskStops, weatherCamsFor } from "@/lib/api/dispatch-risk";
 import { batchWeather } from "@/lib/api/weather";
 import { listFuelOrders, listSupplierBases } from "@/lib/api/ground";
 import { zoneFor } from "@/lib/format/local-time";
@@ -154,8 +155,13 @@ export default async function PreflightPage({
       const reqs = routeIcaos.flatMap((icao) => [
         { icao, kind: "metar" as const },
         { icao, kind: "taf" as const },
+        { icao, kind: "pirep" as const },
       ]);
-      weather = await batchWeather(reqs).catch(() => null);
+      const [batch, cams] = await Promise.all([
+        batchWeather(reqs).catch(() => null),
+        weatherCamsFor(routeIcaos),
+      ]);
+      weather = batch;
 
       // The FRAT prefill needs the observations, so it follows the
       // weather rather than joining the fan-out above. Best-effort: a
@@ -163,6 +169,11 @@ export default async function PreflightPage({
       // did, with nothing prefilled, which is the status quo rather
       // than a regression.
       const observations = observationsFromWeather(weather);
+      // Each stop's reports as the dispatch packet sends them (#117), so
+      // the FRAT scores the same weather: the METAR, the FAA WeatherCam
+      // and the village reports, and its icing and turbulence from the
+      // PIREPs.
+      const stops = riskStops(routeIcaos, weather, null, cams);
       // The prefill runs even with no weather: duty, rest, currency and
       // maintenance need none, and gating it on the METAR meant a
       // weather-service blip also blanked the duty-clock factors. The
@@ -173,11 +184,13 @@ export default async function PreflightPage({
       const [prefillResult, blockResult] = await Promise.all([
         getFratPrefill(flightId, {
           observations,
+          stops,
           is_ifr: isIfrPlanned(),
         }).catch(() => null),
-        observations.length > 0
+        observations.length > 0 || stops.some((stop) => stop.weathercam)
           ? getFratBlockEligibility(flightId, {
               observations,
+              stops,
               is_ifr: isIfrPlanned(),
             }).catch(() => null)
           : Promise.resolve(null),
