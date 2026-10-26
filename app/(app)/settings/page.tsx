@@ -193,6 +193,11 @@ export default async function SettingsLandingPage() {
           href: "/settings/foreflight",
         },
         {
+          label: "Text Messages",
+          blurb: "Text passengers waiting for a seat a no-show opened, from the company's Twilio account.",
+          href: "/settings/text-messages",
+        },
+        {
           label: "API Keys",
           blurb: "Issue, review and revoke keys for partner access to the read-only Public API.",
           href: "/settings/api-keys",

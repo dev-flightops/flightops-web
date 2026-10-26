@@ -117,6 +117,35 @@ describe("Passengers & Crew (#62)", () => {
     expect(screen.queryByText("Remove Ann Quill?")).toBeNull();
   });
 
+  it("asks where each boards and deplanes on a flight with stops (#120)", () => {
+    const route = ["PABE", "PAVA", "PAHP", "PABE"];
+    const hooper = [pax({ boards_at: "PAHP", leaves_at: null }), pax({ id: "p-3", first_name: "Wes", is_waitlist: true })];
+    render(<PassengersSection flightId={FLIGHT} rows={hooper} editable stops={route} />);
+    const table = screen.getByRole("table");
+    expect(within(table).getByText("PAHP → PABE")).toBeTruthy();
+    expect(within(table).getByText("PABE → PABE")).toBeTruthy();
+    expect(within(table).getByText("WAITLIST")).toBeTruthy();
+
+    fireEvent.click(screen.getAllByRole("button", { name: "Edit" })[0]);
+    const form = screen.getByRole("form", { name: "Edit Ann Quill" });
+    const boards = within(form).getByLabelText("Boards at") as HTMLSelectElement;
+    const deplanes = within(form).getByLabelText("Deplanes at") as HTMLSelectElement;
+    expect([...boards.options].map((o) => o.text)).toEqual(["Leg 1: PABE", "Leg 2: PAVA", "Leg 3: PAHP"]);
+    expect([...deplanes.options].map((o) => o.text)).toEqual(["Leg 1: PAVA", "Leg 2: PAHP", "Leg 3: PABE"]);
+    expect(boards.value).toBe("PAHP");
+    expect(deplanes.value).toBe("PABE");
+    expect((within(form).getByLabelText("Waitlist: waits for a seat") as HTMLInputElement).checked).toBe(false);
+  });
+
+  it("has no stop pickers on a flight of one leg", () => {
+    render(<PassengersSection flightId={FLIGHT} rows={rows} editable stops={["PABE", "PAEM"]} />);
+    expect(screen.queryByText("Stops")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "+ Add Passenger" }));
+    const form = screen.getByRole("form", { name: "Add passenger" });
+    expect(within(form).queryByLabelText("Boards at")).toBeNull();
+    expect(within(form).getByLabelText("Waitlist: waits for a seat")).toBeTruthy();
+  });
+
   it("offers nothing to change on a locked manifest", () => {
     render(<PassengersSection flightId={FLIGHT} rows={rows} editable={false} />);
     expect(screen.queryByRole("button", { name: "+ Add Passenger" })).toBeNull();

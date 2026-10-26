@@ -18,11 +18,19 @@ export function passengerSeatsRefusal(err: unknown): string | null {
     return null;
   }
   if (!detail || typeof detail !== "object") return null;
-  const d = detail as { error?: unknown; tail_number?: unknown; seats?: unknown; passengers?: unknown };
+  const d = detail as {
+    error?: unknown;
+    tail_number?: unknown;
+    seats?: unknown;
+    passengers?: unknown;
+    leg?: unknown;
+  };
   if (d.error !== "more_passengers_than_seats") return null;
+  // On a flight with stops, the leg that would be over (#120).
+  const where = typeof d.leg === "string" ? ` from ${d.leg.replace("-", " to ")}` : "";
   return (
     `${String(d.tail_number)} has ${String(d.seats)} passenger seats, and this would make ` +
-    `${String(d.passengers)} passengers. Someone in the co-pilot seat must be a company ` +
+    `${String(d.passengers)} passengers${where}. Someone in the co-pilot seat must be a company ` +
     "check airman, entered as crew."
   );
 }

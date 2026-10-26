@@ -12,6 +12,7 @@ import { localDateTime, zoneFor } from "@/lib/format/local-time";
 import { CHECKIN_ROLES, hasAnyRole } from "@/lib/roles";
 
 import { CheckInBoard } from "./check-in-board";
+import { OpenSeats } from "./open-seats";
 
 export const dynamic = "force-dynamic";
 
@@ -68,6 +69,7 @@ export default async function CheckInPage({
           </>
         }
       />
+      <OpenSeats flightId={view.flight_id} timeZone={zoneFor(zones, view.origin)} />
       <CheckInBoard initial={view} canAct={canAct} />
     </div>
   );

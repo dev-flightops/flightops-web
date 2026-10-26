@@ -4,6 +4,7 @@ import { AddAirportDialog } from "@/components/village-wx/add-airport-dialog";
 import { formatZuluDateTime } from "@/lib/format/flight-time";
 import { AddReportDialog } from "@/components/village-wx/add-report-dialog";
 import { ApproachToggle } from "@/components/village-wx/approach-toggle";
+import { ReportPhotos } from "@/components/village-wx/report-photos";
 import { ApiError } from "@/lib/api/client";
 import type {
   FlightCategory,
@@ -196,7 +197,10 @@ function ReportCard({
               </code>
             </div>
             {r ? (
-              <Conditions report={r} view={view} />
+              <>
+                <Conditions report={r} view={view} />
+                <ReportPhotos photos={r.photos} />
+              </>
             ) : (
               <p className="mt-1 text-[0.75rem] text-muted-foreground">
                 No report yet — file the first observation.
