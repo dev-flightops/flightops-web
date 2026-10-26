@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useTransition, type FormEvent } from "react";
+import { useCallback, useEffect, useRef, useState, useTransition, type FormEvent } from "react";
 
 import { buttonOutline, buttonSolid, linkCaps } from "@/components/ff/controls";
 import { Notice } from "@/components/ff/notice";
@@ -23,6 +23,14 @@ import type {
   CheckInView,
   NoShowReason,
 } from "@/lib/api/check-in";
+import {
+  applyStep,
+  checkInNeedsForm,
+  loadQueue,
+  saveQueue,
+  stepPaxId,
+  type QueuedStep,
+} from "@/lib/check-in/offline";
 import { cn } from "@/lib/utils";
 
 import {
@@ -33,6 +41,7 @@ import {
   noShowAction,
   openBoardingAction,
   promoteAction,
+  refreshAction,
   resetAction,
   type StepResult,
 } from "./actions";
@@ -42,6 +51,11 @@ import {
  * (`templates/checkin/partials/state.html`): the counts, planned against
  * actual weight, and every passenger with what can be done to them. Each
  * step answers with the whole check-in, which replaces what is shown.
+ *
+ * On a phone (#119) the passengers are a list with the next step as one
+ * tap beside each name: the client's "quite literally check box next to
+ * their names". A step taken without signal is kept on the phone, shown at
+ * once, and sent in order when the phone is back (lib/check-in/offline).
  */
 
 const lbs = (v: string | number | null | undefined) =>
@@ -79,11 +93,42 @@ function statusOf(p: CheckInPax): { label: string; tone: StatusTone } {
   }
 }
 
+/** A step sent to the server: a kept one says when it was taken. */
+function send(flightId: string, step: QueuedStep, kept: boolean): Promise<StepResult> {
+  const at = kept ? step.at : undefined;
+  switch (step.kind) {
+    case "check-in":
+      return checkInAction(flightId, step.paxId, step.input, at);
+    case "board":
+      return boardAction(flightId, step.paxId, at);
+    case "promote":
+      return promoteAction(flightId, step.paxId, at);
+    case "reset":
+      return resetAction(flightId, step.paxId);
+    case "no-show":
+      return noShowAction(flightId, step.paxId, step.reason, step.notes, at);
+    case "open-boarding":
+      return openBoardingAction(flightId, at);
+  }
+}
+
+const NO_SIGNAL = "No signal on this phone: try again once it's back in service.";
+
 export function CheckInBoard({ initial, canAct }: { initial: CheckInView; canAct: boolean }) {
   const [view, setView] = useState(initial);
   const [error, setError] = useState<string | null>(null);
   const [dialog, setDialog] = useState<Dialogs>(null);
   const [pending, startTransition] = useTransition();
+  // Taps kept on the phone until the server has them (#119), whether the
+  // last send failed for want of signal, and what the server refused.
+  const [kept, setKept] = useState<QueuedStep[]>([]);
+  const [stalled, setStalled] = useState(false);
+  const [online, setOnline] = useState(() => (typeof navigator === "undefined" ? true : navigator.onLine));
+  const [refused, setRefused] = useState<string[]>([]);
+  const [storable, setStorable] = useState(true);
+  const keptRef = useRef<QueuedStep[]>([]);
+  const sending = useRef(false);
+  const flightId = initial.flight_id;
 
   const closed = view.boarding_closed_at !== null;
   const locked = view.manifest_status === "final";
@@ -91,10 +136,124 @@ export function CheckInBoard({ initial, canAct }: { initial: CheckInView; canAct
   const open = canAct && view.manifest_id !== null && !closed && !locked;
   const boarding = view.boarding_opened_at !== null && !closed;
 
-  function run(fn: () => Promise<StepResult>, after?: () => void) {
+  const remember = useCallback(
+    (steps: QueuedStep[]) => {
+      keptRef.current = steps;
+      setKept(steps);
+      setStorable(saveQueue(flightId, steps));
+    },
+    [flightId],
+  );
+
+  /** Send what the phone kept, in order, until it runs out of signal.
+   *  Only when the phone says it has signal, unless asked to try. */
+  const sendKept = useCallback(async (anyway = false) => {
+    if (sending.current || keptRef.current.length === 0) return;
+    if (!anyway && typeof navigator !== "undefined" && !navigator.onLine) return;
+    sending.current = true;
+    let anyRefused = false;
+    try {
+      while (keptRef.current.length > 0) {
+        const step = keptRef.current[0];
+        let result: StepResult;
+        try {
+          result = await send(flightId, step, true);
+        } catch {
+          setStalled(true);
+          break; // still no signal; the rest wait
+        }
+        if (!result.ok && result.retry) {
+          // Not a refusal: signed out, or the server couldn't answer. It
+          // stays kept, with the rest behind it.
+          setError(result.error);
+          setStalled(true);
+          break;
+        }
+        setStalled(false);
+        // Only this step: a tap made while it was on its way is behind it.
+        remember(keptRef.current.filter((kept) => kept !== step));
+        if (result.ok) {
+          setView(result.view);
+        } else {
+          anyRefused = true;
+          const pax = view.passengers.find((p) => p.id === stepPaxId(step));
+          setRefused((prev) => [
+            ...prev,
+            `${pax ? `${pax.first_name} ${pax.last_name}` : "Boarding"}: ${result.error}`,
+          ]);
+        }
+      }
+      if (anyRefused && keptRef.current.length === 0) {
+        // What a refused step had shown is undone by the server's own view.
+        const fresh = await refreshAction(flightId).catch(() => null);
+        if (fresh?.ok) setView(fresh.view);
+      }
+    } finally {
+      sending.current = false;
+    }
+  }, [flightId, remember, view.passengers]);
+
+  // What a previous visit kept, shown and sent once there's signal; and
+  // sent again whenever the phone says it's back, or every 20 s anyway,
+  // since a phone can claim signal it doesn't have.
+  useEffect(() => {
+    const steps = loadQueue(flightId);
+    if (steps.length > 0) {
+      keptRef.current = steps;
+      setKept(steps);
+      setView((v) => steps.reduce(applyStep, v));
+      void sendKept();
+    }
+    // Once, on arrival.
+  }, [flightId]);
+  useEffect(() => {
+    const back = () => {
+      setOnline(true);
+      void sendKept();
+    };
+    const gone = () => setOnline(false);
+    window.addEventListener("online", back);
+    window.addEventListener("offline", gone);
+    const timer = kept.length > 0 ? window.setInterval(() => void sendKept(), 20_000) : undefined;
+    return () => {
+      window.removeEventListener("online", back);
+      window.removeEventListener("offline", gone);
+      if (timer) window.clearInterval(timer);
+    };
+  }, [kept.length, sendKept]);
+
+  /** Keep a step on the phone and show it at once. */
+  function keep(step: QueuedStep) {
+    remember([...keptRef.current, step]);
+    setView((v) => applyStep(v, step));
+  }
+
+  /** A tap: shown at once and sent behind anything already on its way,
+   *  so a slow or missing signal never holds the list up. */
+  function tap(step: QueuedStep) {
     setError(null);
+    keep(step);
+    void sendKept();
+  }
+
+  /** A form's step: sent and answered while the form is open, so a
+   *  refusal can be put right in it; kept like a tap without signal. */
+  function perform(step: QueuedStep, after?: () => void) {
+    setError(null);
+    if (keptRef.current.length > 0 || (typeof navigator !== "undefined" && !navigator.onLine)) {
+      tap(step);
+      after?.();
+      return;
+    }
     startTransition(async () => {
-      const result = await fn();
+      let result: StepResult;
+      try {
+        result = await send(flightId, step, false);
+      } catch {
+        keep(step);
+        after?.();
+        return;
+      }
       if (result.ok) {
         setView(result.view);
         after?.();
@@ -103,6 +262,35 @@ export function CheckInBoard({ initial, canAct }: { initial: CheckInView; canAct
       }
     });
   }
+
+  /** A step that needs signal: a walk-up, closing boarding. */
+  function run(fn: () => Promise<StepResult>, after?: () => void) {
+    setError(null);
+    if (keptRef.current.length > 0) {
+      setError("Send what this phone kept first: it needs signal.");
+      return;
+    }
+    startTransition(async () => {
+      let result: StepResult;
+      try {
+        result = await fn();
+      } catch {
+        setError(NO_SIGNAL);
+        return;
+      }
+      if (result.ok) {
+        setView(result.view);
+        after?.();
+      } else {
+        setError(result.error);
+      }
+    });
+  }
+
+  const now = () => new Date().toISOString();
+  const waiting = new Set(kept.map(stepPaxId).filter((id): id is string => id !== null));
+  // Kept for want of signal, rather than on their way.
+  const noSignal = kept.length > 0 && (stalled || !online);
 
   const reasonLabel = (code: string | null) =>
     view.no_show_reasons.find((r) => r.code === code)?.label ?? "";
@@ -162,7 +350,7 @@ export function CheckInBoard({ initial, canAct }: { initial: CheckInView; canAct
                 type="button"
                 className={buttonSolid}
                 disabled={pending}
-                onClick={() => run(() => openBoardingAction(view.flight_id))}
+                onClick={() => tap({ kind: "open-boarding", at: now() })}
               >
                 {pending ? <Spinner size="xs" /> : null}
                 Begin Boarding
@@ -171,6 +359,33 @@ export function CheckInBoard({ initial, canAct }: { initial: CheckInView; canAct
           </div>
         ) : null}
       </div>
+
+      {noSignal ? (
+        <Notice tone="yellow" label="Kept on this phone" role="status" className="mb-6">
+          {`${kept.length} ${kept.length === 1 ? "step is" : "steps are"} waiting for signal. They'll be sent in order once the phone is back in service.`}{" "}
+          <button type="button" className={linkCaps} onClick={() => void sendKept(true)}>
+            Send now ›
+          </button>
+          {!storable ? (
+            <span className="mt-1 block">
+              This phone can&rsquo;t store them, so keep the page open until they&rsquo;re sent.
+            </span>
+          ) : null}
+        </Notice>
+      ) : null}
+
+      {refused.length > 0 ? (
+        <Notice tone="red" label="Not taken when sent" role="alert" className="mb-6">
+          <ul className="space-y-0.5">
+            {refused.map((line) => (
+              <li key={line}>{line}</li>
+            ))}
+          </ul>
+          <button type="button" className={cn(linkCaps, "mt-1")} onClick={() => setRefused([])}>
+            Dismiss
+          </button>
+        </Notice>
+      ) : null}
 
       {error && !dialog ? (
         <Notice tone="red" label="Not done" role="alert" className="mb-6">
@@ -214,7 +429,37 @@ export function CheckInBoard({ initial, canAct }: { initial: CheckInView; canAct
         {view.passengers.length === 0 ? (
           <p className="text-sm text-muted-foreground">No passengers on this flight&rsquo;s manifest.</p>
         ) : (
-          <div className="overflow-x-auto rounded-lg border border-border bg-card">
+          <>
+          {/* On a phone: the next step as one tap beside each name (#119). */}
+          <ul className="divide-y divide-border rounded-lg border border-border bg-card md:hidden">
+            {view.passengers.map((p) => (
+              <PhoneRow
+                key={p.id}
+                pax={p}
+                open={open}
+                boarding={boarding}
+                pending={pending}
+                waiting={waiting.has(p.id) ? (noSignal ? "Waiting for signal" : "Sending…") : null}
+                reasonLabel={reasonLabel(p.no_show_reason)}
+                onCheckIn={() =>
+                  checkInNeedsForm(view, p)
+                    ? setDialog({ kind: "check-in", pax: p })
+                    : tap({
+                        kind: "check-in",
+                        paxId: p.id,
+                        input: { id_verified: p.id_verified, hazmat_declared: null },
+                        at: now(),
+                      })
+                }
+                onEdit={() => setDialog({ kind: "check-in", pax: p })}
+                onNoShow={() => setDialog({ kind: "no-show", pax: p })}
+                onPromote={() => tap({ kind: "promote", paxId: p.id, at: now() })}
+                onBoard={() => tap({ kind: "board", paxId: p.id, at: now() })}
+                onReset={() => tap({ kind: "reset", paxId: p.id, at: now() })}
+              />
+            ))}
+          </ul>
+          <div className="hidden overflow-x-auto rounded-lg border border-border bg-card md:block">
             <table className="w-full text-sm">
               <thead className="ff-thead">
                 <tr>
@@ -261,6 +506,11 @@ export function CheckInBoard({ initial, canAct }: { initial: CheckInView; canAct
                       </td>
                       <td className={cn(TD, "whitespace-nowrap")}>
                         <StatusMark label={status.label} tone={status.tone} />
+                        {waiting.has(p.id) ? (
+                          <span className="block text-xs text-status-yellow">
+                            {noSignal ? "Waiting for signal" : "Sending…"}
+                          </span>
+                        ) : null}
                         {p.check_in_status === "no_show" ? (
                           <span className="block text-xs text-muted-foreground">{reasonLabel(p.no_show_reason)}</span>
                         ) : p.check_in_status === "boarded" ? (
@@ -279,9 +529,9 @@ export function CheckInBoard({ initial, canAct }: { initial: CheckInView; canAct
                             pending={pending}
                             onCheckIn={() => setDialog({ kind: "check-in", pax: p })}
                             onNoShow={() => setDialog({ kind: "no-show", pax: p })}
-                            onPromote={() => run(() => promoteAction(view.flight_id, p.id))}
-                            onBoard={() => run(() => boardAction(view.flight_id, p.id))}
-                            onReset={() => run(() => resetAction(view.flight_id, p.id))}
+                            onPromote={() => tap({ kind: "promote", paxId: p.id, at: now() })}
+                            onBoard={() => tap({ kind: "board", paxId: p.id, at: now() })}
+                            onReset={() => tap({ kind: "reset", paxId: p.id, at: now() })}
                           />
                         ) : null}
                       </td>
@@ -291,6 +541,7 @@ export function CheckInBoard({ initial, canAct }: { initial: CheckInView; canAct
               </tbody>
             </table>
           </div>
+          </>
         )}
       </section>
 
@@ -305,7 +556,7 @@ export function CheckInBoard({ initial, canAct }: { initial: CheckInView; canAct
             setError(null);
           }}
           onSubmit={(input) =>
-            run(() => checkInAction(view.flight_id, dialog.pax.id, input), () => setDialog(null))
+            perform({ kind: "check-in", paxId: dialog.pax.id, input, at: now() }, () => setDialog(null))
           }
         />
       ) : null}
@@ -320,7 +571,9 @@ export function CheckInBoard({ initial, canAct }: { initial: CheckInView; canAct
             setError(null);
           }}
           onSubmit={(reason, notes) =>
-            run(() => noShowAction(view.flight_id, dialog.pax.id, reason, notes), () => setDialog(null))
+            perform({ kind: "no-show", paxId: dialog.pax.id, reason, notes, at: now() }, () =>
+              setDialog(null),
+            )
           }
         />
       ) : null}
@@ -348,6 +601,113 @@ export function CheckInBoard({ initial, canAct }: { initial: CheckInView; canAct
         />
       ) : null}
     </div>
+  );
+}
+
+/** One passenger on a phone (#119): the name, what's on the manifest,
+ *  and the next step as a single tap, big enough for a glove. */
+function PhoneRow({
+  pax,
+  open,
+  boarding,
+  pending,
+  waiting,
+  reasonLabel,
+  onCheckIn,
+  onEdit,
+  onNoShow,
+  onPromote,
+  onBoard,
+  onReset,
+}: {
+  pax: CheckInPax;
+  open: boolean;
+  boarding: boolean;
+  pending: boolean;
+  /** "Sending…" or "Waiting for signal" while a step of theirs is kept. */
+  waiting: string | null;
+  reasonLabel: string;
+  onCheckIn: () => void;
+  onEdit: () => void;
+  onNoShow: () => void;
+  onPromote: () => void;
+  onBoard: () => void;
+  onReset: () => void;
+}) {
+  const status = statusOf(pax);
+  const name = `${pax.first_name} ${pax.last_name}`;
+  const TAP = "btn-caps min-h-11 min-w-[6.5rem] rounded-md px-3 text-[0.72rem] disabled:opacity-50";
+  let primary = null;
+  if (open && pax.standby) {
+    primary = (
+      <button type="button" className={cn(TAP, "border border-input text-foreground")} onClick={onPromote} aria-label={`Seat ${name}`}>
+        Seat
+      </button>
+    );
+  } else if (open && pax.check_in_status === "booked") {
+    primary = (
+      <button type="button" className={cn(TAP, "bg-primary text-primary-foreground")} disabled={pending} onClick={onCheckIn} aria-label={`Check in ${name}`}>
+        Check in
+      </button>
+    );
+  } else if (open && pax.check_in_status === "checked_in" && boarding) {
+    primary = (
+      <button type="button" role="checkbox" aria-checked="false" className={cn(TAP, "border-2 border-primary text-foreground")} onClick={onBoard} aria-label={`Board ${name}`}>
+        <span aria-hidden className="mr-1.5 inline-block h-3.5 w-3.5 border-2 border-current align-[-2px]" />
+        Board
+      </button>
+    );
+  } else if (pax.check_in_status === "boarded") {
+    primary = (
+      <span role="checkbox" aria-checked="true" aria-label={`${name} on board`} className={cn(TAP, "inline-flex items-center justify-center bg-status-blue-fill text-white")}>
+        <span aria-hidden className="mr-1.5">✓</span>
+        On board
+      </span>
+    );
+  }
+  return (
+    <li className={cn("flex items-center gap-3 px-3 py-3", pax.check_in_status === "no_show" && "opacity-60")}>
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-sm font-semibold text-foreground">
+          {pax.last_name}, {pax.first_name}
+          {pax.is_unaccompanied_minor ? (
+            <span className="ml-2 text-[0.65rem] font-bold uppercase tracking-[0.1em] text-status-yellow">UM</span>
+          ) : null}
+        </p>
+        <p className="font-mono text-xs text-muted-foreground">
+          {[pax.seat_number ? `Seat ${pax.seat_number}` : null, lbs(pax.weight_lbs), `${pax.bags_count ?? "—"} bags`]
+            .filter(Boolean)
+            .join(" · ")}
+        </p>
+        <p className="mt-1 flex flex-wrap items-baseline gap-x-2">
+          <StatusMark label={status.label} tone={status.tone} />
+          {pax.check_in_status === "no_show" && reasonLabel ? (
+            <span className="text-xs text-muted-foreground">{reasonLabel}</span>
+          ) : null}
+          {waiting ? <span className="text-xs text-status-yellow">{waiting}</span> : null}
+        </p>
+        {open ? (
+          <p className="mt-1 flex flex-wrap gap-x-4">
+            {pax.check_in_status === "checked_in" ? (
+              <button type="button" className={ACTION} disabled={pending} onClick={onEdit} aria-label={`Edit ${name}`}>
+                Edit
+              </button>
+            ) : null}
+            {pax.check_in_status === "booked" ? (
+              <button type="button" className={cn(ACTION, "text-status-red")} disabled={pending} onClick={onNoShow} aria-label={`No-show ${name}`}>
+                No-show
+              </button>
+            ) : null}
+            {pax.check_in_status === "checked_in" || pax.check_in_status === "no_show" ? (
+              <button type="button" className={cn(ACTION, "text-muted-foreground")} disabled={pending} onClick={onReset} aria-label={`Undo ${name}`}>
+                Undo
+              </button>
+            ) : null}
+          </p>
+        ) : null}
+      </div>
+      {primary}
+    </li>
   );
 }
 
@@ -391,7 +751,7 @@ function RowActions({
       {pax.check_in_status === "checked_in" ? (
         <>
           {boarding ? (
-            <button type="button" className={cn(ACTION, "text-primary")} disabled={pending} onClick={onBoard} aria-label={`Board ${name}`}>
+            <button type="button" className={cn(ACTION, "text-primary")} onClick={onBoard} aria-label={`Board ${name}`}>
               Board
             </button>
           ) : null}
