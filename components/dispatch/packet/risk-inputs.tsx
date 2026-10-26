@@ -356,7 +356,7 @@ function NotesBox({
   hint: string;
   placeholder: string;
   initial: string | null;
-  field: "non_certified_notes" | "dispatcher_notes";
+  field: "dispatcher_notes";
   flightId: string;
   canEdit: boolean;
 }) {
@@ -382,20 +382,6 @@ function NotesBox({
       />
       <SaveState pending={pending} error={error} />
     </SectionPanel>
-  );
-}
-
-export function NonCertifiedNotes({ flightId, risk, canEdit }: Props) {
-  return (
-    <NotesBox
-      title="Non-Certified Weather Notes"
-      hint="FAA WeatherCams / SayWeather advisory, or an agent's report (for awareness only, not certified). Printed on the packet, and a ceiling, visibility or fog cue here can raise the weather row."
-      placeholder="Paste WeatherCams or SayWeather text here..."
-      initial={risk.inputs.non_certified_notes}
-      field="non_certified_notes"
-      flightId={flightId}
-      canEdit={canEdit}
-    />
   );
 }
 
