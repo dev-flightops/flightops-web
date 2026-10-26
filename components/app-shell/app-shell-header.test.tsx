@@ -24,7 +24,7 @@ describe("the top bar's operator logo", () => {
     expect(container.querySelector('img[src="https://example.test/logo.svg"]')).not.toBeNull();
     expect(screen.getByText("Sample Air")).toHaveClass("sr-only");
     // The link home still says whose it is.
-    expect(screen.getByRole("link", { name: "Sample Air" }).querySelector("img")).not.toBeNull();
+    expect(screen.getByRole("link", { name: /^Sample Air/ }).querySelector("img")).not.toBeNull();
   });
 
   it("keeps the name beside an emblem, which does not", () => {
@@ -56,7 +56,7 @@ describe("the top bar's operator logo", () => {
     );
     fireEvent.error(container.querySelector("img")!);
     expect(container.querySelector("img")).toBeNull();
-    expect(screen.getByRole("link", { name: "Sample Air" }).querySelector(".bg-white")).toBeNull();
+    expect(screen.getByRole("link", { name: /^Sample Air/ }).querySelector(".bg-white")).toBeNull();
     expect(screen.getByText("Sample Air")).not.toHaveClass("sr-only");
   });
 
@@ -64,5 +64,17 @@ describe("the top bar's operator logo", () => {
     const { container } = render(<AppShellHeader brand="Sample Air" showDepartmentNav={false} />);
     expect(container.querySelector("img")).toBeNull();
     expect(screen.getByText("Sample Air")).not.toHaveClass("sr-only");
+  });
+});
+
+describe("the platform under the operator's name (#118)", () => {
+  it("reads Powered by Peregrine, with or without a logo", () => {
+    const { container } = render(
+      <AppShellHeader brand="Sample Air" logoUrl="https://example.test/logo.svg" showDepartmentNav={false} />,
+    );
+    expect(screen.getByRole("link", { name: "Sample Air Powered by Peregrine" })).toBeInTheDocument();
+    // Beside a wordmark the name goes to screen readers; the platform stays.
+    load(container, 220, 48);
+    expect(screen.getByText("Powered by Peregrine")).not.toHaveClass("sr-only");
   });
 });

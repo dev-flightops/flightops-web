@@ -135,10 +135,13 @@ export async function updateCompanyProfile(
 export interface BrandingExtractResponse {
   suggested_primary: string;
   suggested_primary_dark: string;
+  /** The site's own share image (og:image), for Home (#118); null when
+   *  it names none. Absent from a service before #118. */
+  suggested_home_image_url?: string | null;
 }
 
 /** POST /auth/settings/branding/extract — take a URL, return a suggested
- *  brand palette pulled from the site's favicon. */
+ *  brand palette pulled from the site's favicon, and its share image. */
 export async function extractBrandingFromUrl(
   url: string,
 ): Promise<BrandingExtractResponse> {

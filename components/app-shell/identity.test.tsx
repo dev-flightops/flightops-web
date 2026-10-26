@@ -29,7 +29,7 @@ describe("the bar a customer or supplier login gets", () => {
       />,
     );
     expect(
-      screen.getByRole("link", { name: "Peregrine Demo Airlines" }),
+      screen.getByRole("link", { name: /^Peregrine Demo Airlines/ }),
     ).toHaveAttribute("href", "/portal");
     expect(screen.queryByRole("navigation")).toBeNull();
     expect(screen.queryByRole("link", { name: "Ops" })).toBeNull();
