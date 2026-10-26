@@ -53,3 +53,15 @@ describe("village weather refused by role (29 Sep)", () => {
     ).toEqual({ status: "api-error", message: `${REPORTERS} add the airport.` });
   });
 });
+
+describe("a filed report's photos (#121)", () => {
+  it("answers with the report, so its photos can follow", async () => {
+    createVillageWeatherReport.mockResolvedValueOnce({ id: "r-1" });
+    expect(
+      await fileVillageReportAction(
+        { status: "idle" },
+        form({ village_airport_id: "11111111-1111-1111-1111-111111111111" }),
+      ),
+    ).toEqual({ status: "ok", reportId: "r-1" });
+  });
+});

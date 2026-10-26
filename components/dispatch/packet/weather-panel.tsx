@@ -1,3 +1,4 @@
+import { ReportPhotos } from "@/components/village-wx/report-photos";
 import { FlightCategoryBadge } from "@/components/weather/flight-category-badge";
 import { SpecialReportChip } from "@/components/weather/special-report-chip";
 import {
@@ -381,6 +382,7 @@ function VillageReport({ row, now }: { row: VillageBoardRow; now: number }) {
         <>
           <p className="mt-1 text-sm font-semibold text-foreground">{conditions || "—"}</p>
           {r.notes ? <p className="text-xs text-foreground">{r.notes}</p> : null}
+          <ReportPhotos photos={r.photos} />
           <p
             className={`mt-0.5 text-[0.7rem] ${
               stale === "red"
