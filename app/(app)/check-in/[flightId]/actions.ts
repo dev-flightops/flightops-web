@@ -27,7 +27,15 @@ import { refusalMessage } from "./messages";
  * from the client components, as the manifest page's are.
  */
 
-export type StepResult = { ok: true; view: CheckInView } | { ok: false; error: string };
+export type StepResult =
+  | { ok: true; view: CheckInView }
+  | {
+      ok: false;
+      error: string;
+      /** Not a refusal: the session ran out or the server couldn't answer.
+       *  A step a phone kept stays kept and goes later (#119). */
+      retry?: boolean;
+    };
 
 async function step(flightId: string, run: () => Promise<CheckInView>): Promise<StepResult> {
   try {
@@ -37,27 +45,36 @@ async function step(flightId: string, run: () => Promise<CheckInView>): Promise<
     return { ok: true, view };
   } catch (err) {
     if (err instanceof SessionExpiredError) {
-      return { ok: false, error: "Your session expired — please sign in again." };
+      return { ok: false, error: "Your session expired — please sign in again.", retry: true };
     }
     if (err instanceof ApiError) {
       if (err.status === 403) {
-        return { ok: false, error: "Only check-in staff can do that." };
+        return { ok: false, error: "Only check-in staff and the flight's crew can do that." };
       }
       return {
         ok: false,
         error: refusalMessage(err.message) ?? `That didn't go through (HTTP ${err.status}). Try again.`,
+        retry: err.status >= 500,
       };
     }
-    return { ok: false, error: "That didn't go through. Try again." };
+    return { ok: false, error: "That didn't go through. Try again.", retry: true };
   }
 }
 
-export async function checkInAction(flightId: string, paxId: string, input: CheckInInput) {
-  return step(flightId, () => checkInPax(paxId, input));
+// `at` is when the step was taken, for one a phone kept without signal and
+// sends now (#119).
+
+export async function checkInAction(
+  flightId: string,
+  paxId: string,
+  input: CheckInInput,
+  at?: string,
+) {
+  return step(flightId, () => checkInPax(paxId, input, at));
 }
 
-export async function promoteAction(flightId: string, paxId: string) {
-  return step(flightId, () => promoteStandby(paxId));
+export async function promoteAction(flightId: string, paxId: string, at?: string) {
+  return step(flightId, () => promoteStandby(paxId, at));
 }
 
 export async function noShowAction(
@@ -65,24 +82,31 @@ export async function noShowAction(
   paxId: string,
   reason: NoShowReason,
   notes: string | null,
+  at?: string,
 ) {
-  return step(flightId, () => markNoShow(paxId, reason, notes));
+  return step(flightId, () => markNoShow(paxId, reason, notes, at));
 }
 
-export async function boardAction(flightId: string, paxId: string) {
-  return step(flightId, () => boardPax(paxId));
+export async function boardAction(flightId: string, paxId: string, at?: string) {
+  return step(flightId, () => boardPax(paxId, at));
 }
 
 export async function resetAction(flightId: string, paxId: string) {
   return step(flightId, () => resetPax(paxId));
 }
 
-export async function openBoardingAction(flightId: string) {
-  return step(flightId, () => openBoarding(flightId));
+export async function openBoardingAction(flightId: string, at?: string) {
+  return step(flightId, () => openBoarding(flightId, at));
 }
 
 export async function closeBoardingAction(flightId: string) {
   return step(flightId, () => closeBoarding(flightId));
+}
+
+/** The check-in as the server holds it, after a phone's kept steps were
+ *  sent and one was refused (#119). */
+export async function refreshAction(flightId: string): Promise<StepResult> {
+  return step(flightId, () => getCheckIn(flightId));
 }
 
 /** A walk-up, added at the gate where the company allows them: a

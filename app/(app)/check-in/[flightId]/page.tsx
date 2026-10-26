@@ -7,6 +7,7 @@ import { PageHeader } from "@/components/ff/page-header";
 import { loadZoneTable } from "@/lib/api/auth";
 import { getCheckIn, type CheckInView } from "@/lib/api/check-in";
 import { ApiError } from "@/lib/api/client";
+import { listFlightCrew } from "@/lib/api/crew-assignments";
 import { localDateTime, zoneFor } from "@/lib/format/local-time";
 import { CHECKIN_ROLES, hasAnyRole } from "@/lib/roles";
 
@@ -21,7 +22,8 @@ export const dynamic = "force-dynamic";
  * controls, counts, planned against actual weight, and every passenger
  * with what can be done to them. Ours lists the manifest's passengers,
  * since our bookings carry a count rather than names; crew are not
- * checked in. Anyone on staff can see it; the check-in roles act.
+ * checked in. Anyone on staff can see it; the check-in roles act, and the
+ * flight's own crew, at a village without an agent (#119).
  */
 export default async function CheckInPage({
   params,
@@ -36,8 +38,14 @@ export default async function CheckInPage({
     if (err instanceof ApiError && err.status === 404) notFound();
     throw err;
   }
-  const [session, zones] = await Promise.all([auth(), loadZoneTable()]);
-  const canAct = hasAnyRole(session?.roles ?? [], CHECKIN_ROLES);
+  const [session, zones, crew] = await Promise.all([
+    auth(),
+    loadZoneTable(),
+    listFlightCrew(flightId).catch(() => null),
+  ]);
+  const me = session?.user?.id;
+  const crewing = Boolean(me && crew?.items.some((c) => c.user.id === me));
+  const canAct = hasAnyRole(session?.roles ?? [], CHECKIN_ROLES) || crewing;
   const departs = localDateTime(view.scheduled_departure_at, zoneFor(zones, view.origin));
 
   return (

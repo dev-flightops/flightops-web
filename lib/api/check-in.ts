@@ -136,14 +136,20 @@ function post(path: string, body?: unknown): Promise<CheckInView> {
   });
 }
 
-export const checkInPax = (paxId: string, input: CheckInInput) =>
-  post(`/pax/${paxId}/check-in`, input);
-export const promoteStandby = (paxId: string) => post(`/pax/${paxId}/promote`);
-export const markNoShow = (paxId: string, reason: NoShowReason, notes: string | null) =>
-  post(`/pax/${paxId}/no-show`, { reason, notes });
-export const boardPax = (paxId: string) => post(`/pax/${paxId}/board`);
+// `at`: when the step was taken, for one kept on a phone without signal
+// and sent later (#119); the check-in records it. Absent is now.
+const when = (at?: string) => (at ? { at } : undefined);
+
+export const checkInPax = (paxId: string, input: CheckInInput, at?: string) =>
+  post(`/pax/${paxId}/check-in`, { ...input, ...when(at) });
+export const promoteStandby = (paxId: string, at?: string) =>
+  post(`/pax/${paxId}/promote`, when(at));
+export const markNoShow = (paxId: string, reason: NoShowReason, notes: string | null, at?: string) =>
+  post(`/pax/${paxId}/no-show`, { reason, notes, ...when(at) });
+export const boardPax = (paxId: string, at?: string) => post(`/pax/${paxId}/board`, when(at));
 export const resetPax = (paxId: string) => post(`/pax/${paxId}/reset`);
-export const openBoarding = (flightId: string) => post(`/flights/${flightId}/boarding/open`);
+export const openBoarding = (flightId: string, at?: string) =>
+  post(`/flights/${flightId}/boarding/open`, when(at));
 export const closeBoarding = (flightId: string) => post(`/flights/${flightId}/boarding/close`);
 
 // ---- Settings → Check-in (ground) ----------------------------------------------------
