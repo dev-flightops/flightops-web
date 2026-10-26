@@ -2067,6 +2067,17 @@ export interface VillageWeatherReportResponse {
 
   notes: string | null;
   flight_category: FlightCategory | null;
+  /** Visibility, clouds, the runway, as the observer took them (#121).
+   *  Absent from a weather service before #121. */
+  photos?: VillagePhotoRef[];
+}
+
+/** A photo with a village report (#121): its JPEG is at
+ *  /api/village-photos/{id}. */
+export interface VillagePhotoRef {
+  id: string;
+  width: number;
+  height: number;
 }
 
 export interface VillageWeatherReportListResponse {

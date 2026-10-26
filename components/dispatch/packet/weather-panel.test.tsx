@@ -503,6 +503,21 @@ describe("WeatherPanel — village reports (#110)", () => {
     expect(screen.getByText(/No instrument approach/)).toBeInTheDocument();
   });
 
+  it("shows the observer's photos with the report (#121)", async () => {
+    const withPhotos = village();
+    withPhotos.latest_report = {
+      ...withPhotos.latest_report!,
+      photos: [{ id: "ph-1", width: 1280, height: 960 }],
+    };
+    getVillageBoard.mockResolvedValueOnce({ items: [withPhotos], total: 1 });
+    batchWeather.mockReset().mockResolvedValueOnce(makeBatch([{ icao: "PAII", kind: "metar" }]));
+    render(await WeatherPanel({ icaos: ["PAII"] }));
+    expect(screen.getByRole("link", { name: "Photo 1 of 1, full size in a new tab" })).toHaveAttribute(
+      "href",
+      "/api/village-photos/ph-1",
+    );
+  });
+
   it("flags a report older than two hours, and stands without the board", async () => {
     const old = village();
     old.latest_report.reported_at = new Date(Date.now() - 150 * 60_000).toISOString();

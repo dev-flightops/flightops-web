@@ -62,6 +62,8 @@ const _paxSchema = z.object({
     "Enter a valid email, or leave it blank.",
   ),
   notes: _optional(2000, "notes"),
+  boards_at: _optional(4, "boarding stop"),
+  leaves_at: _optional(4, "deplaning stop"),
 });
 
 const _pieces = z
@@ -105,6 +107,9 @@ const PAX_FIELDS = [
   "notes",
   "is_crew",
   "is_unaccompanied_minor",
+  "is_waitlist",
+  "boards_at",
+  "leaves_at",
 ] as const;
 
 const FREIGHT_FIELDS = [
@@ -139,6 +144,9 @@ function _refusal(err: unknown, denied: string): string {
     const overSeats = passengerSeatsRefusal(err);
     if (overSeats) return overSeats;
     if (err.status === 409) return "This manifest is locked, so it can't be changed.";
+    if (err.status === 422 && err.message.includes("stops_not_on_route")) {
+      return "Pick stops on this flight's route, deplaning after boarding.";
+    }
     if (err.status === 422) return "Check the fields and try again.";
     return `That was not saved (HTTP ${err.status}).`;
   }
@@ -177,6 +185,9 @@ export async function savePaxAction(
     contact_phone: v.contact_phone || null,
     contact_email: v.contact_email || null,
     notes: v.notes || null,
+    boards_at: v.boards_at || null,
+    leaves_at: v.leaves_at || null,
+    is_waitlist: values.is_waitlist === "on",
   };
   try {
     if (paxId) await updatePax(paxId, pax);

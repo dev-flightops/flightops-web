@@ -36,6 +36,21 @@ export interface ManifestPaxRow {
    *  totals. Absent from servers that predate it. */
   check_in_status?: "booked" | "checked_in" | "boarded" | "no_show";
   no_show_reason?: string | null;
+  /** The stops they get on and off at (#120); null is the flight's
+   *  origin / destination. Absent from servers that predate it. */
+  boards_at?: string | null;
+  leaves_at?: string | null;
+  /** Legacy's waitlist: waiting for a seat on a full flight (#120). */
+  is_waitlist?: boolean;
+}
+
+/** One leg's seats (#120): held by passengers aboard on it, and open
+ *  against the aircraft's passenger seats (null when not recorded). */
+export interface LegSeats {
+  origin: string;
+  destination: string;
+  held: number;
+  open: number | null;
 }
 
 export interface ManifestCargoRow {
@@ -141,6 +156,8 @@ export interface ManifestDetailResponse {
   cargo: ManifestCargoRow[];
   totals: ManifestTotals;
   load: ManifestLoad;
+  /** Seats on each leg, in route order (#120). */
+  legs?: LegSeats[];
 }
 
 export const TICKET_TYPES: readonly TicketType[] = [
@@ -194,6 +211,10 @@ export interface PaxInput {
   contact_phone: string | null;
   contact_email: string | null;
   notes: string | null;
+  /** Left out: the flight's origin / destination, not on the waitlist. */
+  boards_at?: string | null;
+  leaves_at?: string | null;
+  is_waitlist?: boolean;
 }
 
 /** A cargo line; a mail line is one with a mail class. */
