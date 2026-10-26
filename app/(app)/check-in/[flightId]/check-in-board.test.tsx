@@ -327,6 +327,22 @@ describe("on a phone, and without signal (#119)", () => {
     expect(JSON.parse(window.localStorage.getItem("fo-check-in-queue:f-1")!)).toHaveLength(1);
   });
 
+  it("keeps a tap made while the one before it is on its way", async () => {
+    const checkedIn = view({ passengers: [pax({ check_in_status: "checked_in" })] });
+    let finishOpening: (r: unknown) => void = () => {};
+    actions.openBoardingAction.mockReturnValueOnce(new Promise((resolve) => (finishOpening = resolve)));
+    const opened = view({ ...checkedIn, boarding_opened_at: "2026-10-22T18:00:00Z" });
+    actions.boardAction.mockResolvedValue({ ok: true, view: { ...opened, passengers: [pax({ check_in_status: "boarded" })] } });
+    render(<CheckInBoard initial={checkedIn} canAct />);
+    fireEvent.click(screen.getByRole("button", { name: "Begin Boarding" }));
+    // Boarding shows open at once; the board tap goes behind it.
+    fireEvent.click(phoneList().getByRole("checkbox", { name: "Board Ana Andrews" }));
+    expect(actions.boardAction).not.toHaveBeenCalled();
+    finishOpening({ ok: true, view: opened });
+    await waitFor(() => expect(actions.boardAction).toHaveBeenCalled());
+    await waitFor(() => expect(window.localStorage.getItem("fo-check-in-queue:f-1")).toBeNull());
+  });
+
   it("picks up what an earlier visit kept", async () => {
     window.localStorage.setItem(
       "fo-check-in-queue:f-1",

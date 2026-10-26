@@ -119,8 +119,11 @@ export function CheckInBoard({ initial, canAct }: { initial: CheckInView; canAct
   const [error, setError] = useState<string | null>(null);
   const [dialog, setDialog] = useState<Dialogs>(null);
   const [pending, startTransition] = useTransition();
-  // Taps kept without signal (#119), and what the server refused of them.
+  // Taps kept on the phone until the server has them (#119), whether the
+  // last send failed for want of signal, and what the server refused.
   const [kept, setKept] = useState<QueuedStep[]>([]);
+  const [stalled, setStalled] = useState(false);
+  const [online, setOnline] = useState(() => (typeof navigator === "undefined" ? true : navigator.onLine));
   const [refused, setRefused] = useState<string[]>([]);
   const [storable, setStorable] = useState(true);
   const keptRef = useRef<QueuedStep[]>([]);
@@ -151,20 +154,24 @@ export function CheckInBoard({ initial, canAct }: { initial: CheckInView; canAct
     let anyRefused = false;
     try {
       while (keptRef.current.length > 0) {
-        const [step, ...rest] = keptRef.current;
+        const step = keptRef.current[0];
         let result: StepResult;
         try {
           result = await send(flightId, step, true);
         } catch {
+          setStalled(true);
           break; // still no signal; the rest wait
         }
         if (!result.ok && result.retry) {
           // Not a refusal: signed out, or the server couldn't answer. It
           // stays kept, with the rest behind it.
           setError(result.error);
+          setStalled(true);
           break;
         }
-        remember(rest);
+        setStalled(false);
+        // Only this step: a tap made while it was on its way is behind it.
+        remember(keptRef.current.filter((kept) => kept !== step));
         if (result.ok) {
           setView(result.view);
         } else {
@@ -200,11 +207,17 @@ export function CheckInBoard({ initial, canAct }: { initial: CheckInView; canAct
     // Once, on arrival.
   }, [flightId]);
   useEffect(() => {
-    const retry = () => void sendKept();
-    window.addEventListener("online", retry);
-    const timer = kept.length > 0 ? window.setInterval(retry, 20_000) : undefined;
+    const back = () => {
+      setOnline(true);
+      void sendKept();
+    };
+    const gone = () => setOnline(false);
+    window.addEventListener("online", back);
+    window.addEventListener("offline", gone);
+    const timer = kept.length > 0 ? window.setInterval(() => void sendKept(), 20_000) : undefined;
     return () => {
-      window.removeEventListener("online", retry);
+      window.removeEventListener("online", back);
+      window.removeEventListener("offline", gone);
       if (timer) window.clearInterval(timer);
     };
   }, [kept.length, sendKept]);
@@ -215,14 +228,21 @@ export function CheckInBoard({ initial, canAct }: { initial: CheckInView; canAct
     setView((v) => applyStep(v, step));
   }
 
-  /** A step that can wait for signal: sent now, or kept. Behind steps
-   *  already kept it's kept too, so they reach the server in order. */
+  /** A tap: shown at once and sent behind anything already on its way,
+   *  so a slow or missing signal never holds the list up. */
+  function tap(step: QueuedStep) {
+    setError(null);
+    keep(step);
+    void sendKept();
+  }
+
+  /** A form's step: sent and answered while the form is open, so a
+   *  refusal can be put right in it; kept like a tap without signal. */
   function perform(step: QueuedStep, after?: () => void) {
     setError(null);
     if (keptRef.current.length > 0 || (typeof navigator !== "undefined" && !navigator.onLine)) {
-      keep(step);
+      tap(step);
       after?.();
-      void sendKept();
       return;
     }
     startTransition(async () => {
@@ -269,6 +289,8 @@ export function CheckInBoard({ initial, canAct }: { initial: CheckInView; canAct
 
   const now = () => new Date().toISOString();
   const waiting = new Set(kept.map(stepPaxId).filter((id): id is string => id !== null));
+  // Kept for want of signal, rather than on their way.
+  const noSignal = kept.length > 0 && (stalled || !online);
 
   const reasonLabel = (code: string | null) =>
     view.no_show_reasons.find((r) => r.code === code)?.label ?? "";
@@ -328,7 +350,7 @@ export function CheckInBoard({ initial, canAct }: { initial: CheckInView; canAct
                 type="button"
                 className={buttonSolid}
                 disabled={pending}
-                onClick={() => perform({ kind: "open-boarding", at: now() })}
+                onClick={() => tap({ kind: "open-boarding", at: now() })}
               >
                 {pending ? <Spinner size="xs" /> : null}
                 Begin Boarding
@@ -338,7 +360,7 @@ export function CheckInBoard({ initial, canAct }: { initial: CheckInView; canAct
         ) : null}
       </div>
 
-      {kept.length > 0 ? (
+      {noSignal ? (
         <Notice tone="yellow" label="Kept on this phone" role="status" className="mb-6">
           {`${kept.length} ${kept.length === 1 ? "step is" : "steps are"} waiting for signal. They'll be sent in order once the phone is back in service.`}{" "}
           <button type="button" className={linkCaps} onClick={() => void sendKept(true)}>
@@ -417,12 +439,12 @@ export function CheckInBoard({ initial, canAct }: { initial: CheckInView; canAct
                 open={open}
                 boarding={boarding}
                 pending={pending}
-                waiting={waiting.has(p.id)}
+                waiting={waiting.has(p.id) ? (noSignal ? "Waiting for signal" : "Sending…") : null}
                 reasonLabel={reasonLabel(p.no_show_reason)}
                 onCheckIn={() =>
                   checkInNeedsForm(view, p)
                     ? setDialog({ kind: "check-in", pax: p })
-                    : perform({
+                    : tap({
                         kind: "check-in",
                         paxId: p.id,
                         input: { id_verified: p.id_verified, hazmat_declared: null },
@@ -431,9 +453,9 @@ export function CheckInBoard({ initial, canAct }: { initial: CheckInView; canAct
                 }
                 onEdit={() => setDialog({ kind: "check-in", pax: p })}
                 onNoShow={() => setDialog({ kind: "no-show", pax: p })}
-                onPromote={() => perform({ kind: "promote", paxId: p.id, at: now() })}
-                onBoard={() => perform({ kind: "board", paxId: p.id, at: now() })}
-                onReset={() => perform({ kind: "reset", paxId: p.id, at: now() })}
+                onPromote={() => tap({ kind: "promote", paxId: p.id, at: now() })}
+                onBoard={() => tap({ kind: "board", paxId: p.id, at: now() })}
+                onReset={() => tap({ kind: "reset", paxId: p.id, at: now() })}
               />
             ))}
           </ul>
@@ -485,7 +507,9 @@ export function CheckInBoard({ initial, canAct }: { initial: CheckInView; canAct
                       <td className={cn(TD, "whitespace-nowrap")}>
                         <StatusMark label={status.label} tone={status.tone} />
                         {waiting.has(p.id) ? (
-                          <span className="block text-xs text-status-yellow">Waiting for signal</span>
+                          <span className="block text-xs text-status-yellow">
+                            {noSignal ? "Waiting for signal" : "Sending…"}
+                          </span>
                         ) : null}
                         {p.check_in_status === "no_show" ? (
                           <span className="block text-xs text-muted-foreground">{reasonLabel(p.no_show_reason)}</span>
@@ -505,9 +529,9 @@ export function CheckInBoard({ initial, canAct }: { initial: CheckInView; canAct
                             pending={pending}
                             onCheckIn={() => setDialog({ kind: "check-in", pax: p })}
                             onNoShow={() => setDialog({ kind: "no-show", pax: p })}
-                            onPromote={() => perform({ kind: "promote", paxId: p.id, at: now() })}
-                            onBoard={() => perform({ kind: "board", paxId: p.id, at: now() })}
-                            onReset={() => perform({ kind: "reset", paxId: p.id, at: now() })}
+                            onPromote={() => tap({ kind: "promote", paxId: p.id, at: now() })}
+                            onBoard={() => tap({ kind: "board", paxId: p.id, at: now() })}
+                            onReset={() => tap({ kind: "reset", paxId: p.id, at: now() })}
                           />
                         ) : null}
                       </td>
@@ -600,7 +624,8 @@ function PhoneRow({
   open: boolean;
   boarding: boolean;
   pending: boolean;
-  waiting: boolean;
+  /** "Sending…" or "Waiting for signal" while a step of theirs is kept. */
+  waiting: string | null;
   reasonLabel: string;
   onCheckIn: () => void;
   onEdit: () => void;
@@ -615,7 +640,7 @@ function PhoneRow({
   let primary = null;
   if (open && pax.standby) {
     primary = (
-      <button type="button" className={cn(TAP, "border border-input text-foreground")} disabled={pending} onClick={onPromote} aria-label={`Seat ${name}`}>
+      <button type="button" className={cn(TAP, "border border-input text-foreground")} onClick={onPromote} aria-label={`Seat ${name}`}>
         Seat
       </button>
     );
@@ -627,7 +652,7 @@ function PhoneRow({
     );
   } else if (open && pax.check_in_status === "checked_in" && boarding) {
     primary = (
-      <button type="button" role="checkbox" aria-checked="false" className={cn(TAP, "border-2 border-primary text-foreground")} disabled={pending} onClick={onBoard} aria-label={`Board ${name}`}>
+      <button type="button" role="checkbox" aria-checked="false" className={cn(TAP, "border-2 border-primary text-foreground")} onClick={onBoard} aria-label={`Board ${name}`}>
         <span aria-hidden className="mr-1.5 inline-block h-3.5 w-3.5 border-2 border-current align-[-2px]" />
         Board
       </button>
@@ -659,7 +684,7 @@ function PhoneRow({
           {pax.check_in_status === "no_show" && reasonLabel ? (
             <span className="text-xs text-muted-foreground">{reasonLabel}</span>
           ) : null}
-          {waiting ? <span className="text-xs text-status-yellow">Waiting for signal</span> : null}
+          {waiting ? <span className="text-xs text-status-yellow">{waiting}</span> : null}
         </p>
         {open ? (
           <p className="mt-1 flex flex-wrap gap-x-4">
@@ -726,7 +751,7 @@ function RowActions({
       {pax.check_in_status === "checked_in" ? (
         <>
           {boarding ? (
-            <button type="button" className={cn(ACTION, "text-primary")} disabled={pending} onClick={onBoard} aria-label={`Board ${name}`}>
+            <button type="button" className={cn(ACTION, "text-primary")} onClick={onBoard} aria-label={`Board ${name}`}>
               Board
             </button>
           ) : null}

@@ -49,7 +49,9 @@ export default async function CheckInPage({
   const departs = localDateTime(view.scheduled_departure_at, zoneFor(zones, view.origin));
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
+    // Room at the foot on a phone, so the last passenger's tap clears the
+    // floating Ask AI and Safety buttons (#119).
+    <div className="mx-auto max-w-7xl px-4 pb-36 pt-8 sm:px-6 md:pb-8">
       <PageHeader
         back={{ href: "/manifest", label: "Flight Schedule" }}
         eyebrow="Gate Check-in"
