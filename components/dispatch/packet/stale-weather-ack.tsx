@@ -87,7 +87,9 @@ function describe(freshness: RouteFreshness): string {
   for (const station of freshness.stations) {
     if (!station.requires_acknowledgment) continue;
     if (!station.has_any_weather) {
-      parts.push(`${station.icao}: no weather on file`);
+      // A WeatherCam reading may be on the card (#117), but the release's
+      // gate counts only these two.
+      parts.push(`${station.icao}: no METAR or village report`);
     } else if (station.metar_stale) {
       parts.push(
         station.metar_age_minutes != null

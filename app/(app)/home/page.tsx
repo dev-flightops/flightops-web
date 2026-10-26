@@ -5,6 +5,7 @@ import { DEPARTMENTS, departmentForPath, type DepartmentId } from "@/components/
 import { PageHeader } from "@/components/ff/page-header";
 import { Stat, StatStrip } from "@/components/ff/stat-strip";
 import { ActiveAlertsPanel } from "@/components/home/active-alerts-panel";
+import { HomeImageBand } from "@/components/home/home-image-band";
 import { HOME_QUICK_LINKS, QuickLinks } from "@/components/home/quick-links";
 import {
   HOME_MODULES,
@@ -12,7 +13,7 @@ import {
   moduleStatusHint,
   type HomeModule,
 } from "@/components/home/module-catalog";
-import { listMyTenants } from "@/lib/api/auth";
+import { getCompanyProfile, listMyTenants } from "@/lib/api/auth";
 import { getFlightStats } from "@/lib/api/ops";
 import { loadOperationalSnapshot } from "@/lib/dashboards/operational-snapshot";
 import { currentGreeting, firstNameFrom } from "@/lib/greeting";
@@ -57,14 +58,19 @@ const ALERT_VIEWING_ROLES = roleGate(
  *
  * Which entries a user sees is the client's home matrix
  * (HOME_MODULE_ROLES), unchanged; only their presentation moved.
+ *
+ * A company that sets an image under Settings → Branding (#118) gets it
+ * behind the greeting and the figures; without one, Home is as above.
  */
 export default async function HomePage() {
-  const [session, tenantsResponse, stats, snapshot] = await Promise.all([
+  const [session, tenantsResponse, stats, snapshot, profile] = await Promise.all([
     auth(),
     listMyTenants().catch(() => ({ tenants: [] })),
     getFlightStats().catch(() => null),
     loadOperationalSnapshot(),
+    getCompanyProfile().catch(() => null),
   ]);
+  const homeImage = profile?.home_image_url?.trim() || null;
 
   const currentTenant =
     tenantsResponse.tenants.find((t) => t.is_current) ??
@@ -117,8 +123,8 @@ export default async function HomePage() {
   const groups = directoryGroups(visibleModules);
   const live = visibleModules.filter((m) => m.status === "live").length;
 
-  return (
-    <div className="mx-auto max-w-6xl px-4 pb-16 pt-8 sm:px-8">
+  const opening = (
+    <>
       <PageHeader
         eyebrow={currentTenant?.name}
         title={firstName ? `${greeting}, ${firstName}` : greeting}
@@ -129,36 +135,45 @@ export default async function HomePage() {
         <Stat value={onGround} label="On the ground" tone="blue" />
         <Stat value={acftHold} label="Aircraft on hold" tone={acftHold > 0 ? "red" : "neutral"} />
       </StatStrip>
+    </>
+  );
 
-      {canSeeAlerts && <ActiveAlertsPanel />}
+  return (
+    <>
+      {homeImage ? <HomeImageBand src={homeImage}>{opening}</HomeImageBand> : null}
+      <div className="mx-auto max-w-6xl px-4 pb-16 pt-8 sm:px-8">
+        {homeImage ? null : opening}
 
-      <section aria-labelledby="departments-heading" className="mt-10">
-        <div className="mb-6 flex flex-wrap items-baseline justify-between gap-2 border-b border-border pb-3">
-          <h2 id="departments-heading" className="caption-caps text-foreground">
-            Departments
-          </h2>
-          <span className="eyebrow">
-            {live} live · {visibleModules.length - live} coming
-          </span>
-        </div>
-        <div className="grid gap-x-10 gap-y-9 sm:grid-cols-2 lg:grid-cols-3">
-          {groups.map((group) => (
-            <div key={group.id} className="min-w-0">
-              <h3 className="eyebrow mb-3 border-b border-border pb-2">{group.label}</h3>
-              <ul className="space-y-3.5">
-                {group.modules.map((module) => (
-                  <li key={module.id}>
-                    <DirectoryEntry module={module} />
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
-        </div>
-      </section>
+        {canSeeAlerts && <ActiveAlertsPanel />}
 
-      <QuickLinks links={visibleQuickLinks} />
-    </div>
+        <section aria-labelledby="departments-heading" className="mt-10">
+          <div className="mb-6 flex flex-wrap items-baseline justify-between gap-2 border-b border-border pb-3">
+            <h2 id="departments-heading" className="caption-caps text-foreground">
+              Departments
+            </h2>
+            <span className="eyebrow">
+              {live} live · {visibleModules.length - live} coming
+            </span>
+          </div>
+          <div className="grid gap-x-10 gap-y-9 sm:grid-cols-2 lg:grid-cols-3">
+            {groups.map((group) => (
+              <div key={group.id} className="min-w-0">
+                <h3 className="eyebrow mb-3 border-b border-border pb-2">{group.label}</h3>
+                <ul className="space-y-3.5">
+                  {group.modules.map((module) => (
+                    <li key={module.id}>
+                      <DirectoryEntry module={module} />
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <QuickLinks links={visibleQuickLinks} />
+      </div>
+    </>
   );
 }
 

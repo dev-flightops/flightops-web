@@ -1,7 +1,9 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { Fragment, useMemo, useState, useTransition } from "react";
 
+import { NonCertifiedWeatherNotice, sourceLabel } from "@/components/weather/weather-source";
+import type { StopWeather } from "@/lib/api/dispatch-risk";
 import type {
   FratAssessmentResponse,
   FratAuthorizationKind,
@@ -662,9 +664,9 @@ function FratQuestionnaire({
             </p>
             <p className="mt-1 text-muted-foreground">
               Checked: wind, ceiling, visibility, rest and duty against
-              your operator&rsquo;s limits. Not checked: aircraft swap,
-              crew change, NOTAMs. Retake it below if anything else has
-              changed.
+              your operator&rsquo;s limits, and icing and turbulence
+              PIREPs. Not checked: aircraft swap, crew change, NOTAMs.
+              Retake it below if anything else has changed.
             </p>
             <button
               type="button"
@@ -689,6 +691,12 @@ function FratQuestionnaire({
         {FACTOR_GROUPS.map((group) => (
           <div key={group.group}>
             <h3 className="panel-title mb-3 border-b border-border pb-2">{group.group}</h3>
+            {group.group === "Environment / Weather" && fratPrefill?.stops?.length ? (
+              <WeatherUsed
+                stops={fratPrefill.stops}
+                nonCertified={Boolean(fratPrefill.non_certified_weather)}
+              />
+            ) : null}
             <div className="space-y-3">
               {group.factors.map((f) => (
                 <FactorRow
@@ -976,7 +984,9 @@ function FactorRow({
             value={value}
             onChange={(e) => onChange(Number(e.target.value))}
             aria-describedby={`factor-${factor.code}-anchor`}
-            className="flex-1 accent-primary"
+            // min-w-0: a range input's own minimum width pushed the score
+            // past the edge on a phone.
+            className="min-w-0 flex-1 accent-primary"
           />
           <span
             className={cn(
@@ -1397,4 +1407,39 @@ function Field({
 function formatBlockExpiry(iso: string | null): string {
   if (!iso) return "—";
   return `${iso.slice(11, 16)}Z`;
+}
+
+
+/** Where each stop's weather came from (#117), and the client's notice
+ *  when some of it isn't certified: "should note in the FRAT where the
+ *  weather was sourced". */
+function WeatherUsed({
+  stops,
+  nonCertified,
+}: {
+  stops: StopWeather[];
+  nonCertified: boolean;
+}) {
+  return (
+    <div className="mb-3 space-y-2">
+      {nonCertified ? <NonCertifiedWeatherNotice /> : null}
+      <div>
+        <p className="eyebrow">Weather used</p>
+        <dl className="mt-1 grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5 text-xs">
+          {stops.map((stop) => (
+            <Fragment key={stop.ident}>
+              <dt className="font-mono font-semibold text-foreground">{stop.ident}</dt>
+              <dd
+                className={
+                  stop.certified || !stop.source ? "text-muted-foreground" : "text-status-yellow"
+                }
+              >
+                {sourceLabel(stop)}
+              </dd>
+            </Fragment>
+          ))}
+        </dl>
+      </div>
+    </div>
+  );
 }

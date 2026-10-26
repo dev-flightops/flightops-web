@@ -6,12 +6,7 @@ import { FuelOrderPanel } from "./fuel-order-panel";
 import { LoadTeamPanel } from "./load-team-panel";
 import { MaintenancePanel } from "./maintenance-panel";
 import { NotamAcknowledgmentPanel } from "./notam-acknowledgment-panel";
-import {
-  CompanyRiskInputs,
-  ComplianceGatesInputs,
-  ManagementTriggers,
-  NonCertifiedNotes,
-} from "./risk-inputs";
+import { CompanyRiskInputs, ComplianceGatesInputs, ManagementTriggers } from "./risk-inputs";
 import { RouteInput } from "./route-input";
 import { SectionPanel } from "./section-panel";
 import { StaleWeatherAck } from "./stale-weather-ack";
@@ -24,7 +19,13 @@ import { WeatherPanel } from "./weather-panel";
  *
  *   Route → Weather & ATIS → NOTAM Review → Compliance Gates
  *   → Fuel → Load Team → Company Risk Inputs → Management
- *   → Non-Certified Weather Notes
+ *
+ * Legacy's Non-Certified Weather Notes box is gone (#117): the FAA
+ * WeatherCams and the village reports are read and scored for each stop,
+ * and the Weather & ATIS cards say which a stop was scored on. The client:
+ * "Then we have no need for the Notes box on the FRAT pertaining to non
+ * certified weather and the Dispatcher Notes will be the only remaining
+ * notes box."
  *
  * Live as of M2-G-12:
  *   - Route textarea — live; commits to ?route= search param on blur
@@ -35,10 +36,9 @@ import { WeatherPanel } from "./weather-panel";
  *   - Fuel — the departure base's supplier and contract price
  *   - Load Team — assign the ramp team, same row as /ramp-ops
  *
- *   - Compliance Gates, Company Risk Inputs, Management Approval
- *     Triggers and Non-Certified Weather Notes — the dispatch risk
- *     matrix's inputs (#50): worked out from our data where it can be,
- *     each overridable, saved per flight
+ *   - Compliance Gates, Company Risk Inputs and Management Approval
+ *     Triggers — the dispatch risk matrix's inputs (#50): worked out from
+ *     our data where it can be, each overridable, saved per flight
  *
  * NOTAM Review still blocked on M2-M-4 (FAA NOTAM proxy).
  *
@@ -91,7 +91,11 @@ export async function LeftColumn({
         <RouteInput key={icaos.join(",")} defaultText={icaos.join("\n")} />
       </SectionPanel>
 
-      <WeatherPanel icaos={icaos} />
+      <WeatherPanel
+        icaos={icaos}
+        stopWeather={risk?.stops ?? null}
+        nonCertified={Boolean(risk?.non_certified_weather)}
+      />
 
       {/* #89: under the weather it judges, above the stale-weather box,
           since no acknowledgment clears it. Nothing for an aircraft the
@@ -141,12 +145,6 @@ export async function LeftColumn({
           />
           <ManagementTriggers
             key={`${flight.id}-management`}
-            flightId={flight.id}
-            risk={risk}
-            canEdit={canEditRisk}
-          />
-          <NonCertifiedNotes
-            key={`${flight.id}-notes`}
             flightId={flight.id}
             risk={risk}
             canEdit={canEditRisk}

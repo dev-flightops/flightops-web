@@ -21,9 +21,12 @@ import {
 export function BrandingForm({
   initialPrimary,
   initialPrimaryDark,
+  initialHomeImage = null,
 }: {
   initialPrimary: string | null;
   initialPrimaryDark: string | null;
+  /** The image behind Home (#118), a link. */
+  initialHomeImage?: string | null;
 }) {
   const [state, action, pending] = useActionState<UpdateBrandingState, FormData>(
     updateBrandingAction,
@@ -36,13 +39,16 @@ export function BrandingForm({
 
   const [primary, setPrimary] = useState(initialPrimary ?? "");
   const [primaryDark, setPrimaryDark] = useState(initialPrimaryDark ?? "");
+  const [homeImage, setHomeImage] = useState(initialHomeImage ?? "");
 
   // When an extract succeeds, pipe the suggested palette into the color
-  // inputs. The user can then tweak before hitting Save.
+  // inputs, and the site's share image into Home's (#118) when it names
+  // one. The user can then tweak before hitting Save.
   useEffect(() => {
     if (extractState.status === "ok") {
       setPrimary(extractState.primary);
       setPrimaryDark(extractState.primaryDark);
+      if (extractState.homeImage) setHomeImage(extractState.homeImage);
     }
   }, [extractState]);
 
@@ -109,8 +115,11 @@ export function BrandingForm({
         )}
         {extractState.status === "ok" && (
           <p role="status" className="mt-2 text-[0.7rem] text-status-green">
-            Suggested {extractState.primary} — review below and Save when
-            ready.
+            Suggested {extractState.primary}
+            {extractState.homeImage
+              ? " and the site's own image for Home"
+              : "; the site names no image for Home"}{" "}
+            — review below and Save when ready.
           </p>
         )}
       </form>
@@ -185,6 +194,12 @@ export function BrandingForm({
         )}
       </div>
 
+      <HomeImageField
+        value={homeImage}
+        onChange={setHomeImage}
+        error={fieldError("home_image_url")}
+      />
+
       <div className="flex items-center justify-end gap-2">
         <button
           type="submit"
@@ -254,6 +269,68 @@ function ColorField({
       ) : (
         <p className="mt-1 text-[0.65rem] text-muted-foreground">{hint}</p>
       )}
+    </div>
+  );
+}
+
+/** The image behind Home (#118): a link, and how Home will look with it,
+ *  drawn as Home draws it (a dark band, the scrim, the greeting). */
+function HomeImageField({
+  value,
+  onChange,
+  error,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  error?: string;
+}) {
+  const link = /^https?:\/\/\S+$/.test(value.trim()) ? value.trim() : null;
+  return (
+    <div className="rounded-lg border border-border bg-card p-5">
+      <label htmlFor="home_image_url" className="field-label">
+        Home image
+      </label>
+      <input
+        id="home_image_url"
+        name="home_image_url"
+        type="text"
+        inputMode="url"
+        placeholder="https://yourairline.com/images/hero.jpg, or blank for none"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        maxLength={500}
+        spellCheck={false}
+        autoComplete="off"
+        aria-invalid={error ? "true" : undefined}
+        className="ff-input px-3 py-2 text-sm aria-[invalid=true]:border-status-red"
+      />
+      {error ? (
+        <p role="alert" className="field-error">
+          {error}
+        </p>
+      ) : (
+        <p className="mt-1 text-[0.65rem] text-muted-foreground">
+          A wide photo, shown behind the greeting on Home. Suggest from your
+          website fills in the site&rsquo;s own image when it names one.
+        </p>
+      )}
+      <div className="mt-4">
+        <div className="eyebrow mb-2">Home preview</div>
+        {link ? (
+          <div className="dark relative h-32 overflow-hidden bg-ink sm:h-40">
+            {/* The company's link on any host, so not next/image. */}
+            <img src={link} alt="" className="absolute inset-0 h-full w-full object-cover" />
+            <div aria-hidden className="absolute inset-0 bg-gradient-to-t from-ink via-ink/70 to-ink/30" />
+            <p className="page-title absolute bottom-3 left-4 text-xl text-foreground">
+              Good morning
+            </p>
+          </div>
+        ) : (
+          <p className="text-xs text-muted-foreground">
+            No image: Home shows the greeting on the page as it does today.
+          </p>
+        )}
+      </div>
     </div>
   );
 }
