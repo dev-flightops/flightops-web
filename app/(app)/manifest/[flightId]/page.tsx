@@ -12,6 +12,7 @@ import {
   getLoadPlan,
   MAIL_CLASS_LABELS,
   mailDescription,
+  type LegSeats,
   type LoadPlanResponse,
   type ManifestDetailResponse,
 } from "@/lib/api/manifest";
@@ -19,12 +20,13 @@ import { fuelEstimateLine, fuelPlanningNote } from "@/lib/flights/fuel-estimate"
 import type { FlightDetail, FlightStatus } from "@/lib/api/types";
 import { hasAnyRole, MANIFEST_LOCKERS } from "@/lib/roles";
 import { crewWeightNote } from "@/lib/flights/crew-weight";
+import { flightStops } from "@/lib/route";
 
 import { PlannedFuelForm } from "./fuel-form";
 import { LoadPlanApply } from "./load-plan-apply";
 import { FreightSection } from "./freight-section";
 import { CreateManifestButton, LockManifestButton } from "./manifest-controls";
-import { fmtLbs } from "./manifest-bits";
+import { fmtLbs, TH, THEAD } from "./manifest-bits";
 import { PassengersSection } from "./pax-section";
 
 export const dynamic = "force-dynamic";
@@ -111,10 +113,17 @@ export default async function FlightManifestPage({
 
           <LoadPanel manifest={manifest} editable={editable} isIfr={Boolean(flight.is_ifr)} />
 
+          {manifest.legs && manifest.legs.length > 1 ? <LegSeatsPanel legs={manifest.legs} /> : null}
+
           {plan ? <LoadPlanSection plan={plan} flight={flight} editable={editable} /> : null}
 
           <div className="mt-6 grid gap-6">
-            <PassengersSection flightId={flight.id} rows={manifest.pax} editable={editable} />
+            <PassengersSection
+              flightId={flight.id}
+              rows={manifest.pax}
+              editable={editable}
+              stops={flightStops(flight)}
+            />
             <FreightSection
               flightId={flight.id}
               kind="mail"
@@ -135,6 +144,43 @@ export default async function FlightManifestPage({
         <EmptyState flightId={flight.id} />
       )}
     </div>
+  );
+}
+
+/**
+ * Seats leg by leg on a flight with stops (#120): passengers picked up at
+ * one stop and dropped at another share the aircraft's seats per leg, so
+ * the flight can carry more people in all than it has seats.
+ */
+function LegSeatsPanel({ legs }: { legs: LegSeats[] }) {
+  return (
+    <section aria-label="Seats by leg" className="mb-6 overflow-hidden rounded-lg border border-border bg-card">
+      <h2 className="border-b border-border px-4 py-2.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+        Seats by leg
+      </h2>
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead className={THEAD}>
+            <tr>
+              <th className={TH}>Leg</th>
+              <th className={`${TH} text-right`}>Aboard</th>
+              <th className={`${TH} text-right`}>Open</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-border">
+            {legs.map((leg, i) => (
+              <tr key={`${i}-${leg.origin}-${leg.destination}`}>
+                <td className="whitespace-nowrap px-3 py-2 font-mono text-xs">
+                  {`${i + 1}  ${leg.origin} → ${leg.destination}`}
+                </td>
+                <td className="px-3 py-2 text-right font-mono text-xs tabular-nums">{leg.held}</td>
+                <td className="px-3 py-2 text-right font-mono text-xs tabular-nums">{leg.open ?? "?"}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
   );
 }
 
