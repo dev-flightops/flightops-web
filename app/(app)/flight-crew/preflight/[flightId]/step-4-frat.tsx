@@ -984,7 +984,9 @@ function FactorRow({
             value={value}
             onChange={(e) => onChange(Number(e.target.value))}
             aria-describedby={`factor-${factor.code}-anchor`}
-            className="flex-1 accent-primary"
+            // min-w-0: a range input's own minimum width pushed the score
+            // past the edge on a phone.
+            className="min-w-0 flex-1 accent-primary"
           />
           <span
             className={cn(

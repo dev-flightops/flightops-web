@@ -277,9 +277,11 @@ function AirportHeader({
   weather: StopWeather | null;
 }) {
   const label = weather ? sourceLabel(weather) : metar.ok ? "Official METAR/TAF" : "No METAR";
+  // Wraps on a phone: a SPECI chip and the METAR's age beside a long
+  // source label pushed the page sideways at 390 px.
   return (
-    <div className="mb-3 flex items-baseline justify-between gap-3">
-      <div className="flex items-baseline gap-2">
+    <div className="mb-3 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+      <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
         {role && <RoleTag role={role} />}
         <span className="font-mono text-base font-semibold text-foreground">
           {icao}
@@ -301,7 +303,7 @@ function AirportHeader({
         </span>
       </div>
       {metar.ok && (
-        <span className="flex items-baseline gap-2 text-xs text-muted-foreground">
+        <span className="flex flex-wrap items-baseline gap-2 text-xs text-muted-foreground">
           <SpecialReportChip raw={metar.report.raw} />
           METAR age: {metarAge(metar.report.parsed_at)}
         </span>
