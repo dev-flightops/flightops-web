@@ -60,6 +60,7 @@ import type {
   ReleaseResponse,
   StepCompletionRequest,
   StepCompletionResponse,
+  UserRef,
   WeatherMinimumsView,
   WeightReturn,
   WeightReturnCreateRequest,
@@ -749,6 +750,31 @@ export async function logCurrencyCompletion(
  *  govern; a PIC is checked on PIC and either-seat items, an SIC on SIC
  *  and either-seat items. */
 export type CrewSeat = "pic" | "sic";
+
+/** One pilot for a seat on a flight (#91): whether the release would
+ *  take them there, and why not. */
+export interface CrewOption {
+  pilot: UserRef;
+  available: boolean;
+  reasons: string[];
+  /** What release would ask to acknowledge: a grace month, a record not
+   *  entered (#99). */
+  warnings: string[];
+}
+
+export interface CrewOptionsResponse {
+  flight_id: string;
+  seat: CrewSeat;
+  items: CrewOption[];
+}
+
+/** Who can be crewed in a seat on a flight, and why the rest can't (#91):
+ *  judged as release judges the seat. */
+export async function getCrewOptions(flightId: string, seat: CrewSeat): Promise<CrewOptionsResponse> {
+  return apiFetch<CrewOptionsResponse>(
+    `/ops/compliance/crew-options?flight_id=${flightId}&seat=${seat}`,
+  );
+}
 
 export async function getPicCompliance(
   pilotId: string,

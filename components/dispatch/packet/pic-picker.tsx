@@ -9,8 +9,10 @@ import {
   unassignCrewAction,
 } from "@/app/(app)/dispatch/crew-actions";
 
+import type { CrewOption } from "@/lib/api/ops";
 import type { CurrencyStatus, UserRef } from "@/lib/api/types";
 
+import { NotAvailableList, unavailableIds } from "./not-available";
 import type { SeatTypeWarning } from "./type-warnings";
 import { useDispatchQuery } from "./use-dispatch-query";
 
@@ -80,9 +82,10 @@ const STATUS_LABEL: Record<CurrencyStatus, string> = {
 };
 
 export function PicPicker({
-  options,
+  options: roster,
   currentPicId,
   flightId,
+  availability,
 }: {
   options: PicOption[];
   currentPicId: string | null;
@@ -90,7 +93,12 @@ export function PicPicker({
    *  loading a scheduled flight. There is nothing to assign crew to, so
    *  the picker falls back to its URL-only pre-screen behaviour. */
   flightId?: string | null;
+  /** Who release would take as PIC on this flight (#91). A pilot it
+   *  would refuse isn't offered; the current PIC stays shown. */
+  availability?: CrewOption[] | null;
 }) {
+  const out = unavailableIds(availability);
+  const options = roster.filter((o) => !out.has(o.pilot.id) || o.pilot.id === currentPicId);
   const router = useRouter();
   const nextQuery = useDispatchQuery();
   const [pending, startTransition] = useTransition();
@@ -178,6 +186,7 @@ export function PicPicker({
           <option key={opt.pilot.id} value={opt.pilot.id}>
             ● {opt.pilot.full_name} — {STATUS_LABEL[opt.status]}
             {opt.typeWarning?.pic ? ` · ${opt.typeWarning.pic}` : ""}
+            {out.has(opt.pilot.id) ? " · not available" : ""}
           </option>
         ))}
       </select>
@@ -187,6 +196,7 @@ export function PicPicker({
           supervisor override.
         </p>
       ) : null}
+      {availability ? <NotAvailableList seat="PIC" options={availability} /> : null}
       {error ? (
         // The backend names the incumbent — "Ann Pilot is already PIC on
         // PGR900" tells the dispatcher who to stand down. Shown as-is

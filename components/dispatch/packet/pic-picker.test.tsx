@@ -236,3 +236,52 @@ describe("PicPicker — the aircraft type (#46)", () => {
     expect(screen.queryByText(/Release needs a supervisor override/)).toBeNull();
   });
 });
+
+describe("PicPicker: a pilot the release would refuse isn't offered (#91)", () => {
+  const availability = [
+    { pilot: sarah.pilot, available: true, reasons: [], warnings: [] },
+    { pilot: bob.pilot, available: true, reasons: [], warnings: ["Initial Competency Check: Grace ends Nov 30."] },
+    {
+      pilot: alice.pilot,
+      available: false,
+      reasons: ["Medical Certificate: Expired Oct 1."],
+      warnings: [],
+    },
+  ];
+
+  it("offers only who release would take, and lists the rest with why", async () => {
+    render(
+      <PicPicker
+        options={[sarah, bob, alice]}
+        currentPicId={null}
+        flightId="f-1"
+        availability={availability}
+      />,
+    );
+    const names = screen.getAllByRole("option").map((o) => o.textContent ?? "");
+    expect(names.some((n) => n.includes("Sarah Kessler"))).toBe(true);
+    expect(names.some((n) => n.includes("Bob Henderson"))).toBe(true);
+    expect(names.some((n) => n.includes("Alice Chen"))).toBe(false);
+    await userEvent.click(screen.getByText("Not available as PIC (1)"));
+    expect(screen.getByText("Alice Chen")).toBeInTheDocument();
+    expect(screen.getByText("— Medical Certificate: Expired Oct 1.")).toBeInTheDocument();
+  });
+
+  it("keeps showing a PIC already on the flight who has fallen out, marked", () => {
+    render(
+      <PicPicker
+        options={[sarah, bob, alice]}
+        currentPicId={alice.pilot.id}
+        flightId="f-1"
+        availability={availability}
+      />,
+    );
+    expect(screen.getByRole("option", { name: /Alice Chen .* not available/ })).toBeInTheDocument();
+  });
+
+  it("offers everyone when who's available couldn't be read", () => {
+    render(<PicPicker options={[sarah, bob, alice]} currentPicId={null} flightId="f-1" availability={null} />);
+    expect(screen.getAllByRole("option")).toHaveLength(4);
+    expect(screen.queryByText(/Not available as PIC/)).toBeNull();
+  });
+});

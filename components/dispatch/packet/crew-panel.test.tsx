@@ -215,3 +215,28 @@ describe("CrewPanel — the aircraft type (#46)", () => {
     expect(screen.queryByText(/as SIC on CARAVAN/)).toBeNull();
   });
 });
+
+describe("CrewPanel: an SIC the release would refuse isn't offered (#91)", () => {
+  it("leaves Bo out of the SIC choices and says why", () => {
+    render(
+      <CrewPanel
+        flightId="f-1"
+        assignments={[assignment()]}
+        candidates={CANDIDATES}
+        sicAvailability={[
+          { pilot: CANDIDATES[1].pilot, available: false, reasons: ["PIC Check: Overdue."], warnings: [] },
+          { pilot: CANDIDATES[2].pilot, available: true, reasons: [], warnings: [] },
+        ]}
+      />,
+    );
+    const sic = screen.getByRole("combobox", { name: "Assign SIC" });
+    const offered = Array.from(sic.querySelectorAll("option")).map((o) => o.textContent ?? "");
+    expect(offered.some((t) => t.startsWith("Cy Pilot"))).toBe(true);
+    expect(offered.some((t) => t.startsWith("Bo Pilot"))).toBe(false);
+    expect(screen.getByText("Not available as SIC (1)")).toBeInTheDocument();
+    expect(screen.getByText("— PIC Check: Overdue.")).toBeInTheDocument();
+    // The cabin seat isn't a pilot seat the release judges.
+    const cabin = screen.getByRole("combobox", { name: "Assign Flight Attendant" });
+    expect(Array.from(cabin.querySelectorAll("option")).some((o) => o.textContent?.startsWith("Bo Pilot"))).toBe(true);
+  });
+});
