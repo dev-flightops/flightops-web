@@ -99,13 +99,20 @@ export function AppShellHeader({
             {logoUrl && logoShape !== "failed" ? (
               <OperatorLogo key={logoUrl} src={logoUrl} shown={logoShape !== null} onSettled={settleLogo} />
             ) : null}
-            <span
-              className={cn(
-                "truncate font-display text-[0.95rem] font-extrabold uppercase tracking-[0.08em]",
-                logoShape === "wordmark" && "sr-only",
-              )}
-            >
-              {brand}
+            {/* The operator's name, and the platform's beneath it (#118):
+                "[company] - Powered by Peregrine", the client asked. */}
+            <span className="flex min-w-0 flex-col justify-center">
+              <span
+                className={cn(
+                  "truncate font-display text-[0.95rem] font-extrabold uppercase leading-tight tracking-[0.08em]",
+                  logoShape === "wordmark" && "sr-only",
+                )}
+              >
+                {brand}
+              </span>
+              <span className="truncate text-[0.625rem] font-semibold leading-tight tracking-[0.04em] text-muted-foreground">
+                Powered by Peregrine
+              </span>
             </span>
           </Link>
 

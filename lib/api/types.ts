@@ -1223,6 +1223,8 @@ export interface CompanyProfileResponse {
    *  "use the default". Set via /settings/branding. */
   brand_primary_color: string | null;
   brand_primary_dark_color: string | null;
+  /** The company's image behind Home (#118), a link; null shows none. */
+  home_image_url: string | null;
   notes: string | null;
 }
 
@@ -1255,6 +1257,8 @@ export interface CompanyProfileUpdateRequest {
   /** #RRGGBB or #RRGGBBAA. Empty string clears the override. */
   brand_primary_color?: string | null;
   brand_primary_dark_color?: string | null;
+  /** An http(s) link. Empty string clears it. */
+  home_image_url?: string | null;
   notes?: string | null;
 }
 
