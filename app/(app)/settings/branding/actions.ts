@@ -10,8 +10,8 @@ import {
 } from "@/lib/api/auth";
 
 /**
- * /settings/branding server action. Validates hex colors, PATCHes the
- * two brand color fields on company_profile, then revalidates every
+ * /settings/branding server action. Validates hex colors and the Home
+ * image link (#118), PATCHes them on company_profile, then revalidates every
  * page that reads the theme (which is every page inside (app) — the
  * BrandThemeStyle wrapper injects the override at the layout root).
  *
@@ -20,6 +20,7 @@ import {
  */
 
 const HEX = /^(#[0-9A-Fa-f]{6}([0-9A-Fa-f]{2})?|)$/;
+const IMAGE_LINK = /^(https?:\/\/[^\s"'<>\\]+|)$/;
 
 const Schema = z.object({
   brand_primary_color: z
@@ -32,6 +33,12 @@ const Schema = z.object({
     .trim()
     .max(9)
     .refine((v) => HEX.test(v), "Use #RRGGBB (e.g. #8f1e22) or blank to clear"),
+  // The image behind Home (#118): a link, as the backend takes it.
+  home_image_url: z
+    .string()
+    .trim()
+    .max(500, "That link is too long (500 characters at most)")
+    .refine((v) => IMAGE_LINK.test(v), "Use an https:// link to an image, or blank for none"),
 });
 
 export type UpdateBrandingState =
@@ -85,7 +92,7 @@ export async function updateBrandingAction(
 
 export type ExtractBrandingState =
   | { status: "idle" }
-  | { status: "ok"; primary: string; primaryDark: string }
+  | { status: "ok"; primary: string; primaryDark: string; homeImage: string | null }
   | { status: "error"; message: string };
 
 export async function extractBrandingAction(
@@ -102,6 +109,7 @@ export async function extractBrandingAction(
       status: "ok",
       primary: result.suggested_primary,
       primaryDark: result.suggested_primary_dark,
+      homeImage: result.suggested_home_image_url ?? null,
     };
   } catch (err) {
     if (err instanceof ApiError) {

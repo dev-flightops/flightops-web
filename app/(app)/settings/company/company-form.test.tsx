@@ -48,6 +48,7 @@ function profile(
     rewards_program_name: "Rewards Program",
     brand_primary_color: null,
     brand_primary_dark_color: null,
+    home_image_url: null,
     notes: null,
     ...over,
   };

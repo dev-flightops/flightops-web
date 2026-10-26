@@ -1,6 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
+import type { StopWeather } from "@/lib/api/dispatch-risk";
 import type {
   VillageBoardResponse,
   VillageBoardRow,
@@ -11,7 +12,7 @@ import type {
 // Same hoisting + ApiError stub as before — vi.mock factories run before
 // top-level code, and we still need to short-circuit the @/lib/api/client
 // → next-auth → next/server import chain.
-const { TestApiError, batchWeather, getVillageBoard } = vi.hoisted(() => {
+const { TestApiError, batchWeather, getVillageBoard, weatherCamsFor } = vi.hoisted(() => {
   class TestApiError extends Error {
     constructor(
       public status: number,
@@ -25,10 +26,13 @@ const { TestApiError, batchWeather, getVillageBoard } = vi.hoisted(() => {
     TestApiError,
     batchWeather: vi.fn(),
     getVillageBoard: vi.fn(async (): Promise<VillageBoardResponse> => ({ items: [], total: 0 })),
+    // The WeatherCams come in a batch of their own (#117); none by default.
+    weatherCamsFor: vi.fn(async (): Promise<WeatherBatchResponse | null> => null),
   };
 });
 vi.mock("@/lib/api/client", () => ({ ApiError: TestApiError }));
 vi.mock("@/lib/api/weather", () => ({ batchWeather, getVillageBoard }));
+vi.mock("@/lib/api/dispatch-risk", () => ({ weatherCamsFor }));
 
 import { WeatherPanel } from "./weather-panel";
 
@@ -513,3 +517,130 @@ describe("WeatherPanel — village reports (#110)", () => {
     expect(screen.getAllByText("Village Report")).toHaveLength(1);
   });
 });
+
+describe("WeatherPanel — where each stop's weather came from (#117)", () => {
+  function stop(overrides: Partial<StopWeather> & { ident: string }): StopWeather {
+    return {
+      source: "metar",
+      certified: true,
+      described: "METAR",
+      ceiling_ft: null,
+      ceiling_from: "METAR",
+      visibility_sm: 10,
+      visibility_from: "METAR",
+      wind_direction: "270",
+      wind_kt: 15,
+      wind_gust_kt: null,
+      wind_from: "METAR",
+      ...overrides,
+    };
+  }
+
+  const CAM = makeReport({
+    icao: "PAEE",
+    kind: "wxcam",
+    raw: "VWOS EEK 260410Z 2 1/2SM -RA OVC008 06/05 A2983",
+    flight_category: "IFR",
+    ceiling_ft: 800,
+    visibility_sm: 2.5,
+    observed_at: new Date(Date.now() - 12 * 60_000).toISOString(),
+    site_name: "Eek VWOS",
+    site_url: "https://weathercams.faa.gov/map/-180,51,-129,72/cameraSite/102/details/weather",
+    estimate: false,
+    reports_sky: true,
+  });
+
+  it("names the source a stop was scored on, and says when it isn't certified", async () => {
+    batchWeather.mockReset().mockResolvedValueOnce(
+      makeBatch([{ icao: "PABE", kind: "metar" }], [
+        { icao: "PAEE", kind: "metar", status: 404, detail: "No METAR" },
+      ]),
+    );
+    weatherCamsFor.mockResolvedValueOnce({ items: [CAM], errors: [] });
+    render(
+      await WeatherPanel({
+        icaos: ["PABE", "PAEE"],
+        nonCertified: true,
+        stopWeather: [
+          stop({ ident: "PABE" }),
+          stop({
+            ident: "PAEE",
+            source: "weathercam",
+            certified: false,
+            described: "FAA WeatherCam, not certified",
+            ceiling_ft: 800,
+            ceiling_from: "FAA WeatherCam",
+            visibility_sm: 2.5,
+            visibility_from: "FAA WeatherCam",
+            wind_direction: null,
+            wind_kt: null,
+            wind_from: null,
+          }),
+        ],
+      }),
+    );
+    expect(screen.getByText("Official METAR/TAF")).toBeInTheDocument();
+    expect(screen.getByText("FAA WeatherCam · Not certified")).toBeInTheDocument();
+    expect(screen.getByText("Not certified weather")).toBeInTheDocument();
+    expect(screen.getByText(/OpSpecs authorize non-certified weather/)).toBeInTheDocument();
+    // No METAR at Eek: what it was scored on, and the reading itself.
+    expect(screen.getByText("Scored on")).toBeInTheDocument();
+    expect(screen.getByText("Ceiling 800 ft (FAA WeatherCam)")).toBeInTheDocument();
+    expect(screen.getByText("Visibility 2.5 SM (FAA WeatherCam)")).toBeInTheDocument();
+    expect(screen.getByText("FAA WeatherCam · Eek VWOS · not certified")).toBeInTheDocument();
+    expect(screen.getByText("VWOS EEK 260410Z 2 1/2SM -RA OVC008 06/05 A2983")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Cameras on FAA WeatherCams" })).toHaveAttribute(
+      "href",
+      CAM.site_url,
+    );
+    expect(weatherCamsFor).toHaveBeenCalledWith(["PABE", "PAEE"]);
+  });
+
+  it("shows a worse reading beside the METAR, and the cameras' estimate as one", async () => {
+    batchWeather.mockReset().mockResolvedValueOnce(makeBatch([{ icao: "PAHP", kind: "metar" }]));
+    weatherCamsFor.mockResolvedValueOnce({
+      items: [
+        makeReport({
+          ...CAM,
+          icao: "PAHP",
+          raw: "Estimated visibility 1.75 SM",
+          site_name: "Hooper Bay",
+          estimate: true,
+          confidence: 52,
+          site_url: null,
+        }),
+      ],
+      errors: [],
+    });
+    render(
+      await WeatherPanel({
+        icaos: ["PAHP"],
+        stopWeather: [
+          stop({
+            ident: "PAHP",
+            certified: false,
+            described: "METAR and FAA WeatherCam estimate, not certified",
+            visibility_sm: 1.75,
+            visibility_from: "FAA WeatherCam estimate",
+          }),
+        ],
+      }),
+    );
+    expect(screen.getByText("METAR and FAA WeatherCam estimate · Not certified")).toBeInTheDocument();
+    expect(screen.getByText("Scored on a worse reading")).toBeInTheDocument();
+    expect(screen.getByText("Visibility 1.75 SM (FAA WeatherCam estimate)")).toBeInTheDocument();
+    expect(
+      screen.getByText("Estimated visibility 1.75 SM (the cameras' estimate, 52% confidence)"),
+    ).toBeInTheDocument();
+    // The notice comes from the risk's verdict, which this render didn't pass.
+    expect(screen.queryByText("Not certified weather")).not.toBeInTheDocument();
+  });
+
+  it("names the METAR alone without the risk, as before", async () => {
+    batchWeather.mockReset().mockResolvedValueOnce(makeBatch([{ icao: "PADU", kind: "metar" }]));
+    render(await WeatherPanel({ icaos: ["PADU"] }));
+    expect(screen.getByText("Official METAR/TAF")).toBeInTheDocument();
+    expect(screen.queryByText(/Scored on/)).not.toBeInTheDocument();
+  });
+});
+
