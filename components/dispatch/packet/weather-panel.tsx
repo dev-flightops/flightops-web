@@ -1,6 +1,12 @@
 import { FlightCategoryBadge } from "@/components/weather/flight-category-badge";
 import { SpecialReportChip } from "@/components/weather/special-report-chip";
+import {
+  NonCertifiedWeatherNotice,
+  scoredElsewhere,
+  sourceLabel,
+} from "@/components/weather/weather-source";
 import { ApiError } from "@/lib/api/client";
+import { weatherCamsFor, type StopWeather } from "@/lib/api/dispatch-risk";
 import { batchWeather, getVillageBoard } from "@/lib/api/weather";
 import type { VillageBoardRow, WeatherReportResponse } from "@/lib/api/types";
 import {
@@ -20,9 +26,10 @@ import {
 
 import { EmptyPanel, SectionPanel } from "./section-panel";
 
-// Backend caps batch at 30 requests — slice longer routes (a METAR, a
-// TAF and the PIREPs per stop = 10-stop max). If the dispatcher pastes a
-// wild 30-stop bush route, we show the first 10 and a footer note.
+// Backend caps batch at 40 requests — slice longer routes (a METAR, a
+// TAF, the PIREPs and the WeatherCam per stop = 10-stop max). If the
+// dispatcher pastes a wild 30-stop bush route, we show the first 10 and a
+// footer note.
 const MAX_STOPS = 10;
 
 /**
@@ -37,8 +44,23 @@ const MAX_STOPS = 10;
  * Failures degrade per-row: bad ICAOs (404) and 502s still render a
  * card, just with the parsed fields blanked and a fallback message
  * where the raw text would be.
+ *
+ * Each card says where the weather its stop is scored on came from
+ * (#117): the METAR, the FAA WeatherCam or the village report, from the
+ * risk matrix's `stopWeather`. Without one (a typed route, or scoring
+ * failed) the card names the METAR alone, as it always did.
  */
-export async function WeatherPanel({ icaos }: { icaos: string[] }) {
+export async function WeatherPanel({
+  icaos,
+  stopWeather = null,
+  nonCertified = false,
+}: {
+  icaos: string[];
+  /** Each stop's scored weather and its sources, from ops (#117). */
+  stopWeather?: StopWeather[] | null;
+  /** Some stop's scored weather isn't certified: show the notice. */
+  nonCertified?: boolean;
+}) {
   if (icaos.length === 0) {
     return (
       <EmptyPanel
@@ -66,6 +88,9 @@ export async function WeatherPanel({ icaos }: { icaos: string[] }) {
   // PAII and it never reached the brief. The board is a convenience here,
   // so a failure leaves the METARs standing alone.
   const villageBoard = getVillageBoard().catch(() => null);
+  // The FAA WeatherCams (#117), in a batch of their own so a slow FAA page
+  // never holds the METARs; usually already kept from scoring the risk.
+  const weatherCams = weatherCamsFor(stops);
 
   // One round-trip — backend fans out concurrently to AWC.
   let batch;
@@ -114,6 +139,10 @@ export async function WeatherPanel({ icaos }: { icaos: string[] }) {
   for (const row of (await villageBoard)?.items ?? []) {
     villages.set(row.airport.icao.trim().toUpperCase(), row);
   }
+  const cams = new Map<string, WeatherReportResponse>();
+  for (const item of (await weatherCams)?.items ?? []) {
+    cams.set(item.icao, item);
+  }
   const now = Date.now();
 
   const cards = stops.map((icao, idx) => ({
@@ -123,6 +152,8 @@ export async function WeatherPanel({ icaos }: { icaos: string[] }) {
     taf: outcomeFor(icao, "taf", lookup, errorLookup),
     pireps: outcomeFor(icao, "pirep", lookup, errorLookup),
     village: villages.get(icao.trim().toUpperCase()) ?? null,
+    camera: cams.get(icao) ?? null,
+    weather: stopWeather?.find((stop) => stop.ident === icao) ?? null,
     now,
   }));
 
@@ -138,6 +169,7 @@ export async function WeatherPanel({ icaos }: { icaos: string[] }) {
       }
     >
       <div className="space-y-3">
+        {nonCertified ? <NonCertifiedWeatherNotice /> : null}
         {cards.map((airport) => (
           <AirportWeather key={airport.icao} {...airport} />
         ))}
@@ -150,8 +182,10 @@ export async function WeatherPanel({ icaos }: { icaos: string[] }) {
       )}
       <p className="mt-3 text-[0.65rem] text-muted-foreground">
         Source: Aviation Weather Center via weather-service. METAR cached 2 min,
-        TAF 30 min, PIREPs (within 50 nm, last 3 hours) 15 min. ATIS is not
-        shown yet.
+        TAF 30 min, PIREPs (within 50 nm, last 3 hours) 15 min. FAA WeatherCams
+        and village reports aren&rsquo;t certified; WeatherCams cached 10 min.
+        Each stop is scored on the worst current reading. ATIS is not shown
+        yet.
       </p>
     </SectionPanel>
   );
@@ -183,6 +217,8 @@ function AirportWeather({
   taf,
   pireps,
   village,
+  camera,
+  weather,
   now,
 }: {
   icao: string;
@@ -192,13 +228,31 @@ function AirportWeather({
   pireps: FetchOutcome;
   /** The stop's row on the Village Weather Board, when it's a village. */
   village: VillageBoardRow | null;
+  /** The FAA WeatherCam site's current reading, when there is one. */
+  camera: WeatherReportResponse | null;
+  /** What the stop is scored on, and where it came from (#117). */
+  weather: StopWeather | null;
   now: number;
 }) {
+  const elsewhere = weather ? scoredElsewhere(weather) : [];
   return (
     <div className="rounded-md border border-border bg-card/40 p-4">
-      <AirportHeader icao={icao} role={role} metar={metar} />
+      <AirportHeader icao={icao} role={role} metar={metar} weather={weather} />
 
       {metar.ok && <MetarSummaryAndGrid report={metar.report} />}
+
+      {elsewhere.length > 0 ? (
+        <div className="mt-3">
+          <p className="eyebrow">{metar.ok ? "Scored on a worse reading" : "Scored on"}</p>
+          <ul className="mt-1 space-y-0.5 text-sm font-semibold text-foreground">
+            {elsewhere.map((line) => (
+              <li key={line}>{line}</li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+
+      {camera ? <WeatherCamReport report={camera} now={now} /> : null}
 
       {village ? <VillageReport row={village} now={now} /> : null}
 
@@ -215,11 +269,14 @@ function AirportHeader({
   icao,
   role,
   metar,
+  weather,
 }: {
   icao: string;
   role: RouteRole | null;
   metar: FetchOutcome;
+  weather: StopWeather | null;
 }) {
+  const label = weather ? sourceLabel(weather) : metar.ok ? "Official METAR/TAF" : "No METAR";
   return (
     <div className="mb-3 flex items-baseline justify-between gap-3">
       <div className="flex items-baseline gap-2">
@@ -233,8 +290,14 @@ function AirportHeader({
             size="lg"
           />
         )}
-        <span className="text-xs text-muted-foreground">
-          Official METAR/TAF
+        <span
+          className={
+            weather && !weather.certified && weather.source
+              ? "text-xs font-semibold text-status-yellow"
+              : "text-xs text-muted-foreground"
+          }
+        >
+          {label}
         </span>
       </div>
       {metar.ok && (
@@ -243,6 +306,49 @@ function AirportHeader({
           METAR age: {metarAge(metar.report.parsed_at)}
         </span>
       )}
+    </div>
+  );
+}
+
+/** The FAA WeatherCam site's reading (#117): its VWOS line, or the
+ *  cameras' estimated visibility, with a link to the FAA's page and its
+ *  pictures. Not certified. */
+function WeatherCamReport({ report, now }: { report: WeatherReportResponse; now: number }) {
+  const observed = report.observed_at ? new Date(report.observed_at).getTime() : null;
+  return (
+    <div className="mt-3 border-l-[3px] border-l-status-yellow pl-3">
+      <p className="eyebrow">
+        FAA WeatherCam{report.site_name ? ` · ${report.site_name}` : ""} · not certified
+      </p>
+      {report.estimate ? (
+        <p className="mt-1 text-sm font-semibold text-foreground">
+          {`${report.raw} (the cameras' estimate${
+            report.confidence != null ? `, ${report.confidence}% confidence` : ""
+          })`}
+        </p>
+      ) : (
+        <pre className="m-0 mt-1 whitespace-pre-wrap break-words font-mono text-[0.75rem] font-semibold text-foreground">
+          {report.raw}
+        </pre>
+      )}
+      <p className="mt-0.5 text-[0.7rem] text-muted-foreground">
+        {observed !== null
+          ? `${utcHm(report.observed_at as string)} · ${villageAge(now - observed)} ago`
+          : null}
+        {report.site_url ? (
+          <>
+            {observed !== null ? " · " : null}
+            <a
+              href={report.site_url}
+              target="_blank"
+              rel="noreferrer"
+              className="underline underline-offset-2 hover:text-foreground"
+            >
+              Cameras on FAA WeatherCams
+            </a>
+          </>
+        ) : null}
+      </p>
     </div>
   );
 }

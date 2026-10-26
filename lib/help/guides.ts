@@ -81,7 +81,7 @@ export const GUIDES: Guide[] = [
     steps: [
       "On [Flight Crew](/flight-crew), open your flight under **My Flights** to start its preflight.",
       "Work steps 1 to 3 first: the dispatch release, weight and balance, and weather and NOTAMs. The FRAT is step 4.",
-      "Score each factor from 0 to 5 in its group: pilot, aircraft, environment, external and route. Ceiling, visibility and wind come filled in from the route's METARs and the village reports of the last 6 hours, with the source named. Change any score that doesn't match what you see.",
+      "Score each factor from 0 to 5 in its group: pilot, aircraft, environment, external and route. Ceiling, visibility and wind come filled in from the route's METARs, FAA WeatherCams and village reports (the worst current reading at each stop), with the source named, and icing and turbulence from the official PIREPs near the route. Weather used that isn't certified is marked, with the OpSpecs notice. Change any score that doesn't match what you see.",
       "Note how you will mitigate anything scored high.",
       "Submit. The total sets the level, against your company's thresholds (Settings → Flight Risk): LOW, MEDIUM, HIGH or EXTREME.",
       "At HIGH, contact dispatch and record it. At EXTREME, a Chief Pilot or the Director of Operations has to authorize the flight before you can go on.",

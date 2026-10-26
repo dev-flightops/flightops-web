@@ -3,6 +3,8 @@
  * Hand-maintained for now; we'll generate from OpenAPI in a later story.
  */
 
+import type { RiskStopIn, StopWeather } from "./dispatch-risk";
+
 export type FlightStatus = "scheduled" | "released" | "cancelled" | "completed";
 
 export interface AircraftRef {
@@ -437,7 +439,8 @@ export interface ProvidersResponse {
 
 // Weather (M2-M-3 backend / M2-G-1 frontend)
 
-export type WeatherKind = "metar" | "taf" | "pirep";
+/** "wxcam" is an FAA WeatherCam site's reading (#117), not certified. */
+export type WeatherKind = "metar" | "taf" | "pirep" | "wxcam";
 
 /** FAA flight category — derived from raw METAR by weather-service (M2-M-11).
  *  Only populated for METAR responses; TAF + PIREP always return null. */
@@ -469,6 +472,16 @@ export interface WeatherReportResponse {
   dewpoint_c: number | null;
   /** European Q-codes converted to inHg server-side. */
   altimeter_in_hg: number | null;
+  // An FAA WeatherCam site's reading (#117), kind "wxcam": `raw` is the
+  // VWOS line, or "Estimated visibility 2 SM" for the cameras' estimate.
+  observed_at?: string | null;
+  site_name?: string | null;
+  site_url?: string | null;
+  /** True when it's the cameras' estimated visibility alone. */
+  estimate?: boolean | null;
+  /** True when the reading reports the sky: then no ceiling is clear. */
+  reports_sky?: boolean | null;
+  confidence?: number | null;
 }
 
 // Batch weather (M2-M-12)
@@ -476,8 +489,9 @@ export interface WeatherReportResponse {
 export interface WeatherBatchRequestItem {
   icao: string;
   /** "pirep" is every PIREP within 50 nm of the stop from the last 3
-   *  hours, one per line; an empty `raw` means there were none (#51). */
-  kind: "metar" | "taf" | "pirep";
+   *  hours, one per line; an empty `raw` means there were none (#51).
+   *  "wxcam" is the FAA WeatherCam site at the airport (#117). */
+  kind: WeatherKind;
 }
 
 export interface WeatherBatchItemError {
@@ -2347,6 +2361,8 @@ export interface FratObservation {
 
 export interface FratBlockEligibilityRequest {
   observations: FratObservation[];
+  /** Each stop's reports, as the dispatch packet sends them (#117). */
+  stops?: RiskStopIn[];
   is_ifr?: boolean;
 }
 
@@ -2384,6 +2400,10 @@ export interface FratBlockEligibilityResponse {
 
 export interface FratPrefillRequest {
   observations: FratObservation[];
+  /** Each stop's reports, as the dispatch packet sends them (#117): the
+   *  METAR, the FAA WeatherCam and the PIREPs. Scored in place of
+   *  `observations` when sent. */
+  stops?: RiskStopIn[];
   /** IFR flights get no weather suggestion: the operator's rule is
    *  "below approach mins" and approach minima are per airport and per
    *  procedure from their ops specs, which the system does not hold. */
@@ -2416,6 +2436,10 @@ export interface FratPrefillResponse {
   /** The dispatch packet's overall risk as released (#88): the FRAT is
    *  filed at no lower a level. Null before release. */
   packet_risk_level?: FratRiskLevel | null;
+  /** Each stop's weather and where it came from (#117). */
+  stops?: StopWeather[];
+  /** Some stop's weather used isn't certified. */
+  non_certified_weather?: boolean;
 }
 
 /** A duty position on an aircraft type (#45), as 135ACM names them. */
