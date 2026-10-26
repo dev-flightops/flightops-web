@@ -83,6 +83,17 @@ describe("createFlightAction", () => {
     expect(redirectSpy).toHaveBeenCalledWith("/flight-following");
   });
 
+  it("opens a flight VFR unless Flown IFR is ticked (#123)", async () => {
+    createFlight.mockResolvedValueOnce({}).mockResolvedValueOnce({});
+    await expect(createFlightAction({ status: "idle" }, makeFormData())).rejects.toThrow(
+      "NEXT_REDIRECT",
+    );
+    await expect(
+      createFlightAction({ status: "idle" }, makeFormData({ is_ifr: "on" })),
+    ).rejects.toThrow("NEXT_REDIRECT");
+    expect(createFlight.mock.calls.map(([arg]) => arg.is_ifr)).toEqual([false, true]);
+  });
+
   it("returns field errors for missing required fields", async () => {
     const fd = makeFormData({ flight_number: "" });
     const result = await createFlightAction({ status: "idle" }, fd);

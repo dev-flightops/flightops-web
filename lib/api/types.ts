@@ -102,6 +102,9 @@ export interface FlightListItem {
   /** Every airport on the route, in order (services migration 0104).
    *  Optional for services from before it; read through flightStops(). */
   stops?: string[];
+  /** Flown IFR (#123); VFR unless dispatch marks it. Absent from a
+   *  service from before it. */
+  is_ifr?: boolean;
 }
 
 /** One leg of a multi-stop flight. */
@@ -2464,7 +2467,7 @@ export interface MinimumsStation {
   below: boolean;
   /** Why the minimums hold this stop (#110): the aircraft isn't IFR
    *  certified, or the field has no instrument approach. */
-  reason?: "not_ifr_certified" | "no_instrument_approach" | null;
+  reason?: "not_ifr_certified" | "vfr_flight" | "no_instrument_approach" | null;
   /** Empty when the stop has no weather to compare. */
   observations: MinimumsObservation[];
 }

@@ -123,6 +123,8 @@ export interface FlightCreatePayload {
   pax_count?: number;
   cargo_lbs?: number;
   notes?: string | null;
+  /** Flown IFR (#123); VFR when left out. */
+  is_ifr?: boolean;
   /** A multi-stop route (services migration 0104): origin and the
    *  departure are the first leg's, destination and arrival the last's. */
   legs?: FlightLegPayload[];
@@ -246,6 +248,8 @@ export interface FlightUpdatePayload {
   pax_count?: number;
   cargo_lbs?: number;
   notes?: string | null;
+  /** Flown IFR (#123). */
+  is_ifr?: boolean;
   /** Replace the route (#106): two or more legs make it multi-stop and
    *  set the endpoints from them; [] makes it a single leg again. */
   legs?: FlightLegPayload[];

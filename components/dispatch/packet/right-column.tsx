@@ -181,6 +181,8 @@ function FlightActionsRow({
       <div className="space-y-2">
         <div className="flex flex-wrap items-center gap-3">
           <StatusBadge status={flight.status} />
+          {/* #123: VFR unless marked IFR under Edit. */}
+          <span className="eyebrow">{flight.is_ifr ? "IFR" : "VFR"}</span>
           <EditFlightDialog flight={flight} aircraft={aircraft} zones={zones} />
           {canDispatch ? (
             <CancelFlight flightId={flight.id} flightNumber={flight.flight_number} />

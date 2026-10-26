@@ -77,6 +77,7 @@ const schema = z
     pax_count: z.coerce.number().int().nonnegative("Cannot be negative"),
     cargo_lbs: z.coerce.number().int().nonnegative("Cannot be negative"),
     notes: z.string().max(500, "Max 500 characters"),
+    is_ifr: z.boolean(),
   })
   .superRefine((v, ctx) => {
     // The same zone throughout, so the local strings compare in order.
@@ -239,6 +240,7 @@ function buildPatch(
   const notesNormalized = values.notes.trim() || null;
   if (notesNormalized !== (flight.notes ?? null))
     patch.notes = notesNormalized;
+  if (values.is_ifr !== Boolean(flight.is_ifr)) patch.is_ifr = values.is_ifr;
   return patch;
 }
 
@@ -262,6 +264,7 @@ export function EditFlightDialog({
       pax_count: flight.pax_count,
       cargo_lbs: flight.cargo_lbs,
       notes: flight.notes ?? "",
+      is_ifr: Boolean(flight.is_ifr),
     },
   });
   const stops = useFieldArray({ control: form.control, name: "stops" });
@@ -544,6 +547,15 @@ export function EditFlightDialog({
                   </FormItem>
                 )}
               />
+
+              {/* #123: VFR unless ticked, and then held to the company's
+                  dispatch minimums at every stop. */}
+              <div className="sm:col-span-2">
+                <label className="flex items-center gap-2 text-xs text-foreground">
+                  <input type="checkbox" {...form.register("is_ifr")} className="accent-primary" />
+                  Flown IFR
+                </label>
+              </div>
 
               <FormItem className="sm:col-span-2">
                 <Label htmlFor="edit-notes">Notes</Label>

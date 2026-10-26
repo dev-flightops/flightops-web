@@ -129,3 +129,66 @@ describe("WeatherMinimumsNotice — a field without an instrument approach (#110
     ).toBeInTheDocument();
   });
 });
+
+describe("WeatherMinimumsNotice — a VFR flight (#123)", () => {
+  const VFR: WeatherMinimumsView = {
+    applies: true,
+    airframe_type: "caravan",
+    min_ceiling_ft: 600,
+    min_visibility_sm: "2.0",
+    below: false,
+    stations: [
+      {
+        icao: "PABE",
+        below: false,
+        reason: "vfr_flight",
+        observations: [
+          {
+            source: "metar",
+            observed_at: null,
+            ceiling_ft: 900,
+            visibility_sm: 4,
+            below_ceiling: false,
+            below_visibility: false,
+          },
+        ],
+      },
+      { icao: "PAKI", below: false, reason: "vfr_flight", observations: [] },
+    ],
+  };
+
+  it("says the flight is flown VFR and the minimums were met", () => {
+    render(<WeatherMinimumsNotice minimums={VFR} />);
+    expect(
+      screen.getByText(
+        "Flown VFR: held to the company’s dispatch minimums of 600 ft / 2 sm at every stop, and met on the latest weather (no current report at PAKI).",
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it("says how to mark it IFR below them, and not that the Caravan isn't IFR certified", () => {
+    render(
+      <WeatherMinimumsNotice
+        minimums={{
+          ...VFR,
+          below: true,
+          stations: [
+            {
+              ...VFR.stations[0],
+              below: true,
+              observations: [
+                { ...VFR.stations[0].observations[0], ceiling_ft: 500, below_ceiling: true },
+              ],
+            },
+            VFR.stations[1],
+          ],
+        }}
+      />,
+    );
+    const alert = screen.getByRole("alert");
+    expect(alert).toHaveTextContent(
+      "PABE ceiling 500 ft. The flight is flown VFR, and the company’s dispatch minimums for a VFR flight are 600 ft / 2 sm at every stop. It can’t be released until the weather comes up. If it will be flown IFR, tick Flown IFR under Edit.",
+    );
+    expect(alert).not.toHaveTextContent(/not IFR certified/);
+  });
+});
