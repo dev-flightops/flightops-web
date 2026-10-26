@@ -664,9 +664,9 @@ function FratQuestionnaire({
             </p>
             <p className="mt-1 text-muted-foreground">
               Checked: wind, ceiling, visibility, rest and duty against
-              your operator&rsquo;s limits. Not checked: aircraft swap,
-              crew change, NOTAMs. Retake it below if anything else has
-              changed.
+              your operator&rsquo;s limits, and icing and turbulence
+              PIREPs. Not checked: aircraft swap, crew change, NOTAMs.
+              Retake it below if anything else has changed.
             </p>
             <button
               type="button"
