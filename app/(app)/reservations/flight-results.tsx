@@ -19,6 +19,7 @@ import {
 const UNAVAILABLE_REASON_LABELS: Record<UnavailableReason, string> = {
   insufficient_seats: "Not enough seats",
   already_departed: "Already departed",
+  chartered: "Chartered",
 };
 
 /**

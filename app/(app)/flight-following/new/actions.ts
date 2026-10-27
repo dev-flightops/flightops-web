@@ -115,6 +115,17 @@ export type CreateFlightFormState =
       stops: SubmittedStop[];
     };
 
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** Ops refusing to link the flight to its charter (#133). */
+const CHARTER_REFUSALS: Record<string, string> = {
+  charter_not_found: "That charter couldn't be found, so the flight wasn't opened.",
+  charter_not_confirmed:
+    "That charter isn't confirmed. Confirm it in the Charter Pipeline, then build its flight.",
+  charter_has_a_flight:
+    "That charter already has its flight. Open it from the Charter Pipeline.",
+};
+
 /** Legacy's cap: its route checks stopped at ten airports. */
 const MAX_LEGS = 9;
 
@@ -220,6 +231,7 @@ export async function createFlightAction(
   }
   const last = legs[legs.length - 1];
 
+  const charterRequestId = String(formData.get("charter_request_id") ?? "").trim();
   let opened: { id: string; day: string } | null = null;
   try {
     const flight = await createFlight({
@@ -234,6 +246,8 @@ export async function createFlightAction(
       notes: parsed.data.notes ?? null,
       is_ifr: formData.get("is_ifr") === "on",
       ...(legs.length > 1 ? { legs } : {}),
+      // A confirmed charter's flight (#133): ops links the charter to it.
+      ...(UUID.test(charterRequestId) ? { charter_request_id: charterRequestId } : {}),
     });
     if (flight?.id) {
       opened = { id: flight.id, day: (flight.scheduled_departure_at ?? "").slice(0, 10) };
@@ -285,6 +299,10 @@ export async function createFlightAction(
           values,
           stops,
         };
+      }
+      const charterRefusal = CHARTER_REFUSALS[detail];
+      if (charterRefusal) {
+        return { status: "api-error", message: charterRefusal, values, stops };
       }
       if (detail === "too_many_legs") {
         return {

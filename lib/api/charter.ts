@@ -105,6 +105,10 @@ export async function listCharters(
   return apiFetch<CharterListResponse>(`/reservations/charter${suffix}`);
 }
 
+export async function getCharter(charterId: string): Promise<CharterRow> {
+  return apiFetch<CharterRow>(`/reservations/charter/${charterId}`);
+}
+
 export async function createCharter(
   body: CharterCreateRequest,
 ): Promise<CharterRow> {

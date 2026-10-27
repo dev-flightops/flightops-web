@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { isoDayToUtcDate } from "@/lib/iso-day";
 
+import { auth } from "@/auth";
+import { linkCaps } from "@/components/ff/controls";
 import { ApiError } from "@/lib/api/client";
 import {
   CHARTER_STATUS_LABELS,
@@ -9,6 +11,7 @@ import {
   listCharters,
 } from "@/lib/api/charter";
 import { listCustomers, type Customer } from "@/lib/api/reservations";
+import { DISPATCH_WRITERS, hasAnyRole } from "@/lib/roles";
 
 import { NewCharterToggle } from "./new-charter-toggle";
 import { TransitionButtons } from "./transition-buttons";
@@ -70,6 +73,31 @@ function formatDate(iso: string): string {
   });
 }
 
+/**
+ * The charter's flight (#133). The client, 25 Oct: "the charter pipeline
+ * doesn't appear to flow into the flights? I added a charter and I can't
+ * see it in dispatch view". Legacy made the flight when the charter was
+ * confirmed; here the dispatcher builds it from the request, picking the
+ * aircraft, and the flight is linked back.
+ */
+function CharterFlightLink({ charter, canBuild }: { charter: CharterRow; canBuild: boolean }) {
+  if (charter.flight_id) {
+    return (
+      <Link href={`/dispatch?flight=${charter.flight_id}`} className={linkCaps}>
+        Flight <span aria-hidden>›</span>
+      </Link>
+    );
+  }
+  if (canBuild && (charter.status === "confirmed" || charter.status === "dispatched")) {
+    return (
+      <Link href={`/flight-following/new?charter=${charter.id}`} className={linkCaps}>
+        Build flight <span aria-hidden>›</span>
+      </Link>
+    );
+  }
+  return null;
+}
+
 function charterRef(id: string): string {
   return `CHR-${id.slice(0, 8).toUpperCase()}`;
 }
@@ -81,6 +109,8 @@ export default async function CharterPipelinePage({
 }) {
   const params = await searchParams;
   const active = parseStatus(params.status);
+  // Who may open the charter's flight (#133): ops' DispatcherClaims.
+  const canBuildFlights = hasAnyRole((await auth())?.roles ?? [], DISPATCH_WRITERS);
 
   let rows: CharterRow[] = [];
   let customers: Customer[] = [];
@@ -185,10 +215,13 @@ export default async function CharterPipelinePage({
                       <CharterStatusBadge status={c.status} />
                     </td>
                     <td className="whitespace-nowrap px-4 py-3 text-right">
-                      <TransitionButtons
-                        charterId={c.id}
-                        currentStatus={c.status}
-                      />
+                      <div className="flex items-center justify-end gap-3">
+                        <CharterFlightLink charter={c} canBuild={canBuildFlights} />
+                        <TransitionButtons
+                          charterId={c.id}
+                          currentStatus={c.status}
+                        />
+                      </div>
                     </td>
                   </tr>
                 ))}

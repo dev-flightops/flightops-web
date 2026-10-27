@@ -129,6 +129,8 @@ export interface FlightCreatePayload {
   /** A multi-stop route (services migration 0104): origin and the
    *  departure are the first leg's, destination and arrival the last's. */
   legs?: FlightLegPayload[];
+  /** The confirmed charter this flight flies (#133); it is linked to it. */
+  charter_request_id?: string;
 }
 
 export async function createFlight(
