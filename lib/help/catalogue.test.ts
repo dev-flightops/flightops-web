@@ -115,16 +115,26 @@ describe("the catalogue stays honest", () => {
 
 describe("articles for gated pages", () => {
   it("R3: the accounting export article is written for the roles the menu shows it to", () => {
-    // The service admits Exec Admins and the Director of Operations
-    // only. An article written for anyone else points them at a page
-    // that answers with the access panel.
+    // The service admits Exec Admins, the Director of Operations and the
+    // accountant (#128) only. An article written for anyone else points
+    // them at a page that answers with the access panel.
     expect(helpFor("/reservations/accounting-export")?.whoCanUse).toEqual([
       "exec_admin",
       "director_of_operations",
+      "accountant",
     ]);
     expect(helpFor("/reservations/accounting-export")?.whoCanUse).toEqual(
       MODULE_ROLES["reservations-acct-export"],
     );
+  });
+});
+
+describe("the money articles (#128)", () => {
+  it.each([
+    ["/invoicing", "invoicing"],
+    ["/accounting", "accounting"],
+  ])("%s is written for the roles the menu shows it to", (route, moduleId) => {
+    expect(helpFor(route)?.whoCanUse).toEqual(MODULE_ROLES[moduleId]);
   });
 });
 

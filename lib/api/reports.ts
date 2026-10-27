@@ -185,9 +185,12 @@ export interface AccountingSummary {
   period_label: string;
   period_start: string;
   period_end: string;
+  /** The company's zone, which the month's days are cut in (#128). */
+  time_zone: string;
   /** What was sold — quoted totals on the month's bookings. */
   booked_cents: number;
-  /** What was billed — invoices raised in the month, voids excluded. */
+  /** What was billed — invoices dated in the month and sent (or since
+   *  paid). Drafts and voids are not (#128). */
   invoiced_cents: number;
   /** What arrived — payments received in the month, by the date the
    *  money landed rather than the invoice's date. */

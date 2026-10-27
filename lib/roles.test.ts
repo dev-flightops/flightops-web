@@ -25,6 +25,7 @@ describe("roles", () => {
     // than a gate quietly never matching again.
     expect([...ROLES].sort()).toEqual(
       [
+        "accountant",
         "check_airman",
         "chief_pilot",
         "crew_member",

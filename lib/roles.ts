@@ -37,6 +37,7 @@ export const ROLES = [
   "director_of_operations",
   "dispatcher",
   "reservations_agent",
+  "accountant",
   "chief_pilot",
   "director_of_maintenance",
   "check_airman",
@@ -205,6 +206,15 @@ export const FLIGHT_LOG_ADMINS = roleGate(
   "director_of_operations",
   "exec_admin",
 );
+
+/** Add a customer or change one: reservations-service's MANAGE_ROLES.
+ *  The DO and the accountant read the list (#128) but don't keep it. */
+export const CUSTOMER_MANAGERS = roleGate("dispatcher", "reservations_agent", "exec_admin");
+
+/** The company's money (#128): Invoicing, Accounting, Profitability and
+ *  the accounting export. The services' ACCOUNTING_ROLES: the post-holders
+ *  and the company's bookkeeper, who sees nothing operational. */
+export const ACCOUNTING_ROLES = roleGate("accountant", "director_of_operations", "exec_admin");
 
 /** Does this caller hold any of the gate's roles? */
 export function hasAnyRole(
