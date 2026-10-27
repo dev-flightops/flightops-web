@@ -16,7 +16,7 @@ import {
   type LoadPlanResponse,
   type ManifestDetailResponse,
 } from "@/lib/api/manifest";
-import { fuelEstimateLine } from "@/lib/flights/fuel-estimate";
+import { fuelEstimateLine, fuelPlanningNote } from "@/lib/flights/fuel-estimate";
 import type { FlightDetail, FlightStatus } from "@/lib/api/types";
 import { hasAnyRole, MANIFEST_LOCKERS } from "@/lib/roles";
 import { crewWeightNote } from "@/lib/flights/crew-weight";
@@ -111,7 +111,7 @@ export default async function FlightManifestPage({
 
           <TotalsStrip totals={manifest.totals} />
 
-          <LoadPanel manifest={manifest} editable={editable} />
+          <LoadPanel manifest={manifest} editable={editable} isIfr={Boolean(flight.is_ifr)} />
 
           {manifest.legs && manifest.legs.length > 1 ? <LegSeatsPanel legs={manifest.legs} /> : null}
 
@@ -281,7 +281,16 @@ function TotalsStrip({ totals }: { totals: ManifestDetailResponse["totals"] }) {
  * overstated the room for mail by their weight. Until the planned fuel is
  * entered the figure is labelled as before fuel, never passed off as real.
  */
-function LoadPanel({ manifest, editable }: { manifest: ManifestDetailResponse; editable: boolean }) {
+function LoadPanel({
+  manifest,
+  editable,
+  isIfr,
+}: {
+  manifest: ManifestDetailResponse;
+  editable: boolean;
+  /** The flight is flown IFR (#123): the fuel note adds the alternate. */
+  isIfr: boolean;
+}) {
   const load = manifest.load;
   // An ops build from before #74 sends no breakdown; show nothing rather
   // than fail the page while the two deploys catch up with each other.
@@ -324,7 +333,7 @@ function LoadPanel({ manifest, editable }: { manifest: ManifestDetailResponse; e
       </div>
       {load.fuel_basis === "estimated" && load.fuel_estimate ? (
         <p className="mt-3 text-xs text-muted-foreground">
-          {`${fuelEstimateLine(load.fuel_estimate)} Enter the planned fuel to use your own figure instead.`}
+          {`${fuelEstimateLine(load.fuel_estimate)} ${fuelPlanningNote(load.fuel_estimate, { is_ifr: isIfr })} Enter the planned fuel to use your own figure instead.`}
         </p>
       ) : null}
       {!load.fuel_counted ? (

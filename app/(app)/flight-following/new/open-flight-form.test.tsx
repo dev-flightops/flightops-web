@@ -108,3 +108,17 @@ describe("OpenFlightForm: VFR unless marked IFR (#123)", () => {
     expect(ifr).toBeChecked();
   });
 });
+
+describe("OpenFlightForm: the company's ground time (#126)", () => {
+  it("starts each stop's ground time at the company's, still changeable", () => {
+    render(<OpenFlightForm aircraft={[CARAVAN, AIRVAN]} zones={ZONES} groundMinutesDefault={20} />);
+    expect(input("ground_minutes")).toHaveValue(20);
+    fireEvent.change(input("ground_minutes"), { target: { value: "25" } });
+    expect(input("ground_minutes")).toHaveValue(25);
+  });
+
+  it("is 15 minutes without a company setting", () => {
+    renderForm();
+    expect(input("ground_minutes")).toHaveValue(15);
+  });
+});

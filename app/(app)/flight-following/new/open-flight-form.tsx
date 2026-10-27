@@ -49,10 +49,14 @@ import { StopsEditor } from "./stops-editor";
 export function OpenFlightForm({
   aircraft,
   zones,
+  groundMinutesDefault = 15,
 }: {
   aircraft: AircraftListItem[];
   /** Each base's zone, for the departure base the times are typed in. */
   zones: ZoneTable;
+  /** The company's time on the ground at each stop (#126, Settings →
+   *  Company), changeable here for this flight. */
+  groundMinutesDefault?: number;
 }) {
   const [state, action, pending] = useActionState<
     CreateFlightFormState,
@@ -111,7 +115,7 @@ export function OpenFlightForm({
   // on the ground at each stop.
   const [aircraftId, setAircraftId] = useState("");
   const [roundTrip, setRoundTrip] = useState(true);
-  const [groundMinutes, setGroundMinutes] = useState("15");
+  const [groundMinutes, setGroundMinutes] = useState(String(groundMinutesDefault));
   useEffect(() => {
     if (state.status !== "idle") {
       const echoedOrigin = (state.values.origin ?? "").toUpperCase();
@@ -129,9 +133,9 @@ export function OpenFlightForm({
       setEta(state.values.scheduled_arrival_at ?? "");
       setAircraftId(state.values.aircraft_id ?? "");
       setRoundTrip(echoedRoundTrip);
-      setGroundMinutes(state.values.ground_minutes ?? "15");
+      setGroundMinutes(state.values.ground_minutes ?? String(groundMinutesDefault));
     }
-  }, [state]);
+  }, [state, groundMinutesDefault]);
 
   // The way home on a round trip: a last leg back to the origin, added
   // once there is somewhere to come back from, and taken off when the

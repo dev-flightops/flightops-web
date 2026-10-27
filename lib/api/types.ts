@@ -1242,6 +1242,9 @@ export interface CompanyProfileResponse {
   brand_primary_dark_color: string | null;
   /** The company's image behind Home (#118), a link; null shows none. */
   home_image_url: string | null;
+  /** Minutes on the ground at each stop for a new flight's times (#126);
+   *  absent from services before it, read as 15. */
+  ground_minutes?: number;
   notes: string | null;
 }
 
@@ -1276,6 +1279,8 @@ export interface CompanyProfileUpdateRequest {
   brand_primary_dark_color?: string | null;
   /** An http(s) link. Empty string clears it. */
   home_image_url?: string | null;
+  /** 0 to 240 (#126). */
+  ground_minutes?: number;
   notes?: string | null;
 }
 

@@ -335,6 +335,28 @@ describe("the client's payload arithmetic (#111)", () => {
     );
   });
 
+  it("says the reserve holds, and an IFR flight adds its alternate (#126)", () => {
+    const { unmount } = render(
+      <WeightAndBalanceStep flightId="f-1" flight={FLIGHT} openReturn={null} load={LOAD} />,
+    );
+    expect(row("− Fuel")).toHaveTextContent(
+      "The 45 min reserve holds on every flight: never below the legal minimum, as the GOM asks for conservative planning.",
+    );
+    expect(row("− Fuel")).not.toHaveTextContent("alternate");
+    unmount();
+    render(
+      <WeightAndBalanceStep
+        flightId="f-1"
+        flight={{ ...FLIGHT, is_ifr: true }}
+        openReturn={null}
+        load={LOAD}
+      />,
+    );
+    expect(row("− Fuel")).toHaveTextContent(
+      "IFR: add the fuel to your alternate, which the GOM says always to plan for.",
+    );
+  });
+
   it("shows the checked-in passengers' weight, the rest, and the margin", () => {
     render(<WeightAndBalanceStep flightId="f-1" flight={FLIGHT} openReturn={null} load={LOAD} />);
     expect(row("Passengers checked in")).toHaveTextContent("5 at their weighed weights, 100 lb of it bags");

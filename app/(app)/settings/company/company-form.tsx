@@ -29,6 +29,7 @@ const FIELDS = [
   "invoice_tax_percent",
   "invoice_terms_days",
   "invoicing_in_peregrine",
+  "ground_minutes",
   "notes",
 ] as const;
 type FieldName = (typeof FIELDS)[number];
@@ -42,6 +43,9 @@ function toValues(p: CompanyProfileResponse): Values {
       values[name] = taxPercentFromFraction(p.invoice_tax_rate);
     } else if (name === "invoice_terms_days") {
       values[name] = p.invoice_terms_days == null ? "" : String(p.invoice_terms_days);
+    } else if (name === "ground_minutes") {
+      // 15 unless the company set another (#126); an older backend sends nothing.
+      values[name] = String(p.ground_minutes ?? 15);
     } else if (name === "invoicing_in_peregrine") {
       // On unless the company turned it off (#95); an older backend sends nothing.
       values[name] = p.invoicing_in_peregrine === false ? "false" : "true";
@@ -276,6 +280,20 @@ export function CompanyForm({ profile }: { profile: CompanyProfileResponse }) {
             placeholder="30"
             hint="Days from the invoice date to the due date, 0 to 365. Blank means 30."
             error={fieldError("invoice_terms_days")}
+          />
+        </div>
+      </Section>
+
+      {/* #126: what Open New Flight fills a flight's times in with. */}
+      <Section title="Flights">
+        <div className="grid gap-4 sm:grid-cols-3">
+          <Field
+            {...bind("ground_minutes")}
+            label="Ground Time at Each Stop (min)"
+            inputMode="numeric"
+            placeholder="15"
+            hint="Open New Flight fills a flight's times in with this, and it can be changed on each flight. 0 to 240."
+            error={fieldError("ground_minutes")}
           />
         </div>
       </Section>
