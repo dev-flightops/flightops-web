@@ -155,6 +155,25 @@ describe("VillageWxPage (M2-G-village-wx-redesign)", () => {
     expect(screen.getByText(/Stale:/i)).toBeInTheDocument();
   });
 
+  it("says why a report of clouds alone has no category (#131)", async () => {
+    // SCT 400 without a visibility: SCT isn't a ceiling, so the server
+    // can't rate it, and the board says why instead of showing nothing.
+    getVillageBoard.mockResolvedValueOnce({
+      items: [
+        row(
+          { icao: "9Z8", name: "Levelock", region: "Bristol Bay" },
+          { cloud_cover: "SCT", ceiling_ft: 400, visibility_sm: null, flight_category: null },
+        ),
+      ],
+      total: 1,
+    });
+
+    await renderPage();
+
+    expect(screen.getByText("No category: visibility not reported")).toBeInTheDocument();
+    expect(screen.getByText(/SCT 400ft/)).toBeInTheDocument();
+  });
+
   it("groups rows by region with airports listed under each", async () => {
     getVillageBoard.mockResolvedValueOnce({
       items: [

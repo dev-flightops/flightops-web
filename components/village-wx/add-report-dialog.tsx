@@ -122,7 +122,9 @@ export function AddReportDialog({
             <DialogDescription>
               Quick observation — only the airport is required. Fill the
               fields you actually know; the server stamps the flight
-              category (VFR / MVFR / IFR / LIFR) from ceiling + visibility.
+              category (VFR / MVFR / IFR / LIFR) from the ceiling and
+              visibility. Only a broken (BKN), overcast (OVC) or obscured
+              (VV) layer is a ceiling: a FEW or SCT base isn&rsquo;t one.
             </DialogDescription>
           </DialogHeader>
 
@@ -160,7 +162,7 @@ export function AddReportDialog({
               />
               <Field
                 name="ceiling_ft"
-                label="Ceiling (ft AGL)"
+                label="Cloud base (ft AGL)"
                 type="number"
                 placeholder="1000"
                 min={0}
