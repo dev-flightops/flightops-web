@@ -9,6 +9,7 @@ import { fleetTypes } from "@/lib/fleet-types";
 import { RELEASE_POLICY_ADMINS, hasAnyRole } from "@/lib/roles";
 
 import { FirstClassMedicalCard } from "./first-class-medical-card";
+import { NotStartedCard } from "./not-started-card";
 import { TypeGateCard } from "./type-gate-card";
 
 /**
@@ -105,6 +106,7 @@ export default async function SettingsCurrencyPage() {
       </header>
 
       {gate ? <TypeGateCard settings={gate} canChange={canChangeGate} /> : null}
+      {gate ? <NotStartedCard settings={gate} canChange={canChangeGate} /> : null}
       {gate ? (
         <FirstClassMedicalCard
           settings={gate}

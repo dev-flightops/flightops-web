@@ -185,13 +185,13 @@ export default async function PreflightPage({
         getFratPrefill(flightId, {
           observations,
           stops,
-          is_ifr: isIfrPlanned(),
+          is_ifr: isIfrPlanned(flightResult),
         }).catch(() => null),
         observations.length > 0 || stops.some((stop) => stop.weathercam)
           ? getFratBlockEligibility(flightId, {
               observations,
               stops,
-              is_ifr: isIfrPlanned(),
+              is_ifr: isIfrPlanned(flightResult),
             }).catch(() => null)
           : Promise.resolve(null),
       ]);

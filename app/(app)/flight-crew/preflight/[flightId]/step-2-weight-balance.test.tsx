@@ -310,6 +310,53 @@ describe("the client's payload arithmetic (#111)", () => {
     expect(screen.queryByText("2,000 lbs")).toBeNull();
   });
 
+  it("counts the pilot at the weight on their record, and names one estimated (#125)", () => {
+    const { unmount } = render(
+      <WeightAndBalanceStep
+        flightId="f-1"
+        flight={FLIGHT}
+        openReturn={null}
+        load={{ ...LOAD, load: { ...LOAD.load, crew_lbs: "172", crew_estimated_for: [] } }}
+      />,
+    );
+    expect(row("− Pilot and crew")).toHaveTextContent("1 assigned, at the weights on their records");
+    expect(row("− Pilot and crew")).toHaveTextContent("172 lb");
+    unmount();
+    render(
+      <WeightAndBalanceStep
+        flightId="f-1"
+        flight={FLIGHT}
+        openReturn={null}
+        load={{ ...LOAD, load: { ...LOAD.load, crew_estimated_for: ["Henry Kealoha"] } }}
+      />,
+    );
+    expect(row("− Pilot and crew")).toHaveTextContent(
+      "1 assigned; the standard weight for Henry Kealoha, with no weight on file",
+    );
+  });
+
+  it("says the reserve holds, and an IFR flight adds its alternate (#126)", () => {
+    const { unmount } = render(
+      <WeightAndBalanceStep flightId="f-1" flight={FLIGHT} openReturn={null} load={LOAD} />,
+    );
+    expect(row("− Fuel")).toHaveTextContent(
+      "The 45 min reserve holds on every flight: never below the legal minimum, as the GOM asks for conservative planning.",
+    );
+    expect(row("− Fuel")).not.toHaveTextContent("alternate");
+    unmount();
+    render(
+      <WeightAndBalanceStep
+        flightId="f-1"
+        flight={{ ...FLIGHT, is_ifr: true }}
+        openReturn={null}
+        load={LOAD}
+      />,
+    );
+    expect(row("− Fuel")).toHaveTextContent(
+      "IFR: add the fuel to your alternate, which the GOM says always to plan for.",
+    );
+  });
+
   it("shows the checked-in passengers' weight, the rest, and the margin", () => {
     render(<WeightAndBalanceStep flightId="f-1" flight={FLIGHT} openReturn={null} load={LOAD} />);
     expect(row("Passengers checked in")).toHaveTextContent("5 at their weighed weights, 100 lb of it bags");

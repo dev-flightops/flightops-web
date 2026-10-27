@@ -1,6 +1,8 @@
 import type { AreaForecastRegion } from "@/lib/api/dispatch-risk";
 import type { FlightDetail } from "@/lib/api/types";
 
+import type { CrewOption } from "@/lib/api/ops";
+
 import { PicPicker, type PicOption } from "./pic-picker";
 import { AreaForecastSelect } from "./risk-inputs";
 import { SectionPanel } from "./section-panel";
@@ -99,10 +101,13 @@ export function FlightDetailsPanel({
   currentPicId,
   flightId,
   areaForecast = null,
+  picAvailability = null,
 }: {
   flight?: FlightDetail | null;
   /** Pilot roster + overall status for the PIC dropdown (M2-G-5). */
   picOptions: PicOption[];
+  /** Who release would take as PIC on the flight (#91). */
+  picAvailability?: CrewOption[] | null;
   /** The PIC in effect — the assigned one where a flight is loaded,
    *  otherwise the ?pic=<uuid> pre-screen selection. */
   currentPicId: string | null;
@@ -190,6 +195,7 @@ export function FlightDetailsPanel({
           options={picOptions}
           currentPicId={currentPicId}
           flightId={flightId}
+          availability={picAvailability}
         />
 
         <Field label="SIC Name" htmlFor="flight-sic">

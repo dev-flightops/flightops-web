@@ -12,6 +12,7 @@ import { STATUS_TOKENS } from "../../crew-currency/status-tokens";
 import { CurrencyItemCard } from "./currency-item-card";
 import { AirmanRecordCard } from "@/components/compliance/airman-record-card";
 import { ProfileHeader } from "./profile-header";
+import { PilotWeightCard } from "./pilot-weight-card";
 import type { CheckItemRef } from "./type-qualification-dialogs";
 import { TypeQualificationsCard } from "./type-qualifications-card";
 import { auth } from "@/auth";
@@ -133,6 +134,10 @@ export default async function PilotComplianceProfilePage({
           canAuthorise={canAuthoriseType}
           canRecordCheck={canLogCompletion}
         />
+      ) : null}
+
+      {profile.can_edit_weight ? (
+        <PilotWeightCard pilotId={profile.pilot.id} weightLbs={profile.weight_lbs ?? null} />
       ) : null}
 
       {airman && disqualifications ? (

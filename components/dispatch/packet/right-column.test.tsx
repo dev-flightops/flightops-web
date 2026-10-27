@@ -128,6 +128,15 @@ describe("RightColumn / flight-actions row", () => {
     ).toBeInTheDocument();
   });
 
+  it("says whether a scheduled flight is flown VFR or IFR (#123)", () => {
+    const { unmount } = render(<RightColumn flight={baseFlight({ status: "scheduled" })} />);
+    expect(screen.getByText("VFR")).toBeInTheDocument();
+    unmount();
+    render(<RightColumn flight={baseFlight({ status: "scheduled", is_ifr: true })} />);
+    expect(screen.getByText("IFR")).toBeInTheDocument();
+    expect(screen.queryByText("VFR")).not.toBeInTheDocument();
+  });
+
   it("renders status + ReleasedFooter + PDF download for released flights", () => {
     render(
       <RightColumn

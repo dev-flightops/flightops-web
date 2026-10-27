@@ -132,6 +132,8 @@ function fratErrorToMessage(err: unknown): string {
     if (err.status === 400) return "One of the answers is out of range (0–5).";
     if (err.status === 404) return "Submit an assessment first.";
     if (err.status === 409) return "Authorization not required for this risk level.";
+    if (err.status === 422 && err.message.includes("below_approach_minimums_not_over_limits"))
+      return "Below the approach minimums is scored 5, over company limits.";
     return `Couldn't save (HTTP ${err.status}).`;
   }
   return "Couldn't save — try again.";

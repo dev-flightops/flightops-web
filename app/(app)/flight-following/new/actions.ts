@@ -232,6 +232,7 @@ export async function createFlightAction(
       pax_count: parsed.data.pax_count,
       cargo_lbs: parsed.data.cargo_lbs,
       notes: parsed.data.notes ?? null,
+      is_ifr: formData.get("is_ifr") === "on",
       ...(legs.length > 1 ? { legs } : {}),
     });
     if (flight?.id) {

@@ -12,6 +12,7 @@ import type {
  * an aircraft that is not IFR certified must not be dispatched below
  * them at the departure or the destination. Nor may any aircraft at a
  * field without an instrument approach, which is reached VFR (#110).
+ * Since #123 that holds every flight flown VFR, whatever the aircraft.
  * Release refuses it (409 `below_weather_minimums`); the dispatch packet
  * says so first, and Open New Flight after creating one. One wording for
  * all three.
@@ -56,6 +57,11 @@ export function heldForType(stations: MinimumsStation[]): boolean {
   return stations.every((s) => (s.reason ?? "not_ifr_certified") === "not_ifr_certified");
 }
 
+/** True when the stops are held because the flight is flown VFR (#123). */
+export function heldForVfr(stations: MinimumsStation[]): boolean {
+  return stations.some((s) => s.reason === "vfr_flight");
+}
+
 /** "PAEM" or "PAEM and PAII": the stops held for want of an approach. */
 export function withoutApproach(stations: MinimumsStation[]): string {
   const icaos = stations.filter((s) => s.reason === "no_instrument_approach").map((s) => s.icao);
@@ -73,6 +79,13 @@ export function minimumsBlockReason(view: WeatherMinimumsView | null | undefined
       `Below the company's dispatch minimums for aircraft not IFR certified ` +
       `(${label}): ${belowSummary(view.stations)}. No release until it comes up, or move the ` +
       `flight to an IFR-certified aircraft.`
+    );
+  }
+  if (heldForVfr(view.stations)) {
+    return (
+      `Below the company's dispatch minimums for a VFR flight (${label}): ` +
+      `${belowSummary(view.stations)}. No release until it comes up. If the flight will be flown ` +
+      `IFR, tick Flown IFR under Edit.`
     );
   }
   const below = view.stations.filter((s) => s.below);

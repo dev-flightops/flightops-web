@@ -16,9 +16,10 @@ import {
   type LoadPlanResponse,
   type ManifestDetailResponse,
 } from "@/lib/api/manifest";
-import { fuelEstimateLine } from "@/lib/flights/fuel-estimate";
+import { fuelEstimateLine, fuelPlanningNote } from "@/lib/flights/fuel-estimate";
 import type { FlightDetail, FlightStatus } from "@/lib/api/types";
 import { hasAnyRole, MANIFEST_LOCKERS } from "@/lib/roles";
+import { crewWeightNote } from "@/lib/flights/crew-weight";
 import { flightStops } from "@/lib/route";
 
 import { PlannedFuelForm } from "./fuel-form";
@@ -110,7 +111,7 @@ export default async function FlightManifestPage({
 
           <TotalsStrip totals={manifest.totals} />
 
-          <LoadPanel manifest={manifest} editable={editable} />
+          <LoadPanel manifest={manifest} editable={editable} isIfr={Boolean(flight.is_ifr)} />
 
           {manifest.legs && manifest.legs.length > 1 ? <LegSeatsPanel legs={manifest.legs} /> : null}
 
@@ -272,11 +273,6 @@ function TotalsStrip({ totals }: { totals: ManifestDetailResponse["totals"] }) {
   );
 }
 
-const CREW_BASIS: Record<ManifestDetailResponse["load"]["crew_basis"], (count: number) => string> = {
-  manifest: () => "as weighed on the manifest",
-  standard: (count) => `${count} assigned, at standard weight`,
-  none: () => "none on the flight yet",
-};
 
 /**
  * What is left of the aircraft's useful load for mail and freight (#74):
@@ -285,7 +281,16 @@ const CREW_BASIS: Record<ManifestDetailResponse["load"]["crew_basis"], (count: n
  * overstated the room for mail by their weight. Until the planned fuel is
  * entered the figure is labelled as before fuel, never passed off as real.
  */
-function LoadPanel({ manifest, editable }: { manifest: ManifestDetailResponse; editable: boolean }) {
+function LoadPanel({
+  manifest,
+  editable,
+  isIfr,
+}: {
+  manifest: ManifestDetailResponse;
+  editable: boolean;
+  /** The flight is flown IFR (#123): the fuel note adds the alternate. */
+  isIfr: boolean;
+}) {
   const load = manifest.load;
   // An ops build from before #74 sends no breakdown; show nothing rather
   // than fail the page while the two deploys catch up with each other.
@@ -314,7 +319,7 @@ function LoadPanel({ manifest, editable }: { manifest: ManifestDetailResponse; e
       <div className="flex flex-wrap items-end gap-x-3 gap-y-2">
         <Term label="Useful load" value={`${load.useful_load_lbs.toLocaleString()} lb`} />
         <Op>−</Op>
-        <Term label="Crew" value={`${fmtLbs(load.crew_lbs)} lb`} note={CREW_BASIS[load.crew_basis](load.crew_count)} />
+        <Term label="Crew" value={`${fmtLbs(load.crew_lbs)} lb`} note={crewWeightNote(load)} />
         <Op>−</Op>
         <Term
           label="Fuel"
@@ -328,7 +333,7 @@ function LoadPanel({ manifest, editable }: { manifest: ManifestDetailResponse; e
       </div>
       {load.fuel_basis === "estimated" && load.fuel_estimate ? (
         <p className="mt-3 text-xs text-muted-foreground">
-          {`${fuelEstimateLine(load.fuel_estimate)} Enter the planned fuel to use your own figure instead.`}
+          {`${fuelEstimateLine(load.fuel_estimate)} ${fuelPlanningNote(load.fuel_estimate, { is_ifr: isIfr })} Enter the planned fuel to use your own figure instead.`}
         </p>
       ) : null}
       {!load.fuel_counted ? (

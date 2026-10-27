@@ -2,7 +2,7 @@ import { PageHeader } from "@/components/ff/page-header";
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
-import { loadZoneTable } from "@/lib/api/auth";
+import { getCompanyProfile, loadZoneTable } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
 import { listAircraft } from "@/lib/api/ops";
 import type { AircraftListItem } from "@/lib/api/types";
@@ -25,6 +25,11 @@ export default async function FlightFollowingNewPage() {
   let loadError: string | null = null;
   // Times are typed local to the departure base (#68).
   const zones = loadZoneTable();
+  // The company's ground time at each stop (#126); 15 minutes when the
+  // settings can't be read, as before there was a setting.
+  const groundMinutes = getCompanyProfile()
+    .then((c) => c.ground_minutes ?? 15)
+    .catch(() => 15);
 
   try {
     aircraft = (await listAircraft()).items.filter((a) => a.is_active);
@@ -71,7 +76,11 @@ export default async function FlightFollowingNewPage() {
           </Button>
         </div>
       ) : (
-        <OpenFlightForm aircraft={aircraft} zones={await zones} />
+        <OpenFlightForm
+          aircraft={aircraft}
+          zones={await zones}
+          groundMinutesDefault={await groundMinutes}
+        />
       )}
     </div>
   );

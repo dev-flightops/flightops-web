@@ -98,7 +98,7 @@ export function CurrencyItemCard({
           <Field
             label="Days Until Non-Current"
             value={daysUntilLabel(cell)}
-            accent="text-status-yellow"
+            accent="text-status-red"
           />
         )}
       </dl>
