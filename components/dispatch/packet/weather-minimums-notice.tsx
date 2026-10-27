@@ -2,20 +2,22 @@ import type { WeatherMinimumsView } from "@/lib/api/types";
 import {
   belowSummary,
   heldForType,
+  heldForVfr,
   minimumsLabel,
   withoutApproach,
 } from "@/lib/frat/weather-minimums";
 
 /**
- * The company's dispatch minimums on this flight (#89, #110).
+ * The company's dispatch minimums on this flight (#89, #110, #123).
  *
  * For an aircraft the company lists as not IFR certified (Settings →
- * Flight Risk), at every stop; and for any aircraft at a village airport
- * without an instrument approach (Weather → Village Wx), which is reached
- * VFR. Below them the release is refused, and nothing on this page clears
- * that: the weather has to come up (refresh it above), or the flight goes
- * another way. Above them, one quiet line says the check was made, so a
- * dispatcher knows the rule applied rather than guessing it didn't.
+ * Flight Risk) or a flight flown VFR, at every stop; and on an IFR flight
+ * at a village airport without an instrument approach (Weather → Village
+ * Wx), which is reached VFR. Below them the release is refused, and
+ * nothing on this page clears that: the weather has to come up (refresh
+ * it above), the flight is marked IFR, or it goes another way. Above
+ * them, one quiet line says the check was made, so a dispatcher knows the
+ * rule applied rather than guessing it didn't.
  */
 export function WeatherMinimumsNotice({
   minimums,
@@ -30,6 +32,7 @@ export function WeatherMinimumsNotice({
     .map((s) => s.icao);
 
   const forType = heldForType(minimums.stations);
+  const forVfr = !forType && heldForVfr(minimums.stations);
   const noReport =
     unchecked.length > 0 ? ` (no current report at ${unchecked.join(", ")})` : "";
 
@@ -43,6 +46,8 @@ export function WeatherMinimumsNotice({
         <p className="mt-1 text-xs">
           {forType
             ? `${belowSummary(minimums.stations)}. The ${type} is not IFR certified, and the company’s dispatch minimums are ${label} at every stop. It can’t be released until the weather comes up, or on an IFR-certified aircraft.`
+            : forVfr
+            ? `${belowSummary(minimums.stations)}. The flight is flown VFR, and the company’s dispatch minimums for a VFR flight are ${label} at every stop. It can’t be released until the weather comes up. If it will be flown IFR, tick Flown IFR under Edit.`
             : `${belowSummary(minimums.stations)}. There’s no instrument approach at ${fields}, so it’s reached VFR whatever the aircraft, and the company’s dispatch minimums there are ${label}. It can’t be released until the weather there comes up.`}
         </p>
       </div>
@@ -53,6 +58,8 @@ export function WeatherMinimumsNotice({
     <p className="text-[0.6875rem] text-muted-foreground">
       {forType
         ? `The ${type} is not IFR certified: held to the company’s dispatch minimums of ${label} at every stop, and met on the latest weather${noReport}.`
+        : forVfr
+        ? `Flown VFR: held to the company’s dispatch minimums of ${label} at every stop, and met on the latest weather${noReport}.`
         : `No instrument approach at ${withoutApproach(minimums.stations)}: held to the company’s dispatch minimums of ${label} there, and met on the latest weather${noReport}.`}
     </p>
   );

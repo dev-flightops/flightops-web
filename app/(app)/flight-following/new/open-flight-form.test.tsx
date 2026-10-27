@@ -96,3 +96,15 @@ describe("OpenFlightForm: a round trip by default, its times from the cruise spe
     expect(screen.getByText("Not on the Alaska airport list: type the times")).toBeInTheDocument();
   });
 });
+
+describe("OpenFlightForm: VFR unless marked IFR (#123)", () => {
+  it("opens a flight VFR, with Flown IFR to tick", async () => {
+    renderForm();
+    const ifr = screen.getByRole("checkbox", { name: "Flown IFR" });
+    expect(ifr).not.toBeChecked();
+    expect(ifr).toHaveAttribute("name", "is_ifr");
+    expect(screen.getByText(/Leave it unticked for a VFR flight/)).toBeInTheDocument();
+    await userEvent.click(ifr);
+    expect(ifr).toBeChecked();
+  });
+});

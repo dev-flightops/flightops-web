@@ -73,10 +73,9 @@ export function observationsFromWeather(
  * pilot would otherwise get. Guessing VFR at worst offers a suggestion
  * against the VFR floor, which is visible and can be overridden.
  *
- * The flight record carries no IFR flag today — the dispatch packet has
- * an IFR/VFR compliance gate, but it is dispatcher-set on the packet
- * rather than stored on the flight. When that lands, read it here.
+ * The flight says how it is flown since #123: VFR unless dispatch marked
+ * it IFR. A flight from a service before that reads VFR.
  */
-export function isIfrPlanned(): boolean {
-  return false;
+export function isIfrPlanned(flight?: { is_ifr?: boolean } | null): boolean {
+  return Boolean(flight?.is_ifr);
 }

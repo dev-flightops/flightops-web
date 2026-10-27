@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import type { WeatherBatchResponse, WeatherReportResponse } from "@/lib/api/types";
 
-import { observationsFromWeather } from "./observations";
+import { isIfrPlanned, observationsFromWeather } from "./observations";
 
 function report(over: Partial<WeatherReportResponse> = {}): WeatherReportResponse {
   return {
@@ -123,5 +123,14 @@ describe("observationsFromWeather", () => {
     for (const threshold of ["30", "35", "1000", "3.0", "vfr_min", "crosswind"]) {
       expect(code).not.toContain(threshold);
     }
+  });
+});
+
+describe("isIfrPlanned (#123)", () => {
+  it("reads the flight's rules, VFR when it doesn't say", () => {
+    expect(isIfrPlanned({ is_ifr: true })).toBe(true);
+    expect(isIfrPlanned({ is_ifr: false })).toBe(false);
+    expect(isIfrPlanned({})).toBe(false);
+    expect(isIfrPlanned(null)).toBe(false);
   });
 });

@@ -6,6 +6,7 @@ import {
   belowMinimumsFromError,
   belowSummary,
   heldForType,
+  heldForVfr,
   minimumsLabel,
   withoutApproach,
 } from "./weather-minimums";
@@ -127,5 +128,50 @@ describe("dispatch minimums at a field without an instrument approach (#110)", (
         { icao: "9Z8", below: true, reason: "no_instrument_approach", observations: [] },
       ]),
     ).toBe("PAII and 9Z8");
+  });
+});
+
+describe("dispatch minimums on a VFR flight (#123)", () => {
+  const VFR_STOPS = [
+    {
+      icao: "PABE",
+      below: true,
+      reason: "vfr_flight" as const,
+      observations: [
+        {
+          source: "metar" as const,
+          observed_at: null,
+          ceiling_ft: 500,
+          visibility_sm: 5,
+          below_ceiling: true,
+          below_visibility: false,
+        },
+      ],
+    },
+    { icao: "PAKI", below: false, reason: "vfr_flight" as const, observations: [] },
+  ];
+
+  it("says the flight is flown VFR, and how to mark it IFR", () => {
+    expect(heldForType(VFR_STOPS)).toBe(false);
+    expect(heldForVfr(VFR_STOPS)).toBe(true);
+    const body = JSON.stringify({
+      detail: {
+        error: "below_weather_minimums",
+        min_ceiling_ft: 600,
+        min_visibility_sm: 2,
+        stations: VFR_STOPS,
+      },
+    });
+    expect(belowMinimumsFromError(body)).toBe(
+      "Below the company's dispatch minimums for a VFR flight (600 ft / 2 sm): PABE ceiling " +
+        "500 ft. No release until it comes up. If the flight will be flown IFR, tick Flown IFR " +
+        "under Edit.",
+    );
+  });
+
+  it("is not a VFR hold on an IFR flight held at a field without an approach", () => {
+    expect(
+      heldForVfr([{ icao: "PAII", below: true, reason: "no_instrument_approach", observations: [] }]),
+    ).toBe(false);
   });
 });

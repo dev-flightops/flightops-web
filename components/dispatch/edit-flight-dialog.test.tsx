@@ -172,6 +172,32 @@ describe("EditFlightDialog", () => {
     });
   });
 
+  it("marks a VFR flight IFR, and back (#123)", async () => {
+    updateFlightAction.mockReset().mockResolvedValue({ ok: true });
+    const user = userEvent.setup();
+    const { unmount } = render(
+      <EditFlightDialog flight={baseFlight} aircraft={[aircraft207, aircraft510]} />,
+    );
+    await user.click(screen.getByRole("button", { name: /edit/i }));
+    expect(screen.getByLabelText("Flown IFR")).not.toBeChecked();
+    await user.click(screen.getByLabelText("Flown IFR"));
+    await user.click(screen.getByRole("button", { name: /save changes/i }));
+    expect(updateFlightAction).toHaveBeenLastCalledWith(baseFlight.id, { is_ifr: true });
+    unmount();
+
+    render(
+      <EditFlightDialog
+        flight={{ ...baseFlight, is_ifr: true }}
+        aircraft={[aircraft207, aircraft510]}
+      />,
+    );
+    await user.click(screen.getByRole("button", { name: /edit/i }));
+    expect(screen.getByLabelText("Flown IFR")).toBeChecked();
+    await user.click(screen.getByLabelText("Flown IFR"));
+    await user.click(screen.getByRole("button", { name: /save changes/i }));
+    expect(updateFlightAction).toHaveBeenLastCalledWith(baseFlight.id, { is_ifr: false });
+  });
+
   it("closes without calling the server action when no fields changed", async () => {
     updateFlightAction.mockReset();
     const user = userEvent.setup();

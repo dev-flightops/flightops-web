@@ -355,6 +355,22 @@ export function OpenFlightForm({
           defaultValue={submitted("cargo_lbs", "0")}
           error={fieldError("cargo_lbs")}
         />
+        {/* #123: VFR unless ticked. A VFR flight is held to the company's
+            dispatch minimums at every stop. */}
+        <div className="md:col-span-2">
+          <label className="flex items-center gap-2 text-xs text-foreground">
+            <input
+              type="checkbox"
+              name="is_ifr"
+              defaultChecked={submitted("is_ifr") === "on"}
+              className="accent-primary"
+            />
+            Flown IFR
+          </label>
+          <p className="mt-1 text-[0.65rem] text-muted-foreground">
+            Leave it unticked for a VFR flight: below the company&apos;s dispatch minimums at any stop it isn&apos;t released.
+          </p>
+        </div>
       </div>
 
       <div>
