@@ -205,7 +205,6 @@ export function Refunds({
               <tr className="ff-thead">
                 <th scope="col" className="py-2 pr-4">Date</th>
                 <th scope="col" className="py-2 pr-4">Given back</th>
-                <th scope="col" className="py-2 pr-4">Why</th>
                 <th scope="col" className="py-2 text-right">Amount</th>
               </tr>
             </thead>
@@ -218,6 +217,9 @@ export function Refunds({
                       <td className="whitespace-nowrap py-2 pr-4 tabular-nums text-foreground">
                         {r.refunded_on}
                       </td>
+                      {/* Where it went, then why and who approved it, in one
+                          cell: at 390px a fourth column broke the reason
+                          mid-word. */}
                       <td className="py-2 pr-4 text-foreground">
                         {where(r)}
                         {r.reference ? (
@@ -225,12 +227,11 @@ export function Refunds({
                             {r.reference}
                           </div>
                         ) : null}
-                      </td>
-                      <td className="py-2 pr-4 text-muted-foreground [overflow-wrap:anywhere]">
-                        {r.reason}
-                        {r.approved_by_name ? (
-                          <div className="text-xs">Approved by {r.approved_by_name}</div>
-                        ) : null}
+                        <div className="text-xs text-muted-foreground">
+                          {r.approved_by_name
+                            ? `${r.reason} · Approved by ${r.approved_by_name}`
+                            : r.reason}
+                        </div>
                       </td>
                       <td className="whitespace-nowrap py-2 text-right tabular-nums">
                         {voided ? (
@@ -260,7 +261,7 @@ export function Refunds({
                     {voided && (
                       <tr className="border-b border-border last:border-0">
                         <td
-                          colSpan={4}
+                          colSpan={3}
                           className="pb-2 text-xs text-muted-foreground [overflow-wrap:anywhere]"
                         >
                           <span className="eyebrow mr-1.5">Voided</span>
