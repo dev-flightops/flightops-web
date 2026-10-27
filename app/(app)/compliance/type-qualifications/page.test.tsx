@@ -98,8 +98,8 @@ describe("/compliance/type-qualifications", () => {
     const [, base, caravan, kingair] = within(rowFor("Ana Pilot")).getAllByRole("cell");
     expect(base).toHaveTextContent("PANC");
     expect(within(caravan).getByText("PIC").className).toContain("text-status-green");
-    expect(within(caravan).getByText("CA").className).toContain("text-status-yellow");
-    expect(within(kingair).getByText("SIC").className).toContain("text-status-red");
+    expect(within(caravan).getByText("CA").className).toContain("text-status-red");
+    expect(within(kingair).getByText("SIC").className).toContain("text-status-magenta");
     expect(within(caravan).getByText("PIC")).toHaveAttribute(
       "title",
       expect.stringContaining("Competency check (135.293): last 2026-01-12, due 2027-01"),

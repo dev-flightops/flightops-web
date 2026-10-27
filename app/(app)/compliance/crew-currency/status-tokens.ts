@@ -1,20 +1,21 @@
 import type { CurrencyStatus } from "@/lib/api/types";
 
 /**
- * Per-status visual tokens — Spec 5 §"Cell badge colors".
+ * Per-status visual tokens, in the GOM's five currency levels (#66; Rev
+ * 12, §15): Green normal, Gold aware, Red alert, Magenta critical, Grey.
  *
- *   UPCOMING       blue   "more than 30 days before early month"
- *   EARLY          teal   "in early month window"
- *   DUE THIS MONTH green  "in base month"
- *   GRACE          yellow "in grace month, X days remaining"
- *   NON-CURRENT    red    "past grace month end — hard block"
- *   NOT STARTED    gray   "no completion ever recorded"
+ *   UPCOMING       green    normal: due in more than a month
+ *   EARLY          green    normal: in the early month, done or doable
+ *   DUE THIS MONTH gold     aware: in the base month
+ *   GRACE          red      alert: in the grace month, X days remaining
+ *   NON-CURRENT    magenta  critical: past the grace month — a hard block
+ *   NOT STARTED    grey     nothing on record (the GOM's grey, no longer
+ *                           viable, has no status of its own here)
  *
- * Kept as a single map so the grid cells, chips, and pilot-row
- * overall-status badge all render the same colors. Mapping the
- * status enum → tailwind class names is the cleanest way to keep
- * the UI in sync with the spec without smearing color literals
- * across files.
+ * The scheme used to be Spec 5's blue, teal, green, yellow, red, in which
+ * green meant "due this month", close to the opposite of the GOM's green:
+ * a pilot trained on the GOM could misread it. Kept as a single map so the
+ * grid cells, chips and the pilot-row overall status all render the same.
  */
 
 export interface StatusToken {
@@ -38,33 +39,33 @@ export const STATUS_TOKENS: Record<CurrencyStatus, StatusToken> = {
   },
   upcoming: {
     label: "Upcoming",
-    pill: "status-mark text-[0.6rem] text-status-blue",
-    badge: "status-mark text-status-blue",
-    rowTint: "",
-  },
-  early_month: {
-    label: "Early",
-    pill: "status-mark text-[0.6rem] text-status-teal",
-    badge: "status-mark text-status-teal",
-    rowTint: "",
-  },
-  due_this_month: {
-    label: "Due This Month",
     pill: "status-mark text-[0.6rem] text-status-green",
     badge: "status-mark text-status-green",
     rowTint: "",
   },
+  early_month: {
+    label: "Early",
+    pill: "status-mark text-[0.6rem] text-status-green",
+    badge: "status-mark text-status-green",
+    rowTint: "",
+  },
+  due_this_month: {
+    label: "Due This Month",
+    pill: "status-mark text-[0.6rem] text-status-gold",
+    badge: "status-mark text-status-gold",
+    rowTint: "",
+  },
   grace_month: {
     label: "Grace",
-    pill: "status-mark text-[0.6rem] text-status-yellow",
-    badge: "status-mark text-status-yellow",
-    rowTint: "bg-status-yellow/[0.03]",
+    pill: "status-mark text-[0.6rem] text-status-red",
+    badge: "status-mark text-status-red",
+    rowTint: "bg-status-red/[0.03]",
   },
   non_current: {
     label: "Non-Current",
-    pill: "status-mark text-[0.6rem] text-status-red",
-    badge: "status-mark text-status-red",
-    rowTint: "bg-status-red/[0.04]",
+    pill: "status-mark text-[0.6rem] text-status-magenta",
+    badge: "status-mark text-status-magenta",
+    rowTint: "bg-status-magenta/[0.04]",
   },
 };
 

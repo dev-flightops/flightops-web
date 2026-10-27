@@ -83,6 +83,9 @@
     --status-orange: 251 146 60;
     --status-purple: 192 132 252;
     --status-teal: 94 234 212;
+    /* The GOM's currency levels (#66): Gold aware, Magenta critical. */
+    --status-gold: 233 196 106; /* #E9C46A, 9.7:1 on the card */
+    --status-magenta: 232 121 249; /* #E879F9, 6.6:1 on the card */
 
     /* Status as a fill under white text: 4.9-7.6:1, both modes. */
     --status-green-fill: 4 120 87; /* #047857 */
@@ -130,6 +133,8 @@
     --status-orange: 167 56 10;
     --status-purple: 126 34 206;
     --status-teal: 14 106 99;
+    --status-gold: 138 101 0; /* #8A6500, 5.3:1 on white, 4.9:1 on muted */
+    --status-magenta: 162 28 175; /* #A21CAF, 6.3:1 on white */
   }
 
   /* A dark island inside the light page keeps the navy palette (it must
@@ -160,6 +165,9 @@
     --status-orange: 251 146 60;
     --status-purple: 192 132 252;
     --status-teal: 94 234 212;
+    /* The GOM's currency levels (#66): Gold aware, Magenta critical. */
+    --status-gold: 233 196 106; /* #E9C46A, 9.7:1 on the card */
+    --status-magenta: 232 121 249; /* #E879F9, 6.6:1 on the card */
   }
 
   /* A section band (#78): ForeFlight alternates white and #F1F5F8 on its

@@ -164,7 +164,7 @@ function AnchorCell({
       const tone =
         cell.rolling_count >= item.rolling_threshold
           ? "text-status-green"
-          : "text-status-yellow";
+          : "text-status-gold";
       return (
         <span className={`font-mono text-[0.65rem] ${tone}`}>
           {cell.rolling_count}/{item.rolling_threshold}
@@ -185,7 +185,7 @@ function AnchorCell({
   if (cell.status === "grace_month" && cell.grace_month_end) {
     const days = daysUntil(cell.grace_month_end);
     return (
-      <span className="font-mono text-[0.65rem] text-status-yellow">
+      <span className="font-mono text-[0.65rem] text-status-red">
         Grace ends {cell.grace_month_end}
         {days !== null && days >= 0 ? ` · ${days}d` : ""}
       </span>

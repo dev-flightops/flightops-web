@@ -59,14 +59,14 @@ describe("PicPicker (M2-G-5)", () => {
     expect(combo.textContent).toMatch(/Alice Chen.*NON-CURRENT/);
   });
 
-  it("renders the red status dot next to the label when the selected PIC is non-current", () => {
+  it("renders the magenta status dot next to the label when the selected PIC is non-current (#66)", () => {
     const { container } = render(
       <PicPicker
         options={[sarah, bob, alice]}
         currentPicId={alice.pilot.id}
       />,
     );
-    const dot = container.querySelector('label[for="pic-picker"] .bg-status-red');
+    const dot = container.querySelector('label[for="pic-picker"] .bg-status-magenta');
     expect(dot).toBeInTheDocument();
     // The dot is for sighted users; a screen reader gets the status from
     // the selected option, which reads "Alice Chen — NON-CURRENT".

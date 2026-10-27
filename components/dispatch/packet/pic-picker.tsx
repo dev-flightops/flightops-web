@@ -63,14 +63,24 @@ export interface PicOption {
   typeWarning?: SeatTypeWarning | null;
 }
 
-const STATUS_TO_DOT: Record<CurrencyStatus, "green" | "yellow" | "red"> = {
-  not_started: "yellow",
+// The GOM's five currency levels (#66): Green normal, Gold aware, Red
+// alert, Magenta critical, Grey for nothing on record.
+const STATUS_TO_DOT: Record<CurrencyStatus, "green" | "gold" | "red" | "magenta" | "gray"> = {
+  not_started: "gray",
   upcoming: "green",
   early_month: "green",
-  due_this_month: "yellow",
-  grace_month: "yellow",
-  non_current: "red",
+  due_this_month: "gold",
+  grace_month: "red",
+  non_current: "magenta",
 };
+
+const DOT_CLASS = {
+  green: "bg-status-green",
+  gold: "bg-status-gold",
+  red: "bg-status-red",
+  magenta: "bg-status-magenta",
+  gray: "bg-status-gray",
+} as const;
 
 const STATUS_LABEL: Record<CurrencyStatus, string> = {
   not_started: "Not started",
@@ -156,11 +166,7 @@ export function PicPicker({
             aria-hidden
             className={
               "inline-block h-2 w-2 shrink-0 " +
-              (selectedDot === "green"
-                ? "bg-status-green"
-                : selectedDot === "yellow"
-                  ? "bg-status-yellow"
-                  : "bg-status-red")
+              DOT_CLASS[selectedDot]
             }
           />
         )}

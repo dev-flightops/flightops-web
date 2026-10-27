@@ -247,7 +247,7 @@ export function ComplianceCalendar({
                   <span className="truncate text-[0.65rem] text-muted-foreground">
                     {e.item.name}
                   </span>
-                  <span className="font-mono text-[0.65rem] text-status-yellow">
+                  <span className="font-mono text-[0.65rem] text-status-gold">
                     {e.cell.rolling_count}/{e.item.rolling_threshold}
                   </span>
                 </div>
