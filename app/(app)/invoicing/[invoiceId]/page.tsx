@@ -3,11 +3,14 @@ import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { auth } from "@/auth";
+import { listStaff } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
 import {
   getCustomerInvoice,
   type CustomerInvoiceDetail,
 } from "@/lib/api/customer-invoices";
+import { REFUND_APPROVERS, hasAnyRole } from "@/lib/roles";
 
 import {
   isOverdue,
@@ -17,9 +20,11 @@ import {
   statusClasses,
   unitPrice,
 } from "../money";
+import { ApplyCredit } from "./apply-credit";
 import { InvoiceActions } from "./invoice-actions";
 import { PaymentHistory } from "./payment-history";
 import { RecordPayment } from "./record-payment";
+import { type Approver, Refunds } from "./refunds";
 
 /**
  * /invoicing/{id} — one invoice, as the customer will see it.
@@ -41,6 +46,21 @@ export const dynamic = "force-dynamic";
 
 function todayUtc(): string {
   return new Date().toISOString().slice(0, 10);
+}
+
+/** Who may approve a refund over $500 (#127): everyone on the staff
+ *  holding the role, but not the person entering it. None when the
+ *  directory can't be read; the form then says one is needed. */
+async function refundApprovers(): Promise<Approver[]> {
+  const me = (await auth())?.user?.email?.toLowerCase() ?? "";
+  try {
+    const { items } = await listStaff();
+    return items
+      .filter((p) => hasAnyRole(p.roles, REFUND_APPROVERS) && p.email.toLowerCase() !== me)
+      .map((p) => ({ id: p.id, name: p.full_name || p.email }));
+  } catch {
+    return [];
+  }
 }
 
 export default async function InvoiceDetailPage({
@@ -72,6 +92,11 @@ export default async function InvoiceDetailPage({
   }
 
   const overdue = isOverdue(invoice.status, invoice.due_date, todayUtc());
+  // What can still be given back (#127): received and not yet refunded.
+  const refundable = invoice.paid_cents - invoice.refunded_cents;
+  const canRefund =
+    (invoice.status === "sent" || invoice.status === "paid") && refundable > 0;
+  const approvers = canRefund ? await refundApprovers() : [];
   const flightBits = [
     invoice.flight_number,
     invoice.origin_icao && invoice.destination_icao
@@ -116,7 +141,7 @@ export default async function InvoiceDetailPage({
           invoiceNumber={invoice.invoice_number}
           status={invoice.status}
           hasUnpricedLines={invoice.has_unpriced_lines}
-          paidCents={invoice.paid_cents}
+          paidCents={refundable}
           outstandingCents={invoice.outstanding_cents}
         />
       </header>
@@ -240,6 +265,16 @@ export default async function InvoiceDetailPage({
                   {money(invoice.paid_cents)}
                 </dd>
               </div>
+              {invoice.refunded_cents > 0 && (
+                <div>
+                  <dt className="eyebrow">
+                    Refunded
+                  </dt>
+                  <dd className="text-sm font-semibold tabular-nums text-foreground">
+                    {money(invoice.refunded_cents)}
+                  </dd>
+                </div>
+              )}
               <div>
                 <dt className="eyebrow">
                   Outstanding
@@ -267,7 +302,28 @@ export default async function InvoiceDetailPage({
               invoice.status === "sent" && invoice.outstanding_cents > 0
             }
           />
+          <ApplyCredit
+            invoiceId={invoice.id}
+            creditNotes={invoice.credit_notes}
+            outstandingCents={invoice.outstanding_cents}
+            canApply={
+              invoice.status === "sent" && invoice.outstanding_cents > 0
+            }
+          />
         </section>
+      )}
+
+      {invoice.status !== "draft" && (
+        <Refunds
+          invoiceId={invoice.id}
+          invoiceNumber={invoice.invoice_number}
+          refunds={invoice.refunds}
+          payments={invoice.payments}
+          refundableCents={refundable}
+          hasCustomer={invoice.customer !== null}
+          canRefund={canRefund}
+          approvers={approvers}
+        />
       )}
 
       {invoice.notes && (

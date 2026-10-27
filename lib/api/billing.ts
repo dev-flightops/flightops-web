@@ -4,8 +4,8 @@
  * billing router uses no internal prefix so gateway paths map 1:1
  * to service paths (unlike the academy router).
  *
- * Every endpoint admits an Executive Admin and a Director of
- * Operations; expect a 403 for every other role.
+ * Every endpoint but the standing admits an Executive Admin and a
+ * Director of Operations; expect a 403 for every other role.
  */
 
 import { apiFetch } from "./client";
@@ -130,6 +130,19 @@ export async function listInvoices(
 
 export async function listPlans(): Promise<PlanListResponse> {
   return apiFetch<PlanListResponse>("/billing/plans");
+}
+
+/** Whether the company's subscription is paid up (#127): `grace` from a
+ *  failed renewal payment until `read_only_from`, then `read_only` until
+ *  it's paid. Any staff login may ask, since read-only reaches them all. */
+export interface BillingStanding {
+  state: "ok" | "grace" | "read_only";
+  payment_failed_at: string | null;
+  read_only_from: string | null;
+}
+
+export async function getBillingStanding(): Promise<BillingStanding> {
+  return apiFetch<BillingStanding>("/billing/standing");
 }
 
 // ---- Stripe write path (Slice 2) --------------------------------------------
