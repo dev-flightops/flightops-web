@@ -164,8 +164,27 @@ export const CHECKIN_CONFIG = roleGate("chief_pilot", "director_of_operations", 
 
 /** Lock a flight's manifest (#62). A lock is final, and legacy locks it
  *  when boarding closes, so it is the check-in roles' call. Building the
- *  manifest is open to any staff. */
+ *  manifest is MANIFEST_EDITORS'. */
 export const MANIFEST_LOCKERS = CHECKIN_ROLES;
+
+/** Build a manifest: its passengers, mail, cargo and fuel, its load plan,
+ *  and the mail and freight waiting at a station (#62, #75). Ops'
+ *  MANIFEST_EDITORS: every role but the accountant's, whose legacy
+ *  counterpart read manifests only (#128). */
+export const MANIFEST_EDITORS = roleGate(
+  "exec_admin",
+  "director_of_operations",
+  "dispatcher",
+  "reservations_agent",
+  "chief_pilot",
+  "director_of_maintenance",
+  "check_airman",
+  "maintenance",
+  "ground_ops",
+  "safety_officer",
+  "pilot",
+  "crew_member",
+);
 
 /** Change the crew calendar: assignments and a pilot's home base (#43).
  *  Legacy let any signed-in user edit anyone's schedule. */
@@ -215,6 +234,17 @@ export const CUSTOMER_MANAGERS = roleGate("dispatcher", "reservations_agent", "e
  *  the accounting export. The services' ACCOUNTING_ROLES: the post-holders
  *  and the company's bookkeeper, who sees nothing operational. */
 export const ACCOUNTING_ROLES = roleGate("accountant", "director_of_operations", "exec_admin");
+
+const BOOKKEEPER: Role = "accountant";
+
+/** The bell's alerts are the operation's: grounded aircraft, overdue
+ *  flights, expiring MELs. The bookkeeper works none of it (#128), so a
+ *  login holding the accountant's role alone gets no bell; any other role
+ *  keeps it. An empty role list keeps it, as the top bar's links fail
+ *  open on one. */
+export function seesOperationalAlerts(roles: readonly string[]): boolean {
+  return roles.length === 0 || roles.some((r) => r !== BOOKKEEPER);
+}
 
 /** Does this caller hold any of the gate's roles? */
 export function hasAnyRole(

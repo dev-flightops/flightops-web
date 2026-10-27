@@ -18,7 +18,7 @@ import {
 } from "@/lib/api/manifest";
 import { fuelEstimateLine } from "@/lib/flights/fuel-estimate";
 import type { FlightDetail, FlightStatus } from "@/lib/api/types";
-import { hasAnyRole, MANIFEST_LOCKERS } from "@/lib/roles";
+import { hasAnyRole, MANIFEST_EDITORS, MANIFEST_LOCKERS } from "@/lib/roles";
 import { flightStops } from "@/lib/route";
 
 import { PlannedFuelForm } from "./fuel-form";
@@ -45,8 +45,9 @@ export const dynamic = "force-dynamic";
  *
  * Entry (#62): while the manifest is a draft anyone on staff adds, edits
  * and removes passengers, mail and cargo, as legacy's manifest page lets
- * them. Locking it is final and is the check-in roles' (MANIFEST_LOCKERS),
- * legacy's close-boarding roles.
+ * them, except the accountant, who reads it as legacy's bookkeeper did
+ * (MANIFEST_EDITORS, #128). Locking it is final and is the check-in roles'
+ * (MANIFEST_LOCKERS), legacy's close-boarding roles.
  */
 export default async function FlightManifestPage({
   params,
@@ -85,8 +86,10 @@ export default async function FlightManifestPage({
     }
   }
 
-  const editable = manifest?.status === "draft";
-  const canLock = editable && hasAnyRole((await auth())?.roles ?? [], MANIFEST_LOCKERS);
+  const roles = (await auth())?.roles ?? [];
+  const canBuild = hasAnyRole(roles, MANIFEST_EDITORS);
+  const editable = manifest?.status === "draft" && canBuild;
+  const canLock = editable && hasAnyRole(roles, MANIFEST_LOCKERS);
 
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 py-8">
@@ -140,7 +143,7 @@ export default async function FlightManifestPage({
           <ManifestMeta manifest={manifest} />
         </>
       ) : (
-        <EmptyState flightId={flight.id} />
+        <EmptyState flightId={flight.id} canCreate={canBuild} />
       )}
     </div>
   );
@@ -555,17 +558,21 @@ function ManifestMeta({ manifest }: { manifest: ManifestDetailResponse }) {
   );
 }
 
-function EmptyState({ flightId }: { flightId: string }) {
+function EmptyState({ flightId, canCreate }: { flightId: string; canCreate: boolean }) {
   return (
     <div className="rounded-lg border border-border bg-card py-16 text-center">
       <p className="mb-2 text-sm font-medium text-foreground">
         No manifest created for this flight yet.
       </p>
-      <p className="mx-auto mb-5 max-w-md text-xs text-muted-foreground">
-        Create the manifest to add passengers, mail and cargo. This page then
-        shows the roster, the cargo list and the payload totals.
-      </p>
-      <CreateManifestButton flightId={flightId} />
+      {canCreate ? (
+        <>
+          <p className="mx-auto mb-5 max-w-md text-xs text-muted-foreground">
+            Create the manifest to add passengers, mail and cargo. This page then
+            shows the roster, the cargo list and the payload totals.
+          </p>
+          <CreateManifestButton flightId={flightId} />
+        </>
+      ) : null}
     </div>
   );
 }
