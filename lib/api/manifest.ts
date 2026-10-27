@@ -105,9 +105,14 @@ export interface ManifestLoad {
   useful_load_lbs: number | null;
   crew_lbs: string;
   /** "manifest": crew rows' own weights. "standard": the flight's assigned
-   *  crew at standard weights. "none": no crew anywhere. */
+   *  crew, at the weights on their records or else the standard weight
+   *  (#125). "none": no crew anywhere. */
   crew_basis: "manifest" | "standard" | "none";
   crew_count: number;
+  /** With "standard", the assigned crew counted at the standard weight
+   *  because none is on their record (#125), by name. The rest count at
+   *  their own weights. Absent from services before #125. */
+  crew_estimated_for?: string[];
   /** The planned fuel, else the trip's estimate (#75); null when neither. */
   fuel_lbs: string | null;
   payload_lbs: string;

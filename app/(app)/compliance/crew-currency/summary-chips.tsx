@@ -7,10 +7,9 @@ import type { ComplianceView } from "./view-switcher";
 
 /**
  * The four summary chips at the top of the compliance board.
- * Spec 5 §"Summary chips":
- *   "X Fully Current (green), Y Early Month (teal), Z Grace Month
- *    (yellow), W Non-Current (red). Clicking any chip filters the
- *    grid to that status."
+ * Spec 5 §"Summary chips", in the GOM's colours (#66): X Fully Current,
+ * Y Early Month, Z Grace Month (red, alert), W Non-Current (magenta,
+ * critical). Clicking any chip filters the grid to that status.
  *
  * Each chip is a Link toggling the URL `?status=…` param. Clicking
  * the active chip again clears the filter (Link to `.`).
@@ -40,19 +39,19 @@ const CHIPS: ChipDef[] = [
     key: "early_month",
     label: "Early Month",
     filterStatus: "early_month",
-    rule: "border-status-teal",
+    rule: "border-status-green",
   },
   {
     key: "grace_month",
     label: "Grace Month",
     filterStatus: "grace_month",
-    rule: "border-status-yellow",
+    rule: "border-status-red",
   },
   {
     key: "non_current",
     label: "Non-Current",
     filterStatus: "non_current",
-    rule: "border-status-red",
+    rule: "border-status-magenta",
   },
 ];
 

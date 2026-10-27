@@ -147,7 +147,7 @@ describe("layout", () => {
       "title",
       "Check Airman on CARAVAN: Grace month",
     );
-    expect(within(aircraft).getByText("CA").className).toContain("text-status-yellow");
+    expect(within(aircraft).getByText("CA").className).toContain("text-status-red");
 
     const none = within(rowFor("Bob Pilot")).getAllByRole("cell")[
       heads.indexOf("Aircraft")

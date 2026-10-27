@@ -6,7 +6,9 @@ import { z } from "zod";
 import {
   createVillageAirport,
   createVillageWeatherReport,
+  retireVillageAirport,
   setVillageInstrumentApproach,
+  updateVillageAirport,
 } from "@/lib/api/weather";
 import { ApiError } from "@/lib/api/client";
 
@@ -182,6 +184,53 @@ export async function addVillageAirportAction(
   }
   revalidatePath("/village-wx");
   return { status: "ok" };
+}
+
+export type AirportEditResult =
+  | { ok: true }
+  | { ok: false; error: string; errors?: Record<string, string> };
+
+/**
+ * Correct a village airport (#130): Levelock was on the board as PAAI, a
+ * code no airport has; it is 9Z8. Its reports stay with it. Called from
+ * the dialog's onSubmit rather than as a form action, so a refused save
+ * keeps what was typed.
+ */
+export async function editVillageAirportAction(
+  airportId: string,
+  values: { icao: string; name: string; region: string; notes: string },
+): Promise<AirportEditResult> {
+  const parsed = AirportSchema.safeParse(values);
+  if (!parsed.success) {
+    return { ok: false, error: "Check the fields marked.", errors: _formatErrors(parsed.error) };
+  }
+  try {
+    await updateVillageAirport(airportId, parsed.data);
+  } catch (err) {
+    if (err instanceof ApiError && err.status === 409) {
+      return {
+        ok: false,
+        error: "Check the fields marked.",
+        errors: { icao: "Another airport, a retired one included, has that identifier." },
+      };
+    }
+    const state = _apiErrorState(err, "change the airport");
+    return { ok: false, error: state.status === "api-error" ? state.message : "That wasn't saved." };
+  }
+  revalidatePath("/village-wx");
+  return { ok: true };
+}
+
+/** Take a village airport off the board (#130). Its reports are kept. */
+export async function retireVillageAirportAction(airportId: string): Promise<AirportEditResult> {
+  try {
+    await retireVillageAirport(airportId);
+  } catch (err) {
+    const state = _apiErrorState(err, "retire the airport");
+    return { ok: false, error: state.status === "api-error" ? state.message : "That wasn't saved." };
+  }
+  revalidatePath("/village-wx");
+  return { ok: true };
 }
 
 export type ApproachResult = { ok: true } | { ok: false; error: string };

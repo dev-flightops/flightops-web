@@ -51,6 +51,11 @@ vi.mock("@/components/village-wx/add-airport-dialog", () => ({
 vi.mock("./auto-refresh", () => ({
   AutoRefresh: () => null,
 }));
+vi.mock("@/components/village-wx/edit-airport-dialog", () => ({
+  EditAirportDialog: ({ airport }: { airport: { icao: string } }) => (
+    <div data-testid={`edit-${airport.icao}`} />
+  ),
+}));
 vi.mock("@/components/village-wx/approach-toggle", () => ({
   ApproachToggle: ({ icao, hasApproach, canSet }: { icao: string; hasApproach: boolean; canSet: boolean }) => (
     <div data-testid={`approach-${icao}`} data-has={String(hasApproach)} data-can-set={String(canSet)} />
@@ -315,5 +320,21 @@ describe("VillageWxPage: instrument approaches (#110)", () => {
     auth.mockResolvedValueOnce({ roles: ["director_of_operations"] });
     await renderPage();
     expect(screen.getByTestId("approach-PAII")).toHaveAttribute("data-can-set", "true");
+  });
+});
+
+describe("VillageWxPage: correcting an airport (#130)", () => {
+  it("lets a village weather reporter edit an airport, and nobody else", async () => {
+    getVillageBoard.mockResolvedValue({
+      items: [row({ id: "a-9", icao: "PAAI", name: "Levelock" })],
+      total: 1,
+    });
+    const { unmount } = await renderPage();
+    expect(screen.getByTestId("edit-PAAI")).toBeInTheDocument();
+    unmount();
+
+    auth.mockResolvedValueOnce({ roles: ["maintenance"] });
+    await renderPage();
+    expect(screen.queryByTestId("edit-PAAI")).toBeNull();
   });
 });

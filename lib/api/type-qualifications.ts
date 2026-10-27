@@ -148,6 +148,11 @@ export interface ComplianceSettings {
   vfr_only_types?: string[];
   vfr_only_changed_at?: string | null;
   vfr_only_changed_by?: UserRef | null;
+  /** A record never entered blocks release (#99); off, it warns. Absent
+   *  from servers that predate it. */
+  not_started_blocks?: boolean;
+  not_started_changed_at?: string | null;
+  not_started_changed_by?: UserRef | null;
 }
 
 export async function getComplianceSettings(): Promise<ComplianceSettings> {
@@ -160,6 +165,15 @@ export async function updateComplianceSettings(body: {
   return apiFetch<ComplianceSettings>("/ops/compliance/settings", {
     method: "PUT",
     body: JSON.stringify(body),
+  });
+}
+
+/** PUT /ops/compliance/settings/not-started (#99): whether a record
+ *  never entered blocks release. */
+export async function updateNotStartedBlocks(blocks: boolean): Promise<ComplianceSettings> {
+  return apiFetch<ComplianceSettings>("/ops/compliance/settings/not-started", {
+    method: "PUT",
+    body: JSON.stringify({ not_started_blocks: blocks }),
   });
 }
 

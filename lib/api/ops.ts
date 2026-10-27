@@ -60,6 +60,7 @@ import type {
   ReleaseResponse,
   StepCompletionRequest,
   StepCompletionResponse,
+  UserRef,
   WeatherMinimumsView,
   WeightReturn,
   WeightReturnCreateRequest,
@@ -123,6 +124,8 @@ export interface FlightCreatePayload {
   pax_count?: number;
   cargo_lbs?: number;
   notes?: string | null;
+  /** Flown IFR (#123); VFR when left out. */
+  is_ifr?: boolean;
   /** A multi-stop route (services migration 0104): origin and the
    *  departure are the first leg's, destination and arrival the last's. */
   legs?: FlightLegPayload[];
@@ -246,6 +249,8 @@ export interface FlightUpdatePayload {
   pax_count?: number;
   cargo_lbs?: number;
   notes?: string | null;
+  /** Flown IFR (#123). */
+  is_ifr?: boolean;
   /** Replace the route (#106): two or more legs make it multi-stop and
    *  set the endpoints from them; [] makes it a single leg again. */
   legs?: FlightLegPayload[];
@@ -653,6 +658,18 @@ export async function getComplianceBoard(
   return apiFetch<ComplianceBoardResponse>(`/ops/compliance/board${tail}`);
 }
 
+/** Set a pilot's weight on their record for weight and balance (#125);
+ *  null clears it. The pilot themselves, or a crew manager. */
+export async function setPilotWeight(
+  pilotId: string,
+  weightLbs: number | null,
+): Promise<PilotProfileResponse> {
+  return apiFetch<PilotProfileResponse>(`/ops/compliance/pilots/${pilotId}/weight`, {
+    method: "PUT",
+    body: JSON.stringify({ weight_lbs: weightLbs }),
+  });
+}
+
 /** Per-pilot currency profile — header + all-item cells. */
 export async function getPilotComplianceProfile(
   pilotId: string,
@@ -733,6 +750,31 @@ export async function logCurrencyCompletion(
  *  govern; a PIC is checked on PIC and either-seat items, an SIC on SIC
  *  and either-seat items. */
 export type CrewSeat = "pic" | "sic";
+
+/** One pilot for a seat on a flight (#91): whether the release would
+ *  take them there, and why not. */
+export interface CrewOption {
+  pilot: UserRef;
+  available: boolean;
+  reasons: string[];
+  /** What release would ask to acknowledge: a grace month, a record not
+   *  entered (#99). */
+  warnings: string[];
+}
+
+export interface CrewOptionsResponse {
+  flight_id: string;
+  seat: CrewSeat;
+  items: CrewOption[];
+}
+
+/** Who can be crewed in a seat on a flight, and why the rest can't (#91):
+ *  judged as release judges the seat. */
+export async function getCrewOptions(flightId: string, seat: CrewSeat): Promise<CrewOptionsResponse> {
+  return apiFetch<CrewOptionsResponse>(
+    `/ops/compliance/crew-options?flight_id=${flightId}&seat=${seat}`,
+  );
+}
 
 export async function getPicCompliance(
   pilotId: string,

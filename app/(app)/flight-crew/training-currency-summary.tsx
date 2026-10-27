@@ -133,7 +133,7 @@ export async function TrainingCurrencySummary({
         >
           full profile
         </Link>{" "}
-        for completion history.
+        for completion history and your weight for weight and balance.
       </p>
     </div>
   );
@@ -158,7 +158,7 @@ function CurrencyBadge({
     // The count itself in its status colour, not a tinted chip (#81).
     const cls = met
       ? "font-mono text-xs font-bold tabular-nums text-status-green"
-      : "font-mono text-xs font-bold tabular-nums text-status-yellow";
+      : "font-mono text-xs font-bold tabular-nums text-status-gold";
     return (
       <span className={cls}>
         {count}/{item.rolling_threshold}

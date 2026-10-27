@@ -126,6 +126,9 @@ const config: Config = {
           // Spec 5 §"Cell badge colors" — teal renders the EARLY MONTH
           // window, distinct from green (DUE THIS MONTH).
           teal: rgb("--status-teal"),
+          // The GOM's currency levels (#66): Gold aware, Magenta critical.
+          gold: rgb("--status-gold"),
+          magenta: rgb("--status-magenta"),
           // Deeper tones for a solid fill under white text (#78).
           "green-fill": rgb("--status-green-fill"),
           "yellow-fill": rgb("--status-yellow-fill"),

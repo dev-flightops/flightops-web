@@ -27,3 +27,16 @@ export function fuelEstimateLine(e: FuelEstimate): string {
   const fuel = FUEL_LABELS[e.fuel_type_code ?? ""] ?? (e.fuel_type_code ?? "").toUpperCase();
   return `Fuel estimated: ${trip} + ${e.reserve_minutes} min reserve at ${Number(e.burn_gph)} gal/h = ${Number(e.gallons).toLocaleString()} gal of ${fuel}.`;
 }
+
+/**
+ * What the estimate leaves to the planner (#126): the reserve is 45
+ * minutes on every flight, never below the legal minimum, as the GOM asks
+ * for conservative planning; and an IFR flight adds the fuel to its
+ * alternate, which the GOM says always to plan for.
+ */
+export function fuelPlanningNote(e: FuelEstimate, flight?: { is_ifr?: boolean } | null): string {
+  const reserve = `The ${e.reserve_minutes} min reserve holds on every flight: never below the legal minimum, as the GOM asks for conservative planning.`;
+  return flight?.is_ifr
+    ? `${reserve} IFR: add the fuel to your alternate, which the GOM says always to plan for.`
+    : reserve;
+}

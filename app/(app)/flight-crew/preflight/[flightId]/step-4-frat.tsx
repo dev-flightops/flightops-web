@@ -2,9 +2,11 @@
 
 import { Fragment, useMemo, useState, useTransition } from "react";
 
+import { segment, segmentGroup } from "@/components/ff/controls";
 import { NonCertifiedWeatherNotice, sourceLabel } from "@/components/weather/weather-source";
 import type { StopWeather } from "@/lib/api/dispatch-risk";
 import type {
+  ApproachMinimums,
   FratAssessmentResponse,
   FratAuthorizationKind,
   FratBlockEligibilityResponse,
@@ -338,6 +340,23 @@ const FACTOR_GROUPS: ReadonlyArray<{
 
 /** Pick the anchor whose key is the greatest ≤ value. Callers get a
  *  useful string even when a factor only defined 0/2/4/5. */
+/** The operator's "out of company limits" mark: any factor at it is a
+ *  no-go (shared frat_limits.OVER_COMPANY_LIMITS). */
+const OVER_COMPANY_LIMITS = 5;
+
+/** The approach-minimums answers (#124), and the factor each one scores. */
+type ApproachWhich = keyof ApproachMinimums;
+const APPROACH_FACTOR: Record<ApproachWhich, string> = {
+  ceiling: "wx_ceiling",
+  visibility: "wx_vis",
+};
+
+function approachWhich(code: string): ApproachWhich | null {
+  if (code === APPROACH_FACTOR.ceiling) return "ceiling";
+  if (code === APPROACH_FACTOR.visibility) return "visibility";
+  return null;
+}
+
 function anchorFor(anchors: Record<number, string>, value: number): string {
   const keys = Object.keys(anchors)
     .map(Number)
@@ -507,6 +526,32 @@ function FratQuestionnaire({
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
+  /** #124: on an IFR flight the pilot answers from the approach plates
+   *  whether the forecast at arrival is at or above the approach
+   *  minimums, for the ceiling and for the visibility. */
+  const asksApproach = Boolean(fratPrefill?.asks_approach_minimums);
+  const [approach, setApproach] = useState<Record<ApproachWhich, boolean | null>>({
+    ceiling: null,
+    visibility: null,
+  });
+  const answerApproach = (which: ApproachWhich, met: boolean) => {
+    const code = APPROACH_FACTOR[which];
+    const previous = approach[which];
+    setApproach((prev) => ({ ...prev, [which]: met }));
+    // No: the flight may not take off IFR (14 CFR 135.219), over company
+    // limits. Yes after a no: back to what the weather scored, where a
+    // stop was scored on it. Otherwise the pilot's own number stays.
+    setAnswers((prev) => ({
+      ...prev,
+      [code]: !met
+        ? OVER_COMPANY_LIMITS
+        : previous === false
+          ? (suggested.get(code)?.score ?? 0)
+          : prev[code],
+    }));
+    setTouched((prev) => new Set(prev).add(code));
+  };
+
   const total = useMemo(
     () => Object.values(answers).reduce((sum, v) => sum + v, 0),
     [answers],
@@ -561,12 +606,28 @@ function FratQuestionnaire({
         ...(affirmed && unassessed.length > 0
           ? { affirmed_zero_factors: unassessed }
           : {}),
+        ...(asksApproach && approach.ceiling != null && approach.visibility != null
+          ? {
+              approach_minimums: {
+                ceiling: approach.ceiling,
+                visibility: approach.visibility,
+              },
+            }
+          : {}),
       });
       if (!result.ok) setError(result.error);
     });
   };
 
   const handleSubmit = () => {
+    // The one question that is required: whether an IFR flight may take
+    // off at all depends on it (#124).
+    if (asksApproach && (approach.ceiling == null || approach.visibility == null)) {
+      setError(
+        "Answer whether the forecast ceiling and visibility at arrival are at or above the approach minimums.",
+      );
+      return;
+    }
     // Not a block. The operator asked for a FRAT that takes seconds,
     // and refusing to submit would fight that. What it stops is doing
     // it *silently*: the count is named, and confirming turns a
@@ -698,25 +759,37 @@ function FratQuestionnaire({
               />
             ) : null}
             <div className="space-y-3">
-              {group.factors.map((f) => (
-                <FactorRow
-                  key={f.code}
-                  factor={f}
-                  suggestion={suggested.get(f.code)}
-                  companyCrosswindLimitKt={companyCrosswindLimitKt}
-                  nearLimitEntryKt={nearLimitEntryKt}
-                  demonstratedCrosswindKt={demonstratedCrosswindKt}
-                  engineCount={engineCount}
-                  hasCompanyLimits={hasCompanyLimits}
-                  value={answers[f.code]}
-                  onChange={(v) => {
-                    setAnswers((prev) => ({ ...prev, [f.code]: v }));
-                    // Moving it counts even when it lands on 0 — a
-                    // deliberate zero is an assessment.
-                    setTouched((prev) => new Set(prev).add(f.code));
-                  }}
-                />
-              ))}
+              {group.factors.map((f) => {
+                const which = asksApproach ? approachWhich(f.code) : null;
+                return (
+                  <FactorRow
+                    key={f.code}
+                    factor={f}
+                    suggestion={suggested.get(f.code)}
+                    companyCrosswindLimitKt={companyCrosswindLimitKt}
+                    nearLimitEntryKt={nearLimitEntryKt}
+                    demonstratedCrosswindKt={demonstratedCrosswindKt}
+                    engineCount={engineCount}
+                    hasCompanyLimits={hasCompanyLimits}
+                    value={answers[f.code]}
+                    onChange={(v) => {
+                      setAnswers((prev) => ({ ...prev, [f.code]: v }));
+                      // Moving it counts even when it lands on 0 — a
+                      // deliberate zero is an assessment.
+                      setTouched((prev) => new Set(prev).add(f.code));
+                    }}
+                    approach={
+                      which
+                        ? {
+                            which,
+                            met: approach[which],
+                            onAnswer: (met) => answerApproach(which, met),
+                          }
+                        : undefined
+                    }
+                  />
+                );
+              })}
             </div>
           </div>
         ))}
@@ -861,6 +934,7 @@ function FactorRow({
   demonstratedCrosswindKt,
   engineCount,
   hasCompanyLimits,
+  approach,
 }: {
   factor: FratFactor;
   value: number;
@@ -871,8 +945,16 @@ function FactorRow({
   demonstratedCrosswindKt?: number | null;
   engineCount?: number | null;
   hasCompanyLimits?: boolean;
+  /** On an IFR flight, the approach-minimums question for this factor
+   *  (#124). A "no" holds the score at over company limits. */
+  approach?: {
+    which: ApproachWhich;
+    met: boolean | null;
+    onAnswer: (met: boolean) => void;
+  };
 }) {
   const anchor = anchorFor(factor.anchors, value);
+  const belowApproach = approach?.met === false;
   // Value tone follows the risk palette so pilots can see at a glance
   // which factors they've flagged high. 0–1 green · 2–3 yellow · 4–5 red.
   const valueClass =
@@ -927,6 +1009,8 @@ function FactorRow({
             )}
           </p>
         ) : null}
+
+        {approach ? <ApproachQuestion {...approach} /> : null}
 
         {factor.code === "wx_wind" ? (
           <p className="mt-0.5 text-[0.65rem] leading-snug">
@@ -983,6 +1067,9 @@ function FactorRow({
             step={1}
             value={value}
             onChange={(e) => onChange(Number(e.target.value))}
+            // Below the approach minimums it is a no-go, and the server
+            // refuses a lower score beside that answer (#124).
+            disabled={belowApproach}
             aria-describedby={`factor-${factor.code}-anchor`}
             // min-w-0: a range input's own minimum width pushed the score
             // past the edge on a phone.
@@ -1004,6 +1091,50 @@ function FactorRow({
           {anchor}
         </p>
       </div>
+    </div>
+  );
+}
+
+/**
+ * #124: the client, 22 Sep: "Ifr flights below approach mins are elevated
+ * risk as well." The system holds no approach minima, so the pilot, who
+ * has the plates, answers. Below them the flight may not take off under
+ * IFR (14 CFR 135.219), so "no" scores the factor over company limits.
+ */
+function ApproachQuestion({
+  which,
+  met,
+  onAnswer,
+}: {
+  which: ApproachWhich;
+  met: boolean | null;
+  onAnswer: (met: boolean) => void;
+}) {
+  const id = `approach-${which}`;
+  return (
+    <div className="mt-1.5">
+      <p id={id} className="text-[0.65rem] leading-snug text-foreground">
+        {`IFR: is the forecast ${which} at arrival at or above the approach minimums?`}
+      </p>
+      <div role="group" aria-labelledby={id} className={cn(segmentGroup, "mt-1")}>
+        {([true, false] as const).map((answer) => (
+          <button
+            key={String(answer)}
+            type="button"
+            aria-pressed={met === answer}
+            onClick={() => onAnswer(answer)}
+            className={segment(met === answer)}
+          >
+            {answer ? "Yes" : "No"}
+          </button>
+        ))}
+      </div>
+      {met === false ? (
+        <p className="mt-1 text-[0.65rem] leading-snug text-status-red">
+          Below the approach minimums the flight may not take off IFR (14 CFR 135.219): scored
+          5, over company limits.
+        </p>
+      ) : null}
     </div>
   );
 }
@@ -1183,6 +1314,18 @@ function FratResultPanel({
             </span>
           </p>
         )}
+
+        {/* What the pilot answered from the approach plates (#124). */}
+        {assessment.approach_minimums ? (
+          <div className="rounded-md border border-border px-3 py-2 text-xs">
+            <p className="mb-1 eyebrow">Approach minimums at arrival</p>
+            <p className="text-foreground">
+              {`Ceiling ${assessment.approach_minimums.ceiling ? "at or above" : "below"} · visibility ${
+                assessment.approach_minimums.visibility ? "at or above" : "below"
+              }, the pilot's answer from the approach plates.`}
+            </p>
+          </div>
+        ) : null}
 
         {assessment.mitigations && (
           <div className="rounded-md border border-border px-3 py-2 text-xs">

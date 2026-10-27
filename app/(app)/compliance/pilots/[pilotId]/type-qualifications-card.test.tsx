@@ -169,7 +169,7 @@ describe("TypeQualificationsCard", () => {
 
     // An authorised position whose check has lapsed reads red.
     const kingair = rowFor("KINGAIR");
-    expect(within(kingair).getByText("2025-03-01").className).toContain("text-status-red");
+    expect(within(kingair).getByText("2025-03-01").className).toContain("text-status-magenta");
   });
 
   it("shows each type's two checks with when they fall due", () => {

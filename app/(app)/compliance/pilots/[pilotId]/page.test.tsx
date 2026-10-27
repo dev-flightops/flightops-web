@@ -416,3 +416,27 @@ describe("the aircraft qualifications section", () => {
     ).toBeNull();
   });
 });
+
+describe("the pilot's weight (#125)", () => {
+  it("is on the record for whoever can change it", async () => {
+    getPilotComplianceProfile.mockResolvedValue(makeProfile({ weight_lbs: 182, can_edit_weight: true }));
+    await renderPage();
+    expect(screen.getByRole("heading", { name: "Weight for weight and balance" })).toBeInTheDocument();
+    expect(screen.getByLabelText("Weight (lb)")).toHaveValue("182");
+    expect(
+      screen.getByText("The load counts 182 lb on every flight this pilot is crewed on."),
+    ).toBeInTheDocument();
+  });
+
+  it("says the standard weight is used while none is on file", async () => {
+    getPilotComplianceProfile.mockResolvedValue(makeProfile({ weight_lbs: null, can_edit_weight: true }));
+    await renderPage();
+    expect(screen.getByText(/None on file: the load counts 190 lb/)).toBeInTheDocument();
+  });
+
+  it("is not shown to anyone else", async () => {
+    getPilotComplianceProfile.mockResolvedValue(makeProfile({ can_edit_weight: false }));
+    await renderPage();
+    expect(screen.queryByRole("heading", { name: "Weight for weight and balance" })).not.toBeInTheDocument();
+  });
+});

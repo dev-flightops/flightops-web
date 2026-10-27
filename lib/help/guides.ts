@@ -42,9 +42,10 @@ export const GUIDES: Guide[] = [
       "Enter the flight number, then the origin and destination as ICAO codes or FAA identifiers (9Z8 for Levelock, for example).",
       "Round trip is on, so once the destination is in, a last leg back to the origin is added. Untick **Round trip** for a one-way flight, and add any stops before the way home.",
       "Pick the aircraft. The times fill in from its cruise speed (Settings → Fleet) with the **Ground time at each stop**, 15 minutes unless changed. Type a time to change it: a time you typed is never overwritten.",
-      "Enter the passengers and cargo, then press **Open Flight**.",
+      "Enter the passengers and cargo. Tick **Flown IFR** if the flight will be flown IFR; left unticked, it is a VFR flight. Then press **Open Flight**.",
     ],
     notes: [
+      "A VFR flight isn't released while the weather at any stop is below the company's dispatch minimums. To change VFR or IFR later, open the flight on Dispatch and press **Edit**.",
       "A flight can't carry more passengers than the aircraft's passenger seats (Settings → Fleet). Crew don't count.",
       "Times are typed and shown in the departure base's local time.",
       "Bookings waiting for a flight are listed under **Awaiting a flight** on Dispatch.",
@@ -88,7 +89,8 @@ export const GUIDES: Guide[] = [
     ],
     notes: [
       "The FRAT is never filed at a lower level than the dispatch packet the flight was released on.",
-      "For a flight that has to go VFR (an aircraft not IFR certified, or a field without an instrument approach), weather below the company's dispatch minimums scores 5: over company limits.",
+      "For a VFR flight, an aircraft not IFR certified, or a field without an instrument approach, weather below the company's dispatch minimums scores 5: over company limits.",
+      "On an IFR flight the FRAT asks whether the forecast ceiling and visibility at arrival are at or above the approach minimums, from your approach plates. A no scores that factor 5: below them the flight may not take off IFR (14 CFR 135.219), and a carried block FRAT doesn't apply, since each leg answers for its own landings.",
       "The levels are explained in [What do the FRAT levels mean?](/help#faq-frat-levels).",
     ],
     pages: ["/flight-crew"],

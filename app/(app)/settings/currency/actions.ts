@@ -6,6 +6,7 @@ import { ApiError } from "@/lib/api/client";
 import {
   updateComplianceSettings,
   updateFirstClassMedicalTypes,
+  updateNotStartedBlocks,
 } from "@/lib/api/type-qualifications";
 
 /**
@@ -75,6 +76,33 @@ export async function setFirstClassMedicalTypesAction(
     return { ok: false, error: "Couldn't save. Try again." };
   }
   for (const path of ["/settings/currency", "/dispatch", "/crew"]) {
+    revalidatePath(path);
+  }
+  return { ok: true };
+}
+
+/** Whether a currency record never entered blocks release (#99). Off, it
+ *  is a warning the dispatcher acknowledges; on, the pilot isn't offered
+ *  for the seat and release is refused until it's entered. */
+export async function setNotStartedBlocksAction(blocks: boolean): Promise<ActionResult> {
+  try {
+    await updateNotStartedBlocks(blocks);
+  } catch (err) {
+    if (err instanceof ApiError) {
+      if (err.status === 401) {
+        return { ok: false, error: "Your session expired — please sign in again." };
+      }
+      if (err.status === 403) {
+        return {
+          ok: false,
+          error: "Only the Director of Operations or an Exec Admin can change this.",
+        };
+      }
+      return { ok: false, error: `Couldn't save (HTTP ${err.status}). Try again.` };
+    }
+    return { ok: false, error: "Couldn't save. Try again." };
+  }
+  for (const path of ["/settings/currency", "/dispatch", "/compliance/crew-currency"]) {
     revalidatePath(path);
   }
   return { ok: true };

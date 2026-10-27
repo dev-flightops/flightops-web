@@ -108,6 +108,16 @@ const Schema = z.object({
     parseTermsDays,
     "Whole days from 0 to 365.",
   ),
+  // Minutes on the ground at each stop (#126): a number, never blank.
+  ground_minutes: z
+    .string()
+    .trim()
+    .optional()
+    .refine(
+      (v) => v === undefined || (/^\d+$/.test(v) && Number(v) <= 240),
+      "Whole minutes from 0 to 240.",
+    )
+    .transform((v) => (v === undefined ? undefined : Number(v))),
   // The invoicing switch (#95), sent by the form as "true" or "false".
   invoicing_in_peregrine: z
     .enum(["true", "false"])

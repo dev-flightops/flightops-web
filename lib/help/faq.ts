@@ -51,8 +51,9 @@ export const FAQ: FaqEntry[] = [
     slug: "below-minimums",
     question: "Why does it say the weather is below minimums?",
     answer:
-      "Some flights can only go VFR: an aircraft that isn't IFR certified, and any aircraft going to a village airport without an instrument approach. For those, the release is refused while the latest weather at a stop is below the company's dispatch minimums, 600 ft and 2 sm unless the company has set others under Settings → Flight Risk. The latest weather is the METAR or a village report from the last 6 hours, whichever is worse.",
+      "A flight is VFR unless dispatch marks it IFR, and some flights can only go VFR: an aircraft that isn't IFR certified, and any aircraft going to a village airport without an instrument approach. A VFR flight's release is refused while the latest weather at any stop is below the company's dispatch minimums, 600 ft and 2 sm unless the company has set others under Settings → Flight Risk; an IFR flight in an IFR-certified aircraft is held only at a village airport without an instrument approach. The latest weather is the METAR or a village report from the last 6 hours, whichever is worse.",
     points: [
+      "Whether a flight is flown IFR is ticked on [Open New Flight](/flight-following/new), or later under **Edit** on the flight's dispatch packet.",
       "Which aircraft types aren't IFR certified is set under Settings → Flight Risk.",
       "Which village airports have an instrument approach is marked on [Village weather](/village-wx). They all start as having none.",
       "The packet says which stop and which report before anyone presses Release.",

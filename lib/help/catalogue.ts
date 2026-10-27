@@ -629,7 +629,7 @@ export const HELP_ENTRIES: HelpEntry[] = [
           "Every position needs a competency check (135.293) on the type within the last 12 calendar months.",
           "PIC also needs an instrument check (135.297) on the type within the last 6 calendar months.",
           "A check taken in the month before it is due, the month it is due or the month after keeps its anniversary month. One taken earlier or later starts a new anniversary from the month it was taken.",
-          "Yellow is the grace month: still flyable, but the check is overdue. Red is past the grace month, or no check on file.",
+          "The colours are the GOM's currency levels: green current, gold due this month, red the grace month (still flyable, but the check is overdue), magenta past the grace month or no check on file, grey nothing on record.",
         ],
       },
       {

@@ -12,8 +12,10 @@ import type {
   CrewAssignment,
   CrewRole,
 } from "@/lib/api/crew-assignments";
+import type { CrewOption } from "@/lib/api/ops";
 import type { CurrencyStatus, UserRef } from "@/lib/api/types";
 
+import { NotAvailableList, unavailableIds } from "./not-available";
 import type { SeatTypeWarning } from "./type-warnings";
 
 /**
@@ -42,13 +44,15 @@ import type { SeatTypeWarning } from "./type-warnings";
 
 // Same mapping as PicPicker and the compliance grid — a dispatcher
 // glancing between them should not have to re-learn the colours.
-const STATUS_TO_DOT: Record<CurrencyStatus, "green" | "yellow" | "red"> = {
-  not_started: "yellow",
+// The GOM's five currency levels (#66): Green normal, Gold aware, Red
+// alert, Magenta critical, Grey for nothing on record.
+const STATUS_TO_DOT: Record<CurrencyStatus, "green" | "gold" | "red" | "magenta" | "gray"> = {
+  not_started: "gray",
   upcoming: "green",
   early_month: "green",
-  due_this_month: "yellow",
-  grace_month: "yellow",
-  non_current: "red",
+  due_this_month: "gold",
+  grace_month: "red",
+  non_current: "magenta",
 };
 
 const STATUS_LABEL: Record<CurrencyStatus, string> = {
@@ -62,8 +66,10 @@ const STATUS_LABEL: Record<CurrencyStatus, string> = {
 
 const DOT_CLASS = {
   green: "bg-status-green",
-  yellow: "bg-status-yellow",
+  gold: "bg-status-gold",
   red: "bg-status-red",
+  magenta: "bg-status-magenta",
+  gray: "bg-status-gray",
 } as const;
 
 export interface CrewCandidate {
@@ -110,10 +116,14 @@ export function CrewPanel({
   flightId,
   assignments,
   candidates,
+  sicAvailability,
 }: {
   flightId: string;
   assignments: CrewAssignment[];
   candidates: CrewCandidate[];
+  /** Who release would take as SIC on this flight (#91); those it would
+   *  refuse aren't offered. Null when it couldn't be read. */
+  sicAvailability?: CrewOption[] | null;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -193,78 +203,85 @@ export function CrewPanel({
           const taken = new Set(
             assignments.filter((a) => a.crew_role !== role).map((a) => a.user.id),
           );
-          const options = candidates.filter((c) => !taken.has(c.pilot.id));
+          // Nor, as SIC, anyone release would refuse there (#91).
+          const out = role === "sic" ? unavailableIds(sicAvailability) : new Set<string>();
+          const options = candidates.filter((c) => !taken.has(c.pilot.id) && !out.has(c.pilot.id));
           const current = assigned
             ? candidates.find((c) => c.pilot.id === assigned.user.id)
             : undefined;
 
           return (
-            <div key={role} className="flex items-center gap-3 px-5 py-3">
-              <span className="w-32 shrink-0 text-xs font-semibold text-foreground">
-                {label}
-                {required ? (
-                  <span className="ml-1 text-status-yellow" aria-hidden="true">
-                    *
-                  </span>
-                ) : null}
-              </span>
-
-              {assigned ? (
-                <>
-                  <span className="flex min-w-0 flex-1 items-center gap-2">
-                    {current ? (
-                      <span
-                        className={`h-2 w-2 shrink-0 ${DOT_CLASS[STATUS_TO_DOT[current.status]]}`}
-                        aria-hidden="true"
-                      />
-                    ) : null}
-                    <span className="truncate text-sm text-foreground">
-                      {assigned.user.full_name}
+            <div key={role} className="px-5 py-3">
+              <div className="flex items-center gap-3">
+                <span className="w-32 shrink-0 text-xs font-semibold text-foreground">
+                  {label}
+                  {required ? (
+                    <span className="ml-1 text-status-yellow" aria-hidden="true">
+                      *
                     </span>
-                    {current ? (
-                      <span className="shrink-0 text-[0.68rem] text-muted-foreground">
-                        {STATUS_LABEL[current.status]}
+                  ) : null}
+                </span>
+
+                {assigned ? (
+                  <>
+                    <span className="flex min-w-0 flex-1 items-center gap-2">
+                      {current ? (
+                        <span
+                          className={`h-2 w-2 shrink-0 ${DOT_CLASS[STATUS_TO_DOT[current.status]]}`}
+                          aria-hidden="true"
+                        />
+                      ) : null}
+                      <span className="truncate text-sm text-foreground">
+                        {assigned.user.full_name}
                       </span>
-                    ) : null}
-                    <TypeWarning text={seatWarning(current, role)} />
-                  </span>
-                  <button
-                    type="button"
+                      {current ? (
+                        <span className="shrink-0 text-[0.68rem] text-muted-foreground">
+                          {STATUS_LABEL[current.status]}
+                        </span>
+                      ) : null}
+                      <TypeWarning text={seatWarning(current, role)} />
+                    </span>
+                    <button
+                      type="button"
+                      disabled={pending}
+                      onClick={() =>
+                        run(() => unassignCrewAction(flightId, assigned.user.id))
+                      }
+                      aria-label={`Remove ${assigned.user.full_name} as ${label}`}
+                      className="shrink-0 rounded-md border border-border p-1 text-muted-foreground transition-colors hover:border-status-red/40 hover:text-status-red disabled:opacity-50"
+                    >
+                      <CloseGlyph className="h-3.5 w-3.5" />
+                    </button>
+                  </>
+                ) : (
+                  <select
+                    aria-label={`Assign ${label}`}
                     disabled={pending}
-                    onClick={() =>
-                      run(() => unassignCrewAction(flightId, assigned.user.id))
+                    value=""
+                    onChange={(e) =>
+                      e.target.value &&
+                      run(() => assignCrewAction(flightId, e.target.value, role))
                     }
-                    aria-label={`Remove ${assigned.user.full_name} as ${label}`}
-                    className="shrink-0 rounded-md border border-border p-1 text-muted-foreground transition-colors hover:border-status-red/40 hover:text-status-red disabled:opacity-50"
+                    className="min-w-0 flex-1 rounded-md border border-border bg-background px-3 py-1.5 text-sm text-foreground disabled:opacity-50"
                   >
-                    <CloseGlyph className="h-3.5 w-3.5" />
-                  </button>
-                </>
-              ) : (
-                <select
-                  aria-label={`Assign ${label}`}
-                  disabled={pending}
-                  value=""
-                  onChange={(e) =>
-                    e.target.value &&
-                    run(() => assignCrewAction(flightId, e.target.value, role))
-                  }
-                  className="min-w-0 flex-1 rounded-md border border-border bg-background px-3 py-1.5 text-sm text-foreground disabled:opacity-50"
-                >
-                  <option value="">
-                    {required ? "Select a pilot…" : "Unassigned"}
-                  </option>
-                  {options.map((option) => {
-                    const warning = seatWarning(option, role);
-                    return (
-                      <option key={option.pilot.id} value={option.pilot.id}>
-                        {option.pilot.full_name} — {STATUS_LABEL[option.status]}
-                        {warning ? ` · ${warning}` : ""}
-                      </option>
-                    );
-                  })}
-                </select>
-              )}
+                    <option value="">
+                      {required ? "Select a pilot…" : "Unassigned"}
+                    </option>
+                    {options.map((option) => {
+                      const warning = seatWarning(option, role);
+                      return (
+                        <option key={option.pilot.id} value={option.pilot.id}>
+                          {option.pilot.full_name} — {STATUS_LABEL[option.status]}
+                          {warning ? ` · ${warning}` : ""}
+                        </option>
+                      );
+                    })}
+                  </select>
+                )}
+              </div>
+              {role === "sic" && !assigned && sicAvailability ? (
+                <NotAvailableList seat="SIC" options={sicAvailability} />
+              ) : null}
             </div>
           );
         })}

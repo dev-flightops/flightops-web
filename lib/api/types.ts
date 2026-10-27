@@ -102,6 +102,9 @@ export interface FlightListItem {
   /** Every airport on the route, in order (services migration 0104).
    *  Optional for services from before it; read through flightStops(). */
   stops?: string[];
+  /** Flown IFR (#123); VFR unless dispatch marks it. Absent from a
+   *  service from before it. */
+  is_ifr?: boolean;
 }
 
 /** One leg of a multi-stop flight. */
@@ -1239,6 +1242,9 @@ export interface CompanyProfileResponse {
   brand_primary_dark_color: string | null;
   /** The company's image behind Home (#118), a link; null shows none. */
   home_image_url: string | null;
+  /** Minutes on the ground at each stop for a new flight's times (#126);
+   *  absent from services before it, read as 15. */
+  ground_minutes?: number;
   notes: string | null;
 }
 
@@ -1273,6 +1279,8 @@ export interface CompanyProfileUpdateRequest {
   brand_primary_dark_color?: string | null;
   /** An http(s) link. Empty string clears it. */
   home_image_url?: string | null;
+  /** 0 to 240 (#126). */
+  ground_minutes?: number;
   notes?: string | null;
 }
 
@@ -1613,8 +1621,20 @@ export interface FratAssessmentResponse {
   /** null means the assessment predates the column; `[]` means the
    *  pilot was asked and affirmed nothing. */
   affirmed_zero_factors: string[] | null;
+  /** The pilot's answers on the approach minimums, on an IFR flight
+   *  (#124). Null or absent when the question wasn't asked. */
+  approach_minimums?: ApproachMinimums | null;
   created_at: string;
   authorizations: FratAuthorizationResponse[];
+}
+
+/** On an IFR flight the FRAT asks the pilot, who has the approach plates,
+ *  whether the forecast at arrival is at or above the approach minimums
+ *  (#124). 14 CFR 135.219: below them the flight may not take off under
+ *  IFR, so a "no" is scored over company limits. */
+export interface ApproachMinimums {
+  ceiling: boolean;
+  visibility: boolean;
 }
 
 export interface FratSubmitRequest {
@@ -1633,6 +1653,9 @@ export interface FratSubmitRequest {
    *  must be present in `answers` with a value of 0, or the submit is
    *  a 422. */
   affirmed_zero_factors?: string[];
+  /** On an IFR flight (#124). A `false` must come with that factor scored
+   *  5, or the submit is a 422. */
+  approach_minimums?: ApproachMinimums;
 }
 
 export interface FratAuthorizeRequest {
@@ -1873,6 +1896,10 @@ export interface PilotProfileResponse {
   overall_status: CurrencyStatus;
   cells: PilotCurrencyCell[];
   items: CurrencyItemRef[];
+  /** The pilot's weight for weight and balance (#125): sent only to the
+   *  pilot and the crew managers, who can change it. */
+  weight_lbs?: number | null;
+  can_edit_weight?: boolean;
 }
 
 export interface LogCompletionRequest {
@@ -2455,6 +2482,9 @@ export interface FratPrefillResponse {
   stops?: StopWeather[];
   /** Some stop's weather used isn't certified. */
   non_certified_weather?: boolean;
+  /** An IFR flight landing where there is an instrument approach: the
+   *  pilot answers on the approach minimums (#124). */
+  asks_approach_minimums?: boolean;
 }
 
 /** A duty position on an aircraft type (#45), as 135ACM names them. */
@@ -2475,7 +2505,7 @@ export interface MinimumsStation {
   below: boolean;
   /** Why the minimums hold this stop (#110): the aircraft isn't IFR
    *  certified, or the field has no instrument approach. */
-  reason?: "not_ifr_certified" | "no_instrument_approach" | null;
+  reason?: "not_ifr_certified" | "vfr_flight" | "no_instrument_approach" | null;
   /** Empty when the stop has no weather to compare. */
   observations: MinimumsObservation[];
 }
