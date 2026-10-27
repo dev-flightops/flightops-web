@@ -1,5 +1,6 @@
 import { auth, signOut } from "@/auth";
 import { AppShell } from "@/components/app-shell/app-shell";
+import { BillingStandingNotice } from "@/components/app-shell/billing-standing-notice";
 import { AssistantProvider } from "@/components/assistant/assistant-context";
 import { AssistantWidget } from "@/components/assistant/assistant-widget";
 import { HeaderActions } from "@/components/app-shell/header-actions";
@@ -9,8 +10,10 @@ import { DatePickerAffordance } from "@/components/app-shell/date-picker-afforda
 import { rolesCanSeeModule } from "@/components/home/module-catalog";
 import { SafetyReportButton } from "@/components/safety/safety-report-button";
 import { getCompanyProfile, getMyBrand, listMyTenants } from "@/lib/api/auth";
+import { getBillingStanding } from "@/lib/api/billing";
 import { SessionExpiredError } from "@/lib/api/client";
 import { EXTERNAL_HOME, isStaffSession } from "@/lib/external-access";
+import { SUBSCRIPTION_MANAGERS, hasAnyRole } from "@/lib/roles";
 import { TenantProvider } from "@/lib/tenant";
 
 import { signOutAction, switchTenantAction } from "./actions";
@@ -79,6 +82,10 @@ export default async function AppGroupLayout({
     );
   }
 
+  // Whether the subscription is paid up (#127), for the notice on every
+  // page. Asked for alongside the company profile; a failure shows none.
+  const standingRequest = getBillingStanding().catch(() => null);
+
   // Per-tenant brand color overrides (M3 branding). Fetched here so every
   // authenticated page inherits the tenant theme without each route
   // re-fetching. Soft-fails to defaults if the auth service is briefly
@@ -117,6 +124,15 @@ export default async function AppGroupLayout({
       )
     : null;
 
+  const standing = await standingRequest;
+  const noticeSlot =
+    standing && standing.state !== "ok" ? (
+      <BillingStandingNotice
+        standing={standing}
+        canPay={hasAnyRole(sessionRoles, SUBSCRIPTION_MANAGERS)}
+      />
+    ) : null;
+
   const actionsSlot = headerData ? (
     <HeaderActions
       {...headerData}
@@ -145,6 +161,7 @@ export default async function AppGroupLayout({
           showOpsChip={rolesCanSeeModule("reservations", sessionRoles)}
           opsPhone={opsPhone}
           logoUrl={logoUrl}
+          noticeSlot={noticeSlot}
         >
           {children}
           {/* Spec: global Safety Report button, fixed bottom-right on every

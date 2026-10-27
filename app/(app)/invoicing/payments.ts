@@ -5,9 +5,9 @@
 
 import type { PaymentMethod } from "@/lib/api/customer-invoices";
 
-/** What the form offers. `account` (on-account) and `comp` are kept
- *  out until the client decides how they count in Collected and aging;
- *  the service still accepts them. */
+/** What the form offers: every method the service records. `account`
+ *  (on-account) and `comp` are not money received (#127), so neither
+ *  is offered or accepted. */
 export const FORM_METHODS: ReadonlyArray<{
   value: PaymentMethod;
   label: string;
@@ -20,7 +20,7 @@ export const FORM_METHODS: ReadonlyArray<{
 ];
 
 /** Every method a payment can carry, for the history. Includes the two
- *  the form does not offer, which can arrive through the API. */
+ *  no longer recorded, for any payment entered before (#127). */
 export const METHOD_LABELS: Record<PaymentMethod, string> = {
   cash: "Cash",
   check: "Check",

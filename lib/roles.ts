@@ -235,6 +235,10 @@ export const CUSTOMER_MANAGERS = roleGate("dispatcher", "reservations_agent", "e
  *  and the company's bookkeeper, who sees nothing operational. */
 export const ACCOUNTING_ROLES = roleGate("accountant", "director_of_operations", "exec_admin");
 
+/** The company's own Peregrine subscription: plan, card and paying.
+ *  billing-service's BillingAdmin. */
+export const SUBSCRIPTION_MANAGERS = roleGate("director_of_operations", "exec_admin");
+
 const BOOKKEEPER: Role = "accountant";
 
 /** The bell's alerts are the operation's: grounded aircraft, overdue

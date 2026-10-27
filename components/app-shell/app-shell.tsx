@@ -36,6 +36,9 @@ export interface AppShellProps {
   showDepartmentNav?: boolean;
   /** The operator's logo (Settings → Company), shown in the bar (#78). */
   logoUrl?: string | null;
+  /** A message for every page, under the bar: the subscription's
+   *  standing (#127). */
+  noticeSlot?: ReactNode;
 }
 
 export function AppShell({
@@ -48,6 +51,7 @@ export function AppShell({
   homeHref,
   showDepartmentNav,
   logoUrl = null,
+  noticeSlot,
 }: AppShellProps) {
   return (
     <div className="flex min-h-screen flex-col">
@@ -64,6 +68,9 @@ export function AppShell({
         showDepartmentNav={showDepartmentNav}
         logoUrl={logoUrl}
       />
+      {noticeSlot ? (
+        <div className="mx-auto w-full max-w-7xl px-4 pt-4 sm:px-6">{noticeSlot}</div>
+      ) : null}
       <main className="flex-1">{children}</main>
     </div>
   );

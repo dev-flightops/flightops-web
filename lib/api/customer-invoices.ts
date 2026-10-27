@@ -71,10 +71,11 @@ export interface CustomerInvoice {
   has_unpriced_lines: boolean;
 }
 
-/** What the money arrived as. The record-payment form offers cash,
- *  check, card, transfer ("ACH or wire") and other; `account` and
- *  `comp` are accepted by the service but kept out of the form until
- *  the client decides how they count. */
+/** What the money arrived as: cash, check, card, transfer ("ACH or
+ *  wire") or other. `account` and `comp` are only ever history: the
+ *  client decided (#127) that a charge on account stays owed until it
+ *  is paid and a comp seat is charged nothing, so the service no longer
+ *  records either as money received. */
 export type PaymentMethod =
   | "cash"
   | "card"
