@@ -4,6 +4,7 @@ import { AddAirportDialog } from "@/components/village-wx/add-airport-dialog";
 import { formatZuluDateTime } from "@/lib/format/flight-time";
 import { AddReportDialog } from "@/components/village-wx/add-report-dialog";
 import { ApproachToggle } from "@/components/village-wx/approach-toggle";
+import { EditAirportDialog } from "@/components/village-wx/edit-airport-dialog";
 import { ReportPhotos } from "@/components/village-wx/report-photos";
 import { ApiError } from "@/lib/api/client";
 import type {
@@ -142,7 +143,13 @@ export default async function VillageWxPage({
           <ul className="space-y-2">
             {rows.map((row) => (
               <li key={row.airport.id}>
-                <ReportCard row={row} view={view} now={now} canSetApproach={canSetApproach} />
+                <ReportCard
+                  row={row}
+                  view={view}
+                  now={now}
+                  canSetApproach={canSetApproach}
+                  canEdit={canReport}
+                />
               </li>
             ))}
           </ul>
@@ -160,12 +167,15 @@ function ReportCard({
   view,
   now,
   canSetApproach = false,
+  canEdit = false,
 }: {
   row: VillageBoardRow;
   view: "compact" | "expanded";
   now: number;
   /** RELEASE_POLICY_ADMINS: may say whether an approach can be flown (#110). */
   canSetApproach?: boolean;
+  /** VILLAGE_WX_REPORTERS: may correct or retire the airport (#130). */
+  canEdit?: boolean;
 }) {
   const { airport, latest_report: r } = row;
   const accent = categoryAccent(r?.flight_category ?? null);
@@ -212,6 +222,7 @@ function ReportCard({
               hasApproach={Boolean(airport.has_instrument_approach)}
               canSet={canSetApproach}
             />
+            {canEdit ? <EditAirportDialog airport={airport} /> : null}
           </div>
           {r?.flight_category && (
             <CategoryBadge category={r.flight_category} />
