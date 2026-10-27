@@ -114,6 +114,31 @@ export function zoneAbbreviation(timeZone: string, at: Date = new Date()): strin
   return name ?? timeZone;
 }
 
+/** "Alaska Time": a zone's name without daylight or standard, for saying
+ *  where a day or a month ends (#128). UTC stays "UTC". */
+export function zoneName(timeZone: string, at: Date = new Date()): string {
+  if (timeZone === "UTC" || timeZone === "Etc/UTC") return "UTC";
+  const name = new Intl.DateTimeFormat("en-US", { timeZone, timeZoneName: "longGeneric" })
+    .formatToParts(at)
+    .find((p) => p.type === "timeZoneName")?.value;
+  return name ?? timeZone;
+}
+
+/** The calendar year and month (1-12) an instant falls in, in `timeZone`:
+ *  on the evening of the 31st in Alaska, UTC is already in the next month. */
+export function localYearMonth(
+  timeZone: string,
+  at: Date = new Date(),
+): { year: number; month: number } {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    year: "numeric",
+    month: "numeric",
+  }).formatToParts(at);
+  const part = (type: string) => Number(parts.find((p) => p.type === type)?.value);
+  return { year: part("year"), month: part("month") };
+}
+
 /** "11:30 AKDT" for an instant, in `timeZone`. */
 export function localClock(iso: string, timeZone: string): string {
   const at = new Date(iso);

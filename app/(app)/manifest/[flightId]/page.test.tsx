@@ -156,7 +156,7 @@ describe("manifest entry (#62)", () => {
     expect(within(cargo).getByText("1Z999")).toBeTruthy();
   });
 
-  it("lets anyone on staff build the manifest, but not lock it", async () => {
+  it("lets a pilot build the manifest, but not lock it", async () => {
     mocks.auth.mockResolvedValue({ roles: ["pilot"] });
     mocks.getFlightManifest.mockResolvedValue(manifest("draft"));
     await renderPage();
@@ -182,6 +182,61 @@ describe("manifest entry (#62)", () => {
     expect(screen.getByText("No manifest created for this flight yet.")).toBeTruthy();
     expect(screen.getByRole("button", { name: "Create Manifest" })).toBeTruthy();
     expect(screen.queryByRole("button", { name: "Lock Manifest" })).toBeNull();
+  });
+});
+
+describe("the accountant reads manifests (#128)", () => {
+  it("shows a draft with nothing to change, as legacy's bookkeeper had it", async () => {
+    mocks.auth.mockResolvedValue({ roles: ["accountant"] });
+    mocks.getFlightManifest.mockResolvedValue(manifest("draft"));
+    await renderPage();
+    expect(screen.getByText("Quill")).toBeTruthy();
+    expect(screen.getByText("UPS package")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Lock Manifest" })).toBeNull();
+    expect(screen.queryByRole("button", { name: /^\+ Add/ })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Edit" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Remove" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Save Fuel" })).toBeNull();
+  });
+
+  it("shows what is waiting without offering to load it", async () => {
+    mocks.auth.mockResolvedValue({ roles: ["accountant"] });
+    mocks.getFlightManifest.mockResolvedValue(manifest("draft"));
+    mocks.getLoadPlan.mockResolvedValue({
+      flight_id: FLIGHT,
+      origin: "PANC",
+      destinations: ["PABE"],
+      load: BEFORE_FUEL,
+      waiting: [
+        { id: "w-2", station_icao: "PANC", destination_icao: "PABE", mail_class: "priority_mail", description: "USPS Priority Mail", weight_lbs: "150.0", pieces: 3, shipper: null, consignee: null, notes: null, status: "waiting", received_at: "2026-10-20T17:00:00Z" },
+      ],
+      suggestion: [
+        { waiting_load_id: "w-2", description: "USPS Priority Mail", mail_class: "priority_mail", weight_lbs: "150.0", pieces: 3, of_weight_lbs: "150.0", of_pieces: 3 },
+      ],
+      suggested_lbs: "150.0",
+      left_after_lbs: "400.0",
+      blocked: null,
+    });
+    await renderPage();
+    const w = within(screen.getByRole("region", { name: "Mail and freight waiting" }));
+    expect(w.getByText("1 entry waiting, 150 lb.")).toBeTruthy();
+    expect(w.queryByRole("button")).toBeNull();
+  });
+
+  it("doesn't offer a manifest to create", async () => {
+    mocks.auth.mockResolvedValue({ roles: ["accountant"] });
+    mocks.getFlightManifest.mockRejectedValue(new mocks.TestApiError(404, "/manifest", "manifest not created yet"));
+    await renderPage();
+    expect(screen.getByText("No manifest created for this flight yet.")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Create Manifest" })).toBeNull();
+  });
+
+  it("lets a bookkeeper who also dispatches build it", async () => {
+    mocks.auth.mockResolvedValue({ roles: ["accountant", "dispatcher"] });
+    mocks.getFlightManifest.mockResolvedValue(manifest("draft"));
+    await renderPage();
+    expect(screen.getByRole("button", { name: "+ Add Cargo" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Lock Manifest" })).toBeTruthy();
   });
 });
 

@@ -49,9 +49,10 @@ export const HOME_QUICK_LINKS: QuickLink[] = [
     href: "/invoicing",
     status: "live",
     // Same audience as the nav entry and the service: raising and
-    // sending an invoice is the office's job. The DO is admitted here
-    // as well as the exec admin, matching MODULE_ROLES.invoicing.
-    roles: ["exec_admin", "director_of_operations"],
+    // sending an invoice is the office's job. The DO and the company's
+    // bookkeeper (#128) are admitted here as well as the exec admin,
+    // matching MODULE_ROLES.invoicing.
+    roles: ["exec_admin", "director_of_operations", "accountant"],
   },
   // "My" anything — a logbook, a duty history — only means something to
   // someone who flies. Kept in step with the flight-log and currency

@@ -12,7 +12,7 @@ import {
 
 import type { AccountingExportResponse } from "@/lib/api/types";
 
-const { TestApiError, getAccountingExport, listCustomers } = vi.hoisted(() => {
+const { TestApiError, getAccountingExport, listCustomers, loadZoneTable } = vi.hoisted(() => {
   class TestApiError extends Error {
     constructor(
       public status: number,
@@ -22,12 +22,18 @@ const { TestApiError, getAccountingExport, listCustomers } = vi.hoisted(() => {
       super(message);
     }
   }
-  return { TestApiError, getAccountingExport: vi.fn(), listCustomers: vi.fn() };
+  return {
+    TestApiError,
+    getAccountingExport: vi.fn(),
+    listCustomers: vi.fn(),
+    loadZoneTable: vi.fn(),
+  };
 });
 
 vi.mock("@/lib/api/client", () => ({ ApiError: TestApiError }));
 vi.mock("@/lib/api/ops", () => ({ getAccountingExport }));
 vi.mock("@/lib/api/reservations", () => ({ listCustomers }));
+vi.mock("@/lib/api/auth", () => ({ loadZoneTable }));
 
 import AccountingExportPage from "./page";
 
@@ -44,6 +50,9 @@ beforeEach(() => {
   getAccountingExport.mockReset();
   listCustomers.mockReset();
   listCustomers.mockResolvedValue({ items: [], total: 0 });
+  // No base names a zone: the company's is Alaska's (#128).
+  loadZoneTable.mockReset();
+  loadZoneTable.mockResolvedValue({ byIcao: {}, fallback: "America/Anchorage" });
 });
 
 async function renderPage(params: Record<string, string> = {}) {
@@ -230,7 +239,7 @@ describe("/reservations/accounting-export: who may see it", () => {
     await renderPage({ start: "2026-09-01", end: "2026-09-30" });
 
     expect(screen.getByRole("alert").textContent).toBe(
-      "The accounting export is limited to executive admins and the director of operations.",
+      "The accounting export is limited to executive admins, the director of operations and the accountant.",
     );
     expect(screen.getByRole("heading", { name: "Accounting Export" })).toBeDefined();
     expect(screen.queryByRole("table")).toBeNull();
@@ -285,23 +294,23 @@ describe("/reservations/accounting-export: the date range", () => {
     expect(toInput().value).toBe("2026-10-02");
   });
 
-  it("counts days in UTC, as the export dates flights", async () => {
-    // 03:00Z on 1 Oct is already October in UTC, though still the
-    // evening of 30 Sep in Alaska: the default range is 1 Oct alone,
-    // not September.
+  it("counts days in the company's zone, as the export dates flights (#128)", async () => {
+    // 03:00Z on 1 Oct is already October in UTC, but still the evening
+    // of 30 Sep in Alaska: the default range is September so far.
     pinNow("2026-10-01T03:00:00Z");
     getAccountingExport.mockResolvedValue(emptyResponse());
 
     await renderPage();
 
     expect(getAccountingExport).toHaveBeenCalledWith({
-      start: "2026-10-01",
-      end: "2026-10-01",
+      start: "2026-09-01",
+      end: "2026-09-30",
     });
   });
 
   it("on the 1st, the default range is that one day", async () => {
-    // 00:30Z on 1 Oct: 16:30 on 30 Sep in Alaska.
+    // 00:30Z on 1 Oct, for a company whose hub keeps UTC.
+    loadZoneTable.mockResolvedValue({ byIcao: { PANC: "UTC" }, fallback: "UTC" });
     pinNow("2026-10-01T00:30:00Z");
     getAccountingExport.mockResolvedValue(emptyResponse());
 
@@ -377,7 +386,7 @@ describe("/reservations/accounting-export: the date range", () => {
     await renderPage({ start: "2026-09-30", end: "2026-09-01" });
 
     expect(screen.getByRole("alert").textContent).toBe(
-      "The accounting export is limited to executive admins and the director of operations.",
+      "The accounting export is limited to executive admins, the director of operations and the accountant.",
     );
     expect(screen.queryByRole("search")).toBeNull();
   });

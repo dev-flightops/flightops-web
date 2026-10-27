@@ -106,11 +106,11 @@ describe("reservations_agent — the second half of the request", () => {
   });
 });
 
-describe("Accounting Export: Exec Admin and Director of Operations only", () => {
-  // Mirrors ops-service's gate on /accounting-export, which refuses every
-  // other role. The menu shows it only when both the Reservations
-  // department and the module are visible.
-  const ADMITTED: readonly Role[] = ["exec_admin", "director_of_operations"];
+describe("Accounting Export: Exec Admin, Director of Operations and the accountant only", () => {
+  // Mirrors ops-service's gate on /accounting-export (ACCOUNTING_ROLES),
+  // which refuses every other role. The menu shows it only when both the
+  // Reservations department and the module are visible.
+  const ADMITTED: readonly Role[] = ["exec_admin", "director_of_operations", "accountant"];
   const menuShowsExport = (role: Role) => {
     const dept = deptById("reservations");
     return (
@@ -432,5 +432,36 @@ describe("the M4 post-holder roles", () => {
     it("does not get company settings", () => {
       expect(idsFor(["check_airman"])).not.toContain("settings");
     });
+  });
+});
+
+
+describe("the accountant: the company's money, nothing operational (#128)", () => {
+  const ACCOUNTANT = ["accountant"];
+  const moduleIds = (dept: string) => visibleModules(deptById(dept), ACCOUNTANT).map((m) => m.id);
+
+  it("sees Admin and Reservations for the money pages, and Safety and Academy like everyone", () => {
+    expect(idsFor(ACCOUNTANT).sort()).toEqual(["academy", "admin", "reservations", "safety"].sort());
+  });
+
+  it("in Admin: Invoicing, Accounting and Profitability, no dashboards or reports", () => {
+    expect(moduleIds("admin").sort()).toEqual(["accounting", "invoicing", "profitability"].sort());
+  });
+
+  it("in Reservations: the accounting export alone, no bookings, customers or manifests", () => {
+    expect(moduleIds("reservations")).toEqual(["reservations-acct-export"]);
+  });
+
+  it("left everyone else's Admin and Reservations exactly as they were", () => {
+    // Admitting the accountant to the two departments pinned every module
+    // that used to inherit them; each kept its old audience.
+    for (const role of ["dispatcher", "chief_pilot", "check_airman", "director_of_maintenance"] as const) {
+      const admin = visibleModules(deptById("admin"), [role]).map((m) => m.id);
+      expect(admin, role).toContain("dashboard-executive");
+      expect(admin, role).toContain("fleetbrain");
+    }
+    const agent = visibleModules(deptById("reservations"), ["reservations_agent"]).map((m) => m.id);
+    expect(agent).toContain("reservations-customers");
+    expect(agent).toContain("reservations-search");
   });
 });

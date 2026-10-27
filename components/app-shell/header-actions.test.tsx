@@ -75,6 +75,21 @@ describe("HeaderActions", () => {
     expect(screen.queryByLabelText("Users")).toBeNull();
   });
 
+  it("has no bell at all, not even a disabled one, when it isn't this login's (#128)", () => {
+    render(
+      <HeaderActions
+        email="books@flightops.local"
+        signOutAction={vi.fn()}
+        showBell={false}
+        bellAlerts={{ alerts: [], dismissedCount: 0, filterUnavailable: false }}
+        dismissAlertAction={vi.fn()}
+      />,
+    );
+    expect(screen.queryByLabelText("Notifications")).toBeNull();
+    expect(screen.queryByTitle(/Notifications/)).toBeNull();
+    expect(screen.getByLabelText("Time Clock")).toBeInTheDocument();
+  });
+
   it("opens help on the article for the current route", () => {
     // It sat here as a disabled "Coming in M4" placeholder. The
     // question somebody presses ? to ask is about the page in front of

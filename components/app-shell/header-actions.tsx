@@ -60,6 +60,9 @@ export interface HeaderActionsProps {
     rest_acknowledged?: boolean;
   }) => Promise<DutyActionResult>;
   clockOutAction?: (args?: { reason?: string }) => Promise<DutyActionResult>;
+  /** When false there is no bell at all: its alerts are the operation's,
+   *  and a bookkeeper's login has no use for them (#128). Defaults true. */
+  showBell?: boolean;
   /** Outstanding alerts for the bell, already filtered to this user's
    *  dismissals. Null when they could not be read — the bell then
    *  renders disabled rather than showing zero. */
@@ -91,6 +94,7 @@ export function HeaderActions({
   clockInAction,
   clockOutAction,
   aiTools,
+  showBell = true,
   bellAlerts,
   dismissAlertAction,
 }: HeaderActionsProps) {
@@ -110,7 +114,7 @@ export function HeaderActions({
           disables rather than showing a zero: a count of nothing is a
           claim the operation is clear, and "we could not look" is a
           different statement. */}
-      {bellAlerts && dismissAlertAction ? (
+      {!showBell ? null : bellAlerts && dismissAlertAction ? (
         <NotificationsBell
           alerts={bellAlerts.alerts}
           dismissedCount={bellAlerts.dismissedCount}

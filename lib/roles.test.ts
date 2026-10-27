@@ -6,6 +6,7 @@ import {
   DISPATCH_WRITERS,
   FLIGHT_LOG_ADMINS,
   GSE_WRITERS,
+  MANIFEST_EDITORS,
   OVERRIDE_AUTHORITY,
   RAMP_OPS,
   ROLES,
@@ -14,6 +15,7 @@ import {
   hasAnyRole,
   isRole,
   roleGate,
+  seesOperationalAlerts,
 } from "./roles";
 
 describe("roles", () => {
@@ -25,6 +27,7 @@ describe("roles", () => {
     // than a gate quietly never matching again.
     expect([...ROLES].sort()).toEqual(
       [
+        "accountant",
         "check_airman",
         "chief_pilot",
         "crew_member",
@@ -166,5 +169,21 @@ describe("the ground and village sets (29 Sep)", () => {
       "pilot",
       "reservations_agent",
     ]);
+  });
+});
+
+describe("the bookkeeper and the operation (#128)", () => {
+  it("builds no manifest: every other role does, as all staff did before", () => {
+    // Legacy's accountant read manifests only. A role added later has to
+    // be put on one side or the other here, as in the services' set.
+    expect([...MANIFEST_EDITORS].sort()).toEqual(ROLES.filter((r) => r !== "accountant").sort());
+  });
+
+  it("gets no bell unless another role brings one", () => {
+    expect(seesOperationalAlerts(["accountant"])).toBe(false);
+    expect(seesOperationalAlerts(["accountant", "dispatcher"])).toBe(true);
+    expect(seesOperationalAlerts(["pilot"])).toBe(true);
+    expect(seesOperationalAlerts(["reservations_agent"])).toBe(true);
+    expect(seesOperationalAlerts([])).toBe(true);
   });
 });
