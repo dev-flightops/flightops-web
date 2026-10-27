@@ -141,7 +141,7 @@ export default async function InvoiceDetailPage({
           invoiceNumber={invoice.invoice_number}
           status={invoice.status}
           hasUnpricedLines={invoice.has_unpriced_lines}
-          paidCents={invoice.paid_cents}
+          paidCents={refundable}
           outstandingCents={invoice.outstanding_cents}
         />
       </header>
