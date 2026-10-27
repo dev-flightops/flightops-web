@@ -90,6 +90,7 @@ export const GUIDES: Guide[] = [
     notes: [
       "The FRAT is never filed at a lower level than the dispatch packet the flight was released on.",
       "For a VFR flight, an aircraft not IFR certified, or a field without an instrument approach, weather below the company's dispatch minimums scores 5: over company limits.",
+      "On an IFR flight the FRAT asks whether the forecast ceiling and visibility at arrival are at or above the approach minimums, from your approach plates. A no scores that factor 5: below them the flight may not take off IFR (14 CFR 135.219), and a carried block FRAT doesn't apply, since each leg answers for its own landings.",
       "The levels are explained in [What do the FRAT levels mean?](/help#faq-frat-levels).",
     ],
     pages: ["/flight-crew"],

@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -785,5 +785,109 @@ describe("the weather each stop was scored on", () => {
     });
     expect(screen.getByText("Official METAR/TAF")).toBeInTheDocument();
     expect(screen.queryByText("Not certified weather")).not.toBeInTheDocument();
+  });
+});
+
+/**
+ * The approach minimums on an IFR flight (#124). The client: "Ifr flights
+ * below approach mins are elevated risk as well." The system holds no
+ * approach minima, so the pilot answers from the plates; below them the
+ * flight may not take off under IFR (14 CFR 135.219), a no-go.
+ */
+const ifrPrefill: FratPrefillResponse = {
+  flight_id: "f-1",
+  suggestions: ["wx_ceiling", "wx_vis"].map((factor) => ({
+    factor,
+    score: null,
+    source: "company weather limits",
+    unavailable_reason:
+      "This is an IFR flight, scored from your answer on the approach minimums at arrival.",
+  })),
+  crosswind_limit_kt: 30,
+  near_limit_entry_kt: 20,
+  vfr_min_ceiling_ft: 1000,
+  vfr_min_visibility_sm: 3,
+  asks_approach_minimums: true,
+};
+
+const question = (which: "ceiling" | "visibility") =>
+  screen.getByRole("group", {
+    name: `IFR: is the forecast ${which} at arrival at or above the approach minimums?`,
+  });
+
+describe("the approach minimums on an IFR flight", () => {
+  beforeEach(() => vi.mocked(submitFratAction).mockClear());
+
+  it("asks about the ceiling and the visibility, and nothing else", () => {
+    renderStep({ fratPrefill: ifrPrefill });
+    expect(question("ceiling")).toBeInTheDocument();
+    expect(question("visibility")).toBeInTheDocument();
+    expect(screen.getAllByRole("group", { name: /approach minimums/ })).toHaveLength(2);
+  });
+
+  it("is not asked on a VFR flight", () => {
+    renderStep({ fratPrefill: { ...ifrPrefill, asks_approach_minimums: false } });
+    expect(screen.queryByRole("group", { name: /approach minimums/ })).not.toBeInTheDocument();
+  });
+
+  it("scores a no over company limits and holds it there", async () => {
+    const user = userEvent.setup();
+    renderStep({ fratPrefill: ifrPrefill });
+    await user.click(within(question("ceiling")).getByRole("button", { name: "No" }));
+    const ceiling = screen.getByLabelText("Ceiling");
+    expect(ceiling).toHaveValue("5");
+    expect(ceiling).toBeDisabled();
+    expect(screen.getByText(/may not take off IFR \(14 CFR 135\.219\)/)).toBeInTheDocument();
+
+    // Yes again lets it go back to what the weather scored.
+    await user.click(within(question("ceiling")).getByRole("button", { name: "Yes" }));
+    expect(ceiling).toHaveValue("0");
+    expect(ceiling).toBeEnabled();
+  });
+
+  it("won't file until both are answered, then sends them", async () => {
+    const user = userEvent.setup();
+    renderStep({ fratPrefill: ifrPrefill });
+    await user.click(screen.getByRole("button", { name: /submit assessment/i }));
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "Answer whether the forecast ceiling and visibility at arrival are at or above the approach minimums.",
+    );
+    expect(submitFratAction).not.toHaveBeenCalled();
+
+    await user.click(within(question("ceiling")).getByRole("button", { name: "Yes" }));
+    await user.click(within(question("visibility")).getByRole("button", { name: "No" }));
+    await user.click(screen.getByRole("button", { name: /submit assessment/i }));
+    await user.click(screen.getByRole("button", { name: /genuinely zero/i }));
+    const body = vi.mocked(submitFratAction).mock.calls.at(-1)?.[1];
+    expect(body?.approach_minimums).toEqual({ ceiling: true, visibility: false });
+    expect(body?.answers.wx_ceiling).toBe(0);
+    expect(body?.answers.wx_vis).toBe(5);
+    // Answered, so neither is among the unassessed zeros.
+    expect(body?.affirmed_zero_factors).not.toContain("wx_ceiling");
+  });
+
+  it("shows the answers on the filed assessment", () => {
+    renderStep({
+      initial: {
+        id: "a-1",
+        flight_id: "f-1",
+        pilot_user_id: "u-1",
+        answers: { wx_ceiling: 0, wx_vis: 5 },
+        total_score: 5,
+        risk_level: "low",
+        mitigations: null,
+        over_limit_factors: ["wx_vis"],
+        affirmed_zero_factors: null,
+        carried_from_assessment_id: null,
+        approach_minimums: { ceiling: true, visibility: false },
+        created_at: "2026-10-26T12:00:00Z",
+        authorizations: [],
+      },
+    });
+    expect(
+      screen.getByText(
+        "Ceiling at or above · visibility below, the pilot's answer from the approach plates.",
+      ),
+    ).toBeInTheDocument();
   });
 });
