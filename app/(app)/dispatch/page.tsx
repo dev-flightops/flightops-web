@@ -30,6 +30,7 @@ import { listFlightCrew } from "@/lib/api/crew-assignments";
 import {
   type CrewSeat,
   getComplianceBoard,
+  getCrewOptions,
   getFlight,
   getPicCompliance,
   listAircraft,
@@ -190,6 +191,8 @@ export default async function DispatchPage({
     awaitingFlight,
     sicChecks,
     plansWaiting,
+    picAvailability,
+    sicAvailability,
   ] = await Promise.all([
     listFlights({ onDate: scheduleDate }).catch(() => ({
       items: [],
@@ -230,6 +233,15 @@ export default async function DispatchPage({
           .then((r) => r.waiting)
           .catch(() => 0)
       : Promise.resolve(0),
+    // Who release would take in each seat (#91): a pilot it would refuse
+    // isn't offered. Soft-fail: without it every pilot is offered, as
+    // before, and release still checks.
+    selectedId
+      ? getCrewOptions(selectedId, "pic").then((r) => r.items).catch(() => null)
+      : Promise.resolve(null),
+    selectedId
+      ? getCrewOptions(selectedId, "sic").then((r) => r.items).catch(() => null)
+      : Promise.resolve(null),
   ]);
 
   // #46 — who is current in which seat on this flight's aircraft type,
@@ -374,6 +386,7 @@ export default async function DispatchPage({
         <FlightDetailsPanel
           flight={selectedFlight}
           picOptions={candidates}
+          picAvailability={picAvailability}
           currentPicId={effectivePicId}
           flightId={selectedFlight?.id ?? null}
           areaForecast={
@@ -397,6 +410,7 @@ export default async function DispatchPage({
             flightId={selectedFlight.id}
             assignments={crew.items}
             candidates={candidates}
+            sicAvailability={sicAvailability}
           />
         )}
 
