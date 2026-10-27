@@ -5,6 +5,7 @@ import { useState, useTransition } from "react";
 import { linkCaps } from "@/components/ff/controls";
 import type { FlightLoad } from "@/lib/api/manifest";
 import type { FlightDetail, WeightReturn } from "@/lib/api/types";
+import { crewWeightNote } from "@/lib/flights/crew-weight";
 import { fuelEstimateLine } from "@/lib/flights/fuel-estimate";
 import { payloadAllowance } from "@/lib/preflight/payload-allowance";
 
@@ -312,12 +313,7 @@ function LoadBreakdown({ flight, data }: { flight: FlightDetail; data: FlightLoa
   const fuel = load.fuel_lbs != null ? Number(load.fuel_lbs) : null;
   const maxPayload = useful - crew - (fuel ?? 0);
   const remaining = load.remaining_lbs != null ? Number(load.remaining_lbs) : null;
-  const crewNote =
-    load.crew_basis === "manifest"
-      ? "from the manifest"
-      : load.crew_basis === "standard"
-        ? `${load.crew_count === 1 ? "standard weight" : `${load.crew_count} at standard weights`}; enter the crew on the manifest for their own`
-        : "no crew on the flight yet";
+  const crewNote = crewWeightNote(load);
   const fuelNote =
     load.fuel_basis === "planned"
       ? "planned by dispatch"

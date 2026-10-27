@@ -19,6 +19,7 @@ import {
 import { fuelEstimateLine } from "@/lib/flights/fuel-estimate";
 import type { FlightDetail, FlightStatus } from "@/lib/api/types";
 import { hasAnyRole, MANIFEST_LOCKERS } from "@/lib/roles";
+import { crewWeightNote } from "@/lib/flights/crew-weight";
 import { flightStops } from "@/lib/route";
 
 import { PlannedFuelForm } from "./fuel-form";
@@ -272,11 +273,6 @@ function TotalsStrip({ totals }: { totals: ManifestDetailResponse["totals"] }) {
   );
 }
 
-const CREW_BASIS: Record<ManifestDetailResponse["load"]["crew_basis"], (count: number) => string> = {
-  manifest: () => "as weighed on the manifest",
-  standard: (count) => `${count} assigned, at standard weight`,
-  none: () => "none on the flight yet",
-};
 
 /**
  * What is left of the aircraft's useful load for mail and freight (#74):
@@ -314,7 +310,7 @@ function LoadPanel({ manifest, editable }: { manifest: ManifestDetailResponse; e
       <div className="flex flex-wrap items-end gap-x-3 gap-y-2">
         <Term label="Useful load" value={`${load.useful_load_lbs.toLocaleString()} lb`} />
         <Op>−</Op>
-        <Term label="Crew" value={`${fmtLbs(load.crew_lbs)} lb`} note={CREW_BASIS[load.crew_basis](load.crew_count)} />
+        <Term label="Crew" value={`${fmtLbs(load.crew_lbs)} lb`} note={crewWeightNote(load)} />
         <Op>−</Op>
         <Term
           label="Fuel"

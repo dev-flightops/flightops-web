@@ -133,7 +133,7 @@ export async function TrainingCurrencySummary({
         >
           full profile
         </Link>{" "}
-        for completion history.
+        for completion history and your weight for weight and balance.
       </p>
     </div>
   );
