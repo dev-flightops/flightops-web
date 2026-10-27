@@ -5,6 +5,9 @@ const {
   recordCustomerInvoicePayment,
   voidCustomerInvoice,
   voidCustomerInvoicePayment,
+  refundCustomerInvoice,
+  voidCustomerInvoiceRefund,
+  applyCustomerCredit,
   revalidatePath,
   TestApiError,
   TestSessionExpiredError,
@@ -31,6 +34,9 @@ const {
     recordCustomerInvoicePayment: vi.fn(),
     voidCustomerInvoice: vi.fn(),
     voidCustomerInvoicePayment: vi.fn(),
+    refundCustomerInvoice: vi.fn(),
+    voidCustomerInvoiceRefund: vi.fn(),
+    applyCustomerCredit: vi.fn(),
     revalidatePath: vi.fn(),
     TestApiError,
     TestSessionExpiredError,
@@ -49,13 +55,19 @@ vi.mock("@/lib/api/customer-invoices", () => ({
   sendCustomerInvoice: vi.fn(),
   voidCustomerInvoice,
   voidCustomerInvoicePayment,
+  refundCustomerInvoice,
+  voidCustomerInvoiceRefund,
+  applyCustomerCredit,
 }));
 
 import {
+  applyCreditAction,
   markPaidAction,
   recordPaymentAction,
+  refundAction,
   voidInvoiceAction,
   voidPaymentAction,
+  voidRefundAction,
 } from "./actions";
 
 const refused = (detail: string, status = 409) =>
@@ -258,5 +270,106 @@ describe("voidInvoiceAction", () => {
       message:
         "This invoice has payments recorded against it, so it cannot be voided.",
     });
+  });
+});
+
+describe("refunds and credit notes (#127)", () => {
+  const form = {
+    amount: "120.00",
+    kind: "original_payment" as const,
+    paymentId: "pay-1",
+    refundedOn: "2026-10-03",
+    reason: " Flight cancelled ",
+    reference: "  ",
+    approverId: "",
+  };
+
+  it("sends a refund to the payment, trimmed", async () => {
+    refundCustomerInvoice.mockResolvedValueOnce({
+      refund: { kind: "original_payment", amount_cents: 12_000, credit_number: null },
+    });
+    const result = await refundAction("inv-1", form);
+    expect(refundCustomerInvoice).toHaveBeenCalledWith("inv-1", {
+      kind: "original_payment",
+      amount_cents: 12_000,
+      payment_id: "pay-1",
+      refunded_on: "2026-10-03",
+      reason: "Flight cancelled",
+      reference: null,
+      approved_by_user_id: null,
+    });
+    expect(result).toEqual({ status: "ok", message: "Recorded 120.00 going back to the payment." });
+  });
+
+  it("names the credit note it issued", async () => {
+    refundCustomerInvoice.mockResolvedValueOnce({
+      refund: { kind: "credit_note", amount_cents: 12_000, credit_number: "CN-000004" },
+    });
+    const result = await refundAction("inv-1", { ...form, kind: "credit_note", paymentId: "" });
+    expect(refundCustomerInvoice.mock.calls[0][1].payment_id).toBeNull();
+    expect(result.status === "ok" && result.message).toMatch(/^Issued credit note CN-000004 for 120.00\./);
+  });
+
+  it("asks for an approver over $500 without calling the service", async () => {
+    const result = await refundAction("inv-1", { ...form, amount: "500.01" });
+    expect(result).toEqual({
+      status: "error",
+      message: "A refund over $500 needs an approver. Choose who approved it.",
+    });
+    expect(refundCustomerInvoice).not.toHaveBeenCalled();
+  });
+
+  it("explains the service's refusals", async () => {
+    refundCustomerInvoice.mockRejectedValueOnce(refused("refund_exceeds_payment_of_4500"));
+    expect((await refundAction("inv-1", form)).status === "error").toBe(true);
+    refundCustomerInvoice.mockRejectedValueOnce(refused("refund_exceeds_payment_of_4500"));
+    expect(await refundAction("inv-1", form)).toEqual({
+      status: "error",
+      message: "That is more than the 45.00 that can still go back to that payment.",
+    });
+    refundCustomerInvoice.mockRejectedValueOnce(refused("approver_is_yourself"));
+    expect(await refundAction("inv-1", { ...form, amount: "600", approverId: "u-me" })).toEqual({
+      status: "error",
+      message: "Someone else has to approve a refund over $500.",
+    });
+  });
+
+  it("voids a refund with a reason", async () => {
+    voidCustomerInvoiceRefund.mockResolvedValueOnce({
+      refund: { kind: "credit_note", amount_cents: 5_000, credit_number: "CN-000002" },
+    });
+    expect(await voidRefundAction("inv-1", "ref-1", "  ")).toEqual({
+      status: "error",
+      message: "Say why the refund is being voided.",
+    });
+    expect(await voidRefundAction("inv-1", "ref-1", " Entered twice ")).toEqual({
+      status: "ok",
+      message: "Voided credit note CN-000002.",
+    });
+    expect(voidCustomerInvoiceRefund).toHaveBeenCalledWith("inv-1", "ref-1", "Entered twice");
+  });
+
+  it("pays from a credit note and says what is left", async () => {
+    applyCustomerCredit.mockResolvedValueOnce({
+      payment: { reference: "CN-000001" },
+      settled: false,
+      outstanding_cents: 30_000,
+    });
+    expect(await applyCreditAction("inv-2", "cn-1", "100", "2026-10-04")).toEqual({
+      status: "ok",
+      message: "Paid 100.00 from credit note CN-000001. 300.00 still outstanding.",
+    });
+    expect(applyCustomerCredit).toHaveBeenCalledWith("inv-2", "cn-1", 10_000, "2026-10-04");
+    applyCustomerCredit.mockRejectedValueOnce(refused("credit_exceeds_remaining_of_2500"));
+    expect(await applyCreditAction("inv-2", "cn-1", "100", "2026-10-04")).toEqual({
+      status: "error",
+      message: "That is more than the 25.00 left on the credit note.",
+    });
+  });
+
+  it("a read-only company's refusal is shown as it is", async () => {
+    const sentence = "The company's subscription payment is overdue, so nothing can be changed until it's paid.";
+    refundCustomerInvoice.mockRejectedValueOnce(new TestApiError(402, "/billing/x", sentence));
+    expect(await refundAction("inv-1", form)).toEqual({ status: "error", message: sentence });
   });
 });

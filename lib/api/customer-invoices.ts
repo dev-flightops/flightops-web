@@ -72,10 +72,11 @@ export interface CustomerInvoice {
 }
 
 /** What the money arrived as: cash, check, card, transfer ("ACH or
- *  wire") or other. `account` and `comp` are only ever history: the
- *  client decided (#127) that a charge on account stays owed until it
- *  is paid and a comp seat is charged nothing, so the service no longer
- *  records either as money received. */
+ *  wire") or other. `credit` is a credit note paying the invoice (#127):
+ *  it settles it like money, but no money arrived; its reference is the
+ *  note's number. `account` and `comp` are only ever history: the client
+ *  decided (#127) that a charge on account stays owed until it is paid
+ *  and a comp seat is charged nothing, so neither is money received. */
 export type PaymentMethod =
   | "cash"
   | "card"
@@ -83,7 +84,8 @@ export type PaymentMethod =
   | "transfer"
   | "account"
   | "comp"
-  | "other";
+  | "other"
+  | "credit";
 
 export interface CustomerPayment {
   id: string;
@@ -112,6 +114,45 @@ export interface CustomerInvoiceDetail extends CustomerInvoice {
   outstanding_cents: number;
   /** Oldest first, by the date the money arrived. */
   payments: CustomerPayment[];
+  /** Money given back on this invoice (#127), oldest first, voided ones
+   *  marked. A refund doesn't move the balance. */
+  refunds: CustomerRefund[];
+  /** The refunds that still count. */
+  refunded_cents: number;
+  /** The customer's credit notes with credit left: what can pay this
+   *  invoice. Empty for a walk-in. */
+  credit_notes: CreditNote[];
+}
+
+/** Back to the payment the money came from, or a credit note for a
+ *  later invoice (#127). */
+export type RefundKind = "original_payment" | "credit_note";
+
+export interface CustomerRefund {
+  id: string;
+  kind: RefundKind;
+  amount_cents: number;
+  refunded_on: string;
+  reason: string;
+  reference: string | null;
+  /** `original_payment`: the payment it went back to. */
+  payment_id: string | null;
+  /** `credit_note`: its number and what it still has to pay with. */
+  credit_number: string | null;
+  credit_remaining_cents: number | null;
+  /** Who approved it, when over $500. */
+  approved_by_name: string | null;
+  voided_at: string | null;
+  void_reason: string | null;
+}
+
+export interface CreditNote {
+  id: string;
+  credit_number: string;
+  /** The invoice the money was first received on. */
+  invoice_number: string;
+  refunded_on: string;
+  remaining_cents: number;
 }
 
 export interface CustomerInvoiceList {
@@ -227,6 +268,64 @@ export async function voidCustomerInvoicePayment(
 /** Money received against a sent invoice, part or all of what is
  *  outstanding. The service refuses more than the outstanding balance,
  *  a date in the future, and drafts and voids. */
+export interface RefundInput {
+  kind: RefundKind;
+  amount_cents: number;
+  payment_id?: string | null;
+  refunded_on?: string | null;
+  reason: string;
+  reference?: string | null;
+  /** Required over $500: another person who may approve refunds. */
+  approved_by_user_id?: string | null;
+}
+
+export interface RefundResult {
+  refund: CustomerRefund;
+  invoice: CustomerInvoice;
+  paid_cents: number;
+  refunded_cents: number;
+}
+
+/** Give money back on an invoice (#127). */
+export async function refundCustomerInvoice(
+  invoiceId: string,
+  input: RefundInput,
+): Promise<RefundResult> {
+  return apiFetch<RefundResult>(`/billing/customer-invoices/${invoiceId}/refunds`, {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
+/** Void a refund entered in error (#127). */
+export async function voidCustomerInvoiceRefund(
+  invoiceId: string,
+  refundId: string,
+  reason: string,
+): Promise<RefundResult> {
+  return apiFetch<RefundResult>(
+    `/billing/customer-invoices/${invoiceId}/refunds/${refundId}/void`,
+    { method: "POST", body: JSON.stringify({ reason }) },
+  );
+}
+
+/** Pay an invoice from one of its customer's credit notes (#127). */
+export async function applyCustomerCredit(
+  invoiceId: string,
+  creditNoteId: string,
+  amountCents: number,
+  appliedOn?: string | null,
+): Promise<RecordPaymentResult> {
+  return apiFetch<RecordPaymentResult>(`/billing/customer-invoices/${invoiceId}/credit`, {
+    method: "POST",
+    body: JSON.stringify({
+      credit_note_id: creditNoteId,
+      amount_cents: amountCents,
+      applied_on: appliedOn ?? null,
+    }),
+  });
+}
+
 export async function recordCustomerInvoicePayment(
   invoiceId: string,
   input: RecordPaymentInput,

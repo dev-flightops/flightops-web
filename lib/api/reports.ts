@@ -193,8 +193,13 @@ export interface AccountingSummary {
    *  paid). Drafts and voids are not (#128). */
   invoiced_cents: number;
   /** What arrived — payments received in the month, by the date the
-   *  money landed rather than the invoice's date. */
+   *  money landed rather than the invoice's date, less money refunded
+   *  to a payment in the month (#127). A credit note paying an invoice
+   *  isn't money arriving, so it isn't here. */
   collected_cents: number;
+  /** The month's refunds back to a payment, already off collected
+   *  (#127). */
+  refunded_cents?: number;
   cost_cents: number;
   profit_cents: number;
   margin_pct: number | null;

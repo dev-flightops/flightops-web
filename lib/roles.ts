@@ -235,6 +235,11 @@ export const CUSTOMER_MANAGERS = roleGate("dispatcher", "reservations_agent", "e
  *  and the company's bookkeeper, who sees nothing operational. */
 export const ACCOUNTING_ROLES = roleGate("accountant", "director_of_operations", "exec_admin");
 
+/** Approve a refund over $500 (#127): the post-holders who run the
+ *  company, never the person entering it. billing-service's
+ *  APPROVER_ROLES. */
+export const REFUND_APPROVERS = roleGate("director_of_operations", "exec_admin");
+
 /** The company's own Peregrine subscription: plan, card and paying.
  *  billing-service's BillingAdmin. */
 export const SUBSCRIPTION_MANAGERS = roleGate("director_of_operations", "exec_admin");

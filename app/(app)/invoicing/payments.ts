@@ -29,7 +29,13 @@ export const METHOD_LABELS: Record<PaymentMethod, string> = {
   other: "Other",
   account: "On account",
   comp: "Comp",
+  credit: "Credit note",
 };
+
+/** Above this a refund names who approved it (#127): the client's
+ *  figure, and the old system's default. billing-service's
+ *  APPROVAL_OVER_CENTS. */
+export const REFUND_APPROVAL_OVER_CENTS = 500_00;
 
 export function isFormMethod(value: string): value is PaymentMethod {
   return FORM_METHODS.some((m) => m.value === value);
