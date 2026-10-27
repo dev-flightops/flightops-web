@@ -26,6 +26,10 @@ export interface FlightSearchResult {
   destination: string;
   scheduled_departure_at: string;
   scheduled_arrival_at: string;
+  /** Every stop (#132). `origin`/`destination` and the times are the part
+   *  searched for: MM2001 PAKN → 9Z8 → PAKN answers PAKN → 9Z8 with its
+   *  first leg. Absent from a service older than #132. */
+  route?: string[];
   status: string;
   aircraft_tail: string | null;
   aircraft_model: string | null;

@@ -139,11 +139,10 @@ export function OpenFlightForm({
 
   // The way home on a round trip: a last leg back to the origin, added
   // once there is somewhere to come back from, and taken off when the
-  // box is unticked. A new origin moves it, unless it was changed.
-  const lastOrigin = useRef(origin);
+  // box is unticked. It follows the origin however the origin is typed:
+  // retyping PANC as PAKN letter by letter used to leave it going to PANC
+  // (#132), as it only moved when the origin changed in one step.
   useEffect(() => {
-    const previous = lastOrigin.current;
-    lastOrigin.current = origin;
     setStops((current) => {
       const home = current.find((s) => s.returning);
       if (!roundTrip) return home ? current.filter((s) => s !== home) : current;
@@ -151,20 +150,25 @@ export function OpenFlightForm({
         return current;
       }
       if (home) {
-        return home.destination === previous && previous !== origin
-          ? current.map((s) => (s === home ? { ...s, destination: origin } : s))
-          : current;
+        return home.destination === origin
+          ? current
+          : current.map((s) => (s === home ? { ...s, destination: origin } : s));
       }
       return [...current, { destination: origin, departure: "", arrival: "", returning: true }];
     });
   }, [roundTrip, origin, firstDestination]);
 
-  /** A stop added after the way home goes before it; taking the way home
-   *  off unticks Round trip. */
+  /** A stop added after the way home goes before it. Taking the way home
+   *  off, or sending it somewhere else by hand, unticks Round trip: what
+   *  is left is an ordinary stop, which the origin no longer moves. */
   function changeStops(next: SubmittedStop[]) {
-    const home = next.find((s) => s.returning);
+    const before = stops.find((s) => s.returning);
+    const edited = next.map((s) =>
+      s.returning && before && s.destination !== before.destination ? { ...s, returning: false } : s,
+    );
+    const home = edited.find((s) => s.returning);
     if (roundTrip && !home) setRoundTrip(false);
-    setStops(home && next[next.length - 1] !== home ? [...next.filter((s) => s !== home), home] : next);
+    setStops(home && edited[edited.length - 1] !== home ? [...edited.filter((s) => s !== home), home] : edited);
   }
 
   const timeZone = zoneFor(zones, origin);

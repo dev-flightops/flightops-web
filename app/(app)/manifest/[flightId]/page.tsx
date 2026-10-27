@@ -20,7 +20,7 @@ import { fuelEstimateLine, fuelPlanningNote } from "@/lib/flights/fuel-estimate"
 import type { FlightDetail, FlightStatus } from "@/lib/api/types";
 import { hasAnyRole, MANIFEST_EDITORS, MANIFEST_LOCKERS } from "@/lib/roles";
 import { crewWeightNote } from "@/lib/flights/crew-weight";
-import { flightStops } from "@/lib/route";
+import { flightStops, routeText } from "@/lib/route";
 
 import { PlannedFuelForm } from "./fuel-form";
 import { LoadPlanApply } from "./load-plan-apply";
@@ -216,7 +216,8 @@ function FlightHeader({
           {flight.flight_number}
         </h1>
         <div className="mt-1 font-mono text-sm text-muted-foreground">
-          {flight.origin} → {flight.destination}
+          {/* #132: every stop. A round trip read "PAKN → PAKN". */}
+          {routeText(flight)}
           <span className="mx-2 text-muted-foreground">·</span>
           {flight.aircraft.tail_number}
           {flight.aircraft.model ? (

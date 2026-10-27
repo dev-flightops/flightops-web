@@ -39,4 +39,12 @@ describe("the Flight Following board", () => {
     expect(screen.getByText("PAHP")).toBeInTheDocument();
     expect(screen.getByRole("row", { name: /GV2026/ })).toHaveTextContent("PABE → PAHP → PASM");
   });
+
+  it("offers Edit until the flight is released (#132)", () => {
+    // Client, 23 Oct: "is there a way that we can go back in and edit a
+    // flight after it's made it to this stage?"
+    render(<FlightBoard flights={[row, { ...row, id: "f-2", flight_number: "GV2027", status: "released" }]} />);
+    const edits = screen.getAllByRole("link", { name: "Edit" });
+    expect(edits.map((a) => a.getAttribute("href"))).toEqual(["/dispatch?flight=f-1&edit=1"]);
+  });
 });

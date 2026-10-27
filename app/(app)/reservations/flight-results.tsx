@@ -93,6 +93,12 @@ export function FlightResults({
               >
                 <td className="px-4 py-3 font-mono text-foreground">
                   {f.flight_number}
+                  {f.route && f.route.length > 2 ? (
+                    // #132: the stops beyond the two searched for.
+                    <span className="block text-[0.7rem] text-muted-foreground">
+                      {f.route.join(" → ")}
+                    </span>
+                  ) : null}
                 </td>
                 <td className="px-4 py-3 text-muted-foreground">
                   {formatTime(f.scheduled_departure_at)}

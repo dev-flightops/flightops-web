@@ -107,6 +107,8 @@ interface SearchParams {
    *  survives a reload. The release endpoint re-checks server-side, so
    *  hand-editing this only skips the button hint, not the gate. */
   stale_wx_ack?: string;
+  /** #132: "1" from the board's Edit link opens the Edit dialog. */
+  edit?: string;
 }
 
 /**
@@ -133,6 +135,7 @@ export default async function DispatchPage({
     pic: picOverrideId,
     warns_acked: warnsAckedParam,
     stale_wx_ack: staleWxAckParam,
+    edit: editParam,
   } = await searchParams;
   // What the viewer may do on the packet, not what they may see: the
   // backend enforces each of these, so this only keeps controls away
@@ -464,6 +467,7 @@ export default async function DispatchPage({
             flight={selectedFlight}
             aircraft={aircraft}
             zones={zones}
+            openEdit={editParam === "1"}
             hardBlockReason={hardBlockReason}
             pilotUserId={effectivePicId}
             overridesAcknowledged={overridesAcknowledged}

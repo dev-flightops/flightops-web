@@ -49,6 +49,34 @@ describe("OpenFlightForm: a round trip by default, its times from the cruise spe
     expect(stopInputs("stop_destination")).toHaveLength(0);
   });
 
+  it("brings the way home to an origin typed over letter by letter (#132)", async () => {
+    // The client, 23 Oct: "the leg two portion is not updating to PAKN".
+    renderForm();
+    await userEvent.type(input("origin"), "panc");
+    await userEvent.type(input("destination"), "9z8");
+    expect(stopInputs("stop_destination").map((i) => i.value)).toEqual(["PANC"]);
+
+    await userEvent.clear(input("origin"));
+    await userEvent.type(input("origin"), "pakn");
+    expect(stopInputs("stop_destination").map((i) => i.value)).toEqual(["PAKN"]);
+    expect(screen.getByRole("checkbox", { name: /Round trip: back to PAKN/ })).toBeChecked();
+  });
+
+  it("makes a way home sent elsewhere by hand an ordinary stop (#132)", async () => {
+    renderForm();
+    await userEvent.type(input("origin"), "pakn");
+    await userEvent.type(input("destination"), "9z8");
+    const home = stopInputs("stop_destination")[0];
+    await userEvent.clear(home);
+    await userEvent.type(home, "panc");
+    expect(screen.getByRole("checkbox", { name: /Round trip/ })).not.toBeChecked();
+
+    // The origin no longer moves it.
+    await userEvent.clear(input("origin"));
+    await userEvent.type(input("origin"), "pabe");
+    expect(stopInputs("stop_destination").map((i) => i.value)).toEqual(["PANC"]);
+  });
+
   it("fills the times in from the Caravan's 165 kt and the ground time", async () => {
     renderForm();
     await userEvent.selectOptions(screen.getByLabelText(/Aircraft/), "ac-1");

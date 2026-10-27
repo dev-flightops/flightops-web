@@ -57,6 +57,21 @@ describe("FlightResults", () => {
     );
   });
 
+  it("shows every stop of a flight found by one of its legs (#132)", () => {
+    // MM2001, PAKN → 9Z8 → PAKN, answers a search from PAKN to 9Z8.
+    render(
+      <FlightResults
+        results={response(
+          [flight({ flight_number: "MM2001", origin: "PAKN", destination: "9Z8", route: ["PAKN", "9Z8", "PAKN"] })],
+          { origin: "PAKN", destination: "9Z8" },
+        )}
+        bookingHref={href}
+      />,
+    );
+    expect(screen.getByText("PAKN → 9Z8 → PAKN")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Book" })).toBeInTheDocument();
+  });
+
   it("offers no Book link on an unbookable flight, and says why", () => {
     render(
       <FlightResults
