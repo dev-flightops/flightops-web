@@ -6,6 +6,7 @@ import {
   loadUnacknowledgedAlerts,
   type UnacknowledgedAlerts,
 } from "@/lib/dashboards/unacknowledged-alerts";
+import { seesOperationalAlerts } from "@/lib/roles";
 
 import { signOutAction } from "./actions";
 import { clockInAction, clockOutAction } from "./duty-actions";
@@ -54,6 +55,7 @@ export interface HeaderActionsData {
   clockInAction: typeof clockInAction;
   clockOutAction: typeof clockOutAction;
   aiTools: ReturnType<typeof visibleAiTools>;
+  showBell: boolean;
   bellAlerts: UnacknowledgedAlerts | null;
   dismissAlertAction: typeof dismissAlertAction;
 }
@@ -63,9 +65,12 @@ export async function buildHeaderActionsData(
   fullName: string | null,
   roles: readonly string[],
 ): Promise<HeaderActionsData> {
+  // The bell carries the operation's alerts, which the bookkeeper has no
+  // use for (#128); their pages don't fetch them either.
+  const showBell = seesOperationalAlerts(roles);
   const [initialDuty, bellAlerts] = await Promise.all([
     getCurrentDuty().catch(() => null),
-    loadUnacknowledgedAlerts().catch(() => null),
+    showBell ? loadUnacknowledgedAlerts().catch(() => null) : null,
   ]);
 
   return {
@@ -83,6 +88,7 @@ export async function buildHeaderActionsData(
     clockInAction,
     clockOutAction,
     aiTools: visibleAiTools(roles),
+    showBell,
     bellAlerts,
     dismissAlertAction,
   };

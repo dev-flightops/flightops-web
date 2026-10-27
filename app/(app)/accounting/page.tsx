@@ -10,8 +10,11 @@ import {
   type AccountingSummary,
 } from "@/lib/api/reports";
 
+import { linkCaps } from "@/components/ff/controls";
+
 import { money } from "../invoicing/money";
 import { PeriodControls } from "@/components/reports/period-controls";
+import { DEFAULT_TIME_ZONE, localYearMonth, zoneName } from "@/lib/format/local-time";
 
 /**
  * /accounting — one month's money, and what is still owed.
@@ -46,9 +49,16 @@ export const dynamic = "force-dynamic";
 
 /** The last day of a past month, so aging shows that month-end as it
  *  stood (#29); undefined for this month or later, which ages as of
- *  today. Months are UTC, as the summary's are. */
-export function monthEndIfPast(year: number, month: number, now: Date = new Date()): string | undefined {
-  const thisMonth = now.getUTCFullYear() * 12 + now.getUTCMonth();
+ *  today. Months are the company's, in its zone, as the summary's are
+ *  (#128). */
+export function monthEndIfPast(
+  year: number,
+  month: number,
+  timeZone: string,
+  now: Date = new Date(),
+): string | undefined {
+  const today = localYearMonth(timeZone, now);
+  const thisMonth = today.year * 12 + (today.month - 1);
   if (year * 12 + (month - 1) >= thisMonth) return undefined;
   return new Date(Date.UTC(year, month, 0)).toISOString().slice(0, 10);
 }
@@ -86,13 +96,19 @@ export default async function AccountingPage({
     const code = err instanceof ApiError ? err.status : 0;
     loadError =
       code === 403
-        ? "Accounting is limited to executive admins and the director of operations."
+        ? "Accounting is limited to executive admins, the director of operations and the accountant."
         : "Could not load the summary just now.";
   }
 
   try {
     aging = await getAgingReport(
-      bothGiven ? monthEndIfPast(Number(yearParam), Number(monthParam)) : undefined,
+      bothGiven
+        ? monthEndIfPast(
+            Number(yearParam),
+            Number(monthParam),
+            summary?.time_zone ?? DEFAULT_TIME_ZONE,
+          )
+        : undefined,
     );
   } catch {
     agingError = "Could not load the aging report just now.";
@@ -107,9 +123,19 @@ export default async function AccountingPage({
           </h1>
           {summary && (
             <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
-              {summary.period_label} · {summary.block_hours.toFixed(1)} block
-              hours
+              {`${summary.period_label} · ${summary.block_hours.toFixed(1)} block hours · the month ends at midnight ${zoneName(summary.time_zone)}`}
             </p>
+          )}
+          {summary && (
+            // The month's flights for the bookkeeper's software. The
+            // export sits under Reservations, as in legacy, where the
+            // accountant has no other page to start from (#128).
+            <Link
+              href={`/reservations/accounting-export?start=${summary.period_start}&end=${summary.period_end}`}
+              className={`${linkCaps} mt-3`}
+            >
+              Export this month <span aria-hidden>›</span>
+            </Link>
           )}
         </div>
         {summary && (
@@ -147,7 +173,7 @@ export default async function AccountingPage({
             />
             <Figure
               label="Invoiced"
-              sub="invoices raised this month"
+              sub="invoices sent this month"
               cents={summary.invoiced_cents}
             />
             <Figure
@@ -166,10 +192,10 @@ export default async function AccountingPage({
             >
               <span className="font-semibold">
                 {summary.uninvoiced_flights} flight{summary.uninvoiced_flights === 1 ? "" : "s"} flown
-                with no invoice — {money(summary.uninvoiced_cents)} booked.
+                with no invoice sent — {money(summary.uninvoiced_cents)} booked.
               </span>{" "}
               <Link href="/invoicing" className="underline">
-                Raise them from Invoicing
+                Raise or send them from Invoicing
               </Link>{" "}
               before closing the month.
             </p>

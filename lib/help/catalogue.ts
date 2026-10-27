@@ -1628,7 +1628,7 @@ export const HELP_ENTRIES: HelpEntry[] = [
   {
     route: "/invoicing",
     title: "Invoicing",
-    whoCanUse: ["exec_admin"],
+    whoCanUse: ["exec_admin", "director_of_operations", "accountant"],
     whatItDoes:
       "Invoices raised against completed work, and what has been paid. Built from bookings and charters that have flown rather than entered separately, so an invoice traces back to a flight.",
     howToUse: [
@@ -1643,7 +1643,7 @@ export const HELP_ENTRIES: HelpEntry[] = [
   {
     route: "/accounting",
     title: "Accounting",
-    whoCanUse: ["exec_admin"],
+    whoCanUse: ["exec_admin", "director_of_operations", "accountant"],
     whatItDoes:
       "The financial view of the operation, and the exports that hand it to whatever the operator keeps its books in. This app is not the ledger; it is the source the ledger is fed from.",
     howToUse: [
@@ -1657,7 +1657,7 @@ export const HELP_ENTRIES: HelpEntry[] = [
   {
     route: "/reservations/accounting-export",
     title: "Accounting export",
-    whoCanUse: ["exec_admin", "director_of_operations"],
+    whoCanUse: ["exec_admin", "director_of_operations", "accountant"],
     whatItDoes:
       "The bookings-side export: completed bookings for a period, as a file the operator's accounting system can take.",
     howToUse: [

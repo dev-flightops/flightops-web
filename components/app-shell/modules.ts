@@ -1045,6 +1045,28 @@ export function moduleStatusHint(status: ModuleStatus): string {
  *
  * Departments not listed are visible to everyone.
  */
+/**
+ * Admin's and Reservations' audiences before the company's bookkeeper
+ * joined them (#128). The accountant is admitted to both departments for
+ * the money pages alone, so every module there that used to inherit its
+ * department names one of these instead: admitting a role to a
+ * department must not hand it a page by omission.
+ */
+const ADMIN_STAFF: readonly Role[] = [
+  "exec_admin",
+  "director_of_operations",
+  "director_of_maintenance",
+  "dispatcher",
+  "chief_pilot",
+  "check_airman",
+];
+const RESERVATIONS_STAFF: readonly Role[] = [
+  "exec_admin",
+  "director_of_operations",
+  "dispatcher",
+  "reservations_agent",
+];
+
 export const DEPARTMENT_ROLES: Partial<Record<DepartmentId, readonly Role[]>> =
   {
     // Dispatch, flight following, schedule, weather, currency, elog.
@@ -1083,13 +1105,10 @@ export const DEPARTMENT_ROLES: Partial<Record<DepartmentId, readonly Role[]>> =
       "director_of_maintenance",
     ],
     // Booking, manifests, customers, charter, rewards. Explicitly not
-    // pilots or crew — the client's own example.
-    reservations: [
-      "exec_admin",
-      "director_of_operations",
-      "dispatcher",
-      "reservations_agent",
-    ],
+    // pilots or crew — the client's own example. The accountant for the
+    // accounting export only (#128): every other module here names
+    // RESERVATIONS_STAFF.
+    reservations: [...RESERVATIONS_STAFF, "accountant"],
     // director_of_maintenance for ground equipment, which is theirs.
     "ground-ops": [
       "exec_admin",
@@ -1124,15 +1143,10 @@ export const DEPARTMENT_ROLES: Partial<Record<DepartmentId, readonly Role[]>> =
     safety: [...ROLES],
     hr: ["exec_admin", "director_of_operations"],
     // Reporting. The GOM puts running special reports at Level 2, which
-    // is where the check airman and the DOM sit.
-    admin: [
-      "exec_admin",
-      "director_of_operations",
-      "director_of_maintenance",
-      "dispatcher",
-      "chief_pilot",
-      "check_airman",
-    ],
+    // is where the check airman and the DOM sit. The accountant for
+    // Invoicing, Accounting and Profitability only (#128): every other
+    // module here names ADMIN_STAFF or its own roles.
+    admin: [...ADMIN_STAFF, "accountant"],
     // The GOM has Level 1 adding and archiving users and aircraft, and
     // names the DO there. The DOM is deliberately not included — an
     // operator who wants that grants Executive Admin alongside.
@@ -1429,8 +1443,9 @@ export const MODULE_ROLES: Record<string, readonly Role[]> = {
   //
   // Without this entry it inherits the Admin department and the link
   // appears for the DOM, the dispatcher, the chief pilot and the check
-  // airman — four roles the service refuses.
-  invoicing: ["exec_admin", "director_of_operations"],
+  // airman — four roles the service refuses. The accountant since #128:
+  // reviewing, sending and reconciling invoices is the bookkeeper's job.
+  invoicing: ["exec_admin", "director_of_operations", "accountant"],
 
   // Matches reports-service's bi route. Revenue by customer and
   // margin by airframe are commercial figures, so the same two roles
@@ -1447,8 +1462,9 @@ export const MODULE_ROLES: Record<string, readonly Role[]> = {
   // acct_export gate (exec_admin, director_ops, admin). Every flight
   // with its PIC and notes, for the books. Without this entry it
   // inherits Reservations and the link appears for the dispatcher and
-  // the reservations agent, both of whom the service refuses.
-  "reservations-acct-export": ["exec_admin", "director_of_operations"],
+  // the reservations agent, both of whom the service refuses. The
+  // accountant since #128: legacy's role table gave it the export.
+  "reservations-acct-export": ["exec_admin", "director_of_operations", "accountant"],
 
   // Matches reports-service's integrity route. Wider than the filings
   // deliberately: the GOM makes the Director of Operations responsible
@@ -1476,14 +1492,38 @@ export const MODULE_ROLES: Record<string, readonly Role[]> = {
   // a commercial figure, so the same two roles the accounting summary
   // admits — checked against the service rather than assumed, after
   // TypeScript caught a duplicate MODULE_ROLES key on the last page
-  // that turned out to be gated already.
-  profitability: ["exec_admin", "director_of_operations"],
+  // that turned out to be gated already. The accountant since #128.
+  profitability: ["exec_admin", "director_of_operations", "accountant"],
 
   // Matches reports-service's accounting summary and billing-service's
   // aging report. This page carries revenue, cost and margin, which an
   // operator does not necessarily share with the whole roster — the
-  // same reason the executive summary is gated this way.
-  accounting: ["exec_admin", "director_of_operations"],
+  // same reason the executive summary is gated this way. The company's
+  // bookkeeper reads it too (#128).
+  accounting: ["exec_admin", "director_of_operations", "accountant"],
+
+  // Admin and Reservations modules that inherited their department until
+  // the accountant joined both (#128). Each keeps exactly the audience it
+  // had; the accountant's own pages are the four money entries above.
+  "dashboard-executive": ADMIN_STAFF,
+  "dashboard-director-ops": ADMIN_STAFF,
+  "dashboard-chief-pilot": ADMIN_STAFF,
+  "dashboard-dispatcher": ADMIN_STAFF,
+  "dashboard-station": ADMIN_STAFF,
+  "dashboard-ops-score": ADMIN_STAFF,
+  "dashboard-system": ADMIN_STAFF,
+  reports: ADMIN_STAFF,
+  "reports-executive": ADMIN_STAFF,
+  fleetbrain: ADMIN_STAFF,
+  "ops-brief": ADMIN_STAFF,
+  "ai-query": ADMIN_STAFF,
+  "reservations-search": RESERVATIONS_STAFF,
+  "reservations-board": RESERVATIONS_STAFF,
+  "reservations-manifest": RESERVATIONS_STAFF,
+  "reservations-waiting": RESERVATIONS_STAFF,
+  "reservations-customers": RESERVATIONS_STAFF,
+  "reservations-charter": RESERVATIONS_STAFF,
+  "reservations-rewards": RESERVATIONS_STAFF,
 
   // Matches safety-service's SAFETY_REPORT_REVIEWERS (#58): the inbox of
   // filed reports. Anyone may file one, from the red button; their own

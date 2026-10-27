@@ -1,6 +1,8 @@
 import Link from "next/link";
 
+import { auth } from "@/auth";
 import { linkCaps } from "@/components/ff/controls";
+import { hasAnyRole, MANIFEST_EDITORS } from "@/lib/roles";
 import { cn } from "@/lib/utils";
 import { loadZoneTable } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
@@ -20,6 +22,9 @@ export const dynamic = "force-dynamic";
  * for its route and suggests filling its spare weight from it. An entry's
  * weight and pieces are what is still on the ground: loading part of it
  * leaves the rest here, and taking a line off a manifest puts it back.
+ *
+ * Whoever builds manifests logs and removes entries (MANIFEST_EDITORS);
+ * the accountant reads the list (#128).
  */
 export default async function WaitingMailFreightPage({
   searchParams,
@@ -31,6 +36,7 @@ export default async function WaitingMailFreightPage({
 
   // Received times read in the station's own zone (#68).
   const zones = loadZoneTable();
+  const canLog = hasAnyRole((await auth())?.roles ?? [], MANIFEST_EDITORS);
   let data: WaitingListResponse | null = null;
   let loadError: string | null = null;
   try {
@@ -66,9 +72,11 @@ export default async function WaitingMailFreightPage({
         ) : null}
       </header>
 
-      <section aria-label="Log mail or freight" className="mb-6 rounded-lg border border-border bg-card p-4">
-        <AddWaitingForm station={station} />
-      </section>
+      {canLog ? (
+        <section aria-label="Log mail or freight" className="mb-6 rounded-lg border border-border bg-card p-4">
+          <AddWaitingForm station={station} />
+        </section>
+      ) : null}
 
       {loadError ? (
         <p role="alert" className="text-sm text-status-yellow">
@@ -101,9 +109,11 @@ export default async function WaitingMailFreightPage({
                       <th scope="col" className={`${TH} text-right`}>Pieces</th>
                       <th scope="col" className={TH}>Shipper → Consignee</th>
                       <th scope="col" className={TH}>Notes</th>
-                      <th scope="col" className={`${TH} text-right`}>
-                        <span className="sr-only">Actions</span>
-                      </th>
+                      {canLog ? (
+                        <th scope="col" className={`${TH} text-right`}>
+                          <span className="sr-only">Actions</span>
+                        </th>
+                      ) : null}
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border">
@@ -124,9 +134,11 @@ export default async function WaitingMailFreightPage({
                           {i.shipper || i.consignee ? `${i.shipper ?? "—"} → ${i.consignee ?? "—"}` : "—"}
                         </td>
                         <td className="px-3 py-2.5 text-xs text-muted-foreground">{i.notes ?? "—"}</td>
-                        <td className="px-3 py-2.5 text-right">
-                          <CancelWaitingButton id={i.id} label={i.description} />
-                        </td>
+                        {canLog ? (
+                          <td className="px-3 py-2.5 text-right">
+                            <CancelWaitingButton id={i.id} label={i.description} />
+                          </td>
+                        ) : null}
                       </tr>
                     ))}
                   </tbody>

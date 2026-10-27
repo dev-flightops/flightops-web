@@ -215,11 +215,11 @@ export const HOME_MODULE_ROLES: Record<string, readonly Role[]> = {
   ],
   hr: ["exec_admin", "director_of_operations"],
   housing: ["exec_admin", "director_of_operations", "ground_ops"],
-  // Already the right pair, and it matches billing-service's
-  // customer-invoice routes plus MODULE_ROLES.invoicing. Raising and
-  // sending an invoice is the office's job; voiding one is a financial
-  // correction.
-  invoicing: ["exec_admin", "director_of_operations"],
+  // Matches billing-service's customer-invoice routes plus
+  // MODULE_ROLES.invoicing. Raising and sending an invoice is the
+  // office's job, the company's bookkeeper's included (#128); voiding one
+  // is a financial correction.
+  invoicing: ["exec_admin", "director_of_operations", "accountant"],
   compliance: [
     "exec_admin",
     "director_of_operations",

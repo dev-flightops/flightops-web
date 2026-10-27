@@ -1,7 +1,9 @@
+import { loadZoneTable } from "@/lib/api/auth";
 import { getAccountingExport } from "@/lib/api/ops";
 import { listCustomers } from "@/lib/api/reservations";
 import { ApiError } from "@/lib/api/client";
 import type { AccountingExportResponse } from "@/lib/api/types";
+import { utcToLocalInput } from "@/lib/format/local-time";
 import { isValidIsoDay } from "@/lib/iso-day";
 
 import { csvFilename, rowsToCsv } from "./csv";
@@ -15,15 +17,16 @@ import { AcctExportFilterBar, type CustomerOption } from "./filter-bar";
  * legacy's file (15 columns, its file name, CRLF lines), so the
  * bookkeeper's existing import keeps working (#27).
  *
- * Exec Admins and the Director of Operations only, as in legacy
+ * Exec Admins, the Director of Operations and the company's bookkeeper
+ * (#128), as legacy's gate and role table had it
  * (`modules/acct_export/router.py:33`). The ops service refuses anyone
  * else, and they get the access panel the other finance pages show,
  * with nothing behind it.
  *
  * The range comes from the URL: the filter bar is a GET form. With none
  * it runs from the 1st of this month to today, legacy's default
- * (`router.py:188-192`). Days are UTC, because the export dates each
- * flight by its UTC landing day.
+ * (`router.py:188-192`). Days are the company's, in its zone (#128),
+ * because the export dates each flight by its landing day there.
  */
 
 export const dynamic = "force-dynamic";
@@ -56,8 +59,11 @@ async function customerOptions(): Promise<CustomerOption[]> {
   }
 }
 
-function defaultRange(now: Date = new Date()): { start: string; end: string } {
-  const today = now.toISOString().slice(0, 10);
+function defaultRange(
+  timeZone: string,
+  now: Date = new Date(),
+): { start: string; end: string } {
+  const today = utcToLocalInput(now.toISOString(), timeZone).slice(0, 10);
   return { start: `${today.slice(0, 8)}01`, end: today };
 }
 
@@ -67,7 +73,8 @@ export default async function AccountingExportPage({
   searchParams: Promise<Params>;
 }) {
   const params = await searchParams;
-  const fallback = defaultRange();
+  // The company's zone, by the services' rule: the bases', else Alaska's.
+  const fallback = defaultRange((await loadZoneTable()).fallback);
   const start = parseDate(params.start) ?? fallback.start;
   const end = parseDate(params.end) ?? fallback.end;
   const customerParam = Array.isArray(params.customer) ? params.customer[0] : params.customer;
@@ -103,8 +110,8 @@ export default async function AccountingExportPage({
           role="alert"
           className="notice notice-red text-sm"
         >
-          The accounting export is limited to executive admins and the
-          director of operations.
+          The accounting export is limited to executive admins, the
+          director of operations and the accountant.
         </p>
       </div>
     );

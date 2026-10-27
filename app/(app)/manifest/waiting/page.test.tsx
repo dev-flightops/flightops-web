@@ -11,12 +11,13 @@ const mocks = vi.hoisted(() => {
       super(message);
     }
   }
-  return { TestApiError, listWaiting: vi.fn(), loadZoneTable: vi.fn() };
+  return { TestApiError, auth: vi.fn(), listWaiting: vi.fn(), loadZoneTable: vi.fn() };
 });
 vi.mock("react", async (importOriginal) => ({
   ...(await importOriginal<typeof import("react")>()),
   useActionState: (_action: unknown, initial: unknown) => [initial, () => {}, false],
 }));
+vi.mock("@/auth", () => ({ auth: mocks.auth }));
 vi.mock("@/lib/api/client", () => ({ ApiError: mocks.TestApiError, apiFetch: vi.fn() }));
 vi.mock("@/lib/api/auth", () => ({ loadZoneTable: mocks.loadZoneTable }));
 vi.mock("@/lib/api/manifest", async (importOriginal) => ({
@@ -60,6 +61,7 @@ async function renderPage(station?: string) {
 }
 
 beforeEach(() => {
+  mocks.auth.mockReset().mockResolvedValue({ roles: ["ground_ops"] });
   mocks.listWaiting.mockReset().mockResolvedValue({ items: ITEMS, routes: ROUTES });
   mocks.loadZoneTable
     .mockReset()
@@ -108,6 +110,16 @@ describe("/manifest/waiting (#75)", () => {
     await renderPage();
     expect(screen.getByText("Nothing is waiting.")).toBeTruthy();
     expect(screen.getByRole("region", { name: "Log mail or freight" })).toBeTruthy();
+  });
+
+  it("shows the accountant what is waiting, with nothing to log or remove (#128)", async () => {
+    mocks.auth.mockResolvedValue({ roles: ["accountant"] });
+    await renderPage();
+    const bethel = within(screen.getByRole("region", { name: "PABE → PAHP" }));
+    expect(bethel.getByText("2 entries · 2,300 lb · 41 pieces")).toBeTruthy();
+    expect(screen.queryByRole("region", { name: "Log mail or freight" })).toBeNull();
+    expect(screen.queryByRole("button")).toBeNull();
+    expect(bethel.queryByRole("columnheader", { name: "Actions" })).toBeNull();
   });
 
   it("says when the list can't be had", async () => {

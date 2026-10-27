@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { auth } from "@/auth";
 import { ApiError } from "@/lib/api/client";
 import {
   CUSTOMER_TYPES,
@@ -8,6 +9,7 @@ import {
   type CustomerType,
   listCustomers,
 } from "@/lib/api/reservations";
+import { CUSTOMER_MANAGERS, hasAnyRole } from "@/lib/roles";
 
 /**
  * /customers — Customer directory (top-level route matching legacy
@@ -26,6 +28,10 @@ export default async function CustomersListPage({
   }>;
 }) {
   const params = await searchParams;
+  // The DO and the accountant read customers (#128); adding one is for
+  // those who keep the list, so the button is not offered to be refused.
+  const session = await auth();
+  const canAdd = hasAnyRole(session?.roles ?? [], CUSTOMER_MANAGERS);
   const q = params.q?.trim() ?? "";
   const customerType = _validType(params.type);
   const includeArchived = params.include_archived === "1";
@@ -59,12 +65,14 @@ export default async function CustomersListPage({
             Individual · Corporate · Government · Non-Profit
           </p>
         </div>
-        <Link
-          href="/customers/new"
-          className="btn-caps rounded-md bg-primary px-4 py-2 text-white hover:bg-brand-dark"
-        >
-          + New Customer
-        </Link>
+        {canAdd && (
+          <Link
+            href="/customers/new"
+            className="btn-caps rounded-md bg-primary px-4 py-2 text-white hover:bg-brand-dark"
+          >
+            + New Customer
+          </Link>
+        )}
       </header>
 
       <form method="GET" className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-[1fr_10rem_auto]">
