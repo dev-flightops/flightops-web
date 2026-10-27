@@ -3,9 +3,15 @@ import { redirect } from "next/navigation";
 
 import { ApiError } from "@/lib/api/client";
 import { listSupplierFuelOrders } from "@/lib/api/ground";
-import { formatQuote, getPortalDashboard } from "@/lib/api/portal";
+import {
+  formatQuote,
+  getPortalDashboard,
+  getPortalInvoices,
+  type PortalInvoicesResponse,
+} from "@/lib/api/portal";
 
-import { StatusBadge, formatDate } from "./portal-ui";
+import { InvoiceDownload } from "./invoice-download";
+import { InvoiceStatus, StatusBadge, formatDate } from "./portal-ui";
 
 /**
  * /portal — the customer's view of their own charters.
@@ -18,14 +24,24 @@ import { StatusBadge, formatDate } from "./portal-ui";
  * Read-only. Legacy offers no booking, cancellation or change here, and
  * neither do we — a customer sees what operations has recorded, and
  * changes go through the operator.
+ *
+ * Below the charters, the invoices sent to them, each with its PDF
+ * (#129, decided 26 Oct).
  */
 
 export const dynamic = "force-dynamic";
 
 export default async function PortalPage() {
+  // Both at once. The invoices are billing's: when they can't be read the
+  // page loses that section, not the charters.
+  const [dashboard, invoiceList] = await Promise.allSettled([
+    getPortalDashboard(),
+    getPortalInvoices(),
+  ]);
   let data;
   try {
-    data = await getPortalDashboard();
+    if (dashboard.status === "rejected") throw dashboard.reason;
+    data = dashboard.value;
   } catch (err) {
     const status = err instanceof ApiError ? err.status : 0;
     return (
@@ -120,7 +136,87 @@ export default async function PortalPage() {
           Showing {data.items.length} of {data.total} flights.
         </p>
       )}
+      <Invoices invoices={invoiceList.status === "fulfilled" ? invoiceList.value : null} />
     </Shell>
+  );
+}
+
+/**
+ * The invoices sent to this customer (#129), newest first, each with its
+ * PDF: the same document the operator sends. What is still owed leads;
+ * paid and voided ones stay, so the list matches the papers they were
+ * given.
+ */
+function Invoices({ invoices }: { invoices: PortalInvoicesResponse | null }) {
+  return (
+    <section aria-labelledby="invoices-heading" className="mt-10">
+      <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2 border-b border-border pb-2">
+        <h2 id="invoices-heading" className="section-title">
+          Invoices
+        </h2>
+        {invoices && invoices.balance_cents > 0 ? (
+          <p className="text-sm font-semibold text-foreground">
+            {`Balance due ${formatQuote(invoices.balance_cents)}`}
+          </p>
+        ) : null}
+      </div>
+      {invoices === null ? (
+        <p className="text-sm text-status-yellow">
+          {"We couldn’t load your invoices just now. Please try again in a moment."}
+        </p>
+      ) : invoices.items.length === 0 ? (
+        <p className="text-sm text-muted-foreground">No invoices yet.</p>
+      ) : (
+        <div className="overflow-x-auto rounded-lg border border-border bg-card">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="ff-thead">
+                <th className="px-4 py-3">Invoice</th>
+                <th className="px-4 py-3">Date</th>
+                <th className="px-4 py-3">Flight</th>
+                <th className="px-4 py-3 text-right">Total</th>
+                <th className="px-4 py-3 text-right">Balance</th>
+                <th className="px-4 py-3">Status</th>
+                <th className="px-4 py-3">
+                  <span className="sr-only">PDF</span>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {invoices.items.map((i) => (
+                <tr key={i.id} className="border-b border-border/60 last:border-0">
+                  <td className="px-4 py-3 font-mono">{i.invoice_number}</td>
+                  <td className="px-4 py-3 text-muted-foreground">
+                    {formatDate(i.invoice_date)}
+                    {i.status === "sent" && i.due_date ? (
+                      <span className="block text-xs">{`Due ${formatDate(i.due_date)}`}</span>
+                    ) : null}
+                  </td>
+                  <td className="px-4 py-3">
+                    {i.flight_number ? <span className="font-mono">{i.flight_number}</span> : "—"}
+                    {i.origin_icao && i.destination_icao ? (
+                      <span className="block font-mono text-xs text-muted-foreground">
+                        {`${i.origin_icao} → ${i.destination_icao}`}
+                      </span>
+                    ) : null}
+                  </td>
+                  <td className="px-4 py-3 text-right tabular-nums">{formatQuote(i.total_cents)}</td>
+                  <td className="px-4 py-3 text-right tabular-nums">
+                    {i.status === "sent" ? formatQuote(i.balance_cents) : "—"}
+                  </td>
+                  <td className="px-4 py-3">
+                    <InvoiceStatus invoice={i} />
+                  </td>
+                  <td className="px-4 py-3 text-right">
+                    <InvoiceDownload invoiceId={i.id} invoiceNumber={i.invoice_number} />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </section>
   );
 }
 

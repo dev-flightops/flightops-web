@@ -1,4 +1,5 @@
 import { type CharterStatus } from "@/lib/api/charter";
+import type { PortalInvoiceRow } from "@/lib/api/portal";
 
 /**
  * Customer-facing status wording.
@@ -47,6 +48,24 @@ export function StatusBadge({ status }: { status: CharterStatus }) {
       {PORTAL_STATUS_LABELS[status] ?? status}
     </span>
   );
+}
+
+/** An invoice's state in the customer's words (#129): what they still owe
+ *  reads in yellow, paid in green, a voided one quietly. */
+export function InvoiceStatus({
+  invoice,
+}: {
+  invoice: Pick<PortalInvoiceRow, "status" | "paid_cents">;
+}) {
+  const [word, tone] =
+    invoice.status === "paid"
+      ? ["Paid", "text-status-green"]
+      : invoice.status === "void"
+        ? ["Void", "text-muted-foreground"]
+        : invoice.paid_cents > 0
+          ? ["Part paid", "text-status-yellow"]
+          : ["Unpaid", "text-status-yellow"];
+  return <span className={`status-mark ${tone}`}>{word}</span>;
 }
 
 /**
