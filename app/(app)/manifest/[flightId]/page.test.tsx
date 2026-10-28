@@ -257,6 +257,8 @@ describe("pickups by stop (#120)", () => {
     const rows = within(seats).getAllByRole("row").slice(1);
     expect(rows.map((r) => r.textContent)).toEqual(["1  PABE → PAVA09", "2  PAVA → PAHP54", "3  PAHP → PABE90"]);
     expect(within(section("Passengers & Crew")).getByText("PABE → PABE")).toBeTruthy();
+    // #132: the header names every stop; a round trip read "PABE → PABE".
+    expect(screen.getByText(/^PABE → PAVA → PAHP → PABE/)).toBeInTheDocument();
   });
 
   it("has no leg table for a flight of one leg", async () => {

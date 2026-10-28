@@ -64,7 +64,9 @@ export function LoadFromSchedule({
   const goToDate = (next: string) => {
     if (!next) return;
     startTransition(() => {
-      router.push(`/dispatch/?date=${next}`);
+      // #132: stay where the dispatcher is, as every other packet control
+      // does; the default scrolled the page back to the top.
+      router.push(`/dispatch/?date=${next}`, { scroll: false });
     });
   };
 
@@ -153,6 +155,7 @@ export function LoadFromSchedule({
             startTransition(() => {
               router.push(
                 id ? `/dispatch/?date=${date}&flight=${id}` : `/dispatch/?date=${date}`,
+                { scroll: false },
               );
             });
           }}

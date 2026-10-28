@@ -128,6 +128,11 @@ describe("RightColumn / flight-actions row", () => {
     ).toBeInTheDocument();
   });
 
+  it("opens Edit straight away from the board's Edit link (#132)", () => {
+    render(<RightColumn flight={baseFlight({ status: "scheduled" })} openEdit />);
+    expect(screen.getByRole("dialog")).toHaveTextContent(/^Edit /);
+  });
+
   it("says whether a scheduled flight is flown VFR or IFR (#123)", () => {
     const { unmount } = render(<RightColumn flight={baseFlight({ status: "scheduled" })} />);
     expect(screen.getByText("VFR")).toBeInTheDocument();

@@ -163,6 +163,13 @@ function FlightBoardRow({ flight }: { flight: BoardFlightItem }) {
         >
           Docs
         </span>
+        {/* #132: "is there a way that we can go back in and edit a flight
+            after it's made it to this stage?" The packet's Edit, opened. */}
+        {flight.status === "scheduled" && (
+          <Link href={`/dispatch?flight=${flight.id}&edit=1`} className={`mr-4 ${linkCaps}`}>
+            Edit
+          </Link>
+        )}
         <Link href={`/dispatch?flight=${flight.id}`} className={linkCaps}>
           Update <span aria-hidden>›</span>
         </Link>

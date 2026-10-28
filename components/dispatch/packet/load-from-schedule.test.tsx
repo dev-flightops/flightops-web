@@ -67,12 +67,13 @@ describe("LoadFromSchedule", () => {
     expect(opt?.textContent).not.toMatch(/Sarah Kessler/);
   });
 
+  // #132: the page stays where the dispatcher is; it used to jump to the top.
   it("keeps the day in the URL when a flight is selected", async () => {
     push.mockReset();
     const user = userEvent.setup();
     panel();
     await user.selectOptions(screen.getByRole("combobox"), "f-1");
-    expect(push).toHaveBeenCalledWith(`/dispatch/?date=${DATE}&flight=f-1`);
+    expect(push).toHaveBeenCalledWith(`/dispatch/?date=${DATE}&flight=f-1`, { scroll: false });
   });
 
   it("keeps the day when the selection is cleared", async () => {
@@ -82,7 +83,7 @@ describe("LoadFromSchedule", () => {
     const user = userEvent.setup();
     panel({ selectedFlightId: "f-1" });
     await user.selectOptions(screen.getByRole("combobox"), "");
-    expect(push).toHaveBeenCalledWith(`/dispatch/?date=${DATE}`);
+    expect(push).toHaveBeenCalledWith(`/dispatch/?date=${DATE}`, { scroll: false });
   });
 
   it("shows the supplied selectedFlightId as the current value", () => {
@@ -123,7 +124,7 @@ describe("the day control", () => {
     const user = userEvent.setup();
     panel();
     await user.click(screen.getByRole("button", { name: /next day/i }));
-    expect(push).toHaveBeenCalledWith("/dispatch/?date=2026-06-01");
+    expect(push).toHaveBeenCalledWith("/dispatch/?date=2026-06-01", { scroll: false });
   });
 
   it("steps back exactly one day", async () => {
@@ -131,7 +132,7 @@ describe("the day control", () => {
     const user = userEvent.setup();
     panel();
     await user.click(screen.getByRole("button", { name: /previous day/i }));
-    expect(push).toHaveBeenCalledWith("/dispatch/?date=2026-05-30");
+    expect(push).toHaveBeenCalledWith("/dispatch/?date=2026-05-30", { scroll: false });
   });
 
   it("steps in UTC, not the viewer's zone", async () => {
@@ -143,7 +144,7 @@ describe("the day control", () => {
     const user = userEvent.setup();
     panel({ date: "2026-03-01" });
     await user.click(screen.getByRole("button", { name: /previous day/i }));
-    expect(push).toHaveBeenCalledWith("/dispatch/?date=2026-02-28");
+    expect(push).toHaveBeenCalledWith("/dispatch/?date=2026-02-28", { scroll: false });
   });
 
   it("handles a leap day", async () => {
@@ -151,7 +152,7 @@ describe("the day control", () => {
     const user = userEvent.setup();
     panel({ date: "2028-02-28" });
     await user.click(screen.getByRole("button", { name: /next day/i }));
-    expect(push).toHaveBeenCalledWith("/dispatch/?date=2028-02-29");
+    expect(push).toHaveBeenCalledWith("/dispatch/?date=2028-02-29", { scroll: false });
   });
 
   it("goes to a day picked straight from the field", () => {
@@ -162,7 +163,7 @@ describe("the day control", () => {
     fireEvent.change(screen.getByLabelText(/schedule date/i), {
       target: { value: "2026-07-04" },
     });
-    expect(push).toHaveBeenCalledWith("/dispatch/?date=2026-07-04");
+    expect(push).toHaveBeenCalledWith("/dispatch/?date=2026-07-04", { scroll: false });
   });
 
   it("ignores the field being cleared rather than jumping to an empty day", () => {

@@ -35,6 +35,7 @@ export function RightColumn({
   flight,
   aircraft = [],
   zones,
+  openEdit = false,
   hardBlockReason = null,
   pilotUserId = null,
   overridesAcknowledged = false,
@@ -51,6 +52,8 @@ export function RightColumn({
   aircraft?: AircraftListItem[];
   /** Base zones, for the Edit dialog's local times (#68). */
   zones?: ZoneTable;
+  /** #132: open the Edit dialog straight away (the board's Edit link). */
+  openEdit?: boolean;
   /** M2-G-5 — when set, the Generate PDF button is disabled and the
    *  tooltip explains why (e.g. "PIC has 2 hard-block currency
    *  items"). Null = no block, button behaves normally. */
@@ -83,6 +86,7 @@ export function RightColumn({
             flight={flight}
             aircraft={aircraft}
             zones={zones}
+            openEdit={openEdit}
             hardBlockReason={hardBlockReason}
             pilotUserId={pilotUserId}
             overridesAcknowledged={overridesAcknowledged}
@@ -150,6 +154,7 @@ function FlightActionsRow({
   flight,
   aircraft,
   zones,
+  openEdit = false,
   hardBlockReason = null,
   pilotUserId = null,
   overridesAcknowledged = false,
@@ -161,6 +166,7 @@ function FlightActionsRow({
   flight: FlightDetail;
   aircraft: AircraftListItem[];
   zones?: ZoneTable;
+  openEdit?: boolean;
   /** The same gate as Generate PDF. Release dispatch used to skip it,
    *  so a dispatcher could release with warnings unacknowledged. */
   hardBlockReason?: string | null;
@@ -183,7 +189,7 @@ function FlightActionsRow({
           <StatusBadge status={flight.status} />
           {/* #123: VFR unless marked IFR under Edit. */}
           <span className="eyebrow">{flight.is_ifr ? "IFR" : "VFR"}</span>
-          <EditFlightDialog flight={flight} aircraft={aircraft} zones={zones} />
+          <EditFlightDialog flight={flight} aircraft={aircraft} zones={zones} defaultOpen={openEdit} />
           {canDispatch ? (
             <CancelFlight flightId={flight.id} flightNumber={flight.flight_number} />
           ) : null}

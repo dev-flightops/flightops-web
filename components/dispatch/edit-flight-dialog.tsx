@@ -115,6 +115,8 @@ interface EditFlightDialogProps {
   aircraft: AircraftListItem[];
   /** Each base's zone, for the departure base the times are typed in. */
   zones?: ZoneTable;
+  /** Open on arrival: the board's Edit link (#132). */
+  defaultOpen?: boolean;
 }
 
 /** The typed local time as a UTC instant, if it differs from `stored`. */
@@ -248,10 +250,11 @@ export function EditFlightDialog({
   flight,
   aircraft,
   zones = DEFAULT_ZONE_TABLE,
+  defaultOpen = false,
 }: EditFlightDialogProps) {
   const router = useRouter();
   const storedZone = zoneFor(zones, flight.origin);
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(defaultOpen);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
