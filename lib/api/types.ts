@@ -105,6 +105,12 @@ export interface FlightListItem {
   /** Flown IFR (#123); VFR unless dispatch marks it. Absent from a
    *  service from before it. */
   is_ifr?: boolean;
+  /** The legs in flying order (#139); empty for a single-leg flight,
+   *  whose own times are its leg's. Absent from services before #139. */
+  legs?: FlightLeg[];
+  /** Seats held on each leg, in leg order, when the list is asked
+   *  `withSeats` (#139); else null or absent. */
+  seats_held_by_leg?: number[] | null;
 }
 
 /** One leg of a multi-stop flight. */
@@ -123,8 +129,6 @@ export interface FlightDetail extends FlightListItem {
   max_payload_lbs: number | null;
   released_at: string | null;
   released_by: UserRef | null;
-  /** Empty (or absent) for a single-leg flight. */
-  legs?: FlightLeg[];
 }
 
 export interface FlightListResponse {

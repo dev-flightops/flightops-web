@@ -82,6 +82,8 @@ export interface ListFlightsParams {
    *  against someone else's flight. There was nothing to filter on
    *  until the assignment table existed. */
   assignedToMe?: boolean;
+  /** Also the seats held on each leg (#139), as reservations count them. */
+  withSeats?: boolean;
   limit?: number;
   offset?: number;
 }
@@ -103,6 +105,8 @@ export async function listFlights(
   // server log reads like someone deliberately asked for everyone's
   // flights.
   if (params.assignedToMe) search.set("assigned_to_me", "true");
+  // #139: the seats held on each leg, for the schedule's calendar.
+  if (params.withSeats) search.set("with_seats", "true");
   if (params.limit !== undefined) search.set("limit", String(params.limit));
   if (params.offset !== undefined) search.set("offset", String(params.offset));
 

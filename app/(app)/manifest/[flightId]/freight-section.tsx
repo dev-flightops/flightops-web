@@ -42,7 +42,7 @@ export function FreightSection({
   const pounds = rows.reduce((sum, c) => sum + Number(c.weight_lbs), 0);
 
   return (
-    <section>
+    <section id={kind} className="scroll-mt-28">
       <div className="mb-2 flex items-baseline gap-2 px-1">
         <h2 className="eyebrow">{_TITLE[kind]}</h2>
         <span className="text-xs text-muted-foreground">

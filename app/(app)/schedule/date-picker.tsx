@@ -6,9 +6,12 @@ import { useTransition } from "react";
 export function DatePicker({
   defaultValue,
   statuses,
+  view,
 }: {
   defaultValue: string;
   statuses: string;
+  /** "list" keeps the list view (#139); the default is by aircraft. */
+  view?: string;
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -17,6 +20,7 @@ export function DatePicker({
     const params = new URLSearchParams();
     params.set("date", date);
     if (statuses) params.set("statuses", statuses);
+    if (view === "list") params.set("view", "list");
     startTransition(() => {
       router.replace(`/schedule?${params.toString()}`, { scroll: false });
     });

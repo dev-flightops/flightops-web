@@ -16,9 +16,12 @@ const OPTIONS: { value: FlightStatus; label: string }[] = [
 export function StatusFilter({
   date,
   statuses,
+  view,
 }: {
   date: string;
   statuses: FlightStatus[];
+  /** "list" keeps the list view (#139); the default is by aircraft. */
+  view?: string;
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -32,6 +35,7 @@ export function StatusFilter({
     if (set.size > 0) {
       params.set("statuses", [...set].sort().join(","));
     }
+    if (view === "list") params.set("view", "list");
     startTransition(() => {
       router.replace(`/schedule?${params.toString()}`, { scroll: false });
     });
