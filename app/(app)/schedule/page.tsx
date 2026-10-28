@@ -3,14 +3,18 @@ import Link from "next/link";
 import { buttonOutline, buttonSolid, linkCaps } from "@/components/ff/controls";
 import { PageHeader } from "@/components/ff/page-header";
 import { StatusMark, type StatusTone } from "@/components/ff/status-mark";
+import { loadZoneTable } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
 import { listFlights } from "@/lib/api/ops";
 import type {
   FlightListItem,
   FlightStatus,
 } from "@/lib/api/types";
+import { localClock, localDate, utcToLocalInput, type ZoneTable, zoneFor } from "@/lib/format/local-time";
+import { routeText } from "@/lib/route";
 
 import { DatePicker } from "./date-picker";
+import { FlightPanel } from "./flight-panel";
 import { StatusFilter } from "./status-filter";
 
 /**
@@ -21,12 +25,13 @@ import { StatusFilter } from "./status-filter";
  * /flight-following which is the live tracking surface.
  *
  * URL-driven state:
- *   ?date=YYYY-MM-DD          (default: today UTC)
+ *   ?date=YYYY-MM-DD          (default: today, the company's day, #137)
  *   ?statuses=scheduled,released  (default: all)
  *
  * Flights group by origin ICAO (each base gets its own panel), sorted
- * within each group by scheduled_departure_at ascending. Each row
- * gets a "Manifest" link to the printable release sheet.
+ * within each group by scheduled_departure_at ascending. A flight's
+ * number opens its panel: seats, bookings, Add booking, the manifest
+ * (#137). Its row links the manifest to build and the sheet to print.
  */
 
 const ALLOWED_STATUSES: ReadonlySet<FlightStatus> = new Set([
@@ -43,8 +48,10 @@ const STATUS_LABEL: Record<FlightStatus, string> = {
   completed: "Completed",
 };
 
-function todayUtc(): string {
-  return new Date().toISOString().slice(0, 10);
+/** Today in the company's zone (#137): a UTC day started tomorrow's
+ *  schedule at 4 pm Alaska time. */
+function today(zone: string): string {
+  return utcToLocalInput(new Date().toISOString(), zone).slice(0, 10);
 }
 
 function parseStatuses(raw: string | undefined): FlightStatus[] {
@@ -65,17 +72,18 @@ export default async function SchedulePage({
   searchParams: Promise<{ date?: string; statuses?: string }>;
 }) {
   const { date: dateParam, statuses: statusesParam } = await searchParams;
+  const zones = await loadZoneTable();
   const date =
     dateParam && /^\d{4}-\d{2}-\d{2}$/.test(dateParam)
       ? dateParam
-      : todayUtc();
+      : today(zones.fallback);
   const statuses = parseStatuses(statusesParam);
 
   let flights: FlightListItem[] = [];
   let loadError: string | null = null;
 
   try {
-    flights = (await listFlights({ onDate: date, limit: 200 })).items;
+    flights = (await listFlights({ onCompanyDate: date, limit: 200 })).items;
   } catch (err) {
     const status = err instanceof ApiError ? err.status : 0;
     loadError =
@@ -96,7 +104,7 @@ export default async function SchedulePage({
     <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
       <PageHeader
         title="Flight Schedule"
-        description={`Published schedule for ${date} (UTC) — ${totalCount} flight${totalCount === 1 ? "" : "s"}`}
+        description={`Published schedule for ${localDate(`${date}T12:00:00Z`, "UTC", { withYear: true })} — ${totalCount} flight${totalCount === 1 ? "" : "s"}. Open a flight for its bookings and manifest.`}
         actions={
           <>
             <DatePicker defaultValue={date} statuses={statusesParam ?? ""} />
@@ -136,7 +144,7 @@ export default async function SchedulePage({
       ) : (
         <div className="space-y-5">
           {Object.entries(grouped).map(([base, list]) => (
-            <BaseGroup key={base} base={base} flights={list} />
+            <BaseGroup key={base} base={base} flights={list} zones={zones} />
           ))}
         </div>
       )}
@@ -166,9 +174,11 @@ function groupByOrigin(
 function BaseGroup({
   base,
   flights,
+  zones,
 }: {
   base: string;
   flights: FlightListItem[];
+  zones: ZoneTable;
 }) {
   return (
     <section>
@@ -194,7 +204,7 @@ function BaseGroup({
           </thead>
           <tbody>
             {flights.map((f) => (
-              <FlightRow key={f.id} flight={f} />
+              <FlightRow key={f.id} flight={f} zones={zones} />
             ))}
           </tbody>
         </table>
@@ -203,15 +213,26 @@ function BaseGroup({
   );
 }
 
-function FlightRow({ flight }: { flight: FlightListItem }) {
+function FlightRow({ flight, zones }: { flight: FlightListItem; zones: ZoneTable }) {
+  const zone = zoneFor(zones, flight.origin);
+  const stops = flight.stops && flight.stops.length > 0 ? flight.stops : [flight.origin, flight.destination];
   return (
     <tr className="border-b border-border last:border-0">
-      <td className="px-4 py-3 font-semibold text-foreground">
-        {flight.flight_number}
+      <td className="px-4 py-3">
+        <FlightPanel
+          flight={{
+            id: flight.id,
+            flightNumber: flight.flight_number,
+            stops,
+            departs: `${localDate(flight.scheduled_departure_at, zone)}, ${localClock(flight.scheduled_departure_at, zone)}`,
+            departsLocal: utcToLocalInput(flight.scheduled_departure_at, zone),
+            tail: flight.aircraft.tail_number,
+          }}
+        />
       </td>
       <td className="px-4 py-3 font-mono text-foreground">
-        {flight.origin}{" "}
-        <span className="text-muted-foreground">→</span> {flight.destination}
+        {/* #137: every stop; a round trip read PABE → PABE. */}
+        {routeText(flight)}
       </td>
       <td className="px-4 py-3">
         <span className="font-mono text-foreground">
@@ -222,7 +243,8 @@ function FlightRow({ flight }: { flight: FlightListItem }) {
         </span>
       </td>
       <td className="px-4 py-3 font-mono text-xs text-foreground">
-        {formatHm(flight.scheduled_departure_at)}
+        {localClock(flight.scheduled_departure_at, zone)}
+        <span className="ml-1.5 text-muted-foreground">{formatHm(flight.scheduled_departure_at)}</span>
         {flight.actual_departure_at && (
           <span className="ml-1.5 text-status-green">
             (ATD {formatHm(flight.actual_departure_at)})
@@ -230,7 +252,8 @@ function FlightRow({ flight }: { flight: FlightListItem }) {
         )}
       </td>
       <td className="px-4 py-3 font-mono text-xs text-foreground">
-        {formatHm(flight.scheduled_arrival_at)}
+        {localClock(flight.scheduled_arrival_at, zone)}
+        <span className="ml-1.5 text-muted-foreground">{formatHm(flight.scheduled_arrival_at)}</span>
         {flight.actual_arrival_at && (
           <span className="ml-1.5 text-status-green">
             (ATA {formatHm(flight.actual_arrival_at)})
@@ -241,6 +264,10 @@ function FlightRow({ flight }: { flight: FlightListItem }) {
         <StatusBadge status={flight.status} />
       </td>
       <td className="px-4 py-3 text-right">
+        {/* #137: the manifest to build, not only the sheet to print. */}
+        <Link href={`/manifest/${flight.id}`} className={`mr-4 ${linkCaps}`}>
+          Open <span aria-hidden>›</span>
+        </Link>
         <Link
           href={`/schedule/${flight.id}/manifest`}
           target="_blank"

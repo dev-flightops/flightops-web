@@ -5,8 +5,10 @@ import { cn } from "@/lib/utils";
 import { notFound } from "next/navigation";
 
 import { auth } from "@/auth";
+import { loadZoneTable } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
 import { getFlight } from "@/lib/api/ops";
+import { type Booking, listWaitingBookings } from "@/lib/api/reservations";
 import {
   getFlightManifest,
   getLoadPlan,
@@ -18,9 +20,10 @@ import {
 } from "@/lib/api/manifest";
 import { fuelEstimateLine, fuelPlanningNote } from "@/lib/flights/fuel-estimate";
 import type { FlightDetail, FlightStatus } from "@/lib/api/types";
-import { hasAnyRole, MANIFEST_EDITORS, MANIFEST_LOCKERS } from "@/lib/roles";
+import { CUSTOMER_MANAGERS, hasAnyRole, MANIFEST_EDITORS, MANIFEST_LOCKERS } from "@/lib/roles";
 import { crewWeightNote } from "@/lib/flights/crew-weight";
 import { flightStops, routeText } from "@/lib/route";
+import { utcToLocalInput, zoneFor } from "@/lib/format/local-time";
 
 import { PlannedFuelForm } from "./fuel-form";
 import { LoadPlanApply } from "./load-plan-apply";
@@ -28,6 +31,7 @@ import { FreightSection } from "./freight-section";
 import { CreateManifestButton, LockManifestButton } from "./manifest-controls";
 import { fmtLbs, TH, THEAD } from "./manifest-bits";
 import { PassengersSection } from "./pax-section";
+import { WaitingBookings } from "./waiting-bookings";
 
 export const dynamic = "force-dynamic";
 
@@ -89,6 +93,28 @@ export default async function FlightManifestPage({
 
   const roles = (await auth())?.roles ?? [];
   const canBuild = hasAnyRole(roles, MANIFEST_EDITORS);
+  // Bookings waiting for this flight (#137), for whoever takes bookings:
+  // reservations' own roles. Anyone else, and a reservations build from
+  // before, goes without the section.
+  const canBook = hasAnyRole(roles, CUSTOMER_MANAGERS);
+  let waiting: Booking[] | null = null;
+  if (canBook && flight.status !== "completed" && flight.status !== "cancelled") {
+    try {
+      waiting = (await listWaitingBookings(flightId)).items;
+    } catch {
+      waiting = null;
+    }
+  }
+  const stops = flightStops(flight);
+  const newBooking = new URLSearchParams({
+    flight: flight.id,
+    origin: stops[0],
+    destination: stops[1] ?? stops[0],
+    // Local at the departure base, as the booking form reads it (#68).
+    date: utcToLocalInput(flight.scheduled_departure_at, zoneFor(await loadZoneTable(), stops[0])),
+    pax: "1",
+    return_to: `/manifest/${flight.id}`,
+  });
   const editable = manifest?.status === "draft" && canBuild;
   const canLock = editable && hasAnyRole(roles, MANIFEST_LOCKERS);
 
@@ -107,6 +133,15 @@ export default async function FlightManifestPage({
         flight={flight}
         lock={canLock ? <LockManifestButton flightId={flight.id} flightNumber={flight.flight_number} /> : null}
       />
+
+      {waiting && manifest?.status !== "final" ? (
+        <WaitingBookings
+          flightId={flight.id}
+          bookings={waiting}
+          newBookingHref={`/reservations/bookings/new?${newBooking.toString()}`}
+          canAdd={canBook}
+        />
+      ) : null}
 
       {manifest ? (
         <>

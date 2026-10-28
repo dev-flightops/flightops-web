@@ -164,6 +164,24 @@ export interface BookingFlightRef {
   status: string;
 }
 
+/** One person a booking is for (#137). On a flight they're a passenger on
+ *  its manifest, where weights, seat and notes (wheelchair assist) are
+ *  kept. */
+export interface BookingPassenger {
+  first_name: string;
+  last_name: string;
+  weight_lbs?: number | null;
+  baggage_lbs?: number | null;
+  notes?: string | null;
+  contact_phone?: string | null;
+  contact_email?: string | null;
+}
+
+/** A booking's number as the screens show it, like a charter's CHR-. */
+export function bookingRef(id: string): string {
+  return `BK-${id.slice(0, 8).toUpperCase()}`;
+}
+
 export interface Booking {
   id: string;
   customer: CustomerRef;
@@ -195,6 +213,9 @@ export interface Booking {
   cancelled_reason: string | null;
   created_at: string;
   updated_at: string;
+  /** Who it's for, as booked (#137); on a flight, its manifest has them.
+   *  Absent from servers that predate it. */
+  passengers?: BookingPassenger[];
 }
 
 export interface BookingListResponse {
@@ -251,6 +272,11 @@ export interface CreateBookingInput {
   cargo_notes?: string | null;
   quoted_total_cents?: number | null;
   notes?: string | null;
+  /** Who it's for, by name (#137); sets pax_count. */
+  passengers?: BookingPassenger[];
+  /** The flight to put it on now (#137): from a search result, the
+   *  schedule or the manifest. */
+  flight_id?: string | null;
 }
 
 export async function createBooking(
@@ -336,4 +362,58 @@ export async function assignBookingToFlight(
       headers: { "Content-Type": "application/json" },
     },
   );
+}
+
+
+/** One leg's seats (#137): held by bookings and the manifest's own
+ *  passengers; open is null when the aircraft's seats aren't recorded. */
+export interface LegSeatsView {
+  origin: string;
+  destination: string;
+  held: number;
+  open: number | null;
+}
+
+/** A booking's passenger as the flight's manifest has them now. */
+export interface FlightBookingPassenger {
+  id: string;
+  first_name: string;
+  last_name: string;
+  weight_lbs: number;
+  notes: string | null;
+  check_in_status: string;
+}
+
+export interface FlightBooking {
+  id: string;
+  customer: CustomerRef;
+  origin_icao: string;
+  destination_icao: string;
+  requested_departure_at: string;
+  pax_count: number;
+  status: BookingStatus;
+  notes: string | null;
+  /** On the manifest; empty for a booking from before that names nobody. */
+  passengers: FlightBookingPassenger[];
+}
+
+/** A flight's bookings and seats leg by leg (#137): the schedule's flight
+ *  panel. */
+export interface FlightBookings {
+  flight_id: string;
+  flight_number: string;
+  route: string[];
+  seats_total: number;
+  legs: LegSeatsView[];
+  bookings: FlightBooking[];
+}
+
+export async function getFlightBookings(flightId: string): Promise<FlightBookings> {
+  return apiFetch<FlightBookings>(`/reservations/flights/${flightId}/bookings`);
+}
+
+/** Bookings with no flight yet that this flight can carry on its day
+ *  (#137), for "Add to this flight" on the manifest. */
+export async function listWaitingBookings(flightId: string): Promise<BookingListResponse> {
+  return apiFetch<BookingListResponse>(`/reservations/flights/${flightId}/waiting-bookings`);
 }

@@ -10,37 +10,11 @@ import {
   confirmBooking,
   quoteBooking,
 } from "@/lib/api/reservations";
+import { refusalMessage } from "@/lib/reservations/refusals";
 
 export interface LifecycleState {
   status: "idle" | "error" | "ok";
   message?: string;
-}
-
-/**
- * A 409 in words rather than in the wire format.
- *
- * This used to render the raw body — a dispatcher assigning a booking
- * to a completed flight was shown
- * `Backend rejected the transition ({"detail":"flight_not_assignable_in_status_completed"})`,
- * which says what happened only if you already know. Recognised
- * conflicts get a sentence; anything unrecognised keeps the detail,
- * because an opaque message we cannot explain is still better than
- * one we have invented.
- */
-const CONFLICT_MESSAGES: Record<string, string> = {
-  flight_not_assignable_in_status_completed:
-    "That flight has already been completed, so it cannot take a new booking.",
-  flight_not_assignable_in_status_cancelled:
-    "That flight was cancelled, so it cannot take a booking.",
-  booking_cancelled: "This booking is cancelled — reinstate it first.",
-  insufficient_seats: "That flight does not have enough seats left.",
-};
-
-function conflictMessage(raw: string): string {
-  for (const [slug, sentence] of Object.entries(CONFLICT_MESSAGES)) {
-    if (raw.includes(slug)) return sentence;
-  }
-  return `The change was refused (${raw}).`;
 }
 
 async function _wrap(
@@ -52,7 +26,7 @@ async function _wrap(
   } catch (err) {
     if (err instanceof ApiError) {
       if (err.status === 409) {
-        return { status: "error", message: conflictMessage(err.message) };
+        return { status: "error", message: refusalMessage(err.message) };
       }
       return {
         status: "error",

@@ -2,11 +2,13 @@ import Link from "next/link";
 
 import { linkCaps } from "@/components/ff/controls";
 import { ApiError } from "@/lib/api/client";
+import { type FlightSearchResult, searchFlights } from "@/lib/api/flight-search";
 import { getFleetAirworthiness } from "@/lib/api/maintenance";
 import { listCustomers } from "@/lib/api/reservations";
 import { cn } from "@/lib/utils";
 
 import { BookingForm } from "./booking-form";
+import { FlightChoice } from "./flight-choice";
 
 export default async function NewBookingPage({
   searchParams,
@@ -18,6 +20,14 @@ export default async function NewBookingPage({
     date?: string;
     pax?: string;
     aircraft?: string;
+    /** The flight it goes on (#137): a search result, the schedule or the
+     *  manifest. "Book" from a search result had passed it and the form
+     *  dropped it, so the booking was filed with no flight. */
+    flight?: string;
+    /** A name typed in the search that isn't on file. */
+    customer_name?: string;
+    /** Where to land after filing. */
+    return_to?: string;
   }>;
 }) {
   const params = await searchParams;
@@ -27,7 +37,7 @@ export default async function NewBookingPage({
   let aircraft: Array<{ id: string; tail_number: string; model: string | null }> =
     [];
   try {
-    customers = (await listCustomers({ limit: 200 })).items;
+    customers = (await listCustomers({ limit: 500 })).items;
   } catch (err) {
     if (err instanceof ApiError && err.status === 401) throw err;
   }
@@ -39,6 +49,33 @@ export default async function NewBookingPage({
   } catch {
     aircraft = [];
   }
+
+  // The flights on that route that day (#137): the client wanted the
+  // booking desk told "this is the flight option or there is no flight
+  // option". Listed with the full ones, so a full flight reads as full.
+  const day = (params.date ?? "").slice(0, 10);
+  const pax = params.pax ? Number(params.pax) || 1 : 1;
+  let flights: FlightSearchResult[] | null = null;
+  if (params.origin && params.destination && /^\d{4}-\d{2}-\d{2}$/.test(day)) {
+    try {
+      flights = (
+        await searchFlights({
+          origin: params.origin,
+          destination: params.destination,
+          date: day,
+          paxCount: pax,
+          showUnavailable: true,
+        })
+      ).items;
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 401) throw err;
+      flights = null;
+    }
+  }
+  const chosen = flights?.find((f) => f.flight_id === params.flight) ?? null;
+  const returnTo = params.return_to?.startsWith("/") && !params.return_to.startsWith("//")
+    ? params.return_to
+    : null;
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-8 sm:px-6">
@@ -55,19 +92,19 @@ export default async function NewBookingPage({
         </p>
       </header>
 
-      {customers.length === 0 ? (
-        <div className="mb-4 notice notice-yellow">
-          No customers yet.{" "}
-          <Link
-            href="/customers/new"
-            className="font-semibold underline"
-          >
-            Create one first
-          </Link>{" "}
-          before filing a booking.
-        </div>
-      ) : (
-        <BookingForm
+      <FlightChoice
+        flights={flights}
+        chosen={chosen}
+        chosenId={params.flight ?? null}
+        searched={{
+          origin: params.origin ?? "",
+          destination: params.destination ?? "",
+          day,
+        }}
+        query={params}
+      />
+
+      <BookingForm
           customers={customers}
           aircraft={aircraft}
           preselectCustomerId={params.customer ?? null}
@@ -77,9 +114,11 @@ export default async function NewBookingPage({
             destination: params.destination ?? null,
             date: params.date ?? null,
             pax: params.pax ? Number(params.pax) || null : null,
+            customerName: params.customer_name ?? null,
           }}
+          flightId={chosen ? chosen.flight_id : null}
+          returnTo={returnTo}
         />
-      )}
     </div>
   );
 }

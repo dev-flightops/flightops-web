@@ -42,6 +42,9 @@ export interface ManifestPaxRow {
   leaves_at?: string | null;
   /** Legacy's waitlist: waiting for a seat on a full flight (#120). */
   is_waitlist?: boolean;
+  /** The booking they're on (#137); null when added on the manifest.
+   *  Their seat is the booking's, so they come off by changing it. */
+  booking_id?: string | null;
 }
 
 /** One leg's seats (#120): held by passengers aboard on it, and open

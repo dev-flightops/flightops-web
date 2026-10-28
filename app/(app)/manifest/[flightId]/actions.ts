@@ -24,6 +24,8 @@ import {
   type TicketType,
 } from "@/lib/api/manifest";
 import { passengerSeatsRefusal } from "@/lib/flights/passenger-seats";
+import { assignBookingToFlight } from "@/lib/api/reservations";
+import { refusalMessage } from "@/lib/reservations/refusals";
 
 export interface ManifestFormState {
   status: "idle" | "ok" | "error";
@@ -298,6 +300,32 @@ export async function removeLineAction(
     return { status: "error", message: _refusal(err, _ANY_STAFF), attempt };
   }
   revalidatePath(_page(flightId.data));
+  return { status: "ok", attempt };
+}
+
+/** Put a waiting booking on this flight (#137): its passengers come onto
+ *  the manifest. The client had filed one PABE → 9Z8 and found no way to
+ *  add it to 6969 from the manifest. */
+export async function addBookingAction(
+  prev: ManifestFormState,
+  formData: FormData,
+): Promise<ManifestFormState> {
+  const attempt = prev.attempt + 1;
+  const flightId = _id.safeParse(formData.get("flight_id"));
+  const bookingId = _id.safeParse(formData.get("booking_id"));
+  if (!flightId.success || !bookingId.success) {
+    return { status: "error", message: "This row lost track of its booking. Refresh the page.", attempt };
+  }
+  try {
+    await assignBookingToFlight(bookingId.data, flightId.data);
+  } catch (err) {
+    if (err instanceof ApiError && (err.status === 409 || err.status === 404)) {
+      return { status: "error", message: refusalMessage(err.message), attempt };
+    }
+    return { status: "error", message: _refusal(err, _ANY_STAFF), attempt };
+  }
+  revalidatePath(_page(flightId.data));
+  revalidatePath("/schedule");
   return { status: "ok", attempt };
 }
 
