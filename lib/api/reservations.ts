@@ -56,12 +56,19 @@ export interface ListCustomersParams {
   offset?: number;
 }
 
+/** The most customers one call may ask for: reservations-service's
+ *  `limit` is `le=200`. The booking search asked for 500 from July (#160),
+ *  every call answered 422, the page fell back to no customers, and its
+ *  typeahead never listed anyone: the client's "no drop down of customers
+ *  when I started typing" (#137). */
+export const CUSTOMERS_MAX_LIMIT = 200;
+
 function _customersQs(p: ListCustomersParams): string {
   const s = new URLSearchParams();
   if (p.q) s.set("q", p.q);
   if (p.customer_type) s.set("customer_type", p.customer_type);
   if (p.include_archived) s.set("include_archived", "true");
-  if (p.limit !== undefined) s.set("limit", String(p.limit));
+  if (p.limit !== undefined) s.set("limit", String(Math.min(p.limit, CUSTOMERS_MAX_LIMIT)));
   if (p.offset !== undefined) s.set("offset", String(p.offset));
   const qs = s.toString();
   return qs ? `?${qs}` : "";

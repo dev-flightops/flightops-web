@@ -4,7 +4,7 @@ import { linkCaps } from "@/components/ff/controls";
 import { ApiError } from "@/lib/api/client";
 import { type FlightSearchResult, searchFlights } from "@/lib/api/flight-search";
 import { getFleetAirworthiness } from "@/lib/api/maintenance";
-import { listCustomers } from "@/lib/api/reservations";
+import { CUSTOMERS_MAX_LIMIT, listCustomers } from "@/lib/api/reservations";
 import { cn } from "@/lib/utils";
 
 import { BookingForm } from "./booking-form";
@@ -37,7 +37,7 @@ export default async function NewBookingPage({
   let aircraft: Array<{ id: string; tail_number: string; model: string | null }> =
     [];
   try {
-    customers = (await listCustomers({ limit: 500 })).items;
+    customers = (await listCustomers({ limit: CUSTOMERS_MAX_LIMIT })).items;
   } catch (err) {
     if (err instanceof ApiError && err.status === 401) throw err;
   }

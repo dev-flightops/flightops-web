@@ -1,6 +1,6 @@
 import { ApiError } from "@/lib/api/client";
 import { listStations } from "@/lib/api/ground";
-import { listCustomers } from "@/lib/api/reservations";
+import { CUSTOMERS_MAX_LIMIT, listCustomers } from "@/lib/api/reservations";
 import type { StationListItem } from "@/lib/api/types";
 
 import { NewBookingSearchForm } from "./new-booking-search-form";
@@ -24,7 +24,7 @@ import { NewBookingSearchForm } from "./new-booking-search-form";
 export default async function NewBookingLandingPage() {
   let customers: Awaited<ReturnType<typeof listCustomers>>["items"] = [];
   try {
-    customers = (await listCustomers({ limit: 500 })).items;
+    customers = (await listCustomers({ limit: CUSTOMERS_MAX_LIMIT })).items;
   } catch (err) {
     if (err instanceof ApiError && err.status === 401) throw err;
     customers = [];
