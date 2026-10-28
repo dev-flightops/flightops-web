@@ -174,6 +174,31 @@ describe("createFlightAction", () => {
     }
   });
 
+  it("opens a confirmed charter's flight linked to it (#133)", async () => {
+    const charter = "9868a454-cfa1-46ca-8c26-ed2de62953ee";
+    createFlight.mockReset().mockResolvedValueOnce({}).mockResolvedValueOnce({});
+    await expect(
+      createFlightAction({ status: "idle" }, makeFormData({ charter_request_id: charter })),
+    ).rejects.toThrow("NEXT_REDIRECT");
+    await expect(
+      createFlightAction({ status: "idle" }, makeFormData({ charter_request_id: "not-an-id" })),
+    ).rejects.toThrow("NEXT_REDIRECT");
+    expect(createFlight.mock.calls.map(([arg]) => arg.charter_request_id)).toEqual([charter, undefined]);
+  });
+
+  it("says why a charter's flight was refused (#133)", async () => {
+    createFlight.mockReset().mockRejectedValueOnce(
+      new TestApiError(409, "/ops/flights", JSON.stringify({ detail: "charter_has_a_flight" })),
+    );
+    const result = await createFlightAction({ status: "idle" }, makeFormData());
+    expect(result.status).toBe("api-error");
+    if (result.status === "api-error") {
+      expect(result.message).toMatch(/already has its flight/);
+      // What was typed comes back.
+      expect(result.values.flight_number).toBe("GV404");
+    }
+  });
+
   it("maps backend flight_number_conflict to a uniqueness hint", async () => {
     createFlight.mockReset().mockRejectedValueOnce(
       new TestApiError(
