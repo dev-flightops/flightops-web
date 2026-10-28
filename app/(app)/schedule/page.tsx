@@ -1,20 +1,33 @@
 import Link from "next/link";
 
-import { buttonOutline, buttonSolid, linkCaps } from "@/components/ff/controls";
+import { buttonOutline, buttonSolid, linkCaps, segment, segmentGroup } from "@/components/ff/controls";
 import { PageHeader } from "@/components/ff/page-header";
+import { LoadFailedNotice } from "@/components/ff/setup-notice";
 import { StatusMark, type StatusTone } from "@/components/ff/status-mark";
 import { loadZoneTable } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
-import { listFlights } from "@/lib/api/ops";
+import { Loads } from "@/lib/api/loads";
+import { getFleetAirworthiness } from "@/lib/api/maintenance";
+import { listAircraft, listFlights } from "@/lib/api/ops";
 import type {
   FlightListItem,
   FlightStatus,
 } from "@/lib/api/types";
 import { localClock, localDate, utcToLocalInput, type ZoneTable, zoneFor } from "@/lib/format/local-time";
 import { routeText } from "@/lib/route";
+import {
+  aircraftColumns,
+  dayLegs,
+  type FleetEntry,
+  hourWindow,
+  legState,
+  minutesInto,
+  placeLegs,
+} from "@/lib/schedule/day-legs";
 
+import { AircraftDay, type DayColumn } from "./aircraft-day";
 import { DatePicker } from "./date-picker";
-import { FlightPanel } from "./flight-panel";
+import { FlightPanelButton } from "./flight-panel";
 import { StatusFilter } from "./status-filter";
 
 /**
@@ -27,6 +40,11 @@ import { StatusFilter } from "./status-filter";
  * URL-driven state:
  *   ?date=YYYY-MM-DD          (default: today, the company's day, #137)
  *   ?statuses=scheduled,released  (default: all)
+ *   ?view=list                (default: by aircraft, #139)
+ *
+ * By aircraft (#139), the day is a column per aircraft and a block per
+ * leg, as the client's own scheduling system shows it; a block opens the
+ * flight's panel on that leg. The list groups flights by base.
  *
  * Flights group by origin ICAO (each base gets its own panel), sorted
  * within each group by scheduled_departure_at ascending. A flight's
@@ -69,9 +87,10 @@ function parseStatuses(raw: string | undefined): FlightStatus[] {
 export default async function SchedulePage({
   searchParams,
 }: {
-  searchParams: Promise<{ date?: string; statuses?: string }>;
+  searchParams: Promise<{ date?: string; statuses?: string; view?: string }>;
 }) {
-  const { date: dateParam, statuses: statusesParam } = await searchParams;
+  const { date: dateParam, statuses: statusesParam, view: viewParam } = await searchParams;
+  const view = viewParam === "list" ? "list" : "aircraft";
   const zones = await loadZoneTable();
   const date =
     dateParam && /^\d{4}-\d{2}-\d{2}$/.test(dateParam)
@@ -83,7 +102,7 @@ export default async function SchedulePage({
   let loadError: string | null = null;
 
   try {
-    flights = (await listFlights({ onCompanyDate: date, limit: 200 })).items;
+    flights = (await listFlights({ onCompanyDate: date, limit: 200, withSeats: view === "aircraft" })).items;
   } catch (err) {
     const status = err instanceof ApiError ? err.status : 0;
     loadError =
@@ -99,6 +118,13 @@ export default async function SchedulePage({
 
   const grouped = groupByOrigin(filtered);
   const totalCount = filtered.length;
+  const byAircraft = view === "aircraft" && !loadError ? await aircraftDay(date, filtered, zones.fallback) : null;
+  const viewHref = (v: "aircraft" | "list") => {
+    const params = new URLSearchParams({ date });
+    if (statusesParam) params.set("statuses", statusesParam);
+    if (v === "list") params.set("view", "list");
+    return `/schedule?${params.toString()}`;
+  };
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
@@ -107,7 +133,15 @@ export default async function SchedulePage({
         description={`Published schedule for ${localDate(`${date}T12:00:00Z`, "UTC", { withYear: true })} — ${totalCount} flight${totalCount === 1 ? "" : "s"}. Open a flight for its bookings and manifest.`}
         actions={
           <>
-            <DatePicker defaultValue={date} statuses={statusesParam ?? ""} />
+            <nav aria-label="View" className={segmentGroup}>
+              <Link href={viewHref("aircraft")} aria-current={view === "aircraft" ? "page" : undefined} className={segment(view === "aircraft")}>
+                By aircraft
+              </Link>
+              <Link href={viewHref("list")} aria-current={view === "list" ? "page" : undefined} className={segment(view === "list")}>
+                List
+              </Link>
+            </nav>
+            <DatePicker defaultValue={date} statuses={statusesParam ?? ""} view={view} />
             {/* The form lives under Flight Following and is called "Open
                 Flight", which is where nobody looks for it: the client
                 reported being "mostly unsuccessful in building flight"
@@ -124,9 +158,26 @@ export default async function SchedulePage({
         }
       />
 
-      <StatusFilter date={date} statuses={statuses} />
+      <StatusFilter date={date} statuses={statuses} view={view} />
 
-      {loadError ? (
+      {byAircraft ? (
+        <>
+          <LoadFailedNotice what={byAircraft.failed} meaning="Aircraft with no flight that day may be missing." className="mb-4" />
+          {totalCount === 0 ? (
+            <p className="mb-3 text-sm text-muted-foreground">
+              {flights.length === 0 ? `No flights scheduled for ${date}.` : "No flights match the current status filter."}
+            </p>
+          ) : null}
+          <AircraftDay
+            columns={byAircraft.columns}
+            start={byAircraft.start}
+            end={byAircraft.end}
+            zone={zones.fallback}
+            zones={zones}
+            nowMinute={date === today(zones.fallback) ? minutesInto(date, new Date().toISOString(), zones.fallback) : null}
+          />
+        </>
+      ) : loadError ? (
         <div
           role="alert"
           className="rounded-lg border border-border bg-card px-4 py-6 text-center text-sm text-muted-foreground"
@@ -150,6 +201,39 @@ export default async function SchedulePage({
       )}
     </div>
   );
+}
+
+/**
+ * The day's legs by aircraft (#139). The fleet is ops' aircraft, with
+ * maintenance's word on which are grounded and why where the viewer may
+ * read it; a reservations agent may not, and then sees no reason.
+ */
+async function aircraftDay(
+  date: string,
+  flights: FlightListItem[],
+  zone: string,
+): Promise<{ columns: DayColumn[]; start: number; end: number; failed: string[] }> {
+  const loads = new Loads();
+  const [aircraft, fleet] = await Promise.all([
+    loads.or(listAircraft(), null, "the fleet"),
+    loads.or(getFleetAirworthiness(), null, "which aircraft are grounded"),
+  ]);
+  const status = new Map((fleet?.items ?? []).map((f) => [f.aircraft.id, f]));
+  const entries: FleetEntry[] = (aircraft?.items ?? []).map((a) => {
+    const s = status.get(a.id);
+    return {
+      id: a.id,
+      tail: a.tail_number,
+      model: a.model,
+      active: a.is_active,
+      airworthy: s ? s.is_airworthy : true,
+      groundedReason: s?.grounded_reason ?? null,
+    };
+  });
+  const legs = dayLegs(flights);
+  const { start, end } = hourWindow(date, legs, zone);
+  const columns = aircraftColumns(entries, legs).map((c) => ({ ...c, legs: placeLegs(date, c.legs, zone, start) }));
+  return { columns, start, end, failed: loads.failed };
 }
 
 function groupByOrigin(
@@ -219,15 +303,15 @@ function FlightRow({ flight, zones }: { flight: FlightListItem; zones: ZoneTable
   return (
     <tr className="border-b border-border last:border-0">
       <td className="px-4 py-3">
-        <FlightPanel
+        <FlightPanelButton
           flight={{
             id: flight.id,
             flightNumber: flight.flight_number,
             stops,
-            departs: `${localDate(flight.scheduled_departure_at, zone)}, ${localClock(flight.scheduled_departure_at, zone)}`,
-            departsLocal: utcToLocalInput(flight.scheduled_departure_at, zone),
             tail: flight.aircraft.tail_number,
+            state: legState(flight),
           }}
+          zones={zones}
         />
       </td>
       <td className="px-4 py-3 font-mono text-foreground">

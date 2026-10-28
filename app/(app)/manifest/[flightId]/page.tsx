@@ -352,7 +352,7 @@ function LoadPanel({
   if (load.useful_load_lbs == null) {
     // #138: it had sent people to "Settings → Aircraft", which isn't a page.
     return (
-      <section aria-label="Load" className="mb-6">
+      <section id="load" aria-label="Load" className="mb-6 scroll-mt-28">
         <SetupNotice
           place="fleet"
           missing={`${tail}’s useful load (its max gross and empty weight)`}
@@ -375,7 +375,7 @@ function LoadPanel({
       ? "Left for mail & freight"
       : "Left before fuel";
   return (
-    <section aria-label="Load" className="mb-6 rounded-lg border border-border bg-card p-4">
+    <section id="load" aria-label="Load" className="mb-6 scroll-mt-28 rounded-lg border border-border bg-card p-4">
       <div className="flex flex-wrap items-end gap-x-3 gap-y-2">
         <Term label="Useful load" value={`${load.useful_load_lbs.toLocaleString()} lb`} />
         <Op>−</Op>

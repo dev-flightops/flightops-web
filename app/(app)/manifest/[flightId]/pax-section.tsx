@@ -51,7 +51,7 @@ export function PassengersSection({
   const withStops = stops.length > 2;
 
   return (
-    <section>
+    <section id="passengers" className="scroll-mt-28">
       <div className="mb-2 flex items-baseline gap-2 px-1">
         <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
           Passengers &amp; Crew
