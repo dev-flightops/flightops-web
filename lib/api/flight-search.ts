@@ -17,7 +17,8 @@
 
 import { apiFetch } from "./client";
 
-export type UnavailableReason = "insufficient_seats" | "already_departed";
+/** `chartered`: a charter's flight (#133), the customer's aircraft. */
+export type UnavailableReason = "insufficient_seats" | "already_departed" | "chartered";
 
 export interface FlightSearchResult {
   flight_id: string;
@@ -78,4 +79,5 @@ export async function searchFlights(
 export const UNAVAILABLE_REASON_LABELS: Record<UnavailableReason, string> = {
   insufficient_seats: "Not enough seats",
   already_departed: "Already departed",
+  chartered: "Chartered",
 };

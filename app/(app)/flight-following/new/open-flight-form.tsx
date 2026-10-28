@@ -22,6 +22,24 @@ import {
 } from "./actions";
 import { StopsEditor } from "./stops-editor";
 
+/** The form's starting values, keyed like its fields (#133). */
+export interface FlightPrefill {
+  flight_number?: string;
+  origin?: string;
+  destination?: string;
+  scheduled_departure_at?: string;
+  round_trip?: boolean;
+  pax_count?: string;
+  cargo_lbs?: string;
+  notes?: string;
+  charter_request_id?: string;
+}
+
+function starting(prefill: FlightPrefill | undefined, field: string): string | undefined {
+  const value = prefill?.[field as keyof FlightPrefill];
+  return typeof value === "string" ? value : undefined;
+}
+
 /**
  * "+ Open Flight" form (M2-G-14). Client component because we want
  * useActionState for inline field errors and a pending state on the
@@ -50,6 +68,7 @@ export function OpenFlightForm({
   aircraft,
   zones,
   groundMinutesDefault = 15,
+  prefill,
 }: {
   aircraft: AircraftListItem[];
   /** Each base's zone, for the departure base the times are typed in. */
@@ -57,6 +76,8 @@ export function OpenFlightForm({
   /** The company's time on the ground at each stop (#126, Settings →
    *  Company), changeable here for this flight. */
   groundMinutesDefault?: number;
+  /** Starting values: a confirmed charter's request (#133). */
+  prefill?: FlightPrefill;
 }) {
   const [state, action, pending] = useActionState<
     CreateFlightFormState,
@@ -81,7 +102,7 @@ export function OpenFlightForm({
    * back. Success redirects, so there is nothing to restore then.
    */
   const submitted = (field: string, fallback = ""): string =>
-    state.status === "idle" ? fallback : (state.values[field] ?? fallback);
+    state.status === "idle" ? (starting(prefill, field) ?? fallback) : (state.values[field] ?? fallback);
 
   /**
    * Counts completed submissions, to key the aircraft select on.
@@ -105,16 +126,16 @@ export function OpenFlightForm({
   // The legs after the first. Controlled, and put back from what the
   // action echoes after a failed submit, like every other field here.
   const [stops, setStops] = useState<SubmittedStop[]>([]);
-  const [firstDestination, setFirstDestination] = useState("");
+  const [firstDestination, setFirstDestination] = useState(prefill?.destination ?? "");
   // The origin decides the zone the times are typed in; the times are
   // kept to show each one in Zulu as it is typed.
-  const [origin, setOrigin] = useState("");
-  const [etd, setEtd] = useState("");
+  const [origin, setOrigin] = useState(prefill?.origin ?? "");
+  const [etd, setEtd] = useState(prefill?.scheduled_departure_at ?? "");
   const [eta, setEta] = useState("");
   // #108: the aircraft for its cruise speed, the way home, and the time
   // on the ground at each stop.
   const [aircraftId, setAircraftId] = useState("");
-  const [roundTrip, setRoundTrip] = useState(true);
+  const [roundTrip, setRoundTrip] = useState(prefill?.round_trip ?? true);
   const [groundMinutes, setGroundMinutes] = useState(String(groundMinutesDefault));
   useEffect(() => {
     if (state.status !== "idle") {
@@ -231,6 +252,9 @@ export function OpenFlightForm({
 
   return (
     <form action={action} className="space-y-5">
+      {submitted("charter_request_id") ? (
+        <input type="hidden" name="charter_request_id" value={submitted("charter_request_id")} />
+      ) : null}
       {state.status === "api-error" && (
         <div
           role="alert"

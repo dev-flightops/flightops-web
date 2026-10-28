@@ -137,6 +137,37 @@ describe("OpenFlightForm: VFR unless marked IFR (#123)", () => {
   });
 });
 
+describe("OpenFlightForm: a charter's flight (#133)", () => {
+  it("starts from the charter's request and carries it", () => {
+    render(
+      <OpenFlightForm
+        aircraft={[CARAVAN, AIRVAN]}
+        zones={ZONES}
+        prefill={{
+          flight_number: "CHR-9868A454",
+          origin: "PABE",
+          destination: "PAII",
+          scheduled_departure_at: "2026-10-25T10:30",
+          round_trip: false,
+          pax_count: "5",
+          cargo_lbs: "0",
+          notes: "Charter for Alice Northrup",
+          charter_request_id: "9868a454-cfa1-46ca-8c26-ed2de62953ee",
+        }}
+      />,
+    );
+    expect(input("flight_number")).toHaveValue("CHR-9868A454");
+    expect(input("origin")).toHaveValue("PABE");
+    expect(input("destination")).toHaveValue("PAII");
+    expect(input("scheduled_departure_at")).toHaveValue("2026-10-25T10:30");
+    expect(input("pax_count")).toHaveValue(5);
+    expect(input("charter_request_id")).toHaveValue("9868a454-cfa1-46ca-8c26-ed2de62953ee");
+    // One way: no return the same day.
+    expect(screen.getByRole("checkbox", { name: /Round trip/ })).not.toBeChecked();
+    expect(stopInputs("stop_destination")).toHaveLength(0);
+  });
+});
+
 describe("OpenFlightForm: the company's ground time (#126)", () => {
   it("starts each stop's ground time at the company's, still changeable", () => {
     render(<OpenFlightForm aircraft={[CARAVAN, AIRVAN]} zones={ZONES} groundMinutesDefault={20} />);

@@ -72,6 +72,17 @@ describe("FlightResults", () => {
     expect(screen.getByRole("link", { name: "Book" })).toBeInTheDocument();
   });
 
+  it("says a charter's flight is chartered (#133)", () => {
+    render(
+      <FlightResults
+        results={response([flight({ is_available: false, unavailable_reason: "chartered" })])}
+        bookingHref={href}
+      />,
+    );
+    expect(screen.getByText("Chartered")).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Book" })).toBeNull();
+  });
+
   it("offers no Book link on an unbookable flight, and says why", () => {
     render(
       <FlightResults
