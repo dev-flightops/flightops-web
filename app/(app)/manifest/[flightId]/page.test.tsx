@@ -17,6 +17,8 @@ const mocks = vi.hoisted(() => {
     getFlight: vi.fn(),
     getFlightManifest: vi.fn(),
     getLoadPlan: vi.fn(),
+    // #138: the bookings waiting for the flight, for a role that books.
+    listWaitingBookings: vi.fn(),
     // What a form's last submit returned; tests that need one set it.
     actionState: { current: undefined as unknown },
   };
@@ -32,6 +34,10 @@ vi.mock("@/lib/api/manifest", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/lib/api/manifest")>()),
   getFlightManifest: mocks.getFlightManifest,
   getLoadPlan: mocks.getLoadPlan,
+}));
+vi.mock("@/lib/api/reservations", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/api/reservations")>()),
+  listWaitingBookings: mocks.listWaitingBookings,
 }));
 vi.mock("./actions", () => ({
   savePaxAction: vi.fn(),
@@ -137,6 +143,7 @@ beforeEach(() => {
   mocks.getFlight.mockReset().mockResolvedValue(flight);
   mocks.getFlightManifest.mockReset();
   mocks.getLoadPlan.mockReset().mockRejectedValue(new mocks.TestApiError(404, "/manifest", "not found"));
+  mocks.listWaitingBookings.mockReset().mockResolvedValue({ items: [], total: 0 });
   mocks.actionState.current = undefined;
 });
 
@@ -333,7 +340,30 @@ describe("weight left for mail and freight (#74)", () => {
     mocks.auth.mockResolvedValue({ roles: ["dispatcher"] });
     mocks.getFlightManifest.mockResolvedValue(manifest("draft", { ...BEFORE_FUEL, useful_load_lbs: null, remaining_lbs: null }));
     await renderPage();
-    expect(within(panel()).getByText(/Set this aircraft’s useful load in Settings → Aircraft/)).toBeTruthy();
+    // #138: Settings → Fleet, named; a dispatcher is told who sets it.
+    expect(
+      within(panel()).getByText(
+        /N100PA’s useful load \(its max gross and empty weight\) isn’t set, so the weight left for mail and freight can’t be worked out\. Ask an Exec Admin, the Director of Operations, the Director of Maintenance or Maintenance to set it under Settings → Fleet\./,
+      ),
+    ).toBeTruthy();
+  });
+
+  it("links a fleet editor to Settings → Fleet for it (#138)", async () => {
+    mocks.auth.mockResolvedValue({ roles: ["director_of_maintenance"] });
+    mocks.getFlightManifest.mockResolvedValue(manifest("draft", { ...BEFORE_FUEL, useful_load_lbs: null, remaining_lbs: null }));
+    await renderPage();
+    expect(within(panel()).getByRole("link", { name: "Set it under Settings → Fleet ›" })).toHaveAttribute("href", "/settings/fleet");
+  });
+
+  it("says when what's waiting couldn't be loaded, not that nothing is (#138)", async () => {
+    mocks.auth.mockResolvedValue({ roles: ["dispatcher"] });
+    mocks.getFlightManifest.mockResolvedValue(manifest("draft"));
+    mocks.getLoadPlan.mockRejectedValue(new mocks.TestApiError(500, "/manifest", "boom"));
+    mocks.listWaitingBookings.mockRejectedValue(new mocks.TestApiError(502, "/reservations", "down"));
+    await renderPage();
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "Couldn’t load the mail and freight waiting for this route and the bookings waiting for this flight. Reload the page to try again",
+    );
   });
 
   it("still renders against an ops build that sends no breakdown", async () => {
@@ -424,7 +454,8 @@ describe("the trip's fuel and what is waiting for the route (#75)", () => {
     await renderPage();
     expect(
       screen.getByText(
-        "Fuel isn’t counted yet. Enter the planned fuel, or set the fuel burn for C208B (Settings → Costs) to have it estimated.",
+        // #138: a setup notice the assistant sees, naming what to set where.
+        "Fuel isn’t counted yet: the estimate needs the fuel burn for C208B (Settings → Costs). Enter the planned fuel below, or set those to have it estimated.",
       ),
     ).toBeTruthy();
   });

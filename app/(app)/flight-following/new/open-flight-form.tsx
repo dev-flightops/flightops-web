@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useActionState, useEffect, useMemo, useRef, useState } from "react";
 
+import { Notice } from "@/components/ff/notice";
+import { SetupNotice } from "@/components/ff/setup-notice";
 import { Spinner } from "@/components/ui/spinner";
 import { findAirport } from "@/lib/airports";
 import type { AircraftListItem } from "@/lib/api/types";
@@ -14,6 +16,7 @@ import {
   zoneFor,
   zuluHint,
 } from "@/lib/format/local-time";
+import { useOnScreen } from "@/lib/help/on-screen";
 
 import {
   createFlightAction,
@@ -63,12 +66,16 @@ function starting(prefill: FlightPrefill | undefined, field: string): string | u
  *     destination ... if the system can build the times enroute based
  *     of standard cruise speeds". A time typed by hand is never
  *     overwritten.
+ *   - An aircraft with no cruise speed says so, and so does a submit
+ *     the empty times stop (#138): the browser's own "Please fill out
+ *     this field" says which box, never why it is empty.
  */
 export function OpenFlightForm({
   aircraft,
   zones,
   groundMinutesDefault = 15,
   prefill,
+  canSetFleet = false,
 }: {
   aircraft: AircraftListItem[];
   /** Each base's zone, for the departure base the times are typed in. */
@@ -78,6 +85,8 @@ export function OpenFlightForm({
   groundMinutesDefault?: number;
   /** Starting values: a confirmed charter's request (#133). */
   prefill?: FlightPrefill;
+  /** The viewer may set an aircraft's cruise speed (Settings → Fleet). */
+  canSetFleet?: boolean;
 }) {
   const [state, action, pending] = useActionState<
     CreateFlightFormState,
@@ -245,13 +254,34 @@ export function OpenFlightForm({
     ? "Pick the aircraft to fill in the times from its cruise speed."
     : speed
       ? `Times fill in at ${speed} kt, ${Math.max(0, Number(groundMinutes) || 0)} min on the ground at each stop. Change any of them.`
-      : `Set ${plane.tail_number}’s cruise speed under Settings → Fleet to fill in the times.`;
+      : null;
+
+  // #138: a submit the browser stops for an empty time says which times
+  // and why they're empty, by the button where the dispatcher is looking.
+  const [triedToOpen, setTriedToOpen] = useState(false);
+  const emptyTimes = [
+    etd ? null : "ETD",
+    eta ? null : stops.length > 0 ? "Leg 1 ETA" : "ETA",
+    ...stops.flatMap((stop, i) => [
+      stop.departure ? null : `Leg ${i + 2} ETD`,
+      stop.arrival ? null : `Leg ${i + 2} ETA`,
+    ]),
+  ].filter((label): label is string => label !== null);
+  const why =
+    plane && !speed && emptyTimes.some((label) => label !== "ETD")
+      ? `${plane.tail_number} has no cruise speed, so they can’t fill in: type them${canSetFleet ? ", or set its cruise speed under Settings → Fleet" : ""}.`
+      : "Type them in.";
+  const blocked =
+    triedToOpen && emptyTimes.length > 0
+      ? `${emptyTimes.join(", ")} ${emptyTimes.length === 1 ? "is" : "are"} empty. ${why}`
+      : null;
+  useOnScreen(blocked ? `Can’t open the flight yet: ${blocked}` : null);
   const departs = localToUtcIso(etd, timeZone);
   const tz = zoneAbbreviation(timeZone, departs ? new Date(departs) : new Date());
   const errors = state.status === "field-errors" ? state.errors : {};
 
   return (
-    <form action={action} className="space-y-5">
+    <form action={action} onInvalidCapture={() => setTriedToOpen(true)} className="space-y-5">
       {submitted("charter_request_id") ? (
         <input type="hidden" name="charter_request_id" value={submitted("charter_request_id")} />
       ) : null}
@@ -286,6 +316,7 @@ export function OpenFlightForm({
           {aircraft.map((a) => (
             <option key={a.id} value={a.id}>
               {a.tail_number} — {a.model}
+              {a.cruise_speed_kt == null ? " · no cruise speed: type the times" : ""}
             </option>
           ))}
         </FieldSelect>
@@ -358,8 +389,18 @@ export function OpenFlightForm({
             />
             min
           </label>
-          <p className="text-[0.65rem] text-muted-foreground">{timesNote}</p>
+          {timesNote ? <p className="text-[0.65rem] text-muted-foreground">{timesNote}</p> : null}
         </div>
+        {plane && !speed ? (
+          <SetupNotice
+            className="md:col-span-2"
+            place="fleet"
+            missing={`${plane.tail_number}’s cruise speed`}
+            stops="the leg times can’t fill in"
+            meanwhile="Type each leg’s times."
+            canFix={canSetFleet}
+          />
+        ) : null}
         <div className="md:col-span-2">
           <StopsEditor
             key={`stops-${submitCount}`}
@@ -421,6 +462,12 @@ export function OpenFlightForm({
           className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs text-foreground focus:border-primary focus:outline-none"
         />
       </div>
+
+      {blocked ? (
+        <Notice tone="red" label="Can’t open yet">
+          {blocked}
+        </Notice>
+      ) : null}
 
       <div className="flex items-center gap-3 pt-2">
         <button

@@ -1,12 +1,14 @@
 import Link from "next/link";
 
 import { linkCaps } from "@/components/ff/controls";
+import { LoadFailedNotice, OnScreenNotice, SetupNotice } from "@/components/ff/setup-notice";
 import { cn } from "@/lib/utils";
 import { notFound } from "next/navigation";
 
 import { auth } from "@/auth";
 import { loadZoneTable } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
+import { Loads } from "@/lib/api/loads";
 import { getFlight } from "@/lib/api/ops";
 import { type Booking, listWaitingBookings } from "@/lib/api/reservations";
 import {
@@ -23,6 +25,7 @@ import type { FlightDetail, FlightStatus } from "@/lib/api/types";
 import { CUSTOMER_MANAGERS, hasAnyRole, MANIFEST_EDITORS, MANIFEST_LOCKERS } from "@/lib/roles";
 import { crewWeightNote } from "@/lib/flights/crew-weight";
 import { flightStops, routeText } from "@/lib/route";
+import { canSetUp } from "@/lib/setup/places";
 import { utcToLocalInput, zoneFor } from "@/lib/format/local-time";
 
 import { PlannedFuelForm } from "./fuel-form";
@@ -80,16 +83,13 @@ export default async function FlightManifestPage({
     }
   }
 
-  // The load plan (#75). An ops build from before it answers 404 or an
-  // error; the page then simply goes without the section.
-  let plan: LoadPlanResponse | null = null;
-  if (manifest) {
-    try {
-      plan = await getLoadPlan(flightId);
-    } catch {
-      plan = null;
-    }
-  }
+  // The load plan (#75): without it the page goes without the section,
+  // and says so unless there is no plan to have (404). #138: a failure had
+  // looked like nothing waiting.
+  const loads = new Loads();
+  const plan: LoadPlanResponse | null = manifest
+    ? await loads.or(getLoadPlan(flightId), null, "the mail and freight waiting for this route")
+    : null;
 
   const roles = (await auth())?.roles ?? [];
   const canBuild = hasAnyRole(roles, MANIFEST_EDITORS);
@@ -99,12 +99,13 @@ export default async function FlightManifestPage({
   const canBook = hasAnyRole(roles, CUSTOMER_MANAGERS);
   let waiting: Booking[] | null = null;
   if (canBook && flight.status !== "completed" && flight.status !== "cancelled") {
-    try {
-      waiting = (await listWaitingBookings(flightId)).items;
-    } catch {
-      waiting = null;
-    }
+    waiting = await loads.or(
+      listWaitingBookings(flightId).then((r) => r.items),
+      null,
+      "the bookings waiting for this flight",
+    );
   }
+  const canSetFleet = canSetUp(roles, "fleet");
   const stops = flightStops(flight);
   const newBooking = new URLSearchParams({
     flight: flight.id,
@@ -134,6 +135,8 @@ export default async function FlightManifestPage({
         lock={canLock ? <LockManifestButton flightId={flight.id} flightNumber={flight.flight_number} /> : null}
       />
 
+      <LoadFailedNotice what={loads.failed} className="mb-6" />
+
       {waiting && manifest?.status !== "final" ? (
         <WaitingBookings
           flightId={flight.id}
@@ -149,7 +152,13 @@ export default async function FlightManifestPage({
 
           <TotalsStrip totals={manifest.totals} />
 
-          <LoadPanel manifest={manifest} editable={editable} isIfr={Boolean(flight.is_ifr)} />
+          <LoadPanel
+            manifest={manifest}
+            editable={editable}
+            isIfr={Boolean(flight.is_ifr)}
+            tail={flight.aircraft.tail_number}
+            canSetFleet={canSetFleet}
+          />
 
           {manifest.legs && manifest.legs.length > 1 ? <LegSeatsPanel legs={manifest.legs} /> : null}
 
@@ -324,20 +333,32 @@ function LoadPanel({
   manifest,
   editable,
   isIfr,
+  tail,
+  canSetFleet,
 }: {
   manifest: ManifestDetailResponse;
   editable: boolean;
   /** The flight is flown IFR (#123): the fuel note adds the alternate. */
   isIfr: boolean;
+  /** The aircraft, named where its useful load is missing (#138). */
+  tail: string;
+  /** The viewer may set it under Settings → Fleet. */
+  canSetFleet: boolean;
 }) {
   const load = manifest.load;
   // An ops build from before #74 sends no breakdown; show nothing rather
   // than fail the page while the two deploys catch up with each other.
   if (!load) return null;
   if (load.useful_load_lbs == null) {
+    // #138: it had sent people to "Settings → Aircraft", which isn't a page.
     return (
-      <section aria-label="Load" className="mb-6 rounded-lg border border-border bg-card p-4 text-sm text-muted-foreground">
-        {`Set this aircraft’s useful load in Settings → Aircraft to see the weight left for mail and freight.`}
+      <section aria-label="Load" className="mb-6">
+        <SetupNotice
+          place="fleet"
+          missing={`${tail}’s useful load (its max gross and empty weight)`}
+          stops="the weight left for mail and freight can’t be worked out"
+          canFix={canSetFleet}
+        />
       </section>
     );
   }
@@ -375,11 +396,17 @@ function LoadPanel({
           {`${fuelEstimateLine(load.fuel_estimate)} ${fuelPlanningNote(load.fuel_estimate, { is_ifr: isIfr })} Enter the planned fuel to use your own figure instead.`}
         </p>
       ) : null}
-      {!load.fuel_counted ? (
+      {!load.fuel_counted && load.fuel_estimate?.missing.length ? (
+        // #138: what the estimate lacks, where it's set, as ops words it.
+        <OnScreenNotice
+          className="mt-3"
+          tone="yellow"
+          label="Setup needed"
+          text={`Fuel isn’t counted yet: the estimate needs ${load.fuel_estimate.missing.join(" and ")}. ${editable ? "Enter the planned fuel below, or set those to have it estimated." : "Set those to have it estimated."}`}
+        />
+      ) : !load.fuel_counted ? (
         <p className="mt-3 text-xs text-status-yellow">
-          {load.fuel_estimate?.missing.length
-            ? `Fuel isn’t counted yet. Enter the planned fuel, or set ${load.fuel_estimate.missing.join(" and ")} to have it estimated.`
-            : `Fuel isn’t counted yet. Enter the planned fuel to see what is really left for mail and freight.`}
+          Fuel isn’t counted yet. Enter the planned fuel to see what is really left for mail and freight.
         </p>
       ) : null}
       {editable ? (
@@ -393,7 +420,7 @@ function LoadPanel({
 
 const BLOCKED: Record<NonNullable<LoadPlanResponse["blocked"]>, string> = {
   locked: "The manifest is locked, so nothing more goes on.",
-  no_useful_load: "Set the aircraft’s useful load in Settings → Aircraft to plan the load.",
+  no_useful_load: "Set the aircraft’s useful load under Settings → Fleet to plan the load.",
   fuel_unknown: "Enter the planned fuel above, or set up the fuel estimate, before filling the weight left.",
   nothing_waiting: "Nothing is waiting for this route.",
   no_room: "There is no weight left for mail or freight.",

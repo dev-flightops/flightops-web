@@ -10,6 +10,8 @@ import { listFlights, getFlightStats } from "@/lib/api/ops";
 import { loadOperationalSnapshot } from "@/lib/dashboards/operational-snapshot";
 import { snapshotAlertsToList } from "@/lib/dashboards/snapshot-to-alerts";
 import type { FlightListItem } from "@/lib/api/types";
+import { LoadFailedNotice } from "@/components/ff/setup-notice";
+import { Loads } from "@/lib/api/loads";
 
 function todayUtc(): string {
   return new Date().toISOString().slice(0, 10);
@@ -17,14 +19,16 @@ function todayUtc(): string {
 
 export default async function DirectorOpsDashboardPage() {
   const today = todayUtc();
+  // #138: flights that didn't load say so; they had read as a quiet day.
+  const loads = new Loads();
   const [stats, todaysFlights, pendingResult, snapshot] = await Promise.all([
     getFlightStats().catch(() => null),
-    listFlights({ onDate: today }).catch(() => ({ items: [], total: 0 })),
+    loads.or(listFlights({ onDate: today }), { items: [], total: 0 }, "today’s flights"),
     // Pull a wider window then filter to today + tomorrow client-side —
     // the API doesn't have a date-range param yet, and a bare
     // status='scheduled' query also picks up orphaned old-date rows
     // from prior seed runs. Mirrors legacy's "today + tomorrow" scope.
-    listFlights({ status: "scheduled", limit: 50 }).catch(() => ({ items: [], total: 0 })),
+    loads.or(listFlights({ status: "scheduled", limit: 50 }), { items: [], total: 0 }, "the scheduled flights"),
     loadOperationalSnapshot(),
   ]);
 
@@ -93,6 +97,8 @@ export default async function DirectorOpsDashboardPage() {
         description="Real-time operational overview"
         actions={<ScorePill score={opsScore} />}
       />
+
+      <LoadFailedNotice what={loads.failed} className="mb-4" />
 
       {/* Row 1 — 6-col stat tiles. Airborne + Overdue come from the
           shared snapshot; the others derive from today's stats query. */}

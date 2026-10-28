@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 
+import { SetupNotice } from "@/components/ff/setup-notice";
 import type { InvoiceStatus } from "@/lib/api/customer-invoices";
 
 import {
@@ -174,12 +175,14 @@ export function InvoiceActions({
       </div>
 
       {canSend && hasUnpricedLines && (
-        // In place of the button, not as an error after clicking it.
-        <p className="notice notice-yellow">
-          This invoice has a line with no price, so it can&apos;t be marked
-          as sent. Set the cargo rate in Settings → Company, then void
-          this draft and raise the flight&apos;s invoices again.
-        </p>
+        // In place of the button, not as an error after clicking it. #138:
+        // a setup notice, with the page linked for those who may set it.
+        <SetupNotice
+          place="company"
+          missing="The company’s cargo rate"
+          stops="this invoice has a line with no price and can’t be marked as sent"
+          meanwhile="Once it’s set, void this draft and raise the flight’s invoices again."
+        />
       )}
 
       {canMarkPaid && markingPaid && (

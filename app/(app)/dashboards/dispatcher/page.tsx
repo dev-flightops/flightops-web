@@ -9,6 +9,8 @@ import { listFlights, getFlightStats } from "@/lib/api/ops";
 import { loadOperationalSnapshot } from "@/lib/dashboards/operational-snapshot";
 import { snapshotAlertsToList } from "@/lib/dashboards/snapshot-to-alerts";
 import type { FlightListItem } from "@/lib/api/types";
+import { LoadFailedNotice } from "@/components/ff/setup-notice";
+import { Loads } from "@/lib/api/loads";
 
 function todayUtc(): string {
   return new Date().toISOString().slice(0, 10);
@@ -16,13 +18,15 @@ function todayUtc(): string {
 
 export default async function DispatcherDashboardPage() {
   const today = todayUtc();
+  // #138: flights that didn't load say so; they had read as a quiet day.
+  const loads = new Loads();
   const [stats, todaysFlights, pendingResult, snapshot] = await Promise.all([
     getFlightStats().catch(() => null),
-    listFlights({ onDate: today }).catch(() => ({ items: [], total: 0 })),
+    loads.or(listFlights({ onDate: today }), { items: [], total: 0 }, "today’s flights"),
     // Wider window then filter to today + tomorrow — same fix as
     // director-ops. Bare status='scheduled' picks up orphan rows from
     // prior seed runs.
-    listFlights({ status: "scheduled", limit: 50 }).catch(() => ({ items: [], total: 0 })),
+    loads.or(listFlights({ status: "scheduled", limit: 50 }), { items: [], total: 0 }, "the scheduled flights"),
     loadOperationalSnapshot(),
   ]);
 
@@ -58,6 +62,8 @@ export default async function DispatcherDashboardPage() {
         title="Dispatcher Live View"
         description="Active flights · crew legality · pending dispatch packets"
       />
+
+      <LoadFailedNotice what={loads.failed} className="mb-4" />
 
       {/* Row 1 — 5-col stat tiles */}
       <div className="grid grid-cols-2 gap-x-6 gap-y-5 sm:grid-cols-3 md:grid-cols-5">

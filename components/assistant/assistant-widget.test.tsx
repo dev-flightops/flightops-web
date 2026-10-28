@@ -4,6 +4,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 let pathname = "/dispatch";
 vi.mock("next/navigation", () => ({ usePathname: () => pathname }));
 
+import { SetupNotice } from "@/components/ff/setup-notice";
+
 import { AssistantProvider } from "./assistant-context";
 import { AssistantWidget } from "./assistant-widget";
 
@@ -120,6 +122,39 @@ describe("the chat", () => {
     expect(body.messages).toEqual([
       { role: "user", content: "How do I release a flight?", page: { route: "/dispatch", title: "Dispatch" } },
     ]);
+  });
+
+  it("asks from what the page is showing, and offers to ask why first (#138)", async () => {
+    pathname = "/flight-following/new";
+    fetchMock.mockResolvedValueOnce(
+      events({ type: "text", text: "N604PA has no cruise speed." }, { type: "done", stop_reason: "end_turn" }),
+    );
+    render(
+      <>
+        <App />
+        <SetupNotice place="fleet" missing="N604PA’s cruise speed" stops="the leg times can’t fill in" canFix={false} />
+      </>,
+    );
+    openIt();
+    fireEvent.click(screen.getByRole("button", { name: "Why can't I go ahead here?" }));
+    await screen.findByText("N604PA has no cruise speed.");
+    const [asked] = JSON.parse(fetchMock.mock.calls[0][1].body).messages;
+    expect(asked.content).toBe("Why can't I go ahead here?");
+    expect(asked.page.route).toBe("/flight-following/new");
+    expect(asked.page.notices).toEqual([
+      "Setup needed: N604PA’s cruise speed isn’t set, so the leg times can’t fill in. " +
+        "It’s done under Settings → Fleet, by an Exec Admin, the Director of Operations, the Director of Maintenance or Maintenance.",
+    ]);
+  });
+
+  it("sends no notices from a page that shows none, and suggests as before", async () => {
+    fetchMock.mockResolvedValueOnce(events({ type: "text", text: "Ok." }, { type: "done", stop_reason: "end_turn" }));
+    render(<App />);
+    openIt();
+    expect(screen.queryByRole("button", { name: "Why can't I go ahead here?" })).toBeNull();
+    askIt("How do I release a flight?");
+    await screen.findByText("Ok.");
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body).messages[0].page).toEqual({ route: "/dispatch", title: "Dispatch" });
   });
 
   it("asks a suggested question, follows up with the conversation so far, and starts over", async () => {

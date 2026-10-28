@@ -14,6 +14,7 @@ vi.mock("@/lib/api/auth", () => ({
   loadZoneTable: vi.fn(async () => ({ byIcao: {}, fallback: "America/Anchorage" })),
 }));
 vi.mock("./actions", () => ({ createFlightAction: vi.fn() }));
+vi.mock("@/auth", () => ({ auth: vi.fn(async () => ({ roles: ["dispatcher"] })) }));
 // Next runs the form on React 19; the test runner has React 18.
 vi.mock("react", async (importOriginal) => ({
   ...(await importOriginal<typeof import("react")>()),

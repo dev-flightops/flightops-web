@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { OnScreenText } from "@/components/ff/setup-notice";
 import type { ExecutiveSummary } from "@/lib/api/reports";
 
 /**
@@ -145,9 +146,15 @@ export function SummaryView({
           role="status"
           className="mb-5 notice notice-yellow"
         >
-          {s.basis.cost_factors_on_file === 0
-            ? "No operating-cost factors are on file, so cost and margin below are incomplete. Add them under Settings → Costs."
-            : `${s.basis.flights_unpriced} of ${priced} flights could not be costed — cost and margin below are understated.`}
+          {s.basis.cost_factors_on_file === 0 ? (
+            // #138: the assistant sees it too.
+            <OnScreenText
+              text="No operating-cost factors are on file, so cost and margin below are incomplete. Add them under Settings → Costs."
+              said="Setup needed: no operating-cost factors are on file, so cost and margin are incomplete. They're added under Settings → Costs, by an Exec Admin."
+            />
+          ) : (
+            `${s.basis.flights_unpriced} of ${priced} flights could not be costed — cost and margin below are understated.`
+          )}
         </p>
       ) : null}
 

@@ -14,6 +14,7 @@ import {
   listUsers,
 } from "@/lib/api/auth";
 import { listAircraft } from "@/lib/api/ops";
+import { aircraftGaps } from "@/lib/setup/aircraft";
 
 /**
  * /settings — Settings landing.
@@ -32,6 +33,8 @@ export default async function SettingsLandingPage() {
   let simMode: boolean | null = null;
   let usersTotal: number | null = null;
   let activeAircraft = 0;
+  // #138: active aircraft missing what a flight on them needs.
+  let aircraftNeedingSetup = 0;
   let loadError: string | null = null;
 
   try {
@@ -53,9 +56,9 @@ export default async function SettingsLandingPage() {
   }
 
   try {
-    activeAircraft = (await listAircraft()).items.filter(
-      (a) => a.is_active,
-    ).length;
+    const active = (await listAircraft()).items.filter((a) => a.is_active);
+    activeAircraft = active.length;
+    aircraftNeedingSetup = active.filter((a) => aircraftGaps(a).length > 0).length;
   } catch {
     // Non-fatal — leave the tile at 0 if the fleet endpoint is unreachable.
   }
@@ -116,7 +119,10 @@ export default async function SettingsLandingPage() {
         {
           label: "Fleet",
           blurb: "Add, edit and retire aircraft. Passenger seats and useful load feed the Fleet Board and load planning.",
-          value: `${activeAircraft} active`,
+          value:
+            aircraftNeedingSetup > 0
+              ? `${activeAircraft} active · ${aircraftNeedingSetup} need${aircraftNeedingSetup === 1 ? "s" : ""} setup`
+              : `${activeAircraft} active`,
           href: "/settings/fleet",
         },
         {

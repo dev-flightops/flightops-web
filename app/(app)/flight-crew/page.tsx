@@ -12,6 +12,8 @@ import { currentGreeting, firstNameFrom } from "@/lib/greeting";
 
 import { CorrectDuty } from "@/components/duty/correct-duty";
 import { SquawkDialog, type AircraftChoice } from "@/components/dispatch/packet/squawk-dialog";
+import { LoadFailedNotice } from "@/components/ff/setup-notice";
+import { Loads } from "@/lib/api/loads";
 
 import { DutyClockButton } from "./duty-clock-button";
 import { TodayFlightsPanel } from "./today-flights-panel";
@@ -77,14 +79,18 @@ export default async function FlightCrewPage() {
 
   // The fleet for the squawk form (#92). Losing it costs the pilot the
   // squawk button, not the page.
-  const aircraft: AircraftChoice[] = await listAircraft()
-    .then((r) =>
+  // #138: and says so, rather than the button just not being there.
+  const loads = new Loads();
+  const aircraft: AircraftChoice[] = await loads.or(
+    listAircraft().then((r) =>
       r.items
         .filter((a) => a.is_active)
         .map((a) => ({ id: a.id, tail_number: a.tail_number, model: a.model }))
         .sort((a, b) => a.tail_number.localeCompare(b.tail_number)),
-    )
-    .catch(() => []);
+    ),
+    [],
+    "the aircraft list, so a squawk can’t be written up here",
+  );
 
   try {
     // Three UTC days, not one, and the browser decides which of them
@@ -150,6 +156,7 @@ export default async function FlightCrewPage() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
       <PageHeader eyebrow="Flight Crew" title={`${greeting}${firstName ? `, ${firstName}` : ""}`} />
+      <LoadFailedNotice what={loads.failed} className="mb-4" />
 
       {/* 1. Duty In / Out — Spec 4 §"Page layout / Duty In / Out button" */}
       <section aria-label="Duty" className="mb-8">

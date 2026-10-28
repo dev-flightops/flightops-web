@@ -16,6 +16,9 @@ import {
   isRole,
   roleGate,
   seesOperationalAlerts,
+  COMPANY_SETTINGS_WRITERS,
+  COST_SETTINGS_WRITERS,
+  FLEET_EDITORS,
 } from "./roles";
 
 describe("roles", () => {
@@ -185,5 +188,28 @@ describe("the bookkeeper and the operation (#128)", () => {
     expect(seesOperationalAlerts(["pilot"])).toBe(true);
     expect(seesOperationalAlerts(["reservations_agent"])).toBe(true);
     expect(seesOperationalAlerts([])).toBe(true);
+  });
+});
+
+describe("who may set what a page needs (#138)", () => {
+  // Mirrors of the services that take each change; a setup notice links
+  // only these to the page.
+  const sorted = (gate: ReadonlySet<string>) => [...gate].sort();
+
+  it("the fleet: ops' FleetAdminClaims", () => {
+    expect(sorted(FLEET_EDITORS)).toEqual([
+      "director_of_maintenance",
+      "director_of_operations",
+      "exec_admin",
+      "maintenance",
+    ]);
+  });
+
+  it("the company profile and bases: auth's SettingsWriter", () => {
+    expect(sorted(COMPANY_SETTINGS_WRITERS)).toEqual(["director_of_operations", "exec_admin"]);
+  });
+
+  it("operating costs: an Exec Admin only", () => {
+    expect(sorted(COST_SETTINGS_WRITERS)).toEqual(["exec_admin"]);
   });
 });

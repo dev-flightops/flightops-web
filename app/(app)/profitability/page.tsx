@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { linkCaps } from "@/components/ff/controls";
+import { OnScreenText } from "@/components/ff/setup-notice";
 import { cn } from "@/lib/utils";
 import { PeriodControls } from "@/components/reports/period-controls";
 import { ApiError } from "@/lib/api/client";
@@ -228,8 +229,10 @@ export default async function ProfitabilityPage({
               <ul className="mt-1 space-y-0.5">
                 {b.cost_factors_on_file === 0 && (
                   <li>
-                    No operating-cost rates are configured at all, so every
-                    cost below is zero. Add them under Settings → Costs.
+                    <OnScreenText
+                      text="No operating-cost rates are configured at all, so every cost below is zero. Add them under Settings → Costs."
+                      said="Setup needed: no operating-cost rates are configured, so every cost on Profitability is zero. They're added under Settings → Costs, by an Exec Admin."
+                    />
                   </li>
                 )}
                 {b.flights_unpriced > 0 && (

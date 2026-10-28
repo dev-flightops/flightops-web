@@ -23,6 +23,9 @@ import { readEvents } from "@/lib/help/sse";
 export interface PageRef {
   route: string;
   title?: string;
+  /** What the page showed as the question was asked (#138): its notices
+   *  about setup it needs and loads that failed (lib/help/on-screen.ts). */
+  notices?: string[];
 }
 
 export interface ChatTurn {

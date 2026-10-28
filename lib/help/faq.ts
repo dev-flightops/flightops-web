@@ -129,4 +129,45 @@ export const FAQ: FaqEntry[] = [
       "Flight times are typed and shown in the local time of the departure base, and stored in UTC. A form that wants UTC says so on the field.",
     pages: ["/dispatch", "/flight-following/new"],
   },
+  // #138: where work stops for want of a setting, the page says so; these
+  // are the same answers for a question asked from anywhere.
+  {
+    slug: "setup-needed",
+    question: "Why can't I go ahead here? What does “Setup needed” mean?",
+    answer:
+      "Some work needs a setting the company enters once: an aircraft's cruise speed or useful load, a cost rate, the text-message account. Where one is missing, the page shows a **Setup needed** notice where the work stops: what isn't set, what that stops, and what to do meanwhile. If your roles can set it, the notice links the page; if not, it names who can. [Fleet](/settings/fleet) also marks each active aircraft that is missing something a flight needs. A red **Couldn't load** notice is different: something the page needed didn't load, so what's shown may be incomplete. Reload the page, and if it keeps happening, tell your company administrator. Asked from the page, Peregrine Assistant reads its notices.",
+    pages: ["/settings/fleet"],
+  },
+  {
+    slug: "times-dont-fill-in",
+    question: "Why don't the times fill in when I open a flight?",
+    answer:
+      "The arrival and later departure times fill in from the aircraft's cruise speed, set under [Fleet](/settings/fleet), and the ground time at each stop. An aircraft without one says so in the aircraft list (\"no cruise speed: type the times\") and on the form: type each leg's times, or have the cruise speed set. The flight won't open with a time left empty, and the form names the empty ones. A stop that isn't on the Alaska airport list needs its times typed as well.",
+    pages: ["/flight-following/new", "/settings/fleet"],
+  },
+  {
+    slug: "weight-left-unknown",
+    question: "Why can't the manifest work out the weight left for mail and freight?",
+    answer:
+      "The weight left is the aircraft's useful load less the crew, the fuel and everything on board. It needs:",
+    points: [
+      "**The useful load**: the aircraft's max gross and empty weight, or its useful load, under [Fleet](/settings/fleet). The pilot's weight and balance needs it too.",
+      "**The fuel**: the planned fuel entered on the manifest, or the estimate, which needs the fuel burn and fuel type for the aircraft's type under [Costs](/settings/costs).",
+    ],
+    pages: ["/manifest", "/settings/fleet", "/settings/costs"],
+  },
+  {
+    slug: "no-cost",
+    question: "Why does a dispatch option say no cost?",
+    answer:
+      "An option is costed from the operating cost for the aircraft's type and the fuel price at its base, under [Costs](/settings/costs), which an Exec Admin sets, and from the aircraft's type under [Fleet](/settings/fleet). The card names what's missing; it never shows a guessed figure.",
+    pages: ["/dispatch/intelligence", "/settings/costs"],
+  },
+  {
+    slug: "texts-kept",
+    question: "Why are the open-seat texts kept and not sent?",
+    answer:
+      "Texts go out from the company's own text-message account, set up under [Text Messages](/settings/text-messages) by an Exec Admin or the Director of Operations. Until it's set up, the gate page keeps the texts unsent.",
+    pages: ["/settings/text-messages"],
+  },
 ];
