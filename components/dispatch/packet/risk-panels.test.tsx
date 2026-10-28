@@ -145,6 +145,21 @@ describe("the risk inputs (#50)", () => {
     await waitFor(() => expect(refresh).toHaveBeenCalled());
   });
 
+  it("says Unknown when the night can't be worked out (#136)", () => {
+    const note = "position unknown for ZZZZ; enter it under Stations or answer Night Ops";
+    const base = risk();
+    render(
+      <CompanyRiskInputs
+        flightId="f-1"
+        risk={risk({ automatic: { ...base.automatic, night: { value: null, note } } })}
+        canEdit
+      />,
+    );
+    const night = screen.getByLabelText("Night Ops");
+    expect(within(night).getByRole("option", { name: "Auto (Unknown)" })).toBeInTheDocument();
+    expect(screen.getByText(note)).toBeInTheDocument();
+  });
+
   it("saves the crosswind on blur, and clearing it goes back to auto", async () => {
     render(<CompanyRiskInputs flightId="f-1" risk={risk()} canEdit />);
     const crosswind = screen.getByLabelText("Crosswind (kt)");
