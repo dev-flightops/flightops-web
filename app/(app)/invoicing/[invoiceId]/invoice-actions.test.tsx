@@ -60,6 +60,16 @@ describe("Void", () => {
     expect(screen.queryByRole("button", { name: "Void" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Mark paid" })).not.toBeInTheDocument();
   });
+
+  it("is offered on a paid invoice once all its money has gone back (#127)", () => {
+    renderActions({ status: "paid", paidCents: 0, outstandingCents: 0 });
+    expect(screen.getByRole("button", { name: "Void" })).toBeInTheDocument();
+  });
+
+  it("is never offered on a void invoice", () => {
+    renderActions({ status: "void", paidCents: 0, outstandingCents: 0 });
+    expect(screen.queryByRole("button", { name: "Void" })).not.toBeInTheDocument();
+  });
 });
 
 describe("Mark paid", () => {

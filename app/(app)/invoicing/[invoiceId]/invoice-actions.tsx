@@ -44,6 +44,8 @@ export function InvoiceActions({
   invoiceNumber: string;
   status: InvoiceStatus;
   hasUnpricedLines: boolean;
+  /** Received and not given back (#127): while any counts, the
+   *  invoice can't be voided. */
   paidCents: number;
   outstandingCents: number;
 }) {
@@ -114,7 +116,9 @@ export function InvoiceActions({
 
   const canSend = status === "draft";
   const canMarkPaid = status === "sent";
-  const canVoid = (status === "draft" || status === "sent") && paidCents === 0;
+  // A paid invoice too, once every cent it took has gone back (#127):
+  // a flight cancelled after it was paid.
+  const canVoid = status !== "void" && paidCents === 0;
 
   return (
     <div className="space-y-2">

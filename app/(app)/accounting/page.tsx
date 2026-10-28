@@ -178,7 +178,11 @@ export default async function AccountingPage({
             />
             <Figure
               label="Collected"
-              sub="payments received this month"
+              sub={
+                (summary.refunded_cents ?? 0) > 0
+                  ? `payments received this month, less ${money(summary.refunded_cents ?? 0)} refunded`
+                  : "payments received this month"
+              }
               cents={summary.collected_cents}
             />
           </section>
