@@ -14,7 +14,7 @@ import type {
  * sends.
  */
 
-const { TestApiError, getCustomerInvoice, notFound } = vi.hoisted(() => {
+const { TestApiError, getCustomerInvoice, notFound, listStaff } = vi.hoisted(() => {
   class TestApiError extends Error {
     constructor(
       public status: number,
@@ -30,12 +30,15 @@ const { TestApiError, getCustomerInvoice, notFound } = vi.hoisted(() => {
     notFound: vi.fn(() => {
       throw new Error("NEXT_NOT_FOUND");
     }),
+    listStaff: vi.fn(),
   };
 });
 
 vi.mock("@/lib/api/client", () => ({ ApiError: TestApiError }));
 vi.mock("next/navigation", () => ({ notFound }));
 vi.mock("@/lib/api/customer-invoices", () => ({ getCustomerInvoice }));
+vi.mock("@/lib/api/auth", () => ({ listStaff }));
+vi.mock("@/auth", () => ({ auth: vi.fn(async () => ({ user: { email: "me@test.local" } })) }));
 vi.mock("../actions", () => ({
   invoicePdfAction: vi.fn(),
   markPaidAction: vi.fn(),
@@ -88,6 +91,9 @@ function invoice(over: Partial<CustomerInvoiceDetail> = {}): CustomerInvoiceDeta
     paid_cents: 0,
     outstanding_cents: 100_000,
     payments: [],
+    refunds: [],
+    refunded_cents: 0,
+    credit_notes: [],
     ...over,
   };
 }
@@ -108,6 +114,14 @@ const paymentsSection = () =>
 
 beforeEach(() => {
   vi.clearAllMocks();
+  listStaff.mockResolvedValue({
+    items: [
+      { id: "u-me", full_name: "Me Admin", email: "me@test.local", roles: ["exec_admin"] },
+      { id: "u-do", full_name: "Dana Director", email: "dana@test.local", roles: ["director_of_operations"] },
+      { id: "u-pilot", full_name: "Pat Pilot", email: "pat@test.local", roles: ["pilot"] },
+    ],
+    total: 3,
+  });
 });
 
 describe("the invoice page's payments", () => {
@@ -197,5 +211,78 @@ describe("the invoice page's payments", () => {
     expect(paymentsSection()).toBeInTheDocument();
     expect(recordPayment()).not.toBeInTheDocument();
     expect(within(paymentsSection()!).getByText("ACH or wire")).toBeInTheDocument();
+  });
+});
+
+describe("refunds and credit notes on the invoice page (#127)", () => {
+  const refundsSection = () => screen.queryByRole("region", { name: "Refunds" });
+
+  it("offers nothing to refund before money comes in", async () => {
+    await renderPage(invoice());
+    expect(refundsSection()).not.toBeInTheDocument();
+    expect(listStaff).not.toHaveBeenCalled();
+  });
+
+  it("offers Refund once money has come in", async () => {
+    await renderPage(
+      invoice({
+        status: "paid",
+        paid_cents: 100_000,
+        outstanding_cents: 0,
+        payments: [payment({ id: "pay-1", amount_cents: 100_000 })],
+      }),
+    );
+    expect(within(refundsSection()!).getByRole("button", { name: "Refund" })).toBeInTheDocument();
+  });
+
+  it("nothing more to give back once it all went back", async () => {
+    await renderPage(
+      invoice({
+        status: "paid",
+        paid_cents: 100_000,
+        outstanding_cents: 0,
+        refunded_cents: 100_000,
+        payments: [payment({ id: "pay-1", amount_cents: 100_000 })],
+        refunds: [
+          {
+            id: "ref-1",
+            kind: "original_payment",
+            amount_cents: 100_000,
+            refunded_on: "2026-10-02",
+            reason: "Flight cancelled",
+            reference: null,
+            payment_id: "pay-1",
+            credit_number: null,
+            credit_remaining_cents: null,
+            approved_by_name: "Dana Director",
+            voided_at: null,
+            void_reason: null,
+          },
+        ],
+      }),
+    );
+    const section = refundsSection()!;
+    expect(within(section).queryByRole("button", { name: "Refund" })).not.toBeInTheDocument();
+    expect(section).toHaveTextContent("To the ACH or wire payment of 2026-09-30");
+    expect(section).toHaveTextContent("Approved by Dana Director");
+    expect(paymentsSection()).toHaveTextContent("Refunded");
+  });
+
+  it("offers the customer's credit on an invoice that owes", async () => {
+    await renderPage(
+      invoice({
+        credit_notes: [
+          {
+            id: "cn-1",
+            credit_number: "CN-000001",
+            invoice_number: "INV-000003",
+            refunded_on: "2026-10-01",
+            remaining_cents: 15_000,
+          },
+        ],
+      }),
+    );
+    expect(paymentsSection()).toHaveTextContent("The customer has 150.00 of credit.");
+    expect(screen.getByRole("button", { name: "Pay with credit" })).toBeInTheDocument();
   });
 });
