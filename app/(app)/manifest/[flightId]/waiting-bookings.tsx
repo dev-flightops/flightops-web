@@ -33,7 +33,9 @@ export function WaitingBookings({
   return (
     <section aria-label="Bookings waiting for this flight" className="mb-6 rounded-lg border border-border bg-card p-4">
       <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-        <h2 className="section-title">Bookings waiting for this flight</h2>
+        <h2 className="text-sm font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+          Bookings waiting for this flight
+        </h2>
         {canAdd ? (
           <Link href={newBookingHref} className={buttonOutline}>
             + New booking on this flight

@@ -1,10 +1,12 @@
 import Link from "next/link";
 
 import { linkCaps } from "@/components/ff/controls";
+import { loadZoneTable } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
 import { type FlightSearchResult, searchFlights } from "@/lib/api/flight-search";
 import { getFleetAirworthiness } from "@/lib/api/maintenance";
 import { CUSTOMERS_MAX_LIMIT, listCustomers } from "@/lib/api/reservations";
+import { utcToLocalInput, zoneFor } from "@/lib/format/local-time";
 import { cn } from "@/lib/utils";
 
 import { BookingForm } from "./booking-form";
@@ -73,6 +75,11 @@ export default async function NewBookingPage({
     }
   }
   const chosen = flights?.find((f) => f.flight_id === params.flight) ?? null;
+  // On a chosen flight the party wants its departure: the leg they board,
+  // local at that stop, not the search's 09:00.
+  const departs = chosen
+    ? utcToLocalInput(chosen.scheduled_departure_at, zoneFor(await loadZoneTable(), chosen.origin))
+    : (params.date ?? null);
   const returnTo = params.return_to?.startsWith("/") && !params.return_to.startsWith("//")
     ? params.return_to
     : null;
@@ -112,7 +119,7 @@ export default async function NewBookingPage({
           prefill={{
             origin: params.origin ?? null,
             destination: params.destination ?? null,
-            date: params.date ?? null,
+            date: departs,
             pax: params.pax ? Number(params.pax) || null : null,
             customerName: params.customer_name ?? null,
           }}
