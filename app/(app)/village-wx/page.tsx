@@ -224,9 +224,15 @@ function ReportCard({
             />
             {canEdit ? <EditAirportDialog airport={airport} /> : null}
           </div>
-          {r?.flight_category && (
+          {r?.flight_category ? (
             <CategoryBadge category={r.flight_category} />
-          )}
+          ) : r && r.visibility_sm == null ? (
+            // #131: a FEW or SCT layer isn't a ceiling, so a report of
+            // clouds alone can't be rated without the visibility.
+            <span className="shrink-0 text-right text-[0.65rem] text-muted-foreground">
+              No category: visibility not reported
+            </span>
+          ) : null}
         </div>
 
         {r && (

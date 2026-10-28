@@ -4,16 +4,25 @@ import { revalidatePath } from "next/cache";
 
 import { ApiError, SessionExpiredError } from "@/lib/api/client";
 import {
+  applyCustomerCredit,
   getCustomerInvoicePdfBase64,
   markCustomerInvoicePaid,
   recordCustomerInvoicePayment,
+  refundCustomerInvoice,
   sendCustomerInvoice,
   voidCustomerInvoice,
   voidCustomerInvoicePayment,
+  voidCustomerInvoiceRefund,
+  type RefundKind,
 } from "@/lib/api/customer-invoices";
 
 import { money } from "./money";
-import { isFormMethod, METHOD_LABELS, parseAmount } from "./payments";
+import {
+  isFormMethod,
+  METHOD_LABELS,
+  parseAmount,
+  REFUND_APPROVAL_OVER_CENTS,
+} from "./payments";
 
 /**
  * Invoice lifecycle actions, from the server.
@@ -49,6 +58,32 @@ const REFUSALS: Record<string, string> = {
   payment_already_voided: "That payment has already been voided.",
   payment_not_found: "That payment is not on this invoice.",
   invoice_not_found: "That invoice no longer exists.",
+  // Refunds and credit notes (#127).
+  invoice_has_nothing_to_refund:
+    "Nothing has been received on this invoice, so there is nothing to give back.",
+  refunded_on_in_the_future: "A refund cannot be dated in the future.",
+  applied_on_in_the_future: "Credit cannot be applied with a date in the future.",
+  refund_needs_an_approver:
+    "A refund over $500 needs an approver. Choose who approved it.",
+  approver_is_yourself: "Someone else has to approve a refund over $500.",
+  approver_cannot_approve_refunds:
+    "That person can't approve refunds. An Exec Admin or the Director of Operations can.",
+  payment_id_required: "Choose the payment the money goes back to.",
+  payment_is_voided: "That payment was voided, so nothing can go back to it.",
+  credit_goes_back_as_credit:
+    "A credit note paid that, so it goes back as a credit note, not to a payment.",
+  credit_note_needs_a_customer:
+    "A walk-in can't hold a credit note. Give the money back to the payment instead.",
+  refund_already_voided: "That refund has already been voided.",
+  refund_not_found: "That refund is not on this invoice.",
+  credit_note_in_use:
+    "That credit note has paid an invoice. Void that payment first.",
+  credit_note_not_found: "That credit note no longer exists or was voided.",
+  credit_note_is_another_customers: "That credit note belongs to another customer.",
+  payment_has_refunds:
+    "Money has gone back to this payment. Void that refund first.",
+  payment_covers_a_refund:
+    "Money has been given back from what this payment brought in. Void that refund or credit note first.",
 };
 
 function explain(err: unknown, fallback: string): string {
@@ -56,6 +91,9 @@ function explain(err: unknown, fallback: string): string {
     return "Your session has expired. Sign in again.";
   }
   if (err instanceof ApiError) {
+    // The company is read-only until its subscription is paid (#127):
+    // apiFetch's ReadOnlyError carries the sentence to show.
+    if (err.status === 402) return err.message;
     // The body is the service's detail slug. Match a known one, and
     // otherwise say what happened without pasting raw JSON at the user.
     for (const [slug, sentence] of Object.entries(REFUSALS)) {
@@ -68,6 +106,19 @@ function explain(err: unknown, fallback: string): string {
     );
     if (over) {
       return `That is more than the ${money(Math.max(0, Number(over[1])))} still outstanding.`;
+    }
+    const back = String(err.message).match(
+      /refund_exceeds_(received|payment)_of_(-?\d+)/,
+    );
+    if (back) {
+      const left = money(Math.max(0, Number(back[2])));
+      return back[1] === "payment"
+        ? `That is more than the ${left} that can still go back to that payment.`
+        : `That is more than the ${left} received and not yet given back.`;
+    }
+    const credit = String(err.message).match(/credit_exceeds_remaining_of_(-?\d+)/);
+    if (credit) {
+      return `That is more than the ${money(Math.max(0, Number(credit[1])))} left on the credit note.`;
     }
     const transition = String(err.message).match(
       /cannot_go_from_(\w+?)_to_(\w+)/,
@@ -231,6 +282,122 @@ export async function voidPaymentAction(
       status: "error",
       message: explain(err, "Could not void the payment"),
     };
+  }
+}
+
+export interface RefundForm {
+  /** As typed: "50", "50.00". */
+  amount: string;
+  kind: RefundKind;
+  /** The payment the money goes back to, for `original_payment`. */
+  paymentId: string;
+  /** YYYY-MM-DD. */
+  refundedOn: string;
+  reason: string;
+  reference: string;
+  /** Needed over $500: who approved it. */
+  approverId: string;
+}
+
+/** Give money back on an invoice (#127): to the payment it came from,
+ *  or as a credit note for a later invoice of the customer's. */
+export async function refundAction(
+  invoiceId: string,
+  form: RefundForm,
+): Promise<InvoiceActionState> {
+  const cents = parseAmount(form.amount);
+  if (cents === null || cents <= 0) {
+    return { status: "error", message: "Enter the amount to give back, like 50.00." };
+  }
+  if (form.kind === "original_payment" && !form.paymentId) {
+    return { status: "error", message: "Choose the payment the money goes back to." };
+  }
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(form.refundedOn)) {
+    return { status: "error", message: "Enter the date of the refund." };
+  }
+  if (form.reason.trim().length < 3) {
+    return { status: "error", message: "Say why the money is going back." };
+  }
+  if (cents > REFUND_APPROVAL_OVER_CENTS && !form.approverId) {
+    return { status: "error", message: "A refund over $500 needs an approver. Choose who approved it." };
+  }
+  try {
+    const { refund } = await refundCustomerInvoice(invoiceId, {
+      kind: form.kind,
+      amount_cents: cents,
+      payment_id: form.kind === "original_payment" ? form.paymentId : null,
+      refunded_on: form.refundedOn,
+      reason: form.reason.trim(),
+      reference: form.reference.trim() || null,
+      approved_by_user_id: form.approverId || null,
+    });
+    revalidatePath("/invoicing");
+    revalidatePath(`/invoicing/${invoiceId}`);
+    return {
+      status: "ok",
+      message:
+        refund.kind === "credit_note"
+          ? `Issued credit note ${refund.credit_number} for ${money(cents)}. It can pay a later invoice of the customer's.`
+          : `Recorded ${money(cents)} going back to the payment.`,
+    };
+  } catch (err) {
+    return { status: "error", message: explain(err, "Could not record the refund") };
+  }
+}
+
+/** Void a refund entered in error (#127); the money counts as received
+ *  again. */
+export async function voidRefundAction(
+  invoiceId: string,
+  refundId: string,
+  reason: string,
+): Promise<InvoiceActionState> {
+  if (reason.trim().length < 3) {
+    return { status: "error", message: "Say why the refund is being voided." };
+  }
+  try {
+    const { refund } = await voidCustomerInvoiceRefund(invoiceId, refundId, reason.trim());
+    revalidatePath("/invoicing");
+    revalidatePath(`/invoicing/${invoiceId}`);
+    return {
+      status: "ok",
+      message:
+        refund.kind === "credit_note"
+          ? `Voided credit note ${refund.credit_number}.`
+          : `Voided the ${money(refund.amount_cents)} refund.`,
+    };
+  } catch (err) {
+    return { status: "error", message: explain(err, "Could not void the refund") };
+  }
+}
+
+/** Pay an invoice from one of its customer's credit notes (#127). */
+export async function applyCreditAction(
+  invoiceId: string,
+  creditNoteId: string,
+  amount: string,
+  appliedOn: string,
+): Promise<InvoiceActionState> {
+  const cents = parseAmount(amount);
+  if (cents === null || cents <= 0) {
+    return { status: "error", message: "Enter the amount of credit to use, like 50.00." };
+  }
+  if (!creditNoteId) {
+    return { status: "error", message: "Choose the credit note to pay with." };
+  }
+  try {
+    const result = await applyCustomerCredit(invoiceId, creditNoteId, cents, appliedOn || null);
+    revalidatePath("/invoicing");
+    revalidatePath(`/invoicing/${invoiceId}`);
+    const used = `Paid ${money(cents)} from credit note ${result.payment.reference}.`;
+    return {
+      status: "ok",
+      message: result.settled
+        ? `${used} The invoice is paid.`
+        : `${used} ${money(result.outstanding_cents)} still outstanding.`,
+    };
+  } catch (err) {
+    return { status: "error", message: explain(err, "Could not apply the credit") };
   }
 }
 

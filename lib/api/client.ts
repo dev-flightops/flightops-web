@@ -32,6 +32,23 @@ export class SessionExpiredError extends ApiError {
   }
 }
 
+/** What a refused write says while the company is read-only (#127). */
+export const READ_ONLY_MESSAGE =
+  "The company's subscription payment is overdue, so nothing can be changed until it's paid. Flight following, safety reports and clocking out still work.";
+
+/**
+ * Thrown when the company is read-only because its subscription payment
+ * is overdue (#127): every service refuses a staff write with 402 then,
+ * except flight following, safety reports and clocking out. Its message
+ * is a sentence a form can show as it is.
+ */
+export class ReadOnlyError extends ApiError {
+  constructor(path: string) {
+    super(402, path, READ_ONLY_MESSAGE);
+    this.name = "ReadOnlyError";
+  }
+}
+
 const apiBaseUrl = () => {
   const url = process.env.NEXT_PUBLIC_API_URL;
   if (!url) {
@@ -106,6 +123,9 @@ export async function apiFetch<T>(
     // revoked, or malformed token). Trigger the session-expired flow.
     if (response.status === 401) {
       throw new SessionExpiredError(path, body || "session expired");
+    }
+    if (response.status === 402) {
+      throw new ReadOnlyError(path);
     }
     throw new ApiError(response.status, path, body || response.statusText);
   }
