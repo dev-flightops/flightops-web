@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { OnScreenNotice } from "@/components/ff/setup-notice";
 import { AddAircraftDialog } from "@/components/settings/add-aircraft-dialog";
 import { EditAircraftDialog } from "@/components/settings/edit-aircraft-dialog";
 import {
@@ -9,6 +10,7 @@ import {
 import { ApiError } from "@/lib/api/client";
 import { listAircraft } from "@/lib/api/ops";
 import type { AircraftListItem } from "@/lib/api/types";
+import { aircraftGaps } from "@/lib/setup/aircraft";
 
 /** /settings/fleet — Fleet management.
  *
@@ -37,6 +39,9 @@ export default async function SettingsFleetPage() {
 
   const active = aircraft.filter((a) => a.is_active);
   const retired = aircraft.filter((a) => !a.is_active);
+  // #138: an active aircraft missing what a flight on it needs, named here
+  // as well as on the page where the work stops.
+  const incomplete = active.filter((a) => aircraftGaps(a).length > 0).map((a) => a.tail_number);
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
@@ -67,6 +72,15 @@ export default async function SettingsFleetPage() {
           {loadError}
         </div>
       )}
+
+      {incomplete.length > 0 ? (
+        <OnScreenNotice
+          className="mb-4"
+          tone="yellow"
+          label="Setup needed"
+          text={`${listed(incomplete)} ${incomplete.length === 1 ? "is" : "are"} missing settings a flight needs: each says which below. Edit the aircraft to set them.`}
+        />
+      ) : null}
 
       {!loadError && aircraft.length === 0 && (
         <div className="rounded-lg border border-border bg-card px-5 py-8 text-center">
@@ -124,6 +138,13 @@ function FleetTable({
               <span className="font-mono font-semibold tracking-tight text-foreground">
                 {a.tail_number}
               </span>
+              {variant === "active"
+                ? aircraftGaps(a).map((gap) => (
+                    <span key={gap.what} className="mt-0.5 block text-[0.7rem] text-status-yellow">
+                      {`No ${gap.what}: ${gap.stops}.`}
+                    </span>
+                  ))
+                : null}
             </td>
             <td className="px-4 py-3 text-muted-foreground">
               {a.model ?? "—"}
@@ -156,4 +177,9 @@ function FleetTable({
       </tbody>
     </table>
   );
+}
+
+function listed(items: string[]): string {
+  if (items.length <= 1) return items[0] ?? "";
+  return `${items.slice(0, -1).join(", ")} and ${items[items.length - 1]}`;
 }

@@ -1,4 +1,6 @@
+import { auth } from "@/auth";
 import { PageHeader } from "@/components/ff/page-header";
+import { SetupNotice } from "@/components/ff/setup-notice";
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
@@ -7,6 +9,7 @@ import { getCharter, type CharterRow } from "@/lib/api/charter";
 import { ApiError } from "@/lib/api/client";
 import { listAircraft } from "@/lib/api/ops";
 import type { AircraftListItem } from "@/lib/api/types";
+import { canSetUp } from "@/lib/setup/places";
 
 import { type FlightPrefill, OpenFlightForm } from "./open-flight-form";
 
@@ -28,6 +31,8 @@ export default async function FlightFollowingNewPage({
 }) {
   // A confirmed charter's flight (#133): the form starts from the request.
   const { charter: charterId } = await searchParams;
+  // #138: who may set a missing cruise speed, or make an aircraft active.
+  const canSetFleet = canSetUp((await auth())?.roles ?? [], "fleet");
   const charter = charterId ? await getCharter(charterId).catch(() => null) : null;
   let aircraft: AircraftListItem[] = [];
   let loadError: string | null = null;
@@ -71,15 +76,16 @@ export default async function FlightFollowingNewPage({
           {loadError}
         </div>
       ) : aircraft.length === 0 ? (
-        <div className="rounded-lg border border-border bg-card px-5 py-8 text-center">
-          <p className="text-sm text-muted-foreground">
-            No active aircraft on this tenant.
-          </p>
-          <p className="mt-1 text-xs text-muted-foreground">
-            Activate an aircraft on the Maintenance page before opening
-            a flight.
-          </p>
-          <Button asChild variant="secondary" size="sm" className="mt-4">
+        <div className="space-y-4">
+          {/* Aircraft are made active again under Settings → Fleet (#138);
+              this had sent people to the Maintenance page. */}
+          <SetupNotice
+            place="fleet"
+            sentence="No aircraft is active, so a flight can’t be opened."
+            fix="make one active"
+            canFix={canSetFleet}
+          />
+          <Button asChild variant="secondary" size="sm">
             <Link href="/flight-following">← Back to board</Link>
           </Button>
         </div>
@@ -91,6 +97,7 @@ export default async function FlightFollowingNewPage({
             zones={await zones}
             groundMinutesDefault={await groundMinutes}
             prefill={charter ? charterPrefill(charter) : undefined}
+            canSetFleet={canSetFleet}
           />
         </>
       )}

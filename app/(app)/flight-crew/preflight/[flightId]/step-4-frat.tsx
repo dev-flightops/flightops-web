@@ -3,6 +3,7 @@
 import { Fragment, useMemo, useState, useTransition } from "react";
 
 import { segment, segmentGroup } from "@/components/ff/controls";
+import { OnScreenText } from "@/components/ff/setup-notice";
 import { NonCertifiedWeatherNotice, sourceLabel } from "@/components/weather/weather-source";
 import type { StopWeather } from "@/lib/api/dispatch-risk";
 import type {
@@ -1043,16 +1044,15 @@ function FactorRow({
                 ) : null}
               </span>
             ) : hasCompanyLimits === false ? (
-              <span className="italic text-status-yellow">
-                Company crosswind limits could not be loaded — score
-                against your GOM limit.
-              </span>
+              <OnScreenText
+                className="italic text-status-yellow"
+                text="Company crosswind limits could not be loaded — score against your GOM limit."
+              />
             ) : (
-              <span className="italic text-status-yellow">
-                Engine count not recorded for this aircraft, so no company
-                crosswind limit applies to it yet — score against your GOM
-                limit. An admin can set it under Settings &rarr; Fleet.
-              </span>
+              <OnScreenText
+                className="italic text-status-yellow"
+                text="Engine count not recorded for this aircraft, so no company crosswind limit applies to it yet: score against your GOM limit. It’s set under Settings → Fleet, by an Exec Admin, the Director of Operations, the Director of Maintenance or Maintenance."
+              />
             )}
           </p>
         ) : null}

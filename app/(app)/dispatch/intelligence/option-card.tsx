@@ -1,3 +1,4 @@
+import { OnScreenText } from "@/components/ff/setup-notice";
 import type { DispatchOption } from "@/lib/api/ops";
 
 /**
@@ -157,15 +158,34 @@ export function OptionCard({ option }: { option: DispatchOption }) {
         ) : option.kind !== "hold" ? (
           // Named rather than hidden, and never a guessed figure. The
           // service returns exactly what is unconfigured; legacy falls
-          // back to $450/hr and prints the result as money.
-          <span
-            className="text-status-yellow"
-            title={option.cost.missing.join("; ")}
-          >
+          // back to $450/hr and prints the result as money. #138: on the
+          // card, with where each is set, not in a tooltip.
+          <span className="text-status-yellow">
             no cost — rates not configured
+            {option.cost.missing.length ? (
+              <OnScreenText
+                className="block text-[0.65rem]"
+                text={costGaps(option.cost.missing)}
+                said={`Setup needed: a dispatch option has no cost estimate: ${costGaps(option.cost.missing)}.`}
+              />
+            ) : null}
           </span>
         ) : null}
       </div>
     </li>
   );
+}
+
+/** What the cost lacks, each with where it's set (#138): an operating
+ *  cost or a fuel price under Settings → Costs, a type under Fleet. */
+function costGaps(missing: string[]): string {
+  return missing
+    .map((gap) =>
+      /type on file/.test(gap)
+        ? `${gap} (Settings → Fleet)`
+        : /operating cost|fuel price/.test(gap)
+          ? `${gap} (Settings → Costs)`
+          : gap,
+    )
+    .join("; ");
 }

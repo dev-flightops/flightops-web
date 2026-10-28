@@ -17,6 +17,8 @@ import {
 import { searchFlights, type FlightSearchResult } from "@/lib/api/flight-search";
 import { loadZoneTable } from "@/lib/api/auth";
 import { zoneFor } from "@/lib/format/local-time";
+import { LoadFailedNotice } from "@/components/ff/setup-notice";
+import { Loads } from "@/lib/api/loads";
 
 import { AssignFlightPanel } from "./assign-flight-panel";
 import { LifecycleControls } from "./lifecycle-controls";
@@ -46,19 +48,23 @@ export default async function BookingDetailPage({
   // are included on purpose — a dispatcher looking at an unserviced
   // booking needs to see that the 09:15 exists and is full, which is a
   // different problem from there being no flight at all.
+  // #138: a search that fails says so; it had read as no flight at all.
+  const loads = new Loads();
   let candidates: FlightSearchResult[] = [];
   if (booking.status !== "cancelled") {
-    candidates = await searchFlights({
-      origin: booking.origin_icao,
-      destination: booking.destination_icao,
-      date: booking.requested_departure_at.slice(0, 10),
-      paxCount: booking.pax_count,
-      showUnavailable: true,
-    })
-      .then((r) => r.items)
+    candidates = await loads.or(
+      searchFlights({
+        origin: booking.origin_icao,
+        destination: booking.destination_icao,
+        date: booking.requested_departure_at.slice(0, 10),
+        paxCount: booking.pax_count,
+        showUnavailable: true,
+      }).then((r) => r.items),
       // A search that fails should not take the page with it; the rest
       // of the booking is still worth reading.
-      .catch(() => []);
+      [],
+      "the flights this booking could go on",
+    );
   }
 
   return (
@@ -81,6 +87,8 @@ export default async function BookingDetailPage({
           </code>
         </p>
       </header>
+
+      <LoadFailedNotice what={loads.failed} className="mb-6" />
 
       {filed === "1" ? (
         <div

@@ -74,8 +74,13 @@ describe("the seats a no-show opened, on the gate page (#120)", () => {
     expect(within(waiting).getByText("Text kept, not sent: no text-message account")).toBeTruthy();
     expect(within(waiting).getByText("No phone: call them")).toBeTruthy();
     expect(within(waiting).getByText("Texted 10:41 AKDT")).toBeTruthy();
-    // No account yet: the texts wait, and nothing to press.
-    expect(within(panel).getByText(/Texts are kept until the company's text-message account is set up/)).toBeTruthy();
+    // No account yet: the texts wait, and nothing to press. #138: the
+    // notice names the real page, and who sets it up.
+    expect(
+      within(panel).getByText(
+        /The company’s text-message account isn’t set, so these texts are kept, not sent\. Ask an Exec Admin or the Director of Operations to set it under Settings → Text Messages\./,
+      ),
+    ).toBeTruthy();
     expect(within(panel).queryByRole("button")).toBeNull();
   });
 

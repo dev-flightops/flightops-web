@@ -401,6 +401,10 @@ describe("the client's payload arithmetic (#111)", () => {
         load={{ ...LOAD, load: { ...LOAD.load, useful_load_lbs: null } }}
       />,
     );
-    expect(screen.getByText(/N100PA has no max gross and empty weight/)).toBeInTheDocument();
+    // #138: the setup notice the manifest shows too, with who sets it.
+    expect(
+      screen.getByText(/N100PA’s useful load \(its max gross and empty weight\) isn’t set, so its payload can’t be worked out here\./),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/to set it under Settings → Fleet\./)).toBeInTheDocument();
   });
 });

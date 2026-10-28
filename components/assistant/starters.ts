@@ -57,7 +57,16 @@ const EVERYONE = [
   "What do the FRAT levels mean?",
 ];
 
-export function startersFor(roles: readonly string[]): readonly string[] {
+/** Asked first on a page showing a setup or failed-load notice (#138):
+ *  the question goes with those notices, so it's answered from them. */
+export const WHY_NOT_HERE = "Why can't I go ahead here?";
+
+export function startersFor(roles: readonly string[], noticesShown = false): readonly string[] {
+  const questions = forRoles(roles);
+  return noticesShown ? [WHY_NOT_HERE, ...questions.slice(0, 3)] : questions;
+}
+
+function forRoles(roles: readonly string[]): readonly string[] {
   for (const [match, questions] of BY_ROLE) {
     if (roles.some((role) => (match as readonly string[]).includes(role))) return questions;
   }

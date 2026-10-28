@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 
 import { linkCaps } from "@/components/ff/controls";
+import { SetupNotice } from "@/components/ff/setup-notice";
 import type { FlightLoad } from "@/lib/api/manifest";
 import type { FlightDetail, WeightReturn } from "@/lib/api/types";
 import { crewWeightNote } from "@/lib/flights/crew-weight";
@@ -303,10 +304,13 @@ function LoadBreakdown({ flight, data }: { flight: FlightDetail; data: FlightLoa
   const { load } = data;
   const useful = load.useful_load_lbs;
   if (useful == null) {
+    // #138: the same notice as the manifest's, which the assistant sees.
     return (
-      <p className="notice notice-yellow">
-        {`${flight.aircraft.tail_number} has no max gross and empty weight (or useful load) under Settings → Fleet, so its payload can’t be worked out here.`}
-      </p>
+      <SetupNotice
+        place="fleet"
+        missing={`${flight.aircraft.tail_number}’s useful load (its max gross and empty weight)`}
+        stops="its payload can’t be worked out here"
+      />
     );
   }
   const crew = Number(load.crew_lbs);

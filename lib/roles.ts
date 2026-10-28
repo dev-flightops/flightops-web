@@ -210,6 +210,24 @@ export const RELEASE_POLICY_ADMINS = roleGate("director_of_operations", "exec_ad
  *  reads and writes the company's flights there. */
 export const INTEGRATION_ADMINS = roleGate("director_of_operations", "exec_admin");
 
+/** Edit an aircraft under Settings → Fleet: its seats, cruise speed and
+ *  weights (#138 names them where they're missing). ops' FleetAdminClaims
+ *  (services/ops/app/routes/aircraft.py): maintenance owns the airframe. */
+export const FLEET_EDITORS = roleGate(
+  "exec_admin",
+  "director_of_operations",
+  "director_of_maintenance",
+  "maintenance",
+);
+
+/** The company profile and its bases (#138): auth's SettingsWriter
+ *  (services/auth/app/routes/settings.py). */
+export const COMPANY_SETTINGS_WRITERS = roleGate("director_of_operations", "exec_admin");
+
+/** Operating costs, behind every cost and margin figure (#138): auth's
+ *  ExecAdminClaims on /settings/costs, fuel prices too. */
+export const COST_SETTINGS_WRITERS = roleGate("exec_admin");
+
 /** Releasing a flight and the dispatch risk inputs (#50): ops'
  *  `DispatcherClaims` on both. */
 export const DISPATCH_WRITERS = roleGate("dispatcher", "exec_admin");

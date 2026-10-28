@@ -61,7 +61,7 @@ describe("Mark as sent", () => {
     expect(screen.queryByRole("button", { name: "Mark as sent" })).not.toBeInTheDocument();
     expect(
       screen.getByText(
-        "This invoice has a line with no price, so it can't be marked as sent. Set the cargo rate in Settings → Company, then void this draft and raise the flight's invoices again.",
+        /The company’s cargo rate isn’t set, so this invoice has a line with no price and can’t be marked as sent\. Once it’s set, void this draft and raise the flight’s invoices again\./,
       ),
     ).toBeInTheDocument();
   });

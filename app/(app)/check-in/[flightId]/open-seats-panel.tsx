@@ -3,6 +3,7 @@
 import { useEffect, useState, useTransition } from "react";
 
 import { buttonSolid } from "@/components/ff/controls";
+import { SetupNotice } from "@/components/ff/setup-notice";
 import { Notice } from "@/components/ff/notice";
 import type { Opening, OpeningPassenger } from "@/lib/api/open-seats";
 import { localClock } from "@/lib/format/local-time";
@@ -89,9 +90,13 @@ export function OpenSeatsPanel({
           </ul>
         )}
         {kept && !opening.can_text ? (
-          <p className="mt-2 text-xs text-muted-foreground">
-            Texts are kept until the company&apos;s text-message account is set up in Settings → Integrations.
-          </p>
+          // #138: it named "Settings → Integrations", a heading, not a page.
+          <SetupNotice
+            className="mt-2"
+            place="textMessages"
+            missing="The company’s text-message account"
+            stops="these texts are kept, not sent"
+          />
         ) : null}
         {canAct && opening.can_text && toText.length > 0 ? (
           <div className="mt-3">

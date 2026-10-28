@@ -1,10 +1,12 @@
 import Link from "next/link";
 
 import { PageHeader } from "@/components/ff/page-header";
+import { LoadFailedNotice, SetupNotice } from "@/components/ff/setup-notice";
 import { AlertList } from "@/components/dashboards/alert-list";
 import { StationPicker } from "@/components/dashboards/station-picker";
 import { StatTile } from "@/components/dashboards/stat-tile";
 import { listCompanyBases } from "@/lib/api/auth";
+import { Loads } from "@/lib/api/loads";
 import { listFlights } from "@/lib/api/ops";
 import {
   loadOperationalSnapshot,
@@ -28,17 +30,18 @@ export default async function StationDashboardPage({
 }) {
   const { station: requestedStation } = await searchParams;
   const today = todayUtc();
+  // #138: a load that fails says so; it had read as no traffic, or as
+  // "No bases configured".
+  const loads = new Loads();
   const [todaysFlights, snapshot, basesResponse] = await Promise.all([
-    listFlights({ onDate: today, limit: 200 }).catch(() => ({
-      items: [],
-      total: 0,
-    })),
+    loads.or(listFlights({ onDate: today, limit: 200 }), { items: [], total: 0 }, "today’s flights"),
     loadOperationalSnapshot(),
     // Full bases catalog drives both the dropdown picker and the
     // network grid — same source legacy uses. Falls back to today's
     // traffic stations if the catalog query fails.
-    listCompanyBases().catch(() => ({ items: [], total: 0 })),
+    loads.or(listCompanyBases(), { items: [], total: 0 }, "the company’s bases"),
   ]);
+  const basesFailed = loads.failed.includes("the company’s bases");
 
   // Bases sorted by ICAO — drives the <select> and the network grid.
   const bases = [...basesResponse.items].sort((a, b) =>
@@ -91,6 +94,8 @@ export default async function StationDashboardPage({
           />
         }
       />
+
+      <LoadFailedNotice what={loads.failed} className="mb-5" />
 
       {/* Row 1 — 4-col stats */}
       <div className="grid grid-cols-2 gap-x-6 gap-y-5 md:grid-cols-4">
@@ -172,6 +177,7 @@ export default async function StationDashboardPage({
         </h2>
         <NetworkGrid
           bases={bases}
+          basesFailed={basesFailed}
           flights={todaysFlights.items}
           currentStation={station}
         />
@@ -244,10 +250,13 @@ function StationFlightsTable({
 
 function NetworkGrid({
   bases,
+  basesFailed,
   flights,
   currentStation,
 }: {
   bases: CompanyBaseResponse[];
+  /** The bases didn't load: the notice at the top says so. */
+  basesFailed: boolean;
   flights: FlightListItem[];
   currentStation: string;
 }) {
@@ -267,10 +276,13 @@ function NetworkGrid({
   }
 
   if (bases.length === 0) {
+    if (basesFailed) return null;
     return (
-      <p className="py-4 text-center text-xs text-muted-foreground">
-        No bases configured. Add bases in Settings → Bases.
-      </p>
+      <SetupNotice
+        place="bases"
+        sentence="No base is set up, so there is no station network to sum up."
+        fix="add the bases"
+      />
     );
   }
 

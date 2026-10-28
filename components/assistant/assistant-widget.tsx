@@ -9,6 +9,7 @@ import { BotGlyph, CloseGlyph, SendGlyph } from "@/components/ff/glyphs";
 import { Notice } from "@/components/ff/notice";
 import { RichText } from "@/components/help/rich-text";
 import { MAX_QUESTION_CHARS } from "@/components/help/use-help-chat";
+import { onScreenNotices, useOnScreenNotices } from "@/lib/help/on-screen";
 import { pageRef } from "@/lib/help/page-ref";
 import { cn } from "@/lib/utils";
 
@@ -64,6 +65,9 @@ function Thinking() {
 export function AssistantWidget() {
   const assistant = useAssistant();
   const pathname = usePathname() ?? "/";
+  // The page's notices now (#138): a page showing one gets "why can't I
+  // go ahead here?" first among the suggestions.
+  const onScreen = useOnScreenNotices();
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const endRef = useRef<HTMLDivElement>(null);
   const open = assistant?.open ?? false;
@@ -88,9 +92,14 @@ export function AssistantWidget() {
   if (!assistant) return null;
   const { chat, setOpen, name, roles } = assistant;
   const { draft, setDraft, busy, notice, ask, reset, full } = chat;
-  const page = pageRef(pathname);
+  // #138: a question goes with what the page is showing as it's asked, so
+  // "why can't I?" is answered about what stops this person here.
+  const page = () => {
+    const notices = onScreenNotices();
+    return notices.length ? { ...pageRef(pathname), notices } : pageRef(pathname);
+  };
   const send = () => {
-    if (!busy && !full) void ask(draft, page);
+    if (!busy && !full) void ask(draft, page());
   };
   const followed = () => {
     if (!window.matchMedia("(min-width: 640px)").matches) setOpen(false);
@@ -164,11 +173,11 @@ export function AssistantWidget() {
                 </div>
                 <p className="eyebrow mb-2 mt-5">Try asking</p>
                 <ul className="space-y-1.5">
-                  {startersFor(roles).map((question) => (
+                  {startersFor(roles, onScreen.length > 0).map((question) => (
                     <li key={question}>
                       <button
                         type="button"
-                        onClick={() => void ask(question, page)}
+                        onClick={() => void ask(question, page())}
                         disabled={busy}
                         className="w-full rounded-md border border-border px-3 py-2 text-left text-xs text-foreground transition hover:border-primary hover:bg-accent disabled:opacity-60"
                       >

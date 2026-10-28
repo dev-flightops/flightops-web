@@ -2,6 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
 import type { DispatchOption } from "@/lib/api/ops";
+import { onScreenNotices } from "@/lib/help/on-screen";
 
 import { OptionCard } from "./option-card";
 
@@ -153,6 +154,14 @@ describe("cost", () => {
     // confident dollars.
     render(<OptionCard option={option()} />);
     expect(screen.getByText(/rates not configured/)).toBeInTheDocument();
+  });
+
+  it("names what's missing and where it's set, on the card (#138)", () => {
+    render(<OptionCard option={option()} />);
+    expect(screen.getByText("no operating cost configured for caravan (Settings → Costs)")).toBeInTheDocument();
+    expect(onScreenNotices()).toContain(
+      "Setup needed: a dispatch option has no cost estimate: no operating cost configured for caravan (Settings → Costs).",
+    );
   });
 
   it("shows the estimate once the rates exist", () => {

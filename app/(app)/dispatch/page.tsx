@@ -14,6 +14,8 @@ import { BookingsAwaitingFlightPanel } from "@/components/dispatch/packet/bookin
 import { ForeFlightPlanPanel } from "@/components/dispatch/packet/foreflight-plan-panel";
 import { ForeFlightPlansWaitingBanner } from "@/components/dispatch/packet/foreflight-plans";
 import { WeightReturnsPanel } from "@/components/dispatch/packet/weight-returns-panel";
+import { LoadFailedNotice } from "@/components/ff/setup-notice";
+import { Loads } from "@/lib/api/loads";
 import {
   FlightDetailsPanel,
 } from "@/components/dispatch/packet/flight-details-panel";
@@ -184,6 +186,9 @@ export default async function DispatchPage({
     .filter((a) => a.crew_role === "sic")
     .map((a) => a.user.id);
 
+  // #138: a soft-failed load says so at the top of the packet. Each had
+  // read as nothing there: no flights, no pilots, no weight returns.
+  const loads = new Loads();
   const [
     { items: flights },
     tenantsResponse,
@@ -197,10 +202,7 @@ export default async function DispatchPage({
     picAvailability,
     sicAvailability,
   ] = await Promise.all([
-    listFlights({ onDate: scheduleDate }).catch(() => ({
-      items: [],
-      total: 0,
-    })),
+    loads.or(listFlights({ onDate: scheduleDate }), { items: [], total: 0 }, "the day’s flights"),
     listMyTenants().catch(() => ({ tenants: [] })),
     selectedId ? loadFlight(selectedId) : Promise.resolve(null),
     loadPicRoster(),
@@ -213,14 +215,11 @@ export default async function DispatchPage({
     // are already blocked server-side at preflight step 2, so nothing
     // becomes dispatchable that shouldn't be. It just means dispatch has
     // to hear about it by radio, as they do today.
-    listWeightReturns().catch(() => ({ items: [] })),
+    loads.or(listWeightReturns(), { items: [] }, "the flights handed back over weight"),
     // Reservations nobody has put on a flight yet. Soft-fail like the
     // others: losing this panel costs dispatch the queue, not the
     // packet they are working on.
-    listBookings({ awaiting_flight: true, limit: 25 }).catch(() => ({
-      items: [],
-      total: 0,
-    })),
+    loads.or(listBookings({ awaiting_flight: true, limit: 25 }), { items: [], total: 0 }, "the bookings waiting for a flight"),
     Promise.all(
       sicIds.map(async (pilotId) => ({
         pilotId,
@@ -240,10 +239,10 @@ export default async function DispatchPage({
     // isn't offered. Soft-fail: without it every pilot is offered, as
     // before, and release still checks.
     selectedId
-      ? getCrewOptions(selectedId, "pic").then((r) => r.items).catch(() => null)
+      ? loads.or(getCrewOptions(selectedId, "pic").then((r) => r.items), null, "who release would take as PIC")
       : Promise.resolve(null),
     selectedId
-      ? getCrewOptions(selectedId, "sic").then((r) => r.items).catch(() => null)
+      ? loads.or(getCrewOptions(selectedId, "sic").then((r) => r.items), null, "who release would take as SIC")
       : Promise.resolve(null),
   ]);
 
@@ -252,7 +251,7 @@ export default async function DispatchPage({
   // the warnings, and release still checks the PIC.
   const flightType = selectedFlight?.aircraft.airframe_type ?? null;
   const typeGrid = flightType
-    ? await getTypeQualificationGrid().catch(() => null)
+    ? await loads.or(getTypeQualificationGrid(), null, "the type qualifications")
     : null;
   const warnings = typeWarnings(typeGrid, flightType);
   const candidates = picOptions.map((option) => ({
@@ -313,13 +312,13 @@ export default async function DispatchPage({
   // every release. `computeHardBlockReason` documents that contract.
   let weatherFreshness: RouteFreshness | null = null;
   if (selectedFlight && icaos.length > 0) {
-    weatherFreshness = await getRouteFreshness(icaos).catch(() => null);
+    weatherFreshness = await loads.or(getRouteFreshness(icaos), null, "how fresh the route’s weather is");
   }
   // #89 — for an aircraft the company lists as not IFR certified, the
   // route held against its dispatch minimums, as release will hold it.
   // Soft-fails like freshness: release refuses server-side regardless.
   const weatherMinimums = selectedFlight
-    ? await getWeatherMinimums(selectedFlight.id).catch(() => null)
+    ? await loads.or(getWeatherMinimums(selectedFlight.id), null, "the dispatch minimums check")
     : null;
 
   // The dispatch risk matrix (#50): scored by ops from the flight's weather
@@ -356,6 +355,12 @@ export default async function DispatchPage({
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
       <PacketHeader tenantName={tenantName} flight={selectedFlight} />
+
+      <LoadFailedNotice
+        what={loads.failed}
+        meaning="Release still runs every check itself."
+        className="mb-4"
+      />
 
         {/* Held-back flights sit above the packet on purpose: each one is
             already blocked at preflight step 2 and stays blocked until
