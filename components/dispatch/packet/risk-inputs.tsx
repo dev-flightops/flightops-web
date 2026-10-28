@@ -61,6 +61,9 @@ function SaveState({ pending, error }: { pending: boolean; error: string | null 
 }
 
 function yesNo(value: boolean | null): string {
+  // Null when our data can't say, as for night at a stop with no known
+  // position (#136). It had read "No".
+  if (value === null) return "Unknown";
   return value ? "Yes" : "No";
 }
 
