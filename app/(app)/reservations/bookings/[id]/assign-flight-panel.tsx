@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 
 import type { FlightSearchResult } from "@/lib/api/flight-search";
+import { localClock } from "@/lib/format/local-time";
 
 import { assignFlightAction } from "./actions";
 
@@ -48,11 +49,16 @@ function unavailableLabel(f: FlightSearchResult, paxCount: number): string {
 export function AssignFlightPanel({
   bookingId,
   candidates,
+  timeZone,
   assignedFlightNumber,
   paxCount,
 }: {
   bookingId: string;
   candidates: FlightSearchResult[];
+  /** The departure base's zone (#68): the time is local there, and the
+   *  same on the server and in the browser (#137: the viewer's clock had
+   *  rendered one text on the server and another in the browser). */
+  timeZone: string;
   assignedFlightNumber: string | null;
   paxCount: number;
 }) {
@@ -145,10 +151,7 @@ export function AssignFlightPanel({
                     {f.origin} → {f.destination}
                   </span>
                   <span className="tabular-nums text-muted-foreground">
-                    {new Date(f.scheduled_departure_at).toLocaleTimeString([], {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
+                    {localClock(f.scheduled_departure_at, timeZone)}
                   </span>
                 </label>
                 <span
