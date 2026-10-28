@@ -82,7 +82,7 @@ describe("the flight panel", () => {
     const leg = await screen.findByRole("tabpanel", { name: "Leg 1, PABE to 9Z8" });
     expect(within(leg).getByText("Levelock")).toBeInTheDocument();
     expect(within(leg).getAllByText("10:30 AKDT").length).toBeGreaterThan(0);
-    expect(within(leg).getByText("1 h 15 min")).toBeInTheDocument();
+    expect(within(leg).getAllByText("1 h 15 min")).toHaveLength(2); // over the route line and in the details
     expect(within(leg).getByRole("link", { name: /^Passengers: 1 checked in, 1 booked, 9 seats · 8 open$/ })).toHaveAttribute("href", "/manifest/f-1#passengers");
     expect(within(leg).getByRole("link", { name: /^Weight: 165 lb manifested, 2,202 lb available, 2,367 lb maximum$/ })).toHaveAttribute("href", "/manifest/f-1#load");
     expect(within(leg).getByText("BK-0E34AB7F")).toBeInTheDocument();

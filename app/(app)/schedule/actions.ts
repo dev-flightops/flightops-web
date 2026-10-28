@@ -1,8 +1,8 @@
 "use server";
 
+import { findAirport } from "@/lib/airports";
 import { listCompanyBases } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
-import { getAirports } from "@/lib/api/dispatch-risk";
 import { Loads } from "@/lib/api/loads";
 import { type FlightLoad, getFlightLoad, getFlightManifest, type ManifestDetailResponse } from "@/lib/api/manifest";
 import { getFlight } from "@/lib/api/ops";
@@ -26,7 +26,8 @@ export async function flightBookingsAction(
 /** Everything the schedule's flight panel shows, leg by leg (#139). */
 export interface FlightSheet {
   flight: FlightDetail;
-  /** Airport names by identifier, where known. */
+  /** Airport names by identifier, where known: the same Alaska table the
+   *  new-flight form names airports from ("Levelock" for 9Z8). */
   names: Record<string, string>;
   /** The departure base's name ("Bethel"), when it is one of the company's. */
   base: string | null;
@@ -50,15 +51,17 @@ export async function flightSheetAction(
   }
   const stops = flight.stops && flight.stops.length > 1 ? flight.stops : [flight.origin, flight.destination];
   const loads = new Loads();
-  const [bookings, manifest, load, airports, bases] = await Promise.all([
+  const [bookings, manifest, load, bases] = await Promise.all([
     loads.or(getFlightBookings(flightId), null, "the flight's bookings"),
     loads.or(getFlightManifest(flightId), null, "the manifest"),
     loads.or(getFlightLoad(flightId), null, "the flight's weights"),
-    loads.or(getAirports([...new Set(stops)]), [], "the airports' names"),
     loads.or(listCompanyBases({ includeInactive: true }), null, "the company's bases"),
   ]);
   const names: Record<string, string> = {};
-  for (const airport of airports) if (airport.name) names[airport.ident.toUpperCase()] = airport.name;
+  for (const code of new Set(stops)) {
+    const airport = findAirport(code);
+    if (airport) names[code.toUpperCase()] = airport.name;
+  }
   const base = bases?.items.find((b) => b.icao.toUpperCase() === flight.origin.toUpperCase());
   return {
     ok: true,

@@ -85,7 +85,12 @@ export function AircraftDay({
             <div key={c.id} className="border-b border-l border-border px-2 py-2 text-center">
               <div className="font-mono text-sm font-semibold text-foreground">{c.tail}</div>
               <div className="truncate text-[0.7rem] text-muted-foreground">{c.model ?? " "}</div>
-              {c.grounded ? <StatusMark label={`Grounded · ${c.grounded}`} tone="red" className="mt-1" /> : null}
+              {c.grounded ? (
+                <div className="mt-1">
+                  <StatusMark label="Grounded" tone="red" />
+                  <div className="text-[0.7rem] leading-tight text-foreground">{c.grounded}</div>
+                </div>
+              ) : null}
             </div>
           ))}
           {columns.length === 0 ? (

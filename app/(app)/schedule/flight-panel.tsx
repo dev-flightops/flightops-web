@@ -147,9 +147,14 @@ export function FlightPanel({
             </div>
             <div className="mt-3 grid grid-cols-[1fr_auto_1fr] items-end gap-3">
               <Airport ident={current.origin} name={sheet.names[current.origin]} time={localClock(at.departs, zoneFor(zones, current.origin))} />
-              <span aria-hidden className="pb-6 text-muted-foreground">
-                ———→
-              </span>
+              <div aria-hidden className="flex min-w-24 flex-col items-center gap-1 pb-6">
+                <span className="text-[0.7rem] text-muted-foreground">{duration(at.departs, at.arrives)}</span>
+                <span className="flex w-full items-center">
+                  <span className="h-2 w-2 border border-muted-foreground" />
+                  <span className="h-px flex-1 bg-muted-foreground" />
+                  <span className="h-2 w-2 bg-muted-foreground" />
+                </span>
+              </div>
               <Airport
                 ident={current.destination}
                 name={sheet.names[current.destination]}

@@ -127,7 +127,7 @@ export default async function SchedulePage({
   };
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
+    <div className={`mx-auto px-4 py-8 sm:px-6 ${view === "aircraft" ? "max-w-[100rem]" : "max-w-6xl"}`}>
       <PageHeader
         title="Flight Schedule"
         description={`Published schedule for ${localDate(`${date}T12:00:00Z`, "UTC", { withYear: true })} — ${totalCount} flight${totalCount === 1 ? "" : "s"}. Open a flight for its bookings and manifest.`}

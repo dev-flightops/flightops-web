@@ -45,7 +45,7 @@ describe("the schedule by aircraft", () => {
     expect(screen.getByRole("group", { name: "N100PA" })).toBeInTheDocument();
     const grounded = screen.getByRole("group", { name: "N301PA, grounded: MEL expired" });
     expect(within(grounded).queryAllByRole("button")).toHaveLength(0);
-    expect(screen.getByText("Grounded · MEL expired")).toBeInTheDocument();
+    expect(within(screen.getByText("MEL expired").parentElement!).getByText("Grounded")).toBeInTheDocument();
   });
 
   it("puts a block per leg at its times with its seats", () => {
