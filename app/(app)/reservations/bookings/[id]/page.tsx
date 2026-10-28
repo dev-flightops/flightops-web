@@ -15,6 +15,8 @@ import {
 } from "@/lib/api/reservations";
 
 import { searchFlights, type FlightSearchResult } from "@/lib/api/flight-search";
+import { loadZoneTable } from "@/lib/api/auth";
+import { zoneFor } from "@/lib/format/local-time";
 
 import { AssignFlightPanel } from "./assign-flight-panel";
 import { LifecycleControls } from "./lifecycle-controls";
@@ -201,6 +203,7 @@ export default async function BookingDetailPage({
         <AssignFlightPanel
           bookingId={booking.id}
           candidates={candidates}
+          timeZone={zoneFor(await loadZoneTable(), booking.origin_icao)}
           assignedFlightNumber={booking.flight?.flight_number ?? null}
           paxCount={booking.pax_count}
         />

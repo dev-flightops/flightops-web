@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { TestApiError, createBooking, loadZoneTable } = vi.hoisted(() => {
+const { TestApiError, createBooking, createCustomer, loadZoneTable } = vi.hoisted(() => {
   class TestApiError extends Error {
     constructor(
       public status: number,
@@ -13,6 +13,7 @@ const { TestApiError, createBooking, loadZoneTable } = vi.hoisted(() => {
   return {
     TestApiError,
     createBooking: vi.fn(async () => ({ id: "b-1" })),
+    createCustomer: vi.fn(async () => ({ id: "22222222-2222-4222-8222-222222222222" })),
     loadZoneTable: vi.fn(async () => ({
       byIcao: { PANC: "America/Anchorage" },
       fallback: "America/Anchorage",
@@ -20,7 +21,7 @@ const { TestApiError, createBooking, loadZoneTable } = vi.hoisted(() => {
   };
 });
 vi.mock("@/lib/api/client", () => ({ ApiError: TestApiError }));
-vi.mock("@/lib/api/reservations", () => ({ createBooking }));
+vi.mock("@/lib/api/reservations", () => ({ createBooking, createCustomer }));
 vi.mock("@/lib/api/auth", () => ({ loadZoneTable }));
 vi.mock("next/navigation", () => ({
   redirect: (url: string) => {
@@ -138,5 +139,79 @@ describe("a real identifier", () => {
     expect(createBooking).toHaveBeenCalledWith(
       expect.objectContaining({ origin_icao: "PANC", destination_icao: "PABE" }),
     );
+  });
+});
+
+
+describe("who it's for, and the flight (#137)", () => {
+  const FLIGHT = "33333333-3333-4333-8333-333333333333";
+
+  function withPassengers(fd: FormData, rows: string[][]): FormData {
+    for (const [first, last, weight, notes] of rows) {
+      fd.append("passenger_first_name", first);
+      fd.append("passenger_last_name", last);
+      fd.append("passenger_weight_lbs", weight);
+      fd.append("passenger_notes", notes);
+    }
+    return fd;
+  }
+
+  beforeEach(() => {
+    createBooking.mockClear();
+    createCustomer.mockClear();
+  });
+
+  it("names the passengers and puts it on the flight it was opened with", async () => {
+    const fd = withPassengers(form({ flight_id: FLIGHT }), [
+      ["Phil", "Bass", "190", "Wheelchair assist"],
+      ["", "", "", ""],
+    ]);
+    await expect(createBookingAction({ status: "idle" }, fd)).rejects.toThrow(
+      "REDIRECT:/reservations/bookings/b-1?filed=1",
+    );
+    expect(createBooking).toHaveBeenCalledWith(
+      expect.objectContaining({
+        customer_id: CUSTOMER,
+        flight_id: FLIGHT,
+        pax_count: 1,
+        passengers: [{ first_name: "Phil", last_name: "Bass", weight_lbs: 190, notes: "Wheelchair assist" }],
+      }),
+    );
+  });
+
+  it("adds a caller who isn't on file as a customer", async () => {
+    const fd = withPassengers(form({ customer_id: "", new_customer_name: "Phil Bass" }), [["Phil", "Bass", "", ""]]);
+    await expect(createBookingAction({ status: "idle" }, fd)).rejects.toThrow("REDIRECT:");
+    expect(createCustomer).toHaveBeenCalledWith({ full_name: "Phil Bass" });
+    expect(createBooking).toHaveBeenCalledWith(
+      expect.objectContaining({ customer_id: "22222222-2222-4222-8222-222222222222" }),
+    );
+  });
+
+  it("asks for a customer when there's neither one picked nor a name", async () => {
+    const result = await createBookingAction({ status: "idle" }, form({ customer_id: "", new_customer_name: "" }));
+    expect(result.fieldErrors?.customer_id).toBe("Pick a customer, or type a new customer's name.");
+    expect(createBooking).not.toHaveBeenCalled();
+  });
+
+  it("goes back where it was started, never to another site", async () => {
+    await expect(
+      createBookingAction({ status: "idle" }, form({ return_to: `/manifest/${FLIGHT}` })),
+    ).rejects.toThrow(`REDIRECT:/manifest/${FLIGHT}`);
+    await expect(
+      createBookingAction({ status: "idle" }, form({ return_to: "//evil.example/x" })),
+    ).rejects.toThrow("REDIRECT:/reservations/bookings/b-1?filed=1");
+  });
+
+  it("says how many seats a full flight has left", async () => {
+    createBooking.mockRejectedValueOnce(
+      new TestApiError(
+        409,
+        "/reservations/bookings",
+        '{"detail":{"error":"flight_full","seats_total":9,"seats_booked":8,"seats_available":1,"seats_requested":2}}',
+      ),
+    );
+    const result = await createBookingAction({ status: "idle" }, form({ flight_id: FLIGHT }));
+    expect(result.message).toBe("That flight has 1 seat left on the legs this booking rides; it needs 2.");
   });
 });

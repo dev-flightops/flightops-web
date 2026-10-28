@@ -47,11 +47,21 @@ function panel(
     <AssignFlightPanel
       bookingId="b-1"
       candidates={candidates}
+      timeZone="America/Anchorage"
       assignedFlightNumber={assigned}
       paxCount={paxCount}
     />,
   );
 }
+
+describe("a candidate's departure (#137)", () => {
+  it("is local at the departure base, the same on the server and in the browser", () => {
+    panel();
+    // 17:30Z in September is 09:30 in Alaska; the viewer's own clock had
+    // rendered one text on the server and another in the browser.
+    expect(screen.getByText("09:30 AKDT")).toBeInTheDocument();
+  });
+});
 
 describe("a booking with no flight", () => {
   it("says it is waiting on dispatch", () => {

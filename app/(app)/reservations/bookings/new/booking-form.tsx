@@ -1,10 +1,12 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 
 import type { Customer } from "@/lib/api/reservations";
 
 import { createBookingAction, type NewBookingFormState } from "./actions";
+import { CustomerPicker } from "./customer-picker";
+import { PassengerRows } from "./passenger-rows";
 
 const _initial: NewBookingFormState = { status: "idle" };
 
@@ -21,6 +23,8 @@ export interface BookingPrefill {
   destination: string | null;
   date: string | null;
   pax: number | null;
+  /** A name typed in the search that isn't on file (#137). */
+  customerName?: string | null;
 }
 
 export function BookingForm({
@@ -30,6 +34,8 @@ export function BookingForm({
   preselectAircraftId,
   prefill,
   redirectUrlTemplate,
+  flightId,
+  returnTo,
 }: {
   customers: Customer[];
   aircraft: Array<{ id: string; tail_number: string; model: string | null }>;
@@ -37,14 +43,25 @@ export function BookingForm({
   preselectAircraftId?: string | null;
   prefill?: BookingPrefill;
   redirectUrlTemplate?: string;
+  /** The flight it goes on (#137): picked from a search result, the
+   *  schedule or the manifest. */
+  flightId?: string | null;
+  /** Where to land after filing, e.g. back on the manifest. */
+  returnTo?: string | null;
 }) {
   const [state, formAction, pending] = useActionState(
     createBookingAction,
     _initial,
   );
+  const preselected = customers.find((c) => c.id === preselectCustomerId);
+  const [customerName, setCustomerName] = useState(
+    preselected?.full_name ?? prefill?.customerName ?? "",
+  );
 
   return (
     <form action={formAction} className="space-y-6">
+      {flightId ? <input type="hidden" name="flight_id" value={flightId} /> : null}
+      {returnTo ? <input type="hidden" name="return_to" value={returnTo} /> : null}
       {redirectUrlTemplate ? (
         <input
           type="hidden"
@@ -61,29 +78,13 @@ export function BookingForm({
         </div>
       ) : null}
 
-      <Field
-        label="Customer"
-        name="customer_id"
+      <CustomerPicker
+        customers={customers}
+        preselectCustomerId={preselectCustomerId}
+        initialName={prefill?.customerName ?? null}
         error={state.fieldErrors?.customer_id}
-      >
-        <select
-          id="customer_id"
-          name="customer_id"
-          required
-          className="ff-input"
-          defaultValue={preselectCustomerId ?? ""}
-        >
-          <option value="" disabled>
-            Select…
-          </option>
-          {customers.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.full_name}
-              {c.company_name ? ` — ${c.company_name}` : ""}
-            </option>
-          ))}
-        </select>
-      </Field>
+        onNameChange={setCustomerName}
+      />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Field
@@ -145,23 +146,13 @@ export function BookingForm({
             className="ff-input"
           />
         </Field>
-        <Field
-          label="Pax"
-          name="pax_count"
-          error={state.fieldErrors?.pax_count}
-        >
-          <input
-            id="pax_count"
-            name="pax_count"
-            type="number"
-            min={0}
-            max={999}
-            required
-            defaultValue={prefill?.pax ?? 1}
-            className="ff-input"
-          />
-        </Field>
       </div>
+
+      <PassengerRows
+        initialCount={prefill?.pax ?? 1}
+        customerName={customerName}
+        error={state.fieldErrors?.passengers}
+      />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Field

@@ -83,8 +83,9 @@ describe("SchedulePage (M2-G-30)", () => {
 
     await renderPage({ date: "2026-07-01" });
 
+    // The company's day (#137), not a UTC one.
     expect(listFlights).toHaveBeenCalledWith({
-      onDate: "2026-07-01",
+      onCompanyDate: "2026-07-01",
       limit: 200,
     });
   });
@@ -94,9 +95,9 @@ describe("SchedulePage (M2-G-30)", () => {
 
     await renderPage({ date: "not-a-date" });
 
-    // falls back to today UTC
+    // falls back to today in the company's zone (#137)
     expect(listFlights).toHaveBeenCalledWith({
-      onDate: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/),
+      onCompanyDate: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/),
       limit: 200,
     });
   });

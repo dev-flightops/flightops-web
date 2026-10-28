@@ -5,8 +5,9 @@ import { z } from "zod";
 
 import { loadZoneTable } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
-import { createBooking } from "@/lib/api/reservations";
+import { type BookingPassenger, createBooking, createCustomer } from "@/lib/api/reservations";
 import { localToUtcIso, zoneFor } from "@/lib/format/local-time";
+import { refusalMessage } from "@/lib/reservations/refusals";
 
 /**
  * An airport identifier on a new booking.
@@ -38,7 +39,9 @@ function airportId(label: string) {
 }
 
 const _schema = z.object({
-  customer_id: z.string().uuid("Pick a customer."),
+  // An existing customer, or a new one by name (#137): one of the two.
+  customer_id: z.string().uuid().optional().or(z.literal("")),
+  new_customer_name: z.string().trim().max(200).optional(),
   origin_icao: airportId("Origin"),
   destination_icao: airportId("Destination"),
   requested_departure_at_local: z
@@ -51,7 +54,42 @@ const _schema = z.object({
     .refine((n) => Number.isFinite(n) && n >= 0 && n <= 999, "Pax count 0-999."),
   quoted_total_dollars: z.string().optional(),
   notes: z.string().trim().max(4000).optional(),
+  flight_id: z.string().uuid().optional().or(z.literal("")),
 });
+
+/** Where to land after filing (#137): a path in this app, never another
+ *  site; anything else is ignored rather than refused, since it's no
+ *  field the agent can fix. */
+function _returnTo(formData: FormData): string | null {
+  const to = String(formData.get("return_to") ?? "");
+  return /^\/(?!\/)[A-Za-z0-9/_?=&%.-]*$/.test(to) ? to : null;
+}
+
+/** The passenger rows (#137), in the order on the form; a row with no
+ *  first name is a row left empty. */
+function _passengers(formData: FormData): BookingPassenger[] | string {
+  const firsts = formData.getAll("passenger_first_name").map(String);
+  const lasts = formData.getAll("passenger_last_name").map(String);
+  const weights = formData.getAll("passenger_weight_lbs").map(String);
+  const notes = formData.getAll("passenger_notes").map(String);
+  const people: BookingPassenger[] = [];
+  for (let i = 0; i < firsts.length; i++) {
+    const first = firsts[i].trim();
+    if (!first) continue;
+    const weightText = (weights[i] ?? "").trim();
+    const weight = weightText === "" ? null : Number(weightText);
+    if (weight !== null && (!Number.isFinite(weight) || weight < 0 || weight > 1000)) {
+      return `Passenger ${i + 1}'s weight should be 0-1000 lb.`;
+    }
+    people.push({
+      first_name: first.slice(0, 80),
+      last_name: (lasts[i] ?? "").trim().slice(0, 80),
+      weight_lbs: weight,
+      notes: (notes[i] ?? "").trim().slice(0, 500) || null,
+    });
+  }
+  return people;
+}
 
 export interface NewBookingFormState {
   status: "idle" | "error" | "ok";
@@ -65,6 +103,7 @@ export async function createBookingAction(
 ): Promise<NewBookingFormState> {
   const parsed = _schema.safeParse({
     customer_id: formData.get("customer_id") ?? "",
+    new_customer_name: formData.get("new_customer_name") ?? "",
     origin_icao: formData.get("origin_icao") ?? "",
     destination_icao: formData.get("destination_icao") ?? "",
     requested_departure_at_local:
@@ -73,6 +112,7 @@ export async function createBookingAction(
     pax_count: formData.get("pax_count") ?? "1",
     quoted_total_dollars: formData.get("quoted_total_dollars") ?? "",
     notes: formData.get("notes") ?? "",
+    flight_id: formData.get("flight_id") ?? "",
   });
   if (!parsed.success) {
     const fieldErrors: Record<string, string> = {};
@@ -88,6 +128,21 @@ export async function createBookingAction(
   }
 
   const v = parsed.data;
+  if (!v.customer_id && (v.new_customer_name ?? "").length < 2) {
+    return {
+      status: "error",
+      message: "Please fix the highlighted fields.",
+      fieldErrors: { customer_id: "Pick a customer, or type a new customer's name." },
+    };
+  }
+  const passengers = _passengers(formData);
+  if (typeof passengers === "string") {
+    return {
+      status: "error",
+      message: "Please fix the highlighted fields.",
+      fieldErrors: { passengers },
+    };
+  }
   // Local at the departure base (#68). `new Date(local)` read it in the
   // server's own zone, which on Vercel is UTC: a 10:00 booking was
   // stored as 10:00Z, 02:00 in Alaska.
@@ -121,19 +176,28 @@ export async function createBookingAction(
 
   let newId: string;
   try {
+    // A caller not on file becomes a customer as the booking is filed
+    // (#137): the manual form had offered only the customers already there.
+    const customerId =
+      v.customer_id || (await createCustomer({ full_name: v.new_customer_name ?? "" })).id;
     const created = await createBooking({
-      customer_id: v.customer_id,
+      customer_id: customerId,
       origin_icao: v.origin_icao,
       destination_icao: v.destination_icao,
       requested_departure_at: departureIso,
       aircraft_id: v.aircraft_id || null,
-      pax_count: v.pax_count,
+      pax_count: passengers.length || v.pax_count,
+      passengers,
+      flight_id: v.flight_id || null,
       quoted_total_cents: quotedCents,
       notes: v.notes || null,
     });
     newId = created.id;
   } catch (err) {
     if (err instanceof ApiError) {
+      if (err.status === 409 || err.status === 404) {
+        return { status: "error", message: refusalMessage(err.message) };
+      }
       return {
         status: "error",
         message: `Backend rejected the booking (HTTP ${err.status}).`,
@@ -153,6 +217,12 @@ export async function createBookingAction(
   const redirectTemplate = formData.get("redirect_url");
   if (typeof redirectTemplate === "string" && redirectTemplate.trim() !== "") {
     redirect(redirectTemplate.replace("%NEWID%", newId));
+  }
+
+  // Back where it was started (#137): the manifest or the schedule.
+  const returnTo = _returnTo(formData);
+  if (returnTo) {
+    redirect(returnTo);
   }
 
   redirect(`/reservations/bookings/${newId}?filed=1`);

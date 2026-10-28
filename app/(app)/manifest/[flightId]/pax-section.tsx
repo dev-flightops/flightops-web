@@ -1,8 +1,10 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState, useEffect, useState } from "react";
 
 import { TICKET_TYPES, TICKET_TYPE_LABELS, type ManifestPaxRow } from "@/lib/api/manifest";
+import { bookingRef } from "@/lib/api/reservations";
 
 import { savePaxAction, type ManifestFormState } from "./actions";
 import { FIELD, Flag, fmtLbs, FormNotice, TH, THEAD, TicketBadge } from "./manifest-bits";
@@ -84,7 +86,7 @@ export function PassengersSection({
                   {withStops ? <th className={TH}>Stops</th> : null}
                   <th className={`${TH} text-right`}>Weight</th>
                   <th className={`${TH} text-right`}>Baggage</th>
-                  <th className={TH}>Flags</th>
+                  <th className={TH}>Flags · booking · notes</th>
                   <th className={TH}>Contact</th>
                   {editable ? <th className={`${TH} text-right`}>Actions</th> : null}
                 </tr>
@@ -114,7 +116,19 @@ export function PassengersSection({
                         {p.check_in_status === "no_show" && <Flag label="NO-SHOW" tone="red" />}
                         {p.check_in_status === "checked_in" && <Flag label="CHECKED IN" tone="green" />}
                         {p.check_in_status === "boarded" && <Flag label="BOARDED" tone="blue" />}
+                        {/* #137: the booking they came from, by number. */}
+                        {p.booking_id ? (
+                          <Link
+                            href={`/reservations/bookings/${p.booking_id}`}
+                            className="font-mono text-xs font-semibold text-primary hover:underline"
+                          >
+                            {bookingRef(p.booking_id)}
+                          </Link>
+                        ) : null}
                       </div>
+                      {p.notes ? (
+                        <p className="mt-0.5 max-w-[18rem] whitespace-normal text-xs text-muted-foreground">{p.notes}</p>
+                      ) : null}
                     </td>
                     <td className="whitespace-nowrap px-3 py-2.5 text-xs text-muted-foreground">
                       {p.contact_phone ?? p.contact_email ?? "—"}
@@ -129,12 +143,24 @@ export function PassengersSection({
                           >
                             Edit
                           </button>
-                          <RemoveLine
-                            flightId={flightId}
-                            kind="pax"
-                            lineId={p.id}
-                            label={`${p.first_name} ${p.last_name}`}
-                          />
+                          {p.booking_id ? (
+                            // Their seat is the booking's (#137): cancelling
+                            // or moving it takes them off.
+                            <Link
+                              href={`/reservations/bookings/${p.booking_id}`}
+                              title="On a booking: cancel or move the booking to take them off"
+                              className="text-xs font-semibold text-foreground/80 hover:text-foreground hover:underline"
+                            >
+                              Booking ›
+                            </Link>
+                          ) : (
+                            <RemoveLine
+                              flightId={flightId}
+                              kind="pax"
+                              lineId={p.id}
+                              label={`${p.first_name} ${p.last_name}`}
+                            />
+                          )}
                         </span>
                       </td>
                     ) : null}

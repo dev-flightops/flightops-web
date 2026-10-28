@@ -178,6 +178,8 @@ export function NewBookingSearchForm({
 
     const params = new URLSearchParams();
     if (customerId) params.set("customer", customerId);
+    // A caller not on file (#137): the booking form adds them by name.
+    else if (customerQuery.trim()) params.set("customer_name", customerQuery.trim());
     if (origin.trim()) params.set("origin", origin.trim().toUpperCase());
     if (destination.trim())
       params.set("destination", destination.trim().toUpperCase());
@@ -305,7 +307,7 @@ export function NewBookingSearchForm({
               className="ff-input"
               autoComplete="off"
             />
-            {customerQuery.trim() && !customerId && filteredCustomers.length > 0 ? (
+            {customerQuery.trim() && !customerId ? (
               <ul className="absolute left-0 right-0 z-10 mt-1 max-h-60 overflow-y-auto rounded-md border border-border bg-card shadow-lg">
                 {filteredCustomers.map((c) => (
                   <li key={c.id}>
@@ -335,6 +337,16 @@ export function NewBookingSearchForm({
                     </button>
                   </li>
                 ))}
+                {/* #137: "no drop down of customers when I started typing":
+                    a caller not on file had nothing to pick. */}
+                {filteredCustomers.some(
+                  (c) => c.full_name.trim().toLowerCase() === customerQuery.trim().toLowerCase(),
+                ) ? null : (
+                  <li className="border-t border-border px-3 py-1.5 text-xs">
+                    <span className="font-semibold">New customer: {customerQuery.trim()}</span>
+                    <span className="ml-2 text-muted-foreground">added when the booking is filed</span>
+                  </li>
+                )}
               </ul>
             ) : null}
           </div>
