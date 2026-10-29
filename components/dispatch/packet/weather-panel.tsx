@@ -12,6 +12,7 @@ import { batchWeather, getVillageBoard } from "@/lib/api/weather";
 import type { VillageBoardRow, WeatherReportResponse } from "@/lib/api/types";
 import {
   villageAge,
+  villageCategoryBecause,
   villageSky,
   villageStaleness,
   villageWind,
@@ -364,9 +365,10 @@ function VillageReport({ row, now }: { row: VillageBoardRow; now: number }) {
   const reportedAt = r ? new Date(r.reported_at).getTime() : 0;
   const stale = r ? villageStaleness(reportedAt, now) : null;
   const who = r ? (r.reported_by?.full_name ?? r.reported_by_name) : null;
+  const because = r ? villageCategoryBecause(r) : null;
   const conditions = r
     ? [
-        r.flight_category,
+        r.flight_category && because ? `${r.flight_category} (${because})` : r.flight_category,
         villageSky(r),
         villageWind(r),
         r.temperature_c != null ? `${r.temperature_c}°C` : null,

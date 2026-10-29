@@ -496,7 +496,8 @@ describe("WeatherPanel — village reports (#110)", () => {
     render(await WeatherPanel({ icaos: ["PAKN", "PAII"] }));
     expect(screen.getAllByText("Village Report")).toHaveLength(1);
     expect(
-      screen.getByText('IFR · OVC 500ft · Vis 3SM · Wind 120°/12ktG28 · -2°C · 29.92"'),
+      // What set the category, with it (#149).
+      screen.getByText('IFR (ceiling 500 ft) · OVC 500ft · Vis 3SM · Wind 120°/12ktG28 · -2°C · 29.92"'),
     ).toBeInTheDocument();
     expect(screen.getByText("Fog over the river")).toBeInTheDocument();
     expect(screen.getByText(/by Owen Staley · 1\.1h ago$/)).toBeInTheDocument();
