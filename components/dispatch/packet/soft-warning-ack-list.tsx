@@ -2,7 +2,7 @@
 
 import { SpinnerGlyph } from "@/components/ff/glyphs";
 import { useRouter } from "next/navigation";
-import { useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 
 import type { CrewSeat } from "@/lib/api/ops";
 import type { ComplianceFinding } from "@/lib/api/types";
@@ -28,6 +28,12 @@ import { useDispatchQuery } from "./use-dispatch-query";
  * completed style. A push used to scroll the dispatcher back to the top
  * of the page on every tick (#70). When ALL soft warnings are acked, the
  * parent enables Generate PDF (see page.tsx).
+ *
+ * A tick shows at once, and ticks in a row go to the URL together once
+ * they stop (#145). Each tick used to wait for the whole packet to render
+ * again, 5-10 s on the demo, with every box disabled meanwhile: the
+ * client's nine warnings took over a minute. "Acknowledge all" does them
+ * in one go.
  */
 /**
  * The checkbox's accessible name. An SIC item already says so ("SIC IFR
@@ -38,6 +44,9 @@ function ackLabel(seat: CrewSeat, name: string): string {
   if (seat === "pic" || /^SIC\b/.test(name)) return `Acknowledge ${name}`;
   return `Acknowledge ${name} (SIC)`;
 }
+
+/** How long ticks in a row wait for the next before the URL takes them. */
+export const TICK_SETTLE_MS = 500;
 
 export function SoftWarningAckList({
   findings,
@@ -53,25 +62,60 @@ export function SoftWarningAckList({
   const router = useRouter();
   const nextQuery = useDispatchQuery();
   const [pending, startTransition] = useTransition();
+  // Ticks the URL doesn't show yet, by ack key: what the box should read.
+  const [ticked, setTicked] = useState<ReadonlyMap<string, boolean>>(() => new Map());
+  const latest = useRef<string | null>(null);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const toggle = (code: string, next: boolean) => {
-    const qs = nextQuery((params) => {
-      const nextAcks = parseAckedWarns(params.get("warns_acked") ?? undefined);
-      if (next) nextAcks.add(code);
-      else nextAcks.delete(code);
-      if (nextAcks.size === 0) params.delete("warns_acked");
-      else params.set("warns_acked", Array.from(nextAcks).sort().join(","));
+  // Once the URL shows a tick, the box reads it from there again.
+  const shownKey = Array.from(ackedCodes).sort().join(",");
+  useEffect(() => {
+    const shown = new Set(shownKey ? shownKey.split(",") : []);
+    setTicked((prev) => {
+      const still = Array.from(prev).filter(([key, on]) => shown.has(key) !== on);
+      return still.length === prev.size ? prev : new Map(still);
     });
+  }, [shownKey]);
+  useEffect(() => () => {
+    if (timer.current) clearTimeout(timer.current);
+  }, []);
+
+  const isAcked = (key: string) => ticked.get(key) ?? ackedCodes.has(key);
+
+  const send = () => {
+    timer.current = null;
+    const qs = latest.current;
     startTransition(() => {
       router.replace(qs ? `/dispatch/?${qs}` : "/dispatch/", { scroll: false });
     });
   };
 
+  const change = (keys: string[], on: boolean, settle = TICK_SETTLE_MS) => {
+    setTicked((prev) => {
+      const next = new Map(prev);
+      for (const key of keys) next.set(key, on);
+      return next;
+    });
+    latest.current = nextQuery((params) => {
+      const nextAcks = parseAckedWarns(params.get("warns_acked") ?? undefined);
+      for (const key of keys) {
+        if (on) nextAcks.add(key);
+        else nextAcks.delete(key);
+      }
+      if (nextAcks.size === 0) params.delete("warns_acked");
+      else params.set("warns_acked", Array.from(nextAcks).sort().join(","));
+    });
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = setTimeout(send, settle);
+  };
+
+  const unacked = findings.map((f) => warningAckKey(seat, f.code)).filter((key) => !isAcked(key));
+
   return (
     <ul className="mt-2 space-y-1 text-[0.7rem]">
       {findings.map((f) => {
         const key = warningAckKey(seat, f.code);
-        const acked = ackedCodes.has(key);
+        const acked = isAcked(key);
         const id = `warn-ack-${seat}-${f.code}`;
         return (
           <li
@@ -87,8 +131,7 @@ export function SoftWarningAckList({
               id={id}
               type="checkbox"
               checked={acked}
-              disabled={pending}
-              onChange={(e) => toggle(key, e.target.checked)}
+              onChange={(e) => change([key], e.target.checked)}
               aria-label={ackLabel(seat, f.name)}
               className="mt-0.5 h-3 w-3 shrink-0 cursor-pointer accent-status-green"
             />
@@ -112,9 +155,20 @@ export function SoftWarningAckList({
           </li>
         );
       })}
+      {findings.length > 1 && unacked.length > 0 ? (
+        <li className="flex justify-end pt-1">
+          <button
+            type="button"
+            onClick={() => change(unacked, true, 0)}
+            className="btn-caps rounded-md border border-primary/40 bg-background px-3 py-1 text-primary hover:bg-primary/5 text-[0.68rem]"
+          >
+            Acknowledge all
+          </button>
+        </li>
+      ) : null}
       {pending && (
         <li className="flex items-center gap-1 text-[0.6rem] text-muted-foreground">
-          <SpinnerGlyph className="h-3 w-3 animate-spin" aria-hidden /> Saving…
+          <SpinnerGlyph className="h-3 w-3 animate-spin" aria-hidden /> Updating the packet…
         </li>
       )}
     </ul>
