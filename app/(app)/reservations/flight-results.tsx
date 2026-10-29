@@ -35,11 +35,17 @@ const UNAVAILABLE_REASON_LABELS: Record<UnavailableReason, string> = {
 export function FlightResults({
   results,
   bookingHref,
+  onSelect,
+  selectedId = null,
 }: {
   results: FlightSearchResponse;
   /** Where "Book" goes for a given flight. Injected so this file stays
    *  free of route-building concerns. */
-  bookingHref: (flight: FlightSearchResult) => string;
+  bookingHref?: (flight: FlightSearchResult) => string;
+  /** A return trip's lists (#148): a flight is picked from each before
+   *  booking, so a row selects rather than books. */
+  onSelect?: (flight: FlightSearchResult) => void;
+  selectedId?: string | null;
 }) {
   if (results.total === 0) {
     return (
@@ -114,14 +120,28 @@ export function FlightResults({
                   <SeatCount flight={f} />
                 </td>
                 <td className="px-4 py-3 text-right">
-                  {f.is_available ? (
+                  {f.is_available && onSelect ? (
+                    <button
+                      type="button"
+                      onClick={() => onSelect(f)}
+                      aria-pressed={selectedId === f.flight_id}
+                      aria-label={`${selectedId === f.flight_id ? "Selected" : "Select"} ${f.flight_number}`}
+                      className={
+                        selectedId === f.flight_id
+                          ? "btn-caps rounded-md bg-primary px-3 py-1.5 text-white text-[0.72rem]"
+                          : "btn-caps rounded-md border border-primary/40 bg-background px-3 py-1.5 text-primary hover:bg-primary/5 text-[0.72rem]"
+                      }
+                    >
+                      {selectedId === f.flight_id ? "Selected" : "Select"}
+                    </button>
+                  ) : f.is_available && bookingHref ? (
                     <Link
                       href={bookingHref(f)}
                       className="btn-caps rounded-md bg-primary px-3 py-1.5 text-white hover:bg-brand-dark text-[0.72rem]"
                     >
                       Book
                     </Link>
-                  ) : (
+                  ) : f.is_available ? null : (
                     <span className="text-xs text-status-yellow">
                       {f.unavailable_reason
                         ? UNAVAILABLE_REASON_LABELS[f.unavailable_reason]

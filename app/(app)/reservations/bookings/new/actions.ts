@@ -135,6 +135,22 @@ export async function createBookingAction(
     };
   }
 
+  // The way back of a return trip (#148): local at its origin, which is
+  // the way out's destination.
+  let returnTrip: { requested_departure_at: string; flight_id: string | null } | null = null;
+  const returnLocal = String(formData.get("return_departure_at_local") ?? "");
+  if (returnLocal) {
+    const returnIso = localToUtcIso(returnLocal, zoneFor(await loadZoneTable(), v.destination_icao));
+    if (!returnIso) {
+      return { status: "error", message: "Invalid return time." };
+    }
+    const backFlight = String(formData.get("return_flight_id") ?? "");
+    returnTrip = {
+      requested_departure_at: returnIso,
+      flight_id: /^[0-9a-f-]{36}$/i.test(backFlight) ? backFlight : null,
+    };
+  }
+
   // Dollars → cents. Empty string means "no quote yet".
   let quotedCents: number | null = null;
   if (v.quoted_total_dollars && v.quoted_total_dollars.trim() !== "") {
@@ -166,6 +182,7 @@ export async function createBookingAction(
       flight_id: v.flight_id || null,
       quoted_total_cents: quotedCents,
       notes: v.notes || null,
+      return_trip: returnTrip,
     });
     newId = created.id;
   } catch (err) {

@@ -12,6 +12,7 @@ import {
   BOOKING_STATUS_LABELS,
   type AircraftRef,
   type Booking,
+  bookingRef,
   getBooking,
   getBookingChanges,
 } from "@/lib/api/reservations";
@@ -75,7 +76,11 @@ export default async function BookingDetailPage({
   // Editing (#147): any stage but cancelled, each change kept below.
   const zone = zoneFor(await loadZoneTable(), booking.origin_icao);
   const editable = booking.status !== "cancelled";
-  const [changes, aircraft] = await Promise.all([
+  // The other half of a return trip (#148).
+  const pairedLoad = booking.paired_booking_id
+    ? loads.or(getBooking(booking.paired_booking_id), null, "the other half of the return trip")
+    : Promise.resolve(null);
+  const [changes, aircraft, paired] = await Promise.all([
     loads.or(getBookingChanges(booking.id), [], "the booking's history"),
     editable
       ? loads.or(
@@ -86,6 +91,7 @@ export default async function BookingDetailPage({
           "the aircraft list",
         )
       : Promise.resolve([] as AircraftRef[]),
+    pairedLoad,
   ]);
 
   return (
@@ -116,7 +122,7 @@ export default async function BookingDetailPage({
           role="status"
           className="mb-4 notice notice-green"
         >
-          Booking filed.
+          {booking.paired_booking_id ? "Booking filed, with its way back." : "Booking filed."}
         </div>
       ) : null}
       {updated === "1" ? (
@@ -181,6 +187,24 @@ export default async function BookingDetailPage({
           </div>
         ) : null}
       </section>
+
+      {paired ? (
+        <section aria-label="Return trip" className="mb-6 border-l-[3px] border-primary bg-card px-4 py-3">
+          <div className="eyebrow">
+            {paired.requested_departure_at > booking.requested_departure_at
+              ? "Return trip · the way back"
+              : "Return trip · the way out"}
+          </div>
+          <p className="mt-1 text-sm">
+            {`${paired.origin_icao} → ${paired.destination_icao}, ${formatZuluDateTime(paired.requested_departure_at)}, ${
+              paired.flight ? `on ${paired.flight.flight_number}` : "waiting for a flight"
+            } · ${BOOKING_STATUS_LABELS[paired.status]}`}
+          </p>
+          <Link href={`/reservations/bookings/${paired.id}`} className={cn(linkCaps, "mt-1 inline-block")}>
+            Open {bookingRef(paired.id)} <span aria-hidden>›</span>
+          </Link>
+        </section>
+      ) : null}
 
       {editable ? (
         <EditBooking

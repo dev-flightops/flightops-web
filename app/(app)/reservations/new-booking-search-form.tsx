@@ -2,11 +2,11 @@
 
 import { useMemo, useState } from "react";
 
-import type { FlightSearchResponse } from "@/lib/api/flight-search";
+import type { FlightSearchResponse, FlightSearchResult } from "@/lib/api/flight-search";
 import type { Customer } from "@/lib/api/reservations";
 
 import { searchFlightsAction } from "./actions";
-import { FlightResults } from "./flight-results";
+import { FlightResults, formatTime } from "./flight-results";
 import type { StationListItem } from "@/lib/api/types";
 
 /**
@@ -40,17 +40,11 @@ const TRIP_TYPES: Array<{
   disabledReason?: string;
 }> = [
   { id: "one_way", label: "One Way" },
-  // Return is disabled rather than shown-but-broken: a round trip needs a
-  // second-leg date + the fares/inventory engine (deferred to the fares
-  // vertical, M4) to price and create it. Offering it here previously set
-  // trip_type=return with no return-date input — an option that captured
-  // nothing. Re-enable once the engine + return-date field ship together.
-  {
-    id: "return",
-    label: "Return",
-    disabled: true,
-    disabledReason: "Round-trip booking is coming soon",
-  },
+  // Return (#148), as legacy's search: a return date, the way out and the
+  // way back listed together, a flight picked from each, and both booked
+  // at once. The client, 29 Oct: "Why can't we book return flights?" It
+  // had waited on fares, which one-way booking doesn't price either.
+  { id: "return", label: "Return" },
   { id: "freight_only", label: "Freight Only" },
 ];
 
@@ -121,6 +115,14 @@ export function NewBookingSearchForm({
   const [results, setResults] = useState<FlightSearchResponse | null>(null);
   const [searching, setSearching] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
+  // The way back of a return trip (#148), and the flight picked each way.
+  const [returnDate, setReturnDate] = useState("");
+  const [returnResults, setReturnResults] = useState<FlightSearchResponse | null>(null);
+  const [returnError, setReturnError] = useState<string | null>(null);
+  const [searchingBack, setSearchingBack] = useState(false);
+  const [chosenOut, setChosenOut] = useState<FlightSearchResult | null>(null);
+  const [chosenBack, setChosenBack] = useState<FlightSearchResult | null>(null);
+  const isReturn = tripType === "return";
 
   const filteredCustomers = useMemo(() => {
     if (!customerQuery.trim()) return [];
@@ -154,6 +156,12 @@ export function NewBookingSearchForm({
       nextErrors.via = "Via should be an airport code like PANC or A61.";
     }
     if (!date) nextErrors.date = "Date is required.";
+    if (isReturn) {
+      if (!returnDate) nextErrors.return_date = "Return date is required.";
+      else if (date && returnDate < date) {
+        nextErrors.return_date = "The way back can't be before the way out.";
+      }
+    }
     if (
       origin.trim() &&
       destination.trim() &&
@@ -188,10 +196,42 @@ export function NewBookingSearchForm({
     if (via.trim()) params.set("via", via.trim().toUpperCase());
     if (couponCode.trim()) params.set("coupon", couponCode.trim());
     if (tripType !== "one_way") params.set("trip_type", tripType);
+    if (isReturn) params.set("return_date", returnDate);
 
     setSearched(params.toString());
+    setChosenOut(null);
+    setChosenBack(null);
+    setReturnResults(null);
+    setReturnError(null);
     void runSearch(origin.trim(), destination.trim(), date, pax);
+    if (isReturn) void runReturnSearch(destination.trim(), origin.trim(), returnDate, pax);
   }
+
+  /** The way back: destination to origin on the return date (#148). */
+  async function runReturnSearch(o: string, d: string, on: string, pax: number) {
+    setSearchingBack(true);
+    try {
+      const result = await searchFlightsAction({
+        origin: o,
+        destination: d,
+        date: on,
+        paxCount: pax,
+        showUnavailable: true,
+      });
+      if (result.status === "ok") setReturnResults(result.data);
+      else setReturnError(`${result.message} You can still book the way back by hand.`);
+    } catch {
+      setReturnError("Couldn't search the way back just now. You can still book it by hand.");
+    } finally {
+      setSearchingBack(false);
+    }
+  }
+
+  const picked = (f: FlightSearchResult | null) =>
+    f ? `${f.flight_number}, ${formatTime(f.scheduled_departure_at)}` : "no flight picked: it waits for one";
+  const continueHref = `/reservations/bookings/new?${searched ?? ""}${
+    chosenOut ? `&flight=${chosenOut.flight_id}` : ""
+  }${chosenBack ? `&return_flight=${chosenBack.flight_id}` : ""}`;
 
   async function runSearch(
     o: string,
@@ -250,7 +290,11 @@ export function NewBookingSearchForm({
               <button
                 key={t.id}
                 type="button"
-                onClick={() => !t.disabled && setTripType(t.id)}
+                onClick={() => {
+                  if (t.disabled) return;
+                  setTripType(t.id);
+                  if (t.id === "return" && !returnDate) setReturnDate(date);
+                }}
                 disabled={t.disabled}
                 aria-pressed={tripType === t.id}
                 title={t.disabledReason}
@@ -414,6 +458,43 @@ export function NewBookingSearchForm({
         </Field>
       </div>
 
+      {isReturn ? (
+        // Legacy's return row: the date, and the way back's airports, which
+        // are the way out's swapped.
+        <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-[10rem_1fr_1fr_10rem]">
+          <Field label="Return Date" error={errors.return_date}>
+            <input
+              type="date"
+              aria-label="Return date"
+              value={returnDate}
+              min={date || undefined}
+              onChange={(e) => setReturnDate(e.target.value)}
+              className="ff-input"
+            />
+          </Field>
+          <Field label="Return From">
+            <input
+              type="text"
+              aria-label="Return from"
+              value={destination.trim().toUpperCase()}
+              readOnly
+              aria-readonly
+              className="ff-input uppercase text-muted-foreground"
+            />
+          </Field>
+          <Field label="Return To">
+            <input
+              type="text"
+              aria-label="Return to"
+              value={origin.trim().toUpperCase()}
+              readOnly
+              aria-readonly
+              className="ff-input uppercase text-muted-foreground"
+            />
+          </Field>
+        </div>
+      ) : null}
+
       {/* Shared ICAO typeahead for From/To/Via — mirrors legacy
           booking_search.html's <datalist id="station-list">. The option
           VALUE is the bare ICAO (what the input commits + what we put in
@@ -490,7 +571,7 @@ export function NewBookingSearchForm({
         </p>
       )}
 
-      {results && (
+      {results && !isReturn && (
         <FlightResults
           results={results}
           bookingHref={(f) =>
@@ -498,6 +579,44 @@ export function NewBookingSearchForm({
           }
         />
       )}
+
+      {isReturn && searched && (results || returnResults || returnError || searchingBack) ? (
+        <section aria-label="Return trip" className="mt-4">
+          <h3 className="panel-title">Way out</h3>
+          {results ? (
+            <FlightResults
+              results={results}
+              selectedId={chosenOut?.flight_id ?? null}
+              onSelect={(f) => setChosenOut(f)}
+            />
+          ) : null}
+          <h3 className="panel-title mt-6">Way back</h3>
+          {searchingBack ? <p className="mt-2 text-sm text-muted-foreground">Searching…</p> : null}
+          {returnError ? (
+            <p role="status" className="notice notice-yellow mt-2 text-sm">
+              {returnError}
+            </p>
+          ) : null}
+          {returnResults ? (
+            <FlightResults
+              results={returnResults}
+              selectedId={chosenBack?.flight_id ?? null}
+              onSelect={(f) => setChosenBack(f)}
+            />
+          ) : null}
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4">
+            <p className="text-xs text-muted-foreground">
+              {`Way out: ${picked(chosenOut)} · Way back: ${picked(chosenBack)}`}
+            </p>
+            <a
+              href={continueHref}
+              className="btn-caps rounded-md bg-primary px-5 py-2 text-white hover:bg-brand-dark"
+            >
+              Continue to booking
+            </a>
+          </div>
+        </section>
+      ) : null}
 
       {searched && !searching && (
         <p className="mt-3 text-xs text-muted-foreground">

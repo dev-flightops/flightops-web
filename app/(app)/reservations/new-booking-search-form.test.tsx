@@ -336,3 +336,81 @@ describe("NewBookingSearchForm — when the search fails", () => {
     ).toBeInTheDocument();
   });
 });
+
+describe("NewBookingSearchForm — return trips (#148)", () => {
+  // The client, 29 Oct: "Why can't we book return flights?"
+  const outboundDate = () => document.querySelectorAll<HTMLInputElement>('input[type="date"]')[0];
+  function flight(id: string, number: string, origin: string, destination: string, at: string) {
+    return {
+      flight_id: id,
+      flight_number: number,
+      origin,
+      destination,
+      scheduled_departure_at: at,
+      scheduled_arrival_at: at,
+      status: "scheduled",
+      aircraft_tail: "N100PA",
+      aircraft_model: null,
+      seats_total: 9,
+      seats_booked: 0,
+      seats_available: 9,
+      is_available: true,
+      unavailable_reason: null,
+    };
+  }
+
+  function answer(items: ReturnType<typeof flight>[], origin: string, destination: string, day: string) {
+    return {
+      status: "ok" as const,
+      data: { items, total: items.length, origin, destination, search_date: day, pax_count: 1 },
+    };
+  }
+
+  it("searches the way out and the way back, and books the flights picked from each", async () => {
+    searchFlights.mockReset();
+    searchFlights
+      .mockResolvedValueOnce(
+        answer([flight("f-out", "PGR791", "PABE", "9Z8", "2026-10-31T18:30:00Z")], "PABE", "9Z8", "2026-10-31") as never,
+      )
+      .mockResolvedValueOnce(
+        answer([flight("f-back", "PGR792", "9Z8", "PABE", "2026-11-02T23:00:00Z")], "9Z8", "PABE", "2026-11-02") as never,
+      );
+    render(<NewBookingSearchForm customers={[]} stations={STATIONS} />);
+    fireEvent.click(screen.getByRole("button", { name: "Return" }));
+    fillRoute("PABE", "9Z8");
+    fireEvent.change(outboundDate(), { target: { value: "2026-10-31" } });
+    fireEvent.change(screen.getByLabelText("Return date"), { target: { value: "2026-11-02" } });
+    expect(screen.getByLabelText("Return from")).toHaveValue("9Z8");
+    expect(screen.getByLabelText("Return to")).toHaveValue("PABE");
+    fireEvent.click(screen.getByRole("button", { name: /search flights/i }));
+
+    expect(searchFlights).toHaveBeenCalledWith(
+      expect.objectContaining({ origin: "PABE", destination: "9Z8", date: "2026-10-31" }),
+    );
+    expect(searchFlights).toHaveBeenCalledWith(
+      expect.objectContaining({ origin: "9Z8", destination: "PABE", date: "2026-11-02" }),
+    );
+    fireEvent.click(await screen.findByRole("button", { name: "Select PGR791" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Select PGR792" }));
+    expect(screen.getByRole("button", { name: "Selected PGR791" })).toHaveAttribute("aria-pressed", "true");
+    const go = screen.getByRole("link", { name: "Continue to booking" });
+    const url = new URL(go.getAttribute("href") ?? "", "http://x");
+    expect(url.searchParams.get("trip_type")).toBe("return");
+    expect(url.searchParams.get("return_date")).toBe("2026-11-02");
+    expect(url.searchParams.get("flight")).toBe("f-out");
+    expect(url.searchParams.get("return_flight")).toBe("f-back");
+  });
+
+  it("wants a return date that isn't before the way out", () => {
+    searchFlights.mockClear();
+    render(<NewBookingSearchForm customers={[]} stations={STATIONS} />);
+    fireEvent.click(screen.getByRole("button", { name: "Return" }));
+    fillRoute("PABE", "9Z8");
+    fireEvent.change(outboundDate(), { target: { value: "2026-10-31" } });
+    fireEvent.change(screen.getByLabelText("Return date"), { target: { value: "2026-10-30" } });
+    // The picker's own minimum stops it in a browser; the form checks too.
+    expect(screen.getByLabelText("Return date")).toHaveAttribute("min", "2026-10-31");
+    fireEvent.click(screen.getByRole("button", { name: /search flights/i }));
+    expect(searchFlights).not.toHaveBeenCalled();
+  });
+});

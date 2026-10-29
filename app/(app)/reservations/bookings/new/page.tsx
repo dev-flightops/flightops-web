@@ -30,6 +30,9 @@ export default async function NewBookingPage({
     customer_name?: string;
     /** Where to land after filing. */
     return_to?: string;
+    /** A return trip (#148): the way back's day and, once picked, its flight. */
+    return_date?: string;
+    return_flight?: string;
   }>;
 }) {
   const params = await searchParams;
@@ -80,6 +83,31 @@ export default async function NewBookingPage({
   const departs = chosen
     ? utcToLocalInput(chosen.scheduled_departure_at, zoneFor(await loadZoneTable(), chosen.origin))
     : (params.date ?? null);
+  // The way back of a return trip (#148): destination to origin on its day.
+  const backDay = (params.return_date ?? "").slice(0, 10);
+  const isReturn = /^\d{4}-\d{2}-\d{2}$/.test(backDay) && Boolean(params.origin && params.destination);
+  let flightsBack: FlightSearchResult[] | null = null;
+  if (isReturn) {
+    try {
+      flightsBack = (
+        await searchFlights({
+          origin: params.destination ?? "",
+          destination: params.origin ?? "",
+          date: backDay,
+          paxCount: pax,
+          showUnavailable: true,
+        })
+      ).items;
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 401) throw err;
+      flightsBack = null;
+    }
+  }
+  const chosenBack = flightsBack?.find((f) => f.flight_id === params.return_flight) ?? null;
+  const backDeparts = chosenBack
+    ? utcToLocalInput(chosenBack.scheduled_departure_at, zoneFor(await loadZoneTable(), chosenBack.origin))
+    : `${backDay}T09:00`;
+
   const returnTo = params.return_to?.startsWith("/") && !params.return_to.startsWith("//")
     ? params.return_to
     : null;
@@ -109,7 +137,29 @@ export default async function NewBookingPage({
           day,
         }}
         query={params}
+        heading={isReturn ? "Way out" : undefined}
       />
+
+      {isReturn ? (
+        <p className="mb-3 text-sm">
+          {`Return trip: filing books the way back too, ${params.destination} → ${params.origin}, for the same passengers.`}
+        </p>
+      ) : null}
+      {isReturn ? (
+        <FlightChoice
+          flights={flightsBack}
+          chosen={chosenBack}
+          chosenId={params.return_flight ?? null}
+          searched={{
+            origin: params.destination ?? "",
+            destination: params.origin ?? "",
+            day: backDay,
+          }}
+          query={params}
+          param="return_flight"
+          heading="Way back"
+        />
+      ) : null}
 
       <BookingForm
           customers={customers}
@@ -124,6 +174,7 @@ export default async function NewBookingPage({
             customerName: params.customer_name ?? null,
           }}
           flightId={chosen ? chosen.flight_id : null}
+          returnTrip={isReturn ? { departureLocal: backDeparts, flightId: chosenBack?.flight_id ?? null } : null}
           returnTo={returnTo}
         />
     </div>

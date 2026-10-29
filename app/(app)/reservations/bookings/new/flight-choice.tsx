@@ -22,12 +22,19 @@ export async function FlightChoice({
   chosenId,
   searched,
   query,
+  param = "flight",
+  heading,
 }: {
   flights: FlightSearchResult[] | null;
   chosen: FlightSearchResult | null;
   chosenId: string | null;
   searched: { origin: string; destination: string; day: string };
   query: Record<string, string | undefined>;
+  /** The query parameter the pick goes in: "return_flight" for a return
+   *  trip's way back (#148). */
+  param?: string;
+  /** "Way out" or "Way back" on a return trip (#148). */
+  heading?: string;
 }) {
   if (flights === null) return null;
   const zones = await loadZoneTable();
@@ -41,16 +48,16 @@ export async function FlightChoice({
   function hrefFor(flightId: string | null): string {
     const next = new URLSearchParams();
     for (const [key, value] of Object.entries(query)) {
-      if (value !== undefined && key !== "flight") next.set(key, value);
+      if (value !== undefined && key !== param) next.set(key, value);
     }
-    if (flightId) next.set("flight", flightId);
+    if (flightId) next.set(param, flightId);
     return `/reservations/bookings/new?${next.toString()}`;
   }
 
   if (chosen) {
     return (
-      <section aria-label="Flight" className="mb-6 border-l-[3px] border-primary bg-card px-4 py-3">
-        <div className="eyebrow">On flight</div>
+      <section aria-label={heading ?? "Flight"} className="mb-6 border-l-[3px] border-primary bg-card px-4 py-3">
+        <div className="eyebrow">{heading ? `${heading} · on flight` : "On flight"}</div>
         <p className="mt-1 text-sm">
           <span className="font-mono font-semibold">{chosen.flight_number}</span>
           {" · "}
@@ -73,7 +80,8 @@ export async function FlightChoice({
 
   const open = flights.filter((f) => f.is_available);
   return (
-    <section aria-label="Flights that day" className="mb-6 bg-card px-4 py-3">
+    <section aria-label={heading ?? "Flights that day"} className="mb-6 bg-card px-4 py-3">
+      {heading ? <div className="eyebrow mb-1">{heading}</div> : null}
       {chosenId ? (
         <p role="alert" className="notice notice-yellow mb-3 text-sm">
           That flight doesn&apos;t go {route} on {dayText}. Pick one below, or file the booking to wait for one.
