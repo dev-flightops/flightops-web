@@ -52,7 +52,7 @@ describe("LoadFromSchedule", () => {
     expect(screen.getAllByRole("option")).toHaveLength(3); // placeholder + 2
   });
 
-  it("includes date, flight number, route, and tail in each option text", () => {
+  it("includes the departure time, flight number, route, and tail in each option text", () => {
     // Option label used to append a placeholder chief-pilot name too;
     // dropped because Flight has no pilot_id column yet and rendering
     // a hardcoded pilot misled dispatchers into skipping the PIC
@@ -61,10 +61,19 @@ describe("LoadFromSchedule", () => {
     const opt = screen
       .getAllByRole("option")
       .find((o) => o.getAttribute("value") === "f-1");
-    expect(opt?.textContent).toMatch(/GV101/);
+    expect(opt?.textContent).toMatch(/^06:00 AKDT · GV101/); // 14:00Z, on the base's clock (#68)
     expect(opt?.textContent).toMatch(/PADU → PANC/);
     expect(opt?.textContent).toMatch(/N207GE/);
     expect(opt?.textContent).not.toMatch(/Sarah Kessler/);
+  });
+
+  it("shows a flight from a base in another zone on that base's clock", () => {
+    panel({
+      zones: { byIcao: { PADK: "America/Adak", PABE: "America/Anchorage" }, fallback: "America/Anchorage" },
+      flights: [baseFlight({ origin: "PADK", scheduled_departure_at: "2026-05-31T20:00:00Z" })],
+    });
+    const opt = screen.getAllByRole("option").find((o) => o.getAttribute("value") === "f-1");
+    expect(opt?.textContent).toMatch(/^11:00 HA?DT · GV101/);
   });
 
   // #132: the page stays where the dispatcher is; it used to jump to the top.
@@ -117,6 +126,14 @@ describe("the day control", () => {
   it("shows the day being worked", () => {
     panel();
     expect(screen.getByLabelText(/schedule date/i)).toHaveValue(DATE);
+  });
+
+  // #101: the day is the company's, not UTC's.
+  it("says whose day it is", () => {
+    panel();
+    expect(screen.getByLabelText("Schedule date (Alaska Time)")).toHaveValue(DATE);
+    expect(screen.getByText("Alaska Time")).toBeInTheDocument();
+    expect(screen.queryByText(/UTC/)).not.toBeInTheDocument();
   });
 
   it("steps forward exactly one day", async () => {
@@ -193,11 +210,13 @@ describe("a day with no flights", () => {
     ).toBeInTheDocument();
   });
 
-  it("names the day that is empty", () => {
+  it("names the day that is empty, and whose day", () => {
     // "No flights" without the date reads as "the system has no
     // flights", which is a different and much more alarming claim.
     panel({ flights: [] });
-    expect(screen.getByText(new RegExp(DATE))).toBeInTheDocument();
+    expect(screen.getByText(/^No flights scheduled for/)).toHaveTextContent(
+      "No flights scheduled for May 31, 2026 (Alaska Time).",
+    );
   });
 
   it("offers building one", () => {

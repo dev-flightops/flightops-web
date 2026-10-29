@@ -106,6 +106,13 @@ export function utcToLocalInput(iso: string, timeZone: string): string {
   return shifted.toISOString().slice(0, 16);
 }
 
+/** The calendar day `at` falls on in `timeZone`, "2026-10-28": at 8 pm
+ *  in Alaska, UTC is already on the 29th. The schedule (#137) and the
+ *  dispatch packet (#101) list flights by the company's day. */
+export function localDay(timeZone: string, at: Date = new Date()): string {
+  return utcToLocalInput(at.toISOString(), timeZone).slice(0, 10);
+}
+
 /** "AKDT" for Alaska in summer, "AKST" in winter. */
 export function zoneAbbreviation(timeZone: string, at: Date = new Date()): string {
   const name = new Intl.DateTimeFormat("en-US", { timeZone, timeZoneName: "short" })

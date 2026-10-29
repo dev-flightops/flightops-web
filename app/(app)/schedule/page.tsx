@@ -13,7 +13,7 @@ import type {
   FlightListItem,
   FlightStatus,
 } from "@/lib/api/types";
-import { localClock, localDate, utcToLocalInput, type ZoneTable, zoneFor } from "@/lib/format/local-time";
+import { localClock, localDate, localDay, type ZoneTable, zoneFor } from "@/lib/format/local-time";
 import { routeText } from "@/lib/route";
 import {
   aircraftColumns,
@@ -66,12 +66,6 @@ const STATUS_LABEL: Record<FlightStatus, string> = {
   completed: "Completed",
 };
 
-/** Today in the company's zone (#137): a UTC day started tomorrow's
- *  schedule at 4 pm Alaska time. */
-function today(zone: string): string {
-  return utcToLocalInput(new Date().toISOString(), zone).slice(0, 10);
-}
-
 function parseStatuses(raw: string | undefined): FlightStatus[] {
   if (!raw) return [];
   return [
@@ -95,7 +89,7 @@ export default async function SchedulePage({
   const date =
     dateParam && /^\d{4}-\d{2}-\d{2}$/.test(dateParam)
       ? dateParam
-      : today(zones.fallback);
+      : localDay(zones.fallback); // the company's day, not UTC's (#137)
   const statuses = parseStatuses(statusesParam);
 
   let flights: FlightListItem[] = [];
@@ -174,7 +168,7 @@ export default async function SchedulePage({
             end={byAircraft.end}
             zone={zones.fallback}
             zones={zones}
-            nowMinute={date === today(zones.fallback) ? minutesInto(date, new Date().toISOString(), zones.fallback) : null}
+            nowMinute={date === localDay(zones.fallback) ? minutesInto(date, new Date().toISOString(), zones.fallback) : null}
           />
         </>
       ) : loadError ? (

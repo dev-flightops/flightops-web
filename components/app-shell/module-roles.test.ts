@@ -465,3 +465,11 @@ describe("the accountant: the company's money, nothing operational (#128)", () =
     expect(agent).toContain("reservations-search");
   });
 });
+
+// #102: Admin read "Executive" twice, the dashboard and the report.
+describe("each department's menu", () => {
+  it.each(DEPARTMENTS.map((d) => [d.id, d] as const))("%s names each module once", (_, dept) => {
+    const labels = dept.children.map((m) => m.label);
+    expect(labels.filter((label, i) => labels.indexOf(label) !== i)).toEqual([]);
+  });
+});
