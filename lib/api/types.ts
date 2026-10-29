@@ -1785,6 +1785,11 @@ export interface PilotCurrencyCell {
   base_month_due: string | null;
   grace_month_end: string | null;
   rolling_count: number | null;
+  /** A check failed since the last pass (#98): when, and who gave it.
+   *  The cell is non-current until a pass is logged. Absent from an
+   *  older backend. */
+  failed_on?: string | null;
+  failed_by?: string | null;
 }
 
 export interface PilotComplianceRow {

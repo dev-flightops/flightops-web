@@ -78,3 +78,53 @@ describe("CurrencyItemCard — medical (#87)", () => {
     expect(field("Expires")).toBe("2026-10-21");
   });
 });
+
+const IPC: CurrencyItemRef = {
+  ...MEDICAL,
+  id: "ipc-1",
+  code: "ipc",
+  name: "Instrument Proficiency Check",
+  regulation: "14 CFR 135.297",
+  interval_type: "semi_annual",
+  requires_examiner: true,
+  is_check_event: true,
+};
+
+describe("CurrencyItemCard — a failed check (#98)", () => {
+  it("says it was failed, when, and who gave the check", () => {
+    render(
+      <CurrencyItemCard
+        item={IPC}
+        cell={cell({
+          currency_item_id: "ipc-1",
+          status: "non_current",
+          last_completed_date: "2026-08-12",
+          failed_on: "2026-10-28",
+          failed_by: "Sam Examiner",
+        })}
+        pilotId="p-1"
+        pilotName="Pat Pilot"
+      />,
+    );
+    // The badge, and the field below it.
+    expect(screen.getByText("Failed", { selector: "span" })).toBeInTheDocument();
+    expect(screen.getByText("Failed", { selector: "dt" }).nextElementSibling?.textContent).toBe(
+      "2026-10-28 · Sam Examiner",
+    );
+    // The last pass is still shown: the failure came after it.
+    expect(field("Last Completed")).toBe("2026-08-12");
+  });
+
+  it("says nothing of a failure once a pass is logged", () => {
+    render(
+      <CurrencyItemCard
+        item={IPC}
+        cell={cell({ currency_item_id: "ipc-1", status: "upcoming", last_completed_date: "2026-10-29" })}
+        pilotId="p-1"
+        pilotName="Pat Pilot"
+      />,
+    );
+    expect(screen.queryByText("Failed")).not.toBeInTheDocument();
+    expect(screen.getByText("Upcoming")).toBeInTheDocument();
+  });
+});

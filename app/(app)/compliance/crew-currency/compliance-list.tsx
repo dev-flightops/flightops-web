@@ -7,7 +7,7 @@ import type {
   PilotCurrencyCell,
 } from "@/lib/api/types";
 
-import { STATUS_TOKENS, daysUntil } from "./status-tokens";
+import { STATUS_TOKENS, daysUntil, failedText } from "./status-tokens";
 
 /**
  * Spec 5 / M2-G-3 — flat list view of the compliance board.
@@ -134,7 +134,7 @@ export function ComplianceList({
               </td>
               <td className="px-3 py-2">
                 <span className={STATUS_TOKENS[e.cell.status].pill}>
-                  {STATUS_TOKENS[e.cell.status].label}
+                  {failedText(e.cell) ? "Failed" : STATUS_TOKENS[e.cell.status].label}
                 </span>
               </td>
               <td className="px-3 py-2">
@@ -173,6 +173,13 @@ function AnchorCell({
       );
     }
     return <span className="text-[0.65rem] text-muted-foreground">—</span>;
+  }
+  // A check failed since the last pass (#98): when, and who gave it.
+  const failed = failedText(cell);
+  if (failed) {
+    return (
+      <span className="font-mono text-[0.65rem] text-foreground">Failed {failed}</span>
+    );
   }
   // A medical has an expiry date, not a base month (#87).
   if (item.interval_type === "medical_hard_expiry" && cell.base_month_due) {
