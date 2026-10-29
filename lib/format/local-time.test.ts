@@ -5,6 +5,7 @@ import {
   localClock,
   localDate,
   localDateTime,
+  localDay,
   localToUtcIso,
   utcToLocalInput,
   zoneAbbreviation,
@@ -75,6 +76,21 @@ describe("utcToLocalInput", () => {
 
   it("is blank for a value that is not a time", () => {
     expect(utcToLocalInput("not a time", ALASKA)).toBe("");
+  });
+});
+
+describe("localDay", () => {
+  // #101: 8 pm on the 28th in Alaska is already the 29th in UTC.
+  it("is the day there, not UTC's", () => {
+    expect(localDay(ALASKA, new Date("2026-10-29T04:00:00Z"))).toBe("2026-10-28");
+    expect(localDay("UTC", new Date("2026-10-29T04:00:00Z"))).toBe("2026-10-29");
+  });
+
+  it("turns over at local midnight", () => {
+    expect(localDay(ALASKA, new Date("2026-10-29T07:59:00Z"))).toBe("2026-10-28");
+    expect(localDay(ALASKA, new Date("2026-10-29T08:00:00Z"))).toBe("2026-10-29");
+    // AKST from 1 Nov: midnight is 09:00Z.
+    expect(localDay(ALASKA, new Date("2026-12-15T08:30:00Z"))).toBe("2026-12-14");
   });
 });
 

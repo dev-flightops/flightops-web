@@ -7,6 +7,14 @@ import { useTransition, type ReactNode } from "react";
 
 import { SectionPanel } from "./section-panel";
 import type { FlightListItem } from "@/lib/api/types";
+import {
+  DEFAULT_ZONE_TABLE,
+  localClock,
+  localDate,
+  zoneFor,
+  zoneName,
+  type ZoneTable,
+} from "@/lib/format/local-time";
 import { routeText } from "@/lib/route";
 
 /**
@@ -34,10 +42,15 @@ import { routeText } from "@/lib/route";
  * the day is empty — an empty day is a normal thing to be looking at,
  * usually on the way to somewhere else.
  *
- * Date arithmetic is UTC throughout: `T00:00:00Z` on parse and
- * `setUTCDate` to step. Doing it in local time is what made the fleet
- * board's arrows skip two days at a time west of Greenwich (8/24), and
- * the same trap is here.
+ * The day is the company's (#101), as on the schedule (#137): a UTC day
+ * started tomorrow's list at 4 pm in Alaska, so an evening flight was
+ * missing from the day the dispatcher picked. The panel names the zone,
+ * and each flight shows its departure on its base's clock (#68).
+ *
+ * Stepping the day is still string arithmetic in UTC: `T00:00:00Z` on
+ * parse and `setUTCDate` to step. Doing it in the browser's zone is
+ * what made the fleet board's arrows skip two days at a time west of
+ * Greenwich (8/24), and the same trap is here.
  *
  * Changing the day clears the selected flight rather than carrying it.
  * The selection is a flight on the day you were looking at; keeping it
@@ -48,18 +61,24 @@ export function LoadFromSchedule({
   flights,
   selectedFlightId,
   date,
+  zones = DEFAULT_ZONE_TABLE,
   children,
 }: {
   flights: FlightListItem[];
   selectedFlightId?: string | null;
-  /** The day being shown, `YYYY-MM-DD` UTC. */
+  /** The company's day being shown, `YYYY-MM-DD`. */
   date: string;
+  /** The bases' zones: the company's is the day's, and each flight's
+   *  base gives its departure clock. */
+  zones?: ZoneTable;
   /** Slot for the SelectedFlightSummary rows that render below the dropdown
    * when a flight is loaded. Pre-rendered server-side and passed in. */
   children?: ReactNode;
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+  // "Alaska Time": whose day this is.
+  const dayZone = zoneName(zones.fallback, new Date(`${date}T12:00:00Z`));
 
   const goToDate = (next: string) => {
     if (!next) return;
@@ -108,7 +127,7 @@ export function LoadFromSchedule({
           </button>
           <input
             type="date"
-            aria-label="Schedule date (UTC)"
+            aria-label={`Schedule date (${dayZone})`}
             value={date}
             onChange={(e) => goToDate(e.target.value)}
             disabled={isPending}
@@ -123,6 +142,7 @@ export function LoadFromSchedule({
           >
             →
           </button>
+          <span className="ml-1 text-[0.65rem] text-muted-foreground">{dayZone}</span>
         </div>
       </div>
 
@@ -134,7 +154,10 @@ export function LoadFromSchedule({
         <div className="rounded-lg border border-border bg-background px-3 py-3 text-[0.8125rem] text-muted-foreground">
           <p>
             No flights scheduled for{" "}
-            <span className="font-semibold text-foreground">{date}</span> (UTC).
+            <span className="font-semibold text-foreground">
+              {localDate(`${date}T12:00:00Z`, "UTC", { withYear: true })}
+            </span>{" "}
+            ({dayZone}).
           </p>
           <p className="mt-1">
             Step to another day above, or{" "}
@@ -164,15 +187,12 @@ export function LoadFromSchedule({
           className="flex h-9 w-full rounded-lg border border-border bg-background px-3 py-2 text-[0.8125rem] focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 disabled:cursor-wait disabled:opacity-70"
         >
           <option value="">— enter manually or select a flight —</option>
-          {flights.map((f) => {
-            const dep = f.scheduled_departure_at.slice(0, 10);
-            return (
-              <option key={f.id} value={f.id}>
-                {dep} · {f.flight_number} · {routeText(f)} ·{" "}
-                {f.aircraft.tail_number}
-              </option>
-            );
-          })}
+          {flights.map((f) => (
+            <option key={f.id} value={f.id}>
+              {localClock(f.scheduled_departure_at, zoneFor(zones, f.origin))} ·{" "}
+              {f.flight_number} · {routeText(f)} · {f.aircraft.tail_number}
+            </option>
+          ))}
         </select>
       )}
 
