@@ -6,7 +6,7 @@ import type {
   PilotCurrencyCell,
 } from "@/lib/api/types";
 
-import { STATUS_TOKENS, daysUntil } from "./status-tokens";
+import { STATUS_TOKENS, daysUntil, failedText } from "./status-tokens";
 import type { CurrencyStatus } from "./types";
 
 /**
@@ -117,10 +117,12 @@ export function ComplianceGrid({
 
 function Cell({ cell }: { cell: PilotCurrencyCell }) {
   const token = STATUS_TOKENS[cell.status];
+  // A check failed since the last pass (#98) says so, with when and who.
+  const failed = failedText(cell);
   // Grace-month cells render "GRACE — X days" per Spec 5 §"Cell
   // badge colors". We compute the countdown from grace_month_end.
-  let label = token.label;
-  if (cell.status === "grace_month") {
+  let label = failed ? "Failed" : token.label;
+  if (!failed && cell.status === "grace_month") {
     const remaining = daysUntil(cell.grace_month_end);
     if (remaining !== null && remaining >= 0) {
       label = `Grace — ${remaining}d`;
@@ -131,13 +133,20 @@ function Cell({ cell }: { cell: PilotCurrencyCell }) {
       <span
         className={token.pill}
         title={
-          cell.last_completed_date
-            ? `Last completed ${cell.last_completed_date}`
-            : "No completion logged"
+          failed
+            ? `Failed ${failed}`
+            : cell.last_completed_date
+              ? `Last completed ${cell.last_completed_date}`
+              : "No completion logged"
         }
       >
         {label}
       </span>
+      {failed && (
+        <span className="max-w-[10rem] truncate font-mono text-[0.6rem] text-muted-foreground" title={`Failed ${failed}`}>
+          {failed}
+        </span>
+      )}
     </div>
   );
 }
