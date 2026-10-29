@@ -66,5 +66,7 @@ export async function amendDutyAction(
   // revalidating the parent does not cover a nested route — without
   // this the corrected times stay stale until a hard reload.
   revalidatePath("/flight-crew/history");
+  // A corrector works from the pilot's page (#100).
+  revalidatePath("/compliance/pilots/[pilotId]", "page");
   return { status: "ok", message: "Corrected." };
 }

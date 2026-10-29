@@ -5,6 +5,8 @@ const {
   getPilotComplianceProfile,
   getAirmanRecord,
   listDisqualifications,
+  getDutySettings,
+  listDutyHistory,
   notFound,
   TestApiError,
 } = vi.hoisted(() => {
@@ -21,6 +23,8 @@ const {
     getPilotComplianceProfile: vi.fn(),
     getAirmanRecord: vi.fn(),
     listDisqualifications: vi.fn(),
+    getDutySettings: vi.fn(),
+    listDutyHistory: vi.fn(),
     notFound: vi.fn(() => {
       const err = new Error("NEXT_NOT_FOUND");
       throw err;
@@ -34,7 +38,12 @@ vi.mock("@/lib/api/ops", () => ({
   getPilotComplianceProfile,
   getAirmanRecord,
   listDisqualifications,
+  getDutySettings,
+  listDutyHistory,
 }));
+// The Correct control reaches a server action, and through it next-auth,
+// which does not resolve under vitest.
+vi.mock("@/components/duty/correct-duty", () => ({ CorrectDuty: () => null }));
 vi.mock("next/navigation", () => ({ notFound }));
 const { getPilotTypeQualifications } = vi.hoisted(() => ({
   getPilotTypeQualifications: vi.fn(),
@@ -110,6 +119,10 @@ beforeEach(() => {
   getPilotComplianceProfile.mockReset();
   getAirmanRecord.mockReset();
   listDisqualifications.mockReset();
+  listDutyHistory.mockReset();
+  // Not a corrector unless a test says so (#100).
+  getDutySettings.mockReset();
+  getDutySettings.mockResolvedValue({ correction_roles: [], can_correct_others: false });
   // The airman record is a secondary section on this page; these
   // defaults keep the currency assertions below about currency.
   getAirmanRecord.mockResolvedValue({
@@ -438,5 +451,43 @@ describe("the pilot's weight (#125)", () => {
     getPilotComplianceProfile.mockResolvedValue(makeProfile({ can_edit_weight: false }));
     await renderPage();
     expect(screen.queryByRole("heading", { name: "Weight for weight and balance" })).not.toBeInTheDocument();
+  });
+});
+
+// #100: the people the company lets correct anyone's duty times do it
+// from the pilot's page.
+describe("the pilot's duty history", () => {
+  it("is shown to someone who may correct it, with who corrected what", async () => {
+    getPilotComplianceProfile.mockResolvedValue(makeProfile());
+    getDutySettings.mockResolvedValue({ correction_roles: ["chief_pilot"], can_correct_others: true });
+    listDutyHistory.mockResolvedValue({
+      total: 1,
+      items: [
+        {
+          id: "d-1",
+          clock_in_at: "2026-10-11T15:00:00Z",
+          clock_out_at: "2026-10-12T01:00:00Z",
+          elapsed_hours: 10,
+          is_open: false,
+          rest_acknowledged: false,
+          corrected: { by: "Kim Chief", at: "2026-10-21T18:00:00Z", reason: "Forgot to clock out." },
+        },
+      ],
+    });
+
+    await renderPage();
+
+    expect(listDutyHistory).toHaveBeenCalledWith({ userId: "p-1", limit: 10 });
+    expect(screen.getByRole("heading", { name: "Duty history" })).toBeInTheDocument();
+    expect(screen.getByText("Corrected by Kim Chief, 2026-10-21: Forgot to clock out.")).toBeInTheDocument();
+  });
+
+  it("is not shown to anyone else", async () => {
+    getPilotComplianceProfile.mockResolvedValue(makeProfile());
+
+    await renderPage();
+
+    expect(listDutyHistory).not.toHaveBeenCalled();
+    expect(screen.queryByRole("heading", { name: "Duty history" })).not.toBeInTheDocument();
   });
 });

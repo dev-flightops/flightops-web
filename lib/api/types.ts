@@ -1697,6 +1697,14 @@ export interface StepCompletionRequest {
 }
 
 // Pilot duty tracking (Spec 4 §"Duty time tracking" / M2 Duty backend).
+/** The latest correction someone other than the pilot made to a duty
+ *  period (#100): the pilot sees who corrected it, when and why. */
+export interface DutyCorrection {
+  by: string;
+  at: string;
+  reason: string;
+}
+
 export interface DutyPeriodSummary {
   id: string;
   clock_in_at: string;
@@ -1706,6 +1714,15 @@ export interface DutyPeriodSummary {
   rest_acknowledged: boolean;
   /** On the clock-in response: it reopened the duty day. */
   resumed?: boolean;
+  /** Absent from an older backend. */
+  corrected?: DutyCorrection | null;
+}
+
+/** Who may correct anyone's duty times, a company setting (#100). A
+ *  pilot always corrects their own. */
+export interface DutySettings {
+  correction_roles: string[];
+  can_correct_others: boolean;
 }
 
 export interface DutyWarning {
