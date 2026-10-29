@@ -3,7 +3,8 @@ import { cn } from "@/lib/utils";
 
 /**
  * Standard loading spinner — the app's own ring glyph (#79) with the
- * Tailwind `animate-spin` utility. Three sizes track the rest of the UI scale
+ * Tailwind `animate-spin` utility, which stands still for reduced motion
+ * (#142). Three sizes track the rest of the UI scale
  * (xs in inline subtitles, sm next to button text, md in large
  * placeholder panels). The Spinner is purely visual, so it carries
  * `aria-hidden`; callers should provide a `<span class="sr-only">`
@@ -25,7 +26,7 @@ export function Spinner({
   className?: string;
 }) {
   return (
-    <SpinnerGlyph className={cn("animate-spin", SIZE_CLASS[size], className)} />
+    <SpinnerGlyph className={cn("motion-safe:animate-spin", SIZE_CLASS[size], className)} />
   );
 }
 

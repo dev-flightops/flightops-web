@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import { cookies } from "next/headers";
+import { Suspense } from "react";
 
+import { NavigationProgress } from "@/components/app-shell/navigation-progress";
 import { ThemeProvider } from "@/components/theme/theme-provider";
 import { THEME_COOKIE, themeFromCookie } from "@/lib/theme/theme-mode";
 
@@ -61,7 +63,14 @@ export default async function RootLayout({
       className={`${fontSans.variable} ${fontDisplay.variable} ${fontMono.variable}`}
     >
       <body className="min-h-screen bg-background text-foreground font-sans antialiased">
-        <ThemeProvider initial={theme}>{children}</ThemeProvider>
+        <ThemeProvider initial={theme}>
+          {/* The bar reads the search parameters, so it waits on its own
+              boundary rather than holding up the page (#142). */}
+          <Suspense fallback={null}>
+            <NavigationProgress />
+          </Suspense>
+          {children}
+        </ThemeProvider>
       </body>
     </html>
   );
