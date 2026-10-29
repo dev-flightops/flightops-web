@@ -22,6 +22,9 @@ const MESSAGES: Record<string, string> = {
   on_booking:
     "This passenger is on a booking. Cancel or move the booking to take them off.",
   flight_not_found: "That flight no longer exists.",
+  booking_immutable: "A cancelled booking can't be changed. File a new one.",
+  flight_not_landed: "A booking is completed once its flight has landed.",
+  return_before_outbound: "The way back has to leave after the way out.",
 };
 
 export function refusalMessage(raw: string): string {
