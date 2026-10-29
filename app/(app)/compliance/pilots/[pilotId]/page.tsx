@@ -2,11 +2,14 @@ import { notFound } from "next/navigation";
 import { ApiError } from "@/lib/api/client";
 import {
   getAirmanRecord,
+  getDutySettings,
   getPilotComplianceProfile,
   listDisqualifications,
+  listDutyHistory,
 } from "@/lib/api/ops";
 
 import { getPilotTypeQualifications } from "@/lib/api/type-qualifications";
+import { DutyHistoryTable } from "@/app/(app)/flight-crew/history/duty-history-table";
 
 import { STATUS_TOKENS } from "../../crew-currency/status-tokens";
 import { CurrencyItemCard } from "./currency-item-card";
@@ -76,11 +79,17 @@ export default async function PilotComplianceProfilePage({
   // Soft-failed on purpose, and fetched in parallel with each other.
   // Currency is what this page is primarily for; losing the airman
   // record should cost the reader that section, not the whole page.
-  const [airman, disqualifications, typeQuals] = await Promise.all([
+  const [airman, disqualifications, typeQuals, dutySettings] = await Promise.all([
     getAirmanRecord(pilotId).catch(() => null),
     listDisqualifications(pilotId).catch(() => null),
     getPilotTypeQualifications(pilotId).catch(() => null),
+    getDutySettings().catch(() => null),
   ]);
+  // The pilot's duty history, for someone the company lets correct
+  // anyone's duty times (#100): a forgotten clock-out is fixed here.
+  const duty = dutySettings?.can_correct_others
+    ? await listDutyHistory({ userId: pilotId, limit: 10 }).catch(() => null)
+    : null;
   // The items a type's check rides are logged against; their examiner
   // rule comes from the item, as on the currency cards.
   const checkItem = (id: string | null): CheckItemRef | null =>
@@ -138,6 +147,18 @@ export default async function PilotComplianceProfilePage({
 
       {profile.can_edit_weight ? (
         <PilotWeightCard pilotId={profile.pilot.id} weightLbs={profile.weight_lbs ?? null} />
+      ) : null}
+
+      {duty ? (
+        <section className="mt-6" aria-labelledby="duty-history">
+          <h2 id="duty-history" className="eyebrow mb-2">
+            Duty history
+          </h2>
+          <p className="mb-3 text-xs text-muted-foreground">
+            {`Correct a period ${profile.pilot.full_name} forgot to close or logged wrong. They see who corrected it and why.`}
+          </p>
+          <DutyHistoryTable periods={duty.items} pilotName={profile.pilot.full_name} />
+        </section>
       ) : null}
 
       {airman && disqualifications ? (

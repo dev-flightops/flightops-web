@@ -25,6 +25,7 @@ import type {
   DisqualificationListResponse,
   DutyHistoryResponse,
   DutyPeriodSummary,
+  DutySettings,
   FlightDetail,
   FlightListResponse,
   FlightLogCreateRequest,
@@ -522,13 +523,29 @@ export async function clockOut(
 }
 
 export async function listDutyHistory(
-  params: { limit?: number; offset?: number } = {},
+  params: { limit?: number; offset?: number; userId?: string } = {},
 ): Promise<DutyHistoryResponse> {
   const qs = new URLSearchParams();
   if (params.limit !== undefined) qs.set("limit", String(params.limit));
   if (params.offset !== undefined) qs.set("offset", String(params.offset));
+  // A pilot's history, for someone the company lets correct it (#100).
+  if (params.userId !== undefined) qs.set("user_id", params.userId);
   const tail = qs.toString() ? `?${qs.toString()}` : "";
   return apiFetch<DutyHistoryResponse>(`/ops/duty/history${tail}`);
+}
+
+/** Who may correct anyone's duty times (#100), and whether the viewer may. */
+export async function getDutySettings(): Promise<DutySettings> {
+  return apiFetch<DutySettings>("/ops/duty/settings");
+}
+
+/** Set it: the Director of Operations or an Exec Admin. */
+export async function updateDutySettings(correctionRoles: string[]): Promise<DutySettings> {
+  return apiFetch<DutySettings>("/ops/duty/settings", {
+    method: "PUT",
+    body: JSON.stringify({ correction_roles: correctionRoles }),
+    headers: { "Content-Type": "application/json" },
+  });
 }
 
 // ---- 8-step preflight job flow (Spec 4 §"8-STEP PREFLIGHT JOB FLOW") ----

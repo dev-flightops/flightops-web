@@ -168,6 +168,11 @@ export default async function SettingsLandingPage() {
           href: "/settings/permissions",
         },
         {
+          label: "Duty Corrections",
+          blurb: "Who may correct anyone's duty times.",
+          href: "/settings/duty",
+        },
+        {
           label: "Document requirements",
           blurb: "What staff must file.",
           href: "/settings/document-requirements",

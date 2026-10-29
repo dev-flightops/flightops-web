@@ -23,19 +23,30 @@ import type { DutyPeriodSummary } from "@/lib/api/types";
  * a pilot to amend their own. The control existed from 8/28 but only
  * on /time-clock, an HR-department page a pilot cannot navigate to, so
  * the pilot it was built for could not reach it.
+ *
+ * Since #100 the pilot page shows a pilot's table to the people the
+ * company lets correct anyone's duty times (`pilotName`), and a period
+ * someone else corrected says who, when and why.
  */
 export function DutyHistoryTable({
   periods,
+  pilotName,
 }: {
   periods: DutyPeriodSummary[];
+  /** Someone else's history, read by a corrector (#100). */
+  pilotName?: string;
 }) {
   if (periods.length === 0) {
     return (
       <div className="rounded-lg border border-border bg-card px-5 py-8 text-center">
-        <p className="text-sm text-muted-foreground">No duty periods on file.</p>
-        <p className="mt-2 text-xs text-muted-foreground">
-          Clock In from the Flight Crew page once you start your day.
+        <p className="text-sm text-muted-foreground">
+          {pilotName ? `No duty periods on file for ${pilotName}.` : "No duty periods on file."}
         </p>
+        {pilotName ? null : (
+          <p className="mt-2 text-xs text-muted-foreground">
+            Clock In from the Flight Crew page once you start your day.
+          </p>
+        )}
       </div>
     );
   }
@@ -71,6 +82,11 @@ export function DutyHistoryTable({
               </td>
               <td className="px-3 py-2">
                 <StatusBadge isOpen={p.is_open} />
+                {p.corrected ? (
+                  <p className="mt-1 max-w-[22rem] text-[0.65rem] text-muted-foreground">
+                    {`Corrected by ${p.corrected.by}, ${dateOnly(p.corrected.at)}: ${p.corrected.reason}`}
+                  </p>
+                ) : null}
               </td>
               <td className="px-3 py-2 text-right align-top">
                 <CorrectDuty period={p} />
