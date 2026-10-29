@@ -41,10 +41,20 @@ export function DepartmentNav({ roles = [] }: { roles?: readonly string[] }) {
   // dispatcher on /reservations/accounting-export would see New Booking
   // (/reservations) lit. Then no chip is current.
   const activeId = activeModuleId(dept.children, pathname);
+  // The modules from the first divider on (Admin's AI tools) wrap as one
+  // group (#102): left to wrap alone, Fleet Brain ended line one and the
+  // rest of the group began line two. From md up it keeps the right
+  // end of its line, so its divider still reads as one.
+  const split = modules.findIndex((m, i) => i > 0 && m.dividerBefore);
+  const head = split > 0 ? modules.slice(0, split) : modules;
+  const tail = split > 0 ? modules.slice(split) : [];
+  const item = (module: ModuleEntry) => (
+    <DepartmentNavItem key={module.id} module={module} isActive={module.id === activeId} />
+  );
 
   return (
     <div className="border-b border-border bg-background">
-      <div className="container flex h-11 items-stretch gap-2 px-3">
+      <div className="container flex min-h-11 items-stretch gap-2 px-3">
         <Link
           href="/home/"
           className="flex flex-shrink-0 items-center px-1 text-muted-foreground transition-colors hover:text-foreground"
@@ -56,20 +66,16 @@ export function DepartmentNav({ roles = [] }: { roles?: readonly string[] }) {
           <ChevronGlyph />
         </span>
 
-        {/* h-scroll on narrow widths instead of wrapping or clipping —
-            keeps the row to a single line and lets the user swipe across
-            the modules on phones. */}
+        {/* h-scroll on phones instead of wrapping or clipping: one line
+            the user swipes across. From md up the row wraps instead
+            (#102): with its scrollbar hidden, Admin's 21 modules ran off
+            the right edge at desktop width, where a mouse can't swipe. */}
         <nav
           aria-label={`${dept.label} modules`}
-          className="flex flex-1 items-stretch gap-5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          className="flex flex-1 items-stretch gap-x-5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:flex-wrap md:overflow-visible"
         >
-          {modules.map((module) => (
-            <DepartmentNavItem
-              key={module.id}
-              module={module}
-              isActive={module.id === activeId}
-            />
-          ))}
+          {head.map(item)}
+          {tail.length > 0 && <div className="flex items-stretch gap-x-5 md:ml-auto">{tail.map(item)}</div>}
         </nav>
       </div>
     </div>
@@ -129,7 +135,7 @@ function DepartmentNavItem({
       : "text-muted-foreground hover:text-foreground";
 
   const className = cn(
-    "relative flex items-center whitespace-nowrap text-[0.8125rem] font-semibold transition-colors",
+    "relative flex min-h-11 items-center whitespace-nowrap text-[0.8125rem] font-semibold transition-colors",
     "after:absolute after:inset-x-0 after:bottom-0 after:h-0.5",
     baseTone,
     !isLive && "opacity-40 cursor-not-allowed",
@@ -139,7 +145,7 @@ function DepartmentNavItem({
     <>
       {module.pushRight && <span className="flex-1" />}
       {module.dividerBefore && (
-        <span className="mx-1 h-3 w-px bg-border" aria-hidden />
+        <span className="mx-1 h-3 w-px self-center bg-border" aria-hidden />
       )}
     </>
   );

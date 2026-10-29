@@ -215,3 +215,21 @@ describe("ComplianceList", () => {
     expect(screen.getByText("Expires 2026-10-31")).toBeInTheDocument();
   });
 });
+
+describe("a failed check (#98)", () => {
+  it("is listed as failed, with when and who gave the check", () => {
+    const items = [calendarItem({ id: "i-1", code: "ipc", name: "IPC", interval_type: "semi_annual" })];
+    const rows = [
+      row(
+        "p-1",
+        "Pat",
+        [cell("i-1", "non_current", { last_completed_date: "2026-08-12", failed_on: "2026-10-28", failed_by: "Sam Examiner" })],
+        "non_current",
+      ),
+    ];
+    render(<ComplianceList items={items} rows={rows} statusFilter={null} />);
+    expect(screen.getByText("Failed")).toBeInTheDocument();
+    expect(screen.getByText("Failed 2026-10-28 · Sam Examiner")).toBeInTheDocument();
+    expect(screen.queryByText("Non-Current")).not.toBeInTheDocument();
+  });
+});

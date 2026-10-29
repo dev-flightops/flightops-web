@@ -306,8 +306,10 @@ export const DEPARTMENTS: Department[] = [
         department: "admin",
       },
       {
+        // #102: the page's own name. "Executive" was the dashboard's too,
+        // so the menu read Executive twice.
         id: "reports-executive",
-        label: "Executive",
+        label: "Executive Summary",
         href: "/reports/executive/summary",
         status: "live",
         department: "admin",

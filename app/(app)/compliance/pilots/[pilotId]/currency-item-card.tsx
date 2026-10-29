@@ -3,6 +3,7 @@ import type { CurrencyItemRef, PilotCurrencyCell } from "@/lib/api/types";
 import {
   STATUS_TOKENS,
   daysUntil,
+  failedText,
 } from "../../crew-currency/status-tokens";
 import { LogCompletionButton } from "./log-completion-button";
 
@@ -41,6 +42,8 @@ export function CurrencyItemCard({
   // it records no exam.
   const examOnFile =
     cell.last_completed_date !== null && cell.last_completed_date !== cell.base_month_due;
+  // A check failed since the last pass (#98): non-current until a pass.
+  const failed = failedText(cell);
 
   return (
     <div className="rounded-lg border border-border bg-card p-4">
@@ -52,13 +55,16 @@ export function CurrencyItemCard({
           </p>
         </div>
         <span className={token.badge}>
-          {cell.status === "grace_month"
-            ? `Grace${graceDaysSuffix(cell)}`
-            : token.label}
+          {failed
+            ? "Failed"
+            : cell.status === "grace_month"
+              ? `Grace${graceDaysSuffix(cell)}`
+              : token.label}
         </span>
       </div>
 
       <dl className="mt-3 grid grid-cols-2 gap-x-3 gap-y-1.5 text-[0.7rem]">
+        {failed && <Field label="Failed" value={failed} accent="text-status-magenta" />}
         {isMedical ? (
           <>
             <Field
