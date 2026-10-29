@@ -86,8 +86,9 @@ export function daysUntil(target: string | null): number | null {
 
 /** A check failed since the last pass (#98), as the board, the list and
  *  the pilot page say it: "2026-10-28 · Sam Examiner". Null when the cell
- *  has no failure. It stays non-current until a pass is logged. */
+ *  has no failure, or reads anything but non-current. It stays
+ *  non-current until a pass is logged. */
 export function failedText(cell: PilotCurrencyCell): string | null {
-  if (!cell.failed_on) return null;
+  if (!cell.failed_on || cell.status !== "non_current") return null;
   return cell.failed_by ? `${cell.failed_on} · ${cell.failed_by}` : cell.failed_on;
 }
