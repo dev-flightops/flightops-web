@@ -184,6 +184,12 @@ const config: Config = {
           from: { transform: "scaleX(0)" },
           to: { transform: "scaleX(1)" },
         },
+        // The navigation bar (#142): a third of the width sweeping across
+        // the window while a page loads.
+        "ff-sweep": {
+          from: { transform: "translateX(-100%)" },
+          to: { transform: "translateX(300%)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -191,6 +197,7 @@ const config: Config = {
         // Legacy "overdue" pulse, used on at-risk / late items.
         "ff-pulse": "ff-pulse 1.4s ease-in-out infinite",
         "ff-progress": "ff-progress 8s linear forwards",
+        "ff-sweep": "ff-sweep 1.1s ease-in-out infinite",
       },
     },
   },
