@@ -40,7 +40,7 @@ import {
   listFlights,
   listWeightReturns,
 } from "@/lib/api/ops";
-import { DEFAULT_ZONE_TABLE, type ZoneTable } from "@/lib/format/local-time";
+import { localDay } from "@/lib/format/local-time";
 import { listBookings } from "@/lib/api/reservations";
 import { getTypeQualificationGrid } from "@/lib/api/type-qualifications";
 import {
@@ -65,10 +65,6 @@ import {
   overridesOnRecord,
 } from "@/components/dispatch/packet/release-gate";
 import { flightStops, paramToRoute } from "@/lib/route";
-
-function todayUtc(): string {
-  return new Date().toISOString().slice(0, 10);
-}
 
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -146,8 +142,19 @@ export default async function DispatchPage({
   // Validate rather than trust: a malformed ?date= would otherwise be
   // passed to the API as a filter and quietly return nothing, which
   // reads as "no flights" rather than "bad date".
+  const dateGiven =
+    dateParam && /^\d{4}-\d{2}-\d{2}$/.test(dateParam) ? dateParam : null;
+  // #101: the day is the company's, as on the schedule (#137). A UTC day
+  // started tomorrow's list at 4 pm in Alaska, so an evening flight was
+  // missing from the day the dispatcher picked. A packet opened from the
+  // schedule or the board names a flight and no day: list that flight's.
+  const [zones, namedFlight] = await Promise.all([
+    loadZoneTable(),
+    selectedId && !dateGiven ? loadFlight(selectedId) : Promise.resolve(undefined),
+  ]);
   const scheduleDate =
-    dateParam && /^\d{4}-\d{2}-\d{2}$/.test(dateParam) ? dateParam : todayUtc();
+    dateGiven ??
+    localDay(zones.fallback, namedFlight ? new Date(namedFlight.scheduled_departure_at) : undefined);
 
   const currentPicId = isUuid(picOverrideId) ? picOverrideId : null;
 
@@ -202,9 +209,13 @@ export default async function DispatchPage({
     picAvailability,
     sicAvailability,
   ] = await Promise.all([
-    loads.or(listFlights({ onDate: scheduleDate }), { items: [], total: 0 }, "the day’s flights"),
+    loads.or(listFlights({ onCompanyDate: scheduleDate }), { items: [], total: 0 }, "the day’s flights"),
     listMyTenants().catch(() => ({ tenants: [] })),
-    selectedId ? loadFlight(selectedId) : Promise.resolve(null),
+    namedFlight !== undefined
+      ? Promise.resolve(namedFlight)
+      : selectedId
+        ? loadFlight(selectedId)
+        : Promise.resolve(null),
     loadPicRoster(),
     // Against whoever is actually flying it, not whoever the URL says.
     effectivePicId
@@ -278,17 +289,13 @@ export default async function DispatchPage({
   // Aircraft list is only needed by the Edit dialog inside RightColumn's
   // FlightActionsPanel — fetch it lazily, and only when a scheduled
   // flight is selected. Soft-fail if the call errors (the dialog hides
-  // its tail-swap selector when the list is empty).
+  // its tail-swap selector when the list is empty). The base zones its
+  // times are typed in (#68) were loaded with the day, above.
   let aircraft: AircraftListItem[] = [];
-  // And the base zones its times are typed in (#68).
-  let zones: ZoneTable = DEFAULT_ZONE_TABLE;
   if (selectedFlight?.status === "scheduled") {
-    [aircraft, zones] = await Promise.all([
-      listAircraft()
-        .then((list) => list.items)
-        .catch(() => []),
-      loadZoneTable(),
-    ]);
+    aircraft = await listAircraft()
+      .then((list) => list.items)
+      .catch(() => []);
   }
 
   // Resolve the routing for the Weather panel:
@@ -379,6 +386,7 @@ export default async function DispatchPage({
           flights={flights}
           selectedFlightId={selectedId ?? null}
           date={scheduleDate}
+          zones={zones}
         >
           {selectedFlight && (
             <SelectedFlightSummary
