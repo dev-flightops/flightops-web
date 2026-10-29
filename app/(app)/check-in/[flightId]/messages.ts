@@ -19,7 +19,14 @@ const BY_CODE: Record<string, string> = {
 
 type Detail =
   | string
-  | { error?: string; missing?: string[]; passengers?: string[]; field?: string }
+  | {
+      error?: string;
+      missing?: string[];
+      passengers?: string[];
+      field?: string;
+      over_by_lbs?: number;
+      useful_load_lbs?: number;
+    }
   | null;
 
 /** The `detail` of a FastAPI error body, or null when it has none. */
@@ -46,6 +53,8 @@ export function refusalMessage(body: string): string | null {
       return `${detail.field}: pick one of the options.`;
     case "not_a_number":
       return `${detail.field} has to be a number.`;
+    case "over_weight":
+      return `${(detail.over_by_lbs ?? 0).toLocaleString("en-US")} lb over the aircraft's useful load of ${(detail.useful_load_lbs ?? 0).toLocaleString("en-US")} lb. Offload bags or freight, or move a passenger, before boarding.`;
     default:
       return null;
   }

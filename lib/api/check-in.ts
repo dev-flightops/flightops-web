@@ -12,7 +12,7 @@
  */
 
 import { apiFetch } from "./client";
-import type { TicketType } from "./manifest";
+import type { ManifestLoad, TicketType } from "./manifest";
 
 export type CheckInStatus = "booked" | "checked_in" | "boarded" | "no_show";
 export type NoShowReason =
@@ -109,6 +109,10 @@ export interface CheckInView {
     actual_pax_lbs: string;
     actual_bags_lbs: string;
   };
+  /** What is left of the aircraft's useful load with the weights weighed
+   *  here (#146); null until there is a manifest. Boarding is refused
+   *  while `remaining_lbs` is below zero. Absent from services before #146. */
+  load?: ManifestLoad | null;
 }
 
 export interface CheckInInput {

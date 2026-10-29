@@ -232,6 +232,41 @@ describe("CheckInBoard (#103)", () => {
     expect(screen.getByText("Manifest locked")).toBeInTheDocument();
   });
 
+  it("says when the flight is over its useful load, and won't board it (#146)", () => {
+    // MM1122, 29 Oct: 1,216 lb of passengers and bags on a 1,400 lb Skywagon.
+    const load = {
+      useful_load_lbs: 1400,
+      crew_lbs: "190",
+      crew_basis: "standard" as const,
+      crew_count: 1,
+      fuel_lbs: "300",
+      payload_lbs: "1216",
+      remaining_lbs: "-306",
+      fuel_counted: true,
+      fuel_basis: "estimated" as const,
+    };
+    const { rerender } = render(<CheckInBoard initial={view({ load })} canAct />);
+    expect(screen.getByText("Over weight")).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "306 lb over N806PA's useful load of 1,400 lb: crew 190 lb, fuel 300 lb (estimated), passengers, bags, mail and freight 1,216 lb. Offload bags or freight, or move a passenger, before boarding begins or closes.",
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Begin Boarding" })).toBeDisabled();
+    const weights = screen.getByRole("group", { name: "Weights" });
+    expect(within(weights).getByText("−306 lb")).toBeInTheDocument();
+
+    rerender(
+      <CheckInBoard
+        initial={view({ load: { ...load, remaining_lbs: "94", payload_lbs: "816" } })}
+        canAct
+        key="under"
+      />,
+    );
+    expect(screen.queryByText("Over weight")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Begin Boarding" })).toBeEnabled();
+  });
+
   it("points to the manifest when the flight has none", () => {
     render(<CheckInBoard initial={view({ manifest_id: null, manifest_status: null, passengers: [] })} canAct />);
     expect(screen.getByText("No manifest yet")).toBeInTheDocument();

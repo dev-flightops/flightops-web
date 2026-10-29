@@ -299,6 +299,12 @@ export function CheckInBoard({ initial, canAct }: { initial: CheckInView; canAct
   const actual = Number(view.weights.actual_pax_lbs) + Number(view.weights.actual_bags_lbs);
   const delta = actual - planned;
   const done = view.counts.checked_in + view.counts.boarded;
+  // What's left of the aircraft's useful load with the weights weighed
+  // here (#146). The client boarded MM1122 over its Skywagon's.
+  const load = view.load ?? null;
+  const left = load?.remaining_lbs != null ? Number(load.remaining_lbs) : null;
+  const over = left !== null && left < 0;
+  const overWhy = "Over the aircraft's useful load: offload before boarding.";
 
   return (
     <div>
@@ -321,6 +327,16 @@ export function CheckInBoard({ initial, canAct }: { initial: CheckInView; canAct
         </Notice>
       ) : null}
 
+      {over && load && !closed && !locked ? (
+        <Notice tone="red" label="Over weight" role="alert" className="mb-6">
+          {`${lbs(-(left ?? 0))} over ${view.tail_number ?? "the aircraft"}'s useful load of ${lbs(load.useful_load_lbs)}: crew ${lbs(load.crew_lbs)}, fuel ${
+            load.fuel_counted
+              ? `${lbs(load.fuel_lbs)}${load.fuel_basis === "estimated" ? " (estimated)" : ""}`
+              : "not counted"
+          }, passengers, bags, mail and freight ${lbs(load.payload_lbs)}. Offload bags or freight, or move a passenger, before boarding begins or closes.`}
+        </Notice>
+      ) : null}
+
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-muted-foreground">
           {closed
@@ -340,7 +356,8 @@ export function CheckInBoard({ initial, canAct }: { initial: CheckInView; canAct
               <button
                 type="button"
                 className={buttonSolid}
-                disabled={pending}
+                disabled={pending || over}
+                title={over ? overWhy : undefined}
                 onClick={() => setDialog({ kind: "close" })}
               >
                 Close Boarding
@@ -349,7 +366,8 @@ export function CheckInBoard({ initial, canAct }: { initial: CheckInView; canAct
               <button
                 type="button"
                 className={buttonSolid}
-                disabled={pending}
+                disabled={pending || over}
+                title={over ? overWhy : undefined}
                 onClick={() => tap({ kind: "open-boarding", at: now() })}
               >
                 {pending ? <Spinner size="xs" /> : null}
@@ -420,6 +438,18 @@ export function CheckInBoard({ initial, canAct }: { initial: CheckInView; canAct
           tone={Math.abs(delta) > 50 ? "red" : "neutral"}
           hint="Planned counts everyone still expected"
         />
+        {load ? (
+          <Stat
+            value={left === null ? "—" : `${left < 0 ? "−" : ""}${lbs(Math.abs(left))}`}
+            label="Left of Useful Load"
+            tone={left === null ? "neutral" : over ? "red" : "green"}
+            hint={
+              load.useful_load_lbs === null
+                ? "No useful load on record for this aircraft"
+                : `Of ${lbs(load.useful_load_lbs)}, after crew${load.fuel_counted ? " and fuel" : "; fuel not counted"}`
+            }
+          />
+        ) : null}
       </StatStrip>
 
       <section aria-labelledby="pax-heading">
