@@ -51,7 +51,11 @@ export function LifecycleControls({
    *  booking here. When null, falls back to the booking short id. */
   cancelConfirmToken?: string | null;
 }) {
-  const actions = ALLOWED[currentStatus];
+  // A booking completed before its flight landed, or with no flight
+  // (#154), never flew: completed before Complete waited for the landing,
+  // so it can still be voided.
+  const actions: ReadonlyArray<"quote" | "confirm" | "complete" | "cancel"> =
+    currentStatus === "completed" && !flightLanded ? ["cancel"] : ALLOWED[currentStatus];
   if (actions.length === 0) return null;
 
   return (
@@ -82,6 +86,7 @@ export function LifecycleControls({
         <CancelForm
           bookingId={bookingId}
           confirmToken={cancelConfirmToken ?? bookingId.slice(0, 8)}
+          voiding={currentStatus === "completed"}
         />
       ) : null}
     </section>
@@ -180,9 +185,12 @@ function CompleteForm({ bookingId }: { bookingId: string }) {
 function CancelForm({
   bookingId,
   confirmToken,
+  voiding = false,
 }: {
   bookingId: string;
   confirmToken: string;
+  /** A completed booking that never flew (#154). */
+  voiding?: boolean;
 }) {
   const [state, formAction, pending] = useActionState(cancelAction, _initial);
   const [reason, setReason] = useState("");
@@ -192,7 +200,12 @@ function CancelForm({
     placeholder: confirmToken,
   });
   return (
-    <ActionCard title="Cancel booking" tone="danger">
+    <ActionCard title={voiding ? "Void booking" : "Cancel booking"} tone="danger">
+      {voiding ? (
+        <p className="text-xs text-muted-foreground">
+          Completed before its flight landed, or with no flight: it never flew, so it can be voided.
+        </p>
+      ) : null}
       {state.status === "error" && state.message ? (
         <ErrorBanner message={state.message} />
       ) : null}

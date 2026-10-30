@@ -169,6 +169,11 @@ export interface BookingFlightRef {
   destination: string;
   scheduled_departure_at: string;
   status: string;
+  /** The aircraft flying it (#150): the fleet board places the booking
+   *  on that aircraft's row. */
+  aircraft_id?: string | null;
+  /** It has landed: what Complete waits for (#147). */
+  landed?: boolean;
 }
 
 /** One person a booking is for (#137). On a flight they're a passenger on
