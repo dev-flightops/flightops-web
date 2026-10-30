@@ -233,7 +233,7 @@ function CancelForm({
             disabled={pending || reason.trim() === "" || !isConfirmed}
             className="btn-caps rounded-md border px-3 py-2 disabled:opacity-60 border-status-red/60 text-[0.72rem] text-status-red hover:border-status-red"
           >
-            {pending ? "Cancelling…" : "Cancel Booking"}
+            {pending ? "Cancelling…" : voiding ? "Void Booking" : "Cancel Booking"}
           </button>
         </div>
       </form>
