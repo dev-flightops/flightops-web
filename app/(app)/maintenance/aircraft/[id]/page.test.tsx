@@ -49,7 +49,7 @@ vi.mock("@/lib/api/maintenance", async (importOriginal) => ({
   listAircraftDueItems: vi.fn(async () => ({ items: [], total: 0, as_of: "2026-10-30" })),
   listWorkOrders: vi.fn(async () => ({ items: [], total: 0 })),
 }));
-vi.mock("next/navigation", () => ({ notFound: notFoundSpy }));
+vi.mock("next/navigation", () => ({ notFound: notFoundSpy, useRouter: () => ({ refresh: vi.fn() }) }));
 // The page reads the viewer's roles to decide what it offers (29 Sep).
 const { auth } = vi.hoisted(() => ({
   auth: vi.fn(async () => ({ roles: ["dispatcher"] as string[] })),
