@@ -3,7 +3,7 @@ import Link from "next/link";
 import { ResolveSquawkDialog } from "@/components/dispatch/packet/resolve-squawk-dialog";
 import { cn } from "@/lib/utils";
 import type { SquawkResponse, SquawkSeverity } from "@/lib/api/types";
-import { formatBoth } from "@/lib/format/flight-time";
+import { formatBothWithDate } from "@/lib/format/flight-time";
 
 /**
  * Squawks list — used in two contexts:
@@ -83,7 +83,7 @@ function SquawkRow({
   showAircraft: boolean;
   canResolve: boolean;
 }) {
-  const reported = formatBoth(squawk.reported_at);
+  const reported = formatBothWithDate(squawk.reported_at);
 
   return (
     <tr className="border-t border-border hover:bg-accent">

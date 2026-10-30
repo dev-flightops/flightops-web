@@ -148,6 +148,8 @@ export interface WorkOrderRow {
   closed_date: string | null;
   opened_by_user_id: string;
   opened_by_name: string | null;
+  /** Past its due date and not completed or closed (#156). */
+  is_overdue?: boolean;
 }
 
 export interface WorkOrderListResponse {
@@ -163,4 +165,132 @@ export async function listWorkOrders(
   if (params.aircraftId) qs.set("aircraft_id", params.aircraftId);
   const tail = qs.toString() ? `?${qs.toString()}` : "";
   return apiFetch<WorkOrderListResponse>(`/maintenance/work-orders${tail}`);
+}
+
+// ---- The due list (#156) -----------------------------------------------------
+
+export type DueItemKind = "inspection" | "ad" | "sb" | "component" | "calendar" | "other";
+export type DueState = "overdue" | "due_soon" | "current" | "not_scheduled";
+
+export const DUE_ITEM_KINDS: { value: DueItemKind; label: string }[] = [
+  { value: "inspection", label: "Inspection" },
+  { value: "ad", label: "Airworthiness directive" },
+  { value: "sb", label: "Service bulletin" },
+  { value: "component", label: "Life-limited component" },
+  { value: "calendar", label: "Calendar item" },
+  { value: "other", label: "Other" },
+];
+
+/** One item on an aircraft's due list, with where it stands today. */
+export interface DueItem {
+  id: string;
+  aircraft_id: string;
+  tail_number: string;
+  kind: DueItemKind;
+  title: string;
+  reference: string | null;
+  interval_hours: number | null;
+  interval_days: number | null;
+  due_hours: number | null;
+  due_on: string | null;
+  last_done_on: string | null;
+  last_done_hours: number | null;
+  grounds_when_overdue: boolean;
+  is_active: boolean;
+  notes: string | null;
+  state: DueState;
+  /** Aircraft hours until due, negative once past. */
+  hours_left: number | null;
+  /** Days until due, negative once past. */
+  days_left: number | null;
+  /** "100-hour inspection: 7.5 hours overdue". */
+  summary: string;
+  aircraft_total_hours: number;
+}
+
+export interface DueItemList {
+  items: DueItem[];
+  total: number;
+  /** The company's date the states were worked out on. */
+  as_of: string;
+}
+
+export interface DueItemInput {
+  kind: DueItemKind;
+  title: string;
+  reference?: string | null;
+  interval_hours?: number | null;
+  interval_days?: number | null;
+  due_hours?: number | null;
+  due_on?: string | null;
+  last_done_on?: string | null;
+  last_done_hours?: number | null;
+  grounds_when_overdue?: boolean;
+  notes?: string | null;
+}
+
+export interface DueItemSignOff {
+  done_on: string;
+  done_hours?: number | null;
+  done_by_name: string;
+  certificate_number?: string | null;
+  notes?: string | null;
+}
+
+export interface DueItemCompletion {
+  id: string;
+  item_id: string;
+  done_on: string;
+  done_hours: number | null;
+  done_by_name: string;
+  certificate_number: string | null;
+  work_order_id: string | null;
+  notes: string | null;
+  next_due_hours: number | null;
+  next_due_on: string | null;
+  recorded_by_name: string | null;
+}
+
+export async function listDueList(
+  params: { aircraftId?: string; state?: DueState } = {},
+): Promise<DueItemList> {
+  const qs = new URLSearchParams();
+  if (params.aircraftId) qs.set("aircraft_id", params.aircraftId);
+  if (params.state) qs.set("state", params.state);
+  const tail = qs.toString() ? `?${qs.toString()}` : "";
+  return apiFetch<DueItemList>(`/maintenance/due-list${tail}`);
+}
+
+export async function listAircraftDueItems(aircraftId: string): Promise<DueItemList> {
+  return apiFetch<DueItemList>(`/maintenance/aircraft/${aircraftId}/due-items`);
+}
+
+export async function addDueItem(aircraftId: string, body: DueItemInput): Promise<DueItem> {
+  return apiFetch<DueItem>(`/maintenance/aircraft/${aircraftId}/due-items`, {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+}
+
+export async function updateDueItem(
+  itemId: string,
+  body: Partial<DueItemInput> & { is_active?: boolean },
+): Promise<DueItem> {
+  return apiFetch<DueItem>(`/maintenance/due-items/${itemId}`, {
+    method: "PATCH",
+    body: JSON.stringify(body),
+  });
+}
+
+export async function signOffDueItem(itemId: string, body: DueItemSignOff): Promise<DueItem> {
+  return apiFetch<DueItem>(`/maintenance/due-items/${itemId}/complete`, {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+}
+
+export async function listDueItemCompletions(itemId: string): Promise<DueItemCompletion[]> {
+  return (
+    await apiFetch<{ items: DueItemCompletion[] }>(`/maintenance/due-items/${itemId}/completions`)
+  ).items;
 }

@@ -40,6 +40,9 @@ export interface ModuleEntry {
    * the right edge of the nav row (legacy `<span style="flex:1;"></span>`
    * before Users in admin). */
   pushRight?: boolean;
+  /** Not shown in the department nav until it is live (#156): dimmed
+   *  entries there still read as links. */
+  hiddenUntilLive?: boolean;
 }
 
 export type DepartmentId =
@@ -650,6 +653,13 @@ export const DEPARTMENTS: Department[] = [
         department: "maintenance",
       },
       {
+        id: "due-list",
+        label: "Due List",
+        href: "/maintenance/due-list",
+        status: "live",
+        department: "maintenance",
+      },
+      {
         id: "work-orders",
         label: "Work Orders",
         href: "/maintenance/work-orders",
@@ -662,6 +672,9 @@ export const DEPARTMENTS: Department[] = [
         href: "/maintenance/rts",
         status: "planned",
         department: "maintenance",
+        // #156: "Same for RTS, Inventory, Expiration, Batch Trace, MX Clock,
+        // Availability in the top bar." Hidden until built (Greg, 30 Oct).
+        hiddenUntilLive: true,
       },
       {
         id: "inventory",
@@ -669,6 +682,9 @@ export const DEPARTMENTS: Department[] = [
         href: "/maintenance/inventory",
         status: "planned",
         department: "maintenance",
+        // #156: "Same for RTS, Inventory, Expiration, Batch Trace, MX Clock,
+        // Availability in the top bar." Hidden until built (Greg, 30 Oct).
+        hiddenUntilLive: true,
       },
       {
         id: "expiration",
@@ -676,6 +692,9 @@ export const DEPARTMENTS: Department[] = [
         href: "/maintenance/expiration",
         status: "planned",
         department: "maintenance",
+        // #156: "Same for RTS, Inventory, Expiration, Batch Trace, MX Clock,
+        // Availability in the top bar." Hidden until built (Greg, 30 Oct).
+        hiddenUntilLive: true,
       },
       {
         id: "batch-trace",
@@ -683,6 +702,9 @@ export const DEPARTMENTS: Department[] = [
         href: "/maintenance/batch-trace",
         status: "planned",
         department: "maintenance",
+        // #156: "Same for RTS, Inventory, Expiration, Batch Trace, MX Clock,
+        // Availability in the top bar." Hidden until built (Greg, 30 Oct).
+        hiddenUntilLive: true,
       },
       {
         id: "mx-clock",
@@ -690,6 +712,9 @@ export const DEPARTMENTS: Department[] = [
         href: "/maintenance/mx-clock",
         status: "planned",
         department: "maintenance",
+        // #156: "Same for RTS, Inventory, Expiration, Batch Trace, MX Clock,
+        // Availability in the top bar." Hidden until built (Greg, 30 Oct).
+        hiddenUntilLive: true,
       },
       {
         id: "availability",
@@ -697,6 +722,9 @@ export const DEPARTMENTS: Department[] = [
         href: "/maintenance/availability",
         status: "planned",
         department: "maintenance",
+        // #156: "Same for RTS, Inventory, Expiration, Batch Trace, MX Clock,
+        // Availability in the top bar." Hidden until built (Greg, 30 Oct).
+        hiddenUntilLive: true,
       },
       {
         id: "mx-intel",

@@ -161,7 +161,14 @@ export default async function WorkOrdersPage({
                   </tr>
                 ) : (
                   orders.map((wo) => (
-                    <tr key={wo.id} className="hover:bg-accent">
+                    <tr
+                      key={wo.id}
+                      className={
+                        wo.is_overdue
+                          ? "shadow-[inset_3px_0_0_rgb(var(--status-red))] hover:bg-accent"
+                          : "hover:bg-accent"
+                      }
+                    >
                       <td className="whitespace-nowrap px-4 py-3 font-mono text-xs font-semibold text-foreground">
                         {wo.wo_number}
                       </td>
@@ -185,6 +192,12 @@ export default async function WorkOrdersPage({
                       </td>
                       <td className="whitespace-nowrap px-4 py-3 font-mono text-xs">
                         {wo.due_date ?? "—"}
+                        {/* #156: "Work orders past due aren't flagged overdue." */}
+                        {wo.is_overdue ? (
+                          <div className="mt-0.5 font-sans">
+                            <span className="status-mark text-status-red">Overdue</span>
+                          </div>
+                        ) : null}
                       </td>
                     </tr>
                   ))

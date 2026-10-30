@@ -136,6 +136,36 @@ export function EditAircraftDialog({ aircraft }: { aircraft: AircraftListItem })
               speed fills in each leg&rsquo;s time on a new flight.
             </p>
 
+            {/* #156: fuel orders are checked against the aircraft's fuel and
+                tanks. Left empty, its type's are used. */}
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <label htmlFor="fuel_type_code" className="field-label">
+                  Fuel
+                </label>
+                <select
+                  id="fuel_type_code"
+                  name="fuel_type_code"
+                  defaultValue={aircraft.fuel_type_code ?? ""}
+                  className="ff-input px-3 py-2 text-sm"
+                >
+                  <option value="">From its type</option>
+                  <option value="100ll">100LL (AvGas)</option>
+                  <option value="jet_a">Jet A</option>
+                  <option value="mogas">Mogas</option>
+                </select>
+              </div>
+              <Field
+                name="fuel_capacity_gal"
+                label="Tank capacity (gal)"
+                type="number"
+                min={0.1}
+                step={0.1}
+                defaultValue={aircraft.fuel_capacity_gal ?? ""}
+                error={fieldError("fuel_capacity_gal")}
+              />
+            </div>
+
             {/* HALT-2 — airframe identity, grouped as its own row because
                 these read together on the fleet card. */}
             <div className="grid gap-4 sm:grid-cols-3">

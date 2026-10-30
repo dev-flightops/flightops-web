@@ -68,6 +68,14 @@ export interface AircraftListItem {
    *  (#115): without them every save blanked them. */
   base?: string | null;
   special_notes?: string | null;
+  /** The fuel it takes ("100ll", "jet_a") and its tanks in US gallons, as
+   *  entered under Settings → Fleet (#156)… */
+  fuel_type_code?: string | null;
+  fuel_capacity_gal?: number | null;
+  /** …and as fuel orders are checked: the entered figures, else its
+   *  type's. */
+  effective_fuel_type_code?: string | null;
+  effective_fuel_capacity_gal?: number | null;
 }
 
 export interface AircraftListResponse {
@@ -565,7 +573,18 @@ export interface WeatherBriefingCreateRequest {
 export type SquawkSeverity = "minor" | "major" | "grounding";
 
 export type IssueKind =
-  "expired_mel" | "open_mel" | "grounding_squawk" | "major_squawk";
+  | "expired_mel"
+  | "open_mel"
+  | "grounding_squawk"
+  | "major_squawk"
+  | "annual_overdue"
+  | "annual_due_soon"
+  | "hundred_hour_overdue"
+  | "hundred_hour_due_soon"
+  // The due list (#156): an item past its hours or date, and one within
+  // 10 hours or 30 days of it.
+  | "due_item_overdue"
+  | "due_item_due_soon";
 
 /**
  * Discriminated union by `kind` — backend returns a single shape with
@@ -584,6 +603,10 @@ export interface BlockingIssue {
   squawk_id?: string | null;
   severity?: SquawkSeverity | null;
   reported_at?: string | null;
+  // Inspection and due list fields (#156)
+  inspection_due_date?: string | null;
+  hours_overdue?: number | null;
+  maintenance_item_id?: string | null;
 }
 
 export interface AdvisoryIssue {
@@ -596,6 +619,9 @@ export interface AdvisoryIssue {
   squawk_id?: string | null;
   severity?: SquawkSeverity | null;
   reported_at?: string | null;
+  inspection_due_date?: string | null;
+  hours_until_due?: number | null;
+  maintenance_item_id?: string | null;
 }
 
 /** Subset of AircraftRef returned by the maintenance-service — no seats
@@ -628,6 +654,8 @@ export interface FleetAircraftSummary {
   advisory_count: number;
   open_mel_count: number;
   open_squawk_count: number;
+  /** Due list items overdue or coming due (#156). */
+  due_item_count?: number;
   // M2-M-17 — fleet-card display fields
   airframe_type: string | null;
   base: string | null;
@@ -1090,9 +1118,13 @@ export interface FuelOrderResponse {
   requested_by: UserRef;
   requested_at: string;
   notification_sent_at: string | null;
+  /** "in_app": in the supplier's portal. Null: nothing was sent (#156). */
   notification_channel: string | null;
   notification_to: string | null;
   notification_subject: string | null;
+  /** The fuel its flight's manifest plans to carry, in gallons of this
+   *  order's fuel (#156); null without a flight or a plan. */
+  planned_fuel_gallons?: number | null;
 }
 
 export interface FuelOrderListResponse {

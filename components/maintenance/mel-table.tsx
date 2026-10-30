@@ -3,7 +3,7 @@ import Link from "next/link";
 import { CloseMelDialog } from "@/components/dispatch/packet/close-mel-dialog";
 import { cn } from "@/lib/utils";
 import type { MelItemResponse } from "@/lib/api/types";
-import { formatBoth } from "@/lib/format/flight-time";
+import { formatBothWithDate } from "@/lib/format/flight-time";
 
 /**
  * MEL items list — used in two contexts:
@@ -103,8 +103,8 @@ function MelRow({
       : daysToDue < 7
         ? "yellow"
         : "muted";
-  const deferred = formatBoth(item.deferred_at);
-  const due = formatBoth(item.due_at);
+  const deferred = formatBothWithDate(item.deferred_at);
+  const due = formatBothWithDate(item.due_at);
 
   return (
     <tr className="border-t border-border hover:bg-accent">

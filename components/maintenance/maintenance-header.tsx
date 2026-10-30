@@ -49,15 +49,10 @@ export interface ActionButton {
 export const MAINTENANCE_ACTIONS: ActionButton[] = [
   { label: "Squawks", href: "/maintenance/squawks", status: "live" },
   { label: "MEL", href: "/maintenance/mel", status: "live" },
-  // Legacy's "Due List" is the maintenance-due list, which is our
-  // Maintenance Clock — "track aircraft maintenance time with
-  // milestones". Pointed at /maintenance/expiration first, which is
-  // the *parts* shelf-life report and a different question
-  // altogether; the route existed so the guard was satisfied, and
-  // only opening the page showed it. The department nav calls this
-  // same page "MX Clock" — one page, two labels, because this header
-  // mirrors legacy's wording.
-  { label: "Due List", href: "/maintenance/mx-clock", status: "planned" },
+  // Legacy's "Due List" is the maintenance due list (#156): each
+  // aircraft's inspections, ADs and calendar items. It had pointed at the
+  // unbuilt Maintenance Clock, a different page.
+  { label: "Due List", href: "/maintenance/due-list", status: "live" },
   { label: "Work Orders", href: "/maintenance/work-orders", status: "live" },
   { label: "Inventory", href: "/maintenance/inventory", status: "planned" },
   { label: "RTS Queue", href: "/maintenance/rts", status: "planned" },
@@ -72,6 +67,11 @@ export const MAINTENANCE_ACTIONS: ActionButton[] = [
   { label: "+ Aircraft", href: "/settings/fleet", status: "live", primary: true },
 ];
 
+/** What the header shows (#156): what is built. The client, 10/29: "Six
+ *  maintenance tabs look clickable, do nothing." Greg decided (30 Oct):
+ *  the due list now, the rest hidden until they are built. */
+export const SHOWN_MAINTENANCE_ACTIONS = MAINTENANCE_ACTIONS.filter((a) => a.status === "live");
+
 export function MaintenanceHeader() {
   return (
     <header className="mb-6 flex flex-col gap-4 border-b border-border pb-5 sm:flex-row sm:items-end sm:justify-between">
@@ -84,7 +84,7 @@ export function MaintenanceHeader() {
         </p>
       </div>
       <div className="flex flex-wrap gap-2">
-        {MAINTENANCE_ACTIONS.map((action) => (
+        {SHOWN_MAINTENANCE_ACTIONS.map((action) => (
           <ActionLink key={action.label} action={action} />
         ))}
       </div>

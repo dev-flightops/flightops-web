@@ -4,9 +4,11 @@ import { useActionState, useState } from "react";
 
 import { Spinner } from "@/components/ui/spinner";
 import type {
+  AircraftListItem,
   FuelSupplierResponse,
   FuelTypeResponse,
 } from "@/lib/api/types";
+import { takesFuel } from "@/lib/fuel";
 
 import { createFuelOrderAction, type NewFuelOrderState } from "./actions";
 
@@ -22,9 +24,12 @@ function todayLocalIsoDate(): string {
 export function NewFuelOrderForm({
   suppliers,
   fuelTypes,
+  fleet,
 }: {
   suppliers: FuelSupplierResponse[];
   fuelTypes: FuelTypeResponse[];
+  /** The aircraft in service (#156): the tail is picked from them. */
+  fleet: AircraftListItem[];
 }) {
   const [state, action, pending] = useActionState<NewFuelOrderState, FormData>(
     createFuelOrderAction,
@@ -42,6 +47,16 @@ export function NewFuelOrderForm({
   };
   const totalGal = parseGal(leftGal) + parseGal(rightGal);
 
+  // #156: "Form should only offer the aircraft's fuel." The tail picks the
+  // fuel; its tanks bound the quantity.
+  const [tail, setTail] = useState<string>("");
+  const aircraft = fleet.find((a) => a.tail_number === tail) ?? null;
+  const offered = aircraft
+    ? fuelTypes.filter((t) => takesFuel(aircraft.effective_fuel_type_code, t.code))
+    : fuelTypes;
+  const capacity = aircraft?.effective_fuel_capacity_gal ?? null;
+  const overCapacity = capacity !== null && totalGal > capacity;
+
   const fieldError = (key: string) =>
     state.status === "field-errors" ? state.errors[key] : undefined;
 
@@ -57,15 +72,26 @@ export function NewFuelOrderForm({
       )}
 
       <div className="grid grid-cols-2 gap-4">
-        <Field
+        <FieldSelect
           name="n_number"
-          label="Tail Number"
-          placeholder="N207GE"
+          label="Aircraft"
           required
-          autoCapitalize="characters"
-          spellCheck={false}
           error={fieldError("n_number")}
-        />
+          value={tail}
+          onChange={setTail}
+          hint={
+            aircraft
+              ? `${aircraft.model ?? aircraft.tail_number}${capacity !== null ? ` · tanks hold ${capacity} gal` : ""}`
+              : undefined
+          }
+        >
+          <option value="">— Select aircraft —</option>
+          {fleet.map((a) => (
+            <option key={a.id} value={a.tail_number}>
+              {a.tail_number}
+            </option>
+          ))}
+        </FieldSelect>
         <Field
           name="base_code"
           label="Base"
@@ -98,7 +124,7 @@ export function NewFuelOrderForm({
           error={fieldError("fuel_type_id")}
         >
           <option value="">— Select type —</option>
-          {fuelTypes.map((t) => (
+          {offered.map((t) => (
             <option key={t.id} value={t.id}>
               {t.label}
             </option>
@@ -137,6 +163,11 @@ export function NewFuelOrderForm({
           Enter each wing tank separately — the total is calculated. Enter 0 on
           one side if you only want to fill the other.
         </p>
+        {overCapacity ? (
+          <p role="alert" className="field-error">
+            {totalGal.toFixed(1)} gal is more than {tail}&apos;s tanks hold ({capacity} gal).
+          </p>
+        ) : null}
       </div>
 
       <Field
@@ -167,7 +198,7 @@ export function NewFuelOrderForm({
 
       <button
         type="submit"
-        disabled={pending || suppliers.length === 0 || fuelTypes.length === 0}
+        disabled={pending || suppliers.length === 0 || fuelTypes.length === 0 || overCapacity}
         className="btn-caps inline-flex w-full items-center justify-center gap-1.5 rounded-md bg-primary px-4 py-2.5 text-white hover:bg-brand-dark disabled:opacity-50"
       >
         {pending && <Spinner size="xs" />}
@@ -269,12 +300,18 @@ function FieldSelect({
   label,
   required,
   error,
+  hint,
+  value,
+  onChange,
   children,
 }: {
   name: string;
   label: string;
   required?: boolean;
   error?: string;
+  hint?: string;
+  value?: string;
+  onChange?: (value: string) => void;
   children: React.ReactNode;
 }) {
   return (
@@ -292,9 +329,11 @@ function FieldSelect({
         required={required}
         aria-invalid={error ? "true" : undefined}
         className="ff-input px-3 py-2 text-sm aria-[invalid=true]:border-status-red"
+        {...(onChange ? { value, onChange: (e) => onChange(e.target.value) } : {})}
       >
         {children}
       </select>
+      {hint && !error ? <p className="mt-1 text-[0.65rem] text-muted-foreground">{hint}</p> : null}
       {error && (
         <p role="alert" className="field-error">
           {error}

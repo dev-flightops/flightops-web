@@ -16,6 +16,36 @@ export function fuelTypeForAircraft(model: string | null): string {
   return "JET-A";
 }
 
+/**
+ * A fuel type code in one spelling, as fuel orders are checked (#156,
+ * flightops_shared/aircraft_fuel.py `fuel_code`): "jet-a", "JETA" and
+ * "Jet A" are Jet A; "100LL", "av_gas_100ll" and "AVGAS" are 100LL.
+ */
+export function fuelCode(code: string | null | undefined): string | null {
+  const norm = (code ?? "").toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
+  const flat = norm.replace(/_/g, "");
+  if (!flat) return null;
+  if (flat.endsWith("100ll") || flat === "avgas") return "100ll";
+  if (flat === "jeta") return "jet_a";
+  if (flat === "jeta1") return "jet_a1";
+  if (flat.startsWith("jeta") && /plus|prist|additive/.test(flat)) return "jet_a_plus";
+  return norm;
+}
+
+const SAME_FUEL: Record<string, string[]> = {
+  jet_a: ["jet_a", "jet_a_plus", "jet_a1"],
+  "100ll": ["100ll"],
+};
+
+/** Whether a fuel type is the aircraft's fuel; an aircraft whose fuel
+ *  isn't known takes anything, as the service checks it. */
+export function takesFuel(aircraftFuel: string | null | undefined, typeCode: string): boolean {
+  const own = fuelCode(aircraftFuel);
+  if (!own) return true;
+  const ordered = fuelCode(typeCode);
+  return ordered !== null && (SAME_FUEL[own] ?? [own]).includes(ordered);
+}
+
 /** One supplier-and-fuel choice for an order at a base. */
 export interface FuelSupplierOption {
   key: string;

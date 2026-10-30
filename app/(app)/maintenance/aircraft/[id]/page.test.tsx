@@ -39,11 +39,15 @@ const {
 });
 
 vi.mock("@/lib/api/client", () => ({ ApiError: TestApiError }));
-vi.mock("@/lib/api/maintenance", () => ({
+vi.mock("@/lib/api/maintenance", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/api/maintenance")>()),
   getAirworthiness,
   getFleetAirworthiness,
   listMelItems,
   listSquawks,
+  // The due list and work orders (#156): empty unless a test says.
+  listAircraftDueItems: vi.fn(async () => ({ items: [], total: 0, as_of: "2026-10-30" })),
+  listWorkOrders: vi.fn(async () => ({ items: [], total: 0 })),
 }));
 vi.mock("next/navigation", () => ({ notFound: notFoundSpy }));
 // The page reads the viewer's roles to decide what it offers (29 Sep).
