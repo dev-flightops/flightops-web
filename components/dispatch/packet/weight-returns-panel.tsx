@@ -31,28 +31,48 @@ export function WeightReturnsPanel({ returns }: { returns: WeightReturn[] }) {
       </header>
 
       <ul className="divide-y divide-status-red/10">
-        {returns.map((r) => (
-          <li key={r.id} className="px-4 py-3 text-xs">
-            <div className="flex items-baseline justify-between gap-3">
-              <Link
-                href={`/dispatch?flight=${r.flight_id}`}
-                className="font-semibold text-foreground underline-offset-2 hover:underline"
-              >
-                {r.pilot_name ?? "Pilot"}
-              </Link>
-              <span className="font-mono font-semibold text-status-red">
-                max {Number(r.max_payload_lbs).toLocaleString()} lbs
-              </span>
-            </div>
-            {r.note && (
-              <p className="mt-1 italic text-muted-foreground">“{r.note}”</p>
-            )}
-            <p className="mt-1 text-[0.65rem] text-muted-foreground">
-              Re-plan the load to this figure or lighter, then mark it
-              re-planned on the flight.
-            </p>
-          </li>
-        ))}
+        {returns.map((r) => {
+          const max = Number(r.max_payload_lbs);
+          const payload = r.payload_lbs == null ? null : Number(r.payload_lbs);
+          return (
+            <li key={r.id} className="px-4 py-3 text-xs">
+              <div className="flex items-baseline justify-between gap-3">
+                <Link
+                  href={`/dispatch?flight=${r.flight_id}`}
+                  className="font-semibold text-foreground underline-offset-2 hover:underline"
+                >
+                  {r.flight_number ? `${r.flight_number} · ${r.pilot_name ?? "Pilot"}` : (r.pilot_name ?? "Pilot")}
+                </Link>
+                <span className="font-mono font-semibold text-status-red">
+                  max {max.toLocaleString()} lbs
+                </span>
+              </div>
+              {r.note && (
+                <p className="mt-1 italic text-muted-foreground">“{r.note}”</p>
+              )}
+              {/* #153: how much has to come off, and the way in to do it. */}
+              <div className="mt-1 flex flex-wrap items-baseline justify-between gap-2">
+                <p className="text-foreground">
+                  {payload == null
+                    ? "No manifest yet."
+                    : payload > max
+                      ? `Payload now ${payload.toLocaleString()} lb: take off ${(payload - max).toLocaleString()} lb.`
+                      : `Payload now ${payload.toLocaleString()} lb, within the pilot's figure.`}
+                </p>
+                <Link
+                  href={`/manifest/${r.flight_id}`}
+                  className="btn-caps text-[0.65rem] text-primary hover:underline"
+                >
+                  Open manifest ›
+                </Link>
+              </div>
+              <p className="mt-1 text-[0.65rem] text-muted-foreground">
+                Re-plan the load to this figure or lighter, then mark it
+                re-planned on the flight.
+              </p>
+            </li>
+          );
+        })}
       </ul>
     </section>
   );

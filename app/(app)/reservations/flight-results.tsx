@@ -5,6 +5,7 @@ import {
   type FlightSearchResult,
   type UnavailableReason,
 } from "@/lib/api/flight-search";
+import { payloadLeftText } from "@/lib/reservations/payload-text";
 
 /**
  * Why a listed flight cannot be booked, in words a dispatcher can act
@@ -172,6 +173,12 @@ function SeatCount({ flight }: { flight: FlightSearchResult }) {
     <span className="tabular-nums">
       <span className={`font-semibold ${tone}`}>{flight.seats_available}</span>
       <span className="text-muted-foreground"> / {flight.seats_total}</span>
+      {flight.payload_left_lbs != null ? (
+        // What it can still carry (#153), beside the seats.
+        <span className={`block text-[0.65rem] ${flight.payload_left_lbs < 0 ? "text-status-red" : "text-muted-foreground"}`}>
+          {payloadLeftText(flight.payload_left_lbs)}
+        </span>
+      ) : null}
     </span>
   );
 }

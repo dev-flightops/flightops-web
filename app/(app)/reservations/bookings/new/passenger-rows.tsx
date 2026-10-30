@@ -33,10 +33,14 @@ export function PassengerRows({
   initialCount,
   customerName,
   error,
+  payloadLeft = [],
 }: {
   initialCount: number;
   customerName: string;
   error?: string;
+  /** What the chosen flights can still carry (#153): a party heavier than
+   *  that is warned about, and still files. */
+  payloadLeft?: ReadonlyArray<{ flightNumber: string; lbs: number }>;
 }) {
   const [rows, setRows] = useState<Row[]>(() =>
     Array.from({ length: Math.min(Math.max(initialCount, 1), 99) }, blank),
@@ -138,6 +142,29 @@ export function PassengerRows({
           On a flight they go on its manifest, where weights are confirmed at check-in.
         </p>
       )}
+      {overWeight(shown, payloadLeft).map((line) => (
+        <p key={line} role="alert" className="notice notice-yellow mt-2 text-xs">
+          {line}
+        </p>
+      ))}
     </fieldset>
   );
+}
+
+/** The party's weights against what each chosen flight can still carry
+ *  (#153). A warning, not a refusal: the gate check-in refuses boarding
+ *  over the useful load (#146). */
+function overWeight(
+  rows: ReadonlyArray<{ weight: string }>,
+  payloadLeft: ReadonlyArray<{ flightNumber: string; lbs: number }>,
+): string[] {
+  const party = rows.reduce((sum, r) => sum + (Number(r.weight) > 0 ? Number(r.weight) : 0), 0);
+  if (party <= 0) return [];
+  return payloadLeft
+    .filter((p) => party > p.lbs)
+    .map((p) =>
+      p.lbs <= 0
+        ? `${p.flightNumber} can't carry more: it's at or over its useful load already. It still files; the gate check-in won't board it over weight.`
+        : `The weights entered come to ${party.toLocaleString("en-US")} lb, more than the ${p.lbs.toLocaleString("en-US")} lb ${p.flightNumber} can still carry. It still files; the gate check-in won't board it over weight.`,
+    );
 }

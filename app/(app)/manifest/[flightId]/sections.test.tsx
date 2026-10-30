@@ -15,6 +15,7 @@ vi.mock("./actions", () => ({
   removeLineAction: vi.fn(),
   createManifestAction: vi.fn(),
   lockManifestAction: vi.fn(),
+  reopenManifestAction: vi.fn(),
 }));
 
 import type { ManifestCargoRow, ManifestPaxRow } from "@/lib/api/manifest";

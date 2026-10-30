@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import Link from "next/link";
 
 import { linkCaps } from "@/components/ff/controls";
@@ -31,7 +32,7 @@ import { utcToLocalInput, zoneFor } from "@/lib/format/local-time";
 import { PlannedFuelForm } from "./fuel-form";
 import { LoadPlanApply } from "./load-plan-apply";
 import { FreightSection } from "./freight-section";
-import { CreateManifestButton, LockManifestButton } from "./manifest-controls";
+import { CreateManifestButton, LockManifestButton, ReopenManifestButton } from "./manifest-controls";
 import { fmtLbs, TH, THEAD } from "./manifest-bits";
 import { PassengersSection } from "./pax-section";
 import { WaitingBookings } from "./waiting-bookings";
@@ -118,6 +119,13 @@ export default async function FlightManifestPage({
   });
   const editable = manifest?.status === "draft" && canBuild;
   const canLock = editable && hasAnyRole(roles, MANIFEST_LOCKERS);
+  // Until the flight departs (#153).
+  const canReopen =
+    manifest?.status === "final" &&
+    hasAnyRole(roles, MANIFEST_LOCKERS) &&
+    !flight.actual_departure_at &&
+    flight.status !== "completed" &&
+    flight.status !== "cancelled";
 
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 py-8">
@@ -148,7 +156,12 @@ export default async function FlightManifestPage({
 
       {manifest ? (
         <>
-          {manifest.status === "final" ? <LockedBanner manifest={manifest} /> : null}
+          {manifest.status === "final" ? (
+            <LockedBanner
+              manifest={manifest}
+              reopen={canReopen ? <ReopenManifestButton flightId={flight.id} flightNumber={flight.flight_number} /> : null}
+            />
+          ) : null}
 
           <TotalsStrip totals={manifest.totals} />
 
@@ -231,16 +244,27 @@ function LegSeatsPanel({ legs }: { legs: LegSeats[] }) {
   );
 }
 
-function LockedBanner({ manifest }: { manifest: ManifestDetailResponse }) {
+function LockedBanner({
+  manifest,
+  reopen,
+}: {
+  manifest: ManifestDetailResponse;
+  /** Reopen, for whoever may lock, until departure (#153). */
+  reopen: ReactNode;
+}) {
   return (
     <div
       role="status"
-      className="mb-6 notice notice-green text-sm"
+      className="mb-6 notice notice-green flex flex-wrap items-start justify-between gap-3 text-sm"
     >
-      <span className="font-semibold">Manifest locked.</span>{" "}
-      {manifest.locked_at
-        ? `Final since ${new Date(manifest.locked_at).toLocaleString("en-US", { timeZone: "UTC" })} UTC; it can't be changed.`
-        : "It is final and can't be changed."}
+      <p>
+        <span className="font-semibold">Manifest locked.</span>{" "}
+        {manifest.locked_at
+          ? `Final since ${new Date(manifest.locked_at).toLocaleString("en-US", { timeZone: "UTC" })} UTC.`
+          : "It is final."}
+        {reopen ? " Reopen it to take a passenger or weight off before departure." : " It can't be changed."}
+      </p>
+      {reopen}
     </div>
   );
 }

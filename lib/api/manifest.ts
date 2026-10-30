@@ -267,9 +267,17 @@ export async function setPlannedFuel(
   });
 }
 
-/** Make the manifest final. There is no unlock; check-in roles only. */
+/** Make the manifest final; check-in roles only. */
 export async function lockManifest(flightId: string): Promise<ManifestDetailResponse> {
   return apiFetch<ManifestDetailResponse>(`/manifest/flights/${flightId}/lock`, {
+    method: "POST",
+  });
+}
+
+/** Reopen a locked manifest until the flight departs (#153): the same
+ *  roles as locking; logged in the flight's audit trail. */
+export async function reopenManifest(flightId: string): Promise<ManifestDetailResponse> {
+  return apiFetch<ManifestDetailResponse>(`/manifest/flights/${flightId}/reopen`, {
     method: "POST",
   });
 }
