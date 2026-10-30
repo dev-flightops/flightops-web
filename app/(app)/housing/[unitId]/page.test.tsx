@@ -64,6 +64,7 @@ vi.mock("@/lib/api/housing", () => ({
     "crew_house",
   ],
   ROOM_STATUSES: ["available", "occupied", "maintenance", "offline"],
+  SETTABLE_ROOM_STATUSES: ["available", "maintenance", "offline"],
   ROOM_TYPE_LABELS: {
     single: "Single",
     double: "Double",
@@ -82,6 +83,12 @@ vi.mock("./add-room-form", () => ({
   AddRoomDrawer: ({ unitId }: { unitId: string }) => (
     <div data-testid="add-room" data-unit-id={unitId} />
   ),
+}));
+
+// Staff for the "Book a stay" picker (#158); the dialog is tested on its own.
+vi.mock("@/lib/api/auth", () => ({ listStaff: vi.fn(async () => ({ items: [], total: 0 })) }));
+vi.mock("@/components/housing/book-stay-dialog", () => ({
+  BookStayDialog: () => <button data-testid="book-stay">Book a stay</button>,
 }));
 
 import HousingUnitDetailPage from "./page";

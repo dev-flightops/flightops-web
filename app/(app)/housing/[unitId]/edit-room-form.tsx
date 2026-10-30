@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
 import {
-  ROOM_STATUSES,
+  SETTABLE_ROOM_STATUSES,
   ROOM_STATUS_LABELS,
   ROOM_TYPES,
   ROOM_TYPE_LABELS,
@@ -162,10 +162,10 @@ export function EditRoomDrawer({
                 <Field label="Status">
                   <select
                     name="status"
-                    defaultValue={room.status}
+                    defaultValue={room.status === "occupied" ? "available" : room.status}
                     className={INPUT}
                   >
-                    {ROOM_STATUSES.map((s) => (
+                    {SETTABLE_ROOM_STATUSES.map((s) => (
                       <option key={s} value={s}>
                         {ROOM_STATUS_LABELS[s]}
                       </option>

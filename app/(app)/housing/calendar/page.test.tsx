@@ -55,6 +55,15 @@ vi.mock("@/lib/api/housing", () => ({
   },
 }));
 
+// Staff for the "Book a stay" pickers (#158), and the dialog itself, which
+// is tested on its own.
+vi.mock("@/lib/api/auth", () => ({ listStaff: vi.fn(async () => ({ items: [], total: 0 })) }));
+vi.mock("@/components/housing/book-stay-dialog", () => ({
+  BookStayDialog: ({ roomId, checkIn }: { roomId?: string; checkIn?: string }) => (
+    <button data-testid="book-night" data-room={roomId} data-day={checkIn}>+</button>
+  ),
+}));
+
 import HousingCalendarPage from "./page";
 import { DEFAULT_UNIT_COLOR } from "@/lib/housing/unit-color";
 

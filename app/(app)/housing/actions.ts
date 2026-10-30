@@ -110,7 +110,8 @@ export async function setHousingUnitActiveAction(
   }
 }
 
-/** Create a housing booking. Used by the room-row Book button. */
+/** Create a housing booking: the house page's "Book a stay" and the
+ *  calendar's empty nights (#158). */
 export async function createHousingBookingAction(
   _prev: ActionResult<{ id: string }>,
   formData: FormData,
@@ -180,6 +181,8 @@ function mapError(err: unknown, fallback: string): string {
       try {
         const detail = JSON.parse(err.message)?.detail;
         if (typeof detail === "string") return detail;
+        // A refusal in words (#158): "Room 01 holds 1, and it's booked then: …".
+        if (detail && typeof detail.message === "string") return detail.message;
       } catch {
         // fall through
       }

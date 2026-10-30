@@ -3,7 +3,7 @@
 import { useActionState, useState } from "react";
 
 import {
-  ROOM_STATUSES,
+  SETTABLE_ROOM_STATUSES,
   ROOM_STATUS_LABELS,
   ROOM_TYPE_LABELS,
   ROOM_TYPES,
@@ -109,7 +109,7 @@ export function AddRoomDrawer({ unitId }: { unitId: string }) {
                     defaultValue="available"
                     className="ff-input px-3 py-1.5 text-xs"
                   >
-                    {ROOM_STATUSES.map((s) => (
+                    {SETTABLE_ROOM_STATUSES.map((s) => (
                       <option key={s} value={s}>
                         {ROOM_STATUS_LABELS[s]}
                       </option>

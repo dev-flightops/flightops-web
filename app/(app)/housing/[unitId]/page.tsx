@@ -13,6 +13,9 @@ import {
   type RoomStatus,
 } from "@/lib/api/housing";
 
+import { BookStayDialog } from "@/components/housing/book-stay-dialog";
+import { listStaff } from "@/lib/api/auth";
+
 import { AddRoomDrawer } from "./add-room-form";
 import { EditRoomDrawer } from "./edit-room-form";
 import { EditUnitDrawer } from "./edit-unit-form";
@@ -45,6 +48,11 @@ export default async function HousingUnitDetailPage({
     if (err instanceof ApiError && err.status === 404) notFound();
     throw err;
   }
+
+  // Who can be booked in (#158): anyone on the staff.
+  const people = await listStaff()
+    .then((r) => r.items.map((p) => ({ id: p.id, name: p.full_name })))
+    .catch(() => []);
 
   // Bookings — pull today+ so we can flag occupied rooms and show a
   // small activity list. Soft-fails: empty rooms + no bookings is a
@@ -121,8 +129,19 @@ export default async function HousingUnitDetailPage({
             </p>
           )}
         </div>
-        <EditUnitDrawer unit={unit} />
-        <AddRoomDrawer unitId={unit.id} />
+        <div className="flex flex-wrap items-center gap-2">
+          {rooms.length > 0 ? (
+            <BookStayDialog
+              rooms={rooms.map((r) => ({
+                id: r.id,
+                label: `${r.room_number} (${ROOM_TYPE_LABELS[r.room_type as keyof typeof ROOM_TYPE_LABELS] ?? r.room_type}, holds ${r.capacity})`,
+              }))}
+              people={people}
+            />
+          ) : null}
+          <EditUnitDrawer unit={unit} />
+          <AddRoomDrawer unitId={unit.id} />
+        </div>
       </header>
 
       <RoomsCard
@@ -211,10 +230,17 @@ function RoomsCard({
                       {r.capacity}
                     </td>
                     <td className="whitespace-nowrap px-3 py-2.5">
+                      {/* From its bookings (#158), the service's word for
+                          tonight; the hand-set "occupied" no longer counts. */}
                       <RoomStatusBadge
-                        status={r.status as RoomStatus}
-                        occupied={occupiedRoomIds.has(r.id)}
+                        status={(r.status_now ?? r.status) as RoomStatus}
+                        occupied={r.status_now ? false : occupiedRoomIds.has(r.id)}
                       />
+                      {r.occupants_tonight ? (
+                        <span className="ml-2 font-mono text-[0.65rem] text-muted-foreground">
+                          {r.occupants_tonight}/{r.capacity}
+                        </span>
+                      ) : null}
                     </td>
                     <td className="whitespace-nowrap px-3 py-2.5 text-xs">
                       <AmenityChips room={r} />
