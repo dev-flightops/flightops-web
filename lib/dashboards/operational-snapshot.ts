@@ -232,7 +232,13 @@ export async function loadOperationalSnapshot(): Promise<OperationalSnapshot> {
           : `Risk HIGH, needs approval — ${item.flight_number}`,
         detail: over
           ? `${item.pilot_name ?? "The pilot"} · ${item.over_limit_factors.map(factorLabel).join(", ")} · waiting for the Chief Pilot or DO`
-          : `${item.pilot_name ?? "The pilot"} · ${item.packet_level === "high" ? "dispatch packet HIGH" : "FRAT EXTREME"} · waiting for the Chief Pilot or DO`,
+          : `${item.pilot_name ?? "The pilot"} · ${
+              item.packet_level === "high"
+                ? "dispatch packet HIGH"
+                : item.management_required
+                  ? "management approval flagged"
+                  : "FRAT EXTREME"
+            } · waiting for the Chief Pilot or DO`,
         href: `/dispatch?flight=${item.flight_id}`,
         // Each FRAT filed is its own event: one filed again comes back.
         occurredAt: item.filed_at,

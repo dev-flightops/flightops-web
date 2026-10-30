@@ -48,6 +48,7 @@ export function FratOverLimitsPanel({
   const waiting = view.waiting ?? (overLimits && !accepted);
   const why = [
     view.packet_level === "high" ? "the dispatch packet scores it HIGH" : null,
+    view.management_required ? "the dispatch packet flags management approval" : null,
     view.risk_level === "extreme" ? "the FRAT is EXTREME" : null,
   ].filter(Boolean);
 

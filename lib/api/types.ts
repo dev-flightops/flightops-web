@@ -1706,6 +1706,9 @@ export interface FratOverLimits {
   high_risk?: boolean;
   risk_level?: string | null;
   packet_level?: string | null;
+  /** The packet flags management approval (outside pilot restrictions, VFR
+   *  mountain terrain at night, maintenance within 4 hours). */
+  management_required?: boolean;
   high_risk_approved?: FratAuthorizationResponse | null;
   /** Something here still waits for the Chief Pilot or DO. */
   waiting?: boolean;
