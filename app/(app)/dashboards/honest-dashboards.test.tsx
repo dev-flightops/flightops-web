@@ -1,7 +1,7 @@
 import { cleanup, render, screen, within } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { FlightStats } from "@/lib/api/types";
+import type { ComplianceBoardResponse, FlightStats } from "@/lib/api/types";
 import type { OperationalSnapshot } from "@/lib/dashboards/operational-snapshot";
 
 /**
@@ -11,7 +11,10 @@ import type { OperationalSnapshot } from "@/lib/dashboards/operational-snapshot"
  * Revenue MTD", "0% Profit Margin", "0/0 Crew Current", "0 Crew Expired
  * — check before dispatch" — and sentences like "No overrides in the
  * last 90 days" about data they never read, with a small "M3" pill as
- * the only sign. They say "Not built yet" now, and the pills are gone.
+ * the only sign. They said "Not built yet" next, which the client counted
+ * as seven unfinished tiles (#157). Now the crew tiles read the currency
+ * board and receivables read billing; what has nothing behind it isn't
+ * shown, and neither is a tile whose source didn't load.
  */
 
 const counts = { scheduled: 2, released: 1, cancelled: 0, completed: 1, total: 4 };
@@ -34,6 +37,36 @@ const snapshot = {
   fleet: [],
 } as unknown as OperationalSnapshot;
 
+const board: ComplianceBoardResponse = {
+  items: [
+    { id: "i-med", code: "medical_certificate", name: "Medical" },
+    { id: "i-pc", code: "pc_135_299", name: "135.299 Line Check" },
+  ] as ComplianceBoardResponse["items"],
+  rows: [
+    {
+      pilot: { id: "p-1", full_name: "Bob Hargrove" },
+      overall_status: "upcoming",
+      cells: [
+        { currency_item_id: "i-med", status: "upcoming", base_month_due: "2027-04" },
+        { currency_item_id: "i-pc", status: "upcoming", base_month_due: "2027-01" },
+      ],
+    },
+    {
+      pilot: { id: "p-2", full_name: "Tomas Eklund" },
+      overall_status: "non_current",
+      cells: [
+        { currency_item_id: "i-med", status: "non_current", base_month_due: "2026-09" },
+        { currency_item_id: "i-pc", status: "upcoming", base_month_due: "2027-02" },
+      ],
+    },
+  ] as unknown as ComplianceBoardResponse["rows"],
+  chips: { fully_current: 1, early_month: 0, grace_month: 0, non_current: 1, records_missing: 0 },
+};
+const { boardMock, invoicesMock } = vi.hoisted(() => ({
+  boardMock: vi.fn(),
+  invoicesMock: vi.fn(),
+}));
+
 vi.mock("@/lib/api/client", () => ({ ApiError: class extends Error {} }));
 vi.mock("@/lib/dashboards/operational-snapshot", () => ({
   loadOperationalSnapshot: vi.fn(async () => snapshot),
@@ -41,7 +74,9 @@ vi.mock("@/lib/dashboards/operational-snapshot", () => ({
 vi.mock("@/lib/api/ops", () => ({
   getFlightStats: vi.fn(async () => stats),
   listFlights: vi.fn(async () => ({ items: [], total: 0 })),
+  getComplianceBoard: boardMock,
 }));
+vi.mock("@/lib/api/customer-invoices", () => ({ listCustomerInvoices: invoicesMock }));
 vi.mock("@/lib/api/auth", () => ({
   listMyTenants: vi.fn(async () => ({
     tenants: [
@@ -67,6 +102,10 @@ import ExecutiveDashboardPage from "./executive/page";
 import OpsScoreDashboardPage from "./ops-score/page";
 
 afterEach(cleanup);
+beforeEach(() => {
+  boardMock.mockReset().mockResolvedValue(board);
+  invoicesMock.mockReset().mockResolvedValue({ items: [], total: 0, outstanding_cents: 260000 });
+});
 
 /** The tile whose label is `label` — its value sits beside it. */
 function tile(label: string): HTMLElement {
@@ -81,31 +120,32 @@ function expectNoMilestonePills() {
 }
 
 describe("executive dashboard", () => {
-  it("says the money tiles are not built instead of printing $0", async () => {
+  it("reads crew from the currency board and receivables from billing, and shows no unbuilt tile", async () => {
     render(await ExecutiveDashboardPage());
-    for (const label of [
-      "Revenue MTD",
-      "Profit Margin",
-      "Rev / FH",
-      "30d Forecast",
-      "Outstanding AR",
-      "Crew Current",
-      "Overrides (30d)",
-    ]) {
-      const t = tile(label);
-      expect(within(t).getByText("—")).toBeInTheDocument();
-      expect(within(t).getByText("Not built yet")).toBeInTheDocument();
+    expect(within(tile("Crew Current")).getByText("1/2")).toBeInTheDocument();
+    expect(within(tile("Outstanding AR")).getByText("$2,600")).toBeInTheDocument();
+    for (const label of ["Revenue MTD", "Profit Margin", "Rev / FH", "30d Forecast", "Overrides (30d)"]) {
+      expect(screen.queryByText(label)).toBeNull();
     }
-    expect(screen.queryByText("$0")).toBeNull();
+    expect(screen.queryByText("Not built yet")).toBeNull();
     expect(screen.queryByText("0%")).toBeNull();
     // A measured tile keeps its number.
     expect(within(tile("Fleet Airworthy")).getByText("3/4")).toBeInTheDocument();
     expectNoMilestonePills();
   });
+
+  it("leaves a tile out when its source doesn't load, rather than print zero", async () => {
+    boardMock.mockRejectedValue(new Error("down"));
+    invoicesMock.mockRejectedValue(new Error("down"));
+    render(await ExecutiveDashboardPage());
+    expect(screen.queryByText("Crew Current")).toBeNull();
+    expect(screen.queryByText("Outstanding AR")).toBeNull();
+    expect(screen.queryByText("$0")).toBeNull();
+  });
 });
 
 describe("chief pilot dashboard", () => {
-  it("does not claim nothing happened in panels it never reads", async () => {
+  it("reads the crew tiles and matrix from the currency board", async () => {
     render(await ChiefPilotDashboardPage());
     for (const claim of [
       /no pilot data in the last 90 days/i,
@@ -115,9 +155,14 @@ describe("chief pilot dashboard", () => {
     ]) {
       expect(screen.queryByText(claim)).toBeNull();
     }
-    for (const label of ["Active Crew", "Fully Current", "Expired", "Expiring Soon"]) {
-      expect(within(tile(label)).getByText("Not built yet")).toBeInTheDocument();
-    }
+    expect(within(tile("Active Crew")).getByText("2")).toBeInTheDocument();
+    expect(within(tile("Fully Current")).getByText("1/2")).toBeInTheDocument();
+    expect(within(tile("Expired")).getByText("1")).toBeInTheDocument();
+    const row = screen.getByRole("row", { name: /Tomas Eklund/ });
+    expect(within(row).getByText("2026-09")).toBeInTheDocument();
+    expect(within(row).getByText("Not current")).toBeInTheDocument();
+    expect(within(row).getByText("Medical")).toBeInTheDocument();
+    expect(screen.queryByText(/not built yet/i)).toBeNull();
     expectNoMilestonePills();
   });
 });
@@ -127,9 +172,7 @@ describe("director of operations dashboard", () => {
     render(await DirectorOpsDashboardPage());
     expect(screen.queryByText("PICs current")).toBeNull();
     expect(screen.queryByText("Extreme")).toBeNull();
-    expect(
-      screen.getByText(/not built here yet — pilot currency is on fleet compliance/i),
-    ).toBeInTheDocument();
+    expect(screen.queryByText(/not built/i)).toBeNull();
     expectNoMilestonePills();
   });
 });
@@ -147,11 +190,16 @@ describe("ops score dashboard", () => {
 });
 
 describe("dispatcher dashboard", () => {
-  it("does not reassure a dispatcher that no crew are expired", async () => {
+  it("counts expired crew from the currency board", async () => {
     render(await DispatcherDashboardPage());
     const t = tile("Crew Expired");
-    expect(within(t).getByText("—")).toBeInTheDocument();
-    expect(within(t).queryByText("check before dispatch")).toBeNull();
+    expect(within(t).getByText("1")).toBeInTheDocument();
     expectNoMilestonePills();
+  });
+
+  it("does not reassure a dispatcher that no crew are expired when the board didn't load", async () => {
+    boardMock.mockRejectedValue(new Error("down"));
+    render(await DispatcherDashboardPage());
+    expect(screen.queryByText("Crew Expired")).toBeNull();
   });
 });

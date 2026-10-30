@@ -90,7 +90,7 @@ describe("SummaryTab", () => {
   it("renders the empty state when there are no legs", () => {
     render(<SummaryTab log={makeLog()} legs={[]} />);
     expect(screen.getByText(/no legs entered yet/i)).toBeInTheDocument();
-    expect(screen.getByText(/tab 2 \(legs\)/i)).toBeInTheDocument();
+    expect(screen.getByText("Legs", { selector: "span" })).toBeInTheDocument();
   });
 
   it("renders three big tiles with totals to one decimal place", () => {
@@ -154,7 +154,7 @@ describe("SummaryTab", () => {
         legs={[leg({ engine_on: "08:00", engine_off: "09:00" })]}
       />,
     );
-    expect(screen.getByText(/derived from tab 2/i)).toBeInTheDocument();
+    expect(screen.getByText(/worked out from the legs/i)).toBeInTheDocument();
   });
 
   it("renders the pilot-writable currency counters section", () => {
@@ -231,7 +231,7 @@ describe("SummaryTab: read-only copy (29 Sep)", () => {
         canEdit={false}
       />,
     );
-    expect(screen.getByText(/derived from tab 2/i)).toBeInTheDocument();
+    expect(screen.getByText(/worked out from the legs/i)).toBeInTheDocument();
     expect(screen.queryByText(/edit a leg/i)).not.toBeInTheDocument();
   });
 });
