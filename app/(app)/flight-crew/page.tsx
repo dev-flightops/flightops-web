@@ -6,7 +6,7 @@ import { EmptyState } from "@/components/ff/empty-state";
 import { PageHeader } from "@/components/ff/page-header";
 import { Panel } from "@/components/ff/panel";
 import { ApiError } from "@/lib/api/client";
-import { getCurrentDuty, listAircraft, listFlights } from "@/lib/api/ops";
+import { getCurrentDuty, getMorning, listAircraft, listFlights, type MorningResponse } from "@/lib/api/ops";
 import type { CurrentDutyResponse, FlightListItem } from "@/lib/api/types";
 import { currentGreeting, firstNameFrom } from "@/lib/greeting";
 
@@ -16,6 +16,7 @@ import { LoadFailedNotice } from "@/components/ff/setup-notice";
 import { Loads } from "@/lib/api/loads";
 
 import { DutyClockButton } from "./duty-clock-button";
+import { MorningAircraft } from "./morning-aircraft";
 import { TodayFlightsPanel } from "./today-flights-panel";
 import { TrainingCurrencySummary } from "./training-currency-summary";
 
@@ -76,6 +77,9 @@ export default async function FlightCrewPage() {
   const greeting = currentGreeting();
 
   let duty: CurrentDutyResponse = DUTY_OFFLINE_DEFAULT;
+  // #93: the aircraft the pilot takes for the day. Null when it couldn't
+  // be read (or the person doesn't fly).
+  let morning: MorningResponse | null = null;
 
   // The fleet for the squawk form (#92). Losing it costs the pilot the
   // squawk button, not the page.
@@ -122,8 +126,9 @@ export default async function FlightCrewPage() {
 
     // Duty failure degrades the button to its default off-duty shape
     // rather than blocking the whole page.
-    const [dutyResult, ...dayResults] = await Promise.all([
+    const [dutyResult, morningResult, ...dayResults] = await Promise.all([
       getCurrentDuty().catch(() => DUTY_OFFLINE_DEFAULT),
+      getMorning().catch(() => null),
       ...windowDates.map((onDate) =>
         listFlights({
           onDate,
@@ -143,6 +148,7 @@ export default async function FlightCrewPage() {
       a.scheduled_departure_at.localeCompare(b.scheduled_departure_at),
     );
     duty = dutyResult;
+    morning = morningResult;
   } catch (err) {
     if (err instanceof ApiError && err.status === 401) {
       loadError = "Your session expired — please sign in again.";
@@ -179,12 +185,17 @@ export default async function FlightCrewPage() {
       {/* At the aircraft (#92). The client: pilots duty in, then
           preflight and run up in the morning, before they have a flight,
           so a squawk cannot wait for a flight's preflight or packet. */}
-      {aircraft.length > 0 && (
+      {(aircraft.length > 0 || morning) && (
         <Panel
           title="At the aircraft"
-          actions={<SquawkDialog choices={aircraft} />}
+          actions={aircraft.length > 0 ? <SquawkDialog choices={aircraft} /> : undefined}
           className="mb-8"
         >
+          {/* #93: take the aircraft for the day and record its preflight
+              and run-up, before any flight in it is accepted. */}
+          <div className="mb-4">
+            <MorningAircraft morning={morning} />
+          </div>
           <p className="text-xs text-muted-foreground">
             Found something on the preflight or the run-up? Squawk it here. A
             grounding squawk takes the aircraft out of service at once, and no

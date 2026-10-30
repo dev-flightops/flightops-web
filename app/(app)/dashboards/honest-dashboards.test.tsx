@@ -75,6 +75,7 @@ vi.mock("@/lib/api/ops", () => ({
   getFlightStats: vi.fn(async () => stats),
   listFlights: vi.fn(async () => ({ items: [], total: 0 })),
   getComplianceBoard: boardMock,
+  getMorningToday: vi.fn(async () => ({ company_date: "2026-10-31", items: [] })),
 }));
 vi.mock("@/lib/api/customer-invoices", () => ({ listCustomerInvoices: invoicesMock }));
 vi.mock("@/lib/api/auth", () => ({
