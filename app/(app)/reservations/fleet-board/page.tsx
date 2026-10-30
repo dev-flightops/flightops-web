@@ -116,8 +116,9 @@ export default async function FleetBoardPage({
   const bookedSeats = openBookings.reduce((sum, b) => sum + b.pax_count, 0);
   const aircraftById = new Map(aircraft.map((a) => [a.id, a]));
   const totalSeatsUsed = openBookings.reduce((sum, b) => {
-    if (!b.aircraft) return sum;
-    return sum + (aircraftById.get(b.aircraft.id)?.seats ?? 0);
+    const id = aircraftIdOf(b);
+    if (!id) return sum;
+    return sum + (aircraftById.get(id)?.seats ?? 0);
   }, 0);
 
   return (
@@ -220,8 +221,9 @@ function ListView({
   return (
     <ul className="mt-4 space-y-2">
       {sorted.map((b) => {
-        const seats = b.aircraft
-          ? (aircraftById.get(b.aircraft.id)?.seats ?? null)
+        const flown = aircraftById.get(aircraftIdOf(b) ?? "");
+        const seats = flown
+          ? (flown.seats ?? null)
           : null;
         const payload = _estimatedPayloadLbs(b.pax_count);
         return (
@@ -238,9 +240,9 @@ function ListView({
                   <span className="text-muted-foreground">
                     {b.origin_icao} → {b.destination_icao}
                   </span>
-                  {b.aircraft ? (
+                  {flown ? (
                     <span className="eyebrow">
-                      {b.aircraft.tail_number}
+                      {flown.tail_number}
                     </span>
                   ) : null}
                 </div>
@@ -274,6 +276,13 @@ function ListView({
 }
 
 // ============================================================================
+/** The aircraft a booking flies on (#150): its flight's, else its own. A
+ *  booking put on a flight from the search has no aircraft of its own, and
+ *  sat in "Unassigned" although its flight had one. */
+function aircraftIdOf(b: Booking): string | null {
+  return b.flight?.aircraft_id ?? b.aircraft?.id ?? null;
+}
+
 // Board view — aircraft rows × 24h columns
 // ============================================================================
 
@@ -313,7 +322,7 @@ function BoardView({
             <AircraftRow
               key={a.id}
               aircraft={a}
-              bookings={bookings.filter((b) => b.aircraft?.id === a.id)}
+              bookings={bookings.filter((b) => aircraftIdOf(b) === a.id)}
               aircraftById={aircraftById}
               day={day}
               isoDay={isoDay}
@@ -321,7 +330,7 @@ function BoardView({
           ))}
 
           <UnassignedRow
-            bookings={bookings.filter((b) => !b.aircraft)}
+            bookings={bookings.filter((b) => !aircraftIdOf(b))}
             aircraftById={aircraftById}
             day={day}
             isoDay={isoDay}
@@ -363,6 +372,7 @@ function AircraftRow({
         aircraftById={aircraftById}
         day={day}
         aircraftId={aircraft.id}
+        tailNumber={aircraft.tail_number}
         isoDay={isoDay}
       />
     </div>
@@ -405,16 +415,23 @@ function TimelineTrack({
   aircraftById,
   day,
   aircraftId,
+  tailNumber = null,
   isoDay,
 }: {
   bookings: Booking[];
   aircraftById: Map<string, AircraftListItem>;
   day: Date;
   aircraftId: string | null;
+  tailNumber?: string | null;
   isoDay: string;
 }) {
+  // A flight's bookings share its aircraft's row; they move with it (#150).
+  const onFlight = new Map<string, number>();
+  for (const b of bookings) {
+    if (b.flight && b.status !== "cancelled") onFlight.set(b.flight.id, (onFlight.get(b.flight.id) ?? 0) + 1);
+  }
   return (
-    <TimelineClickable aircraftId={aircraftId} isoDay={isoDay}>
+    <TimelineClickable aircraftId={aircraftId} tailNumber={tailNumber} isoDay={isoDay}>
       {/* Faint hourly gridlines (23 = between hours) */}
       {Array.from({ length: 23 }, (_, i) => (
         <div
@@ -424,7 +441,13 @@ function TimelineTrack({
         />
       ))}
       {bookings.map((b) => (
-        <BookingBlock key={b.id} b={b} aircraftById={aircraftById} day={day} />
+        <BookingBlock
+          key={b.id}
+          b={b}
+          aircraftById={aircraftById}
+          day={day}
+          onFlight={b.flight ? (onFlight.get(b.flight.id) ?? 1) : 1}
+        />
       ))}
     </TimelineClickable>
   );
@@ -434,10 +457,13 @@ function BookingBlock({
   b,
   aircraftById,
   day,
+  onFlight,
 }: {
   b: Booking;
   aircraftById: Map<string, AircraftListItem>;
   day: Date;
+  /** Bookings on its flight, which move with it when it's dragged. */
+  onFlight: number;
 }) {
   const dep = new Date(b.requested_departure_at);
   const arr = b.estimated_arrival_at ? new Date(b.estimated_arrival_at) : null;
@@ -464,8 +490,9 @@ function BookingBlock({
             ? "border-border bg-muted text-muted-foreground"
             : "border-status-blue/60 bg-status-blue/15 text-status-blue";
 
-  const seats = b.aircraft
-    ? (aircraftById.get(b.aircraft.id)?.seats ?? null)
+  const flown = aircraftById.get(aircraftIdOf(b) ?? "");
+  const seats = flown
+    ? (flown.seats ?? null)
     : null;
   const payload = _estimatedPayloadLbs(b.pax_count);
   const seatsText =
@@ -474,6 +501,17 @@ function BookingBlock({
   return (
     <BookingClickable
       bookingId={b.id}
+      drag={
+        b.status === "cancelled"
+          ? undefined
+          : {
+              bookingId: b.id,
+              flightId: b.flight?.id ?? null,
+              flightNumber: b.flight?.flight_number ?? null,
+              onFlight,
+              fromAircraftId: aircraftIdOf(b),
+            }
+      }
       style={{ left: `${leftPct}%`, width: `${widthPct}%` }}
       className={
         "absolute top-1 bottom-1 flex items-center gap-1 overflow-hidden rounded border px-1.5 text-[0.65rem] font-semibold whitespace-nowrap hover:z-10 hover:shadow-md hover:ring-1 hover:ring-foreground/20 " +
