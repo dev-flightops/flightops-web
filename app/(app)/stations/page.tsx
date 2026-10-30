@@ -156,7 +156,12 @@ function RunwayCell({ station }: { station: StationListItem }) {
   // And "not cached" was the lookup's word, not the operator's.
   if (len === null || width === null) {
     return (
-      <span className="text-xs text-status-yellow">No runway on file</span>
+      <span
+        className="text-xs text-muted-foreground"
+        title="The risk matrix uses FAA data where it has the airport; enter the runway on the station for a village strip it doesn't."
+      >
+        Not entered
+      </span>
     );
   }
   return (
