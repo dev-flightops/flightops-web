@@ -60,6 +60,8 @@ function airframeLabel(
       return "GA8";
     case "navajo":
       return "PA31";
+    case "1900d":
+      return "1900D (Beech)";
     case "kingair":
       // The fleet's two king airs are a 1900D and a King Air 200, and
       // the model text is what separates them.

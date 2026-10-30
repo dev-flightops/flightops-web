@@ -186,6 +186,12 @@ const AIRFRAME_PALETTE: Record<
     abbr: "K200",
     className: "text-status-purple",
   },
+  // The Beech 1900D is its own type, not a King Air (#155: the client's
+  // 1900D was tagged K200).
+  "1900d": {
+    abbr: "B190",
+    className: "text-status-purple",
+  },
   ga8: {
     abbr: "GA8",
     className: "text-status-yellow",

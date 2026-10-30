@@ -43,12 +43,6 @@ const sicLanding: ComplianceFinding = {
   message: "1 of 3 required in last 90 days.",
 };
 
-const lastUrl = () =>
-  [...push.mock.calls, ...replace.mock.calls]
-    .map((c) => c[0] as string)
-    .sort((a, b) => a.length - b.length)
-    .at(-1) ?? "";
-
 beforeEach(() => {
   push.mockReset();
   replace.mockReset();
