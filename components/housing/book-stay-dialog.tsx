@@ -75,7 +75,7 @@ export function BookStayDialog({
         setOpen(false);
         router.refresh();
       } else {
-        setError(result.error);
+        setError(result.error ?? "The stay couldn’t be booked.");
       }
     });
   };
