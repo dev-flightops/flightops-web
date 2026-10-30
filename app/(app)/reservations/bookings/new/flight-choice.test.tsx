@@ -68,3 +68,25 @@ describe("which flight the booking goes on (#137)", () => {
     expect(screen.queryByRole("link", { name: /Book on this flight/ })).toBeNull();
   });
 });
+
+describe("a return trip's way back (#148)", () => {
+  it("picks the way back into its own place, keeping the way out's", async () => {
+    const back = flight({ flight_id: "f-792", flight_number: "PGR792", origin: "9Z8", destination: "PABE", route: undefined });
+    render(
+      await FlightChoice({
+        flights: [back],
+        chosen: null,
+        chosenId: null,
+        searched: { origin: "9Z8", destination: "PABE", day: "2026-11-02" },
+        query: { ...query, flight: "f-6969", return_date: "2026-11-02" },
+        param: "return_flight",
+        heading: "Way back",
+      }),
+    );
+    expect(screen.getByRole("region", { name: "Way back" })).toBeInTheDocument();
+    const link = screen.getByRole("link", { name: /Book on this flight/ }).getAttribute("href") ?? "";
+    const url = new URL(link, "http://x");
+    expect(url.searchParams.get("return_flight")).toBe("f-792");
+    expect(url.searchParams.get("flight")).toBe("f-6969");
+  });
+});

@@ -223,6 +223,8 @@ export interface Booking {
   /** Who it's for, as booked (#137); on a flight, its manifest has them.
    *  Absent from servers that predate it. */
   passengers?: BookingPassenger[];
+  /** The other half of a return trip (#148). */
+  paired_booking_id?: string | null;
 }
 
 export interface BookingListResponse {
@@ -284,6 +286,13 @@ export interface CreateBookingInput {
   /** The flight to put it on now (#137): from a search result, the
    *  schedule or the manifest. */
   flight_id?: string | null;
+  /** A return trip (#148): the way back, filed as a second booking for
+   *  the same customer and passengers. Both are filed, or neither. */
+  return_trip?: {
+    requested_departure_at: string;
+    estimated_arrival_at?: string | null;
+    flight_id?: string | null;
+  } | null;
 }
 
 export async function createBooking(
@@ -305,6 +314,9 @@ export interface UpdateBookingInput {
   cargo_notes?: string | null;
   quoted_total_cents?: number | null;
   notes?: string | null;
+  /** Who it's for while it waits for a flight (#137); on a flight, its
+   *  manifest has them and this is refused. */
+  passengers?: BookingPassenger[];
 }
 
 export async function updateBooking(
@@ -315,6 +327,24 @@ export async function updateBooking(
     method: "PATCH",
     body: JSON.stringify(input),
   });
+}
+
+/** One field an edit changed (#147): times in ISO 8601, money in cents,
+ *  the aircraft by tail number, the passengers by name. */
+export interface BookingChange {
+  id: string;
+  field: string;
+  old_value: string | null;
+  new_value: string | null;
+  changed_by_name: string | null;
+  changed_at: string;
+}
+
+/** A booking's history of edits, newest first (#147). */
+export async function getBookingChanges(bookingId: string): Promise<BookingChange[]> {
+  return (
+    await apiFetch<{ changes: BookingChange[] }>(`/reservations/bookings/${bookingId}/changes`)
+  ).changes;
 }
 
 export async function quoteBooking(

@@ -35,6 +35,7 @@ export function BookingForm({
   prefill,
   redirectUrlTemplate,
   flightId,
+  returnTrip = null,
   returnTo,
 }: {
   customers: Customer[];
@@ -46,6 +47,9 @@ export function BookingForm({
   /** The flight it goes on (#137): picked from a search result, the
    *  schedule or the manifest. */
   flightId?: string | null;
+  /** The way back of a return trip (#148): local at its origin, and its
+   *  flight when one was picked. Filed with the way out. */
+  returnTrip?: { departureLocal: string; flightId: string | null } | null;
   /** Where to land after filing, e.g. back on the manifest. */
   returnTo?: string | null;
 }) {
@@ -61,6 +65,14 @@ export function BookingForm({
   return (
     <form action={formAction} className="space-y-6">
       {flightId ? <input type="hidden" name="flight_id" value={flightId} /> : null}
+      {returnTrip ? (
+        <>
+          <input type="hidden" name="return_departure_at_local" value={returnTrip.departureLocal} />
+          {returnTrip.flightId ? (
+            <input type="hidden" name="return_flight_id" value={returnTrip.flightId} />
+          ) : null}
+        </>
+      ) : null}
       {returnTo ? <input type="hidden" name="return_to" value={returnTo} /> : null}
       {redirectUrlTemplate ? (
         <input

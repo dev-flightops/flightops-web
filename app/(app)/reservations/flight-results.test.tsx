@@ -177,3 +177,20 @@ describe("formatDay", () => {
     process.env.TZ = "UTC";
   });
 });
+
+describe("FlightResults on a return trip (#148)", () => {
+  it("selects rather than books, and marks the one selected", () => {
+    const picked: string[] = [];
+    render(
+      <FlightResults
+        results={response([flight(), flight({ flight_id: "f-2", flight_number: "PGR902" })])}
+        selectedId="f-2"
+        onSelect={(f) => picked.push(f.flight_id)}
+      />,
+    );
+    expect(screen.queryByRole("link", { name: "Book" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Selected PGR902" })).toHaveAttribute("aria-pressed", "true");
+    screen.getByRole("button", { name: "Select PGR900" }).click();
+    expect(picked).toEqual(["f-1"]);
+  });
+});

@@ -10,17 +10,23 @@ import { ApiError } from "@/lib/api/client";
 import { cn } from "@/lib/utils";
 import {
   BOOKING_STATUS_LABELS,
+  type AircraftRef,
   type Booking,
+  bookingRef,
   getBooking,
+  getBookingChanges,
 } from "@/lib/api/reservations";
+import { getFleetAirworthiness } from "@/lib/api/maintenance";
 
 import { searchFlights, type FlightSearchResult } from "@/lib/api/flight-search";
 import { loadZoneTable } from "@/lib/api/auth";
-import { zoneFor } from "@/lib/format/local-time";
+import { utcToLocalInput, zoneAbbreviation, zoneFor } from "@/lib/format/local-time";
 import { LoadFailedNotice } from "@/components/ff/setup-notice";
 import { Loads } from "@/lib/api/loads";
 
 import { AssignFlightPanel } from "./assign-flight-panel";
+import { BookingHistory } from "./booking-history";
+import { EditBooking } from "./edit-booking";
 import { LifecycleControls } from "./lifecycle-controls";
 
 export default async function BookingDetailPage({
@@ -67,6 +73,27 @@ export default async function BookingDetailPage({
     );
   }
 
+  // Editing (#147): any stage but cancelled, each change kept below.
+  const zone = zoneFor(await loadZoneTable(), booking.origin_icao);
+  const editable = booking.status !== "cancelled";
+  // The other half of a return trip (#148).
+  const pairedLoad = booking.paired_booking_id
+    ? loads.or(getBooking(booking.paired_booking_id), null, "the other half of the return trip")
+    : Promise.resolve(null);
+  const [changes, aircraft, paired] = await Promise.all([
+    loads.or(getBookingChanges(booking.id), [], "the booking's history"),
+    editable
+      ? loads.or(
+          getFleetAirworthiness().then((fleet) =>
+            fleet.items.filter((f) => f.is_active).map((f): AircraftRef => f.aircraft),
+          ),
+          [] as AircraftRef[],
+          "the aircraft list",
+        )
+      : Promise.resolve([] as AircraftRef[]),
+    pairedLoad,
+  ]);
+
   return (
     <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
       <header className="mb-6 border-b border-border pb-5">
@@ -95,7 +122,7 @@ export default async function BookingDetailPage({
           role="status"
           className="mb-4 notice notice-green"
         >
-          Booking filed.
+          {booking.paired_booking_id ? "Booking filed, with its way back." : "Booking filed."}
         </div>
       ) : null}
       {updated === "1" ? (
@@ -161,6 +188,34 @@ export default async function BookingDetailPage({
         ) : null}
       </section>
 
+      {paired ? (
+        <section aria-label="Return trip" className="mb-6 border-l-[3px] border-primary bg-card px-4 py-3">
+          <div className="eyebrow">
+            {paired.requested_departure_at > booking.requested_departure_at
+              ? "Return trip · the way back"
+              : "Return trip · the way out"}
+          </div>
+          <p className="mt-1 text-sm">
+            {`${paired.origin_icao} → ${paired.destination_icao}, ${formatZuluDateTime(paired.requested_departure_at)}, ${
+              paired.flight ? `on ${paired.flight.flight_number}` : "waiting for a flight"
+            } · ${BOOKING_STATUS_LABELS[paired.status]}`}
+          </p>
+          <Link href={`/reservations/bookings/${paired.id}`} className={cn(linkCaps, "mt-1 inline-block")}>
+            Open {bookingRef(paired.id)} <span aria-hidden>›</span>
+          </Link>
+        </section>
+      ) : null}
+
+      {editable ? (
+        <EditBooking
+          key={booking.updated_at}
+          booking={booking}
+          aircraft={aircraft}
+          departureLocal={utcToLocalInput(booking.requested_departure_at, zone)}
+          zoneLabel={`${zoneAbbreviation(zone, new Date(booking.requested_departure_at))} at ${booking.origin_icao}`}
+        />
+      ) : null}
+
       {booking.confirmed_at ||
       booking.cancelled_at ||
       booking.completed_at ? (
@@ -204,6 +259,8 @@ export default async function BookingDetailPage({
         </section>
       ) : null}
 
+      <BookingHistory changes={changes} />
+
       {/* Shown for a completed booking too, read-only in effect —
           which flight carried it is part of the record. Hidden only
           for a cancelled one, where there is nothing to service. */}
@@ -222,6 +279,7 @@ export default async function BookingDetailPage({
         <LifecycleControls
           bookingId={booking.id}
           currentStatus={booking.status}
+          flightLanded={booking.flight?.status === "completed"}
           currentQuoteCents={booking.quoted_total_cents}
           cancelConfirmToken={`${booking.origin_icao}-${booking.destination_icao}`}
         />

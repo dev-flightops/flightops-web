@@ -15,7 +15,7 @@ const { TestApiError, createBooking, createCustomer, loadZoneTable } = vi.hoiste
     createBooking: vi.fn(async () => ({ id: "b-1" })),
     createCustomer: vi.fn(async () => ({ id: "22222222-2222-4222-8222-222222222222" })),
     loadZoneTable: vi.fn(async () => ({
-      byIcao: { PANC: "America/Anchorage" },
+      byIcao: { PANC: "America/Anchorage", PABE: "America/Anchorage" },
       fallback: "America/Anchorage",
     })),
   };
@@ -213,5 +213,34 @@ describe("who it's for, and the flight (#137)", () => {
     );
     const result = await createBookingAction({ status: "idle" }, form({ flight_id: FLIGHT }));
     expect(result.message).toBe("That flight has 1 seat left on the legs this booking rides; it needs 2.");
+  });
+});
+
+
+describe("a return trip (#148)", () => {
+  beforeEach(() => createBooking.mockClear());
+
+  it("files the way back with the way out, local at its own origin", async () => {
+    const result = await submit({
+      return_departure_at_local: "2026-09-22T15:00",
+      return_flight_id: "33333333-3333-4333-8333-333333333333",
+    });
+    expect(result.status).toBe("ok");
+    expect(createBooking).toHaveBeenCalledWith(
+      expect.objectContaining({
+        origin_icao: "PANC",
+        destination_icao: "PABE",
+        return_trip: {
+          // 15:00 AKDT at PABE.
+          requested_departure_at: "2026-09-22T23:00:00Z",
+          flight_id: "33333333-3333-4333-8333-333333333333",
+        },
+      }),
+    );
+  });
+
+  it("is one way without a return time", async () => {
+    await submit();
+    expect(createBooking).toHaveBeenCalledWith(expect.objectContaining({ return_trip: null }));
   });
 });

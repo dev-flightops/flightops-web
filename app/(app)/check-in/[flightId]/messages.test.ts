@@ -31,6 +31,12 @@ describe("check-in refusals in words (#103)", () => {
     );
   });
 
+  it("says by how much a flight is over its useful load (#146)", () => {
+    expect(refusalMessage(body({ error: "over_weight", over_by_lbs: 306, useful_load_lbs: 1400 }))).toBe(
+      "306 lb over the aircraft's useful load of 1,400 lb. Offload bags or freight, or move a passenger, before boarding.",
+    );
+  });
+
   it("leaves anything else to the caller", () => {
     expect(refusalMessage(body("something_new"))).toBeNull();
     expect(refusalMessage("not json")).toBeNull();

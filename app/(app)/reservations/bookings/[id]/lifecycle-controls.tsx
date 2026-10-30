@@ -36,11 +36,15 @@ const ALLOWED: Record<BookingStatus, Array<"quote" | "confirm" | "complete" | "c
 export function LifecycleControls({
   bookingId,
   currentStatus,
+  flightLanded = false,
   currentQuoteCents,
   cancelConfirmToken,
 }: {
   bookingId: string;
   currentStatus: BookingStatus;
+  /** Its flight has landed (#147): only then is it completed. The
+   *  client's booking was completed while it waited for a flight. */
+  flightLanded?: boolean;
   currentQuoteCents: number | null;
   /** Text the user must retype to enable Cancel — usually the route
    *  ("PANC-PABE"). Passed by the caller since we don't have the full
@@ -66,7 +70,13 @@ export function LifecycleControls({
         <ConfirmForm bookingId={bookingId} />
       ) : null}
       {actions.includes("complete") ? (
-        <CompleteForm bookingId={bookingId} />
+        flightLanded ? (
+          <CompleteForm bookingId={bookingId} />
+        ) : (
+          <p className="text-xs text-muted-foreground">
+            Complete it once its flight has landed.
+          </p>
+        )
       ) : null}
       {actions.includes("cancel") ? (
         <CancelForm

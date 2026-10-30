@@ -99,7 +99,7 @@ describe("ticks in different panels before the page comes back", () => {
     expect(url.get("notams_acked")).toBe("PABE,PASM");
   });
 
-  it("keeps the PIC's acknowledgment when the SIC's is ticked next", () => {
+  it("keeps the PIC's acknowledgment when the SIC's is ticked next", async () => {
     // Two lists, one per seat. Each only waits on its own ticks.
     const picIfr: ComplianceFinding = {
       ...sicLanding,
@@ -119,8 +119,11 @@ describe("ticks in different panels before the page comes back", () => {
       screen.getByRole("checkbox", { name: "Acknowledge SIC Day Landing Currency" }),
     );
 
-    const url = new URLSearchParams(lastUrl().split("?")[1]);
-    expect(url.get("warns_acked")).toBe("ifr_currency,sic:sic_day_landing_currency");
+    // Each list sends its ticks once they stop (#145); the last one sent has both.
+    await vi.waitFor(() => {
+      const url = new URLSearchParams(lastUrl().split("?")[1]);
+      expect(url.get("warns_acked")).toBe("ifr_currency,sic:sic_day_landing_currency");
+    });
   });
 
   it("keeps a NOTAM acknowledgment and each MEL ticked after it", () => {

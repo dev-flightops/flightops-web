@@ -1,4 +1,4 @@
-import type { VillageWeatherReportResponse } from "@/lib/api/types";
+import type { FlightCategory, VillageWeatherReportResponse } from "@/lib/api/types";
 
 /**
  * How a village observer's report reads: on the Village Weather Board,
@@ -63,4 +63,41 @@ export function villageStaleness(reportedAtMs: number, nowMs: number): "yellow" 
   if (age > VILLAGE_STALE_RED_MS) return "red";
   if (age > VILLAGE_STALE_YELLOW_MS) return "yellow";
   return null;
+}
+
+/** The covers that make a ceiling (14 CFR 1.1): broken, overcast, an
+ *  obscured sky. A base reported with no cover is taken as one, as the
+ *  weather service does (flightops_shared.flight_category). */
+const CEILING_COVERS = new Set(["BKN", "OVC", "VV"]);
+
+/** The FAA's flight category for a ceiling and a visibility, by the
+ *  service's own bands: 3,000 ft and 5 SM are MVFR. */
+function band(ceilingFt: number | null, visibilitySm: number | null): FlightCategory {
+  const ceiling = ceilingFt ?? Infinity;
+  const visibility = visibilitySm ?? Infinity;
+  if (ceiling < 500 || visibility < 1) return "LIFR";
+  if (ceiling < 1000 || visibility < 3) return "IFR";
+  if (ceiling <= 3000 || visibility <= 5) return "MVFR";
+  return "VFR";
+}
+
+/**
+ * What set a village report's category (#149): its ceiling, its
+ * visibility, or both. The client read FEW 400 with 3 SM as VFR: a FEW
+ * layer is not a ceiling, but 3 SM is MVFR. Null when it's VFR or the
+ * report gives neither.
+ */
+export function villageCategoryBecause(r: VillageWeatherReportResponse): string | null {
+  const category = r.flight_category;
+  if (!category || category === "VFR") return null;
+  const ceiling =
+    r.ceiling_ft != null && (!r.cloud_cover || CEILING_COVERS.has(r.cloud_cover)) ? r.ceiling_ft : null;
+  const reasons: string[] = [];
+  if (ceiling != null && band(ceiling, null) === category) {
+    reasons.push(`ceiling ${ceiling.toLocaleString("en-US")} ft`);
+  }
+  if (r.visibility_sm != null && band(null, r.visibility_sm) === category) {
+    reasons.push(`visibility ${villageVisibility(r.visibility_sm).replace(/SM$/, " SM")}`);
+  }
+  return reasons.length > 0 ? reasons.join(" and ") : null;
 }

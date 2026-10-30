@@ -5,8 +5,9 @@ import { z } from "zod";
 
 import { loadZoneTable } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
-import { type BookingPassenger, createBooking, createCustomer } from "@/lib/api/reservations";
+import { createBooking, createCustomer } from "@/lib/api/reservations";
 import { localToUtcIso, zoneFor } from "@/lib/format/local-time";
+import { passengersFromForm } from "@/lib/reservations/passenger-form";
 import { refusalMessage } from "@/lib/reservations/refusals";
 
 /**
@@ -65,32 +66,6 @@ function _returnTo(formData: FormData): string | null {
   return /^\/(?!\/)[A-Za-z0-9/_?=&%.-]*$/.test(to) ? to : null;
 }
 
-/** The passenger rows (#137), in the order on the form; a row with no
- *  first name is a row left empty. */
-function _passengers(formData: FormData): BookingPassenger[] | string {
-  const firsts = formData.getAll("passenger_first_name").map(String);
-  const lasts = formData.getAll("passenger_last_name").map(String);
-  const weights = formData.getAll("passenger_weight_lbs").map(String);
-  const notes = formData.getAll("passenger_notes").map(String);
-  const people: BookingPassenger[] = [];
-  for (let i = 0; i < firsts.length; i++) {
-    const first = firsts[i].trim();
-    if (!first) continue;
-    const weightText = (weights[i] ?? "").trim();
-    const weight = weightText === "" ? null : Number(weightText);
-    if (weight !== null && (!Number.isFinite(weight) || weight < 0 || weight > 1000)) {
-      return `Passenger ${i + 1}'s weight should be 0-1000 lb.`;
-    }
-    people.push({
-      first_name: first.slice(0, 80),
-      last_name: (lasts[i] ?? "").trim().slice(0, 80),
-      weight_lbs: weight,
-      notes: (notes[i] ?? "").trim().slice(0, 500) || null,
-    });
-  }
-  return people;
-}
-
 export interface NewBookingFormState {
   status: "idle" | "error" | "ok";
   message?: string;
@@ -135,7 +110,7 @@ export async function createBookingAction(
       fieldErrors: { customer_id: "Pick a customer, or type a new customer's name." },
     };
   }
-  const passengers = _passengers(formData);
+  const passengers = passengersFromForm(formData);
   if (typeof passengers === "string") {
     return {
       status: "error",
@@ -157,6 +132,22 @@ export async function createBookingAction(
       fieldErrors: {
         requested_departure_at_local: "Pick a valid date and time.",
       },
+    };
+  }
+
+  // The way back of a return trip (#148): local at its origin, which is
+  // the way out's destination.
+  let returnTrip: { requested_departure_at: string; flight_id: string | null } | null = null;
+  const returnLocal = String(formData.get("return_departure_at_local") ?? "");
+  if (returnLocal) {
+    const returnIso = localToUtcIso(returnLocal, zoneFor(await loadZoneTable(), v.destination_icao));
+    if (!returnIso) {
+      return { status: "error", message: "Invalid return time." };
+    }
+    const backFlight = String(formData.get("return_flight_id") ?? "");
+    returnTrip = {
+      requested_departure_at: returnIso,
+      flight_id: /^[0-9a-f-]{36}$/i.test(backFlight) ? backFlight : null,
     };
   }
 
@@ -191,6 +182,7 @@ export async function createBookingAction(
       flight_id: v.flight_id || null,
       quoted_total_cents: quotedCents,
       notes: v.notes || null,
+      return_trip: returnTrip,
     });
     newId = created.id;
   } catch (err) {

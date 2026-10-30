@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const replace = vi.fn();
 vi.mock("next/navigation", () => ({
@@ -14,6 +14,8 @@ import {
   SoftWarningAckList,
 } from "./soft-warning-ack-list";
 import type { ComplianceFinding } from "@/lib/api/types";
+
+import { resetDispatchQuery } from "./dispatch-query";
 
 const grace: ComplianceFinding = {
   currency_item_id: "i-1",
@@ -65,6 +67,11 @@ describe("allSoftAcked", () => {
 });
 
 describe("SoftWarningAckList (M2-G-5 tail)", () => {
+  beforeEach(() => {
+    resetDispatchQuery();
+    replace.mockReset();
+  });
+
   it("renders a checkbox per finding, unchecked by default", () => {
     render(
       <SoftWarningAckList findings={[grace, medical]} ackedCodes={new Set()} />,
@@ -116,7 +123,9 @@ describe("SoftWarningAckList (M2-G-5 tail)", () => {
     await user.click(
       screen.getByLabelText("Acknowledge Instrument Proficiency Check"),
     );
-    expect(replace).toHaveBeenCalledWith("/dispatch/?warns_acked=ipc", { scroll: false });
+    await vi.waitFor(() =>
+      expect(replace).toHaveBeenCalledWith("/dispatch/?warns_acked=ipc", { scroll: false }),
+    );
   });
 
   it("clears the URL when the last ack toggles off", async () => {
@@ -131,6 +140,55 @@ describe("SoftWarningAckList (M2-G-5 tail)", () => {
     await user.click(
       screen.getByLabelText("Acknowledge Instrument Proficiency Check"),
     );
-    expect(replace).toHaveBeenCalledWith("/dispatch/", { scroll: false });
+    await vi.waitFor(() => expect(replace).toHaveBeenCalledWith("/dispatch/", { scroll: false }));
+  });
+
+  it("shows a tick at once, keeps the boxes open, and sends ticks in a row together (#145)", async () => {
+    // The client, 29 Oct: each tick said "saving" for 5-10 s, nine times.
+    const user = userEvent.setup();
+    render(<SoftWarningAckList findings={[grace, medical]} ackedCodes={new Set()} />);
+    const ipc = screen.getByLabelText("Acknowledge Instrument Proficiency Check");
+    const med = screen.getByLabelText("Acknowledge Medical Certificate");
+
+    await user.click(ipc);
+    expect(ipc).toBeChecked();
+    expect(med).toBeEnabled();
+    await user.click(med);
+    expect(med).toBeChecked();
+    expect(replace).not.toHaveBeenCalled();
+
+    await vi.waitFor(() => expect(replace).toHaveBeenCalledTimes(1));
+    expect(replace).toHaveBeenCalledWith("/dispatch/?warns_acked=ipc%2Cmedical_certificate", {
+      scroll: false,
+    });
+  });
+
+  it("acknowledges every warning in one go", async () => {
+    const user = userEvent.setup();
+    render(<SoftWarningAckList findings={[grace, medical]} ackedCodes={new Set()} />);
+    await user.click(screen.getByRole("button", { name: "Acknowledge all" }));
+    expect(screen.getByLabelText("Acknowledge Instrument Proficiency Check")).toBeChecked();
+    expect(screen.getByLabelText("Acknowledge Medical Certificate")).toBeChecked();
+    expect(screen.queryByRole("button", { name: "Acknowledge all" })).not.toBeInTheDocument();
+    await vi.waitFor(() =>
+      expect(replace).toHaveBeenCalledWith(
+        "/dispatch/?warns_acked=ipc%2Cmedical_certificate",
+        { scroll: false },
+      ),
+    );
+    expect(replace).toHaveBeenCalledTimes(1);
+  });
+
+  it("reads the box from the URL again once the URL has the tick", async () => {
+    const user = userEvent.setup();
+    const { rerender } = render(
+      <SoftWarningAckList findings={[grace, medical]} ackedCodes={new Set()} />,
+    );
+    await user.click(screen.getByLabelText("Acknowledge Instrument Proficiency Check"));
+    rerender(<SoftWarningAckList findings={[grace, medical]} ackedCodes={new Set(["ipc"])} />);
+    expect(screen.getByLabelText("Acknowledge Instrument Proficiency Check")).toBeChecked();
+    // Unticked elsewhere (the back button): the URL says so, and the box follows.
+    rerender(<SoftWarningAckList findings={[grace, medical]} ackedCodes={new Set()} />);
+    expect(screen.getByLabelText("Acknowledge Instrument Proficiency Check")).not.toBeChecked();
   });
 });

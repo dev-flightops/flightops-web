@@ -16,6 +16,7 @@ import { getVillageBoard, listVillageAirports } from "@/lib/api/weather";
 import { hasAnyRole, RELEASE_POLICY_ADMINS, VILLAGE_WX_REPORTERS } from "@/lib/roles";
 import {
   villageAge,
+  villageCategoryBecause,
   villageSky,
   villageStaleness,
   villageWind,
@@ -265,6 +266,8 @@ function Conditions({
   view: "compact" | "expanded";
 }) {
   const skyLine = villageSky(report);
+  // What set its category (#149): "FEW 400, 3 SM" read as VFR, and 3 SM is MVFR.
+  const because = villageCategoryBecause(report);
   const windLine = villageWind(report);
   const altPiece = report.altimeter_in_hg
     ? `${report.altimeter_in_hg.toFixed(2)}"`
@@ -280,6 +283,11 @@ function Conditions({
     return (
       <div className="mt-1 text-[0.85rem]">
         <p className="text-foreground">{top}</p>
+        {because && (
+          <p className="text-[0.75rem] text-muted-foreground">
+            {report.flight_category} on its {because}
+          </p>
+        )}
         {bottom && <p className="text-muted-foreground">{bottom}</p>}
       </div>
     );
@@ -289,6 +297,9 @@ function Conditions({
     <dl className="mt-1 grid grid-cols-2 gap-x-4 gap-y-0.5 text-[0.8rem]">
       {skyLine && (
         <Row label="Sky" value={skyLine} />
+      )}
+      {because && (
+        <Row label="Category" value={`${report.flight_category} on its ${because}`} />
       )}
       {windLine && <Row label="Wind" value={windLine} />}
       {altPiece && <Row label="Altimeter" value={altPiece} />}

@@ -45,8 +45,13 @@ function miles(value: number): string {
 export function scoredElsewhere(stop: StopWeather): string[] {
   const lines: string[] = [];
   if (stop.ceiling_from && stop.ceiling_from !== "METAR") {
-    const ceiling = stop.ceiling_ft === null ? "clear" : `${stop.ceiling_ft.toLocaleString()} ft`;
-    lines.push(`Ceiling ${ceiling} (${stop.ceiling_from})`);
+    // "No ceiling", not "clear" (#149): a FEW or SCT layer is reported
+    // but isn't a ceiling.
+    lines.push(
+      stop.ceiling_ft === null
+        ? `No ceiling (${stop.ceiling_from})`
+        : `Ceiling ${stop.ceiling_ft.toLocaleString()} ft (${stop.ceiling_from})`,
+    );
   }
   if (stop.visibility_from && stop.visibility_from !== "METAR" && stop.visibility_sm !== null) {
     lines.push(`Visibility ${miles(stop.visibility_sm)} SM (${stop.visibility_from})`);
