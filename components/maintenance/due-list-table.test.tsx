@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import type { DueItem } from "@/lib/api/maintenance";
 
+vi.mock("@/lib/api/client", () => ({ ApiError: class extends Error {}, apiFetch: vi.fn() }));
 vi.mock("./due-item-dialogs", () => ({
   SignOffDueItemDialog: ({ item }: { item: DueItem }) => <button>Sign off {item.title}</button>,
   RetireDueItemButton: () => <button>Retire</button>,
