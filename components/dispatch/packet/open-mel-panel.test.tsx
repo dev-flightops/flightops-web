@@ -21,8 +21,11 @@ vi.mock("@/lib/api/maintenance", () => ({ listMelItems }));
 // useSearchParams. Mock both so the child renders cleanly when the
 // panel hands off to it.
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({ replace: vi.fn() }),
+  useRouter: () => ({ replace: vi.fn(), refresh: vi.fn() }),
   useSearchParams: () => new URLSearchParams(),
+}));
+vi.mock("@/app/(app)/dispatch/ack-actions", () => ({
+  saveAcknowledgmentsAction: vi.fn(async () => ({ ok: true })),
 }));
 
 import { OpenMelPanel } from "./open-mel-panel";
@@ -48,7 +51,7 @@ async function renderPanel(
   ackedMelIds: string[] = [],
   aircraftId = "ac-1",
 ) {
-  const ui = await OpenMelPanel({ aircraftId, ackedMelIds });
+  const ui = await OpenMelPanel({ flightId: "f-1", aircraftId, ackedMelIds });
   return render(ui);
 }
 

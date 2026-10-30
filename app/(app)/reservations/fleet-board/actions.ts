@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { scheduleRefusal } from "@/lib/flights/schedule-refusals";
 
 import { ApiError } from "@/lib/api/client";
 import { updateFlight } from "@/lib/api/ops";
@@ -51,6 +52,8 @@ function refusal(err: unknown, input: { flightId: string | null; flightNumber: s
       : `${flight} is ${status.replace(/_/g, " ")}, so it stays on its aircraft.`;
   }
   if (err.status === 409 && err.message.includes("aircraft_not_active")) return "That aircraft isn't active.";
+  const scheduled = scheduleRefusal(err.message);
+  if (scheduled) return scheduled;
   if (err.status === 409 && err.message.includes("booking_immutable")) return "A cancelled booking can't be moved.";
   return `That was not saved (HTTP ${err.status}).`;
 }

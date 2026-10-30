@@ -9,7 +9,6 @@ import type { StopWeather } from "@/lib/api/dispatch-risk";
 import type {
   ApproachMinimums,
   FratAssessmentResponse,
-  FratAuthorizationKind,
   FratBlockEligibilityResponse,
   FratFactorSuggestion,
   FratPrefillResponse,
@@ -19,7 +18,6 @@ import { cn } from "@/lib/utils";
 
 import {
   completeStepAction,
-  recordFratAuthorizationAction,
   submitFratAction,
 } from "./actions";
 import { FACTOR_GROUPS, type FratFactor } from "@/lib/frat/factors";
@@ -64,6 +62,14 @@ interface Props {
   fratPrefill?: FratPrefillResponse | null;
   /** Whether a FRAT the pilot already filed can be carried here. */
   fratBlock?: FratBlockEligibilityResponse | null;
+  /** Where it renders (#155): the pilot's preflight step, with Continue,
+   *  or the flight's FRAT page, which the pilot and dispatch both open. */
+  mode?: "preflight" | "page";
+  /** The sign-off boxes, under the result (#155). */
+  signoffs?: React.ReactNode;
+  /** The FRAT can't be filed or changed here: the flight is released, or
+   *  the viewer is neither on the flight nor dispatch (#155). */
+  readOnly?: boolean;
 }
 
 /**
@@ -164,12 +170,6 @@ function PacketLevelNote({
 }
 
 /** The band as a notice's tone (#81): its colour on the edge and label. */
-const RISK_BAND_CLASSES: Record<FratRiskLevel, string> = {
-  low: "notice-green",
-  medium: "notice-yellow",
-  high: "notice-yellow",
-  extreme: "notice-red",
-};
 const RISK_LABEL: Record<FratRiskLevel, string> = {
   low: "LOW",
   medium: "MEDIUM",
@@ -187,6 +187,9 @@ export function FlightRiskAssessmentStep({
   hasCompanyLimits = true,
   fratPrefill,
   fratBlock,
+  mode = "preflight",
+  signoffs,
+  readOnly = false,
 }: Props) {
   // Pilots reach this component in two modes:
   //   1. First-time — no assessment yet, render the questionnaire.
@@ -198,7 +201,14 @@ export function FlightRiskAssessmentStep({
   // link that flips this local override so we re-render the empty
   // questionnaire without needing a route change.
   const [override, setOverride] = useState(false);
-  if (!initial || override) {
+  if (!initial && readOnly) {
+    return (
+      <section className="rounded-lg border border-border bg-card px-5 py-4 text-sm text-muted-foreground">
+        No FRAT on this flight yet. The pilot or dispatch files it.
+      </section>
+    );
+  }
+  if (!initial || (override && !readOnly)) {
     return (
       <FratQuestionnaire
         flightId={flightId}
@@ -217,6 +227,9 @@ export function FlightRiskAssessmentStep({
       flightId={flightId}
       assessment={initial}
       onRetake={() => setOverride(true)}
+      mode={mode}
+      signoffs={signoffs}
+      readOnly={readOnly}
     />
   );
 }
@@ -923,10 +936,16 @@ function FratResultPanel({
   flightId,
   assessment,
   onRetake,
+  mode = "preflight",
+  signoffs,
+  readOnly = false,
 }: {
   flightId: string;
   assessment: FratAssessmentResponse;
   onRetake: () => void;
+  mode?: "preflight" | "page";
+  signoffs?: React.ReactNode;
+  readOnly?: boolean;
 }) {
   const risk = assessment.risk_level;
   // Named by the server, so the client cannot disagree with it about
@@ -949,11 +968,15 @@ function FratResultPanel({
   // the factors over company limits no longer stop the flight.
   const accepted = assessment.over_limits_accepted ?? null;
   const noGo = overLimits.length > 0 && !accepted;
-  const requiredKind: FratAuthorizationKind | null =
-    risk === "extreme" ? "cp_do_authorization" : null;
-  const hasRequiredAuth =
-    requiredKind === null ||
-    assessment.authorizations.some((a) => a.kind === requiredKind);
+  // EXTREME, or a dispatch packet scoring HIGH, needs the Chief Pilot or
+  // DO, who approve it from their own login (#155): the pilot no longer
+  // types in who they called. The pilot carries on once they have signed
+  // the FRAT; the release waits for the approval.
+  const approved = assessment.high_risk_approved ?? null;
+  const needsApproval =
+    (risk === "extreme" || assessment.last_packet_level === "high") && !approved;
+  const pilotSigned = (assessment.signoffs ?? []).some((s) => s.role === "pilot");
+  const hasRequiredAuth = pilotSigned || assessment.signoffs === undefined;
 
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -973,8 +996,17 @@ function FratResultPanel({
   return (
     <section className="rounded-lg border border-border bg-card">
       <header className="border-b border-border px-5 py-3">
-        <p className="eyebrow">Step 4</p>
+        {mode === "preflight" ? <p className="eyebrow">Step 4</p> : null}
         <h2 className="caption-caps mt-1 text-lg text-foreground">Flight Risk Assessment Tool (FRAT)</h2>
+        {assessment.filed_by_name ? (
+          <p className="mt-1 text-xs text-muted-foreground">
+            {`Filed by ${assessment.filed_by_name}${
+              assessment.pilot_name && assessment.pilot_name !== assessment.filed_by_name
+                ? ` for ${assessment.pilot_name}`
+                : ""
+            }.`}
+          </p>
+        ) : null}
       </header>
 
       <div className="space-y-4 px-5 py-4 text-sm">
@@ -1002,10 +1034,10 @@ function FratResultPanel({
                 ? accepted
                   ? "Accepted"
                   : "No-go"
-                : risk === "extreme"
-                  ? hasRequiredAuth
-                    ? "Cleared"
-                    : "Pending"
+                : risk === "extreme" || assessment.last_packet_level === "high"
+                  ? approved
+                    ? "Approved"
+                    : "CP / DO"
                   : risk === "high"
                     ? "Dispatch reviews"
                     : "Not required"
@@ -1015,8 +1047,8 @@ function FratResultPanel({
                 ? accepted
                   ? "text-status-green text-sm"
                   : "text-status-red text-sm"
-                : risk === "extreme"
-                  ? hasRequiredAuth
+                : risk === "extreme" || assessment.last_packet_level === "high"
+                  ? approved
                     ? "text-status-green text-sm"
                     : "text-status-yellow text-sm"
                   : risk === "high"
@@ -1118,13 +1150,26 @@ function FratResultPanel({
           </div>
         )}
 
-        {requiredKind && !hasRequiredAuth && (
-          <FratAuthorizationForm
-            flightId={flightId}
-            kind={requiredKind}
-            band={RISK_BAND_CLASSES[risk]}
-          />
+        {needsApproval && (
+          <p role="note" className="notice notice-yellow text-xs">
+            <span className="notice-label">Chief Pilot or DO approval</span>
+            <span className="text-foreground">
+              {risk === "extreme"
+                ? "The FRAT is EXTREME. "
+                : "The dispatch packet scores this flight HIGH. "}
+              The Chief Pilot and the DO have a bell alert; one of them approves the flight from the
+              dispatch packet before it is released.
+            </span>
+          </p>
         )}
+        {approved ? (
+          <p role="note" className="notice notice-green text-xs">
+            <span className="notice-label">Approved</span>
+            <span className="text-foreground">
+              {`by ${approved.authorizer_name} (${approved.authorizer_role})${approved.notes ? `: “${approved.notes}”` : "."}`}
+            </span>
+          </p>
+        ) : null}
 
         {assessment.authorizations.length > 0 && (
           <ul className="space-y-1.5">
@@ -1153,24 +1198,36 @@ function FratResultPanel({
           </ul>
         )}
 
-        {!noGo && (
+        {signoffs}
+
+        {mode === "preflight" && !noGo && (
         <button
           type="button"
           disabled={!hasRequiredAuth || pending}
           onClick={handleContinue}
           className="btn-caps inline-flex w-full items-center justify-center rounded-md bg-primary px-4 py-2.5 text-white transition-opacity hover:bg-brand-dark disabled:opacity-50"
         >
-          {pending ? "Saving…" : "Continue to Step 5 →"}
+          {pending ? "Saving…" : hasRequiredAuth ? "Continue to Step 5 →" : "Sign the FRAT to continue"}
         </button>
         )}
 
-        <button
-          type="button"
-          onClick={onRetake}
-          className="w-full text-center text-[0.7rem] font-semibold text-primary hover:underline"
-        >
-          ↻ Retake questionnaire
-        </button>
+        {readOnly ? (
+          assessment.locked ? (
+            <p className="text-center text-[0.7rem] text-muted-foreground">
+              The flight is released: its FRAT stays as signed. Dispatch pulls the release back to change it.
+            </p>
+          ) : null
+        ) : (
+          <button
+            type="button"
+            onClick={onRetake}
+            className="w-full text-center text-[0.7rem] font-semibold text-primary hover:underline"
+          >
+            {(assessment.signoffs ?? []).length > 0
+              ? "↻ Change the FRAT (clears both signatures)"
+              : "↻ Retake questionnaire"}
+          </button>
+        )}
 
         {error && (
           <p role="alert" className="field-error">
@@ -1179,147 +1236,6 @@ function FratResultPanel({
         )}
       </div>
     </section>
-  );
-}
-
-function FratAuthorizationForm({
-  flightId,
-  kind,
-  band,
-}: {
-  flightId: string;
-  kind: FratAuthorizationKind;
-  band: string;
-}) {
-  const [name, setName] = useState("");
-  const [role, setRole] = useState(
-    kind === "dispatch_contact" ? "dispatcher" : "chief_pilot",
-  );
-  const [certNumber, setCertNumber] = useState("");
-  const [notes, setNotes] = useState("");
-  const [pending, startTransition] = useTransition();
-  const [error, setError] = useState<string | null>(null);
-
-  const canSubmit =
-    name.trim().length > 0 && role.trim().length > 0 && !pending;
-
-  const handleSubmit = () => {
-    setError(null);
-    startTransition(async () => {
-      const result = await recordFratAuthorizationAction(flightId, {
-        kind,
-        authorizer_name: name.trim(),
-        authorizer_role: role.trim(),
-        authorizer_cert_number:
-          certNumber.trim() === "" ? undefined : certNumber.trim(),
-        notes: notes.trim() === "" ? undefined : notes.trim(),
-      });
-      if (!result.ok) setError(result.error);
-    });
-  };
-
-  return (
-    <div className={cn("notice space-y-2 text-xs", band)}>
-      <p className="notice-label">
-        {kind === "dispatch_contact"
-          ? "Dispatch contact required"
-          : "CP / DO authorization required"}
-      </p>
-      <p className="text-foreground">
-        {kind === "dispatch_contact"
-          ? "Contact dispatch and record the conversation below."
-          : "Record the Chief Pilot or Director of Ops authorization below."}
-      </p>
-      <Field
-        label="Authorizer name"
-        value={name}
-        onChange={setName}
-        placeholder={
-          kind === "dispatch_contact" ? "Sarah Dispatcher" : "Dana Chief-Pilot"
-        }
-      />
-      <Field
-        label="Role"
-        value={role}
-        onChange={setRole}
-        placeholder={
-          kind === "dispatch_contact"
-            ? "dispatcher"
-            : "chief_pilot or director_of_operations"
-        }
-      />
-      {kind === "cp_do_authorization" && (
-        <Field
-          label="Certificate number (optional)"
-          value={certNumber}
-          onChange={setCertNumber}
-          placeholder="A&P / ATP cert"
-        />
-      )}
-      <Field
-        label="Notes"
-        value={notes}
-        onChange={setNotes}
-        placeholder={
-          kind === "dispatch_contact"
-            ? "Conversation summary, time, mitigations"
-            : "Authorization rationale + conditions briefed"
-        }
-        multiline
-      />
-      <button
-        type="button"
-        disabled={!canSubmit}
-        onClick={handleSubmit}
-        className="btn-caps w-full rounded-md bg-primary px-3 py-1.5 text-white transition-opacity hover:bg-brand-dark disabled:opacity-50 text-[0.72rem]"
-      >
-        {pending ? "Recording…" : "Record authorization"}
-      </button>
-      {error && (
-        <p role="alert" className="text-status-red">
-          {error}
-        </p>
-      )}
-    </div>
-  );
-}
-
-function Field({
-  label,
-  value,
-  onChange,
-  placeholder,
-  multiline,
-}: {
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-  placeholder: string;
-  multiline?: boolean;
-}) {
-  return (
-    <div>
-      <label className="field-label mb-0.5">
-        {label}
-      </label>
-      {multiline ? (
-        <textarea
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          rows={2}
-          placeholder={placeholder}
-          className="ff-input px-2 py-1 text-xs"
-        />
-      ) : (
-        <input
-          type="text"
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder={placeholder}
-          className="ff-input px-2 py-1 text-xs"
-        />
-      )}
-    </div>
   );
 }
 

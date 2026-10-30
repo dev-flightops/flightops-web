@@ -3,13 +3,13 @@ import { auth } from "@/auth";
 import {
   AIRWORTHINESS_WRITERS,
   DISPATCH_WRITERS,
+  FRAT_DISPATCH_SIGNERS,
   FRAT_OVER_LIMIT_ACCEPTORS,
   hasAnyRole,
   OVERRIDE_AUTHORITY,
   PLAN_REVIEWERS,
 } from "@/lib/roles";
 import { DispatchComplianceGate } from "@/components/dispatch/packet/dispatch-compliance-gate";
-import { parseAckedMelIds } from "@/components/dispatch/packet/mel-acks";
 import { OpenMelPanel } from "@/components/dispatch/packet/open-mel-panel";
 import { BookingsAwaitingFlightPanel } from "@/components/dispatch/packet/bookings-awaiting-flight-panel";
 import { ForeFlightPlanPanel } from "@/components/dispatch/packet/foreflight-plan-panel";
@@ -37,12 +37,17 @@ import {
   getCrewOptions,
   getFlight,
   getFratOverLimits,
+  getLatestFratAssessment,
   getPicCompliance,
   listAircraft,
   getWeatherMinimums,
   listFlights,
+  listReleaseAcknowledgments,
   listWeightReturns,
 } from "@/lib/api/ops";
+import { getFlightLoad } from "@/lib/api/manifest";
+import { listMelItems } from "@/lib/api/maintenance";
+import { ReleaseReadinessPanel } from "@/components/dispatch/packet/release-readiness-panel";
 import { localDay } from "@/lib/format/local-time";
 import { listBookings } from "@/lib/api/reservations";
 import { getTypeQualificationGrid } from "@/lib/api/type-qualifications";
@@ -56,12 +61,11 @@ import { getRouteFreshness } from "@/lib/api/weather";
 import type {
   AircraftListItem,
   FlightDetail,
+  FratAssessmentResponse,
   PicComplianceResponse,
   RouteFreshness,
 } from "@/lib/api/types";
 import type { PicOption } from "@/components/dispatch/packet/pic-picker";
-import { parseAckedWarns } from "@/components/dispatch/packet/soft-warning-ack-parser";
-import { parseAckedIcaos } from "@/components/dispatch/packet/notam-acks";
 import { typeWarnings } from "@/components/dispatch/packet/type-warnings";
 import {
   computeHardBlockReason,
@@ -88,26 +92,11 @@ interface SearchParams {
   /** Comma-separated ICAOs that override [origin, destination] for the
    *  Weather panel. Set by the Route input on blur. */
   route?: string;
-  /** Comma-separated ICAOs the dispatcher has manually acknowledged
-   *  NOTAMs for. Bridges until the M2-M-4 NOTAM proxy ships. */
-  notams_acked?: string;
-  /** Comma-separated MEL ids the dispatcher has acknowledged on this
-   *  packet (Spec 7). Mirrors the NOTAM-ack pattern — URL-driven so
-   *  state survives reload + can be shared. */
-  mels_acked?: string;
   /** Pilot UUID to render the Spec 5 compliance gate against. */
   pic?: string;
-  /** M2-G-5 tail — comma-separated currency-item codes the dispatcher
-   *  has ack'd (soft warnings). URL-driven so state persists reload. */
-  warns_acked?: string;
   /** M2-G-5 tail — set to "1" after the supervisor override modal
    *  submits successfully. Signals the page to let Generate PDF fire
    *  even though hard blocks are on the pilot's currency record. */
-  /** HALT-2 — set to "1" once the dispatcher acknowledges stale or
-   *  missing route weather. URL-driven like the other acks so the state
-   *  survives a reload. The release endpoint re-checks server-side, so
-   *  hand-editing this only skips the button hint, not the gate. */
-  stale_wx_ack?: string;
   /** #132: "1" from the board's Edit link opens the Edit dialog. */
   edit?: string;
 }
@@ -131,11 +120,7 @@ export default async function DispatchPage({
     flight: selectedId,
     date: dateParam,
     route: routeParam,
-    notams_acked: notamsAckedParam,
-    mels_acked: melsAckedParam,
     pic: picOverrideId,
-    warns_acked: warnsAckedParam,
-    stale_wx_ack: staleWxAckParam,
     edit: editParam,
   } = await searchParams;
   // What the viewer may do on the packet, not what they may see: the
@@ -167,8 +152,27 @@ export default async function DispatchPage({
   //
   // Soft-fail: a roster that will not load should cost the dispatcher
   // the crew panel, not the whole packet.
-  // The flight's FRAT, when filed over company limits (#152).
-  const overLimits = selectedId ? await getFratOverLimits(selectedId).catch(() => null) : null;
+  // The flight's FRAT, when the Chief Pilot or DO has anything to accept
+  // or approve on it (#152, #155); the FRAT itself, its sign-offs and what
+  // it still needs before release; the load the release judges; and what
+  // this dispatcher ticked on the packet, as saved (#155: the ticks lived
+  // in the page's link, so a pre-filled link released with every box
+  // ticked).
+  const [overLimits, frat, releaseLoad, myAcks, openMels] = selectedId
+    ? await Promise.all([
+        getFratOverLimits(selectedId).catch(() => null),
+        getLatestFratAssessment(selectedId).catch((err): FratAssessmentResponse | null | undefined =>
+          err instanceof ApiError && err.status === 404 ? null : undefined,
+        ),
+        getFlightLoad(selectedId).catch(() => null),
+        listReleaseAcknowledgments(selectedId)
+          .then((r) => r.items.filter((a) => a.mine))
+          .catch(() => []),
+        listMelItems({ status: "open", limit: 100 })
+          .then((r) => r.items)
+          .catch(() => null),
+      ])
+    : [null, null, null, [], null];
   const crew = selectedId
     ? await listFlightCrew(selectedId).catch(() => ({
         items: [],
@@ -275,16 +279,16 @@ export default async function DispatchPage({
     typeWarning: warnings.get(option.pilot.id) ?? null,
   }));
 
-  // M2-G-5 tail — parse ack state from URL. `warns_acked` is
-  // comma-separated currency-item codes.
-  const ackedWarnCodes = parseAckedWarns(warnsAckedParam);
+  // What this dispatcher acknowledged, as saved (#155).
+  const savedKeys = (kind: string) => myAcks.filter((a) => a.kind === kind).map((a) => a.key);
+  const ackedWarnCodes = new Set(savedKeys("soft_warning"));
   // Overridden when every PIC hard block has a supervisor override on
   // record for this flight. It used to be `?overrides_ack=1`, set by the
   // dialog in the browser that recorded it; since the supervisor
   // records it from their own login (29 Sep), the dispatcher's page has
   // to read it from the record.
   const overridesAcknowledged = overridesOnRecord(picCompliance);
-  const staleWeatherAcknowledged = staleWxAckParam === "1";
+  const staleWeatherAcknowledged = savedKeys("stale_weather").includes("route");
 
   const currentTenant =
     tenantsResponse.tenants.find((t) => t.is_current) ??
@@ -309,8 +313,11 @@ export default async function DispatchPage({
   //      route, else origin and destination
   //   3. empty array (panel shows the placeholder)
   const routedIcaos = paramToRoute(routeParam);
-  const notamAckedIcaos = parseAckedIcaos(notamsAckedParam);
-  const ackedMelIds = parseAckedMelIds(melsAckedParam);
+  const notamAckedIcaos = savedKeys("notam");
+  const ackedMelIds = savedKeys("mel");
+  const openMelIds = (openMels ?? [])
+    .filter((m) => m.aircraft.id === selectedFlight?.aircraft.id)
+    .map((m) => m.id);
   const icaos =
     routedIcaos.length > 0
       ? routedIcaos
@@ -362,6 +369,15 @@ export default async function DispatchPage({
     weatherFreshness,
     staleWeatherAcknowledged,
     weatherMinimums,
+    openMelIds,
+    ackedMelIds,
+    fratBlockers:
+      frat === undefined
+        ? null
+        : frat === null
+          ? [{ code: "frat_missing", message: "No FRAT on this flight yet. The pilot or dispatch files it." }]
+          : frat.release_blockers ?? null,
+    releaseLoad: releaseLoad?.release ?? null,
   });
 
   return (
@@ -408,6 +424,20 @@ export default async function DispatchPage({
           <FratOverLimitsPanel
             view={overLimits}
             canAccept={hasAnyRole(viewerRoles, FRAT_OVER_LIMIT_ACCEPTORS)}
+          />
+        ) : null}
+
+        {/* #155 (the client's item 51): the release shows the FRAT and the
+            weight and balance, so the dispatcher sees both before
+            releasing, and signs the FRAT here. */}
+        {selectedFlight ? (
+          <ReleaseReadinessPanel
+            flight={selectedFlight}
+            frat={frat ?? null}
+            fratUnavailable={frat === undefined}
+            load={releaseLoad}
+            timeZone={zones.fallback}
+            canSignForDispatch={hasAnyRole(viewerRoles, FRAT_DISPATCH_SIGNERS)}
           />
         ) : null}
 
@@ -462,10 +492,11 @@ export default async function DispatchPage({
         )}
 
         {/* Open MEL items on the selected aircraft — Spec 7. Each item
-            gets a dispatcher ack checkbox; state persists in the URL
-            (?mels_acked=) so reload + share preserve it. */}
+            gets a dispatcher ack checkbox, saved for the dispatcher who
+            ticks it (#155). */}
         {selectedFlight && (
           <OpenMelPanel
+            flightId={selectedFlight.id}
             aircraftId={selectedFlight.aircraft.id}
             ackedMelIds={ackedMelIds}
           />

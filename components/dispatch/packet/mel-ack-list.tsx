@@ -1,12 +1,8 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useTransition } from "react";
-
 import type { MelItemResponse } from "@/lib/api/types";
 
-import { parseAckedMelIds, serializeAckedMelIds } from "./mel-acks";
-import { useDispatchQuery } from "./use-dispatch-query";
+import { useSavedAcks } from "./use-saved-acks";
 
 /**
  * Open-MEL acknowledgment checkboxes (Spec 7).
@@ -22,33 +18,23 @@ import { useDispatchQuery } from "./use-dispatch-query";
  * badge + due-date.
  */
 export function MelAckList({
+  flightId,
   items,
   ackedMelIds,
 }: {
+  flightId: string;
   items: MelItemResponse[];
+  /** The MELs the viewer acknowledged, as saved (#155). */
   ackedMelIds: string[];
 }) {
-  const router = useRouter();
-  const nextQuery = useDispatchQuery();
-  const [pending, startTransition] = useTransition();
-
-  const ackedSet = new Set(ackedMelIds);
-  const ackedCount = items.filter((m) => ackedSet.has(m.id)).length;
+  const { isOn, change, pending, error } = useSavedAcks(flightId, "mel", new Set(ackedMelIds));
+  const ackedCount = items.filter((m) => isOn(m.id)).length;
   const allAcked = ackedCount === items.length;
 
   function toggle(melId: string, checked: boolean) {
-    // From the newest URL, not ackedSet: see use-dispatch-query.ts.
-    const qs = nextQuery((params) => {
-      const next = new Set(parseAckedMelIds(params.get("mels_acked")));
-      if (checked) next.add(melId);
-      else next.delete(melId);
-      const serialized = serializeAckedMelIds(next);
-      if (serialized) params.set("mels_acked", serialized);
-      else params.delete("mels_acked");
-    });
-
-    startTransition(() => {
-      router.replace(`?${qs}`, { scroll: false });
+    change([melId], checked, (id) => {
+      const mel = items.find((m) => m.id === id);
+      return mel ? { ata_chapter: mel.ata_chapter, description: mel.description } : null;
     });
   }
 
@@ -77,7 +63,7 @@ export function MelAckList({
 
       <ul className="space-y-2">
         {items.map((mel) => {
-          const isAcked = ackedSet.has(mel.id);
+          const isAcked = isOn(mel.id);
           return (
             <li
               key={mel.id}
@@ -88,7 +74,6 @@ export function MelAckList({
                 type="checkbox"
                 checked={isAcked}
                 onChange={(e) => toggle(mel.id, e.target.checked)}
-                disabled={pending}
                 className="mt-1 h-4 w-4 cursor-pointer accent-primary"
                 aria-label={`Acknowledge MEL ${mel.ata_chapter} — ${mel.description}`}
               />
@@ -111,6 +96,12 @@ export function MelAckList({
           );
         })}
       </ul>
+      {pending ? <p className="mt-2 text-[0.65rem] text-muted-foreground">Saving…</p> : null}
+      {error ? (
+        <p role="alert" className="field-error mt-2">
+          {error}
+        </p>
+      ) : null}
     </div>
   );
 }

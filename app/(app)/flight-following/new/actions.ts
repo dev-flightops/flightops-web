@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { scheduleRefusal } from "@/lib/flights/schedule-refusals";
 
 import { loadZoneTable } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
@@ -273,6 +274,10 @@ export async function createFlightAction(
           values,
           stops,
         };
+      }
+      const refused = scheduleRefusal(err.message);
+      if (refused) {
+        return { status: "api-error", message: refused, values, stops };
       }
       if (detail === "flight_number_conflict") {
         return {

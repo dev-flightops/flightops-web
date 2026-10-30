@@ -23,7 +23,10 @@ import type {
   CustomCurrencyItemCreateRequest,
   CustomCurrencyItemUpdateRequest,
   DisqualificationListResponse,
+  AckKind,
+  DepartureFlag,
   DutyHistoryResponse,
+  DutyOverLimit,
   DutyPeriodSummary,
   DutySettings,
   FlightDetail,
@@ -48,6 +51,7 @@ import type {
   FratPrefillResponse,
   FratAuthorizeRequest,
   FratOverLimits,
+  FratSignRole,
   FratSubmitRequest,
   LogCompletionRequest,
   LogCompletionResponse,
@@ -59,6 +63,7 @@ import type {
   PilotProfileResponse,
   PilotRosterResponse,
   PreflightProgressResponse,
+  ReleaseAcknowledgment,
   ReleaseResponse,
   StepCompletionRequest,
   StepCompletionResponse,
@@ -236,6 +241,50 @@ export interface CheckInPayload {
   event: "depart" | "arrive";
   /** Optional override; defaults to server-side now() on the backend. */
   at?: string | null;
+  /** The departure's flags were shown and it is recorded anyway (#155). */
+  confirm_flags?: boolean;
+}
+
+/** What Mark Departed would flag if the flight left now (#155). */
+export async function getDepartureCheck(flightId: string): Promise<{ flags: DepartureFlag[] }> {
+  return apiFetch<{ flags: DepartureFlag[] }>(`/ops/flights/${flightId}/departure-check`);
+}
+
+/** Every box ticked on a flight's packet, saved as ticked (#155). */
+export async function listReleaseAcknowledgments(
+  flightId: string,
+): Promise<{ items: ReleaseAcknowledgment[] }> {
+  return apiFetch<{ items: ReleaseAcknowledgment[] }>(`/ops/flights/${flightId}/acknowledgments`);
+}
+
+/** Tick one box, as the caller, now (#155). */
+export async function acknowledgeForRelease(
+  flightId: string,
+  kind: AckKind,
+  key: string,
+  detail?: Record<string, unknown> | null,
+): Promise<ReleaseAcknowledgment> {
+  return apiFetch<ReleaseAcknowledgment>(`/ops/flights/${flightId}/acknowledgments`, {
+    method: "POST",
+    body: JSON.stringify({ kind, key, detail: detail ?? null }),
+  });
+}
+
+/** Untick one of the caller's boxes (#155). */
+export async function withdrawReleaseAcknowledgment(
+  flightId: string,
+  kind: AckKind,
+  key: string,
+): Promise<void> {
+  await apiFetch<void>(
+    `/ops/flights/${flightId}/acknowledgments/${kind}/${encodeURIComponent(key)}`,
+    { method: "DELETE" },
+  );
+}
+
+/** Everyone on duty longer than the company's maximum (#155). */
+export async function getDutyOverLimit(): Promise<DutyOverLimit> {
+  return apiFetch<DutyOverLimit>("/ops/duty/over-limit");
 }
 
 /** Record actual departure or arrival on a released flight (M2-M-19).
@@ -636,6 +685,28 @@ export async function getFratOverLimits(flightId: string): Promise<FratOverLimit
  *  with a reason (#152). */
 export async function acceptFratOverLimits(flightId: string, reason: string): Promise<FratOverLimits> {
   return apiFetch<FratOverLimits>(`/ops/frat/${flightId}/accept-over-limits`, {
+    method: "POST",
+    body: JSON.stringify({ reason }),
+  });
+}
+
+/** The pilot's or a dispatcher's sign-off on the FRAT they reviewed
+ *  (#155). 409 frat_changed when it was edited since. */
+export async function signFrat(
+  flightId: string,
+  assessmentId: string,
+  role: FratSignRole,
+): Promise<FratAssessmentResponse> {
+  return apiFetch<FratAssessmentResponse>(`/ops/frat/${flightId}/sign`, {
+    method: "POST",
+    body: JSON.stringify({ assessment_id: assessmentId, role }),
+  });
+}
+
+/** The Chief Pilot or DO approves what the FRAT waits for: factors over
+ *  company limits and a HIGH risk (#152, #155), with a reason. */
+export async function approveFrat(flightId: string, reason: string): Promise<FratOverLimits> {
+  return apiFetch<FratOverLimits>(`/ops/frat/${flightId}/approve`, {
     method: "POST",
     body: JSON.stringify({ reason }),
   });

@@ -150,6 +150,18 @@ export interface FlightLoad {
   to_check_in: PassengerTally;
   cargo_lbs: string;
   load: ManifestLoad;
+  /** The load the release is judged on (#155): the manifest's, else the
+   *  numbers typed on the flight with passengers at the standard weight.
+   *  Absent from an older backend. */
+  release?: ReleaseLoad | null;
+}
+
+export interface ReleaseLoad {
+  basis: "manifest" | "typed";
+  useful_load_lbs: number | null;
+  payload_lbs: number | string;
+  /** Negative: over the aircraft's useful load. */
+  remaining_lbs: number | string | null;
 }
 
 export interface ManifestDetailResponse {

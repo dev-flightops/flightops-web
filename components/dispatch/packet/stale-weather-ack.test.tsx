@@ -6,9 +6,13 @@ import type { RouteFreshness, StationFreshness } from "@/lib/api/types";
 import { StaleWeatherAck } from "./stale-weather-ack";
 
 const replace = vi.fn();
+const save = vi.fn(async (..._args: unknown[]) => ({ ok: true }));
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({ replace }),
+  useRouter: () => ({ replace, refresh: vi.fn() }),
   useSearchParams: () => new URLSearchParams(""),
+}));
+vi.mock("@/app/(app)/dispatch/ack-actions", () => ({
+  saveAcknowledgmentsAction: (...args: unknown[]) => save(...args),
 }));
 
 function station(overrides: Partial<StationFreshness> = {}): StationFreshness {
@@ -40,7 +44,7 @@ describe("StaleWeatherAck", () => {
   it("renders nothing when the route's weather is current", () => {
     // No checkbox to click past out of habit on a clean route.
     const { container } = render(
-      <StaleWeatherAck freshness={freshness()} acknowledged={false} />,
+      <StaleWeatherAck flightId="f-1" freshness={freshness()} acknowledged={false} />,
     );
     expect(container).toBeEmptyDOMElement();
   });
@@ -49,7 +53,7 @@ describe("StaleWeatherAck", () => {
     // Matches the release gate, which also declines to act on a verdict
     // it could not obtain.
     const { container } = render(
-      <StaleWeatherAck freshness={null} acknowledged={false} />,
+      <StaleWeatherAck flightId="f-1" freshness={null} acknowledged={false} />,
     );
     expect(container).toBeEmptyDOMElement();
   });
@@ -57,6 +61,7 @@ describe("StaleWeatherAck", () => {
   it("offers the checkbox when an acknowledgment is required", () => {
     render(
       <StaleWeatherAck
+        flightId="f-1"
         freshness={freshness({
           acknowledgment_required: true,
           any_stale_metar: true,
@@ -78,6 +83,7 @@ describe("StaleWeatherAck", () => {
   it("names the offending stop and how old its METAR is", () => {
     render(
       <StaleWeatherAck
+        flightId="f-1"
         freshness={freshness({
           acknowledgment_required: true,
           stations: [
@@ -98,6 +104,7 @@ describe("StaleWeatherAck", () => {
   it("reports a missing observation distinctly from a stale one", () => {
     render(
       <StaleWeatherAck
+        flightId="f-1"
         freshness={freshness({
           acknowledgment_required: true,
           stations: [
@@ -118,6 +125,7 @@ describe("StaleWeatherAck", () => {
   it("renders long ages in hours rather than making the reader divide", () => {
     render(
       <StaleWeatherAck
+        flightId="f-1"
         freshness={freshness({
           acknowledgment_required: true,
           stations: [
@@ -138,6 +146,7 @@ describe("StaleWeatherAck", () => {
   it("shows as checked once acknowledged", () => {
     render(
       <StaleWeatherAck
+        flightId="f-1"
         freshness={freshness({
           acknowledgment_required: true,
           stations: [station({ metar_stale: true, requires_acknowledgment: true })],
@@ -148,25 +157,34 @@ describe("StaleWeatherAck", () => {
     expect(screen.getByRole("checkbox")).toBeChecked();
   });
 
-  it("records the acknowledgment in the URL when ticked", () => {
-    replace.mockReset();
+  it("saves the acknowledgment for the dispatcher when ticked (#155), not in the URL", async () => {
+    save.mockClear();
     render(
       <StaleWeatherAck
+        flightId="f-1"
         freshness={freshness({
           acknowledgment_required: true,
           stations: [station({ metar_stale: true, requires_acknowledgment: true })],
+          stations_requiring_acknowledgment: ["PANC"],
         })}
         acknowledged={false}
       />,
     );
     fireEvent.click(screen.getByRole("checkbox"));
-    expect(replace).toHaveBeenCalledWith("/dispatch/?stale_wx_ack=1", { scroll: false });
+    expect(screen.getByRole("checkbox")).toBeChecked();
+    await vi.waitFor(() =>
+      expect(save).toHaveBeenCalledWith("f-1", [
+        { kind: "stale_weather", key: "route", on: true, detail: { stations: ["PANC"] } },
+      ]),
+    );
+    expect(replace).not.toHaveBeenCalled();
   });
 
-  it("takes it back out when unticked", () => {
-    replace.mockReset();
+  it("withdraws it when unticked", async () => {
+    save.mockClear();
     render(
       <StaleWeatherAck
+        flightId="f-1"
         freshness={freshness({
           acknowledgment_required: true,
           stations: [station({ metar_stale: true, requires_acknowledgment: true })],
@@ -175,7 +193,11 @@ describe("StaleWeatherAck", () => {
       />,
     );
     fireEvent.click(screen.getByRole("checkbox"));
-    expect(replace).toHaveBeenCalledWith("/dispatch/", { scroll: false });
+    await vi.waitFor(() =>
+      expect(save).toHaveBeenCalledWith("f-1", [
+        expect.objectContaining({ kind: "stale_weather", key: "route", on: false }),
+      ]),
+    );
   });
 
   it("still renders when no station explains why", () => {
@@ -183,6 +205,7 @@ describe("StaleWeatherAck", () => {
     // must not produce an empty description.
     render(
       <StaleWeatherAck
+        flightId="f-1"
         freshness={freshness({ acknowledgment_required: true, stations: [] })}
         acknowledged={false}
       />,

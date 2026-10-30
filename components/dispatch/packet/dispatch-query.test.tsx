@@ -5,8 +5,13 @@ import type { ComplianceFinding } from "@/lib/api/types";
 
 const push = vi.fn();
 const replace = vi.fn();
+const refresh = vi.fn();
+const save = vi.fn(async (..._args: unknown[]) => ({ ok: true }));
+vi.mock("@/app/(app)/dispatch/ack-actions", () => ({
+  saveAcknowledgmentsAction: (...args: unknown[]) => save(...args),
+}));
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({ push, replace }),
+  useRouter: () => ({ push, replace, refresh }),
   // The page never comes back in these tests: every tick is made
   // while the URL still shows the flight alone.
   useSearchParams: () => new URLSearchParams("flight=f1"),
@@ -21,7 +26,10 @@ import { SoftWarningAckList } from "./soft-warning-ack-list";
 /**
  * Walking the 27 Sep fixes on 28 Sep: tick the SIC's soft warning, tick
  * a NOTAM box before the page came back, and the SIC acknowledgment was
- * gone. Each panel rebuilt the URL from the one last rendered.
+ * gone. Each panel rebuilt the URL from the one last rendered. Since #155
+ * the ticks are saved per dispatcher and never go in the URL at all, so
+ * panels can't take each other's away; the URL keeps the rest of the
+ * packet's state (the flight, the PIC, the route).
  */
 
 const sicLanding: ComplianceFinding = {
@@ -44,6 +52,7 @@ const lastUrl = () =>
 beforeEach(() => {
   push.mockReset();
   replace.mockReset();
+  save.mockClear();
 });
 
 describe("nextDispatchQuery", () => {
@@ -80,101 +89,47 @@ describe("nextDispatchQuery", () => {
   });
 });
 
-describe("ticks in different panels before the page comes back", () => {
-  it("keeps the SIC acknowledgment when a NOTAM box is ticked next", () => {
-    render(
-      <>
-        <SoftWarningAckList seat="sic" findings={[sicLanding]} ackedCodes={new Set()} />
-        <NotamAcknowledgmentPanel icaos={["PABE", "PASM"]} ackedFromUrl={[]} />
-      </>,
-    );
-    fireEvent.click(
-      screen.getByRole("checkbox", { name: "Acknowledge SIC Day Landing Currency" }),
-    );
-    fireEvent.click(screen.getByRole("checkbox", { name: "Acknowledge NOTAMs for PABE" }));
-    fireEvent.click(screen.getByRole("checkbox", { name: "Acknowledge NOTAMs for PASM" }));
-
-    const url = new URLSearchParams(lastUrl().split("?")[1]);
-    expect(url.get("warns_acked")).toBe("sic:sic_day_landing_currency");
-    expect(url.get("notams_acked")).toBe("PABE,PASM");
+describe("ticks in different panels (#155: saved, never in the URL)", () => {
+  const melItem = (id: string, ata: string, description: string) => ({
+    id,
+    aircraft: { id: "a-1", tail_number: "N503PA", model: "C208B" },
+    ata_chapter: ata,
+    description,
+    category: "C" as const,
+    deferred_at: "2026-09-27T10:00:00Z",
+    due_at: "2026-10-27T10:00:00Z",
+    status: "open" as const,
+    closed_at: null,
+    closed_by: null,
+    notes: null,
   });
 
-  it("keeps the PIC's acknowledgment when the SIC's is ticked next", async () => {
-    // Two lists, one per seat. Each only waits on its own ticks.
-    const picIfr: ComplianceFinding = {
-      ...sicLanding,
-      currency_item_id: "i-pic",
-      code: "ifr_currency",
-      name: "IFR Currency",
-      regulation: "14 CFR 61.57(c)",
-    };
+  it("each panel saves its own ticks, and none of them touches the URL", async () => {
     render(
       <>
-        <SoftWarningAckList seat="pic" findings={[picIfr]} ackedCodes={new Set()} />
-        <SoftWarningAckList seat="sic" findings={[sicLanding]} ackedCodes={new Set()} />
-      </>,
-    );
-    fireEvent.click(screen.getByRole("checkbox", { name: "Acknowledge IFR Currency" }));
-    fireEvent.click(
-      screen.getByRole("checkbox", { name: "Acknowledge SIC Day Landing Currency" }),
-    );
-
-    // Each list sends its ticks once they stop (#145); the last one sent has both.
-    await vi.waitFor(() => {
-      const url = new URLSearchParams(lastUrl().split("?")[1]);
-      expect(url.get("warns_acked")).toBe("ifr_currency,sic:sic_day_landing_currency");
-    });
-  });
-
-  it("keeps a NOTAM acknowledgment and each MEL ticked after it", () => {
-    render(
-      <>
-        <NotamAcknowledgmentPanel icaos={["PABE"]} ackedFromUrl={[]} />
+        <SoftWarningAckList flightId="f1" seat="sic" findings={[sicLanding]} ackedCodes={new Set()} />
+        <NotamAcknowledgmentPanel flightId="f1" icaos={["PABE", "PASM"]} acked={[]} />
         <MelAckList
-          items={[
-            {
-              id: "mel-1",
-              aircraft: { id: "a-1", tail_number: "N503PA", model: "C208B" },
-              ata_chapter: "33",
-              description: "Left nav light inoperative",
-              category: "C",
-              deferred_at: "2026-09-27T10:00:00Z",
-              due_at: "2026-10-27T10:00:00Z",
-              status: "open",
-              closed_at: null,
-              closed_by: null,
-              notes: null,
-            },
-            {
-              id: "mel-2",
-              aircraft: { id: "a-1", tail_number: "N503PA", model: "C208B" },
-              ata_chapter: "34",
-              description: "Autopilot inoperative",
-              category: "C",
-              deferred_at: "2026-09-27T10:00:00Z",
-              due_at: "2026-10-27T10:00:00Z",
-              status: "open",
-              closed_at: null,
-              closed_by: null,
-              notes: null,
-            },
-          ]}
+          flightId="f1"
+          items={[melItem("mel-1", "33", "Left nav light inoperative")]}
           ackedMelIds={[]}
         />
       </>,
     );
+    fireEvent.click(screen.getByRole("checkbox", { name: "Acknowledge SIC Day Landing Currency" }));
     fireEvent.click(screen.getByRole("checkbox", { name: "Acknowledge NOTAMs for PABE" }));
-    fireEvent.click(
-      screen.getByRole("checkbox", { name: "Acknowledge MEL 34 — Autopilot inoperative" }),
-    );
-    fireEvent.click(
-      screen.getByRole("checkbox", {
-        name: "Acknowledge MEL 33 — Left nav light inoperative",
-      }),
-    );
+    fireEvent.click(screen.getByRole("checkbox", { name: "Acknowledge NOTAMs for PASM" }));
+    fireEvent.click(screen.getByLabelText(/Acknowledge MEL 33/));
 
-    const url = new URLSearchParams(lastUrl().split("?")[1]);
-    expect(url.get("notams_acked")).toBe("PABE");
-    expect(url.get("mels_acked")).toBe("mel-1,mel-2");
+    await vi.waitFor(() => expect(save).toHaveBeenCalledTimes(3));
+    const saved = save.mock.calls.flatMap((c) => c[1] as { kind: string; key: string }[]);
+    expect(saved.map((c) => `${c.kind}:${c.key}`).sort()).toEqual([
+      "mel:mel-1",
+      "notam:PABE",
+      "notam:PASM",
+      "soft_warning:sic:sic_day_landing_currency",
+    ]);
+    expect(push).not.toHaveBeenCalled();
+    expect(replace).not.toHaveBeenCalled();
   });
 });

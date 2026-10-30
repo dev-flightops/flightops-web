@@ -33,9 +33,6 @@ export function WeatherMinimumsNotice({
 
   const forType = heldForType(minimums.stations);
   const forVfr = !forType && heldForVfr(minimums.stations);
-  const noReport =
-    unchecked.length > 0 ? ` (no current report at ${unchecked.join(", ")})` : "";
-
   if (minimums.below) {
     const fields = withoutApproach(minimums.stations.filter((s) => s.below));
     return (
@@ -54,13 +51,26 @@ export function WeatherMinimumsNotice({
     );
   }
 
+  const held = forType
+    ? `The ${type} is not IFR certified: held to the company’s dispatch minimums of ${label} at every stop`
+    : forVfr
+      ? `Flown VFR: held to the company’s dispatch minimums of ${label} at every stop`
+      : `No instrument approach at ${withoutApproach(minimums.stations)}: held to the company’s dispatch minimums of ${label} there`;
+  if (unchecked.length > 0) {
+    // #155: a stop with no report read "met" (the client's ZZZZ). It can't
+    // be checked, which is not the same thing.
+    const checked = minimums.stations.length > unchecked.length;
+    return (
+      <div role="note" className="notice notice-yellow">
+        <p className="notice-label">No report to check</p>
+        <p className="mt-1 text-xs">
+          {`${held}. ${checked ? "Met where there’s a report; no" : "No"} current report at ${unchecked.join(", ")}, so the minimums can’t be checked there. Read the weather in your usual source before releasing.`}
+        </p>
+      </div>
+    );
+  }
+
   return (
-    <p className="text-[0.6875rem] text-muted-foreground">
-      {forType
-        ? `The ${type} is not IFR certified: held to the company’s dispatch minimums of ${label} at every stop, and met on the latest weather${noReport}.`
-        : forVfr
-        ? `Flown VFR: held to the company’s dispatch minimums of ${label} at every stop, and met on the latest weather${noReport}.`
-        : `No instrument approach at ${withoutApproach(minimums.stations)}: held to the company’s dispatch minimums of ${label} there, and met on the latest weather${noReport}.`}
-    </p>
+    <p className="text-[0.6875rem] text-muted-foreground">{`${held}, and met on the latest weather.`}</p>
   );
 }

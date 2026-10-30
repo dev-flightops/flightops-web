@@ -49,6 +49,10 @@ export function DutyClockButton({ initial }: Props) {
 
   const isOnDuty = duty.open !== null;
   const { armed, arm, disarm, ref } = useArmedConfirm();
+  // Past the company's maximum, the period closes with a reason on record
+  // (#155: periods of 212.7 h and 602.4 h were closed with no flag).
+  const overLimit = Boolean(duty.open && duty.open.elapsed_hours > duty.max_duty_hours);
+  const [reason, setReason] = useState("");
 
   const handleClick = () => {
     setError(null);
@@ -73,7 +77,7 @@ export function DutyClockButton({ initial }: Props) {
       const previous = duty;
       setDuty(closedShape);
       startTransition(async () => {
-        const result = await clockOutAction();
+        const result = await clockOutAction(overLimit ? { reason: reason.trim() } : {});
         if (!result.ok) {
           setDuty(previous);
           setError(result.error ?? "Couldn't clock out.");
@@ -130,6 +134,21 @@ export function DutyClockButton({ initial }: Props) {
             </span>
             . {resumeNote(duty.min_rest_hours)}
           </p>
+          {overLimit ? (
+            <label className="mt-3 block">
+              <span className="field-label">
+                {`Past the ${duty.max_duty_hours} h maximum: say why`}
+              </span>
+              <textarea
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+                rows={2}
+                maxLength={500}
+                placeholder="e.g. Forgot to clock out after the last leg yesterday"
+                className="ff-input mt-1 text-sm"
+              />
+            </label>
+          ) : null}
           <div className="mt-4 flex flex-wrap gap-2">
             <button type="button" onClick={disarm} className={cn(buttonOutline, "px-3 py-1.5")}>
               Keep working
@@ -137,7 +156,7 @@ export function DutyClockButton({ initial }: Props) {
             <button
               type="button"
               onClick={handleClick}
-              disabled={pending}
+              disabled={pending || (overLimit && reason.trim().length === 0)}
               className="btn-caps rounded-md bg-status-red-fill px-3 py-1.5 text-[0.72rem] text-white hover:brightness-95 disabled:opacity-60"
             >
               {pending ? "Closing…" : "Close duty period"}

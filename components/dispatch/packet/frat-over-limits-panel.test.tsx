@@ -46,7 +46,7 @@ describe("the packet's FRAT over company limits (#152)", () => {
 
   it("tells everyone else who it waits for", () => {
     render(<FratOverLimitsPanel view={view()} canAccept={false} />);
-    expect(screen.getByText("Waiting for the Chief Pilot or the DO to accept it. They have a bell alert.")).toBeInTheDocument();
+    expect(screen.getByText("Waiting for the Chief Pilot or the DO. They have a bell alert.")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Accept over company limits" })).not.toBeInTheDocument();
   });
 

@@ -4,8 +4,11 @@ import { describe, expect, it, vi } from "vitest";
 import { NotamAcknowledgmentPanel } from "./notam-acknowledgment-panel";
 
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({ replace: vi.fn() }),
+  useRouter: () => ({ replace: vi.fn(), refresh: vi.fn() }),
   useSearchParams: () => new URLSearchParams(""),
+}));
+vi.mock("@/app/(app)/dispatch/ack-actions", () => ({
+  saveAcknowledgmentsAction: vi.fn(async () => ({ ok: true })),
 }));
 
 /** A round trip names its home airport twice (#57). */
@@ -13,7 +16,7 @@ vi.mock("next/navigation", () => ({
 describe("NotamAcknowledgmentPanel on a round trip", () => {
   it("asks once per airport and counts airports, not stops", () => {
     const errors = vi.spyOn(console, "error").mockImplementation(() => {});
-    render(<NotamAcknowledgmentPanel icaos={["PANC", "PABE", "PANC"]} ackedFromUrl={["PABE"]} />);
+    render(<NotamAcknowledgmentPanel flightId="f-1" icaos={["PANC", "PABE", "PANC"]} acked={["PABE"]} />);
     expect(screen.getAllByRole("checkbox").map((c) => c.getAttribute("aria-label"))).toEqual([
       "Acknowledge NOTAMs for PANC",
       "Acknowledge NOTAMs for PABE",
@@ -25,7 +28,7 @@ describe("NotamAcknowledgmentPanel on a round trip", () => {
   });
 
   it("is done once both airports are acknowledged", () => {
-    render(<NotamAcknowledgmentPanel icaos={["PANC", "PABE", "PANC"]} ackedFromUrl={["PANC", "PABE"]} />);
+    render(<NotamAcknowledgmentPanel flightId="f-1" icaos={["PANC", "PABE", "PANC"]} acked={["PANC", "PABE"]} />);
     expect(screen.getByText("2/2 acknowledged")).toBeTruthy();
   });
 });

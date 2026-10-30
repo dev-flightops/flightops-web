@@ -7,6 +7,7 @@ const api = vi.hoisted(() => ({
   listSafetyReports: vi.fn(),
   listOpenSeats: vi.fn(),
   listFratAwaitingAcceptance: vi.fn(),
+  getDutyOverLimit: vi.fn(),
 }));
 vi.mock("@/lib/api/maintenance", () => ({
   getFleetAirworthiness: api.getFleetAirworthiness,
@@ -20,7 +21,10 @@ vi.mock("@/lib/api/safety-reports", async (importOriginal) => ({
   listSafetyReports: api.listSafetyReports,
 }));
 vi.mock("@/lib/api/open-seats", () => ({ listOpenSeats: api.listOpenSeats }));
-vi.mock("@/lib/api/ops", () => ({ listFratAwaitingAcceptance: api.listFratAwaitingAcceptance }));
+vi.mock("@/lib/api/ops", () => ({
+  listFratAwaitingAcceptance: api.listFratAwaitingAcceptance,
+  getDutyOverLimit: api.getDutyOverLimit,
+}));
 
 import type { Opening, OpeningPassenger } from "@/lib/api/open-seats";
 
@@ -38,6 +42,7 @@ function report(id: string, risk_level: "high" | "medium" | null) {
 }
 
 beforeEach(() => {
+  api.getDutyOverLimit.mockResolvedValue({ max_duty_hours: 14, items: [] });
   api.getFleetAirworthiness.mockResolvedValue({ items: [] });
   api.listMelItems.mockResolvedValue({ items: [] });
   api.getFlightBoard.mockResolvedValue({ items: [] });
@@ -183,5 +188,67 @@ describe("FRATs over company limits (#152)", () => {
   it("raises nothing for anyone else", async () => {
     api.listSafetyReports.mockResolvedValue({ items: [], total: 0 });
     expect((await loadOperationalSnapshot()).alerts).toEqual([]);
+  });
+});
+
+
+describe("#155: duty past the limit, flagged departures, a HIGH risk", () => {
+  it("raises each, red for duty and the approval, yellow for a flagged departure", async () => {
+    api.listSafetyReports.mockResolvedValue({ items: [], total: 0 });
+    api.getDutyOverLimit.mockResolvedValue({
+      max_duty_hours: 14,
+      items: [{ user_id: "u-1", full_name: "Peregrine Admin", clock_in_at: "2026-10-28T00:42:00Z", elapsed_hours: 38.9 }],
+    });
+    api.getFlightBoard.mockResolvedValue({
+      items: [
+        {
+          id: "f-1",
+          flight_number: "TST901",
+          aircraft: { id: "a-1", tail_number: "N806PA", model: "C207", seats: 6 },
+          origin: "PABE",
+          destination: "ZZZZ",
+          scheduled_departure_at: "2026-10-29T22:00:00Z",
+          scheduled_arrival_at: "2026-10-29T23:00:00Z",
+          actual_departure_at: "2026-10-29T16:20:00Z",
+          actual_arrival_at: null,
+          status: "released",
+          pax_count: 6,
+          cargo_lbs: 5000,
+          pic_name: "Tomas Eklund",
+          is_overdue: false,
+          last_contact_at: null,
+          departure_flags: [{ code: "pic_off_duty", message: "Tomas Eklund wasn't clocked in." }],
+        },
+      ],
+      view: "today",
+      total: 1,
+    });
+    api.listFratAwaitingAcceptance.mockResolvedValue({
+      items: [
+        {
+          flight_id: "f-2",
+          flight_number: "PGR701",
+          scheduled_departure_at: "2026-10-30T18:30:00Z",
+          assessment_id: "a-2",
+          pilot_name: "Bob Henderson",
+          over_limit_factors: [],
+          mitigations: null,
+          filed_at: "2026-10-30T17:00:00Z",
+          accepted: null,
+          high_risk: true,
+          packet_level: "high",
+          risk_level: "medium",
+          waiting: true,
+        },
+      ],
+    });
+    const { alerts } = await loadOperationalSnapshot();
+    const byCategory = Object.fromEntries(alerts.map((a) => [a.category, a]));
+    expect(byCategory.duty_over_limit.title).toBe("On duty past the limit — Peregrine Admin");
+    expect(byCategory.duty_over_limit.severity).toBe("red");
+    expect(byCategory.departure_flagged.title).toBe("Departed with flags — TST901");
+    expect(byCategory.departure_flagged.detail).toBe("Tomas Eklund wasn't clocked in.");
+    expect(byCategory.frat_over_limits.title).toBe("Risk HIGH, needs approval — PGR701");
+    expect(byCategory.frat_over_limits.detail).toContain("dispatch packet HIGH");
   });
 });

@@ -424,3 +424,53 @@ describe("computeHardBlockReason — dispatch minimums", () => {
     expect(computeHardBlockReason({ ...CLEAR, weatherMinimums: null })).toBeNull();
   });
 });
+
+describe("computeHardBlockReason — #155 the MELs, the FRAT and the load", () => {
+  it("blocks on an open MEL this dispatcher hasn't acknowledged", () => {
+    expect(
+      computeHardBlockReason({ ...CLEAR, openMelIds: ["m-1", "m-2"], ackedMelIds: ["m-1"] }),
+    ).toBe("1 open MEL item still needs dispatcher acknowledgment.");
+    expect(
+      computeHardBlockReason({ ...CLEAR, openMelIds: ["m-1"], ackedMelIds: ["m-1"] }),
+    ).toBeNull();
+  });
+
+  it("blocks on what the FRAT still needs, naming the first", () => {
+    expect(
+      computeHardBlockReason({
+        ...CLEAR,
+        fratBlockers: [
+          { code: "frat_pilot_unsigned", message: "The pilot hasn't signed the FRAT." },
+          { code: "frat_dispatcher_unsigned", message: "A dispatcher hasn't signed the FRAT." },
+        ],
+      }),
+    ).toBe("FRAT: The pilot hasn't signed the FRAT. (and 1 more)");
+    expect(computeHardBlockReason({ ...CLEAR, fratBlockers: [] })).toBeNull();
+    // Couldn't be read: release still checks it.
+    expect(computeHardBlockReason({ ...CLEAR, fratBlockers: null })).toBeNull();
+  });
+
+  it("blocks a load over the useful load, saying where it came from", () => {
+    expect(
+      computeHardBlockReason({
+        ...CLEAR,
+        fratBlockers: [],
+        releaseLoad: { basis: "typed", useful_load_lbs: 1400, payload_lbs: 6140, remaining_lbs: "-5090.0" },
+      }),
+    ).toBe(
+      "Over the aircraft's useful load by 5,090 lb, by the passengers and cargo typed on the flight.",
+    );
+    expect(
+      computeHardBlockReason({
+        ...CLEAR,
+        releaseLoad: { basis: "manifest", useful_load_lbs: null, payload_lbs: 0, remaining_lbs: null },
+      }),
+    ).toMatch(/no max payload on record/);
+    expect(
+      computeHardBlockReason({
+        ...CLEAR,
+        releaseLoad: { basis: "manifest", useful_load_lbs: 1400, payload_lbs: 600, remaining_lbs: 210 },
+      }),
+    ).toBeNull();
+  });
+});

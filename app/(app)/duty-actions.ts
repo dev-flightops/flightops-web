@@ -53,6 +53,9 @@ export async function clockOutAction(
 
 function mapError(err: unknown, fallback: string): string {
   if (err instanceof ApiError) {
+    if (err.status === 409 && err.message.includes("over_max_duty_reason_required")) {
+      return "You've been on duty past the company's maximum: say why on the Flight Crew page, then clock out.";
+    }
     if (err.status === 409) {
       const detail = parseDetail(err.message);
       if (detail === "already_clocked_in") {

@@ -2,10 +2,15 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const replace = vi.fn();
+const refresh = vi.fn();
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({ replace }),
+  useRouter: () => ({ refresh }),
   useSearchParams: () => new URLSearchParams(""),
+}));
+
+const save = vi.fn(async (..._args: unknown[]) => ({ ok: true }) as { ok: boolean; error?: string });
+vi.mock("@/app/(app)/dispatch/ack-actions", () => ({
+  saveAcknowledgmentsAction: (...args: unknown[]) => save(...args),
 }));
 
 import {
@@ -14,8 +19,6 @@ import {
   SoftWarningAckList,
 } from "./soft-warning-ack-list";
 import type { ComplianceFinding } from "@/lib/api/types";
-
-import { resetDispatchQuery } from "./dispatch-query";
 
 const grace: ComplianceFinding = {
   currency_item_id: "i-1",
@@ -66,45 +69,31 @@ describe("allSoftAcked", () => {
   });
 });
 
-describe("SoftWarningAckList (M2-G-5 tail)", () => {
+describe("SoftWarningAckList (M2-G-5 tail; saved per dispatcher, #155)", () => {
   beforeEach(() => {
-    resetDispatchQuery();
-    replace.mockReset();
+    save.mockReset();
+    save.mockResolvedValue({ ok: true });
+    refresh.mockReset();
   });
 
   it("renders a checkbox per finding, unchecked by default", () => {
-    render(
-      <SoftWarningAckList findings={[grace, medical]} ackedCodes={new Set()} />,
-    );
-    const ipc = screen.getByLabelText(
-      "Acknowledge Instrument Proficiency Check",
-    ) as HTMLInputElement;
-    const med = screen.getByLabelText(
-      "Acknowledge Medical Certificate",
-    ) as HTMLInputElement;
-    expect(ipc).not.toBeChecked();
-    expect(med).not.toBeChecked();
+    render(<SoftWarningAckList flightId="f-1" findings={[grace, medical]} ackedCodes={new Set()} />);
+    expect(screen.getByLabelText("Acknowledge Instrument Proficiency Check")).not.toBeChecked();
+    expect(screen.getByLabelText("Acknowledge Medical Certificate")).not.toBeChecked();
   });
 
-  it("shows the Ack'd chip + line-through when a code is already acked", () => {
+  it("shows the Ack'd chip + line-through when the viewer's tick is saved", () => {
     render(
-      <SoftWarningAckList
-        findings={[grace, medical]}
-        ackedCodes={new Set(["ipc"])}
-      />,
+      <SoftWarningAckList flightId="f-1" findings={[grace, medical]} ackedCodes={new Set(["ipc"])} />,
     );
-    const ipc = screen.getByLabelText(
-      "Acknowledge Instrument Proficiency Check",
-    ) as HTMLInputElement;
-    expect(ipc).toBeChecked();
+    expect(screen.getByLabelText("Acknowledge Instrument Proficiency Check")).toBeChecked();
     expect(screen.getByText("Ack'd")).toBeInTheDocument();
   });
 
   it("names whose box it is when either seat can hold the item", () => {
-    // Both pilots can have a medical warning; "SIC IFR Currency" already
-    // says whose it is and is not said twice.
     render(
       <SoftWarningAckList
+        flightId="f-1"
         seat="sic"
         findings={[medical, { ...grace, code: "sic_ifr_currency", name: "SIC IFR Currency" }]}
         ackedCodes={new Set()}
@@ -114,81 +103,81 @@ describe("SoftWarningAckList (M2-G-5 tail)", () => {
     expect(screen.getByLabelText("Acknowledge SIC IFR Currency")).toBeInTheDocument();
   });
 
-  it("puts ?warns_acked=<code> in the URL, without scrolling, when a checkbox flips on", async () => {
-    replace.mockReset();
+  it("saves a tick for the dispatcher, with what was on screen, then refreshes; never the URL", async () => {
     const user = userEvent.setup();
-    render(
-      <SoftWarningAckList findings={[grace, medical]} ackedCodes={new Set()} />,
-    );
-    await user.click(
-      screen.getByLabelText("Acknowledge Instrument Proficiency Check"),
-    );
+    render(<SoftWarningAckList flightId="f-1" findings={[grace, medical]} ackedCodes={new Set()} />);
+    await user.click(screen.getByLabelText("Acknowledge Instrument Proficiency Check"));
+    await vi.waitFor(() => expect(save).toHaveBeenCalledTimes(1));
+    expect(save).toHaveBeenCalledWith("f-1", [
+      {
+        kind: "soft_warning",
+        key: "ipc",
+        on: true,
+        detail: { name: "Instrument Proficiency Check", message: expect.any(String) },
+      },
+    ]);
+    await vi.waitFor(() => expect(refresh).toHaveBeenCalled());
+  });
+
+  it("unticking withdraws it", async () => {
+    const user = userEvent.setup();
+    render(<SoftWarningAckList flightId="f-1" findings={[grace]} ackedCodes={new Set(["ipc"])} />);
+    await user.click(screen.getByLabelText("Acknowledge Instrument Proficiency Check"));
     await vi.waitFor(() =>
-      expect(replace).toHaveBeenCalledWith("/dispatch/?warns_acked=ipc", { scroll: false }),
+      expect(save).toHaveBeenCalledWith("f-1", [
+        expect.objectContaining({ kind: "soft_warning", key: "ipc", on: false }),
+      ]),
     );
   });
 
-  it("clears the URL when the last ack toggles off", async () => {
-    replace.mockReset();
+  it("shows a tick at once, keeps the boxes open, and saves ticks in a row together (#145, #155)", async () => {
     const user = userEvent.setup();
-    render(
-      <SoftWarningAckList
-        findings={[grace]}
-        ackedCodes={new Set(["ipc"])}
-      />,
-    );
-    await user.click(
-      screen.getByLabelText("Acknowledge Instrument Proficiency Check"),
-    );
-    await vi.waitFor(() => expect(replace).toHaveBeenCalledWith("/dispatch/", { scroll: false }));
-  });
-
-  it("shows a tick at once, keeps the boxes open, and sends ticks in a row together (#145)", async () => {
-    // The client, 29 Oct: each tick said "saving" for 5-10 s, nine times.
-    const user = userEvent.setup();
-    render(<SoftWarningAckList findings={[grace, medical]} ackedCodes={new Set()} />);
+    render(<SoftWarningAckList flightId="f-1" findings={[grace, medical]} ackedCodes={new Set()} />);
     const ipc = screen.getByLabelText("Acknowledge Instrument Proficiency Check");
     const med = screen.getByLabelText("Acknowledge Medical Certificate");
-
     await user.click(ipc);
     expect(ipc).toBeChecked();
     expect(med).toBeEnabled();
     await user.click(med);
     expect(med).toBeChecked();
-    expect(replace).not.toHaveBeenCalled();
-
-    await vi.waitFor(() => expect(replace).toHaveBeenCalledTimes(1));
-    expect(replace).toHaveBeenCalledWith("/dispatch/?warns_acked=ipc%2Cmedical_certificate", {
-      scroll: false,
-    });
+    expect(save).not.toHaveBeenCalled();
+    await vi.waitFor(() => expect(save).toHaveBeenCalledTimes(1));
+    expect(save.mock.calls[0][1] as unknown[]).toHaveLength(2);
   });
 
   it("acknowledges every warning in one go", async () => {
     const user = userEvent.setup();
-    render(<SoftWarningAckList findings={[grace, medical]} ackedCodes={new Set()} />);
+    render(<SoftWarningAckList flightId="f-1" findings={[grace, medical]} ackedCodes={new Set()} />);
     await user.click(screen.getByRole("button", { name: "Acknowledge all" }));
     expect(screen.getByLabelText("Acknowledge Instrument Proficiency Check")).toBeChecked();
     expect(screen.getByLabelText("Acknowledge Medical Certificate")).toBeChecked();
-    expect(screen.queryByRole("button", { name: "Acknowledge all" })).not.toBeInTheDocument();
-    await vi.waitFor(() =>
-      expect(replace).toHaveBeenCalledWith(
-        "/dispatch/?warns_acked=ipc%2Cmedical_certificate",
-        { scroll: false },
-      ),
-    );
-    expect(replace).toHaveBeenCalledTimes(1);
+    await vi.waitFor(() => expect(save).toHaveBeenCalledTimes(1));
+    expect((save.mock.calls[0][1] as { key: string }[]).map((c) => c.key).sort()).toEqual([
+      "ipc",
+      "medical_certificate",
+    ]);
   });
 
-  it("reads the box from the URL again once the URL has the tick", async () => {
+  it("a tick that wasn't saved goes back, and says so", async () => {
+    save.mockResolvedValue({ ok: false, error: "Only a dispatcher acknowledges for release." });
+    const user = userEvent.setup();
+    render(<SoftWarningAckList flightId="f-1" findings={[grace]} ackedCodes={new Set()} />);
+    await user.click(screen.getByLabelText("Acknowledge Instrument Proficiency Check"));
+    expect(await screen.findByRole("alert")).toHaveTextContent("Only a dispatcher");
+    expect(screen.getByLabelText("Acknowledge Instrument Proficiency Check")).not.toBeChecked();
+  });
+
+  it("reads the box from what is saved once the server has the tick", async () => {
     const user = userEvent.setup();
     const { rerender } = render(
-      <SoftWarningAckList findings={[grace, medical]} ackedCodes={new Set()} />,
+      <SoftWarningAckList flightId="f-1" findings={[grace, medical]} ackedCodes={new Set()} />,
     );
     await user.click(screen.getByLabelText("Acknowledge Instrument Proficiency Check"));
-    rerender(<SoftWarningAckList findings={[grace, medical]} ackedCodes={new Set(["ipc"])} />);
+    rerender(
+      <SoftWarningAckList flightId="f-1" findings={[grace, medical]} ackedCodes={new Set(["ipc"])} />,
+    );
     expect(screen.getByLabelText("Acknowledge Instrument Proficiency Check")).toBeChecked();
-    // Unticked elsewhere (the back button): the URL says so, and the box follows.
-    rerender(<SoftWarningAckList findings={[grace, medical]} ackedCodes={new Set()} />);
+    rerender(<SoftWarningAckList flightId="f-1" findings={[grace, medical]} ackedCodes={new Set()} />);
     expect(screen.getByLabelText("Acknowledge Instrument Proficiency Check")).not.toBeChecked();
   });
 });

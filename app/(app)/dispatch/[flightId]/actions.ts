@@ -12,6 +12,7 @@ import {
   type FlightUpdatePayload,
 } from "@/lib/api/ops";
 import { passengerSeatsRefusal } from "@/lib/flights/passenger-seats";
+import { releaseRefusal, scheduleRefusal } from "@/lib/flights/schedule-refusals";
 
 import { belowMinimumsFromError } from "@/lib/frat/weather-minimums";
 
@@ -181,6 +182,8 @@ export async function releaseFlightAction(
             "Selected PIC isn't on this tenant's roster. Refresh and pick again.",
         };
       }
+      const refused = releaseRefusal(err.message);
+      if (refused) return { ok: false, error: refused };
       return { ok: false, error: `Release failed (HTTP ${err.status}).` };
     }
     return { ok: false, error: "Release failed. Please try again." };
@@ -226,6 +229,8 @@ export async function updateFlightAction(
       }
       const overSeats = passengerSeatsRefusal(err);
       if (overSeats) return { ok: false, error: overSeats };
+      const refused = scheduleRefusal(err.message);
+      if (refused) return { ok: false, error: refused };
       return { ok: false, error: `Save failed (HTTP ${err.status}).` };
     }
     return { ok: false, error: "Save failed. Please try again." };

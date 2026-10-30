@@ -239,6 +239,10 @@ export function FlightPanel({
               <Link href={`/dispatch?flight=${flight.id}`} className={buttonOutline}>
                 Dispatch packet
               </Link>
+              {/* #155: the FRAT from dispatch's master schedule. */}
+              <Link href={`/frat/${flight.id}`} className={buttonOutline}>
+                FRAT
+              </Link>
               <Link href={`/schedule/${flight.id}/manifest`} target="_blank" rel="noopener noreferrer" className={buttonOutline}>
                 Print
               </Link>

@@ -38,7 +38,7 @@
 import { getFlightBoard } from "@/lib/api/flight-following";
 import { getFleetAirworthiness, listMelItems } from "@/lib/api/maintenance";
 import { listOpenSeats, type Opening } from "@/lib/api/open-seats";
-import { listFratAwaitingAcceptance } from "@/lib/api/ops";
+import { getDutyOverLimit, listFratAwaitingAcceptance } from "@/lib/api/ops";
 import { factorLabel } from "@/lib/frat/factors";
 import { SAFETY_REPORT_TYPE_LABELS, listSafetyReports } from "@/lib/api/safety-reports";
 import type {
@@ -52,6 +52,8 @@ export interface OperationalAlert {
   /** Stable category — useful for grouping or future filtering. */
   category:
     | "aircraft_grounded"
+    | "departure_flagged"
+    | "duty_over_limit"
     | "frat_over_limits"
     | "flight_overdue"
     | "mel_expiring"
@@ -95,7 +97,7 @@ export interface OperationalSnapshot {
 const TWO_DAYS_MS = 2 * 24 * 60 * 60 * 1000;
 
 export async function loadOperationalSnapshot(): Promise<OperationalSnapshot> {
-  const [fleet, openMels, board, newReports, openings, overLimits] = await Promise.all([
+  const [fleet, openMels, board, newReports, openings, overLimits, onDutyTooLong] = await Promise.all([
     getFleetAirworthiness().catch(() => null),
     listMelItems({ status: "open" }).catch(() => null),
     getFlightBoard("today").catch(() => null),
@@ -103,6 +105,8 @@ export async function loadOperationalSnapshot(): Promise<OperationalSnapshot> {
     listOpenSeats().catch(() => null),
     // The Chief Pilot's and DO's alone (#152): everyone else gets a 403.
     listFratAwaitingAcceptance().catch(() => null),
+    // Everyone on duty past the company's maximum (#155).
+    getDutyOverLimit().catch(() => null),
   ]);
 
   const alerts: OperationalAlert[] = [];
@@ -215,17 +219,60 @@ export async function loadOperationalSnapshot(): Promise<OperationalSnapshot> {
   // A FRAT filed over company limits waiting for the Chief Pilot or DO
   // to accept it (#152): the client's "ping to chief pilot/DO for an
   // acceptance". The flight is a no-go until one of them does.
+  // A HIGH risk too (#155): the packet HIGH or the FRAT EXTREME.
   if (overLimits) {
     for (const item of overLimits.items) {
+      const over = item.over_limit_factors.length > 0;
       alerts.push({
         id: `frat-over-limits-${item.assessment_id}`,
         severity: "red",
         category: "frat_over_limits",
-        title: `FRAT over company limits — ${item.flight_number}`,
-        detail: `${item.pilot_name ?? "The pilot"} · ${item.over_limit_factors.map(factorLabel).join(", ")} · waiting for the Chief Pilot or DO`,
+        title: over
+          ? `FRAT over company limits — ${item.flight_number}`
+          : `Risk HIGH, needs approval — ${item.flight_number}`,
+        detail: over
+          ? `${item.pilot_name ?? "The pilot"} · ${item.over_limit_factors.map(factorLabel).join(", ")} · waiting for the Chief Pilot or DO`
+          : `${item.pilot_name ?? "The pilot"} · ${item.packet_level === "high" ? "dispatch packet HIGH" : "FRAT EXTREME"} · waiting for the Chief Pilot or DO`,
         href: `/dispatch?flight=${item.flight_id}`,
         // Each FRAT filed is its own event: one filed again comes back.
         occurredAt: item.filed_at,
+      });
+    }
+  }
+
+  // A departure recorded with something wrong (#155): the PIC off duty,
+  // the release not accepted, the FRAT unsigned, no locked manifest, an
+  // hour early. Recorded because the aircraft had left; flagged here.
+  if (board) {
+    for (const row of board.items) {
+      const flags = row.departure_flags ?? [];
+      if (flags.length > 0 && row.actual_departure_at) {
+        alerts.push({
+          id: `departure-flags-${row.id}`,
+          severity: "yellow",
+          category: "departure_flagged",
+          title: `Departed with flags — ${row.flight_number}`,
+          detail: flags.map((f) => f.message).join(" "),
+          href: `/dispatch?flight=${row.id}`,
+          scopedToIcao: row.origin,
+          occurredAt: row.actual_departure_at,
+        });
+      }
+    }
+  }
+
+  // On duty past the company's maximum (#155: "The admin login has been
+  // on duty for 38.9h").
+  if (onDutyTooLong) {
+    for (const item of onDutyTooLong.items) {
+      alerts.push({
+        id: `duty-over-limit-${item.user_id}`,
+        severity: "red",
+        category: "duty_over_limit",
+        title: `On duty past the limit — ${item.full_name}`,
+        detail: `${item.elapsed_hours.toFixed(1)} h on duty; the company maximum is ${onDutyTooLong.max_duty_hours} h. Clock out, or correct the times.`,
+        href: `/compliance/pilots/${item.user_id}`,
+        occurredAt: item.clock_in_at,
       });
     }
   }
