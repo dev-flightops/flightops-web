@@ -107,6 +107,9 @@ export async function submitFratAction(
   try {
     const assessment = await submitFratAssessment(flightId, body);
     revalidatePath(`/flight-crew/preflight/${flightId}`);
+    // The flight's FRAT page and the packet show it too (#155).
+    revalidatePath(`/frat/${flightId}`);
+    revalidatePath("/dispatch");
     return { ok: true, assessment };
   } catch (err) {
     return { ok: false, error: fratErrorToMessage(err) };
@@ -131,6 +134,10 @@ function fratErrorToMessage(err: unknown): string {
     if (err.status === 401) return "Your session expired — sign in again.";
     if (err.status === 400) return "One of the answers is out of range (0–5).";
     if (err.status === 404) return "Submit an assessment first.";
+    if (err.status === 409 && err.message.includes("frat_locked"))
+      return "The flight is released: its FRAT stays as signed. Dispatch pulls the release back to change it.";
+    if (err.status === 409 && err.message.includes("pic_required"))
+      return "The flight has no PIC yet: put one on the crew, then file the FRAT for them.";
     if (err.status === 409) return "Authorization not required for this risk level.";
     if (err.status === 422 && err.message.includes("below_approach_minimums_not_over_limits"))
       return "Below the approach minimums is scored 5, over company limits.";
