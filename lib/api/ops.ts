@@ -47,6 +47,7 @@ import type {
   FratPrefillRequest,
   FratPrefillResponse,
   FratAuthorizeRequest,
+  FratOverLimits,
   FratSubmitRequest,
   LogCompletionRequest,
   LogCompletionResponse,
@@ -623,6 +624,27 @@ export async function getFratBlockEligibility(
     `/ops/frat/${flightId}/block-eligibility`,
     { method: "POST", body: JSON.stringify(body) },
   );
+}
+
+/** The flight's latest FRAT if it was filed over company limits, and its
+ *  acceptance; null when it wasn't (#152). Any staff. */
+export async function getFratOverLimits(flightId: string): Promise<FratOverLimits | null> {
+  return apiFetch<FratOverLimits | null>(`/ops/frat/${flightId}/over-limits`);
+}
+
+/** The Chief Pilot or DO accepts the flight's FRAT over company limits,
+ *  with a reason (#152). */
+export async function acceptFratOverLimits(flightId: string, reason: string): Promise<FratOverLimits> {
+  return apiFetch<FratOverLimits>(`/ops/frat/${flightId}/accept-over-limits`, {
+    method: "POST",
+    body: JSON.stringify({ reason }),
+  });
+}
+
+/** FRATs over company limits waiting for the Chief Pilot or DO (#152).
+ *  403 for everyone else. */
+export async function listFratAwaitingAcceptance(): Promise<{ items: FratOverLimits[] }> {
+  return apiFetch<{ items: FratOverLimits[] }>("/ops/frat/awaiting-acceptance");
 }
 
 export async function recordFratAuthorization(

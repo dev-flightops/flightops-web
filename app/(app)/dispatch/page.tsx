@@ -3,6 +3,7 @@ import { auth } from "@/auth";
 import {
   AIRWORTHINESS_WRITERS,
   DISPATCH_WRITERS,
+  FRAT_OVER_LIMIT_ACCEPTORS,
   hasAnyRole,
   OVERRIDE_AUTHORITY,
   PLAN_REVIEWERS,
@@ -14,6 +15,7 @@ import { BookingsAwaitingFlightPanel } from "@/components/dispatch/packet/bookin
 import { ForeFlightPlanPanel } from "@/components/dispatch/packet/foreflight-plan-panel";
 import { ForeFlightPlansWaitingBanner } from "@/components/dispatch/packet/foreflight-plans";
 import { WeightReturnsPanel } from "@/components/dispatch/packet/weight-returns-panel";
+import { FratOverLimitsPanel } from "@/components/dispatch/packet/frat-over-limits-panel";
 import { LoadFailedNotice } from "@/components/ff/setup-notice";
 import { Loads } from "@/lib/api/loads";
 import {
@@ -34,6 +36,7 @@ import {
   getComplianceBoard,
   getCrewOptions,
   getFlight,
+  getFratOverLimits,
   getPicCompliance,
   listAircraft,
   getWeatherMinimums,
@@ -164,6 +167,8 @@ export default async function DispatchPage({
   //
   // Soft-fail: a roster that will not load should cost the dispatcher
   // the crew panel, not the whole packet.
+  // The flight's FRAT, when filed over company limits (#152).
+  const overLimits = selectedId ? await getFratOverLimits(selectedId).catch(() => null) : null;
   const crew = selectedId
     ? await listFlightCrew(selectedId).catch(() => ({
         items: [],
@@ -398,6 +403,13 @@ export default async function DispatchPage({
             />
           )}
         </LoadFromSchedule>
+
+        {overLimits ? (
+          <FratOverLimitsPanel
+            view={overLimits}
+            canAccept={hasAnyRole(viewerRoles, FRAT_OVER_LIMIT_ACCEPTORS)}
+          />
+        ) : null}
 
         <FlightDetailsPanel
           flight={selectedFlight}

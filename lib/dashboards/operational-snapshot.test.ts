@@ -6,6 +6,7 @@ const api = vi.hoisted(() => ({
   getFlightBoard: vi.fn(),
   listSafetyReports: vi.fn(),
   listOpenSeats: vi.fn(),
+  listFratAwaitingAcceptance: vi.fn(),
 }));
 vi.mock("@/lib/api/maintenance", () => ({
   getFleetAirworthiness: api.getFleetAirworthiness,
@@ -19,6 +20,7 @@ vi.mock("@/lib/api/safety-reports", async (importOriginal) => ({
   listSafetyReports: api.listSafetyReports,
 }));
 vi.mock("@/lib/api/open-seats", () => ({ listOpenSeats: api.listOpenSeats }));
+vi.mock("@/lib/api/ops", () => ({ listFratAwaitingAcceptance: api.listFratAwaitingAcceptance }));
 
 import type { Opening, OpeningPassenger } from "@/lib/api/open-seats";
 
@@ -41,6 +43,8 @@ beforeEach(() => {
   api.getFlightBoard.mockResolvedValue({ items: [] });
   api.listSafetyReports.mockReset();
   api.listOpenSeats.mockReset().mockResolvedValue([]);
+  // Everyone but the Chief Pilot and DO gets a 403 (#152).
+  api.listFratAwaitingAcceptance.mockReset().mockRejectedValue(new Error("403"));
 });
 
 describe("new safety report alerts (#58)", () => {
@@ -143,5 +147,41 @@ describe("seat open alerts (#120)", () => {
         }),
       ),
     ).toBe("3 waiting: 2 texts not sent");
+  });
+});
+
+describe("FRATs over company limits (#152)", () => {
+  it("pings the Chief Pilot and DO: one red alert per FRAT waiting, to its packet", async () => {
+    api.listSafetyReports.mockResolvedValue({ items: [], total: 0 });
+    api.listFratAwaitingAcceptance.mockResolvedValue({
+      items: [
+        {
+          flight_id: "f-1122",
+          flight_number: "MM1122",
+          scheduled_departure_at: "2026-10-30T17:33:00Z",
+          assessment_id: "a-1",
+          pilot_name: "Bob Henderson",
+          over_limit_factors: ["wx_wind"],
+          mitigations: "Planning to use runway 12.",
+          filed_at: "2026-10-30T16:00:00Z",
+          accepted: null,
+        },
+      ],
+    });
+    const [alert] = (await loadOperationalSnapshot()).alerts;
+    expect(alert).toMatchObject({
+      id: "frat-over-limits-a-1",
+      severity: "red",
+      category: "frat_over_limits",
+      title: "FRAT over company limits — MM1122",
+      href: "/dispatch?flight=f-1122",
+      occurredAt: "2026-10-30T16:00:00Z",
+    });
+    expect(alert.detail).toMatch(/^Bob Henderson · .+ · waiting for the Chief Pilot or DO$/);
+  });
+
+  it("raises nothing for anyone else", async () => {
+    api.listSafetyReports.mockResolvedValue({ items: [], total: 0 });
+    expect((await loadOperationalSnapshot()).alerts).toEqual([]);
   });
 });

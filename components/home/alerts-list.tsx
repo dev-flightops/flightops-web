@@ -51,6 +51,7 @@ import type { OperationalAlert } from "@/lib/dashboards/operational-snapshot";
 
 const CATEGORY_LABEL: Record<OperationalAlert["category"], string> = {
   aircraft_grounded: "Aircraft grounded",
+  frat_over_limits: "FRATs over company limits",
   flight_overdue: "Flights overdue",
   mel_expiring: "MELs expiring within 48 hours",
   safety_report_new: "New safety reports",
@@ -60,6 +61,7 @@ const CATEGORY_LABEL: Record<OperationalAlert["category"], string> = {
 // Order the groups by what stops an aeroplane leaving, not alphabetically.
 const CATEGORY_ORDER: OperationalAlert["category"][] = [
   "aircraft_grounded",
+  "frat_over_limits",
   "flight_overdue",
   "mel_expiring",
   "safety_report_new",

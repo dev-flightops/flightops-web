@@ -665,6 +665,39 @@ describe("over company limits", () => {
     ).toBeInTheDocument();
     expect(screen.queryByText(/no-go/i)).not.toBeInTheDocument();
   });
+
+  it("says the Chief Pilot and DO were alerted, and lets it go once one accepts (#152)", () => {
+    // The client, 29 Oct: "a manager override at this step. Sends a ping
+    // to chief pilot/DO for an acceptance."
+    const { unmount } = renderStep({ initial: filedOverLimits() });
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "The Chief Pilot and the DO have been alerted. The flight can go once one of them accepts it on the flight's dispatch packet.",
+    );
+    unmount();
+
+    renderStep({
+      initial: {
+        ...filedOverLimits(),
+        over_limits_accepted: {
+          id: "auth-1",
+          frat_assessment_id: "a-1",
+          kind: "over_limits_accepted" as const,
+          authorizer_name: "Dan Ops",
+          authorizer_role: "Director of Operations",
+          authorizer_cert_number: null,
+          notes: "Runway 12 keeps it in limits",
+          authorized_at: "2026-09-25T12:20:00Z",
+        },
+      },
+    });
+    expect(screen.queryByText(/this flight is a no-go/i)).not.toBeInTheDocument();
+    expect(screen.getByText("Accepted")).toBeInTheDocument();
+    expect(screen.getByRole("note")).toHaveTextContent(
+      "Wind & gusts: accepted by Dan Ops (Director of Operations), Sep 25, 12:20Z.",
+    );
+    expect(screen.getByRole("note")).toHaveTextContent("“Runway 12 keeps it in limits”");
+    expect(screen.getByRole("button", { name: /Continue to Step 5/i })).toBeInTheDocument();
+  });
 });
 
 // ---- #88: never below the dispatch packet --------------------------------------
