@@ -91,7 +91,10 @@ export default async function GroundOpsHubPage() {
 
       <section className="mb-6 grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-3 lg:grid-cols-6">
         <StatTile label="Flights Today" value={flightsToday} />
-        <StatTile label="Stations" value={stationCount} />
+        {/* Every airport on file, villages included; Ramp Ops lists the
+            company's bases (#157: "Ground Ops hub says 38 stations, Ramp
+            Ops lists 13"). */}
+        <StatTile label="Stations on file" value={stationCount} />
         <StatTile
           label="Pending Fuel"
           value={pendingFuel}
@@ -130,7 +133,7 @@ export default async function GroundOpsHubPage() {
           title="Station Management"
           blurb="Airport and base master data. Runway information, station issues, and operational notes."
           links={[
-            { ...L.allStations, sublabel: `${stationCount} stations configured` },
+            { ...L.allStations, sublabel: `${stationCount} on file: bases, airports and villages` },
             {
               ...L.stationIssues,
               badge:

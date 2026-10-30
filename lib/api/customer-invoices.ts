@@ -43,6 +43,9 @@ export interface InvoiceLine {
 export interface InvoiceCustomerRef {
   id: string;
   full_name: string;
+  /** Who the invoice is addressed to: the company for a company
+   *  customer, else the person (#157). Absent from an older service. */
+  bill_to?: string | null;
 }
 
 export interface CustomerInvoice {

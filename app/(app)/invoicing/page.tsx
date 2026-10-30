@@ -254,7 +254,7 @@ export default async function InvoicingPage({
                           )}
                         </td>
                         <td className="px-4 py-2.5 text-foreground">
-                          {inv.customer?.full_name ?? (
+                          {inv.customer?.bill_to ?? inv.customer?.full_name ?? (
                             <span className="text-muted-foreground">
                               Walk-in
                             </span>

@@ -7,6 +7,7 @@ import { notFound } from "next/navigation";
 import { FlightCategoryBadge } from "@/components/weather/flight-category-badge";
 import { ApiError } from "@/lib/api/client";
 import { getWeatherBriefing } from "@/lib/api/weather";
+import { zoneAbbreviation } from "@/lib/format/local-time";
 import type {
   WeatherBriefingResponse,
   WeatherReportResponse,
@@ -97,7 +98,7 @@ function Header({ briefing }: { briefing: WeatherBriefingResponse }) {
     hour: "2-digit",
     minute: "2-digit",
     hour12: false,
-  })} AKD`;
+  })} ${zoneAbbreviation("America/Anchorage", created)}`;
   return (
     <PageHeader
       title="Weather Briefing"

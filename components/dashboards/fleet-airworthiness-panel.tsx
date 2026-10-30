@@ -3,6 +3,7 @@ import Link from "next/link";
 import { linkCaps } from "@/components/ff/controls";
 
 import type { FleetAircraftSummary } from "@/lib/api/types";
+import { inFleet } from "@/lib/fleet/in-fleet";
 
 /**
  * Fleet Airworthiness panel — vertical list of every active aircraft
@@ -34,10 +35,12 @@ export function FleetAirworthinessPanel({
   fleet,
   title = "Fleet Airworthiness",
 }: Props) {
-  const active = fleet.filter((r) => r.is_active);
+  // Grounded aircraft too (#157): "0 open squawks though N301PA grounded
+  // by one". Grounding clears is_active, so they had dropped out.
+  const active = fleet.filter(inFleet);
   const openSquawks = active.reduce((s, r) => s + r.open_squawk_count, 0);
   const openMels = active.reduce((s, r) => s + r.open_mel_count, 0);
-  const pendingRts = active.filter((r) => !r.is_airworthy).length;
+  const pendingRts = active.filter((r) => !r.is_active || !r.is_airworthy).length;
 
   return (
     <section className="overflow-hidden rounded-lg border border-border bg-card">

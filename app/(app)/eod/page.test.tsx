@@ -73,15 +73,48 @@ describe("EodPage", () => {
 
     expect(listFlights).toHaveBeenCalledTimes(3);
     const calls = listFlights.mock.calls.map((c) => c[0]);
+    // The company's day (#157): landed today, and due out today.
     expect(calls).toContainEqual(
-      expect.objectContaining({ status: "completed", onDate: "2026-06-15" }),
+      expect.objectContaining({ status: "completed", arrivedOnCompanyDate: "2026-06-15" }),
     );
     expect(calls).toContainEqual(
       expect.objectContaining({ status: "released" }),
     );
     expect(calls).toContainEqual(
-      expect.objectContaining({ status: "scheduled" }),
+      expect.objectContaining({ status: "scheduled", onCompanyDate: "2026-06-15" }),
     );
+  });
+
+  it("flags a released flight past its arrival, with its date (#157)", async () => {
+    // The client: "EOD 'No flags' with two overdue flights."
+    listFlights
+      .mockResolvedValueOnce({ items: [], total: 0 })
+      .mockResolvedValueOnce({
+        items: [
+          makeFlight({
+            flight_number: "MM001",
+            status: "released",
+            scheduled_departure_at: "2026-06-14T18:00:00Z",
+            scheduled_arrival_at: "2026-06-14T19:00:00Z",
+          }),
+          makeFlight({
+            flight_number: "AIR1",
+            status: "released",
+            scheduled_departure_at: "2026-06-15T19:30:00Z",
+            scheduled_arrival_at: "2026-06-15T21:00:00Z",
+          }),
+        ],
+        total: 2,
+      })
+      .mockResolvedValueOnce({ items: [], total: 0 });
+
+    await renderPage();
+
+    expect(screen.getByText(/Overdue: released, past their arrival, not closed \(1\)/)).toBeInTheDocument();
+    const flagged = screen.getByText("MM001").closest("li");
+    expect(flagged).toHaveTextContent("Jun 14");
+    expect(flagged).toHaveTextContent("no landing recorded");
+    expect(screen.queryByText(/No flags/)).toBeNull();
   });
 
   it("renders the four stat tiles with correct counts + computed block hours", async () => {

@@ -9,15 +9,20 @@ import { PillarBar } from "@/components/dashboards/pillar-bar";
 import { ScorePill } from "@/components/dashboards/score-pill";
 import { StatTile } from "@/components/dashboards/stat-tile";
 import { listMyTenants } from "@/lib/api/auth";
-import { getFlightStats } from "@/lib/api/ops";
+import { listCustomerInvoices } from "@/lib/api/customer-invoices";
+import { getComplianceBoard, getFlightStats } from "@/lib/api/ops";
 import { loadOperationalSnapshot } from "@/lib/dashboards/operational-snapshot";
 import { snapshotAlertsToList } from "@/lib/dashboards/snapshot-to-alerts";
 
 export default async function ExecutiveDashboardPage() {
-  const [stats, tenantsResponse, snapshot] = await Promise.all([
+  const [stats, tenantsResponse, snapshot, crew, invoices] = await Promise.all([
     getFlightStats().catch(() => null),
     listMyTenants().catch(() => ({ tenants: [] })),
     loadOperationalSnapshot(),
+    // #157: the client's "7 tiles 'Not built yet'". Crew and receivables
+    // come from the currency board and billing; the rest are hidden.
+    getComplianceBoard().catch(() => null),
+    listCustomerInvoices({ limit: 1 }).catch(() => null),
   ]);
 
   const todayCount = stats?.today.total ?? 0;
@@ -101,7 +106,7 @@ export default async function ExecutiveDashboardPage() {
           per-metric, not status-driven. Aircraft Airborne stays blue
           even at 0; Flights Today + Fleet Airworthy stay green; the
           M3/M4-blocked tiles (Crew, Overrides) stay muted. */}
-      <div className="grid grid-cols-2 gap-x-6 gap-y-5 sm:grid-cols-3 md:grid-cols-5">
+      <div className="grid grid-cols-2 gap-x-6 gap-y-5 sm:grid-cols-3 md:grid-cols-4">
         <StatTile
           value={snapshot.airborneCount}
           label="Aircraft Airborne"
@@ -119,25 +124,40 @@ export default async function ExecutiveDashboardPage() {
           sub={`${fleetGrounded} on hold`}
           tone="green"
         />
-        {/* Not wired. These printed "0/0" and "0" as if measured; a dash
-            and "Not built yet" is what is true. */}
-        <StatTile value="—" label="Crew Current" sub="Not built yet" tone="muted" />
-        <StatTile value="—" label="Overrides (30d)" sub="Not built yet" tone="muted" />
+        {/* From the currency board (#157). A tile with nothing behind it
+            (overrides) isn't shown. */}
+        {crew ? (
+          <StatTile
+            value={`${crew.chips.fully_current}/${crew.rows.length}`}
+            label="Crew Current"
+            sub={
+              crew.chips.records_missing
+                ? `${crew.chips.records_missing} with records missing`
+                : `${crew.chips.non_current} not current`
+            }
+            tone={crew.chips.non_current > 0 ? "red" : "green"}
+          />
+        ) : null}
       </div>
 
       {/* Row 2 — 6-col financial row. Smaller value font (size="small")
           and each tile takes a stable brand color per legacy: green
           revenue/margin, blue rev-per-hour, yellow forecast, purple AR,
           and the analytics → arrow stays neutral. */}
-      <div className="mt-6 grid grid-cols-2 gap-x-6 gap-y-5 border-t border-border pt-5 sm:grid-cols-3 md:grid-cols-6">
-        {/* The five money tiles were literal "$0" and "0%" — an executive
-            reading them would take the operation for broke. They are not
-            wired; the Executive Summary report computes these figures. */}
-        <StatTile value="—" label="Revenue MTD" sub="Not built yet" tone="muted" size="small" />
-        <StatTile value="—" label="Profit Margin" sub="Not built yet" tone="muted" size="small" />
-        <StatTile value="—" label="Rev / FH" sub="Not built yet" tone="muted" size="small" />
-        <StatTile value="—" label="30d Forecast" sub="Not built yet" tone="muted" size="small" />
-        <StatTile value="—" label="Outstanding AR" sub="Not built yet" tone="muted" size="small" />
+      <div className="mt-6 grid grid-cols-2 gap-x-6 gap-y-5 border-t border-border pt-5 sm:grid-cols-3 md:grid-cols-5">
+        {/* The money tiles were literal "$0" and "0%", then "Not built yet"
+            (#157). Receivables come from billing; revenue, margin, rev/FH
+            and the forecast are the Executive Summary report's, so they
+            aren't repeated here. */}
+        {invoices ? (
+          <StatTile
+            value={`$${Math.round(invoices.outstanding_cents / 100).toLocaleString("en-US")}`}
+            label="Outstanding AR"
+            sub="sent invoices less payments"
+            tone="default"
+            size="small"
+          />
+        ) : null}
         <StatTile
           value="→"
           label="Executive Analytics"
@@ -155,12 +175,12 @@ export default async function ExecutiveDashboardPage() {
               Active Alerts
             </h2>
             <span className="text-[0.65rem] text-muted-foreground">
-              {snapshot.alerts.length} live · 6 more alert types land with their services
+              {snapshot.alerts.length} live
             </span>
           </div>
           <AlertList
             alerts={snapshotAlertsToList(snapshot.alerts)}
-            emptyHint="No grounded aircraft, overdue flights or MELs expiring in the next two days. Pilot currency, NOTAM and safety alerts are not fed into this list — safety-service ships hazards but nothing routes them here."
+            emptyHint="No grounded aircraft, overdue flights or MELs expiring in the next two days."
           />
         </section>
 

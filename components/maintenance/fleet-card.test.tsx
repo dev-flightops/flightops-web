@@ -236,6 +236,12 @@ describe("FleetCard (M2-G-22b legacy layout)", () => {
 // real state — spreadsheet imports routinely carry only a tail number.
 
 describe("formatIdentityLine (HALT-2 legacy fidelity)", () => {
+  it("doesn't repeat a make the model already names (#157)", () => {
+    expect(
+      formatIdentityLine({ year: 2016, make: "Cessna", model: "Cessna 208 Caravan" }),
+    ).toBe("2016 Cessna 208 Caravan");
+  });
+
   it("joins year, make and model in legacy order", () => {
     expect(
       formatIdentityLine({ year: 2019, make: "Cessna", model: "208 Caravan" }),

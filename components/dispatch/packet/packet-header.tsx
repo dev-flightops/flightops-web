@@ -73,15 +73,8 @@ export function PacketHeader({
             AI Assistant
           </OpenAssistantButton>
 
-          {/* History — disabled, M3 (no dispatch-packet history table yet). */}
-          <button
-            type="button"
-            disabled
-            title="Packet history · Coming in M3"
-            className={cn(buttonOutline, "cursor-not-allowed")}
-          >
-            History
-          </button>
+          {/* History had sat here disabled ("Coming in M3"): there is no
+              packet history yet, so it isn't shown (#157). */}
         </>
       }
     />

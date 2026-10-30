@@ -49,7 +49,7 @@ const ALERT_VIEWING_ROLES = roleGate(
  * grid of icon tiles. In order:
  *
  *   1. The greeting, with the operator's name above it.
- *   2. Today's figures: airborne, on the ground, aircraft on hold.
+ *   2. Today's fleet: aircraft airborne, on the ground, on hold.
  *   3. Active alerts: role-gated, as the M2 spec has it.
  *   4. The departments as a directory: each home entry under the nav
  *      department its route belongs to, a plain link with its one-line
@@ -111,9 +111,10 @@ export default async function HomePage() {
     return sessionRoles.some((r) => (l.roles as readonly string[]).includes(r));
   });
 
+  // Aircraft, all three (#157): "1 on the ground" had counted today's
+  // unflown flights, beside 8 aircraft, 3 on hold and 1 airborne.
   const airborne = snapshot.airborneCount;
-  const todayTotal = stats ? stats.today.scheduled + stats.today.released : 0;
-  const onGround = Math.max(0, todayTotal - airborne);
+  const onGround = stats ? Math.max(0, stats.aircraft_active - airborne) : 0;
   const acftHold = stats
     ? Math.max(0, stats.aircraft_total - stats.aircraft_active)
     : 0;

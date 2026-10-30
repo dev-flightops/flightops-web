@@ -15,6 +15,7 @@ import { DISPATCH_WRITERS, hasAnyRole } from "@/lib/roles";
 
 import { NewCharterToggle } from "./new-charter-toggle";
 import { TransitionButtons } from "./transition-buttons";
+import { DEFAULT_TIME_ZONE, localDay } from "@/lib/format/local-time";
 
 /**
  * /reservations/charter — Charter Pipeline.
@@ -109,6 +110,7 @@ export default async function CharterPipelinePage({
 }) {
   const params = await searchParams;
   const active = parseStatus(params.status);
+  const today = localDay(DEFAULT_TIME_ZONE);
   // Who may open the charter's flight (#133): ops' DispatcherClaims.
   const canBuildFlights = hasAnyRole((await auth())?.roles ?? [], DISPATCH_WRITERS);
 
@@ -213,6 +215,7 @@ export default async function CharterPipelinePage({
                     </td>
                     <td className="whitespace-nowrap px-4 py-3">
                       <CharterStatusBadge status={c.status} />
+                      <PastDue charter={c} today={today} />
                     </td>
                     <td className="whitespace-nowrap px-4 py-3 text-right">
                       <div className="flex items-center justify-end gap-3">
@@ -232,6 +235,31 @@ export default async function CharterPipelinePage({
       )}
     </div>
   );
+}
+
+/**
+ * #157: "Confirmed charter dated Oct 25 (CHR-9060A454) still 'Confirmed',
+ * no flight, no flag. Several August requests still open." A charter
+ * whose date has passed says so: confirmed with no flight, or a request
+ * or quote nobody closed.
+ */
+function PastDue({ charter, today }: { charter: CharterRow; today: string }) {
+  if (charter.requested_date.slice(0, 10) >= today) return null;
+  if (charter.status === "confirmed" && !charter.flight_id) {
+    return (
+      <div className="mt-0.5">
+        <span className="status-mark text-status-red">Date passed, no flight</span>
+      </div>
+    );
+  }
+  if (charter.status === "request" || charter.status === "quoted") {
+    return (
+      <div className="mt-0.5">
+        <span className="status-mark text-status-yellow">Date passed, still open</span>
+      </div>
+    );
+  }
+  return null;
 }
 
 function CharterStatusBadge({ status }: { status: CharterStatus }) {

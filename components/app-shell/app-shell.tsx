@@ -71,7 +71,9 @@ export function AppShell({
       {noticeSlot ? (
         <div className="mx-auto w-full max-w-7xl px-4 pt-4 sm:px-6">{noticeSlot}</div>
       ) : null}
-      <main className="flex-1">{children}</main>
+      {/* Room under the last row for the floating Ask AI and Safety
+          buttons (#157: on a phone they covered the content). */}
+      <main className="flex-1 pb-28 sm:pb-20">{children}</main>
     </div>
   );
 }

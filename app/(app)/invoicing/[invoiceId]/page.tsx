@@ -155,7 +155,18 @@ export default async function InvoiceDetailPage({
 
       <section className="mb-6 grid grid-cols-2 gap-4 rounded-lg border border-border bg-card p-5 sm:grid-cols-4">
         <Field label="Bill to">
-          {invoice.customer?.full_name ?? "Walk-in customer"}
+          {invoice.customer ? (
+            <>
+              {invoice.customer.bill_to ?? invoice.customer.full_name}
+              {invoice.customer.bill_to && invoice.customer.bill_to !== invoice.customer.full_name ? (
+                <span className="block text-xs text-muted-foreground">
+                  Attn: {invoice.customer.full_name}
+                </span>
+              ) : null}
+            </>
+          ) : (
+            "Walk-in customer"
+          )}
         </Field>
         <Field label="Flight">{flightBits.join(" · ") || "—"}</Field>
         <Field label="Issued">{invoice.invoice_date}</Field>

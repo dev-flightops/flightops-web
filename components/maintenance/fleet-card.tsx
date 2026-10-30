@@ -152,9 +152,14 @@ export function formatIdentityLine({
   model: string | null;
 }): string {
   const modelText = displayModel(model);
+  const makeText = make?.trim() || null;
+  // A model that already names its maker ("Cessna 208 Caravan") isn't
+  // given it twice (#157: "Cessna Cessna 208 Caravan").
+  const named =
+    makeText !== null && modelText.toLowerCase().startsWith(`${makeText.toLowerCase()} `);
   const parts = [
     year != null ? String(year) : null,
-    make?.trim() || null,
+    named ? null : makeText,
     // displayModel() returns the "No details" placeholder, which is a
     // fallback for the whole line rather than a part of it.
     modelText === "No details" ? null : modelText,

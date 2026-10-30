@@ -7,6 +7,7 @@ import Link from "next/link";
 import { FlightCategoryBadge } from "@/components/weather/flight-category-badge";
 import { ApiError } from "@/lib/api/client";
 import { listWeatherBriefings } from "@/lib/api/weather";
+import { zoneAbbreviation } from "@/lib/format/local-time";
 import type { WeatherBriefingListItem } from "@/lib/api/types";
 
 /**
@@ -28,7 +29,8 @@ import type { WeatherBriefingListItem } from "@/lib/api/types";
 const BRIEFINGS_LIMIT = 100;
 
 function formatBriefingTimestamp(iso: string): string {
-  // "MM/DD HH:MM AKD" matches the legacy column format exactly.
+  // "MM/DD HH:MM AKDT", legacy's column with the zone's own abbreviation
+  // (#157: "AKD" stood for both AKDT and AKST).
   const d = new Date(iso);
   const md = d.toLocaleDateString("en-US", {
     timeZone: "America/Anchorage",
@@ -41,7 +43,7 @@ function formatBriefingTimestamp(iso: string): string {
     minute: "2-digit",
     hour12: false,
   });
-  return `${md} ${hm} AKD`;
+  return `${md} ${hm} ${zoneAbbreviation("America/Anchorage", d)}`;
 }
 
 export default async function WeatherBriefingsPage() {

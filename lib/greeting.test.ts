@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { firstNameFrom, greetingForHour } from "./greeting";
+import { currentGreeting, firstNameFrom, greetingForHour } from "./greeting";
 
 describe("greetingForHour", () => {
   it.each([
@@ -34,5 +34,13 @@ describe("firstNameFrom", () => {
     expect(firstNameFrom(undefined)).toBe("");
     expect(firstNameFrom("")).toBe("");
     expect(firstNameFrom("   ")).toBe("");
+  });
+});
+
+describe("currentGreeting (#157)", () => {
+  it("greets by the hour in Alaska, not the server's", () => {
+    // 15:30Z on 30 Oct is 07:30 AKDT: the client got "Good afternoon".
+    expect(currentGreeting(new Date("2026-10-30T15:30:00Z"))).toBe("Good morning");
+    expect(currentGreeting(new Date("2026-10-30T23:30:00Z"))).toBe("Good afternoon");
   });
 });
