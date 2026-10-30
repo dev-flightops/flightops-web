@@ -9,7 +9,7 @@ const { completeStepAction } = vi.hoisted(() => ({
 vi.mock("./actions", () => ({ completeStepAction }));
 
 import { PostFlightLogStep } from "./step-8-post-flight-log";
-import type { FlightDetail } from "@/lib/api/types";
+import type { FlightDetail, FlightLogResponse } from "@/lib/api/types";
 
 const FLIGHT = {
   id: "f-1",
@@ -70,5 +70,19 @@ describe("PostFlightLogStep (M2-G-7 step 8)", () => {
       screen.getByRole("button", { name: /Mark preflight complete/i }),
     );
     expect(await screen.findByRole("alert")).toHaveTextContent(/HTTP 500/i);
+  });
+
+  it("opens the draft the arrival filled in (the client, 30 Oct)", () => {
+    const draft = { id: "l-1", status: "draft" } as FlightLogResponse;
+    render(<PostFlightLogStep flightId="f-1" flight={FLIGHT} flightLog={draft} />);
+    expect(screen.getByText(/Your log for GV207 is waiting as a draft, filled from the flight/)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /Open your log/ })).toHaveAttribute("href", "/flight-crew/elog/l-1");
+  });
+
+  it("says so once the log is submitted", () => {
+    const submitted = { id: "l-1", status: "submitted" } as FlightLogResponse;
+    render(<PostFlightLogStep flightId="f-1" flight={FLIGHT} flightLog={submitted} />);
+    expect(screen.getByText("Your log for GV207 is submitted.")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /Open your log/ })).toHaveAttribute("href", "/flight-crew/elog/l-1");
   });
 });
