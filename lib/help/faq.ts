@@ -44,6 +44,10 @@ export const FAQ: FaqEntry[] = [
       "**Below the company's dispatch minimums**: see [Why does it say the weather is below minimums?](/help#faq-below-minimums). Nothing can be acknowledged: the weather has to come up, or the flight goes another way.",
       "**The route has stale or missing weather**: refresh the weather. If it stays stale and you have checked conditions another way, acknowledge it on the weather panel.",
       "**Selected PIC isn't on this tenant's roster**: refresh the page and pick the PIC again.",
+      "**The FRAT**: there is none yet, the pilot or a dispatcher hasn't signed it, or the Chief Pilot or DO hasn't approved a HIGH risk or a FRAT over company limits. The packet's FRAT panel says which.",
+      "**The load is over the aircraft's useful load**: take passengers, cargo or fuel off. Without a manifest the release judges the passengers and cargo typed on the flight, passengers at 190 lb.",
+      "**The aircraft has no max payload on record**: set it in Settings → Fleet; the load can't be checked without it.",
+      "**Acknowledge each open MEL on the aircraft first**: tick each MEL item listed on the packet.",
     ],
     pages: ["/dispatch", "/compliance/crew-currency", "/maintenance/squawks"],
   },
@@ -68,8 +72,8 @@ export const FAQ: FaqEntry[] = [
     points: [
       "**LOW**, under 15: go ahead.",
       "**MEDIUM**, 15 to 24: go ahead, with the mitigations noted.",
-      "**HIGH**, 25 to 34: contact dispatch and record it before going on.",
-      "**EXTREME**, 35 or more: a Chief Pilot or the Director of Operations has to authorize the flight.",
+      "**HIGH**, 25 to 34: dispatch reviews it; the dispatcher's sign-off on the FRAT is that review.",
+      "**EXTREME**, 35 or more: the Chief Pilot or the Director of Operations approves the flight from their own login before it can be released.",
     ],
     pages: ["/flight-crew", "/settings/frat"],
   },
@@ -77,7 +81,7 @@ export const FAQ: FaqEntry[] = [
     slug: "packet-and-frat",
     question: "Why does the dispatch packet show a different risk level from my FRAT?",
     answer:
-      "They are scored differently. The packet's risk assessment takes its worst single row (severity times likelihood); the FRAT adds up all its factors. A FRAT is never filed at a lower level than the packet the flight was released on, so a HIGH packet means at least a HIGH FRAT.",
+      "They are scored differently. The packet's risk assessment takes its worst single row (severity times likelihood); the FRAT adds up all its factors. A FRAT is never filed at a lower level than the packet, so a HIGH packet means at least a HIGH FRAT, and a HIGH packet needs the Chief Pilot or DO to approve the flight. A stop with no weather report scores as unknown, which is HIGH.",
     pages: ["/dispatch", "/flight-crew"],
   },
   {

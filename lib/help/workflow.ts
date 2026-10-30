@@ -77,7 +77,7 @@ export const WORKFLOW: WorkflowStage[] = [
     page: "/flight-crew",
     pageLabel: "Flight Crew",
     what:
-      "The pilot is on duty (**DUTY IN** on [Flight Crew](/flight-crew)) and works the flight's preflight in order: the dispatch release, weight and balance, weather and NOTAMs, the FRAT, duty, then accepting the flight. Squawks found at the aircraft are filed from the same page.",
+      "Before the release the pilot files the flight's FRAT and signs it, and a dispatcher signs it too; then the pilot is on duty (**DUTY IN** on [Flight Crew](/flight-crew)) and works the preflight in order: the dispatch release, weight and balance, weather and NOTAMs, the signed FRAT, duty, then accepting the flight. Squawks found at the aircraft are filed from the same page.",
   },
   {
     slug: "board",
