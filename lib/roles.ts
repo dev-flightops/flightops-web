@@ -162,10 +162,14 @@ export const CHECKIN_ROLES = roleGate(
  *  CONFIG_ROLES). */
 export const CHECKIN_CONFIG = roleGate("chief_pilot", "director_of_operations", "exec_admin");
 
-/** Lock a flight's manifest (#62). A lock is final, and legacy locks it
- *  when boarding closes, so it is the check-in roles' call. Building the
- *  manifest is MANIFEST_EDITORS'. */
+/** Lock a flight's manifest (#62), and reopen it until the flight departs
+ *  (#153). Legacy locks it when boarding closes, so it is the check-in
+ *  roles' call. Building the manifest is MANIFEST_EDITORS'. */
 export const MANIFEST_LOCKERS = CHECKIN_ROLES;
+
+/** Accept a FRAT filed over company limits, so the flight may go (#152):
+ *  the Chief Pilot or DO, from their own login, with a reason. */
+export const FRAT_OVER_LIMIT_ACCEPTORS = roleGate("chief_pilot", "director_of_operations");
 
 /** Build a manifest: its passengers, mail, cargo and fuel, its load plan,
  *  and the mail and freight waiting at a station (#62, #75). Ops'

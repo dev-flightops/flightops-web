@@ -12,6 +12,7 @@ import {
   deleteCargo,
   deletePax,
   lockManifest,
+  reopenManifest,
   MAIL_CLASSES,
   setPlannedFuel,
   mailDescription,
@@ -350,7 +351,7 @@ export async function createManifestAction(
 }
 
 /** Make the manifest final. The API admits only legacy's close-boarding
- *  roles (MANIFEST_LOCKERS) and there is no unlock. */
+ *  roles (MANIFEST_LOCKERS); they may reopen it until departure (#153). */
 export async function lockManifestAction(
   prev: ManifestFormState,
   formData: FormData,
@@ -366,6 +367,34 @@ export async function lockManifestAction(
       message: _refusal(
         err,
         "Only Ground Ops, Reservations Agents, Dispatchers, the Chief Pilot, the Director of Operations and Exec Admins lock manifests.",
+      ),
+      attempt,
+    };
+  }
+  revalidatePath(_page(flightId.data));
+  return { status: "ok", attempt };
+}
+
+/** Reopen a locked manifest so a passenger or weight can come off, until
+ *  the flight departs (#153). Same roles as locking. */
+export async function reopenManifestAction(
+  prev: ManifestFormState,
+  formData: FormData,
+): Promise<ManifestFormState> {
+  const attempt = prev.attempt + 1;
+  const flightId = _id.safeParse(formData.get("flight_id"));
+  if (!flightId.success) return { status: "error", message: "Refresh the page and try again.", attempt };
+  try {
+    await reopenManifest(flightId.data);
+  } catch (err) {
+    if (err instanceof ApiError && err.status === 409) {
+      return { status: "error", message: "The flight has departed, so its manifest stays locked.", attempt };
+    }
+    return {
+      status: "error",
+      message: _refusal(
+        err,
+        "Only Ground Ops, Reservations Agents, Dispatchers, the Chief Pilot, the Director of Operations and Exec Admins reopen manifests.",
       ),
       attempt,
     };

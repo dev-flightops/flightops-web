@@ -5,6 +5,7 @@ import { loadZoneTable } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
 import { type FlightSearchResult, searchFlights } from "@/lib/api/flight-search";
 import { getFleetAirworthiness } from "@/lib/api/maintenance";
+import { withPayloadLeft } from "@/lib/reservations/payload-left";
 import { CUSTOMERS_MAX_LIMIT, listCustomers } from "@/lib/api/reservations";
 import { utcToLocalInput, zoneFor } from "@/lib/format/local-time";
 import { cn } from "@/lib/utils";
@@ -63,15 +64,17 @@ export default async function NewBookingPage({
   let flights: FlightSearchResult[] | null = null;
   if (params.origin && params.destination && /^\d{4}-\d{2}-\d{2}$/.test(day)) {
     try {
-      flights = (
-        await searchFlights({
-          origin: params.origin,
-          destination: params.destination,
-          date: day,
-          paxCount: pax,
-          showUnavailable: true,
-        })
-      ).items;
+      flights = await withPayloadLeft(
+        (
+          await searchFlights({
+            origin: params.origin,
+            destination: params.destination,
+            date: day,
+            paxCount: pax,
+            showUnavailable: true,
+          })
+        ).items,
+      );
     } catch (err) {
       if (err instanceof ApiError && err.status === 401) throw err;
       flights = null;
@@ -89,15 +92,17 @@ export default async function NewBookingPage({
   let flightsBack: FlightSearchResult[] | null = null;
   if (isReturn) {
     try {
-      flightsBack = (
-        await searchFlights({
-          origin: params.destination ?? "",
-          destination: params.origin ?? "",
-          date: backDay,
-          paxCount: pax,
-          showUnavailable: true,
-        })
-      ).items;
+      flightsBack = await withPayloadLeft(
+        (
+          await searchFlights({
+            origin: params.destination ?? "",
+            destination: params.origin ?? "",
+            date: backDay,
+            paxCount: pax,
+            showUnavailable: true,
+          })
+        ).items,
+      );
     } catch (err) {
       if (err instanceof ApiError && err.status === 401) throw err;
       flightsBack = null;
@@ -176,6 +181,9 @@ export default async function NewBookingPage({
           flightId={chosen ? chosen.flight_id : null}
           returnTrip={isReturn ? { departureLocal: backDeparts, flightId: chosenBack?.flight_id ?? null } : null}
           returnTo={returnTo}
+          payloadLeft={[chosen, chosenBack].flatMap((f) =>
+            f && f.payload_left_lbs != null ? [{ flightNumber: f.flight_number, lbs: f.payload_left_lbs }] : [],
+          )}
         />
     </div>
   );

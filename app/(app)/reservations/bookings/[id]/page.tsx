@@ -271,15 +271,15 @@ export default async function BookingDetailPage({
           timeZone={zoneFor(await loadZoneTable(), booking.origin_icao)}
           assignedFlightNumber={booking.flight?.flight_number ?? null}
           paxCount={booking.pax_count}
+          completed={booking.status === "completed"}
         />
       ) : null}
 
-      {booking.status !== "completed" &&
-      booking.status !== "cancelled" ? (
+      {booking.status !== "cancelled" ? (
         <LifecycleControls
           bookingId={booking.id}
           currentStatus={booking.status}
-          flightLanded={booking.flight?.status === "completed"}
+          flightLanded={Boolean(booking.flight?.landed) || booking.flight?.status === "completed"}
           currentQuoteCents={booking.quoted_total_cents}
           cancelConfirmToken={`${booking.origin_icao}-${booking.destination_icao}`}
         />

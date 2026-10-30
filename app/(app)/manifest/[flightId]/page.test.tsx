@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => {
@@ -45,6 +45,7 @@ vi.mock("./actions", () => ({
   removeLineAction: vi.fn(),
   createManifestAction: vi.fn(),
   lockManifestAction: vi.fn(),
+  reopenManifestAction: vi.fn(),
   savePlannedFuelAction: vi.fn(),
   applyLoadPlanAction: vi.fn(),
 }));
@@ -180,6 +181,26 @@ describe("manifest entry (#62)", () => {
     expect(screen.queryByRole("button", { name: /^\+ Add/ })).toBeNull();
     expect(screen.queryByRole("button", { name: "Edit" })).toBeNull();
     expect(screen.getByText("Quill")).toBeTruthy();
+  });
+
+  it("offers whoever may lock it a reopen until the flight departs (#153)", async () => {
+    mocks.auth.mockResolvedValue({ roles: ["ground_ops"] });
+    mocks.getFlightManifest.mockResolvedValue(manifest("final"));
+    await renderPage();
+    expect(screen.getByRole("button", { name: "Reopen Manifest" })).toBeTruthy();
+    expect(screen.getByText(/Reopen it to take a passenger or weight off before departure\./)).toBeTruthy();
+
+    cleanup();
+    mocks.getFlight.mockResolvedValue({ ...flight, actual_departure_at: "2026-11-02T17:45:00Z" });
+    await renderPage();
+    expect(screen.queryByRole("button", { name: "Reopen Manifest" })).toBeNull();
+    expect(screen.getByText(/It can't be changed\./)).toBeTruthy();
+
+    cleanup();
+    mocks.auth.mockResolvedValue({ roles: ["pilot"] });
+    mocks.getFlight.mockResolvedValue(flight);
+    await renderPage();
+    expect(screen.queryByRole("button", { name: "Reopen Manifest" })).toBeNull();
   });
 
   it("offers to create the manifest when the flight has none", async () => {

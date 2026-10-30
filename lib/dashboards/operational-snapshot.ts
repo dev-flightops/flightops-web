@@ -38,6 +38,8 @@
 import { getFlightBoard } from "@/lib/api/flight-following";
 import { getFleetAirworthiness, listMelItems } from "@/lib/api/maintenance";
 import { listOpenSeats, type Opening } from "@/lib/api/open-seats";
+import { listFratAwaitingAcceptance } from "@/lib/api/ops";
+import { factorLabel } from "@/lib/frat/factors";
 import { SAFETY_REPORT_TYPE_LABELS, listSafetyReports } from "@/lib/api/safety-reports";
 import type {
   BoardFlightItem,
@@ -50,6 +52,7 @@ export interface OperationalAlert {
   /** Stable category — useful for grouping or future filtering. */
   category:
     | "aircraft_grounded"
+    | "frat_over_limits"
     | "flight_overdue"
     | "mel_expiring"
     | "safety_report_new"
@@ -92,12 +95,14 @@ export interface OperationalSnapshot {
 const TWO_DAYS_MS = 2 * 24 * 60 * 60 * 1000;
 
 export async function loadOperationalSnapshot(): Promise<OperationalSnapshot> {
-  const [fleet, openMels, board, newReports, openings] = await Promise.all([
+  const [fleet, openMels, board, newReports, openings, overLimits] = await Promise.all([
     getFleetAirworthiness().catch(() => null),
     listMelItems({ status: "open" }).catch(() => null),
     getFlightBoard("today").catch(() => null),
     listSafetyReports({ status: "open", limit: 50 }).catch(() => null),
     listOpenSeats().catch(() => null),
+    // The Chief Pilot's and DO's alone (#152): everyone else gets a 403.
+    listFratAwaitingAcceptance().catch(() => null),
   ]);
 
   const alerts: OperationalAlert[] = [];
@@ -203,6 +208,24 @@ export async function loadOperationalSnapshot(): Promise<OperationalSnapshot> {
         scopedToIcao: opening.legs[0]?.origin,
         // The latest no-show: a newer one brings a dismissed alert back.
         occurredAt: opening.occurred_at,
+      });
+    }
+  }
+
+  // A FRAT filed over company limits waiting for the Chief Pilot or DO
+  // to accept it (#152): the client's "ping to chief pilot/DO for an
+  // acceptance". The flight is a no-go until one of them does.
+  if (overLimits) {
+    for (const item of overLimits.items) {
+      alerts.push({
+        id: `frat-over-limits-${item.assessment_id}`,
+        severity: "red",
+        category: "frat_over_limits",
+        title: `FRAT over company limits — ${item.flight_number}`,
+        detail: `${item.pilot_name ?? "The pilot"} · ${item.over_limit_factors.map(factorLabel).join(", ")} · waiting for the Chief Pilot or DO`,
+        href: `/dispatch?flight=${item.flight_id}`,
+        // Each FRAT filed is its own event: one filed again comes back.
+        occurredAt: item.filed_at,
       });
     }
   }

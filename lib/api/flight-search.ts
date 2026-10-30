@@ -39,6 +39,10 @@ export interface FlightSearchResult {
   seats_available: number;
   is_available: boolean;
   unavailable_reason: UnavailableReason | null;
+  /** The payload the flight can still carry, in lb (#153): filled by the
+   *  web from ops' load (lib/reservations/payload-left.ts). Null when the
+   *  aircraft has no useful load on file; absent when not asked. */
+  payload_left_lbs?: number | null;
 }
 
 export interface FlightSearchResponse {

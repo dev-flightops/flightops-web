@@ -27,10 +27,15 @@ export function NonCertifiedWeatherNotice() {
   );
 }
 
-/** "Official METAR/TAF", or the sources scored, e.g. "Village report · Not
- *  certified". */
+/** "Official METAR/TAF", with a worse reading beside it named (#151:
+ *  "Official METAR/TAF, and the FAA WeatherCam estimate where worse"), or
+ *  the sources scored, e.g. "Village report · Not certified". */
 export function sourceLabel(stop: StopWeather): string {
-  if (stop.certified) return "Official METAR/TAF";
+  if (stop.certified) {
+    return stop.described.startsWith("METAR")
+      ? `Official METAR/TAF${stop.described.slice("METAR".length)}`
+      : "Official METAR/TAF";
+  }
   if (!stop.source) return "No weather";
   const names = stop.described.replace(/, not certified$/, "");
   return `${names.charAt(0).toUpperCase()}${names.slice(1)} · Not certified`;

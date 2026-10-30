@@ -5,6 +5,7 @@ import {
   type FlightSearchResponse,
   searchFlights,
 } from "@/lib/api/flight-search";
+import { withPayloadLeft } from "@/lib/reservations/payload-left";
 
 /**
  * Flight search, run on the server.
@@ -43,7 +44,9 @@ export async function searchFlightsAction(params: {
   showUnavailable: boolean;
 }): Promise<FlightSearchActionResult> {
   try {
-    return { status: "ok", data: await searchFlights(params) };
+    const found = await searchFlights(params);
+    // What each flight can still carry (#153).
+    return { status: "ok", data: { ...found, items: await withPayloadLeft(found.items) } };
   } catch (err) {
     if (err instanceof SessionExpiredError) {
       return {

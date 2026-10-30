@@ -1581,11 +1581,14 @@ export interface PilotAcceptanceRequest {
 
 export type FratRiskLevel = "low" | "medium" | "high" | "extreme";
 export type FratAuthorizationKind = "dispatch_contact" | "cp_do_authorization";
+/** What a FRAT's authorizations can be: the pilot's two, and the Chief
+ *  Pilot's or DO's acceptance of a FRAT over company limits (#152). */
+export type FratRecordedKind = FratAuthorizationKind | "over_limits_accepted";
 
 export interface FratAuthorizationResponse {
   id: string;
   frat_assessment_id: string;
-  kind: FratAuthorizationKind;
+  kind: FratRecordedKind;
   authorizer_name: string;
   authorizer_role: string;
   authorizer_cert_number: string | null;
@@ -1630,6 +1633,23 @@ export interface FratAssessmentResponse {
   approach_minimums?: ApproachMinimums | null;
   created_at: string;
   authorizations: FratAuthorizationResponse[];
+  /** The Chief Pilot's or DO's acceptance of `over_limit_factors` (#152):
+   *  with it the flight is no longer a no-go. */
+  over_limits_accepted?: FratAuthorizationResponse | null;
+}
+
+/** A flight's latest FRAT, filed over company limits, and its acceptance
+ *  (#152): the packet's panel and the Chief Pilot's and DO's bell. */
+export interface FratOverLimits {
+  flight_id: string;
+  flight_number: string;
+  scheduled_departure_at: string;
+  assessment_id: string;
+  pilot_name: string | null;
+  over_limit_factors: string[];
+  mitigations: string | null;
+  filed_at: string;
+  accepted: FratAuthorizationResponse | null;
 }
 
 /** On an IFR flight the FRAT asks the pilot, who has the approach plates,
@@ -2330,6 +2350,10 @@ export interface WeightReturn {
   resolved_at: string | null;
   resolved_by_user_id: string | null;
   is_open: boolean;
+  /** In dispatch's queue (#153): which flight, and its payload now as the
+   *  check-in weighs it. */
+  flight_number?: string | null;
+  payload_lbs?: string | null;
 }
 
 export interface WeightReturnCreateRequest {

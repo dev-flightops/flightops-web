@@ -52,6 +52,7 @@ export function AssignFlightPanel({
   timeZone,
   assignedFlightNumber,
   paxCount,
+  completed = false,
 }: {
   bookingId: string;
   candidates: FlightSearchResult[];
@@ -61,6 +62,8 @@ export function AssignFlightPanel({
   timeZone: string;
   assignedFlightNumber: string | null;
   paxCount: number;
+  /** Completed (#154): one with no flight isn't waiting on dispatch. */
+  completed?: boolean;
 }) {
   const [selected, setSelected] = useState<string>("");
   const [pending, setPending] = useState(false);
@@ -99,6 +102,10 @@ export function AssignFlightPanel({
             Choose another below to move it.
           </span>
         </p>
+      ) : completed ? (
+        <p className="text-sm text-muted-foreground">
+          Completed with no flight on record. Choose the flight that carried it, or void it below if it never flew.
+        </p>
       ) : (
         <p className="text-sm text-status-yellow">
           Not on a flight yet — this booking is waiting on dispatch.
@@ -120,13 +127,15 @@ export function AssignFlightPanel({
           {/* The other half of the report: "how does dispatch know they
               need to make a new flight?" When there is nothing to
               assign to, the answer is to build one, so the page says so
-              and links there. */}
-          <Link
-            href="/dispatch"
-            className="mt-1.5 inline-block font-semibold text-primary hover:underline"
-          >
-            Build a flight for it →
-          </Link>
+              and links there. Not for a completed booking (#154). */}
+          {completed ? null : (
+            <Link
+              href="/dispatch"
+              className="mt-1.5 inline-block font-semibold text-primary hover:underline"
+            >
+              Build a flight for it →
+            </Link>
+          )}
         </div>
       ) : (
         <ul className="mt-3 space-y-1.5">

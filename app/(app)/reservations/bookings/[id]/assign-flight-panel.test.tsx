@@ -63,6 +63,26 @@ describe("a candidate's departure (#137)", () => {
   });
 });
 
+describe("a booking completed with no flight (#154)", () => {
+  it("isn't said to wait on dispatch, nor offered a flight to build", () => {
+    // Bob Kalskag's, completed on 3 Aug with no flight: the client read it
+    // as "just sitting ready for dispatch".
+    render(
+      <AssignFlightPanel
+        bookingId="b-1"
+        candidates={[]}
+        timeZone="America/Anchorage"
+        assignedFlightNumber={null}
+        paxCount={1}
+        completed
+      />,
+    );
+    expect(screen.getByText(/^Completed with no flight on record\./)).toBeInTheDocument();
+    expect(screen.queryByText(/waiting on dispatch/)).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /Build a flight for it/ })).not.toBeInTheDocument();
+  });
+});
+
 describe("a booking with no flight", () => {
   it("says it is waiting on dispatch", () => {
     panel();

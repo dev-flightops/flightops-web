@@ -37,6 +37,7 @@ export function BookingForm({
   flightId,
   returnTrip = null,
   returnTo,
+  payloadLeft = [],
 }: {
   customers: Customer[];
   aircraft: Array<{ id: string; tail_number: string; model: string | null }>;
@@ -52,6 +53,8 @@ export function BookingForm({
   returnTrip?: { departureLocal: string; flightId: string | null } | null;
   /** Where to land after filing, e.g. back on the manifest. */
   returnTo?: string | null;
+  /** What the chosen flights can still carry (#153). */
+  payloadLeft?: ReadonlyArray<{ flightNumber: string; lbs: number }>;
 }) {
   const [state, formAction, pending] = useActionState(
     createBookingAction,
@@ -164,6 +167,7 @@ export function BookingForm({
         initialCount={prefill?.pax ?? 1}
         customerName={customerName}
         error={state.fieldErrors?.passengers}
+        payloadLeft={payloadLeft}
       />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">

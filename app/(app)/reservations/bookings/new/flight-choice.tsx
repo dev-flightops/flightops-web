@@ -4,6 +4,7 @@ import { linkCaps } from "@/components/ff/controls";
 import { loadZoneTable } from "@/lib/api/auth";
 import { type FlightSearchResult, UNAVAILABLE_REASON_LABELS } from "@/lib/api/flight-search";
 import { localClock, localDate, zoneFor } from "@/lib/format/local-time";
+import { payloadLeftText } from "@/lib/reservations/payload-text";
 import { cn } from "@/lib/utils";
 
 /**
@@ -71,6 +72,12 @@ export async function FlightChoice({
             ? `${chosen.seats_available} of ${chosen.seats_total} seats open on ${route}. Filing it puts the passengers on this flight's manifest.`
             : `${why(chosen)}: ${chosen.seats_available} of ${chosen.seats_total} seats open on ${route}.`}
         </p>
+        {chosen.payload_left_lbs != null ? (
+          // What it can still carry (#153).
+          <p className={`mt-1 text-sm ${chosen.payload_left_lbs < 0 ? "text-status-red" : ""}`}>
+            {`Payload: ${payloadLeftText(chosen.payload_left_lbs)}, after crew and fuel.`}
+          </p>
+        ) : null}
         <Link href={hrefFor(null)} className={cn(linkCaps, "mt-2 inline-block")}>
           Choose another flight <span aria-hidden>›</span>
         </Link>

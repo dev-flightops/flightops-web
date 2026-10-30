@@ -175,4 +175,18 @@ describe("LifecycleControls: Complete waits for the flight to land (#147)", () =
     expect(screen.queryByText("Complete it once its flight has landed.")).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Mark Completed" })).toBeInTheDocument();
   });
+
+  it("voids a booking completed before it flew, and nothing else once completed (#154)", () => {
+    // Bob Kalskag's: completed on 3 Aug with no flight.
+    const { rerender } = render(
+      <LifecycleControls bookingId="b-1" currentStatus="completed" currentQuoteCents={null} />,
+    );
+    expect(screen.getByRole("heading", { name: "Void booking" })).toBeInTheDocument();
+    expect(screen.getByText(/it never flew, so it can be voided/)).toBeInTheDocument();
+    rerender(
+      <LifecycleControls bookingId="b-1" currentStatus="completed" flightLanded currentQuoteCents={null} />,
+    );
+    expect(screen.queryByRole("heading", { name: "Void booking" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Cancel booking" })).not.toBeInTheDocument();
+  });
 });
