@@ -40,9 +40,11 @@ describe("WeatherMinimumsNotice (#89)", () => {
 
   it("says the rule applied and was met, and where there was nothing to check", () => {
     render(<WeatherMinimumsNotice minimums={MET} />);
+    // #155: no report is not "met" (the client's ZZZZ).
     expect(screen.getByText(/The GA8 is not IFR certified/)).toHaveTextContent(
-      "600 ft / 2 sm at every stop, and met on the latest weather (no current report at PAKI)",
+      "600 ft / 2 sm at every stop. Met where there’s a report; no current report at PAKI, so the minimums can’t be checked there.",
     );
+    expect(screen.getByText("No report to check")).toBeInTheDocument();
   });
 
   it("raises an alert below them, naming the stop", () => {
@@ -124,7 +126,7 @@ describe("WeatherMinimumsNotice — a field without an instrument approach (#110
     );
     expect(
       screen.getByText(
-        "No instrument approach at PAII: held to the company’s dispatch minimums of 600 ft / 2 sm there, and met on the latest weather (no current report at PAII).",
+        "No instrument approach at PAII: held to the company’s dispatch minimums of 600 ft / 2 sm there. No current report at PAII, so the minimums can’t be checked there. Read the weather in your usual source before releasing.",
       ),
     ).toBeInTheDocument();
   });
@@ -161,7 +163,7 @@ describe("WeatherMinimumsNotice — a VFR flight (#123)", () => {
     render(<WeatherMinimumsNotice minimums={VFR} />);
     expect(
       screen.getByText(
-        "Flown VFR: held to the company’s dispatch minimums of 600 ft / 2 sm at every stop, and met on the latest weather (no current report at PAKI).",
+        "Flown VFR: held to the company’s dispatch minimums of 600 ft / 2 sm at every stop. Met where there’s a report; no current report at PAKI, so the minimums can’t be checked there. Read the weather in your usual source before releasing.",
       ),
     ).toBeInTheDocument();
   });

@@ -1,11 +1,8 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useTransition } from "react";
-
 import type { RouteFreshness } from "@/lib/api/types";
 
-import { useDispatchQuery } from "./use-dispatch-query";
+import { useSavedAcks } from "./use-saved-acks";
 
 /**
  * Stale / missing weather acknowledgment (HALT-2).
@@ -30,38 +27,33 @@ import { useDispatchQuery } from "./use-dispatch-query";
  * shows no checkbox to click past out of habit.
  */
 export function StaleWeatherAck({
+  flightId,
   freshness,
   acknowledged,
 }: {
+  flightId: string | null;
   freshness: RouteFreshness | null;
+  /** The viewer acknowledged it, as saved (#155). */
   acknowledged: boolean;
 }) {
-  const router = useRouter();
-  const nextQuery = useDispatchQuery();
-  const [isPending, startTransition] = useTransition();
+  const { isOn, change, error } = useSavedAcks(
+    flightId ?? "",
+    "stale_weather",
+    acknowledged ? new Set(["route"]) : new Set(),
+  );
 
-  if (freshness === null || !freshness.acknowledgment_required) return null;
+  if (freshness === null || !freshness.acknowledgment_required || !flightId) return null;
 
-  // Set from the box's own state rather than by inverting the prop,
-  // which is the last render: see use-dispatch-query.ts.
-  const toggle = (checked: boolean) => {
-    const qs = nextQuery((search) => {
-      if (checked) search.set("stale_wx_ack", "1");
-      else search.delete("stale_wx_ack");
-    });
-    startTransition(() => {
-      router.replace(`/dispatch/${qs ? `?${qs}` : ""}`, { scroll: false });
-    });
-  };
+  const toggle = (checked: boolean) =>
+    change(["route"], checked, () => ({ stations: freshness.stations_requiring_acknowledgment }), 0);
 
   return (
     <div className="rounded-lg border border-status-yellow/40 bg-status-yellow/5 p-3">
       <label className="flex cursor-pointer items-start gap-2.5">
         <input
           type="checkbox"
-          checked={acknowledged}
+          checked={isOn("route")}
           onChange={(e) => toggle(e.target.checked)}
-          disabled={isPending}
           className="mt-0.5 h-4 w-4 shrink-0 accent-status-yellow"
         />
         <span className="min-w-0">
@@ -73,6 +65,11 @@ export function StaleWeatherAck({
           </span>
         </span>
       </label>
+      {error ? (
+        <p role="alert" className="field-error mt-1">
+          {error}
+        </p>
+      ) : null}
     </div>
   );
 }

@@ -68,7 +68,9 @@ export function FlightBoard({ flights }: { flights: BoardFlightItem[] }) {
 
 function FlightBoardRow({ flight }: { flight: BoardFlightItem }) {
   const dep = formatBoth(flight.scheduled_departure_at);
-  const arr = formatBoth(flight.scheduled_arrival_at);
+  // Once it has left, its scheduled block after the departure (#155): MM001
+  // left at 21:42Z and showed an ETA of 19:45Z.
+  const arr = formatBoth(flight.estimated_arrival_at ?? flight.scheduled_arrival_at);
   const hasPax = flight.pax_count > 0 || flight.cargo_lbs > 0;
 
   return (
@@ -142,10 +144,10 @@ function FlightBoardRow({ flight }: { flight: BoardFlightItem }) {
       </td>
       <td className="whitespace-nowrap px-4 py-3.5 text-right">
         {flight.status === "released" && flight.actual_departure_at === null && (
-          <CheckInButton flightId={flight.id} event="depart" />
+          <CheckInButton flightId={flight.id} flightNumber={flight.flight_number} event="depart" />
         )}
         {flight.status === "released" && flight.actual_departure_at !== null && (
-          <CheckInButton flightId={flight.id} event="arrive" />
+          <CheckInButton flightId={flight.id} flightNumber={flight.flight_number} event="arrive" />
         )}
         {/* Dimmed rather than linked. There is no per-flight document
             page: legacy has one at `/following/{id}/docs`, backed by a

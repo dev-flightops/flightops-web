@@ -1,8 +1,10 @@
 import type {
   PicComplianceResponse,
+  ReleaseBlocker,
   RouteFreshness,
   WeatherMinimumsView,
 } from "@/lib/api/types";
+import type { ReleaseLoad } from "@/lib/api/manifest";
 import { minimumsBlockReason } from "@/lib/frat/weather-minimums";
 
 import { unacknowledgedNotamIcaos } from "./notam-acks";
@@ -78,6 +80,15 @@ export function computeHardBlockReason(input: {
   /** ops `GET /flights/{id}/weather-minimums` (#89). Null when the call
    *  failed: as for freshness, release still refuses server-side. */
   weatherMinimums?: WeatherMinimumsView | null;
+  /** #155 — open MEL deferrals on the aircraft, and the ones this
+   *  dispatcher acknowledged. */
+  openMelIds?: string[];
+  ackedMelIds?: string[];
+  /** #155 — what the flight's FRAT still needs, in order. Null when it
+   *  couldn't be read: release still refuses server-side. */
+  fratBlockers?: ReleaseBlocker[] | null;
+  /** #155 — the load the release is judged on. Null when unknown. */
+  releaseLoad?: ReleaseLoad | null;
 }): string | null {
   const {
     picCompliance,
@@ -91,6 +102,10 @@ export function computeHardBlockReason(input: {
     weatherFreshness,
     staleWeatherAcknowledged,
     weatherMinimums = null,
+    openMelIds = [],
+    ackedMelIds = [],
+    fratBlockers = null,
+    releaseLoad = null,
   } = input;
 
   if (hasSelectedFlight && !picAssigned) {
@@ -141,6 +156,29 @@ export function computeHardBlockReason(input: {
     const stations = weatherFreshness.stations_requiring_acknowledgment;
     const where = stations.length > 0 ? ` for ${stations.join(", ")}` : "";
     return `Stale or missing weather${where} — review it and acknowledge before release.`;
+  }
+
+  if (hasSelectedFlight) {
+    const unackedMels = openMelIds.filter((id) => !ackedMelIds.includes(id));
+    if (unackedMels.length > 0) {
+      return `${unackedMels.length} open MEL item${unackedMels.length === 1 ? "" : "s"} still need${unackedMels.length === 1 ? "s" : ""} dispatcher acknowledgment.`;
+    }
+  }
+
+  // #155 — the FRAT, then the load. The server holds them last too.
+  if (hasSelectedFlight && fratBlockers && fratBlockers.length > 0) {
+    const more = fratBlockers.length > 1 ? ` (and ${fratBlockers.length - 1} more)` : "";
+    return `FRAT: ${fratBlockers[0].message}${more}`;
+  }
+  if (hasSelectedFlight && releaseLoad) {
+    const remaining = releaseLoad.remaining_lbs === null ? null : Number(releaseLoad.remaining_lbs);
+    if (releaseLoad.useful_load_lbs === null) {
+      return "The aircraft has no max payload on record, so the load can't be checked — set it in Settings → Fleet.";
+    }
+    if (remaining !== null && remaining < 0) {
+      const from = releaseLoad.basis === "manifest" ? "the manifest" : "the passengers and cargo typed on the flight";
+      return `Over the aircraft's useful load by ${Math.round(-remaining).toLocaleString("en-US")} lb, by ${from}.`;
+    }
   }
 
   // A null verdict means the freshness call failed. We do NOT block on

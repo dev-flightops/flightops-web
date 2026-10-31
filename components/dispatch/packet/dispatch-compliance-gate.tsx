@@ -57,10 +57,9 @@ export async function DispatchComplianceGate({
   /** M2-G-5 — when the page-level loader already fetched the response,
    *  pass it here to skip the round-trip. */
   prefetched?: PicComplianceResponse | null;
-  /** M2-G-5 tail — currency-item codes the dispatcher already ack'd
-   *  via the URL. Consumed by SoftWarningAckList to render the
-   *  ticked checkbox state; parent page uses the "all acked" check
-   *  to enable Generate PDF. */
+  /** The warnings the viewer acknowledged, as saved (#155). Consumed by
+   *  SoftWarningAckList to render the ticked state; the page uses the
+   *  "all acked" check to enable release. */
   ackedWarnCodes?: ReadonlySet<string>;
   /** M2-G-5 tail — passed to the override modal so the overrides
    *  audit rows carry a flight reference. Null when no flight is
@@ -185,7 +184,9 @@ function SeatBanner({
     );
   }
   if (data.dot_color === "yellow") {
-    return <SoftWarningBanner seat={seat} data={data} ackedCodes={ackedCodes} />;
+    return (
+      <SoftWarningBanner seat={seat} data={data} ackedCodes={ackedCodes} flightId={flightId} />
+    );
   }
   return <ClearBanner seat={seat} data={data} />;
 }
@@ -223,10 +224,12 @@ function SoftWarningBanner({
   seat,
   data,
   ackedCodes,
+  flightId,
 }: {
   seat: CrewSeat;
   data: PicComplianceResponse;
   ackedCodes: ReadonlySet<string>;
+  flightId: string | null;
 }) {
   const unackedCount = data.soft_warnings.filter(
     (w) => !ackedCodes.has(warningAckKey(seat, w.code)),
@@ -269,6 +272,7 @@ function SoftWarningBanner({
       </div>
       <TypeStandingLine seat={seat} standing={data.type_standing} />
       <SoftWarningAckList
+        flightId={flightId ?? ""}
         seat={seat}
         findings={data.soft_warnings}
         ackedCodes={ackedCodes}
@@ -360,6 +364,7 @@ function HardBlockBanner({
             Also pending acknowledgment
           </div>
           <SoftWarningAckList
+            flightId={flightId ?? ""}
             seat={seat}
             findings={data.soft_warnings}
             ackedCodes={ackedCodes}

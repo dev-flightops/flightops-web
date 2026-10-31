@@ -60,6 +60,8 @@ function airframeLabel(
       return "GA8";
     case "navajo":
       return "PA31";
+    case "1900d":
+      return "1900D (Beech)";
     case "kingair":
       // The fleet's two king airs are a 1900D and a King Air 200, and
       // the model text is what separates them.
@@ -120,20 +122,32 @@ export function FlightDetailsPanel({
 }) {
   return (
     <SectionPanel title="Flight Details">
+      {flight && flight.status !== "scheduled" ? (
+        <p role="note" className="notice notice-blue mb-3 text-xs">
+          <span className="notice-label">Released</span>
+          <span className="text-foreground">
+            The flight&apos;s aircraft, route, times and crew stay as released. To change one, pull the
+            release back: the flight then needs its FRAT signed and releasing again.
+          </span>
+        </p>
+      ) : null}
       <div className="grid grid-cols-2 gap-4 md:grid-cols-6">
-        <Field label="Flight #" hint="press Enter to load" htmlFor="flight-number">
-          <input
-            id="flight-number"
-            type="text"
-            placeholder="GV306"
-            defaultValue={flight?.flight_number ?? ""}
-            // `key` forces a re-render with a new default when the
-            // selection changes — React's defaultValue is read once
-            // per mount otherwise.
-            key={`flight-num-${flight?.id ?? "none"}`}
-            className="ff-input"
-            autoComplete="off"
-          />
+        <Field label="Flight #" hint={flight ? undefined : "press Enter to load"} htmlFor={flight ? undefined : "flight-number"}>
+          {flight ? (
+            /* #155 (the client's item 72): with a flight loaded these are
+               the flight's own values, not boxes that change nothing.
+               The flight is changed under Edit, before release. */
+            <p className="ff-input font-mono">{flight.flight_number}</p>
+          ) : (
+            <input
+              id="flight-number"
+              type="text"
+              placeholder="GV306"
+              defaultValue=""
+              className="ff-input"
+              autoComplete="off"
+            />
+          )}
         </Field>
 
         {/* Only a hand-filled packet has a control here; with a flight
@@ -179,16 +193,19 @@ export function FlightDetailsPanel({
           )}
         </Field>
 
-        <Field label="N-Number" htmlFor="flight-tail">
-          <input
-            id="flight-tail"
-            type="text"
-            placeholder="N12345"
-            defaultValue={flight?.aircraft.tail_number ?? ""}
-            key={`tail-${flight?.id ?? "none"}`}
-            className="ff-input"
-            autoComplete="off"
-          />
+        <Field label="N-Number" htmlFor={flight ? undefined : "flight-tail"}>
+          {flight ? (
+            <p className="ff-input font-mono">{flight.aircraft.tail_number}</p>
+          ) : (
+            <input
+              id="flight-tail"
+              type="text"
+              placeholder="N12345"
+              defaultValue=""
+              className="ff-input"
+              autoComplete="off"
+            />
+          )}
         </Field>
 
         <PicPicker
@@ -196,16 +213,21 @@ export function FlightDetailsPanel({
           currentPicId={currentPicId}
           flightId={flightId}
           availability={picAvailability}
+          locked={Boolean(flight && flight.status !== "scheduled")}
         />
 
-        <Field label="SIC Name" htmlFor="flight-sic">
-          <input
-            id="flight-sic"
-            type="text"
-            placeholder="Last, First (optional)"
-            className="ff-input"
-            autoComplete="off"
-          />
+        <Field label="SIC Name" htmlFor={flight ? undefined : "flight-sic"}>
+          {flight ? (
+            <p className="ff-input text-muted-foreground">Set in the Crew panel</p>
+          ) : (
+            <input
+              id="flight-sic"
+              type="text"
+              placeholder="Last, First (optional)"
+              className="ff-input"
+              autoComplete="off"
+            />
+          )}
         </Field>
 
         <Field label="Area Forecast Region" htmlFor="flight-afd-region">

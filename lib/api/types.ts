@@ -779,10 +779,15 @@ export interface BoardFlightItem {
   status: FlightStatus;
   pax_count: number;
   cargo_lbs: number;
-  /** Reserved for the crew-assignment story (M3). Always null today. */
+  /** The PIC on the flight's crew (#155). */
   pic_name: string | null;
-  /** Computed: status==="released" AND now > scheduled_arrival_at + 30 min. */
+  /** Computed: status==="released" AND now > the estimated arrival + 30 min. */
   is_overdue: boolean;
+  /** When it should land (#155): the scheduled arrival, or once it has
+   *  left, its scheduled block after the actual departure. */
+  estimated_arrival_at?: string | null;
+  /** What its departure was flagged for (#155). */
+  departure_flags?: DepartureFlag[];
   /** max(positions.reported_at) for this flight_id, or null. */
   last_contact_at: string | null;
   /** Every airport on the route (services migration 0104). */
@@ -1583,7 +1588,10 @@ export type FratRiskLevel = "low" | "medium" | "high" | "extreme";
 export type FratAuthorizationKind = "dispatch_contact" | "cp_do_authorization";
 /** What a FRAT's authorizations can be: the pilot's two, and the Chief
  *  Pilot's or DO's acceptance of a FRAT over company limits (#152). */
-export type FratRecordedKind = FratAuthorizationKind | "over_limits_accepted";
+export type FratRecordedKind =
+  | FratAuthorizationKind
+  | "over_limits_accepted"
+  | "high_risk_approved";
 
 export interface FratAuthorizationResponse {
   id: string;
@@ -1636,6 +1644,49 @@ export interface FratAssessmentResponse {
   /** The Chief Pilot's or DO's acceptance of `over_limit_factors` (#152):
    *  with it the flight is no longer a no-go. */
   over_limits_accepted?: FratAuthorizationResponse | null;
+  /** Who filed it: the pilot, or a dispatcher for the pilot (#155). */
+  filed_by_user_id?: string | null;
+  filed_by_name?: string | null;
+  pilot_name?: string | null;
+  /** The pilot's and the dispatcher's sign-offs on this FRAT (#155). An
+   *  edit is a new FRAT, which has none. */
+  signoffs?: FratSignoff[];
+  verification?: FratVerification | null;
+  /** The Chief Pilot's or DO's approval of a HIGH or EXTREME risk (#155). */
+  high_risk_approved?: FratAuthorizationResponse | null;
+  /** The dispatch packet's level as last scored, lower case (#155). */
+  last_packet_level?: string | null;
+  /** What still stands between this FRAT and the release, in order. */
+  release_blockers?: ReleaseBlocker[];
+  /** The flight is released: the FRAT can't change until it's pulled back. */
+  locked?: boolean;
+}
+
+export type FratSignRole = "pilot" | "dispatcher";
+
+/** One sign-off box, checked (#155). */
+export interface FratSignoff {
+  role: FratSignRole;
+  user_id: string | null;
+  signer_name: string;
+  signed_at: string;
+  /** The pilot's flight time in the 24 hours before signing, and what
+   *  135.265(a)(1) left of it, in minutes. The pilot's only. */
+  flight_minutes_today?: number | null;
+  flight_minutes_remaining?: number | null;
+}
+
+/** The signed record's audit trail ID (#155). */
+export interface FratVerification {
+  complete: boolean;
+  intact: boolean;
+  record_hash: string | null;
+  code: string | null;
+}
+
+export interface ReleaseBlocker {
+  code: string;
+  message: string;
 }
 
 /** A flight's latest FRAT, filed over company limits, and its acceptance
@@ -1650,6 +1701,17 @@ export interface FratOverLimits {
   mitigations: string | null;
   filed_at: string;
   accepted: FratAuthorizationResponse | null;
+  /** The risk is HIGH (#155): the FRAT's level is HIGH or EXTREME, or the
+   *  packet last scored HIGH. It needs the CP's or DO's approval too. */
+  high_risk?: boolean;
+  risk_level?: string | null;
+  packet_level?: string | null;
+  /** The packet flags management approval (outside pilot restrictions, VFR
+   *  mountain terrain at night, maintenance within 4 hours). */
+  management_required?: boolean;
+  high_risk_approved?: FratAuthorizationResponse | null;
+  /** Something here still waits for the Chief Pilot or DO. */
+  waiting?: boolean;
 }
 
 /** On an IFR flight the FRAT asks the pilot, who has the approach plates,
@@ -1736,6 +1798,14 @@ export interface DutyPeriodSummary {
   resumed?: boolean;
   /** Absent from an older backend. */
   corrected?: DutyCorrection | null;
+  /** Longer than the company's maximum duty period (#155). */
+  over_limit?: boolean;
+}
+
+/** Everyone on duty longer than the company's maximum (#155). */
+export interface DutyOverLimit {
+  max_duty_hours: number;
+  items: { user_id: string; full_name: string; clock_in_at: string; elapsed_hours: number }[];
 }
 
 /** Who may correct anyone's duty times, a company setting (#100). A
@@ -1840,6 +1910,8 @@ export interface ComplianceChips {
   early_month: number;
   grace_month: number;
   non_current: number;
+  /** Pilots with a record never entered (#155): not counted as current. */
+  records_missing?: number;
 }
 
 export interface ComplianceBoardResponse {
@@ -2553,6 +2625,9 @@ export interface MinimumsObservation {
 export interface MinimumsStation {
   icao: string;
   below: boolean;
+  /** No report to hold against the minimums (#155): it can't be checked,
+   *  which is not the same as met. */
+  no_report?: boolean;
   /** Why the minimums hold this stop (#110): the aircraft isn't IFR
    *  certified, or the field has no instrument approach. */
   reason?: "not_ifr_certified" | "vfr_flight" | "no_instrument_approach" | null;
@@ -2571,4 +2646,25 @@ export interface WeatherMinimumsView {
   min_visibility_sm: number | string | null;
   below: boolean;
   stations: MinimumsStation[];
+}
+
+/** What Mark Departed flags (#155): the PIC off duty, the release not
+ *  accepted, the FRAT not signed, no locked manifest, an hour early. */
+export interface DepartureFlag {
+  code: string;
+  message: string;
+}
+
+export type AckKind = "soft_warning" | "mel" | "notam" | "stale_weather";
+
+/** One box a dispatcher ticked on the packet, saved as they ticked it
+ *  (#155). Only the viewer's own (`mine`) count toward their release. */
+export interface ReleaseAcknowledgment {
+  kind: AckKind;
+  key: string;
+  user_id: string;
+  user_name: string;
+  acknowledged_at: string;
+  detail?: Record<string, unknown> | null;
+  mine: boolean;
 }

@@ -16,7 +16,7 @@ import type { ComplianceView } from "./view-switcher";
  */
 
 interface ChipDef {
-  key: "fully_current" | "early_month" | "grace_month" | "non_current";
+  key: "fully_current" | "early_month" | "grace_month" | "non_current" | "records_missing";
   label: string;
   filterStatus: CurrencyStatus | null;
   /** The figure's rule colour, as the Flight Following stats draw it. */
@@ -52,6 +52,15 @@ const CHIPS: ChipDef[] = [
     label: "Non-Current",
     filterStatus: "non_current",
     rule: "border-status-magenta",
+  },
+  {
+    // #155: a record never entered isn't current (the client's "9 fully
+    // current" while every item read Not started), so those pilots are
+    // counted here.
+    key: "records_missing",
+    label: "Records Missing",
+    filterStatus: "not_started",
+    rule: "border-status-yellow",
   },
 ];
 
@@ -91,7 +100,7 @@ export function SummaryChips({
             }`}
           >
             <span className="font-display text-[1.6rem] font-extrabold leading-none tabular-nums text-foreground">
-              {chips[chip.key]}
+              {chips[chip.key] ?? 0}
             </span>
             <span className="eyebrow mt-1.5">{chip.label}</span>
           </Link>

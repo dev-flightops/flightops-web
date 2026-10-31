@@ -1,11 +1,8 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useTransition } from "react";
-
 import { routeAirports } from "./notam-acks";
 import { SectionPanel } from "./section-panel";
-import { useDispatchQuery } from "./use-dispatch-query";
+import { useSavedAcks } from "./use-saved-acks";
 
 /**
  * NOTAM Acknowledgment panel — manual bridge until M2-M-4 ships the
@@ -30,18 +27,23 @@ import { useDispatchQuery } from "./use-dispatch-query";
  * the surface contract.
  */
 export function NotamAcknowledgmentPanel({
+  flightId,
   icaos: route,
-  ackedFromUrl,
+  acked: ackedSaved,
 }: {
+  flightId: string | null;
   icaos: string[];
-  ackedFromUrl: string[];
+  /** The stops the viewer acknowledged, as saved (#155). */
+  acked: string[];
 }) {
   // A round trip names its home airport twice; it has one set of NOTAMs
   // and one acknowledgment (#57).
   const icaos = routeAirports(route);
-  const router = useRouter();
-  const nextQuery = useDispatchQuery();
-  const [isPending, startTransition] = useTransition();
+  const { isOn, change, pending: isPending, error } = useSavedAcks(
+    flightId ?? "",
+    "notam",
+    new Set(ackedSaved.map((s) => s.trim().toUpperCase())),
+  );
 
   if (icaos.length === 0) {
     return (
@@ -65,39 +67,10 @@ export function NotamAcknowledgmentPanel({
 
   // Filter ackedFromUrl to only contain ICAOs that are still in the route
   // — if dispatcher removes a stop, its ack should disappear too.
-  const acked = new Set(
-    ackedFromUrl
-      .map((s) => s.trim().toUpperCase())
-      .filter((s) => icaos.includes(s)),
-  );
-
-  // The set is rebuilt from the newest URL, not from `acked`: that is
-  // the last render, and a tick still loading is not in it.
-  const updateUrl = (change: (next: Set<string>) => void) => {
-    const qs = nextQuery((search) => {
-      const next = new Set(
-        (search.get("notams_acked") ?? "")
-          .split(",")
-          .map((s) => s.trim().toUpperCase())
-          .filter((s) => icaos.includes(s)),
-      );
-      change(next);
-      if (next.size === 0) search.delete("notams_acked");
-      else search.set("notams_acked", [...next].sort().join(","));
-    });
-    startTransition(() => {
-      router.replace(`/dispatch/${qs ? `?${qs}` : ""}`, { scroll: false });
-    });
-  };
-
-  const toggle = (icao: string, checked: boolean) =>
-    updateUrl((next) => {
-      if (checked) next.add(icao);
-      else next.delete(icao);
-    });
-
-  const ackAll = () => updateUrl((next) => icaos.forEach((i) => next.add(i)));
-  const clearAll = () => updateUrl((next) => next.clear());
+  const acked = new Set(icaos.filter((i) => isOn(i)));
+  const toggle = (icao: string, checked: boolean) => change([icao], checked);
+  const ackAll = () => change(icaos.filter((i) => !acked.has(i)), true, undefined, 0);
+  const clearAll = () => change(Array.from(acked), false, undefined, 0);
 
   const allAcked = icaos.every((i) => acked.has(i));
 
@@ -141,7 +114,7 @@ export function NotamAcknowledgmentPanel({
                     type="checkbox"
                     checked={isAcked}
                     onChange={(e) => toggle(icao, e.target.checked)}
-                    disabled={isPending}
+                    disabled={!flightId}
                     aria-label={`Acknowledge NOTAMs for ${icao}`}
                     className="h-4 w-4 cursor-pointer accent-primary"
                   />
@@ -183,6 +156,11 @@ export function NotamAcknowledgmentPanel({
           </button>
         )}
       </div>
+      {error ? (
+        <p role="alert" className="field-error mt-2">
+          {error}
+        </p>
+      ) : null}
     </SectionPanel>
   );
 }

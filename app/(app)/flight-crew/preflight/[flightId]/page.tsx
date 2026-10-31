@@ -6,25 +6,17 @@ import { ApiError } from "@/lib/api/client";
 import {
   getCurrentDuty,
   getFlight,
-  getFratBlockEligibility,
-  getFratPrefill,
   getLatestFratAssessment,
   getLatestPilotAcceptance,
   getWeightReturn,
   getPreflightProgress,
 } from "@/lib/api/ops";
 import { getFratThresholds, loadZoneTable } from "@/lib/api/auth";
-import {
-  isIfrPlanned,
-  observationsFromWeather,
-} from "@/lib/frat/observations";
+import { loadFratInputs } from "@/lib/frat/load-inputs";
 import { getFlightLoad, type FlightLoad } from "@/lib/api/manifest";
-import { riskStops, weatherCamsFor } from "@/lib/api/dispatch-risk";
-import { batchWeather } from "@/lib/api/weather";
 import { listFuelOrders, listSupplierBases } from "@/lib/api/ground";
 import { zoneFor } from "@/lib/format/local-time";
 import { fuelTypeForAircraft, supplierOptionsFor } from "@/lib/fuel";
-import { flightStops } from "@/lib/route";
 import { cn } from "@/lib/utils";
 import type {
   FratBlockEligibilityResponse,
@@ -144,60 +136,11 @@ export default async function PreflightPage({
     weightReturn = weightReturnResult;
     flightLoad = flightLoadResult;
     fratConfig = fratConfigResult;
-    // Step 3 weather — depends on the flight's routing airports, so
-    // it fires after the flight fetch. Non-fatal: if the
-    // weather-service is unreachable, Step 3 renders the ack
-    // surface with a warning banner and per-airport "data
-    // unavailable" copy so the pilot can still confirm they
-    // reviewed weather in their usual source (ForeFlight, etc.).
-    const routeIcaos = _routingAirports(flightResult);
-    if (routeIcaos.length > 0) {
-      const reqs = routeIcaos.flatMap((icao) => [
-        { icao, kind: "metar" as const },
-        { icao, kind: "taf" as const },
-        { icao, kind: "pirep" as const },
-      ]);
-      const [batch, cams] = await Promise.all([
-        batchWeather(reqs).catch(() => null),
-        weatherCamsFor(routeIcaos),
-      ]);
-      weather = batch;
-
-      // The FRAT prefill needs the observations, so it follows the
-      // weather rather than joining the fan-out above. Best-effort: a
-      // failure means step 4 renders the questionnaire as it always
-      // did, with nothing prefilled, which is the status quo rather
-      // than a regression.
-      const observations = observationsFromWeather(weather);
-      // Each stop's reports as the dispatch packet sends them (#117), so
-      // the FRAT scores the same weather: the METAR, the FAA WeatherCam
-      // and the village reports, and its icing and turbulence from the
-      // PIREPs.
-      const stops = riskStops(routeIcaos, weather, null, cams);
-      // The prefill runs even with no weather: duty, rest, currency and
-      // maintenance need none, and gating it on the METAR meant a
-      // weather-service blip also blanked the duty-clock factors. The
-      // wind and ceiling factors come back unscored without it. The
-      // block eligibility compares weather, so it still needs some.
-      // Neither blocks the page: a failure means step 4 behaves as it
-      // did before it existed.
-      const [prefillResult, blockResult] = await Promise.all([
-        getFratPrefill(flightId, {
-          observations,
-          stops,
-          is_ifr: isIfrPlanned(flightResult),
-        }).catch(() => null),
-        observations.length > 0 || stops.some((stop) => stop.weathercam)
-          ? getFratBlockEligibility(flightId, {
-              observations,
-              stops,
-              is_ifr: isIfrPlanned(flightResult),
-            }).catch(() => null)
-          : Promise.resolve(null),
-      ]);
-      fratPrefill = prefillResult;
-      fratBlock = blockResult;
-    }
+    // Step 3's weather and step 4's prefill and block FRAT, as the
+    // flight's FRAT page loads them (#155). Non-fatal: without weather,
+    // step 3 renders its "data unavailable" acknowledgment and step 4 the
+    // questionnaire unfilled.
+    ({ weather, fratPrefill, fratBlock } = await loadFratInputs(flightResult));
   } catch (err) {
     if (err instanceof ApiError && err.status === 404) {
       notFound();
@@ -280,18 +223,4 @@ function BackLink() {
       <span aria-hidden>‹</span> Flight Crew
     </Link>
   );
-}
-
-/** Deduped airports on the route, in order, for the Step 3 weather
- *  batch: every stop of a multi-leg flight. */
-function _routingAirports(flight: FlightDetail): string[] {
-  const seen = new Set<string>();
-  const list: string[] = [];
-  for (const icao of flightStops(flight)) {
-    if (icao && !seen.has(icao)) {
-      seen.add(icao);
-      list.push(icao);
-    }
-  }
-  return list;
 }

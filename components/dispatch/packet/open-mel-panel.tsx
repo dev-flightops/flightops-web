@@ -10,7 +10,8 @@ import { MelAckList } from "./mel-ack-list";
  *
  * The panel only renders when an aircraft is in play. Loads open MEL
  * items for that tail server-side, then hands them to the client
- * `MelAckList` which manages checkbox state via URL params (same
+ * `MelAckList`, which saves each tick for the dispatcher (#155; it used
+ * to keep them in URL params, same
  * pattern as the NOTAM acks — `?mels_acked=id1,id2`).
  *
  * When all open MELs are acknowledged the panel shows the green
@@ -24,10 +25,13 @@ import { MelAckList } from "./mel-ack-list";
  * to ack — not just that the panel didn't render.
  */
 export async function OpenMelPanel({
+  flightId,
   aircraftId,
   ackedMelIds,
 }: {
+  flightId: string;
   aircraftId: string;
+  /** The MELs the viewer acknowledged, as saved (#155). */
   ackedMelIds: string[];
 }) {
   let items: MelItemResponse[] = [];
@@ -70,5 +74,5 @@ export async function OpenMelPanel({
     );
   }
 
-  return <MelAckList items={items} ackedMelIds={ackedMelIds} />;
+  return <MelAckList flightId={flightId} items={items} ackedMelIds={ackedMelIds} />;
 }

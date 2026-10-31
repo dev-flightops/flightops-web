@@ -96,6 +96,7 @@ export function PicPicker({
   currentPicId,
   flightId,
   availability,
+  locked = false,
 }: {
   options: PicOption[];
   currentPicId: string | null;
@@ -106,6 +107,9 @@ export function PicPicker({
   /** Who release would take as PIC on this flight (#91). A pilot it
    *  would refuse isn't offered; the current PIC stays shown. */
   availability?: CrewOption[] | null;
+  /** The flight is released (#155): the crew stays as released until the
+   *  release is pulled back. */
+  locked?: boolean;
 }) {
   const out = unavailableIds(availability);
   const options = roster.filter((o) => !out.has(o.pilot.id) || o.pilot.id === currentPicId);
@@ -113,12 +117,18 @@ export function PicPicker({
   const nextQuery = useDispatchQuery();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  // The pick shows at once and the box stays usable while it is saved
+  // (#155, the client's item 69: it "sat on a loading spinner and
+  // couldn't be selected").
+  const [chosen, setChosen] = useState<string | null>(null);
+  const shownId = chosen ?? currentPicId;
 
-  const selected = options.find((o) => o.pilot.id === currentPicId) ?? null;
+  const selected = options.find((o) => o.pilot.id === shownId) ?? null;
   const selectedDot = selected ? STATUS_TO_DOT[selected.status] : null;
 
   function onChange(next: string) {
     setError(null);
+    setChosen(next);
     startTransition(async () => {
       if (flightId) {
         // Persist first. If the assignment is refused, the URL should
@@ -133,6 +143,7 @@ export function PicPicker({
             : await assignCrewAction(flightId, next, "pic", { replace: true });
         if (!result.ok) {
           setError(result.error);
+          setChosen(null);
           return;
         }
       }
@@ -174,12 +185,18 @@ export function PicPicker({
           <SpinnerGlyph className="ml-1 h-3 w-3 animate-spin" aria-hidden />
         )}
       </label>
+      {locked ? (
+        <p className="ff-input flex items-center justify-between gap-2">
+          <span>{selected?.pilot.full_name ?? "—"}</span>
+          <span className="text-[0.65rem] font-normal text-muted-foreground">released</span>
+        </p>
+      ) : (
       <select
         id="pic-picker"
         name="pic"
         aria-label="Pilot in Command"
-        value={currentPicId ?? ""}
-        disabled={pending || options.length === 0}
+        value={shownId ?? ""}
+        disabled={options.length === 0}
         onChange={(e) => onChange(e.target.value)}
         className="ff-input"
       >
@@ -198,6 +215,7 @@ export function PicPicker({
           </option>
         ))}
       </select>
+      )}
       {selected?.typeWarning?.pic ? (
         <p className="mt-1.5 text-[0.68rem] text-status-red">
           {selected.pilot.full_name} is {selected.typeWarning.pic}. Release needs a

@@ -171,6 +171,10 @@ export const MANIFEST_LOCKERS = CHECKIN_ROLES;
  *  the Chief Pilot or DO, from their own login, with a reason. */
 export const FRAT_OVER_LIMIT_ACCEPTORS = roleGate("chief_pilot", "director_of_operations");
 
+/** Sign the FRAT for dispatch, and file one for the flight's PIC (#155):
+ *  whoever may release the flight. */
+export const FRAT_DISPATCH_SIGNERS = roleGate("dispatcher", "exec_admin");
+
 /** Build a manifest: its passengers, mail, cargo and fuel, its load plan,
  *  and the mail and freight waiting at a station (#62, #75). Ops'
  *  MANIFEST_EDITORS: every role but the accountant's, whose legacy

@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { buttonOutline } from "@/components/ff/controls";
+import { buttonOutline, linkCaps } from "@/components/ff/controls";
 import { EmptyState } from "@/components/ff/empty-state";
 import { StatusMark, type StatusTone } from "@/components/ff/status-mark";
 import type { FlightListItem } from "@/lib/api/types";
@@ -112,12 +112,19 @@ function FlightCard({ flight }: { flight: FlightListItem }) {
             {formatUtcTime(flight.scheduled_arrival_at)}
           </div>
         </div>
-        <Link
-          href={`/flight-crew/preflight/${flight.id}`}
-          className={cn(buttonOutline, "shrink-0 px-3 py-1.5")}
-        >
-          Begin Preflight →
-        </Link>
+        <div className="flex shrink-0 flex-col items-end gap-1.5">
+          <Link
+            href={`/flight-crew/preflight/${flight.id}`}
+            className={cn(buttonOutline, "px-3 py-1.5")}
+          >
+            Begin Preflight →
+          </Link>
+          {/* The flight's FRAT, filed and signed before the release (#155):
+              "opened right from that flight on ... the pilot's schedule". */}
+          <Link href={`/frat/${flight.id}`} className={linkCaps}>
+            FRAT ›
+          </Link>
+        </div>
       </div>
     </li>
   );

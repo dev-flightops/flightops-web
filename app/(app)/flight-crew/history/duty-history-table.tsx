@@ -79,6 +79,11 @@ export function DutyHistoryTable({
               </td>
               <td className="px-3 py-2 font-semibold">
                 {p.elapsed_hours.toFixed(1)}h
+                {p.over_limit ? (
+                  <span className="status-mark ml-2 text-status-red" title="Longer than the company's maximum duty period">
+                    Over the limit
+                  </span>
+                ) : null}
               </td>
               <td className="px-3 py-2">
                 <StatusBadge isOpen={p.is_open} />

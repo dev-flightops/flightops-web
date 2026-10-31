@@ -61,7 +61,7 @@ export async function LeftColumn({
   flight: FlightDetail | null;
   icaos: string[];
   /** ICAOs the dispatcher has manually acknowledged NOTAMs for (from
-   *  the `?notams_acked=` query param). Empty when no acks yet. */
+   *  saved acknowledgments, #155). Empty when no acks yet. */
   notamAckedIcaos: string[];
   /** Staleness verdict for the route. Null when the freshness call
    *  failed — the ack control hides, matching the release gate, which
@@ -107,6 +107,7 @@ export async function LeftColumn({
           a control somewhere else on the page. Renders nothing when the
           route's weather is current. */}
       <StaleWeatherAck
+        flightId={flight?.id ?? null}
         freshness={weatherFreshness}
         acknowledged={staleWeatherAcknowledged}
       />
@@ -114,8 +115,9 @@ export async function LeftColumn({
       <AlternateReviewPanel icaos={icaos} />
 
       <NotamAcknowledgmentPanel
+        flightId={flight?.id ?? null}
         icaos={icaos}
-        ackedFromUrl={notamAckedIcaos}
+        acked={notamAckedIcaos}
       />
 
       {flight && risk ? (
