@@ -8,6 +8,7 @@ import { ApiError } from "@/lib/api/client";
 import { listFlights } from "@/lib/api/ops";
 import type { FlightListItem } from "@/lib/api/types";
 import { formatBoth, formatZulu } from "@/lib/format/flight-time";
+import { DEFAULT_TIME_ZONE, localDate, localDay, zoneName } from "@/lib/format/local-time";
 
 import { CancelStaleButton } from "./cancel-stale-button";
 
@@ -33,20 +34,19 @@ import { CancelStaleButton } from "./cancel-stale-button";
  *
  * Stale = status=scheduled AND scheduled_departure_at < now AND no
  * actuals. Today's Planned = status=scheduled AND scheduled_departure_at
- * is in the future, today UTC.
+ * is in the future, today in the company's zone. Overdue = released and
+ * 30 minutes past its scheduled arrival, from any day (#157).
  *
  * Unclosed duty + unreconciled fuel sections from the legacy aren't
  * here yet — they need crew-service + ground-service which are M3.
  */
 
-function todayUtcYmd(): string {
-  return new Date().toISOString().slice(0, 10);
-}
-
-function todayUtcLong(): string {
-  const now = new Date();
-  return now.toLocaleDateString("en-US", {
-    timeZone: "UTC",
+/** The company's day (#157). EOD had closed out the UTC day, which in
+ *  Alaska ends at 4 pm, and so counted no flight completed today while the
+ *  board and Ramp Ops showed three. */
+function todayLong(): string {
+  return new Date().toLocaleDateString("en-US", {
+    timeZone: DEFAULT_TIME_ZONE,
     weekday: "long",
     month: "long",
     day: "numeric",
@@ -54,13 +54,17 @@ function todayUtcLong(): string {
   });
 }
 
+/** A released flight this long past its scheduled arrival, still not
+ *  closed, is a flag (#157: "EOD 'No flags' with two overdue flights"). */
+const OVERDUE_AFTER_MIN = 30;
+
 /** Cutoff for "stale" — any scheduled flight whose scheduled_departure_at
  *  is more than this many minutes in the past with no actuals counts as
  *  stale and surfaces in the EOD flags panel. */
 const STALE_THRESHOLD_MIN = 15;
 
 export default async function EodPage() {
-  const today = todayUtcYmd();
+  const today = localDay(DEFAULT_TIME_ZONE);
   const nowMs = Date.now();
   const staleCutoff = nowMs - STALE_THRESHOLD_MIN * 60 * 1000;
 
@@ -71,7 +75,8 @@ export default async function EodPage() {
 
   try {
     const [completed, released, scheduled] = await Promise.all([
-      listFlights({ status: "completed", onDate: today, limit: 200 }),
+      // Landed today, whichever day it was due out.
+      listFlights({ status: "completed", arrivedOnCompanyDate: today, limit: 200 }),
       listFlights({ status: "released", limit: 200 }),
       // Scope to today — bare `listFlights({status:'scheduled'})` pulls
       // in orphan rows from previous seed dates (the same bug we fixed
@@ -79,7 +84,7 @@ export default async function EodPage() {
       // TODAY", so a flight scheduled three days ago that's still
       // status=scheduled was a bookkeeping miss on those older days,
       // not an action item for tonight's closeout.
-      listFlights({ status: "scheduled", onDate: today, limit: 200 }),
+      listFlights({ status: "scheduled", onCompanyDate: today, limit: 200 }),
     ]);
     completedToday = completed.items;
     airborne = released.items;
@@ -108,14 +113,21 @@ export default async function EodPage() {
     }
   }
 
+  // Released and not closed: still flying, or past its arrival with no
+  // landing recorded, from whatever day.
+  const overdue = airborne.filter(
+    (f) => Date.parse(f.scheduled_arrival_at) + OVERDUE_AFTER_MIN * 60_000 < nowMs,
+  );
+  const stillAirborne = airborne.filter((f) => !overdue.includes(f));
+
   const totalBlockHours = computeBlockHours(completedToday);
-  const flagsCount = stale.length;  // duty + fuel sections await M3
+  const flagsCount = stale.length + overdue.length; // duty + fuel sections await M3
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
       <PageHeader
         title="End-of-Day Closeout"
-        description={`${todayUtcLong()} UTC`}
+        description={`${todayLong()}, ${zoneName(DEFAULT_TIME_ZONE)}`}
         actions={
           <Link href="/flight-following" className={buttonOutline}>
             ← Back to Board
@@ -135,14 +147,14 @@ export default async function EodPage() {
           <StatTiles
             completed={completedToday.length}
             blockHours={totalBlockHours}
-            airborne={airborne.length}
+            airborne={stillAirborne.length}
             flags={flagsCount}
           />
 
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
             <CompletedSection flights={completedToday} />
-            <AirborneSection flights={airborne} />
-            <FlagsSection stale={stale} />
+            <AirborneSection flights={stillAirborne} />
+            <FlagsSection stale={stale} overdue={overdue} />
             {todayPlanned.length > 0 && (
               <PlannedSection flights={todayPlanned} />
             )}
@@ -276,8 +288,8 @@ function AirborneSection({ flights }: { flights: FlightListItem[] }) {
   );
 }
 
-function FlagsSection({ stale }: { stale: FlightListItem[] }) {
-  if (stale.length === 0) {
+function FlagsSection({ stale, overdue }: { stale: FlightListItem[]; overdue: FlightListItem[] }) {
+  if (stale.length === 0 && overdue.length === 0) {
     return (
       <Section title="Flags Requiring Attention" tone="red" wide>
         <p className="text-xs text-status-green">
@@ -288,6 +300,34 @@ function FlagsSection({ stale }: { stale: FlightListItem[] }) {
   }
   return (
     <Section title="Flags Requiring Attention" tone="red" wide>
+      {overdue.length > 0 ? (
+        <div className="mb-4">
+          <div className="mb-2 text-xs font-semibold text-status-red">
+            Overdue: released, past their arrival, not closed ({overdue.length})
+          </div>
+          <ul className="space-y-1">
+            {overdue.map((f) => (
+              <li
+                key={f.id}
+                className="rounded border border-status-red/15 bg-status-red/5 px-2 py-1.5 text-xs"
+              >
+                <span className="font-semibold">{f.flight_number || "—"}</span>
+                <span className="ml-2 font-mono">
+                  {localDate(f.scheduled_departure_at, DEFAULT_TIME_ZONE)}
+                </span>
+                <span className="ml-2 font-mono">{f.aircraft.tail_number}</span>
+                <span className="ml-2 font-mono">
+                  {f.origin} → {f.destination}
+                </span>
+                <span className="ml-2 text-muted-foreground">
+                  — ETA {formatZulu(f.scheduled_arrival_at)}, no landing recorded
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+      {stale.length > 0 ? (
       <div>
         <div className="mb-2 text-xs font-semibold text-status-red">
           Stale Planned Flights ({stale.length})
@@ -313,6 +353,7 @@ function FlagsSection({ stale }: { stale: FlightListItem[] }) {
           <CancelStaleButton flightIds={stale.map((f) => f.id)} />
         </div>
       </div>
+      ) : null}
     </Section>
   );
 }

@@ -109,7 +109,9 @@ export function FleetBoardChrome({
 
         <div className="flex items-center gap-2">
           <span className="status-mark text-muted-foreground">
-            {flightsCount} flight{flightsCount === 1 ? "" : "s"}
+            {/* Bookings, which is what this board shows (#157: "Header
+                '3 flights' while 7 on the board today"). */}
+            {flightsCount} booking{flightsCount === 1 ? "" : "s"}
           </span>
           <span className="status-mark text-status-green">
             {bookedSeats}/{totalSeats} seats

@@ -219,20 +219,27 @@ function empNumber(tenantSlug: string, i: number): string {
   return `${tenantSlug}-${(200 + i).toString().padStart(3, "0")}`;
 }
 
+// In words (#157: the list showed "flight_ops" and, for roles missing
+// here, the role's own code, "director_of_operations"). Every role has one.
 const _ROLE_TO_DEPT: Record<string, string> = {
-  exec_admin: "admin",
-  dispatcher: "dispatch",
-  chief_pilot: "flight_ops",
-  pilot: "flight_ops",
-  crew_member: "flight_ops",
-  maintenance: "maintenance",
-  ground_ops: "ground_ops",
-  safety_officer: "safety",
+  exec_admin: "Administration",
+  accountant: "Administration",
+  director_of_operations: "Flight Operations",
+  dispatcher: "Dispatch",
+  reservations_agent: "Reservations",
+  chief_pilot: "Flight Operations",
+  check_airman: "Flight Operations",
+  pilot: "Flight Operations",
+  crew_member: "Flight Operations",
+  director_of_maintenance: "Maintenance",
+  maintenance: "Maintenance",
+  ground_ops: "Ground Operations",
+  safety_officer: "Safety",
 };
 
 function roleToDepartment(role: string | undefined): string | null {
   if (!role) return null;
-  return _ROLE_TO_DEPT[role] ?? role;
+  return _ROLE_TO_DEPT[role] ?? role.replace(/_/g, " ");
 }
 
 const _EMPLOYMENT_TYPE_LABELS: Record<string, string> = {

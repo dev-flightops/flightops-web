@@ -10,6 +10,8 @@ import type {
   GSEUnitStatus,
 } from "@/lib/api/types";
 import { GSE_WRITERS, hasAnyRole } from "@/lib/roles";
+import { DEFAULT_TIME_ZONE, localDay } from "@/lib/format/local-time";
+import { EQUIPMENT_TYPE_LABELS } from "@/lib/ground/equipment-labels";
 
 /**
  * /equipment — GSE landing (M2-G-39).
@@ -26,17 +28,6 @@ import { GSE_WRITERS, hasAnyRole } from "@/lib/roles";
 
 const UNITS_LIMIT = 500;
 
-const EQUIPMENT_TYPE_LABELS: Record<GSEEquipmentType, string> = {
-  tug: "Tug",
-  gpu: "GPU",
-  deice_truck: "Deice Truck",
-  belt_loader: "Belt Loader",
-  fuel_truck: "Fuel Truck",
-  lavatory: "Lavatory",
-  air_start: "Air Start",
-  heater: "Heater",
-  other: "Other",
-};
 
 const ALLOWED_STATUSES: GSEUnitStatus[] = [
   "operational",
@@ -409,8 +400,17 @@ function StationGroup({
 
 function UnitRow({ unit }: { unit: GSEUnitListItem }) {
   const makeModel = [unit.make, unit.model].filter(Boolean).join(" ") || "—";
+  // #157: "GSE units past next-service date still Operational, no flag."
+  const serviceOverdue =
+    unit.next_service_date !== null && unit.next_service_date < localDay(DEFAULT_TIME_ZONE);
   return (
-    <tr className="border-b border-border last:border-0">
+    <tr
+      className={
+        serviceOverdue
+          ? "border-b border-border shadow-[inset_3px_0_0_rgb(var(--status-red))] last:border-0"
+          : "border-b border-border last:border-0"
+      }
+    >
       <td className="px-4 py-3 font-semibold text-foreground">{unit.name}</td>
       <td className="px-4 py-3 text-xs text-muted-foreground">
         {EQUIPMENT_TYPE_LABELS[unit.equipment_type]}
@@ -421,6 +421,11 @@ function UnitRow({ unit }: { unit: GSEUnitListItem }) {
       </td>
       <td className="px-4 py-3 text-xs text-foreground">
         {unit.next_service_date ?? "—"}
+        {serviceOverdue ? (
+          <div className="mt-0.5">
+            <span className="status-mark text-status-red">Service overdue</span>
+          </div>
+        ) : null}
       </td>
       <td className="px-4 py-3 text-center">
         {unit.open_squawk_count > 0 ? (

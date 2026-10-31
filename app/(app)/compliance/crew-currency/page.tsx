@@ -69,7 +69,7 @@ export default async function ComplianceCrewCurrencyPage({
             Fleet Compliance
           </h1>
           <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
-            Every pilot, every currency item — Spec 5 single source of truth.
+            Every pilot and every currency item, in one place.
           </p>
         </div>
         <AddCurrencyItemDialog />

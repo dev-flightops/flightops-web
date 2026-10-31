@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { loadZoneTable } from "@/lib/api/auth";
 import { getAccountingExport } from "@/lib/api/ops";
 import { listCustomers } from "@/lib/api/reservations";
@@ -201,9 +202,11 @@ function Activity({
           <h2 className="eyebrow">
             Flight Activity
           </h2>
+          {/* #157: it had said "No dollar amounts are stored in the
+              dispatch platform", beside invoices with amounts. */}
           <p className="text-xs text-muted-foreground">
-            This data is for accounting reference only. No dollar amounts are
-            stored in the dispatch platform.
+            Flight activity for accounting. Amounts are on the invoices
+            (<Link href="/invoicing" className="underline">Invoicing</Link>).
           </p>
         </div>
         <div className="overflow-x-auto">

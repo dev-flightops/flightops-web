@@ -1,10 +1,12 @@
+import { zoneAbbreviation } from "./local-time";
+
 /**
  * Flight-time formatting helpers.
  *
  * Dispatchers reference two clocks per flight: local field time
- * (AKD for the Peregrine demo tenant) and Zulu (UTC). The legacy
- * board shows both stacked as `08:36 AKD / 16:36z`. Matching the
- * format verbatim so muscle memory transfers.
+ * (AKDT or AKST for the Peregrine demo tenant) and Zulu (UTC). The
+ * legacy board shows both stacked as `08:36 AKD / 16:36z`; the zone now
+ * says which of daylight or standard time it is (#157).
  *
  * America/Anchorage automatically handles AKDT (UTC-8) vs AKST
  * (UTC-9) swap via Intl's IANA data — no manual DST logic needed.
@@ -20,9 +22,11 @@ const AKD_FORMATTER = new Intl.DateTimeFormat("en-US", {
   timeZone: "America/Anchorage",
 });
 
-/** "08:36 AKD" — local time at the field. */
+/** "08:36 AKDT" — local time at the field, with the zone's own
+ *  abbreviation for that day (#157: "AKD" had stood for both). */
 export function formatLocal(iso: string): string {
-  return `${AKD_FORMATTER.format(new Date(iso))} AKD`;
+  const at = new Date(iso);
+  return `${AKD_FORMATTER.format(at)} ${zoneAbbreviation("America/Anchorage", at)}`;
 }
 
 /** "16:36z" — Zulu time, lowercase z to match the legacy board. */
@@ -45,7 +49,7 @@ const AKD_DATE = new Intl.DateTimeFormat("en-US", {
 });
 
 /**
- * Both, each with its date: "Aug 17, 07:39 AKD" over "Aug 17, 15:39z".
+ * Both, each with its date: "Aug 17, 07:39 AKDT" over "Aug 17, 15:39z".
  * For records days apart, as an MEL's deferral and due date are. With the
  * time alone they read as the same moment (#156: "same timestamp for
  * 'deferred' and 'due', no date, only a time").

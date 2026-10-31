@@ -5,37 +5,34 @@ import { CheckGlyph } from "@/components/ff/glyphs";
 import { AlertList } from "@/components/dashboards/alert-list";
 import { FleetAirworthinessPanel } from "@/components/dashboards/fleet-airworthiness-panel";
 import { StatTile } from "@/components/dashboards/stat-tile";
-import { listFlights, getFlightStats } from "@/lib/api/ops";
+import { getComplianceBoard, listFlights, getFlightStats } from "@/lib/api/ops";
+import { DEFAULT_TIME_ZONE, localDay } from "@/lib/format/local-time";
 import { loadOperationalSnapshot } from "@/lib/dashboards/operational-snapshot";
 import { snapshotAlertsToList } from "@/lib/dashboards/snapshot-to-alerts";
 import type { FlightListItem } from "@/lib/api/types";
 import { LoadFailedNotice } from "@/components/ff/setup-notice";
 import { Loads } from "@/lib/api/loads";
 
-function todayUtc(): string {
-  return new Date().toISOString().slice(0, 10);
-}
-
 export default async function DispatcherDashboardPage() {
-  const today = todayUtc();
+  // The company's day (#157), as the board and the schedule have it.
+  const today = localDay(DEFAULT_TIME_ZONE);
   // #138: flights that didn't load say so; they had read as a quiet day.
   const loads = new Loads();
-  const [stats, todaysFlights, pendingResult, snapshot] = await Promise.all([
+  const [stats, todaysFlights, pendingResult, snapshot, crew] = await Promise.all([
     getFlightStats().catch(() => null),
-    loads.or(listFlights({ onDate: today }), { items: [], total: 0 }, "today’s flights"),
+    loads.or(listFlights({ onCompanyDate: today }), { items: [], total: 0 }, "today’s flights"),
     // Wider window then filter to today + tomorrow — same fix as
     // director-ops. Bare status='scheduled' picks up orphan rows from
     // prior seed runs.
     loads.or(listFlights({ status: "scheduled", limit: 50 }), { items: [], total: 0 }, "the scheduled flights"),
     loadOperationalSnapshot(),
+    getComplianceBoard().catch(() => null),
   ]);
 
   const todayDate = today;
-  const tomorrowDate = new Date(Date.now() + 24 * 60 * 60 * 1000)
-    .toISOString()
-    .slice(0, 10);
+  const tomorrowDate = localDay(DEFAULT_TIME_ZONE, new Date(Date.now() + 24 * 60 * 60 * 1000));
   const pendingTodayAndTomorrow = pendingResult.items.filter((f) => {
-    const d = f.scheduled_departure_at.slice(0, 10);
+    const d = localDay(DEFAULT_TIME_ZONE, new Date(f.scheduled_departure_at));
     return d === todayDate || d === tomorrowDate;
   });
 
@@ -91,10 +88,15 @@ export default async function DispatcherDashboardPage() {
           sub={`${fleetActive}/${fleetTotal} avail`}
           tone={fleetGrounded > 0 ? "orange" : "muted"}
         />
-        {/* This read "0 Crew Expired — check before dispatch" from a
-            hardcoded zero: false reassurance on the one check it names.
-            Not wired, so it says so; currency is on Fleet Compliance. */}
-        <StatTile value="—" label="Crew Expired" sub="Not built yet" tone="muted" />
+        {/* From the currency board (#157); it had said "Not built yet". */}
+        {crew ? (
+          <StatTile
+            value={crew.chips.non_current}
+            label="Crew Expired"
+            sub="check before dispatch"
+            tone={crew.chips.non_current > 0 ? "red" : "muted"}
+          />
+        ) : null}
       </div>
 
       {/* Row 2 — alerts */}
@@ -102,7 +104,7 @@ export default async function DispatcherDashboardPage() {
         <div className="-mx-5 -mt-5 mb-4 flex flex-wrap items-baseline justify-between gap-2 border-b border-border px-5 py-3">
           <h2 className="panel-title">Active Alerts</h2>
           <span className="text-[0.65rem] text-muted-foreground">
-            {snapshot.alerts.length} live · 6 more alert types land with their services
+            {snapshot.alerts.length} live
           </span>
         </div>
         <AlertList
@@ -150,13 +152,9 @@ export default async function DispatcherDashboardPage() {
         />
       </div>
 
-      {/* Row 5 — 3-col footer panels (all backed by services not yet built) */}
-      <div className="mt-6 grid grid-cols-1 items-start gap-5 md:grid-cols-3">
-        <FuturePanel
-          title="Crew Currency"
-          hint="Not built here yet — pilot currency is on Fleet Compliance."
-        />
-        <FuturePanel title="Risk Distribution (7d)" hint="Not built yet." />
+      {/* Row 5 — recent outcomes. The crew currency and risk distribution
+          panels said "Not built yet" (#157) and aren't shown. */}
+      <div className="mt-6 grid grid-cols-1 items-start gap-5">
         <RecentOutcomesPanel />
       </div>
     </div>
@@ -299,19 +297,6 @@ function PendingDispatchTable({ flights }: { flights: FlightListItem[] }) {
         </tbody>
       </table>
     </div>
-  );
-}
-
-function FuturePanel({ title, hint }: { title: string; hint: string }) {
-  return (
-    <section className="rounded-lg border border-border bg-card p-5">
-      <div className="mb-2 flex items-center justify-between">
-        <h2 className="panel-title">
-          {title}
-        </h2>
-      </div>
-      <p className="text-xs text-muted-foreground">{hint}</p>
-    </section>
   );
 }
 

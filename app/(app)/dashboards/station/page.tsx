@@ -14,10 +14,7 @@ import {
 } from "@/lib/dashboards/operational-snapshot";
 import { snapshotAlertsToList } from "@/lib/dashboards/snapshot-to-alerts";
 import type { CompanyBaseResponse, FlightListItem } from "@/lib/api/types";
-
-function todayUtc(): string {
-  return new Date().toISOString().slice(0, 10);
-}
+import { DEFAULT_TIME_ZONE, localDay } from "@/lib/format/local-time";
 
 interface SearchParams {
   station?: string;
@@ -29,12 +26,13 @@ export default async function StationDashboardPage({
   searchParams: Promise<SearchParams>;
 }) {
   const { station: requestedStation } = await searchParams;
-  const today = todayUtc();
+  // The company's day (#157).
+  const today = localDay(DEFAULT_TIME_ZONE);
   // #138: a load that fails says so; it had read as no traffic, or as
   // "No bases configured".
   const loads = new Loads();
   const [todaysFlights, snapshot, basesResponse] = await Promise.all([
-    loads.or(listFlights({ onDate: today, limit: 200 }), { items: [], total: 0 }, "today’s flights"),
+    loads.or(listFlights({ onCompanyDate: today, limit: 200 }), { items: [], total: 0 }, "today’s flights"),
     loadOperationalSnapshot(),
     // Full bases catalog drives both the dropdown picker and the
     // network grid — same source legacy uses. Falls back to today's

@@ -45,7 +45,7 @@ export function SummaryTab({
           {!readOnly && (
             <>
               {" "}Add legs in{" "}
-              <span className="font-semibold text-foreground">Tab 2 (Legs)</span>{" "}
+              <span className="font-semibold text-foreground">Legs</span>{" "}
               to see derived totals.
             </>
           )}
@@ -86,7 +86,7 @@ export function SummaryTab({
           </StatStrip>
 
           <p className="text-[0.65rem] text-muted-foreground">
-            Tiles are derived from Tab 2 (Legs).
+            Totals are worked out from the legs.
             {!readOnly && " Edit a leg to update them."}
           </p>
         </>

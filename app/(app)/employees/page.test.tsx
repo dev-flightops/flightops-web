@@ -110,7 +110,7 @@ describe("/employees", () => {
     expect(screen.getByText("PEREGRINE-DEMO-200")).toBeDefined();
 
     // Role mapped to a department label.
-    expect(screen.getByText("flight_ops")).toBeDefined();
+    expect(screen.getByText("Flight Operations")).toBeDefined();
 
     // Status filter defaults to Active.
     expect(

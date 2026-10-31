@@ -103,14 +103,8 @@ export function RightColumn({
         <div className="flex flex-wrap gap-3">
           <RefreshWeatherButton flightSelected={!!flight} />
 
-          <button
-            type="button"
-            disabled
-            title="AI Review · Coming in M4"
-            className="btn-caps inline-flex cursor-not-allowed items-center gap-1.5 rounded-md border border-status-purple/40 px-4 py-2 text-[0.72rem] text-status-purple opacity-60"
-          >
-            AI Review
-          </button>
+          {/* AI Review had sat here disabled ("Coming in M4"); it isn't
+              built, so it isn't shown (#157). The AI Assistant is above. */}
 
           <GeneratePdfButton
             flight={flight ?? null}

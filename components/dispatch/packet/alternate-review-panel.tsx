@@ -81,8 +81,8 @@ export async function AlternateReviewPanel({ icaos }: { icaos: string[] }) {
       </ul>
       <p className="mt-3 text-[0.65rem] text-muted-foreground">
         Verdict derived from the current METAR (ceiling &lt; 2000 ft OR vis
-        &lt; 3 SM, per FAR 91.169). Forecast-based alternate review (TAF
-        within ETA ± 1 hr) lands in a later story.
+        &lt; 3 SM, per FAR 91.169). Check the TAF around the ETA as well:
+        this verdict reads the METAR only.
       </p>
     </SectionPanel>
   );

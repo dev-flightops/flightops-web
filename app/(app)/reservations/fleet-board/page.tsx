@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { DEFAULT_TIME_ZONE, localClock, localDay, localToUtcIso } from "@/lib/format/local-time";
 import { isValidIsoDay } from "@/lib/iso-day";
 
 import { ApiError } from "@/lib/api/client";
@@ -37,19 +38,18 @@ function _parseView(raw: string | undefined): BoardView {
   return raw === "list" || raw === "split" ? raw : "board";
 }
 
-// The board's day window. Note this is midnight in the *server's* zone,
-// which is what the booking query is filtered on. The day the viewer sees
-// in the navigator comes from the URL string instead — see lib/iso-day.ts.
-function _parseDate(raw: string | undefined): Date {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  if (!isValidIsoDay(raw)) return today;
-  return new Date(`${raw}T00:00:00`);
-}
-
-function _isoDate(d: Date): string {
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+// The board's day: midnight to midnight in the company's zone (#157). It
+// had been midnight in the server's zone, UTC on Vercel, and its times the
+// server's too, so PGR701 at 10:30 AKDT showed as 6:30 PM.
+function _dayWindow(raw: string | undefined): { isoDay: string; day: Date; dayEnd: Date } {
+  const isoDay = isValidIsoDay(raw) ? raw : localDay(DEFAULT_TIME_ZONE);
+  const next = new Date(`${isoDay}T12:00:00Z`);
+  next.setUTCDate(next.getUTCDate() + 1);
+  const start = localToUtcIso(`${isoDay}T00:00`, DEFAULT_TIME_ZONE) ?? `${isoDay}T00:00:00Z`;
+  const end =
+    localToUtcIso(`${next.toISOString().slice(0, 10)}T00:00`, DEFAULT_TIME_ZONE) ??
+    `${next.toISOString().slice(0, 10)}T00:00:00Z`;
+  return { isoDay, day: new Date(start), dayEnd: new Date(end) };
 }
 
 // Accepts "HH:MM" (24h). Returns the string on success or null on
@@ -79,11 +79,8 @@ export default async function FleetBoardPage({
 }) {
   const params = await searchParams;
   const view = _parseView(params.view);
-  const day = _parseDate(params.d);
-  const dayEnd = new Date(day);
-  dayEnd.setDate(dayEnd.getDate() + 1);
+  const { isoDay, day, dayEnd } = _dayWindow(params.d);
   const drawerBookingId = params.booking ?? null;
-  const isoDay = _isoDate(day);
   const newDrawerOpen = params.new === "1";
   const newDrawerAircraftId = params.aircraft_id ?? null;
   const newDrawerHour = _validHour(params.t) ?? "09:00";
@@ -537,11 +534,9 @@ function BookingBlock({
 // Helpers
 // ============================================================================
 
+/** "10:30 AKDT": the company's clock, not the server's (#157). */
 function _timeOnly(iso: string): string {
-  return new Date(iso).toLocaleTimeString(undefined, {
-    hour: "numeric",
-    minute: "2-digit",
-  });
+  return localClock(iso, DEFAULT_TIME_ZONE);
 }
 
 // FAA average passenger weight (summer, adult, incl. 30 lbs baggage) — used

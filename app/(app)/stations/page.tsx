@@ -151,16 +151,22 @@ function StationsTable({ stations }: { stations: StationListItem[] }) {
 function RunwayCell({ station }: { station: StationListItem }) {
   const len = station.runway_length_ft;
   const width = station.runway_width_ft;
+  // #157: "Levelock '01/193,284 × 60 ft'": the name and the length ran
+  // together, a margin being no separator to anyone reading or copying it.
+  // And "not cached" was the lookup's word, not the operator's.
   if (len === null || width === null) {
     return (
-      <span className="text-xs text-status-yellow">not cached</span>
+      <span
+        className="text-xs text-muted-foreground"
+        title="The risk matrix uses FAA data where it has the airport; enter the runway on the station for a village strip it doesn't."
+      >
+        Not entered
+      </span>
     );
   }
   return (
     <span className="font-mono text-xs text-foreground">
-      {station.runway_primary_name && (
-        <span className="mr-2">{station.runway_primary_name}</span>
-      )}
+      {station.runway_primary_name ? `${station.runway_primary_name} · ` : null}
       {len.toLocaleString()} × {width} ft
       {len < 2500 && (
         <span className="status-mark ml-2 text-status-red">

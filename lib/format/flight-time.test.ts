@@ -21,19 +21,19 @@ describe("formatLocal (America/Anchorage)", () => {
   // the codebase can crib from when adding more tenants in M3.
   it("converts UTC to Anchorage local during DST", () => {
     // 20:00 UTC = 12:00 AKD in summer
-    expect(formatLocal("2026-06-15T20:00:00Z")).toBe("12:00 AKD");
+    expect(formatLocal("2026-06-15T20:00:00Z")).toBe("12:00 AKDT");
   });
 
   it("handles a wrap-back to the prior day correctly", () => {
     // 04:00 UTC = 20:00 AKD (prior day)
-    expect(formatLocal("2026-06-15T04:00:00Z")).toBe("20:00 AKD");
+    expect(formatLocal("2026-06-15T04:00:00Z")).toBe("20:00 AKDT");
   });
 });
 
 describe("formatBoth", () => {
   it("returns both formats", () => {
     const result = formatBoth("2026-06-15T20:00:00Z");
-    expect(result.local).toBe("12:00 AKD");
+    expect(result.local).toBe("12:00 AKDT");
     expect(result.zulu).toBe("20:00z");
   });
 });
@@ -78,5 +78,12 @@ describe("formatZuluDate", () => {
 
   it("returns the input rather than 'Invalid Date' on junk", () => {
     expect(formatZuluDate("nonsense")).toBe("nonsense");
+  });
+});
+
+describe("the zone's own abbreviation (#157)", () => {
+  it("says AKST in winter, not AKD", () => {
+    // 20:00 UTC on 15 Jan = 11:00 AKST (UTC-9).
+    expect(formatLocal("2026-01-15T20:00:00Z")).toBe("11:00 AKST");
   });
 });

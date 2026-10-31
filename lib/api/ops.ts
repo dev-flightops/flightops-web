@@ -78,6 +78,9 @@ export interface ListFlightsParams {
   onDate?: string; // YYYY-MM-DD (UTC)
   /** YYYY-MM-DD in the company's time zone (#137): the schedule's day. */
   onCompanyDate?: string;
+  /** Landed on this day in the company's zone (#157): End of Day's
+   *  "completed today". */
+  arrivedOnCompanyDate?: string;
   /** Single or multiple statuses. Multi-value lands as repeated
    *  `?status=` params, which FastAPI delivers as a list (M2-M-15). */
   status?: FlightStatus | FlightStatus[];
@@ -101,6 +104,7 @@ export async function listFlights(
   const search = new URLSearchParams();
   if (params.onDate) search.set("on_date", params.onDate);
   if (params.onCompanyDate) search.set("on_company_date", params.onCompanyDate);
+  if (params.arrivedOnCompanyDate) search.set("arrived_on_company_date", params.arrivedOnCompanyDate);
   if (params.status) {
     const values = Array.isArray(params.status)
       ? params.status

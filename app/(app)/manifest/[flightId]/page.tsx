@@ -163,7 +163,7 @@ export default async function FlightManifestPage({
             />
           ) : null}
 
-          <TotalsStrip totals={manifest.totals} />
+          <TotalsStrip totals={manifest.totals} load={manifest.load} />
 
           <LoadPanel
             manifest={manifest}
@@ -313,13 +313,26 @@ function FlightHeader({
   );
 }
 
-function TotalsStrip({ totals }: { totals: ManifestDetailResponse["totals"] }) {
+function TotalsStrip({
+  totals,
+  load,
+}: {
+  totals: ManifestDetailResponse["totals"];
+  load: ManifestDetailResponse["load"];
+}) {
+  // The crew as the load counts them (#157: "Crew missing from manifest:
+  // 0 crew, 0 lb crew weight, while the useful-load box adds 380 lb for
+  // two crew at standard weight"). With none weighed on the manifest,
+  // that is the flight's assigned crew.
+  const assigned = load && load.crew_basis === "standard";
+  const crewCount = assigned ? load.crew_count : totals.crew_count;
+  const crewLbs = assigned ? load.crew_lbs : totals.crew_weight_lbs;
   return (
     <div className="mb-5 grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-4 lg:grid-cols-6">
       <Stat value={totals.pax_count} label="Passengers" />
       <Stat value={totals.revenue_pax} label="Revenue" />
-      <Stat value={totals.crew_count} label="Crew" />
-      <Stat value={`${fmtLbs(totals.crew_weight_lbs)} lb`} label="Crew Weight" />
+      <Stat value={crewCount} label={assigned ? "Crew (assigned)" : "Crew"} />
+      <Stat value={`${fmtLbs(crewLbs)} lb`} label="Crew Weight" />
       <Stat
         value={`${fmtLbs(totals.pax_weight_lbs)} lb`}
         label="Pax Weight"

@@ -12,18 +12,16 @@ import { snapshotAlertsToList } from "@/lib/dashboards/snapshot-to-alerts";
 import type { FlightListItem } from "@/lib/api/types";
 import { LoadFailedNotice } from "@/components/ff/setup-notice";
 import { Loads } from "@/lib/api/loads";
-
-function todayUtc(): string {
-  return new Date().toISOString().slice(0, 10);
-}
+import { DEFAULT_TIME_ZONE, localDay } from "@/lib/format/local-time";
 
 export default async function DirectorOpsDashboardPage() {
-  const today = todayUtc();
+  // The company's day (#157), as the board and the schedule have it.
+  const today = localDay(DEFAULT_TIME_ZONE);
   // #138: flights that didn't load say so; they had read as a quiet day.
   const loads = new Loads();
   const [stats, todaysFlights, pendingResult, snapshot] = await Promise.all([
     getFlightStats().catch(() => null),
-    loads.or(listFlights({ onDate: today }), { items: [], total: 0 }, "today’s flights"),
+    loads.or(listFlights({ onCompanyDate: today }), { items: [], total: 0 }, "today’s flights"),
     // Pull a wider window then filter to today + tomorrow client-side —
     // the API doesn't have a date-range param yet, and a bare
     // status='scheduled' query also picks up orphaned old-date rows
@@ -33,11 +31,9 @@ export default async function DirectorOpsDashboardPage() {
   ]);
 
   const todayDate = today;
-  const tomorrowDate = new Date(Date.now() + 24 * 60 * 60 * 1000)
-    .toISOString()
-    .slice(0, 10);
+  const tomorrowDate = localDay(DEFAULT_TIME_ZONE, new Date(Date.now() + 24 * 60 * 60 * 1000));
   const pendingTodayAndTomorrow = pendingResult.items.filter((f) => {
-    const d = f.scheduled_departure_at.slice(0, 10);
+    const d = localDay(DEFAULT_TIME_ZONE, new Date(f.scheduled_departure_at));
     return d === todayDate || d === tomorrowDate;
   });
 
@@ -147,7 +143,7 @@ export default async function DirectorOpsDashboardPage() {
           </h2>
           <AlertList
             alerts={snapshotAlertsToList(snapshot.alerts)}
-            emptyHint="No grounded aircraft, overdue flights or MELs expiring in the next two days. NOTAM, compliance and safety alerts are not fed into this list — safety-service ships hazards but nothing routes them here."
+            emptyHint="No grounded aircraft, overdue flights or MELs expiring in the next two days."
           />
         </section>
 
@@ -209,25 +205,14 @@ export default async function DirectorOpsDashboardPage() {
         </section>
       </div>
 
-      {/* Row 4 — 3-col: Stations + Crew Compliance + Risk Distribution.
-          The last two printed hardcoded zeros ("PICs current 0/0",
-          "Extreme 0") under an "M3" pill, which was the only sign they
-          were not real. They say they are not built now. */}
+      {/* Row 4 — stations. Crew Compliance and Risk Distribution had
+          printed hardcoded zeros, then "Not built yet" (#157); they aren't
+          shown until they read something. */}
       <div className="mt-6 grid grid-cols-1 items-start gap-5 md:grid-cols-3">
         <ListPanel
           title="Station Summary"
           rows={collectStations(todaysFlights.items)}
           emptyHint="No station traffic today."
-        />
-        <ListPanel
-          title="Crew Compliance"
-          rows={[]}
-          emptyHint="Not built here yet — pilot currency is on Fleet Compliance."
-        />
-        <ListPanel
-          title="Risk Distribution (14d)"
-          rows={[]}
-          emptyHint="Not built yet."
         />
       </div>
     </div>

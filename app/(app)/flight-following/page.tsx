@@ -151,9 +151,11 @@ export default async function FlightFollowingPage({
     <div className="mx-auto flex min-h-[calc(100vh-9rem)] max-w-7xl flex-col px-4 py-8 sm:px-6">
       <PageHeader />
 
-      <div className="mb-4 flex items-center justify-between gap-4">
+      {/* Wraps on a phone (#157: "Flight Following filters and table run
+          off screen"). */}
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-2 sm:gap-4">
         <FilterTabs activeView={view} display={display} />
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <ManualRefreshButton />
           <DisplayToggle view={view} activeDisplay={display} />
         </div>

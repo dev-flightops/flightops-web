@@ -89,7 +89,7 @@ export function FlightHistoryTable({
               {logs.length} log{logs.length === 1 ? "" : "s"}
             </td>
             <td colSpan={2} className="px-3 py-2 text-muted-foreground">
-              Filtered totals: hours roll in once Tab 2 (Legs) ships.
+              Hours are on each log’s legs.
             </td>
           </tr>
         </tfoot>

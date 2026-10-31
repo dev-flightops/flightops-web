@@ -39,6 +39,8 @@ import { getFlightBoard } from "@/lib/api/flight-following";
 import { getFleetAirworthiness, listMelItems } from "@/lib/api/maintenance";
 import { listOpenSeats, type Opening } from "@/lib/api/open-seats";
 import { getDutyOverLimit, listFratAwaitingAcceptance } from "@/lib/api/ops";
+import { inFleet } from "@/lib/fleet/in-fleet";
+import { DEFAULT_TIME_ZONE, localDate } from "@/lib/format/local-time";
 import { factorLabel } from "@/lib/frat/factors";
 import { SAFETY_REPORT_TYPE_LABELS, listSafetyReports } from "@/lib/api/safety-reports";
 import type {
@@ -144,7 +146,9 @@ export async function loadOperationalSnapshot(): Promise<OperationalSnapshot> {
           id: `overdue-${row.id}`,
           severity: "red",
           category: "flight_overdue",
-          title: `Flight overdue — ${row.flight_number}`,
+          // With its date (#157): two overdue MM001s from different days
+          // read "MM001, MM001".
+          title: `Flight overdue — ${row.flight_number} ${localDate(row.scheduled_departure_at, DEFAULT_TIME_ZONE)}`,
           detail: `${row.aircraft.tail_number} · ${row.origin} → ${row.destination} · no contact 20+ min`,
           href: "/flight-following",
           scopedToIcao: row.origin,
@@ -304,14 +308,16 @@ export async function loadOperationalSnapshot(): Promise<OperationalSnapshot> {
     flightsByOrigin.set(row.origin, list);
   }
 
-  const fleetRows = fleet?.items ?? [];
-  const fleetTotal = fleetRows.filter((r) => r.is_active).length;
+  // The fleet is every aircraft the company has, grounded ones included
+  // (#157): grounding clears is_active, so counting active aircraft read
+  // "5/5 fleet airworthy, 0 on hold" with three on the ground. Only a
+  // retired aircraft (inactive and not grounded) is left out.
+  const fleetRows = (fleet?.items ?? []).filter(inFleet);
+  const fleetTotal = fleetRows.length;
   const fleetAirworthy = fleetRows.filter(
     (r) => r.is_active && r.is_airworthy,
   ).length;
-  const fleetGrounded = fleetRows.filter(
-    (r) => r.is_active && !r.is_airworthy,
-  ).length;
+  const fleetGrounded = fleetTotal - fleetAirworthy;
 
   return {
     alerts,

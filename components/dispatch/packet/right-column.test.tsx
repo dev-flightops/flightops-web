@@ -93,11 +93,9 @@ describe("RightColumn / Generate PDF button", () => {
     ).toBeDisabled();
   });
 
-  it("AI Review stays disabled regardless of selection (M4)", () => {
+  it("shows no AI Review button: it isn't built (#157)", () => {
     render(<RightColumn flight={baseFlight()} />);
-    expect(
-      screen.getByRole("button", { name: /AI Review/i }),
-    ).toBeDisabled();
+    expect(screen.queryByRole("button", { name: /AI Review/i })).toBeNull();
   });
 });
 

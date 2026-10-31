@@ -14,6 +14,7 @@ import type {
   GSEUnitListItem,
   StationIssueResponse,
 } from "@/lib/api/types";
+import { equipmentTypeLabel } from "@/lib/ground/equipment-labels";
 
 /**
  * /ramper — Ramp staff worklist.
@@ -189,7 +190,7 @@ export default async function RamperPage() {
             key={u.id}
             href={`/equipment/${u.id}`}
             primary={u.name}
-            secondary={`${u.equipment_type} • ${u.station?.name ?? "—"} • ${u.open_squawk_count} open`}
+            secondary={`${equipmentTypeLabel(u.equipment_type)} • ${u.station?.name ?? "—"} • ${u.open_squawk_count} open`}
             cta="View"
             tone={u.status === "out_of_service" ? "red" : undefined}
           />

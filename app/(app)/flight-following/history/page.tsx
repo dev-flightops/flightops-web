@@ -9,6 +9,7 @@ import type {
   FlightListItem,
 } from "@/lib/api/types";
 import { formatBoth } from "@/lib/format/flight-time";
+import { DEFAULT_TIME_ZONE, localDate } from "@/lib/format/local-time";
 
 /**
  * /flight-following/history — terminal-status flight history.
@@ -153,6 +154,7 @@ function FlightHistoryTable({ flights }: { flights: FlightListItem[] }) {
       <table className="w-full text-xs">
         <thead className="ff-thead">
           <tr className="text-left eyebrow">
+            <th className="px-3 py-2">Date</th>
             <th className="px-3 py-2">Flight</th>
             <th className="px-3 py-2">Aircraft</th>
             <th className="px-3 py-2">Route</th>
@@ -180,6 +182,11 @@ function FlightHistoryRow({ flight }: { flight: FlightListItem }) {
 
   return (
     <tr className="border-t border-border hover:bg-accent">
+      {/* #157: "Flight Following history has no date column; repeat
+          flights indistinguishable." The company's day it was due out. */}
+      <td className="whitespace-nowrap px-3 py-2.5 font-mono text-foreground">
+        {localDate(flight.scheduled_departure_at, DEFAULT_TIME_ZONE, { withYear: true })}
+      </td>
       <td className="px-3 py-2.5 font-semibold text-foreground">
         {flight.flight_number || "—"}
       </td>
