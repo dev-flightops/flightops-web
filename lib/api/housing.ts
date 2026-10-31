@@ -23,6 +23,10 @@ export const ROOM_STATUSES = [
 ] as const;
 export type RoomStatus = (typeof ROOM_STATUSES)[number];
 
+/** The statuses a person sets (#158): "occupied" follows from the room's
+ *  bookings, so the forms don't offer it. */
+export const SETTABLE_ROOM_STATUSES = ["available", "maintenance", "offline"] as const;
+
 export const BOOKING_PURPOSES = [
   "crew_rest",
   "training",
@@ -89,6 +93,10 @@ export interface HousingRoom {
   has_private_bath: boolean;
   has_laundry: boolean;
   notes: string | null;
+  /** Guests booked in tonight, and the status that follows (#158):
+   *  occupied, available, or the hand-set maintenance or offline. */
+  occupants_tonight?: number;
+  status_now?: RoomStatus | null;
 }
 
 export interface HousingBooking {

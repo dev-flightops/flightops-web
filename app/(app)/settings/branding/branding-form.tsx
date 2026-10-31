@@ -40,6 +40,7 @@ export function BrandingForm({
   const [primary, setPrimary] = useState(initialPrimary ?? "");
   const [primaryDark, setPrimaryDark] = useState(initialPrimaryDark ?? "");
   const [homeImage, setHomeImage] = useState(initialHomeImage ?? "");
+  const [imageBroken, setImageBroken] = useState(false);
 
   // When an extract succeeds, pipe the suggested palette into the color
   // inputs, and the site's share image into Home's (#118) when it names
@@ -198,12 +199,13 @@ export function BrandingForm({
         value={homeImage}
         onChange={setHomeImage}
         error={fieldError("home_image_url")}
+        onBroken={setImageBroken}
       />
 
       <div className="flex items-center justify-end gap-2">
         <button
           type="submit"
-          disabled={pending}
+          disabled={pending || imageBroken}
           className="btn-caps inline-flex items-center gap-1.5 rounded-md bg-primary px-4 py-2 text-white hover:bg-brand-dark disabled:opacity-60 text-[0.72rem]"
         >
           {pending && <Spinner size="xs" />}
@@ -279,12 +281,22 @@ function HomeImageField({
   value,
   onChange,
   error,
+  onBroken,
 }: {
   value: string;
   onChange: (v: string) => void;
   error?: string;
+  /** Whether the link fails to load as an image (#158). */
+  onBroken: (broken: boolean) => void;
 }) {
   const link = /^https?:\/\/\S+$/.test(value.trim()) ? value.trim() : null;
+  // The client, 10/29: "The branding function does not work for images /
+  // unless I am doing it wrong?" The field held the company's website, a
+  // page rather than an image, and the preview just stayed blank. Loaded
+  // here, an address that isn't an image says so, and isn't saved.
+  const [broken, setBroken] = useState<string | null>(null);
+  const isBroken = link !== null && broken === link;
+  useEffect(() => onBroken(isBroken), [isBroken, onBroken]);
   return (
     <div className="rounded-lg border border-border bg-card p-5">
       <label htmlFor="home_image_url" className="field-label">
@@ -308,10 +320,17 @@ function HomeImageField({
         <p role="alert" className="field-error">
           {error}
         </p>
+      ) : isBroken ? (
+        <p role="alert" className="field-error">
+          That address isn&rsquo;t an image we can show: it&rsquo;s probably a web
+          page. Open the picture you want, copy the image&rsquo;s own address
+          (right-click it, then Copy image address), and paste that here.
+        </p>
       ) : (
         <p className="mt-1 text-[0.65rem] text-muted-foreground">
-          A wide photo, shown behind the greeting on Home. Suggest from your
-          website fills in the site&rsquo;s own image when it names one.
+          The address of a wide photo (ending .jpg, .png or .webp), shown
+          behind the greeting on Home. Suggest from your website fills in the
+          site&rsquo;s own image when it names one.
         </p>
       )}
       <div className="mt-4">
@@ -319,7 +338,13 @@ function HomeImageField({
         {link ? (
           <div className="dark relative h-32 overflow-hidden bg-ink sm:h-40">
             {/* The company's link on any host, so not next/image. */}
-            <img src={link} alt="" className="absolute inset-0 h-full w-full object-cover" />
+            <img
+              src={link}
+              alt=""
+              onError={() => setBroken(link)}
+              onLoad={() => setBroken(null)}
+              className="absolute inset-0 h-full w-full object-cover"
+            />
             <div aria-hidden className="absolute inset-0 bg-gradient-to-t from-ink via-ink/70 to-ink/30" />
             <p className="page-title absolute bottom-3 left-4 text-xl text-foreground">
               Good morning

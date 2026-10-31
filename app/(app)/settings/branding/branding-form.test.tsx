@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
@@ -60,5 +60,16 @@ describe("the Home image", () => {
     expect(screen.getByLabelText("Home image")).toHaveValue("https://www.brand.example/og.jpg");
     expect(screen.getByText(/and the site's own image for Home/)).toBeInTheDocument();
     actions.extracted = { status: "idle" };
+  });
+
+  it("says when the address isn't an image, and won't save it (#158)", () => {
+    // The client typed their website; the preview stayed blank and saved.
+    const url = "https://www.brand.example/";
+    const { container } = render(
+      <BrandingForm initialPrimary={null} initialPrimaryDark={null} initialHomeImage={url} />,
+    );
+    fireEvent.error(container.querySelector(`img[src="${url}"]`)!);
+    expect(screen.getByRole("alert")).toHaveTextContent(/isn.t an image we can show/);
+    expect(screen.getByRole("button", { name: /Save brand theme/ })).toBeDisabled();
   });
 });

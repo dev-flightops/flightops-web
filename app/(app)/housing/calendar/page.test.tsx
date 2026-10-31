@@ -55,6 +55,15 @@ vi.mock("@/lib/api/housing", () => ({
   },
 }));
 
+// Staff for the "Book a stay" pickers (#158), and the dialog itself, which
+// is tested on its own.
+vi.mock("@/lib/api/auth", () => ({ listStaff: vi.fn(async () => ({ items: [], total: 0 })) }));
+vi.mock("@/components/housing/book-stay-dialog", () => ({
+  BookStayDialog: ({ roomId, checkIn }: { roomId?: string; checkIn?: string }) => (
+    <button data-testid="book-night" data-room={roomId} data-day={checkIn}>+</button>
+  ),
+}));
+
 import HousingCalendarPage from "./page";
 import { DEFAULT_UNIT_COLOR } from "@/lib/housing/unit-color";
 
@@ -309,7 +318,7 @@ describe("which bookings land in which cell", () => {
     return within(row!).getAllByRole("cell").slice(1);
   };
 
-  it("fills every day a stay covers", async () => {
+  it("fills each night of a stay, not its check-out morning", async () => {
     seed({
       bookings: [
         booking({ id: "b-1", check_in: "2026-08-18", check_out: "2026-08-20" }),
@@ -317,8 +326,8 @@ describe("which bookings land in which cell", () => {
     });
     await renderPage();
     const filled = cellsForRoom().map((c) => within(c).queryAllByRole("link").length);
-    // Tue, Wed, Thu — inclusive at both ends.
-    expect(filled).toEqual([0, 1, 1, 1, 0, 0, 0]);
+    // Tue and Wed nights; they leave Thursday morning (#158).
+    expect(filled).toEqual([0, 1, 1, 0, 0, 0, 0]);
   });
 
   it("runs an open-ended stay to the end of the window", async () => {
@@ -340,7 +349,8 @@ describe("which bookings land in which cell", () => {
     });
     await renderPage();
     const filled = cellsForRoom().map((c) => within(c).queryAllByRole("link").length);
-    expect(filled).toEqual([1, 1, 0, 0, 0, 0, 0]);
+    // Through Monday night; they leave Tuesday morning.
+    expect(filled).toEqual([1, 0, 0, 0, 0, 0, 0]);
   });
 
   it("leaves cancelled bookings out of the grid entirely", async () => {
@@ -359,10 +369,10 @@ describe("which bookings land in which cell", () => {
     expect(filled).toEqual([0, 0, 0, 0, 0, 0, 0]);
   });
 
-  it("stacks two stays that overlap on one day", async () => {
+  it("stacks two stays that share a night", async () => {
     seed({
       bookings: [
-        booking({ id: "b-1", check_in: MONDAY, check_out: "2026-08-18", employee_name: "Alice Chen" }),
+        booking({ id: "b-1", check_in: MONDAY, check_out: "2026-08-19", employee_name: "Alice Chen" }),
         booking({ id: "b-2", check_in: "2026-08-18", check_out: "2026-08-19", employee_name: "Bob Henderson" }),
       ],
     });

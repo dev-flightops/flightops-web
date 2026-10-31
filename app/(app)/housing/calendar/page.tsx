@@ -13,6 +13,8 @@ import {
 } from "@/lib/api/housing";
 import { unitColor } from "@/lib/housing/unit-color";
 import { readableTextOn } from "@/lib/theme/contrast";
+import { BookStayDialog, type StayPerson, type StayRoom } from "@/components/housing/book-stay-dialog";
+import { listStaff } from "@/lib/api/auth";
 
 /**
  * /housing/calendar — 7-day booking calendar.
@@ -29,10 +31,10 @@ import { readableTextOn } from "@/lib/theme/contrast";
  *   - `getHousingUnit(id)` per active unit to pull rooms (the list
  *     endpoint doesn't include rooms; keep the fetches parallel)
  *
- * Interactions today are read-only: click a booking → jump to
- * `/housing/[unitId]` where the full booking row + cancel action
- * live. Drag-to-book from the legacy tag row is deferred to a
- * follow-up story (needs a booking-create modal + drag state).
+ * Click a booking → jump to `/housing/[unitId]` where the full booking
+ * row + cancel action live. A night with room left has a "+" that books
+ * a stay from it (#158: "by clicking an empty run of nights on the
+ * calendar"); the dialog takes the check-out for a longer run.
  */
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -74,6 +76,11 @@ export default async function HousingCalendarPage({
         ? "Your session expired — please sign in again."
         : "Housing calendar unavailable. Try refreshing in a moment.";
   }
+
+  // Who can be booked in (#158): anyone on the staff.
+  const people: StayPerson[] = await listStaff()
+    .then((r) => r.items.map((p) => ({ id: p.id, name: p.full_name })))
+    .catch(() => []);
 
   const prevAnchor = addDays(anchor, -7);
   const nextAnchor = addDays(anchor, 7);
@@ -131,6 +138,7 @@ export default async function HousingCalendarPage({
         <EmptyState />
       ) : (
         <CalendarGrid
+          people={people}
           units={units}
           unitsRooms={unitsRooms}
           bookings={bookings}
@@ -188,11 +196,13 @@ function CalendarNav({
 }
 
 function CalendarGrid({
+  people,
   units,
   unitsRooms,
   bookings,
   days,
 }: {
+  people: StayPerson[];
   units: HousingUnit[];
   unitsRooms: Map<string, HousingRoom[]>;
   bookings: HousingBooking[];
@@ -206,6 +216,12 @@ function CalendarGrid({
     bookingsByRoom.set(b.room_id, list);
   }
   const todayIso = isoDay(new Date());
+  const choices: StayRoom[] = units.flatMap((u) =>
+    (unitsRooms.get(u.id) ?? []).map((r) => ({
+      id: r.id,
+      label: `${u.name} · ${r.room_number} (holds ${r.capacity})`,
+    })),
+  );
 
   return (
     <div className="overflow-x-auto rounded-lg border border-border bg-card">
@@ -247,6 +263,8 @@ function CalendarGrid({
                 days={days}
                 bookingsByRoom={bookingsByRoom}
                 todayIso={todayIso}
+                people={people}
+                choices={choices}
               />
             );
           })}
@@ -262,12 +280,16 @@ function UnitBlock({
   days,
   bookingsByRoom,
   todayIso,
+  people,
+  choices,
 }: {
   unit: HousingUnit;
   rooms: HousingRoom[];
   days: Date[];
   bookingsByRoom: Map<string, HousingBooking[]>;
   todayIso: string;
+  people: StayPerson[];
+  choices: StayRoom[];
 }) {
   if (rooms.length === 0) {
     return (
@@ -313,8 +335,10 @@ function UnitBlock({
           </td>
           {days.map((d) => {
             const dayIso = isoDay(d);
+            // The guests of that night: a stay's check-out morning isn't one
+            // of its nights (#158).
             const dayBookings = (bookingsByRoom.get(r.id) ?? []).filter(
-              (b) => b.check_in <= dayIso && (b.check_out === null || b.check_out >= dayIso),
+              (b) => b.check_in <= dayIso && (b.check_out === null || b.check_out > dayIso || b.check_out === b.check_in),
             );
             return (
               <td
@@ -332,6 +356,17 @@ function UnitBlock({
                       unit={unit}
                     />
                   ))}
+                  {dayBookings.length < r.capacity && people.length > 0 ? (
+                    <BookStayDialog
+                      trigger="cell"
+                      rooms={choices}
+                      people={people}
+                      roomId={r.id}
+                      checkIn={dayIso}
+                      triggerLabel="+"
+                      triggerClassName="w-full rounded border border-dashed border-border py-0.5 text-[0.7rem] text-muted-foreground hover:border-primary hover:text-primary"
+                    />
+                  ) : null}
                 </div>
               </td>
             );
