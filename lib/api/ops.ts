@@ -558,6 +558,77 @@ export async function getFlightLogAuditTimeline(
   );
 }
 
+// ---- The morning preflight (#93) ----
+
+/** One aircraft's day: who has it, and its preflight once recorded. */
+export interface DayPreflight {
+  id: string;
+  aircraft_id: string;
+  tail_number: string;
+  pilot_user_id: string;
+  pilot_name: string;
+  company_date: string;
+  picked_at: string;
+  preflight_at: string | null;
+  fuel_gallons: string | number | null;
+  oil_quarts: string | number | null;
+  notes: string | null;
+  assigned_by_name: string | null;
+}
+
+export interface MorningAircraftOption {
+  aircraft_id: string;
+  tail_number: string;
+  model: string | null;
+  base: string | null;
+  available: boolean;
+  /** Why it isn't offered: not airworthy, another base, taken. */
+  reason: string | null;
+}
+
+export interface MorningResponse {
+  company_date: string;
+  on_duty: boolean;
+  mine: DayPreflight | null;
+  options: MorningAircraftOption[];
+}
+
+/** The caller's aircraft today and what they may take (pilots). */
+export async function getMorning(): Promise<MorningResponse> {
+  return apiFetch<MorningResponse>("/ops/morning/aircraft", { cache: "no-store" });
+}
+
+export async function pickMorningAircraft(aircraftId: string): Promise<DayPreflight> {
+  return apiFetch<DayPreflight>("/ops/morning/pick", {
+    method: "POST",
+    body: JSON.stringify({ aircraft_id: aircraftId }),
+  });
+}
+
+export async function recordMorningPreflight(
+  id: string,
+  body: { fuel_gallons?: number | null; oil_quarts?: number | null; notes?: string | null },
+): Promise<DayPreflight> {
+  return apiFetch<DayPreflight>(`/ops/morning/${id}/preflight`, {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+}
+
+/** Every aircraft taken today, for dispatch. */
+export async function getMorningToday(): Promise<{ company_date: string; items: DayPreflight[] }> {
+  return apiFetch<{ company_date: string; items: DayPreflight[] }>("/ops/morning/today", {
+    cache: "no-store",
+  });
+}
+
+export async function reassignMorningAircraft(id: string, pilotUserId: string): Promise<DayPreflight> {
+  return apiFetch<DayPreflight>(`/ops/morning/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify({ pilot_user_id: pilotUserId }),
+  });
+}
+
 // ---- Pilot duty tracking (Spec 4 §"Duty time tracking") ----
 
 export async function getCurrentDuty(): Promise<CurrentDutyResponse> {
