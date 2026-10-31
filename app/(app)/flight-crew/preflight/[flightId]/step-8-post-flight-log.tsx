@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useState, useTransition } from "react";
 
 import { linkCaps } from "@/components/ff/controls";
-import type { FlightDetail } from "@/lib/api/types";
+import type { FlightDetail, FlightLogResponse } from "@/lib/api/types";
 import { cn } from "@/lib/utils";
 
 import { completeStepAction } from "./actions";
@@ -12,6 +12,9 @@ import { completeStepAction } from "./actions";
 interface Props {
   flightId: string;
   flight: FlightDetail;
+  /** The flight's log, when there is one: the draft its arrival opened,
+   *  filled from the flight (the client, 30 Oct). */
+  flightLog?: FlightLogResponse | null;
 }
 
 /**
@@ -21,9 +24,10 @@ interface Props {
  * opens the electronic flight log for this leg, and files it. This
  * step both:
  *
- *   1. Links to the pre-created draft elog for this flight (or the
- *      /flight-crew/elog inbox if no draft exists yet — the pilot
- *      creates one there with the same aircraft / flight picker).
+ *   1. Opens the flight's draft log, which its arrival on Flight
+ *      Following filled in (the client, 30 Oct: "is post flight e-log
+ *      automatically filled data acquired during the flight?"), or the
+ *      /flight-crew/elog inbox before the arrival is recorded.
  *   2. Records the completion so the preflight_steps row lands and
  *      the 8-of-8 "All done" panel renders.
  *
@@ -32,7 +36,7 @@ interface Props {
  * you know where to file it", not "elog submitted". Elog completion
  * is its own auditable event (Spec 4 §"Elog submission chain").
  */
-export function PostFlightLogStep({ flightId, flight }: Props) {
+export function PostFlightLogStep({ flightId, flight, flightLog = null }: Props) {
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
@@ -62,20 +66,30 @@ export function PostFlightLogStep({ flightId, flight }: Props) {
 
         <div className="notice notice-blue">
           <p className="notice-label">File the elog</p>
-          <p className="mt-1 text-xs text-foreground">
-            Open the pilot logbook and start a new entry for{" "}
-            <span className="font-mono font-semibold">
-              {flight.flight_number}
-            </span>{" "}
-            ({flight.origin} → {flight.destination}). The 7-tab elog
-            walks you through legs, W&amp;B, currency, trends, VOR
-            check, and any MX discrepancy before you hit Submit.
-          </p>
+          {flightLog === null ? (
+            <p className="mt-1 text-xs text-foreground">
+              When dispatch records the arrival of{" "}
+              <span className="font-mono font-semibold">{flight.flight_number}</span>{" "}
+              ({flight.origin} → {flight.destination}), its log opens as a draft, already
+              filled from the flight. It&apos;s in your logbook then.
+            </p>
+          ) : flightLog.status === "draft" ? (
+            <p className="mt-1 text-xs text-foreground">
+              {`Your log for ${flight.flight_number} is waiting as a draft, filled from the flight: `}
+              a leg per stop, the crew, each leg&apos;s weights from the manifest, the planned
+              fuel, and the takeoff and landing Flight Following recorded. Add what happened in
+              the air, correct anything (extra fuel, a stop&apos;s times), and submit.
+            </p>
+          ) : (
+            <p className="mt-1 text-xs text-foreground">
+              {`Your log for ${flight.flight_number} is ${flightLog.status}.`}
+            </p>
+          )}
           <Link
-            href="/flight-crew/elog"
+            href={flightLog ? `/flight-crew/elog/${flightLog.id}` : "/flight-crew/elog"}
             className={cn(linkCaps, "mt-2")}
           >
-            Open Flight Log <span aria-hidden>›</span>
+            {flightLog ? "Open your log" : "Open Flight Log"} <span aria-hidden>›</span>
           </Link>
         </div>
 

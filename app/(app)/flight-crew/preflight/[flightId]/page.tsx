@@ -10,6 +10,7 @@ import {
   getLatestPilotAcceptance,
   getWeightReturn,
   getPreflightProgress,
+  listFlightLogs,
 } from "@/lib/api/ops";
 import { getFratThresholds, loadZoneTable } from "@/lib/api/auth";
 import { loadFratInputs } from "@/lib/frat/load-inputs";
@@ -24,6 +25,7 @@ import type {
   FratThresholdConfigResponse,
   CurrentDutyResponse,
   FlightDetail,
+  FlightLogResponse,
   FratAssessmentResponse,
   PilotAcceptanceResponse,
   WeightReturn,
@@ -66,7 +68,7 @@ const DUTY_OFFLINE_DEFAULT: CurrentDutyResponse = {
  *   - Step 5: Duty In confirmation (reads /duty/current)
  *   - Step 6: Accept or Deny Release (writes flight_pilot_acceptance)
  *   - Step 7: Flight Following Position Reports (ack + dispatch links)
- *   - Step 8: Post-Flight Log (handoff to /flight-crew/elog)
+ *   - Step 8: Post-Flight Log (opens the draft arrival filled in, else /flight-crew/elog)
  */
 export default async function PreflightPage({
   params,
@@ -86,6 +88,7 @@ export default async function PreflightPage({
   let fratConfig: FratThresholdConfigResponse | null = null;
   let fratPrefill: FratPrefillResponse | null = null;
   let fratBlock: FratBlockEligibilityResponse | null = null;
+  let flightLog: FlightLogResponse | null = null;
   let loadError: string | null = null;
 
   try {
@@ -101,6 +104,7 @@ export default async function PreflightPage({
       weightReturnResult,
       fratConfigResult,
       flightLoadResult,
+      flightLogResult,
     ] = await Promise.all([
         getFlight(flightId),
         getPreflightProgress(flightId),
@@ -127,6 +131,10 @@ export default async function PreflightPage({
         // fuel and the manifest's payload. Best-effort: without it the
         // step shows the aircraft's useful load, as before.
         getFlightLoad(flightId).catch(() => null),
+        // Step 8: the draft log arrival opened, filled from the flight
+        // (the client, 30 Oct). Best-effort: without it the step points
+        // at the logbook, as before.
+        listFlightLogs({ flightId, mine: true, limit: 1 }).catch(() => null),
       ]);
     flight = flightResult;
     progress = progressResult;
@@ -135,6 +143,7 @@ export default async function PreflightPage({
     acceptance = acceptanceResult;
     weightReturn = weightReturnResult;
     flightLoad = flightLoadResult;
+    flightLog = flightLogResult?.items[0] ?? null;
     fratConfig = fratConfigResult;
     // Step 3's weather and step 4's prefill and block FRAT, as the
     // flight's FRAT page loads them (#155). Non-fatal: without weather,
@@ -212,6 +221,7 @@ export default async function PreflightPage({
         fratPrefill={fratPrefill}
         fratBlock={fratBlock}
         fuel={fuel}
+        flightLog={flightLog}
       />
     </div>
   );

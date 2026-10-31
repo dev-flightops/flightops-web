@@ -18,6 +18,7 @@ import {
 import type {
   CurrentDutyResponse,
   FlightDetail,
+  FlightLogResponse,
   FratBlockEligibilityResponse,
   FratPrefillResponse,
   FratThresholdConfigResponse,
@@ -72,6 +73,9 @@ interface Props {
    *  step on every step: the pilot can review and change fuel at any
    *  point in the release process. */
   fuel?: React.ReactNode;
+  /** The flight's log for Step 8: the draft its arrival opened, filled
+   *  from the flight (the client, 30 Oct). Null before the arrival. */
+  flightLog?: FlightLogResponse | null;
 }
 
 /**
@@ -102,6 +106,7 @@ export function PreflightShell({
   fratPrefill,
   fratBlock,
   fuel,
+  flightLog = null,
 }: Props) {
   const completedNumbers = new Set(
     progress.completed.map((s) => s.step_number),
@@ -190,6 +195,7 @@ export function PreflightShell({
           fratConfig={fratConfig}
           fratPrefill={fratPrefill}
           fratBlock={fratBlock}
+          flightLog={flightLog}
         />
       )}
 
@@ -339,6 +345,7 @@ function ActiveStep({
   fratConfig,
   fratPrefill,
   fratBlock,
+  flightLog,
 }: {
   flightId: string;
   flight: FlightDetail;
@@ -352,6 +359,7 @@ function ActiveStep({
   fratConfig: FratThresholdConfigResponse | null;
   fratPrefill: FratPrefillResponse | null;
   fratBlock: FratBlockEligibilityResponse | null;
+  flightLog: FlightLogResponse | null;
 }) {
   switch (stepNumber) {
     case 1:
@@ -407,7 +415,7 @@ function ActiveStep({
     case 7:
       return <PositionReportsStep flightId={flightId} flight={flight} />;
     case 8:
-      return <PostFlightLogStep flightId={flightId} flight={flight} />;
+      return <PostFlightLogStep flightId={flightId} flight={flight} flightLog={flightLog} />;
     default:
       return <StepStubPanel stepNumber={stepNumber} />;
   }
