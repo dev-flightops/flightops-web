@@ -77,6 +77,9 @@ describe("EditAircraftDialog", () => {
       serial_number: "208B0421",
       airframe_type: "caravan",
       special_notes: "Cargo pod fitted",
+      // Nothing entered for its fuel and tanks (#156): its type's are used.
+      fuel_type_code: "",
+      fuel_capacity_gal: "",
     });
   });
 

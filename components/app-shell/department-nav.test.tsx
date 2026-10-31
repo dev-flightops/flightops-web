@@ -89,35 +89,17 @@ describe("DepartmentNav", () => {
     expect(weather).toHaveAttribute("href", "/weather");
   });
 
-  it("renders the legacy Maintenance subnav on /maintenance, built entries linked", () => {
-    // Parity check against legacy templates/maintenance/dashboard.html
-    // sub-nav: Fleet | Work Orders | RTS | Inventory | Expiration |
-    // Batch Trace | MX Clock | Availability | ✨ MX Intel.
-    // MEL + Squawks are intentionally NOT here — legacy keeps those
-    // inside the per-aircraft detail page.
+  it("renders the Maintenance subnav on /maintenance: what's built, linked; the rest hidden", () => {
+    // Legacy's sub-nav: Fleet | Work Orders | RTS | Inventory | Expiration |
+    // Batch Trace | MX Clock | Availability | ✨ MX Intel, with the Due
+    // List (#156) beside Fleet. MEL + Squawks are intentionally NOT here —
+    // legacy keeps those inside the per-aircraft detail page.
     vi.mocked(usePathname).mockReturnValue("/maintenance");
     render(<DepartmentNav />);
 
-    expect(screen.getByTestId("dept-nav-fleet")).toBeInTheDocument();
-    expect(screen.getByTestId("dept-nav-work-orders")).toBeInTheDocument();
-    expect(screen.getByTestId("dept-nav-rts")).toBeInTheDocument();
-    expect(screen.getByTestId("dept-nav-inventory")).toBeInTheDocument();
-    expect(screen.getByTestId("dept-nav-expiration")).toBeInTheDocument();
-    expect(screen.getByTestId("dept-nav-batch-trace")).toBeInTheDocument();
-    expect(screen.getByTestId("dept-nav-mx-clock")).toBeInTheDocument();
-    expect(screen.getByTestId("dept-nav-availability")).toBeInTheDocument();
-    expect(screen.getByTestId("dept-nav-mx-intel")).toBeInTheDocument();
-
-    expect(screen.queryByTestId("dept-nav-mel")).not.toBeInTheDocument();
-    expect(screen.queryByTestId("dept-nav-squawks")).not.toBeInTheDocument();
-
-    // Fleet, Work Orders and MX Intel are built. The other six were
-    // asserted live here as "shipped in #172", and their pages existed —
-    // as shells: legacy's layout with every control disabled and no
-    // maintenance-service endpoint behind any of them. They are
-    // `planned` now, dimmed with "Not built yet", and their pages say so.
     for (const [id, href] of [
       ["fleet", "/maintenance"],
+      ["due-list", "/maintenance/due-list"],
       ["work-orders", "/maintenance/work-orders"],
       // MX Intel shipped in M4. It was a disabled span with a "Coming
       // in M4" tooltip, and this assertion is what caught the flip —
@@ -128,18 +110,14 @@ describe("DepartmentNav", () => {
       expect(chip.tagName).toBe("A");
       expect(chip).toHaveAttribute("href", href);
     }
-    for (const id of [
-      "rts",
-      "inventory",
-      "expiration",
-      "batch-trace",
-      "mx-clock",
-      "availability",
-    ]) {
-      const chip = screen.getByTestId(`dept-nav-${id}`);
-      expect(chip.tagName).toBe("SPAN");
-      expect(chip).toHaveAttribute("aria-disabled", "true");
-      expect(chip).toHaveAttribute("title", "Not built yet");
+    expect(screen.queryByTestId("dept-nav-mel")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("dept-nav-squawks")).not.toBeInTheDocument();
+
+    // The six shells (legacy's layout, no endpoint behind them) had shown
+    // dimmed, and the client found they "look clickable, do nothing"
+    // (#156). Greg, 30 Oct: hidden until they are built.
+    for (const id of ["rts", "inventory", "expiration", "batch-trace", "mx-clock", "availability"]) {
+      expect(screen.queryByTestId(`dept-nav-${id}`)).not.toBeInTheDocument();
     }
     // The AI accent survives going live. It is what tells a mechanic
     // this chip opens a model rather than a record.

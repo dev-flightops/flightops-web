@@ -157,7 +157,6 @@ export const LEGACY_REDIRECTS: readonly (readonly [from: string, to: string])[] 
   ["/maintenance/aircraft/:id/mel", "/maintenance/mel"],
   ["/maintenance/availability-report", "/maintenance/availability"],
   ["/maintenance/calendar", "/maintenance"],
-  ["/maintenance/due-list", "/maintenance"],
   ["/maintenance/inspections", "/maintenance"],
   ["/maintenance/inspections/new", "/maintenance"],
   ["/maintenance/inspections/:id", "/maintenance"],

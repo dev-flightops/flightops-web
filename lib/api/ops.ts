@@ -348,6 +348,9 @@ export interface AircraftCreatePayload {
   empty_weight_lbs?: number | null;
   /** Knots true, for the new-flight form's leg times (#108). */
   cruise_speed_kt?: number | null;
+  /** The fuel it takes and its tanks, US gallons (#156). Empty: its type's. */
+  fuel_type_code?: string | null;
+  fuel_capacity_gal?: number | null;
 }
 
 export interface AircraftUpdatePayload {
@@ -364,6 +367,9 @@ export interface AircraftUpdatePayload {
   empty_weight_lbs?: number | null;
   /** Knots true, for the new-flight form's leg times (#108). */
   cruise_speed_kt?: number | null;
+  /** The fuel it takes and its tanks, US gallons (#156). Empty: its type's. */
+  fuel_type_code?: string | null;
+  fuel_capacity_gal?: number | null;
 }
 
 export async function createAircraft(payload: AircraftCreatePayload) {

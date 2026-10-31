@@ -93,13 +93,12 @@ describe("an answered turn", () => {
     ).toBeInTheDocument();
   });
 
-  it("shows what it understood, so a wrong answer is traceable", () => {
-    renderTranscript([
-      { id: 1, query: "fleet status", at: "14:02", reply: reply() },
-    ]);
-    expect(
-      screen.getByText(/intent: aircraft_status \(80%\)/),
-    ).toBeInTheDocument();
+  it("shows no reading under the answer, but keeps it traceable (#156)", () => {
+    // The client, 10/29: "Debug text under each answer ('intent:
+    // maintenance_due (85%)')".
+    renderTranscript([{ id: 1, query: "fleet status", at: "14:02", reply: reply() }]);
+    expect(screen.queryByText(/intent:/)).toBeNull();
+    expect(document.querySelector('[data-intent="aircraft_status:80"]')).not.toBeNull();
   });
 
   it("renders badges with their own colour", () => {
@@ -239,7 +238,7 @@ describe("understood but not held", () => {
         },
       },
     ]);
-    expect(screen.getByText(/not tracked here/)).toBeInTheDocument();
+    expect(screen.getByText(/Not tracked here/)).toBeInTheDocument();
     expect(screen.queryByText(/intent: inventory_status/)).toBeNull();
   });
 });
@@ -283,14 +282,12 @@ describe("what shape the answer is", () => {
     expect(screen.queryByText(/intent:/)).not.toBeInTheDocument();
   });
 
-  it("still shows the intent line on a real answer", () => {
-    // The inverse, so suppressing it on prose cannot creep into the
-    // data path — that line is the only thing making a wrong answer
-    // diagnosable without the server log.
+  it("keeps the reading on a real answer, out of sight (#156)", () => {
     renderTranscript([
       { id: 1, query: "fleet status", at: "14:02", reply: reply() },
     ]);
-    expect(screen.getByText(/intent: aircraft_status/)).toBeInTheDocument();
+    expect(screen.queryByText(/intent:/)).toBeNull();
+    expect(document.querySelector("[data-intent^='aircraft_status']")).not.toBeNull();
   });
 });
 

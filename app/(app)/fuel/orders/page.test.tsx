@@ -165,4 +165,22 @@ describe("FuelOrdersPage (M2-G-40)", () => {
       screen.getByText(/fuel orders unavailable/i),
     ).toBeInTheDocument();
   });
+
+  it("dates each order and flags one below its flight's planned fuel (#156)", async () => {
+    listFuelOrders.mockResolvedValueOnce({
+      items: [
+        makeOrder({ id: "a", requested_fuel_date: "2026-10-29", requested_quantity_gallons: 90, planned_fuel_gallons: 169 }),
+        makeOrder({ id: "b", n_number: "N510PA", requested_fuel_date: "2026-10-30", planned_fuel_gallons: 80 }),
+      ],
+      total: 2,
+    });
+
+    await renderPage();
+
+    expect(screen.getByRole("columnheader", { name: "Date" })).toBeInTheDocument();
+    expect(screen.getByText("Oct 29, 2026")).toBeInTheDocument();
+    expect(screen.getByText(/Plan 169 gal: check what.s aboard/)).toBeInTheDocument();
+    // 100 gal against a plan of 80 needs no flag.
+    expect(screen.getAllByText(/Plan \d+ gal/)).toHaveLength(1);
+  });
 });

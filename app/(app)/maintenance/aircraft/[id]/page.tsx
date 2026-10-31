@@ -3,6 +3,8 @@ import Link from "next/link";
 import { linkCaps } from "@/components/ff/controls";
 import { notFound } from "next/navigation";
 
+import { AddDueItemDialog } from "@/components/maintenance/due-item-dialogs";
+import { DueListTable } from "@/components/maintenance/due-list-table";
 import { MelTable } from "@/components/maintenance/mel-table";
 import { SquawksTable } from "@/components/maintenance/squawks-table";
 import { cn } from "@/lib/utils";
@@ -10,8 +12,12 @@ import { ApiError } from "@/lib/api/client";
 import {
   getAirworthiness,
   getFleetAirworthiness,
+  listAircraftDueItems,
   listMelItems,
   listSquawks,
+  listWorkOrders,
+  type DueItem,
+  type WorkOrderRow,
 } from "@/lib/api/maintenance";
 import type {
   AirworthinessResponse,
@@ -39,6 +45,11 @@ import { MelDeferralDialog } from "@/components/dispatch/packet/mel-deferral-dia
  * `status` doesn't accept multi-value yet on /maintenance/squawks, so
  * we issue two parallel calls and merge for open + in_progress —
  * cheap (1 query each) and avoids a backend change for this story.
+ *
+ * #156: the client, 10/29: "Aircraft detail page shows only MEL items and
+ * squawks: no inspections, due items or work orders." The aircraft's due
+ * list and its open work orders follow; either failing to load leaves
+ * the rest of the page as it was.
  */
 export default async function AircraftDetailPage({
   params,
@@ -60,6 +71,8 @@ export default async function AircraftDetailPage({
   // the fleet endpoint errors. Lookup is O(N) over a small fleet — no
   // perf concern.
   let summary: FleetAircraftSummary | null = null;
+  let dueItems: DueItem[] | null = null;
+  let workOrders: WorkOrderRow[] | null = null;
   let loadError: string | null = null;
 
   try {
@@ -69,13 +82,21 @@ export default async function AircraftDetailPage({
       openResult,
       inProgressResult,
       fleetResult,
+      dueResult,
+      workOrderResult,
     ] = await Promise.all([
       getAirworthiness(id),
       listMelItems({ aircraftId: id, status: "open" }),
       listSquawks({ aircraftId: id, status: "open" }),
       listSquawks({ aircraftId: id, status: "in_progress" }),
       getFleetAirworthiness().catch(() => null),
+      listAircraftDueItems(id).catch(() => null),
+      listWorkOrders({ aircraftId: id }).catch(() => null),
     ]);
+    dueItems = dueResult?.items ?? null;
+    workOrders = workOrderResult
+      ? workOrderResult.items.filter((wo) => wo.status !== "completed" && wo.status !== "closed")
+      : null;
     verdict = verdictResult;
     mels = melsResult.items;
     openSquawks = openResult.items;
@@ -133,6 +154,80 @@ export default async function AircraftDetailPage({
         <SectionHeader title="Open squawks" count={squawks.length} />
         <SquawksTable items={squawks} canResolve={canSignOff} />
       </section>
+
+      <section className="mt-8">
+        <div className="flex items-start justify-between gap-3">
+          <SectionHeader title="Due list" count={dueItems?.length ?? 0} />
+          {canSignOff && (
+            <AddDueItemDialog
+              aircraft={[{ id: verdict.aircraft.id, tail_number: verdict.aircraft.tail_number }]}
+            />
+          )}
+        </div>
+        {dueItems === null ? (
+          <p className="text-xs text-muted-foreground">The due list didn&apos;t load. Try refreshing.</p>
+        ) : (
+          <DueListTable
+            items={dueItems}
+            canSignOff={canSignOff}
+            emptyMessage="Nothing on this aircraft's due list yet: inspections, ADs and calendar items go here."
+          />
+        )}
+      </section>
+
+      <section className="mt-8">
+        <SectionHeader title="Open work orders" count={workOrders?.length ?? 0} />
+        {workOrders === null ? (
+          <p className="text-xs text-muted-foreground">Work orders didn&apos;t load. Try refreshing.</p>
+        ) : (
+          <WorkOrderList orders={workOrders} />
+        )}
+      </section>
+    </div>
+  );
+}
+
+function WorkOrderList({ orders }: { orders: WorkOrderRow[] }) {
+  if (orders.length === 0) {
+    return (
+      <div className="rounded-lg border border-border bg-card px-5 py-8 text-center text-xs text-muted-foreground">
+        No open work orders.
+      </div>
+    );
+  }
+  return (
+    <div className="overflow-x-auto rounded-lg border border-border bg-card">
+      <table className="w-full text-xs">
+        <thead className="ff-thead">
+          <tr className="text-left eyebrow">
+            <th className="px-3 py-2">WO #</th>
+            <th className="px-3 py-2">Title</th>
+            <th className="px-3 py-2">Status</th>
+            <th className="px-3 py-2">Opened</th>
+            <th className="px-3 py-2">Due</th>
+          </tr>
+        </thead>
+        <tbody>
+          {orders.map((wo) => (
+            <tr
+              key={wo.id}
+              className={cn(
+                "border-t border-border hover:bg-accent",
+                wo.is_overdue && "shadow-[inset_3px_0_0_rgb(var(--status-red))]",
+              )}
+            >
+              <td className="whitespace-nowrap px-3 py-2.5 font-mono font-semibold">{wo.wo_number}</td>
+              <td className="px-3 py-2.5">{wo.title}</td>
+              <td className="whitespace-nowrap px-3 py-2.5 eyebrow">{wo.status.replace(/_/g, " ")}</td>
+              <td className="whitespace-nowrap px-3 py-2.5 font-mono">{wo.opened_date}</td>
+              <td className="whitespace-nowrap px-3 py-2.5 font-mono">
+                {wo.due_date ?? "—"}
+                {wo.is_overdue ? <span className="status-mark ml-2 text-status-red">Overdue</span> : null}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { linkCaps } from "@/components/ff/controls";
 import { ApiError } from "@/lib/api/client";
 import { listFuelOrders } from "@/lib/api/ground";
+import { formatZuluDate } from "@/lib/format/flight-time";
 import type {
   FuelOrderResponse,
   FuelOrderStatus,
@@ -106,6 +107,7 @@ export default async function FuelOrdersPage({
           <table className="w-full text-sm">
             <thead>
               <tr className="ff-thead">
+                <th className="px-4 py-3">Date</th>
                 <th className="px-4 py-3">Aircraft</th>
                 <th className="px-4 py-3">Base</th>
                 <th className="px-4 py-3">Supplier</th>
@@ -131,6 +133,10 @@ export default async function FuelOrdersPage({
 function OrderRow({ order }: { order: FuelOrderResponse }) {
   return (
     <tr className="border-b border-border last:border-0">
+      {/* #156: "Fuel orders: no date column". The day it's wanted. */}
+      <td className="whitespace-nowrap px-4 py-3 font-mono text-xs text-foreground">
+        {formatZuluDate(order.requested_fuel_date)}
+      </td>
       <td className="px-4 py-3 font-mono font-semibold text-foreground">
         {order.n_number}
       </td>
@@ -143,6 +149,7 @@ function OrderRow({ order }: { order: FuelOrderResponse }) {
       </td>
       <td className="px-4 py-3 text-right font-mono text-xs text-foreground">
         {order.requested_quantity_gallons.toLocaleString()} gal
+        <BelowPlan order={order} />
       </td>
       <td className="px-4 py-3 text-right font-mono text-xs">
         {order.actual_quantity_gallons !== null ? (
@@ -165,6 +172,23 @@ function OrderRow({ order }: { order: FuelOrderResponse }) {
         </Link>
       </td>
     </tr>
+  );
+}
+
+/**
+ * #156: "manifest plans 169 gal Jet A for PGR701 (round trip + reserve);
+ * scenario fuel orders are 90 gal every day; nothing flags the
+ * shortfall." An order is the uplift, so less than the plan can be right
+ * when the rest is in the tanks: flagged for someone to check, not
+ * refused.
+ */
+function BelowPlan({ order }: { order: FuelOrderResponse }) {
+  const planned = order.planned_fuel_gallons;
+  if (planned === null || planned === undefined || order.requested_quantity_gallons >= planned) return null;
+  return (
+    <div className="mt-0.5 font-sans text-[0.65rem] font-semibold text-status-yellow">
+      Plan {planned.toLocaleString()} gal: check what&apos;s aboard
+    </div>
   );
 }
 

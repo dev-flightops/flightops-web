@@ -2,7 +2,14 @@ import { describe, expect, it } from "vitest";
 
 import type { FuelSupplierBaseResponse } from "@/lib/api/types";
 
-import { fuelTypeForAircraft, localDate, neededByInstant, supplierOptionsFor } from "./fuel";
+import {
+  fuelCode,
+  fuelTypeForAircraft,
+  localDate,
+  neededByInstant,
+  supplierOptionsFor,
+  takesFuel,
+} from "./fuel";
 
 function row(over: Partial<FuelSupplierBaseResponse>): FuelSupplierBaseResponse {
   return {
@@ -95,5 +102,30 @@ describe("localDate", () => {
   it("is the departure base's calendar day", () => {
     // 18:45 AKDT on 11 October is already 12 October in UTC.
     expect(localDate("2026-10-12T02:45:00Z", "America/Anchorage")).toBe("2026-10-11");
+  });
+});
+
+describe("fuel codes, as fuel orders are checked (#156)", () => {
+  it.each([
+    ["jet-a", "jet_a"],
+    ["JETA", "jet_a"],
+    ["Jet A", "jet_a"],
+    ["Jet A with additive (Prist)", "jet_a_plus"],
+    ["100LL", "100ll"],
+    ["av_gas_100ll", "100ll"],
+    ["AVGAS", "100ll"],
+    ["", null],
+  ])("%s is %s", (code, norm) => {
+    expect(fuelCode(code)).toBe(norm);
+  });
+
+  it("offers a C207 its 100LL and not Jet A", () => {
+    expect(takesFuel("100ll", "av_gas_100ll")).toBe(true);
+    expect(takesFuel("100ll", "jet_a")).toBe(false);
+  });
+
+  it("counts Jet A with additive as Jet A, and refuses nothing when the fuel isn't known", () => {
+    expect(takesFuel("jet_a", "jet_a_plus")).toBe(true);
+    expect(takesFuel(null, "jet_a")).toBe(true);
   });
 });

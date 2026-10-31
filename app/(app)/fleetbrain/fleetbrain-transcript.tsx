@@ -281,26 +281,18 @@ function Answer({
         </div>
       ) : null}
 
-      {/* What it understood. Legacy shows the same line, and it is the
-          only thing that makes a wrong answer diagnosable without
-          reading the server log.
-
-          Suppressed on a greeting or a refusal: there is no reading to
-          check, and "intent: unknown (0%)" under "Hello — what do you
-          need?" reads as a failure when nothing failed. */}
-      {answer.kind === "conversational" || answer.kind === "refusal" ? (
-        <p className="mt-1.5 text-[0.65rem] text-muted-foreground">{at}</p>
-      ) : (
-        <p className="mt-1.5 text-[0.65rem] text-muted-foreground">
-          {answer.unsupported
-            ? "not tracked here"
-            : `intent: ${intent.intent_type}`}
-          {intent.confidence > 0
-            ? ` (${Math.round(intent.confidence * 100)}%)`
-            : ""}{" "}
-          · {at}
-        </p>
-      )}
+      {/* When it answered. The reading it made ("intent: maintenance_due
+          (85%)") was shown here too, as legacy did; the client, 10/29:
+          "Debug text under each answer" (#156). It stays in the page's
+          data attribute, for anyone tracing a wrong answer. */}
+      <p
+        className="mt-1.5 text-[0.65rem] text-muted-foreground"
+        data-intent={`${intent.intent_type}:${Math.round(intent.confidence * 100)}`}
+      >
+        {answer.unsupported && answer.kind !== "conversational" && answer.kind !== "refusal"
+          ? `Not tracked here · ${at}`
+          : at}
+      </p>
     </>
   );
 }

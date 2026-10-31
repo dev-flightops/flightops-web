@@ -15,20 +15,18 @@ describe("MaintenanceHeader", () => {
     ).toBeInTheDocument();
   });
 
-  it("renders the 8 legacy action entries", () => {
+  it("shows only the actions that are built (#156)", () => {
+    // The client, 10/29: "Six maintenance tabs look clickable, do
+    // nothing: Due List, Inventory, RTS Queue, Inspections, Vendors,
+    // Roster." The due list is built now; Greg (30 Oct): the rest hidden
+    // until they are.
     render(<MaintenanceHeader />);
 
-    for (const label of [
-      "Due List",
-      "Work Orders",
-      "Inspections",
-      "Inventory",
-      "Vendors",
-      "RTS Queue",
-      "Roster",
-      "+ Aircraft",
-    ]) {
+    for (const label of ["Squawks", "MEL", "Due List", "Work Orders", "+ Aircraft"]) {
       expect(screen.getByText(label)).toBeInTheDocument();
+    }
+    for (const label of ["Inspections", "Inventory", "Vendors", "RTS Queue", "Roster"]) {
+      expect(screen.queryByText(label)).toBeNull();
     }
   });
 
@@ -43,54 +41,19 @@ describe("MaintenanceHeader", () => {
     const expected: Record<string, string> = {
       Squawks: "/maintenance/squawks",
       MEL: "/maintenance/mel",
-      // Not /maintenance/expiration — that is the parts shelf-life
-      // report. The due list is the Maintenance Clock.
+      // Not /maintenance/expiration (the parts shelf-life report) nor
+      // the Maintenance Clock: the due list itself (#156).
+      "Due List": "/maintenance/due-list",
       "Work Orders": "/maintenance/work-orders",
       // Adding a tail ships under Settings, not /maintenance — which is
-      // exactly why it was missed. See below.
+      // exactly why it was missed: it sat dimmed as "an add form we never
+      // built" while /settings/fleet had it.
       "+ Aircraft": "/settings/fleet",
     };
     for (const [label, href] of Object.entries(expected)) {
       const action = screen.getByText(label);
       expect(action.tagName, `${label} should be a link`).toBe("A");
       expect(action).toHaveAttribute("href", href);
-    }
-  });
-
-  it("still dims the three with no page behind them", () => {
-    // Inspections, Vendors and Roster genuinely have no route. Dimmed
-    // is right for those — the failure mode this file now guards
-    // against is the opposite one.
-    //
-    // "+ Aircraft" used to be in this list, asserted to be a dimmed
-    // SPAN, on the stated grounds that it was "an add form we never
-    // built". It was built: /settings/fleet has rendered
-    // AddAircraftDialog against createAircraftAction since M2. The
-    // belief was wrong, so the test passed while the button stayed
-    // dead — a mechanic on /maintenance had no way to reach it. Only
-    // the /maintenance prefix was ever checked.
-    render(<MaintenanceHeader />);
-
-    for (const label of ["Inspections", "Vendors", "Roster"]) {
-      const action = screen.getByText(label);
-      expect(action.tagName).toBe("SPAN");
-      expect(action).toHaveAttribute("aria-disabled", "true");
-      expect(action).toHaveAttribute("title", "Coming in M3");
-    }
-  });
-
-  it("dims the three whose pages were shells, and says they are not built", () => {
-    // Due List, Inventory and RTS Queue were asserted live above
-    // because their pages existed. The pages were legacy's layout with
-    // every control disabled, and no maintenance-service endpoint backs
-    // any of them. Each page now says it is not built.
-    render(<MaintenanceHeader />);
-
-    for (const label of ["Due List", "Inventory", "RTS Queue"]) {
-      const action = screen.getByText(label);
-      expect(action.tagName).toBe("SPAN");
-      expect(action).toHaveAttribute("aria-disabled", "true");
-      expect(action).toHaveAttribute("title", "Not built yet");
     }
   });
 });

@@ -38,6 +38,24 @@ export function formatBoth(iso: string): { local: string; zulu: string } {
   return { local: formatLocal(iso), zulu: formatZulu(iso) };
 }
 
+const AKD_DATE = new Intl.DateTimeFormat("en-US", {
+  month: "short",
+  day: "numeric",
+  timeZone: "America/Anchorage",
+});
+
+/**
+ * Both, each with its date: "Aug 17, 07:39 AKD" over "Aug 17, 15:39z".
+ * For records days apart, as an MEL's deferral and due date are. With the
+ * time alone they read as the same moment (#156: "same timestamp for
+ * 'deferred' and 'due', no date, only a time").
+ */
+export function formatBothWithDate(iso: string): { local: string; zulu: string } {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return { local: iso, zulu: "" };
+  return { local: `${AKD_DATE.format(d)}, ${formatLocal(iso)}`, zulu: formatZuluDateTime(iso) };
+}
+
 /**
  * "Aug 26, 00:13z" — a Zulu timestamp with the date, for lists where a
  * bare time would be ambiguous across midnight.

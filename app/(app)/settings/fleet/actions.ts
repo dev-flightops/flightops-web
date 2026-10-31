@@ -108,6 +108,18 @@ const CreateSchema = z.object({
   max_gross_weight_lbs: nullableIntMax(200_000),
   empty_weight_lbs: nullableIntMax(200_000),
   cruise_speed_kt: nullableIntRange(40, 600, "Cruise speed must be 40-600 kt."),
+  // The fuel it takes and its tanks (#156): fuel orders are checked
+  // against them. Empty, its type's are used.
+  fuel_type_code: nullableTrimmed(30),
+  fuel_capacity_gal: z
+    .string()
+    .trim()
+    .optional()
+    .transform((v) => (v ? v : null))
+    .refine((v) => v === null || (Number.isFinite(Number(v)) && Number(v) > 0 && Number(v) <= 9999), {
+      message: "Tank capacity must be 0.1-9,999 gal.",
+    })
+    .transform((v) => (v === null ? null : Number(v))),
 });
 
 /** Empty at or above max gross is a typo; the API refuses it too. */

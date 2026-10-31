@@ -33,7 +33,9 @@ export function DepartmentNav({ roles = [] }: { roles?: readonly string[] }) {
   // problem, but we should not offer to take them further in.
   if (!canSeeDepartment(dept, roles)) return null;
 
-  const modules = visibleModules(dept, roles);
+  // Entries hidden until built aren't drawn at all (#156): dimmed, they
+  // still read as links that do nothing.
+  const modules = visibleModules(dept, roles).filter((m) => !(m.hiddenUntilLive && m.status !== "live"));
   if (modules.length === 0) return null;
   // Found among all the department's modules, not just the visible
   // ones. On a page this role cannot see (opened by URL), the visible

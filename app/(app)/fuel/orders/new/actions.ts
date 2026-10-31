@@ -97,6 +97,13 @@ export async function createFuelOrderAction(
           message: "Your session expired — please sign in again.",
         };
       }
+      // #156: the aircraft, its fuel and tanks, and the station are
+      // checked; each refusal goes on the field it is about, in the
+      // service's words.
+      const refusal = orderRefusal(err.message);
+      if (refusal) {
+        return { status: "field-errors", errors: { [refusal.field]: refusal.message } };
+      }
       if (err.status === 404) {
         return {
           status: "field-errors",
@@ -127,4 +134,25 @@ export async function createFuelOrderAction(
   }
 
   redirect(`/fuel/orders/${orderId}`);
+}
+
+const REFUSAL_FIELDS: Record<string, string> = {
+  aircraft_not_in_fleet: "n_number",
+  aircraft_grounded: "n_number",
+  aircraft_retired: "n_number",
+  aircraft_not_airworthy: "n_number",
+  wrong_fuel_type: "fuel_type_id",
+  over_tank_capacity: "requested_left_gallons",
+  fuel_on_hold_at_station: "base_code",
+};
+
+/** The service's {code, message} refusal, and the field it belongs on. */
+function orderRefusal(body: string): { field: string; message: string } | null {
+  try {
+    const detail = (JSON.parse(body) as { detail?: { code?: string; message?: string } }).detail;
+    const field = detail?.code ? REFUSAL_FIELDS[detail.code] : undefined;
+    return field && detail?.message ? { field, message: detail.message } : null;
+  } catch {
+    return null;
+  }
 }
