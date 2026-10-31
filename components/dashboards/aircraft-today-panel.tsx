@@ -1,4 +1,6 @@
 import type { DayPreflight } from "@/lib/api/ops";
+
+import { ReassignAircraft } from "./reassign-aircraft";
 import { DEFAULT_TIME_ZONE, localClock } from "@/lib/format/local-time";
 
 /**
@@ -7,7 +9,14 @@ import { DEFAULT_TIME_ZONE, localClock } from "@/lib/format/local-time";
  * aircraft with none can't be accepted, so dispatch sees the gap before the
  * pilot does.
  */
-export function AircraftTodayPanel({ today }: { today: { items: DayPreflight[] } | null }) {
+export function AircraftTodayPanel({
+  today,
+  pilots = [],
+}: {
+  today: { items: DayPreflight[] } | null;
+  /** The pilots dispatch can give an aircraft to; empty for anyone who can't (AIRCRAFT_ASSIGNERS). */
+  pilots?: { id: string; name: string }[];
+}) {
   return (
     <section className="rounded-lg border border-border bg-card p-5" aria-label="Aircraft today">
       <h2 className="panel-title">Aircraft today</h2>
@@ -25,6 +34,7 @@ export function AircraftTodayPanel({ today }: { today: { items: DayPreflight[] }
               <th>Pilot</th>
               <th>Taken</th>
               <th>Preflight and run-up</th>
+              {pilots.length ? <th>Move</th> : null}
             </tr>
           </thead>
           <tbody>
@@ -39,6 +49,16 @@ export function AircraftTodayPanel({ today }: { today: { items: DayPreflight[] }
                 </td>
                 <td>{at(row.picked_at)}</td>
                 <td>{row.preflight_at ? preflight(row) : <span className="text-status-yellow">Not yet</span>}</td>
+                {pilots.length ? (
+                  <td>
+                    <ReassignAircraft
+                      preflightId={row.id}
+                      tail={row.tail_number}
+                      currentPilotId={row.pilot_user_id}
+                      pilots={pilots}
+                    />
+                  </td>
+                ) : null}
               </tr>
             ))}
           </tbody>

@@ -2,11 +2,14 @@ import Link from "next/link";
 
 import { PageHeader } from "@/components/ff/page-header";
 import { CheckGlyph } from "@/components/ff/glyphs";
+import { auth } from "@/auth";
 import { AircraftTodayPanel } from "@/components/dashboards/aircraft-today-panel";
 import { AlertList } from "@/components/dashboards/alert-list";
 import { FleetAirworthinessPanel } from "@/components/dashboards/fleet-airworthiness-panel";
 import { StatTile } from "@/components/dashboards/stat-tile";
+import { listStaff } from "@/lib/api/auth";
 import { getComplianceBoard, getMorningToday, listFlights, getFlightStats } from "@/lib/api/ops";
+import { AIRCRAFT_ASSIGNERS, hasAnyRole } from "@/lib/roles";
 import { DEFAULT_TIME_ZONE, localDay } from "@/lib/format/local-time";
 import { loadOperationalSnapshot } from "@/lib/dashboards/operational-snapshot";
 import { snapshotAlertsToList } from "@/lib/dashboards/snapshot-to-alerts";
@@ -19,7 +22,10 @@ export default async function DispatcherDashboardPage() {
   const today = localDay(DEFAULT_TIME_ZONE);
   // #138: flights that didn't load say so; they had read as a quiet day.
   const loads = new Loads();
-  const [stats, todaysFlights, pendingResult, snapshot, crew, aircraftToday] = await Promise.all([
+  // #93: dispatch and the crew's managers can give an aircraft to another pilot.
+  const session = await auth();
+  const canAssign = hasAnyRole(session?.roles ?? [], AIRCRAFT_ASSIGNERS);
+  const [stats, todaysFlights, pendingResult, snapshot, crew, aircraftToday, staff] = await Promise.all([
     getFlightStats().catch(() => null),
     loads.or(listFlights({ onCompanyDate: today }), { items: [], total: 0 }, "today’s flights"),
     // Wider window then filter to today + tomorrow — same fix as
@@ -30,6 +36,7 @@ export default async function DispatcherDashboardPage() {
     getComplianceBoard().catch(() => null),
     // #93: the aircraft taken this morning. Null when it couldn't load.
     getMorningToday().catch(() => null),
+    canAssign ? listStaff().catch(() => null) : Promise.resolve(null),
   ]);
 
   const todayDate = today;
@@ -118,7 +125,12 @@ export default async function DispatcherDashboardPage() {
 
       {/* #93: the aircraft the pilots took this morning, and their preflights. */}
       <div className="mt-5">
-        <AircraftTodayPanel today={aircraftToday} />
+        <AircraftTodayPanel
+          today={aircraftToday}
+          pilots={(staff?.items ?? [])
+            .filter((m) => m.roles.includes("pilot"))
+            .map((m) => ({ id: m.id, name: m.full_name }))}
+        />
       </div>
 
       {/* Row 3 — Live Ops Board */}

@@ -1,5 +1,8 @@
 import { render, screen, within } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+
+vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn() }) }));
+vi.mock("@/app/(app)/dashboards/dispatcher/actions", () => ({ reassignAircraftAction: vi.fn() }));
 
 import { AircraftTodayPanel } from "./aircraft-today-panel";
 
@@ -37,5 +40,20 @@ describe("AircraftTodayPanel (#93)", () => {
     expect(screen.getByText(/No aircraft taken yet today/)).toBeInTheDocument();
     rerender(<AircraftTodayPanel today={null} />);
     expect(screen.getByText(/Couldn.t load today.s aircraft/)).toBeInTheDocument();
+  });
+});
+
+describe("AircraftTodayPanel: moving an aircraft (#93)", () => {
+  it("offers dispatch to give an aircraft to another pilot, and no one else", () => {
+    const pilots = [
+      { id: "p-1", name: "Beth Nolan" },
+      { id: "p-2", name: "Caleb Frost" },
+    ];
+    const { rerender } = render(<AircraftTodayPanel today={{ items: [ROW] }} pilots={pilots} />);
+    const select = screen.getByLabelText("Give N701PS to");
+    expect(within(select).queryByRole("option", { name: "Beth Nolan" })).toBeNull();
+    expect(within(select).getByRole("option", { name: "Caleb Frost" })).toBeInTheDocument();
+    rerender(<AircraftTodayPanel today={{ items: [ROW] }} />);
+    expect(screen.queryByLabelText("Give N701PS to")).toBeNull();
   });
 });

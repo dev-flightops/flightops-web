@@ -78,7 +78,9 @@ vi.mock("@/lib/api/ops", () => ({
   getMorningToday: vi.fn(async () => ({ company_date: "2026-10-31", items: [] })),
 }));
 vi.mock("@/lib/api/customer-invoices", () => ({ listCustomerInvoices: invoicesMock }));
+vi.mock("@/auth", () => ({ auth: vi.fn(async () => ({ roles: ["dispatcher"] })) }));
 vi.mock("@/lib/api/auth", () => ({
+  listStaff: vi.fn(async () => ({ items: [], total: 0 })),
   listMyTenants: vi.fn(async () => ({
     tenants: [
       { id: "t-1", name: "Peregrine Test Air", slug: "pta", plan: "owner", is_current: true },
