@@ -5,6 +5,7 @@ import { z } from "zod";
 
 import { loadZoneTable } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
+import { validationSummary } from "@/lib/api/validation-errors";
 import { createBooking, createCustomer } from "@/lib/api/reservations";
 import { localToUtcIso, zoneFor } from "@/lib/format/local-time";
 import { passengersFromForm } from "@/lib/reservations/passenger-form";
@@ -192,7 +193,7 @@ export async function createBookingAction(
       }
       return {
         status: "error",
-        message: `Backend rejected the booking (HTTP ${err.status}).`,
+        message: validationSummary(err) ?? `The booking didn't file (HTTP ${err.status}). Try again in a moment.`,
       };
     }
     return {

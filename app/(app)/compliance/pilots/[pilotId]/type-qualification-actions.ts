@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 import { ApiError } from "@/lib/api/client";
+import { validationSummary } from "@/lib/api/validation-errors";
 import { logCurrencyCompletion } from "@/lib/api/ops";
 import {
   authoriseTypePosition,
@@ -187,7 +188,7 @@ function messageFor(err: unknown, verb: string, roles: string): string {
     if (err.status === 403) return `Only ${roles} can ${verb}.`;
     const detail = detailOf(err.message);
     if (detail && DETAILS[detail]) return DETAILS[detail];
-    return `Couldn't ${verb} (HTTP ${err.status}). Try again.`;
+    return validationSummary(err) ?? `Couldn't ${verb} (HTTP ${err.status}). Try again.`;
   }
   return `Couldn't ${verb}. Try again.`;
 }

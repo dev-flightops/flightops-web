@@ -5,6 +5,7 @@ import { z } from "zod";
 
 import { createFuelQualityTest } from "@/lib/api/ground";
 import { ApiError } from "@/lib/api/client";
+import { validationSummary } from "@/lib/api/validation-errors";
 
 /**
  * /fuel/quality server action — log a fresh quality test. Validates
@@ -120,7 +121,7 @@ export async function createFuelQualityTestAction(
       }
       return {
         status: "api-error",
-        message: `Couldn't log the test (HTTP ${err.status}). Try again.`,
+        message: validationSummary(err) ?? `Couldn't log the test (HTTP ${err.status}). Try again.`,
       };
     }
     return {

@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 
 import { enrol } from "@/lib/api/academy";
 import { ApiError } from "@/lib/api/client";
+import { validationSummary } from "@/lib/api/validation-errors";
 
 export interface EnrolFormState {
   status: "idle" | "error";
@@ -25,7 +26,7 @@ export async function enrolAction(
     if (err instanceof ApiError) {
       return {
         status: "error",
-        message: `Backend rejected the request (HTTP ${err.status}).`,
+        message: validationSummary(err) ?? `That didn't save (HTTP ${err.status}). Try again in a moment.`,
       };
     }
     return {

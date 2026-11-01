@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import { ApiError } from "@/lib/api/client";
+import { validationSummary } from "@/lib/api/validation-errors";
 import { createGseUnit } from "@/lib/api/ground";
 
 /**
@@ -144,7 +145,7 @@ export async function createEquipmentAction(
       }
       return {
         status: "api-error",
-        message: `Couldn't add the unit (HTTP ${err.status}). Try again in a moment.`,
+        message: validationSummary(err) ?? `Couldn't add the unit (HTTP ${err.status}). Try again in a moment.`,
       };
     }
     return {

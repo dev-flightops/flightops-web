@@ -4,6 +4,7 @@ import { revalidatePath, revalidateTag } from "next/cache";
 import { z } from "zod";
 
 import { ApiError } from "@/lib/api/client";
+import { validationSummary } from "@/lib/api/validation-errors";
 import {
   createStationIssue,
   resolveStationIssue,
@@ -152,7 +153,7 @@ function apiToState(err: unknown, refused?: string): ReportIssueState {
     }
     return {
       status: "api-error",
-      message: `Action failed (HTTP ${err.status}). Try again in a moment.`,
+      message: validationSummary(err) ?? `Action failed (HTTP ${err.status}). Try again in a moment.`,
     };
   }
   return {
@@ -195,7 +196,7 @@ export async function setStationActiveAction(
             "Only Ground Ops, the Director of Operations or an Exec Admin can deactivate or reactivate a station.",
         };
       }
-      return { ok: false, error: `Couldn't save (HTTP ${err.status}).` };
+      return { ok: false, error: validationSummary(err) ?? `Couldn't save (HTTP ${err.status}).` };
     }
     return { ok: false, error: "Couldn't save — try again." };
   }
@@ -248,7 +249,7 @@ export async function setStationRunwayAction(
           error: "Check the numbers: length 100–20,000 ft, width 10–500 ft.",
         };
       }
-      return { ok: false, error: `Couldn't save (HTTP ${err.status}).` };
+      return { ok: false, error: validationSummary(err) ?? `Couldn't save (HTTP ${err.status}).` };
     }
     return { ok: false, error: "Couldn't save — try again." };
   }

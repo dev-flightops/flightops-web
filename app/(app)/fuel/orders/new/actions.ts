@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import { ApiError } from "@/lib/api/client";
+import { validationSummary } from "@/lib/api/validation-errors";
 import { createFuelOrder } from "@/lib/api/ground";
 
 /**
@@ -124,7 +125,7 @@ export async function createFuelOrderAction(
       }
       return {
         status: "api-error",
-        message: `Couldn't place the order (HTTP ${err.status}). Try again in a moment.`,
+        message: validationSummary(err) ?? `Couldn't place the order (HTTP ${err.status}). Try again in a moment.`,
       };
     }
     return {

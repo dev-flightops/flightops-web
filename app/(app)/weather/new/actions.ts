@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import { ApiError } from "@/lib/api/client";
+import { validationSummary } from "@/lib/api/validation-errors";
 import { createWeatherBriefing } from "@/lib/api/weather";
 import { parseIcaos } from "@/lib/weather/icaos";
 
@@ -109,7 +110,7 @@ export async function createBriefingAction(
       }
       return {
         status: "api-error",
-        message: `Couldn't save the briefing (HTTP ${err.status}). Try again in a moment.`,
+        message: validationSummary(err) ?? `Couldn't save the briefing (HTTP ${err.status}). Try again in a moment.`,
       };
     }
     return {

@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 import { ApiError } from "@/lib/api/client";
+import { validationSummary } from "@/lib/api/validation-errors";
 import {
   changeGseStatus,
   completeGseMaintenance,
@@ -255,7 +256,7 @@ function apiToState(err: unknown, refused?: string): ActionState {
     }
     return {
       status: "api-error",
-      message: `Action failed (HTTP ${err.status}). Try again in a moment.`,
+      message: validationSummary(err) ?? `Action failed (HTTP ${err.status}). Try again in a moment.`,
     };
   }
   return {

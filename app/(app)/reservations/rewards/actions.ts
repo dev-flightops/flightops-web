@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 
 import { ApiError } from "@/lib/api/client";
+import { refusalText } from "@/lib/api/validation-errors";
 import {
   createRewardsTransaction,
   enrollRewardsMember,
@@ -46,7 +47,7 @@ export async function enrollMemberAction(
       }
       return {
         status: "error",
-        message: `Backend error ${err.status}: ${err.message}`,
+        message: refusalText(err) ?? `That didn't go through (HTTP ${err.status}). Try again in a moment.`,
       };
     }
     return { status: "error", message: "Unexpected error." };
@@ -92,7 +93,7 @@ export async function createTransactionAction(
       }
       return {
         status: "error",
-        message: `Backend error ${err.status}: ${err.message}`,
+        message: refusalText(err) ?? `That didn't go through (HTTP ${err.status}). Try again in a moment.`,
       };
     }
     return { status: "error", message: "Unexpected error." };

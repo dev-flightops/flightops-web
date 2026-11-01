@@ -6,6 +6,7 @@ import { scheduleRefusal } from "@/lib/flights/schedule-refusals";
 
 import { loadZoneTable } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
+import { validationSummary } from "@/lib/api/validation-errors";
 import { createFlight, getWeatherMinimums } from "@/lib/api/ops";
 import { passengerSeatsRefusal } from "@/lib/flights/passenger-seats";
 import { localToUtcIso, zoneFor } from "@/lib/format/local-time";
@@ -323,7 +324,7 @@ export async function createFlightAction(
       }
       return {
         status: "api-error",
-        message: `Couldn't open the flight (HTTP ${err.status}). Try again in a moment.`,
+        message: validationSummary(err) ?? `Couldn't open the flight (HTTP ${err.status}). Try again in a moment.`,
         values,
         stops,
       };
