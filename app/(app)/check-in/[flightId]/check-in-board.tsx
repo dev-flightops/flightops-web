@@ -1237,7 +1237,7 @@ function CloseBoardingDialog({
           <DialogTitle>Close Boarding</DialogTitle>
           <DialogDescription>
             {view.rules.lock_manifest_on_close
-              ? "The manifest locks, final for weight and balance and the reports. It can't be unlocked."
+              ? "The manifest locks, final for weight and balance and the reports, unless it's reopened before departure."
               : "Nothing more can change at check-in. The manifest stays editable, as your settings say."}
           </DialogDescription>
         </DialogHeader>
