@@ -117,6 +117,41 @@ describe("EodPage", () => {
     expect(screen.queryByText(/No flags/)).toBeNull();
   });
 
+  it("reads airborne and overdue as Flight Following does (#134)", async () => {
+    // Due 17:00-19:45Z, away at 19:42Z: the board estimates 22:27Z and
+    // counts it airborne; End of Day called it overdue from 20:15Z and
+    // nothing airborne. A released flight that hasn't left isn't airborne.
+    listFlights
+      .mockResolvedValueOnce({ items: [], total: 0 })
+      .mockResolvedValueOnce({
+        items: [
+          makeFlight({
+            flight_number: "MM001",
+            status: "released",
+            scheduled_departure_at: "2026-06-15T17:00:00Z",
+            scheduled_arrival_at: "2026-06-15T19:45:00Z",
+            actual_departure_at: "2026-06-15T19:42:00Z",
+          }),
+          makeFlight({
+            flight_number: "REL1",
+            status: "released",
+            scheduled_departure_at: "2026-06-15T21:00:00Z",
+            scheduled_arrival_at: "2026-06-15T22:00:00Z",
+          }),
+        ],
+        total: 2,
+      })
+      .mockResolvedValueOnce({ items: [], total: 0 });
+
+    await renderPage();
+
+    const row = screen.getByText("MM001").closest("tr");
+    expect(row).toHaveTextContent("22:27z");
+    expect(screen.queryByText("REL1")).toBeNull();
+    expect(screen.queryByText(/Overdue: released/)).toBeNull();
+    expect(screen.getByText(/No flags/)).toBeInTheDocument();
+  });
+
   it("renders the four stat tiles with correct counts + computed block hours", async () => {
     const twoHourFlight = (n: string) =>
       makeFlight({
