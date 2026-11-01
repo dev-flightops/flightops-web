@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import { resumeNote, useArmedConfirm } from "@/components/duty/confirm-duty-out";
 
 import { clockInAction, clockOutAction } from "./actions";
+import { DEFAULT_TIME_ZONE } from "@/lib/format/local-time";
 
 interface Props {
   initial: CurrentDutyResponse;
@@ -226,6 +227,7 @@ export function DutyClockButton({ initial }: Props) {
               hour: "2-digit",
               minute: "2-digit",
               hour12: false,
+              timeZone: DEFAULT_TIME_ZONE,
             })}
           </span>
           . You were back inside the {duty.min_rest_hours}h minimum rest, so

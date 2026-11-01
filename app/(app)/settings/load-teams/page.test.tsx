@@ -91,18 +91,15 @@ describe("Settings → Load Teams", () => {
     }
   });
 
-  it("marks what isn't built, and nothing looks live but dead", async () => {
+  it("shows nothing that isn't built, and nothing looks live but dead (#134)", async () => {
+    // Fleet Report, Reminders, Activity Log and Performance were dimmed and
+    // "Not built yet"; the client counts such marks as faults.
     const { container } = await renderPage();
-    for (const label of ["Fleet Report", "Reminders", "Activity Log"]) {
-      const el = screen.getByRole("button", { name: label });
-      expect(el).toHaveAttribute("aria-disabled", "true");
-      expect(el).toHaveAttribute("title", "Not built yet");
+    for (const label of ["Fleet Report", "Reminders", "Activity Log", "Performance"]) {
+      expect(screen.queryByText(label)).not.toBeInTheDocument();
     }
-    expect(screen.getAllByRole("button", { name: "Performance" })).toHaveLength(2);
-    // The old page disabled its buttons with disabled:opacity-100, so
-    // they looked live. No button on this page is disabled now.
-    expect(container.querySelectorAll("button:disabled")).toHaveLength(0);
-    expect(container.innerHTML).not.toMatch(/follow-up|backend endpoints are live/i);
+    expect(container.querySelectorAll("button:disabled, [aria-disabled='true']")).toHaveLength(0);
+    expect(container.innerHTML).not.toMatch(/follow-up|backend endpoints are live|Not built/i);
   });
 
   it("lists archived teams when asked", async () => {

@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 
 import { acknowledgeDocumentAction } from "../actions";
+import { DEFAULT_TIME_ZONE } from "@/lib/format/local-time";
 
 interface Props {
   documentId: string;
@@ -138,12 +139,16 @@ function CheckIcon({ className }: { className?: string }) {
 
 function fmtWhen(iso: string): string {
   const d = new Date(iso);
-  return `${d.toLocaleDateString(undefined, {
+  // The company's zone, so the server and the browser render the same text
+  // (#134).
+  return `${d.toLocaleDateString("en-US", {
     month: "short",
     day: "numeric",
     year: "numeric",
-  })} · ${d.toLocaleTimeString(undefined, {
+    timeZone: DEFAULT_TIME_ZONE,
+  })} · ${d.toLocaleTimeString("en-US", {
     hour: "numeric",
     minute: "2-digit",
+    timeZone: DEFAULT_TIME_ZONE,
   })}`;
 }

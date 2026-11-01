@@ -76,7 +76,8 @@ describe("the duty hero button", () => {
     clockInAction.mockResolvedValueOnce({
       ok: true,
       resumed: true,
-      clockInAt: new Date(2026, 8, 27, 6, 5).toISOString(),
+      // 06:05 at the company (AKDT), whatever zone the server renders in (#134).
+      clockInAt: "2026-09-27T14:05:00Z",
     } as never);
     const user = userEvent.setup();
     render(<DutyClockButton initial={offDuty()} />);
