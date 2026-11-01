@@ -24,8 +24,10 @@ const ADMIN_ROLES = roleGate(
  *
  * Layout matches legacy peregrineflight.com/academy Studio tab:
  *   * Purple "Course Studio" heading + subtitle
- *   * Three right-aligned CTAs: Browse Templates (purple) · + Blank
- *     Course (dark) · Open Studio (yellow/gold)
+ *   * One CTA, + Blank Course. Legacy's Browse Templates and Open
+ *     Studio aren't shown: neither the template gallery nor the
+ *     full-page editor exists, and a disabled button reads as broken
+ *     (#134).
  *   * Big graduation-cap empty state when there are no courses yet
  *   * When courses exist, render them below the CTA row (legacy
  *     shows the empty state at zero-count but the existing-drafts
@@ -64,37 +66,16 @@ export default async function StudioPage() {
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
-      {/* The one working action is the solid one; the two unbuilt ones
-          are quiet. It was the other way round — the disabled buttons
-          carried purple and yellow, the live one was plain. */}
       <AcademyHeader
         title="Course Studio"
-        description="Build training courses from scratch or start from a template"
+        description="Build training courses"
         actions={
-          <>
-            <button
-              type="button"
-              disabled
-              title="The course-template gallery isn't built yet"
-              className="cursor-not-allowed rounded-md border border-border bg-card px-4 py-2 text-sm font-semibold text-muted-foreground opacity-60"
-            >
-              Browse Templates
-            </button>
-            <Link
-              href="/academy/studio/new"
-              className="btn-caps rounded-md bg-primary px-4 py-2 text-primary-foreground hover:bg-brand-dark"
-            >
-              + Blank Course
-            </Link>
-            <button
-              type="button"
-              disabled
-              title="The full-page Studio editor isn't built yet"
-              className="cursor-not-allowed rounded-md border border-border bg-card px-4 py-2 text-sm font-semibold text-muted-foreground opacity-60"
-            >
-              Open Studio
-            </button>
-          </>
+          <Link
+            href="/academy/studio/new"
+            className="btn-caps rounded-md bg-primary px-4 py-2 text-primary-foreground hover:bg-brand-dark"
+          >
+            + Blank Course
+          </Link>
         }
       />
 

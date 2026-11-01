@@ -8,9 +8,9 @@ import { RecordTabs } from "./record-tabs";
  *
  * Profile and Documents are ours. Onboarding and Drug & Alcohol are
  * subsystems nobody has scheduled — 5 tables behind one and 9 behind
- * the other in legacy — so they stay rendered and marked rather than
- * dropped (which hides that the record has more to it) or linked
- * (which gives two 404s).
+ * the other in legacy — so they aren't shown, rather than linked (two
+ * 404s) or dimmed and marked "Not built" (which the client counted as
+ * faults, #134).
  */
 
 describe("the built tabs", () => {
@@ -68,42 +68,20 @@ describe("the outstanding count", () => {
 });
 
 describe("the unbuilt tabs", () => {
-  it("shows both rather than hiding them", () => {
+  // Onboarding and Drug & Alcohol aren't built. Shown dimmed and marked
+  // "Not built", the client counted them as faults; now they aren't shown
+  // until they're built (#134).
+  it("aren't shown", () => {
     render(<RecordTabs employeeId="u-1" active="profile" />);
     for (const label of ["Onboarding", "Drug & Alcohol"]) {
-      expect(screen.getByText(label)).toBeInTheDocument();
+      expect(screen.queryByText(label)).not.toBeInTheDocument();
     }
+    expect(screen.queryByText("Not built")).not.toBeInTheDocument();
   });
 
-  it("says not built, not soon", () => {
-    // Neither is on a story list. "Soon" was a commitment nothing
-    // backs.
-    render(<RecordTabs employeeId="u-1" active="profile" />);
-    expect(screen.getAllByText("Not built")).toHaveLength(2);
-    expect(screen.queryByText("Soon")).not.toBeInTheDocument();
-  });
-
-  it("says in the tooltip that they are not scheduled either", () => {
-    render(<RecordTabs employeeId="u-1" active="profile" />);
-    expect(screen.getByText("Onboarding").closest("span")).toHaveAttribute(
-      "title",
-      expect.stringContaining("not currently scheduled"),
-    );
-  });
-
-  it("does not make them clickable", () => {
-    render(<RecordTabs employeeId="u-1" active="profile" />);
-    for (const label of ["Onboarding", "Drug & Alcohol"]) {
-      expect(
-        screen.queryByRole("link", { name: label }),
-      ).not.toBeInTheDocument();
-    }
-  });
-
-  it("no longer claims Documents is unbuilt", () => {
-    // It was in that list until this feature shipped.
-    render(<RecordTabs employeeId="u-1" active="profile" />);
-    const documents = screen.getByRole("link", { name: /Documents/ });
-    expect(documents.textContent).not.toMatch(/Not built/);
+  it("leave Profile and Documents", () => {
+    render(<RecordTabs employeeId="u-1" active="documents" />);
+    expect(screen.getByRole("link", { name: "Profile" })).toBeInTheDocument();
+    expect(screen.getByText("Documents")).toBeInTheDocument();
   });
 });

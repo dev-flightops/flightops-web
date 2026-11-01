@@ -126,7 +126,8 @@ export default async function GroundOpsHubPage() {
                   ? { text: `${pendingFuel} pending`, tone: "yellow" }
                   : undefined,
             },
-            L.rampMessages,
+            // Ramp Messages isn't listed until it's built: a dimmed
+            // "Soon" read as broken (#134).
           ]}
         />
         <SectionCard

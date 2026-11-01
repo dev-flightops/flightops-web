@@ -543,14 +543,6 @@ export function NewBookingSearchForm({
       {/* Row 4 — Actions */}
       <div className="mt-4 flex flex-wrap items-center justify-end gap-2 border-t border-border pt-4">
         <button
-          type="button"
-          disabled
-          title="Gift vouchers aren't built yet"
-          className="rounded-md border border-border bg-card px-3 py-2 text-xs font-semibold text-muted-foreground/70 cursor-not-allowed"
-        >
-          Use Gift Voucher
-        </button>
-        <button
           type="submit"
           className="btn-caps rounded-md bg-primary px-5 py-2 text-white hover:bg-brand-dark"
         >

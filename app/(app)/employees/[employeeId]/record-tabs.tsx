@@ -4,15 +4,14 @@ import Link from "next/link";
  * The tab bar on an employee record.
  *
  * Legacy shows Profile / Documents / Onboarding / Drug & Alcohol.
- * Profile and Documents are ours now; the other two are subsystems
- * nobody has scheduled — legacy carries 5 tables behind Onboarding and
- * 9 behind Drug & Alcohol, the latter including the 14 CFR 120.217
+ * Profile and Documents are ours; the other two are subsystems nobody
+ * has scheduled — legacy carries 5 tables behind Onboarding and 9
+ * behind Drug & Alcohol, the latter including the 14 CFR 120.217
  * annual MIS summary.
  *
- * They stay rendered and marked, because dropping them hides that the
- * record has more to it and linking them would give two 404s. Marked
- * "Not built" rather than "Soon": neither is on a story list, and
- * "soon" is a commitment nothing backs.
+ * They were shown dimmed and marked "Not built". The client counts such
+ * marks as faults (#157 took them off the dashboards), so they aren't
+ * shown until they're built (#134).
  *
  * Lifted out of employee-record-form.tsx once Documents became a real
  * tab, so both panels render the same bar rather than each owning a
@@ -20,8 +19,6 @@ import Link from "next/link";
  */
 
 export type RecordTab = "profile" | "documents";
-
-const UNBUILT = ["Onboarding", "Drug & Alcohol"] as const;
 
 export function RecordTabs({
   employeeId,
@@ -57,19 +54,6 @@ export function RecordTabs({
           </span>
         )}
       </Tab>
-      {UNBUILT.map((label) => (
-        <span
-          key={label}
-          title={`${label} is not built yet and is not currently scheduled`}
-          aria-disabled="true"
-          className="-mb-px cursor-not-allowed px-3 py-2 text-xs font-semibold text-muted-foreground/50"
-        >
-          {label}
-          <span className="status-mark ml-1.5">
-            Not built
-          </span>
-        </span>
-      ))}
     </nav>
   );
 }
