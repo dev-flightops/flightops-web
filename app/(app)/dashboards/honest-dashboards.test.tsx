@@ -123,6 +123,7 @@ describe("executive dashboard", () => {
   it("reads crew from the currency board and receivables from billing, and shows no unbuilt tile", async () => {
     render(await ExecutiveDashboardPage());
     expect(within(tile("Crew Current")).getByText("1/2")).toBeInTheDocument();
+    expect(within(tile("Crew Current")).getByText("1 not current")).toBeInTheDocument();
     expect(within(tile("Outstanding AR")).getByText("$2,600")).toBeInTheDocument();
     for (const label of ["Revenue MTD", "Profit Margin", "Rev / FH", "30d Forecast", "Overrides (30d)"]) {
       expect(screen.queryByText(label)).toBeNull();
@@ -132,6 +133,21 @@ describe("executive dashboard", () => {
     // A measured tile keeps its number.
     expect(within(tile("Fleet Airworthy")).getByText("3/4")).toBeInTheDocument();
     expectNoMilestonePills();
+  });
+
+  it("says who the crew fraction leaves out (#134)", async () => {
+    // "6/9 · 0 not current" left three pilots in their grace or due month
+    // counted nowhere.
+    boardMock.mockResolvedValue({
+      ...board,
+      chips: { fully_current: 6, early_month: 1, grace_month: 2, non_current: 0, records_missing: 0 },
+      rows: Array.from({ length: 9 }, () => board.rows[0]),
+    });
+    render(await ExecutiveDashboardPage());
+    expect(within(tile("Crew Current")).getByText("6/9")).toBeInTheDocument();
+    expect(
+      within(tile("Crew Current")).getByText("2 in the grace month, 1 due this month"),
+    ).toBeInTheDocument();
   });
 
   it("leaves a tile out when its source doesn't load, rather than print zero", async () => {
