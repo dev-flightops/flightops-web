@@ -133,33 +133,11 @@ export function FleetBoardChrome({
           />
         </div>
 
-        {/* Filter chips — placeholder for now. Legacy has these driven by
-            bookings.base_id / aircraft.aircraft_type / bookings.pilot_id
-            (fields we haven't added yet). Render as no-op dropdowns to
-            match the UI; wire when the fields exist. */}
-        <FilterChip label="All Bases" />
-        <FilterChip label="All Types" />
-        <FilterChip label="All Pilots" />
-        <button
-          type="button"
-          className="btn-caps rounded-md border border-input px-3 py-1.5 text-foreground hover:bg-accent text-[0.72rem]"
-        >
-          Go
-        </button>
+        {/* Legacy's base, type and pilot filters and its Go button aren't
+            here: the fields behind them don't exist yet, and a control
+            that does nothing reads as broken (#134). The search filters
+            as you type. */}
       </div>
     </>
-  );
-}
-
-function FilterChip({ label }: { label: string }) {
-  return (
-    <button
-      type="button"
-      disabled
-      title="Filters aren't built yet"
-      className="rounded-md border border-border bg-card px-2.5 py-1 text-xs font-semibold text-muted-foreground/70 cursor-not-allowed"
-    >
-      {label}
-    </button>
   );
 }

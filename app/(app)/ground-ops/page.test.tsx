@@ -224,21 +224,21 @@ describe("GroundOpsHubPage", () => {
     ).toHaveAttribute("href", "/equipment/new");
   });
 
-  it("renders live links for Ramp Dashboard + Fuel sub-links; Messages still dim", async () => {
+  it("renders live links for Ramp Dashboard + Fuel sub-links; no unbuilt Messages", async () => {
     listStations.mockResolvedValueOnce({ items: [], total: 0 });
     listOpenStationIssues.mockResolvedValueOnce({ items: [], total: 0 });
     listGseUnits.mockResolvedValueOnce({ items: [], total: 0 });
 
     await renderPage();
 
-    // Ramp Dashboard + Fuel Orders now live (M2). Ramp Messages stays
-    // M3-dimmed; Fuel Quality Log now live (M2-G-fuel-quality-log).
+    // Ramp Dashboard + Fuel Orders now live (M2). Ramp Messages isn't
+    // built, so it isn't listed (#134); Fuel Quality Log now live.
     expect(
       screen.getByRole("link", { name: /ramp dashboard/i }),
     ).toHaveAttribute("href", "/ramper");
     expect(screen.getByText(/^order fuel$/i)).toBeInTheDocument();
     expect(screen.getByText(/suppliers & pricing/i)).toBeInTheDocument();
-    expect(screen.getByText(/ramp messages/i)).toBeInTheDocument();
+    expect(screen.queryByText(/ramp messages/i)).not.toBeInTheDocument();
     expect(
       screen.getByRole("link", { name: /fuel quality log/i }),
     ).toHaveAttribute("href", "/fuel/quality");

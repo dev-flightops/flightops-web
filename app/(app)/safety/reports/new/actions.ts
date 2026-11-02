@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import { ApiError } from "@/lib/api/client";
+import { validationSummary } from "@/lib/api/validation-errors";
 import {
   SAFETY_REPORT_TYPES,
   type SafetyReportFiling,
@@ -127,7 +128,7 @@ export async function fileSafetyReportAction(
           "Attach a photo (JPG, PNG, GIF or WEBP) or a PDF. An iPhone HEIC photo has to be exported as JPEG first.",
         );
       }
-      return fail(`The report was not filed (HTTP ${err.status}). Try again.`);
+      return fail(validationSummary(err) ?? `The report was not filed (HTTP ${err.status}). Try again.`);
     }
     return fail("Could not reach the safety service. Try again in a moment.");
   }

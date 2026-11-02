@@ -149,22 +149,9 @@ function FlightBoardRow({ flight }: { flight: BoardFlightItem }) {
         {flight.status === "released" && flight.actual_departure_at !== null && (
           <CheckInButton flightId={flight.id} flightNumber={flight.flight_number} event="arrive" />
         )}
-        {/* Dimmed rather than linked. There is no per-flight document
-            page: legacy has one at `/following/{id}/docs`, backed by a
-            FlightDocument model, per-category upload permissions and a
-            download route, and none of that exists here — so this link
-            404'd on every row of the board.
-            Dimming is the reversible half of an open decision about
-            whether to build the subsystem or drop the affordance. What
-            is not in question is that a link to a 404 is worse than
-            either. */}
-        <span
-          title="Per-flight documents are not built yet"
-          aria-disabled="true"
-          className="mr-4 cursor-not-allowed text-[0.68rem] font-bold uppercase tracking-[0.1em] text-muted-foreground/40"
-        >
-          Docs
-        </span>
+        {/* No Docs here: legacy's per-flight documents (`/following/{id}/docs`,
+            a FlightDocument model, per-category upload permissions) don't
+            exist. A dimmed "Docs" on every row read as broken (#134). */}
         {/* #132: "is there a way that we can go back in and edit a flight
             after it's made it to this stage?" The packet's Edit, opened. */}
         {flight.status === "scheduled" && (

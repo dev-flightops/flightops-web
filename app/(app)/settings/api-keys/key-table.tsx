@@ -1,4 +1,5 @@
 import type { ApiKeyRow } from "@/lib/api/api-keys";
+import { DEFAULT_TIME_ZONE } from "@/lib/format/local-time";
 
 /**
  * The key list, with no hooks and no action wiring.
@@ -109,9 +110,12 @@ export function reads(row: ApiKeyRow): string {
 }
 
 export function formatWhen(iso: string): string {
+  // The company's day, so the server and the browser agree: without a
+  // zone the page failed to hydrate (#134).
   return new Date(iso).toLocaleDateString("en-US", {
     month: "short",
     day: "numeric",
     year: "numeric",
+    timeZone: DEFAULT_TIME_ZONE,
   });
 }

@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 import { ApiError } from "@/lib/api/client";
+import { validationSummary } from "@/lib/api/validation-errors";
 import { logCurrencyCompletion } from "@/lib/api/ops";
 
 /**
@@ -156,7 +157,7 @@ export async function logCompletionAction(
       }
       return {
         status: "api-error",
-        message: `Couldn't save (HTTP ${err.status}). Try again.`,
+        message: validationSummary(err) ?? `Couldn't save (HTTP ${err.status}). Try again.`,
       };
     }
     return {

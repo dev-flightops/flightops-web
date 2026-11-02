@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import { ApiError } from "@/lib/api/client";
+import { validationSummary } from "@/lib/api/validation-errors";
 import { createGseUnit } from "@/lib/api/ground";
 
 /**
@@ -65,6 +66,13 @@ const Schema = z.object({
     .refine((v) => v === undefined || (Number.isInteger(v) && v >= 1), {
       message: "Service interval must be at least 1 day",
     }),
+  // Legacy's add form had it; without it a new unit never showed a
+  // service due (#134).
+  next_service_date: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, "Pick a date")
+    .optional()
+    .or(z.literal("").transform(() => undefined)),
   hours_total: z
     .string()
     .optional()
@@ -116,6 +124,7 @@ export async function createEquipmentAction(
       year: parsed.data.year ?? null,
       station_id: parsed.data.station_id ?? null,
       service_interval_days: parsed.data.service_interval_days ?? null,
+      next_service_date: parsed.data.next_service_date ?? null,
       hours_total: parsed.data.hours_total,
       manufacturer: parsed.data.manufacturer ?? null,
       notes: parsed.data.notes ?? null,
@@ -144,7 +153,7 @@ export async function createEquipmentAction(
       }
       return {
         status: "api-error",
-        message: `Couldn't add the unit (HTTP ${err.status}). Try again in a moment.`,
+        message: validationSummary(err) ?? `Couldn't add the unit (HTTP ${err.status}). Try again in a moment.`,
       };
     }
     return {

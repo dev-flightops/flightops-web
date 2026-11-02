@@ -194,6 +194,24 @@ describe("VillageWxPage (M2-G-village-wx-redesign)", () => {
     expect(screen.getByText("Dillingham")).toBeInTheDocument();
   });
 
+  it("puts one region typed two ways under one heading (#134)", async () => {
+    // The demo had "yk delta" (Bethel) and "YK Delta" (Chefornak) as two.
+    getVillageBoard.mockResolvedValueOnce({
+      items: [
+        row({ id: "a-1", icao: "PABE", name: "Bethel", region: "yk delta" }),
+        row({ id: "a-2", icao: "PACK", name: "Chefornak", region: " YK  Delta" }),
+      ],
+      total: 2,
+    });
+
+    await renderPage();
+
+    const regions = screen.getAllByRole("heading", { level: 2 });
+    expect(regions.map((h) => h.textContent)).toEqual(["YK Delta"]);
+    expect(screen.getByText("Bethel")).toBeInTheDocument();
+    expect(screen.getByText("Chefornak")).toBeInTheDocument();
+  });
+
   it("falls back to 'Unassigned' when an airport has no region", async () => {
     getVillageBoard.mockResolvedValueOnce({
       items: [row({ region: null })],

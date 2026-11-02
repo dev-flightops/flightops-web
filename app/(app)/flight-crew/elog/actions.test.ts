@@ -131,6 +131,29 @@ describe("createFlightLogAction", () => {
     }
   });
 
+  it("opens the pilot's log when the flight already has one (#134)", async () => {
+    // The arrival opens the PIC's draft; a second log for the flight
+    // counted its time twice toward 135.265, so ops refuses it and names
+    // the one the pilot has.
+    createFlightLog.mockRejectedValueOnce(
+      new TestApiError(
+        409,
+        "/ops/flight-logs",
+        JSON.stringify({
+          detail: { error: "flight_has_a_log", flight_log_id: "log-7" },
+        }),
+      ),
+    );
+
+    await expect(
+      createFlightLogAction(
+        { status: "idle" },
+        makeFormData({ flight_id: "22222222-2222-2222-2222-222222222222" }),
+      ),
+    ).rejects.toThrow("NEXT_REDIRECT");
+    expect(redirectSpy).toHaveBeenCalledWith("/flight-crew/elog/log-7");
+  });
+
   it("maps flight_aircraft_mismatch to a field error on the flight picker", async () => {
     createFlightLog.mockRejectedValueOnce(
       new TestApiError(

@@ -54,9 +54,21 @@ function todayLong(): string {
   });
 }
 
-/** A released flight this long past its scheduled arrival, still not
- *  closed, is a flag (#157: "EOD 'No flags' with two overdue flights"). */
+/** A released flight this long past its arrival, still not closed, is a
+ *  flag (#157: "EOD 'No flags' with two overdue flights"). */
 const OVERDUE_AFTER_MIN = 30;
+
+/** When the flight should land, as Flight Following works it out (ops'
+ *  estimated_arrival): its scheduled block after the actual departure once
+ *  it has left, else the scheduled arrival. End of Day read the scheduled
+ *  arrival, so MM001, away 2 h 42 min late, read overdue here from 19:45Z
+ *  while the board put its ETA at 00:27Z (#134). */
+function estimatedArrivalMs(f: FlightListItem): number {
+  const arr = Date.parse(f.scheduled_arrival_at);
+  if (!f.actual_departure_at || f.actual_arrival_at) return arr;
+  const block = arr - Date.parse(f.scheduled_departure_at);
+  return Math.max(arr, Date.parse(f.actual_departure_at) + block);
+}
 
 /** Cutoff for "stale" — any scheduled flight whose scheduled_departure_at
  *  is more than this many minutes in the past with no actuals counts as
@@ -69,12 +81,12 @@ export default async function EodPage() {
   const staleCutoff = nowMs - STALE_THRESHOLD_MIN * 60 * 1000;
 
   let completedToday: FlightListItem[] = [];
-  let airborne: FlightListItem[] = [];
+  let released: FlightListItem[] = [];
   let allScheduled: FlightListItem[] = [];
   let loadError: string | null = null;
 
   try {
-    const [completed, released, scheduled] = await Promise.all([
+    const [completed, releasedFlights, scheduled] = await Promise.all([
       // Landed today, whichever day it was due out.
       listFlights({ status: "completed", arrivedOnCompanyDate: today, limit: 200 }),
       listFlights({ status: "released", limit: 200 }),
@@ -87,7 +99,7 @@ export default async function EodPage() {
       listFlights({ status: "scheduled", onCompanyDate: today, limit: 200 }),
     ]);
     completedToday = completed.items;
-    airborne = released.items;
+    released = releasedFlights.items;
     allScheduled = scheduled.items;
   } catch (err) {
     const status = err instanceof ApiError ? err.status : 0;
@@ -113,12 +125,15 @@ export default async function EodPage() {
     }
   }
 
-  // Released and not closed: still flying, or past its arrival with no
-  // landing recorded, from whatever day.
-  const overdue = airborne.filter(
-    (f) => Date.parse(f.scheduled_arrival_at) + OVERDUE_AFTER_MIN * 60_000 < nowMs,
+  // Airborne is departed and not landed, from whatever day, as the board
+  // counts it; a released flight that hasn't left isn't airborne (#134).
+  // Overdue is released and past its arrival with no landing recorded, the
+  // arrival worked out as the board does; an overdue flight that left is
+  // both.
+  const stillAirborne = released.filter((f) => f.actual_departure_at && !f.actual_arrival_at);
+  const overdue = released.filter(
+    (f) => estimatedArrivalMs(f) + OVERDUE_AFTER_MIN * 60_000 < nowMs,
   );
-  const stillAirborne = airborne.filter((f) => !overdue.includes(f));
 
   const totalBlockHours = computeBlockHours(completedToday);
   const flagsCount = stale.length + overdue.length; // duty + fuel sections await M3
@@ -277,7 +292,7 @@ function AirborneSection({ flights }: { flights: FlightListItem[] }) {
                   {f.origin} → {f.destination}
                 </td>
                 <td className="px-2 py-1.5 font-mono text-muted-foreground">
-                  {formatZulu(f.scheduled_arrival_at)}
+                  {formatZulu(new Date(estimatedArrivalMs(f)).toISOString())}
                 </td>
               </tr>
             ))}
@@ -320,7 +335,7 @@ function FlagsSection({ stale, overdue }: { stale: FlightListItem[]; overdue: Fl
                   {f.origin} → {f.destination}
                 </span>
                 <span className="ml-2 text-muted-foreground">
-                  — ETA {formatZulu(f.scheduled_arrival_at)}, no landing recorded
+                  — ETA {formatZulu(new Date(estimatedArrivalMs(f)).toISOString())}, no landing recorded
                 </span>
               </li>
             ))}

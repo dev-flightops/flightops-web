@@ -284,10 +284,14 @@ function formatUtc(iso: string): string {
 
 function formatReleasedAt(iso: string): string {
   const d = new Date(iso);
-  return `${d.toLocaleDateString(undefined, {
+  // Both parts in UTC: the date was the browser's and the time UTC, so
+  // they disagreed near midnight, and the server and browser rendered
+  // different text (#134).
+  return `${d.toLocaleDateString("en-US", {
     month: "short",
     day: "numeric",
-  })} · ${d.toLocaleTimeString(undefined, {
+    timeZone: "UTC",
+  })} · ${d.toLocaleTimeString("en-US", {
     hour: "numeric",
     minute: "2-digit",
     timeZone: "UTC",

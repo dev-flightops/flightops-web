@@ -11,6 +11,7 @@ import { StatTile } from "@/components/dashboards/stat-tile";
 import { listMyTenants } from "@/lib/api/auth";
 import { listCustomerInvoices } from "@/lib/api/customer-invoices";
 import { getComplianceBoard, getFlightStats } from "@/lib/api/ops";
+import type { ComplianceChips } from "@/lib/api/types";
 import { loadOperationalSnapshot } from "@/lib/dashboards/operational-snapshot";
 import { snapshotAlertsToList } from "@/lib/dashboards/snapshot-to-alerts";
 
@@ -130,11 +131,7 @@ export default async function ExecutiveDashboardPage() {
           <StatTile
             value={`${crew.chips.fully_current}/${crew.rows.length}`}
             label="Crew Current"
-            sub={
-              crew.chips.records_missing
-                ? `${crew.chips.records_missing} with records missing`
-                : `${crew.chips.non_current} not current`
-            }
+            sub={crewNotFullyCurrent(crew.chips)}
             tone={crew.chips.non_current > 0 ? "red" : "green"}
           />
         ) : null}
@@ -231,4 +228,17 @@ export default async function ExecutiveDashboardPage() {
       </div>
     </div>
   );
+}
+
+/** Who the "x/y" leaves out. It read "6/9 · 0 not current" with three
+ *  pilots in their grace or due month counted nowhere (#134). */
+function crewNotFullyCurrent(chips: ComplianceChips): string {
+  const parts = [
+    [chips.non_current, "not current"],
+    [chips.records_missing ?? 0, "with records missing"],
+    [chips.grace_month, "in the grace month"],
+    [chips.early_month, "due this month"],
+  ] as const;
+  const shown = parts.filter(([n]) => n > 0).map(([n, what]) => `${n} ${what}`);
+  return shown.length ? shown.join(", ") : "all current";
 }

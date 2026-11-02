@@ -350,6 +350,7 @@ export interface CreateGseUnitPayload {
   year?: number | null;
   station_id?: string | null;
   service_interval_days?: number | null;
+  next_service_date?: string | null;
   hours_total?: number;
   manufacturer?: string | null;
   notes?: string | null;

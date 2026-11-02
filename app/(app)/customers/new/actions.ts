@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import { ApiError } from "@/lib/api/client";
+import { validationProblems, validationSummary } from "@/lib/api/validation-errors";
 import { CUSTOMER_TYPES, type CustomerType, createCustomer } from "@/lib/api/reservations";
 
 const _schema = z.object({
@@ -67,9 +68,21 @@ export async function createCustomerAction(
           fieldErrors: { email: "Duplicate email in this tenant." },
         };
       }
+      // A refused field is marked on the form (#134): the reserved
+      // domain in "sweep@example.test" read "HTTP 422", nothing else.
+      const problems = validationProblems(err);
+      if (problems.length) {
+        return {
+          status: "error",
+          message: validationSummary(err) ?? "Check the marked fields.",
+          fieldErrors: Object.fromEntries(
+            problems.filter((p) => p.field).map((p) => [p.field as string, p.message]),
+          ),
+        };
+      }
       return {
         status: "error",
-        message: `Backend rejected the request (HTTP ${err.status}).`,
+        message: `Couldn't create the customer (HTTP ${err.status}). Try again in a moment.`,
       };
     }
     return {

@@ -1,12 +1,10 @@
 import Link from "next/link";
 
-import { tab, tabList } from "@/components/ff/controls";
 import { listStaff } from "@/lib/api/auth";
 import { formatRole } from "@/lib/roles";
 import { listLoadTeams, listStations } from "@/lib/api/ground";
 import { ApiError } from "@/lib/api/client";
 import type { LoadTeamResponse } from "@/lib/api/types";
-import { cn } from "@/lib/utils";
 
 import { MembersSheet } from "./members-sheet";
 import { TeamActiveButton } from "./team-active-button";
@@ -31,7 +29,6 @@ import {
  * reminder texts — nothing here sends them).
  */
 
-const NOT_BUILT = "Not built yet";
 
 type StatusParam = "active" | "all";
 
@@ -118,9 +115,6 @@ export default async function SettingsLoadTeamsPage({
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <NotBuilt className="btn-caps rounded-md border border-input px-3 py-2 text-foreground">
-            Fleet Report
-          </NotBuilt>
           <TeamDialog
             stations={stations}
             people={people}
@@ -140,11 +134,6 @@ export default async function SettingsLoadTeamsPage({
         </div>
       </header>
 
-      <div className={cn(tabList, "mb-6")}>
-        <span className={tab(true)}>Teams</span>
-        <NotBuilt className={tab(false)}>Reminders</NotBuilt>
-        <NotBuilt className={tab(false)}>Activity Log</NotBuilt>
-      </div>
 
       {loadError ? (
         <div
@@ -195,27 +184,6 @@ function groupByBase(
     (grouped[t.base_icao] ??= []).push(t);
   }
   return grouped;
-}
-
-/** A legacy control with nothing behind it yet: dimmed, "Not built yet"
- *  on hover, as the maintenance header marks its unbuilt actions. */
-function NotBuilt({
-  className,
-  children,
-}: {
-  className: string;
-  children: string;
-}) {
-  return (
-    <span
-      role="button"
-      aria-disabled="true"
-      title={NOT_BUILT}
-      className={`cursor-not-allowed opacity-50 ${className}`}
-    >
-      {children}
-    </span>
-  );
 }
 
 function BaseSection({
@@ -330,7 +298,6 @@ function TeamRow({
             triggerClassName={CARD_BUTTON}
           />
           <MembersSheet team={team} people={people} />
-          <NotBuilt className={CARD_BUTTON}>Performance</NotBuilt>
           <TeamActiveButton
             teamId={team.id}
             teamName={team.team_name}

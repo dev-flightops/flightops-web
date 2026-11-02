@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 import { ApiError } from "@/lib/api/client";
+import { validationSummary } from "@/lib/api/validation-errors";
 import { createCurrencyItem, deactivateCurrencyItem } from "@/lib/api/ops";
 
 /**
@@ -175,7 +176,7 @@ function apiToState(err: unknown): CreateCurrencyItemState {
     }
     return {
       status: "api-error",
-      message: `Couldn't create item (HTTP ${err.status}). Try again.`,
+      message: validationSummary(err) ?? `Couldn't create item (HTTP ${err.status}). Try again.`,
     };
   }
   return {

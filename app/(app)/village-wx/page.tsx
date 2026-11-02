@@ -420,15 +420,22 @@ function categoryAccent(category: FlightCategory | null) {
 const formatStamp = formatZuluDateTime;
 
 function groupByRegion(rows: VillageBoardRow[]): [string, VillageBoardRow[]][] {
-  const buckets = new Map<string, VillageBoardRow[]>();
+  // Region is free text: "yk delta" and "YK Delta" are one region, not two
+  // headings (#134). Grouped without case or extra spaces, shown in a
+  // spelling with capitals when any airport has one.
+  const buckets = new Map<string, { label: string; rows: VillageBoardRow[] }>();
   for (const row of rows) {
-    const key = row.airport.region?.trim() || UNGROUPED_LABEL;
-    const bucket = buckets.get(key) ?? [];
-    bucket.push(row);
+    const label = row.airport.region?.trim().replace(/\s+/g, " ") || UNGROUPED_LABEL;
+    const key = label.toLowerCase();
+    const bucket = buckets.get(key) ?? { label, rows: [] };
+    if (bucket.label === bucket.label.toLowerCase() && label !== label.toLowerCase()) {
+      bucket.label = label;
+    }
+    bucket.rows.push(row);
     buckets.set(key, bucket);
   }
   // Stable alphabetical, "Unassigned" last so named regions surface first.
-  return Array.from(buckets.entries()).sort(([a], [b]) => {
+  return Array.from(buckets.values(), ({ label, rows: grouped }) => [label, grouped] as [string, VillageBoardRow[]]).sort(([a], [b]) => {
     if (a === UNGROUPED_LABEL) return 1;
     if (b === UNGROUPED_LABEL) return -1;
     return a.localeCompare(b);

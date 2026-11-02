@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 
 import { ApiError } from "@/lib/api/client";
+import { refusalText } from "@/lib/api/validation-errors";
 import {
   approvePayEvent,
   createPayEvent,
@@ -86,7 +87,7 @@ export async function createPayEventAction(
     if (err instanceof ApiError) {
       return {
         status: "error",
-        message: `Backend error ${err.status}: ${err.message}`,
+        message: refusalText(err) ?? `That didn't go through (HTTP ${err.status}). Try again in a moment.`,
       };
     }
     return { status: "error", message: "Unexpected error." };

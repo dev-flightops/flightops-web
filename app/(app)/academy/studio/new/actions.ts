@@ -11,6 +11,7 @@ import {
   createCourse,
 } from "@/lib/api/academy";
 import { ApiError } from "@/lib/api/client";
+import { validationSummary } from "@/lib/api/validation-errors";
 
 const _schema = z.object({
   title: z.string().trim().min(1, "Title is required.").max(200),
@@ -73,7 +74,7 @@ export async function createCourseAction(
     if (err instanceof ApiError) {
       return {
         status: "error",
-        message: `Backend rejected the request (HTTP ${err.status}).`,
+        message: validationSummary(err) ?? `That didn't save (HTTP ${err.status}). Try again in a moment.`,
       };
     }
     return {

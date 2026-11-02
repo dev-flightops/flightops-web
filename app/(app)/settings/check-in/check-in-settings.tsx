@@ -35,7 +35,7 @@ const POLICY: { key: keyof CheckInConfig; label: string; hint: string }[] = [
   {
     key: "lock_manifest_on_close",
     label: "Lock the manifest when boarding closes",
-    hint: "Final for weight and balance and the reports; it can't be unlocked.",
+    hint: "Final for weight and balance and the reports, unless it's reopened before departure.",
   },
 ];
 

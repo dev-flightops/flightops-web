@@ -170,15 +170,6 @@ export default async function FlightSchedulePage({
           </p>
         </div>
         <div className="flex gap-2">
-          <button
-            type="button"
-            disabled
-            aria-disabled="true"
-            title="Flight schedule templates ship with Marc's manifest module"
-            className="cursor-not-allowed rounded-md border border-border bg-card px-3 py-2 text-sm font-semibold text-foreground/80 disabled:opacity-100"
-          >
-            Templates
-          </button>
           <Link
             href="/flight-following/new"
             className="btn-caps rounded-md bg-primary px-3 py-2 text-white hover:bg-brand-dark"

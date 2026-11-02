@@ -84,6 +84,12 @@ export async function createFlightLogAction(
           message: "Your session expired — please sign in again.",
         };
       }
+      // One log per pilot per flight (#134): the arrival already opened
+      // this pilot's draft for it, or they started one. Open that one.
+      const existing = existingLogId(err);
+      if (existing) {
+        redirect(`/flight-crew/elog/${existing}`);
+      }
       const detail = parseDetail(err.message);
       if (detail === "aircraft_not_active") {
         return {
@@ -200,5 +206,21 @@ function parseDetail(message: string): string {
     return typeof parsed.detail === "string" ? parsed.detail : "";
   } catch {
     return "";
+  }
+}
+
+/** The log a 409 `flight_has_a_log` names, if that's what this is. */
+function existingLogId(err: ApiError): string | null {
+  if (err.status !== 409) return null;
+  try {
+    const parsed = JSON.parse(err.message) as {
+      detail?: { error?: unknown; flight_log_id?: unknown };
+    };
+    const detail = parsed.detail;
+    return detail?.error === "flight_has_a_log" && typeof detail.flight_log_id === "string"
+      ? detail.flight_log_id
+      : null;
+  } catch {
+    return null;
   }
 }

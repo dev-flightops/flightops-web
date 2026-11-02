@@ -17,6 +17,7 @@ import {
 } from "@/lib/api/check-in";
 import { ApiError, SessionExpiredError } from "@/lib/api/client";
 import { addPax } from "@/lib/api/manifest";
+import { validationSummary } from "@/lib/api/validation-errors";
 import { passengerSeatsRefusal } from "@/lib/flights/passenger-seats";
 
 import { refusalMessage } from "./messages";
@@ -53,7 +54,7 @@ async function step(flightId: string, run: () => Promise<CheckInView>): Promise<
       }
       return {
         ok: false,
-        error: refusalMessage(err.message) ?? `That didn't go through (HTTP ${err.status}). Try again.`,
+        error: refusalMessage(err.message) ?? validationSummary(err) ?? `That didn't go through (HTTP ${err.status}). Try again.`,
         retry: err.status >= 500,
       };
     }
@@ -138,7 +139,7 @@ export async function addWalkUpAction(
       if (err.status === 409) {
         return { ok: false, error: "The manifest is locked, so no one can be added." };
       }
-      return { ok: false, error: `The walk-up wasn't added (HTTP ${err.status}).` };
+      return { ok: false, error: validationSummary(err) ?? `The walk-up wasn't added (HTTP ${err.status}).` };
     }
     return { ok: false, error: "The walk-up wasn't added. Try again." };
   }
