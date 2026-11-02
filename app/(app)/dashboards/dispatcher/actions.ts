@@ -15,6 +15,7 @@ export async function reassignAircraftAction(id: string, pilotUserId: string): P
   try {
     await reassignMorningAircraft(id, pilotUserId);
     revalidatePath("/dashboards/dispatcher");
+    revalidatePath("/dispatch");
     return { ok: true };
   } catch (err) {
     if (err instanceof ApiError) {
