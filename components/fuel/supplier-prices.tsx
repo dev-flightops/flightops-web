@@ -271,8 +271,9 @@ export function SupplierPrices({
               <input name="notes" defaultValue={row?.notes ?? ""} className="ff-input" />
             </label>
             <p className="text-xs text-muted-foreground sm:col-span-4">
-              The default is the supplier offered first on fuel orders for this fuel at this base; setting it here
-              takes it from any other supplier. Orders keep the price they were placed at.
+              Saving a base and fuel this supplier already has replaces that price. The default is the supplier
+              offered first on fuel orders for this fuel at this base; setting it here takes it from any other
+              supplier. Orders keep the price they were placed at.
             </p>
             <div className="flex justify-end gap-2 sm:col-span-4">
               <button type="button" className={buttonOutline} onClick={() => setEditing(null)}>
