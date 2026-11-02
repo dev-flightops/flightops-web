@@ -31,7 +31,6 @@ export function UploadDocumentForm({ unitId }: { unitId: string }) {
         setSizeError(tooBig);
         if (tooBig) e.preventDefault();
       }}
-      encType="multipart/form-data"
       aria-label="Upload a document"
       className="mt-3 grid gap-3 sm:grid-cols-[2fr_1fr_1fr_auto] sm:items-end"
     >
