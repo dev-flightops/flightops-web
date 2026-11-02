@@ -120,7 +120,7 @@ export function NewEquipmentForm({
         ))}
       </FieldSelect>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-3 gap-4">
         <Field
           name="hours_total"
           label="Hours (current)"
@@ -136,6 +136,12 @@ export function NewEquipmentForm({
           type="number"
           placeholder="90"
           error={fieldError("service_interval_days")}
+        />
+        <Field
+          name="next_service_date"
+          label="Next service"
+          type="date"
+          error={fieldError("next_service_date")}
         />
       </div>
 

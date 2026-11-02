@@ -38,7 +38,15 @@ vi.mock("@/lib/api/client", () => ({ ApiError: TestApiError }));
 // New dialog components use React 19's useActionState which isn't
 // available in jsdom. Stub them as passive markers.
 vi.mock("@/components/equipment/change-status-dialog", () => ({
-  ChangeStatusDialog: () => <button type="button">Change status</button>,
+  ChangeStatusDialog: ({
+    serviceDue,
+  }: {
+    serviceDue?: { due: string; next: string | null } | null;
+  }) => (
+    <button type="button" data-due={serviceDue?.due ?? ""} data-next={serviceDue?.next ?? ""}>
+      Change status
+    </button>
+  ),
 }));
 vi.mock("@/components/equipment/report-squawk-dialog", () => ({
   ReportSquawkDialog: () => <button type="button">+ Report squawk</button>,
@@ -161,6 +169,44 @@ describe("EquipmentDetailPage (M2-G-39)", () => {
     expect(screen.getByText("Eagle TT-50")).toBeInTheDocument();
     expect(screen.getByText("EA-12345")).toBeInTheDocument();
     expect(screen.getByText("PANC")).toBeInTheDocument();
+  });
+
+  it("marks a service that came due and tells the status dialog (#134)", async () => {
+    // Due 2026-08-01 every 90 days; on 11/1 back to operational records
+    // the service and moves the next one to 2027-01-30.
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-11-01T20:00:00Z"));
+    try {
+      getGseUnit.mockResolvedValueOnce(makeUnit());
+      listGseMaintenance.mockResolvedValueOnce({ items: [], total: 0 });
+      listGseSquawks.mockResolvedValueOnce({ items: [], total: 0 });
+
+      await renderPage();
+
+      expect(screen.getByText("Service overdue")).toBeInTheDocument();
+      const button = screen.getByRole("button", { name: "Change status" });
+      expect(button).toHaveAttribute("data-due", "2026-08-01");
+      expect(button).toHaveAttribute("data-next", "2027-01-30");
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("says nothing of a service not yet due", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-11-01T20:00:00Z"));
+    try {
+      getGseUnit.mockResolvedValueOnce(makeUnit({ next_service_date: "2026-11-02" }));
+      listGseMaintenance.mockResolvedValueOnce({ items: [], total: 0 });
+      listGseSquawks.mockResolvedValueOnce({ items: [], total: 0 });
+
+      await renderPage();
+
+      expect(screen.queryByText("Service overdue")).toBeNull();
+      expect(screen.getByRole("button", { name: "Change status" })).toHaveAttribute("data-due", "");
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("renders the scheduled-maintenance table", async () => {

@@ -31,3 +31,28 @@ describe("createEquipmentAction refused by role (29 Sep)", () => {
     });
   });
 });
+
+describe("createEquipmentAction's next service (#134)", () => {
+  it("sends the next service date, which legacy's add form had", async () => {
+    createGseUnit.mockResolvedValueOnce({ id: "u-9" });
+    const fd = new FormData();
+    fd.set("name", "GPU 3");
+    fd.set("equipment_type", "gpu");
+    fd.set("service_interval_days", "180");
+    fd.set("next_service_date", "2027-02-01");
+    await createEquipmentAction({ status: "idle" }, fd);
+    expect(createGseUnit).toHaveBeenLastCalledWith(
+      expect.objectContaining({ service_interval_days: 180, next_service_date: "2027-02-01" }),
+    );
+  });
+
+  it("leaves it out when the field is blank", async () => {
+    createGseUnit.mockResolvedValueOnce({ id: "u-10" });
+    const fd = new FormData();
+    fd.set("name", "GPU 4");
+    fd.set("equipment_type", "gpu");
+    fd.set("next_service_date", "");
+    await createEquipmentAction({ status: "idle" }, fd);
+    expect(createGseUnit).toHaveBeenLastCalledWith(expect.objectContaining({ next_service_date: null }));
+  });
+});

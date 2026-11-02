@@ -36,12 +36,22 @@ const STATUSES = [
   },
 ] as const;
 
+/** A unit whose service date has come: back to operational records that
+ *  service, as in legacy (#134). `next` is the date it moves to, when the
+ *  unit has an interval. */
+export interface ServiceDue {
+  due: string;
+  next: string | null;
+}
+
 export function ChangeStatusDialog({
   unitId,
   currentStatus,
+  serviceDue = null,
 }: {
   unitId: string;
   currentStatus: GSEUnitStatus;
+  serviceDue?: ServiceDue | null;
 }) {
   const [open, setOpen] = useState(false);
   const [state, action, pending] = useActionState<
@@ -104,6 +114,13 @@ export function ChangeStatusDialog({
                   </option>
                 ))}
               </select>
+              {serviceDue && (
+                <p className="mt-2 text-sm text-foreground">
+                  Its service was due {serviceDue.due}. Setting it to
+                  Operational records today&apos;s service
+                  {serviceDue.next ? `; the next one is due ${serviceDue.next}.` : "."}
+                </p>
+              )}
             </div>
 
             <div>

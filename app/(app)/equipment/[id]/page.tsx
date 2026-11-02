@@ -5,12 +5,13 @@ import { cn } from "@/lib/utils";
 import { notFound } from "next/navigation";
 
 import { auth } from "@/auth";
-import { ChangeStatusDialog } from "@/components/equipment/change-status-dialog";
+import { ChangeStatusDialog, type ServiceDue } from "@/components/equipment/change-status-dialog";
 import { CompleteMaintenanceButton } from "@/components/equipment/complete-maintenance-button";
 import { ReportSquawkDialog } from "@/components/equipment/report-squawk-dialog";
 import { ResolveSquawkButton } from "@/components/equipment/resolve-squawk-button";
 import { ScheduleMaintenanceDialog } from "@/components/equipment/schedule-maintenance-dialog";
 import { ApiError } from "@/lib/api/client";
+import { DEFAULT_TIME_ZONE, localDay } from "@/lib/format/local-time";
 import {
   getGseUnit,
   listGseMaintenance,
@@ -153,6 +154,24 @@ const EQUIPMENT_TYPE_LABELS: Record<GSEEquipmentType, string> = {
 const GSE_WRITER_NAMES =
   "Ground Ops, the Director of Maintenance, the Director of Operations or an Exec Admin";
 
+/** "2026-11-01" plus 180 days, by the calendar. */
+function daysAfter(day: string, days: number): string {
+  const d = new Date(`${day}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + days);
+  return d.toISOString().slice(0, 10);
+}
+
+/** Its service date has come (today counts, as in legacy): setting it back
+ *  to operational records the service (#134). */
+function serviceDue(unit: GSEUnitListItem): ServiceDue | null {
+  const today = localDay(DEFAULT_TIME_ZONE);
+  if (unit.next_service_date === null || unit.next_service_date > today) return null;
+  return {
+    due: unit.next_service_date,
+    next: unit.service_interval_days ? daysAfter(today, unit.service_interval_days) : null,
+  };
+}
+
 function Header({
   unit,
   canWrite,
@@ -177,7 +196,11 @@ function Header({
       <div className="flex items-center gap-2">
         <UnitStatusChip status={unit.status} size="lg" />
         {canWrite ? (
-          <ChangeStatusDialog unitId={unit.id} currentStatus={unit.status} />
+          <ChangeStatusDialog
+            unitId={unit.id}
+            currentStatus={unit.status}
+            serviceDue={serviceDue(unit)}
+          />
         ) : null}
       </div>
     </div>
@@ -203,6 +226,12 @@ function Meta({ unit }: { unit: GSEUnitListItem }) {
         <Field
           label="Next service"
           value={unit.next_service_date ?? "—"}
+          flag={
+            // As the list marks it (#157).
+            unit.next_service_date !== null && unit.next_service_date < localDay(DEFAULT_TIME_ZONE)
+              ? "Service overdue"
+              : undefined
+          }
         />
         <Field
           label="Interval (days)"
@@ -474,13 +503,18 @@ function UnitStatusChip({
   );
 }
 
-function Field({ label, value }: { label: string; value: string }) {
+function Field({ label, value, flag }: { label: string; value: string; flag?: string }) {
   return (
     <div>
       <dt className="eyebrow">
         {label}
       </dt>
       <dd className="m-0 mt-0.5 font-mono text-sm text-foreground">{value}</dd>
+      {flag ? (
+        <dd className="m-0 mt-0.5">
+          <span className="status-mark text-status-red">{flag}</span>
+        </dd>
+      ) : null}
     </div>
   );
 }
