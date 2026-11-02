@@ -1,0 +1,112 @@
+Peregrine operational journey burn-down
+November 1, 2026 · local app + real local API/Postgres
+
+Scope and status
+Deployment is excluded. Existing operational workflows remain in scope. The requested LMS expansion (media upload, SCORM import/player, lesson viewing tracking) is a separate feature project, per Greg’s November 1 decision. Existing Academy assignment, quiz, completion and currency workflows remain in scope.
+
+Green in the original bug tab is reserved for fixes from earlier commits. None of the new fixes described here should be highlighted green as prior work. A matching commit is evidence of implementation, not proof that a whole journey now passes. Items below explicitly distinguish browser verification, regression coverage and remaining work.
+
+Confirmed defects and local fixes
+
+BF-01 · Cancelling a flight stranded confirmed passenger bookings
+Meeting/report connection: October 30 report says cancelled flights left passengers without an obvious next action.
+Reproduction: Cancel DEMO104 with two named passengers. Before the fix the booking remained attached to the cancelled flight and did not return to “Bookings awaiting a flight.”
+Change: Cancellation atomically detaches active bookings, preserves the most recent manifest’s weighed passenger/baggage values, records the change and restores the dispatch queue entry. The cancelled manifest remains intact as history.
+Browser acceptance: After cancelling, Demo Traveller (2 passengers) appears in the dispatch queue. Open the booking, select PGR316 and assign it. The page confirms “Assigned. The booking is off the dispatch queue.” Seats free decreases from 19 to 17.
+Regression: A locked/boarded historical manifest can be recovered and reassigned without deleting history or losing weighed baggage. The separate complaint about lingering overdue alerts is not yet closed by this passenger recovery fix.
+
+BF-02 · Bumped passenger baggage had no follow-on tracking
+Reproduction: A passenger’s baggage could be reduced on the manifest without retaining a waiting item for a later flight.
+Change: “Bump bags” requires weight, number of bags and reason. One transaction reduces manifest baggage and creates a waiting load with passenger, booking, route and actor provenance. Locked manifests must be reopened first; over-bumping and departed/completed/cancelled flights are refused. The waiting list links back to the passenger booking.
+Browser acceptance: Bump 10 lb from Demo Traveller’s 20 lb. Manifest falls to 10 lb; Mail & Freight contains a 10 lb, one-piece record named for that passenger and the entered reason.
+Regression: Loading that waiting item onto a later flight preserves the source reference while leaving the passenger’s booking on its original flight. Browser loading onto the later flight remains to be walked.
+
+BF-03 · Pilot weather review omitted village observations
+Report connection: October 30 says village observations were visible to dispatch but absent from the pilot packet.
+Reproduction: Pilot weather review for DEMO105 at PANC → PAII showed METAR/TAF only, although PAII had a village observation.
+Change: Dispatch and pilot use the same village report component, including photos, observation age, visibility, cloud layers and observer notes. Only the flight’s route airports are shown. A failed village-board request produces an explicit unavailable message.
+Browser acceptance: PAII now shows the prepared village observation, including SCT 400 ft, visibility 10 sm, wind 6 kt and its observer note. Scattered clouds are not rendered as a ceiling.
+Test limitation: Steps 1 and 2 were pre-completed in the local QA database to isolate the weather screen. This screenshot does not claim that the complete pilot preflight/release journey has passed.
+
+BF-04 · Remaining pilot route labels hid intermediate stops
+Change: Pilot completion, post-flight handoff and the electronic log flight selector now use the shared full-route formatter rather than joining origin and destination only. Full multi-stop browser acceptance remains pending; the October 30 round-trip screenshot complaint is not yet closed.
+
+Fixture corrections found during walkthroughs
+Prepared fuel orders now link to their flights, so the pilot’s flight-specific fuel panel can find them. The prepared set includes a village observation on DEMO105. The base seeder no longer creates the fake PAKO_S Kotlik station and retires that exact legacy seed row without deleting references. Academy Emergency Procedures seed text now consistently describes 14 CFR 135.331 rather than claiming 135.293(a). Existing databases need the seed correction applied before their old content changes; these are not yet browser-accepted closures of the complete catalog/Academy reports.
+
+Repeatable journey acceptance map
+
+J01 · Reservation → schedule → manifest
+Roles: reservations/CSA and dispatch. Starting data: customer, passenger weights, available outbound and return flights, eligible aircraft and enough seats.
+Steps: Search one-way and round-trip; create named passengers; confirm; assign a flight; verify calendar/list/manifest; edit passenger or aircraft details and preserve both legs.
+Pass: One booking lineage, correct seats and load on both legs, no duplicate passengers. Verify Marcus Chen’s reported round-trip error specifically. Status: 55 reservation regression tests passed across return trips, edits, assignment, manifest integration and flight search; complete browser round-trip still pending.
+
+J02 · No matching flight / charter recovery
+Roles: reservations and dispatch. Starting data: a confirmed unassigned booking and a charter request.
+Steps: Find pending work; create or choose a flight; attach the booking/charter; verify it disappears from the waiting queue and appears on the schedule/manifest.
+Pass: No stranded or silently forgotten confirmed work. Status: Browser assignment passed for the recovered Demo Traveller booking; old confirmed charter aging and build-flight path still need verification.
+
+J03 · Cancellation / rescheduling
+Roles: dispatch and reservations. Starting data: a not-yet-departed flight with named passengers and weighed bags.
+Steps: Cancel with a reason; verify audit and operational boards; recover passengers; assign another flight; preserve cancelled-flight history.
+Pass: Passenger recovery and reassignment work without losing weights; cancelled flight stops producing active overdue alerts. Status: Passenger path browser-verified and regression-tested. Alert and freight cancellation handling remain open.
+
+J04 · Dispatch release
+Roles: dispatcher, pilot and CP/DO for required approvals. Starting data: known airports, serviceable aircraft, qualified crew and current medical/currency.
+Steps: Review weather at every stop, load/fuel, maintenance and risk; complete signed FRAT and personal acknowledgments; release; edit a released route/aircraft and require re-release.
+Pass: Missing medical/FRAT, overload, invalid airport, required approval, incompatible fuel and maintenance holds cannot bypass gates. Status: Existing implementation commits identified; nine operational suites passed 162 tests including release, departure, risk/qualification gates and pull-back. Full role-based browser acceptance remains pending. CG/envelope calculation remains a separate open gap requiring aircraft loading data.
+
+J05 · Pilot duty / daily preflight / flight FRAT
+Role: pilot. Starting data: medical/type/currency, duty/rest state, daily preflight and assigned flight.
+Steps: Duty in; take aircraft; record run-up; review release/load/weather/village observations; complete quick or block FRAT; obtain required signatures; accept; record subsequent legs.
+Pass: Actual legal state is used, edits invalidate stale approval, packet agrees with dispatch and acceptance is recorded. Status: Village-weather screen browser-verified; complete duty-to-acceptance path pending.
+
+J06 · Ground readiness
+Roles: ground/load team, dispatcher and fuel supplier. Starting data: assigned flight/aircraft, payload, fuel plan and supplier.
+Steps: Acknowledge load; check in passengers; load mail/freight; order correct fuel; confirm requested versus delivered; record completion/photos; verify pilot sees readiness.
+Pass: No invalid tail/fuel/over-capacity uplift; discrepancies have reasons; readiness reaches pilot. Status: Fuel order records inspected in browser; full ground/photographic-evidence/supplier lifecycle pending. Do not claim supplier email is connected merely because a scenario says it was notified.
+
+J07 · Bumped bags
+Roles: ground or dispatch. Starting data: an editable manifest with baggage and a later compatible flight.
+Steps: Bump an identified quantity and reason; find it in Mail & Freight; follow passenger booking; load onto later flight.
+Pass: Weight changes exactly once and no baggage is orphaned. Status: Bump → waiting browser pass; later-flight transfer passes database regression, browser transfer pending.
+
+J08 · Departure → arrival → log → invoice
+Roles: pilot, dispatch and billing. Starting data: legally released/accepted flight, duty in and manifest.
+Steps: Depart; track position; arrive with valid times; open prefilled draft log; submit; generate/reconcile invoice; compare aircraft/pilot hours and daily totals.
+Pass: No zero-minute/early invalid lifecycle, hours accumulate once, customer identity/money and company-local dates agree. Status: Prior commits and release/arrival regressions identified; complete browser lifecycle pending. Historic draft logs are not automatically a product defect without an intended submission action.
+
+J09 · Squawk → maintenance → return to service
+Roles: pilot, maintenance and dispatch. Starting data: available aircraft and a grounding defect.
+Steps: File squawk; verify grounded availability; create/perform work; inspect due list/MEL dates; sign return to service; verify dispatch eligibility returns.
+Pass: Inspection, MEL, squawk and work-order records explain the airworthiness state. Status: Prior implementation commits located; complete browser lifecycle pending.
+
+J10 · Existing Academy → currency
+Roles: chief pilot/instructor and learner. Starting data: correctly linked Emergency Procedures course, quiz and assigned learner.
+Steps: Create/assign existing lesson content; learn; pass quiz; review certificate; verify 135.331 currency and audit.
+Pass: Completion updates the intended currency and does not count untracked items as current. Status: Seed description corrected; complete browser acceptance pending. Media upload, SCORM and lesson-level viewing tracking are a separately documented feature project.
+
+J11 · Safety and housing
+Roles: reporting staff, safety owner and housing admin. Starting data: prepared hazard and a double room with one occupant.
+Steps: Triage report; assign owner/due date; close with resolution. Book a second occupant; refuse a third; cancel and verify capacity is freed.
+Pass: Hazard lifecycle is auditable and occupancy derives from bookings. Status: Prepared safety report and 1-of-2 occupied room inspected in browser; complete lifecycle pending.
+
+J12 · Founder overview and existing AI questions
+Role: executive admin. Starting data: current company-local-day flights, crew, holds, invoices and maintenance.
+Steps: Compare Home, executive dashboard, Fleet Board, history and EOD; ask existing questions about maintenance due, legal crew and flight hours.
+Pass: Same record/date definitions across screens; flight hours are not duty hours; legal crew excludes nonpilots; unavailable data is explicit. Status: Prior commits located. Live AI-answer acceptance cannot be claimed without a working model integration; dashboard reconciliation remains pending.
+
+Regression evidence
+Operational backend: 162 tests passed across baggage, cancellation, demo preparation, release/departure, aircraft qualification, check-in, FRAT limits and release pull-back.
+Reservations backend: 55 tests passed across return trips, edits, assignment, booking/manifest integration and flight search.
+Frontend: 4,048 tests passed across 434 files before the additional bump-dialog tests. On this machine Node 26 requires NODE_OPTIONS=--no-experimental-webstorage for the jsdom localStorage tests. Further checks and dialog tests are recorded in the repository QA ledger.
+
+Open work retained explicitly
+The original numbered reports 1–73 are retained individually in docs/qa/uat-burndown.md with candidate commits and acceptance status. They have not been declared closed just because a related commit exists. Priority remaining checks include Marcus Chen round trips, cancelled overdue alerts, multi-stop route display, end-to-end pilot/ground/arrival/maintenance/Academy workflows, revenue export, fuel-plan shortfall, seat assignment, catalog consistency and mobile layout.
+
+LMS expansion — separate feature project
+Build a distinct acceptance/specification for supported media formats and storage/permissions, SCORM package validation and playback, launch/completion/score tracking, lesson-level viewing rules and audit, author/pilot experience and migration of current courses. This work is not included in the operational bug burn-down and is not marked fixed.
+
+Browser evidence follows
+Screenshots below use synthetic local demo data. They show actual browser results and are not images of mocked interfaces.
+
