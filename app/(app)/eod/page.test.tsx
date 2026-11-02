@@ -173,7 +173,10 @@ describe("EodPage", () => {
 
     const row = screen.getByText("MM001").closest("tr");
     expect(row).toHaveTextContent("22:27z");
-    expect(screen.queryByText("REL1")).toBeNull();
+    const airborne = screen.getByRole("heading", { name: "Still Airborne" }).closest("section")!;
+    expect(within(airborne).queryByText("REL1")).toBeNull();
+    const planned = screen.getByRole("heading", { name: "Planned — Not Yet Departed" }).closest("section")!;
+    expect(within(planned).getByText("REL1")).toBeInTheDocument();
     expect(screen.queryByText(/Overdue: released/)).toBeNull();
     expect(screen.getByText(/No flags/)).toBeInTheDocument();
   });

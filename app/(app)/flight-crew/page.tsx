@@ -75,7 +75,6 @@ export default async function FlightCrewPage() {
     firstNameFrom(session?.user?.name) ||
     firstNameFrom((session?.user?.email ?? "").split("@")[0]);
   const greeting = currentGreeting();
-  const canPreflightAircraft = session?.roles?.some(role => ["pilot", "chief_pilot", "director_of_operations"].includes(role));
 
   let duty: CurrentDutyResponse = DUTY_OFFLINE_DEFAULT;
   // #93: the aircraft the pilot takes for the day. Null when it couldn't

@@ -31,4 +31,3 @@ Frontend: 4,053 tests passed in 435 files; TypeScript and ESLint pass. The full 
 Backend: 162 operational and 55 reservation tests previously passed; focused fixture/baggage/cancel rerun 20 passed; board and cancel rerun 22 passed. These reruns overlap; do not add the counts together.
 
 BF-05 · Successful linked Marcus Chen round trip
-

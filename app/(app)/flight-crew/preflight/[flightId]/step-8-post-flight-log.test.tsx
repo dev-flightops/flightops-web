@@ -47,6 +47,16 @@ describe("PostFlightLogStep (M2-G-7 step 8)", () => {
     ).toBeEnabled();
   });
 
+  it("shows every stop before the arrival opens the flight log", () => {
+    render(
+      <PostFlightLogStep
+        flightId="f-1"
+        flight={{ ...FLIGHT, stops: ["PANC", "PAHO", "PADQ"] }}
+      />,
+    );
+    expect(screen.getByText(/PANC → PAHO → PADQ/)).toBeInTheDocument();
+  });
+
   it("calls completeStepAction with step=8 on click", async () => {
     completeStepAction.mockResolvedValueOnce({ ok: true });
     const user = userEvent.setup();

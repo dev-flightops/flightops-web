@@ -109,4 +109,3 @@ Build a distinct acceptance/specification for supported media formats and storag
 
 Browser evidence follows
 Screenshots below use synthetic local demo data. They show actual browser results and are not images of mocked interfaces.
-
