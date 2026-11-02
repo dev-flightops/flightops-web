@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 
 import { ApiError } from "@/lib/api/client";
-import { clockIn, clockOut } from "@/lib/api/ops";
+import { clockIn, clockOut, pickMorningAircraft, recordMorningPreflight } from "@/lib/api/ops";
 
 export interface DutyActionResult {
   ok: boolean;
@@ -51,6 +51,47 @@ export async function clockOutAction(
     return { ok: true };
   } catch (err) {
     return { ok: false, error: mapError(err, "couldn't clock out") };
+  }
+}
+
+export interface MorningActionResult {
+  ok: boolean;
+  error?: string;
+}
+
+/** #93: take an aircraft for the day, after duty in. */
+export async function pickAircraftAction(aircraftId: string): Promise<MorningActionResult> {
+  try {
+    await pickMorningAircraft(aircraftId);
+    revalidatePath("/flight-crew");
+    return { ok: true };
+  } catch (err) {
+    return { ok: false, error: serviceMessage(err) ?? mapError(err, "Couldn't take the aircraft.") };
+  }
+}
+
+/** #93: the aircraft's preflight and run-up on record. */
+export async function recordPreflightAction(
+  id: string,
+  body: { fuel_gallons: number | null; oil_quarts: number | null; notes: string | null },
+): Promise<MorningActionResult> {
+  try {
+    await recordMorningPreflight(id, body);
+    revalidatePath("/flight-crew");
+    return { ok: true };
+  } catch (err) {
+    return { ok: false, error: serviceMessage(err) ?? mapError(err, "Couldn't record the preflight.") };
+  }
+}
+
+/** The service's own sentence for a refusal ({detail: {message}}). */
+function serviceMessage(err: unknown): string | null {
+  if (!(err instanceof ApiError)) return null;
+  try {
+    const message = JSON.parse(err.message)?.detail?.message;
+    return typeof message === "string" ? message : null;
+  } catch {
+    return null;
   }
 }
 

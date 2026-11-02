@@ -404,6 +404,8 @@ export async function retireAircraft(aircraftId: string): Promise<void> {
 export interface ListFlightLogsParams {
   status?: FlightLogStatus | FlightLogStatus[];
   aircraftId?: string;
+  /** One flight's log: the draft its arrival opened. */
+  flightId?: string;
   /** Filter to logs created by the current user. Server reads the
    *  user id from the JWT so the client doesn't need to know its own. */
   mine?: boolean;
@@ -429,6 +431,7 @@ export async function listFlightLogs(
     for (const s of values) search.append("status", s);
   }
   if (params.aircraftId) search.set("aircraft_id", params.aircraftId);
+  if (params.flightId) search.set("flight_id", params.flightId);
   if (params.mine) search.set("mine", "true");
   if (params.fromDate) search.set("from_date", params.fromDate);
   if (params.toDate) search.set("to_date", params.toDate);
@@ -556,6 +559,77 @@ export async function getFlightLogAuditTimeline(
   return apiFetch<AuditTimelineResponse>(
     `/ops/flight-logs/${logId}/audit-timeline`,
   );
+}
+
+// ---- The morning preflight (#93) ----
+
+/** One aircraft's day: who has it, and its preflight once recorded. */
+export interface DayPreflight {
+  id: string;
+  aircraft_id: string;
+  tail_number: string;
+  pilot_user_id: string;
+  pilot_name: string;
+  company_date: string;
+  picked_at: string;
+  preflight_at: string | null;
+  fuel_gallons: string | number | null;
+  oil_quarts: string | number | null;
+  notes: string | null;
+  assigned_by_name: string | null;
+}
+
+export interface MorningAircraftOption {
+  aircraft_id: string;
+  tail_number: string;
+  model: string | null;
+  base: string | null;
+  available: boolean;
+  /** Why it isn't offered: not airworthy, another base, taken. */
+  reason: string | null;
+}
+
+export interface MorningResponse {
+  company_date: string;
+  on_duty: boolean;
+  mine: DayPreflight | null;
+  options: MorningAircraftOption[];
+}
+
+/** The caller's aircraft today and what they may take (pilots). */
+export async function getMorning(): Promise<MorningResponse> {
+  return apiFetch<MorningResponse>("/ops/morning/aircraft", { cache: "no-store" });
+}
+
+export async function pickMorningAircraft(aircraftId: string): Promise<DayPreflight> {
+  return apiFetch<DayPreflight>("/ops/morning/pick", {
+    method: "POST",
+    body: JSON.stringify({ aircraft_id: aircraftId }),
+  });
+}
+
+export async function recordMorningPreflight(
+  id: string,
+  body: { fuel_gallons?: number | null; oil_quarts?: number | null; notes?: string | null },
+): Promise<DayPreflight> {
+  return apiFetch<DayPreflight>(`/ops/morning/${id}/preflight`, {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+}
+
+/** Every aircraft taken today, for dispatch. */
+export async function getMorningToday(): Promise<{ company_date: string; items: DayPreflight[] }> {
+  return apiFetch<{ company_date: string; items: DayPreflight[] }>("/ops/morning/today", {
+    cache: "no-store",
+  });
+}
+
+export async function reassignMorningAircraft(id: string, pilotUserId: string): Promise<DayPreflight> {
+  return apiFetch<DayPreflight>(`/ops/morning/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify({ pilot_user_id: pilotUserId }),
+  });
 }
 
 // ---- Pilot duty tracking (Spec 4 §"Duty time tracking") ----
