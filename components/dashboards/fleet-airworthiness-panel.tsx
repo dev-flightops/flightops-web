@@ -80,8 +80,8 @@ function Row({ row }: { row: FleetAircraftSummary }) {
   const rawModel = row.aircraft.model;
   const model =
     rawModel && rawModel.toLowerCase() !== "unknown" ? rawModel : null;
-  const grounded = !row.is_airworthy;
-  const advisory = row.is_airworthy && row.advisory_count > 0;
+  const grounded = !row.is_active || !row.is_airworthy;
+  const advisory = !grounded && row.advisory_count > 0;
 
   // Colored-dot pattern (same shape as the score-band legend on
   // /dashboards/ops-score) instead of 🟢🟡🔴 emoji — those fall back

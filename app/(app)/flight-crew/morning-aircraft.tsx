@@ -25,6 +25,7 @@ export function MorningAircraft({ morning }: { morning: MorningResponse | null }
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [choice, setChoice] = useState("");
+  const [completed, setCompleted] = useState(false);
 
   if (morning === null) {
     return (
@@ -69,7 +70,7 @@ export function MorningAircraft({ morning }: { morning: MorningResponse | null }
 
   const record = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!mine) return;
+    if (!mine || !completed) return;
     const form = new FormData(event.currentTarget);
     const num = (key: string) => {
       const value = String(form.get(key) ?? "").trim();
@@ -104,8 +105,9 @@ export function MorningAircraft({ morning }: { morning: MorningResponse | null }
             <span className="field-label">Notes</span>
             <input name="notes" type="text" maxLength={2000} className="ff-input" placeholder="Run-up normal" />
           </label>
+          <label className="flex gap-2 text-sm sm:col-span-2"><input type="checkbox" checked={completed} onChange={(event) => setCompleted(event.target.checked)} disabled={pending} />Preflight and run-up complete</label>
           <div className="sm:col-span-2">
-            <button type="submit" className={buttonSolid} disabled={pending}>
+            <button type="submit" className={buttonSolid} disabled={pending || !completed}>
               {pending ? "Recording…" : "Record preflight and run-up"}
             </button>
           </div>

@@ -137,7 +137,7 @@ export function CurrencyCountersField({
     footnote ??
     (variant === "sic"
       ? "Mirrors the PIC counters above for the SIC pilot — feeds SIC IFR currency on submit."
-      : "Approaches, holds, and IFR time feed Spec 5 IFR currency. Leave blank if not flown / not yet entered.");
+      : "Approaches, holds, and IFR time update instrument currency on submission. Leave blank if not flown or not yet entered.");
 
   return (
     <div className="rounded-md border border-border p-4">

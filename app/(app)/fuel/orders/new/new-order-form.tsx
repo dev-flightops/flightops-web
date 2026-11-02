@@ -12,24 +12,17 @@ import { takesFuel } from "@/lib/fuel";
 
 import { createFuelOrderAction, type NewFuelOrderState } from "./actions";
 
-function todayLocalIsoDate(): string {
-  const d = new Date();
-  return [
-    d.getFullYear(),
-    String(d.getMonth() + 1).padStart(2, "0"),
-    String(d.getDate()).padStart(2, "0"),
-  ].join("-");
-}
-
 export function NewFuelOrderForm({
   suppliers,
   fuelTypes,
   fleet,
+  today,
 }: {
   suppliers: FuelSupplierResponse[];
   fuelTypes: FuelTypeResponse[];
   /** The aircraft in service (#156): the tail is picked from them. */
   fleet: AircraftListItem[];
+  today: string;
 }) {
   const [state, action, pending] = useActionState<NewFuelOrderState, FormData>(
     createFuelOrderAction,
@@ -122,6 +115,7 @@ export function NewFuelOrderForm({
           label="Fuel Type"
           required
           error={fieldError("fuel_type_id")}
+          hint={aircraft && offered.length === 0 ? `No ${aircraft.effective_fuel_type_code ?? "approved"} fuel type is configured. Ask an administrator to configure the fuel directory before ordering.` : undefined}
         >
           <option value="">— Select type —</option>
           {offered.map((t) => (
@@ -174,7 +168,7 @@ export function NewFuelOrderForm({
         name="requested_fuel_date"
         label="Requested Date"
         type="date"
-        defaultValue={todayLocalIsoDate()}
+        defaultValue={today}
         required
         error={fieldError("requested_fuel_date")}
       />
@@ -198,7 +192,7 @@ export function NewFuelOrderForm({
 
       <button
         type="submit"
-        disabled={pending || suppliers.length === 0 || fuelTypes.length === 0 || overCapacity}
+        disabled={pending || suppliers.length === 0 || fuelTypes.length === 0 || (aircraft !== null && offered.length === 0) || overCapacity}
         className="btn-caps inline-flex w-full items-center justify-center gap-1.5 rounded-md bg-primary px-4 py-2.5 text-white hover:bg-brand-dark disabled:opacity-50"
       >
         {pending && <Spinner size="xs" />}

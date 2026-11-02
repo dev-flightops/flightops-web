@@ -31,9 +31,15 @@ export function StatusControls({
     _initial,
   );
   const options = NEXT_STATUS_OPTIONS[currentStatus];
-  const [nextStatus, setNextStatus] = useState<CapaStatus>(
+  const [selectedStatus, setNextStatus] = useState<CapaStatus>(
     defaultNextStatus(currentStatus),
   );
+  // A successful action refreshes currentStatus without remounting this
+  // client form. A selection no longer offered must not hide the closure
+  // reason while the native select visually falls back to "closed".
+  const nextStatus = options.includes(selectedStatus)
+    ? selectedStatus
+    : defaultNextStatus(currentStatus);
   if (options.length === 0) return null;
 
   return (

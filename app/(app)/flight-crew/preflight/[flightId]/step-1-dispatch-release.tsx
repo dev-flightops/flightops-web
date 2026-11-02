@@ -5,6 +5,7 @@ import { useEffect, useRef, useState, useTransition } from "react";
 
 import { buttonOutline } from "@/components/ff/controls";
 import type { FlightDetail } from "@/lib/api/types";
+import { formatZuluDateTime } from "@/lib/format/flight-time";
 import { cn } from "@/lib/utils";
 import { routeText } from "@/lib/route";
 
@@ -236,7 +237,7 @@ function AwaitingReleasePanel({ flight }: { flight: FlightDetail }) {
         <p className="text-xs text-muted-foreground">
           {flight.status === "cancelled"
             ? "The flight was cancelled — head back to the Flight Crew board."
-            : "Check back after the dispatcher completes the packet, or head back to the Flight Crew board and open another flight."}
+            : "File your FRAT before dispatch releases the flight. Return here afterward to review and acknowledge the release."}
         </p>
       </div>
       <div className="rounded-md border border-border p-3 text-xs text-muted-foreground">
@@ -255,6 +256,11 @@ function AwaitingReleasePanel({ flight }: { flight: FlightDetail }) {
           {formatUtc(flight.scheduled_departure_at)}
         </div>
       </div>
+      {flight.status === "scheduled" && (
+        <Link href={`/frat/${flight.id}`} className={cn(buttonOutline, "px-3 py-1.5")}>
+          File or review FRAT →
+        </Link>
+      )}
       <Link
         href="/flight-crew"
         className={cn(buttonOutline, "px-3 py-1.5")}
@@ -272,7 +278,7 @@ function ReleasePublishedBanner({ flight }: { flight: FlightDetail }) {
       <span className="notice-label">✓ Release published</span>
       <span>by {releasedByName}</span>{" "}
       <span className="text-muted-foreground">
-        · {flight.released_at ? formatReleasedAt(flight.released_at) : ""}
+        · {flight.released_at ? formatZuluDateTime(flight.released_at) : ""}
       </span>
     </div>
   );
@@ -280,21 +286,4 @@ function ReleasePublishedBanner({ flight }: { flight: FlightDetail }) {
 
 function formatUtc(iso: string): string {
   return `${iso.slice(11, 16)}Z`;
-}
-
-function formatReleasedAt(iso: string): string {
-  const d = new Date(iso);
-  // Both parts in UTC: the date was the browser's and the time UTC, so
-  // they disagreed near midnight, and the server and browser rendered
-  // different text (#134).
-  return `${d.toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    timeZone: "UTC",
-  })} · ${d.toLocaleTimeString("en-US", {
-    hour: "numeric",
-    minute: "2-digit",
-    timeZone: "UTC",
-    timeZoneName: "short",
-  })}`;
 }

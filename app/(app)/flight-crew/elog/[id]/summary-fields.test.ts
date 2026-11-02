@@ -151,6 +151,14 @@ describe("computeFlightLogSummary", () => {
     // 23:35 → 25:10 = 1h 35m = 1.583... → 1.6
     expect(s.totalBlockHours).toBe(1.6);
   });
+  it("does not add a day to airborne times both after midnight when engine time crosses midnight", () => {
+    const summary = computeFlightLogSummary([leg({
+      engine_on: "23:55:00", engine_off: "00:25:00",
+      blocks_off: "00:05:00", blocks_on: "00:15:00", crosses_midnight: true,
+    })]);
+    expect(summary.totalFlightHours).toBe(0.5);
+    expect(summary.totalBlockHours).toBe(0.2);
+  });
 
   it("returns null contribution when end < start without crosses_midnight", () => {
     // Malformed leg — UI shouldn't let this happen, but defensively

@@ -28,20 +28,21 @@ import { OverdueBadge, StatusBadge } from "./status-badge";
  * red edge down its left side and the OVERDUE status beside AIRBORNE —
  * not by tinting the whole row, which on navy read as an error state.
  */
-export function FlightBoard({ flights }: { flights: BoardFlightItem[] }) {
+export function FlightBoard({ flights, canDispatch = false }: { flights: BoardFlightItem[]; canDispatch?: boolean }) {
   if (flights.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center border border-border bg-card py-16 text-center">
         <p className="caption-caps text-muted-foreground">No active flights</p>
-        <Link href="/flight-following/new" className={`${buttonSolid} mt-5`}>
+        {canDispatch && <Link href="/flight-following/new" className={`${buttonSolid} mt-5`}>
           Open Flight
-        </Link>
+        </Link>}
       </div>
     );
   }
 
   return (
-    <div className="overflow-x-auto border border-border bg-card">
+    <div className="overflow-x-auto border border-border bg-card" role="region" aria-label="Flight board; scroll horizontally to see all columns" tabIndex={0}>
+      <p className="border-b border-border px-4 py-2 text-xs text-muted-foreground sm:hidden">Swipe sideways for status, contact and flight actions.</p>
       <table className="w-full text-[0.8125rem]">
         <thead className="bg-muted">
           <tr className="eyebrow text-left">
@@ -58,7 +59,7 @@ export function FlightBoard({ flights }: { flights: BoardFlightItem[] }) {
         </thead>
         <tbody>
           {flights.map((f) => (
-            <FlightBoardRow key={f.id} flight={f} />
+            <FlightBoardRow key={f.id} flight={f} canDispatch={canDispatch} />
           ))}
         </tbody>
       </table>
@@ -66,7 +67,7 @@ export function FlightBoard({ flights }: { flights: BoardFlightItem[] }) {
   );
 }
 
-function FlightBoardRow({ flight }: { flight: BoardFlightItem }) {
+function FlightBoardRow({ flight, canDispatch }: { flight: BoardFlightItem; canDispatch: boolean }) {
   const dep = formatBoth(flight.scheduled_departure_at);
   // Once it has left, its scheduled block after the departure (#155): MM001
   // left at 21:42Z and showed an ETA of 19:45Z.
@@ -143,10 +144,10 @@ function FlightBoardRow({ flight }: { flight: BoardFlightItem }) {
         />
       </td>
       <td className="whitespace-nowrap px-4 py-3.5 text-right">
-        {flight.status === "released" && flight.actual_departure_at === null && (
+        {canDispatch && flight.status === "released" && flight.actual_departure_at === null && (
           <CheckInButton flightId={flight.id} flightNumber={flight.flight_number} event="depart" />
         )}
-        {flight.status === "released" && flight.actual_departure_at !== null && (
+        {canDispatch && flight.status === "released" && flight.actual_departure_at !== null && (
           <CheckInButton flightId={flight.id} flightNumber={flight.flight_number} event="arrive" />
         )}
         {/* No Docs here: legacy's per-flight documents (`/following/{id}/docs`,
@@ -154,14 +155,14 @@ function FlightBoardRow({ flight }: { flight: BoardFlightItem }) {
             exist. A dimmed "Docs" on every row read as broken (#134). */}
         {/* #132: "is there a way that we can go back in and edit a flight
             after it's made it to this stage?" The packet's Edit, opened. */}
-        {flight.status === "scheduled" && (
+        {canDispatch && flight.status === "scheduled" && (
           <Link href={`/dispatch?flight=${flight.id}&edit=1`} className={`mr-4 ${linkCaps}`}>
             Edit
           </Link>
         )}
-        <Link href={`/dispatch?flight=${flight.id}`} className={linkCaps}>
+        {canDispatch && <Link href={`/dispatch?flight=${flight.id}`} className={linkCaps}>
           Update <span aria-hidden>›</span>
-        </Link>
+        </Link>}
       </td>
     </tr>
   );

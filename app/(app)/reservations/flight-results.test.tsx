@@ -6,7 +6,7 @@ import type {
   FlightSearchResult,
 } from "@/lib/api/flight-search";
 
-import { FlightResults, formatDay } from "./flight-results";
+import { FlightResults, formatDay, formatTime } from "./flight-results";
 
 function flight(overrides: Partial<FlightSearchResult> = {}): FlightSearchResult {
   return {
@@ -159,6 +159,14 @@ describe("FlightResults", () => {
       <FlightResults results={response([flight()])} bookingHref={href} />,
     );
     expect(container.textContent).not.toMatch(/fare|price|\$/i);
+  });
+});
+
+describe("reservation departure clocks", () => {
+  it("matches the booking form's departure base rather than the viewer's zone", () => {
+    expect(formatTime("2026-11-02T05:12:00Z", "America/Anchorage")).toBe("20:12 AKST");
+    expect(formatTime("2026-07-02T05:12:00Z", "America/Anchorage")).toBe("21:12 AKDT");
+    expect(formatTime("2026-11-02T05:12:00Z", "America/Chicago")).toBe("23:12 CST");
   });
 });
 

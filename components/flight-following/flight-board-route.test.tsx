@@ -1,5 +1,6 @@
-import { render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { cleanup, render, screen } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
+afterEach(cleanup);
 
 import type { BoardFlightItem } from "@/lib/api/types";
 
@@ -43,8 +44,14 @@ describe("the Flight Following board", () => {
   it("offers Edit until the flight is released (#132)", () => {
     // Client, 23 Oct: "is there a way that we can go back in and edit a
     // flight after it's made it to this stage?"
-    render(<FlightBoard flights={[row, { ...row, id: "f-2", flight_number: "GV2027", status: "released" }]} />);
+    render(<FlightBoard canDispatch flights={[row, { ...row, id: "f-2", flight_number: "GV2027", status: "released" }]} />);
     const edits = screen.getAllByRole("link", { name: "Edit" });
     expect(edits.map((a) => a.getAttribute("href"))).toEqual(["/dispatch?flight=f-1&edit=1"]);
+  });
+  it("hides dispatch-only movement and edit controls from read-only viewers", () => {
+    render(<FlightBoard flights={[row, { ...row, id: "f-2", status: "released" }]} />);
+    expect(screen.queryByRole("button", { name: "Mark Departed" })).toBeNull();
+    expect(screen.queryByRole("link", { name: "Edit" })).toBeNull();
+    expect(screen.queryByRole("link", { name: "Update" })).toBeNull();
   });
 });

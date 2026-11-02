@@ -6,6 +6,7 @@ import { z } from "zod";
 import { ApiError } from "@/lib/api/client";
 import {
   addCargo,
+  bumpPaxBags,
   addPax,
   applyLoadPlan,
   createManifest,
@@ -38,6 +39,25 @@ export interface ManifestFormState {
 }
 
 const _id = z.string().uuid();
+
+export async function bumpBagsAction(flightId: string, paxId: string, input: {weight_lbs: string; pieces: number; reason: string}): Promise<{ok: boolean; error?: string}> {
+  const valid = z.object({
+    flightId: _id, paxId: _id,
+    weight_lbs: z.string().refine(value => Number.isFinite(Number(value)) && Number(value) > 0 && Number(value) <= 9999, "Enter a positive baggage weight."),
+    pieces: z.number().int().min(1).max(1000),
+    reason: z.string().trim().min(1).max(500),
+  }).safeParse({flightId, paxId, ...input});
+  if (!valid.success) return {ok:false, error:valid.error.issues[0].message};
+  try {
+    await bumpPaxBags(paxId, input);
+    revalidatePath(`/manifest/${flightId}`);
+    revalidatePath("/manifest/waiting");
+    revalidatePath("/schedule");
+    return {ok:true};
+  } catch (error) {
+    return {ok:false, error:error instanceof ApiError ? error.message : "Could not move the bags. Try again."};
+  }
+}
 
 /** Pounds as typed: a non-negative number under the column's ceiling, so
  *  a slip of the finger is refused here rather than overflowing there. */

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useId, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 
 import { linkCaps } from "@/components/ff/controls";
@@ -102,9 +102,9 @@ export function LegCard({
         <div className="flex items-baseline gap-2">
           <span className="panel-title">Leg {leg.leg_number}</span>
           <span className="text-[0.65rem] text-muted-foreground">
-            <Stat color="text-status-green" label="flight" value={totals.flightTime} />
+            <Stat color="text-status-green" label="airborne" value={totals.flightTime} />
             {" · "}
-            <Stat color="text-status-blue" label="block" value={totals.blockTime} />
+            <Stat color="text-status-blue" label="engine" value={totals.blockTime} />
             {" · "}
             <Stat color="text-status-yellow" label="hobbs" value={totals.hobbsTime} />
           </span>
@@ -418,10 +418,12 @@ function IcaoField({
   onBlur: () => void;
   disabled?: boolean;
 }) {
+  const id = useId();
   return (
     <div>
-      <FieldLabel htmlFor={`icao-${label.toLowerCase()}`}>{label}</FieldLabel>
+      <FieldLabel htmlFor={id}>{label}</FieldLabel>
       <input
+        id={id}
         type="text"
         maxLength={4}
         value={value}
@@ -447,10 +449,12 @@ function TimeField({
   onBlur: () => void;
   disabled?: boolean;
 }) {
+  const id = useId();
   return (
     <div>
-      <FieldLabel htmlFor={`time-${label.toLowerCase()}`}>{label}</FieldLabel>
+      <FieldLabel htmlFor={id}>{label}</FieldLabel>
       <input
+        id={id}
         type="time"
         value={value}
         disabled={disabled}
@@ -481,12 +485,14 @@ function NumberField({
   max?: number;
   disabled?: boolean;
 }) {
+  const id = useId();
   return (
     <div>
-      <FieldLabel htmlFor={`num-${label.toLowerCase().replace(/\s+/g, "-")}`}>
+      <FieldLabel htmlFor={id}>
         {label}
       </FieldLabel>
       <input
+        id={id}
         type="number"
         step={step}
         min={min}
@@ -516,12 +522,14 @@ function SelectField({
   disabled?: boolean;
   children: React.ReactNode;
 }) {
+  const id = useId();
   return (
     <div>
-      <FieldLabel htmlFor={`select-${label.toLowerCase().replace(/\s+/g, "-")}`}>
+      <FieldLabel htmlFor={id}>
         {label}
       </FieldLabel>
       <select
+        id={id}
         value={value}
         disabled={disabled}
         onChange={(e) => onChange(e.target.value)}

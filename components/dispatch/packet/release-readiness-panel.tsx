@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { linkCaps } from "@/components/ff/controls";
 import { FratSignoffs } from "@/components/frat/frat-signoffs";
+import { BalanceScopeNote } from "@/components/manifest/balance-scope-note";
 import type { FlightLoad } from "@/lib/api/manifest";
 import type { FlightDetail, FratAssessmentResponse } from "@/lib/api/types";
 
@@ -95,6 +96,7 @@ export function ReleaseReadinessPanel({
           <h2 className="section-title">Weight and balance</h2>
         </header>
         <div className="px-5 py-3 text-sm">
+          <BalanceScopeNote />
           {release === null ? (
             <p className="text-muted-foreground">The load couldn&apos;t be read just now. Release still checks it.</p>
           ) : release.useful_load_lbs === null ? (

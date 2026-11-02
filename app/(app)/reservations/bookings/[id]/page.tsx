@@ -160,11 +160,11 @@ export default async function BookingDetailPage({
         ) : null}
         {booking.aircraft ? (
           <DetailRow
-            label="Aircraft"
+            label="Aircraft preference"
             value={`${booking.aircraft.tail_number}${booking.aircraft.model ? ` (${booking.aircraft.model})` : ""}`}
           />
         ) : (
-          <DetailRow label="Aircraft" value="— (dispatch to assign)" />
+          <DetailRow label="Aircraft preference" value="No preference" />
         )}
         <DetailRow label="Pax" value={String(booking.pax_count)} />
         {booking.cargo_notes ? (

@@ -253,7 +253,7 @@ function SoftWarningBanner({
           }
         >
           {allAcked
-            ? "All soft warnings acknowledged — release enabled"
+            ? "All crew soft warnings acknowledged"
             : "Soft warning — ack required before release"}
         </span>
       </div>
@@ -264,7 +264,7 @@ function SoftWarningBanner({
           accent={allAcked ? "text-status-green" : "text-status-yellow"}
           hint={
             allAcked
-              ? "Cleared for release"
+              ? "Crew warning checks complete"
               : `${unackedCount} of ${data.soft_warnings.length} still need ack`
           }
         />

@@ -53,6 +53,19 @@ beforeEach(() => {
 });
 
 describe("new safety report alerts (#58)", () => {
+  it("counts and alerts a manually grounded aircraft without maintenance blockers, excluding retired aircraft", async () => {
+    api.listSafetyReports.mockResolvedValue({ items: [] });
+    const row = { aircraft: { id: "held", tail_number: "N96DM" }, is_active: false,
+      is_airworthy: true, blocking_count: 0, grounded_at: "2026-11-02T03:00:00Z",
+      checked_at: "2026-11-02T03:01:00Z" };
+    api.getFleetAirworthiness.mockResolvedValue({ items: [row,
+      { ...row, aircraft: { id: "retired", tail_number: "RETIRED" }, grounded_at: null }] });
+    const snapshot = await loadOperationalSnapshot();
+    expect(snapshot).toMatchObject({ fleetTotal: 1, fleetAirworthy: 0, fleetGrounded: 1 });
+    expect(snapshot.alerts).toEqual([expect.objectContaining({ id: "grounded-held",
+      detail: "Aircraft manually grounded. Cannot dispatch.", occurredAt: row.grounded_at })]);
+  });
+
   it("raises one per report nobody has reviewed yet, red when rated high risk", async () => {
     api.listSafetyReports.mockResolvedValue({ items: [report("r-1", null), report("r-2", "high")], total: 2 });
     const { alerts } = await loadOperationalSnapshot();
@@ -251,4 +264,18 @@ describe("#155: duty past the limit, flagged departures, a HIGH risk", () => {
     expect(byCategory.frat_over_limits.title).toBe("Risk HIGH, needs approval — PGR701");
     expect(byCategory.frat_over_limits.detail).toContain("dispatch packet HIGH");
   });
+});
+
+
+it("counts each airborne aircraft once despite overlapping imported flights", async () => {
+  api.listSafetyReports.mockResolvedValue({ items: [] });
+  api.getFlightBoard.mockResolvedValue({ items: [
+    { id: "f1", status: "released", aircraft: { id: "a1" }, origin: "PANC", actual_departure_at: "2026-11-02T01:00:00Z", actual_arrival_at: null },
+    { id: "f2", status: "released", aircraft: { id: "a1" }, origin: "PANC", actual_departure_at: "2026-11-02T02:00:00Z", actual_arrival_at: null },
+    { id: "f3", status: "released", aircraft: { id: "a2" }, origin: "PANC", actual_departure_at: "2026-11-02T02:00:00Z", actual_arrival_at: null },
+    { id: "f4", status: "released", aircraft: { id: "a3" }, origin: "PANC", actual_departure_at: null, actual_arrival_at: null },
+  ] });
+  const snapshot = await loadOperationalSnapshot();
+  expect(snapshot.airborneCount).toBe(2);
+  expect(snapshot.releasedCount).toBe(4);
 });

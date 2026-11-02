@@ -78,6 +78,7 @@ vi.mock("@/lib/api/housing", () => ({
     maintenance: "Maintenance",
     offline: "Offline",
   },
+  BOOKING_PURPOSE_LABELS: { crew_rest: "Crew Rest", training: "Training", travel: "Travel", rotation: "Rotation", maintenance: "Maintenance", other: "Other" },
 }));
 vi.mock("./add-room-form", () => ({
   AddRoomDrawer: ({ unitId }: { unitId: string }) => (
@@ -86,7 +87,7 @@ vi.mock("./add-room-form", () => ({
 }));
 
 // Staff for the "Book a stay" picker (#158); the dialog is tested on its own.
-vi.mock("@/lib/api/auth", () => ({ listStaff: vi.fn(async () => ({ items: [], total: 0 })) }));
+vi.mock("@/lib/api/auth", () => ({ listStaff: vi.fn(async () => ({ items: [], total: 0 })), loadZoneTable: async () => ({ byIcao: {}, fallback: "America/Anchorage" }) }));
 vi.mock("@/components/housing/book-stay-dialog", () => ({
   BookStayDialog: () => <button data-testid="book-stay">Book a stay</button>,
 }));
@@ -312,7 +313,7 @@ describe("room status badge", () => {
     expect(within(roomsTable()).getByText("Available")).toBeInTheDocument();
   });
 
-  it("counts a booking that checks out today", async () => {
+  it("frees a bed on the checkout morning, matching the calendar", async () => {
     withRoomAndBooking({ status: "available" }, [
       booking({
         id: "b-1",
@@ -322,7 +323,7 @@ describe("room status badge", () => {
       }),
     ]);
     await renderPage();
-    expect(within(roomsTable()).getByText("In use")).toBeInTheDocument();
+    expect(within(roomsTable()).getByText("Available")).toBeInTheDocument();
   });
 
   it("attributes occupancy to the booked room only", async () => {

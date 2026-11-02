@@ -64,12 +64,12 @@ afterEach(() => {
 describe("the launcher", () => {
   it("sits above the Safety button, and in the corner where Safety isn't shown", () => {
     const { unmount } = render(<App />);
-    expect(launcher()).toHaveClass("bottom-[4.5rem]");
+    expect(launcher()).toHaveClass("sm:bottom-[4.5rem]");
     expect(launcher()).toHaveTextContent("Ask AI");
     unmount();
     pathname = "/safety/reports/new";
     render(<App />);
-    expect(launcher()).toHaveClass("bottom-6");
+    expect(launcher()).toHaveClass("sm:bottom-6");
   });
 
   it("opens the chat and closes it again, from the launcher, the window or Escape", () => {

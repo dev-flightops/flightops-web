@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { FlightListItem } from "@/lib/api/types";
@@ -43,6 +43,8 @@ function makeFlight(
     scheduled_departure_at: "2026-06-15T14:00:00Z",
     scheduled_arrival_at: "2026-06-15T16:00:00Z",
     status: "completed",
+    actual_departure_at: (overrides.status ?? "completed") === "completed" ? "2026-06-15T14:00:00Z" : null,
+    actual_arrival_at: (overrides.status ?? "completed") === "completed" ? "2026-06-15T16:00:00Z" : null,
     ...overrides,
   };
 }
@@ -66,6 +68,30 @@ async function renderPage() {
 }
 
 describe("EodPage", () => {
+  it("keeps overdue airborne flights airborne, and unreleased departures in the planned section", async () => {
+    listFlights.mockResolvedValueOnce({ items: [], total: 0 }).mockResolvedValueOnce({ items: [
+      makeFlight({ flight_number: "FLYING", status: "released", actual_departure_at: "2026-06-15T14:00:00Z" }),
+      makeFlight({ flight_number: "RELEASED", status: "released", scheduled_departure_at: "2026-06-15T22:00:00Z", scheduled_arrival_at: "2026-06-16T00:00:00Z" }),
+      makeFlight({ flight_number: "TOMORROW", status: "released", scheduled_departure_at: "2026-06-16T22:00:00Z", scheduled_arrival_at: "2026-06-17T00:00:00Z" }),
+    ] }).mockResolvedValueOnce({ items: [], total: 0 });
+    await renderPage();
+    const airborne = screen.getByRole("heading", { name: "Still Airborne" }).closest("section")!;
+    expect(within(airborne).getByText("FLYING")).toBeInTheDocument();
+    expect(within(airborne).queryByText("RELEASED")).toBeNull();
+    const planned = screen.getByRole("heading", { name: "Planned — Not Yet Departed" }).closest("section")!;
+    expect(planned).toHaveTextContent("RELEASED");
+    expect(within(planned).queryByText("Airborne", { exact: true })).toBeNull();
+    expect(screen.queryByText("TOMORROW")).toBeNull();
+  });
+  it("uses actual flight durations instead of scheduled time, identifying missing timestamps", async () => {
+    listFlights.mockResolvedValueOnce({ items: [
+      makeFlight({ flight_number: "SHORT", actual_departure_at: "2026-06-15T14:00:00Z", actual_arrival_at: "2026-06-15T14:06:00Z" }),
+      makeFlight({ flight_number: "UNKNOWN", actual_departure_at: null, actual_arrival_at: null }),
+    ] }).mockResolvedValueOnce({ items: [] }).mockResolvedValueOnce({ items: [] });
+    await renderPage();
+    expect(screen.getByText("Recorded Flight Hours").parentElement).toHaveTextContent("0.1");
+    expect(screen.getByText(/Flights without recorded departure/)).toBeInTheDocument();
+  });
   it("issues three parallel listFlights calls (today completed, all released, all scheduled)", async () => {
     listFlights.mockResolvedValue({ items: [], total: 0 });
 
@@ -147,7 +173,10 @@ describe("EodPage", () => {
 
     const row = screen.getByText("MM001").closest("tr");
     expect(row).toHaveTextContent("22:27z");
-    expect(screen.queryByText("REL1")).toBeNull();
+    const airborne = screen.getByRole("heading", { name: "Still Airborne" }).closest("section")!;
+    expect(within(airborne).queryByText("REL1")).toBeNull();
+    const planned = screen.getByRole("heading", { name: "Planned — Not Yet Departed" }).closest("section")!;
+    expect(within(planned).getByText("REL1")).toBeInTheDocument();
     expect(screen.queryByText(/Overdue: released/)).toBeNull();
     expect(screen.getByText(/No flags/)).toBeInTheDocument();
   });

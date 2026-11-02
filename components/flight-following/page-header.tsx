@@ -20,7 +20,7 @@ import { AutoClock } from "./auto-clock";
  * have pages. This said they pointed at stub routes "until M2-G-14"
  * for a long time after those shipped.
  */
-export function PageHeader() {
+export function PageHeader({ canOpenFlight = true }: { canOpenFlight?: boolean }) {
   return (
     <Header
       title="Flight Following"
@@ -40,9 +40,9 @@ export function PageHeader() {
           <Link href="/flight-following/history" className={buttonOutline}>
             History
           </Link>
-          <Link href="/flight-following/new" className={buttonSolid}>
+          {canOpenFlight && <Link href="/flight-following/new" className={buttonSolid}>
             Open Flight
-          </Link>
+          </Link>}
         </>
       }
     />

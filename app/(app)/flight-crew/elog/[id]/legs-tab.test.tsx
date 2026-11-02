@@ -47,6 +47,16 @@ function makeLeg(over: Partial<FlightLogLeg> & { id: string }): FlightLogLeg {
 }
 
 describe("LegsTab", () => {
+  it("gives each leg's repeated fields working, distinct labels", () => {
+    const { container } = render(<LegsTab logId="log-1" logStatus="draft" initialLegs={[
+      makeLeg({ id: "one", leg_number: 1 }), makeLeg({ id: "two", leg_number: 2 }),
+    ]} />);
+    for (const name of ["Engine On", "Origin", "Start Hobbs", "Pilot Flying"]) {
+      const fields = within(container).getAllByLabelText(name);
+      expect(fields).toHaveLength(2);
+      expect(fields[0].id).not.toBe(fields[1].id);
+    }
+  });
   it("renders an Add Leg button + empty hint when no legs exist", () => {
     render(
       <LegsTab logId="log-1" logStatus="draft" initialLegs={[]} />,

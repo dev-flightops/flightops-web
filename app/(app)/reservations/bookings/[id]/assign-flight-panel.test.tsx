@@ -163,7 +163,7 @@ describe("no flights on that route that day", () => {
     // answer is to build one.
     panel([]);
     const link = screen.getByRole("link", { name: /Build a flight for it/ });
-    expect(link).toHaveAttribute("href", "/dispatch");
+    expect(link).toHaveAttribute("href", "/flight-following/new?booking=b-1");
   });
 
   it("offers no assign button with nothing to assign to", () => {

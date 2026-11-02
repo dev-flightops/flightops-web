@@ -133,7 +133,7 @@ export default async function WaitingMailFreightPage({
                         <td className="px-3 py-2.5 text-xs text-muted-foreground">
                           {i.shipper || i.consignee ? `${i.shipper ?? "—"} → ${i.consignee ?? "—"}` : "—"}
                         </td>
-                        <td className="px-3 py-2.5 text-xs text-muted-foreground">{i.notes ?? "—"}</td>
+                        <td className="px-3 py-2.5 text-xs text-muted-foreground">{i.notes ?? "—"}{i.source_booking_id ? <Link className="mt-1 block text-primary hover:underline" href={`/reservations/bookings/${i.source_booking_id}`}>Open passenger booking →</Link> : null}</td>
                         {canLog ? (
                           <td className="px-3 py-2.5 text-right">
                             <CancelWaitingButton id={i.id} label={i.description} />

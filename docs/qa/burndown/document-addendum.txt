@@ -1,0 +1,33 @@
+
+Verification addendum · November 1
+This section supersedes the earlier pending status for the specific return-booking reproduction and records additional checks.
+
+BF-05 · Marcus Chen return booking reproduced and fixed locally
+Before: Select Marcus Chen, PANC → PABE, Return, same calendar day, select late outbound DEMO103, and leave the return unassigned because no return flight is scheduled. The form silently submitted a hidden return departure of 09:00. This was earlier than the 20:12 outbound; the server correctly refused it, but the UI only said “Backend rejected the booking (HTTP 422).” There was no return-time field to correct.
+After: Requested return departure is visible. It is editable when no return flight is chosen and read-only when it comes from a chosen flight. Validation names the chronology problem and points to the field before calling the booking API.
+Browser result: Changing the return to 23:30 successfully filed outbound BK-995D1AC7 and linked return BK-566DA821 for Marcus Chen. Opening the return shows PABE → PANC at 23:30 AKST (08:30Z), with the outbound linked back. The return intentionally waits for dispatch; no available return flight was invented. Both-flight assignment/calendar/edit acceptance remains open.
+Evidence: roundtrip-before.jpg and roundtrip-after.jpg; action regression covers an early return and verifies no invalid API write occurs.
+
+BF-06 · Search-results clock contradicted booking-form clock
+Before: DEMO103 appeared at 10:12 PM in the viewer’s Phoenix clock, then at 20:12 AKST in the booking form. This could make a valid itinerary look inconsistent and obscured which local day applied.
+After: Search tables and selected-leg summaries use each departure base’s configured time zone, matching the booking form, with AKST/AKDT labels. Tests cover winter, summer and a different configured zone.
+
+BF-07 · “Today” was a rolling 24 hours on the operational board
+Before: Ramper’s “Departing today” included next-company-day departures because the shared board used now → now+24h. Its time-window branch also admitted cancelled flights.
+After: Today/tomorrow/week use company-local calendar boundaries and exclude cancelled flights. Released overdue flights remain visible on Today even across midnight, so the fix does not hide overdue tracking. Completed arrivals use actual arrival time rather than a later edit timestamp.
+Browser result: The same Ramper fixture now lists three current-day departures instead of seven; four next-day flights are removed from Today. A Postgres integration test covers 23:30 Alaska after UTC midnight, the next-day boundary, missed scheduled work, cancellation and a released overdue flight from an earlier day.
+Remaining distinction: This resolves the board window/cancelled-row defect. The reported persistent notification after cancellation still needs explicit bell/home verification before that part is closed.
+
+Existing prior fix verified and marked in green in original Tab 1
+Report 37: “Ramp Dashboard” is a working link from Ground Ops to the Ramper worklist. The link already existed in commit 73dd76d, before these new edits. Browser navigation passed; original report text is highlighted light green. New BF-01 through BF-07 changes are not green prior-work markings.
+Ground Ops also labels the full catalog “Stations on file,” and Ramper now shows readable Belt Loader/Fuel Truck labels, from prior commit 7765aaa. The different base-versus-airport counts are retained as distinct concepts; this is not evidence that both catalogs should have identical totals.
+
+Ground fuel walkthrough
+Complete the prepared N95DM order: 100 gallons requested, 100 actual, fueled by Demo ramp agent, no discrepancy note. Result: status fueled, actual 100 gal, invoice pending, audit row confirmed → fueled. This does not reproduce report 39’s false discrepancy for matching quantities. The supplier endpoint also intentionally allows a quality/reason note to mark a discrepancy even when quantities match; original historic records need their reasons inspected before changing their state.
+After linking the existing local prepared order to DEMO105 (the new fixture now creates that link itself), the pilot preflight shows fueled 100 gal from Prepared Demo Fuel. This confirms the fuel-to-pilot read path, not supplier email delivery.
+
+Updated checks
+Frontend: 4,053 tests passed in 435 files; TypeScript and ESLint pass. The full production build is being verified separately.
+Backend: 162 operational and 55 reservation tests previously passed; focused fixture/baggage/cancel rerun 20 passed; board and cancel rerun 22 passed. These reruns overlap; do not add the counts together.
+
+BF-05 · Successful linked Marcus Chen round trip

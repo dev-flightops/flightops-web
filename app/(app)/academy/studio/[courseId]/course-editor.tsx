@@ -33,7 +33,7 @@ export function CourseEditor({
 }) {
   return (
     <div className="space-y-6">
-      <PublishStatusPicker course={course} />
+      <PublishStatusPicker key={course.publish_status} course={course} />
       {/* Key on the persisted link id so a successful save (which
           revalidates + re-passes course from the RSC) remounts the
           picker with fresh useState-initial values. Without the key
@@ -202,6 +202,7 @@ function PublishStatusPicker({ course }: { course: CourseDetail }) {
         <input type="hidden" name="course_id" value={course.id} />
         <select
           name="publish_status"
+          aria-label="Publish status"
           value={status}
           onChange={(e) =>
             setStatus(e.target.value as CoursePublishStatus)

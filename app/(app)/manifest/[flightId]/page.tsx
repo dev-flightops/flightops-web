@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 
 import { linkCaps } from "@/components/ff/controls";
+import { BalanceScopeNote } from "@/components/manifest/balance-scope-note";
 import { LoadFailedNotice, OnScreenNotice, SetupNotice } from "@/components/ff/setup-notice";
 import { cn } from "@/lib/utils";
 import { notFound } from "next/navigation";
@@ -164,6 +165,7 @@ export default async function FlightManifestPage({
           ) : null}
 
           <TotalsStrip totals={manifest.totals} load={manifest.load} />
+          <BalanceScopeNote />
 
           <LoadPanel
             manifest={manifest}
@@ -181,6 +183,7 @@ export default async function FlightManifestPage({
             <PassengersSection
               flightId={flight.id}
               rows={manifest.pax}
+              load={manifest.load}
               editable={editable}
               stops={flightStops(flight)}
             />

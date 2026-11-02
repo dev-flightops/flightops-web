@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { loadZoneTable } from "@/lib/api/auth";
+import { localDay } from "@/lib/format/local-time";
 
 import { linkCaps } from "@/components/ff/controls";
 import { cn } from "@/lib/utils";
@@ -14,6 +16,7 @@ import type {
 import { NewFuelOrderForm } from "./new-order-form";
 
 export default async function NewFuelOrderPage() {
+  const zonesPromise = loadZoneTable();
   let suppliers: FuelSupplierResponse[] = [];
   let fuelTypes: FuelTypeResponse[] = [];
   let fleet: AircraftListItem[] = [];
@@ -34,6 +37,7 @@ export default async function NewFuelOrderPage() {
         : "Couldn't load the fuel directory. The form still works — pickers may be empty.";
   }
 
+  const zones = await zonesPromise;
   return (
     <div className="mx-auto max-w-2xl px-4 py-8 sm:px-6">
       <Link
@@ -54,7 +58,7 @@ export default async function NewFuelOrderPage() {
       )}
 
       <div className="rounded-lg border border-border bg-card p-4">
-        <NewFuelOrderForm suppliers={suppliers} fuelTypes={fuelTypes} fleet={fleet} />
+        <NewFuelOrderForm suppliers={suppliers} fuelTypes={fuelTypes} fleet={fleet} today={localDay(zones.fallback)} />
       </div>
       <p className="mt-4 text-center text-xs text-muted-foreground">
         A supplier with a portal login sees the order there as soon as it&apos;s

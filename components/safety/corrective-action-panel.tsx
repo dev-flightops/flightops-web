@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { formatZuluDate } from "@/lib/format/flight-time";
 
 import {
   CAPA_SOURCE_LABELS,
@@ -63,7 +64,7 @@ export function CorrectiveActionPanel({
                   </div>
                   <p className="line-clamp-1 text-xs text-muted-foreground">
                     Owner: {c.owner.full_name} · Due{" "}
-                    {new Date(c.due_date).toLocaleDateString()}
+                    {formatZuluDate(c.due_date)}
                   </p>
                 </div>
                 <span className="whitespace-nowrap eyebrow">

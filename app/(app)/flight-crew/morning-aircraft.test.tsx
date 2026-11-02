@@ -63,6 +63,8 @@ describe("MorningAircraft (#93)", () => {
     expect(screen.getByText(/is yours today/)).toBeInTheDocument();
     await user.type(screen.getByLabelText("Fuel on board (gal)"), "60");
     await user.type(screen.getByLabelText("Oil (qt)"), "9");
+    expect(screen.getByRole("button", { name: "Record preflight and run-up" })).toBeDisabled();
+    await user.click(screen.getByRole("checkbox", { name: "Preflight and run-up complete" }));
     await user.click(screen.getByRole("button", { name: "Record preflight and run-up" }));
     expect(record).toHaveBeenCalledWith("m-1", { fuel_gallons: 60, oil_quarts: 9, notes: null });
   });

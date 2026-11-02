@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { getCompanyProfile, loadZoneTable } from "@/lib/api/auth";
 import { getCharter, type CharterRow } from "@/lib/api/charter";
 import { ApiError } from "@/lib/api/client";
+import { getBooking, bookingRef } from "@/lib/api/reservations";
+import { utcToLocalInput, zoneFor } from "@/lib/format/local-time";
 import { listAircraft } from "@/lib/api/ops";
 import type { AircraftListItem } from "@/lib/api/types";
 import { canSetUp } from "@/lib/setup/places";
@@ -27,17 +29,18 @@ import { type FlightPrefill, OpenFlightForm } from "./open-flight-form";
 export default async function FlightFollowingNewPage({
   searchParams,
 }: {
-  searchParams: Promise<{ charter?: string }>;
+  searchParams: Promise<{ charter?: string; booking?: string }>;
 }) {
   // A confirmed charter's flight (#133): the form starts from the request.
-  const { charter: charterId } = await searchParams;
+  const { charter: charterId, booking: bookingId } = await searchParams;
   // #138: who may set a missing cruise speed, or make an aircraft active.
   const canSetFleet = canSetUp((await auth())?.roles ?? [], "fleet");
+  const booking = bookingId && !charterId ? await getBooking(bookingId).catch(() => null) : null;
   const charter = charterId ? await getCharter(charterId).catch(() => null) : null;
   let aircraft: AircraftListItem[] = [];
   let loadError: string | null = null;
   // Times are typed local to the departure base (#68).
-  const zones = loadZoneTable();
+  const zones = await loadZoneTable();
   // The company's ground time at each stop (#126); 15 minutes when the
   // settings can't be read, as before there was a setting.
   const groundMinutes = getCompanyProfile()
@@ -92,11 +95,19 @@ export default async function FlightFollowingNewPage({
       ) : (
         <>
           {charterId ? <CharterNotice charter={charter} /> : null}
+          {booking ? <div role="note" className="notice notice-blue mb-5 text-sm">Build the flight for {bookingRef(booking.id)}, {booking.customer.full_name}, {booking.pax_count} passenger(s). After opening, review this booking on the new manifest and choose Add to flight.</div> : bookingId ? <p role="alert" className="notice notice-yellow mb-5">The booking could not be loaded. Return to the booking and try again.</p> : null}
           <OpenFlightForm
             aircraft={aircraft}
             zones={await zones}
             groundMinutesDefault={await groundMinutes}
-            prefill={charter ? charterPrefill(charter) : undefined}
+            prefill={charter ? charterPrefill(charter) : booking ? {
+              flight_number: bookingRef(booking.id), origin: booking.origin_icao,
+              destination: booking.destination_icao,
+              scheduled_departure_at: utcToLocalInput(booking.requested_departure_at, zoneFor(zones, booking.origin_icao)),
+              pax_count: String(booking.pax_count), cargo_lbs: "0",
+              notes: `Flight for ${bookingRef(booking.id)} — ${booking.customer.full_name}`,
+              booking_id: booking.id,
+            } : undefined}
             canSetFleet={canSetFleet}
           />
         </>

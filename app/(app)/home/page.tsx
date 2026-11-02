@@ -14,7 +14,6 @@ import {
   type HomeModule,
 } from "@/components/home/module-catalog";
 import { getCompanyProfile, listMyTenants } from "@/lib/api/auth";
-import { getFlightStats } from "@/lib/api/ops";
 import { loadOperationalSnapshot } from "@/lib/dashboards/operational-snapshot";
 import { currentGreeting, firstNameFrom } from "@/lib/greeting";
 import { hasAnyRole, roleGate } from "@/lib/roles";
@@ -63,10 +62,9 @@ const ALERT_VIEWING_ROLES = roleGate(
  * behind the greeting and the figures; without one, Home is as above.
  */
 export default async function HomePage() {
-  const [session, tenantsResponse, stats, snapshot, profile] = await Promise.all([
+  const [session, tenantsResponse, snapshot, profile] = await Promise.all([
     auth(),
     listMyTenants().catch(() => ({ tenants: [] })),
-    getFlightStats().catch(() => null),
     loadOperationalSnapshot(),
     getCompanyProfile().catch(() => null),
   ]);
@@ -113,11 +111,15 @@ export default async function HomePage() {
 
   // Aircraft, all three (#157): "1 on the ground" had counted today's
   // unflown flights, beside 8 aircraft, 3 on hold and 1 airborne.
-  const airborne = snapshot.airborneCount;
-  const onGround = stats ? Math.max(0, stats.aircraft_active - airborne) : 0;
-  const acftHold = stats
-    ? Math.max(0, stats.aircraft_total - stats.aircraft_active)
-    : 0;
+  // Historical imports may contain overlapping airborne flight records.
+  // These tiles count aircraft, so count each tail only once.
+  const airborne = new Set(snapshot.board.filter(flight =>
+    flight.status === "released" && flight.actual_departure_at && !flight.actual_arrival_at,
+  ).map(flight => flight.aircraft.id)).size;
+  // Use the same maintenance assessment as the fleet board and alerts.
+  // An active aircraft may still be held by an overdue inspection.
+  const onGround = Math.max(0, snapshot.fleetAirworthy - airborne);
+  const acftHold = snapshot.fleetGrounded;
 
 
 

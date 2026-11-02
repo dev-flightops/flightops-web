@@ -143,7 +143,14 @@ export async function createBookingAction(
   if (returnLocal) {
     const returnIso = localToUtcIso(returnLocal, zoneFor(await loadZoneTable(), v.destination_icao));
     if (!returnIso) {
-      return { status: "error", message: "Invalid return time." };
+      return { status: "error", message: "Invalid return time.", fieldErrors: { return_departure_at_local: "Pick a valid return date and time." } };
+    }
+    if (Date.parse(returnIso) <= Date.parse(departureIso)) {
+      return {
+        status: "error",
+        message: "The return departure must be after the outbound departure.",
+        fieldErrors: { return_departure_at_local: "Choose a later return departure, or select a later return flight above." },
+      };
     }
     const backFlight = String(formData.get("return_flight_id") ?? "");
     returnTrip = {

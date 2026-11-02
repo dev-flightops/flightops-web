@@ -1,4 +1,5 @@
 import { BoardFilters } from "@/components/flight-following/board-filters";
+import { auth } from "@/auth";
 import { DisplayToggle } from "@/components/flight-following/display-toggle";
 import { FilterTabs } from "@/components/flight-following/filter-tabs";
 import { FleetMapLoader } from "@/components/flight-following/fleet-map-loader";
@@ -111,6 +112,9 @@ export default async function FlightFollowingPage({
     base: baseParam,
   } = await searchParams;
   const view = parseView(viewParam);
+  const session = await auth();
+  // Matches the movement endpoint's DispatcherClaims gate.
+  const canDispatch = Boolean(session?.roles?.some(role => role === "dispatcher" || role === "exec_admin"));
   const display = parseDisplay(displayParam);
   const q = qParam ?? "";
   const statuses = parseStatuses(statusesParam);
@@ -149,7 +153,7 @@ export default async function FlightFollowingPage({
 
   return (
     <div className="mx-auto flex min-h-[calc(100vh-9rem)] max-w-7xl flex-col px-4 py-8 sm:px-6">
-      <PageHeader />
+      <PageHeader canOpenFlight={canDispatch} />
 
       {/* Wraps on a phone (#157: "Flight Following filters and table run
           off screen"). */}
@@ -177,7 +181,7 @@ export default async function FlightFollowingPage({
 
       <div className="min-h-0 flex-1">
         {display === "list" && (
-          <BoardOrError flights={filteredBoard} loadError={boardError} />
+          <BoardOrError flights={filteredBoard} loadError={boardError} canDispatch={canDispatch} />
         )}
         {display === "split" && (
           <SplitOrError
@@ -223,9 +227,11 @@ function errorMessage(err: unknown, surface: "flight-following" | "board"): stri
 function BoardOrError({
   flights,
   loadError,
+  canDispatch,
 }: {
   flights: BoardFlightItem[];
   loadError: string | null;
+  canDispatch: boolean;
 }) {
   if (loadError) {
     return (
@@ -234,7 +240,7 @@ function BoardOrError({
       </div>
     );
   }
-  return <FlightBoard flights={flights} />;
+  return <FlightBoard flights={flights} canDispatch={canDispatch} />;
 }
 
 /**

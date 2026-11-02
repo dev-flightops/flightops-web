@@ -1,6 +1,8 @@
 import Link from "next/link";
 
 import { ApiError } from "@/lib/api/client";
+import { loadZoneTable } from "@/lib/api/auth";
+import { localDay } from "@/lib/format/local-time";
 import {
   listHousingBookings,
   listHousingUnits,
@@ -29,6 +31,7 @@ import { NewUnitDrawer } from "./new-unit-form";
 export const dynamic = "force-dynamic";
 
 export default async function HousingPage() {
+  const today = localDay((await loadZoneTable()).fallback);
   let units: HousingUnit[] = [];
   let bookings: HousingBooking[] = [];
   let loadError: string | null = null;
@@ -37,7 +40,7 @@ export default async function HousingPage() {
     const [unitsResp, bookingsResp] = await Promise.all([
       listHousingUnits(),
       // Today's bookings — used to compute the "occupied" rollup.
-      listHousingBookings({ from: isoDateToday() }),
+      listHousingBookings({ from: today }),
     ]);
     units = unitsResp.items;
     bookings = bookingsResp.items;
@@ -49,12 +52,11 @@ export default async function HousingPage() {
         : "Housing unavailable. Try refreshing in a moment.";
   }
 
-  const today = isoDateToday();
   const activeBookings = bookings.filter(
     (b) =>
       !b.is_cancelled &&
       b.check_in <= today &&
-      (b.check_out === null || b.check_out >= today),
+      (b.check_out === null || b.check_out > today || b.check_out === b.check_in),
   );
 
   const stats = {
@@ -291,12 +293,4 @@ function EmptyState() {
       </p>
     </div>
   );
-}
-
-function isoDateToday(): string {
-  const d = new Date();
-  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(
-    2,
-    "0",
-  )}-${String(d.getUTCDate()).padStart(2, "0")}`;
 }

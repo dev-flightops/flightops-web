@@ -2,50 +2,42 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import {
   describeIsoDay,
-  formatIsoDay,
   shiftIsoDay,
-  todayIsoDay,
 } from "@/lib/iso-day";
 import { SearchGlyph } from "@/components/ff/glyphs";
 
 /**
  * Fleet-board chrome — title, view toggle, per-day navigator, metrics
- * badges, search + filter chips. Split out as a client component so
+ * badges and booking search. Split out as a client component so
  * the date/view controls can push URL params without a full form
  * submit.
  *
- * Filter chips (Bases / Types / Pilots) render but don't filter yet —
- * bookings don't carry those FKs today. When the base/type/pilot
- * fields land on the booking schema, wire the chips to querystring
- * params + backend filters. Matches legacy visually.
  */
 export function FleetBoardChrome({
   view,
   isoDay,
+  today,
+  searchQuery = "",
   flightsCount,
   bookedSeats,
   totalSeats,
+  unassignedPax = 0,
 }: {
   view: "list" | "board" | "split";
   isoDay: string;
+  today: string;
+  searchQuery?: string;
   flightsCount: number;
   bookedSeats: number;
   totalSeats: number;
+  unassignedPax?: number;
 }) {
   const router = useRouter();
-  const [search, setSearch] = useState("");
-
-  // "Today" is the viewer's today, which the server cannot know — so it is
-  // resolved after mount. Rendering it during SSR would label the same day
-  // "Today" on the server and "Tomorrow" in the browser whenever the two
-  // zones straddle midnight, which is a hydration mismatch. Until then the
-  // label is the plain date, which is correct everywhere.
-  const [today, setToday] = useState<string | null>(null);
-  useEffect(() => setToday(todayIsoDay()), []);
+  const [search, setSearch] = useState(searchQuery);
 
   // The day is taken from the URL string, never from a Date handed down by
   // the server: those disagree by a day for any viewer west of Greenwich,
@@ -54,6 +46,7 @@ export function FleetBoardChrome({
   function pushDay(iso: string) {
     const params = new URLSearchParams({ d: iso });
     if (view !== "board") params.set("view", view);
+    if (searchQuery) params.set("q", searchQuery);
     router.push(`/reservations/fleet-board?${params.toString()}`);
   }
 
@@ -66,6 +59,7 @@ export function FleetBoardChrome({
             {(["list", "board", "split"] as const).map((v) => {
               const params = new URLSearchParams({ d: isoDay });
               if (v !== "board") params.set("view", v);
+              if (searchQuery) params.set("q", searchQuery);
               return (
                 <Link
                   key={v}
@@ -95,7 +89,7 @@ export function FleetBoardChrome({
             ←
           </button>
           <div className="rounded-md border border-border bg-card px-3 py-1.5 text-xs font-semibold text-status-green">
-            {today ? describeIsoDay(isoDay, today) : formatIsoDay(isoDay)}
+            {describeIsoDay(isoDay, today)}
           </div>
           <button
             type="button"
@@ -114,18 +108,22 @@ export function FleetBoardChrome({
             {flightsCount} booking{flightsCount === 1 ? "" : "s"}
           </span>
           <span className="status-mark text-status-green">
-            {bookedSeats}/{totalSeats} seats
+            {bookedSeats}/{totalSeats} assigned seats
           </span>
+          {unassignedPax > 0 ? <span className="status-mark text-status-yellow">{unassignedPax} passenger{unassignedPax === 1 ? "" : "s"} awaiting a flight</span> : null}
         </div>
       </div>
 
-      <div className="mt-4 flex flex-wrap items-center gap-2">
+      <form method="get" action="/reservations/fleet-board" role="search" className="mt-4 flex flex-wrap items-center gap-2">
+        <input type="hidden" name="d" value={isoDay} />
+        <input type="hidden" name="view" value={view} />
         <div className="relative flex-1 min-w-[16rem]">
           <span className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground">
             <SearchGlyph size={14} />
           </span>
           <input
             type="search"
+            name="q"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search passenger, flight, ref…"
@@ -133,11 +131,13 @@ export function FleetBoardChrome({
           />
         </div>
 
-        {/* Legacy's base, type and pilot filters and its Go button aren't
-            here: the fields behind them don't exist yet, and a control
-            that does nothing reads as broken (#134). The search filters
-            as you type. */}
-      </div>
+        <button
+          type="submit"
+          className="btn-caps rounded-md border border-input px-3 py-1.5 text-foreground hover:bg-accent text-[0.72rem]"
+        >
+          Go
+        </button>
+      </form>
     </>
   );
 }

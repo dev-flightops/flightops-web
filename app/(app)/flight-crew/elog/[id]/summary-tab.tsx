@@ -54,12 +54,12 @@ export function SummaryTab({
         <>
           <StatStrip label="Flight totals" className="mb-0">
             <BigTile
-              label="Total Flight Time"
+              label="Engine Running Time"
               value={summary.totalFlightHours}
               tone="green"
             />
             <BigTile
-              label="Total Block Time"
+              label="Airborne Time"
               value={summary.totalBlockHours}
               tone="blue"
             />

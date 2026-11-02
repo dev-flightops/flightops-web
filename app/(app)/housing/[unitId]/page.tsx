@@ -7,6 +7,8 @@ import {
   listHousingBookings,
   ROOM_STATUS_LABELS,
   ROOM_TYPE_LABELS,
+  BOOKING_PURPOSE_LABELS,
+  type BookingPurpose,
   type HousingBooking,
   type HousingRoom,
   type HousingUnit,
@@ -14,7 +16,9 @@ import {
 } from "@/lib/api/housing";
 
 import { BookStayDialog } from "@/components/housing/book-stay-dialog";
-import { listStaff } from "@/lib/api/auth";
+import { CancelStay } from "@/components/housing/cancel-stay";
+import { listStaff, loadZoneTable } from "@/lib/api/auth";
+import { localDay } from "@/lib/format/local-time";
 
 import { AddRoomDrawer } from "./add-room-form";
 import { EditRoomDrawer } from "./edit-room-form";
@@ -37,6 +41,7 @@ export default async function HousingUnitDetailPage({
   params: Promise<{ unitId: string }>;
 }) {
   const { unitId } = await params;
+  const today = localDay((await loadZoneTable()).fallback);
 
   let unit: HousingUnit;
   let rooms: HousingRoom[] = [];
@@ -60,21 +65,21 @@ export default async function HousingUnitDetailPage({
   let bookings: HousingBooking[] = [];
   try {
     const resp = await listHousingBookings({
-      from: isoDateToday(),
+      from: today,
+      includeCancelled: true,
     });
     bookings = resp.items.filter((b) => b.unit_id === unitId);
   } catch {
     bookings = [];
   }
 
-  const today = isoDateToday();
   const occupiedRoomIds = new Set(
     bookings
       .filter(
         (b) =>
           !b.is_cancelled &&
           b.check_in <= today &&
-          (b.check_out === null || b.check_out >= today),
+          (b.check_out === null || b.check_out > today || b.check_out === b.check_in),
       )
       .map((b) => b.room_id),
   );
@@ -272,8 +277,9 @@ function BookingsCard({
   if (bookings.length === 0) return null;
   const roomsById = new Map(rooms.map((r) => [r.id, r]));
   const sorted = [...bookings].sort((a, b) =>
-    (a.check_in ?? "").localeCompare(b.check_in ?? ""),
+    Number(a.is_cancelled) - Number(b.is_cancelled) || (a.check_in ?? "").localeCompare(b.check_in ?? ""),
   );
+  const activeCount = sorted.filter(b => !b.is_cancelled).length;
   return (
     <section className="mt-6">
       <div className="mb-2 flex items-baseline gap-2 px-1">
@@ -281,7 +287,7 @@ function BookingsCard({
           Bookings
         </h2>
         <span className="text-xs text-muted-foreground">
-          {sorted.length} upcoming / active
+          {activeCount} upcoming / active{sorted.length > activeCount ? ` · ${sorted.length - activeCount} cancelled` : ""}
         </span>
       </div>
       <div className="overflow-hidden rounded-lg border border-border bg-card">
@@ -295,6 +301,7 @@ function BookingsCard({
                 <th className="px-3 py-2.5 font-semibold">Check out</th>
                 <th className="px-3 py-2.5 font-semibold">Purpose</th>
                 <th className="px-3 py-2.5 font-semibold">Status</th>
+                <th className="px-3 py-2.5 font-semibold">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
@@ -321,7 +328,7 @@ function BookingsCard({
                       {b.check_out ?? "—"}
                     </td>
                     <td className="whitespace-nowrap px-3 py-2.5 text-xs text-muted-foreground">
-                      {b.purpose ?? "—"}
+                      {b.purpose ? (BOOKING_PURPOSE_LABELS[b.purpose as BookingPurpose] ?? b.purpose.replace(/_/g, " ")) : "—"}
                     </td>
                     <td className="whitespace-nowrap px-3 py-2.5">
                       {b.is_cancelled ? (
@@ -333,6 +340,9 @@ function BookingsCard({
                           Active
                         </span>
                       )}
+                    </td>
+                    <td className="whitespace-nowrap px-3 py-2.5">
+                      {!b.is_cancelled && b.unit_id ? <CancelStay bookingId={b.id} unitId={b.unit_id} employee={b.employee_name ?? "this employee"} /> : null}
                     </td>
                   </tr>
                 );
@@ -411,12 +421,4 @@ function fmtCost(v: string | number | null): string {
   if (!Number.isFinite(n)) return "—";
   if (n === 0) return "—";
   return `$${n.toFixed(2)}`;
-}
-
-function isoDateToday(): string {
-  const d = new Date();
-  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(
-    2,
-    "0",
-  )}-${String(d.getUTCDate()).padStart(2, "0")}`;
 }

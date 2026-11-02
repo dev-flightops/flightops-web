@@ -1,6 +1,8 @@
 import Link from "next/link";
 
-import { DEFAULT_TIME_ZONE, localClock, localDay, localToUtcIso } from "@/lib/format/local-time";
+import { localClock, localDay, localToUtcIso } from "@/lib/format/local-time";
+import { loadZoneTable } from "@/lib/api/auth";
+import { bookingAircraftId as aircraftIdOf, matchesBooking, seatTotals, bookingLanes } from "./board-data";
 import { isValidIsoDay } from "@/lib/iso-day";
 
 import { ApiError } from "@/lib/api/client";
@@ -41,13 +43,13 @@ function _parseView(raw: string | undefined): BoardView {
 // The board's day: midnight to midnight in the company's zone (#157). It
 // had been midnight in the server's zone, UTC on Vercel, and its times the
 // server's too, so PGR701 at 10:30 AKDT showed as 6:30 PM.
-function _dayWindow(raw: string | undefined): { isoDay: string; day: Date; dayEnd: Date } {
-  const isoDay = isValidIsoDay(raw) ? raw : localDay(DEFAULT_TIME_ZONE);
+function _dayWindow(raw: string | undefined, timeZone: string): { isoDay: string; day: Date; dayEnd: Date } {
+  const isoDay = isValidIsoDay(raw) ? raw : localDay(timeZone);
   const next = new Date(`${isoDay}T12:00:00Z`);
   next.setUTCDate(next.getUTCDate() + 1);
-  const start = localToUtcIso(`${isoDay}T00:00`, DEFAULT_TIME_ZONE) ?? `${isoDay}T00:00:00Z`;
+  const start = localToUtcIso(`${isoDay}T00:00`, timeZone) ?? `${isoDay}T00:00:00Z`;
   const end =
-    localToUtcIso(`${next.toISOString().slice(0, 10)}T00:00`, DEFAULT_TIME_ZONE) ??
+    localToUtcIso(`${next.toISOString().slice(0, 10)}T00:00`, timeZone) ??
     `${next.toISOString().slice(0, 10)}T00:00:00Z`;
   return { isoDay, day: new Date(start), dayEnd: new Date(end) };
 }
@@ -70,6 +72,7 @@ export default async function FleetBoardPage({
 }: {
   searchParams: Promise<{
     view?: string;
+    q?: string;
     d?: string;
     booking?: string;
     new?: string;
@@ -79,7 +82,9 @@ export default async function FleetBoardPage({
 }) {
   const params = await searchParams;
   const view = _parseView(params.view);
-  const { isoDay, day, dayEnd } = _dayWindow(params.d);
+  const timeZone = (await loadZoneTable()).fallback;
+  const query = params.q?.trim().slice(0, 100) ?? "";
+  const { isoDay, day, dayEnd } = _dayWindow(params.d, timeZone);
   const drawerBookingId = params.booking ?? null;
   const newDrawerOpen = params.new === "1";
   const newDrawerAircraftId = params.aircraft_id ?? null;
@@ -98,7 +103,7 @@ export default async function FleetBoardPage({
       listAircraft(),
     ]);
     bookings = bookingsResp.items;
-    aircraft = aircraftResp.items.filter((a) => a.is_active);
+    aircraft = aircraftResp.items.filter((a) => a.is_active || bookings.some((b) => aircraftIdOf(b) === a.id));
   } catch (err) {
     const status = err instanceof ApiError ? err.status : 0;
     loadError =
@@ -107,25 +112,23 @@ export default async function FleetBoardPage({
         : "Fleet board unavailable. Try refreshing in a moment.";
   }
 
-  // Metrics — flights that day + seat capacity used.
+  const aircraftById = new Map(aircraft.map((a) => [a.id, a]));
+  bookings = bookings.filter((b) => matchesBooking(b, query, aircraftById));
   const openBookings = bookings.filter((b) => b.status !== "cancelled");
   const flightsCount = openBookings.length;
-  const bookedSeats = openBookings.reduce((sum, b) => sum + b.pax_count, 0);
-  const aircraftById = new Map(aircraft.map((a) => [a.id, a]));
-  const totalSeatsUsed = openBookings.reduce((sum, b) => {
-    const id = aircraftIdOf(b);
-    if (!id) return sum;
-    return sum + (aircraftById.get(id)?.seats ?? 0);
-  }, 0);
+  const { bookedSeats, totalSeats, unassignedPax } = seatTotals(openBookings, aircraftById);
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
       <FleetBoardChrome
         view={view}
         isoDay={isoDay}
+        today={localDay(timeZone)}
+        searchQuery={query}
         flightsCount={flightsCount}
         bookedSeats={bookedSeats}
-        totalSeats={totalSeatsUsed}
+        totalSeats={totalSeats}
+        unassignedPax={unassignedPax}
       />
 
       {loadError ? (
@@ -140,14 +143,14 @@ export default async function FleetBoardPage({
           No aircraft. Adjust filters.
         </div>
       ) : view === "list" ? (
-        <ListView bookings={bookings} aircraftById={aircraftById} />
+        <ListView bookings={bookings} aircraftById={aircraftById} timeZone={timeZone} />
       ) : view === "split" ? (
         <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
-          <ListView bookings={bookings} aircraftById={aircraftById} />
+          <ListView bookings={bookings} aircraftById={aircraftById} timeZone={timeZone} />
           <BoardView
             aircraft={aircraft}
             bookings={bookings}
-            aircraftById={aircraftById}
+            aircraftById={aircraftById} timeZone={timeZone}
             day={day}
             isoDay={isoDay}
           />
@@ -156,7 +159,7 @@ export default async function FleetBoardPage({
         <BoardView
           aircraft={aircraft}
           bookings={bookings}
-          aircraftById={aircraftById}
+          aircraftById={aircraftById} timeZone={timeZone}
           day={day}
           isoDay={isoDay}
         />
@@ -188,9 +191,11 @@ export default async function FleetBoardPage({
 function ListView({
   bookings,
   aircraftById,
+  timeZone,
 }: {
   bookings: Booking[];
   aircraftById: Map<string, AircraftListItem>;
+  timeZone: string;
 }) {
   const sorted = [...bookings].sort(
     (a, b) =>
@@ -232,7 +237,7 @@ function ListView({
               <div className="min-w-0 flex-1">
                 <div className="mb-1 flex flex-wrap items-baseline gap-2">
                   <span className="font-semibold tabular-nums">
-                    {_timeOnly(b.requested_departure_at)}
+                    {_timeOnly(b.requested_departure_at, timeZone)}
                   </span>
                   <span className="text-muted-foreground">
                     {b.origin_icao} → {b.destination_icao}
@@ -276,10 +281,6 @@ function ListView({
 /** The aircraft a booking flies on (#150): its flight's, else its own. A
  *  booking put on a flight from the search has no aircraft of its own, and
  *  sat in "Unassigned" although its flight had one. */
-function aircraftIdOf(b: Booking): string | null {
-  return b.flight?.aircraft_id ?? b.aircraft?.id ?? null;
-}
-
 // Board view — aircraft rows × 24h columns
 // ============================================================================
 
@@ -287,12 +288,14 @@ function BoardView({
   aircraft,
   bookings,
   aircraftById,
+  timeZone,
   day,
   isoDay,
 }: {
   aircraft: AircraftListItem[];
   bookings: Booking[];
   aircraftById: Map<string, AircraftListItem>;
+  timeZone: string;
   day: Date;
   isoDay: string;
 }) {
@@ -320,7 +323,7 @@ function BoardView({
               key={a.id}
               aircraft={a}
               bookings={bookings.filter((b) => aircraftIdOf(b) === a.id)}
-              aircraftById={aircraftById}
+              aircraftById={aircraftById} timeZone={timeZone}
               day={day}
               isoDay={isoDay}
             />
@@ -328,7 +331,7 @@ function BoardView({
 
           <UnassignedRow
             bookings={bookings.filter((b) => !aircraftIdOf(b))}
-            aircraftById={aircraftById}
+            aircraftById={aircraftById} timeZone={timeZone}
             day={day}
             isoDay={isoDay}
           />
@@ -342,12 +345,14 @@ function AircraftRow({
   aircraft,
   bookings,
   aircraftById,
+  timeZone,
   day,
   isoDay,
 }: {
   aircraft: AircraftListItem;
   bookings: Booking[];
   aircraftById: Map<string, AircraftListItem>;
+  timeZone: string;
   day: Date;
   isoDay: string;
 }) {
@@ -363,12 +368,14 @@ function AircraftRow({
         <div className="text-[0.65rem] text-muted-foreground">
           {aircraft.seats} seats
         </div>
+        {!aircraft.is_active ? <p className="text-[0.65rem] text-status-red">Unavailable</p> : null}
       </div>
       <TimelineTrack
         bookings={bookings}
-        aircraftById={aircraftById}
+        aircraftById={aircraftById} timeZone={timeZone}
         day={day}
-        aircraftId={aircraft.id}
+        aircraftId={aircraft.is_active ? aircraft.id : null}
+        allowNewBooking={aircraft.is_active}
         tailNumber={aircraft.tail_number}
         isoDay={isoDay}
       />
@@ -379,11 +386,13 @@ function AircraftRow({
 function UnassignedRow({
   bookings,
   aircraftById,
+  timeZone,
   day,
   isoDay,
 }: {
   bookings: Booking[];
   aircraftById: Map<string, AircraftListItem>;
+  timeZone: string;
   day: Date;
   isoDay: string;
 }) {
@@ -398,7 +407,7 @@ function UnassignedRow({
       </div>
       <TimelineTrack
         bookings={bookings}
-        aircraftById={aircraftById}
+        aircraftById={aircraftById} timeZone={timeZone}
         day={day}
         aircraftId={null}
         isoDay={isoDay}
@@ -410,25 +419,30 @@ function UnassignedRow({
 function TimelineTrack({
   bookings,
   aircraftById,
+  timeZone,
   day,
   aircraftId,
   tailNumber = null,
+  allowNewBooking = true,
   isoDay,
 }: {
   bookings: Booking[];
   aircraftById: Map<string, AircraftListItem>;
+  timeZone: string;
   day: Date;
   aircraftId: string | null;
   tailNumber?: string | null;
+  allowNewBooking?: boolean;
   isoDay: string;
 }) {
+  const lanes = bookingLanes(bookings);
   // A flight's bookings share its aircraft's row; they move with it (#150).
   const onFlight = new Map<string, number>();
   for (const b of bookings) {
     if (b.flight && b.status !== "cancelled") onFlight.set(b.flight.id, (onFlight.get(b.flight.id) ?? 0) + 1);
   }
   return (
-    <TimelineClickable aircraftId={aircraftId} tailNumber={tailNumber} isoDay={isoDay}>
+    <TimelineClickable aircraftId={aircraftId} tailNumber={tailNumber} isoDay={isoDay} lanes={lanes.count} allowNewBooking={allowNewBooking}>
       {/* Faint hourly gridlines (23 = between hours) */}
       {Array.from({ length: 23 }, (_, i) => (
         <div
@@ -441,7 +455,8 @@ function TimelineTrack({
         <BookingBlock
           key={b.id}
           b={b}
-          aircraftById={aircraftById}
+          lane={lanes.byId.get(b.id) ?? 0}
+          aircraftById={aircraftById} timeZone={timeZone}
           day={day}
           onFlight={b.flight ? (onFlight.get(b.flight.id) ?? 1) : 1}
         />
@@ -452,12 +467,16 @@ function TimelineTrack({
 
 function BookingBlock({
   b,
+  lane,
   aircraftById,
+  timeZone,
   day,
   onFlight,
 }: {
   b: Booking;
+  lane: number;
   aircraftById: Map<string, AircraftListItem>;
+  timeZone: string;
   day: Date;
   /** Bookings on its flight, which move with it when it's dragged. */
   onFlight: number;
@@ -509,15 +528,15 @@ function BookingBlock({
               fromAircraftId: aircraftIdOf(b),
             }
       }
-      style={{ left: `${leftPct}%`, width: `${widthPct}%` }}
+      style={{ left: `${leftPct}%`, width: `${widthPct}%`, top: 4 + lane * 48, height: 44 }}
       className={
-        "absolute top-1 bottom-1 flex items-center gap-1 overflow-hidden rounded border px-1.5 text-[0.65rem] font-semibold whitespace-nowrap hover:z-10 hover:shadow-md hover:ring-1 hover:ring-foreground/20 " +
+        "absolute flex items-center gap-1 overflow-hidden rounded border px-1.5 text-[0.65rem] font-semibold whitespace-nowrap hover:z-10 hover:shadow-md hover:ring-1 hover:ring-foreground/20 " +
         bg
       }
       title={`${b.origin_icao} → ${b.destination_icao} · ${b.customer.full_name} · ${seatsText} · ~${payload.toLocaleString("en-US")} lbs payload (est.) · ${BOOKING_STATUS_LABELS[b.status]}`}
     >
       <span className="tabular-nums">
-        {_timeOnly(b.requested_departure_at)}
+        {_timeOnly(b.requested_departure_at, timeZone)}
       </span>
       <span className="truncate">
         {b.origin_icao}→{b.destination_icao}
@@ -535,8 +554,8 @@ function BookingBlock({
 // ============================================================================
 
 /** "10:30 AKDT": the company's clock, not the server's (#157). */
-function _timeOnly(iso: string): string {
-  return localClock(iso, DEFAULT_TIME_ZONE);
+function _timeOnly(iso: string, timeZone: string): string {
+  return localClock(iso, timeZone);
 }
 
 // FAA average passenger weight (summer, adult, incl. 30 lbs baggage) — used

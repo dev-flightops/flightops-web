@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 vi.mock("react", async (importOriginal) => ({
@@ -11,7 +11,7 @@ vi.mock("./actions", () => ({
   removeLineAction: vi.fn(),
 }));
 
-import type { ManifestPaxRow } from "@/lib/api/manifest";
+import type { ManifestLoad, ManifestPaxRow } from "@/lib/api/manifest";
 
 import { PassengersSection } from "./pax-section";
 
@@ -37,6 +37,15 @@ function row(over: Partial<ManifestPaxRow>): ManifestPaxRow {
 }
 
 describe("a booked passenger on the manifest (#137)", () => {
+  it("shows assigned crew consistently when they are counted by the load but have no manifest row", () => {
+    cleanup();
+    render(<PassengersSection flightId="f-1" editable={false} rows={[row({})]}
+      load={{ crew_basis: "standard", crew_count: 1, crew_lbs: "190",
+        crew_estimated_for: ["Demo Pilot"] } as ManifestLoad} />);
+    expect(screen.getByText("1 pax · 1 assigned crew")).toBeInTheDocument();
+    expect(screen.getByText(/Assigned crew: 190 lb/)).toHaveTextContent("Demo Pilot");
+    cleanup();
+  });
   it("shows the booking and its note, and is taken off through the booking", () => {
     render(
       <PassengersSection
