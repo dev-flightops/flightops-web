@@ -1,11 +1,12 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { z } from "zod";
 
 import { ApiError } from "@/lib/api/client";
 import { validationSummary } from "@/lib/api/validation-errors";
 import { createGseUnit } from "@/lib/api/ground";
+
+import { EquipmentSchema, fieldErrors, orNull, type EquipmentFormState } from "../equipment-schema";
 
 /**
  * Add Equipment form action (M2-G-39b).
@@ -15,102 +16,16 @@ import { createGseUnit } from "@/lib/api/ground";
  * tenant. Successful create redirects to the new unit's detail page.
  */
 
-const Schema = z.object({
-  name: z.string().trim().min(1, "Name is required").max(200),
-  equipment_type: z.enum([
-    "tug",
-    "gpu",
-    "deice_truck",
-    "belt_loader",
-    "fuel_truck",
-    "lavatory",
-    "air_start",
-    "heater",
-    "other",
-  ]),
-  make: z
-    .string()
-    .trim()
-    .max(100)
-    .optional()
-    .or(z.literal("").transform(() => undefined)),
-  model: z
-    .string()
-    .trim()
-    .max(100)
-    .optional()
-    .or(z.literal("").transform(() => undefined)),
-  serial_number: z
-    .string()
-    .trim()
-    .max(100)
-    .optional()
-    .or(z.literal("").transform(() => undefined)),
-  year: z
-    .string()
-    .optional()
-    .transform((v) => (v && v !== "" ? Number(v) : undefined))
-    .refine(
-      (v) => v === undefined || (Number.isInteger(v) && v >= 1900 && v <= 2200),
-      { message: "Year must be between 1900 and 2200" },
-    ),
-  station_id: z
-    .string()
-    .uuid()
-    .optional()
-    .or(z.literal("").transform(() => undefined)),
-  service_interval_days: z
-    .string()
-    .optional()
-    .transform((v) => (v && v !== "" ? Number(v) : undefined))
-    .refine((v) => v === undefined || (Number.isInteger(v) && v >= 1), {
-      message: "Service interval must be at least 1 day",
-    }),
-  // Legacy's add form had it; without it a new unit never showed a
-  // service due (#134).
-  next_service_date: z
-    .string()
-    .regex(/^\d{4}-\d{2}-\d{2}$/, "Pick a date")
-    .optional()
-    .or(z.literal("").transform(() => undefined)),
-  hours_total: z
-    .string()
-    .optional()
-    .transform((v) => (v && v !== "" ? Number(v) : 0))
-    .refine((v) => Number.isFinite(v) && v >= 0, {
-      message: "Hours must be ≥ 0",
-    }),
-  manufacturer: z
-    .string()
-    .trim()
-    .max(200)
-    .optional()
-    .or(z.literal("").transform(() => undefined)),
-  notes: z
-    .string()
-    .max(2000)
-    .optional()
-    .or(z.literal("").transform(() => undefined)),
-});
-
-export type NewEquipmentState =
-  | { status: "idle" }
-  | { status: "field-errors"; errors: Record<string, string> }
-  | { status: "api-error"; message: string };
+export type NewEquipmentState = EquipmentFormState;
 
 export async function createEquipmentAction(
   _prev: NewEquipmentState,
   formData: FormData,
 ): Promise<NewEquipmentState> {
   const raw = Object.fromEntries(formData.entries());
-  const parsed = Schema.safeParse(raw);
+  const parsed = EquipmentSchema.safeParse(raw);
   if (!parsed.success) {
-    const errors: Record<string, string> = {};
-    for (const issue of parsed.error.issues) {
-      const key = String(issue.path[0] ?? "_");
-      if (!errors[key]) errors[key] = issue.message;
-    }
-    return { status: "field-errors", errors };
+    return { status: "field-errors", errors: fieldErrors(parsed.error) };
   }
 
   let unitId: string;
@@ -118,16 +33,16 @@ export async function createEquipmentAction(
     const created = await createGseUnit({
       name: parsed.data.name,
       equipment_type: parsed.data.equipment_type,
-      make: parsed.data.make ?? null,
-      model: parsed.data.model ?? null,
-      serial_number: parsed.data.serial_number ?? null,
-      year: parsed.data.year ?? null,
-      station_id: parsed.data.station_id ?? null,
-      service_interval_days: parsed.data.service_interval_days ?? null,
-      next_service_date: parsed.data.next_service_date ?? null,
+      make: orNull(parsed.data.make),
+      model: orNull(parsed.data.model),
+      serial_number: orNull(parsed.data.serial_number),
+      year: orNull(parsed.data.year),
+      station_id: orNull(parsed.data.station_id),
+      service_interval_days: orNull(parsed.data.service_interval_days),
+      next_service_date: orNull(parsed.data.next_service_date),
       hours_total: parsed.data.hours_total,
-      manufacturer: parsed.data.manufacturer ?? null,
-      notes: parsed.data.notes ?? null,
+      manufacturer: orNull(parsed.data.manufacturer),
+      notes: orNull(parsed.data.notes),
     });
     unitId = created.id;
   } catch (err) {

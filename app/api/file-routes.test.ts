@@ -6,6 +6,7 @@ vi.mock("@/auth", () => ({ auth }));
 import { GET as documentDownload } from "./documents/[documentId]/download/route";
 import { GET as versionDownload } from "./documents/[documentId]/versions/[versionNumber]/download/route";
 import { GET as employeeDocumentDownload } from "./employee-documents/[documentId]/download/route";
+import { GET as gseDocument } from "./gse-documents/[documentId]/route";
 import { GET as rampPhoto } from "./ramp-photos/[photoId]/route";
 import { GET as safetyReportAttachment } from "./safety-reports/[id]/attachment/route";
 import { GET as villagePhoto } from "./village-photos/[photoId]/route";
@@ -54,6 +55,12 @@ const ROUTES: { name: string; handler: Handler; params: Record<string, string>; 
     handler: safetyReportAttachment as Handler,
     params: { id: "r-1" },
     backend: "https://gw.example/safety/reports/r-1/attachment",
+  },
+  {
+    name: "equipment document",
+    handler: gseDocument as Handler,
+    params: { documentId: "g-1" },
+    backend: "https://gw.example/ground/gse/documents/g-1/file",
   },
 ];
 
@@ -144,6 +151,23 @@ describe("ramp photo", () => {
     fetchMock.mockResolvedValue(new Response("", { status: 404 }));
     const res = await call(route);
     expect(await res.text()).toBe("That photo is no longer on file.");
+  });
+});
+
+describe("equipment document (#134)", () => {
+  const route = ROUTES.find((r) => r.name === "equipment document")!;
+
+  it("is a download, never sniffed", async () => {
+    fetchMock.mockResolvedValue(new Response("%PDF-", { status: 200, headers: { "Content-Type": "application/pdf" } }));
+    const res = await call(route);
+    expect(res.headers.get("content-disposition")).toBe("attachment");
+    expect(res.headers.get("x-content-type-options")).toBe("nosniff");
+  });
+
+  it("says a missing document plainly", async () => {
+    fetchMock.mockResolvedValue(new Response("", { status: 404 }));
+    const res = await call(route);
+    expect(await res.text()).toBe("That document is no longer on file.");
   });
 });
 
