@@ -70,81 +70,85 @@ export function SupplierLogins({
           No login yet: fuel orders tell dispatch to call them.
         </p>
       ) : (
-        <table className="data-table mt-2 w-full text-sm">
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Email</th>
-              <th>Last sign-in</th>
-              <th>Status</th>
-              <th />
-            </tr>
-          </thead>
-          <tbody>
-            {logins.map((login) => (
-              <tr key={login.id}>
-                <td>{login.full_name}</td>
-                <td className="font-mono text-xs">{login.email}</td>
-                <td className="text-xs">
-                  {login.last_login_at ? localDateTime(login.last_login_at, DEFAULT_TIME_ZONE) : "Never"}
-                </td>
-                <td>{login.is_active ? "Active" : <span className="text-muted-foreground">Off</span>}</td>
-                <td>
-                  <div className="flex flex-wrap justify-end gap-2">
-                    <button
-                      type="button"
-                      className={buttonOutline}
-                      disabled={pending}
-                      onClick={() => run(() => setSupplierLoginActiveAction(supplierId, login.id, !login.is_active))}
-                    >
-                      {login.is_active ? "Switch off" : "Switch on"}
-                    </button>
-                    {login.serves_others ? null : (
-                      <button type="button" className={buttonOutline} disabled={pending} onClick={() => setPasswordFor(login.id)}>
-                        New password
-                      </button>
-                    )}
-                  </div>
-                  {login.serves_others ? (
-                    <p className="mt-1 text-right text-xs text-muted-foreground">
-                      Signs in for another operator too, so the password is theirs.
-                    </p>
-                  ) : null}
-                  {passwordFor === login.id ? (
-                    <form
-                      className="mt-2 flex flex-wrap justify-end gap-2"
-                      onSubmit={(e) => {
-                        e.preventDefault();
-                        const password = String(new FormData(e.currentTarget).get("password") ?? "");
-                        run(() => setSupplierLoginPasswordAction(supplierId, login.id, password), () => setPasswordFor(null));
-                      }}
-                    >
-                      <label className="sr-only" htmlFor={`password-${login.id}`}>
-                        New password for {login.full_name}
-                      </label>
-                      <input
-                        id={`password-${login.id}`}
-                        name="password"
-                        type="password"
-                        minLength={8}
-                        required
-                        autoComplete="new-password"
-                        placeholder="New password (8+ characters)"
-                        className="ff-input h-8 w-56 py-0 text-xs"
-                      />
-                      <button type="submit" className={buttonSolid} disabled={pending}>
-                        {pending ? "Saving…" : "Set"}
-                      </button>
-                      <button type="button" className={buttonOutline} onClick={() => setPasswordFor(null)}>
-                        Cancel
-                      </button>
-                    </form>
-                  ) : null}
-                </td>
+        // Scrolls on its own at phone width: the buttons column pushed the
+        // page 49 px sideways at 390.
+        <div className="mt-2 overflow-x-auto">
+          <table className="data-table w-full text-sm">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Last sign-in</th>
+                <th>Status</th>
+                <th />
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {logins.map((login) => (
+                <tr key={login.id}>
+                  <td>{login.full_name}</td>
+                  <td className="font-mono text-xs">{login.email}</td>
+                  <td className="text-xs">
+                    {login.last_login_at ? localDateTime(login.last_login_at, DEFAULT_TIME_ZONE) : "Never"}
+                  </td>
+                  <td>{login.is_active ? "Active" : <span className="text-muted-foreground">Off</span>}</td>
+                  <td>
+                    <div className="flex flex-wrap justify-end gap-2">
+                      <button
+                        type="button"
+                        className={buttonOutline}
+                        disabled={pending}
+                        onClick={() => run(() => setSupplierLoginActiveAction(supplierId, login.id, !login.is_active))}
+                      >
+                        {login.is_active ? "Switch off" : "Switch on"}
+                      </button>
+                      {login.serves_others ? null : (
+                        <button type="button" className={buttonOutline} disabled={pending} onClick={() => setPasswordFor(login.id)}>
+                          New password
+                        </button>
+                      )}
+                    </div>
+                    {login.serves_others ? (
+                      <p className="mt-1 text-right text-xs text-muted-foreground">
+                        Signs in for another operator too, so the password is theirs.
+                      </p>
+                    ) : null}
+                    {passwordFor === login.id ? (
+                      <form
+                        className="mt-2 flex flex-wrap justify-end gap-2"
+                        onSubmit={(e) => {
+                          e.preventDefault();
+                          const password = String(new FormData(e.currentTarget).get("password") ?? "");
+                          run(() => setSupplierLoginPasswordAction(supplierId, login.id, password), () => setPasswordFor(null));
+                        }}
+                      >
+                        <label className="sr-only" htmlFor={`password-${login.id}`}>
+                          New password for {login.full_name}
+                        </label>
+                        <input
+                          id={`password-${login.id}`}
+                          name="password"
+                          type="password"
+                          minLength={8}
+                          required
+                          autoComplete="new-password"
+                          placeholder="New password (8+ characters)"
+                          className="ff-input h-8 w-56 py-0 text-xs"
+                        />
+                        <button type="submit" className={buttonSolid} disabled={pending}>
+                          {pending ? "Saving…" : "Set"}
+                        </button>
+                        <button type="button" className={buttonOutline} onClick={() => setPasswordFor(null)}>
+                          Cancel
+                        </button>
+                      </form>
+                    ) : null}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
 
       {adding ? (
