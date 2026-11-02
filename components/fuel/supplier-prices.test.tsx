@@ -128,8 +128,11 @@ describe("SupplierPrices (#134)", () => {
     expect(screen.getByRole("form", { name: "Set a price from Tundra Fuel" })).toBeInTheDocument();
   });
 
-  it("takes the base typed when the stations couldn't be read", async () => {
-    prices(true, null);
+  it.each<[string, typeof STATIONS | null]>([
+    ["the stations couldn't be read", null],
+    ["the company has no stations", []],
+  ])("takes the base typed when %s", async (_, stations) => {
+    prices(true, stations);
     await userEvent.click(screen.getByRole("button", { name: "+ Set a price" }));
     expect(screen.getByLabelText("Base").tagName).toBe("INPUT");
   });

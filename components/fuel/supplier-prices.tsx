@@ -51,7 +51,10 @@ export function SupplierPrices({
   supplierName: string;
   rows: FuelSupplierBaseResponse[];
   canEdit: boolean;
-  /** The company's stations to price at; null when they couldn't be read. */
+  /**
+   * The company's stations to price at; null when they couldn't be read.
+   * Without any the base is typed, as on a fuel order.
+   */
   stations: PriceStation[] | null;
   /** Active fuel types. */
   fuelTypes: PriceFuelType[];
@@ -199,7 +202,7 @@ export function SupplierPrices({
               <>
                 <label>
                   <span className="field-label">Base</span>
-                  {stations ? (
+                  {stations?.length ? (
                     <select name="base_code" required defaultValue="" className="ff-input">
                       <option value="" disabled>
                         Pick a base
