@@ -488,3 +488,59 @@ export async function deleteSsoProvider(
     method: "DELETE",
   });
 }
+
+// ---- A fuel supplier's portal logins (#134) ----
+
+/** One login for a supplier's portal: this company's grant to the rep's
+ *  account (the id), with the account's name and email. */
+export interface SupplierLogin {
+  id: string;
+  account_id: string;
+  full_name: string;
+  email: string;
+  is_active: boolean;
+  last_login_at: string | null;
+  /** The account serves another operator too: its name and password are the rep's. */
+  serves_others: boolean;
+}
+
+function supplierLoginsPath(supplierId: string): string {
+  return `/auth/settings/fuel-suppliers/${encodeURIComponent(supplierId)}/logins`;
+}
+
+export async function listSupplierLogins(supplierId: string): Promise<{ items: SupplierLogin[] }> {
+  return apiFetch<{ items: SupplierLogin[] }>(supplierLoginsPath(supplierId), { cache: "no-store" });
+}
+
+export async function addSupplierLogin(
+  supplierId: string,
+  body: { full_name: string; email: string; password: string | null },
+): Promise<SupplierLogin & { existing_account: boolean }> {
+  return apiFetch<SupplierLogin & { existing_account: boolean }>(supplierLoginsPath(supplierId), {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+}
+
+export async function setSupplierLoginActive(
+  supplierId: string,
+  loginId: string,
+  active: boolean,
+): Promise<SupplierLogin> {
+  return apiFetch<SupplierLogin>(
+    `${supplierLoginsPath(supplierId)}/${encodeURIComponent(loginId)}/${active ? "reactivate" : "deactivate"}`,
+    { method: "POST" },
+  );
+}
+
+export async function setSupplierLoginPassword(
+  supplierId: string,
+  loginId: string,
+  password: string,
+): Promise<SupplierLogin> {
+  return apiFetch<SupplierLogin>(`${supplierLoginsPath(supplierId)}/${encodeURIComponent(loginId)}/password`, {
+    method: "POST",
+    body: JSON.stringify({ password }),
+  });
+}
+

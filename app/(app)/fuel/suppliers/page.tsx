@@ -1,6 +1,10 @@
 import Link from "next/link";
 
+import { auth } from "@/auth";
 import { linkCaps } from "@/components/ff/controls";
+import { SupplierLogins } from "@/components/fuel/supplier-logins";
+import { listSupplierLogins, type SupplierLogin } from "@/lib/api/auth";
+import { FUEL_CONFIG, hasAnyRole } from "@/lib/roles";
 import { cn } from "@/lib/utils";
 import { ApiError } from "@/lib/api/client";
 import {
@@ -20,8 +24,11 @@ import type {
  * suppliers + pricing rows lands in M2-G-43b — backend supports
  * everything (POST / PATCH / PUT / DELETE) but the UI for it is a
  * follow-up.
+ *
+ * Each supplier's portal logins (#134), for the fuel directory's keepers.
  */
 export default async function FuelSuppliersPage() {
+  const canKeep = hasAnyRole((await auth())?.roles ?? [], FUEL_CONFIG);
   let suppliers: FuelSupplierResponse[] = [];
   let bases: FuelSupplierBaseResponse[] = [];
   let loadError: string | null = null;
@@ -39,6 +46,16 @@ export default async function FuelSuppliersPage() {
       status === 401
         ? "Your session expired — please sign in again."
         : "Suppliers feed unavailable. Try refreshing in a moment.";
+  }
+
+  // One read per supplier; a directory holds a handful.
+  const logins = new Map<string, SupplierLogin[] | null>();
+  if (canKeep) {
+    await Promise.all(
+      suppliers.map(async (s) => {
+        logins.set(s.id, await listSupplierLogins(s.id).then((r) => r.items, () => null));
+      }),
+    );
   }
 
   // Index the pricing rows so each supplier card can render its
@@ -93,6 +110,7 @@ export default async function FuelSuppliersPage() {
               key={s.id}
               supplier={s}
               pricing={bySupplier.get(s.id) ?? []}
+              logins={canKeep ? (logins.get(s.id) ?? null) : undefined}
             />
           ))}
         </div>
@@ -104,9 +122,12 @@ export default async function FuelSuppliersPage() {
 function SupplierCard({
   supplier,
   pricing,
+  logins,
 }: {
   supplier: FuelSupplierResponse;
   pricing: FuelSupplierBaseResponse[];
+  /** Left out for those who don't keep the directory. */
+  logins?: SupplierLogin[] | null;
 }) {
   return (
     <article className="rounded-lg border border-border bg-card p-4">
@@ -187,6 +208,10 @@ function SupplierCard({
           </table>
         </div>
       )}
+
+      {logins !== undefined ? (
+        <SupplierLogins supplierId={supplier.id} supplierName={supplier.name} logins={logins} />
+      ) : null}
     </article>
   );
 }
