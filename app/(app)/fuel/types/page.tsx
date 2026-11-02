@@ -1,6 +1,10 @@
 import Link from "next/link";
 
+import { auth } from "@/auth";
 import { linkCaps } from "@/components/ff/controls";
+import { Panel } from "@/components/ff/panel";
+import { AddFuelTypeForm, FuelTypeSwitch } from "@/components/fuel/fuel-type-controls";
+import { FUEL_CONFIG, hasAnyRole } from "@/lib/roles";
 import { cn } from "@/lib/utils";
 import { ApiError } from "@/lib/api/client";
 import { listFuelTypes } from "@/lib/api/ground";
@@ -9,11 +13,12 @@ import type { FuelTypeResponse } from "@/lib/api/types";
 /**
  * /fuel/types — Fuel type catalog (M2-G-44).
  *
- * Read-only listing of the tenant's fuel-type directory. Adding /
- * editing / toggling active state lives in M2-G-44b; the backend
- * supports it (POST / PATCH `/ground/fuel/types`).
+ * The tenant's fuel types. The fuel directory's keepers (FUEL_CONFIG) add
+ * one and switch one off and on (#134), as legacy's Fuel Types page did;
+ * it could only be changed through the API.
  */
 export default async function FuelTypesPage() {
+  const canKeep = hasAnyRole((await auth())?.roles ?? [], FUEL_CONFIG);
   let types: FuelTypeResponse[] = [];
   let loadError: string | null = null;
 
@@ -55,8 +60,9 @@ export default async function FuelTypesPage() {
             No fuel types configured yet.
           </p>
           <p className="mt-1 text-xs text-muted-foreground">
-            Fuel types are added through the API for now:{" "}
-            <code>POST /ground/fuel/types</code>.
+            {canKeep
+              ? "Add the first one below."
+              : "The Chief Pilot, the Director of Maintenance, the Director of Operations or an Exec Admin adds them."}
           </p>
         </div>
       ) : (
@@ -68,6 +74,7 @@ export default async function FuelTypesPage() {
                 <th className="px-4 py-3">Label</th>
                 <th className="px-4 py-3 text-right">Sort order</th>
                 <th className="px-4 py-3">Status</th>
+                {canKeep ? <th className="px-4 py-3" /> : null}
               </tr>
             </thead>
             <tbody>
@@ -94,12 +101,23 @@ export default async function FuelTypesPage() {
                       </span>
                     )}
                   </td>
+                  {canKeep ? (
+                    <td className="px-4 py-3">
+                      <FuelTypeSwitch typeId={t.id} label={t.label} active={t.is_active} />
+                    </td>
+                  ) : null}
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
       )}
+
+      {canKeep && !loadError ? (
+        <Panel title="Add a fuel type" className="mt-6">
+          <AddFuelTypeForm />
+        </Panel>
+      ) : null}
     </div>
   );
 }
