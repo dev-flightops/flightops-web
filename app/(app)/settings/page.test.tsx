@@ -8,6 +8,7 @@ const {
   getFlightTrackingConfig,
   listUsers,
   listSsoProviders,
+  getDemoStatus,
 } = vi.hoisted(() => {
   class TestApiError extends Error {
     constructor(
@@ -25,10 +26,12 @@ const {
     getFlightTrackingConfig: vi.fn(),
     listUsers: vi.fn(),
     listSsoProviders: vi.fn(),
+    getDemoStatus: vi.fn(),
   };
 });
 
 vi.mock("@/lib/api/client", () => ({ ApiError: TestApiError }));
+vi.mock("@/lib/api/demo", () => ({ getDemoStatus }));
 vi.mock("@/lib/api/auth", () => ({
   getCompanyProfile,
   listCompanyBases,
@@ -51,6 +54,7 @@ const seededTracking = {
 };
 
 beforeEach(() => {
+  getDemoStatus.mockReset().mockResolvedValue({enabled:false});
   getCompanyProfile.mockReset();
   listCompanyBases.mockReset();
   getFlightTrackingConfig.mockReset();

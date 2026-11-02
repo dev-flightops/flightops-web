@@ -1,4 +1,5 @@
-import { auth, signOut } from "@/auth";
+import { auth } from "@/auth";
+import { redirect } from "next/navigation";
 import { AppShell } from "@/components/app-shell/app-shell";
 import { BillingStandingNotice } from "@/components/app-shell/billing-standing-notice";
 import { AssistantProvider } from "@/components/assistant/assistant-context";
@@ -41,16 +42,9 @@ export default async function AppGroupLayout({
     tenants = response.tenants;
   } catch (error) {
     if (error instanceof SessionExpiredError) {
-      // Bare redirect("/login") is not enough here: the Auth.js session
-      // cookie is signed with AUTH_SECRET and stays "valid" independent
-      // of the FlightOps JWT. If we redirect to /login while the
-      // session cookie is still present, proxy.ts treats the user as
-      // logged-in and bounces them back to /home/ → another 401 → loop.
-      // signOut() clears the Auth.js cookie too so /login renders for
-      // real. Triggered by: re-seeding the DB (user UUIDs change),
-      // backend JWT key rotation, user/tenant deletion. JWT TTL expiry
-      // is handled separately by the jwt callback in auth.ts.
-      await signOut({ redirectTo: "/login" });
+      // Cookie mutation is not allowed while rendering a Server Component.
+      // Auth.js's sign-out page performs it through its route handler.
+      redirect("/api/auth/signout?callbackUrl=%2Flogin");
     }
     throw error;
   }
@@ -167,9 +161,10 @@ export default async function AppGroupLayout({
           {/* Spec: global Safety Report button, fixed bottom-right on every
               page. Mounted at the layout so it survives client-side
               navigation between routes inside the (app) group. */}
-          <SafetyReportButton />
-          {/* #114: Peregrine Assistant, stacked above Safety. */}
-          <AssistantWidget />
+          <div className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-2 border-t border-border bg-card shadow-lg sm:contents">
+            <SafetyReportButton />
+            <AssistantWidget />
+          </div>
           <DatePickerAffordance />
         </AppShell>
       </AssistantProvider>

@@ -180,6 +180,7 @@ function ResultView({
 }) {
   const pct = Math.round((result.score / result.question_count) * 100);
   const questionsById = new Map(quiz.questions.map((q) => [q.id, q]));
+  const numbersById = new Map(quiz.questions.map((q, index) => [q.id, index + 1]));
   return (
     <div className="space-y-5">
       <div
@@ -220,7 +221,7 @@ function ResultView({
             >
               <p className="font-semibold text-foreground">
                 <span className="mr-2 text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
-                  Q{pq.ordinal}
+                  Q{numbersById.get(pq.question_id) ?? "?"}
                 </span>
                 {q?.prompt ?? "Question unavailable"}
               </p>

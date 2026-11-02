@@ -24,12 +24,16 @@ export function TimelineClickable({
   tailNumber = null,
   isoDay,
   children,
+  lanes = 1,
+  allowNewBooking = true,
 }: {
   aircraftId: string | null;
   /** The row's aircraft, named when a block is dropped on it (#150). */
   tailNumber?: string | null;
   isoDay: string;
   children: ReactNode;
+  lanes?: number;
+  allowNewBooking?: boolean;
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -82,6 +86,7 @@ export function TimelineClickable({
   const onClick = (e: MouseEvent<HTMLDivElement>) => {
     // Ignore clicks that bubbled up from a booking block button —
     // BookingClickable calls preventDefault but not stopPropagation.
+    if (!allowNewBooking) return;
     const target = e.target as HTMLElement;
     if (target.closest("button")) return;
 
@@ -119,7 +124,8 @@ export function TimelineClickable({
         onDragOver={onDragOver}
         onDragLeave={() => setOver(false)}
         onDrop={onDrop}
-        className={`relative h-14 cursor-crosshair${over ? " bg-primary/10 outline outline-1 outline-primary/40" : ""}`}
+        style={{ height: Math.max(56, lanes * 48 + 8) }}
+        className={`relative cursor-crosshair${over ? " bg-primary/10 outline outline-1 outline-primary/40" : ""}`}
       >
         {children}
       </div>

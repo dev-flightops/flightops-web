@@ -27,10 +27,8 @@ import { CancelStaleButton } from "./cancel-stale-button";
  * If profiling shows pressure once tenants scale, a M3 backend
  * /eod/summary endpoint can fold these into one round-trip.
  *
- * "Block hours" uses scheduled times as a proxy — the Aircraft model
- * doesn't yet track actual_departure_at / actual_arrival_at (M2-G-11b
- * deferred Check-In flow). The tile is annotated "(scheduled)" so
- * the dispatcher knows it's a forecast, not a flown actual.
+ * Recorded flight hours use actual departure/arrival timestamps.
+ * Missing actuals stay visible and are excluded from recorded hours.
  *
  * Stale = status=scheduled AND scheduled_departure_at < now AND no
  * actuals. Today's Planned = status=scheduled AND scheduled_departure_at
@@ -135,6 +133,10 @@ export default async function EodPage() {
     (f) => estimatedArrivalMs(f) + OVERDUE_AFTER_MIN * 60_000 < nowMs,
   );
 
+  // Today's releases without a departure remain planned, not airborne.
+  todayPlanned.push(...released.filter((f) => !f.actual_departure_at &&
+    !overdue.includes(f) && localDay(DEFAULT_TIME_ZONE, new Date(f.scheduled_departure_at)) === today));
+
   const totalBlockHours = computeBlockHours(completedToday);
   const flagsCount = stale.length + overdue.length; // duty + fuel sections await M3
 
@@ -181,14 +183,10 @@ export default async function EodPage() {
 }
 
 function computeBlockHours(flights: FlightListItem[]): string {
-  // Without actuals (M2-G-11b deferred) we sum scheduled durations.
+  if (flights.length > 0 && flights.every(f => recordedDurationMs(f) === null)) return "—";
   let totalMs = 0;
   for (const f of flights) {
-    const dep = Date.parse(f.scheduled_departure_at);
-    const arr = Date.parse(f.scheduled_arrival_at);
-    if (Number.isFinite(dep) && Number.isFinite(arr) && arr > dep) {
-      totalMs += arr - dep;
-    }
+    totalMs += recordedDurationMs(f) ?? 0;
   }
   const hours = totalMs / (1000 * 60 * 60);
   return hours.toLocaleString("en-US", {
@@ -211,7 +209,7 @@ function StatTiles({
   return (
     <StatStrip label="Today's closeout">
       <Stat value={completed} label="Flights Completed" tone="green" />
-      <Stat value={blockHours} label="Block Hours (scheduled)" tone="blue" />
+      <Stat value={blockHours} label="Recorded Flight Hours" tone="blue" />
       <Stat value={airborne} label="Still Airborne" tone={airborne > 0 ? "yellow" : "neutral"} />
       <Stat value={flags} label="Flags" tone={flags > 0 ? "red" : "neutral"} />
     </StatStrip>
@@ -232,7 +230,7 @@ function CompletedSection({ flights }: { flights: FlightListItem[] }) {
               <th className="px-2 py-1">Flight</th>
               <th className="px-2 py-1">Aircraft</th>
               <th className="px-2 py-1">Route</th>
-              <th className="px-2 py-1">Block</th>
+              <th className="px-2 py-1">Recorded time</th>
             </tr>
           </thead>
           <tbody>
@@ -248,13 +246,14 @@ function CompletedSection({ flights }: { flights: FlightListItem[] }) {
                   {f.origin} → {f.destination}
                 </td>
                 <td className="px-2 py-1.5 text-muted-foreground">
-                  {flightBlockHours(f)}h
+                  {flightBlockHours(f)}
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
       )}
+      {flights.some(f => recordedDurationMs(f) === null) && <p className="mt-2 text-xs text-muted-foreground">Flights without recorded departure and arrival times are excluded from recorded hours.</p>}
     </Section>
   );
 }
@@ -402,7 +401,7 @@ function PlannedSection({ flights }: { flights: FlightListItem[] }) {
                 {formatBoth(f.scheduled_departure_at).zulu}
               </td>
               <td className="px-2 py-1.5">
-                <StatusBadge status={f.status} />
+                <StatusBadge status={f.status} actualDepartureAt={f.actual_departure_at ?? null} />
               </td>
             </tr>
           ))}
@@ -445,12 +444,18 @@ function Section({
 }
 
 function flightBlockHours(f: FlightListItem): string {
-  const dep = Date.parse(f.scheduled_departure_at);
-  const arr = Date.parse(f.scheduled_arrival_at);
-  if (!Number.isFinite(dep) || !Number.isFinite(arr) || arr <= dep) return "—";
-  const hours = (arr - dep) / (1000 * 60 * 60);
+  const duration = recordedDurationMs(f);
+  if (duration === null) return "—";
+  const hours = duration / (1000 * 60 * 60);
   return hours.toLocaleString("en-US", {
     minimumFractionDigits: 1,
     maximumFractionDigits: 1,
-  });
+  }) + "h";
+}
+
+function recordedDurationMs(flight: FlightListItem): number | null {
+  if (!flight.actual_departure_at || !flight.actual_arrival_at) return null;
+  const departure = Date.parse(flight.actual_departure_at);
+  const arrival = Date.parse(flight.actual_arrival_at);
+  return Number.isFinite(departure) && Number.isFinite(arrival) && arrival >= departure ? arrival - departure : null;
 }

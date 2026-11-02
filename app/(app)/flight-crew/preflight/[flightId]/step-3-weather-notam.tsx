@@ -6,10 +6,12 @@ import type {
   FlightDetail,
   WeatherBatchResponse,
   WeatherReportResponse,
+  VillageBoardRow,
 } from "@/lib/api/types";
 import { FlightCategoryBadge } from "@/components/weather/flight-category-badge";
 import { cn } from "@/lib/utils";
 import { flightStops } from "@/lib/route";
+import { VillageReport } from "@/components/weather/village-report";
 
 import { completeStepAction } from "./actions";
 
@@ -22,6 +24,7 @@ interface Props {
    *  required (legacy behavior: the pilot signs that they reviewed
    *  weather regardless of source, in their usual tool). */
   weather: WeatherBatchResponse | null;
+  villages?: VillageBoardRow[] | null;
 }
 
 /**
@@ -44,7 +47,7 @@ interface Props {
  *   - Data-unavailable warning per airport when the batch endpoint
  *     returned an error for that ICAO+kind pair.
  */
-export function WeatherAndNotamStep({ flightId, flight, weather }: Props) {
+export function WeatherAndNotamStep({ flightId, flight, weather, villages = [] }: Props) {
   const airports = useMemo(() => {
     const seen = new Set<string>();
     const list: string[] = [];
@@ -198,9 +201,10 @@ export function WeatherAndNotamStep({ flightId, flight, weather }: Props) {
                   <WeatherError kind="TAF" detail="No TAF returned." />
                 )}
 
+                {villages === null ? <p role="alert" className="notice notice-yellow mt-2">Village reports could not be loaded. Check the Village Weather board before acknowledging.</p> : villages.filter(row => row.airport.icao.trim().toUpperCase() === icao.trim().toUpperCase()).map(row => <VillageReport key={row.airport.id} row={row} now={Date.now()} />)}
+
                 <p className="mt-2 text-[0.65rem] text-muted-foreground">
-                  NOTAM data is not wired into this view yet — pull
-                  active NOTAMs for {icao} in your usual source
+                  Review active NOTAMs for {icao} in your usual source
                   (ForeFlight, 1800wxbrief) and confirm below.
                 </p>
 

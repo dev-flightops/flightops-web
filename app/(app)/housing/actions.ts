@@ -141,6 +141,8 @@ export async function createHousingBookingAction(
     });
     revalidatePath(`/housing`);
     revalidatePath(`/housing/${booking.unit_id ?? ""}`);
+    revalidatePath("/housing/calendar");
+    revalidatePath("/housing/reports");
     return { ok: true, data: { id: booking.id } };
   } catch (err) {
     return { ok: false, error: mapError(err, "Couldn't create booking.") };
@@ -156,6 +158,8 @@ export async function cancelHousingBookingAction(
     await cancelHousingBooking(bookingId);
     revalidatePath("/housing");
     revalidatePath(`/housing/${unitId}`);
+    revalidatePath("/housing/calendar");
+    revalidatePath("/housing/reports");
     return { ok: true };
   } catch (err) {
     return { ok: false, error: mapError(err, "Couldn't cancel booking.") };

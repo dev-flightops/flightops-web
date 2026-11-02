@@ -12,7 +12,7 @@ import { NewCharterForm } from "./new-charter-form";
  * legacy peregrineflight pattern of an inline expand form rather
  * than a separate route.
  */
-export function NewCharterToggle({ customers }: { customers: Customer[] }) {
+export function NewCharterToggle({ customers, today }: { customers: Customer[]; today: string }) {
   const [open, setOpen] = useState(false);
   return (
     <>
@@ -34,6 +34,7 @@ export function NewCharterToggle({ customers }: { customers: Customer[] }) {
           </div>
           <NewCharterForm
             customers={customers}
+            today={today}
             onClose={() => setOpen(false)}
           />
         </div>

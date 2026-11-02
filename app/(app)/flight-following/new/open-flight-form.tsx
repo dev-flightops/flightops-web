@@ -36,6 +36,7 @@ export interface FlightPrefill {
   cargo_lbs?: string;
   notes?: string;
   charter_request_id?: string;
+  booking_id?: string;
 }
 
 function starting(prefill: FlightPrefill | undefined, field: string): string | undefined {
@@ -282,6 +283,7 @@ export function OpenFlightForm({
 
   return (
     <form action={action} onInvalidCapture={() => setTriedToOpen(true)} className="space-y-5">
+      {submitted("booking_id") ? <input type="hidden" name="booking_id" value={submitted("booking_id")} /> : null}
       {submitted("charter_request_id") ? (
         <input type="hidden" name="charter_request_id" value={submitted("charter_request_id")} />
       ) : null}

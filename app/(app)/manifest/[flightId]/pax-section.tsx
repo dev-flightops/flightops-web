@@ -3,12 +3,14 @@
 import Link from "next/link";
 import { useActionState, useEffect, useState } from "react";
 
-import { TICKET_TYPES, TICKET_TYPE_LABELS, type ManifestPaxRow } from "@/lib/api/manifest";
+import { TICKET_TYPES, TICKET_TYPE_LABELS, type ManifestLoad, type ManifestPaxRow } from "@/lib/api/manifest";
+import { crewWeightNote } from "@/lib/flights/crew-weight";
 import { bookingRef } from "@/lib/api/reservations";
 
 import { savePaxAction, type ManifestFormState } from "./actions";
 import { FIELD, Flag, fmtLbs, FormNotice, TH, THEAD, TicketBadge } from "./manifest-bits";
 import { RemoveLine } from "./remove-line";
+import { BumpBags } from "./bump-bags";
 
 const _initial: ManifestFormState = { status: "idle", attempt: 0 };
 
@@ -36,12 +38,14 @@ export function PassengersSection({
   rows,
   editable,
   stops = [],
+  load,
 }: {
   flightId: string;
   rows: ManifestPaxRow[];
   editable: boolean;
   /** The flight's route, in order. */
   stops?: string[];
+  load?: ManifestLoad | null;
 }) {
   // "add", the id of the passenger being edited, or null when closed.
   const [open, setOpen] = useState<string | null>(null);
@@ -57,7 +61,7 @@ export function PassengersSection({
           Passengers &amp; Crew
         </h2>
         <span className="text-xs text-muted-foreground">
-          {rows.length - crew} pax · {crew} crew
+          {rows.length - crew} pax · {load?.crew_basis === "standard" ? `${load.crew_count} assigned crew` : `${crew} crew`}
         </span>
         {editable ? (
           <button
@@ -69,6 +73,11 @@ export function PassengersSection({
           </button>
         ) : null}
       </div>
+      {load?.crew_basis === "standard" && (
+        <p className="mb-2 px-1 text-xs text-muted-foreground">
+          Assigned crew: {fmtLbs(load.crew_lbs)} lb · {crewWeightNote(load)}.
+        </p>
+      )}
       <div className="overflow-hidden rounded-lg border border-border bg-card">
         {rows.length === 0 ? (
           <div className="px-4 py-10 text-center text-sm text-muted-foreground">
@@ -143,6 +152,7 @@ export function PassengersSection({
                           >
                             Edit
                           </button>
+                          {Number(p.baggage_lbs) > 0 && !p.is_crew && <BumpBags flightId={flightId} paxId={p.id} name={`${p.first_name} ${p.last_name}`} baggageLbs={String(p.baggage_lbs)} />}
                           {p.booking_id ? (
                             // Their seat is the booking's (#137): cancelling
                             // or moving it takes them off.

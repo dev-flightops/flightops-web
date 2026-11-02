@@ -37,7 +37,7 @@ export function SafetyReportButton() {
     <Link
       href={href}
       aria-label="File a safety report"
-      className="btn-caps fixed bottom-6 right-6 z-30 inline-flex items-center rounded-md bg-status-red-fill px-4 py-2.5 text-white shadow-[0_2px_12px_rgb(0_0_0/0.35)] transition hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-status-red"
+      className="btn-caps inline-flex h-14 items-center justify-center sm:fixed sm:bottom-6 sm:right-6 sm:z-30 sm:h-auto sm:rounded-md bg-status-red-fill px-4 py-2.5 text-white shadow-[0_2px_12px_rgb(0_0_0/0.35)] transition hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-status-red"
     >
       Safety
     </Link>

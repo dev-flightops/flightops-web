@@ -8,6 +8,7 @@ import type { Customer } from "@/lib/api/reservations";
 import { searchFlightsAction } from "./actions";
 import { FlightResults, formatTime } from "./flight-results";
 import type { StationListItem } from "@/lib/api/types";
+import { DEFAULT_ZONE_TABLE, localDay, zoneFor, type ZoneTable } from "@/lib/format/local-time";
 
 /**
  * New Booking search form — mirrors legacy peregrineflight.com's
@@ -48,12 +49,6 @@ const TRIP_TYPES: Array<{
   { id: "freight_only", label: "Freight Only" },
 ];
 
-function _todayIso(): string {
-  const d = new Date();
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-}
-
 /** id of the shared <datalist> the three ICAO inputs point at. */
 const STATION_LIST_ID = "station-list";
 
@@ -89,8 +84,12 @@ function airportError(value: string, label: string): string | null {
 export function NewBookingSearchForm({
   customers,
   stations = [],
+  zones = DEFAULT_ZONE_TABLE,
+  today,
 }: {
   customers: Customer[];
+  zones?: ZoneTable;
+  today?: string;
   /** Configured stations, for the From/To/Via ICAO typeahead. Empty when
    *  ground-service is unreachable — inputs stay plain free-text. */
   stations?: StationListItem[];
@@ -101,7 +100,7 @@ export function NewBookingSearchForm({
   const [customerQuery, setCustomerQuery] = useState("");
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [couponCode, setCouponCode] = useState("");
-  const [date, setDate] = useState(_todayIso());
+  const [date, setDate] = useState(() => today ?? localDay(zones.fallback));
   const [origin, setOrigin] = useState("");
   const [destination, setDestination] = useState("");
   const [via, setVia] = useState("");
@@ -228,7 +227,7 @@ export function NewBookingSearchForm({
   }
 
   const picked = (f: FlightSearchResult | null) =>
-    f ? `${f.flight_number}, ${formatTime(f.scheduled_departure_at)}` : "no flight picked: it waits for one";
+    f ? `${f.flight_number}, ${formatTime(f.scheduled_departure_at, zoneFor(zones, f.origin))}` : "no flight picked: it waits for one";
   const continueHref = `/reservations/bookings/new?${searched ?? ""}${
     chosenOut ? `&flight=${chosenOut.flight_id}` : ""
   }${chosenBack ? `&return_flight=${chosenBack.flight_id}` : ""}`;
@@ -566,6 +565,7 @@ export function NewBookingSearchForm({
       {results && !isReturn && (
         <FlightResults
           results={results}
+          zones={zones}
           bookingHref={(f) =>
             `/reservations/bookings/new?${searched ?? ""}&flight=${f.flight_id}`
           }
@@ -578,6 +578,7 @@ export function NewBookingSearchForm({
           {results ? (
             <FlightResults
               results={results}
+              zones={zones}
               selectedId={chosenOut?.flight_id ?? null}
               onSelect={(f) => setChosenOut(f)}
             />
@@ -592,6 +593,7 @@ export function NewBookingSearchForm({
           {returnResults ? (
             <FlightResults
               results={returnResults}
+              zones={zones}
               selectedId={chosenBack?.flight_id ?? null}
               onSelect={(f) => setChosenBack(f)}
             />

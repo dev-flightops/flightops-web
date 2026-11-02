@@ -109,8 +109,8 @@ describe("SummaryTab", () => {
         ]}
       />,
     );
-    expect(screen.getByText("Total Flight Time")).toBeInTheDocument();
-    expect(screen.getByText("Total Block Time")).toBeInTheDocument();
+    expect(screen.getByText("Engine Running Time").parentElement).toHaveTextContent("1.5");
+    expect(screen.getByText("Airborne Time").parentElement).toHaveTextContent("1.3");
     expect(screen.getByText("Total Hobbs")).toBeInTheDocument();
     // 1h30m flight + 1.5 hobbs → both render "1.5"; block 80min → 1.3.
     expect(screen.getAllByText("1.5")).toHaveLength(2);

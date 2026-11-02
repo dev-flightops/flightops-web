@@ -66,8 +66,9 @@ export function CancelFlight({
           <DialogHeader>
             <DialogTitle>Cancel {flightNumber}</DialogTitle>
             <DialogDescription>
-              The flight leaves the board and stays on record as cancelled. Any mail or
-              freight it took from the waiting list goes back on it.
+              The flight leaves the board and stays on record as cancelled.
+              Active passenger bookings return to the awaiting-flight queue;
+              mail and freight go back to the waiting list.
             </DialogDescription>
           </DialogHeader>
           <label htmlFor="cancel-reason" className="field-label">

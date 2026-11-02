@@ -107,7 +107,7 @@ export default async function QuizPage({
           className="mb-4 notice notice-green text-sm"
         >
           <p className="font-semibold">
-            You already passed this quiz —{" "}
+            A passing attempt is recorded —{" "}
             {passingAttempt.score}/{passingAttempt.question_count} correct.
           </p>
           <p className="mt-0.5 text-xs text-status-green">
@@ -121,7 +121,7 @@ export default async function QuizPage({
           className="mb-4 notice notice-yellow text-sm"
         >
           <p className="font-semibold">
-            {priorAttempts.length} prior attempt{priorAttempts.length === 1 ? "" : "s"}
+            Recorded quiz history: {priorAttempts.length} attempt{priorAttempts.length === 1 ? "" : "s"}
             {" — highest score "}
             {(() => {
               // Pick the attempt with the highest score and quote
@@ -133,7 +133,7 @@ export default async function QuizPage({
               );
               return `${best.score}/${best.question_count}`;
             })()}
-            . Not passing yet — try again.
+            . Your current result appears below when submitted.
           </p>
         </div>
       ) : null}

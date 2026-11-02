@@ -14,6 +14,7 @@ import {
 } from "@/lib/api/ops";
 import { getFratThresholds, loadZoneTable } from "@/lib/api/auth";
 import { loadFratInputs } from "@/lib/frat/load-inputs";
+import { getVillageBoard } from "@/lib/api/weather";
 import { getFlightLoad, type FlightLoad } from "@/lib/api/manifest";
 import { listFuelOrders, listSupplierBases } from "@/lib/api/ground";
 import { zoneFor } from "@/lib/format/local-time";
@@ -31,6 +32,7 @@ import type {
   WeightReturn,
   PreflightProgressResponse,
   WeatherBatchResponse,
+  VillageBoardRow,
 } from "@/lib/api/types";
 
 import { PreflightFuel } from "./preflight-fuel";
@@ -90,6 +92,7 @@ export default async function PreflightPage({
   let fratBlock: FratBlockEligibilityResponse | null = null;
   let flightLog: FlightLogResponse | null = null;
   let loadError: string | null = null;
+  let villages: VillageBoardRow[] | null = null;
 
   try {
     // Fan-out: flight + progress are required; duty + latest FRAT +
@@ -105,6 +108,7 @@ export default async function PreflightPage({
       fratConfigResult,
       flightLoadResult,
       flightLogResult,
+      villageResult,
     ] = await Promise.all([
         getFlight(flightId),
         getPreflightProgress(flightId),
@@ -135,6 +139,7 @@ export default async function PreflightPage({
         // (the client, 30 Oct). Best-effort: without it the step points
         // at the logbook, as before.
         listFlightLogs({ flightId, mine: true, limit: 1 }).catch(() => null),
+        getVillageBoard().then(board => board.items).catch(() => null),
       ]);
     flight = flightResult;
     progress = progressResult;
@@ -145,11 +150,18 @@ export default async function PreflightPage({
     flightLoad = flightLoadResult;
     flightLog = flightLogResult?.items[0] ?? null;
     fratConfig = fratConfigResult;
+    villages = villageResult;
     // Step 3's weather and step 4's prefill and block FRAT, as the
     // flight's FRAT page loads them (#155). Non-fatal: without weather,
     // step 3 renders its "data unavailable" acknowledgment and step 4 the
     // questionnaire unfilled.
-    ({ weather, fratPrefill, fratBlock } = await loadFratInputs(flightResult));
+    // Before step 3 there is no weather/FRAT editor (including completed
+    // steps) to render. Do not hold dispatch and weight review behind
+    // external weather fetches. Once weather has been reached, keep the
+    // inputs available when the pilot reopens that completed step.
+    if (progressResult.next_step === null || progressResult.next_step >= 3) {
+      ({ weather, fratPrefill, fratBlock } = await loadFratInputs(flightResult));
+    }
   } catch (err) {
     if (err instanceof ApiError && err.status === 404) {
       notFound();
@@ -217,6 +229,7 @@ export default async function PreflightPage({
         weightReturn={weightReturn}
         flightLoad={flightLoad}
         weather={weather}
+        villages={villages}
         fratConfig={fratConfig}
         fratPrefill={fratPrefill}
         fratBlock={fratBlock}

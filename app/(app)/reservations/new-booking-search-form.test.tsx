@@ -136,6 +136,14 @@ function fillRoute(origin: string, destination: string) {
 }
 
 describe("NewBookingSearchForm — search behaviour", () => {
+  it("does not advertise an unimplemented gift-voucher control", () => {
+    render(<NewBookingSearchForm customers={[]} stations={STATIONS} />);
+
+    expect(
+      screen.queryByRole("button", { name: /use gift voucher/i }),
+    ).not.toBeInTheDocument();
+  });
+
   it("blocks a blank submit and names every missing field", () => {
     render(<NewBookingSearchForm customers={[]} stations={STATIONS} />);
     fireEvent.click(screen.getByRole("button", { name: /search flights/i }));
@@ -412,5 +420,17 @@ describe("NewBookingSearchForm — return trips (#148)", () => {
     expect(screen.getByLabelText("Return date")).toHaveAttribute("min", "2026-10-31");
     fireEvent.click(screen.getByRole("button", { name: /search flights/i }));
     expect(searchFlights).not.toHaveBeenCalled();
+  });
+});
+
+
+describe("booking search company day", () => {
+  it("starts on the operator day when UTC and the viewer are already tomorrow", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-11-02T07:15:00Z"));
+    try {
+      const { container } = render(<NewBookingSearchForm customers={[]} zones={{ fallback: "America/Anchorage", byIcao: {} }} />);
+      expect(container.querySelector('input[type="date"]')).toHaveValue("2026-11-01");
+    } finally { vi.useRealTimers(); }
   });
 });

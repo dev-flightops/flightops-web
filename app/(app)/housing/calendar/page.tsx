@@ -14,7 +14,8 @@ import {
 import { unitColor } from "@/lib/housing/unit-color";
 import { readableTextOn } from "@/lib/theme/contrast";
 import { BookStayDialog, type StayPerson, type StayRoom } from "@/components/housing/book-stay-dialog";
-import { listStaff } from "@/lib/api/auth";
+import { listStaff, loadZoneTable } from "@/lib/api/auth";
+import { localDay } from "@/lib/format/local-time";
 
 /**
  * /housing/calendar — 7-day booking calendar.
@@ -47,7 +48,8 @@ export default async function HousingCalendarPage({
   searchParams: Promise<{ from?: string }>;
 }) {
   const params = await searchParams;
-  const anchor = parseDateOr(params.from, mondayOfThisWeek());
+  const companyToday = localDay((await loadZoneTable()).fallback);
+  const anchor = parseDateOr(params.from, mondayOfThisWeek(companyToday));
   const days = Array.from({ length: 7 }, (_, i) => addDays(anchor, i));
   const fromIso = isoDay(days[0]);
   const toIso = isoDay(days[days.length - 1]);
@@ -84,7 +86,7 @@ export default async function HousingCalendarPage({
 
   const prevAnchor = addDays(anchor, -7);
   const nextAnchor = addDays(anchor, 7);
-  const today = mondayOfThisWeek();
+  const today = mondayOfThisWeek(companyToday);
 
   return (
     <div className="w-full px-4 py-6 sm:px-6">
@@ -138,6 +140,7 @@ export default async function HousingCalendarPage({
         <EmptyState />
       ) : (
         <CalendarGrid
+          todayIso={companyToday}
           people={people}
           units={units}
           unitsRooms={unitsRooms}
@@ -196,12 +199,14 @@ function CalendarNav({
 }
 
 function CalendarGrid({
+  todayIso,
   people,
   units,
   unitsRooms,
   bookings,
   days,
 }: {
+  todayIso: string;
   people: StayPerson[];
   units: HousingUnit[];
   unitsRooms: Map<string, HousingRoom[]>;
@@ -215,7 +220,6 @@ function CalendarGrid({
     list.push(b);
     bookingsByRoom.set(b.room_id, list);
   }
-  const todayIso = isoDay(new Date());
   const choices: StayRoom[] = units.flatMap((u) =>
     (unitsRooms.get(u.id) ?? []).map((r) => ({
       id: r.id,
@@ -467,8 +471,8 @@ function parseDateOr(raw: string | undefined, fallback: Date): Date {
   return new Date(Date.UTC(y, m - 1, d));
 }
 
-function mondayOfThisWeek(): Date {
-  const now = new Date();
+function mondayOfThisWeek(today: string): Date {
+  const now = new Date(`${today}T00:00:00Z`);
   const day = now.getUTCDay(); // 0=Sun
   const diff = day === 0 ? -6 : 1 - day;
   return new Date(

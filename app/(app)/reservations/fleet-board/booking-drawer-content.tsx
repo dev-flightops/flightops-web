@@ -4,6 +4,9 @@ import { LifecycleControls } from "@/app/(app)/reservations/bookings/[id]/lifecy
 import { ApiError } from "@/lib/api/client";
 import { BOOKING_STATUS_LABELS, getBooking } from "@/lib/api/reservations";
 
+import { loadZoneTable } from "@/lib/api/auth";
+import { localClock, localDay, zoneFor } from "@/lib/format/local-time";
+
 import { SheetTitle } from "@/components/ui/sheet";
 
 /** Server component rendering booking detail inside the Fleet Board drawer.
@@ -21,6 +24,9 @@ export async function BookingDrawerContent({ bookingId }: { bookingId: string })
     return <ErrorBody />;
   }
 
+  const timeZone = zoneFor(await loadZoneTable(), booking.origin_icao);
+  const timestamp = (iso: string) => `${localDay(timeZone, new Date(iso))}, ${localClock(iso, timeZone)}`;
+
   return (
     <div className="flex h-full flex-col">
       <header className="border-b border-border px-6 pb-4 pt-6">
@@ -28,7 +34,7 @@ export async function BookingDrawerContent({ bookingId }: { bookingId: string })
           {booking.origin_icao} → {booking.destination_icao}
         </SheetTitle>
         <p className="mt-1 text-xs text-muted-foreground">
-          {new Date(booking.requested_departure_at).toLocaleString()} ·{" "}
+          {timestamp(booking.requested_departure_at)} ·{" "}
           {BOOKING_STATUS_LABELS[booking.status]}
         </p>
         <p className="mt-0.5 text-[0.65rem] text-muted-foreground">
@@ -36,7 +42,7 @@ export async function BookingDrawerContent({ bookingId }: { bookingId: string })
           <code className="rounded bg-muted/60 px-1 font-mono">
             {booking.id.slice(0, 8)}
           </code>{" "}
-          · Filed {new Date(booking.created_at).toLocaleDateString()} ·{" "}
+          · Filed {localDay(timeZone, new Date(booking.created_at))} ·{" "}
           <Link
             href={`/reservations/bookings/${booking.id}`}
             className="text-primary hover:underline"
@@ -63,20 +69,20 @@ export async function BookingDrawerContent({ bookingId }: { bookingId: string })
           />
           <DetailRow
             label="Departure"
-            value={new Date(booking.requested_departure_at).toLocaleString()}
+            value={timestamp(booking.requested_departure_at)}
           />
           {booking.estimated_arrival_at ? (
             <DetailRow
               label="Est. arrival"
-              value={new Date(booking.estimated_arrival_at).toLocaleString()}
+              value={timestamp(booking.estimated_arrival_at)}
             />
           ) : null}
           <DetailRow
-            label="Aircraft"
+            label="Aircraft preference"
             value={
               booking.aircraft
                 ? `${booking.aircraft.tail_number}${booking.aircraft.model ? ` (${booking.aircraft.model})` : ""}`
-                : "— (dispatch to assign)"
+                : "No preference"
             }
           />
           <DetailRow label="Pax" value={String(booking.pax_count)} />
@@ -112,26 +118,26 @@ export async function BookingDrawerContent({ bookingId }: { bookingId: string })
               {booking.quoted_at ? (
                 <li>
                   <span className="font-semibold">Quoted</span> —{" "}
-                  {new Date(booking.quoted_at).toLocaleString()}
+                  {timestamp(booking.quoted_at)}
                 </li>
               ) : null}
               {booking.confirmed_at ? (
                 <li>
                   <span className="font-semibold">Confirmed</span> —{" "}
-                  {new Date(booking.confirmed_at).toLocaleString()} by{" "}
+                  {timestamp(booking.confirmed_at)} by{" "}
                   {booking.confirmed_by?.full_name ?? "unknown"}
                 </li>
               ) : null}
               {booking.completed_at ? (
                 <li>
                   <span className="font-semibold">Completed</span> —{" "}
-                  {new Date(booking.completed_at).toLocaleString()}
+                  {timestamp(booking.completed_at)}
                 </li>
               ) : null}
               {booking.cancelled_at ? (
                 <li>
                   <span className="font-semibold">Cancelled</span> —{" "}
-                  {new Date(booking.cancelled_at).toLocaleString()} by{" "}
+                  {timestamp(booking.cancelled_at)} by{" "}
                   {booking.cancelled_by?.full_name ?? "unknown"}
                   {booking.cancelled_reason ? (
                     <p className="mt-1 whitespace-pre-wrap text-muted-foreground">

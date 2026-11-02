@@ -8,8 +8,10 @@ import type { FlightLogLeg } from "@/lib/api/types";
  * (M2-M-9 chain, follow-up PR) can call the same function.
  *
  * Per-leg semantics:
- *   blockHours  = blocks_on − blocks_off
- *   flightHours = engine_off − engine_on
+ *   totalBlockHours  = landing − takeoff (legacy API fields blocks_on/off)
+ *   totalFlightHours = engine_off − engine_on
+ * UI names these Airborne Time and Engine Running Time respectively;
+ * legacy property names remain for existing callers.
  *   hobbsHours  = end_hobbs − start_hobbs
  *
  * Time fields are "HH:MM:SS" local clock strings; pair with the
@@ -95,7 +97,7 @@ function legHours(
   const startMin = clockToMinutes(startClock);
   const endMinRaw = clockToMinutes(endClock);
   if (startMin === null || endMinRaw === null) return null;
-  const endMin = crossesMidnight ? endMinRaw + 1440 : endMinRaw;
+  const endMin = crossesMidnight && endMinRaw <= startMin ? endMinRaw + 1440 : endMinRaw;
   const diff = endMin - startMin;
   if (diff < 0) return null;
   return diff / 60;

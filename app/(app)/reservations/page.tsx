@@ -1,7 +1,10 @@
 import { ApiError } from "@/lib/api/client";
+import { loadZoneTable } from "@/lib/api/auth";
 import { listStations } from "@/lib/api/ground";
 import { CUSTOMERS_MAX_LIMIT, listCustomers } from "@/lib/api/reservations";
 import type { StationListItem } from "@/lib/api/types";
+
+import { localDay } from "@/lib/format/local-time";
 
 import { NewBookingSearchForm } from "./new-booking-search-form";
 
@@ -22,6 +25,7 @@ import { NewBookingSearchForm } from "./new-booking-search-form";
  * /reservations/fleet-board.
  */
 export default async function NewBookingLandingPage() {
+  const zonesPromise = loadZoneTable();
   let customers: Awaited<ReturnType<typeof listCustomers>>["items"] = [];
   try {
     customers = (await listCustomers({ limit: CUSTOMERS_MAX_LIMIT })).items;
@@ -41,6 +45,8 @@ export default async function NewBookingLandingPage() {
     stations = [];
   }
 
+  const zones = await zonesPromise;
+
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
       <header className="mb-6 border-b border-border pb-5">
@@ -49,7 +55,7 @@ export default async function NewBookingLandingPage() {
           Search trip type, route, and passengers to start a booking.
         </p>
       </header>
-      <NewBookingSearchForm customers={customers} stations={stations} />
+      <NewBookingSearchForm customers={customers} stations={stations} zones={zones} today={localDay(zones.fallback)} />
     </div>
   );
 }

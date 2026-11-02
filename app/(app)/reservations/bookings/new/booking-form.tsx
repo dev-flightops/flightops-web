@@ -70,7 +70,6 @@ export function BookingForm({
       {flightId ? <input type="hidden" name="flight_id" value={flightId} /> : null}
       {returnTrip ? (
         <>
-          <input type="hidden" name="return_departure_at_local" value={returnTrip.departureLocal} />
           {returnTrip.flightId ? (
             <input type="hidden" name="return_flight_id" value={returnTrip.flightId} />
           ) : null}
@@ -161,6 +160,26 @@ export function BookingForm({
             className="ff-input"
           />
         </Field>
+        {returnTrip ? (
+          <Field
+            label="Requested return departure"
+            name="return_departure_at_local"
+            error={state.fieldErrors?.return_departure_at_local}
+            hint={returnTrip.flightId
+              ? "Local time at the return departure base, from the selected flight. Choose another return flight above to change it."
+              : "Local time at the return departure base. Choose a time after the outbound; dispatch will assign a flight."}
+          >
+            <input
+              id="return_departure_at_local"
+              name="return_departure_at_local"
+              type="datetime-local"
+              required
+              readOnly={Boolean(returnTrip.flightId)}
+              defaultValue={returnTrip.departureLocal}
+              className="ff-input"
+            />
+          </Field>
+        ) : null}
       </div>
 
       <PassengerRows

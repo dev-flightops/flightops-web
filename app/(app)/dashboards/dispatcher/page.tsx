@@ -119,7 +119,7 @@ export default async function DispatcherDashboardPage() {
         </div>
         <AlertList
           alerts={snapshotAlertsToList(snapshot.alerts)}
-          emptyHint="No active alerts from the wired sources. Overdue flights, MELs about to expire, and grounded aircraft show up here; expired currency / NOTAM alerts land with M3 services."
+          emptyHint="No overdue flights, expiring MELs or grounded aircraft. Review crew currency and current NOTAMs in the dispatch packet."
         />
       </section>
 

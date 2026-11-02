@@ -57,7 +57,7 @@ vi.mock("@/lib/api/housing", () => ({
 
 // Staff for the "Book a stay" pickers (#158), and the dialog itself, which
 // is tested on its own.
-vi.mock("@/lib/api/auth", () => ({ listStaff: vi.fn(async () => ({ items: [], total: 0 })) }));
+vi.mock("@/lib/api/auth", () => ({ listStaff: vi.fn(async () => ({ items: [], total: 0 })), loadZoneTable: async () => ({ byIcao: {}, fallback: "America/Anchorage" }) }));
 vi.mock("@/components/housing/book-stay-dialog", () => ({
   BookStayDialog: ({ roomId, checkIn }: { roomId?: string; checkIn?: string }) => (
     <button data-testid="book-night" data-room={roomId} data-day={checkIn}>+</button>

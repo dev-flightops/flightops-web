@@ -2,6 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { BoardFlightItem, PositionResponse } from "@/lib/api/types";
+vi.mock("@/auth", () => ({ auth: async () => ({ roles: ["exec_admin"] }) }));
 
 const { TestApiError, getLatestPositions, getFlightBoard } = vi.hoisted(() => {
   class TestApiError extends Error {

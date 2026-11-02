@@ -1,13 +1,15 @@
 import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { getCharter, listAircraft } = vi.hoisted(() => ({
+const { getCharter, getBooking, listAircraft } = vi.hoisted(() => ({
   getCharter: vi.fn(),
+  getBooking: vi.fn(),
   listAircraft: vi.fn(),
 }));
 
 vi.mock("@/lib/api/client", () => ({ ApiError: class ApiError extends Error {} }));
 vi.mock("@/lib/api/charter", () => ({ getCharter }));
+vi.mock("@/lib/api/reservations", () => ({ getBooking, bookingRef: (id: string) => `BK-${id.slice(0,8).toUpperCase()}` }));
 vi.mock("@/lib/api/ops", () => ({ listAircraft }));
 vi.mock("@/lib/api/auth", () => ({
   getCompanyProfile: vi.fn(async () => ({ ground_minutes: 15 })),
@@ -70,4 +72,16 @@ describe("the new-flight page for a charter (#133)", () => {
     expect(screen.getByRole("alert")).toHaveTextContent("won’t be linked to it");
     expect(field("charter_request_id")).toBeNull();
   });
+});
+
+it("keeps a waiting booking's route, passenger count and departure-base time", async () => {
+  const id = "151944f7-2069-494e-8bd5-5720ed696e45";
+  getBooking.mockResolvedValue({ id, customer:{full_name:"Demo Traveller"}, origin_icao:"PABE", destination_icao:"PAII", requested_departure_at:"2026-11-02T09:03:00Z", pax_count:1, flight:null });
+  render(await FlightFollowingNewPage({ searchParams:Promise.resolve({booking:id}) }));
+  expect(field("flight_number")).toHaveValue("BK-151944F7");
+  expect(field("origin")).toHaveValue("PABE");
+  expect(field("destination")).toHaveValue("PAII");
+  expect(field("scheduled_departure_at")).toHaveValue("2026-11-02T00:03");
+  expect(field("booking_id")).toHaveValue(id);
+  expect(screen.getByRole("note")).toHaveTextContent("choose Add to flight");
 });
