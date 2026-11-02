@@ -118,7 +118,7 @@ export function OverrideDialog({
             <DialogTitle>Override hard-block for {pilotName}</DialogTitle>
             <DialogDescription>
               Recording one override per item below. Same cert + reason
-              apply to all. Audit-logged permanently (Spec 5); CP + DO
+              apply to all. Permanently recorded in the audit trail; the Chief Pilot and Director of Operations
               are notified.
             </DialogDescription>
           </DialogHeader>
@@ -203,7 +203,7 @@ export function OverrideDialog({
                 value={reason}
                 disabled={pending}
                 onChange={(e) => setReason(e.target.value)}
-                placeholder="Why does this pilot need to fly despite the block? Spec 5 requires at least 50 characters of context."
+                placeholder="Explain why this pilot needs to fly despite the block (at least 50 characters)."
                 className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none aria-[invalid=true]:border-status-red"
                 aria-invalid={fieldError("reason") ? "true" : undefined}
               />

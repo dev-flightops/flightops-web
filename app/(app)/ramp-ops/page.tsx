@@ -2,7 +2,7 @@ import { StatusMark, type StatusTone } from "@/components/ff/status-mark";
 import Link from "next/link";
 import { formatZulu } from "@/lib/format/flight-time";
 
-import { listCompanyBases } from "@/lib/api/auth";
+import { listCompanyBases, loadZoneTable } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
 import { getFlightBoard } from "@/lib/api/flight-following";
 import { listAssignmentsByTeam, listLoadTeams } from "@/lib/api/ground";
@@ -42,6 +42,7 @@ export default async function RampOpsPage({
   const { base: baseFilterRaw } = await searchParams;
   const baseFilter = baseFilterRaw?.trim().toUpperCase() || null;
 
+  const zonesPromise = loadZoneTable();
   const [basesResult, flightsResult, teamsResult] = await Promise.allSettled([
     listCompanyBases(),
     getFlightBoard("today"),
@@ -105,9 +106,10 @@ export default async function RampOpsPage({
   }
   if (assignmentError) errors.push("Some team assignments unavailable.");
 
+  const zones = await zonesPromise;
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
-      <PageHeader bases={bases} baseFilter={baseFilter} flightCount={flights.length} />
+      <PageHeader bases={bases} baseFilter={baseFilter} flightCount={flights.length} timeZone={zones.fallback} />
 
       {errors.length > 0 && (
         <div
@@ -140,13 +142,16 @@ function PageHeader({
   bases,
   baseFilter,
   flightCount,
+  timeZone,
 }: {
   bases: CompanyBaseResponse[];
   baseFilter: string | null;
   flightCount: number;
+  timeZone: string;
 }) {
   const today = new Date();
   const formatted = today.toLocaleDateString(undefined, {
+    timeZone,
     weekday: "long",
     month: "long",
     day: "numeric",

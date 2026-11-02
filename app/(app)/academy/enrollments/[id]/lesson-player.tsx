@@ -22,12 +22,15 @@ const _initial: CompleteLessonState = { status: "idle" };
 export function LessonPlayer({
   enrollmentId,
   lesson,
+  lessonNumber,
   isDone,
   locked,
   quizPassed,
 }: {
   enrollmentId: string;
   lesson: Lesson;
+  /** Position in the displayed course; stored ordinals may start at 0 or 1. */
+  lessonNumber: number;
   isDone: boolean;
   locked: boolean;
   /** True when the lesson has a quiz AND the learner already has a
@@ -44,7 +47,7 @@ export function LessonPlayer({
     <article>
       <header className="mb-6 border-b border-border pb-5">
         <p className="eyebrow">
-          Lesson {String(lesson.ordinal + 1).padStart(2, "0")}
+          Lesson {String(lessonNumber).padStart(2, "0")}
         </p>
         <h2 className="caption-caps mt-1 text-xl text-foreground">
           {lesson.title}

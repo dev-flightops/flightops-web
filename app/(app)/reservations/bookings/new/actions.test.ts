@@ -243,4 +243,15 @@ describe("a return trip (#148)", () => {
     await submit();
     expect(createBooking).toHaveBeenCalledWith(expect.objectContaining({ return_trip: null }));
   });
+
+  it("explains a same-day return before the outbound without sending an invalid booking", async () => {
+    const result = await submit({
+      requested_departure_at_local: "2026-09-22T15:00",
+      return_departure_at_local: "2026-09-22T09:00",
+    });
+    expect(result.status).toBe("error");
+    if (result.status !== "error") throw new Error("Expected return-time validation");
+    expect(result.fieldErrors?.return_departure_at_local).toMatch(/later return departure/);
+    expect(createBooking).not.toHaveBeenCalled();
+  });
 });

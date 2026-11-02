@@ -27,6 +27,7 @@ import type {
   WeightReturn,
   PreflightProgressResponse,
   WeatherBatchResponse,
+  VillageBoardRow,
 } from "@/lib/api/types";
 
 import { ReviewDispatchReleaseStep } from "./step-1-dispatch-release";
@@ -55,6 +56,7 @@ interface Props {
    *  "data unavailable" state and still lets the pilot ack that
    *  they reviewed weather in their usual source. */
   weather: WeatherBatchResponse | null;
+  villages?: VillageBoardRow[] | null;
   /** The operator's own FRAT policy, for the company crosswind limit
    *  the wind factor is scored against. Null when the settings read
    *  failed — the wind factor then says the limit is unavailable and
@@ -102,6 +104,7 @@ export function PreflightShell({
   weightReturn,
   flightLoad = null,
   weather,
+  villages = [],
   fratConfig,
   fratPrefill,
   fratBlock,
@@ -192,6 +195,7 @@ export function PreflightShell({
           weightReturn={weightReturn}
           flightLoad={flightLoad}
           weather={weather}
+          villages={villages}
           fratConfig={fratConfig}
           fratPrefill={fratPrefill}
           fratBlock={fratBlock}
@@ -342,6 +346,7 @@ function ActiveStep({
   weightReturn,
   flightLoad,
   weather,
+  villages,
   fratConfig,
   fratPrefill,
   fratBlock,
@@ -356,6 +361,7 @@ function ActiveStep({
   weightReturn: WeightReturn | null;
   flightLoad: FlightLoad | null;
   weather: WeatherBatchResponse | null;
+  villages: VillageBoardRow[] | null;
   fratConfig: FratThresholdConfigResponse | null;
   fratPrefill: FratPrefillResponse | null;
   fratBlock: FratBlockEligibilityResponse | null;
@@ -379,6 +385,7 @@ function ActiveStep({
           flightId={flightId}
           flight={flight}
           weather={weather}
+          villages={villages}
         />
       );
     case 4:
@@ -439,9 +446,8 @@ function StepStubPanel({ stepNumber }: { stepNumber: number }) {
       <p className="eyebrow">Step {stepNumber}</p>
       <h2 className="panel-title mt-1">{label}</h2>
       <p className="mt-3 text-sm text-muted-foreground">
-        This step's UI ships in a follow-up PR. The backend gate accepts a
-        completion POST today; for now this surface documents what's coming so
-        the progress indicator stays accurate.
+        This preflight step is unavailable. Refresh the page or contact your
+        dispatcher before continuing.
       </p>
     </section>
   );
@@ -508,8 +514,6 @@ function CompletedSummary({
 function AllDonePanel({ flight }: { flight: FlightDetail }) {
   const {
     flight_number: flightNumber,
-    origin,
-    destination,
   } = flight;
   return (
     <section className="rounded-lg border border-border border-l-[3px] border-l-status-green bg-card px-5 py-6">
@@ -531,7 +535,7 @@ function AllDonePanel({ flight }: { flight: FlightDetail }) {
         </span>
         {" · "}
         <span className="font-mono">
-          {origin} → {destination}
+          {routeText(flight)}
         </span>
       </p>
     </section>

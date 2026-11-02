@@ -117,15 +117,16 @@ export async function loadOperationalSnapshot(): Promise<OperationalSnapshot> {
   // Red — grounded
   if (fleet) {
     for (const row of fleet.items) {
-      if (row.blocking_count > 0) {
+      const manuallyGrounded = !row.is_active && Boolean(row.grounded_at);
+      if (inFleet(row) && (row.blocking_count > 0 || manuallyGrounded)) {
         alerts.push({
           id: `grounded-${row.aircraft.id}`,
           severity: "red",
           category: "aircraft_grounded",
           title: `Aircraft grounded — ${row.aircraft.tail_number}`,
-          detail: `${row.blocking_count} blocking issue${
+          detail: row.blocking_count > 0 ? `${row.blocking_count} blocking issue${
             row.blocking_count === 1 ? "" : "s"
-          } open. Cannot dispatch.`,
+          } open. Cannot dispatch.` : "Aircraft manually grounded. Cannot dispatch.",
           href: `/maintenance/aircraft/${row.aircraft.id}`,
           // grounded_at is null on an aircraft that is airworthy but
           // has blocking issues open, so this falls back to the
@@ -292,7 +293,7 @@ export async function loadOperationalSnapshot(): Promise<OperationalSnapshot> {
   );
 
   const boardItems = board?.items ?? [];
-  let airborneCount = 0;
+  const airborneAircraft = new Set<string>();
   let releasedCount = 0;
   const flightsByOrigin = new Map<string, BoardFlightItem[]>();
   for (const row of boardItems) {
@@ -301,7 +302,7 @@ export async function loadOperationalSnapshot(): Promise<OperationalSnapshot> {
       // "Airborne" inferred from released + actual_departure_at set —
       // legacy uses an explicit airborne status that we collapse into
       // released until the check-in flow records ATD.
-      if (row.actual_departure_at) airborneCount += 1;
+      if (row.actual_departure_at && !row.actual_arrival_at) airborneAircraft.add(row.aircraft.id);
     }
     const list = flightsByOrigin.get(row.origin) ?? [];
     list.push(row);
@@ -321,7 +322,7 @@ export async function loadOperationalSnapshot(): Promise<OperationalSnapshot> {
 
   return {
     alerts,
-    airborneCount,
+    airborneCount: airborneAircraft.size,
     releasedCount,
     fleetTotal,
     fleetAirworthy,

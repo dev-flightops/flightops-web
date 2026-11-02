@@ -1,5 +1,7 @@
 "use client";
 
+import { BalanceScopeNote } from "@/components/manifest/balance-scope-note";
+
 import { useState, useTransition } from "react";
 
 import { linkCaps } from "@/components/ff/controls";
@@ -108,6 +110,7 @@ export function WeightAndBalanceStep({ flightId, flight, openReturn, load = null
       </header>
 
       <div className="space-y-4 px-5 py-4 text-sm">
+        <BalanceScopeNote />
         <p className="text-muted-foreground">
           Run the weight &amp; balance for this flight and record the
           result. If the aircraft is over limits it goes back to dispatch
@@ -202,7 +205,7 @@ export function WeightAndBalanceStep({ flightId, flight, openReturn, load = null
                 onSelect={() => setVerdict("within")}
                 tone="green"
                 title="Within limits"
-                detail="The aircraft is within weight and balance for this flight as loaded."
+                detail="I verified that this load meets weight and balance limits using the aircraft’s approved loading procedure."
               />
               <VerdictOption
                 name="wb-verdict"

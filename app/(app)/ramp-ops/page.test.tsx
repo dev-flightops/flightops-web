@@ -34,7 +34,7 @@ const {
 });
 
 vi.mock("@/lib/api/client", () => ({ ApiError: TestApiError }));
-vi.mock("@/lib/api/auth", () => ({ listCompanyBases }));
+vi.mock("@/lib/api/auth", () => ({ listCompanyBases, loadZoneTable: vi.fn(async () => ({ fallback: "America/Anchorage", byBase: {} })) }));
 vi.mock("@/lib/api/flight-following", () => ({ getFlightBoard }));
 vi.mock("@/lib/api/ground", () => ({
   listLoadTeams,
@@ -300,4 +300,16 @@ describe("RampOpsPage (M2 with M2-M-25e wiring)", () => {
 
     expect(screen.getByRole("alert")).toHaveTextContent(/session expired/i);
   });
+});
+
+
+it("labels today in the company zone across the UTC midnight boundary", async () => {
+  vi.useFakeTimers();
+  vi.setSystemTime(new Date("2026-11-02T08:00:00Z"));
+  try {
+    await renderPage();
+    expect(screen.getByText(/Sunday, November 1/)).toBeInTheDocument();
+  } finally {
+    vi.useRealTimers();
+  }
 });

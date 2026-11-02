@@ -1,4 +1,5 @@
 "use client";
+import { routeText } from "@/lib/route";
 
 import { useActionState, useState } from "react";
 
@@ -116,7 +117,7 @@ export function NewFlightLogForm({
             </option>
             {compatibleFlights.map((f) => (
               <option key={f.id} value={f.id}>
-                {f.flight_number} · {f.origin}→{f.destination}
+                {f.flight_number} · {routeText(f)}
               </option>
             ))}
           </FieldSelect>

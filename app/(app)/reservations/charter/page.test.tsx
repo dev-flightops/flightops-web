@@ -10,12 +10,13 @@ const { auth, listCharters, listCustomers } = vi.hoisted(() => ({
 }));
 
 vi.mock("@/auth", () => ({ auth }));
+vi.mock("@/lib/api/auth", () => ({ loadZoneTable: async () => ({ fallback: "America/Anchorage", byIcao: {} }) }));
 vi.mock("@/lib/api/charter", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/lib/api/charter")>()),
   listCharters,
 }));
 vi.mock("@/lib/api/reservations", () => ({ listCustomers }));
-vi.mock("./new-charter-toggle", () => ({ NewCharterToggle: () => null }));
+vi.mock("./new-charter-toggle", () => ({ NewCharterToggle: ({ today }: { today: string }) => <span data-testid="charter-day">{today}</span> }));
 vi.mock("./transition-buttons", () => ({ TransitionButtons: () => null }));
 
 import CharterPipelinePage from "./page";
@@ -52,6 +53,16 @@ beforeEach(() => {
 });
 
 describe("the charter pipeline's flights (#133)", () => {
+  it("defaults a new request to the company day after UTC and the viewer have crossed midnight", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-11-02T07:15:00Z"));
+    auth.mockResolvedValue({ roles: ["dispatcher"] });
+    listCharters.mockResolvedValue({ items: [] });
+    try {
+      await renderPage();
+      expect(screen.getByTestId("charter-day")).toHaveTextContent("2026-11-01");
+    } finally { vi.useRealTimers(); }
+  });
   it("offers to build a confirmed charter's flight, and opens one it has", async () => {
     // The client, 25 Oct: "the charter pipeline doesn't appear to flow
     // into the flights?"

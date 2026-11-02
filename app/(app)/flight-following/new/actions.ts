@@ -345,6 +345,8 @@ export async function createFlightAction(
 
   // Success — redirect outside the try/catch (NEXT_REDIRECT throws
   // intentionally and we don't want it caught by the API error handler).
+  const sourceBooking = String(formData.get("booking_id") ?? "").trim();
+  if (opened && UUID.test(sourceBooking)) redirect(`/manifest/${opened.id}`);
   if (opened && minimums?.below) {
     redirect(`/dispatch?flight=${opened.id}&date=${opened.day}`);
   }

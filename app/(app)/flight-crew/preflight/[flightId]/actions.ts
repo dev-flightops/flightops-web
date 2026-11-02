@@ -188,6 +188,16 @@ export async function submitPilotAcceptanceAction(
       if (err.status === 404) {
         return { ok: false, error: "Flight not found." };
       }
+      if (err.status === 409 && err.message.includes("aircraft_not_preflighted")) {
+        let message = "This aircraft needs its daily preflight and run-up. Take it on Flight Crew, record both checks, then return here to accept the release.";
+        try {
+          const detail = JSON.parse(err.message).detail;
+          if (detail?.error === "aircraft_not_preflighted" && typeof detail.message === "string") {
+            message = detail.message;
+          }
+        } catch { /* Keep the actionable fallback for older services. */ }
+        return { ok: false, error: message };
+      }
       return { ok: false, error: `Couldn't save (HTTP ${err.status}).` };
     }
     return { ok: false, error: "Couldn't save — try again." };

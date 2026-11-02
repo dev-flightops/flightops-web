@@ -138,7 +138,7 @@ export default async function StationDashboardPage({
               Active Alerts
             </h2>
             <span className="text-[0.65rem] text-muted-foreground">
-              {scopedSnapshot.alerts.length} live · NOTAM and weather alerts land with their services
+              {scopedSnapshot.alerts.length} live · Overdue flights, expiring MELs and grounded aircraft
             </span>
           </div>
           <AlertList

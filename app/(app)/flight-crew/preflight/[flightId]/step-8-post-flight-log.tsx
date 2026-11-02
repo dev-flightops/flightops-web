@@ -1,4 +1,5 @@
 "use client";
+import { routeText } from "@/lib/route";
 
 import Link from "next/link";
 import { useState, useTransition } from "react";
@@ -70,7 +71,7 @@ export function PostFlightLogStep({ flightId, flight, flightLog = null }: Props)
             <p className="mt-1 text-xs text-foreground">
               When dispatch records the arrival of{" "}
               <span className="font-mono font-semibold">{flight.flight_number}</span>{" "}
-              ({flight.origin} → {flight.destination}), its log opens as a draft, already
+              ({routeText(flight)}), its log opens as a draft, already
               filled from the flight. It&apos;s in your logbook then.
             </p>
           ) : flightLog.status === "draft" ? (

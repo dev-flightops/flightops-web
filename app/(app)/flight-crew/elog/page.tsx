@@ -75,7 +75,7 @@ export default async function FlightLogPage() {
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
-      <PageHeader title="Electronic Flight Log" description={todayLong()} />
+      <PageHeader title="Electronic Flight Log" description={`${todayLong()} (UTC)`} />
 
       {loadError ? (
         <div role="alert" className="notice notice-yellow">

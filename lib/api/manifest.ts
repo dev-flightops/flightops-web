@@ -354,6 +354,14 @@ export interface WaitingLoadRow {
   notes: string | null;
   status: WaitingStatus;
   received_at: string;
+  source_booking_id?: string | null;
+  source_pax_id?: string | null;
+}
+
+export function bumpPaxBags(paxId: string, input: { weight_lbs: string; pieces: number; reason: string }) {
+  return apiFetch<WaitingLoadRow>(`/manifest/pax/${paxId}/bump-bags`, {
+    method: "POST", body: JSON.stringify(input),
+  });
 }
 
 export interface WaitingRouteTotal {

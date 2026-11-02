@@ -148,14 +148,24 @@ export default async function AccountingExportPage({
 
       {/* No tiles or table without data: zeros would read as "nothing
           flew", which nobody knows when the load failed. */}
+      {data && !loadError ? (
+        <section aria-label="Invoice amounts export" className="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-card px-4 py-3">
+          <div>
+            <h2 className="eyebrow">Invoice register</h2>
+            <p className="mt-1 max-w-2xl text-xs text-muted-foreground">Selected invoice dates and customer; USD totals, payments and credits, refunds, and current balances. Includes draft and void status. Settlements may be later than the invoice date.</p>
+          </div>
+          <a className="btn-caps rounded-md border border-border px-3 py-2 text-xs" href={`/reservations/accounting-export/invoices?${new URLSearchParams({ start, end, ...(customer ? { customer } : {}) })}`} download>Export invoice amounts CSV</a>
+        </section>
+      ) : null}
+
       {data ? <Activity rows={data.rows} totals={data.totals} /> : null}
 
       <div className="mt-4 rounded-lg border border-border bg-card px-4 py-3">
         <p className="text-xs text-muted-foreground">
           <strong className="text-foreground/80">About this export:</strong>{" "}
           The CSV contains operational activity only — flight dates, routes,
-          customers, passenger counts, and cargo/mail weights. Dollar amounts,
-          rates, and billing terms are managed in your accounting software.
+          customers, passenger counts, and cargo/mail weights. Invoice amounts and payments are available in Invoicing. This activity
+          export does not include invoice balances or revenue.
           This file can be imported into QuickBooks, Xero, Sage, or any system
           that accepts CSV.
         </p>

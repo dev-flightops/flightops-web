@@ -63,6 +63,39 @@ beforeEach(() => {
 });
 
 describe("DispatchComplianceGate", () => {
+  it("does not claim the whole release is enabled when only crew warnings are acknowledged", async () => {
+    getPicCompliance.mockResolvedValueOnce(
+      makeData({
+        dot_color: "yellow",
+        soft_warnings: [
+          makeFinding({
+            currency_item_id: "i-ifr",
+            code: "ifr_currency",
+            name: "IFR Currency",
+            regulation: "14 CFR 61.57(c)",
+            status: "grace_month",
+            message: "0 of 6 required in last 180 days.",
+          }),
+        ],
+      }),
+    );
+
+    render(
+      await DispatchComplianceGate({
+        pilotUserId: "p-1",
+        flightId: "f-1",
+        ackedWarnCodes: new Set(["ifr_currency"]),
+      }),
+    );
+
+    expect(
+      screen.getByText("All crew soft warnings acknowledged"),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Crew warning checks complete")).toBeInTheDocument();
+    expect(screen.queryByText(/release enabled/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/^cleared for release$/i)).not.toBeInTheDocument();
+  });
+
   it("renders the awaiting placeholder when pilotUserId is null", async () => {
     await renderGate(null);
     expect(getPicCompliance).not.toHaveBeenCalled();

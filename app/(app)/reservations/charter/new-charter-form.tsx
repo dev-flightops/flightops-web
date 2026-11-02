@@ -9,12 +9,6 @@ import { createCharterAction, type CharterActionState } from "./actions";
 
 const INITIAL: CharterActionState = { status: "idle" };
 
-function todayIso(): string {
-  const d = new Date();
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-}
-
 /**
  * Wraps the New Charter Request form in useActionState + a
  * customer autocomplete. On success we route back to the pipeline
@@ -23,9 +17,11 @@ function todayIso(): string {
 export function NewCharterForm({
   customers,
   onClose,
+  today,
 }: {
   customers: Customer[];
   onClose: () => void;
+  today: string;
 }) {
   const router = useRouter();
   const [state, action, pending] = useActionState(
@@ -189,7 +185,7 @@ export function NewCharterForm({
             type="date"
             name="requested_date"
             required
-            defaultValue={todayIso()}
+            defaultValue={today}
             className="ff-input px-3 py-2 text-sm"
           />
         </label>

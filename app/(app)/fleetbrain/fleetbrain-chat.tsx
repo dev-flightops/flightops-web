@@ -42,8 +42,7 @@ export function FleetBrainChat({ examples }: { examples: string[] }) {
       foot.current?.scrollIntoView({ behavior: "smooth", block: "end" }),
     );
 
-    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    const result = await askAction(text, tz);
+    const result = await askAction(text);
 
     setTurns((t) =>
       t.map((turn) =>
@@ -114,8 +113,8 @@ export function FleetBrainChat({ examples }: { examples: string[] }) {
           </button>
         </form>
         <p className="mt-1.5 text-center text-[0.65rem] text-muted-foreground">
-          FleetBrain queries live platform data. Results reflect current state
-          as of query time.
+          FleetBrain queries live platform data. Relative dates use the company
+          time zone; results reflect the state at query time.
         </p>
       </div>
     </div>

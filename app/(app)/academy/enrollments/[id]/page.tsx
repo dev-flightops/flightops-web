@@ -12,6 +12,7 @@ import {
   listMyQuizAttempts,
 } from "@/lib/api/academy";
 import { ApiError } from "@/lib/api/client";
+import { formatZuluDate } from "@/lib/format/flight-time";
 
 import { LessonPlayer } from "./lesson-player";
 
@@ -101,10 +102,10 @@ export default async function EnrollmentLessonPage({
           {enrollment.completed_lessons} of {enrollment.total_lessons}{" "}
           lesson{enrollment.total_lessons === 1 ? "" : "s"} complete
           {enrollment.completed_at
-            ? ` · Completed ${new Date(enrollment.completed_at).toLocaleDateString()}`
+            ? ` · Completed ${formatZuluDate(enrollment.completed_at)} (UTC)`
             : ""}
           {enrollment.expires_at
-            ? ` · Expires ${new Date(enrollment.expires_at).toLocaleDateString()}`
+            ? ` · Expires ${formatZuluDate(enrollment.expires_at)} (UTC)`
             : ""}
         </p>
       </header>
@@ -154,6 +155,7 @@ export default async function EnrollmentLessonPage({
             <LessonPlayer
               enrollmentId={enrollment.id}
               lesson={activeLesson}
+              lessonNumber={course.lessons.findIndex(lesson => lesson.id === activeLesson.id) + 1}
               isDone={completedLessonIds.has(activeLesson.id)}
               locked={enrollment.status !== "in_progress"}
               quizPassed={quizPassed}

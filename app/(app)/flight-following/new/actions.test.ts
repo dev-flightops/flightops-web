@@ -434,3 +434,10 @@ describe("createFlightAction and the dispatch minimums (#89)", () => {
     expect(redirectSpy).toHaveBeenCalledWith("/flight-following");
   });
 });
+
+it("opens the new manifest for a waiting-booking handoff", async () => {
+  createFlight.mockResolvedValueOnce({ id:"f-booking", scheduled_departure_at:"2026-11-02T09:03:00Z" });
+  getWeatherMinimums.mockResolvedValueOnce({ below:false });
+  await expect(createFlightAction({ status:"idle" }, makeFormData({ booking_id:"151944f7-2069-494e-8bd5-5720ed696e45" }))).rejects.toThrow("NEXT_REDIRECT");
+  expect(redirectSpy).toHaveBeenCalledWith("/manifest/f-booking");
+});

@@ -4,6 +4,7 @@ import { isoDayToUtcDate } from "@/lib/iso-day";
 import { auth } from "@/auth";
 import { linkCaps } from "@/components/ff/controls";
 import { ApiError } from "@/lib/api/client";
+import { loadZoneTable } from "@/lib/api/auth";
 import {
   CHARTER_STATUS_LABELS,
   type CharterRow,
@@ -15,7 +16,7 @@ import { DISPATCH_WRITERS, hasAnyRole } from "@/lib/roles";
 
 import { NewCharterToggle } from "./new-charter-toggle";
 import { TransitionButtons } from "./transition-buttons";
-import { DEFAULT_TIME_ZONE, localDay } from "@/lib/format/local-time";
+import { localDay } from "@/lib/format/local-time";
 
 /**
  * /reservations/charter — Charter Pipeline.
@@ -110,9 +111,10 @@ export default async function CharterPipelinePage({
 }) {
   const params = await searchParams;
   const active = parseStatus(params.status);
-  const today = localDay(DEFAULT_TIME_ZONE);
+  const [session, zones] = await Promise.all([auth(), loadZoneTable()]);
+  const today = localDay(zones.fallback);
   // Who may open the charter's flight (#133): ops' DispatcherClaims.
-  const canBuildFlights = hasAnyRole((await auth())?.roles ?? [], DISPATCH_WRITERS);
+  const canBuildFlights = hasAnyRole(session?.roles ?? [], DISPATCH_WRITERS);
 
   let rows: CharterRow[] = [];
   let customers: Customer[] = [];
@@ -136,7 +138,7 @@ export default async function CharterPipelinePage({
     <div className="mx-auto max-w-6xl px-4 sm:px-6 py-8">
       <header className="mb-6 flex flex-wrap items-center justify-between gap-4 border-b border-border pb-5">
         <h1 className="page-title">Charter Pipeline</h1>
-        {loadError ? null : <NewCharterToggle customers={customers} />}
+        {loadError ? null : <NewCharterToggle customers={customers} today={today} />}
       </header>
 
       <div className="mb-5 flex flex-wrap gap-2">

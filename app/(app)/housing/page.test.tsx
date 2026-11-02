@@ -1,6 +1,8 @@
 import { render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+vi.mock("@/lib/api/auth", () => ({ loadZoneTable: async () => ({ byIcao: {}, fallback: "America/Anchorage" }) }));
+
 import type { HousingBooking, HousingUnit } from "@/lib/api/housing";
 
 /**
@@ -100,7 +102,7 @@ describe("today's date", () => {
     expect(listHousingBookings).toHaveBeenCalledWith({ from: TODAY });
   });
 
-  it("derives today in UTC, not the host zone", async () => {
+  it("derives today in the company zone regardless of the host zone", async () => {
     // 21:00Z on the 15th is already the 16th in Tokyo. Reading local
     // calendar fields would ask the API for the wrong day and shift the
     // whole occupancy window.
@@ -109,6 +111,12 @@ describe("today's date", () => {
     await renderPage();
     expect(listHousingBookings).toHaveBeenCalledWith({ from: TODAY });
     process.env.TZ = "UTC";
+  });
+
+  it("keeps an Alaska evening on the same company day after UTC midnight", async () => {
+    vi.setSystemTime(new Date("2026-08-16T02:00:00Z"));
+    await renderPage();
+    expect(listHousingBookings).toHaveBeenCalledWith({ from: TODAY });
   });
 });
 
@@ -132,12 +140,10 @@ describe("the occupancy window", () => {
     expect(rollup("1 occupied today")).toBeInTheDocument();
   });
 
-  it("still counts someone checking out today", async () => {
-    // Inclusive on the way out: the room is not free for anyone else
-    // until the checkout has happened.
+  it("frees a previous night's bed on its check-out morning, like the calendar and API", async () => {
     withBookings([booking({ id: "b-1", check_in: "2026-08-01", check_out: TODAY })]);
     await renderPage();
-    expect(rollup("1 occupied today")).toBeInTheDocument();
+    expect(rollup("0 occupied today")).toBeInTheDocument();
   });
 
   it("ignores a stay that ended yesterday", async () => {

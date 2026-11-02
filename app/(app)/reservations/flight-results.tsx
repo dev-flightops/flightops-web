@@ -6,6 +6,7 @@ import {
   type UnavailableReason,
 } from "@/lib/api/flight-search";
 import { payloadLeftText } from "@/lib/reservations/payload-text";
+import { DEFAULT_ZONE_TABLE, localClock, zoneFor, type ZoneTable } from "@/lib/format/local-time";
 
 /**
  * Why a listed flight cannot be booked, in words a dispatcher can act
@@ -38,6 +39,7 @@ export function FlightResults({
   bookingHref,
   onSelect,
   selectedId = null,
+  zones = DEFAULT_ZONE_TABLE,
 }: {
   results: FlightSearchResponse;
   /** Where "Book" goes for a given flight. Injected so this file stays
@@ -47,6 +49,7 @@ export function FlightResults({
    *  booking, so a row selects rather than books. */
   onSelect?: (flight: FlightSearchResult) => void;
   selectedId?: string | null;
+  zones?: ZoneTable;
 }) {
   if (results.total === 0) {
     return (
@@ -109,7 +112,7 @@ export function FlightResults({
                   ) : null}
                 </td>
                 <td className="px-4 py-3 text-muted-foreground">
-                  {formatTime(f.scheduled_departure_at)}
+                  {formatTime(f.scheduled_departure_at, zoneFor(zones, f.origin))}
                 </td>
                 <td className="px-4 py-3 text-muted-foreground">
                   {f.aircraft_tail ?? "TBA"}
@@ -200,11 +203,7 @@ export function formatDay(iso: string): string {
   });
 }
 
-/** Departure time in the viewer's locale. This one IS a real instant,
- *  so it is parsed normally. */
-export function formatTime(iso: string): string {
-  return new Date(iso).toLocaleTimeString("en-US", {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+/** Use the departure base's clock, as the booking form does. */
+export function formatTime(iso: string, timeZone = DEFAULT_ZONE_TABLE.fallback): string {
+  return localClock(iso, timeZone);
 }

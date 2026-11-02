@@ -300,7 +300,6 @@ export const LEGACY_REDIRECTS: readonly (readonly [from: string, to: string])[] 
   ["/settings/load-teams/report", "/settings/load-teams"],
   ["/settings/load-teams/dashboard/:id", "/settings/load-teams"],
   ["/settings/password", "/settings"],
-  ["/settings/demo", "/settings"],
   ["/settings/nda-log", "/settings"],
   ["/settings/tenants", "/platform"],
   ["/settings/tenants/:id", "/platform"],

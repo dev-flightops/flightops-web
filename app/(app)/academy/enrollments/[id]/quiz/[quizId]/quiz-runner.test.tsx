@@ -273,7 +273,7 @@ describe("the result comes from the server, not the client", () => {
         per_question: [
           pq({
             question_id: "q-c",
-            ordinal: 3,
+            ordinal: 0,
             chosen_index: 1,
             correct_index: 0,
             is_correct: false,
@@ -293,6 +293,7 @@ describe("the result comes from the server, not the client", () => {
     // The miss belongs to q-c, so its prompt must be the freezing-drizzle one.
     expect(missed?.textContent).toMatch(/Freezing drizzle/);
     expect(missed?.textContent).toMatch(/Correct answer: SLD conditions/);
+    expect(within(missed!).getByText("Q3")).toBeInTheDocument();
   });
 });
 

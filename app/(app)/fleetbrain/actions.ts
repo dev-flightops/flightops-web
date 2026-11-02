@@ -1,6 +1,7 @@
 "use server";
 
 import { askFleetBrain, type FleetBrainReply } from "@/lib/api/ai";
+import { loadZoneTable } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
 
 export interface AskResult {
@@ -15,14 +16,11 @@ export interface AskResult {
  * apiFetch is server-only: it reads the access token off the session,
  * and a browser fetch would have no way to attach it.
  *
- * The browser's own timezone rides along. Relative dates ("today",
- * "this week") resolve against it server-side, because the alternative
- * is resolving them in whatever zone the container runs in — which is
- * wrong for most of the day for an operator west of Greenwich.
+ * Relative dates use the configured company zone, matching the fleet
+ * board and operational reports even when the viewer is already tomorrow.
  */
 export async function askAction(
   query: string,
-  timezone: string,
 ): Promise<AskResult> {
   const trimmed = query.trim();
   if (!trimmed) return { ok: false, error: "Ask a question first." };
@@ -31,7 +29,7 @@ export async function askAction(
   }
 
   try {
-    return { ok: true, reply: await askFleetBrain(trimmed, timezone) };
+    return { ok: true, reply: await askFleetBrain(trimmed, (await loadZoneTable()).fallback) };
   } catch (err) {
     const status = err instanceof ApiError ? err.status : 0;
     if (status === 401) {

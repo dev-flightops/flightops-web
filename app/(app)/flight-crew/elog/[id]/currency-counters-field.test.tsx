@@ -58,7 +58,7 @@ describe("CurrencyCountersField — PIC variant (default)", () => {
     );
     expect(screen.getByText(/pilot entries/i)).toBeInTheDocument();
     expect(
-      screen.getByText(/spec 5 ifr currency/i),
+      screen.getByText(/update instrument currency/i),
     ).toBeInTheDocument();
   });
 });

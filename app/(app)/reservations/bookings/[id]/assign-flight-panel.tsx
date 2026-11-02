@@ -130,7 +130,7 @@ export function AssignFlightPanel({
               and links there. Not for a completed booking (#154). */}
           {completed ? null : (
             <Link
-              href="/dispatch"
+              href={`/flight-following/new?booking=${bookingId}`}
               className="mt-1.5 inline-block font-semibold text-primary hover:underline"
             >
               Build a flight for it →

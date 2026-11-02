@@ -114,8 +114,8 @@ export function AssistantWidget() {
         aria-controls="peregrine-assistant"
         aria-label={open ? "Close Peregrine Assistant" : "Ask Peregrine Assistant"}
         className={cn(
-          "btn-caps fixed right-6 z-30 inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2.5 text-primary-foreground shadow-[0_2px_12px_rgb(0_0_0/0.35)] transition hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary",
-          pathname === SAFETY_INTAKE ? "bottom-6" : "bottom-[4.5rem]",
+          "btn-caps inline-flex h-14 items-center justify-center gap-2 sm:fixed sm:right-6 sm:z-30 sm:h-auto sm:rounded-md bg-primary px-4 py-2.5 text-primary-foreground shadow-[0_2px_12px_rgb(0_0_0/0.35)] transition hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary",
+          pathname === SAFETY_INTAKE ? "col-span-2 sm:bottom-6" : "sm:bottom-[4.5rem]",
         )}
       >
         {open ? <CloseGlyph size={14} /> : <BotGlyph size={16} />}

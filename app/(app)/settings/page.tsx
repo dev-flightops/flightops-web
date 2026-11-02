@@ -15,6 +15,7 @@ import {
 } from "@/lib/api/auth";
 import { listAircraft } from "@/lib/api/ops";
 import { aircraftGaps } from "@/lib/setup/aircraft";
+import { getDemoStatus } from "@/lib/api/demo";
 
 /**
  * /settings — Settings landing.
@@ -216,6 +217,13 @@ export default async function SettingsLandingPage() {
       ],
     },
   ];
+
+  const demo = await getDemoStatus().catch(() => null);
+  if (demo?.enabled) sections.push({ title: "Demo", rows: [{
+    label: "Prepare today’s demo",
+    blurb: "Refresh the prepared examples between meetings, timed to your company’s day.",
+    href: "/settings/demo",
+  }] });
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
