@@ -404,6 +404,8 @@ export async function retireAircraft(aircraftId: string): Promise<void> {
 export interface ListFlightLogsParams {
   status?: FlightLogStatus | FlightLogStatus[];
   aircraftId?: string;
+  /** One flight's log: the draft its arrival opened. */
+  flightId?: string;
   /** Filter to logs created by the current user. Server reads the
    *  user id from the JWT so the client doesn't need to know its own. */
   mine?: boolean;
@@ -429,6 +431,7 @@ export async function listFlightLogs(
     for (const s of values) search.append("status", s);
   }
   if (params.aircraftId) search.set("aircraft_id", params.aircraftId);
+  if (params.flightId) search.set("flight_id", params.flightId);
   if (params.mine) search.set("mine", "true");
   if (params.fromDate) search.set("from_date", params.fromDate);
   if (params.toDate) search.set("to_date", params.toDate);
