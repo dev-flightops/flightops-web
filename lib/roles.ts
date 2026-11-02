@@ -202,6 +202,16 @@ export const CREW_SCHEDULERS = roleGate(
   "exec_admin",
 );
 
+/** Give an aircraft to a pilot for the day, or move it to another (#93):
+ *  dispatch and the crew's managers. Mirrors AIRCRAFT_ASSIGNERS in
+ *  shared/flightops_shared/auth/roles.py. */
+export const AIRCRAFT_ASSIGNERS = roleGate(
+  "dispatcher",
+  "chief_pilot",
+  "director_of_operations",
+  "exec_admin",
+);
+
 /** Authorise or revoke a pilot's position on an aircraft type (#45).
  *  Check rides themselves are CURRENCY_SIGNOFF, which admits check airmen. */
 export const TYPE_QUALIFICATION_ADMINS = roleGate(
