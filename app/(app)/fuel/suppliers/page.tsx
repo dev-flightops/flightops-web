@@ -2,13 +2,18 @@ import Link from "next/link";
 
 import { auth } from "@/auth";
 import { linkCaps } from "@/components/ff/controls";
+import { Panel } from "@/components/ff/panel";
+import { SupplierForm, SupplierHeader } from "@/components/fuel/supplier-form";
 import { SupplierLogins } from "@/components/fuel/supplier-logins";
+import { SupplierPrices, type PriceFuelType, type PriceStation } from "@/components/fuel/supplier-prices";
 import { listSupplierLogins, type SupplierLogin } from "@/lib/api/auth";
 import { FUEL_CONFIG, hasAnyRole } from "@/lib/roles";
 import { cn } from "@/lib/utils";
 import { ApiError } from "@/lib/api/client";
 import {
   listFuelSuppliers,
+  listFuelTypes,
+  listStations,
   listSupplierBases,
 } from "@/lib/api/ground";
 import type {
@@ -19,13 +24,10 @@ import type {
 /**
  * /fuel/suppliers — Supplier directory + pricing matrix (M2-G-43).
  *
- * Read-only view of the M2-M-25c directory. Each supplier row
- * expands to its supplier×base×fuel_type pricing rows. Editing
- * suppliers + pricing rows lands in M2-G-43b — backend supports
- * everything (POST / PATCH / PUT / DELETE) but the UI for it is a
- * follow-up.
- *
- * Each supplier's portal logins (#134), for the fuel directory's keepers.
+ * Each supplier with its prices, one per fuel at a base. The directory's
+ * keepers (FUEL_CONFIG) add and edit suppliers, set and switch off their
+ * prices, and give each its portal logins (#134): it could only be changed
+ * through the API, as legacy's Fuel → Suppliers changed it.
  */
 export default async function FuelSuppliersPage() {
   const canKeep = hasAnyRole((await auth())?.roles ?? [], FUEL_CONFIG);
@@ -50,12 +52,30 @@ export default async function FuelSuppliersPage() {
 
   // One read per supplier; a directory holds a handful.
   const logins = new Map<string, SupplierLogin[] | null>();
+  // What a price can be set for: the company's stations (null when they
+  // couldn't be read, so the base is typed) and the fuels switched on.
+  let stations: PriceStation[] | null = null;
+  let fuelTypes: PriceFuelType[] = [];
   if (canKeep) {
-    await Promise.all(
-      suppliers.map(async (s) => {
+    await Promise.all([
+      ...suppliers.map(async (s) => {
         logins.set(s.id, await listSupplierLogins(s.id).then((r) => r.items, () => null));
       }),
-    );
+      listStations().then(
+        (r) => {
+          stations = r.items
+            .map((st) => ({ code: st.icao_code.toUpperCase(), name: st.name }))
+            .sort((a, b) => a.code.localeCompare(b.code));
+        },
+        () => {},
+      ),
+      listFuelTypes().then(
+        (r) => {
+          fuelTypes = r.items.map((t) => ({ id: t.id, label: t.label }));
+        },
+        () => {},
+      ),
+    ]);
   }
 
   // Index the pricing rows so each supplier card can render its
@@ -99,8 +119,9 @@ export default async function FuelSuppliersPage() {
             No suppliers configured yet.
           </p>
           <p className="mt-1 text-xs text-muted-foreground">
-            Suppliers are added through the API for now:{" "}
-            <code>POST /ground/fuel/suppliers</code>.
+            {canKeep
+              ? "Add the first one below."
+              : "The Chief Pilot, the Director of Maintenance, the Director of Operations or an Exec Admin adds them."}
           </p>
         </div>
       ) : (
@@ -110,11 +131,20 @@ export default async function FuelSuppliersPage() {
               key={s.id}
               supplier={s}
               pricing={bySupplier.get(s.id) ?? []}
+              canKeep={canKeep}
+              stations={stations}
+              fuelTypes={fuelTypes}
               logins={canKeep ? (logins.get(s.id) ?? null) : undefined}
             />
           ))}
         </div>
       )}
+
+      {canKeep && !loadError ? (
+        <Panel title="Add a supplier" className="mt-6">
+          <SupplierForm />
+        </Panel>
+      ) : null}
     </div>
   );
 }
@@ -122,92 +152,32 @@ export default async function FuelSuppliersPage() {
 function SupplierCard({
   supplier,
   pricing,
+  canKeep,
+  stations,
+  fuelTypes,
   logins,
 }: {
   supplier: FuelSupplierResponse;
   pricing: FuelSupplierBaseResponse[];
+  /** Whoever keeps the directory edits the supplier and its prices. */
+  canKeep: boolean;
+  stations: PriceStation[] | null;
+  fuelTypes: PriceFuelType[];
   /** Left out for those who don't keep the directory. */
   logins?: SupplierLogin[] | null;
 }) {
   return (
     <article className="rounded-lg border border-border bg-card p-4">
-      <header className="mb-3 flex flex-wrap items-start justify-between gap-2">
-        <div>
-          <h2 className="text-base font-semibold text-foreground">
-            {supplier.name}
-            {!supplier.is_active && (
-              <span className="ml-2 eyebrow">
-                Inactive
-              </span>
-            )}
-          </h2>
-          <p className="mt-0.5 text-xs text-muted-foreground">
-            {[supplier.contact_name, supplier.email, supplier.phone]
-              .filter(Boolean)
-              .join(" · ") || "no contact on file"}
-          </p>
-        </div>
-        {supplier.billing_terms && (
-          <span className="eyebrow">
-            {supplier.billing_terms}
-          </span>
-        )}
-      </header>
+      <SupplierHeader supplier={supplier} canEdit={canKeep} />
 
-      {pricing.length === 0 ? (
-        <p className="notice notice-gray text-muted-foreground">
-          No pricing rows configured for this supplier.
-        </p>
-      ) : (
-        <div className="overflow-hidden rounded-md border border-border">
-          <table className="w-full text-xs">
-            <thead>
-              <tr className="border-b border-border bg-background/40 text-left eyebrow">
-                <th className="px-3 py-2">Base</th>
-                <th className="px-3 py-2">Fuel</th>
-                <th className="px-3 py-2 text-right">Price / gal</th>
-                <th className="px-3 py-2">Contract</th>
-                <th className="px-3 py-2">Effective</th>
-                <th className="px-3 py-2">Default</th>
-              </tr>
-            </thead>
-            <tbody>
-              {pricing.map((p) => (
-                <tr
-                  key={p.id}
-                  className="border-b border-border last:border-0"
-                >
-                  <td className="px-3 py-2 font-mono text-foreground">
-                    {p.base_code}
-                  </td>
-                  <td className="px-3 py-2 text-foreground">
-                    {p.fuel_type_label}
-                  </td>
-                  <td className="px-3 py-2 text-right font-mono text-foreground">
-                    {p.price_per_gallon !== null
-                      ? `$${p.price_per_gallon.toFixed(2)}`
-                      : "—"}
-                  </td>
-                  <td className="px-3 py-2 text-muted-foreground">
-                    {p.is_contract_rate ? "✓" : "spot"}
-                  </td>
-                  <td className="px-3 py-2 text-muted-foreground">
-                    {p.effective_from ?? "—"}
-                    {p.effective_to ? ` → ${p.effective_to}` : ""}
-                  </td>
-                  <td className="px-3 py-2">
-                    {p.is_default && (
-                      <span className="eyebrow">
-                        Default
-                      </span>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+      <SupplierPrices
+        supplierId={supplier.id}
+        supplierName={supplier.name}
+        rows={pricing}
+        canEdit={canKeep}
+        stations={stations}
+        fuelTypes={fuelTypes}
+      />
 
       {logins !== undefined ? (
         <SupplierLogins supplierId={supplier.id} supplierName={supplier.name} logins={logins} />

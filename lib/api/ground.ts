@@ -20,8 +20,11 @@ import type {
   FuelQualityTestListResponse,
   FuelQualityTestResponse,
   FuelSupplierBaseListResponse,
+  FuelSupplierBaseResponse,
   FuelSupplierListResponse,
+  FuelSupplierResponse,
   FuelTypeListResponse,
+  FuelTypeResponse,
   GSEEquipmentType,
   GSEMaintenanceItemResponse,
   GSEMaintenanceListResponse,
@@ -225,6 +228,90 @@ export async function listSupplierBases(
   return apiFetch<FuelSupplierBaseListResponse>(
     `/ground/fuel/supplier-bases${qs}`,
   );
+}
+
+/** A supplier's details as the directory's forms send them (#134): every
+ *  field, a blank one as null so an edit clears it. */
+export interface FuelSupplierPayload {
+  name: string;
+  contact_name: string | null;
+  phone: string | null;
+  sms_phone: string | null;
+  email: string | null;
+  cc_emails: string | null;
+  account_number: string | null;
+  billing_terms: string | null;
+  notes: string | null;
+}
+
+export async function createFuelSupplier(payload: FuelSupplierPayload): Promise<FuelSupplierResponse> {
+  return apiFetch<FuelSupplierResponse>("/ground/fuel/suppliers", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function updateFuelSupplier(
+  supplierId: string,
+  payload: Partial<FuelSupplierPayload> & { is_active?: boolean },
+): Promise<FuelSupplierResponse> {
+  return apiFetch<FuelSupplierResponse>(`/ground/fuel/suppliers/${encodeURIComponent(supplierId)}`, {
+    method: "PATCH",
+    body: JSON.stringify(payload),
+  });
+}
+
+/** One supplier's price for a fuel at a base; saving the same base and
+ *  fuel again replaces it. */
+export interface SupplierPricePayload {
+  base_code: string;
+  fuel_type_id: string;
+  price_per_gallon: number | null;
+  is_contract_rate: boolean;
+  effective_from: string | null;
+  effective_to: string | null;
+  is_default: boolean;
+  notes: string | null;
+  is_active: boolean;
+}
+
+export async function saveSupplierPrice(
+  supplierId: string,
+  payload: SupplierPricePayload,
+): Promise<FuelSupplierBaseResponse> {
+  return apiFetch<FuelSupplierBaseResponse>(`/ground/fuel/suppliers/${encodeURIComponent(supplierId)}/bases`, {
+    method: "PUT",
+    body: JSON.stringify(payload),
+  });
+}
+
+/** Switches a price off; the row is kept, so it can be switched on again. */
+export async function switchOffSupplierPrice(rowId: string): Promise<FuelSupplierBaseResponse> {
+  return apiFetch<FuelSupplierBaseResponse>(`/ground/fuel/supplier-bases/${encodeURIComponent(rowId)}`, {
+    method: "DELETE",
+  });
+}
+
+/** A fuel type; the service makes the code from the label when it's left out. */
+export async function createFuelType(payload: {
+  code: string | null;
+  label: string;
+  sort_order: number;
+}): Promise<FuelTypeResponse> {
+  return apiFetch<FuelTypeResponse>("/ground/fuel/types", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function updateFuelType(
+  typeId: string,
+  payload: { label?: string; is_active?: boolean; sort_order?: number },
+): Promise<FuelTypeResponse> {
+  return apiFetch<FuelTypeResponse>(`/ground/fuel/types/${encodeURIComponent(typeId)}`, {
+    method: "PATCH",
+    body: JSON.stringify(payload),
+  });
 }
 
 // Stations CRUD (M2-G-38b) ---------------------------------------------------
