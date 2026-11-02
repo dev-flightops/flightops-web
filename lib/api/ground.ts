@@ -5,6 +5,8 @@
  * config land as subsequent ground-service stories.
  */
 
+import type { GSEDocumentType } from "@/lib/equipment/document-types";
+
 import { apiFetch } from "./client";
 import type {
   FuelOrderCloseSource,
@@ -354,6 +356,51 @@ export interface CreateGseUnitPayload {
   hours_total?: number;
   manufacturer?: string | null;
   notes?: string | null;
+}
+
+/** Amend a unit (#134, the edit form): every field given is set, and one
+ *  given as null is cleared. `is_active: false` removes it from the list,
+ *  as legacy's delete did; true puts it back. */
+export async function updateGseUnit(
+  unitId: string,
+  payload: Partial<CreateGseUnitPayload> & { is_active?: boolean },
+): Promise<GSEUnitListItem> {
+  return apiFetch<GSEUnitListItem>(`/ground/gse/${encodeURIComponent(unitId)}`, {
+    method: "PATCH",
+    body: JSON.stringify(payload),
+  });
+}
+
+/** A file kept with a unit (#134). */
+export interface GSEDocument {
+  id: string;
+  gse_unit_id: string;
+  title: string;
+  doc_type: GSEDocumentType;
+  original_filename: string | null;
+  content_type: string;
+  size_bytes: number;
+  uploaded_by: { id: string; full_name: string; email: string } | null;
+  uploaded_at: string;
+}
+
+export async function listGseDocuments(unitId: string): Promise<{ items: GSEDocument[]; total: number }> {
+  return apiFetch<{ items: GSEDocument[]; total: number }>(
+    `/ground/gse/${encodeURIComponent(unitId)}/documents`,
+    { cache: "no-store" },
+  );
+}
+
+/** Multipart: `file`, `title`, `doc_type`. */
+export async function uploadGseDocument(unitId: string, form: FormData): Promise<GSEDocument> {
+  return apiFetch<GSEDocument>(`/ground/gse/${encodeURIComponent(unitId)}/documents`, {
+    method: "POST",
+    body: form,
+  });
+}
+
+export async function deleteGseDocument(documentId: string): Promise<void> {
+  await apiFetch<void>(`/ground/gse/documents/${encodeURIComponent(documentId)}`, { method: "DELETE" });
 }
 
 export async function createGseUnit(

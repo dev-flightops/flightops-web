@@ -10,6 +10,7 @@ import type {
 const {
   TestApiError,
   getGseUnit,
+  listGseDocuments,
   listGseMaintenance,
   listGseSquawks,
   notFoundSpy,
@@ -26,6 +27,7 @@ const {
   return {
     TestApiError,
     getGseUnit: vi.fn(),
+    listGseDocuments: vi.fn(),
     listGseMaintenance: vi.fn(),
     listGseSquawks: vi.fn(),
     notFoundSpy: vi.fn(() => {
@@ -60,8 +62,19 @@ vi.mock("@/components/equipment/schedule-maintenance-dialog", () => ({
 vi.mock("@/components/equipment/complete-maintenance-button", () => ({
   CompleteMaintenanceButton: () => <button type="button">Complete</button>,
 }));
+vi.mock("@/components/equipment/unit-list-controls", () => ({
+  UnitListControls: ({ isActive }: { isActive: boolean }) =>
+    isActive ? <button type="button">Remove</button> : <button type="button">Put back on the list</button>,
+}));
+vi.mock("@/components/equipment/upload-document-form", () => ({
+  UploadDocumentForm: () => <form aria-label="Upload a document" />,
+}));
+vi.mock("@/components/equipment/remove-document-button", () => ({
+  RemoveDocumentButton: ({ title }: { title: string }) => <button type="button">{`Remove ${title}`}</button>,
+}));
 vi.mock("@/lib/api/ground", () => ({
   getGseUnit,
+  listGseDocuments,
   listGseMaintenance,
   listGseSquawks,
 }));
@@ -142,6 +155,8 @@ beforeEach(() => {
   getGseUnit.mockReset();
   listGseMaintenance.mockReset();
   listGseSquawks.mockReset();
+  listGseDocuments.mockReset();
+  listGseDocuments.mockResolvedValue({ items: [], total: 0 });
   notFoundSpy.mockClear();
 });
 
@@ -343,3 +358,67 @@ describe("EquipmentDetailPage: who works a unit (29 Sep)", () => {
     },
   );
 });
+
+describe("EquipmentDetailPage: documents, edit and remove (#134)", () => {
+  const DOC = {
+    id: "g-1",
+    gse_unit_id: "u-1",
+    title: "Operator manual",
+    doc_type: "manual",
+    original_filename: "hobart-60cu24.pdf",
+    content_type: "application/pdf",
+    size_bytes: 2_400_000,
+    uploaded_by: { id: "u-x", full_name: "Owen Staley", email: "o@x" },
+    uploaded_at: "2026-11-01T20:00:00Z",
+  };
+
+  function loads(unit = makeUnit()) {
+    getGseUnit.mockResolvedValueOnce(unit);
+    listGseMaintenance.mockResolvedValueOnce({ items: [], total: 0 });
+    listGseSquawks.mockResolvedValueOnce({ items: [], total: 0 });
+  }
+
+  it("lists the unit's documents with a download for each, and uploads for its keepers", async () => {
+    loads();
+    listGseDocuments.mockResolvedValueOnce({ items: [DOC], total: 1 });
+    await renderPage();
+    const docs = screen.getByRole("region", { name: "Documents" });
+    expect(docs).toHaveTextContent("Documents (1)");
+    const row = screen.getByRole("row", { name: /Operator manual/ });
+    expect(row).toHaveTextContent("hobart-60cu24.pdf");
+    expect(row).toHaveTextContent("Owen Staley");
+    expect(row).toHaveTextContent("2.3 MB");
+    expect(screen.getByRole("link", { name: "Download" })).toHaveAttribute("href", "/api/gse-documents/g-1");
+    expect(screen.getByRole("button", { name: "Remove Operator manual" })).toBeInTheDocument();
+    expect(screen.getByRole("form", { name: "Upload a document" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Remove" })).toBeInTheDocument();
+  });
+
+  it("reads documents to anyone, and changes nothing for them", async () => {
+    auth.mockResolvedValueOnce({ roles: ["dispatcher"] });
+    loads();
+    listGseDocuments.mockResolvedValueOnce({ items: [DOC], total: 1 });
+    await renderPage();
+    expect(screen.getByRole("link", { name: "Download" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Remove Operator manual" })).toBeNull();
+    expect(screen.queryByRole("form", { name: "Upload a document" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Remove" })).toBeNull();
+  });
+
+  it("keeps the page when the documents can't be read", async () => {
+    loads();
+    listGseDocuments.mockRejectedValueOnce(new TestApiError(502, "/ground/gse/u-1/documents", "Bad Gateway"));
+    await renderPage();
+    expect(screen.getByRole("heading", { name: "Tug A-12", level: 1 })).toBeInTheDocument();
+    expect(screen.getByText(/Couldn.t load the documents/)).toBeInTheDocument();
+  });
+
+  it("says a removed unit is off the list, and offers to put it back", async () => {
+    loads(makeUnit({ is_active: false }));
+    await renderPage();
+    expect(screen.getByRole("status")).toHaveTextContent("Removed from the equipment list.");
+    expect(screen.getByRole("button", { name: "Put back on the list" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Change status" })).toBeNull();
+  });
+});
+

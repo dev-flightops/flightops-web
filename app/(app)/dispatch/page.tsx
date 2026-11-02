@@ -1,6 +1,7 @@
 import { CrewLegalityHints } from "@/components/dispatch/packet/crew-status-rows";
 import { auth } from "@/auth";
 import {
+  AIRCRAFT_ASSIGNERS,
   AIRWORTHINESS_WRITERS,
   DISPATCH_WRITERS,
   FRAT_DISPATCH_SIGNERS,
@@ -10,6 +11,7 @@ import {
   PLAN_REVIEWERS,
 } from "@/lib/roles";
 import { DispatchComplianceGate } from "@/components/dispatch/packet/dispatch-compliance-gate";
+import { AircraftTodayLine, AircraftTodayPanel } from "@/components/dashboards/aircraft-today-panel";
 import { OpenMelPanel } from "@/components/dispatch/packet/open-mel-panel";
 import { BookingsAwaitingFlightPanel } from "@/components/dispatch/packet/bookings-awaiting-flight-panel";
 import { ForeFlightPlanPanel } from "@/components/dispatch/packet/foreflight-plan-panel";
@@ -28,7 +30,7 @@ import { PacketHeader } from "@/components/dispatch/packet/packet-header";
 import { RightColumn } from "@/components/dispatch/packet/right-column";
 import { SelectedFlightSummary } from "@/components/dispatch/packet/selected-flight-summary";
 import { ApiError } from "@/lib/api/client";
-import { listMyTenants, loadZoneTable } from "@/lib/api/auth";
+import { listMyTenants, listStaff, loadZoneTable } from "@/lib/api/auth";
 import { getPlansWaiting } from "@/lib/api/integrations";
 import { listFlightCrew } from "@/lib/api/crew-assignments";
 import {
@@ -38,6 +40,7 @@ import {
   getFlight,
   getFratOverLimits,
   getLatestFratAssessment,
+  getMorningToday,
   getPicCompliance,
   listAircraft,
   getWeatherMinimums,
@@ -217,6 +220,8 @@ export default async function DispatchPage({
     plansWaiting,
     picAvailability,
     sicAvailability,
+    aircraftToday,
+    staff,
   ] = await Promise.all([
     loads.or(listFlights({ onCompanyDate: scheduleDate }), { items: [], total: 0 }, "the day’s flights"),
     listMyTenants().catch(() => ({ tenants: [] })),
@@ -264,6 +269,11 @@ export default async function DispatchPage({
     selectedId
       ? loads.or(getCrewOptions(selectedId, "sic").then((r) => r.items), null, "who release would take as SIC")
       : Promise.resolve(null),
+    // #93: who took which aircraft today, and its preflight. Here as well as
+    // on the Dispatcher dashboard, which needs Admin Access: off for
+    // dispatchers in a new company, so they never saw it.
+    loads.or(getMorningToday(), null, "today’s aircraft"),
+    hasAnyRole(viewerRoles, AIRCRAFT_ASSIGNERS) ? listStaff().catch(() => null) : Promise.resolve(null),
   ]);
 
   // #46 — who is current in which seat on this flight's aircraft type,
@@ -419,6 +429,23 @@ export default async function DispatchPage({
             />
           )}
         </LoadFromSchedule>
+
+        {selectedFlight ? (
+          aircraftToday && aircraftToday.company_date === scheduleDate ? (
+            <AircraftTodayLine
+              tail={selectedFlight.aircraft.tail_number}
+              aircraftId={selectedFlight.aircraft.id}
+              today={aircraftToday}
+            />
+          ) : null
+        ) : (
+          <AircraftTodayPanel
+            today={aircraftToday}
+            pilots={(staff?.items ?? [])
+              .filter((m) => m.roles.includes("pilot"))
+              .map((m) => ({ id: m.id, name: m.full_name }))}
+          />
+        )}
 
         {overLimits ? (
           <FratOverLimitsPanel

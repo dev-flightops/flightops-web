@@ -202,6 +202,16 @@ export const CREW_SCHEDULERS = roleGate(
   "exec_admin",
 );
 
+/** The fuel directory: types, suppliers, bases, prices, and a supplier's
+ *  portal logins (#134). Mirrors FUEL_CONFIG in
+ *  shared/flightops_shared/auth/roles.py. */
+export const FUEL_CONFIG = roleGate(
+  "chief_pilot",
+  "director_of_maintenance",
+  "director_of_operations",
+  "exec_admin",
+);
+
 /** Give an aircraft to a pilot for the day, or move it to another (#93):
  *  dispatch and the crew's managers. Mirrors AIRCRAFT_ASSIGNERS in
  *  shared/flightops_shared/auth/roles.py. */

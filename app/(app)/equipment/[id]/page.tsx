@@ -10,10 +10,16 @@ import { CompleteMaintenanceButton } from "@/components/equipment/complete-maint
 import { ReportSquawkDialog } from "@/components/equipment/report-squawk-dialog";
 import { ResolveSquawkButton } from "@/components/equipment/resolve-squawk-button";
 import { ScheduleMaintenanceDialog } from "@/components/equipment/schedule-maintenance-dialog";
+import { RemoveDocumentButton } from "@/components/equipment/remove-document-button";
+import { UnitListControls } from "@/components/equipment/unit-list-controls";
+import { UploadDocumentForm } from "@/components/equipment/upload-document-form";
 import { ApiError } from "@/lib/api/client";
-import { DEFAULT_TIME_ZONE, localDay } from "@/lib/format/local-time";
+import { documentTypeLabel } from "@/lib/equipment/document-types";
+import { DEFAULT_TIME_ZONE, localDateTime, localDay } from "@/lib/format/local-time";
 import {
+  type GSEDocument,
   getGseUnit,
+  listGseDocuments,
   listGseMaintenance,
   listGseSquawks,
 } from "@/lib/api/ground";
@@ -53,17 +59,21 @@ export default async function EquipmentDetailPage({
   let unit: GSEUnitListItem | null = null;
   let maintenance: GSEMaintenanceItemResponse[] = [];
   let squawks: GSESquawkResponse[] = [];
+  // null when they couldn't be read: the rest of the page still shows.
+  let documents: GSEDocument[] | null = null;
   let loadError: string | null = null;
 
   try {
-    const [u, mx, sq] = await Promise.all([
+    const [u, mx, sq, docs] = await Promise.all([
       getGseUnit(id),
       listGseMaintenance(id, { limit: 50 }),
       listGseSquawks(id, { limit: 50 }),
+      listGseDocuments(id).catch(() => null),
     ]);
     unit = u;
     maintenance = mx.items;
     squawks = sq.items;
+    documents = docs?.items ?? null;
   } catch (err) {
     if (err instanceof ApiError && err.status === 404) {
       notFound();
@@ -99,6 +109,11 @@ export default async function EquipmentDetailPage({
     <div className="mx-auto max-w-5xl px-4 sm:px-6 py-8">
       <BackLink />
       <Header unit={unit} canWrite={canWrite} />
+      {!unit.is_active ? (
+        <div role="status" className="mb-6 notice notice-yellow">
+          Removed from the equipment list. Its record, maintenance and documents are kept.
+        </div>
+      ) : null}
       <Meta unit={unit} />
       <MaintenanceSection
         unitId={unit.id}
@@ -123,8 +138,80 @@ export default async function EquipmentDetailPage({
           emptyHint=""
         />
       )}
+      <DocumentsSection unitId={unit.id} documents={documents} canWrite={canWrite} />
     </div>
   );
+}
+
+/** The unit's paperwork (#134): legacy kept it on this page. */
+function DocumentsSection({
+  unitId,
+  documents,
+  canWrite,
+}: {
+  unitId: string;
+  documents: GSEDocument[] | null;
+  canWrite: boolean;
+}) {
+  return (
+    <section className="mb-6" aria-label="Documents">
+      <h2 className="mb-2 text-sm font-semibold text-foreground">Documents{documents ? ` (${documents.length})` : ""}</h2>
+      {documents === null ? (
+        <p className="mt-2 text-sm text-muted-foreground">Couldn&apos;t load the documents. Try refreshing.</p>
+      ) : documents.length === 0 ? (
+        <p className="mt-2 text-sm text-muted-foreground">
+          No documents yet: the operator manual, inspection records and the like are kept here.
+        </p>
+      ) : (
+        <table className="data-table mt-3 w-full text-sm">
+          <thead>
+            <tr>
+              <th>Title</th>
+              <th>Type</th>
+              <th>Uploaded</th>
+              <th className="text-right">Size</th>
+              <th />
+            </tr>
+          </thead>
+          <tbody>
+            {documents.map((doc) => (
+              <tr key={doc.id}>
+                <td>
+                  {doc.title}
+                  {doc.original_filename && doc.original_filename !== doc.title ? (
+                    <span className="block text-xs text-muted-foreground">{doc.original_filename}</span>
+                  ) : null}
+                </td>
+                <td>{documentTypeLabel(doc.doc_type)}</td>
+                <td className="text-xs">
+                  {localDateTime(doc.uploaded_at, DEFAULT_TIME_ZONE)}
+                  {doc.uploaded_by ? <span className="block text-muted-foreground">{doc.uploaded_by.full_name}</span> : null}
+                </td>
+                <td className="text-right font-mono text-xs">{fileSize(doc.size_bytes)}</td>
+                <td className="text-right">
+                  <a href={`/api/gse-documents/${doc.id}`} className={linkCaps}>
+                    Download
+                  </a>
+                  {canWrite ? (
+                    <span className="ml-3 inline-block">
+                      <RemoveDocumentButton unitId={unitId} documentId={doc.id} title={doc.title} />
+                    </span>
+                  ) : null}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+      {canWrite ? <UploadDocumentForm unitId={unitId} /> : null}
+    </section>
+  );
+}
+
+function fileSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
 function BackLink() {
@@ -195,7 +282,8 @@ function Header({
       </div>
       <div className="flex items-center gap-2">
         <UnitStatusChip status={unit.status} size="lg" />
-        {canWrite ? (
+        {canWrite ? <UnitListControls unitId={unit.id} name={unit.name} isActive={unit.is_active} /> : null}
+        {canWrite && unit.is_active ? (
           <ChangeStatusDialog
             unitId={unit.id}
             currentStatus={unit.status}

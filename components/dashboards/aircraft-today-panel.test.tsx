@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn() }) }));
 vi.mock("@/app/(app)/dashboards/dispatcher/actions", () => ({ reassignAircraftAction: vi.fn() }));
 
-import { AircraftTodayPanel } from "./aircraft-today-panel";
+import { AircraftTodayLine, AircraftTodayPanel } from "./aircraft-today-panel";
 
 const ROW = {
   id: "m-1",
@@ -57,3 +57,23 @@ describe("AircraftTodayPanel: moving an aircraft (#93)", () => {
     expect(screen.queryByLabelText("Give N701PS to")).toBeNull();
   });
 });
+
+describe("AircraftTodayLine: the selected flight's aircraft on the packet (#134)", () => {
+  it("says whose it is and when its preflight went on record", () => {
+    render(<AircraftTodayLine tail="N701PS" aircraftId="a-1" today={{ items: [ROW] }} />);
+    expect(screen.getByLabelText("Aircraft today")).toHaveTextContent(
+      "N701PS is Beth Nolan's today; preflight and run-up at 08:05 AKDT · 60 gal, 9 qt.",
+    );
+  });
+
+  it("says the flight can't be accepted while the preflight is missing", () => {
+    render(<AircraftTodayLine tail="N701PS" aircraftId="a-1" today={{ items: [{ ...ROW, preflight_at: null }] }} />);
+    expect(screen.getByLabelText("Aircraft today")).toHaveTextContent(/aren't on record yet, so the flight can't be accepted/);
+  });
+
+  it("says nobody has taken it", () => {
+    render(<AircraftTodayLine tail="N704PS" aircraftId="a-9" today={{ items: [ROW] }} />);
+    expect(screen.getByLabelText("Aircraft today")).toHaveTextContent("N704PS hasn't been taken today.");
+  });
+});
+

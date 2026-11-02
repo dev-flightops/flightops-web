@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import { ApiError } from "@/lib/api/client";
@@ -10,8 +11,12 @@ import {
   completeGseMaintenance,
   createGseMaintenance,
   createGseSquawk,
+  deleteGseDocument,
   resolveGseSquawk,
+  updateGseUnit,
+  uploadGseDocument,
 } from "@/lib/api/ground";
+import { MAX_UPLOAD_LABEL } from "@/lib/upload-limits";
 
 /**
  * Equipment detail server actions (M2-G-39b):
@@ -268,3 +273,58 @@ function apiToState(err: unknown, refused?: string): ActionState {
 // A type alias, not `export type { ActionState as ... }`, which broke
 // every action on this page (#67; see the fuel order actions).
 export type EquipmentActionState = ActionState;
+
+/** Take the unit off the equipment list, as legacy's delete did (#134):
+ *  its record, maintenance and documents stay, and it can be put back. */
+export async function removeEquipmentAction(unitId: string): Promise<ActionState> {
+  try {
+    await updateGseUnit(unitId, { is_active: false });
+  } catch (err) {
+    return apiToState(err, refusal("remove equipment"));
+  }
+  revalidatePath("/equipment");
+  redirect("/equipment");
+}
+
+export async function restoreEquipmentAction(unitId: string): Promise<ActionState> {
+  try {
+    await updateGseUnit(unitId, { is_active: true });
+  } catch (err) {
+    return apiToState(err, refusal("put equipment back on the list"));
+  }
+  revalidatePath("/equipment");
+  revalidatePath(`/equipment/${unitId}`);
+  return { status: "ok" };
+}
+
+/** A file kept with the unit (#134): its manual, an inspection record. */
+export async function uploadGseDocumentAction(
+  unitId: string,
+  _prev: ActionState,
+  form: FormData,
+): Promise<ActionState> {
+  const file = form.get("file");
+  if (!(file instanceof File) || file.size === 0) {
+    return { status: "field-errors", errors: { file: "Pick a file to upload." } };
+  }
+  try {
+    await uploadGseDocument(unitId, form);
+  } catch (err) {
+    if (err instanceof ApiError && err.status === 413) {
+      return { status: "api-error", message: `Files over ${MAX_UPLOAD_LABEL} can't be uploaded yet.` };
+    }
+    return apiToState(err, refusal("upload equipment documents"));
+  }
+  revalidatePath(`/equipment/${unitId}`);
+  return { status: "ok" };
+}
+
+export async function deleteGseDocumentAction(unitId: string, documentId: string): Promise<ActionState> {
+  try {
+    await deleteGseDocument(documentId);
+  } catch (err) {
+    return apiToState(err, refusal("remove equipment documents"));
+  }
+  revalidatePath(`/equipment/${unitId}`);
+  return { status: "ok" };
+}

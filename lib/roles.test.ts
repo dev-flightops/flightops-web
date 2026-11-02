@@ -5,6 +5,7 @@ import {
   CURRENCY_SIGNOFF,
   DISPATCH_WRITERS,
   FLIGHT_LOG_ADMINS,
+  FUEL_CONFIG,
   GSE_WRITERS,
   MANIFEST_EDITORS,
   OVERRIDE_AUTHORITY,
@@ -133,6 +134,15 @@ describe("the ground and village sets (29 Sep)", () => {
 
   it("stations: station staff and management", () => {
     expect(sorted(STATION_ADMINS)).toEqual(["director_of_operations", "exec_admin", "ground_ops"]);
+  });
+
+  it("the fuel directory and its suppliers' portal logins: legacy's CONFIG_ROLES (#134)", () => {
+    expect(sorted(FUEL_CONFIG)).toEqual([
+      "chief_pilot",
+      "director_of_maintenance",
+      "director_of_operations",
+      "exec_admin",
+    ]);
   });
 
   it("ground equipment: station staff, the DOM and management", () => {

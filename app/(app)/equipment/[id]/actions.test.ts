@@ -6,7 +6,11 @@ const {
   completeGseMaintenance,
   createGseMaintenance,
   createGseSquawk,
+  deleteGseDocument,
+  redirectSpy,
   resolveGseSquawk,
+  updateGseUnit,
+  uploadGseDocument,
 } = vi.hoisted(() => {
   class TestApiError extends Error {
     constructor(
@@ -23,7 +27,13 @@ const {
     completeGseMaintenance: vi.fn(),
     createGseMaintenance: vi.fn(),
     createGseSquawk: vi.fn(),
+    deleteGseDocument: vi.fn(),
+    redirectSpy: vi.fn(() => {
+      throw new Error("NEXT_REDIRECT");
+    }),
     resolveGseSquawk: vi.fn(),
+    updateGseUnit: vi.fn(),
+    uploadGseDocument: vi.fn(),
   };
 });
 vi.mock("@/lib/api/client", () => ({ ApiError: TestApiError }));
@@ -32,11 +42,18 @@ vi.mock("@/lib/api/ground", () => ({
   completeGseMaintenance,
   createGseMaintenance,
   createGseSquawk,
+  deleteGseDocument,
   resolveGseSquawk,
+  updateGseUnit,
+  uploadGseDocument,
 }));
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
+vi.mock("next/navigation", () => ({ redirect: redirectSpy }));
 
 import {
+  removeEquipmentAction,
+  restoreEquipmentAction,
+  uploadGseDocumentAction,
   changeStatusAction,
   completeMaintenanceAction,
   reportSquawkAction,
@@ -117,3 +134,42 @@ describe("equipment actions refused by role (29 Sep)", () => {
     });
   });
 });
+
+describe("removing and documents (#134)", () => {
+  it("takes a unit off the list and goes back to it", async () => {
+    updateGseUnit.mockResolvedValueOnce({});
+    await expect(removeEquipmentAction("u-1")).rejects.toThrow("NEXT_REDIRECT");
+    expect(updateGseUnit).toHaveBeenCalledWith("u-1", { is_active: false });
+    expect(redirectSpy).toHaveBeenCalledWith("/equipment");
+  });
+
+  it("puts it back, and says who may when refused", async () => {
+    updateGseUnit.mockResolvedValueOnce({});
+    expect(await restoreEquipmentAction("u-1")).toEqual({ status: "ok" });
+    expect(updateGseUnit).toHaveBeenLastCalledWith("u-1", { is_active: true });
+    updateGseUnit.mockRejectedValueOnce(new TestApiError(403, "/ground/gse/u-1", "insufficient_role"));
+    const refused = await restoreEquipmentAction("u-1");
+    expect(refused).toEqual({
+      status: "api-error",
+      message:
+        "Only Ground Ops, the Director of Maintenance, the Director of Operations or an Exec Admin can put equipment back on the list.",
+    });
+  });
+
+  it("needs a file, and says when it's too big", async () => {
+    const empty = new FormData();
+    expect(await uploadGseDocumentAction("u-1", { status: "idle" }, empty)).toEqual({
+      status: "field-errors",
+      errors: { file: "Pick a file to upload." },
+    });
+    const form = new FormData();
+    form.set("file", new File(["%PDF-"], "manual.pdf", { type: "application/pdf" }));
+    uploadGseDocument.mockRejectedValueOnce(new TestApiError(413, "/ground/gse/u-1/documents", "document_exceeds_10mb"));
+    const tooBig = await uploadGseDocumentAction("u-1", { status: "idle" }, form);
+    expect(tooBig).toEqual({ status: "api-error", message: "Files over 3.8 MB can't be uploaded yet." });
+    uploadGseDocument.mockResolvedValueOnce({ id: "g-1" });
+    expect(await uploadGseDocumentAction("u-1", { status: "idle" }, form)).toEqual({ status: "ok" });
+    expect(uploadGseDocument).toHaveBeenLastCalledWith("u-1", form);
+  });
+});
+
