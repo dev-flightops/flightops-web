@@ -167,6 +167,84 @@ export async function listWorkOrders(
   return apiFetch<WorkOrderListResponse>(`/maintenance/work-orders${tail}`);
 }
 
+export const WO_TYPES: readonly { value: string; label: string }[] = [
+  { value: "corrective", label: "Corrective" },
+  { value: "preventive", label: "Preventive" },
+  { value: "inspection", label: "Inspection" },
+  { value: "modification", label: "Modification" },
+  { value: "airworthiness_directive", label: "Airworthiness directive" },
+  { value: "service_bulletin", label: "Service bulletin" },
+  { value: "other", label: "Other" },
+];
+
+export const WO_PRIORITIES: readonly { value: WorkOrderPriority; label: string }[] = [
+  { value: "normal", label: "Normal" },
+  { value: "high", label: "High" },
+  { value: "aog", label: "AOG" },
+];
+
+/** Where a work order can go next: maintenance-service's WO_TRANSITIONS. */
+export const WO_NEXT: Record<WorkOrderStatus, WorkOrderStatus[]> = {
+  open: ["in_progress", "awaiting_parts", "closed"],
+  in_progress: ["awaiting_parts", "completed", "closed"],
+  awaiting_parts: ["in_progress", "closed"],
+  completed: ["closed"],
+  closed: [],
+};
+
+export interface WorkOrderEvent {
+  id: string;
+  from_status: WorkOrderStatus | null;
+  to_status: WorkOrderStatus;
+  changed_by_user_id: string;
+  changed_by_name: string | null;
+  note: string | null;
+  /** Absent from an older backend. */
+  changed_at?: string | null;
+}
+
+export interface WorkOrderDetail {
+  work_order: WorkOrderRow;
+  events: WorkOrderEvent[];
+}
+
+export interface WorkOrderCreate {
+  aircraft_id: string;
+  title: string;
+  description?: string | null;
+  wo_type: string;
+  priority: WorkOrderPriority;
+  opened_date: string;
+  due_date?: string | null;
+  squawk_id?: string | null;
+}
+
+export async function getWorkOrder(id: string): Promise<WorkOrderDetail> {
+  return apiFetch<WorkOrderDetail>(`/maintenance/work-orders/${id}`);
+}
+
+export async function createWorkOrder(body: WorkOrderCreate): Promise<WorkOrderRow> {
+  return apiFetch<WorkOrderRow>(`/maintenance/work-orders`, {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+}
+
+export async function transitionWorkOrder(
+  id: string,
+  toStatus: WorkOrderStatus,
+  note: string | null,
+): Promise<WorkOrderRow> {
+  return apiFetch<WorkOrderRow>(`/maintenance/work-orders/${id}/transition`, {
+    method: "POST",
+    body: JSON.stringify({ to_status: toStatus, note }),
+  });
+}
+
+export async function getSquawk(id: string): Promise<SquawkResponse> {
+  return apiFetch<SquawkResponse>(`/maintenance/squawks/${id}`);
+}
+
 // ---- The due list (#156) -----------------------------------------------------
 
 export type DueItemKind = "inspection" | "ad" | "sb" | "component" | "calendar" | "other";

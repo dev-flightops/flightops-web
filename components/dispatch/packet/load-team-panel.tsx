@@ -1,5 +1,8 @@
+import { LoadStatusLine } from "@/components/load-teams/load-status";
+import { loadZoneTable } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
 import { getFlightAssignment, listLoadTeams } from "@/lib/api/ground";
+import { zoneFor } from "@/lib/format/local-time";
 import type {
   FlightAssignmentResponse,
   FlightDetail,
@@ -83,6 +86,8 @@ export async function LoadTeamPanel({
   const editable =
     flight.status === "scheduled" || flight.status === "released";
   const cards = buildCards({ teams, assignment, base, editable });
+  // Where the team is with it (#134): acknowledged, loading, complete.
+  const zones = assignment ? await loadZoneTable().catch(() => null) : null;
 
   return (
     <SectionPanel
@@ -113,6 +118,13 @@ export async function LoadTeamPanel({
               ? null
               : `This flight is ${flight.status} — its load team can't be changed.`
           }
+        />
+      )}
+      {assignment && (
+        <LoadStatusLine
+          assignment={assignment}
+          timeZone={zones ? zoneFor(zones, flight.origin) : "America/Anchorage"}
+          className="mt-2 block"
         />
       )}
     </SectionPanel>

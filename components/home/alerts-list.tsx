@@ -58,6 +58,8 @@ const CATEGORY_LABEL: Record<OperationalAlert["category"], string> = {
   mel_expiring: "MELs expiring within 48 hours",
   safety_report_new: "New safety reports",
   seat_open: "Seats a no-show opened",
+  squawk_new: "New squawks without a work order",
+  load_complete: "Loads complete",
 };
 
 // Order the groups by what stops an aeroplane leaving, not alphabetically.

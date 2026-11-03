@@ -2277,6 +2277,8 @@ export interface FlightAssignmentFlightRef {
   destination: string;
   scheduled_departure_at: string;
   status: string;
+  tail_number?: string | null;
+  pax_count?: number | null;
 }
 
 export interface FlightAssignmentTeamRef {
@@ -2295,6 +2297,13 @@ export interface FlightAssignmentResponse {
   cleared_at: string | null;
   cleared_by: UserRef | null;
   note: string | null;
+  /** The team took the job, and when the load was on (#134). */
+  acknowledged_at?: string | null;
+  acknowledged_by?: UserRef | null;
+  load_completed_at?: string | null;
+  load_completed_by?: UserRef | null;
+  photo_count?: number;
+  crew_user_ids?: string[];
 }
 
 export interface FlightAssignmentListResponse {

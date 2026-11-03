@@ -8,6 +8,7 @@ import {
   loadOperationalSnapshot,
   type OperationalAlert,
 } from "./operational-snapshot";
+import { loadPersonalAlerts } from "./personal-alerts";
 
 /**
  * The alerts this user has not yet dealt with.
@@ -39,13 +40,19 @@ import {
 
 export type UnacknowledgedAlerts = DismissalOutcome<OperationalAlert>;
 
-export async function loadUnacknowledgedAlerts(): Promise<UnacknowledgedAlerts> {
-  const [snapshot, acks] = await Promise.all([
+export async function loadUnacknowledgedAlerts(
+  /** Adds the viewer's own alerts (#134): a new squawk for maintenance,
+   *  a load complete for the flight's crew and dispatch. */
+  viewer?: { roles: readonly string[]; userId: string | null },
+): Promise<UnacknowledgedAlerts> {
+  const [snapshot, personal, acks] = await Promise.all([
     loadOperationalSnapshot(),
+    viewer ? loadPersonalAlerts(viewer).catch(() => []) : [],
     listAlertAcknowledgments().catch(() => null),
   ]);
   return applyDismissals(
-    snapshot.alerts,
+    [...snapshot.alerts.filter((a) => a.severity === "red"), ...personal.filter((a) => a.severity === "red"),
+     ...snapshot.alerts.filter((a) => a.severity !== "red"), ...personal.filter((a) => a.severity !== "red")],
     acks === null ? null : new Map(acks.map((a) => [a.alert_key, a])),
   );
 }

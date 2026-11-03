@@ -39,6 +39,7 @@ export function LifecycleControls({
   flightLanded = false,
   currentQuoteCents,
   cancelConfirmToken,
+  pairedToConfirm = null,
 }: {
   bookingId: string;
   currentStatus: BookingStatus;
@@ -50,6 +51,9 @@ export function LifecycleControls({
    *  ("PANC-PABE"). Passed by the caller since we don't have the full
    *  booking here. When null, falls back to the booking short id. */
   cancelConfirmToken?: string | null;
+  /** The other half of a return trip, still to confirm: Confirm does
+   *  both (#134). */
+  pairedToConfirm?: { id: string; label: string } | null;
 }) {
   // A booking completed before its flight landed, or with no flight
   // (#154), never flew: completed before Complete waited for the landing,
@@ -71,7 +75,7 @@ export function LifecycleControls({
         />
       ) : null}
       {actions.includes("confirm") ? (
-        <ConfirmForm bookingId={bookingId} />
+        <ConfirmForm bookingId={bookingId} paired={pairedToConfirm} />
       ) : null}
       {actions.includes("complete") ? (
         flightLanded ? (
@@ -134,7 +138,13 @@ function QuoteForm({
   );
 }
 
-function ConfirmForm({ bookingId }: { bookingId: string }) {
+function ConfirmForm({
+  bookingId,
+  paired,
+}: {
+  bookingId: string;
+  paired: { id: string; label: string } | null;
+}) {
   const [state, formAction, pending] = useActionState(
     confirmAction,
     _initial,
@@ -144,14 +154,20 @@ function ConfirmForm({ bookingId }: { bookingId: string }) {
       {state.status === "error" && state.message ? (
         <ErrorBanner message={state.message} />
       ) : null}
-      <form action={formAction} className="flex items-end justify-end">
+      <form action={formAction} className="flex flex-wrap items-end justify-end gap-3">
         <input type="hidden" name="booking_id" value={bookingId} />
+        {paired ? (
+          <>
+            <input type="hidden" name="paired_booking_id" value={paired.id} />
+            <span className="mr-auto text-xs text-muted-foreground">Confirms the way back too: {paired.label}.</span>
+          </>
+        ) : null}
         <button
           type="submit"
           disabled={pending}
           className="btn-caps rounded-md border px-3 py-2 disabled:opacity-60 border-status-green/60 text-[0.72rem] text-status-green hover:border-status-green"
         >
-          {pending ? "Confirming…" : "Confirm"}
+          {pending ? "Confirming…" : paired ? "Confirm both ways" : "Confirm"}
         </button>
       </form>
     </ActionCard>

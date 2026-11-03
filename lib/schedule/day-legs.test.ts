@@ -73,17 +73,19 @@ describe("the day's legs", () => {
 });
 
 describe("the columns", () => {
-  it("are every aircraft that can fly or is grounded, plus any with a leg, by tail", () => {
+  it("are every aircraft that can fly or is grounded, plus any with a leg: flying first, the grounded last, by tail", () => {
     const fleet = [
       entry({ id: "ac-503", tail: "N503PA" }),
       entry({ id: "ac-301", tail: "N301PA", active: false, groundedReason: "mel_expired" }),
+      entry({ id: "ac-200", tail: "N200PA" }),
       entry({ id: "ac-999", tail: "N999PA", active: false }), // stored: no column
     ];
     const columns = aircraftColumns(fleet, dayLegs([flight({})]));
     expect(columns.map((c) => [c.tail, c.grounded, c.legs.length])).toEqual([
       ["N100PA", null, 2],
-      ["N301PA", "MEL expired", 0],
+      ["N200PA", null, 0],
       ["N503PA", null, 0],
+      ["N301PA", "MEL expired", 0],
     ]);
   });
 

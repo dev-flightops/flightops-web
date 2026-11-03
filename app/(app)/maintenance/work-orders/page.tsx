@@ -1,6 +1,8 @@
 import Link from "next/link";
 
+import { auth } from "@/auth";
 import { listWorkOrders } from "@/lib/api/maintenance";
+import { WORK_ORDER_WRITERS, hasAnyRole } from "@/lib/roles";
 import type { WorkOrderRow, WorkOrderStatus } from "@/lib/api/maintenance";
 import { ApiError } from "@/lib/api/client";
 
@@ -12,12 +14,9 @@ import { ApiError } from "@/lib/api/client";
  * query param. Legacy default is Active (all statuses); named
  * statuses filter to that single value.
  *
- * "New Work Order" modal is a follow-up story — the backend POST
- * endpoint exists.
+ * New Work Order opens /maintenance/work-orders/new, and each work order
+ * its own page with its timeline and next steps (#134).
  */
-
-const BACKEND_HINT_ADD =
-  "New Work Order modal is a follow-up — POST endpoint is live";
 
 const WO_STATUSES: readonly {
   value: WorkOrderStatus;
@@ -55,6 +54,7 @@ export default async function WorkOrdersPage({
 }) {
   const params = await searchParams;
   const filterStatus = parseStatus(params.status);
+  const canWrite = hasAnyRole((await auth())?.roles ?? [], WORK_ORDER_WRITERS);
 
   let orders: WorkOrderRow[] = [];
   let loadError: string | null = null;
@@ -87,15 +87,14 @@ export default async function WorkOrdersPage({
           >
             Fleet
           </Link>
-          <button
-            type="button"
-            disabled
-            aria-disabled="true"
-            title={BACKEND_HINT_ADD}
-            className="btn-caps cursor-not-allowed rounded-md bg-primary px-3 py-2 text-white disabled:opacity-100 text-[0.72rem]"
-          >
-            + New Work Order
-          </button>
+          {canWrite && (
+            <Link
+              href="/maintenance/work-orders/new"
+              className="btn-caps rounded-md bg-primary px-3 py-2 text-white hover:bg-brand-dark text-[0.72rem]"
+            >
+              + New Work Order
+            </Link>
+          )}
         </div>
       </header>
 
@@ -170,7 +169,9 @@ export default async function WorkOrdersPage({
                       }
                     >
                       <td className="whitespace-nowrap px-4 py-3 font-mono text-xs font-semibold text-foreground">
-                        {wo.wo_number}
+                        <Link href={`/maintenance/work-orders/${wo.id}`} className="text-primary hover:underline">
+                          {wo.wo_number}
+                        </Link>
                       </td>
                       <td className="whitespace-nowrap px-4 py-3 font-mono text-xs">
                         {wo.aircraft_tail ?? "?"}

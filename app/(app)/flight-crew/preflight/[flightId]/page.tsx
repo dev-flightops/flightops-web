@@ -16,7 +16,7 @@ import { getFratThresholds, loadZoneTable } from "@/lib/api/auth";
 import { loadFratInputs } from "@/lib/frat/load-inputs";
 import { getVillageBoard } from "@/lib/api/weather";
 import { getFlightLoad, type FlightLoad } from "@/lib/api/manifest";
-import { listFuelOrders, listSupplierBases } from "@/lib/api/ground";
+import { getFlightAssignment, listFuelOrders, listSupplierBases } from "@/lib/api/ground";
 import { zoneFor } from "@/lib/format/local-time";
 import { fuelTypeForAircraft, supplierOptionsFor } from "@/lib/fuel";
 import { cn } from "@/lib/utils";
@@ -36,6 +36,7 @@ import type {
 } from "@/lib/api/types";
 
 import { PreflightFuel } from "./preflight-fuel";
+import { Readiness } from "./readiness";
 import { PreflightShell } from "./preflight-shell";
 
 const DUTY_OFFLINE_DEFAULT: CurrentDutyResponse = {
@@ -192,13 +193,22 @@ export default async function PreflightPage({
   // this aircraft's fuel. Best-effort, like the weather: a failure costs
   // the pilot the fuel card, not the preflight.
   const fuelTypeCode = fuelTypeForAircraft(flight.aircraft.model);
-  const [[fuelOrders, fuelBases], zones] = await Promise.all([
+  const [[fuelOrders, fuelBases, loadAssignment], zones] = await Promise.all([
     Promise.allSettled([
       listFuelOrders({ flightId: flight.id }),
       listSupplierBases({ baseCode: flight.origin }),
+      getFlightAssignment(flight.id),
     ]),
     loadZoneTable(),
   ]);
+  const readiness = (
+    <Readiness
+      fuelOrders={fuelOrders.status === "fulfilled" ? fuelOrders.value.items : null}
+      assignment={loadAssignment.status === "fulfilled" ? loadAssignment.value : undefined}
+      flightLoad={flightLoad}
+      timeZone={zoneFor(zones, flight.origin)}
+    />
+  );
   const fuel = (
     <PreflightFuel
       flight={flight}
@@ -234,6 +244,7 @@ export default async function PreflightPage({
         fratPrefill={fratPrefill}
         fratBlock={fratBlock}
         fuel={fuel}
+        readiness={readiness}
         flightLog={flightLog}
       />
     </div>

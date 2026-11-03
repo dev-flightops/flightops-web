@@ -875,6 +875,45 @@ export async function getFlightAssignment(
   return items[0] ?? null;
 }
 
+/** The loads of the teams the signed-in user leads or is on, for a
+ *  company day (default today): the ramper's list (#134). */
+export async function listMyTeamLoads(day?: string): Promise<FlightAssignmentListResponse> {
+  return apiFetch<FlightAssignmentListResponse>(
+    `/ground/flight-assignments/mine${day ? `?day=${day}` : ""}`,
+  );
+}
+
+/** Every team's loads for a company day, with where each one stands. */
+export async function listDayLoads(day?: string): Promise<FlightAssignmentListResponse> {
+  return apiFetch<FlightAssignmentListResponse>(
+    `/ground/flight-assignments/day${day ? `?day=${day}` : ""}`,
+  );
+}
+
+/** The team took the job: stamped once, with who. */
+export async function acknowledgeLoad(assignmentId: string): Promise<FlightAssignmentResponse> {
+  return apiFetch<FlightAssignmentResponse>(
+    `/ground/flight-assignments/${assignmentId}/acknowledge`,
+    { method: "POST" },
+  );
+}
+
+/** The load is on the aircraft (acknowledges it too, if no one had). */
+export async function completeLoad(assignmentId: string): Promise<FlightAssignmentResponse> {
+  return apiFetch<FlightAssignmentResponse>(
+    `/ground/flight-assignments/${assignmentId}/complete`,
+    { method: "POST" },
+  );
+}
+
+/** Undo "complete". */
+export async function reopenLoad(assignmentId: string): Promise<FlightAssignmentResponse> {
+  return apiFetch<FlightAssignmentResponse>(
+    `/ground/flight-assignments/${assignmentId}/reopen`,
+    { method: "POST" },
+  );
+}
+
 /** Idempotent upsert: assign a flight to a team. Re-posting the same
  *  (flight, team) returns the existing row; reposting with a different
  *  team closes the old assignment and creates a new one in one

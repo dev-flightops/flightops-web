@@ -71,7 +71,21 @@ export async function confirmAction(
 ): Promise<LifecycleState> {
   const bookingId = String(formData.get("booking_id") ?? "");
   if (!bookingId) return { status: "error", message: "Missing booking id." };
-  return _wrap(bookingId, () => confirmBooking(bookingId));
+  const result = await _wrap(bookingId, () => confirmBooking(bookingId));
+  // A return trip is confirmed both ways at once (#134): the agent had to
+  // open the way back and confirm it again.
+  const pairedId = String(formData.get("paired_booking_id") ?? "");
+  if (result.status !== "ok" || !pairedId) return result;
+  const back = await _wrap(pairedId, () => confirmBooking(pairedId));
+  if (back.status !== "ok") {
+    revalidatePath(`/reservations/bookings/${bookingId}`);
+    return {
+      status: "error",
+      message: `Confirmed this way; the way back wasn't: ${back.message ?? "open it and confirm it there."}`,
+    };
+  }
+  revalidatePath(`/reservations/bookings/${bookingId}`);
+  return result;
 }
 
 export async function completeAction(

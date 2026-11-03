@@ -98,6 +98,17 @@ export async function createFuelOrderAction(
           message: "Your session expired — please sign in again.",
         };
       }
+      // A pilot orders for a flight they crew, from that flight (#134).
+      if (err.status === 403) {
+        return {
+          status: "api-error",
+          message: err.message.includes("pilot_not_on_this_flight")
+            ? "You aren't crewed on that flight, so you can't order its fuel."
+            : err.message.includes("pilot_orders_are_for_a_flight")
+              ? "A pilot orders fuel from the flight: open it on Flight Crew and use its Fuel card."
+              : "Your role can't place fuel orders.",
+        };
+      }
       // #156: the aircraft, its fuel and tanks, and the station are
       // checked; each refusal goes on the field it is about, in the
       // service's words.

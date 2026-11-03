@@ -64,13 +64,14 @@ export async function buildHeaderActionsData(
   email: string,
   fullName: string | null,
   roles: readonly string[],
+  userId: string | null = null,
 ): Promise<HeaderActionsData> {
   // The bell carries the operation's alerts, which the bookkeeper has no
   // use for (#128); their pages don't fetch them either.
   const showBell = seesOperationalAlerts(roles);
   const [initialDuty, bellAlerts] = await Promise.all([
     getCurrentDuty().catch(() => null),
-    showBell ? loadUnacknowledgedAlerts().catch(() => null) : null,
+    showBell ? loadUnacknowledgedAlerts({ roles, userId }).catch(() => null) : null,
   ]);
 
   return {

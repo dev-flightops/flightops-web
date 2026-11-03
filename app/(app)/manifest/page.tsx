@@ -1,7 +1,9 @@
 import Link from "next/link";
 
+import { loadZoneTable } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
 import { listFlights } from "@/lib/api/ops";
+import { localClock, localDay, utcToLocalInput } from "@/lib/format/local-time";
 import type { FlightListItem, FlightStatus } from "@/lib/api/types";
 
 /**
@@ -60,14 +62,10 @@ function parseStatus(
   return null;
 }
 
-function toDayKey(iso: string): string {
-  // Slice YYYY-MM-DD off the ISO string — server passes UTC.
-  return iso.slice(0, 10);
-}
-
-function todayUtcKey(): string {
-  const d = new Date();
-  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-${String(d.getUTCDate()).padStart(2, "0")}`;
+/** The company's day an instant falls on (#134): in UTC, an evening in
+ *  Alaska was already tomorrow, and the times read as Alaska's. */
+function toDayKey(iso: string, zone: string): string {
+  return utcToLocalInput(iso, zone).slice(0, 10);
 }
 
 function formatDayHeading(key: string): string {
@@ -82,21 +80,12 @@ function formatDayHeading(key: string): string {
   });
 }
 
-function formatToday(): string {
+function formatToday(zone: string): string {
   return new Date().toLocaleDateString("en-US", {
     year: "numeric",
     month: "short",
     day: "numeric",
-    timeZone: "UTC",
-  });
-}
-
-function formatDepTime(iso: string): string {
-  return new Date(iso).toLocaleTimeString("en-US", {
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-    timeZone: "UTC",
+    timeZone: zone,
   });
 }
 
@@ -112,7 +101,8 @@ export default async function FlightSchedulePage({
   const range = parseRange(params.range);
   const statusFilter = parseStatus(params.status);
 
-  const today = todayUtcKey();
+  const zone = (await loadZoneTable().catch(() => null))?.fallback ?? "America/Anchorage";
+  const today = localDay(zone);
 
   let flights: FlightListItem[] = [];
   let loadError: string | null = null;
@@ -136,7 +126,7 @@ export default async function FlightSchedulePage({
   // Range filter — done in-process because the backend
   // /ops/flights endpoint filters by exact date, not range.
   const filtered = flights.filter((f) => {
-    const key = toDayKey(f.scheduled_departure_at);
+    const key = toDayKey(f.scheduled_departure_at, zone);
     if (range === "today") return key === today;
     if (range === "past") return key < today;
     if (range === "upcoming") return key >= today;
@@ -145,7 +135,7 @@ export default async function FlightSchedulePage({
 
   // Stats
   const todayFlights = flights.filter(
-    (f) => toDayKey(f.scheduled_departure_at) === today,
+    (f) => toDayKey(f.scheduled_departure_at, zone) === today,
   );
   const activeNow = flights.filter(
     (f) => f.status === "released" && !f.actual_arrival_at,
@@ -154,7 +144,7 @@ export default async function FlightSchedulePage({
   // Group filtered flights by day key.
   const byDate = new Map<string, FlightListItem[]>();
   for (const f of filtered) {
-    const key = toDayKey(f.scheduled_departure_at);
+    const key = toDayKey(f.scheduled_departure_at, zone);
     if (!byDate.has(key)) byDate.set(key, []);
     byDate.get(key)!.push(f);
   }
@@ -194,7 +184,7 @@ export default async function FlightSchedulePage({
           label="Showing"
           valueClass="text-status-blue"
         />
-        <StatCard value={formatToday()} label="Today" small />
+        <StatCard value={formatToday(zone)} label="Today" small />
       </div>
 
       <div className="mb-5 rounded-lg border border-border bg-card px-4 py-3">
@@ -269,6 +259,7 @@ export default async function FlightSchedulePage({
             dayKey={key}
             flights={byDate.get(key)!}
             isToday={key === today}
+            zone={zone}
           />
         ))
       )}
@@ -309,10 +300,12 @@ function DayBlock({
   dayKey,
   flights,
   isToday,
+  zone,
 }: {
   dayKey: string;
   flights: FlightListItem[];
   isToday: boolean;
+  zone: string;
 }) {
   return (
     <section className="mb-5">
@@ -370,7 +363,7 @@ function DayBlock({
                     {f.aircraft.tail_number}
                   </td>
                   <td className="whitespace-nowrap px-4 py-3 font-mono text-xs text-muted-foreground">
-                    {formatDepTime(f.scheduled_departure_at)}
+                    {localClock(f.scheduled_departure_at, zone)}
                   </td>
                   <td className="whitespace-nowrap px-4 py-3">
                     <FlightStatusBadge status={f.status} />

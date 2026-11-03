@@ -75,6 +75,8 @@ interface Props {
    *  step on every step: the pilot can review and change fuel at any
    *  point in the release process. */
   fuel?: React.ReactNode;
+  /** Fuel, load and passengers in one line (#134), under the flight. */
+  readiness?: React.ReactNode;
   /** The flight's log for Step 8: the draft its arrival opened, filled
    *  from the flight (the client, 30 Oct). Null before the arrival. */
   flightLog?: FlightLogResponse | null;
@@ -109,6 +111,7 @@ export function PreflightShell({
   fratPrefill,
   fratBlock,
   fuel,
+  readiness,
   flightLog = null,
 }: Props) {
   const completedNumbers = new Set(
@@ -167,6 +170,7 @@ export function PreflightShell({
   return (
     <>
       <FlightContextBar flight={flight} />
+      {readiness}
       <ProgressIndicator
         completedNumbers={completedNumbers}
         nextStep={nextStep}

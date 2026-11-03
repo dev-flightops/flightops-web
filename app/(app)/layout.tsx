@@ -115,6 +115,7 @@ export default async function AppGroupLayout({
         session.user.email,
         session.user.name ?? null,
         sessionRoles,
+        session.user.id ?? null,
       )
     : null;
 
