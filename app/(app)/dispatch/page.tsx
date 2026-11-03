@@ -51,7 +51,7 @@ import {
 import { getFlightLoad } from "@/lib/api/manifest";
 import { listMelItems } from "@/lib/api/maintenance";
 import { ReleaseReadinessPanel } from "@/components/dispatch/packet/release-readiness-panel";
-import { localDay } from "@/lib/format/local-time";
+import { localDay, localToUtcIso } from "@/lib/format/local-time";
 import { listBookings } from "@/lib/api/reservations";
 import { getTypeQualificationGrid } from "@/lib/api/type-qualifications";
 import {
@@ -208,6 +208,11 @@ export default async function DispatchPage({
   // #138: a soft-failed load says so at the top of the packet. Each had
   // read as nothing there: no flights, no pilots, no weight returns.
   const loads = new Loads();
+  // The waiting bookings from the company's today on (#134). Oldest first,
+  // the ones left from earlier days filled the panel above the one booked
+  // that morning; they are counted instead, for reservations to rebook or
+  // cancel.
+  const todayStart = localToUtcIso(`${localDay(zones.fallback)}T00:00`, zones.fallback) ?? undefined;
   const [
     { items: flights },
     tenantsResponse,
@@ -216,6 +221,7 @@ export default async function DispatchPage({
     picCompliance,
     weightReturns,
     awaitingFlight,
+    awaitingEarlier,
     sicChecks,
     plansWaiting,
     picAvailability,
@@ -244,7 +250,10 @@ export default async function DispatchPage({
     // Reservations nobody has put on a flight yet. Soft-fail like the
     // others: losing this panel costs dispatch the queue, not the
     // packet they are working on.
-    loads.or(listBookings({ awaiting_flight: true, limit: 25 }), { items: [], total: 0 }, "the bookings waiting for a flight"),
+    loads.or(listBookings({ awaiting_flight: true, from_date: todayStart, limit: 25 }), { items: [], total: 0 }, "the bookings waiting for a flight"),
+    todayStart
+      ? listBookings({ awaiting_flight: true, to_date: todayStart, limit: 1 }).catch(() => ({ items: [], total: 0 }))
+      : Promise.resolve({ items: [], total: 0 }),
     Promise.all(
       sicIds.map(async (pilotId) => ({
         pilotId,
@@ -408,7 +417,7 @@ export default async function DispatchPage({
 
         {/* Behind, not blocked — see the panel for why it is amber
             rather than red. */}
-        <BookingsAwaitingFlightPanel bookings={awaitingFlight.items} />
+        <BookingsAwaitingFlightPanel bookings={awaitingFlight.items} earlier={awaitingEarlier.total} />
 
         <ForeFlightPlansWaitingBanner count={plansWaiting} />
 

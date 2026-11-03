@@ -43,15 +43,29 @@ beforeEach(() => {
 });
 
 describe("ErrorScreen", () => {
-  it("offers a retry for an ordinary failure", async () => {
+  it("retries by fetching the page again, not by re-rendering the failed copy", async () => {
+    // #134: "Try again" called reset(), which re-renders what the client
+    // already has, so a page whose server render failed once stayed on
+    // this screen until a full reload. unstable_retry fetches it again.
     const reset = vi.fn();
-    render(<ErrorScreen error={err("Upstream timed out")} reset={reset} />);
+    const retry = vi.fn();
+    render(<ErrorScreen error={err("Upstream timed out")} reset={reset} unstable_retry={retry} />);
 
     expect(screen.getByText("Something went wrong")).toBeInTheDocument();
     expect(screen.getByText("Upstream timed out")).toBeInTheDocument();
 
     await userEvent.click(screen.getByRole("button", { name: /try again/i }));
-    expect(reset).toHaveBeenCalledOnce();
+    expect(retry).toHaveBeenCalledOnce();
+    expect(reset).not.toHaveBeenCalled();
+  });
+
+  it("without unstable_retry, refreshes the server data before resetting", async () => {
+    const reset = vi.fn();
+    render(<ErrorScreen error={err("Upstream timed out")} reset={reset} />);
+
+    await userEvent.click(screen.getByRole("button", { name: /try again/i }));
+    await waitFor(() => expect(reset).toHaveBeenCalledOnce());
+    expect(refresh).toHaveBeenCalledOnce();
   });
 
   it("offers re-login, not retry, when the session has expired", async () => {
