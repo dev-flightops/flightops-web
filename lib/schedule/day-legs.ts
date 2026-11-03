@@ -135,7 +135,11 @@ export function aircraftColumns(fleet: FleetEntry[], legs: DayLeg[]): AircraftCo
   for (const column of columns.values()) {
     column.legs.sort((a, b) => Date.parse(a.departsAt) - Date.parse(b.departsAt));
   }
-  return [...columns.values()].sort((a, b) => a.tail.localeCompare(b.tail));
+  // The aircraft flying today first, then the rest that can fly, then the
+  // grounded; by tail within each (#134): with the whole fleet in tail
+  // order, a day's flights could all sit off the first screen.
+  const rank = (c: AircraftColumn) => (c.legs.length > 0 ? 0 : c.grounded ? 2 : 1);
+  return [...columns.values()].sort((a, b) => rank(a) - rank(b) || a.tail.localeCompare(b.tail));
 }
 
 /** Minutes from local midnight of `day` (YYYY-MM-DD) in `zone`; negative

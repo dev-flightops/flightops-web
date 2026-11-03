@@ -94,6 +94,16 @@ export const AIRWORTHINESS_WRITERS = roleGate(
   "exec_admin",
 );
 
+/** Open and work a work order: maintenance-service's work-order gate
+ *  (#134). Resolving its squawk stays AIRWORTHINESS_WRITERS'. */
+export const WORK_ORDER_WRITERS = roleGate(
+  "maintenance",
+  "director_of_maintenance",
+  "chief_pilot",
+  "director_of_operations",
+  "exec_admin",
+);
+
 /** Add or edit a station, or work its issues (29 Sep). Reporting an
  *  issue is open to all staff. */
 export const STATION_ADMINS = roleGate(
@@ -129,6 +139,18 @@ export const RAMP_OPS = roleGate(
   "ground_ops",
   "dispatcher",
   "chief_pilot",
+  "director_of_operations",
+  "exec_admin",
+);
+
+/** Place a fuel order: the services' FUEL_ORDERERS. A pilot who holds
+ *  no other of these orders only for a flight they crew (#134). */
+export const FUEL_ORDERERS = roleGate(
+  "dispatcher",
+  "pilot",
+  "ground_ops",
+  "chief_pilot",
+  "director_of_maintenance",
   "director_of_operations",
   "exec_admin",
 );

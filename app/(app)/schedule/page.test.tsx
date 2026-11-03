@@ -271,8 +271,8 @@ describe("the schedule by aircraft (#139)", () => {
     const day = screen.getByRole("region", { name: "Flights by aircraft" });
     expect(within(day).getAllByRole("group").map((g) => g.getAttribute("aria-label"))).toEqual([
       "N100PA",
-      "N301PA, grounded: MEL expired",
       "N503PA",
+      "N301PA, grounded: MEL expired",
     ]);
     expect(within(screen.getByRole("group", { name: "N100PA" })).getAllByRole("button").map((b) => b.getAttribute("aria-label"))).toEqual([
       "PGR790.1, PABE to 9Z8, 10:30–11:45, Planned, 5 of 9 seats booked",

@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { SquawkResponse } from "@/lib/api/types";
 
-const { TestApiError, listSquawks, listAircraft } = vi.hoisted(() => {
+const { TestApiError, listSquawks, listAircraft, listWorkOrders } = vi.hoisted(() => {
   class TestApiError extends Error {
     constructor(
       public status: number,
@@ -17,10 +17,11 @@ const { TestApiError, listSquawks, listAircraft } = vi.hoisted(() => {
     TestApiError,
     listSquawks: vi.fn(),
     listAircraft: vi.fn(),
+    listWorkOrders: vi.fn(),
   };
 });
 vi.mock("@/lib/api/client", () => ({ ApiError: TestApiError }));
-vi.mock("@/lib/api/maintenance", () => ({ listSquawks }));
+vi.mock("@/lib/api/maintenance", () => ({ listSquawks, listWorkOrders }));
 vi.mock("@/lib/api/ops", () => ({ listAircraft }));
 
 // The page reads the viewer's roles to decide what it offers (29 Sep).
@@ -61,6 +62,8 @@ function makeSquawk(
 beforeEach(() => {
   listSquawks.mockReset();
   listAircraft.mockReset();
+  listWorkOrders.mockReset();
+  listWorkOrders.mockResolvedValue({ items: [], total: 0 });
   listAircraft.mockResolvedValue({ items: [], total: 0 });
 });
 
@@ -193,6 +196,29 @@ describe("SquawksListPage — who may resolve", () => {
       .mockResolvedValueOnce({ items: [], total: 0 });
     await renderPage();
     expect(screen.getByTestId("resolve-squawk")).toHaveAttribute("data-squawk-id", "s-1");
+  });
+
+  it("offers maintenance a work order for a squawk, or links the one it has (#134)", async () => {
+    auth.mockResolvedValueOnce({ roles: ["maintenance"] });
+    listSquawks
+      .mockResolvedValueOnce({
+        items: [makeSquawk({ id: "s-1", status: "open" }), makeSquawk({ id: "s-2", status: "open" })],
+        total: 2,
+      })
+      .mockResolvedValueOnce({ items: [], total: 0 });
+    listWorkOrders.mockResolvedValueOnce({
+      items: [{ id: "wo-9", wo_number: "WO-AB28B811-01012", squawk_id: "s-2" }],
+      total: 1,
+    });
+    await renderPage();
+    expect(screen.getAllByRole("link", { name: /Open work order/ })[0]).toHaveAttribute(
+      "href",
+      "/maintenance/work-orders/new?squawk=s-1",
+    );
+    expect(screen.getByRole("link", { name: /WO-AB28B811-01012/ })).toHaveAttribute(
+      "href",
+      "/maintenance/work-orders/wo-9",
+    );
   });
 
   it("shows a dispatcher the list read-only", async () => {

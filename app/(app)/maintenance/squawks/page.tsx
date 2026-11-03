@@ -2,7 +2,7 @@ import { AircraftFilter } from "@/components/maintenance/aircraft-filter";
 import { SquawksTable } from "@/components/maintenance/squawks-table";
 import { StatusFilterTabs } from "@/components/maintenance/status-filter-tabs";
 import { ApiError } from "@/lib/api/client";
-import { listSquawks } from "@/lib/api/maintenance";
+import { listSquawks, listWorkOrders } from "@/lib/api/maintenance";
 import { listAircraft } from "@/lib/api/ops";
 import type {
   AircraftListItem,
@@ -10,7 +10,7 @@ import type {
   SquawkStatus,
 } from "@/lib/api/types";
 import { auth } from "@/auth";
-import { AIRWORTHINESS_WRITERS, hasAnyRole } from "@/lib/roles";
+import { AIRWORTHINESS_WRITERS, WORK_ORDER_WRITERS, hasAnyRole } from "@/lib/roles";
 
 /**
  * /maintenance/squawks — cross-fleet squawks list (M2-G-21).
@@ -53,21 +53,30 @@ export default async function SquawksListPage({
     await searchParams;
   // Resolving is maintenance's (AIRWORTHINESS_WRITERS, enforced by the
   // backend); everyone else sees the list read-only.
-  const canResolve = hasAnyRole((await auth())?.roles ?? [], AIRWORTHINESS_WRITERS);
+  const roles = (await auth())?.roles ?? [];
+  const canResolve = hasAnyRole(roles, AIRWORTHINESS_WRITERS);
+  const canOpenWorkOrder = hasAnyRole(roles, WORK_ORDER_WRITERS);
   const tab = parseTab(statusParam);
   const aircraftId = aircraftParam ?? null;
 
   let items: SquawkResponse[] = [];
   let aircraft: AircraftListItem[] = [];
   let loadError: string | null = null;
+  // The work order opened for each squawk (#134). Best-effort: without
+  // them the list still works, it just offers to open one.
+  const workOrders: Record<string, { id: string; wo_number: string }> = {};
 
   try {
     const fetches = await Promise.all([
       fetchSquawks(tab, aircraftId),
       listAircraft(),
+      listWorkOrders().catch(() => ({ items: [], total: 0 })),
     ]);
     items = fetches[0];
     aircraft = fetches[1].items;
+    for (const wo of fetches[2].items) {
+      if (wo.squawk_id) workOrders[wo.squawk_id] = { id: wo.id, wo_number: wo.wo_number };
+    }
   } catch (err) {
     const code = err instanceof ApiError ? err.status : 0;
     loadError =
@@ -120,6 +129,8 @@ export default async function SquawksListPage({
           items={items}
           showAircraft
           canResolve={canResolve}
+          workOrders={workOrders}
+          canOpenWorkOrder={canOpenWorkOrder}
           emptyMessage={`No ${
             tab === "active"
               ? "active"

@@ -20,19 +20,29 @@ import { formatBothWithDate } from "@/lib/format/flight-time";
  * `canResolve` adds Resolve for maintenance (AIRWORTHINESS_WRITERS,
  * 29 Sep): resolving returns the aircraft to service, and the dispatch
  * packet no longer offers it to anyone else.
+ *
+ * `workOrders` links a squawk to the work order opened for it, and
+ * `canOpenWorkOrder` offers to open one (WORK_ORDER_WRITERS, #134).
  */
 export function SquawksTable({
   items,
   showAircraft = false,
   emptyMessage = "No open squawks.",
   canResolve = false,
+  workOrders = {},
+  canOpenWorkOrder = false,
 }: {
   items: SquawkResponse[];
   showAircraft?: boolean;
   emptyMessage?: string;
   /** The viewer may resolve squawks (AIRWORTHINESS_WRITERS). */
   canResolve?: boolean;
+  /** The work order opened for each squawk, by squawk id. */
+  workOrders?: Record<string, { id: string; wo_number: string }>;
+  /** The viewer may open a work order (WORK_ORDER_WRITERS). */
+  canOpenWorkOrder?: boolean;
 }) {
+  const actions = canResolve || canOpenWorkOrder || Object.keys(workOrders).length > 0;
   if (items.length === 0) {
     return (
       <div className="rounded-lg border border-border bg-card px-5 py-8 text-center text-xs text-muted-foreground">
@@ -52,7 +62,7 @@ export function SquawksTable({
             <th className="px-3 py-2">Reported</th>
             <th className="px-3 py-2">By</th>
             <th className="px-3 py-2">Status</th>
-            {canResolve && (
+            {actions && (
               <th className="px-3 py-2">
                 <span className="sr-only">Actions</span>
               </th>
@@ -66,6 +76,9 @@ export function SquawksTable({
               squawk={sq}
               showAircraft={showAircraft}
               canResolve={canResolve}
+              actions={actions}
+              workOrder={workOrders[sq.id] ?? null}
+              canOpenWorkOrder={canOpenWorkOrder}
             />
           ))}
         </tbody>
@@ -78,10 +91,16 @@ function SquawkRow({
   squawk,
   showAircraft,
   canResolve,
+  actions,
+  workOrder,
+  canOpenWorkOrder,
 }: {
   squawk: SquawkResponse;
   showAircraft: boolean;
   canResolve: boolean;
+  actions: boolean;
+  workOrder: { id: string; wo_number: string } | null;
+  canOpenWorkOrder: boolean;
 }) {
   const reported = formatBothWithDate(squawk.reported_at);
 
@@ -121,15 +140,35 @@ function SquawkRow({
       <td className="px-3 py-2.5">
         <StatusChip status={squawk.status} />
       </td>
-      {canResolve && (
+      {actions && (
         <td className="px-3 py-2.5 text-right">
-          {squawk.status !== "resolved" && (
-            <ResolveSquawkDialog
-              squawkId={squawk.id}
-              title={squawk.title}
-              severity={squawk.severity}
-            />
-          )}
+          <div className="flex flex-wrap items-center justify-end gap-3">
+            {workOrder ? (
+              <Link
+                href={`/maintenance/work-orders/${workOrder.id}`}
+                className="font-mono text-[0.68rem] font-semibold text-primary hover:underline"
+              >
+                {workOrder.wo_number} <span aria-hidden>›</span>
+              </Link>
+            ) : (
+              canOpenWorkOrder &&
+              squawk.status !== "resolved" && (
+                <Link
+                  href={`/maintenance/work-orders/new?squawk=${squawk.id}`}
+                  className="text-[0.68rem] font-bold uppercase tracking-[0.1em] text-primary hover:underline"
+                >
+                  Open work order<span className="sr-only"> for {squawk.title}</span>
+                </Link>
+              )
+            )}
+            {canResolve && squawk.status !== "resolved" && (
+              <ResolveSquawkDialog
+                squawkId={squawk.id}
+                title={squawk.title}
+                severity={squawk.severity}
+              />
+            )}
+          </div>
         </td>
       )}
     </tr>

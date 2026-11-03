@@ -1,6 +1,6 @@
 import { StatusMark, type StatusTone } from "@/components/ff/status-mark";
 import Link from "next/link";
-import { formatZulu } from "@/lib/format/flight-time";
+import { formatLocal, formatZulu } from "@/lib/format/flight-time";
 
 import { listCompanyBases, loadZoneTable } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
@@ -393,7 +393,7 @@ function StatusChip({ status }: { status: string }) {
   return <StatusMark label={status} tone={tone[status] ?? "muted"} className="shrink-0 text-[0.6rem]" />;
 }
 
-// Zulu, via the shared helper. The hand-rolled version this replaced
-// passed no timeZone, so on a server component it rendered in the host's
-// zone and carried no suffix to say which clock it was.
-const formatTime = formatZulu;
+// Via the shared helpers, each with its zone (a hand-rolled version had
+// rendered in the host's zone with no suffix). Local first, as Schedule
+// and check-in show it, with Zulu for the crews (#134).
+const formatTime = (iso: string) => `${formatLocal(iso)} (${formatZulu(iso)})`;

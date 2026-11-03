@@ -1,15 +1,21 @@
 import Link from "next/link";
+import { LoadButtons } from "@/components/load-teams/load-buttons";
+import { LoadStatusLine, loadStage } from "@/components/load-teams/load-status";
+import { loadZoneTable } from "@/lib/api/auth";
 import { formatZulu } from "@/lib/format/flight-time";
+import { localClock, zoneFor } from "@/lib/format/local-time";
 
 import {
   listFuelOrders,
   listGseUnits,
+  listMyTeamLoads,
   listOpenStationIssues,
 } from "@/lib/api/ground";
 import { getFlightBoard } from "@/lib/api/flight-following";
 import { ApiError } from "@/lib/api/client";
 import type {
   BoardFlightItem,
+  FlightAssignmentResponse,
   FuelOrderResponse,
   GSEUnitListItem,
   StationIssueResponse,
@@ -24,6 +30,8 @@ import { equipmentTypeLabel } from "@/lib/ground/equipment-labels";
  * a flat to-do list of "things I can action right now." Each row is
  * a single clear next step:
  *
+ *   - The loads of the user's load teams: acknowledge, photograph and
+ *     complete each (#134)
  *   - Fuel orders awaiting confirm / fueling
  *   - Aircraft departing soon (pre-flight checks reminder)
  *   - Open equipment squawks I might need to know about
@@ -40,13 +48,20 @@ export default async function RamperPage() {
     boardResult,
     gseResult,
     issueResult,
+    loadsResult,
+    zonesResult,
   ] = await Promise.allSettled([
     listFuelOrders({ status: "ordered", limit: 20 }),
     listFuelOrders({ status: "confirmed", limit: 20 }),
     getFlightBoard("today"),
     listGseUnits({ limit: 200 }),
     listOpenStationIssues(),
+    listMyTeamLoads(),
+    loadZoneTable(),
   ]);
+  const myLoads: FlightAssignmentResponse[] =
+    loadsResult.status === "fulfilled" ? loadsResult.value.items : [];
+  const zones = zonesResult.status === "fulfilled" ? zonesResult.value : null;
 
   const awaitingConfirm: FuelOrderResponse[] =
     confirmResult.status === "fulfilled" ? confirmResult.value.items : [];
@@ -54,9 +69,11 @@ export default async function RamperPage() {
     fueledResult.status === "fulfilled" ? fueledResult.value.items : [];
   const todaysFlights: BoardFlightItem[] =
     boardResult.status === "fulfilled" ? boardResult.value.items : [];
-  // Pre-flight reminder: scheduled flights only — released ones are
-  // already in the air and not the ramper's worry today.
-  const departingSoon = todaysFlights.filter((f) => f.status === "scheduled");
+  // Pre-flight: everything still on the ground. A released flight is the
+  // one about to be loaded; only once it has departed is it off the list.
+  const departingSoon = todaysFlights.filter(
+    (f) => f.status === "scheduled" || (f.status === "released" && !f.actual_departure_at),
+  );
   // GSE units with at least one open squawk. The cross-unit squawk feed
   // doesn't exist; we lean on the open_squawk_count aggregate the unit
   // list already exposes.
@@ -74,6 +91,7 @@ export default async function RamperPage() {
     ["Flight board", boardResult],
     ["Equipment", gseResult],
     ["Station issues", issueResult],
+    ["Your team's loads", loadsResult],
   ] as const;
   for (const [label, r] of labelByResult) {
     if (r.status === "rejected") {
@@ -86,7 +104,9 @@ export default async function RamperPage() {
     }
   }
 
+  const openLoads = myLoads.filter((a) => loadStage(a) !== "complete");
   const totalTasks =
+    openLoads.length +
     awaitingConfirm.length +
     awaitingFueled.length +
     departingSoon.length +
@@ -120,6 +140,38 @@ export default async function RamperPage() {
           {errors.join(" ")}
         </div>
       )}
+
+      <Section
+        title="Your team's loads"
+        emptyHint="No loads for your team today."
+        actionHref="/ramp-ops"
+        count={myLoads.length}
+      >
+        {myLoads.map((a) => {
+          const zone = zones ? zoneFor(zones, a.flight.origin) : "America/Anchorage";
+          return (
+            <li key={a.id} className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-4 py-3 last:border-b-0">
+              <div className="min-w-0">
+                <div className="text-sm font-semibold text-foreground">
+                  {a.flight.flight_number} • {a.flight.origin} → {a.flight.destination}
+                </div>
+                <div className="text-[0.7rem] text-muted-foreground">
+                  {[a.flight.tail_number, a.flight.pax_count != null ? `${a.flight.pax_count} pax` : null,
+                    `departs ${localClock(a.flight.scheduled_departure_at, zone)} (${formatZulu(a.flight.scheduled_departure_at)})`,
+                    a.load_team.team_name].filter(Boolean).join(" • ")}
+                </div>
+                <LoadStatusLine assignment={a} timeZone={zone} className="mt-1 block" />
+              </div>
+              <div className="flex flex-wrap items-center gap-3">
+                <Link href={`/ramper/${a.flight.id}/photos`} className="text-[0.68rem] font-bold uppercase tracking-[0.1em] text-primary hover:underline">
+                  Photos{a.photo_count ? ` (${a.photo_count})` : ""} <span aria-hidden>›</span>
+                </Link>
+                <LoadButtons assignmentId={a.id} stage={loadStage(a)} flightNumber={a.flight.flight_number} />
+              </div>
+            </li>
+          );
+        })}
+      </Section>
 
       <Section
         title="Confirm fuel orders"

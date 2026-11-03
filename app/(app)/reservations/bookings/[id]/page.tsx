@@ -1,8 +1,4 @@
 import Link from "next/link";
-import {
-  formatZuluDate,
-  formatZuluDateTime,
-} from "@/lib/format/flight-time";
 import { notFound, redirect } from "next/navigation";
 
 import { linkCaps } from "@/components/ff/controls";
@@ -20,7 +16,9 @@ import { getFleetAirworthiness } from "@/lib/api/maintenance";
 
 import { searchFlights, type FlightSearchResult } from "@/lib/api/flight-search";
 import { loadZoneTable } from "@/lib/api/auth";
-import { utcToLocalInput, zoneAbbreviation, zoneFor } from "@/lib/format/local-time";
+// Times at the departure base, as search and the flight lists show them
+// (#134): the agent reads "04:05 AKST", not "13:05z".
+import { localDate, localDateTime, utcToLocalInput, zoneAbbreviation, zoneFor } from "@/lib/format/local-time";
 import { LoadFailedNotice } from "@/components/ff/setup-notice";
 import { Loads } from "@/lib/api/loads";
 
@@ -103,12 +101,12 @@ export default async function BookingDetailPage({
         <h1 className="mt-2 flex flex-wrap items-baseline gap-3 page-title">
           {booking.origin_icao} → {booking.destination_icao}
           <span className="text-sm font-normal text-muted-foreground">
-            {formatZuluDateTime(booking.requested_departure_at)}
+            {localDateTime(booking.requested_departure_at, zone)}
           </span>
         </h1>
         <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
           {BOOKING_STATUS_LABELS[booking.status]} · Filed{" "}
-          {formatZuluDate(booking.created_at)} · Booking id{" "}
+          {localDate(booking.created_at, zone, { withYear: true })} · Booking id{" "}
           <code className="rounded bg-muted/60 px-1 font-mono text-[0.7em]">
             {booking.id.slice(0, 8)}
           </code>
@@ -150,12 +148,12 @@ export default async function BookingDetailPage({
         />
         <DetailRow
           label="Departure"
-          value={formatZuluDateTime(booking.requested_departure_at)}
+          value={localDateTime(booking.requested_departure_at, zone)}
         />
         {booking.estimated_arrival_at ? (
           <DetailRow
             label="Est. arrival"
-            value={formatZuluDateTime(booking.estimated_arrival_at)}
+            value={localDateTime(booking.estimated_arrival_at, zone)}
           />
         ) : null}
         {booking.aircraft ? (
@@ -196,7 +194,7 @@ export default async function BookingDetailPage({
               : "Return trip · the way out"}
           </div>
           <p className="mt-1 text-sm">
-            {`${paired.origin_icao} → ${paired.destination_icao}, ${formatZuluDateTime(paired.requested_departure_at)}, ${
+            {`${paired.origin_icao} → ${paired.destination_icao}, ${localDateTime(paired.requested_departure_at, zone)}, ${
               paired.flight ? `on ${paired.flight.flight_number}` : "waiting for a flight"
             } · ${BOOKING_STATUS_LABELS[paired.status]}`}
           </p>
@@ -227,26 +225,26 @@ export default async function BookingDetailPage({
             {booking.quoted_at ? (
               <li>
                 <span className="font-semibold">Quoted</span> —{" "}
-                {formatZuluDateTime(booking.quoted_at)}
+                {localDateTime(booking.quoted_at, zone)}
               </li>
             ) : null}
             {booking.confirmed_at ? (
               <li>
                 <span className="font-semibold">Confirmed</span> —{" "}
-                {formatZuluDateTime(booking.confirmed_at)} by{" "}
+                {localDateTime(booking.confirmed_at, zone)} by{" "}
                 {booking.confirmed_by?.full_name ?? "unknown"}
               </li>
             ) : null}
             {booking.completed_at ? (
               <li>
                 <span className="font-semibold">Completed</span> —{" "}
-                {formatZuluDateTime(booking.completed_at)}
+                {localDateTime(booking.completed_at, zone)}
               </li>
             ) : null}
             {booking.cancelled_at ? (
               <li>
                 <span className="font-semibold">Cancelled</span> —{" "}
-                {formatZuluDateTime(booking.cancelled_at)} by{" "}
+                {localDateTime(booking.cancelled_at, zone)} by{" "}
                 {booking.cancelled_by?.full_name ?? "unknown"}
                 {booking.cancelled_reason ? (
                   <p className="mt-1 whitespace-pre-wrap text-muted-foreground">
@@ -282,6 +280,14 @@ export default async function BookingDetailPage({
           flightLanded={Boolean(booking.flight?.landed) || booking.flight?.status === "completed"}
           currentQuoteCents={booking.quoted_total_cents}
           cancelConfirmToken={`${booking.origin_icao}-${booking.destination_icao}`}
+          pairedToConfirm={
+            paired && (paired.status === "requested" || paired.status === "quoted")
+              ? {
+                  id: paired.id,
+                  label: `${paired.origin_icao} → ${paired.destination_icao}${paired.flight ? ` on ${paired.flight.flight_number}` : ""}`,
+                }
+              : null
+          }
         />
       ) : null}
     </div>

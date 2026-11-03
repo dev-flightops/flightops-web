@@ -172,7 +172,8 @@ export const LEGACY_REDIRECTS: readonly (readonly [from: string, to: string])[] 
   ["/maintenance/vendors", "/maintenance"],
   ["/maintenance/vendors/new", "/maintenance"],
   ["/maintenance/vendors/:id/edit", "/maintenance"],
-  ["/maintenance/work-orders/new", "/maintenance/work-orders"],
+  // /maintenance/work-orders/new is a page now (#134); :id is a legacy
+  // integer, never a work order's UUID.
   ["/maintenance/work-orders/:id", "/maintenance/work-orders"],
   ["/maintenance/work-orders/:id/task-cards", "/maintenance/work-orders"],
 

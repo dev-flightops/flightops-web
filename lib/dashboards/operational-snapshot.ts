@@ -60,7 +60,9 @@ export interface OperationalAlert {
     | "flight_overdue"
     | "mel_expiring"
     | "safety_report_new"
-    | "seat_open";
+    | "seat_open"
+    | "squawk_new"
+    | "load_complete";
   title: string;
   detail: string;
   /** Permalink to the source record. */
