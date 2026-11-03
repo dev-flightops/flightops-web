@@ -3,6 +3,10 @@ import { PageHeader } from "@/components/ff/page-header";
 import { getDemoStatus } from "@/lib/api/demo";
 import { DemoForm } from "./demo-form";
 
+// Preparing again first removes the last examples: about 26 seconds on a
+// copy of the demo (3 Nov), longer than a function runs by default.
+export const maxDuration = 60;
+
 export default async function DemoPage() {
   const status = await getDemoStatus();
   if (!status.enabled) notFound();
