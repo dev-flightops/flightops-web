@@ -11,6 +11,14 @@ interface ErrorScreenProps {
   error: Error & { digest?: string };
   reset: () => void;
   /**
+   * Next 16 passes this to every error boundary: it fetches the segment
+   * from the server again, then re-renders it. `reset` only re-renders
+   * what the client already has, so after a server-side failure "Try
+   * again" showed the same error until a full reload or a fresh sign-in
+   * (#134: the schedule "won't pull up... stops my test flow").
+   */
+  unstable_retry?: () => void;
+  /**
    * Which sign-in this screen belongs to. The fuel-supplier portal is a
    * separate audience on a separate credential: it authenticates with
    * its own `fuel_supplier_session` cookie, not the staff Auth.js
@@ -60,6 +68,7 @@ function isRedactedByNext(message: string): boolean {
 export function ErrorScreen({
   error,
   reset,
+  unstable_retry,
   audience = "staff",
 }: ErrorScreenProps) {
   const router = useRouter();
@@ -94,6 +103,20 @@ export function ErrorScreen({
     });
   };
 
+  // Fetch the page again, not just re-render the failed copy of it.
+  // Without unstable_retry (a caller that does not pass it), refreshing
+  // the router and then resetting does the same.
+  const handleRetry = () => {
+    if (unstable_retry) {
+      unstable_retry();
+      return;
+    }
+    startTransition(() => {
+      router.refresh();
+      reset();
+    });
+  };
+
   return (
     <main className="container flex min-h-[60vh] flex-col items-center justify-center gap-4 py-12 text-center">
       <AlertGlyph className="h-10 w-10 text-destructive" />
@@ -113,7 +136,7 @@ export function ErrorScreen({
             {isPending ? "Signing in…" : "Sign in again"}
           </Button>
         ) : (
-          <Button onClick={reset}>
+          <Button onClick={handleRetry} disabled={isPending}>
             <RefreshGlyph className="h-4 w-4" />
             Try again
           </Button>

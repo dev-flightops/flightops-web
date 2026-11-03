@@ -98,4 +98,20 @@ describe("when bookings are waiting", () => {
       screen.getByText(/put it on an existing flight, or build one/),
     ).toBeInTheDocument();
   });
+
+  it("counts, but does not list, the ones from earlier days", () => {
+    // #134: seventeen from the week before, oldest first, sat above the
+    // booking made that morning. The page asks for today on; the panel
+    // says how many older ones there are and whose they are to clear.
+    render(<BookingsAwaitingFlightPanel bookings={[booking()]} earlier={17} />);
+    expect(screen.getAllByRole("listitem")).toHaveLength(1);
+    expect(
+      screen.getByText(/17 more are from earlier days and not listed: reservations rebooks or cancels them/),
+    ).toBeInTheDocument();
+  });
+
+  it("says nothing about earlier days when there are none", () => {
+    render(<BookingsAwaitingFlightPanel bookings={[booking()]} />);
+    expect(screen.queryByText(/earlier days/)).not.toBeInTheDocument();
+  });
 });

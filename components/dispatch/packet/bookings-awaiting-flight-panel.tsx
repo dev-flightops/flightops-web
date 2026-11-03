@@ -22,8 +22,13 @@ import type { Booking } from "@/lib/api/reservations";
  */
 export function BookingsAwaitingFlightPanel({
   bookings,
+  earlier = 0,
 }: {
+  /** Waiting from the company's today on. */
   bookings: Booking[];
+  /** How many wait from earlier days, not listed (#134): oldest first,
+   *  seventeen from the week before buried the one booked that morning. */
+  earlier?: number;
 }) {
   if (bookings.length === 0) return null;
 
@@ -74,6 +79,9 @@ export function BookingsAwaitingFlightPanel({
       <p className="border-t border-border px-4 py-2 text-[0.65rem] text-muted-foreground">
         Open a booking to put it on an existing flight, or build one for
         it here.
+        {earlier > 0
+          ? ` ${earlier} more ${earlier === 1 ? "is" : "are"} from earlier days and not listed: reservations rebooks or cancels ${earlier === 1 ? "it" : "them"}.`
+          : null}
       </p>
     </section>
   );

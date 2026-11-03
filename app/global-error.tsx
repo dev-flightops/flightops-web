@@ -37,9 +37,12 @@
 export default function GlobalError({
   error,
   reset,
+  unstable_retry,
 }: {
   error: Error & { digest?: string };
   reset: () => void;
+  /** Fetches again before re-rendering; `reset` only re-renders. */
+  unstable_retry?: () => void;
 }) {
   return (
     <html lang="en">
@@ -138,15 +141,16 @@ export default function GlobalError({
             </a>
           </div>
 
-          {/* `reset` is in the props Next passes and re-renders the
-              subtree. Kept reachable rather than dropped: if the throw
+          {/* `unstable_retry` (or `reset`, which only re-renders) is in
+              the props Next passes: it fetches the subtree again and
+              re-renders it. Kept reachable rather than dropped: if the throw
               happened to be transient render state and not the gateway,
               this is the cheap recovery. Deliberately the quiet option,
               because it is the less likely fix of the two. */}
           <p style={{ marginTop: "1.25rem", fontSize: "0.75rem" }}>
             <button
               type="button"
-              onClick={reset}
+              onClick={unstable_retry ?? reset}
               style={{
                 border: 0,
                 background: "none",
