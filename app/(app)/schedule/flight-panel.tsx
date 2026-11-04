@@ -48,11 +48,16 @@ export const STATE_TONE: Record<LegState, StatusTone> = {
  * leg's airports and times, and what it carries, as passengers (checked
  * in, bookings, seats), freight and weight (manifested, available,
  * maximum). So this opens on a leg, with a tab for each.
+ *
+ * Dispatch can edit a planned flight from here (#134): a short-notice
+ * change starts from the schedule, and the edit was only on Dispatch and
+ * Flight Following.
  */
 export function FlightPanel({
   flight,
   leg = 0,
   zones,
+  canEdit = false,
   open,
   onOpenChange,
 }: {
@@ -60,6 +65,8 @@ export function FlightPanel({
   /** The leg to open on, 0-based. */
   leg?: number;
   zones: ZoneTable;
+  /** DISPATCH_WRITERS: Edit flight on a planned flight. */
+  canEdit?: boolean;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
@@ -236,6 +243,11 @@ export function FlightPanel({
               <Link href={`/manifest/${flight.id}`} className={buttonOutline}>
                 Open manifest
               </Link>
+              {canEdit && flight.state === "planned" ? (
+                <Link href={`/dispatch?flight=${flight.id}&edit=1`} className={buttonOutline}>
+                  Edit flight
+                </Link>
+              ) : null}
               <Link href={`/dispatch?flight=${flight.id}`} className={buttonOutline}>
                 Dispatch packet
               </Link>
@@ -255,7 +267,15 @@ export function FlightPanel({
 }
 
 /** The list view's flight number: opens the panel on the first leg. */
-export function FlightPanelButton({ flight, zones }: { flight: PanelFlight; zones: ZoneTable }) {
+export function FlightPanelButton({
+  flight,
+  zones,
+  canEdit = false,
+}: {
+  flight: PanelFlight;
+  zones: ZoneTable;
+  canEdit?: boolean;
+}) {
   const [open, setOpen] = useState(false);
   return (
     <>
@@ -267,7 +287,7 @@ export function FlightPanelButton({ flight, zones }: { flight: PanelFlight; zone
       >
         {flight.flightNumber}
       </button>
-      {open ? <FlightPanel flight={flight} zones={zones} open={open} onOpenChange={setOpen} /> : null}
+      {open ? <FlightPanel flight={flight} zones={zones} canEdit={canEdit} open={open} onOpenChange={setOpen} /> : null}
     </>
   );
 }

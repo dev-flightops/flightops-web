@@ -113,6 +113,7 @@ function send(flightId: string, step: QueuedStep, kept: boolean): Promise<StepRe
 }
 
 const NO_SIGNAL = "No signal on this phone: try again once it's back in service.";
+const KEPT_FIRST = "Send what this phone kept first: it needs signal.";
 
 export function CheckInBoard({ initial, canAct }: { initial: CheckInView; canAct: boolean }) {
   const [view, setView] = useState(initial);
@@ -127,7 +128,9 @@ export function CheckInBoard({ initial, canAct }: { initial: CheckInView; canAct
   const [refused, setRefused] = useState<string[]>([]);
   const [storable, setStorable] = useState(true);
   const keptRef = useRef<QueuedStep[]>([]);
-  const sending = useRef(false);
+  // The send on its way, if any: a step that needs the queue empty waits
+  // for it.
+  const sending = useRef<Promise<void> | null>(null);
   const flightId = initial.flight_id;
 
   const closed = view.boarding_closed_at !== null;
@@ -145,12 +148,15 @@ export function CheckInBoard({ initial, canAct }: { initial: CheckInView; canAct
     [flightId],
   );
 
-  /** Send what the phone kept, in order, until it runs out of signal.
-   *  Only when the phone says it has signal, unless asked to try. */
-  const sendKept = useCallback(async (anyway = false) => {
-    if (sending.current || keptRef.current.length === 0) return;
-    if (!anyway && typeof navigator !== "undefined" && !navigator.onLine) return;
-    sending.current = true;
+  /** The server's check-in, with the taps still on their way shown on
+   *  it. Replacing the list with the answer to the first of several taps
+   *  had put the others back as they were, so an agent tapped them again
+   *  and the second tap was refused when sent. */
+  const show = useCallback((answer: CheckInView) => {
+    setView(keptRef.current.reduce(applyStep, answer));
+  }, []);
+
+  const sendInOrder = useCallback(async () => {
     let anyRefused = false;
     try {
       while (keptRef.current.length > 0) {
@@ -173,7 +179,7 @@ export function CheckInBoard({ initial, canAct }: { initial: CheckInView; canAct
         // Only this step: a tap made while it was on its way is behind it.
         remember(keptRef.current.filter((kept) => kept !== step));
         if (result.ok) {
-          setView(result.view);
+          show(result.view);
         } else {
           anyRefused = true;
           const pax = view.passengers.find((p) => p.id === stepPaxId(step));
@@ -186,12 +192,24 @@ export function CheckInBoard({ initial, canAct }: { initial: CheckInView; canAct
       if (anyRefused && keptRef.current.length === 0) {
         // What a refused step had shown is undone by the server's own view.
         const fresh = await refreshAction(flightId).catch(() => null);
-        if (fresh?.ok) setView(fresh.view);
+        if (fresh?.ok) show(fresh.view);
       }
     } finally {
-      sending.current = false;
+      sending.current = null;
     }
-  }, [flightId, remember, view.passengers]);
+  }, [flightId, remember, show, view.passengers]);
+
+  /** Send what the phone kept, in order, until it runs out of signal.
+   *  Only when the phone says it has signal, unless asked to try. While
+   *  a send is on its way, the answer is that send. */
+  const sendKept = useCallback((anyway = false): Promise<void> => {
+    if (sending.current) return sending.current;
+    if (keptRef.current.length === 0) return Promise.resolve();
+    if (!anyway && typeof navigator !== "undefined" && !navigator.onLine) return Promise.resolve();
+    const sent = sendInOrder();
+    sending.current = sent;
+    return sent;
+  }, [sendInOrder]);
 
   // What a previous visit kept, shown and sent once there's signal; and
   // sent again whenever the phone says it's back, or every 20 s anyway,
@@ -255,7 +273,7 @@ export function CheckInBoard({ initial, canAct }: { initial: CheckInView; canAct
         return;
       }
       if (result.ok) {
-        setView(result.view);
+        show(result.view);
         after?.();
       } else {
         setError(result.error);
@@ -263,14 +281,22 @@ export function CheckInBoard({ initial, canAct }: { initial: CheckInView; canAct
     });
   }
 
-  /** A step that needs signal: a walk-up, closing boarding. */
+  /** A step that needs signal: a walk-up, closing boarding. Taps still
+   *  on their way go first, as the server takes steps in order; only taps
+   *  kept for want of signal hold it up. It used to refuse while the last
+   *  tap was merely sending, saying the phone needed signal. */
   function run(fn: () => Promise<StepResult>, after?: () => void) {
     setError(null);
-    if (keptRef.current.length > 0) {
-      setError("Send what this phone kept first: it needs signal.");
+    if (noSignal) {
+      setError(KEPT_FIRST);
       return;
     }
     startTransition(async () => {
+      if (keptRef.current.length > 0) await sendKept();
+      if (keptRef.current.length > 0) {
+        setError(KEPT_FIRST);
+        return;
+      }
       let result: StepResult;
       try {
         result = await fn();
@@ -279,7 +305,7 @@ export function CheckInBoard({ initial, canAct }: { initial: CheckInView; canAct
         return;
       }
       if (result.ok) {
-        setView(result.view);
+        show(result.view);
         after?.();
       } else {
         setError(result.error);

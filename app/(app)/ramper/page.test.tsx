@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const {
@@ -136,6 +136,44 @@ describe("RamperPage — the team's loads (#134)", () => {
     });
     render(await RamperPage());
     expect(screen.getByText(/DEMO105 • PANC → PAII/)).toBeInTheDocument();
+    // In the base's time, as the loads above it are.
+    expect(screen.getByText("N95DM • 0 pax • departs 05:35 AKST (14:35z)")).toBeInTheDocument();
+  });
+
+  it("lists fuel orders by when the fuel is wanted, and counts earlier days' (#134)", async () => {
+    // The demo's Ramper led with orders placed for August and never
+    // confirmed, with no date on the row to tell them from today's.
+    const order = (id: string, tail: string, date: string, time: string | null) => ({
+      id,
+      n_number: tail,
+      base_code: "PABE",
+      requested_fuel_date: date,
+      requested_fuel_time: time,
+      supplier_name_snapshot: "Crowley",
+      requested_quantity_gallons: 80,
+    });
+    listFuelOrders.mockImplementation(({ status }: { status: string }) =>
+      Promise.resolve(
+        status === "ordered"
+          ? {
+              items: [
+                order("o-late", "N705PA", "2099-01-02", "2099-01-02T23:30:00Z"),
+                order("o-old", "N503PA", "2026-08-14", null),
+                order("o-soon", "N207GE", "2099-01-01", null),
+              ],
+              total: 3,
+            }
+          : { items: [], total: 0 },
+      ),
+    );
+    render(await RamperPage());
+    const section = screen.getByRole("heading", { name: /Confirm fuel orders/ }).closest("section")!;
+    expect(within(section).getAllByRole("listitem").map((li) => li.textContent)).toEqual([
+      "N207GE @ PABEJan 1 • 80 gal • CrowleyConfirm ›",
+      "N705PA @ PABEJan 2 14:30 AKST • 80 gal • CrowleyConfirm ›",
+    ]);
+    expect(section).toHaveTextContent("1 more is for earlier days and not listed: confirm or cancel it in Fuel orders.");
+    expect(within(section).getByRole("link", { name: "Fuel orders" })).toHaveAttribute("href", "/fuel/orders?status=ordered");
   });
 });
 
@@ -150,6 +188,8 @@ describe("RamperPage (M2)", () => {
                   id: "o-1",
                   n_number: "N207GE",
                   base_code: "PANC",
+                  requested_fuel_date: "2099-01-01",
+                  requested_fuel_time: null,
                   supplier_name_snapshot: "Crowley",
                   requested_quantity_gallons: 100,
                 },

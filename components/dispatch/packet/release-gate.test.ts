@@ -7,7 +7,7 @@ import type {
   RouteFreshness,
 } from "@/lib/api/types";
 
-import { computeHardBlockReason, overridesOnRecord } from "./release-gate";
+import { computeHardBlockReason, computeReleaseBlockers, overridesOnRecord } from "./release-gate";
 
 function finding(code: string): ComplianceFinding {
   return {
@@ -82,7 +82,7 @@ describe("computeHardBlockReason", () => {
         picAssigned: false,
         notamAckedIcaos: [],
       }),
-    ).toBe("No PIC on this flight's crew — pick one in Flight Details before release.");
+    ).toBe("No PIC on this flight's crew — pick one in Flight Details before release. (and 1 more)");
   });
 
   it("does not ask for a PIC when no flight is loaded", () => {
@@ -472,5 +472,65 @@ describe("computeHardBlockReason — #155 the MELs, the FRAT and the load", () =
         releaseLoad: { basis: "manifest", useful_load_lbs: 1400, payload_lbs: 600, remaining_lbs: 210 },
       }),
     ).toBeNull();
+  });
+});
+
+describe("computeReleaseBlockers — every blocker at once (#134)", () => {
+  it("is empty when nothing blocks", () => {
+    expect(computeReleaseBlockers(CLEAR)).toEqual([]);
+  });
+
+  it("lists everything release waits for, in the gate's order", () => {
+    // The packet named only the first, so a dispatcher found each of the
+    // others by clearing the one before.
+    expect(
+      computeReleaseBlockers({
+        ...CLEAR,
+        picCompliance: pic("red", { hard: [finding("a")], soft: [finding("b")] }),
+        notamAckedIcaos: ["PANC"],
+        weatherFreshness: freshness({
+          acknowledgment_required: true,
+          stations_requiring_acknowledgment: ["PABE"],
+        }),
+        openMelIds: ["m-1"],
+        fratBlockers: [
+          { code: "frat_pilot_unsigned", message: "The pilot hasn't signed the FRAT." },
+          { code: "frat_dispatcher_unsigned", message: "A dispatcher hasn't signed the FRAT." },
+        ],
+      }),
+    ).toEqual([
+      "PIC Bob Henderson has 1 hard-block currency item — release blocked until cleared or overridden.",
+      "1 of 1 soft warnings still need dispatcher acknowledgment.",
+      "NOTAMs not acknowledged for PABE — review each stop and check the box before release.",
+      "Stale or missing weather for PABE — review it and acknowledge before release.",
+      "1 open MEL item still needs dispatcher acknowledgment.",
+      "FRAT: The pilot hasn't signed the FRAT.",
+      "FRAT: A dispatcher hasn't signed the FRAT.",
+    ]);
+  });
+
+  it("names every SIC without currency, not just the first", () => {
+    const sic = (name: string): PicComplianceResponse => ({
+      ...pic("red", { hard: [finding("x")] }),
+      pilot: { id: name, full_name: name, email: `${name}@test.local` },
+    });
+    expect(
+      computeReleaseBlockers({ ...CLEAR, sicCompliance: [sic("Ann Lee"), sic("Raj Patel")] }),
+    ).toEqual([
+      "SIC Ann Lee has 1 hard-block currency item — assign a current SIC or clear them before release.",
+      "SIC Raj Patel has 1 hard-block currency item — assign a current SIC or clear them before release.",
+    ]);
+  });
+
+  it("gives the tooltip the first, with a count of the rest", () => {
+    const input = {
+      ...CLEAR,
+      notamAckedIcaos: [],
+      weatherFreshness: freshness({ acknowledgment_required: true, stations_requiring_acknowledgment: ["PANC"] }),
+    };
+    expect(computeReleaseBlockers(input)).toHaveLength(2);
+    expect(computeHardBlockReason(input)).toBe(
+      "NOTAMs not acknowledged for PANC, PABE — review each stop and check the box before release. (and 1 more)",
+    );
   });
 });

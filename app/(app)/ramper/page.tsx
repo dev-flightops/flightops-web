@@ -3,7 +3,7 @@ import { LoadButtons } from "@/components/load-teams/load-buttons";
 import { LoadStatusLine, loadStage } from "@/components/load-teams/load-status";
 import { loadZoneTable } from "@/lib/api/auth";
 import { formatZulu } from "@/lib/format/flight-time";
-import { localClock, zoneFor } from "@/lib/format/local-time";
+import { DEFAULT_TIME_ZONE, localClock, localDate, localDay, type ZoneTable, zoneFor } from "@/lib/format/local-time";
 
 import {
   listFuelOrders,
@@ -51,8 +51,9 @@ export default async function RamperPage() {
     loadsResult,
     zonesResult,
   ] = await Promise.allSettled([
-    listFuelOrders({ status: "ordered", limit: 20 }),
-    listFuelOrders({ status: "confirmed", limit: 20 }),
+    // Enough that today's are all here when earlier days' are counted.
+    listFuelOrders({ status: "ordered", limit: 100 }),
+    listFuelOrders({ status: "confirmed", limit: 100 }),
     getFlightBoard("today"),
     listGseUnits({ limit: 200 }),
     listOpenStationIssues(),
@@ -63,10 +64,21 @@ export default async function RamperPage() {
     loadsResult.status === "fulfilled" ? loadsResult.value.items : [];
   const zones = zonesResult.status === "fulfilled" ? zonesResult.value : null;
 
-  const awaitingConfirm: FuelOrderResponse[] =
-    confirmResult.status === "fulfilled" ? confirmResult.value.items : [];
-  const awaitingFueled: FuelOrderResponse[] =
-    fueledResult.status === "fulfilled" ? fueledResult.value.items : [];
+  // Orders for today and later, soonest first. One still open from an
+  // earlier day is the fuel desk's to settle rather than the ramp's next
+  // task: the demo's Ramper led with orders from August (#134). Those are
+  // counted, with the way to them.
+  const today = localDay(zones?.fallback ?? DEFAULT_TIME_ZONE);
+  const due = (result: typeof confirmResult) => {
+    const orders = result.status === "fulfilled" ? result.value.items : [];
+    const current = orders
+      .filter((o) => o.requested_fuel_date >= today)
+      .sort((a, b) => fuelAt(a).localeCompare(fuelAt(b)));
+    const total = result.status === "fulfilled" ? result.value.total : 0;
+    return { current, earlier: Math.max(total - current.length, 0) };
+  };
+  const { current: awaitingConfirm, earlier: confirmEarlier } = due(confirmResult);
+  const { current: awaitingFueled, earlier: fueledEarlier } = due(fueledResult);
   const todaysFlights: BoardFlightItem[] =
     boardResult.status === "fulfilled" ? boardResult.value.items : [];
   // Pre-flight: everything still on the ground. A released flight is the
@@ -178,13 +190,14 @@ export default async function RamperPage() {
         emptyHint="No orders waiting for supplier confirmation."
         actionHref="/fuel/orders?status=ordered"
         count={awaitingConfirm.length}
+        note={earlierNote(confirmEarlier, "/fuel/orders?status=ordered", "confirm or cancel")}
       >
         {awaitingConfirm.map((o) => (
           <TaskRow
             key={o.id}
             href={`/fuel/orders/${o.id}`}
             primary={`${o.n_number} @ ${o.base_code}`}
-            secondary={`${o.requested_quantity_gallons.toLocaleString()} gal • ${o.supplier_name_snapshot}`}
+            secondary={`${fuelWhen(o, today, zones)} • ${o.requested_quantity_gallons.toLocaleString()} gal • ${o.supplier_name_snapshot}`}
             cta="Confirm"
             tone="yellow"
           />
@@ -196,13 +209,14 @@ export default async function RamperPage() {
         emptyHint="Nothing in the fueling queue."
         actionHref="/fuel/orders?status=confirmed"
         count={awaitingFueled.length}
+        note={earlierNote(fueledEarlier, "/fuel/orders?status=confirmed", "fuel or cancel")}
       >
         {awaitingFueled.map((o) => (
           <TaskRow
             key={o.id}
             href={`/fuel/orders/${o.id}`}
             primary={`${o.n_number} @ ${o.base_code}`}
-            secondary={`${o.requested_quantity_gallons.toLocaleString()} gal • ${o.supplier_name_snapshot}`}
+            secondary={`${fuelWhen(o, today, zones)} • ${o.requested_quantity_gallons.toLocaleString()} gal • ${o.supplier_name_snapshot}`}
             cta="Mark fueled"
             tone="blue"
           />
@@ -224,7 +238,7 @@ export default async function RamperPage() {
             // ramp backend.
             href={`/ramper/${f.id}/photos`}
             primary={`${f.flight_number} • ${f.origin} → ${f.destination}`}
-            secondary={`${f.aircraft.tail_number} • ${f.pax_count} pax • ${formatTime(f.scheduled_departure_at)}`}
+            secondary={`${f.aircraft.tail_number} • ${f.pax_count} pax • departs ${departs(f, zones)}`}
             cta="Photos"
             tone="blue"
           />
@@ -279,12 +293,15 @@ function Section({
   count,
   emptyHint,
   actionHref,
+  note,
   children,
 }: {
   title: string;
   count: number;
   emptyHint: string;
   actionHref: string;
+  /** A line under the list: what it leaves out. */
+  note?: React.ReactNode;
   children: React.ReactNode;
 }) {
   return (
@@ -312,8 +329,42 @@ function Section({
           {children}
         </ul>
       )}
+      {note ? <p className="mt-1.5 text-xs text-muted-foreground">{note}</p> : null}
     </section>
   );
+}
+
+/** When the order is for, to sort by: its day, then the time it's
+ *  needed (an instant), an order without one last in its day. */
+function fuelAt(o: FuelOrderResponse): string {
+  return `${o.requested_fuel_date} ${o.requested_fuel_time ?? "~"}`;
+}
+
+/** "Today 09:00 AKST", "Nov 5" or "Nov 5 14:30 AKST": when the fuel is
+ *  wanted, at the base. */
+function fuelWhen(o: FuelOrderResponse, today: string, zones: ZoneTable | null): string {
+  const day = o.requested_fuel_date === today ? "Today" : localDate(`${o.requested_fuel_date}T12:00:00Z`, "UTC");
+  if (!o.requested_fuel_time) return day;
+  return `${day} ${localClock(o.requested_fuel_time, zones ? zoneFor(zones, o.base_code) : DEFAULT_TIME_ZONE)}`;
+}
+
+function earlierNote(count: number, href: string, what: string): React.ReactNode {
+  if (count === 0) return null;
+  return (
+    <>
+      {`${count} more ${count === 1 ? "is" : "are"} for earlier days and not listed: ${what} ${count === 1 ? "it" : "them"} in `}
+      <Link href={href} className="font-semibold text-primary hover:underline">
+        Fuel orders
+      </Link>
+      .
+    </>
+  );
+}
+
+/** "09:35 AKST (18:35z)": the origin's local time, then Zulu. */
+function departs(f: BoardFlightItem, zones: ZoneTable | null): string {
+  const zone = zones ? zoneFor(zones, f.origin) : DEFAULT_TIME_ZONE;
+  return `${localClock(f.scheduled_departure_at, zone)} (${formatZulu(f.scheduled_departure_at)})`;
 }
 
 function TaskRow({
@@ -356,8 +407,3 @@ function TaskRow({
     </li>
   );
 }
-
-// Zulu, via the shared helper. The hand-rolled version this replaced
-// passed no timeZone, so on a server component it rendered in the host's
-// zone and carried no suffix to say which clock it was.
-const formatTime = formatZulu;

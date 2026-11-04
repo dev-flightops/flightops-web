@@ -39,7 +39,7 @@ export function DayPicker({ date }: { date: string }) {
       </button>
       <input
         type="date"
-        aria-label="Flights date (UTC)"
+        aria-label="Flights date"
         value={date}
         onChange={(e) => goTo(e.target.value)}
         disabled={isPending}

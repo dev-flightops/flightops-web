@@ -97,7 +97,8 @@ describe("the day's list", () => {
     render(<FlightRiskList flights={[flight()]} />);
     expect(screen.getByText("PGR205")).toBeInTheDocument();
     expect(screen.getByText("PAKN → PADU")).toBeInTheDocument();
-    expect(screen.getByText("ETD 20:02z")).toBeInTheDocument();
+    // In the base's time, then Zulu, as the schedule shows it.
+    expect(screen.getByText("ETD 12:02 AKDT (20:02z)")).toBeInTheDocument();
     expect(assessDelayAction).not.toHaveBeenCalled();
   });
 });
