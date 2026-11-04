@@ -1,6 +1,8 @@
+import { loadZoneTable } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
 import { listFlights } from "@/lib/api/ops";
 import type { FlightListItem } from "@/lib/api/types";
+import { localDate, localDay } from "@/lib/format/local-time";
 
 import { DayPicker } from "./day-picker";
 import { FlightRiskList } from "./flight-risk-list";
@@ -36,28 +38,26 @@ import { FlightRiskList } from "./flight-risk-list";
 
 export const dynamic = "force-dynamic";
 
-function todayUtc(): string {
-  return new Date().toISOString().slice(0, 10);
-}
-
 export default async function DelayAlertsPage({
   searchParams,
 }: {
   searchParams: Promise<{ date?: string }>;
 }) {
   const { date: dateParam } = await searchParams;
+  const zones = await loadZoneTable();
   // Validated rather than trusted: a malformed date passed to the API
   // as a filter returns nothing, which reads as "no flights" instead
-  // of "bad date".
+  // of "bad date". The company's day, as the schedule's (#137): the UTC
+  // day put an Alaska afternoon's flights on tomorrow's page.
   const date =
-    dateParam && /^\d{4}-\d{2}-\d{2}$/.test(dateParam) ? dateParam : todayUtc();
+    dateParam && /^\d{4}-\d{2}-\d{2}$/.test(dateParam) ? dateParam : localDay(zones.fallback);
 
   let flights: FlightListItem[] = [];
   let loadError: string | null = null;
   let forbidden = false;
 
   try {
-    flights = (await listFlights({ onDate: date, limit: 200 })).items;
+    flights = (await listFlights({ onCompanyDate: date, limit: 200 })).items;
   } catch (err) {
     const status = err instanceof ApiError ? err.status : 0;
     forbidden = status === 403;
@@ -81,7 +81,7 @@ export default async function DelayAlertsPage({
           </h1>
           <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
             {assessable.length} flight{assessable.length === 1 ? "" : "s"} on{" "}
-            {date} (UTC)
+            {localDate(`${date}T12:00:00Z`, "UTC", { withYear: true })}
             {flights.length !== assessable.length &&
               ` · ${flights.length - assessable.length} cancelled, not shown`}
           </p>
@@ -103,7 +103,7 @@ export default async function DelayAlertsPage({
             aircraft&apos;s squawk and MEL state. Run it per flight, when you
             want it.
           </p>
-          {!forbidden && <FlightRiskList flights={assessable} />}
+          {!forbidden && <FlightRiskList flights={assessable} zones={zones} />}
         </>
       )}
     </div>

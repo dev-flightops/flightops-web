@@ -13,12 +13,14 @@ import { seatWarnings } from "./soft-warning-ack-parser";
 /**
  * The single Generate-PDF release gate.
  *
- * Returns the reason release is blocked, or null when the dispatcher may
- * generate the packet. The dispatch page passes the result straight to
- * GeneratePdfButton's `hardBlockReason`.
+ * Returns every reason release is blocked, in the order below, or an
+ * empty list when the dispatcher may generate the packet. The packet
+ * lists them all under the release buttons (#134): it used to name only
+ * the first, so a dispatcher found each of the others by clearing the one
+ * before. `computeHardBlockReason` gives the first with a count of the
+ * rest, for a button's tooltip.
  *
- * Rules, in precedence order (only one reason surfaces — there's one
- * tooltip slot — but ALL unsatisfied conditions block release):
+ * Rules, in order (ALL unsatisfied conditions block release):
  *
  *   0. No PIC on the flight's crew → block. The server takes the PIC
  *                           from the roster and refuses without one
@@ -58,7 +60,7 @@ import { seatWarnings } from "./soft-warning-ack-parser";
  *   gate), NOTAM acks for every stop (audit finding C1), and weather,
  *   where the server runs the same shared evaluator this gate read.
  */
-export function computeHardBlockReason(input: {
+export interface ReleaseGateInput {
   picCompliance: PicComplianceResponse | null;
   /** Everyone in the flight's SIC seat, checked for that seat. */
   sicCompliance?: PicComplianceResponse[];
@@ -89,7 +91,9 @@ export function computeHardBlockReason(input: {
   fratBlockers?: ReleaseBlocker[] | null;
   /** #155 — the load the release is judged on. Null when unknown. */
   releaseLoad?: ReleaseLoad | null;
-}): string | null {
+}
+
+export function computeReleaseBlockers(input: ReleaseGateInput): string[] {
   const {
     picCompliance,
     sicCompliance = [],
@@ -108,8 +112,10 @@ export function computeHardBlockReason(input: {
     releaseLoad = null,
   } = input;
 
+  const blockers: string[] = [];
+
   if (hasSelectedFlight && !picAssigned) {
-    return "No PIC on this flight's crew — pick one in Flight Details before release.";
+    blockers.push("No PIC on this flight's crew — pick one in Flight Details before release.");
   }
 
   if (
@@ -118,13 +124,17 @@ export function computeHardBlockReason(input: {
     !overridesAcknowledged
   ) {
     const n = picCompliance.hard_blocks.length;
-    return `PIC ${picCompliance.pilot.full_name} has ${n} hard-block currency item${n === 1 ? "" : "s"} — release blocked until cleared or overridden.`;
+    blockers.push(
+      `PIC ${picCompliance.pilot.full_name} has ${n} hard-block currency item${n === 1 ? "" : "s"} — release blocked until cleared or overridden.`,
+    );
   }
 
   for (const sic of sicCompliance) {
     if (sic.dot_color === "red") {
       const n = sic.hard_blocks.length;
-      return `SIC ${sic.pilot.full_name} has ${n} hard-block currency item${n === 1 ? "" : "s"} — assign a current SIC or clear them before release.`;
+      blockers.push(
+        `SIC ${sic.pilot.full_name} has ${n} hard-block currency item${n === 1 ? "" : "s"} — assign a current SIC or clear them before release.`,
+      );
     }
   }
 
@@ -134,18 +144,20 @@ export function computeHardBlockReason(input: {
   ]);
   const unacked = warnings.filter((w) => !ackedWarnCodes.has(w.key));
   if (unacked.length > 0) {
-    return `${unacked.length} of ${warnings.length} soft warnings still need dispatcher acknowledgment.`;
+    blockers.push(`${unacked.length} of ${warnings.length} soft warnings still need dispatcher acknowledgment.`);
   }
 
   if (hasSelectedFlight && icaos.length > 0) {
     const unackedIcaos = unacknowledgedNotamIcaos(icaos, notamAckedIcaos);
     if (unackedIcaos.length > 0) {
-      return `NOTAMs not acknowledged for ${unackedIcaos.join(", ")} — review each stop and check the box before release.`;
+      blockers.push(
+        `NOTAMs not acknowledged for ${unackedIcaos.join(", ")} — review each stop and check the box before release.`,
+      );
     }
   }
 
   const belowMinimums = hasSelectedFlight ? minimumsBlockReason(weatherMinimums) : null;
-  if (belowMinimums) return belowMinimums;
+  if (belowMinimums) blockers.push(belowMinimums);
 
   if (
     hasSelectedFlight &&
@@ -155,29 +167,29 @@ export function computeHardBlockReason(input: {
   ) {
     const stations = weatherFreshness.stations_requiring_acknowledgment;
     const where = stations.length > 0 ? ` for ${stations.join(", ")}` : "";
-    return `Stale or missing weather${where} — review it and acknowledge before release.`;
+    blockers.push(`Stale or missing weather${where} — review it and acknowledge before release.`);
   }
 
   if (hasSelectedFlight) {
     const unackedMels = openMelIds.filter((id) => !ackedMelIds.includes(id));
     if (unackedMels.length > 0) {
-      return `${unackedMels.length} open MEL item${unackedMels.length === 1 ? "" : "s"} still need${unackedMels.length === 1 ? "s" : ""} dispatcher acknowledgment.`;
+      blockers.push(
+        `${unackedMels.length} open MEL item${unackedMels.length === 1 ? "" : "s"} still need${unackedMels.length === 1 ? "s" : ""} dispatcher acknowledgment.`,
+      );
     }
   }
 
   // #155 — the FRAT, then the load. The server holds them last too.
-  if (hasSelectedFlight && fratBlockers && fratBlockers.length > 0) {
-    const more = fratBlockers.length > 1 ? ` (and ${fratBlockers.length - 1} more)` : "";
-    return `FRAT: ${fratBlockers[0].message}${more}`;
+  if (hasSelectedFlight && fratBlockers) {
+    for (const blocker of fratBlockers) blockers.push(`FRAT: ${blocker.message}`);
   }
   if (hasSelectedFlight && releaseLoad) {
     const remaining = releaseLoad.remaining_lbs === null ? null : Number(releaseLoad.remaining_lbs);
     if (releaseLoad.useful_load_lbs === null) {
-      return "The aircraft has no max payload on record, so the load can't be checked — set it in Settings → Fleet.";
-    }
-    if (remaining !== null && remaining < 0) {
+      blockers.push("The aircraft has no max payload on record, so the load can't be checked — set it in Settings → Fleet.");
+    } else if (remaining !== null && remaining < 0) {
       const from = releaseLoad.basis === "manifest" ? "the manifest" : "the passengers and cargo typed on the flight";
-      return `Over the aircraft's useful load by ${Math.round(-remaining).toLocaleString("en-US")} lb, by ${from}.`;
+      blockers.push(`Over the aircraft's useful load by ${Math.round(-remaining).toLocaleString("en-US")} lb, by ${from}.`);
     }
   }
 
@@ -187,7 +199,15 @@ export function computeHardBlockReason(input: {
   // 409 with the real reason rather than a silent bypass. Blocking here
   // instead would strand every release whenever weather-service blips,
   // for a check the server is already making.
-  return null;
+  return blockers;
+}
+
+/** The first reason release is blocked, and how many more there are: a
+ *  disabled button's tooltip. Null when nothing blocks. */
+export function computeHardBlockReason(input: ReleaseGateInput): string | null {
+  const [first, ...rest] = computeReleaseBlockers(input);
+  if (first === undefined) return null;
+  return rest.length > 0 ? `${first} (and ${rest.length} more)` : first;
 }
 
 /**

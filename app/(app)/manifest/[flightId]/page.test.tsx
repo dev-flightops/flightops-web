@@ -177,6 +177,9 @@ describe("manifest entry (#62)", () => {
     mocks.getFlightManifest.mockResolvedValue(manifest("final"));
     await renderPage();
     expect(screen.getByText("Manifest locked.")).toBeTruthy();
+    // When, at the departure base, as the app shows its times (F26: it
+    // read "11/2/2026, 5:40:00 PM UTC").
+    expect(screen.getByText(/Final since Nov 2, 08:40 AKST\./)).toBeTruthy();
     expect(screen.queryByRole("button", { name: "Lock Manifest" })).toBeNull();
     expect(screen.queryByRole("button", { name: /^\+ Add/ })).toBeNull();
     expect(screen.queryByRole("button", { name: "Edit" })).toBeNull();

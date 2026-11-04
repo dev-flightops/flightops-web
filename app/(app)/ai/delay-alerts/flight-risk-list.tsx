@@ -4,6 +4,7 @@ import { useState } from "react";
 
 import type { DelayAssessment, DelayRiskBand } from "@/lib/api/ai";
 import type { FlightListItem } from "@/lib/api/types";
+import { DEFAULT_ZONE_TABLE, localClock, type ZoneTable, zoneFor } from "@/lib/format/local-time";
 
 import { assessDelayAction, type AssessResult } from "./actions";
 
@@ -164,7 +165,7 @@ function Assessment({ data }: { data: DelayAssessment }) {
   );
 }
 
-function FlightRow({ flight }: { flight: FlightListItem }) {
+function FlightRow({ flight, zones }: { flight: FlightListItem; zones: ZoneTable }) {
   const [pending, setPending] = useState(false);
   const [result, setResult] = useState<AssessResult | null>(null);
 
@@ -191,7 +192,7 @@ function FlightRow({ flight }: { flight: FlightListItem }) {
               {flight.origin} → {flight.destination}
             </span>
             <span className="text-xs tabular-nums text-muted-foreground">
-              ETD {hhmmZ(flight.scheduled_departure_at)}
+              {`ETD ${localClock(flight.scheduled_departure_at, zoneFor(zones, flight.origin))} (${hhmmZ(flight.scheduled_departure_at)})`}
             </span>
             <span className="font-mono text-xs text-muted-foreground">
               {flight.aircraft.tail_number}
@@ -235,7 +236,14 @@ function FlightRow({ flight }: { flight: FlightListItem }) {
   );
 }
 
-export function FlightRiskList({ flights }: { flights: FlightListItem[] }) {
+export function FlightRiskList({
+  flights,
+  zones = DEFAULT_ZONE_TABLE,
+}: {
+  flights: FlightListItem[];
+  /** Base zones: each departure in its origin's local time, then Zulu. */
+  zones?: ZoneTable;
+}) {
   if (flights.length === 0) {
     return (
       <p className="rounded-lg border border-border bg-card px-4 py-8 text-center text-sm text-muted-foreground">
@@ -248,7 +256,7 @@ export function FlightRiskList({ flights }: { flights: FlightListItem[] }) {
     // The day's flights as one list, a row each (#86), not a stack of cards.
     <ul className="divide-y divide-border overflow-hidden rounded-lg border border-border bg-card">
       {flights.map((f) => (
-        <FlightRow key={f.id} flight={f} />
+        <FlightRow key={f.id} flight={f} zones={zones} />
       ))}
     </ul>
   );

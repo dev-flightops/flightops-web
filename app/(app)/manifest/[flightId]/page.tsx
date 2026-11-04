@@ -28,7 +28,7 @@ import { CUSTOMER_MANAGERS, hasAnyRole, MANIFEST_EDITORS, MANIFEST_LOCKERS } fro
 import { crewWeightNote } from "@/lib/flights/crew-weight";
 import { flightStops, routeText } from "@/lib/route";
 import { canSetUp } from "@/lib/setup/places";
-import { utcToLocalInput, zoneFor } from "@/lib/format/local-time";
+import { localDateTime, utcToLocalInput, zoneFor } from "@/lib/format/local-time";
 
 import { PlannedFuelForm } from "./fuel-form";
 import { LoadPlanApply } from "./load-plan-apply";
@@ -109,12 +109,14 @@ export default async function FlightManifestPage({
   }
   const canSetFleet = canSetUp(roles, "fleet");
   const stops = flightStops(flight);
+  // The departure base's zone, for the booking form and the locked time.
+  const zone = zoneFor(await loadZoneTable(), stops[0]);
   const newBooking = new URLSearchParams({
     flight: flight.id,
     origin: stops[0],
     destination: stops[1] ?? stops[0],
     // Local at the departure base, as the booking form reads it (#68).
-    date: utcToLocalInput(flight.scheduled_departure_at, zoneFor(await loadZoneTable(), stops[0])),
+    date: utcToLocalInput(flight.scheduled_departure_at, zone),
     pax: "1",
     return_to: `/manifest/${flight.id}`,
   });
@@ -160,6 +162,7 @@ export default async function FlightManifestPage({
           {manifest.status === "final" ? (
             <LockedBanner
               manifest={manifest}
+              zone={zone}
               reopen={canReopen ? <ReopenManifestButton flightId={flight.id} flightNumber={flight.flight_number} /> : null}
             />
           ) : null}
@@ -201,7 +204,7 @@ export default async function FlightManifestPage({
             />
           </div>
 
-          <ManifestMeta manifest={manifest} />
+          <ManifestMeta manifest={manifest} zone={zone} />
         </>
       ) : (
         <EmptyState flightId={flight.id} canCreate={canBuild} />
@@ -249,9 +252,12 @@ function LegSeatsPanel({ legs }: { legs: LegSeats[] }) {
 
 function LockedBanner({
   manifest,
+  zone,
   reopen,
 }: {
   manifest: ManifestDetailResponse;
+  /** The departure base's: the time it was locked, as the app shows times. */
+  zone: string;
   /** Reopen, for whoever may lock, until departure (#153). */
   reopen: ReactNode;
 }) {
@@ -263,7 +269,7 @@ function LockedBanner({
       <p>
         <span className="font-semibold">Manifest locked.</span>{" "}
         {manifest.locked_at
-          ? `Final since ${new Date(manifest.locked_at).toLocaleString("en-US", { timeZone: "UTC" })} UTC.`
+          ? `Final since ${localDateTime(manifest.locked_at, zone)}.`
           : "It is final."}
         {reopen ? " Reopen it to take a passenger or weight off before departure." : " It can't be changed."}
       </p>
@@ -637,7 +643,7 @@ function Stat({
   );
 }
 
-function ManifestMeta({ manifest }: { manifest: ManifestDetailResponse }) {
+function ManifestMeta({ manifest, zone }: { manifest: ManifestDetailResponse; zone: string }) {
   return (
     <div className="mt-6 rounded-lg border border-border bg-card px-4 py-3 text-xs text-muted-foreground">
       <div className="flex flex-wrap items-center gap-x-6 gap-y-1">
@@ -648,12 +654,7 @@ function ManifestMeta({ manifest }: { manifest: ManifestDetailResponse }) {
         {manifest.locked_at && (
           <div>
             <span className="uppercase tracking-wider">Locked</span>{" "}
-            <span className="font-mono text-foreground">
-              {new Date(manifest.locked_at).toLocaleString("en-US", {
-                timeZone: "UTC",
-              })}{" "}
-              UTC
-            </span>
+            <span className="font-mono text-foreground">{localDateTime(manifest.locked_at, zone)}</span>
           </div>
         )}
       </div>

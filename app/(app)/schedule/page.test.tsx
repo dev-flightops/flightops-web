@@ -16,6 +16,7 @@ const { TestApiError, listFlights, listAircraft, getFleetAirworthiness } = vi.ho
   return { TestApiError, listFlights: vi.fn(), listAircraft: vi.fn(), getFleetAirworthiness: vi.fn() };
 });
 vi.mock("@/lib/api/client", () => ({ ApiError: TestApiError }));
+vi.mock("@/auth", () => ({ auth: vi.fn(async () => ({ roles: ["dispatcher"] })) }));
 vi.mock("@/lib/api/ops", () => ({ listFlights, listAircraft }));
 vi.mock("@/lib/api/maintenance", () => ({ getFleetAirworthiness }));
 
