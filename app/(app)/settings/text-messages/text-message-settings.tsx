@@ -39,6 +39,9 @@ export function TextMessageSettings({ account: initial }: { account: TextAccount
       <Status account={account} />
 
       <form
+        // POST, so a save pressed before the script loads never puts the
+        // auth token in the URL (#134).
+        method="post"
         // Remounted with what was saved, so the box and fields match it and
         // a typed token doesn't linger in the page.
         key={account.updated_at ?? "new"}

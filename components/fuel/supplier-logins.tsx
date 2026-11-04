@@ -115,6 +115,7 @@ export function SupplierLogins({
                     ) : null}
                     {passwordFor === login.id ? (
                       <form
+                        method="post"
                         className="mt-2 flex flex-wrap justify-end gap-2"
                         onSubmit={(e) => {
                           e.preventDefault();
@@ -153,6 +154,7 @@ export function SupplierLogins({
 
       {adding ? (
         <form
+          method="post"
           className="mt-3 grid gap-3 sm:grid-cols-3"
           aria-label={`Add a login for ${supplierName}`}
           onSubmit={(e) => {
