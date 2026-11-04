@@ -57,3 +57,7 @@ Demo collection prepared Nov 3 23:03:26 America/Anchorage (Nov 4 Phoenix/UTC). N
 Files named `production` show the live deployed site. Files named `local` show proposed frontend fixes against the same active synthetic API, never a deployed fix. `signed-frat-production.pdf` is the live signed record; `retained-dispatch-packet-live-api.pdf` came through the repaired local download link against that API. The six-page contact sheet is visual review evidence.
 
 Final validation: all 4,235 frontend tests (471 files), full lint, TypeScript and git diff whitespace checks passed. Backend: 102 relevant integration tests and Ruff passed. No claim that a merged service is deployed until the active host is verified.
+
+## Google Doc readback
+
+Updated original Tab 1, the User Journeys & QA acceptance matrix (all nine journeys with AI capabilities/limits), and Operational burn-down evidence. Native exports confirmed original text prefixes preserved in all edited tabs. Tab 1's 62 green-shaded text runs exactly match the baseline; historical report highlighting was not extended. Technical evidence preserved its 38 existing drawings and added 16 screenshots, totaling 54. All 16 captions and the nine-row acceptance matrix were read back. PDF visual review caught and repaired oversized portrait figures and table-heading pagination; the final evidence uses readable landscape log/load views. The original mobile captures remain here as supplemental evidence.
