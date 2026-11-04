@@ -121,6 +121,22 @@ describe("the flight panel", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent("The flight couldn't be loaded.");
   });
 
+  it("lets dispatch edit a planned flight from here, for a short-notice change (#134)", async () => {
+    flightSheetAction.mockResolvedValue({ ok: true, data: sheet() });
+    const { unmount } = render(<FlightPanel flight={FLIGHT} leg={0} zones={ZONES} canEdit open onOpenChange={() => {}} />);
+    const leg = await screen.findByRole("tabpanel");
+    expect(within(leg).getByRole("link", { name: "Edit flight" })).toHaveAttribute("href", "/dispatch?flight=f-1&edit=1");
+    unmount();
+    // Not for a reservations agent, and not once it's released: the
+    // release is pulled back on Dispatch first.
+    for (const [canEdit, state] of [[false, "planned"], [true, "released"]] as const) {
+      const view = render(<FlightPanel flight={{ ...FLIGHT, state }} leg={0} zones={ZONES} canEdit={canEdit} open onOpenChange={() => {}} />);
+      await screen.findByRole("tabpanel");
+      expect(screen.queryByRole("link", { name: "Edit flight" })).not.toBeInTheDocument();
+      view.unmount();
+    }
+  });
+
   it("opens from the list's flight number on the first leg", async () => {
     flightSheetAction.mockResolvedValueOnce({ ok: true, data: sheet() });
     render(<FlightPanelButton flight={FLIGHT} zones={ZONES} />);

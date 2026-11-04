@@ -378,6 +378,61 @@ describe("on a phone, and without signal (#119)", () => {
     await waitFor(() => expect(window.localStorage.getItem("fo-check-in-queue:f-1")).toBeNull());
   });
 
+  it("keeps showing the taps behind one the server has answered (#134)", async () => {
+    // The answer to the first tap had replaced the list, putting the
+    // second back as it was: a fast agent tapped it again, and the second
+    // tap was refused when sent.
+    const ben = pax({ id: "p-ben", first_name: "Ben", last_name: "Brown", check_in_status: "checked_in" });
+    const ana = pax({ check_in_status: "checked_in" });
+    const opened = view({ boarding_opened_at: "2026-10-22T18:00:00Z", passengers: [ana, ben] });
+    let finishBen: (r: unknown) => void = () => {};
+    actions.boardAction
+      .mockResolvedValueOnce({ ok: true, view: { ...opened, passengers: [{ ...ana, check_in_status: "boarded" }, ben] } })
+      .mockReturnValueOnce(new Promise((resolve) => (finishBen = resolve)));
+    render(<CheckInBoard initial={opened} canAct />);
+    fireEvent.click(phoneList().getByRole("checkbox", { name: "Board Ana Andrews" }));
+    fireEvent.click(phoneList().getByRole("checkbox", { name: "Board Ben Brown" }));
+    await waitFor(() => expect(actions.boardAction).toHaveBeenCalledTimes(2));
+    expect(phoneList().getByRole("checkbox", { name: "Ben Brown on board" })).toHaveAttribute("aria-checked", "true");
+    expect(phoneList().getByText("Sending…")).toBeInTheDocument();
+    finishBen({ ok: true, view: { ...opened, passengers: [{ ...ana, check_in_status: "boarded" }, { ...ben, check_in_status: "boarded" }] } });
+    await waitFor(() => expect(phoneList().queryByText("Sending…")).not.toBeInTheDocument());
+    expect(screen.queryByText("Not taken when sent")).not.toBeInTheDocument();
+  });
+
+  it("closes boarding once the last tap is sent, rather than asking for signal (#134)", async () => {
+    const opened = view({ boarding_opened_at: "2026-10-22T18:00:00Z", passengers: [pax({ check_in_status: "checked_in" })] });
+    const boarded = view({ ...opened, passengers: [pax({ check_in_status: "boarded" })] });
+    let finishBoard: (r: unknown) => void = () => {};
+    actions.boardAction.mockReturnValueOnce(new Promise((resolve) => (finishBoard = resolve)));
+    actions.closeBoardingAction.mockResolvedValue({
+      ok: true,
+      view: view({ ...boarded, boarding_closed_at: "2026-10-22T18:20:00Z", manifest_status: "final" }),
+    });
+    render(<CheckInBoard initial={opened} canAct />);
+    fireEvent.click(phoneList().getByRole("checkbox", { name: "Board Ana Andrews" }));
+    fireEvent.click(screen.getByRole("button", { name: "Close Boarding" }));
+    const dialog = await screen.findByRole("dialog");
+    fireEvent.click(within(dialog).getByRole("button", { name: "Close Boarding" }));
+    expect(screen.queryByText(/it needs signal/)).not.toBeInTheDocument();
+    expect(actions.closeBoardingAction).not.toHaveBeenCalled();
+    finishBoard({ ok: true, view: boarded });
+    await waitFor(() => expect(actions.closeBoardingAction).toHaveBeenCalledWith("f-1"));
+    expect(await screen.findByText(/the manifest is final/)).toBeInTheDocument();
+  });
+
+  it("won't close boarding while taps wait for signal", async () => {
+    const opened = view({ boarding_opened_at: "2026-10-22T18:00:00Z", passengers: [pax({ check_in_status: "checked_in" })] });
+    offline(true);
+    render(<CheckInBoard initial={opened} canAct />);
+    fireEvent.click(phoneList().getByRole("checkbox", { name: "Board Ana Andrews" }));
+    fireEvent.click(screen.getByRole("button", { name: "Close Boarding" }));
+    const dialog = await screen.findByRole("dialog");
+    fireEvent.click(within(dialog).getByRole("button", { name: "Close Boarding" }));
+    expect(await within(dialog).findByText("Send what this phone kept first: it needs signal.")).toBeInTheDocument();
+    expect(actions.closeBoardingAction).not.toHaveBeenCalled();
+  });
+
   it("picks up what an earlier visit kept", async () => {
     window.localStorage.setItem(
       "fo-check-in-queue:f-1",

@@ -72,7 +72,9 @@ import type { PicOption } from "@/components/dispatch/packet/pic-picker";
 import { typeWarnings } from "@/components/dispatch/packet/type-warnings";
 import {
   computeHardBlockReason,
+  computeReleaseBlockers,
   overridesOnRecord,
+  type ReleaseGateInput,
 } from "@/components/dispatch/packet/release-gate";
 import { flightStops, paramToRoute } from "@/lib/route";
 
@@ -376,7 +378,7 @@ export default async function DispatchPage({
   // The Generate-PDF release gate (PIC currency, NOTAM acks, stale
   // weather) lives in one pure, unit-tested function so the precedence
   // rules can't drift.
-  const hardBlockReason = computeHardBlockReason({
+  const releaseGate: ReleaseGateInput = {
     picCompliance,
     sicCompliance: sicChecks.flatMap((c) => (c.compliance ? [c.compliance] : [])),
     ackedWarnCodes,
@@ -397,7 +399,9 @@ export default async function DispatchPage({
           ? [{ code: "frat_missing", message: "No FRAT on this flight yet. The pilot or dispatch files it." }]
           : frat.release_blockers ?? null,
     releaseLoad: releaseLoad?.release ?? null,
-  });
+  };
+  const releaseBlockers = computeReleaseBlockers(releaseGate);
+  const hardBlockReason = computeHardBlockReason(releaseGate);
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
@@ -561,6 +565,7 @@ export default async function DispatchPage({
             zones={zones}
             openEdit={editParam === "1"}
             hardBlockReason={hardBlockReason}
+            releaseBlockers={releaseBlockers}
             pilotUserId={effectivePicId}
             overridesAcknowledged={overridesAcknowledged}
             notamAckedIcaos={notamAckedIcaos}

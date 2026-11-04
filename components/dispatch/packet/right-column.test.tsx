@@ -269,6 +269,25 @@ describe("RightColumn / Release dispatch forwards the release arguments", () => 
     );
   });
 
+  it("lists everything release waits for, not just the first (#134)", () => {
+    const blockers = [
+      "NOTAMs not acknowledged for PABE — review each stop and check the box before release.",
+      "FRAT: The pilot hasn't signed the FRAT.",
+    ];
+    render(
+      <RightColumn
+        flight={baseFlight()}
+        hardBlockReason={`${blockers[0]} (and 1 more)`}
+        releaseBlockers={blockers}
+      />,
+    );
+    expect(screen.getByText("Release blocked by 2 things:")).toBeInTheDocument();
+    expect(screen.getAllByRole("listitem").map((li) => li.textContent)).toEqual(blockers);
+    const release = screen.getByRole("button", { name: /Release — blocked/i });
+    expect(release).toBeDisabled();
+    expect(release).toHaveAttribute("title", `${blockers[0]} (and 1 more)`);
+  });
+
   it("never sends an empty ack list when the column has acks", async () => {
     // The specific failure: acks present on the column, absent from the
     // call. A test that only checked flightId passed throughout.

@@ -126,7 +126,8 @@ function applyToPax(p: CheckInPax, step: QueuedStep): CheckInPax {
 }
 
 /** The check-in as it will be once the step reaches the server, to show
- *  at once. The server's answer replaces it when the step is sent. */
+ *  at once. The server's answer replaces it when the step is sent, with
+ *  the steps still behind it applied again. */
 export function applyStep(view: CheckInView, step: QueuedStep): CheckInView {
   if (step.kind === "open-boarding") {
     return { ...view, boarding_opened_at: view.boarding_opened_at ?? step.at };

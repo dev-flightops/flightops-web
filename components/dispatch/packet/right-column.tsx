@@ -37,6 +37,7 @@ export function RightColumn({
   zones,
   openEdit = false,
   hardBlockReason = null,
+  releaseBlockers,
   pilotUserId = null,
   overridesAcknowledged = false,
   notamAckedIcaos = [],
@@ -58,6 +59,9 @@ export function RightColumn({
    *  tooltip explains why (e.g. "PIC has 2 hard-block currency
    *  items"). Null = no block, button behaves normally. */
   hardBlockReason?: string | null;
+  /** Everything release waits for, listed under the buttons (#134).
+   *  Without it, the hard block reason alone. */
+  releaseBlockers?: string[];
   /** M2-M-5 — currently-selected PIC; passed to the release action so
    *  the server-side compliance gate runs. */
   pilotUserId?: string | null;
@@ -88,6 +92,7 @@ export function RightColumn({
             zones={zones}
             openEdit={openEdit}
             hardBlockReason={hardBlockReason}
+            releaseBlockers={releaseBlockers ?? (hardBlockReason ? [hardBlockReason] : [])}
             pilotUserId={pilotUserId}
             overridesAcknowledged={overridesAcknowledged}
             notamAckedIcaos={notamAckedIcaos}
@@ -150,6 +155,7 @@ function FlightActionsRow({
   zones,
   openEdit = false,
   hardBlockReason = null,
+  releaseBlockers = [],
   pilotUserId = null,
   overridesAcknowledged = false,
   notamAckedIcaos = [],
@@ -164,6 +170,8 @@ function FlightActionsRow({
   /** The same gate as Generate PDF. Release dispatch used to skip it,
    *  so a dispatcher could release with warnings unacknowledged. */
   hardBlockReason?: string | null;
+  /** Every reason the gate holds release, shown together (#134). */
+  releaseBlockers?: string[];
   /** Release arguments, forwarded straight to ReleaseButton. This row
    *  took only flight + aircraft, so the release path below had no way
    *  to reach the NOTAM acks the column already held — see the note on
@@ -199,11 +207,20 @@ function FlightActionsRow({
             acknowledgedWarnings={acknowledgedWarnings}
           />
         </div>
-        {hardBlockReason && (
+        {releaseBlockers.length === 1 ? (
           <p id="release-blocked-reason" className="text-xs text-status-red">
-            Release blocked: {hardBlockReason}
+            Release blocked: {releaseBlockers[0]}
           </p>
-        )}
+        ) : releaseBlockers.length > 1 ? (
+          <div id="release-blocked-reason" className="text-xs text-status-red">
+            <p>{`Release blocked by ${releaseBlockers.length} things:`}</p>
+            <ol className="mt-1 list-decimal space-y-0.5 pl-5">
+              {releaseBlockers.map((reason, i) => (
+                <li key={`${i}:${reason}`}>{reason}</li>
+              ))}
+            </ol>
+          </div>
+        ) : null}
       </div>
     );
   }

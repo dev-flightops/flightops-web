@@ -227,6 +227,7 @@ export function ForeFlightSettings({
         {connection.last_error && !check && <Alert>{connection.last_error}</Alert>}
 
         <form
+          method="post"
           className="mt-3 flex flex-wrap items-center gap-2"
           onSubmit={(e) => {
             e.preventDefault();

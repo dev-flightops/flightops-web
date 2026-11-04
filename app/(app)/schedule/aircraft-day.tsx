@@ -48,6 +48,7 @@ export function AircraftDay({
   end,
   zone,
   zones,
+  canEdit = false,
   nowMinute,
 }: {
   columns: DayColumn[];
@@ -57,6 +58,8 @@ export function AircraftDay({
   /** The company's zone: the day's hours. */
   zone: string;
   zones: ZoneTable;
+  /** DISPATCH_WRITERS: the panel offers Edit flight on a planned one. */
+  canEdit?: boolean;
   /** Minutes into the day now, when the day is today; else null. */
   nowMinute: number | null;
 }) {
@@ -147,6 +150,7 @@ export function AircraftDay({
           flight={open.flight}
           leg={open.leg}
           zones={zones}
+          canEdit={canEdit}
           open
           onOpenChange={(next) => {
             if (!next) setOpen(null);

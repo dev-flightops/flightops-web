@@ -173,6 +173,9 @@ describe("SoftWarningAckList (M2-G-5 tail; saved per dispatcher, #155)", () => {
       <SoftWarningAckList flightId="f-1" findings={[grace, medical]} ackedCodes={new Set()} />,
     );
     await user.click(screen.getByLabelText("Acknowledge Instrument Proficiency Check"));
+    // Only a settled save hands authority back to refreshed server props.
+    // A stale refresh during a pending save must not erase the user's tick.
+    await vi.waitFor(() => expect(refresh).toHaveBeenCalled());
     rerender(
       <SoftWarningAckList flightId="f-1" findings={[grace, medical]} ackedCodes={new Set(["ipc"])} />,
     );

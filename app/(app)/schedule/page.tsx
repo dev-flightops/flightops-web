@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import { auth } from "@/auth";
+
 import { buttonOutline, buttonSolid, linkCaps, segment, segmentGroup } from "@/components/ff/controls";
 import { PageHeader } from "@/components/ff/page-header";
 import { LoadFailedNotice } from "@/components/ff/setup-notice";
@@ -14,6 +16,7 @@ import type {
   FlightStatus,
 } from "@/lib/api/types";
 import { localClock, localDate, localDay, type ZoneTable, zoneFor } from "@/lib/format/local-time";
+import { DISPATCH_WRITERS, hasAnyRole } from "@/lib/roles";
 import { routeText } from "@/lib/route";
 import {
   aircraftColumns,
@@ -86,6 +89,8 @@ export default async function SchedulePage({
   const { date: dateParam, statuses: statusesParam, view: viewParam } = await searchParams;
   const view = viewParam === "list" ? "list" : "aircraft";
   const zones = await loadZoneTable();
+  // Dispatch edits a planned flight from its panel (#134), as from the board.
+  const canEdit = hasAnyRole((await auth())?.roles ?? [], DISPATCH_WRITERS);
   const date =
     dateParam && /^\d{4}-\d{2}-\d{2}$/.test(dateParam)
       ? dateParam
@@ -174,6 +179,7 @@ export default async function SchedulePage({
             end={byAircraft.end}
             zone={zones.fallback}
             zones={zones}
+            canEdit={canEdit}
             nowMinute={date === localDay(zones.fallback) ? minutesInto(date, new Date().toISOString(), zones.fallback) : null}
           />
         </>
@@ -195,7 +201,7 @@ export default async function SchedulePage({
       ) : (
         <div className="space-y-5">
           {Object.entries(grouped).map(([base, list]) => (
-            <BaseGroup key={base} base={base} flights={list} zones={zones} />
+            <BaseGroup key={base} base={base} flights={list} zones={zones} canEdit={canEdit} />
           ))}
         </div>
       )}
@@ -259,10 +265,12 @@ function BaseGroup({
   base,
   flights,
   zones,
+  canEdit,
 }: {
   base: string;
   flights: FlightListItem[];
   zones: ZoneTable;
+  canEdit: boolean;
 }) {
   return (
     <section>
@@ -288,7 +296,7 @@ function BaseGroup({
           </thead>
           <tbody>
             {flights.map((f) => (
-              <FlightRow key={f.id} flight={f} zones={zones} />
+              <FlightRow key={f.id} flight={f} zones={zones} canEdit={canEdit} />
             ))}
           </tbody>
         </table>
@@ -297,7 +305,7 @@ function BaseGroup({
   );
 }
 
-function FlightRow({ flight, zones }: { flight: FlightListItem; zones: ZoneTable }) {
+function FlightRow({ flight, zones, canEdit }: { flight: FlightListItem; zones: ZoneTable; canEdit: boolean }) {
   const zone = zoneFor(zones, flight.origin);
   const stops = flight.stops && flight.stops.length > 0 ? flight.stops : [flight.origin, flight.destination];
   return (
@@ -312,6 +320,7 @@ function FlightRow({ flight, zones }: { flight: FlightListItem; zones: ZoneTable
             state: legState(flight),
           }}
           zones={zones}
+          canEdit={canEdit}
         />
       </td>
       <td className="px-4 py-3 font-mono text-foreground">
