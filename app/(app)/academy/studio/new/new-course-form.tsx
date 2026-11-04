@@ -5,8 +5,6 @@ import { useActionState } from "react";
 import {
   COURSE_CATEGORIES,
   COURSE_CATEGORY_LABELS,
-  COURSE_PUBLISH_STATUSES,
-  COURSE_PUBLISH_STATUS_LABELS,
 } from "@/lib/api/academy";
 
 import {
@@ -101,20 +99,10 @@ export function NewCourseForm() {
         </Field>
       </div>
 
-      <Field label="Publish status" name="publish_status">
-        <select
-          id="publish_status"
-          name="publish_status"
-          defaultValue="draft"
-          className="ff-input"
-        >
-          {COURSE_PUBLISH_STATUSES.map((s) => (
-            <option key={s} value={s}>
-              {COURSE_PUBLISH_STATUS_LABELS[s]}
-            </option>
-          ))}
-        </select>
-      </Field>
+      <input type="hidden" name="publish_status" value="draft" />
+      <p className="text-sm text-muted-foreground">
+        New courses start as drafts. Add a lesson in Course studio, then publish.
+      </p>
 
       <div className="flex items-center justify-end">
         <button

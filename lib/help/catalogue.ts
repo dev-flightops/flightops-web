@@ -93,7 +93,7 @@ export const HELP_ENTRIES: HelpEntry[] = [
       "The alerts are derived live from fleet airworthiness, the flight board and open MEL items. Nothing here is stored, so an alert disappears the moment its cause does — return a grounded aircraft to service and it leaves the list on the next load.",
     worthKnowing: [
       "This panel is unfiltered. The bell in the top bar shows the same alerts minus the ones you personally dismissed, so the two can legitimately show different counts.",
-      "The caption says how many alert types are wired. The rest need services that are not built, and it names that rather than implying the list is everything.",
+      "Alerts summarize the supported operational checks; review the underlying flight and maintenance records for their full context.",
     ],
     related: ["/dispatch", "/flight-following", "/maintenance"],
   },
@@ -110,11 +110,12 @@ export const HELP_ENTRIES: HelpEntry[] = [
     connectsTo:
       "Reads the manifest for weight and balance, the maintenance file for airworthiness, crew records for currency, and the weather service for the briefing. A release writes to the flight record and is what the flight board reads to show a flight as released.",
     worthKnowing: [
+      "The displayed load check is weight-only. CG/envelope calculation is not implemented; balance must be verified with the approved aircraft loading procedure. No AI helper can certify it or supply missing approved aircraft data.",
       "The packet shows each pilot's standing in their seat on the aircraft's type. Once aircraft qualifications are switched on in Settings → Currency, a PIC who isn't current as PIC on the type is a hard block that a Chief Pilot, Director of Operations or Exec Admin can override for that one flight. The PIC picker and the crew panel name the problem beside each pilot.",
-      "The Risk Assessment scores the flight the way the operator's original dispatch tool did: each factor's severity times its likelihood (1–5 each), the worst row setting LOW (up to 5), MEDIUM (up to 12) or HIGH. Weather and PIREPs, runways, the company's crosswind limits from Settings → Flight Risk, open MELs, hazmat on the manifest, the aircraft's 100-hour and night are worked out automatically, and the dispatcher can override any of them. Each stop's ceiling, visibility and wind are the worst current reading of its METAR, its FAA WeatherCam (a VWOS reading, or the cameras' estimated visibility) and its village report, and the weather card names the source; where any of it isn't certified, the packet says that only an operator whose OpSpecs authorize non-certified weather may use it for dispatch. Outside Pilot Restrictions and VFR Mountain Terrain at Night are the dispatcher's answers. A stop whose runway isn't known scores HIGH until it's entered under Stations.",
+      "The Risk Assessment scores the flight the way the operator's original dispatch tool did: each applicable factor's severity times its likelihood, with no-cue/not-applicable factors unscored, the worst row setting LOW (up to 5), MEDIUM (up to 12) or HIGH. Weather and PIREPs, runways, the company's crosswind limits from Settings → Flight Risk, open MELs, hazmat on the manifest, the aircraft's 100-hour and night are worked out automatically, and the dispatcher can override any of them. Each stop's ceiling, visibility and wind are the worst current reading of its METAR, its FAA WeatherCam (a VWOS reading, or the cameras' estimated visibility) and its village report, and the weather card names the source; where any of it isn't certified, the packet says that only an operator whose OpSpecs authorize non-certified weather may use it for dispatch. Outside Pilot Restrictions and VFR Mountain Terrain at Night are the dispatcher's answers. A stop whose runway isn't known scores HIGH until it's entered under Stations.",
       "The dispatch packet PDF is laid out as the operator's original was: the risk matrix and its plain-English summary, the AAWU icing and turbulence charts, each stop's METAR, TAF and PIREPs, the area forecast for the region chosen in Flight Details, the non-certified FAA WeatherCam and village readings and whether each was scored, the dispatcher's notes, the NOTAMs reviewed, open MELs and the signature block. The weather and risk are kept as they were at release, so printing it later shows what the flight was released on. A flight released before packets were kept prints today's weather and says so. The company logo from Settings → Company prints at the top, as on the original.",
       "Building a flight is reachable from here as well as from Flight Following. It was only on Flight Following until an operator reported being unable to find it.",
-      "The AI Assistant and AI Review buttons on the packet are not built. Dispatch Intelligence, which suggests aircraft for a next leg, is a separate page.",
+      "The packet’s Peregrine Assistant explains how to use the app; it cannot read or change the flight. AI Review is not available. Dispatch Intelligence, which suggests aircraft for a next leg, is a separate page.",
     ],
     related: ["/dispatch/intelligence", "/flight-following", "/weather"],
   },
@@ -168,7 +169,7 @@ export const HELP_ENTRIES: HelpEntry[] = [
       "Grounding an aircraft removes it from dispatch immediately and raises an alert on the home page and the bell. Airframe and engine hours come from crew flight logs.",
     worthKnowing: [
       "Grounded means a grounding timestamp is set, which the auto-grounding job does when a MEL expires. That is a different test from whether the aircraft is marked active.",
-      "Inspections, Vendors, Roster and adding an aircraft are not built, and are dimmed on the header rather than hidden.",
+      "Use Settings → Fleet to add or edit aircraft. Dedicated Inspections, Vendors and maintenance Roster pages are not available.",
     ],
     related: ["/maintenance/mx-clock", "/maintenance/work-orders", "/dispatch"],
   },
@@ -313,7 +314,7 @@ export const HELP_ENTRIES: HelpEntry[] = [
     worthKnowing: [
       "Only the Director of Operations or an Exec Admin sees this page: the key reads and writes the company's ForeFlight account. It can be replaced but is never shown again.",
       "A flight released here, or released in ForeFlight, is left alone from then on. A cancelled flight is taken out of ForeFlight unless ForeFlight already released it.",
-      "Peregrine's own weight and balance check stays the record. What's sent only pre-loads the pilot's weight and balance in ForeFlight, and ForeFlight's verdict that comes back is shown beside ours, never used in its place.",
+      "Peregrine's own weight check stays on the record. What's sent pre-loads the pilot's weight and balance in ForeFlight; any verdict returned is displayed for review. Peregrine does not itself calculate CG or check the aircraft's balance envelope.",
     ],
     related: ["/settings", "/dispatch", "/dispatch/foreflight-plans"],
   },
@@ -410,19 +411,19 @@ export const HELP_ENTRIES: HelpEntry[] = [
     title: "Fleet Board",
     whoCanUse: ["reservations_agent", "dispatcher", "chief_pilot", "exec_admin"],
     whatItDoes:
-      "The day's flying laid out by aircraft, so an agent can see what is already committed before promising anything. Each aircraft is a row and each flight a block on it, which makes a gap in the schedule — or a double-booking — visible at a glance rather than something you work out from a list.",
+      "The day's bookings laid out by aircraft. Each aircraft is a row and each booking is a block; several bookings can belong to one flight. Booking counts are not flight or leg counts, so compare them with the same population.",
     howToUse: [
       "Pick the date you are selling against.",
       "Read down the aircraft rows to find an airframe with room.",
-      "Click a block to open the flight it belongs to.",
+      "Click a booking block to open its details and follow its assigned-flight link when present.",
       "Use the list view instead when you want to sort or scan by time rather than by aircraft.",
     ],
     connectsTo:
-      "Blocks come from confirmed bookings and from flights created in Dispatch, so the board shows both sides of the operation. Aircraft rows come from the fleet in Settings.",
+      "Blocks come from booking records and their aircraft/flight assignments. Aircraft rows come from the fleet in Settings; unassigned demand still needs an eligible flight.",
     example:
       "An agent is asked for a same-day charter to PADU. The board shows the 208B free after 14:00 and the Navajo committed all afternoon, so they quote the 208B and avoid a conflict that a list view would have buried.",
     worthKnowing: [
-      "Legacy offers a split-screen drag-and-drop that moves a booking between aircraft by dragging. Ours does not: moving a flight between airframes changes its weight and balance and can invalidate a release, so it is done on the flight rather than by dropping a block.",
+      "Drag a booking block onto another aircraft row, review the confirmation and confirm the move. A flight-linked booking moves its flight and the other bookings on that flight; availability, capacity and release-state checks can refuse the move. For another day, edit the booking/flight date rather than dragging horizontally.",
     ],
     related: ["/reservations", "/schedule", "/flight-following"],
   },
@@ -466,10 +467,10 @@ export const HELP_ENTRIES: HelpEntry[] = [
     title: "Flight Crew",
     whoCanUse: ["pilot", "check_airman", "chief_pilot", "director_of_operations", "exec_admin"],
     whatItDoes:
-      "A pilot's own corner of the app: the flights assigned to them, the preflight they have to work through before a release, their logbook, and their currency. Everything here is about one person rather than the operation.",
+      "A pilot's flights, daily aircraft preflight/run-up, flight-release review and acceptance, logbook and currency. Dispatch releases the flight; the assigned pilot reviews and accepts it.",
     howToUse: [
       "Open the flight you are about to operate to start its preflight.",
-      "Work the preflight steps in order — the release is the last one, and it stays closed until the earlier steps are answered.",
+      "Duty in, take the aircraft on Flight Crew and record its daily preflight and run-up before accepting a flight in it. Then work the flight’s eight preflight steps in order; dispatch release review comes first and pilot acceptance is step 6.",
       "File the electronic flight log after the flight, while the numbers are still in front of you.",
       "Check your currency before accepting a flight that needs a qualification you are close to losing.",
     ],
@@ -479,17 +480,20 @@ export const HELP_ENTRIES: HelpEntry[] = [
         body: "The flow is deliberately linear. Each step writes something the next one reads, so skipping ahead would mean signing a release against numbers nobody had entered yet.",
         steps: [
           "Dispatch release — the packet the dispatcher built, for the pilot to accept or reject.",
-          "Weight and balance — loaded from the manifest, with the envelope checked against the airframe.",
+          "Weight check — loaded from the manifest and checked against the aircraft’s weight limits. CG/envelope calculation is not implemented; balance requires the approved aircraft loading procedure.",
           "Weather and NOTAMs — what was current when the release was signed, kept with the flight.",
           "Risk assessment — the FRAT, scored against the operator's own thresholds.",
-          "Acceptance — the pilot's name against the release, which is the record that matters afterwards.",
+          "Duty In confirmation — confirm the current duty period before acceptance.",
+          "Accept or Deny Release — the assigned pilot records their decision after the preceding reviews.",
+          "Flight Following Position Reports — review the position-report process and dispatch links.",
+          "Post-Flight Log — after arrival, open and finish the flight’s draft log.",
         ],
       },
     ],
     connectsTo:
       "The preflight reads the dispatch packet and the manifest, and writes the acceptance back to the flight. A filed flight log pushes hours to Maintenance and pay events to Payroll. Currency comes from the compliance records, not from the logbook.",
     example:
-      "A first officer opens their 06:40 to PABE, finds the release waiting, accepts it, and the flight moves to released on the dispatcher's board without a phone call.",
+      "The assigned pilot opens their 06:40 to PABE, reviews the existing dispatch release and preflight checks, then records acceptance. Pilot acceptance does not replace the dispatcher's release.",
     related: ["/flight-crew/elog", "/compliance/crew-currency", "/dispatch"],
   },
   {
@@ -1003,8 +1007,8 @@ export const HELP_ENTRIES: HelpEntry[] = [
       "The operator's own training: courses, lessons, quizzes and the record of who has completed what. It exists so that training which a certificate depends on is held in the same system as the currency it satisfies, rather than in a spreadsheet beside it.",
     howToUse: [
       "Open My Training to see what has been assigned to you and what is outstanding.",
-      "Work through a course's lessons in order; the quiz unlocks at the end.",
-      "A completion is recorded against your training record when you pass.",
+      "Read each lesson and pass its attached quiz, if present, then select Mark Complete.",
+      "The course completes after every lesson is marked complete; its certificate and completion date are then recorded.",
     ],
     connectsTo:
       "Completions write through to the compliance records, so a course that satisfies a currency item moves that item. Assignments are made by a chief pilot from the assignments page.",
@@ -1015,15 +1019,15 @@ export const HELP_ENTRIES: HelpEntry[] = [
     title: "Course studio",
     whoCanUse: ["chief_pilot", "director_of_operations", "exec_admin"],
     whatItDoes:
-      "Where courses are built: lessons, ordering, and the quiz that closes a course. This is the authoring side of Academy, separate from taking a course.",
+      "Where courses are built: text lessons, ordering, and optional quizzes attached to individual lessons. This is the authoring side of Academy, separate from taking a course.",
     howToUse: [
       "Create the course and describe what completing it means.",
       "Add lessons in the order a learner should meet them.",
-      "Add the quiz, and set what counts as a pass.",
+      "Use Attach Quiz on a lesson, edit its questions, and set the pass threshold. Add questions before learners take it.",
       "Publish, then assign it from the assignments page.",
     ],
     worthKnowing: [
-      "Legacy supports uploading a SCORM package as a course. Ours does not: a SCORM bundle brings its own player and its own completion reporting, and a completion that satisfies a currency requirement needs to come from a source we can audit rather than from a third-party bundle's own say-so.",
+      "Studio currently supports text lessons and lesson quizzes. Media uploads, SCORM import/player and viewing-duration tracking are not available.",
     ],
     connectsTo:
       "Published courses become assignable. Completions feed training records and, where the course satisfies one, a currency item.",
@@ -1037,10 +1041,10 @@ export const HELP_ENTRIES: HelpEntry[] = [
       "Who has been given which course, and where they are with it. Assigning is how a published course reaches a person; without it a course sits in the catalogue and nobody takes it.",
     howToUse: [
       "Choose the course, then the people or the role it goes to.",
-      "Set a due date if the training is time-bound.",
+      "Review the selected learners before assigning. This form does not set a due date.",
       "Track completion from the same page.",
     ],
-    connectsTo: "Reads the published course catalogue; writes completions to training records.",
+    connectsTo: "Reads the published course catalogue and creates enrollments. Learners must complete the lessons before a completion is recorded.",
     related: ["/academy/studio", "/academy/reports", "/compliance/crew-currency"],
   },
   // ── Your own records ────────────────────────────────────────────────
@@ -1086,11 +1090,11 @@ export const HELP_ENTRIES: HelpEntry[] = [
     route: "/academy/mine",
     title: "My training",
     whatItDoes:
-      "The courses assigned to you, what is outstanding, and what you have completed. Where training that a currency requirement depends on is concerned, this is the list that keeps you legal to fly.",
+      "The courses assigned to you, what is outstanding, and what you have completed. Approved linked training may satisfy a currency item; a general course completion alone does not establish flight eligibility.",
     howToUse: [
       "Start with anything overdue — some of it holds up a currency item.",
-      "Work a course's lessons in order; the quiz opens at the end.",
-      "Your completion is recorded automatically when you pass.",
+      "Read each lesson, pass its attached quiz if it has one, and select Mark Complete.",
+      "Passing a quiz does not mark the lesson complete. Mark every lesson complete to finish the course and issue its certificate.",
     ],
     connectsTo:
       "Assignments come from a chief pilot. A completion writes to your training record and moves any currency item the course satisfies.",
@@ -1216,14 +1220,14 @@ export const HELP_ENTRIES: HelpEntry[] = [
     title: "Manifest",
     whoCanUse: ["dispatcher", "reservations_agent", "ground_ops", "pilot", "exec_admin"],
     whatItDoes:
-      "Who and what is on the aircraft: passengers, their weights, and cargo. It is the input to weight and balance, which is why a guessed weight here becomes a wrong envelope on the release.",
+      "Who and what is on the aircraft: passengers, their weights, and cargo. These feed the weight check on the release. The app does not calculate CG or check a balance envelope; use the approved aircraft loading procedure for balance.",
     howToUse: [
       "Open the flight's manifest, and create it if the flight has none.",
       "Add passengers and crew with actual or standard weights, as the operator's policy requires, and their bags.",
       "Add USPS mail by class, and cargo with its weight. A UPS package is a cargo line with its tracking number.",
       "Check the weight left for mail and freight: the aircraft's useful load less the crew, the fuel (dispatch's planned figure, or else the trip's estimate from the type's burn rate) and everything on board.",
       "Load what is waiting for the route: the manifest suggests mail and freight to fill the weight left, priority mail first, and loads it in one click. What doesn't fit stays waiting.",
-      "Lock the manifest when boarding closes. A locked manifest is final: nobody can change it, and there is no unlock. Ground Ops, Reservations Agents, Dispatchers, the Chief Pilot, the Director of Operations and Exec Admins can lock.",
+      "Lock the manifest when boarding closes. Before departure, the same authorized roles can use Reopen to change the load; reopening is audited and re-locking runs the checks again. Ground Ops, Reservations Agents, Dispatchers, the Chief Pilot, the Director of Operations and Exec Admins can lock and reopen.",
     ],
     connectsTo:
       "Feeds the dispatch packet's weight and balance, and the preflight step the pilot signs. Passenger counts come from the booking where there is one.",
@@ -1549,7 +1553,7 @@ export const HELP_ENTRIES: HelpEntry[] = [
     ],
     worthKnowing: [
       "Exec Admin only, and deliberately: the record carries a date of birth, a home address and an emergency contact. That is also why an employee cannot currently open their own record.",
-      "Onboarding and Drug & Alcohol are shown as tabs and marked not built. Each is a subsystem rather than a screen — legacy carries five tables behind one and nine behind the other, the second including the 14 CFR 120.217 annual summary — and neither is scheduled.",
+      "Dedicated Onboarding and Drug & Alcohol workflows are not available. Maintain those records through the operator’s approved process; the employee directory does not manage them.",
     ],
     connectsTo:
       "The certificate record is the same 135.63 record the compliance profile shows. Required documents are defined once in Settings and appear on everyone they apply to.",
@@ -1746,7 +1750,7 @@ export const HELP_ENTRIES: HelpEntry[] = [
       "The aircraft the operator holds: tails, types, and the figures the rest of the app computes against — seats, weights and the airframe's limits.",
     howToUse: [
       "Add the aircraft with its tail number and type.",
-      "Enter the weights and limits carefully; weight and balance is computed from them.",
+      "Enter the weights and limits carefully; the weight check uses them. The app does not calculate CG or the balance envelope from these fields.",
       "Retire an aircraft rather than deleting it — its flights and maintenance history stay attached.",
     ],
     connectsTo:

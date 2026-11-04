@@ -12,7 +12,12 @@ const course: CourseDetail = { id:"c1", title:"Synthetic UAT", description:null,
 it("reconciles publication controls to persisted status after save", () => {
   const { rerender } = render(<CourseEditor course={course} eligibleCurrencyItems={[]} />);
   expect(screen.getByRole("combobox", { name:"Publish status" })).toHaveValue("draft");
-  rerender(<CourseEditor course={{...course,publish_status:"published",is_active:true}} eligibleCurrencyItems={[]} />);
+  rerender(<CourseEditor course={{...course,publish_status:"published",is_active:true,lesson_count:1,lessons:[{id:"l1",course_id:"c1",title:"Read me",body_markdown:"Read this lesson",ordinal:1,quiz_id:null,created_at:course.created_at,updated_at:course.updated_at}]}} eligibleCurrencyItems={[]} />);
   expect(screen.getByRole("combobox", { name:"Publish status" })).toHaveValue("published");
   expect(screen.getByText("Visible in the public catalog.")).toBeInTheDocument();
+});
+it("keeps an empty draft from being published through the editor", () => {
+  render(<CourseEditor course={course} eligibleCurrencyItems={[]} />);
+  expect(screen.getByRole("option", { name:"Published" })).toBeDisabled();
+  expect(screen.getByText("Add a lesson before publishing or assigning this course.")).toBeInTheDocument();
 });

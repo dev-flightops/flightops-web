@@ -103,6 +103,7 @@ export async function bulkAssignAction(
 
 function mapError(err: unknown, fallback: string): string {
   if (err instanceof ApiError) {
+    if (err.status === 409 && err.message.includes("course_has_no_lessons")) return "This course has no lessons yet. Add a lesson in Course studio before assigning it.";
     if (err.status === 401) return "Your session expired — please sign in again.";
     if (err.status === 403) return "You don't have permission to assign courses.";
     if (err.status === 400) return err.message || fallback;

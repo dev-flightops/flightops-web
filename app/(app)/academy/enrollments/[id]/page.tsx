@@ -108,6 +108,14 @@ export default async function EnrollmentLessonPage({
             ? ` · Expires ${formatZuluDate(enrollment.expires_at)} (UTC)`
             : ""}
         </p>
+        {enrollment.status === "completed" ? (
+          <Link
+            href="/academy/certificates"
+            className="mt-3 inline-block text-sm font-medium text-primary hover:underline"
+          >
+            View my certificates →
+          </Link>
+        ) : null}
       </header>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[16rem_1fr]">
