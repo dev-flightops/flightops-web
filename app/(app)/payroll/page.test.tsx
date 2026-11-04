@@ -26,6 +26,7 @@ const {
   approvePayEventAction,
   generatePayEventsAction,
   approvePendingPayEventsAction,
+  routerRefresh,
 } = vi.hoisted(() => {
   class TestApiError extends Error {
     constructor(
@@ -42,9 +43,11 @@ const {
     approvePayEventAction: vi.fn(),
     generatePayEventsAction: vi.fn(),
     approvePendingPayEventsAction: vi.fn(),
+    routerRefresh: vi.fn(),
   };
 });
 
+vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: routerRefresh }) }));
 vi.mock("@/lib/api/client", () => ({ ApiError: TestApiError }));
 // The label map has to come through the mock too — the page imports it
 // as a value, so an incomplete mock would render `undefined` in the Type
@@ -115,6 +118,7 @@ beforeEach(() => {
   approvePayEventAction.mockReset();
   generatePayEventsAction.mockReset();
   approvePendingPayEventsAction.mockReset();
+  routerRefresh.mockReset();
   listPayEvents.mockResolvedValue({ items: [] });
 });
 
@@ -398,6 +402,7 @@ describe("automatic events (#134)", () => {
     fireEvent.click(screen.getByRole("button", { name: "Bring up to date" }));
     await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent("3 created."));
     expect(generatePayEventsAction).toHaveBeenCalledWith("2026-08-01", "2026-08-14");
+    await waitFor(() => expect(routerRefresh).toHaveBeenCalled());
   });
 
   it("asks before approving a range, and leaves it if told no", async () => {
@@ -421,6 +426,7 @@ describe("automatic events (#134)", () => {
       expect(screen.getByRole("alert")).toHaveTextContent("Only an Exec Admin"),
     );
     expect(approvePendingPayEventsAction).toHaveBeenCalledWith("2026-08-01", "2026-08-14");
+    expect(routerRefresh).not.toHaveBeenCalled();
     confirm.mockRestore();
   });
 

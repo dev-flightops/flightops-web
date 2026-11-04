@@ -1570,7 +1570,7 @@ export const HELP_ENTRIES: HelpEntry[] = [
       "Raise anything wrong with a supervisor rather than editing around it.",
     ],
     connectsTo:
-      "The hours are recorded here. Clocking out makes a pay event for them, pending on Payroll; hours past 40 in the week, Monday to Sunday, become overtime. A corrected shift corrects its event.",
+      "The hours are recorded here. Clocking out makes a pay event for them, pending on Payroll; hours past 40 in the week, Monday to Sunday, become overtime, except for flight crew. A corrected shift corrects its event.",
     related: ["/payroll", "/payroll/periods"],
   },
   {
@@ -1591,7 +1591,7 @@ export const HELP_ENTRIES: HelpEntry[] = [
         steps: [
           "A flight landing: flight pay for the PIC and SIC, the day's rate, and any modifiers, from Settings → Pilot Pay. With no rate, the hours are still recorded.",
           "Filing the flight log: its legs replace the check-in times, and its flight type decides the medevac and training modifiers.",
-          "A shift clocking out: duty hours, and overtime past 40 in the week. A pilot with a pay rate has no overtime: their hours are on record only.",
+          "A shift clocking out: duty hours, and overtime past 40 in the week, Monday to Sunday. Flight crew have no hourly overtime: their hours are on record only.",
           "A manual entry on Payroll, which carries whoever entered it. Nothing automatic changes it. Per diem, standby, training pay, expenses and deductions are entered this way.",
         ],
       },

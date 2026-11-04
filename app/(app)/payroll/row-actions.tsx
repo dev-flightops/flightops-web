@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
 import { buttonOutline } from "@/components/ff/controls";
@@ -63,6 +64,7 @@ export function PayEventRange({
   start: string;
   end: string;
 }) {
+  const router = useRouter();
   const [start, setStart] = useState(initialStart);
   const [end, setEnd] = useState(initialEnd);
   const [pending, begin] = useTransition();
@@ -71,7 +73,11 @@ export function PayEventRange({
 
   function run(work: () => Promise<PayEventActionState>) {
     setOutcome(null);
-    begin(async () => setOutcome(await work()));
+    begin(async () => {
+      const result = await work();
+      setOutcome(result);
+      if (result.status === "ok") router.refresh();
+    });
   }
 
   function approveAll() {
