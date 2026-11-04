@@ -11,7 +11,7 @@ import { ApiError } from "@/lib/api/client";
  *
  * Reads live from `/maintenance/work-orders` (M2 backend tail, PR
  * flightops-services PR #113). Filter by status via `?status=`
- * query param. Legacy default is Active (all statuses); named
+ * query param. Default is All (all statuses); named
  * statuses filter to that single value.
  *
  * New Work Order opens /maintenance/work-orders/new, and each work order
@@ -108,7 +108,7 @@ export default async function WorkOrdersPage({
               : "text-muted-foreground hover:text-foreground")
           }
         >
-          Active
+          All
         </Link>
         {WO_STATUSES.map((s) => (
           <Link
