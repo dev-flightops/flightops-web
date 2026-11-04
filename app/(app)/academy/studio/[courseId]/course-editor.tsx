@@ -210,13 +210,15 @@ function PublishStatusPicker({ course }: { course: CourseDetail }) {
           className="ff-input px-3 py-1.5 text-xs w-auto"
         >
           {COURSE_PUBLISH_STATUSES.map((s) => (
-            <option key={s} value={s}>
+            <option key={s} value={s} disabled={s === "published" && course.lessons.length === 0}>
               {COURSE_PUBLISH_STATUS_LABELS[s]}
             </option>
           ))}
         </select>
         <span className="text-xs text-muted-foreground">
-          {status === "draft"
+          {course.lessons.length === 0
+            ? "Add a lesson before publishing or assigning this course."
+            : status === "draft"
             ? "Hidden from learners while you edit."
             : status === "published"
               ? "Visible in the public catalog."
@@ -377,6 +379,7 @@ function LessonRow({
           <input type="hidden" name="lesson_id" value={lesson.id} />
           <input
             name="title"
+            aria-label="Lesson title"
             defaultValue={lesson.title}
             required
             maxLength={200}
@@ -384,10 +387,11 @@ function LessonRow({
           />
           <textarea
             name="body_markdown"
+            aria-label="Lesson text"
             defaultValue={lesson.body_markdown}
             rows={6}
             maxLength={100_000}
-            placeholder="Lesson body (markdown OK)"
+            placeholder="Lesson text (plain text)"
             className="ff-input"
           />
           <div className="flex justify-end">
@@ -430,6 +434,7 @@ function AddLessonForm({ courseId }: { courseId: string }) {
         <input type="hidden" name="course_id" value={courseId} />
         <input
           name="title"
+          aria-label="New lesson title"
           required
           maxLength={200}
           placeholder="Lesson title"
@@ -437,9 +442,10 @@ function AddLessonForm({ courseId }: { courseId: string }) {
         />
         <textarea
           name="body_markdown"
+          aria-label="New lesson text"
           rows={5}
           maxLength={100_000}
-          placeholder="Lesson body (markdown OK)"
+          placeholder="Lesson text (plain text)"
           className="ff-input"
         />
         <div className="flex justify-end">

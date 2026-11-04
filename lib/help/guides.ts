@@ -33,6 +33,42 @@ export interface Guide {
 
 export const GUIDES: Guide[] = [
   {
+    slug: "create-and-assign-training",
+    title: "Create a lesson and assign training",
+    roles: ["chief_pilot", "director_of_operations", "exec_admin"],
+    summary: "Build a course with a lesson and optional knowledge check, then assign it to learners.",
+    steps: [
+      "Open [Course studio](/academy/studio), choose **New Course**, enter its title, description, category and certificate validity, and select **Create Course**. It starts as a draft.",
+      "Under **Add a lesson**, enter the lesson title and text, then select **Add Lesson**. Repeat for additional lessons in the order learners should read them.",
+      "For a knowledge check, select **Attach Quiz** on the lesson. In the quiz editor, save its title and pass threshold, then add questions, answer options and the correct answer. Return to the course in Studio.",
+      "Leave **Linked currency item** at **No link** for a demonstration or general training exercise. Only link approved training to an eligible currency item when that training actually satisfies it.",
+      "Set **Publish status** to **Published** and save. In [Training assignments](/academy/assignments), choose the course and learners and assign it. Confirm their enrollments appear.",
+      "Have the learner complete the course using [Complete Academy training](/help#guide-complete-academy-training), then verify the completion in Assignments and [Certificates](/academy/certificates).",
+    ],
+    notes: [
+      "Lessons currently contain plain text and optional quizzes. Media uploads, SCORM playback, viewing-duration tracking and Academy aggregate reports/CSV export are not available. Assignments and Certificates show the underlying records.",
+      "Peregrine Assistant can explain these steps. It cannot author a course, assign a learner, grade an answer or record completion for you.",
+    ],
+    pages: ["/academy/studio", "/academy/assignments", "/academy/certificates"],
+  },
+  {
+    slug: "complete-academy-training",
+    title: "Complete Academy training",
+    roles: ["pilot", "crew_member", "maintenance", "ground_ops", "chief_pilot", "director_of_operations", "exec_admin"],
+    summary: "Finish each lesson and verify the resulting completion record and certificate.",
+    steps: [
+      "Open [My Training](/academy/mine) and continue the assigned course. A published course can also be opened from [Academy](/academy) and enrolled in.",
+      "Read the lesson. If a quiz is attached, answer and submit it. A failed attempt does not complete the lesson; review the feedback and retry.",
+      "After a passing attempt, select **Mark Complete** on the lesson. Passing the quiz alone does not complete it. Repeat for every lesson.",
+      "Confirm the course shows **Completed** and its completion date. Open **Certificates** in Academy, select the issued certificate, and return to My Training to verify the completed record persists.",
+    ],
+    notes: [
+      "A certificate records the Academy course completion. A general course with no compliance link does not grant regulatory currency or operational qualification.",
+      "The assistant explains the workflow but cannot see your live enrollment, answer the assessment for you or mark training complete.",
+    ],
+    pages: ["/academy/mine", "/academy"],
+  },
+  {
     slug: "build-a-flight",
     title: "Build a flight",
     roles: ["dispatcher", "director_of_operations", "exec_admin"],

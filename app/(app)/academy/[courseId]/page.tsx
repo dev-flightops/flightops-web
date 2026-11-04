@@ -133,6 +133,14 @@ function EnrolCtaSection({
   course: CourseDetail;
   enrollment: Enrollment | null;
 }) {
+  if (course.lesson_count === 0) {
+    return (
+      <section className="notice notice-yellow text-sm">
+        This course has no lessons yet. Ask the course author to add a lesson
+        before enrolling or continuing.
+      </section>
+    );
+  }
   if (enrollment && enrollment.status === "in_progress") {
     return (
       <section className="notice notice-blue flex flex-wrap items-center justify-between gap-2">

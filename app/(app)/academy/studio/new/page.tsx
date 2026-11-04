@@ -33,8 +33,8 @@ export default async function NewCoursePage() {
         </h1>
         <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
           Give it a title + description; add lessons once it&rsquo;s
-          created. The course won&rsquo;t appear in the public catalog
-          until it has lessons.
+          created. New courses start as drafts; publish from Course studio
+          once the lessons are ready.
         </p>
       </header>
       <NewCourseForm />
