@@ -212,7 +212,12 @@ function LoginInner({ providers }: { providers: ProviderSummary[] }) {
               </>
             )}
 
+            {/* POST: pressed before the page's script has loaded (a slow
+                connection), the browser sends the form itself, and with no
+                method that was a GET, the email and password in the URL
+                and so in server logs and the browser's history (#134). */}
             <form
+              method="post"
               onSubmit={form.handleSubmit(onSubmit)}
               className="space-y-4"
               noValidate
