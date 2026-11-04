@@ -106,6 +106,7 @@ export const GUIDES: Guide[] = [
       "Press **Generate PDF**, read the confirmation, then **Release & generate**. The flight is released, the pilot sees the release, and the dispatch packet opens.",
     ],
     notes: [
+      "The load check is weight-only. CG/envelope calculation is not implemented; verify balance using the approved aircraft loading procedure before release. An AI answer does not replace that check.",
       "A refused release says why next to the button. Every reason, and how it is cleared, is in [Why won't my flight release?](/help#faq-release-refused).",
       "The packet keeps the weather, risk and AAWU charts as they were at release, so printing it later shows what the flight was released on.",
       "To take a release back before departure, see [Pull back or cancel a flight](/help#guide-pull-back-or-cancel-a-flight).",

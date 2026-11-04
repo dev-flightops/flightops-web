@@ -29,6 +29,8 @@ Validation:
 
 The original numbered bug ledger remains in `../uat-burndown.md`. CG remains deferred pending approved aircraft data; the LMS media/SCORM/view-time expansion remains a separate project. Unknown legacy staff qualifications, imported flights and company policy are not fabricated to make tests pass. Green in the original Google Doc continues to mean prior-commit fixes, not these new changes.
 
-The synthetic production course and its audit/certificate records are retained as clearly named UAT evidence; it must never be used as regulatory qualification evidence. Its course ID is `44677d65-be76-4b95-a715-4f2a51ccc4d8`.
+The synthetic production course is archived from the catalog; its audit/certificate records are retained as clearly named UAT evidence; it must never be used as regulatory qualification evidence. Its course ID is `44677d65-be76-4b95-a715-4f2a51ccc4d8`.
 
 An initial GitHub Desktop push inherited origin/main. The change was immediately reverted with a normal revert; main's file tree was verified identical to its previous state. The isolated backend PR reapplies the guard for review. No force push or destructive data cleanup was used.
+
+Further help-corpus audit corrected false CG/envelope claims in Dispatch, Flight Crew, Manifest, Fleet and ForeFlight, plus stale claims that manifest reopening and Fleet Board drag/drop were unavailable. This corrects AI guidance about previously fixed original-list workflows; it does not implement CG.
