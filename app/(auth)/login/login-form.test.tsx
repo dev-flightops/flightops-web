@@ -1,4 +1,6 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { act, render, screen, waitFor } from "@testing-library/react";
+import { hydrateRoot, type Root } from "react-dom/client";
+import { renderToString } from "react-dom/server";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -110,6 +112,35 @@ describe("LoginForm", () => {
     // /home/ becomes /portal), and a redirected client-side navigation
     // never committed — the page stayed on /login.
     await waitFor(() => expect(assign).toHaveBeenCalledWith("/home/"));
+  });
+
+  it("keeps what was typed before the page's script loaded (#134)", async () => {
+    // A slow line, or a password manager: the fields are filled while they
+    // are still the server's. Taking them over wrote the form's empty
+    // defaults into them, and Sign In said "Email is required".
+    signIn.mockResolvedValue({ error: null, ok: true });
+    const container = document.createElement("div");
+    container.innerHTML = renderToString(<LoginForm providers={[]} />);
+    document.body.appendChild(container);
+    (container.querySelector("#login-email") as HTMLInputElement).value = "dana@example.test";
+    (container.querySelector("#login-password") as HTMLInputElement).value = "typed-early";
+    let root: Root | undefined;
+    try {
+      await act(async () => {
+        root = hydrateRoot(container, <LoginForm providers={[]} />);
+      });
+      expect(screen.getByLabelText(/email/i)).toHaveValue("dana@example.test");
+      expect(screen.getByLabelText(/password/i)).toHaveValue("typed-early");
+      await userEvent.setup().click(screen.getByRole("button", { name: /sign in$/i }));
+      expect(signIn).toHaveBeenCalledWith("credentials", {
+        email: "dana@example.test",
+        password: "typed-early",
+        redirect: false,
+      });
+    } finally {
+      act(() => root?.unmount());
+      container.remove();
+    }
   });
 
   it("returns to `from` after sign-in, but only a path on this site", async () => {

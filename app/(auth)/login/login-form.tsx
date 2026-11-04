@@ -50,6 +50,18 @@ const schema = z.object({
 
 type FormValues = z.infer<typeof schema>;
 
+/** What a field already holds when the page's script takes it over:
+ *  typed, or filled by a password manager, before the script loaded (a
+ *  slow line). The form's defaults are written into its fields as it
+ *  takes them over, so empty defaults wiped them, and Sign In then said
+ *  "Email is required" (#134). Read in the first render on the client,
+ *  while the fields on screen are still the server's. */
+function typedEarly(id: string): string {
+  if (typeof document === "undefined") return "";
+  const field = document.getElementById(id);
+  return field instanceof HTMLInputElement ? field.value : "";
+}
+
 function LoginInner({ providers }: { providers: ProviderSummary[] }) {
   const searchParams = useSearchParams();
   const from = sameSitePath(searchParams.get("from"));
@@ -60,7 +72,7 @@ function LoginInner({ providers }: { providers: ProviderSummary[] }) {
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: { email: "", password: "" },
+    defaultValues: { email: typedEarly("login-email"), password: typedEarly("login-password") },
   });
 
   // SSO providers shown to the user. Starts as the env-enabled list
