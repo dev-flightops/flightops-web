@@ -1,12 +1,18 @@
 import Link from "next/link";
 
-import { getPilotPay } from "@/lib/api/auth";
+import { RemoveRowButton } from "@/components/settings/remove-row-button";
+import { getPilotPay, listStaff } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
+import { listAircraft } from "@/lib/api/ops";
 import type {
   PayModifierRow,
   PayRateRow,
   PilotPayBundleResponse,
 } from "@/lib/api/auth";
+import { fleetTypes } from "@/lib/fleet-types";
+
+import { removePayModifierAction, removePayRateAction } from "./actions";
+import { PayModifierForm, PayRateForm } from "./pay-forms";
 
 /**
  * /settings/pilot-pay — legacy `templates/settings/pilot_pay.html`.
@@ -14,30 +20,14 @@ import type {
  * Reads live from `/auth/settings/pilot-pay` (M2 backend tail,
  * migration 0056). Two panels — Pay Rate Table + Daily Modifiers.
  *
- * Rates are matched by priority (pilot+airframe > pilot+any >
- * default+airframe > default) at pay-event time; that lookup lives
- * in the payroll service and isn't exposed here. Modifiers apply
- * automatically when conditions are detected on the pay event
- * (medevac / night / training).
+ * Legacy matched a rate by priority (pilot+airframe > pilot+any >
+ * default+airframe > default) when a clocked shift or a flight made a pay
+ * event, and applied modifiers the same way. Pay events here are entered by
+ * hand, so nothing reads these tables yet, and the page says so (#134).
  *
- * Add + Delete endpoints exist backend-side; Add-row modals are a
- * follow-up. Disabled placeholders remain in the inline forms so
- * operators know what fields are coming.
+ * Rows are added and removed, not edited, as in legacy: a new rate with a
+ * later effective date takes over from the old one (#134).
  */
-
-const BACKEND_HINT_ADD =
-  "Add / Delete modals are a follow-up — POST/DELETE endpoints are live";
-
-const RATE_TYPES = [
-  { value: "daily", label: "Daily" },
-  { value: "flight_hourly", label: "Flight Hourly" },
-] as const;
-
-const MODIFIER_TYPES = [
-  { value: "flat", label: "Flat $" },
-  { value: "multiplier", label: "Multiplier" },
-  { value: "per_hour", label: "Per Hour" },
-] as const;
 
 export const dynamic = "force-dynamic";
 
@@ -59,6 +49,21 @@ export default async function SettingsPilotPayPage() {
   const rates = data?.rates ?? [];
   const modifiers = data?.modifiers ?? [];
 
+  // For the form and the table's names; either can fail without losing the
+  // page. The rate's pilot is a user id, and the picker lists the pilots.
+  const [staff, airframes] = await Promise.all([
+    listStaff()
+      .then((r) => r.items)
+      .catch(() => []),
+    listAircraft()
+      .then((r) => fleetTypes(r.items).map((t) => t.slug))
+      .catch(() => [] as string[]),
+  ]);
+  const pilots = staff
+    .filter((s) => s.roles.includes("pilot") || s.roles.includes("chief_pilot"))
+    .map((s) => ({ id: s.id, name: s.full_name }));
+  const names = new Map(staff.map((s) => [s.id, s.full_name]));
+
   return (
     <div className="mx-auto max-w-5xl px-4 sm:px-6 py-8">
       <nav aria-label="Breadcrumb" className="eyebrow mb-4 flex flex-wrap items-center">
@@ -73,7 +78,8 @@ export default async function SettingsPilotPayPage() {
         <h1 className="page-title">Pilot Pay Rates &amp; Modifiers</h1>
         <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
           Configure pay rate tables by seniority, airframe, and role. Add daily
-          modifiers for medevac, night ops, and other situations.
+          modifiers for medevac, night ops, and other situations. Payroll doesn&apos;t
+          read these yet: pay events are entered by hand on Payroll.
         </p>
       </header>
 
@@ -86,8 +92,8 @@ export default async function SettingsPilotPayPage() {
         </div>
       ) : null}
 
-      <PayRateSection rates={rates} />
-      <PayModifierSection modifiers={modifiers} />
+      <PayRateSection rates={rates} names={names} pilots={pilots} airframes={airframes} canEdit={!loadError} />
+      <PayModifierSection modifiers={modifiers} canEdit={!loadError} />
 
       <Link
         href="/settings"
@@ -99,7 +105,19 @@ export default async function SettingsPilotPayPage() {
   );
 }
 
-function PayRateSection({ rates }: { rates: PayRateRow[] }) {
+function PayRateSection({
+  rates,
+  names,
+  pilots,
+  airframes,
+  canEdit,
+}: {
+  rates: PayRateRow[];
+  names: Map<string, string>;
+  pilots: { id: string; name: string }[];
+  airframes: string[];
+  canEdit: boolean;
+}) {
   return (
     <section className="mb-5 rounded-lg border border-border bg-card p-5">
       <h2 className="panel-title mb-3">
@@ -146,13 +164,7 @@ function PayRateSection({ rates }: { rates: PayRateRow[] }) {
                       )}
                     </td>
                     <td className="whitespace-nowrap px-4 py-3 text-xs">
-                      {r.crew_member_id ? (
-                        <span className="font-mono text-muted-foreground">
-                          {r.crew_member_id.slice(0, 8)}
-                        </span>
-                      ) : (
-                        "All Pilots"
-                      )}
+                      {r.crew_member_id ? (names.get(r.crew_member_id) ?? "A specific pilot") : "All Pilots"}
                     </td>
                     <td className="whitespace-nowrap px-4 py-3 text-xs text-muted-foreground">
                       {r.airframe_type ?? "All"}
@@ -173,15 +185,11 @@ function PayRateSection({ rates }: { rates: PayRateRow[] }) {
                       {r.end_date ?? "—"}
                     </td>
                     <td className="whitespace-nowrap px-4 py-3 text-right">
-                      <button
-                        type="button"
-                        disabled
-                        aria-disabled="true"
-                        title={BACKEND_HINT_ADD}
-                        className="cursor-not-allowed text-xs text-status-red opacity-60"
-                      >
-                        Remove
-                      </button>
+                      <RemoveRowButton
+                        label={`Remove the ${r.rate_type === "daily" ? "daily" : "hourly"} rate effective ${r.effective_date}`}
+                        confirm="Remove this pay rate?"
+                        action={removePayRateAction.bind(null, r.id)}
+                      />
                     </td>
                   </tr>
                 ))
@@ -191,56 +199,24 @@ function PayRateSection({ rates }: { rates: PayRateRow[] }) {
         </div>
       </div>
 
-      <div className="border-t border-border pt-3">
-        <div className="eyebrow mb-2">Add Pay Rate</div>
-        <div className="flex flex-wrap items-end gap-2">
-          <Field label="Type" width="w-36">
-            <DisabledSelect options={RATE_TYPES} />
-          </Field>
-          <Field label="Pilot" width="w-40">
-            <DisabledSelect options={[{ value: "", label: "All Pilots (Default)" }]} />
-          </Field>
-          <Field label="Airframe" width="w-32">
-            <DisabledInput placeholder="e.g. 208B" />
-          </Field>
-          <Field label="YOS Min" width="w-20">
-            <DisabledInput placeholder="0" type="number" />
-          </Field>
-          <Field label="YOS Max" width="w-20">
-            <DisabledInput placeholder="99" type="number" />
-          </Field>
-          <Field label="Rate ($)" width="w-24">
-            <DisabledInput placeholder="350.00" type="number" />
-          </Field>
-          <Field label="Effective" width="w-36">
-            <DisabledInput type="date" />
-          </Field>
-          <Field label="End Date" width="w-36">
-            <DisabledInput type="date" />
-          </Field>
-          <button
-            type="button"
-            disabled
-            aria-disabled="true"
-            title={BACKEND_HINT_ADD}
-            className="btn-caps h-[34px] cursor-not-allowed rounded-md bg-primary px-3 text-white disabled:opacity-100 text-[0.72rem]"
-          >
-            + Add Rate
-          </button>
+      {canEdit ? (
+        <div className="border-t border-border pt-3">
+          <div className="eyebrow mb-2">Add Pay Rate</div>
+          <PayRateForm pilots={pilots} airframes={airframes} />
         </div>
-      </div>
+      ) : null}
     </section>
   );
 }
 
-function PayModifierSection({ modifiers }: { modifiers: PayModifierRow[] }) {
+function PayModifierSection({ modifiers, canEdit }: { modifiers: PayModifierRow[]; canEdit: boolean }) {
   return (
     <section className="mb-5 rounded-lg border border-border bg-card p-5">
       <h2 className="panel-title mb-3">
         Daily Modifiers
       </h2>
       <p className="mb-3 text-xs text-muted-foreground">
-        Modifiers auto-apply when conditions are detected (medevac flight type, night arrival, training). Custom modifiers can be applied manually to pay events.
+        What pays extra, such as a medevac flight, a night arrival or a training day.
       </p>
 
       <div className="mb-4 overflow-hidden rounded-lg border border-border bg-card">
@@ -278,15 +254,11 @@ function PayModifierSection({ modifiers }: { modifiers: PayModifierRow[] }) {
                       {formatModifierValue(m)}
                     </td>
                     <td className="whitespace-nowrap px-4 py-3 text-right">
-                      <button
-                        type="button"
-                        disabled
-                        aria-disabled="true"
-                        title={BACKEND_HINT_ADD}
-                        className="cursor-not-allowed text-xs text-status-red opacity-60"
-                      >
-                        Remove
-                      </button>
+                      <RemoveRowButton
+                        label={`Remove ${m.display_label}`}
+                        confirm={`Remove ${m.display_label}?`}
+                        action={removePayModifierAction.bind(null, m.id)}
+                      />
                     </td>
                   </tr>
                 ))
@@ -296,38 +268,12 @@ function PayModifierSection({ modifiers }: { modifiers: PayModifierRow[] }) {
         </div>
       </div>
 
-      <div className="border-t border-border pt-3">
-        <div className="eyebrow mb-2">Add Modifier</div>
-        <div className="flex flex-wrap items-end gap-2">
-          <Field label="Modifier" width="w-40">
-            <DisabledSelect
-              options={[
-                { value: "medevac", label: "Medevac Premium" },
-                { value: "night", label: "Night Ops" },
-                { value: "training", label: "Training Day" },
-              ]}
-            />
-          </Field>
-          <Field label="Display Label" width="w-40">
-            <DisabledInput placeholder="Medevac Premium" />
-          </Field>
-          <Field label="Type" width="w-36">
-            <DisabledSelect options={MODIFIER_TYPES} />
-          </Field>
-          <Field label="Value" width="w-24">
-            <DisabledInput placeholder="150.00" type="number" />
-          </Field>
-          <button
-            type="button"
-            disabled
-            aria-disabled="true"
-            title={BACKEND_HINT_ADD}
-            className="btn-caps h-[34px] cursor-not-allowed rounded-md bg-primary px-3 text-white disabled:opacity-100 text-[0.72rem]"
-          >
-            + Add Modifier
-          </button>
+      {canEdit ? (
+        <div className="border-t border-border pt-3">
+          <div className="eyebrow mb-2">Add Modifier</div>
+          <PayModifierForm />
         </div>
-      </div>
+      ) : null}
     </section>
   );
 }
@@ -362,61 +308,4 @@ function formatModifierValue(m: PayModifierRow): string {
   if (m.modifier_type === "flat") return `$${n.toFixed(2)}`;
   if (m.modifier_type === "multiplier") return `${n}x`;
   return `$${n.toFixed(2)}/hr`;
-}
-
-function Field({
-  label,
-  width,
-  children,
-}: {
-  label: string;
-  width: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <label className={width}>
-      <span className="field-label">
-        {label}
-      </span>
-      {children}
-    </label>
-  );
-}
-
-function DisabledInput({
-  placeholder,
-  type = "text",
-}: {
-  placeholder?: string;
-  type?: string;
-}) {
-  return (
-    <input
-      type={type}
-      placeholder={placeholder}
-      disabled
-      title={BACKEND_HINT_ADD}
-      className="ff-input cursor-not-allowed px-2 py-1.5 text-sm disabled:opacity-100"
-    />
-  );
-}
-
-function DisabledSelect({
-  options,
-}: {
-  options: readonly { value: string; label: string }[];
-}) {
-  return (
-    <select
-      disabled
-      title={BACKEND_HINT_ADD}
-      className="ff-input cursor-not-allowed px-2 py-1.5 text-sm disabled:opacity-100"
-    >
-      {options.map((o) => (
-        <option key={o.value} value={o.value}>
-          {o.label}
-        </option>
-      ))}
-    </select>
-  );
 }

@@ -43,7 +43,7 @@ export function PilotWeightCard({
           ? "None on file: the load counts 190 lb, the standard weight, and says it was estimated."
           : `The load counts ${weightLbs} lb on every flight this pilot is crewed on.`}
       </p>
-      <form onSubmit={save} className="mt-3 flex flex-wrap items-end gap-3">
+      <form method="post" onSubmit={save} className="mt-3 flex flex-wrap items-end gap-3">
         <div>
           <label htmlFor="pilot-weight" className="field-label">
             Weight (lb)

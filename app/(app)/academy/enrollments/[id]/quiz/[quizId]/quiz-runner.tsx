@@ -97,7 +97,7 @@ export function QuizRunner({ enrollmentId, quiz, backToLessonHref }: Props) {
   }
 
   return (
-    <form onSubmit={submit} noValidate className="space-y-6">
+    <form method="post" onSubmit={submit} noValidate className="space-y-6">
       {error && (
         <div
           role="alert"

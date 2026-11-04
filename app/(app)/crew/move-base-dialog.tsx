@@ -73,7 +73,7 @@ function MoveBaseForm({
           {member.full_name}&rsquo;s home base. Assignments stay where they are.
         </DialogDescription>
       </DialogHeader>
-      <form onSubmit={onSubmit} className="space-y-3" noValidate>
+      <form method="post" onSubmit={onSubmit} className="space-y-3" noValidate>
         {error && (
           <p
             role="alert"

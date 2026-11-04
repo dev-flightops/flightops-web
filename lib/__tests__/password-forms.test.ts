@@ -59,6 +59,33 @@ function formsWithoutPost(src: string): string[] {
     .filter((tag) => !/\bmethod="post"/.test(tag) && !/\baction=\{/.test(tag));
 }
 
+/** Forms that say neither: pressed before the script loads, the browser sends
+ *  each as a GET, with its fields in the URL. */
+function formsWithNoMethod(src: string): string[] {
+  const code = stripComments(src);
+  return [...code.matchAll(FORM)]
+    .map((m) => openingTag(code, m.index ?? 0))
+    .filter((tag) => !/\bmethod=/.test(tag) && !/\baction=/.test(tag));
+}
+
+describe("every form says how it sends (#134)", () => {
+  it("has a method or an action", () => {
+    // A search form that wants its fields in the URL says method="get".
+    const files = ROOTS.flatMap((root) => walk(root));
+    const offenders = files.flatMap((f) =>
+      formsWithNoMethod(readFileSync(f, "utf8")).map((tag) => `${f}: ${tag.replace(/\s+/g, " ").slice(0, 80)}`),
+    );
+    expect(offenders).toEqual([]);
+  });
+
+  it("reads the tag it is given", () => {
+    expect(formsWithNoMethod("<form onSubmit={save}><input name='email' /></form>")).toHaveLength(1);
+    expect(formsWithNoMethod('<form method="post" onSubmit={save}></form>')).toEqual([]);
+    expect(formsWithNoMethod('<form method="get"></form>')).toEqual([]);
+    expect(formsWithNoMethod("<form action={save}></form>")).toEqual([]);
+  });
+});
+
 describe("a form with a password field posts (#134)", () => {
   const files = ROOTS.flatMap((root) => walk(root));
 

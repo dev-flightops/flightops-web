@@ -131,7 +131,7 @@ function AssignmentForm({
           hold one assignment on any day.
         </DialogDescription>
       </DialogHeader>
-      <form onSubmit={onSubmit} className="space-y-3" noValidate>
+      <form method="post" onSubmit={onSubmit} className="space-y-3" noValidate>
         {editing && <input type="hidden" name="entry_id" value={editing.id} />}
         {error && (
           <p

@@ -10,13 +10,33 @@ const api = vi.hoisted(() => {
       super(message);
     }
   }
-  return { TestApiError, upsertAircraftCost: vi.fn(), revalidatePath: vi.fn() };
+  return {
+    TestApiError,
+    upsertAircraftCost: vi.fn(),
+    saveFuelPrice: vi.fn(),
+    saveLandingFee: vi.fn(),
+    saveRouteTime: vi.fn(),
+    deleteCostRow: vi.fn(),
+    revalidatePath: vi.fn(),
+  };
 });
 vi.mock("@/lib/api/client", () => ({ ApiError: api.TestApiError }));
-vi.mock("@/lib/api/auth", () => ({ upsertAircraftCost: api.upsertAircraftCost }));
+vi.mock("@/lib/api/auth", () => ({
+  upsertAircraftCost: api.upsertAircraftCost,
+  saveFuelPrice: api.saveFuelPrice,
+  saveLandingFee: api.saveLandingFee,
+  saveRouteTime: api.saveRouteTime,
+  deleteCostRow: api.deleteCostRow,
+}));
 vi.mock("next/cache", () => ({ revalidatePath: api.revalidatePath }));
 
-import { saveAircraftCostAction } from "./actions";
+import {
+  removeCostRowAction,
+  saveAircraftCostAction,
+  saveFuelPriceAction,
+  saveLandingFeeAction,
+  saveRouteTimeAction,
+} from "./actions";
 
 const IDLE = { status: "idle" as const, attempt: 0 };
 
@@ -88,5 +108,70 @@ describe("saveAircraftCostAction (#75)", () => {
     api.upsertAircraftCost.mockRejectedValue(new api.TestApiError(status, "/auth/settings/costs", body));
     expect((await saveAircraftCostAction(IDLE, row())).message).toBe(message);
     expect(api.revalidatePath).not.toHaveBeenCalled();
+  });
+});
+
+describe("fuel prices, landing fees and routes (#134)", () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it("saves a fuel price, the code upper-cased", async () => {
+    api.saveFuelPrice.mockResolvedValue({});
+    const state = await saveFuelPriceAction(IDLE, form({ icao_code: " pabe ", price_per_gal: "$7.50", fuel_type: "Jet-A" }));
+    expect(api.saveFuelPrice).toHaveBeenCalledWith({ icao_code: "PABE", price_per_gal: "7.50", fuel_type: "Jet-A" });
+    expect(state).toMatchObject({ status: "ok", message: "Saved Jet-A at PABE." });
+    expect(api.revalidatePath).toHaveBeenCalledWith("/settings/costs");
+  });
+
+  it("takes a village's FAA code", async () => {
+    api.saveFuelPrice.mockResolvedValue({});
+    await saveFuelPriceAction(IDLE, form({ icao_code: "9z8", price_per_gal: "8", fuel_type: "100LL" }));
+    expect(api.saveFuelPrice).toHaveBeenCalledWith(expect.objectContaining({ icao_code: "9Z8" }));
+  });
+
+  it.each([
+    [{ icao_code: "PA", price_per_gal: "7", fuel_type: "Jet-A" }, /airport code/],
+    [{ icao_code: "PABE", price_per_gal: "0", fuel_type: "Jet-A" }, /above \$0/],
+    [{ icao_code: "PABE", price_per_gal: "7", fuel_type: "" }, /Pick the fuel/],
+  ])("refuses the fuel price %j", async (fields, message) => {
+    const state = await saveFuelPriceAction(IDLE, form(fields));
+    expect(state.message).toMatch(message);
+    expect(api.saveFuelPrice).not.toHaveBeenCalled();
+  });
+
+  it("saves a landing fee, 0 included, with blank notes as null", async () => {
+    api.saveLandingFee.mockResolvedValue({});
+    await saveLandingFeeAction(IDLE, form({ icao_code: "panc", fee_amount: "0", notes: " " }));
+    expect(api.saveLandingFee).toHaveBeenCalledWith({ icao_code: "PANC", fee_amount: "0", notes: null });
+  });
+
+  it("refuses a fee that isn't a number", async () => {
+    const state = await saveLandingFeeAction(IDLE, form({ icao_code: "PANC", fee_amount: "free" }));
+    expect(state.message).toMatch(/in dollars/);
+  });
+
+  it("saves a route", async () => {
+    api.saveRouteTime.mockResolvedValue({});
+    const state = await saveRouteTimeAction(IDLE, form({ origin_icao: "pabe", dest_icao: "paem", est_flight_hrs: "1.2" }));
+    expect(api.saveRouteTime).toHaveBeenCalledWith({ origin_icao: "PABE", dest_icao: "PAEM", est_flight_hrs: "1.2" });
+    expect(state.message).toBe("Saved PABE to PAEM.");
+  });
+
+  it("refuses a route with no time", async () => {
+    const state = await saveRouteTimeAction(IDLE, form({ origin_icao: "PABE", dest_icao: "PAEM", est_flight_hrs: "0" }));
+    expect(state.message).toMatch(/flight time/);
+  });
+
+  it("removes a row by its kind", async () => {
+    api.deleteCostRow.mockResolvedValue(undefined);
+    await expect(removeCostRowAction("landing-fee", "f-1")).resolves.toEqual({ ok: true });
+    expect(api.deleteCostRow).toHaveBeenCalledWith("landing-fee", "f-1");
+  });
+
+  it("says who may remove one", async () => {
+    api.deleteCostRow.mockRejectedValue(new api.TestApiError(403, "/x", "forbidden"));
+    await expect(removeCostRowAction("route", "r-1")).resolves.toEqual({
+      ok: false,
+      error: "Only an Exec Admin can change operating costs.",
+    });
   });
 });

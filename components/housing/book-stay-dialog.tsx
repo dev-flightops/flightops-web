@@ -98,7 +98,7 @@ export function BookStayDialog({
               Who, where, and the nights: check-out is the morning they leave.
             </DialogDescription>
           </DialogHeader>
-          <form onSubmit={onSubmit} className="grid gap-3 sm:grid-cols-2">
+          <form method="post" onSubmit={onSubmit} className="grid gap-3 sm:grid-cols-2">
             <label className="sm:col-span-2">
               <span className="field-label">Employee</span>
               <select name="employee_user_id" required className="ff-input" defaultValue="">

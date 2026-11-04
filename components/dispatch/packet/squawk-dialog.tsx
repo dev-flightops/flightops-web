@@ -165,6 +165,7 @@ export function SquawkDialog({ aircraftId, tailNumber, choices }: SquawkDialogPr
 
           <Form {...form}>
             <form
+              method="post"
               onSubmit={form.handleSubmit(onSubmit)}
               className="grid gap-3 sm:grid-cols-2"
             >

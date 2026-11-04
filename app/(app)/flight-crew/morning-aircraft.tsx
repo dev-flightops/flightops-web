@@ -88,7 +88,7 @@ export function MorningAircraft({ morning }: { morning: MorningResponse | null }
   return (
     <div className="space-y-4">
       {mine ? (
-        <form onSubmit={record} className="grid gap-3 sm:grid-cols-2">
+        <form method="post" onSubmit={record} className="grid gap-3 sm:grid-cols-2">
           <p className="text-sm text-foreground sm:col-span-2">
             <span className="font-mono font-semibold">{mine.tail_number}</span>
             {` is yours today. Record its preflight and run-up:`}

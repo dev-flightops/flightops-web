@@ -544,3 +544,87 @@ export async function setSupplierLoginPassword(
   });
 }
 
+
+// ---- Settings forms: pilot pay and operating costs (#134) --------------------
+
+export interface PayRateInput {
+  rate_type: PayRateType;
+  crew_member_id: string | null;
+  airframe_type: string | null;
+  year_of_service_min: number | null;
+  year_of_service_max: number | null;
+  rate_amount: string;
+  effective_date: string;
+  end_date: string | null;
+}
+
+export async function createPayRate(body: PayRateInput): Promise<PayRateRow> {
+  return apiFetch<PayRateRow>("/auth/settings/pilot-pay/rates", {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+}
+
+export async function deletePayRate(rowId: string): Promise<void> {
+  await apiFetch<void>(`/auth/settings/pilot-pay/rates/${rowId}`, { method: "DELETE" });
+}
+
+export interface PayModifierInput {
+  modifier_name: string;
+  display_label: string;
+  modifier_type: PayModifierType;
+  modifier_value: string;
+}
+
+export async function createPayModifier(body: PayModifierInput): Promise<PayModifierRow> {
+  return apiFetch<PayModifierRow>("/auth/settings/pilot-pay/modifiers", {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+}
+
+export async function deletePayModifier(rowId: string): Promise<void> {
+  await apiFetch<void>(`/auth/settings/pilot-pay/modifiers/${rowId}`, { method: "DELETE" });
+}
+
+/** A base and fuel already priced has its price replaced. */
+export async function saveFuelPrice(body: {
+  icao_code: string;
+  price_per_gal: string;
+  fuel_type: string;
+}): Promise<FuelPriceRow> {
+  return apiFetch<FuelPriceRow>("/auth/settings/costs/fuel-price", {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+}
+
+/** An airport already on the list has its fee replaced. */
+export async function saveLandingFee(body: {
+  icao_code: string;
+  fee_amount: string;
+  notes: string | null;
+}): Promise<LandingFeeRow> {
+  return apiFetch<LandingFeeRow>("/auth/settings/costs/landing-fee", {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+}
+
+/** A route already on the list has its time replaced. */
+export async function saveRouteTime(body: {
+  origin_icao: string;
+  dest_icao: string;
+  est_flight_hrs: string;
+}): Promise<RouteFlightTimeRow> {
+  return apiFetch<RouteFlightTimeRow>("/auth/settings/costs/route", {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+}
+
+export type CostRowKind = "fuel-price" | "landing-fee" | "route";
+
+export async function deleteCostRow(kind: CostRowKind, rowId: string): Promise<void> {
+  await apiFetch<void>(`/auth/settings/costs/${kind}/${rowId}`, { method: "DELETE" });
+}

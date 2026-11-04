@@ -76,6 +76,7 @@ export function FleetBrainChat({ examples }: { examples: string[] }) {
 
       <div className="sticky bottom-0 mt-4 bg-background pb-2 pt-3">
         <form
+          method="post"
           onSubmit={(e) => {
             e.preventDefault();
             void ask(draft);

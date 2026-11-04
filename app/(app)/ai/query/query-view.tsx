@@ -164,6 +164,7 @@ export function QueryView({
 
       <div className="rounded-lg border border-border bg-card p-4">
         <form
+          method="post"
           onSubmit={(e) => {
             e.preventDefault();
             onAsk(draft);

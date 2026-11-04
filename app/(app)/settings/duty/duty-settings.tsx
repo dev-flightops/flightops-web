@@ -49,7 +49,7 @@ export function DutySettingsForm({
 
   return (
     <div className="space-y-6">
-      <form onSubmit={save} className="space-y-6">
+      <form method="post" onSubmit={save} className="space-y-6">
         <Panel title="Who May Correct Anyone's Duty Times">
           <fieldset disabled={!canEdit} className="grid gap-2 sm:grid-cols-2">
             <legend className="sr-only">Roles that may correct anyone&apos;s duty times</legend>

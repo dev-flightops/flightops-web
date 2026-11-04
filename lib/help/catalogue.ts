@@ -1570,7 +1570,7 @@ export const HELP_ENTRIES: HelpEntry[] = [
       "Raise anything wrong with a supervisor rather than editing around it.",
     ],
     connectsTo:
-      "Clocked time becomes pay events, which are what a payroll period is built from.",
+      "The hours are recorded here. A pay event is entered on Payroll: a clocked shift doesn't create one by itself yet.",
     related: ["/payroll", "/payroll/periods"],
   },
   {
@@ -1578,7 +1578,7 @@ export const HELP_ENTRIES: HelpEntry[] = [
     title: "Payroll",
     whoCanUse: ["exec_admin"],
     whatItDoes:
-      "Pay events and the periods they roll into. An event is created by something happening — a clocked shift, a completed flight — rather than typed, so the period is a reading of the operation rather than a separate record of it.",
+      "Pay events and the periods they roll into. An event is entered by hand, with its hours or amount, then approved or rejected.",
     howToUse: [
       "Review the events in the open period.",
       "Investigate anything without a source rather than adjusting it.",
@@ -1588,14 +1588,13 @@ export const HELP_ENTRIES: HelpEntry[] = [
       {
         heading: "Where a pay event comes from",
         steps: [
-          "A clocked shift from the time clock.",
-          "A completed flight, where the pilot's rate pays by the hour or the leg.",
-          "A manual entry, which carries whoever entered it.",
+          "A manual entry on Payroll, which carries whoever entered it.",
+          "Clocked shifts and completed flights don't create events by themselves yet.",
         ],
       },
     ],
     connectsTo:
-      "Rates come from Settings → Pilot Pay. Flight-driven events come from filed flight logs. A locked period exports for the payroll provider.",
+      "A locked period exports for the payroll provider. Settings → Pilot Pay keeps the rate table, which events don't read yet.",
     related: ["/payroll/periods", "/settings/pilot-pay", "/time-clock"],
   },
   {
@@ -1713,16 +1712,16 @@ export const HELP_ENTRIES: HelpEntry[] = [
     title: "Pilot pay",
     whoCanUse: ["exec_admin"],
     whatItDoes:
-      "The rate tables pay events are computed from: what a pilot earns, by aircraft and duty position where the operator pays that way.",
+      "The company's pay rate table and daily modifiers: what a pilot earns, by airframe and years of service. Payroll doesn't read them yet: pay events are entered by hand.",
     howToUse: [
-      "Set the rate per pilot, or per role where the operator pays by role.",
-      "Say what the rate is per — block hour, flight hour, or leg.",
-      "Check a recent flight's pay event after changing a rate, to confirm it computed as you expect.",
+      "Add a rate: daily or flight hourly, for all pilots or one, narrowed by airframe or years of service if you pay that way.",
+      "To change a rate, add a new one with a later effective date.",
+      "Add a modifier for what pays extra, such as a medevac flight or a night arrival.",
     ],
     worthKnowing: [
-      "Changing a rate does not re-price pay events already created. A locked period stays as it was agreed, which is the point of locking it.",
+      "Rates and modifiers are added and removed, not edited.",
     ],
-    connectsTo: "Read when a completed flight creates a pay event.",
+    connectsTo: "Payroll doesn't read these yet: pay events are entered by hand on Payroll.",
     related: ["/payroll", "/payroll/periods", "/settings/costs"],
   },
   {

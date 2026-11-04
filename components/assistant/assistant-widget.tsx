@@ -229,6 +229,7 @@ export function AssistantWidget() {
               </p>
             ) : (
               <form
+                method="post"
                 className="flex items-end gap-2"
                 onSubmit={(e) => {
                   e.preventDefault();

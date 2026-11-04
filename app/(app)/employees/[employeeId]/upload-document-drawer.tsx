@@ -95,6 +95,7 @@ export function UploadDocumentDrawer({
             </div>
 
             <form
+              method="post"
               ref={formRef}
               onSubmit={(e) => {
                 e.preventDefault();

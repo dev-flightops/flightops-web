@@ -155,7 +155,7 @@ function AuthoriseForm({
           type are in date.
         </DialogDescription>
       </DialogHeader>
-      <form onSubmit={onSubmit} className="space-y-3" noValidate>
+      <form method="post" onSubmit={onSubmit} className="space-y-3" noValidate>
         <ErrorLine error={error} />
         <div className="grid grid-cols-2 gap-3">
           <div>
@@ -260,7 +260,7 @@ function RevokeForm({
           record stays in the history.
         </DialogDescription>
       </DialogHeader>
-      <form onSubmit={onSubmit} className="space-y-3" noValidate>
+      <form method="post" onSubmit={onSubmit} className="space-y-3" noValidate>
         <ErrorLine error={error} />
         <div>
           <label htmlFor={`${uid}-on`} className={LABEL}>
@@ -341,7 +341,7 @@ function CheckRideForm({
           record and renews nothing.
         </DialogDescription>
       </DialogHeader>
-      <form onSubmit={onSubmit} className="space-y-3" noValidate>
+      <form method="post" onSubmit={onSubmit} className="space-y-3" noValidate>
         <ErrorLine
           error={
             error ??
