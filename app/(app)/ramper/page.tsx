@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { routeText } from "@/lib/route";
 import { LoadButtons } from "@/components/load-teams/load-buttons";
 import { LoadStatusLine, loadStage } from "@/components/load-teams/load-status";
 import { loadZoneTable } from "@/lib/api/auth";
@@ -61,7 +62,9 @@ export default async function RamperPage() {
     loadZoneTable(),
   ]);
   const myLoads: FlightAssignmentResponse[] =
-    loadsResult.status === "fulfilled" ? loadsResult.value.items : [];
+    loadsResult.status === "fulfilled"
+      ? loadsResult.value.items.filter((a) => a.flight.status !== "completed" && a.flight.status !== "cancelled")
+      : [];
   const zones = zonesResult.status === "fulfilled" ? zonesResult.value : null;
 
   // Orders for today and later, soonest first. One still open from an
@@ -237,7 +240,7 @@ export default async function RamperPage() {
             // view (checklist + timers + notes) lands with Marc's M2
             // ramp backend.
             href={`/ramper/${f.id}/photos`}
-            primary={`${f.flight_number} • ${f.origin} → ${f.destination}`}
+            primary={`${f.flight_number} • ${routeText(f)}`}
             secondary={`${f.aircraft.tail_number} • ${f.pax_count} pax • departs ${departs(f, zones)}`}
             cta="Photos"
             tone="blue"

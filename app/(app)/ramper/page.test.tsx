@@ -98,6 +98,14 @@ describe("RamperPage — the team's loads (#134)", () => {
     expect(screen.getByRole("button", { name: /Acknowledge the load for DEMO104/ })).toBeInTheDocument();
   });
 
+  it.each(["completed", "cancelled"])("does not offer ground actions for a %s flight", async (status) => {
+    const assigned = load();
+    listMyTeamLoads.mockResolvedValueOnce({ items: [{ ...assigned, flight: { ...assigned.flight, status } }], total: 1 });
+    render(await RamperPage());
+    expect(screen.getByText("No loads for your team today.")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /the load for DEMO104/ })).not.toBeInTheDocument();
+  });
+
   it("shows a completed load with who and when, and offers Reopen", async () => {
     listMyTeamLoads.mockResolvedValueOnce({
       items: [
@@ -263,4 +271,11 @@ describe("RamperPage (M2)", () => {
 
     expect(screen.getByRole("alert")).toHaveTextContent(/session expired/i);
   });
+});
+
+it("keeps intermediate stops visible in the departing ramp worklist", async () => {
+  getFlightBoard.mockResolvedValue({ items: [{ id: "multi", flight_number: "DEMO103", origin: "PANC", destination: "PANC", stops: ["PANC", "PABE", "PANC"], aircraft: { tail_number: "N93DM" }, scheduled_departure_at: new Date().toISOString(), actual_departure_at: null, status: "released", pax_count: 0 }], total: 1 });
+  render(await RamperPage());
+  expect(screen.getByText("DEMO103 • PANC → PABE → PANC")).toBeInTheDocument();
+  expect(screen.queryByText("DEMO103 • PANC → PANC")).not.toBeInTheDocument();
 });

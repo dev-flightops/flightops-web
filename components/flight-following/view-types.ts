@@ -44,10 +44,10 @@ export const DISPLAY_LABELS: Record<FlightFollowingDisplay, string> = {
 };
 
 /** Copy under the board explaining what each filter actually returns —
- *  verbatim from the legacy board.html. */
+ *  using the company calendar for day filters. */
 export const VIEW_HINTS: Record<FlightFollowingView, string> = {
-  today: "Showing: airborne + departing within 24h + completed last 12h",
-  tomorrow: "Showing: flights departing 24-48 hours from now",
+  today: "Showing: today’s departures and completed flights, plus flights still airborne",
+  tomorrow: "Showing: flights departing tomorrow (company local date)",
   week: "Showing: all flights in the next 7 days",
   all: "Showing: all planned flights (max 100)",
 };

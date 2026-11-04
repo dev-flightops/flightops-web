@@ -111,7 +111,7 @@ export function RightColumn({
           {/* AI Review had sat here disabled ("Coming in M4"); it isn't
               built, so it isn't shown (#157). The AI Assistant is above. */}
 
-          <GeneratePdfButton
+          {(!flight || flight.status === "scheduled" || flight.status === "released") && <GeneratePdfButton
             flight={flight ?? null}
             hardBlockReason={hardBlockReason}
             pilotUserId={pilotUserId}
@@ -119,7 +119,7 @@ export function RightColumn({
             notamAckedIcaos={notamAckedIcaos}
             staleWeatherAcknowledged={staleWeatherAcknowledged}
             acknowledgedWarnings={acknowledgedWarnings}
-          />
+          />}
         </div>
       </SectionPanel>
 
@@ -256,8 +256,11 @@ function FlightActionsRow({
     <div className="flex flex-wrap items-center gap-3">
       <StatusBadge status={flight.status} />
       <span className="text-xs text-muted-foreground">
-        This flight is {flight.status} — no actions available.
+        {flight.released_at
+          ? `This flight is ${flight.status} — closed for changes. Its saved release remains available.`
+          : `This flight is ${flight.status} — no actions available.`}
       </span>
+      {flight.released_at && <DownloadPdfButton flightId={flight.id} />}
     </div>
   );
 }

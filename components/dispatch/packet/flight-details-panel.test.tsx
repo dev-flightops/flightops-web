@@ -182,3 +182,11 @@ describe("the fields are labelled", () => {
     await expectNoA11yViolations(document.body);
   });
 });
+
+it("does not label a cancelled flight as released or offer pull-back instructions", () => {
+  panel({ ...flight(), status: "cancelled" });
+  expect(screen.getByText("Cancelled")).toBeInTheDocument();
+  expect(screen.getByRole("note")).toHaveTextContent("This flight is closed");
+  expect(screen.queryByText("Released", { exact: true })).not.toBeInTheDocument();
+  expect(screen.getByRole("note")).not.toHaveTextContent("pull the release back");
+});

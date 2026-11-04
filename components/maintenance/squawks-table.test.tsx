@@ -106,3 +106,11 @@ describe("SquawksTable — resolving", () => {
     ).toEqual(["s-1", "s-2"]);
   });
 });
+
+it("retains the resolution reason, resolver and time for closed discrepancies", () => {
+  render(<SquawksTable items={[makeSquawk({ id: "closed", status: "resolved", resolution_notes: "Synthetic grounding condition cleared", resolved_by: { id: "u-2", full_name: "UAT Resolver", email: "resolver@demo.example" }, resolved_at: "2026-11-04T08:41:00Z" })]} />);
+  expect(screen.getByText("Resolution record")).toBeInTheDocument();
+  expect(screen.getByText("Synthetic grounding condition cleared")).toBeInTheDocument();
+  expect(screen.getByText(/UAT Resolver/)).toBeInTheDocument();
+  expect(screen.getByText(/08:41z/)).toBeInTheDocument();
+});

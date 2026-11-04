@@ -188,7 +188,7 @@ export function PicPicker({
       {locked ? (
         <p className="ff-input flex items-center justify-between gap-2">
           <span>{selected?.pilot.full_name ?? "—"}</span>
-          <span className="text-[0.65rem] font-normal text-muted-foreground">released</span>
+          <span className="text-[0.65rem] font-normal text-muted-foreground">locked</span>
         </p>
       ) : (
       <select
