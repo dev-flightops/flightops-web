@@ -5,6 +5,7 @@ import { ApiError } from "@/lib/api/client";
 import { listFlights } from "@/lib/api/ops";
 import { localClock, localDay, utcToLocalInput } from "@/lib/format/local-time";
 import type { FlightListItem, FlightStatus } from "@/lib/api/types";
+import { routeText } from "@/lib/route";
 
 /**
  * /manifest — legacy `templates/manifest/schedule.html`. Flight
@@ -17,10 +18,8 @@ import type { FlightListItem, FlightStatus } from "@/lib/api/types";
  *   - Filter tabs: Upcoming / Today / Past / All + type + status
  *   - Flights grouped by date with per-flight open link
  *
- * We already have flights CRUD on the ops-service; the missing
- * legacy bits (flight_type, PIC, per-flight legs / route chains)
- * aren't on FlightListItem yet — they show as em-dash until the
- * fuller schedule surface lands with Marc's manifest module.
+ * Route chains come from the same flight data as the master schedule,
+ * so a round trip retains its intermediate stop here too.
  */
 
 const RANGES = [
@@ -357,7 +356,7 @@ function DayBlock({
                     </Link>
                   </td>
                   <td className="whitespace-nowrap px-4 py-3 font-mono text-xs">
-                    {f.origin} → {f.destination}
+                    {routeText(f)}
                   </td>
                   <td className="whitespace-nowrap px-4 py-3 font-mono text-xs text-muted-foreground">
                     {f.aircraft.tail_number}

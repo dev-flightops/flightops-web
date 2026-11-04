@@ -320,3 +320,9 @@ describe("EodPage", () => {
     expect(screen.getByText(/eod feed unavailable/i)).toBeInTheDocument();
   });
 });
+
+it("preserves intermediate stops in the closeout flight route", async () => {
+  listFlights.mockResolvedValueOnce({ items: [makeFlight({ flight_number: "DEMO103", origin: "PANC", destination: "PANC", stops: ["PANC", "PABE", "PANC"], actual_departure_at: "2026-06-15T14:00:00Z", actual_arrival_at: "2026-06-15T15:00:00Z" })] }).mockResolvedValueOnce({ items: [] }).mockResolvedValueOnce({ items: [] });
+  await renderPage();
+  expect(screen.getByRole("cell", { name: "PANC → PABE → PANC" })).toBeInTheDocument();
+});

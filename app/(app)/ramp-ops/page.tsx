@@ -1,5 +1,6 @@
 import { StatusMark, type StatusTone } from "@/components/ff/status-mark";
 import Link from "next/link";
+import { routeText } from "@/lib/route";
 import { formatLocal, formatZulu } from "@/lib/format/flight-time";
 
 import { listCompanyBases, loadZoneTable } from "@/lib/api/auth";
@@ -230,7 +231,7 @@ function FlightCard({
                 {f.flight_number}
               </Link>
               <span className="text-muted-foreground">
-                {f.origin} → {f.destination}
+                {routeText(f)}
               </span>
               <StatusChip status={f.status} />
             </div>

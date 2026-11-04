@@ -139,6 +139,24 @@ function SquawkRow({
       </td>
       <td className="px-3 py-2.5">
         <StatusChip status={squawk.status} />
+        {squawk.status === "resolved" && (
+          <details className="mt-2 max-w-sm text-xs">
+            <summary className="cursor-pointer text-primary">Resolution record</summary>
+            <p className="mt-2 whitespace-pre-wrap">
+              {squawk.resolution_notes || "Resolution notes not recorded."}
+            </p>
+            <p className="mt-1 text-muted-foreground">
+              Resolved by {squawk.resolved_by?.full_name || "an unrecorded user"}
+            </p>
+            {squawk.resolved_at && (
+              <p className="mt-1 font-mono text-muted-foreground">
+                {formatBothWithDate(squawk.resolved_at).local}
+                <br />
+                {formatBothWithDate(squawk.resolved_at).zulu}
+              </p>
+            )}
+          </details>
+        )}
       </td>
       {actions && (
         <td className="px-3 py-2.5 text-right">

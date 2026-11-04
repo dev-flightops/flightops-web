@@ -124,10 +124,11 @@ export function FlightDetailsPanel({
     <SectionPanel title="Flight Details">
       {flight && flight.status !== "scheduled" ? (
         <p role="note" className="notice notice-blue mb-3 text-xs">
-          <span className="notice-label">Released</span>
+          <span className="notice-label">{flight.status === "released" ? "Released" : flight.status === "cancelled" ? "Cancelled" : "Completed"}</span>
           <span className="text-foreground">
-            The flight&apos;s aircraft, route, times and crew stay as released. To change one, pull the
-            release back: the flight then needs its FRAT signed and releasing again.
+            {flight.status === "released"
+              ? "The flight’s aircraft, route, times and crew stay as released. To change one, pull the release back: the flight then needs its FRAT signed and releasing again."
+              : "This flight is closed. Its aircraft, route, times and crew are read-only; open a new flight for further travel."}
           </span>
         </p>
       ) : null}

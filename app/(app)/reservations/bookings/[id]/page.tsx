@@ -54,13 +54,17 @@ export default async function BookingDetailPage({
   // different problem from there being no flight at all.
   // #138: a search that fails says so; it had read as no flight at all.
   const loads = new Loads();
+  const zones = await loadZoneTable();
+  const zone = zoneFor(zones, booking.origin_icao);
   let candidates: FlightSearchResult[] = [];
   if (booking.status !== "cancelled") {
     candidates = await loads.or(
       searchFlights({
         origin: booking.origin_icao,
         destination: booking.destination_icao,
-        date: booking.requested_departure_at.slice(0, 10),
+        // Flight search uses the company's operating day, as Fleet Board
+        // does. An Alaska evening timestamp is already tomorrow in UTC.
+        date: utcToLocalInput(booking.requested_departure_at, zones.fallback).slice(0, 10),
         paxCount: booking.pax_count,
         showUnavailable: true,
       }).then((r) => r.items),
@@ -72,7 +76,6 @@ export default async function BookingDetailPage({
   }
 
   // Editing (#147): any stage but cancelled, each change kept below.
-  const zone = zoneFor(await loadZoneTable(), booking.origin_icao);
   const editable = booking.status !== "cancelled";
   // The other half of a return trip (#148).
   const pairedLoad = booking.paired_booking_id
@@ -266,7 +269,7 @@ export default async function BookingDetailPage({
         <AssignFlightPanel
           bookingId={booking.id}
           candidates={candidates}
-          timeZone={zoneFor(await loadZoneTable(), booking.origin_icao)}
+          timeZone={zone}
           assignedFlightNumber={booking.flight?.flight_number ?? null}
           paxCount={booking.pax_count}
           completed={booking.status === "completed"}

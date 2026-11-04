@@ -192,7 +192,7 @@ describe("FlightFollowingPage chrome (M2-G-10)", () => {
   it("renders the filter hint matching the active view", async () => {
     await renderPage({ view: "tomorrow" });
     expect(
-      screen.getByText(/flights departing 24-48 hours from now/i),
+      screen.getByText(/flights departing tomorrow \(company local date\)/i),
     ).toBeInTheDocument();
   });
 

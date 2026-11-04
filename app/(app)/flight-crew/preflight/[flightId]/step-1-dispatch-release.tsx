@@ -144,7 +144,7 @@ export function ReviewDispatchReleaseStep({ flightId, flight }: Props) {
             </div>
             {flight.notes && (
               <div className="notice notice-yellow">
-                <span className="notice-label">Dispatcher notes</span>
+                <span className="notice-label">Flight planning notes</span>
                 <p className="mt-1 whitespace-pre-wrap">{flight.notes}</p>
               </div>
             )}
@@ -152,7 +152,7 @@ export function ReviewDispatchReleaseStep({ flightId, flight }: Props) {
               Weather, NOTAMs, MEL items, and compliance status live in
               their dedicated steps (3 + ahead) — this panel is the
               release header. Open the full PDF for the complete
-              content the dispatcher generated.
+              content and instructions the dispatcher generated. Flight planning notes above are separate from the dispatcher notes in that PDF.
             </p>
             <a
               href={`/api/dispatch/${flight.id}/release.pdf`}

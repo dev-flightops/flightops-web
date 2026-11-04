@@ -305,3 +305,9 @@ describe("RightColumn / Release dispatch forwards the release arguments", () => 
     expect(acks).toEqual(["PADU", "PANC"]);
   });
 });
+
+it("keeps the saved dispatch PDF accessible after a released flight completes", () => {
+  render(<RightColumn flight={baseFlight({ status: "completed", released_at: "2026-06-01T15:00:00Z" })} />);
+  expect(screen.getByRole("link", { name: "Download PDF" })).toHaveAttribute("href", "/api/dispatch/flight-uuid-1/release.pdf");
+  expect(screen.queryByRole("button", { name: /Release dispatch|Pull back release|Generate PDF/ })).not.toBeInTheDocument();
+});

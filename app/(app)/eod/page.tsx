@@ -2,6 +2,7 @@ import { buttonOutline } from "@/components/ff/controls";
 import { PageHeader } from "@/components/ff/page-header";
 import { Stat, StatStrip } from "@/components/ff/stat-strip";
 import Link from "next/link";
+import { routeText } from "@/lib/route";
 
 import { StatusBadge } from "@/components/flight-following/status-badge";
 import { ApiError } from "@/lib/api/client";
@@ -243,7 +244,7 @@ function CompletedSection({ flights }: { flights: FlightListItem[] }) {
                   {f.aircraft.tail_number}
                 </td>
                 <td className="px-2 py-1.5 font-mono">
-                  {f.origin} → {f.destination}
+                  {routeText(f)}
                 </td>
                 <td className="px-2 py-1.5 text-muted-foreground">
                   {flightBlockHours(f)}
@@ -288,7 +289,7 @@ function AirborneSection({ flights }: { flights: FlightListItem[] }) {
                   {f.aircraft.tail_number}
                 </td>
                 <td className="px-2 py-1.5 font-mono">
-                  {f.origin} → {f.destination}
+                  {routeText(f)}
                 </td>
                 <td className="px-2 py-1.5 font-mono text-muted-foreground">
                   {formatZulu(new Date(estimatedArrivalMs(f)).toISOString())}
@@ -331,7 +332,7 @@ function FlagsSection({ stale, overdue }: { stale: FlightListItem[]; overdue: Fl
                 </span>
                 <span className="ml-2 font-mono">{f.aircraft.tail_number}</span>
                 <span className="ml-2 font-mono">
-                  {f.origin} → {f.destination}
+                  {routeText(f)}
                 </span>
                 <span className="ml-2 text-muted-foreground">
                   — ETA {formatZulu(new Date(estimatedArrivalMs(f)).toISOString())}, no landing recorded
@@ -355,7 +356,7 @@ function FlagsSection({ stale, overdue }: { stale: FlightListItem[]; overdue: Fl
               <span className="font-semibold">{f.flight_number || "—"}</span>
               <span className="ml-2 font-mono">{f.aircraft.tail_number}</span>
               <span className="ml-2 font-mono">
-                {f.origin} → {f.destination}
+                {routeText(f)}
               </span>
               <span className="ml-2 text-muted-foreground">
                 — ETD {formatZulu(f.scheduled_departure_at)}, never departed
@@ -395,7 +396,7 @@ function PlannedSection({ flights }: { flights: FlightListItem[] }) {
                 {f.aircraft.tail_number}
               </td>
               <td className="px-2 py-1.5 font-mono">
-                {f.origin} → {f.destination}
+                {routeText(f)}
               </td>
               <td className="px-2 py-1.5 font-mono text-muted-foreground">
                 {formatBoth(f.scheduled_departure_at).zulu}

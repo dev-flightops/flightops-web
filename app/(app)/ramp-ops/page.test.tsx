@@ -313,3 +313,10 @@ it("labels today in the company zone across the UTC midnight boundary", async ()
     vi.useRealTimers();
   }
 });
+
+it("keeps intermediate stops visible on the ramp flight card", async () => {
+  getFlightBoard.mockResolvedValue({ items: [makeFlight({ flight_number: "DEMO103", origin: "PANC", destination: "PANC", stops: ["PANC", "PABE", "PANC"] })], total: 1 });
+  render(await RampOpsPage({ searchParams: Promise.resolve({}) }));
+  expect(screen.getByText("PANC → PABE → PANC")).toBeInTheDocument();
+  expect(screen.queryByText("PANC → PANC")).not.toBeInTheDocument();
+});
