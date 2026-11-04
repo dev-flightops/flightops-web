@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { PayEventRow } from "@/lib/api/payroll";
@@ -20,7 +20,13 @@ import type { PayEventRow } from "@/lib/api/payroll";
 // with this line present.
 process.env.TZ = "Asia/Tokyo";
 
-const { TestApiError, listPayEvents, approvePayEventAction } = vi.hoisted(() => {
+const {
+  TestApiError,
+  listPayEvents,
+  approvePayEventAction,
+  generatePayEventsAction,
+  approvePendingPayEventsAction,
+} = vi.hoisted(() => {
   class TestApiError extends Error {
     constructor(
       public status: number,
@@ -34,6 +40,8 @@ const { TestApiError, listPayEvents, approvePayEventAction } = vi.hoisted(() => 
     TestApiError,
     listPayEvents: vi.fn(),
     approvePayEventAction: vi.fn(),
+    generatePayEventsAction: vi.fn(),
+    approvePendingPayEventsAction: vi.fn(),
   };
 });
 
@@ -55,7 +63,11 @@ vi.mock("@/lib/api/payroll", () => ({
     deduction: "Deduction",
   },
 }));
-vi.mock("./actions", () => ({ approvePayEventAction }));
+vi.mock("./actions", () => ({
+  approvePayEventAction,
+  generatePayEventsAction,
+  approvePendingPayEventsAction,
+}));
 
 import PayrollEventsPage from "./page";
 
@@ -68,6 +80,9 @@ function event(over: Partial<PayEventRow> & { id: string }): PayEventRow {
     amount: "420.5",
     event_date: "2026-08-15",
     flight_id: null,
+    duty_period_id: null,
+    source: "manual",
+    needs_check: false,
     status: "pending",
     approved_by_user_id: null,
     approved_at: null,
@@ -79,7 +94,13 @@ function event(over: Partial<PayEventRow> & { id: string }): PayEventRow {
   } as PayEventRow;
 }
 
-async function renderPage(searchParams: { status?: string | string[] } = {}) {
+async function renderPage(
+  searchParams: {
+    status?: string | string[];
+    start?: string | string[];
+    end?: string | string[];
+  } = {},
+) {
   const ui = await PayrollEventsPage({
     searchParams: Promise.resolve(searchParams),
   });
@@ -92,6 +113,8 @@ const rowFor = (name: string) =>
 beforeEach(() => {
   listPayEvents.mockReset();
   approvePayEventAction.mockReset();
+  generatePayEventsAction.mockReset();
+  approvePendingPayEventsAction.mockReset();
   listPayEvents.mockResolvedValue({ items: [] });
 });
 
@@ -296,5 +319,116 @@ describe("status badge", () => {
     });
     await renderPage();
     expect(within(rowFor("Alice Chen")).getByText(label)).toBeInTheDocument();
+  });
+});
+
+describe("automatic events (#134)", () => {
+  it("reads a date range, with room for a whole period", async () => {
+    await renderPage({ start: "2026-08-01", end: "2026-08-14", status: "pending" });
+    expect(listPayEvents).toHaveBeenCalledWith({
+      status: "pending",
+      start: "2026-08-01",
+      end: "2026-08-14",
+      limit: 1000,
+    });
+  });
+
+  it("ignores a date the API would reject", async () => {
+    await renderPage({ start: "last tuesday" });
+    expect(listPayEvents).toHaveBeenCalledWith({});
+  });
+
+  it("keeps the dates when the status tab changes", async () => {
+    await renderPage({ start: "2026-08-01", end: "2026-08-14" });
+    expect(screen.getByRole("link", { name: "Approved" })).toHaveAttribute(
+      "href",
+      "/payroll?status=approved&start=2026-08-01&end=2026-08-14",
+    );
+    expect(screen.getByRole("link", { name: "All" })).toHaveAttribute(
+      "href",
+      "/payroll?start=2026-08-01&end=2026-08-14",
+    );
+  });
+
+  it("says where an event came from, and shows why one needs a look", async () => {
+    listPayEvents.mockResolvedValue({
+      items: [
+        event({ id: "a", employee_name: "From Flight", source: "flight" }),
+        event({
+          id: "b",
+          employee_name: "From Clock",
+          source: "clock",
+          needs_check: true,
+          notes: "Longer than the company's 14h maximum duty period.",
+        }),
+        event({ id: "c", employee_name: "By Hand", source: "manual" }),
+      ],
+    });
+    await renderPage();
+    expect(within(rowFor("From Flight")).getByText("From the flight")).toBeInTheDocument();
+    expect(within(rowFor("By Hand")).getByText("Entered by hand")).toBeInTheDocument();
+    const flagged = within(rowFor("From Clock"));
+    expect(flagged.getByText("From the clock")).toBeInTheDocument();
+    expect(flagged.getByText(/14h maximum duty/)).toHaveClass("text-status-yellow");
+  });
+
+  it("says so when the list stops at its limit", async () => {
+    listPayEvents.mockResolvedValue({
+      items: Array.from({ length: 200 }, (_, i) => event({ id: `e${i}` })),
+    });
+    await renderPage();
+    expect(screen.getByRole("status")).toHaveTextContent("Showing the latest 200");
+  });
+
+  it("doesn't when it hasn't", async () => {
+    listPayEvents.mockResolvedValue({ items: [event({ id: "a" })] });
+    await renderPage();
+    expect(screen.queryByText(/Showing the latest/)).not.toBeInTheDocument();
+  });
+
+  it("needs dates before acting on a whole range", async () => {
+    await renderPage();
+    expect(screen.getByRole("button", { name: "Bring up to date" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Approve all pending" })).toBeDisabled();
+  });
+
+  it("brings the range up to date and says what changed", async () => {
+    generatePayEventsAction.mockResolvedValue({ status: "ok", message: "3 created." });
+    await renderPage({ start: "2026-08-01", end: "2026-08-14" });
+    fireEvent.click(screen.getByRole("button", { name: "Bring up to date" }));
+    await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent("3 created."));
+    expect(generatePayEventsAction).toHaveBeenCalledWith("2026-08-01", "2026-08-14");
+  });
+
+  it("asks before approving a range, and leaves it if told no", async () => {
+    const confirm = vi.spyOn(window, "confirm").mockReturnValue(false);
+    await renderPage({ start: "2026-08-01", end: "2026-08-14" });
+    fireEvent.click(screen.getByRole("button", { name: "Approve all pending" }));
+    expect(confirm).toHaveBeenCalledWith(expect.stringContaining("2026-08-01 to 2026-08-14"));
+    expect(approvePendingPayEventsAction).not.toHaveBeenCalled();
+    confirm.mockRestore();
+  });
+
+  it("approves the range once told yes, and shows a refusal", async () => {
+    const confirm = vi.spyOn(window, "confirm").mockReturnValue(true);
+    approvePendingPayEventsAction.mockResolvedValue({
+      status: "error",
+      message: "Only an Exec Admin can do that.",
+    });
+    await renderPage({ start: "2026-08-01", end: "2026-08-14" });
+    fireEvent.click(screen.getByRole("button", { name: "Approve all pending" }));
+    await waitFor(() =>
+      expect(screen.getByRole("alert")).toHaveTextContent("Only an Exec Admin"),
+    );
+    expect(approvePendingPayEventsAction).toHaveBeenCalledWith("2026-08-01", "2026-08-14");
+    confirm.mockRestore();
+  });
+
+  it("shows the dates through the URL, and keeps the status tab", async () => {
+    await renderPage({ status: "pending" });
+    const form = screen.getByRole("form", { name: "Pay event dates" });
+    expect(form).toHaveAttribute("method", "get");
+    expect(form).toHaveAttribute("action", "/payroll");
+    expect(form.querySelector('input[name="status"]')).toHaveValue("pending");
   });
 });

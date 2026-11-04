@@ -156,7 +156,8 @@ describe("period rows", () => {
     });
     await renderPage();
     const row = screen.getByRole("row", { name: /Aug 01, 2026/ });
-    expect(within(row).getAllByText("—")).toHaveLength(2);
+    // Left out, Locked and Exported.
+    expect(within(row).getAllByText("—")).toHaveLength(3);
   });
 
   it("shows a timestamp once the period is locked", async () => {
@@ -173,7 +174,7 @@ describe("period rows", () => {
     const row = screen.getByRole("row", { name: /Aug 01, 2026/ });
     // Rendered in the host zone rather than UTC, so the exact clock time
     // is not asserted — only that the row stops claiming it is unlocked.
-    expect(within(row).getAllByText("—")).toHaveLength(1);
+    expect(within(row).getAllByText("—")).toHaveLength(2);
     expect(within(row).getByText(/Aug 1[67], 2026/)).toBeInTheDocument();
   });
 
@@ -216,5 +217,55 @@ describe("navigation", () => {
       "href",
       "/payroll",
     );
+  });
+});
+
+describe("what an export would leave out (#134)", () => {
+  function period(over: Partial<PayPeriodRow>): PayPeriodRow {
+    return {
+      id: "p-1",
+      period_start: "2026-08-01",
+      period_end: "2026-08-14",
+      status: "open",
+      locked_by_user_id: null,
+      locked_at: null,
+      exported_at: null,
+      notes: null,
+      pending_events: 0,
+      still_clocked_in: 0,
+      ...over,
+    };
+  }
+
+  async function render_(row: PayPeriodRow) {
+    listPayPeriods.mockResolvedValue({ items: [row] });
+    render(await PayrollPeriodsPage());
+    return within(screen.getAllByRole("row")[1]);
+  }
+
+  it("links pending events to that period's pending list", async () => {
+    const row = await render_(period({ pending_events: 3 }));
+    expect(row.getByRole("link", { name: "3 pending" })).toHaveAttribute(
+      "href",
+      "/payroll?status=pending&start=2026-08-01&end=2026-08-14",
+    );
+  });
+
+  it("names anyone still clocked in, whose shift has no event yet", async () => {
+    const row = await render_(period({ pending_events: 1, still_clocked_in: 2 }));
+    expect(row.getByText(/1 pending/)).toBeInTheDocument();
+    expect(row.getByText(/2 still clocked in/)).toBeInTheDocument();
+  });
+
+  it("dashes a period with nothing left out", async () => {
+    const row = await render_(period({}));
+    expect(row.queryByRole("link", { name: /pending/ })).not.toBeInTheDocument();
+    expect(row.queryByText(/clocked in/)).not.toBeInTheDocument();
+    expect(row.getAllByText("—")).toHaveLength(3);
+  });
+
+  it("says only approved events export", async () => {
+    await render_(period({}));
+    expect(screen.getByText(/Only approved events go in/)).toBeInTheDocument();
   });
 });
