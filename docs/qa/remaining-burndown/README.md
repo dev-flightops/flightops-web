@@ -39,10 +39,10 @@ An adjacent defect was confirmed: the default view was labeled **Active**, yet d
 
 ## Checks
 
-- Complete frontend suite: **4,217 tests / 468 files passed** under Node 22.
-- Dispatch packet suite: **361 tests / 41 files passed**.
+- Complete frontend suite: **4,222 tests / 469 files passed** under Node 22.
+- Dispatch packet suite: **362 tests / 41 files passed**.
 - Lint and TypeScript passed.
-- Production build and final diff checks are recorded with the PR after browser verification.
+- Production build and final diff checks passed after rebasing onto the latest main.
 
 Current production financial readback and the status of all 28 unhighlighted reports are documented separately in `unhighlighted-status.md`. Historical financial or flight records are never rewritten merely to make a screenshot or total look consistent.
 
