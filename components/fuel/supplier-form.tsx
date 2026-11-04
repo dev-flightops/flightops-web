@@ -46,6 +46,7 @@ export function SupplierForm({
 
   return (
     <form
+      method="post"
       aria-label={supplier ? `Edit ${supplier.name}` : "Add a supplier"}
       className="grid gap-3 sm:grid-cols-3"
       onSubmit={(e) => {

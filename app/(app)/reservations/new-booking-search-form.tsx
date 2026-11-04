@@ -278,6 +278,7 @@ export function NewBookingSearchForm({
 
   return (
     <form
+      method="post"
       onSubmit={onSubmit}
       className="rounded-lg border border-border bg-card p-4"
     >

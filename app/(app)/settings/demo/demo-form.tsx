@@ -16,7 +16,7 @@ export function DemoForm({ status }: { status: DemoStatus }) {
       <p>Prepare fresh examples for {status.company_name}. Flights are timed around when you prepare the demo; housing and fuel examples use the company’s local day ({status.timezone}).</p>
       <p>This replaces the prepared aircraft, flights, bookings, charter requests, invoices, fuel orders, housing and safety examples, including walkthrough activity linked to them. The reserved demo pilot’s duty, flight logs and Academy progress are also refreshed. Company settings, ordinary staff records and user accounts stay in place.</p>
       {status.last_prepared_at && <p>Last prepared: {new Date(status.last_prepared_at).toLocaleString("en-US", { timeZone: status.timezone })} ({status.timezone}). {status.last_company_date !== status.company_date && "Prepare again to refresh the examples for today."}</p>}
-      <form className="space-y-4" onSubmit={(event) => {
+      <form method="post" className="space-y-4" onSubmit={(event) => {
         event.preventDefault();
         setError(null);
         setResult(null);

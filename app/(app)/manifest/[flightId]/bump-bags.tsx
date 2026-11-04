@@ -18,7 +18,7 @@ export function BumpBags({ flightId, paxId, name, baggageLbs }: {flightId:string
     <button type="button" className="text-xs font-semibold hover:underline" onClick={() => {setOpen(true); setMoved(false); setWeight(baggageLbs); setError(null);}}>Bump bags</button>
     <Dialog open={open} onOpenChange={value => {if(!pending)setOpen(value);}}>
       <DialogContent><DialogHeader><DialogTitle>Bump bags — {name}</DialogTitle><DialogDescription>Take bags off this manifest and keep them in Mail &amp; Freight for the next flight. The passenger and booking remain linked to the waiting bags.</DialogDescription></DialogHeader>
-        {moved ? <div role="status" className="space-y-3"><p>Bags moved to the waiting-load queue. The manifest’s baggage weight has been reduced.</p><Link className={linkCaps} href="/manifest/waiting">Find the waiting bags</Link></div> : <form className="space-y-4" onSubmit={event => {
+        {moved ? <div role="status" className="space-y-3"><p>Bags moved to the waiting-load queue. The manifest’s baggage weight has been reduced.</p><Link className={linkCaps} href="/manifest/waiting">Find the waiting bags</Link></div> : <form method="post" className="space-y-4" onSubmit={event => {
           event.preventDefault(); setPending(true); setError(null);
           void (async () => {try {
             const result = await bumpBagsAction(flightId,paxId,{weight_lbs:weight,pieces:Number(pieces),reason});

@@ -118,6 +118,7 @@ export function EditRoomDrawer({
             </div>
 
             <form
+              method="post"
               onSubmit={(e) => {
                 e.preventDefault();
                 onSubmit(e.currentTarget);

@@ -105,6 +105,7 @@ export function EditUnitDrawer({ unit }: { unit: HousingUnit }) {
             </div>
 
             <form
+              method="post"
               onSubmit={(e) => {
                 e.preventDefault();
                 onSubmit(e.currentTarget);

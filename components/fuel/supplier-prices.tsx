@@ -171,6 +171,7 @@ export function SupplierPrices({
           </p>
         ) : (
           <form
+            method="post"
             key={row?.id ?? "new"}
             aria-label={row ? `Price for ${row.fuel_type_label} at ${row.base_code}` : `Set a price from ${supplierName}`}
             className="mt-3 grid gap-3 border-t border-border pt-3 sm:grid-cols-4"

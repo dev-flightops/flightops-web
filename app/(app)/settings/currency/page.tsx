@@ -8,6 +8,7 @@ import type { AircraftListItem, CurrencyItemRef } from "@/lib/api/types";
 import { fleetTypes } from "@/lib/fleet-types";
 import { RELEASE_POLICY_ADMINS, hasAnyRole } from "@/lib/roles";
 
+import { CustomItemActions, NewCustomItemForm } from "./custom-items";
 import { FirstClassMedicalCard } from "./first-class-medical-card";
 import { NotStartedCard } from "./not-started-card";
 import { TypeGateCard } from "./type-gate-card";
@@ -18,22 +19,17 @@ import { TypeGateCard } from "./type-gate-card";
  * Per-tenant currency item catalog. Reads live from `/ops/currency-items`
  * (M2 backend tail — includes both the 14 Part 135 defaults with
  * tenant_id=NULL and any tenant-scoped customs). Defaults render with
- * a "DEFAULT" badge and Edit/Deactivate disabled — the endpoint
- * rejects mutations on them with 403.
- *
- * Add-item flow uses the existing `createCurrencyItem` API wrapper;
- * this page ships as a list-first view — the modal / edit-row UI
- * lands with an M3 follow-up now that the read path is live.
+ * a "DEFAULT" badge and no actions — the endpoint rejects mutations on
+ * them with 403. A company's own items are added, renamed, deactivated and
+ * brought back here (#134); their interval stays as added, since the API
+ * doesn't change it.
  */
 
-const BACKEND_HINT_WRITE =
-  "Add / Edit is next up — the read side is live against /ops/currency-items";
-
 const INTERVAL_LABELS: Record<string, string> = {
-  calendar_month: "Calendar Mo.",
+  annual: "Annual",
+  semi_annual: "Semi-annual",
   rolling_days: "Rolling Days",
-  hard_expiry: "Hard Expiry",
-  initial_only: "Initial Only",
+  medical_hard_expiry: "Hard Expiry",
 };
 
 export const dynamic = "force-dynamic";
@@ -93,15 +89,14 @@ export default async function SettingsCurrencyPage() {
           >
             ← Fleet Board
           </Link>
-          <button
-            type="button"
-            disabled
-            aria-disabled="true"
-            title={BACKEND_HINT_WRITE}
-            className="btn-caps cursor-not-allowed rounded-md bg-primary px-3 py-2 text-white disabled:opacity-100 text-[0.72rem]"
-          >
-            + New Custom Item
-          </button>
+          {loadError ? null : (
+            <a
+              href="#new-custom-item"
+              className="btn-caps rounded-md bg-primary px-3 py-2 text-white hover:bg-brand-dark text-[0.72rem]"
+            >
+              + New Custom Item
+            </a>
+          )}
         </div>
       </header>
 
@@ -133,6 +128,7 @@ export default async function SettingsCurrencyPage() {
             label={`Custom Items (${customs.length})`}
             items={customs}
           />
+          <NewCustomItemForm />
         </>
       )}
     </div>
@@ -173,6 +169,7 @@ function ItemsList({
                   <th scope="col" className="px-4 py-2.5 font-semibold">Interval</th>
                   <th scope="col" className="px-4 py-2.5 font-semibold">Flags</th>
                   <th scope="col" className="px-4 py-2.5 font-semibold">Status</th>
+                  {immutable ? null : <th scope="col" className="px-4 py-2.5"></th>}
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
@@ -206,6 +203,11 @@ function ItemsList({
                         {i.is_active ? "Active" : "Inactive"}
                       </span>
                     </td>
+                    {immutable ? null : (
+                      <td className="px-4 py-3 text-right">
+                        <CustomItemActions item={i} />
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>

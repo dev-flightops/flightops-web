@@ -4,7 +4,10 @@ import { getOperatingCosts } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
 import { listFuelTypes } from "@/lib/api/ground";
 import { listAircraft } from "@/lib/api/ops";
+import { RemoveRowButton } from "@/components/settings/remove-row-button";
+import { removeCostRowAction } from "./actions";
 import { AircraftTypeForm } from "./aircraft-type-form";
+import { FuelPriceForm, LandingFeeForm, RouteTimeForm } from "./cost-forms";
 import type {
   AircraftCostRow,
   FuelPriceRow,
@@ -25,15 +28,11 @@ import type {
  *   4. Cost Per Flight Hour Calculator (aircraft × base matrix,
  *      only when both above sections have data)
  *
- * The aircraft type form works (#75): the load plan needs each type's
- * burn rate and fuel to estimate a trip's fuel, so it had to. The fuel
- * price, landing fee and route forms are still a follow-up — their
- * endpoints exist (POST /settings/costs/{fuel-price,landing-fee,route},
- * DELETE /settings/costs/{resource}/{id}) but the UI isn't wired yet.
+ * The aircraft type form came first (#75): the load plan needs each type's
+ * burn rate and fuel to estimate a trip's fuel. Fuel prices, landing fees and
+ * route times followed (#134): saving a row already on the list replaces it,
+ * and each has a Remove.
  */
-
-const BACKEND_HINT_EDIT =
-  "Add/Edit form is a follow-up — backend endpoints (POST/DELETE) are live";
 
 export const dynamic = "force-dynamic";
 
@@ -95,11 +94,11 @@ export default async function SettingsCostsPage() {
       ) : null}
 
       <AircraftCostsSection rows={aircraft} fuelTypes={fuelTypes} fleetTypes={fleet} canEdit={!loadError} />
-      <FuelPricesSection rows={fuelPrices} />
+      <FuelPricesSection rows={fuelPrices} canEdit={!loadError} />
 
       <div className="mb-5 grid grid-cols-1 gap-5 lg:grid-cols-2">
-        <LandingFeesSection rows={landingFees} />
-        <RoutesSection rows={routes} />
+        <LandingFeesSection rows={landingFees} canEdit={!loadError} />
+        <RoutesSection rows={routes} canEdit={!loadError} />
       </div>
 
       <CalculatorSection aircraft={aircraft} fuelPrices={fuelPrices} />
@@ -213,7 +212,7 @@ function AircraftCostsSection({
   );
 }
 
-function FuelPricesSection({ rows }: { rows: FuelPriceRow[] }) {
+function FuelPricesSection({ rows, canEdit }: { rows: FuelPriceRow[]; canEdit: boolean }) {
   return (
     <section className="mb-5 rounded-lg border border-border bg-card p-5">
       <h2 className="panel-title mb-3">
@@ -237,21 +236,27 @@ function FuelPricesSection({ rows }: { rows: FuelPriceRow[] }) {
                   /gal · {r.fuel_type}
                 </span>
               </div>
+              {canEdit ? (
+                <RemoveRowButton
+                  label={`Remove the ${r.fuel_type} price at ${r.icao_code}`}
+                  confirm={`Remove the ${r.fuel_type} price at ${r.icao_code}?`}
+                  action={removeCostRowAction.bind(null, "fuel-price", r.id)}
+                />
+              ) : null}
             </div>
           ))}
         </div>
       )}
-      <DisabledAddDetails label="+ Add / Edit Fuel Price" hint={BACKEND_HINT_EDIT}>
-        {[
-          { label: "ICAO", placeholder: "PABE" },
-          { label: "$/gal", placeholder: "7.50", type: "number" },
-        ]}
-      </DisabledAddDetails>
+      {canEdit ? (
+        <AddDetails label="+ Add / Edit Fuel Price">
+          <FuelPriceForm />
+        </AddDetails>
+      ) : null}
     </section>
   );
 }
 
-function LandingFeesSection({ rows }: { rows: LandingFeeRow[] }) {
+function LandingFeesSection({ rows, canEdit }: { rows: LandingFeeRow[]; canEdit: boolean }) {
   return (
     <section className="rounded-lg border border-border bg-card p-5">
       <h2 className="panel-title mb-3">
@@ -269,19 +274,33 @@ function LandingFeesSection({ rows }: { rows: LandingFeeRow[] }) {
               className="flex justify-between py-1.5 text-sm"
             >
               <span className="font-mono">{r.icao_code}</span>
-              <span className="text-muted-foreground">
-                ${Number(r.fee_amount).toFixed(0)}
-                {r.notes && ` · ${r.notes}`}
+              <span className="flex items-baseline gap-3 text-muted-foreground">
+                <span>
+                  ${Number(r.fee_amount).toFixed(0)}
+                  {r.notes && ` · ${r.notes}`}
+                </span>
+                {canEdit ? (
+                  <RemoveRowButton
+                    label={`Remove the landing fee at ${r.icao_code}`}
+                    confirm={`Remove the landing fee at ${r.icao_code}?`}
+                    action={removeCostRowAction.bind(null, "landing-fee", r.id)}
+                  />
+                ) : null}
               </span>
             </li>
           ))}
         </ul>
       )}
+      {canEdit ? (
+        <AddDetails label="+ Add / Edit Landing Fee">
+          <LandingFeeForm />
+        </AddDetails>
+      ) : null}
     </section>
   );
 }
 
-function RoutesSection({ rows }: { rows: RouteFlightTimeRow[] }) {
+function RoutesSection({ rows, canEdit }: { rows: RouteFlightTimeRow[]; canEdit: boolean }) {
   return (
     <section className="rounded-lg border border-border bg-card p-5">
       <h2 className="panel-title mb-3">
@@ -301,13 +320,25 @@ function RoutesSection({ rows }: { rows: RouteFlightTimeRow[] }) {
               <span className="font-mono">
                 {r.origin_icao} → {r.dest_icao}
               </span>
-              <span className="text-muted-foreground">
+              <span className="flex items-baseline gap-3 text-muted-foreground">
                 {Number(r.est_flight_hrs).toFixed(1)}h
+                {canEdit ? (
+                  <RemoveRowButton
+                    label={`Remove the route ${r.origin_icao} to ${r.dest_icao}`}
+                    confirm={`Remove the route ${r.origin_icao} to ${r.dest_icao}?`}
+                    action={removeCostRowAction.bind(null, "route", r.id)}
+                  />
+                ) : null}
               </span>
             </li>
           ))}
         </ul>
       )}
+      {canEdit ? (
+        <AddDetails label="+ Add / Edit Route">
+          <RouteTimeForm />
+        </AddDetails>
+      ) : null}
     </section>
   );
 }
@@ -393,45 +424,11 @@ function CalculatorSection({
   );
 }
 
-function DisabledAddDetails({
-  label,
-  hint,
-  children,
-}: {
-  label: string;
-  hint: string;
-  children: Array<{ label: string; placeholder: string; type?: string }>;
-}) {
+function AddDetails({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <details className="mt-3">
       <summary className="cursor-pointer text-[0.68rem] font-bold uppercase tracking-[0.1em] text-primary">{label}</summary>
-      <div className="mt-3 flex flex-wrap gap-2">
-        {children.map((f) => (
-          <label key={f.label} className="min-w-[120px]">
-            <span className="field-label">
-              {f.label}
-            </span>
-            <input
-              type={f.type ?? "text"}
-              placeholder={f.placeholder}
-              disabled
-              title={hint}
-              className="ff-input cursor-not-allowed px-2 py-1.5 text-sm disabled:opacity-100"
-            />
-          </label>
-        ))}
-        <div className="flex items-end">
-          <button
-            type="button"
-            disabled
-            aria-disabled="true"
-            title={hint}
-            className="btn-caps cursor-not-allowed rounded-md bg-primary px-3 py-2 text-white disabled:opacity-100 text-[0.72rem]"
-          >
-            Save
-          </button>
-        </div>
-      </div>
+      {children}
     </details>
   );
 }

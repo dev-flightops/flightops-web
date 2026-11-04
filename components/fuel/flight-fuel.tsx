@@ -301,6 +301,7 @@ function OrderRow({
 
       {mode === "adjust" && (
         <form
+          method="post"
           className="mt-2 flex flex-wrap items-end gap-2"
           onSubmit={(e) => {
             e.preventDefault();
@@ -350,6 +351,7 @@ function OrderRow({
 
       {mode === "cancel" && (
         <form
+          method="post"
           className="mt-2 flex flex-wrap items-end gap-2"
           onSubmit={(e) => {
             e.preventDefault();
@@ -415,6 +417,7 @@ function OrderForm({
 
   return (
     <form
+      method="post"
       aria-label="Order fuel"
       className="space-y-3 rounded-md border border-border bg-background p-3"
       onSubmit={(e) => {

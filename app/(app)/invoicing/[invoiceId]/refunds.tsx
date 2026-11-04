@@ -329,6 +329,7 @@ export function Refunds({
 
       {canRefund && open && (
         <form
+          method="post"
           onSubmit={(e) => void submit(e)}
           aria-label="Refund"
           className="rounded-md border border-border bg-background p-3"

@@ -117,6 +117,7 @@ export function RecordPayment({
 
       {canRecord && open && (
         <form
+          method="post"
           onSubmit={(e) => void submit(e)}
           aria-label="Record payment"
           className="rounded-md border border-border bg-background p-3"

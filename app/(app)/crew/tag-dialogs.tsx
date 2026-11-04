@@ -97,7 +97,7 @@ function NewTagForm({ onClose }: { onClose: () => void }) {
           A short label your schedulers paint on crew days, such as FLY, OFF or TRN.
         </DialogDescription>
       </DialogHeader>
-      <form onSubmit={onSubmit} className="space-y-3" noValidate>
+      <form method="post" onSubmit={onSubmit} className="space-y-3" noValidate>
         {error && (
           <p
             role="alert"

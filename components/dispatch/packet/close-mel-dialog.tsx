@@ -91,7 +91,7 @@ export function CloseMelDialog({
             </DialogDescription>
           </DialogHeader>
 
-          <form onSubmit={onSubmit} className="space-y-3">
+          <form method="post" onSubmit={onSubmit} className="space-y-3">
             <p className="rounded-md border border-border bg-muted/60 px-3 py-2 text-xs text-foreground">
               {description}
             </p>

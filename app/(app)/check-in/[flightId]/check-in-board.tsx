@@ -903,7 +903,7 @@ function CheckInDialog({
             {`${TICKET_LABEL[pax.ticket_type] ?? pax.ticket_type} ticket, booked at ${lbs(pax.planned_weight_lbs ?? pax.weight_lbs)} with ${lbs(pax.planned_baggage_lbs ?? pax.baggage_lbs)} of bags.`}
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={submit} className="space-y-4">
+        <form method="post" onSubmit={submit} className="space-y-4">
           <div className="grid gap-3 sm:grid-cols-2">
             <label className="block">
               <span className="field-label">First Name</span>
@@ -1127,7 +1127,7 @@ function NoShowDialog({
             They come off weight and balance and the passenger counts. Undo puts them back.
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={submit} className="space-y-4">
+        <form method="post" onSubmit={submit} className="space-y-4">
           <label className="block">
             <span className="field-label">Reason</span>
             <select name="reason" required defaultValue={reasons[0]?.code} className={INPUT}>
@@ -1203,7 +1203,7 @@ function WalkUpDialog({
             Adds them to the manifest as booked; then check them in as anyone else.
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={submit} className="space-y-4">
+        <form method="post" onSubmit={submit} className="space-y-4">
           <div className="grid gap-3 sm:grid-cols-2">
             <label className="block">
               <span className="field-label">First Name</span>

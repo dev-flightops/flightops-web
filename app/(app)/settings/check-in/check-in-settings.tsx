@@ -76,7 +76,7 @@ export function CheckInSettings({
 
   return (
     <div className="space-y-6">
-      <form onSubmit={saveRules} className="space-y-6">
+      <form method="post" onSubmit={saveRules} className="space-y-6">
         <Panel title="What Check-in Requires">
           <fieldset disabled={!canEdit} className="grid gap-2 sm:grid-cols-2">
             <legend className="sr-only">What check-in requires</legend>
@@ -260,7 +260,7 @@ function NewField({
   }
 
   return (
-    <form onSubmit={submit} className="mt-5 space-y-3 border-t border-border pt-4">
+    <form method="post" onSubmit={submit} className="mt-5 space-y-3 border-t border-border pt-4">
       <p className="eyebrow">Add a Field</p>
       <div className="grid gap-3 sm:grid-cols-3">
         <label className="block">

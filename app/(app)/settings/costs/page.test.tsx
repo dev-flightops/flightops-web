@@ -21,7 +21,14 @@ vi.mock("@/lib/api/client", () => ({ ApiError: mocks.TestApiError, apiFetch: vi.
 vi.mock("@/lib/api/auth", () => ({ getOperatingCosts: mocks.getOperatingCosts }));
 vi.mock("@/lib/api/ground", () => ({ listFuelTypes: mocks.listFuelTypes }));
 vi.mock("@/lib/api/ops", () => ({ listAircraft: mocks.listAircraft }));
-vi.mock("./actions", () => ({ saveAircraftCostAction: vi.fn() }));
+vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn() }) }));
+vi.mock("./actions", () => ({
+  saveAircraftCostAction: vi.fn(),
+  saveFuelPriceAction: vi.fn(),
+  saveLandingFeeAction: vi.fn(),
+  saveRouteTimeAction: vi.fn(),
+  removeCostRowAction: Object.assign(vi.fn(), { bind: () => vi.fn() }),
+}));
 
 import SettingsCostsPage from "./page";
 
@@ -101,5 +108,43 @@ describe("/settings/costs aircraft types (#75)", () => {
     render(await SettingsCostsPage());
     expect(fuelOf("Cessna 208B Grand Caravan")).toBe("jet_a");
     expect(screen.getByRole("button", { name: "Add aircraft type" })).toBeTruthy();
+  });
+});
+
+describe("fuel prices, landing fees and routes (#134)", () => {
+  const data = {
+    aircraft_costs: [],
+    fuel_prices: [{ id: "p-1", icao_code: "PABE", price_per_gal: "7.50", fuel_type: "Jet-A" }],
+    landing_fees: [{ id: "l-1", icao_code: "PANC", fee_amount: "50", notes: "Ramp" }],
+    routes: [{ id: "t-1", origin_icao: "PABE", dest_icao: "PAEM", est_flight_hrs: "1.2" }],
+  };
+
+  beforeEach(() => {
+    mocks.listFuelTypes.mockResolvedValue({ items: [] });
+    mocks.listAircraft.mockResolvedValue({ items: [] });
+  });
+
+  it("has a working form for each, with nothing disabled and no developer notes", async () => {
+    mocks.getOperatingCosts.mockResolvedValue(data);
+    const { container } = render(await SettingsCostsPage());
+    for (const name of ["Add or edit a fuel price", "Add or edit a landing fee", "Add or edit a route"]) {
+      expect(within(screen.getByRole("form", { name, hidden: true })).getByRole("button", { name: "Save", hidden: true })).toBeEnabled();
+    }
+    expect(container.querySelector('[aria-disabled="true"], [disabled]')).toBeNull();
+    expect(container.innerHTML).not.toMatch(/follow-up|endpoints/);
+  });
+
+  it("gives every row a Remove", async () => {
+    mocks.getOperatingCosts.mockResolvedValue(data);
+    render(await SettingsCostsPage());
+    expect(screen.getByRole("button", { name: "Remove the Jet-A price at PABE" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Remove the landing fee at PANC" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Remove the route PABE to PAEM" })).toBeEnabled();
+  });
+
+  it("offers neither when the page couldn't load", async () => {
+    mocks.getOperatingCosts.mockRejectedValue(new mocks.TestApiError(403, "/x", "forbidden"));
+    render(await SettingsCostsPage());
+    expect(screen.queryByRole("form", { name: "Add or edit a route", hidden: true })).not.toBeInTheDocument();
   });
 });

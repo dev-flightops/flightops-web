@@ -46,6 +46,7 @@ export function AddFuelTypeForm() {
   const [error, setError] = useState<string | null>(null);
   return (
     <form
+      method="post"
       aria-label="Add a fuel type"
       className="grid gap-3 sm:grid-cols-3"
       onSubmit={(e) => {

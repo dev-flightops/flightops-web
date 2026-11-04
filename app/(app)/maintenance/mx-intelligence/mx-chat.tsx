@@ -72,6 +72,7 @@ export function MxChat({ examples }: { examples: string[] }) {
       <div ref={foot} />
 
       <form
+        method="post"
         onSubmit={(e) => {
           e.preventDefault();
           void ask(draft);

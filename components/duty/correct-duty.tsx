@@ -142,6 +142,7 @@ export function CorrectDuty({
 
   return (
     <form
+      method="post"
       aria-label="Correct duty times"
       onSubmit={(e) => {
         e.preventDefault();

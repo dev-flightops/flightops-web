@@ -96,7 +96,7 @@ export function AddDueItemDialog({
               interval, signing it off sets the next due.
             </DialogDescription>
           </DialogHeader>
-          <form onSubmit={onSubmit} className="grid gap-3 sm:grid-cols-2">
+          <form method="post" onSubmit={onSubmit} className="grid gap-3 sm:grid-cols-2">
             {aircraft.length > 1 ? (
               <label className="sm:col-span-2">
                 <span className="field-label">Aircraft</span>
@@ -226,7 +226,7 @@ export function SignOffDueItemDialog({ item }: { item: DueItem }) {
                 : "A one-off: once signed off it leaves the list."}
             </DialogDescription>
           </DialogHeader>
-          <form onSubmit={onSubmit} className="grid gap-3 sm:grid-cols-2">
+          <form method="post" onSubmit={onSubmit} className="grid gap-3 sm:grid-cols-2">
             <label>
               <span className="field-label">Done on</span>
               <input name="done_on" type="date" required defaultValue={today()} max={today()} className="ff-input" />

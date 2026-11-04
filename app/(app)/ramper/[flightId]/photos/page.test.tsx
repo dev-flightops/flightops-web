@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { FlightDetail, RampPhotoResponse } from "@/lib/api/types";
 
-const { TestApiError, getFlight, listRampPhotos } = vi.hoisted(() => {
+const { TestApiError, getFlight, listRampPhotos, getFlightManifest } = vi.hoisted(() => {
   class TestApiError extends Error {
     constructor(
       public status: number,
@@ -17,12 +17,14 @@ const { TestApiError, getFlight, listRampPhotos } = vi.hoisted(() => {
     TestApiError,
     getFlight: vi.fn(),
     listRampPhotos: vi.fn(),
+    getFlightManifest: vi.fn(),
   };
 });
 
 vi.mock("@/lib/api/client", () => ({ ApiError: TestApiError }));
 vi.mock("@/lib/api/ops", () => ({ getFlight }));
 vi.mock("@/lib/api/ground", () => ({ listRampPhotos }));
+vi.mock("@/lib/api/manifest", () => ({ getFlightManifest }));
 const { auth } = vi.hoisted(() => ({
   auth: vi.fn(async () => ({ roles: ["ground_ops"] as string[] })),
 }));
@@ -92,6 +94,7 @@ function makePhoto(
 beforeEach(() => {
   getFlight.mockReset();
   listRampPhotos.mockReset();
+  getFlightManifest.mockReset().mockResolvedValue({ cargo: [] });
   notFoundMock.mockReset().mockImplementation(() => {
     throw new Error("NEXT_NOT_FOUND");
   });
@@ -105,7 +108,7 @@ async function renderPage(flightId = "f-1") {
 }
 
 describe("/ramper/[flightId]/photos", () => {
-  it("renders flight header + Photos(0) + required-photo checklist all red", async () => {
+  it("renders flight header + Photos(0) + the secured load as the one photo required", async () => {
     getFlight.mockResolvedValue(makeFlight());
     listRampPhotos.mockResolvedValue({ items: [], total: 0 });
 
@@ -115,9 +118,10 @@ describe("/ramper/[flightId]/photos", () => {
     expect(screen.getByText(/N207GE · C208B/)).toBeDefined();
     expect(screen.getByText(/Photos \(0\)/)).toBeDefined();
     expect(screen.getByText("No photos yet")).toBeDefined();
-    for (const label of ["Secured Load", "Hazmat Placard", "Damage Documentation"]) {
-      expect(screen.getByText(label)).toBeDefined();
-    }
+    expect(screen.getByText("Secured Load")).toBeDefined();
+    // Neither reads as missing on a flight with no hazmat and no damage (#134).
+    expect(screen.queryByText("Hazmat Placard")).toBeNull();
+    expect(screen.queryByText("Damage Documentation")).toBeNull();
     // Upload form is rendered as a mocked stub.
     expect(screen.getByTestId("upload-form-stub")).toBeDefined();
   });
@@ -135,15 +139,54 @@ describe("/ramper/[flightId]/photos", () => {
     await renderPage();
 
     expect(screen.getByText(/Photos \(2\)/)).toBeDefined();
-    // "damage_documentation" was not uploaded — still red.
-    const damageEl = screen.getByText("Damage Documentation");
-    expect(damageEl.className).toMatch(/status-red/);
     // Secured Load appears in the checklist as green.
     const securedEls = screen.getAllByText(/Secured Load|secured load/i);
     const green = securedEls.find((el) =>
       /status-green/.test(el.className),
     );
     expect(green).toBeDefined();
+  });
+
+  it("asks for the placard when the flight carries hazmat (#134)", async () => {
+    getFlight.mockResolvedValue(makeFlight());
+    listRampPhotos.mockResolvedValue({ items: [makePhoto()], total: 1 });
+    getFlightManifest.mockResolvedValue({ cargo: [{ is_hazmat: false }, { is_hazmat: true }] });
+
+    await renderPage();
+
+    expect(screen.getByText("Hazmat Placard").className).toMatch(/status-red/);
+  });
+
+  it("treats a flight with no manifest as carrying no hazmat (#134)", async () => {
+    getFlight.mockResolvedValue(makeFlight());
+    listRampPhotos.mockResolvedValue({ items: [], total: 0 });
+    getFlightManifest.mockRejectedValue(new TestApiError(404, "/manifest/flights/f-1", "manifest_not_found"));
+
+    await renderPage();
+
+    expect(screen.queryByText(/Hazmat Placard/)).toBeNull();
+  });
+
+  it("says so when it can't read the manifest, rather than guessing (#134)", async () => {
+    getFlight.mockResolvedValue(makeFlight());
+    listRampPhotos.mockResolvedValue({ items: [], total: 0 });
+    getFlightManifest.mockRejectedValue(new TestApiError(503, "/manifest/flights/f-1", "down"));
+
+    await renderPage();
+
+    expect(screen.getByText(/Hazmat Placard, if this flight carries hazmat/).className).toMatch(/muted/);
+  });
+
+  it("shows the note typed with a photo (#134)", async () => {
+    getFlight.mockResolvedValue(makeFlight());
+    listRampPhotos.mockResolvedValue({
+      items: [makePhoto({ notes: "Bags strapped, mail sack at the aft bulkhead" })],
+      total: 1,
+    });
+
+    await renderPage();
+
+    expect(screen.getByText("Bags strapped, mail sack at the aft bulkhead")).toBeDefined();
   });
 
   it("surfaces a yellow warning banner when photo list errors", async () => {

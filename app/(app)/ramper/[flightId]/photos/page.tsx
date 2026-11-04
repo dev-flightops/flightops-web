@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 
 import { auth } from "@/auth";
 import { listRampPhotos } from "@/lib/api/ground";
+import { getFlightManifest } from "@/lib/api/manifest";
 import { getFlight } from "@/lib/api/ops";
 import { ApiError } from "@/lib/api/client";
 import type { RampPhotoResponse, RampPhotoType } from "@/lib/api/types";
@@ -29,14 +30,30 @@ function rampPhotoSrc(photoId: string): string {
   return `/api/ramp-photos/${photoId}`;
 }
 
-const REQUIRED_TYPES: readonly {
-  value: RampPhotoType;
-  label: string;
-}[] = [
-  { value: "secured_load", label: "Secured Load" },
-  { value: "hazmat_placard", label: "Hazmat Placard" },
-  { value: "damage_documentation", label: "Damage Documentation" },
-];
+/**
+ * What this flight needs a photo of, as legacy asks
+ * (templates/ramper/flight_detail.html): the secured load on every flight, the
+ * placard only when it carries hazmat. They used to read as missing on every
+ * flight (#134). Legacy also asks for damage photos once a damage report is
+ * filed; there are no damage reports here yet, so that type is only an upload.
+ */
+function requiredPhotos(hazmat: boolean): { value: RampPhotoType; label: string }[] {
+  return [
+    { value: "secured_load", label: "Secured Load" },
+    ...(hazmat ? [{ value: "hazmat_placard" as const, label: "Hazmat Placard" }] : []),
+  ];
+}
+
+/** Does the flight's manifest carry hazmat? No manifest yet means no; null
+ *  means it couldn't be read, and the page says so rather than guessing. */
+async function carriesHazmat(flightId: string): Promise<boolean | null> {
+  try {
+    const manifest = await getFlightManifest(flightId);
+    return manifest.cargo.some((c) => c.is_hazmat);
+  } catch (err) {
+    return err instanceof ApiError && err.status === 404 ? false : null;
+  }
+}
 
 export default async function RamperPhotosPage({
   params,
@@ -74,6 +91,7 @@ export default async function RamperPhotosPage({
   }
 
   const uploadedTypes = new Set(photos.map((p) => p.photo_type));
+  const hazmat = await carriesHazmat(flightId);
 
   return (
     <div
@@ -183,9 +201,15 @@ export default async function RamperPhotosPage({
                   alt={photoTypeLabel(p.photo_type)}
                   className="h-24 w-full object-cover"
                 />
-                <div className="px-1.5 py-1 text-[0.6rem] font-semibold uppercase tracking-[0.04em] text-muted-foreground">
+                <div className="px-1.5 pt-1 text-[0.6rem] font-semibold uppercase tracking-[0.04em] text-muted-foreground">
                   {photoTypeLabel(p.photo_type)}
                 </div>
+                {p.notes ? (
+                  <div className="whitespace-pre-wrap break-words px-1.5 pt-0.5 text-xs text-foreground">
+                    {p.notes}
+                  </div>
+                ) : null}
+                <div className="pb-1" />
               </a>
             ))}
           </div>
@@ -196,7 +220,7 @@ export default async function RamperPhotosPage({
             Required Photos
           </div>
           <ul className="space-y-1 text-sm">
-            {REQUIRED_TYPES.map((t) => {
+            {requiredPhotos(hazmat === true).map((t) => {
               const have = uploadedTypes.has(t.value);
               return (
                 <li
@@ -211,6 +235,11 @@ export default async function RamperPhotosPage({
                 </li>
               );
             })}
+            {hazmat === null ? (
+              <li className="text-muted-foreground">
+                Hazmat Placard, if this flight carries hazmat. Its manifest couldn&apos;t be read.
+              </li>
+            ) : null}
           </ul>
         </div>
       </div>

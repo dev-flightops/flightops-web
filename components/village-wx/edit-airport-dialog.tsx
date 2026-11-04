@@ -129,7 +129,7 @@ export function EditAirportDialog({ airport }: { airport: VillageAirportResponse
               </DialogFooter>
             </div>
           ) : (
-            <form onSubmit={save} className="space-y-4">
+            <form method="post" onSubmit={save} className="space-y-4">
               <div className="grid gap-4 sm:grid-cols-[1fr_2fr]">
                 {field("icao", "Identifier", { autoCapitalize: "characters", spellCheck: false })}
                 {field("name", "Name")}

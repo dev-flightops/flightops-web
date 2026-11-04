@@ -107,6 +107,7 @@ export function ApplyCredit({
 
       {offered && open && (
         <form
+          method="post"
           onSubmit={(e) => void submit(e)}
           aria-label="Pay with credit"
           className="rounded-md border border-border bg-background p-3"
