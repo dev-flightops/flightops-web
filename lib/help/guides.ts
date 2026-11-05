@@ -46,7 +46,7 @@ export const GUIDES: Guide[] = [
       "Have the learner complete the course using [Complete Academy training](/help#guide-complete-academy-training), then verify the completion in Assignments and [Certificates](/academy/certificates).",
     ],
     notes: [
-      "Lessons currently contain plain text and optional quizzes. Media uploads, SCORM playback, viewing-duration tracking and Academy aggregate reports/CSV export are not available. Assignments and Certificates show the underlying records.",
+      "Lessons hold text, pictures, videos and PDFs, and optional quizzes. A video has to be watched and a PDF paged to the end before the lesson completes or its quiz opens, unless the author marks it as reference. SCORM playback and Academy aggregate reports/CSV export are not available. Assignments and Certificates show the underlying records.",
       "Peregrine Assistant can explain these steps. It cannot author a course, assign a learner, grade an answer or record completion for you.",
     ],
     pages: ["/academy/studio", "/academy/assignments", "/academy/certificates"],
@@ -58,7 +58,7 @@ export const GUIDES: Guide[] = [
     summary: "Finish each lesson and verify the resulting completion record and certificate.",
     steps: [
       "Open [My Training](/academy/mine) and continue the assigned course. A published course can also be opened from [Academy](/academy) and enrolled in.",
-      "Read the lesson. If a quiz is attached, answer and submit it. A failed attempt does not complete the lesson; review the feedback and retry.",
+      "Read the lesson, watch its videos and page through its PDFs to the end. Skipping ahead in a video is off until it has been watched. If a quiz is attached, it opens after that, once the earlier lessons are complete: answer and submit it. A failed attempt does not complete the lesson; review the feedback and retry.",
       "After a passing attempt, select **Mark Complete** on the lesson. Passing the quiz alone does not complete it. Repeat for every lesson.",
       "Confirm the course shows **Completed** and its completion date. Open **Certificates** in Academy, select the issued certificate, and return to My Training to verify the completed record persists.",
     ],

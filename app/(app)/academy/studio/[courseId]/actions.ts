@@ -3,12 +3,21 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
+import { mediaRefusalWords } from "@/lib/academy/media";
 import {
+  addLessonMediaDocument,
+  addLessonMediaLink,
+  completeLessonMediaUpload,
   createLesson,
   createLessonQuiz,
   deleteLesson,
+  deleteLessonMedia,
+  startLessonMediaUpload,
   updateCourse,
   updateLesson,
+  updateLessonMedia,
+  uploadLessonMedia,
+  type LessonMediaUploadTicket,
 } from "@/lib/api/academy";
 import { ApiError } from "@/lib/api/client";
 
@@ -178,4 +187,114 @@ export async function attachQuizAction(
   // paint even if the user clicks Back from the editor.
   revalidatePath(`/academy/studio/${courseId}`);
   redirect(`/academy/studio/quizzes/${quizId}`);
+}
+
+// ---- A lesson's pictures, videos and PDFs (#170) ---------------------------
+
+export interface MediaResult {
+  error: string | null;
+}
+
+async function _media(courseId: string, op: () => Promise<unknown>): Promise<MediaResult> {
+  try {
+    await op();
+  } catch (err) {
+    if (err instanceof ApiError) {
+      return { error: mediaRefusalWords(err.message) ?? `Backend returned HTTP ${err.status}.` };
+    }
+    return { error: "Could not reach academy-service." };
+  }
+  revalidatePath(`/academy/studio/${courseId}`);
+  revalidatePath(`/academy/${courseId}`);
+  return { error: null };
+}
+
+/** A file small enough to come through here. */
+export async function addMediaFileAction(formData: FormData): Promise<MediaResult> {
+  const courseId = String(formData.get("course_id") ?? "");
+  const lessonId = String(formData.get("lesson_id") ?? "");
+  const file = formData.get("file");
+  if (!(file instanceof File) || file.size === 0) return { error: "Choose a file." };
+  const form = new FormData();
+  form.set("file", file);
+  form.set("title", String(formData.get("title") ?? ""));
+  form.set("must_finish", formData.get("must_finish") ? "true" : "false");
+  return _media(courseId, () => uploadLessonMedia(lessonId, form));
+}
+
+/** A URL to send a large file straight to the bucket (#17). */
+export async function startMediaUploadAction(
+  lessonId: string,
+  file: { filename: string; size: number },
+): Promise<{ ticket: LessonMediaUploadTicket | null; error: string | null }> {
+  try {
+    const ticket = await startLessonMediaUpload(lessonId, {
+      filename: file.filename,
+      size_bytes: file.size,
+    });
+    return { ticket, error: null };
+  } catch (err) {
+    if (err instanceof ApiError) {
+      return {
+        ticket: null,
+        error: mediaRefusalWords(err.message) ?? `Backend returned HTTP ${err.status}.`,
+      };
+    }
+    return { ticket: null, error: "Could not reach academy-service." };
+  }
+}
+
+export async function completeMediaUploadAction(
+  courseId: string,
+  lessonId: string,
+  input: { fileKey: string; filename: string; title: string; mustFinish: boolean },
+): Promise<MediaResult> {
+  return _media(courseId, () =>
+    completeLessonMediaUpload(lessonId, {
+      file_key: input.fileKey,
+      filename: input.filename,
+      title: input.title || null,
+      must_finish: input.mustFinish,
+    }),
+  );
+}
+
+export async function addMediaLinkAction(
+  courseId: string,
+  lessonId: string,
+  input: { url: string; title: string; mustFinish: boolean },
+): Promise<MediaResult> {
+  return _media(courseId, () =>
+    addLessonMediaLink(lessonId, {
+      url: input.url,
+      title: input.title || null,
+      must_finish: input.mustFinish,
+    }),
+  );
+}
+
+export async function addMediaDocumentAction(
+  courseId: string,
+  lessonId: string,
+  input: { documentId: string; title: string; mustFinish: boolean },
+): Promise<MediaResult> {
+  return _media(courseId, () =>
+    addLessonMediaDocument(lessonId, {
+      document_id: input.documentId,
+      title: input.title || null,
+      must_finish: input.mustFinish,
+    }),
+  );
+}
+
+export async function updateMediaAction(
+  courseId: string,
+  mediaId: string,
+  change: { title?: string; must_finish?: boolean; move?: "up" | "down" },
+): Promise<MediaResult> {
+  return _media(courseId, () => updateLessonMedia(mediaId, change));
+}
+
+export async function removeMediaAction(courseId: string, mediaId: string): Promise<MediaResult> {
+  return _media(courseId, () => deleteLessonMedia(mediaId));
 }

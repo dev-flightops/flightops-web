@@ -38,6 +38,13 @@ export async function completeLessonAction(
             "This lesson has a quiz — pass it first before marking complete.",
         };
       }
+      if (err.status === 409 && /media_not_finished/.test(err.message)) {
+        return {
+          status: "error",
+          message:
+            "This lesson still has a video to watch or a PDF to page through to the end.",
+        };
+      }
       return {
         status: "error",
         message: `Backend returned HTTP ${err.status}.`,

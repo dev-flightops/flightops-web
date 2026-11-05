@@ -61,6 +61,11 @@ export default async function QuizPage({
       if (err.status === 403) {
         return <NotYourQuiz enrollmentId={enrollmentId} lesson={lessonParam} />;
       }
+      // Reached by an old link or typed: it opens after its lesson's videos
+      // and PDFs and the earlier lessons (#170).
+      if (err.status === 409 && /quiz_locked/.test(err.message)) {
+        return <QuizNotOpenYet enrollmentId={enrollmentId} lesson={lessonParam} />;
+      }
     }
     throw err;
   }
@@ -171,6 +176,35 @@ function NotYourQuiz({
         </p>
         <p className="mt-0.5 text-muted-foreground">
           You&apos;re viewing someone else&apos;s enrollment.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function QuizNotOpenYet({
+  enrollmentId,
+  lesson,
+}: {
+  enrollmentId: string;
+  lesson?: string;
+}) {
+  const back = lesson
+    ? `/academy/enrollments/${enrollmentId}?lesson=${lesson}`
+    : `/academy/enrollments/${enrollmentId}`;
+  return (
+    <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
+      <Link href={back} className={cn(linkCaps, "text-muted-foreground hover:text-foreground")}>
+        <span aria-hidden>‹</span> Back to lesson
+      </Link>
+      <div
+        role="status"
+        className="mt-4 rounded-lg border border-border bg-muted/60 px-4 py-3 text-sm"
+      >
+        <p className="font-semibold text-foreground">This quiz isn&apos;t open yet.</p>
+        <p className="mt-0.5 text-muted-foreground">
+          It opens once the earlier lessons are complete and this lesson&apos;s videos and
+          PDFs have been finished.
         </p>
       </div>
     </div>

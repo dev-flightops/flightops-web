@@ -11,9 +11,13 @@
  */
 
 /** Fetch a backend file without following a redirect to storage. */
-export function fetchBackendFile(url: string, accessToken: string): Promise<Response> {
+export function fetchBackendFile(
+  url: string,
+  accessToken: string,
+  headers: Record<string, string> = {},
+): Promise<Response> {
   return fetch(url, {
-    headers: { Authorization: `Bearer ${accessToken}` },
+    headers: { ...headers, Authorization: `Bearer ${accessToken}` },
     cache: "no-store",
     redirect: "manual",
   });
