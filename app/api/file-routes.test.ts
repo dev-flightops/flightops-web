@@ -3,6 +3,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 const auth = vi.hoisted(() => vi.fn());
 vi.mock("@/auth", () => ({ auth }));
 
+import { POST as reportMediaProgress } from "./academy/enrollments/[enrollmentId]/media-progress/route";
+import { GET as lessonMedia } from "./academy/media/[mediaId]/route";
 import { GET as documentDownload } from "./documents/[documentId]/download/route";
 import { GET as versionDownload } from "./documents/[documentId]/versions/[versionNumber]/download/route";
 import { GET as employeeDocumentDownload } from "./employee-documents/[documentId]/download/route";
@@ -26,6 +28,12 @@ const BUCKET_LINK =
 type Handler = (req: Request, ctx: { params: Promise<Record<string, string>> }) => Promise<Response>;
 
 const ROUTES: { name: string; handler: Handler; params: Record<string, string>; backend: string }[] = [
+  {
+    name: "lesson media",
+    handler: lessonMedia as Handler,
+    params: { mediaId: "m-1" },
+    backend: "https://gw.example/academy/lesson-media/m-1/file",
+  },
   {
     name: "document",
     handler: documentDownload as Handler,
@@ -137,7 +145,7 @@ describe.each(ROUTES)("$name", (route) => {
 });
 
 describe("ramp photo", () => {
-  const route = ROUTES[3];
+  const route = ROUTES[4];
 
   it("tells the browser never to guess the type", async () => {
     fetchMock.mockResolvedValue(
@@ -174,13 +182,13 @@ describe("equipment document (#134)", () => {
 describe("employee document", () => {
   it("keeps personnel files out of shared caches", async () => {
     fetchMock.mockResolvedValue(new Response("x", { status: 200 }));
-    const res = await call(ROUTES[2]);
+    const res = await call(ROUTES[3]);
     expect(res.headers.get("cache-control")).toBe("no-store, private");
   });
 });
 
 describe("safety report attachment", () => {
-  const route = ROUTES[4];
+  const route = ROUTES[5];
 
   it("tells the browser never to guess the type", async () => {
     fetchMock.mockResolvedValue(
@@ -227,6 +235,63 @@ describe("village report photo (#121)", () => {
   });
 
   it("refuses without a session", async () => {
+    auth.mockResolvedValue(null);
+    expect((await call()).status).toBe(401);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+});
+
+describe("a lesson's file (#170)", () => {
+  const call = (headers: Record<string, string> = {}) =>
+    lessonMedia(new Request("https://app.example/x", { headers }), { params: Promise.resolve({ mediaId: "m-1" }) });
+
+  it("passes a video's Range request on, and the part it gets back", async () => {
+    fetchMock.mockResolvedValue(
+      new Response("ftyp", {
+        status: 206,
+        headers: { "Content-Type": "video/mp4", "Content-Range": "bytes 4-7/72", "Accept-Ranges": "bytes" },
+      }),
+    );
+    const res = await call({ Range: "bytes=4-7" });
+    expect(fetchMock.mock.calls[0][1].headers.Range).toBe("bytes=4-7");
+    expect(res.status).toBe(206);
+    expect(res.headers.get("content-range")).toBe("bytes 4-7/72");
+    expect(res.headers.get("accept-ranges")).toBe("bytes");
+    expect(res.headers.get("content-type")).toBe("video/mp4");
+  });
+
+  it("never lets the browser guess the type or keep a copy", async () => {
+    fetchMock.mockResolvedValue(new Response("x", { status: 200 }));
+    const res = await call();
+    expect(res.headers.get("x-content-type-options")).toBe("nosniff");
+    expect(res.headers.get("cache-control")).toBe("private, no-store");
+    expect(fetchMock.mock.calls[0][1].headers.Range).toBeUndefined();
+  });
+});
+
+describe("a lesson's progress report (#170)", () => {
+  const call = (body = '{"media_id":"m-1","page":1}') =>
+    reportMediaProgress(new Request("https://app.example/x", { method: "POST", body }), {
+      params: Promise.resolve({ enrollmentId: "e-1" }),
+    });
+
+  it("goes to the service as the signed-in user, and the answer comes back", async () => {
+    fetchMock.mockResolvedValue(new Response('{"finished":true}', { status: 200 }));
+    const res = await call();
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toBe("https://gw.example/academy/enrollments/e-1/media-progress");
+    expect(init.method).toBe("POST");
+    expect(init.headers.Authorization).toBe("Bearer tok");
+    expect(init.body).toBe('{"media_id":"m-1","page":1}');
+    expect(await res.json()).toEqual({ finished: true });
+  });
+
+  it("passes on a refusal", async () => {
+    fetchMock.mockResolvedValue(new Response('{"detail":"not_enrollee"}', { status: 403 }));
+    expect((await call()).status).toBe(403);
+  });
+
+  it("no session, no report", async () => {
     auth.mockResolvedValue(null);
     expect((await call()).status).toBe(401);
     expect(fetchMock).not.toHaveBeenCalled();

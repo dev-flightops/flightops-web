@@ -1,9 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 
-import type { Lesson } from "@/lib/api/academy";
+import { LessonMediaList } from "@/components/academy/lesson-media";
+import { lessonNumbersText, remainingText } from "@/lib/academy/media";
+import type { Lesson, LessonMediaProgress } from "@/lib/api/academy";
 
 import {
   completeLessonAction,
@@ -18,6 +20,10 @@ const _initial: CompleteLessonState = { status: "idle" };
  * a follow-up will wire react-markdown once the content stories
  * need it. For now the raw text preserves formatting well
  * enough for the demo.
+ *
+ * Its pictures, videos and PDFs follow the text (#170). What has to be watched
+ * or paged through holds back Mark Complete and the quiz, here and in the
+ * service, and a quiz also waits for the earlier lessons.
  */
 export function LessonPlayer({
   enrollmentId,
@@ -26,6 +32,9 @@ export function LessonPlayer({
   isDone,
   locked,
   quizPassed,
+  mediaProgress = [],
+  isEnrollee = true,
+  earlierLessonsOpen = [],
 }: {
   enrollmentId: string;
   lesson: Lesson;
@@ -37,11 +46,22 @@ export function LessonPlayer({
    *  passing attempt. Only meaningful when lesson.quiz_id !== null;
    *  drives whether we show "Take Quiz" or "Mark Complete". */
   quizPassed: boolean;
+  mediaProgress?: LessonMediaProgress[];
+  /** False when an admin opens someone else's enrollment: their viewing
+   *  isn't the learner's, so nothing is recorded. */
+  isEnrollee?: boolean;
+  /** The numbers of the earlier lessons not yet complete. */
+  earlierLessonsOpen?: number[];
 }) {
   const [state, formAction, pending] = useActionState(
     completeLessonAction,
     _initial,
   );
+  const [finishedIds, setFinishedIds] = useState<ReadonlySet<string>>(
+    () => new Set(mediaProgress.filter((row) => row.finished).map((row) => row.media_id)),
+  );
+  const media = lesson.media ?? [];
+  const toFinish = media.filter((item) => item.must_finish && !finishedIds.has(item.id));
 
   return (
     <article>
@@ -67,11 +87,23 @@ export function LessonPlayer({
         <div className="prose prose-invert prose-sm max-w-none whitespace-pre-wrap text-foreground/90">
           {lesson.body_markdown}
         </div>
-      ) : (
+      ) : media.length === 0 ? (
         <p className="text-xs italic text-muted-foreground">
           No lesson content yet.
         </p>
-      )}
+      ) : null}
+
+      {media.length > 0 ? (
+        <LessonMediaList
+          media={media}
+          enrollmentId={isEnrollee && !locked ? enrollmentId : null}
+          progress={mediaProgress}
+          finishedIds={finishedIds}
+          onFinished={(mediaId) =>
+            setFinishedIds((current) => new Set(current).add(mediaId))
+          }
+        />
+      ) : null}
 
       <div className="mt-6 flex flex-wrap items-center justify-end gap-2">
         {isDone ? (
@@ -81,6 +113,15 @@ export function LessonPlayer({
         ) : locked ? (
           <span className="text-xs text-muted-foreground">
             Enrollment is not in progress — lessons can no longer be marked.
+          </span>
+        ) : toFinish.length > 0 && isEnrollee ? (
+          <span className="text-xs text-muted-foreground">
+            {remainingText(toFinish)}
+          </span>
+        ) : lesson.quiz_id && !quizPassed && earlierLessonsOpen.length > 0 ? (
+          <span className="text-xs text-muted-foreground">
+            This lesson&apos;s quiz opens once you&apos;ve completed{" "}
+            {lessonNumbersText(earlierLessonsOpen)}.
           </span>
         ) : lesson.quiz_id && !quizPassed ? (
           // Quiz-gated lesson: send the learner to the runner

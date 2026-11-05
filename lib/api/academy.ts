@@ -76,12 +76,67 @@ export const ENROLLMENT_STATUS_LABELS: Record<EnrollmentStatus, string> = {
   expired: "Expired",
 };
 
+export type LessonMediaKind = "image" | "video" | "pdf";
+
+/** A picture, video or PDF in a lesson (#170): uploaded here, a video link,
+ *  or a document from the library. */
+export interface LessonMedia {
+  id: string;
+  lesson_id: string;
+  ordinal: number;
+  kind: LessonMediaKind;
+  title: string;
+  /** Whether the learner has to watch it or page it to the end before the
+   *  lesson can complete. Off, it's for reference. */
+  must_finish: boolean;
+  source: "file" | "link" | "document";
+  filename: string | null;
+  size_bytes: number | null;
+  link_url: string | null;
+  link_provider: "youtube" | "vimeo" | "file" | null;
+  /** The provider's id for the video; for an unlisted Vimeo video, "id/hash". */
+  link_ref: string | null;
+  document_id: string | null;
+}
+
+/** How far a learner has got through one video or PDF. */
+export interface LessonMediaProgress {
+  media_id: string;
+  position_seconds: number;
+  duration_seconds: number | null;
+  page: number;
+  page_count: number | null;
+  finished: boolean;
+  finished_at: string | null;
+}
+
+export interface LessonMediaLimits {
+  direct_uploads: boolean;
+  max_bytes: Record<LessonMediaKind, number>;
+}
+
+export interface LessonMediaLibraryItem {
+  document_id: string;
+  title: string;
+  category: string;
+  kind: LessonMediaKind;
+}
+
+export interface LessonMediaUploadTicket {
+  file_key: string;
+  url: string;
+  headers: Record<string, string>;
+  expires_in: number;
+}
+
 export interface Lesson {
   id: string;
   course_id: string;
   ordinal: number;
   title: string;
   body_markdown: string;
+  /** Its pictures, videos and PDFs, in order (#170). */
+  media: LessonMedia[];
   /** Backend surfaces the quiz attached to this lesson (or null).
    *  When set, complete-lesson is quiz-gated — the frontend Quiz
    *  Runner has to hand the enrollee through a passing attempt
@@ -281,6 +336,100 @@ export async function deleteLesson(lessonId: string): Promise<void> {
   await apiFetch<void>(`/academy/lessons/${lessonId}`, {
     method: "DELETE",
   });
+}
+
+export async function getLessonMediaLimits(): Promise<LessonMediaLimits> {
+  return apiFetch<LessonMediaLimits>("/academy/lesson-media/upload-limits");
+}
+
+export async function listLessonMediaLibrary(): Promise<LessonMediaLibraryItem[]> {
+  const { items } = await apiFetch<{ items: LessonMediaLibraryItem[] }>(
+    "/academy/lesson-media/library",
+  );
+  return items;
+}
+
+/** A file small enough to come through the service. */
+export async function uploadLessonMedia(
+  lessonId: string,
+  form: FormData,
+): Promise<LessonMedia> {
+  return apiFetch<LessonMedia>(`/academy/lessons/${lessonId}/media`, {
+    method: "POST",
+    body: form,
+  });
+}
+
+/** A URL to send a large file straight to the bucket. */
+export async function startLessonMediaUpload(
+  lessonId: string,
+  input: { filename: string; size_bytes: number },
+): Promise<LessonMediaUploadTicket> {
+  return apiFetch<LessonMediaUploadTicket>(
+    `/academy/lessons/${lessonId}/media/upload-url`,
+    { method: "POST", body: JSON.stringify(input) },
+  );
+}
+
+export async function completeLessonMediaUpload(
+  lessonId: string,
+  input: {
+    file_key: string;
+    filename: string;
+    title: string | null;
+    must_finish: boolean;
+  },
+): Promise<LessonMedia> {
+  return apiFetch<LessonMedia>(`/academy/lessons/${lessonId}/media/complete`, {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
+export async function addLessonMediaLink(
+  lessonId: string,
+  input: { url: string; title: string | null; must_finish: boolean },
+): Promise<LessonMedia> {
+  return apiFetch<LessonMedia>(`/academy/lessons/${lessonId}/media/link`, {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
+export async function addLessonMediaDocument(
+  lessonId: string,
+  input: { document_id: string; title: string | null; must_finish: boolean },
+): Promise<LessonMedia> {
+  return apiFetch<LessonMedia>(`/academy/lessons/${lessonId}/media/document`, {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
+export async function updateLessonMedia(
+  mediaId: string,
+  input: { title?: string; must_finish?: boolean; move?: "up" | "down" },
+): Promise<LessonMedia> {
+  return apiFetch<LessonMedia>(`/academy/lesson-media/${mediaId}`, {
+    method: "PATCH",
+    body: JSON.stringify(input),
+  });
+}
+
+export async function deleteLessonMedia(mediaId: string): Promise<void> {
+  await apiFetch<void>(`/academy/lesson-media/${mediaId}`, {
+    method: "DELETE",
+  });
+}
+
+/** How far this learner has got through the course's videos and PDFs. */
+export async function listLessonMediaProgress(
+  enrollmentId: string,
+): Promise<LessonMediaProgress[]> {
+  const { items } = await apiFetch<{ items: LessonMediaProgress[] }>(
+    `/academy/enrollments/${enrollmentId}/media-progress`,
+  );
+  return items;
 }
 
 // ============================================================================

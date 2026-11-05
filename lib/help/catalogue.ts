@@ -1019,15 +1019,17 @@ export const HELP_ENTRIES: HelpEntry[] = [
     title: "Course studio",
     whoCanUse: ["chief_pilot", "director_of_operations", "exec_admin"],
     whatItDoes:
-      "Where courses are built: text lessons, ordering, and optional quizzes attached to individual lessons. This is the authoring side of Academy, separate from taking a course.",
+      "Where courses are built: lessons with text, pictures, videos and PDFs, ordering, and optional quizzes attached to individual lessons. This is the authoring side of Academy, separate from taking a course.",
     howToUse: [
       "Create the course and describe what completing it means.",
       "Add lessons in the order a learner should meet them.",
+      "Under a lesson, use + Add to upload a picture, video or PDF, paste a YouTube or Vimeo link, or pick a document from the library. Preview shows it as a learner will see it.",
       "Use Attach Quiz on a lesson, edit its questions, and set the pass threshold. Add questions before learners take it.",
       "Publish, then assign it from the assignments page.",
     ],
     worthKnowing: [
-      "Studio currently supports text lessons and lesson quizzes. Media uploads, SCORM import/player and viewing-duration tracking are not available.",
+      "A video has to be watched and a PDF paged to the end before its lesson can complete or its quiz opens, unless you untick that for a reference document. A quiz also waits for the earlier lessons.",
+      "PowerPoint slides need saving as a PDF first. SCORM import and playback are not available.",
     ],
     connectsTo:
       "Published courses become assignable. Completions feed training records and, where the course satisfies one, a currency item.",
@@ -1093,7 +1095,7 @@ export const HELP_ENTRIES: HelpEntry[] = [
       "The courses assigned to you, what is outstanding, and what you have completed. Approved linked training may satisfy a currency item; a general course completion alone does not establish flight eligibility.",
     howToUse: [
       "Start with anything overdue — some of it holds up a currency item.",
-      "Read each lesson, pass its attached quiz if it has one, and select Mark Complete.",
+      "Read each lesson, watch its videos and page through its PDFs to the end, pass its attached quiz if it has one, and select Mark Complete.",
       "Passing a quiz does not mark the lesson complete. Mark every lesson complete to finish the course and issue its certificate.",
     ],
     connectsTo:

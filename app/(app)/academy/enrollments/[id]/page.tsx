@@ -1,14 +1,17 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
+import { auth } from "@/auth";
 import {
   COURSE_CATEGORY_LABELS,
   ENROLLMENT_STATUS_LABELS,
   type CourseDetail,
   type Enrollment,
   type Lesson,
+  type LessonMediaProgress,
   getCourse,
   getEnrollment,
+  listLessonMediaProgress,
   listMyQuizAttempts,
 } from "@/lib/api/academy";
 import { ApiError } from "@/lib/api/client";
@@ -79,6 +82,25 @@ export default async function EnrollmentLessonPage({
       quizPassed = false;
     }
   }
+
+  // How far the learner has got through this lesson's videos and PDFs (#170).
+  // If this fails the players start from the beginning; the service still
+  // keeps what was counted and decides what's finished.
+  let mediaProgress: LessonMediaProgress[] = [];
+  if (activeLesson?.media?.some((item) => item.must_finish)) {
+    mediaProgress = await listLessonMediaProgress(enrollment.id).catch(() => []);
+  }
+  const session = await auth();
+  const activeIndex = activeLesson
+    ? course.lessons.findIndex((lesson) => lesson.id === activeLesson.id)
+    : -1;
+  const earlierLessonsOpen = course.lessons
+    .map((lesson, index) => ({ lesson, number: index + 1 }))
+    .filter(
+      ({ lesson, number }) =>
+        number - 1 < activeIndex && !completedLessonIds.has(lesson.id),
+    )
+    .map(({ number }) => number);
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
@@ -161,12 +183,16 @@ export default async function EnrollmentLessonPage({
         <main className="rounded-lg border border-border bg-card p-6">
           {activeLesson ? (
             <LessonPlayer
+              key={activeLesson.id}
               enrollmentId={enrollment.id}
               lesson={activeLesson}
               lessonNumber={course.lessons.findIndex(lesson => lesson.id === activeLesson.id) + 1}
               isDone={completedLessonIds.has(activeLesson.id)}
               locked={enrollment.status !== "in_progress"}
               quizPassed={quizPassed}
+              mediaProgress={mediaProgress}
+              isEnrollee={session?.user?.id === enrollment.user.id}
+              earlierLessonsOpen={earlierLessonsOpen}
             />
           ) : (
             <div className="text-sm text-muted-foreground">

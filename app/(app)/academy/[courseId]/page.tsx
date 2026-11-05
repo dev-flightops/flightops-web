@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { linkCaps } from "@/components/ff/controls";
+import { mediaSummary } from "@/lib/academy/media";
 import { cn } from "@/lib/utils";
 import { notFound, redirect } from "next/navigation";
 
@@ -110,6 +111,11 @@ export default async function CourseDetailPage({
                       {String(idx + 1).padStart(2, "0")}
                     </span>{" "}
                     <span className="font-semibold">{l.title}</span>
+                    {l.media?.length ? (
+                      <span className="ml-2 text-xs text-muted-foreground">
+                        {mediaSummary(l.media)}
+                      </span>
+                    ) : null}
                   </div>
                   {done ? (
                     <span className="status-mark text-status-green">

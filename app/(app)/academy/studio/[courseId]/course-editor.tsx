@@ -9,6 +9,8 @@ import {
   type CourseDetail,
   type CoursePublishStatus,
   type Lesson,
+  type LessonMediaLibraryItem,
+  type LessonMediaLimits,
 } from "@/lib/api/academy";
 import type { CurrencyItemRef } from "@/lib/api/types";
 
@@ -21,15 +23,20 @@ import {
   updatePublishStatusAction,
   updateLessonAction,
 } from "./actions";
+import { LessonMediaEditor } from "./lesson-media-editor";
 
 const _initial: AdminActionState = { status: "idle" };
 
 export function CourseEditor({
   course,
   eligibleCurrencyItems,
+  mediaLimits = null,
+  mediaLibrary = [],
 }: {
   course: CourseDetail;
   eligibleCurrencyItems: CurrencyItemRef[];
+  mediaLimits?: LessonMediaLimits | null;
+  mediaLibrary?: LessonMediaLibraryItem[];
 }) {
   return (
     <div className="space-y-6">
@@ -44,7 +51,7 @@ export function CourseEditor({
         course={course}
         eligibleItems={eligibleCurrencyItems}
       />
-      <LessonList course={course} />
+      <LessonList course={course} mediaLimits={mediaLimits} mediaLibrary={mediaLibrary} />
       <AddLessonForm courseId={course.id} />
     </div>
   );
@@ -236,7 +243,15 @@ function PublishStatusPicker({ course }: { course: CourseDetail }) {
   );
 }
 
-function LessonList({ course }: { course: CourseDetail }) {
+function LessonList({
+  course,
+  mediaLimits,
+  mediaLibrary,
+}: {
+  course: CourseDetail;
+  mediaLimits: LessonMediaLimits | null;
+  mediaLibrary: LessonMediaLibraryItem[];
+}) {
   return (
     <section className="rounded-lg border border-border bg-card p-4">
       <h2 className="mb-3 eyebrow">
@@ -254,6 +269,8 @@ function LessonList({ course }: { course: CourseDetail }) {
               courseId={course.id}
               lesson={l}
               displayNumber={idx + 1}
+              mediaLimits={mediaLimits}
+              mediaLibrary={mediaLibrary}
             />
           ))}
         </ol>
@@ -321,10 +338,14 @@ function LessonRow({
   courseId,
   lesson,
   displayNumber,
+  mediaLimits,
+  mediaLibrary,
 }: {
   courseId: string;
   lesson: Lesson;
   displayNumber: number;
+  mediaLimits: LessonMediaLimits | null;
+  mediaLibrary: LessonMediaLibraryItem[];
 }) {
   const [editing, setEditing] = useState(false);
   const [state, formAction, pending] = useActionState(
@@ -413,6 +434,12 @@ function LessonRow({
           No body yet.
         </p>
       )}
+      <LessonMediaEditor
+        courseId={courseId}
+        lesson={lesson}
+        limits={mediaLimits}
+        library={mediaLibrary}
+      />
     </li>
   );
 }

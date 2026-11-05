@@ -9,7 +9,11 @@ import { auth } from "@/auth";
 import {
   COURSE_CATEGORY_LABELS,
   type CourseDetail,
+  type LessonMediaLibraryItem,
+  type LessonMediaLimits,
   getCourse,
+  getLessonMediaLimits,
+  listLessonMediaLibrary,
 } from "@/lib/api/academy";
 import { ApiError } from "@/lib/api/client";
 import { listCurrencyItems } from "@/lib/api/ops";
@@ -41,16 +45,22 @@ export default async function ManageCoursePage({
 
   let course: CourseDetail;
   let eligibleCurrencyItems: CurrencyItemRef[] = [];
+  let mediaLimits: LessonMediaLimits | null = null;
+  let mediaLibrary: LessonMediaLibraryItem[] = [];
   try {
     // Kick off both fetches in parallel — the currency-items list
     // isn't strictly required to render the page, so its failure
     // downgrades the compliance picker to a linked-only view
     // rather than blocking the whole editor.
-    const [courseResp, itemsResp] = await Promise.all([
+    const [courseResp, itemsResp, limitsResp, libraryResp] = await Promise.all([
       getCourse(courseId),
       listCurrencyItems().catch(() => null),
+      getLessonMediaLimits().catch(() => null),
+      listLessonMediaLibrary().catch(() => []),
     ]);
     course = courseResp;
+    mediaLimits = limitsResp;
+    mediaLibrary = libraryResp;
     if (itemsResp) {
       eligibleCurrencyItems = itemsResp.items.filter(_isEligibleForLink);
     }
@@ -88,6 +98,8 @@ export default async function ManageCoursePage({
       <CourseEditor
         course={course}
         eligibleCurrencyItems={eligibleCurrencyItems}
+        mediaLimits={mediaLimits}
+        mediaLibrary={mediaLibrary}
       />
     </div>
   );
