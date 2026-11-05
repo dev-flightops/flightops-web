@@ -21,7 +21,7 @@ export function NewSchedule() {
     );
   }
   return (
-    <form method="post" action={action} aria-label="New schedule" className="flex w-full flex-wrap items-end gap-3">
+    <form action={action} aria-label="New schedule" className="flex w-full flex-wrap items-end gap-3">
       <label className="min-w-56 flex-1">
         <span className="field-label">Name</span>
         <input name="name" required maxLength={120} placeholder="Winter 2026" className="ff-input px-3 py-2 text-sm" />

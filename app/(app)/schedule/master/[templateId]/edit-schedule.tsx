@@ -33,7 +33,7 @@ export function EditSchedule({ schedule }: { schedule: ScheduleDetail }) {
     );
   }
   return (
-    <form method="post" action={action} aria-label="Edit schedule" className="flex w-full flex-wrap items-end gap-3">
+    <form action={action} aria-label="Edit schedule" className="flex w-full flex-wrap items-end gap-3">
       <input type="hidden" name="template_id" value={schedule.id} />
       <label className="min-w-56 flex-1">
         <span className="field-label">Name</span>

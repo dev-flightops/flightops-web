@@ -43,7 +43,7 @@ export function PublishForm({
   const result = current ? state.result : undefined;
 
   return (
-    <form method="post" action={action} aria-label="Publish to date range" className="space-y-4">
+    <form action={action} aria-label="Publish to date range" className="space-y-4">
       <input type="hidden" name="template_id" value={templateId} />
       <div className="grid gap-3 sm:grid-cols-3">
         <label>

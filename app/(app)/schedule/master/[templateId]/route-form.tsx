@@ -185,12 +185,7 @@ export function RouteForm({
       : `${plane.tail_number} has no cruise speed, so type the times.`;
 
   return (
-    <form
-      method="post"
-      action={action}
-      aria-label={route ? `Change ${route.flight_number}` : "Add flight"}
-      className="space-y-4"
-    >
+    <form action={action} aria-label={route ? `Change ${route.flight_number}` : "Add flight"} className="space-y-4">
       <input type="hidden" name="template_id" value={templateId} />
       {route ? <input type="hidden" name="route_id" value={route.id} /> : null}
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
