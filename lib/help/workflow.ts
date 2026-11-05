@@ -41,7 +41,7 @@ export const WORKFLOW: WorkflowStage[] = [
     page: "/flight-following/new",
     pageLabel: "Open New Flight",
     what:
-      "The flight is built with its route, stops, aircraft and times, from **+ New Flight** on Dispatch or [Open New Flight](/flight-following/new). Round trips are the default, and times fill in from the aircraft's cruise speed. Bookings are then put on it.",
+      "The flight is built with its route, stops, aircraft and times, from **+ New Flight** on Dispatch or [Open New Flight](/flight-following/new). Round trips are the default, and times fill in from the aircraft's cruise speed. The flights you fly every week come from the [Master Schedule](/schedule/master) instead, published to a date range. Bookings are then put on it.",
   },
   {
     slug: "crew",

@@ -22,10 +22,10 @@ export interface SpotlightGroup {
 const MAX_PER_GROUP = 5;
 
 /** Global spotlight search. Fans out to the four searchable list
- *  endpoints in parallel and returns grouped hits. Customers use the
- *  backend's `q` filter directly; aircraft / bookings / flights don't
- *  have `q` today, so we page-1 those and filter client-side (the
- *  demo tenant is small enough that this is fine for now). */
+ *  endpoints in parallel and returns grouped hits. Customers and flights
+ *  use the backend's `q` filter directly; aircraft and bookings don't have
+ *  `q` today, so we page-1 those and filter client-side (the demo tenant
+ *  is small enough that this is fine for now). */
 export async function spotlightSearch(
   query: string,
 ): Promise<SpotlightGroup[]> {
@@ -120,15 +120,11 @@ async function _bookings(lower: string): Promise<SpotlightGroup> {
 
 async function _flights(lower: string): Promise<SpotlightGroup> {
   try {
-    const { items } = await listFlights({ limit: 100 });
-    const matched = items.filter(
-      (f) =>
-        f.flight_number.toLowerCase().includes(lower) ||
-        f.origin.toLowerCase().includes(lower) ||
-        f.destination.toLowerCase().includes(lower) ||
-        f.aircraft.tail_number.toLowerCase().includes(lower),
-    );
-    const hits: SpotlightHit[] = matched.slice(0, MAX_PER_GROUP).map((f) => ({
+    // The server searches, nearest to now first (#168). This read the oldest
+    // 100 flights on file and looked through those, so a flight today wasn't
+    // found once there were more than 100.
+    const { items } = await listFlights({ q: lower, order: "nearest", limit: MAX_PER_GROUP });
+    const hits: SpotlightHit[] = items.map((f) => ({
       id: f.id,
       label: `${f.flight_number} · ${f.origin} → ${f.destination}`,
       sublabel: `${f.aircraft.tail_number} · ${new Date(f.scheduled_departure_at).toLocaleDateString()}`,

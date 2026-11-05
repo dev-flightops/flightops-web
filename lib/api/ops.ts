@@ -94,6 +94,15 @@ export interface ListFlightsParams {
   assignedToMe?: boolean;
   /** Also the seats held on each leg (#139), as reservations count them. */
   withSeats?: boolean;
+  /** Departing on or after, or on or before, this company day (#168). */
+  departsFrom?: string;
+  departsTo?: string;
+  /** Flight number, origin, destination or tail number containing this. */
+  q?: string;
+  /** By departure, oldest first unless told otherwise. `nearest` starts
+   *  from the flights closest to now: with no date, the default reads only
+   *  the oldest on file (#168). */
+  order?: "asc" | "desc" | "nearest";
   limit?: number;
   offset?: number;
 }
@@ -118,6 +127,10 @@ export async function listFlights(
   if (params.assignedToMe) search.set("assigned_to_me", "true");
   // #139: the seats held on each leg, for the schedule's calendar.
   if (params.withSeats) search.set("with_seats", "true");
+  if (params.departsFrom) search.set("departs_from", params.departsFrom);
+  if (params.departsTo) search.set("departs_to", params.departsTo);
+  if (params.q) search.set("q", params.q);
+  if (params.order) search.set("order", params.order);
   if (params.limit !== undefined) search.set("limit", String(params.limit));
   if (params.offset !== undefined) search.set("offset", String(params.offset));
 

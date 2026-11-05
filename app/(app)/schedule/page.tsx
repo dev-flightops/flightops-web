@@ -153,6 +153,9 @@ export default async function SchedulePage({
                 on 9/9. The schedule is the page you are on when you
                 notice a flight is missing, so the way to add one belongs
                 here. One form still, linked from where the need arises. */}
+            <Link href="/schedule/master" className={buttonOutline}>
+              Master Schedule
+            </Link>
             <Link href="/flight-following/new" className={buttonSolid}>
               + New Flight
             </Link>
@@ -170,7 +173,7 @@ export default async function SchedulePage({
           <LoadFailedNotice what={byAircraft.failed} meaning="Aircraft with no flight that day may be missing." className="mb-4" />
           {totalCount === 0 ? (
             <p className="mb-3 text-sm text-muted-foreground">
-              {flights.length === 0 ? `No flights scheduled for ${date}.` : "No flights match the current status filter."}
+              {flights.length === 0 ? <NoFlights date={date} /> : "No flights match the current status filter."}
             </p>
           ) : null}
           <AircraftDay
@@ -193,9 +196,7 @@ export default async function SchedulePage({
       ) : totalCount === 0 ? (
         <div className="rounded-lg border border-border bg-card px-5 py-8 text-center">
           <p className="text-sm text-muted-foreground">
-            {flights.length === 0
-              ? `No flights scheduled for ${date}.`
-              : "No flights match the current status filter."}
+            {flights.length === 0 ? <NoFlights date={date} /> : "No flights match the current status filter."}
           </p>
         </div>
       ) : (
@@ -206,6 +207,19 @@ export default async function SchedulePage({
         </div>
       )}
     </div>
+  );
+}
+
+/** An empty day, and the two ways to fill it (legacy's reservations board). */
+function NoFlights({ date }: { date: string }) {
+  return (
+    <>
+      No flights scheduled for {date}. Add one with + New Flight, or publish the{" "}
+      <Link href="/schedule/master" className="text-primary hover:underline">
+        Master Schedule
+      </Link>
+      .
+    </>
   );
 }
 

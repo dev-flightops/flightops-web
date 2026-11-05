@@ -6,6 +6,7 @@ import { listFlights } from "@/lib/api/ops";
 import { localClock, localDay, utcToLocalInput } from "@/lib/format/local-time";
 import type { FlightListItem, FlightStatus } from "@/lib/api/types";
 import { routeText } from "@/lib/route";
+import { previousDay } from "@/lib/schedule/master";
 
 /**
  * /manifest — legacy `templates/manifest/schedule.html`. Flight
@@ -104,16 +105,34 @@ export default async function FlightSchedulePage({
   const today = localDay(zone);
 
   let flights: FlightListItem[] = [];
+  let totalInRange = 0;
+  let todayCount = 0;
+  let activeNow = 0;
   let loadError: string | null = null;
   try {
-    // Pull the biggest window /ops/flights accepts (le=200) —
-    // schedule is normally a few weeks of near-term flights.
-    // Client-side filters below narrow it.
-    const response = await listFlights({
-      status: statusFilter ?? undefined,
-      limit: 200,
-    });
-    flights = response.items;
+    // The range asked for, from the server (#168). This read the oldest 200
+    // flights on file and filtered them here, so once there were more than
+    // 200 of them, today's and the upcoming ones weren't among those read.
+    const status = statusFilter ?? undefined;
+    const [listed, todays, released] = await Promise.all([
+      listFlights({
+        status,
+        limit: 200,
+        ...(range === "today"
+          ? { onCompanyDate: today }
+          : range === "past"
+            ? { departsTo: previousDay(today), order: "desc" as const }
+            : range === "upcoming"
+              ? { departsFrom: today }
+              : { order: "nearest" as const }),
+      }),
+      listFlights({ status, onCompanyDate: today, limit: 200 }),
+      listFlights({ status: "released", limit: 200 }),
+    ]);
+    flights = listed.items;
+    totalInRange = listed.total;
+    todayCount = todays.total;
+    activeNow = released.items.filter((f) => !f.actual_arrival_at).length;
   } catch (err) {
     const status = err instanceof ApiError ? err.status : 0;
     loadError =
@@ -122,27 +141,9 @@ export default async function FlightSchedulePage({
         : "Flight schedule unavailable. Try refreshing in a moment.";
   }
 
-  // Range filter — done in-process because the backend
-  // /ops/flights endpoint filters by exact date, not range.
-  const filtered = flights.filter((f) => {
-    const key = toDayKey(f.scheduled_departure_at, zone);
-    if (range === "today") return key === today;
-    if (range === "past") return key < today;
-    if (range === "upcoming") return key >= today;
-    return true;
-  });
-
-  // Stats
-  const todayFlights = flights.filter(
-    (f) => toDayKey(f.scheduled_departure_at, zone) === today,
-  );
-  const activeNow = flights.filter(
-    (f) => f.status === "released" && !f.actual_arrival_at,
-  ).length;
-
-  // Group filtered flights by day key.
+  // Group the flights by day key.
   const byDate = new Map<string, FlightListItem[]>();
-  for (const f of filtered) {
+  for (const f of flights) {
     const key = toDayKey(f.scheduled_departure_at, zone);
     if (!byDate.has(key)) byDate.set(key, []);
     byDate.get(key)!.push(f);
@@ -170,7 +171,7 @@ export default async function FlightSchedulePage({
 
       <div className="mb-5 grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-4">
         <StatCard
-          value={String(todayFlights.length)}
+          value={String(todayCount)}
           label="Today's Flights"
         />
         <StatCard
@@ -179,7 +180,7 @@ export default async function FlightSchedulePage({
           valueClass={activeNow > 0 ? "text-status-green" : ""}
         />
         <StatCard
-          value={String(filtered.length)}
+          value={totalInRange > flights.length ? `${flights.length} of ${totalInRange}` : String(flights.length)}
           label="Showing"
           valueClass="text-status-blue"
         />
