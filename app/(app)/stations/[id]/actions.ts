@@ -217,9 +217,9 @@ export async function setStationActiveAction(
 
 
 /**
- * The runway the company flies at a station (#50), entered by hand for an
- * airport the FAA data doesn't cover. The dispatch risk matrix uses it in
- * place of "runway unknown", which scores HIGH.
+ * The runway the company flies at a station (#50), entered by hand. The
+ * dispatch risk matrix scores the stop on it, in place of AWC's record or
+ * the FAA's airport file (#171).
  */
 export async function setStationRunwayAction(
   stationId: string,
@@ -246,7 +246,7 @@ export async function setStationRunwayAction(
       if (err.status === 422) {
         return {
           ok: false,
-          error: "Check the numbers: length 100–20,000 ft, width 10–500 ft.",
+          error: "Check the numbers: length 100–20,000 ft, width 10–500 ft, heading 0–360°.",
         };
       }
       return { ok: false, error: validationSummary(err) ?? `Couldn't save (HTTP ${err.status}).` };

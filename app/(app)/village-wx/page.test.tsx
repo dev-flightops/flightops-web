@@ -238,6 +238,52 @@ describe("VillageWxPage (M2-G-village-wx-redesign)", () => {
     expect(screen.getByText(/by Dana B\./)).toBeInTheDocument();
   });
 
+  it("shows the runway and the crosswind from the agent's wind (#171)", async () => {
+    getVillageBoard.mockResolvedValueOnce({
+      items: [
+        {
+          ...row({ icao: "9Z8", name: "Levelock" }, {}),
+          runways: [{ name: "01/19", length_ft: 3284, width_ft: 60, true_alignment_deg: 26 }],
+          crosswind_kt: 13,
+          crosswind_runway: "01/19",
+        },
+      ],
+      total: 1,
+    });
+    await renderPage();
+    expect(screen.getByText("Runway 01/19, 3,284 × 60 ft")).toBeInTheDocument();
+    expect(screen.getByText(/Crosswind 13 kt on 01\/19/)).toBeInTheDocument();
+  });
+
+  it("says why a reported wind has no crosswind (#171)", async () => {
+    getVillageBoard.mockResolvedValueOnce({
+      items: [{ ...row({ icao: "ZZ9", name: "A strip" }, {}), runways: [], crosswind_kt: null }],
+      total: 1,
+    });
+    await renderPage();
+    expect(screen.getByText(/No runway on file for a crosswind/)).toBeInTheDocument();
+    expect(screen.queryByText(/Crosswind \d/)).toBeNull();
+  });
+
+  it("names the runways when an airport has several, and says nothing with no wind", async () => {
+    getVillageBoard.mockResolvedValueOnce({
+      items: [
+        {
+          ...row({ icao: "PABE", name: "Bethel" }, { wind_speed_kt: null, wind_dir_deg: null }),
+          runways: [
+            { name: "01L/19R", length_ft: 6400, width_ft: 150, true_alignment_deg: 23 },
+            { name: "12/30", length_ft: 1858, width_ft: 75, true_alignment_deg: 128 },
+          ],
+          crosswind_kt: null,
+        },
+      ],
+      total: 1,
+    });
+    await renderPage();
+    expect(screen.getByText("Runways 01L/19R, 12/30")).toBeInTheDocument();
+    expect(screen.queryByText(/Crosswind/)).toBeNull();
+  });
+
   it("flags a > 4hr report as STALE", async () => {
     getVillageBoard.mockResolvedValueOnce({
       items: [

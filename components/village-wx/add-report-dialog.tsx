@@ -184,7 +184,7 @@ export function AddReportDialog({
             <div className="grid gap-4 sm:grid-cols-3">
               <Field
                 name="wind_dir_deg"
-                label="Wind direction (°)"
+                label="Wind direction (° magnetic)"
                 type="number"
                 placeholder="180"
                 min={0}

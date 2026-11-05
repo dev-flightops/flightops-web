@@ -19,6 +19,8 @@ import {
   villageCategoryBecause,
   villageSky,
   villageStaleness,
+  villageCrosswind,
+  villageRunways,
   villageWind,
 } from "@/lib/village-weather-format";
 
@@ -209,7 +211,7 @@ function ReportCard({
             </div>
             {r ? (
               <>
-                <Conditions report={r} view={view} />
+                <Conditions report={r} view={view} crosswind={villageCrosswind(row)} />
                 <ReportPhotos photos={r.photos} />
               </>
             ) : (
@@ -217,6 +219,16 @@ function ReportCard({
                 No report yet — file the first observation.
               </p>
             )}
+            {villageRunways(row.runways) ? (
+              <p className="mt-1 text-[0.75rem] text-muted-foreground">
+                {villageRunways(row.runways)}
+              </p>
+            ) : r?.wind_speed_kt != null ? (
+              // #171: why a reported wind has no crosswind beside it.
+              <p className="mt-1 text-[0.75rem] text-muted-foreground">
+                No runway on file for a crosswind: enter it under Stations.
+              </p>
+            ) : null}
             <ApproachToggle
               airportId={airport.id}
               icao={airport.icao}
@@ -261,9 +273,11 @@ function ReportCard({
 function Conditions({
   report,
   view,
+  crosswind,
 }: {
   report: VillageWeatherReportResponse;
   view: "compact" | "expanded";
+  crosswind: string | null;
 }) {
   const skyLine = villageSky(report);
   // What set its category (#149): "FEW 400, 3 SM" read as VFR, and 3 SM is MVFR.
@@ -279,7 +293,7 @@ function Conditions({
     // on line 2 (the supporting data). One-line packed reads dense at
     // typical card widths.
     const top = skyLine ?? "—";
-    const bottom = [windLine, altPiece].filter(Boolean).join(" · ");
+    const bottom = [windLine, crosswind, altPiece].filter(Boolean).join(" · ");
     return (
       <div className="mt-1 text-[0.85rem]">
         <p className="text-foreground">{top}</p>
@@ -302,6 +316,7 @@ function Conditions({
         <Row label="Category" value={`${report.flight_category} on its ${because}`} />
       )}
       {windLine && <Row label="Wind" value={windLine} />}
+      {crosswind && <Row label="Crosswind" value={crosswind.replace(/^Crosswind /, "")} />}
       {altPiece && <Row label="Altimeter" value={altPiece} />}
       {report.temperature_c != null && (
         <Row label="Temp" value={`${report.temperature_c}°C`} />

@@ -6,7 +6,7 @@ import type {
   StationListItem,
 } from "@/lib/api/types";
 
-const { TestApiError, listStations, listStationIssues, notFoundSpy } =
+const { TestApiError, listStations, listStationIssues, getFaaRunways, notFoundSpy } =
   vi.hoisted(() => {
     class TestApiError extends Error {
       constructor(
@@ -20,6 +20,7 @@ const { TestApiError, listStations, listStationIssues, notFoundSpy } =
     return {
       TestApiError,
       listStations: vi.fn(),
+      getFaaRunways: vi.fn(),
       listStationIssues: vi.fn(),
       notFoundSpy: vi.fn(() => {
         throw new Error("NEXT_NOT_FOUND");
@@ -27,7 +28,7 @@ const { TestApiError, listStations, listStationIssues, notFoundSpy } =
     };
   });
 vi.mock("@/lib/api/client", () => ({ ApiError: TestApiError }));
-vi.mock("@/lib/api/ground", () => ({ listStations, listStationIssues }));
+vi.mock("@/lib/api/ground", () => ({ listStations, listStationIssues, getFaaRunways }));
 vi.mock("next/navigation", () => ({ notFound: notFoundSpy }));
 const { auth } = vi.hoisted(() => ({
   auth: vi.fn(async () => ({ roles: ["ground_ops"] as string[] })),
@@ -98,6 +99,8 @@ function makeIssue(
 
 beforeEach(() => {
   listStations.mockReset();
+  getFaaRunways.mockReset();
+  getFaaRunways.mockResolvedValue({ code: "PANC", effective: "2026-10-29", runways: [] });
   listStationIssues.mockReset();
   notFoundSpy.mockClear();
 });
@@ -248,6 +251,36 @@ describe("StationDetailPage: who works a station (29 Sep)", () => {
     expect(screen.getByRole("button", { name: /report issue/i })).toBeInTheDocument();
     expect(screen.queryByText(/resolves station issues/i)).toBeNull();
     // #50: the runway the dispatch risk matrix needs.
+    expect(screen.getByRole("button", { name: "Save runway" })).toBeInTheDocument();
+  });
+
+  it("shows the FAA's figures for an airport with no runway entered (#171)", async () => {
+    listStations.mockResolvedValueOnce({
+      items: [makeStation({ runway_length_ft: null, runway_width_ft: null, runway_primary_name: null, runway_source: null })],
+      total: 1,
+    });
+    listStationIssues.mockResolvedValueOnce({ items: [], total: 0 });
+    getFaaRunways.mockResolvedValueOnce({
+      code: "9Z8",
+      effective: "2026-10-29",
+      runways: [{ name: "01/19", length_ft: 3284, width_ft: 60, true_alignment_deg: 26 }],
+    });
+    await renderPage();
+    expect(screen.getAllByText("01/19 · 3,284 × 60 ft · 26° true").length).toBeGreaterThan(0);
+    expect(screen.getByText("FAA airport file")).toBeInTheDocument();
+    expect(screen.getByText("FAA airport file, 29 Oct 2026")).toBeInTheDocument();
+  });
+
+  it("says when the FAA's file has nothing, and still takes a typed runway", async () => {
+    listStations.mockResolvedValueOnce({
+      items: [makeStation({ runway_length_ft: null, runway_width_ft: null, runway_primary_name: null, runway_source: null })],
+      total: 1,
+    });
+    listStationIssues.mockResolvedValueOnce({ items: [], total: 0 });
+    getFaaRunways.mockRejectedValueOnce(new Error("down"));
+    await renderPage();
+    expect(screen.getByText(/has no runway for this airport/)).toBeInTheDocument();
+    expect(screen.getByText("Not entered")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Save runway" })).toBeInTheDocument();
   });
 
