@@ -67,19 +67,19 @@ export function RoutesPanel({
         )
       ) : (
         <div className="overflow-x-auto">
-          <table className="data-table w-full text-sm">
-            <thead>
+          <table className="w-full text-sm">
+            <thead className="ff-thead">
               <tr>
-                <th>Flight</th>
-                <th>Route</th>
-                <th>Operates</th>
-                <th>Departs</th>
-                <th>Arrives</th>
-                <th>Aircraft</th>
-                {canEdit ? <th /> : null}
+                <th scope="col" className="px-4 py-2 font-semibold">Flight</th>
+                <th scope="col" className="px-4 py-2 font-semibold">Route</th>
+                <th scope="col" className="px-4 py-2 font-semibold">Operates</th>
+                <th scope="col" className="px-4 py-2 font-semibold">Departs</th>
+                <th scope="col" className="px-4 py-2 font-semibold">Arrives</th>
+                <th scope="col" className="px-4 py-2 font-semibold">Aircraft</th>
+                {canEdit ? <th scope="col" className="px-4 py-2" /> : null}
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-border">
               {routes.map((route) =>
                 editing === route.id ? (
                   <tr key={route.id}>
@@ -88,31 +88,31 @@ export function RoutesPanel({
                     </td>
                   </tr>
                 ) : (
-                  <tr key={route.id}>
-                    <td className="font-mono font-semibold text-foreground">
+                  <tr key={route.id} className="hover:bg-accent">
+                    <td className="whitespace-nowrap px-4 py-3 font-mono font-semibold text-foreground">
                       {route.flight_number}
                       {route.is_ifr ? <span className="eyebrow ml-2">IFR</span> : null}
                     </td>
-                    <td>
-                      <span className="font-mono text-foreground">{legsRoute(route.legs)}</span>
+                    <td className="px-4 py-3">
+                      <span className="whitespace-nowrap font-mono text-foreground">{legsRoute(route.legs)}</span>
                       {route.legs.length > 1 ? (
-                        <div className="font-mono text-xs text-muted-foreground">
+                        <div className="whitespace-nowrap font-mono text-xs text-muted-foreground">
                           {route.legs.map((leg) => `${leg.departs}–${leg.arrives}`).join(", ")}
                         </div>
                       ) : null}
                       {route.notes ? <div className="text-xs text-muted-foreground">{route.notes}</div> : null}
                     </td>
-                    <td className="whitespace-nowrap">{daysText(route.days_of_week)}</td>
-                    <td className="font-mono tabular-nums">{route.legs[0].departs}</td>
-                    <td className="font-mono tabular-nums">{route.legs[route.legs.length - 1].arrives}</td>
-                    <td>
+                    <td className="whitespace-nowrap px-4 py-3">{daysText(route.days_of_week)}</td>
+                    <td className="px-4 py-3 font-mono tabular-nums">{route.legs[0].departs}</td>
+                    <td className="px-4 py-3 font-mono tabular-nums">{route.legs[route.legs.length - 1].arrives}</td>
+                    <td className="whitespace-nowrap px-4 py-3">
                       <span className="font-mono text-foreground">{route.aircraft.tail_number}</span>
                       <span className="ml-2 text-xs text-muted-foreground">
                         {route.aircraft.is_active ? route.aircraft.model : "not active"}
                       </span>
                     </td>
                     {canEdit ? (
-                      <td className="whitespace-nowrap text-right">
+                      <td className="whitespace-nowrap px-4 py-3 text-right">
                         <button
                           type="button"
                           onClick={() => {

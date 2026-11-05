@@ -30,40 +30,40 @@ export function PublicationsTable({
 }) {
   return (
     <div className="overflow-x-auto">
-      <table className="data-table w-full text-sm">
-        <thead>
+      <table className="w-full text-sm">
+        <thead className="ff-thead">
           <tr>
-            <th>Name</th>
-            {showSchedule ? <th>Schedule</th> : null}
-            <th>Dates</th>
-            <th>Published</th>
-            <th className="text-right">Added</th>
-            <th className="text-right">Already there</th>
-            <th>Couldn&rsquo;t add</th>
-            <th />
+            <th scope="col" className="px-4 py-2 font-semibold">Name</th>
+            {showSchedule ? <th scope="col" className="px-4 py-2 font-semibold">Schedule</th> : null}
+            <th scope="col" className="px-4 py-2 font-semibold">Dates</th>
+            <th scope="col" className="px-4 py-2 font-semibold">Published</th>
+            <th scope="col" className="px-4 py-2 text-right font-semibold">Added</th>
+            <th scope="col" className="px-4 py-2 text-right font-semibold">Already there</th>
+            <th scope="col" className="px-4 py-2 font-semibold">Couldn&rsquo;t add</th>
+            <th scope="col" className="px-4 py-2" />
           </tr>
         </thead>
-        <tbody>
+        <tbody className="divide-y divide-border">
           {publications.map((p) => (
-            <tr key={p.id}>
-              <td className="font-medium text-foreground">{p.name}</td>
+            <tr key={p.id} className="hover:bg-accent">
+              <td className="px-4 py-3 font-medium text-foreground">{p.name}</td>
               {showSchedule ? (
-                <td>
+                <td className="px-4 py-3">
                   <Link href={`/schedule/master/${p.template_id}`} className="text-foreground hover:underline">
                     {p.template_name}
                   </Link>
                 </td>
               ) : null}
-              <td className="whitespace-nowrap">
+              <td className="whitespace-nowrap px-4 py-3">
                 {day(p.start_date)} to {day(p.end_date)}
               </td>
-              <td className="whitespace-nowrap">
+              <td className="whitespace-nowrap px-4 py-3">
                 {localDate(p.published_at, zone, { withYear: true })} {localClock(p.published_at, zone)}
                 {p.published_by ? <div className="text-xs text-muted-foreground">by {p.published_by}</div> : null}
               </td>
-              <td className="text-right font-semibold tabular-nums">{p.flights_created}</td>
-              <td className="text-right tabular-nums">{p.flights_already_there}</td>
-              <td>
+              <td className="px-4 py-3 text-right font-semibold tabular-nums">{p.flights_created}</td>
+              <td className="px-4 py-3 text-right tabular-nums">{p.flights_already_there}</td>
+              <td className="px-4 py-3">
                 {p.problem_count === 0 ? (
                   <span className="tabular-nums">0</span>
                 ) : (
@@ -82,7 +82,7 @@ export function PublicationsTable({
                   </details>
                 )}
               </td>
-              <td className="text-right">
+              <td className="px-4 py-3 text-right">
                 {p.withdrawn_at ? (
                   <span className="text-xs text-muted-foreground">
                     Withdrawn {localDate(p.withdrawn_at, zone)}: {p.flights_removed ?? 0} removed,{" "}

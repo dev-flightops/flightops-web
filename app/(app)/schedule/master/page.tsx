@@ -56,20 +56,20 @@ export default async function MasterSchedulePage() {
               </EmptyState>
             ) : (
               <div className="overflow-x-auto">
-                <table className="data-table w-full text-sm">
-                  <thead>
+                <table className="w-full text-sm">
+                  <thead className="ff-thead">
                     <tr>
-                      <th>Schedule</th>
-                      <th className="text-right">Flights</th>
-                      <th>Last published</th>
-                      <th>Status</th>
-                      <th />
+                      <th scope="col" className="px-4 py-2 font-semibold">Schedule</th>
+                      <th scope="col" className="px-4 py-2 text-right font-semibold">Flights</th>
+                      <th scope="col" className="px-4 py-2 font-semibold">Last published</th>
+                      <th scope="col" className="px-4 py-2 font-semibold">Status</th>
+                      <th scope="col" className="px-4 py-2" />
                     </tr>
                   </thead>
-                  <tbody>
+                  <tbody className="divide-y divide-border">
                     {schedules.map((schedule) => (
-                      <tr key={schedule.id}>
-                        <td>
+                      <tr key={schedule.id} className="hover:bg-accent">
+                        <td className="px-4 py-3">
                           <Link
                             href={`/schedule/master/${schedule.id}`}
                             className="font-semibold text-foreground hover:underline"
@@ -80,8 +80,8 @@ export default async function MasterSchedulePage() {
                             <div className="text-xs text-muted-foreground">{schedule.description}</div>
                           ) : null}
                         </td>
-                        <td className="text-right tabular-nums">{schedule.route_count}</td>
-                        <td>
+                        <td className="px-4 py-3 text-right tabular-nums">{schedule.route_count}</td>
+                        <td className="px-4 py-3">
                           {schedule.last_publication ? (
                             <>
                               {schedule.last_publication.name}
@@ -94,13 +94,13 @@ export default async function MasterSchedulePage() {
                             <span className="text-muted-foreground">Never published</span>
                           )}
                         </td>
-                        <td>
+                        <td className="px-4 py-3">
                           <StatusMark
                             label={schedule.is_active ? "Active" : "Inactive"}
                             tone={schedule.is_active ? "green" : "muted"}
                           />
                         </td>
-                        <td className="text-right">
+                        <td className="px-4 py-3 text-right">
                           <Link href={`/schedule/master/${schedule.id}`} className={linkCaps}>
                             Open <span aria-hidden>›</span>
                           </Link>
