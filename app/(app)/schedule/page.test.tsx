@@ -222,6 +222,16 @@ describe("SchedulePage (M2-G-30)", () => {
 });
 
 /** #139: by default the day is a column per aircraft, a block per leg. */
+describe("the way to the master schedule (#168)", () => {
+  it("is on the page, and on an empty day says how to fill it", async () => {
+    listFlights.mockResolvedValueOnce({ items: [], total: 0 });
+    await renderPage({ date: "2026-10-30", view: "list" });
+    const links = screen.getAllByRole("link", { name: "Master Schedule" });
+    expect(links.map((a) => a.getAttribute("href"))).toEqual(["/schedule/master", "/schedule/master"]);
+    expect(screen.getByText(/No flights scheduled for 2026-10-30\. Add one with \+ New Flight/)).toBeInTheDocument();
+  });
+});
+
 describe("the schedule by aircraft (#139)", () => {
   const legs = [
     { sequence: 1, origin: "PABE", destination: "9Z8", scheduled_departure_at: "2026-10-30T18:30:00Z", scheduled_arrival_at: "2026-10-30T19:45:00Z" },

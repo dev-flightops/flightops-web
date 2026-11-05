@@ -11,11 +11,16 @@ export function RemoveRowButton({
   label,
   confirm,
   action,
+  word = "Remove",
+  pendingWord = "Removing…",
 }: {
   /** Says which row, for a screen reader: "Remove the rate for all pilots". */
   label: string;
   confirm: string;
   action: () => Promise<{ ok: true } | { ok: false; error: string }>;
+  /** What the button says, when it isn't Remove. */
+  word?: string;
+  pendingWord?: string;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -43,7 +48,7 @@ export function RemoveRowButton({
         aria-label={label}
         className="text-xs text-status-red hover:underline disabled:opacity-60"
       >
-        {pending ? "Removing…" : "Remove"}
+        {pending ? pendingWord : word}
       </button>
       {error ? (
         <span role="alert" className="max-w-[16rem] whitespace-normal text-right text-xs text-status-red">

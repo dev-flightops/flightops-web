@@ -1201,6 +1201,21 @@ export const HELP_ENTRIES: HelpEntry[] = [
   },
   // ── Daily operations ────────────────────────────────────────────────
   {
+    route: "/schedule/master",
+    title: "Master Schedule",
+    whoCanUse: ["dispatcher", "exec_admin"],
+    whatItDoes:
+      "Holds the flights the company flies every week, each with its days of the week, in named schedules such as Winter 2026. Publishing one to a date range puts its flights on the Schedule without building them one by one.",
+    howToUse: [
+      "Create a schedule, then add each flight with its route, aircraft, times and days.",
+      "Enter a date range under Publish to Date Range and press Preview to see what it would add.",
+      "Press Publish. A publication made by mistake can be withdrawn from Publication History.",
+    ],
+    connectsTo:
+      "Published flights are ordinary flights on the Schedule: crewed on the dispatch packet, booked, released and flown like any other. Other roles can read this page; only dispatch and an Exec Admin can change it.",
+    related: ["/schedule", "/dispatch", "/flight-following"],
+  },
+  {
     route: "/schedule",
     title: "Schedule",
     whoCanUse: ["dispatcher", "chief_pilot", "director_of_operations", "reservations_agent", "exec_admin"],
@@ -1213,7 +1228,7 @@ export const HELP_ENTRIES: HelpEntry[] = [
     ],
     connectsTo:
       "Flights arrive here from confirmed bookings and from being created directly. Releasing one moves it onto the Flight Following board.",
-    related: ["/dispatch", "/flight-following", "/reservations/fleet-board"],
+    related: ["/schedule/master", "/dispatch", "/flight-following", "/reservations/fleet-board"],
   },
   {
     route: "/manifest",

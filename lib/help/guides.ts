@@ -90,6 +90,27 @@ export const GUIDES: Guide[] = [
     pages: ["/dispatch", "/flight-following/new"],
   },
   {
+    slug: "publish-the-master-schedule",
+    title: "Publish the master schedule",
+    roles: ["dispatcher", "exec_admin"],
+    summary: "Put the flights you fly every week on the Schedule without building each one.",
+    steps: [
+      "On [Schedule](/schedule), press **Master Schedule**, then **+ New Schedule**. Give it a name, for example Winter 2026. A company can keep one for each season.",
+      "Press **+ Add Flight**. Enter the flight number, the aircraft, where it leaves from and where it goes, and tick the days it operates. It is built as on + New Flight: a round trip by default, with the times filled in from the aircraft's cruise speed. Add one for each flight.",
+      "Under **Publish to Date Range**, enter the start and end dates and press **Preview**. It says how many flights the dates would add and which can't be added, and why.",
+      "Press **Publish**. The flights are on the [Schedule](/schedule) with status Planned, ready to crew and release like any other flight.",
+    ],
+    notes: [
+      "Times are the clock at the departure base, and hold through a clock change: the 9 am flight stays the 9 am flight.",
+      "A flight number already on a date is left as it is, so a flight moved or cancelled on the day stays that way, and publishing the same dates again adds nothing twice.",
+      "An aircraft can't hold two flights at once, so a flight is not added when its aircraft is already on another at that time. The preview names it. A flight on an inactive aircraft isn't added either, nor one whose time has already gone today.",
+      "Changing a schedule doesn't change flights already published. Change those on the day from the flight's panel on the Schedule.",
+      "A publication made by mistake can be taken back: **Withdraw** in Publication History removes its flights, except any that have been crewed, booked, released or changed. The same dates can then be published again.",
+      "Crew are assigned to each flight on the dispatch packet, as with any flight.",
+    ],
+    pages: ["/schedule/master", "/schedule"],
+  },
+  {
     slug: "release-a-flight",
     title: "Release a flight",
     roles: ["dispatcher", "director_of_operations", "exec_admin"],
