@@ -154,6 +154,7 @@ export type FlightType =
   | "ferry"
   | "checkride"
   | "scheduled"
+  | "medevac"
   | "eas"
   | "mx_checkflight"
   | "other";

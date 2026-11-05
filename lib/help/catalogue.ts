@@ -491,7 +491,7 @@ export const HELP_ENTRIES: HelpEntry[] = [
       },
     ],
     connectsTo:
-      "The preflight reads the dispatch packet and the manifest, and writes the acceptance back to the flight. A filed flight log pushes hours to Maintenance and pay events to Payroll. Currency comes from the compliance records, not from the logbook.",
+      "The preflight reads the dispatch packet and the manifest, and writes the acceptance back to the flight. A filed flight log pushes hours to Maintenance and settles the flight's pay events on Payroll. Currency comes from the compliance records, not from the logbook.",
     example:
       "The assigned pilot opens their 06:40 to PABE, reviews the existing dispatch release and preflight checks, then records acceptance. Pilot acceptance does not replace the dispatcher's release.",
     related: ["/flight-crew/elog", "/compliance/crew-currency", "/dispatch"],
@@ -501,7 +501,7 @@ export const HELP_ENTRIES: HelpEntry[] = [
     title: "Electronic flight log",
     whoCanUse: ["pilot", "check_airman", "chief_pilot", "exec_admin"],
     whatItDoes:
-      "The logbook entry for a flight: out, off, on, in, the hours that fall out of them, and the legs flown. Filing it is what turns a completed flight into hours on an airframe, time in a pilot's record, and a pay event.",
+      "The logbook entry for a flight: out, off, on, in, the hours that fall out of them, and the legs flown. Filing it is what turns a completed flight into hours on an airframe, time in a pilot's record, and settled pay events.",
     howToUse: [
       "Open the flight you have just finished.",
       "Enter the four times. The hours are computed from them rather than typed, so a transposed digit shows up as an implausible duration.",
@@ -517,7 +517,7 @@ export const HELP_ENTRIES: HelpEntry[] = [
         heading: "What happens after you submit",
         steps: [
           "Airframe hours advance, which moves the maintenance clock.",
-          "A pay event is created if the flight earns one.",
+          "The flight's pay events update from your legs and flight type: a medevac or training flight earns its modifier here.",
           "The entry joins your flight history, which is what a currency check reads.",
           "A chief pilot review is queued where the operator requires one.",
         ],
@@ -1289,11 +1289,11 @@ export const HELP_ENTRIES: HelpEntry[] = [
     howToUse: [
       "Work the list of the day's flights.",
       "Chase any flight without a completion or a cancellation against it.",
-      "Chase any completed flight without a filed log — those are the hours that never reach maintenance or payroll.",
+      "Chase any completed flight without a filed log — until it is filed, its pay stands on the check-in times, without any medevac or training modifier.",
       "Close the day once the list is clear.",
     ],
     connectsTo:
-      "Reads the day's flights and their logs. Unfiled logs are what hold up airframe hours and pay events.",
+      "Reads the day's flights and their logs. Unfiled logs are what hold up a flight's final hours and pay events.",
     example:
       "At 19:00 the board shows eleven flights complete and one still airborne from the afternoon. The dispatcher calls the pilot, finds they landed at PAKN and forgot to update, and closes the day with all twelve accounted for.",
     related: ["/flight-following", "/flight-crew/elog", "/dispatch"],
@@ -1570,7 +1570,7 @@ export const HELP_ENTRIES: HelpEntry[] = [
       "Raise anything wrong with a supervisor rather than editing around it.",
     ],
     connectsTo:
-      "The hours are recorded here. A pay event is entered on Payroll: a clocked shift doesn't create one by itself yet.",
+      "The hours are recorded here. Clocking out makes a pay event for them, pending on Payroll; hours past 40 in the week, Monday to Sunday, become overtime, except for flight crew. A corrected shift corrects its event.",
     related: ["/payroll", "/payroll/periods"],
   },
   {
@@ -1578,9 +1578,10 @@ export const HELP_ENTRIES: HelpEntry[] = [
     title: "Payroll",
     whoCanUse: ["exec_admin"],
     whatItDoes:
-      "Pay events and the periods they roll into. An event is entered by hand, with its hours or amount, then approved or rejected.",
+      "Pay events and the periods they roll into. Flights that land and shifts that clock out make their own events; others are entered by hand. Each is approved or rejected before it can export.",
     howToUse: [
-      "Review the events in the open period.",
+      "Choose the period's dates, then review its events. A note in the description means someone should look: Approve all pending leaves those for you.",
+      "Press Bring up to date after changing pay rates, or for flights and shifts from before the rates were set.",
       "Investigate anything without a source rather than adjusting it.",
       "Lock the period when it is agreed, then export.",
     ],
@@ -1588,13 +1589,15 @@ export const HELP_ENTRIES: HelpEntry[] = [
       {
         heading: "Where a pay event comes from",
         steps: [
-          "A manual entry on Payroll, which carries whoever entered it.",
-          "Clocked shifts and completed flights don't create events by themselves yet.",
+          "A flight landing: flight pay for the PIC and SIC, the day's rate, and any modifiers, from Settings → Pilot Pay. With no rate, the hours are still recorded.",
+          "Filing the flight log: its legs replace the check-in times, and its flight type decides the medevac and training modifiers.",
+          "A shift clocking out: duty hours, and overtime past 40 in the week, Monday to Sunday. Flight crew have no hourly overtime: their hours are on record only.",
+          "A manual entry on Payroll, which carries whoever entered it. Nothing automatic changes it. Per diem, standby, training pay, expenses and deductions are entered this way.",
         ],
       },
     ],
     connectsTo:
-      "A locked period exports for the payroll provider. Settings → Pilot Pay keeps the rate table, which events don't read yet.",
+      "A locked period exports for the payroll provider, approved events only. Settings → Pilot Pay keeps the rate table a flight's events read. An event already exported doesn't change: a later correction is a new event for the next export.",
     related: ["/payroll/periods", "/settings/pilot-pay", "/time-clock"],
   },
   {
@@ -1712,7 +1715,7 @@ export const HELP_ENTRIES: HelpEntry[] = [
     title: "Pilot pay",
     whoCanUse: ["exec_admin"],
     whatItDoes:
-      "The company's pay rate table and daily modifiers: what a pilot earns, by airframe and years of service. Payroll doesn't read them yet: pay events are entered by hand.",
+      "The company's pay rate table and daily modifiers: what a pilot earns, by airframe and years of service. A flight's pay events read them when it lands.",
     howToUse: [
       "Add a rate: daily or flight hourly, for all pilots or one, narrowed by airframe or years of service if you pay that way.",
       "To change a rate, add a new one with a later effective date.",

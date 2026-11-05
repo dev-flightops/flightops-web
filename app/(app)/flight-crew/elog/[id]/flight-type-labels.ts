@@ -10,6 +10,7 @@ export const FLIGHT_TYPE_LABELS: Record<FlightType, string> = {
   ferry: "Ferry",
   checkride: "Checkride",
   scheduled: "Scheduled",
+  medevac: "Medevac",
   eas: "EAS",
   mx_checkflight: "MX Checkflight",
   other: "Other",

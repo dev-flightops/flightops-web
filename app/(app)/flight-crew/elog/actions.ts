@@ -41,6 +41,7 @@ const Schema = z.object({
     "ferry",
     "checkride",
     "scheduled",
+    "medevac",
     "eas",
     "mx_checkflight",
     "other",

@@ -78,8 +78,10 @@ export default async function SettingsPilotPayPage() {
         <h1 className="page-title">Pilot Pay Rates &amp; Modifiers</h1>
         <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
           Configure pay rate tables by seniority, airframe, and role. Add daily
-          modifiers for medevac, night ops, and other situations. Payroll doesn&apos;t
-          read these yet: pay events are entered by hand on Payroll.
+          modifiers for medevac, night ops, and other situations. When a flight
+          lands, its pay events read the most specific rate in force that day.
+          Medevac, night ops, training and check airman apply by themselves; add
+          the others by hand on Payroll.
         </p>
       </header>
 

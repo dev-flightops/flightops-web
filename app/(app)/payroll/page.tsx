@@ -6,10 +6,11 @@ import {
   listPayEvents,
   PAY_EVENT_TYPE_LABELS,
   type PayEventRow,
+  type PayEventSource,
   type PayEventStatus,
 } from "@/lib/api/payroll";
 
-import { ApproveRejectButtons } from "./row-actions";
+import { ApproveRejectButtons, PayEventRange } from "./row-actions";
 
 /**
  * /payroll — Pay Events list.
@@ -20,9 +21,14 @@ import { ApproveRejectButtons } from "./row-actions";
  * Pay Event" CTAs top-right, filter row, then a table of events
  * (Date / Employee / Type / Hours / Amount / Status / Description +
  * inline Approve/Reject actions on pending rows).
+ *
+ * Flights that land and shifts that clock out make their own events (#134),
+ * so the list reads by date range too, and a range can be approved at once.
  */
 
 export const dynamic = "force-dynamic";
+// Bring up to date reads every flight and shift in the range.
+export const maxDuration = 60;
 
 const STATUS_TABS: readonly {
   value: PayEventStatus | "";
@@ -48,6 +54,21 @@ function parseStatus(
     return s;
   }
   return "";
+}
+
+/** The API's limits: a page with no dates, and a page with them. */
+const LATEST = 200;
+const IN_RANGE = 1000;
+
+const SOURCE_LABELS: Record<PayEventSource, string> = {
+  clock: "From the clock",
+  flight: "From the flight",
+  manual: "Entered by hand",
+};
+
+function parseDay(v: string | string[] | undefined): string {
+  const s = Array.isArray(v) ? v[0] : v;
+  return s && /^\d{4}-\d{2}-\d{2}$/.test(s) ? s : "";
 }
 
 function formatMoney(amount: string | null): string {
@@ -78,17 +99,28 @@ function formatEventDate(iso: string): string {
 export default async function PayrollEventsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string | string[] }>;
+  searchParams: Promise<{
+    status?: string | string[];
+    start?: string | string[];
+    end?: string | string[];
+  }>;
 }) {
   const params = await searchParams;
   const statusFilter = parseStatus(params.status);
+  const start = parseDay(params.start);
+  const end = parseDay(params.end);
+  const dated = Boolean(start || end);
+  const limit = dated ? IN_RANGE : LATEST;
 
   let events: PayEventRow[] = [];
   let loadError: string | null = null;
   try {
-    const response = await listPayEvents(
-      statusFilter ? { status: statusFilter } : {},
-    );
+    const response = await listPayEvents({
+      ...(statusFilter ? { status: statusFilter } : {}),
+      ...(start ? { start } : {}),
+      ...(end ? { end } : {}),
+      ...(dated ? { limit } : {}),
+    });
     events = response.items;
   } catch (err) {
     const status = err instanceof ApiError ? err.status : 0;
@@ -127,10 +159,17 @@ export default async function PayrollEventsPage({
         </div>
       </header>
 
+      <PayEventRange status={statusFilter} start={start} end={end} />
+
       <div className="mb-4 flex flex-wrap gap-1">
         {STATUS_TABS.map((t) => {
           const active = t.value === statusFilter;
-          const href = t.value ? `/payroll?status=${t.value}` : "/payroll";
+          const query = new URLSearchParams({
+            ...(t.value ? { status: t.value } : {}),
+            ...(start ? { start } : {}),
+            ...(end ? { end } : {}),
+          }).toString();
+          const href = query ? `/payroll?${query}` : "/payroll";
           return (
             <Link
               key={t.label}
@@ -147,6 +186,12 @@ export default async function PayrollEventsPage({
           );
         })}
       </div>
+
+      {!loadError && total >= limit ? (
+        <p role="status" className="mb-3 text-xs font-semibold text-status-yellow">
+          Showing the latest {limit}. There may be more: choose dates to see them.
+        </p>
+      ) : null}
 
       {loadError ? (
         <div
@@ -186,6 +231,9 @@ export default async function PayrollEventsPage({
                     </td>
                     <td className="whitespace-nowrap px-4 py-3 text-xs text-muted-foreground">
                       {PAY_EVENT_TYPE_LABELS[e.event_type]}
+                      <span className="block text-[0.65rem]">
+                        {SOURCE_LABELS[e.source]}
+                      </span>
                     </td>
                     <td className="whitespace-nowrap px-4 py-3 text-right font-mono text-xs text-muted-foreground">
                       {formatHours(e.hours)}
@@ -196,8 +244,18 @@ export default async function PayrollEventsPage({
                     <td className="whitespace-nowrap px-4 py-3">
                       <PayEventStatusBadge status={e.status} />
                     </td>
-                    <td className="max-w-xs truncate px-4 py-3 text-xs text-muted-foreground">
+                    <td className="max-w-md px-4 py-3 text-xs text-muted-foreground">
                       {e.description ?? ""}
+                      {e.notes ? (
+                        <span
+                          className={
+                            "mt-1 block " +
+                            (e.needs_check ? "font-semibold text-status-yellow" : "")
+                          }
+                        >
+                          {e.notes}
+                        </span>
+                      ) : null}
                     </td>
                     <td className="whitespace-nowrap px-4 py-3 text-right">
                       {e.status === "pending" && !e.is_exported ? (

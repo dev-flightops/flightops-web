@@ -82,7 +82,8 @@ export default async function PayrollPeriodsPage() {
         <h1 className="page-title">Pay Periods</h1>
         <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
           Group approved pay events into a period, lock the period, then
-          export a CSV for your payroll provider.
+          export a CSV for your payroll provider. Only approved events go in
+          the export.
         </p>
       </header>
 
@@ -109,6 +110,7 @@ export default async function PayrollPeriodsPage() {
                 <tr>
                   <th scope="col" className="px-4 py-2.5 font-semibold">Period</th>
                   <th scope="col" className="px-4 py-2.5 font-semibold">Status</th>
+                  <th scope="col" className="px-4 py-2.5 font-semibold">Left out</th>
                   <th scope="col" className="px-4 py-2.5 font-semibold">Locked</th>
                   <th scope="col" className="px-4 py-2.5 font-semibold">Exported</th>
                   <th scope="col" className="px-4 py-2.5"></th>
@@ -122,6 +124,9 @@ export default async function PayrollPeriodsPage() {
                     </td>
                     <td className="whitespace-nowrap px-4 py-3">
                       <PeriodStatusBadge status={p.status} />
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-3 text-xs">
+                      <LeftOut period={p} />
                     </td>
                     <td className="whitespace-nowrap px-4 py-3 text-xs text-muted-foreground">
                       {formatDateTime(p.locked_at)}
@@ -145,6 +150,30 @@ export default async function PayrollPeriodsPage() {
         </div>
       )}
     </div>
+  );
+}
+
+/** What an export of this period would leave out as things stand. */
+function LeftOut({ period }: { period: PayPeriodRow }) {
+  const { pending_events: pending, still_clocked_in: clockedIn } = period;
+  if (!pending && !clockedIn) {
+    return <span className="text-muted-foreground">—</span>;
+  }
+  const query = new URLSearchParams({
+    status: "pending",
+    start: period.period_start,
+    end: period.period_end,
+  });
+  return (
+    <span className="font-semibold text-status-yellow">
+      {pending ? (
+        <Link href={`/payroll?${query}`} className="hover:underline">
+          {pending} pending
+        </Link>
+      ) : null}
+      {pending && clockedIn ? ", " : null}
+      {clockedIn ? `${clockedIn} still clocked in` : null}
+    </span>
   );
 }
 

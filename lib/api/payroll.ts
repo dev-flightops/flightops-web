@@ -1,10 +1,12 @@
 /**
  * Payroll API — wraps auth-service /payroll/* endpoints
- * (flightops-services PR #114). Six operations, all EXEC_ADMIN-gated:
+ * (flightops-services PR #114). All EXEC_ADMIN-gated:
  *
  *   GET  /auth/payroll/events?status=&employee_id=&start=&end=
  *   POST /auth/payroll/events                  create (pending)
  *   POST /auth/payroll/events/{id}/approve     approve|reject
+ *   POST /auth/payroll/events/generate         bring a date range up to date
+ *   POST /auth/payroll/events/approve-pending  approve what needs no second look
  *   GET  /auth/payroll/periods
  *   POST /auth/payroll/periods
  *   POST /auth/payroll/periods/{id}/lock
@@ -49,6 +51,9 @@ export type PayEventStatus = "pending" | "approved" | "rejected" | "exported";
 
 export type PayPeriodStatus = "open" | "review" | "locked" | "exported";
 
+/** A flight or a clocked shift makes its own events; the rest are by hand. */
+export type PayEventSource = "clock" | "flight" | "manual";
+
 export interface PayEventRow {
   id: string;
   employee_user_id: string;
@@ -58,6 +63,10 @@ export interface PayEventRow {
   amount: string | null;
   event_date: string;
   flight_id: string | null;
+  duty_period_id: string | null;
+  source: PayEventSource;
+  /** Someone should look at this one: Approve all leaves it pending. */
+  needs_check: boolean;
   status: PayEventStatus;
   approved_by_user_id: string | null;
   approved_at: string | null;
@@ -120,6 +129,41 @@ export async function approvePayEvent(
   });
 }
 
+export interface PayEventGenerateResponse {
+  created: number;
+  updated: number;
+  removed: number;
+}
+
+/** Settle everything flown or clocked in a date range. Safe to press twice. */
+export async function generatePayEvents(
+  start: string,
+  end: string,
+): Promise<PayEventGenerateResponse> {
+  return apiFetch<PayEventGenerateResponse>("/auth/payroll/events/generate", {
+    method: "POST",
+    body: JSON.stringify({ start, end }),
+  });
+}
+
+export interface PayEventApprovePendingResponse {
+  approved: number;
+  left_to_check: number;
+}
+
+export async function approvePendingPayEvents(
+  start: string,
+  end: string,
+): Promise<PayEventApprovePendingResponse> {
+  return apiFetch<PayEventApprovePendingResponse>(
+    "/auth/payroll/events/approve-pending",
+    {
+      method: "POST",
+      body: JSON.stringify({ start, end }),
+    },
+  );
+}
+
 export interface PayPeriodRow {
   id: string;
   period_start: string;
@@ -129,6 +173,9 @@ export interface PayPeriodRow {
   locked_at: string | null;
   exported_at: string | null;
   notes: string | null;
+  /** What an export would leave out: only approved events go. */
+  pending_events: number;
+  still_clocked_in: number;
 }
 
 export interface PayPeriodListResponse {

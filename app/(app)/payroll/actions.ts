@@ -6,7 +6,9 @@ import { ApiError } from "@/lib/api/client";
 import { refusalText } from "@/lib/api/validation-errors";
 import {
   approvePayEvent,
+  approvePendingPayEvents,
   createPayEvent,
+  generatePayEvents,
   PAY_EVENT_TYPES,
   type PayEventType,
 } from "@/lib/api/payroll";
@@ -41,6 +43,61 @@ export async function approvePayEventAction(
       return { status: "error", message: `Error ${err.status}` };
     }
     return { status: "error", message: "Unexpected error." };
+  }
+}
+
+function rangeRefusal(err: unknown): string {
+  if (err instanceof ApiError) {
+    if (err.status === 401) return "Your session expired. Sign in again, then retry.";
+    if (err.status === 403) return "Only an Exec Admin can do that.";
+    if (err.message.includes("range_too_long")) {
+      return "That's too long a range: 92 days at a time.";
+    }
+    if (err.message.includes("end_before_start")) {
+      return "The end date is before the start date.";
+    }
+    return `That didn't work (HTTP ${err.status}).`;
+  }
+  return "Could not reach the server. Try again in a moment.";
+}
+
+/** Make or correct the events for everything flown or clocked in the range. */
+export async function generatePayEventsAction(
+  start: string,
+  end: string,
+): Promise<PayEventActionState> {
+  try {
+    const { created, updated, removed } = await generatePayEvents(start, end);
+    revalidatePath("/payroll");
+    revalidatePath("/payroll/periods");
+    const changes = [
+      created ? `${created} created` : null,
+      updated ? `${updated} updated` : null,
+      removed ? `${removed} removed` : null,
+    ].filter(Boolean);
+    return {
+      status: "ok",
+      message: changes.length ? `${changes.join(", ")}.` : "Already up to date.",
+    };
+  } catch (err) {
+    return { status: "error", message: rangeRefusal(err) };
+  }
+}
+
+export async function approvePendingPayEventsAction(
+  start: string,
+  end: string,
+): Promise<PayEventActionState> {
+  try {
+    const { approved, left_to_check } = await approvePendingPayEvents(start, end);
+    revalidatePath("/payroll");
+    revalidatePath("/payroll/periods");
+    const left = left_to_check
+      ? ` ${left_to_check} left for you to check.`
+      : "";
+    return { status: "ok", message: `Approved ${approved}.${left}` };
+  } catch (err) {
+    return { status: "error", message: rangeRefusal(err) };
   }
 }
 

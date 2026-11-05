@@ -89,7 +89,7 @@ describe("Settings → Pilot Pay (#134)", () => {
 
   it("says payroll doesn't read the tables yet", async () => {
     render(await SettingsPilotPayPage());
-    expect(screen.getByText(/Payroll doesn.t\s+read these yet/)).toBeInTheDocument();
+    expect(screen.getByText(/its pay events read the most specific rate/)).toBeInTheDocument();
   });
 
   it("offers no forms when the page couldn't load", async () => {
