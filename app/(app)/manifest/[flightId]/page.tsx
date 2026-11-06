@@ -557,7 +557,17 @@ function LoadPlanSection({
               </p>
             </div>
           ) : blocked ? (
-            <p className="text-sm text-status-yellow">{blocked}</p>
+            <>
+              {/* What's waiting, by name, until there's a suggestion to read
+                  it from (#174): "how can the system track those bumped
+                  bags". The count alone didn't say they were here. */}
+              <ul className="mb-2 text-sm">
+                {plan.waiting.map((w) => (
+                  <li key={w.id}>{`${w.description} · ${fmtLbs(w.weight_lbs)} lb`}</li>
+                ))}
+              </ul>
+              <p className="text-sm text-status-yellow">{blocked}</p>
+            </>
           ) : null}
         </>
       )}
