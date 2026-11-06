@@ -17,6 +17,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
+import { WalkUpsNotice } from "./walk-ups-notice";
+
 type Mode = "pull-back" | "cancel";
 
 const MIN_REASON = 5;
@@ -33,7 +35,8 @@ const COPY: Record<Mode, { title: string; body: string; confirm: string }> = {
   cancel: {
     title: "Cancel the released flight",
     body:
-      "The flight is cancelled and its mail goes back on the waiting list. " +
+      "The flight is cancelled. Active passenger bookings return to the " +
+      "awaiting-flight queue; mail and freight go back to the waiting list. " +
       "Say why: it goes in the flight's record with the release it undoes.",
     confirm: "Cancel flight",
   },
@@ -106,6 +109,7 @@ export function WithdrawRelease({
                 </DialogTitle>
                 <DialogDescription>{copy.body}</DialogDescription>
               </DialogHeader>
+              {mode === "cancel" ? <WalkUpsNotice flightId={flightId} /> : null}
               <label htmlFor="withdraw-reason" className="field-label">
                 Reason
               </label>

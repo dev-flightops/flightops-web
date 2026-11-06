@@ -12,6 +12,7 @@ import { formatDate } from "@/lib/utils";
 import type { FlightListItem } from "@/lib/api/types";
 
 import { StatusBadge } from "./status-badge";
+import { routeText } from "@/lib/route";
 
 export function FlightCard({ flight }: { flight: FlightListItem }) {
   return (
@@ -22,7 +23,7 @@ export function FlightCard({ flight }: { flight: FlightListItem }) {
             <div>
               <CardTitle className="text-xl">{flight.flight_number}</CardTitle>
               <CardDescription className="font-mono text-sm">
-                {flight.origin} → {flight.destination}
+                {routeText(flight)}
               </CardDescription>
             </div>
             <StatusBadge status={flight.status} />

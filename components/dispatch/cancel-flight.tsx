@@ -14,6 +14,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
+import { WalkUpsNotice } from "./walk-ups-notice";
+
 /**
  * Cancel a scheduled flight from its packet (#106).
  *
@@ -71,6 +73,7 @@ export function CancelFlight({
               mail and freight go back to the waiting list.
             </DialogDescription>
           </DialogHeader>
+          {open ? <WalkUpsNotice flightId={flightId} /> : null}
           <label htmlFor="cancel-reason" className="field-label">
             Reason (optional)
           </label>

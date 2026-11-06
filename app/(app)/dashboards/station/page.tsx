@@ -15,6 +15,7 @@ import {
 import { snapshotAlertsToList } from "@/lib/dashboards/snapshot-to-alerts";
 import type { CompanyBaseResponse, FlightListItem } from "@/lib/api/types";
 import { DEFAULT_TIME_ZONE, localDay } from "@/lib/format/local-time";
+import { routeText } from "@/lib/route";
 
 interface SearchParams {
   station?: string;
@@ -221,7 +222,7 @@ function StationFlightsTable({
                 </Link>
               </td>
               <td className="px-2 py-2 text-muted-foreground">
-                {f.origin} → {f.destination}
+                {routeText(f)}
               </td>
               <td className="px-2 py-2 text-foreground/90">{f.aircraft.tail_number}</td>
               {direction === "both" && (

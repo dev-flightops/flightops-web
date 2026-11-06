@@ -3,6 +3,7 @@ import Link from "next/link";
 import { linkCaps } from "@/components/ff/controls";
 import { StatusMark } from "@/components/ff/status-mark";
 import type { BoardFlightItem } from "@/lib/api/types";
+import { routeText } from "@/lib/route";
 
 /**
  * Live Ops Board — table of today's flights for the Executive dashboard.
@@ -79,7 +80,7 @@ function Row({ row }: { row: BoardFlightItem }) {
       <td className="px-5 py-2 font-mono font-semibold">{row.flight_number}</td>
       <td className="py-2 pr-3 font-mono">{row.aircraft.tail_number}</td>
       <td className="py-2 pr-3 font-mono text-muted-foreground">
-        {row.origin}→{row.destination}
+        {routeText(row)}
       </td>
       <td className="py-2 pr-3 text-muted-foreground">
         {row.pic_name ?? "—"}

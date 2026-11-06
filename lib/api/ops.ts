@@ -254,6 +254,39 @@ export async function pullBackRelease(
   });
 }
 
+/** What `POST /ops/flights/{id}/move-day` did (#174). */
+export interface FlightMoveResult {
+  flight: FlightDetail;
+  days: number;
+  /** It was released, and the move took the release back. */
+  release_withdrawn: boolean;
+  bookings_moved: number;
+  fuel_orders_moved: number;
+  /** Checked in, on board or marked a no-show, and now booked again. */
+  passengers_rebooked: number;
+  /** Return trips whose halves changed places. */
+  trips_out_of_order: {
+    booking_id: string;
+    customer: string;
+    moved_departs: string;
+    other_booking_id: string;
+    other_departs: string;
+  }[];
+}
+
+/** Move a flight that hasn't left to another day (#174). `toDate` is
+ *  YYYY-MM-DD at the departure base; a released flight needs a reason. */
+export async function moveFlightDay(
+  flightId: string,
+  toDate: string,
+  reason?: string,
+): Promise<FlightMoveResult> {
+  return apiFetch<FlightMoveResult>(`/ops/flights/${flightId}/move-day`, {
+    method: "POST",
+    body: JSON.stringify({ to_date: toDate, ...(reason ? { reason } : {}) }),
+  });
+}
+
 export interface CheckInPayload {
   event: "depart" | "arrive";
   /** Optional override; defaults to server-side now() on the backend. */

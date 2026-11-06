@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { MarkReplanned } from "@/components/dispatch/mark-replanned";
 import type { WeightReturn } from "@/lib/api/types";
 
 /**
@@ -15,7 +16,14 @@ import type { WeightReturn } from "@/lib/api/types";
  * should not read as one more panel to scroll past. It renders nothing at
  * all when there is nothing held back.
  */
-export function WeightReturnsPanel({ returns }: { returns: WeightReturn[] }) {
+export function WeightReturnsPanel({
+  returns,
+  canResolve = false,
+}: {
+  returns: WeightReturn[];
+  /** Dispatch, the Chief Pilot, the DO or an Exec Admin (#174). */
+  canResolve?: boolean;
+}) {
   if (returns.length === 0) return null;
 
   return (
@@ -68,8 +76,15 @@ export function WeightReturnsPanel({ returns }: { returns: WeightReturn[] }) {
               </div>
               <p className="mt-1 text-[0.65rem] text-muted-foreground">
                 Re-plan the load to this figure or lighter, then mark it
-                re-planned on the flight.
+                re-planned. The pilot&rsquo;s preflight is held until then.
               </p>
+              {canResolve ? (
+                <MarkReplanned
+                  flightId={r.flight_id}
+                  flightNumber={r.flight_number ?? "the flight"}
+                  overByLbs={payload != null && payload > max ? payload - max : 0}
+                />
+              ) : null}
             </li>
           );
         })}

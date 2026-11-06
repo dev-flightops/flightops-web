@@ -2,6 +2,7 @@
 import { DownloadPdfButton } from "@/components/dispatch/download-pdf-button";
 import { CancelFlight } from "@/components/dispatch/cancel-flight";
 import { EditFlightDialog } from "@/components/dispatch/edit-flight-dialog";
+import { MoveFlightDay } from "@/components/dispatch/move-flight-day";
 import { ReleaseButton } from "@/components/dispatch/release-button";
 import { ReleasedFooter } from "@/components/dispatch/released-footer";
 import { StatusBadge } from "@/components/dispatch/status-badge";
@@ -9,7 +10,7 @@ import { WithdrawRelease } from "@/components/dispatch/withdraw-release";
 import { flightStops } from "@/lib/route";
 import type { DispatchRisk } from "@/lib/api/dispatch-risk";
 import type { AircraftListItem, FlightDetail } from "@/lib/api/types";
-import type { ZoneTable } from "@/lib/format/local-time";
+import { DEFAULT_ZONE_TABLE, utcToLocalInput, zoneFor, type ZoneTable } from "@/lib/format/local-time";
 
 import { GeneratePdfButton } from "./generate-pdf-button";
 import { RefreshWeatherButton } from "./refresh-weather-button";
@@ -36,6 +37,7 @@ export function RightColumn({
   aircraft = [],
   zones,
   openEdit = false,
+  openMove = false,
   hardBlockReason = null,
   releaseBlockers,
   pilotUserId = null,
@@ -55,6 +57,8 @@ export function RightColumn({
   zones?: ZoneTable;
   /** #132: open the Edit dialog straight away (the board's Edit link). */
   openEdit?: boolean;
+  /** #174: open Move to Another Day straight away (the schedule's link). */
+  openMove?: boolean;
   /** M2-G-5 — when set, the Generate PDF button is disabled and the
    *  tooltip explains why (e.g. "PIC has 2 hard-block currency
    *  items"). Null = no block, button behaves normally. */
@@ -91,6 +95,7 @@ export function RightColumn({
             aircraft={aircraft}
             zones={zones}
             openEdit={openEdit}
+            openMove={openMove}
             hardBlockReason={hardBlockReason}
             releaseBlockers={releaseBlockers ?? (hardBlockReason ? [hardBlockReason] : [])}
             pilotUserId={pilotUserId}
@@ -154,6 +159,7 @@ function FlightActionsRow({
   aircraft,
   zones,
   openEdit = false,
+  openMove = false,
   hardBlockReason = null,
   releaseBlockers = [],
   pilotUserId = null,
@@ -167,6 +173,7 @@ function FlightActionsRow({
   aircraft: AircraftListItem[];
   zones?: ZoneTable;
   openEdit?: boolean;
+  openMove?: boolean;
   /** The same gate as Generate PDF. Release dispatch used to skip it,
    *  so a dispatcher could release with warnings unacknowledged. */
   hardBlockReason?: string | null;
@@ -184,6 +191,7 @@ function FlightActionsRow({
   /** DISPATCH_WRITERS: may pull a release back or cancel the flight (#90). */
   canDispatch?: boolean;
 }) {
+  const moveZone = zoneFor(zones ?? DEFAULT_ZONE_TABLE, flight.origin);
   if (flight.status === "scheduled") {
     return (
       <div className="space-y-2">
@@ -193,7 +201,16 @@ function FlightActionsRow({
           <span className="eyebrow">{flight.is_ifr ? "IFR" : "VFR"}</span>
           <EditFlightDialog flight={flight} aircraft={aircraft} zones={zones} defaultOpen={openEdit} />
           {canDispatch ? (
-            <CancelFlight flightId={flight.id} flightNumber={flight.flight_number} />
+            <>
+              <MoveFlightDay
+                flightId={flight.id}
+                flightNumber={flight.flight_number}
+                departsAt={utcToLocalInput(flight.scheduled_departure_at, moveZone)}
+                timeZone={moveZone}
+                defaultOpen={openMove}
+              />
+              <CancelFlight flightId={flight.id} flightNumber={flight.flight_number} />
+            </>
           ) : null}
           <ReleaseButton
             flightId={flight.id}
@@ -243,7 +260,18 @@ function FlightActionsRow({
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {canDispatch && !flight.actual_departure_at && (
-            <WithdrawRelease flightId={flight.id} flightNumber={flight.flight_number} />
+            <>
+              <WithdrawRelease flightId={flight.id} flightNumber={flight.flight_number} />
+              <MoveFlightDay
+                flightId={flight.id}
+                flightNumber={flight.flight_number}
+                departsAt={utcToLocalInput(flight.scheduled_departure_at, moveZone)}
+                timeZone={moveZone}
+                released
+                defaultOpen={openMove}
+                size="sm"
+              />
+            </>
           )}
           <DownloadPdfButton flightId={flight.id} />
         </div>

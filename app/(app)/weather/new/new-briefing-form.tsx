@@ -9,6 +9,7 @@ import {
   createBriefingAction,
   type NewBriefingState,
 } from "./actions";
+import { routeText } from "@/lib/route";
 
 /**
  * "New Weather Briefing" form (M2-G-27).
@@ -68,8 +69,7 @@ export function NewBriefingForm({
           <option value="">— None —</option>
           {flights.map((f) => (
             <option key={f.id} value={f.id}>
-              {f.flight_number} · {f.aircraft.tail_number} · {f.origin}→
-              {f.destination}
+              {f.flight_number} · {f.aircraft.tail_number} · {routeText(f)}
             </option>
           ))}
         </FieldSelect>

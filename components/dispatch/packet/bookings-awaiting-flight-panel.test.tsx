@@ -84,12 +84,9 @@ describe("when bookings are waiting", () => {
     );
   });
 
-  it("shows the requested date without a timezone to get wrong", () => {
-    // A bare date through new Date() lands at UTC midnight and renders
-    // a day early west of Greenwich — the calendar-arrow bug from
-    // 8/24. Read from the ISO string instead.
+  it("shows when it wants to go, local at its departure base", () => {
     render(<BookingsAwaitingFlightPanel bookings={[booking()]} />);
-    expect(screen.getByText("2026-09-12")).toBeInTheDocument();
+    expect(screen.getByText("Sep 12, 09:30 AKDT")).toBeInTheDocument();
   });
 
   it("tells the dispatcher what to do with them", () => {
@@ -99,19 +96,55 @@ describe("when bookings are waiting", () => {
     ).toBeInTheDocument();
   });
 
-  it("counts, but does not list, the ones from earlier days", () => {
+  it("counts the ones from earlier days, folded away from today's", () => {
     // #134: seventeen from the week before, oldest first, sat above the
     // booking made that morning. The page asks for today on; the panel
     // says how many older ones there are and whose they are to clear.
     render(<BookingsAwaitingFlightPanel bookings={[booking()]} earlier={17} />);
     expect(screen.getAllByRole("listitem")).toHaveLength(1);
     expect(
-      screen.getByText(/17 more are from earlier days and not listed: reservations rebooks or cancels them/),
+      screen.getByText("17 more are from earlier days: reservations rebooks or cancels them."),
     ).toBeInTheDocument();
   });
 
   it("says nothing about earlier days when there are none", () => {
     render(<BookingsAwaitingFlightPanel bookings={[booking()]} />);
     expect(screen.queryByText(/earlier days/)).not.toBeInTheDocument();
+  });
+});
+
+describe("the day a booking is for (#174)", () => {
+  it("is the day at its departure base, not the UTC day", () => {
+    // 15:00 in Bethel is already tomorrow in UTC.
+    render(
+      <BookingsAwaitingFlightPanel
+        bookings={[booking({ origin_icao: "PABE", requested_departure_at: "2026-11-10T00:00:00Z" })]}
+      />,
+    );
+    expect(screen.getByText("Nov 9, 15:00 AKST")).toBeInTheDocument();
+  });
+});
+
+describe("bookings from earlier days (#174)", () => {
+  it("still shows when nothing waits today: a flight cancelled the day after puts its passengers here", () => {
+    render(
+      <BookingsAwaitingFlightPanel bookings={[]} earlier={1} earlierBookings={[booking({ customer: { id: "c-2", full_name: "Marcus Tester", company_name: null } })]} />,
+    );
+    expect(screen.getByRole("region", { name: "Bookings awaiting a flight" })).toBeInTheDocument();
+    expect(screen.getByText("1 is from earlier days: reservations rebooks or cancels it.")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Marcus Tester", hidden: true })).toHaveAttribute("href", "/reservations/bookings/b-1");
+  });
+
+  it("says more beside today's, folded away", () => {
+    render(
+      <BookingsAwaitingFlightPanel bookings={[booking()]} earlier={2} earlierBookings={[booking({ id: "b-8" }), booking({ id: "b-9" })]} />,
+    );
+    expect(screen.getByText("2 more are from earlier days: reservations rebooks or cancels them.")).toBeInTheDocument();
+    expect(screen.getByRole("group")).not.toHaveAttribute("open");
+  });
+
+  it("renders nothing when nothing waits from any day", () => {
+    const { container } = render(<BookingsAwaitingFlightPanel bookings={[]} earlier={0} />);
+    expect(container).toBeEmptyDOMElement();
   });
 });

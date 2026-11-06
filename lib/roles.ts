@@ -290,6 +290,15 @@ export const COST_SETTINGS_WRITERS = roleGate("exec_admin");
  *  `DispatcherClaims` on both. */
 export const DISPATCH_WRITERS = roleGate("dispatcher", "exec_admin");
 
+/** A flight its pilot returned over weight has been re-planned (#174): ops'
+ *  DispatchClaims on /flights/{id}/weight-return/resolve. */
+export const WEIGHT_RETURN_RESOLVERS = roleGate(
+  "exec_admin",
+  "dispatcher",
+  "chief_pilot",
+  "director_of_operations",
+);
+
 /** Put a plan brought back from ForeFlight on a leg, or set it aside
  *  (#55): dispatch, and the DO whose connection brings the plans in. */
 export const PLAN_REVIEWERS = roleGate("dispatcher", "director_of_operations", "exec_admin");

@@ -189,10 +189,7 @@ export interface BookingPassenger {
   contact_email?: string | null;
 }
 
-/** A booking's number as the screens show it, like a charter's CHR-. */
-export function bookingRef(id: string): string {
-  return `BK-${id.slice(0, 8).toUpperCase()}`;
-}
+export { bookingRef } from "@/lib/reservations/booking-ref";
 
 export interface Booking {
   id: string;

@@ -358,7 +358,7 @@ function TeamCard({
                         {a.flight.flight_number}
                       </span>
                       <span className="ml-1.5 text-muted-foreground">
-                        {a.flight.origin} → {a.flight.destination}
+                        {routeText(a.flight)}
                       </span>
                     </Link>
                     <span className="shrink-0 text-[0.7rem] text-muted-foreground">
