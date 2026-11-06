@@ -258,7 +258,7 @@ export default async function DispatchPage({
     // packet they are working on.
     loads.or(listBookings({ awaiting_flight: true, from_date: todayStart, limit: 25 }), { items: [], total: 0 }, "the bookings waiting for a flight"),
     todayStart
-      ? listBookings({ awaiting_flight: true, to_date: todayStart, limit: 1 }).catch(() => ({ items: [], total: 0 }))
+      ? listBookings({ awaiting_flight: true, to_date: todayStart, limit: 25 }).catch(() => ({ items: [], total: 0 }))
       : Promise.resolve({ items: [], total: 0 }),
     Promise.all(
       sicIds.map(async (pilotId) => ({
@@ -428,7 +428,12 @@ export default async function DispatchPage({
 
         {/* Behind, not blocked — see the panel for why it is amber
             rather than red. */}
-        <BookingsAwaitingFlightPanel bookings={awaitingFlight.items} earlier={awaitingEarlier.total} zones={zones} />
+        <BookingsAwaitingFlightPanel
+          bookings={awaitingFlight.items}
+          earlier={awaitingEarlier.total}
+          earlierBookings={awaitingEarlier.items}
+          zones={zones}
+        />
 
         <ForeFlightPlansWaitingBanner count={plansWaiting} />
 
