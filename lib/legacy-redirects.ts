@@ -160,7 +160,6 @@ export const LEGACY_REDIRECTS: readonly (readonly [from: string, to: string])[] 
   ["/maintenance/inspections", "/maintenance"],
   ["/maintenance/inspections/new", "/maintenance"],
   ["/maintenance/inspections/:id", "/maintenance"],
-  ["/maintenance/inventory/new", "/maintenance/inventory"],
   ["/maintenance/inventory/:id/edit", "/maintenance/inventory"],
   ["/maintenance/inventory/:id/history", "/maintenance/inventory"],
   ["/maintenance/inventory/batch-trace", "/maintenance/batch-trace"],

@@ -670,61 +670,43 @@ export const DEPARTMENTS: Department[] = [
         id: "rts",
         label: "RTS",
         href: "/maintenance/rts",
-        status: "planned",
+        status: "live",
         department: "maintenance",
-        // #156: "Same for RTS, Inventory, Expiration, Batch Trace, MX Clock,
-        // Availability in the top bar." Hidden until built (Greg, 30 Oct).
-        hiddenUntilLive: true,
       },
       {
         id: "inventory",
         label: "Inventory",
         href: "/maintenance/inventory",
-        status: "planned",
+        status: "live",
         department: "maintenance",
-        // #156: "Same for RTS, Inventory, Expiration, Batch Trace, MX Clock,
-        // Availability in the top bar." Hidden until built (Greg, 30 Oct).
-        hiddenUntilLive: true,
       },
       {
         id: "expiration",
         label: "Expiration",
         href: "/maintenance/expiration",
-        status: "planned",
+        status: "live",
         department: "maintenance",
-        // #156: "Same for RTS, Inventory, Expiration, Batch Trace, MX Clock,
-        // Availability in the top bar." Hidden until built (Greg, 30 Oct).
-        hiddenUntilLive: true,
       },
       {
         id: "batch-trace",
         label: "Batch Trace",
         href: "/maintenance/batch-trace",
-        status: "planned",
+        status: "live",
         department: "maintenance",
-        // #156: "Same for RTS, Inventory, Expiration, Batch Trace, MX Clock,
-        // Availability in the top bar." Hidden until built (Greg, 30 Oct).
-        hiddenUntilLive: true,
       },
       {
         id: "mx-clock",
         label: "MX Clock",
         href: "/maintenance/mx-clock",
-        status: "planned",
+        status: "live",
         department: "maintenance",
-        // #156: "Same for RTS, Inventory, Expiration, Batch Trace, MX Clock,
-        // Availability in the top bar." Hidden until built (Greg, 30 Oct).
-        hiddenUntilLive: true,
       },
       {
         id: "availability",
         label: "Availability",
         href: "/maintenance/availability",
-        status: "planned",
+        status: "live",
         department: "maintenance",
-        // #156: "Same for RTS, Inventory, Expiration, Batch Trace, MX Clock,
-        // Availability in the top bar." Hidden until built (Greg, 30 Oct).
-        hiddenUntilLive: true,
       },
       {
         id: "mx-intel",

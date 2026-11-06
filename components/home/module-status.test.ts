@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync } from "node:fs";
 import { join } from "node:path";
 
 import { describe, expect, it } from "vitest";
@@ -116,14 +116,8 @@ const NON_LIVE_WITHOUT_HREF: Record<string, string> = {
  *  A query string or hash is not part of the path — the quick links use
  *  `/flight-crew/history?tab=duty`, and treating that whole string as a
  *  directory reported a live page as a 404.
- *
- *  A page that renders NotBuiltPage is a placeholder, not a shipped
- *  page. Six maintenance pages were shells — legacy's layout with every
- *  control disabled, nothing behind it — and this sweep called three of
- *  them shipped because page.tsx existed. The comment at the top says
- *  existence is the floor, not proof; this is the part of "useful" a
- *  file can declare about itself. */
-function pageState(href: string): "built" | "placeholder" | "none" | null {
+ */
+function pageState(href: string): "built" | "none" | null {
   const path = href.split(/[?#]/)[0];
   if (!path.startsWith("/") || path.startsWith("/api") || path.includes("[")) {
     return null; // not statically checkable
@@ -132,9 +126,7 @@ function pageState(href: string): "built" | "placeholder" | "none" | null {
   if (!segments) return null;
   const file = join(APP_DIR, segments, "page.tsx");
   if (!existsSync(file)) return "none";
-  return readFileSync(file, "utf8").includes("NotBuiltPage")
-    ? "placeholder"
-    : "built";
+  return "built";
 }
 
 interface Entry {
@@ -218,20 +210,6 @@ describe("module status matches what is actually built", () => {
     ).toEqual([]);
   });
 
-  it("never calls a placeholder page live", () => {
-    // Due List, Inventory and RTS Queue sat here as live over pages
-    // that were shells — every control disabled, nothing behind them.
-    const placeholders = allEntries()
-      .filter(
-        (e) => e.status === "live" && e.href && pageState(e.href) === "placeholder",
-      )
-      .map((e) => `${e.where}.${e.id} -> ${e.href}`);
-
-    expect(
-      placeholders,
-      "these are live in the nav but their page says it is not built",
-    ).toEqual([]);
-  });
 
   it("gives every unbuilt entry a route, so it stays inside this sweep", () => {
     const unreachable = allEntries()

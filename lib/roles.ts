@@ -94,6 +94,14 @@ export const AIRWORTHINESS_WRITERS = roleGate(
   "exec_admin",
 );
 
+/** Work the shop (#172): move parts in and out, and run the maintenance
+ *  clock. Reading either is open to all staff. */
+export const MX_SHOP_STAFF = roleGate(
+  "maintenance",
+  "director_of_maintenance",
+  "exec_admin",
+);
+
 /** Open and work a work order: maintenance-service's work-order gate
  *  (#134). Resolving its squawk stays AIRWORTHINESS_WRITERS'. */
 export const WORK_ORDER_WRITERS = roleGate(
