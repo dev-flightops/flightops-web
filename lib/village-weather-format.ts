@@ -1,4 +1,9 @@
-import type { FlightCategory, VillageWeatherReportResponse } from "@/lib/api/types";
+import type {
+  FlightCategory,
+  VillageBoardRow,
+  VillageRunway,
+  VillageWeatherReportResponse,
+} from "@/lib/api/types";
 
 /**
  * How a village observer's report reads: on the Village Weather Board,
@@ -46,6 +51,20 @@ export function villageWind(r: VillageWeatherReportResponse): string | null {
   const speed = r.wind_speed_kt != null ? `${r.wind_speed_kt}kt` : "";
   const gust = r.wind_gust_kt ? `G${r.wind_gust_kt}` : "";
   return `Wind ${dir}/${speed}${gust}`;
+}
+
+/** "Runway 01/19, 3,284 × 60 ft", or the names when there are several (#171). */
+export function villageRunways(runways: VillageRunway[] | undefined): string | null {
+  if (!runways?.length) return null;
+  if (runways.length > 1) return `Runways ${runways.map((r) => r.name).join(", ")}`;
+  const [only] = runways;
+  return `Runway ${only.name}, ${only.length_ft.toLocaleString("en-US")} × ${only.width_ft} ft`;
+}
+
+/** "Crosswind 13 kt on 01/19": from the agent's wind, on the best-aligned runway. */
+export function villageCrosswind(row: Pick<VillageBoardRow, "crosswind_kt" | "crosswind_runway">): string | null {
+  if (row.crosswind_kt == null) return null;
+  return `Crosswind ${row.crosswind_kt} kt${row.crosswind_runway ? ` on ${row.crosswind_runway}` : ""}`;
 }
 
 export function villageAge(ms: number): string {

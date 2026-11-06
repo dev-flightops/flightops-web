@@ -94,7 +94,7 @@ describe("setStationRunwayAction (#50)", () => {
 
   it("saves the runway entered by hand", async () => {
     setStationRunway.mockResolvedValueOnce({});
-    const runway = { length_ft: 2010, width_ft: 60, primary_name: "05/23" };
+    const runway = { length_ft: 2010, width_ft: 60, primary_name: "05/23", true_alignment_deg: null };
     expect(await setStationRunwayAction(STATION, runway)).toEqual({ ok: true });
     expect(setStationRunway).toHaveBeenCalledWith(STATION, runway);
   });
@@ -104,6 +104,7 @@ describe("setStationRunwayAction (#50)", () => {
       length_ft: 2010,
       width_ft: null,
       primary_name: null,
+      true_alignment_deg: null,
     });
     expect(result).toEqual({ ok: false, error: "Enter both the length and the width, or neither." });
     expect(setStationRunway).not.toHaveBeenCalled();
@@ -112,14 +113,14 @@ describe("setStationRunwayAction (#50)", () => {
   it("explains a refusal and a value out of range", async () => {
     setStationRunway.mockRejectedValueOnce(refused());
     expect(
-      (await setStationRunwayAction(STATION, { length_ft: 2010, width_ft: 60, primary_name: null }))
+      (await setStationRunwayAction(STATION, { length_ft: 2010, width_ft: 60, primary_name: null, true_alignment_deg: null }))
         .error,
     ).toMatch(/Only Ground Ops, the Director of Operations or an Exec Admin/);
     setStationRunway.mockRejectedValueOnce(new TestApiError(422, "/ground", "range"));
     expect(
-      (await setStationRunwayAction(STATION, { length_ft: 50, width_ft: 60, primary_name: null }))
+      (await setStationRunwayAction(STATION, { length_ft: 50, width_ft: 60, primary_name: null, true_alignment_deg: null }))
         .error,
-    ).toBe("Check the numbers: length 100–20,000 ft, width 10–500 ft.");
+    ).toBe("Check the numbers: length 100–20,000 ft, width 10–500 ft, heading 0–360°.");
   });
 });
 

@@ -1293,8 +1293,9 @@ export const HELP_ENTRIES: HelpEntry[] = [
     ],
     worthKnowing: [
       "A stale observation is shown as stale rather than as current. At strips reporting a few times a day, treating the last report as the present conditions is how a flight launches into something nobody checked.",
+      "Each airport shows its runway and the crosswind from the latest report, on the best-aligned runway. Runways come from the FAA's airport file, or from Stations where one has been entered. Report the wind direction in degrees magnetic, as on a compass: it's compared with the runway's number.",
     ],
-    connectsTo: "Station observations, the same source the per-flight briefings draw on.",
+    connectsTo: "Station observations, the same source the per-flight briefings draw on. The same crosswind goes into the risk matrix and the FRAT.",
     related: ["/weather", "/dispatch"],
   },
   {
@@ -1843,6 +1844,7 @@ export const HELP_ENTRIES: HelpEntry[] = [
     howToUse: [
       "Add a station with its identifier, since that is what flights and weather key on.",
       "Keep the list to stations actually served; an unused station clutters every route picker in the app.",
+      "Open a station to see the FAA's runway figures for it. With nothing entered, the risk matrix uses those. Enter a runway only to score the stop on a different one, or to correct them.",
     ],
     connectsTo:
       "Flights, weather briefings and the village weather board all key on stations. Crew bases are stations marked as such in Settings.",

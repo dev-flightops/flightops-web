@@ -8,13 +8,19 @@ import { auth } from "@/auth";
 import { ReportIssueDialog } from "@/components/stations/report-issue-dialog";
 import { ResolveIssueButton } from "@/components/stations/resolve-issue-button";
 import { ApiError } from "@/lib/api/client";
-import { listStationIssues, listStations } from "@/lib/api/ground";
+import {
+  type FaaRunways,
+  getFaaRunways,
+  listStationIssues,
+  listStations,
+} from "@/lib/api/ground";
 import type {
   StationIssueResponse,
   StationListItem,
   StationType,
 } from "@/lib/api/types";
 import { hasAnyRole, STATION_ADMINS } from "@/lib/roles";
+import { runwayFigures } from "@/lib/stations/runway";
 
 import { StationActiveToggle } from "./active-toggle";
 import { StationRunwayForm } from "./runway-form";
@@ -94,6 +100,9 @@ export default async function StationDetailPage({
     );
   }
   if (station === null) notFound();
+  // #171: the FAA's figures for this airport. Without them the form still
+  // works: a runway can be typed in.
+  const faa = await getFaaRunways(station.icao_code).catch(() => null);
 
   const openIssues = issues.filter(
     (i) => i.status === "open" || i.status === "in_progress",
@@ -106,8 +115,8 @@ export default async function StationDetailPage({
     <div className="mx-auto max-w-5xl px-4 sm:px-6 py-8">
       <BackLink />
       <Header station={station} canAdmin={canAdmin} />
-      <Meta station={station} />
-      {canAdmin && <StationRunwayForm station={station} />}
+      <Meta station={station} faa={faa} />
+      {canAdmin && <StationRunwayForm station={station} faa={faa} />}
       <IssuesSection
         stationId={station.id}
         title={`Open issues (${openIssues.length})`}
@@ -203,7 +212,11 @@ function Header({
   );
 }
 
-function Meta({ station }: { station: StationListItem }) {
+function Meta({ station, faa }: { station: StationListItem; faa: FaaRunways | null }) {
+  const entered = Boolean(station.runway_length_ft && station.runway_width_ft);
+  const fromFile = faa?.runways ?? [];
+  const heading =
+    station.runway_true_alignment_deg == null ? "" : ` · ${station.runway_true_alignment_deg}° true`;
   return (
     <div className="mb-6 rounded-lg border border-border bg-card p-4">
       <dl className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm sm:grid-cols-4">
@@ -214,14 +227,18 @@ function Meta({ station }: { station: StationListItem }) {
         <Field
           label="Runway"
           value={
-            station.runway_length_ft && station.runway_width_ft
-              ? `${station.runway_primary_name ?? "RW"} · ${station.runway_length_ft} × ${station.runway_width_ft} ft`
-              : "Not cached"
+            entered
+              ? `${station.runway_primary_name ?? "RW"} · ${station.runway_length_ft?.toLocaleString("en-US")} × ${station.runway_width_ft} ft${heading}`
+              : fromFile.length === 1
+                ? runwayFigures(fromFile[0])
+                : fromFile.length > 1
+                  ? fromFile.map((runway) => runway.name).join(", ")
+                  : "Not entered"
           }
         />
         <Field
           label="Runway source"
-          value={station.runway_source ?? "—"}
+          value={station.runway_source ?? (fromFile.length > 0 ? "FAA airport file" : "—")}
         />
         <Field
           label="Fuel available"

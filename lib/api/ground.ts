@@ -378,12 +378,13 @@ export interface StationRunwayPayload {
   length_ft: number | null;
   width_ft: number | null;
   primary_name: string | null;
+  /** Blank takes the FAA's figure for that runway. */
+  true_alignment_deg: number | null;
 }
 
 /** The runway the company flies at a station, entered by hand (#50). The
- *  dispatch risk matrix scores a stop whose runway isn't known as HIGH;
- *  this is how a village strip the FAA data lacks gets one. All three
- *  null clears it. */
+ *  dispatch risk matrix scores the stop on it. With nothing entered it uses
+ *  AWC's record or the FAA's airport file (#171). All null clears it. */
 export async function setStationRunway(
   stationId: string,
   payload: StationRunwayPayload,
@@ -392,6 +393,25 @@ export async function setStationRunway(
     method: "PUT",
     body: JSON.stringify(payload),
   });
+}
+
+export interface FaaRunway {
+  name: string;
+  length_ft: number;
+  width_ft: number;
+  true_alignment_deg: number | null;
+}
+
+/** What the FAA's airport file says about one airport (#171). */
+export interface FaaRunways {
+  code: string;
+  /** The file's date, YYYY-MM-DD. */
+  effective: string;
+  runways: FaaRunway[];
+}
+
+export async function getFaaRunways(code: string): Promise<FaaRunways> {
+  return apiFetch<FaaRunways>(`/ground/faa-runways/${encodeURIComponent(code)}`);
 }
 
 export interface CreateStationIssuePayload {

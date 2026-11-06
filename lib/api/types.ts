@@ -859,6 +859,8 @@ export interface StationListItem {
   runway_length_ft: number | null;
   runway_width_ft: number | null;
   runway_primary_name: string | null;
+  /** True heading entered with the runway (#171); blank takes the FAA's. */
+  runway_true_alignment_deg?: number | null;
   runway_source: StationRunwaySource | null;
   runway_cache_updated_at: string | null;
   latitude: number | null;
@@ -2259,9 +2261,23 @@ export interface VillageWeatherReportCreateRequest {
   notes?: string | null;
 }
 
+/** A runway on file for a village airport (#171). */
+export interface VillageRunway {
+  name: string;
+  length_ft: number;
+  width_ft: number;
+  /** True heading of the lower-numbered end; null when not known. */
+  true_alignment_deg: number | null;
+}
+
 export interface VillageBoardRow {
   airport: VillageAirportResponse;
   latest_report: VillageWeatherReportResponse | null;
+  /** The one entered under Stations, or the FAA file's. */
+  runways?: VillageRunway[];
+  /** From the latest report's wind, on the best-aligned runway. */
+  crosswind_kt?: number | null;
+  crosswind_runway?: string | null;
 }
 
 export interface VillageBoardResponse {

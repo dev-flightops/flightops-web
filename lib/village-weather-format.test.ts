@@ -4,7 +4,7 @@ import { scoredElsewhere } from "@/components/weather/weather-source";
 import type { StopWeather } from "@/lib/api/dispatch-risk";
 import type { VillageWeatherReportResponse } from "@/lib/api/types";
 
-import { villageCategoryBecause } from "./village-weather-format";
+import { villageCategoryBecause, villageCrosswind, villageRunways } from "./village-weather-format";
 
 function report(over: Partial<VillageWeatherReportResponse>): VillageWeatherReportResponse {
   return {
@@ -87,5 +87,37 @@ describe("scoredElsewhere", () => {
     expect(scoredElsewhere(stop({ ceiling_ft: 800, ceiling_from: "village report" }))).toEqual([
       "Ceiling 800 ft (village report)",
     ]);
+  });
+});
+
+describe("a village airport's runway and crosswind (#171)", () => {
+  it("one runway, with its size", () => {
+    expect(villageRunways([{ name: "01/19", length_ft: 3284, width_ft: 60, true_alignment_deg: 26 }])).toBe(
+      "Runway 01/19, 3,284 × 60 ft",
+    );
+  });
+
+  it("several, by name", () => {
+    expect(
+      villageRunways([
+        { name: "01L/19R", length_ft: 6400, width_ft: 150, true_alignment_deg: 23 },
+        { name: "12/30", length_ft: 1858, width_ft: 75, true_alignment_deg: 128 },
+      ]),
+    ).toBe("Runways 01L/19R, 12/30");
+  });
+
+  it("none on file", () => {
+    expect(villageRunways([])).toBeNull();
+    expect(villageRunways(undefined)).toBeNull();
+  });
+
+  it("the crosswind, with its runway", () => {
+    expect(villageCrosswind({ crosswind_kt: 13, crosswind_runway: "01/19" })).toBe("Crosswind 13 kt on 01/19");
+    expect(villageCrosswind({ crosswind_kt: 0, crosswind_runway: "01/19" })).toBe("Crosswind 0 kt on 01/19");
+  });
+
+  it("no crosswind when there's nothing to work it out from", () => {
+    expect(villageCrosswind({ crosswind_kt: null, crosswind_runway: null })).toBeNull();
+    expect(villageCrosswind({})).toBeNull();
   });
 });
