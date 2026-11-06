@@ -137,6 +137,25 @@ describe("the flight panel", () => {
     }
   });
 
+  it("offers a move to another day until the flight leaves, to dispatch only (#174)", async () => {
+    flightSheetAction.mockResolvedValue({ ok: true, data: sheet() });
+    for (const state of ["planned", "released"] as const) {
+      const view = render(<FlightPanel flight={{ ...FLIGHT, state }} leg={0} zones={ZONES} canEdit open onOpenChange={() => {}} />);
+      const leg = await screen.findByRole("tabpanel");
+      expect(within(leg).getByRole("link", { name: "Move to another day" })).toHaveAttribute(
+        "href",
+        "/dispatch?flight=f-1&move=1",
+      );
+      view.unmount();
+    }
+    for (const [canEdit, state] of [[false, "planned"], [true, "airborne"], [true, "cancelled"]] as const) {
+      const view = render(<FlightPanel flight={{ ...FLIGHT, state }} leg={0} zones={ZONES} canEdit={canEdit} open onOpenChange={() => {}} />);
+      await screen.findByRole("tabpanel");
+      expect(screen.queryByRole("link", { name: "Move to another day" })).not.toBeInTheDocument();
+      view.unmount();
+    }
+  });
+
   it("opens from the list's flight number on the first leg", async () => {
     flightSheetAction.mockResolvedValueOnce({ ok: true, data: sheet() });
     render(<FlightPanelButton flight={FLIGHT} zones={ZONES} />);

@@ -2302,6 +2302,8 @@ export interface FlightAssignmentFlightRef {
   flight_number: string;
   origin: string;
   destination: string;
+  /** Every airport on the route, in order. Absent from a service before #174. */
+  stops?: string[];
   scheduled_departure_at: string;
   status: string;
   tail_number?: string | null;

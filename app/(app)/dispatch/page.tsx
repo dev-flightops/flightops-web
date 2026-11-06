@@ -9,6 +9,7 @@ import {
   hasAnyRole,
   OVERRIDE_AUTHORITY,
   PLAN_REVIEWERS,
+  WEIGHT_RETURN_RESOLVERS,
 } from "@/lib/roles";
 import { DispatchComplianceGate } from "@/components/dispatch/packet/dispatch-compliance-gate";
 import { AircraftTodayLine, AircraftTodayPanel } from "@/components/dashboards/aircraft-today-panel";
@@ -104,6 +105,8 @@ interface SearchParams {
    *  even though hard blocks are on the pilot's currency record. */
   /** #132: "1" from the board's Edit link opens the Edit dialog. */
   edit?: string;
+  /** #174: "1" from the schedule's link opens Move to Another Day. */
+  move?: string;
 }
 
 /**
@@ -127,6 +130,7 @@ export default async function DispatchPage({
     route: routeParam,
     pic: picOverrideId,
     edit: editParam,
+    move: moveParam,
   } = await searchParams;
   // What the viewer may do on the packet, not what they may see: the
   // backend enforces each of these, so this only keeps controls away
@@ -417,11 +421,14 @@ export default async function DispatchPage({
             already blocked at preflight step 2 and stays blocked until
             dispatch re-plans the load. Renders nothing when the list is
             empty. */}
-        <WeightReturnsPanel returns={weightReturns.items} />
+        <WeightReturnsPanel
+          returns={weightReturns.items}
+          canResolve={hasAnyRole(viewerRoles, WEIGHT_RETURN_RESOLVERS)}
+        />
 
         {/* Behind, not blocked — see the panel for why it is amber
             rather than red. */}
-        <BookingsAwaitingFlightPanel bookings={awaitingFlight.items} earlier={awaitingEarlier.total} />
+        <BookingsAwaitingFlightPanel bookings={awaitingFlight.items} earlier={awaitingEarlier.total} zones={zones} />
 
         <ForeFlightPlansWaitingBanner count={plansWaiting} />
 
@@ -564,6 +571,7 @@ export default async function DispatchPage({
             aircraft={aircraft}
             zones={zones}
             openEdit={editParam === "1"}
+            openMove={moveParam === "1"}
             hardBlockReason={hardBlockReason}
             releaseBlockers={releaseBlockers}
             pilotUserId={effectivePicId}

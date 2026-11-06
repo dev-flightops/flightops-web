@@ -13,6 +13,7 @@ import { CHECKIN_ROLES, hasAnyRole } from "@/lib/roles";
 
 import { CheckInBoard } from "./check-in-board";
 import { OpenSeats } from "./open-seats";
+import { routeText } from "@/lib/route";
 
 export const dynamic = "force-dynamic";
 
@@ -57,7 +58,7 @@ export default async function CheckInPage({
         back={{ href: "/manifest", label: "Flight Schedule" }}
         eyebrow="Gate Check-in"
         title={view.flight_number}
-        description={`${view.origin} → ${view.destination} · ${view.tail_number ?? "No aircraft"} · Departs ${departs}`}
+        description={`${routeText(view)} · ${view.tail_number ?? "No aircraft"} · Departs ${departs}`}
         actions={
           <>
             <Link href={`/manifest/${view.flight_id}`} className={buttonOutline}>

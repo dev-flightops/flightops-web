@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import type { Booking } from "@/lib/api/reservations";
+import { DEFAULT_ZONE_TABLE, localDateTime, type ZoneTable, zoneFor } from "@/lib/format/local-time";
 
 /**
  * Reservations nobody has put on a flight yet.
@@ -23,12 +24,15 @@ import type { Booking } from "@/lib/api/reservations";
 export function BookingsAwaitingFlightPanel({
   bookings,
   earlier = 0,
+  zones = DEFAULT_ZONE_TABLE,
 }: {
   /** Waiting from the company's today on. */
   bookings: Booking[];
   /** How many wait from earlier days, not listed (#134): oldest first,
    *  seventeen from the week before buried the one booked that morning. */
   earlier?: number;
+  /** Base zones: a booking's day is the day at its departure base. */
+  zones?: ZoneTable;
 }) {
   if (bookings.length === 0) return null;
 
@@ -61,11 +65,10 @@ export function BookingsAwaitingFlightPanel({
                 {b.customer.full_name}
               </Link>
               <span className="tabular-nums text-muted-foreground">
-                {/* Read from the ISO string rather than parsed — a
-                    bare date through new Date() lands at UTC midnight
-                    and renders a day early west of Greenwich, which is
-                    the calendar-arrow bug from 8/24. */}
-                {b.requested_departure_at.slice(0, 10)}
+                {/* Local at its departure base (#174): the first ten
+                    characters were the UTC day, so a 15:00 booking in
+                    Alaska read as tomorrow's. */}
+                {localDateTime(b.requested_departure_at, zoneFor(zones, b.origin_icao))}
               </span>
             </div>
             <p className="mt-0.5 text-muted-foreground">

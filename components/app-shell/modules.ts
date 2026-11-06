@@ -19,7 +19,7 @@ import { ROLES, type Role } from "@/lib/roles";
 
 /** `planned`: legacy has it, nothing here backs it, and no milestone is
  *  set — so the hint says "Not built yet" rather than naming a
- *  milestone. See components/not-built-page.tsx. */
+ *  milestone. */
 export type ModuleStatus = "live" | "m2" | "m3" | "m4" | "planned";
 
 export interface ModuleEntry {

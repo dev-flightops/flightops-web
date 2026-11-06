@@ -168,7 +168,7 @@ export default async function RamperPage() {
             <li key={a.id} className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-4 py-3 last:border-b-0">
               <div className="min-w-0">
                 <div className="text-sm font-semibold text-foreground">
-                  {a.flight.flight_number} • {a.flight.origin} → {a.flight.destination}
+                  {a.flight.flight_number} • {routeText(a.flight)}
                 </div>
                 <div className="text-[0.7rem] text-muted-foreground">
                   {[a.flight.tail_number, a.flight.pax_count != null ? `${a.flight.pax_count} pax` : null,

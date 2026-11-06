@@ -10,6 +10,7 @@ import type {
 } from "@/lib/api/types";
 import { formatBoth } from "@/lib/format/flight-time";
 import { DEFAULT_TIME_ZONE, localDate } from "@/lib/format/local-time";
+import { routeText } from "@/lib/route";
 
 /**
  * /flight-following/history — terminal-status flight history.
@@ -199,9 +200,7 @@ function FlightHistoryRow({ flight }: { flight: FlightListItem }) {
         </div>
       </td>
       <td className="px-3 py-2.5 font-mono">
-        {flight.origin}
-        <span className="text-muted-foreground"> → </span>
-        {flight.destination}
+        {routeText(flight)}
       </td>
       <td className="px-3 py-2.5 text-muted-foreground">
         <div className="font-mono">{etd.local}</div>

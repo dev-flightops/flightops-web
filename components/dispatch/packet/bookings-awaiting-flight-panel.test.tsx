@@ -84,12 +84,9 @@ describe("when bookings are waiting", () => {
     );
   });
 
-  it("shows the requested date without a timezone to get wrong", () => {
-    // A bare date through new Date() lands at UTC midnight and renders
-    // a day early west of Greenwich — the calendar-arrow bug from
-    // 8/24. Read from the ISO string instead.
+  it("shows when it wants to go, local at its departure base", () => {
     render(<BookingsAwaitingFlightPanel bookings={[booking()]} />);
-    expect(screen.getByText("2026-09-12")).toBeInTheDocument();
+    expect(screen.getByText("Sep 12, 09:30 AKDT")).toBeInTheDocument();
   });
 
   it("tells the dispatcher what to do with them", () => {
@@ -113,5 +110,17 @@ describe("when bookings are waiting", () => {
   it("says nothing about earlier days when there are none", () => {
     render(<BookingsAwaitingFlightPanel bookings={[booking()]} />);
     expect(screen.queryByText(/earlier days/)).not.toBeInTheDocument();
+  });
+});
+
+describe("the day a booking is for (#174)", () => {
+  it("is the day at its departure base, not the UTC day", () => {
+    // 15:00 in Bethel is already tomorrow in UTC.
+    render(
+      <BookingsAwaitingFlightPanel
+        bookings={[booking({ origin_icao: "PABE", requested_departure_at: "2026-11-10T00:00:00Z" })]}
+      />,
+    );
+    expect(screen.getByText("Nov 9, 15:00 AKST")).toBeInTheDocument();
   });
 });

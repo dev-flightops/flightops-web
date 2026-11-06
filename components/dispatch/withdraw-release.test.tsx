@@ -2,14 +2,16 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { pullBackReleaseAction, cancelReleasedFlightAction, refresh } = vi.hoisted(() => ({
+const { pullBackReleaseAction, cancelReleasedFlightAction, flightWalkUpsAction, refresh } = vi.hoisted(() => ({
   pullBackReleaseAction: vi.fn(),
   cancelReleasedFlightAction: vi.fn(),
+  flightWalkUpsAction: vi.fn(),
   refresh: vi.fn(),
 }));
 vi.mock("@/app/(app)/dispatch/[flightId]/actions", () => ({
   pullBackReleaseAction,
   cancelReleasedFlightAction,
+  flightWalkUpsAction,
 }));
 vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh }) }));
 
@@ -17,9 +19,23 @@ import { WithdrawRelease } from "./withdraw-release";
 
 beforeEach(() => {
   vi.clearAllMocks();
+  flightWalkUpsAction.mockResolvedValue([]);
 });
 
 describe("WithdrawRelease (#90)", () => {
+  it("names the passengers with no booking when cancelling, not when pulling back (#174)", async () => {
+    flightWalkUpsAction.mockResolvedValue(["Wally Walkup"]);
+    const user = userEvent.setup();
+    render(<WithdrawRelease flightId="f-1" flightNumber="PGR701" />);
+    await user.click(screen.getByRole("button", { name: "Pull back release" }));
+    expect(flightWalkUpsAction).not.toHaveBeenCalled();
+    await user.click(screen.getByRole("button", { name: "Back" }));
+    await user.click(screen.getByRole("button", { name: "Cancel flight" }));
+    expect(await screen.findByRole("status")).toHaveTextContent(
+      "Wally Walkup has no booking, added on the manifest, so doesn't go back to Awaiting a flight.",
+    );
+  });
+
   it("pulls the release back only once a reason is given", async () => {
     pullBackReleaseAction.mockResolvedValue({ ok: true });
     const user = userEvent.setup();

@@ -7,6 +7,7 @@ import { getFlight } from "@/lib/api/ops";
 import type { FlightDetail } from "@/lib/api/types";
 
 import { PrintButton } from "./print-button";
+import { routeText } from "@/lib/route";
 
 /**
  * /schedule/{flightId}/manifest — Printable Part 135 release sheet.
@@ -120,7 +121,7 @@ export default async function ManifestPage({
         <Field label="Flight #" value={flight.flight_number} mono />
         <Field
           label="Route"
-          value={`${flight.origin} → ${flight.destination}`}
+          value={routeText(flight)}
           mono
         />
         <Field label="Date (UTC)" value={scheduledDep.date} mono />
