@@ -740,6 +740,16 @@ export interface SquawkResponse {
   resolved_at: string | null;
   resolved_by: UserRef | null;
   resolution_notes: string | null;
+  /** The sign-off (#172). Absent from a backend older than it. */
+  is_rii?: boolean;
+  awaiting_rii?: boolean;
+  rts_submitted_at?: string | null;
+  rts_amt_name?: string | null;
+  rts_amt_cert_number?: string | null;
+  rts_amt_cert_type?: string | null;
+  rii_inspector_name?: string | null;
+  rii_inspector_cert_number?: string | null;
+  rii_inspected_at?: string | null;
 }
 
 export interface SquawkCreateRequest {

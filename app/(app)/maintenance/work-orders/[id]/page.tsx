@@ -140,7 +140,7 @@ export default async function WorkOrderPage({ params }: { params: Promise<{ id: 
                 </span>
               </>
             ) : (
-              <StatusMark label={squawk.status === "in_progress" ? "In progress" : "Open"} tone={squawk.severity === "grounding" ? "red" : "yellow"} />
+              <StatusMark label={squawk.awaiting_rii ? "Awaiting RII" : squawk.status === "in_progress" ? "In progress" : "Open"} tone={squawk.severity === "grounding" ? "red" : "yellow"} />
             )}
           </p>
         </section>
@@ -171,7 +171,7 @@ export default async function WorkOrderPage({ params }: { params: Promise<{ id: 
           workOrderId={wo.id}
           next={WO_NEXT[wo.status]}
           squawk={
-            squawk && squawk.status !== "resolved" && hasAnyRole(roles, AIRWORTHINESS_WRITERS)
+            squawk && squawk.status !== "resolved" && !squawk.is_rii && hasAnyRole(roles, AIRWORTHINESS_WRITERS)
               ? { id: squawk.id, grounding: squawk.severity === "grounding" }
               : null
           }

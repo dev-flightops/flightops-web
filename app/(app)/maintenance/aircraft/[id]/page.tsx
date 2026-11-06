@@ -57,7 +57,8 @@ export default async function AircraftDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const canSignOff = hasAnyRole((await auth())?.roles ?? [], AIRWORTHINESS_WRITERS);
+  const session = await auth();
+  const canSignOff = hasAnyRole(session?.roles ?? [], AIRWORTHINESS_WRITERS);
 
   let verdict: AirworthinessResponse | null = null;
   let mels: MelItemResponse[] = [];
@@ -152,7 +153,7 @@ export default async function AircraftDetailPage({
 
       <section className="mt-8">
         <SectionHeader title="Open squawks" count={squawks.length} />
-        <SquawksTable items={squawks} canResolve={canSignOff} />
+        <SquawksTable items={squawks} canResolve={canSignOff} signerName={session?.user?.name?.trim() ?? ""} />
       </section>
 
       <section className="mt-8">

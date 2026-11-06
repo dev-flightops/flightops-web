@@ -53,7 +53,8 @@ export default async function SquawksListPage({
     await searchParams;
   // Resolving is maintenance's (AIRWORTHINESS_WRITERS, enforced by the
   // backend); everyone else sees the list read-only.
-  const roles = (await auth())?.roles ?? [];
+  const session = await auth();
+  const roles = session?.roles ?? [];
   const canResolve = hasAnyRole(roles, AIRWORTHINESS_WRITERS);
   const canOpenWorkOrder = hasAnyRole(roles, WORK_ORDER_WRITERS);
   const tab = parseTab(statusParam);
@@ -129,6 +130,7 @@ export default async function SquawksListPage({
           items={items}
           showAircraft
           canResolve={canResolve}
+          signerName={session?.user?.name?.trim() ?? ""}
           workOrders={workOrders}
           canOpenWorkOrder={canOpenWorkOrder}
           emptyMessage={`No ${

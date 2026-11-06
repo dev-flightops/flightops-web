@@ -163,7 +163,7 @@ export const HELP_ENTRIES: HelpEntry[] = [
     howToUse: [
       "The fleet list shows each aircraft's blocking and advisory counts.",
       "Squawks are reported defects; MEL items are deferrals with a due date; work orders are the work itself.",
-      "Due List — the Maintenance Clock — is where hours and calendar milestones count down.",
+      "The Due List is where hours and calendar milestones count down. The Maintenance Clock tracks the time an aircraft spends in the shop.",
     ],
     connectsTo:
       "Grounding an aircraft removes it from dispatch immediately and raises an alert on the home page and the bell. Airframe and engine hours come from crew flight logs.",
@@ -171,7 +171,7 @@ export const HELP_ENTRIES: HelpEntry[] = [
       "Grounded means a grounding timestamp is set, which the auto-grounding job does when a MEL expires. That is a different test from whether the aircraft is marked active.",
       "Use Settings → Fleet to add or edit aircraft. Dedicated Inspections, Vendors and maintenance Roster pages are not available.",
     ],
-    related: ["/maintenance/mx-clock", "/maintenance/work-orders", "/dispatch"],
+    related: ["/maintenance/due-list", "/maintenance/work-orders", "/dispatch"],
   },
   {
     route: "/reports",
@@ -527,7 +527,7 @@ export const HELP_ENTRIES: HelpEntry[] = [
       "Hours flow to Maintenance's time clock and to Payroll. Reviews appear in the chief pilot's review queue. The entry itself is part of the 135.63 record.",
     example:
       "A pilot lands at PAKN, enters 14:02 / 14:19 / 15:38 / 15:47, and the log returns 1:45 block and 1:19 flight. The airframe's next inspection moves by 1:45 without anyone updating it by hand.",
-    related: ["/flight-crew/history", "/flight-crew/elog/cp-reviews", "/maintenance/mx-clock"],
+    related: ["/flight-crew/history", "/flight-crew/elog/cp-reviews", "/maintenance/due-list"],
   },
   {
     route: "/flight-crew/history",
@@ -737,17 +737,18 @@ export const HELP_ENTRIES: HelpEntry[] = [
     title: "Return to service",
     whoCanUse: ["maintenance", "director_of_maintenance", "exec_admin"],
     whatItDoes:
-      "The queue of aircraft with completed work that has not yet been signed back into service. An airframe sits here between the work being finished and somebody with the authority to release it saying so.",
+      "What's waiting to be signed back into service: Required Inspection Items waiting for their inspector, squawks whose work order is finished, grounding squawks with the work still to do, and every aircraft held.",
     howToUse: [
-      "Work the queue — an aircraft in it is an aircraft Dispatch cannot release.",
-      "Check the completed work and the parts recorded against it.",
-      "Sign the return to service. Your name and the time are the record.",
+      "Sign off airworthy with the work performed, your name and your FAA certificate. It returns the aircraft to service straight away, unless it's an RII.",
+      "Tick RII for a Required Inspection Item. The aircraft stays held until someone else inspects it and signs: the person who did the work can't.",
+      "An inspector can reject the work, with a reason. It goes back to open, and stays an RII.",
+      "Defer under the MEL, or as a DMI with a due date, instead of fixing it now. A DMI goes on the aircraft's due list and grounds it if the date passes.",
     ],
     connectsTo:
-      "Fed by signed-off work orders. A release here makes the airframe available to Dispatch again, so the queue is the bottleneck between maintenance finishing and flying resuming.",
+      "An aircraft is held by what the release reads: grounding squawks, expired MEL items, and overdue inspections and due items. Clearing the last one makes it available to Dispatch again.",
     example:
-      "The 208B's 100-hour finishes at 16:00. It sits in the RTS queue until the DOM signs it at 16:20, and only then does it reappear as available on the following morning's board.",
-    related: ["/maintenance/work-orders", "/maintenance/availability"],
+      "The 208B's generator is replaced at 16:00. The mechanic signs it as an RII, and it stays held. A second mechanic inspects it at 16:20 and signs, and it's on the board for the morning.",
+    related: ["/maintenance/squawks", "/maintenance/work-orders", "/maintenance/availability"],
   },
   {
     route: "/maintenance/mel",
@@ -781,7 +782,7 @@ export const HELP_ENTRIES: HelpEntry[] = [
     related: ["/maintenance/squawks", "/dispatch", "/maintenance/availability"],
   },
   {
-    route: "/maintenance/mx-clock",
+    route: "/maintenance/due-list",
     title: "Maintenance due list",
     whoCanUse: ["maintenance", "director_of_maintenance", "chief_pilot", "exec_admin"],
     whatItDoes:
@@ -798,47 +799,82 @@ export const HELP_ENTRIES: HelpEntry[] = [
     related: ["/maintenance/work-orders", "/maintenance/expiration", "/flight-crew/elog"],
   },
   {
+    route: "/maintenance/mx-clock",
+    title: "Maintenance clock",
+    whoCanUse: ["maintenance", "director_of_maintenance", "exec_admin"],
+    whatItDoes:
+      "The time an aircraft spends in maintenance. A clock runs from Begin Work to Complete, with the mechanics on it and the milestones reached along the way.",
+    howToUse: [
+      "Pick the aircraft, and its work order if it has one, and press Begin Work. You go on the clock.",
+      "Other mechanics press Join, and Leave when they're done. One aircraft has one clock at a time.",
+      "Press each milestone as it's reached: Aircraft Pulled, Inspection Started, Parts Installed, Test Run Complete, Ready for RTS.",
+      "Press Complete when the job's finished. Returning the aircraft to service is a separate sign-off, on the RTS Queue.",
+    ],
+    connectsTo:
+      "The hours are what the availability report counts as time the aircraft couldn't fly.",
+    example:
+      "The 208B goes in for a 100-hour at 08:00. Two mechanics are on the clock, and it's completed at 16:00: eight hours off the fleet's availability this month.",
+    related: ["/maintenance/availability", "/maintenance/rts", "/maintenance/work-orders"],
+  },
+  {
     route: "/maintenance/inventory",
     title: "Parts inventory",
     whoCanUse: ["maintenance", "director_of_maintenance", "exec_admin"],
     whatItDoes:
-      "What parts are held, where, and how many. Drawn down by work orders as parts are consumed, so the count reflects what has been fitted rather than what was last counted.",
+      "What parts are held, where, and how many, with each batch or lot as its own line. A quantity reads red at or below its minimum. Every movement is recorded, so the history adds up to what's on the shelf.",
     howToUse: [
-      "Search for a part to see the quantity on hand and where it is held.",
-      "Receive stock when it arrives.",
-      "Let work orders do the consuming — adjusting by hand here hides the reason a part left the shelf.",
+      "Search, or filter by category or low stock. Open a part to see its history.",
+      "Move stock on the part's page: Receive when it arrives, Issue when it's used, Return when it comes back. Name the aircraft or work order an issue goes to, because Batch Trace reads that.",
+      "Barcode Scan finds a part by its code and checks one in or out. It lists each batch of a part number, soonest to expire first.",
+      "Edit a part to correct it. A changed quantity goes in the history as a stock count.",
     ],
     connectsTo:
-      "Work orders consume stock. Shelf-life dates feed the parts expiration report.",
-    related: ["/maintenance/work-orders", "/maintenance/expiration", "/maintenance/batch-trace"],
+      "An expired part can't be issued, and an issue can't take more than is on hand. Expiry dates feed the expiration report, and issues feed Batch Trace.",
+    worthKnowing: [
+      "Shipping between bases and parts requests aren't built, so stock in transit isn't counted toward low stock.",
+    ],
+    related: ["/maintenance/expiration", "/maintenance/batch-trace", "/maintenance/work-orders"],
   },
   {
     route: "/maintenance/expiration",
     title: "Parts expiration",
     whoCanUse: ["maintenance", "director_of_maintenance", "exec_admin"],
     whatItDoes:
-      "Parts with a shelf life, and when it runs out. Separate from the maintenance due list on purpose: that one is about airframes accruing hours, this one is about stock going out of date on a shelf whether or not anything flies.",
+      "Parts past their expiry date, and those expiring in the next 30, 60 and 90 days. Separate from the maintenance due list on purpose: that one is about airframes accruing hours, this one is about stock going out of date on a shelf whether or not anything flies.",
     howToUse: [
-      "Read the nearest expiry first.",
-      "Check quantities before ordering — an expiring part you hold six of is a different problem from one you hold one of.",
-      "Remove expired stock from inventory so it cannot be fitted.",
+      "Read the expired list first. Those parts can't be issued, so take them off the shelf.",
+      "Check quantities before ordering: an expiring part you hold six of is a different problem from one you hold one of.",
     ],
-    connectsTo: "Reads shelf-life dates recorded against inventory.",
-    related: ["/maintenance/inventory", "/maintenance/mx-clock"],
+    connectsTo: "Reads the expiry dates recorded against inventory.",
+    related: ["/maintenance/inventory", "/maintenance/batch-trace", "/maintenance/due-list"],
+  },
+  {
+    route: "/maintenance/batch-trace",
+    title: "Batch and lot traceability",
+    whoCanUse: ["maintenance", "director_of_maintenance", "exec_admin"],
+    whatItDoes:
+      "Every movement of a batch or lot, and every aircraft that received a part from it. For an airworthiness directive or a recall.",
+    howToUse: [
+      "Enter a batch number, a lot number or both, or part of one.",
+      "The table lists each movement. Affected Aircraft Summary lists the aircraft to look at.",
+    ],
+    connectsTo:
+      "Reads what was issued from inventory. A part issued without naming an aircraft shows no aircraft here.",
+    related: ["/maintenance/inventory", "/maintenance/expiration"],
   },
   {
     route: "/maintenance/availability",
-    title: "Fleet availability",
+    title: "Aircraft revenue availability",
     whoCanUse: ["maintenance", "director_of_maintenance", "dispatcher", "chief_pilot", "exec_admin"],
     whatItDoes:
-      "Which aircraft can fly right now, and what is stopping the ones that cannot. Dispatch reads it before promising a flight; maintenance reads it to see the effect of the work it has open.",
+      "How much of a period each aircraft could have flown, and what it did with it: revenue hours, maintenance hours, non-revenue flying and idle time. Green at 90%, yellow at 75%, red below.",
     howToUse: [
-      "Read the unavailable aircraft first, and the reason against each.",
-      "Follow a reason through to the work order or MEL entry behind it.",
+      "Pick the dates. It starts with the last 30 days, least available aircraft first.",
+      "Read the status for where each aircraft stands now: In MX, RTS Hold or Available.",
     ],
     connectsTo:
-      "Built from open work orders, the return-to-service queue and MEL deferrals. Feeds the dispatcher's board and the maintenance dashboard.",
-    related: ["/maintenance/rts", "/maintenance/mel", "/maintenance"],
+      "Maintenance hours come from the Maintenance Clock, so time nobody clocked counts as available. Flight hours come from filed logs' block times, or else the check-in times, and a log's flight type decides what's non-revenue.",
+    related: ["/maintenance/mx-clock", "/maintenance/rts", "/maintenance"],
   },
   // ── Safety ──────────────────────────────────────────────────────────
   {
@@ -1430,7 +1466,7 @@ export const HELP_ENTRIES: HelpEntry[] = [
       "Confirm anything you are going to schedule against the maintenance due list.",
     ],
     connectsTo: "Reads airframe hours, maintenance records and flight activity.",
-    related: ["/maintenance/mx-clock", "/profitability", "/ai/query"],
+    related: ["/maintenance/due-list", "/profitability", "/ai/query"],
   },
   {
     route: "/fuel/quality",

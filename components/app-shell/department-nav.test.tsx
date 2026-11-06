@@ -113,11 +113,9 @@ describe("DepartmentNav", () => {
     expect(screen.queryByTestId("dept-nav-mel")).not.toBeInTheDocument();
     expect(screen.queryByTestId("dept-nav-squawks")).not.toBeInTheDocument();
 
-    // The six shells (legacy's layout, no endpoint behind them) had shown
-    // dimmed, and the client found they "look clickable, do nothing"
-    // (#156). Greg, 30 Oct: hidden until they are built.
+    // The six pages that were hidden until they were built (#156, #172).
     for (const id of ["rts", "inventory", "expiration", "batch-trace", "mx-clock", "availability"]) {
-      expect(screen.queryByTestId(`dept-nav-${id}`)).not.toBeInTheDocument();
+      expect(screen.getByTestId(`dept-nav-${id}`).tagName).toBe("A");
     }
     // The AI accent survives going live. It is what tells a mechanic
     // this chip opens a model rather than a record.

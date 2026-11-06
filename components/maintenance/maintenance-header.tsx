@@ -26,22 +26,8 @@ export interface ActionButton {
   status: ModuleStatus;
 }
 
-// Due List, Inventory and RTS Queue are `planned`: their pages existed
-// as shells — legacy's layout with every control disabled — and an
-// earlier pass marked them live because the files were there. Nothing
-// backs them (no maintenance-service endpoint), so they say "Not built
-// yet" now, as their pages do (components/not-built-page.tsx).
-//
-// Five of these shipped and stayed dimmed here. The department nav
-// links them; this header, which is what somebody standing on
-// /maintenance actually reaches for, still said "Coming in M3".
-//
-// "Due List" is /maintenance/expiration — that page IS the due list,
-// under the name the nav gives it. Relabelled rather than left
-// pointing at nothing, because two names for one page is how a hub
-// ends up with a dead entry beside a live one.
-//
-// Inspections, Vendors and Roster have no page and stay dimmed.
+// Inventory and the RTS Queue were shells until #172. Inspections, Vendors
+// and Roster have no page, so the header doesn't show them.
 // Exported for components/home/module-status.test.ts, which sweeps
 // every catalogue in the app for a status that disagrees with what
 // is on disk. This one sat outside that sweep, which is how five
@@ -54,8 +40,8 @@ export const MAINTENANCE_ACTIONS: ActionButton[] = [
   // unbuilt Maintenance Clock, a different page.
   { label: "Due List", href: "/maintenance/due-list", status: "live" },
   { label: "Work Orders", href: "/maintenance/work-orders", status: "live" },
-  { label: "Inventory", href: "/maintenance/inventory", status: "planned" },
-  { label: "RTS Queue", href: "/maintenance/rts", status: "planned" },
+  { label: "Inventory", href: "/maintenance/inventory", status: "live" },
+  { label: "RTS Queue", href: "/maintenance/rts", status: "live" },
   { label: "Inspections", status: "m3" },
   { label: "Vendors", status: "m3" },
   { label: "Roster", status: "m3" },

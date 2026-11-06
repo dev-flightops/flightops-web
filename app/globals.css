@@ -382,6 +382,20 @@
   }
 
   /* A list's column heads, as the Flight Following board sets them. */
+  /* A list's table (#172): padded cells and ruled rows, under a .ff-thead. */
+  .ff-table th {
+    padding: 0.5rem 0.75rem;
+  }
+  .ff-table td {
+    padding: 0.625rem 0.75rem;
+  }
+  .ff-table tbody tr {
+    border-top: 1px solid hsl(var(--border));
+  }
+  .ff-table tbody tr:hover {
+    background-color: hsl(var(--accent));
+  }
+
   .ff-thead {
     border-bottom: 1px solid hsl(var(--border));
     background-color: hsl(var(--muted));

@@ -25,7 +25,7 @@ describe("MaintenanceHeader", () => {
     for (const label of ["Squawks", "MEL", "Due List", "Work Orders", "+ Aircraft"]) {
       expect(screen.getByText(label)).toBeInTheDocument();
     }
-    for (const label of ["Inspections", "Inventory", "Vendors", "RTS Queue", "Roster"]) {
+    for (const label of ["Inspections", "Vendors", "Roster"]) {
       expect(screen.queryByText(label)).toBeNull();
     }
   });
@@ -45,6 +45,8 @@ describe("MaintenanceHeader", () => {
       // the Maintenance Clock: the due list itself (#156).
       "Due List": "/maintenance/due-list",
       "Work Orders": "/maintenance/work-orders",
+      Inventory: "/maintenance/inventory",
+      "RTS Queue": "/maintenance/rts",
       // Adding a tail ships under Settings, not /maintenance — which is
       // exactly why it was missed: it sat dimmed as "an add form we never
       // built" while /settings/fleet had it.

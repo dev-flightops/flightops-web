@@ -372,3 +372,345 @@ export async function listDueItemCompletions(itemId: string): Promise<DueItemCom
     await apiFetch<{ items: DueItemCompletion[] }>(`/maintenance/due-items/${itemId}/completions`)
   ).items;
 }
+
+// ---- Parts (#172) ------------------------------------------------------------
+
+export interface Part {
+  id: string;
+  part_number: string;
+  description: string;
+  category: string;
+  manufacturer: string | null;
+  unit_cost: number | null;
+  unit: string;
+  qty_on_hand: number;
+  qty_minimum: number;
+  low_stock: boolean;
+  location: string | null;
+  is_life_limited: boolean;
+  shelf_life_months: number | null;
+  expiration_date: string | null;
+  expired: boolean;
+  batch_number: string | null;
+  lot_number: string | null;
+  received_date: string | null;
+  is_active: boolean;
+  notes: string | null;
+}
+
+export interface PartList {
+  items: Part[];
+  total: number;
+  /** Across the whole inventory, whatever the filter shows. */
+  low_count: number;
+}
+
+export type PartTransactionType = "received" | "issued" | "returned" | "adjustment";
+
+export interface PartTransaction {
+  id: string;
+  txn_type: PartTransactionType;
+  /** Signed: an issue is negative. */
+  quantity: number;
+  aircraft_id: string | null;
+  aircraft_tail: string | null;
+  work_order_id: string | null;
+  wo_number: string | null;
+  reference: string | null;
+  batch_number: string | null;
+  lot_number: string | null;
+  notes: string | null;
+  recorded_by: string | null;
+  recorded_at: string;
+}
+
+export interface PartDetail extends Part {
+  transactions: PartTransaction[];
+}
+
+export interface PartInput {
+  part_number: string;
+  description: string;
+  category: string;
+  manufacturer: string | null;
+  unit_cost: string | null;
+  unit: string;
+  qty_on_hand: string;
+  qty_minimum: string;
+  location: string | null;
+  is_life_limited: boolean;
+  shelf_life_months: number | null;
+  expiration_date: string | null;
+  batch_number: string | null;
+  lot_number: string | null;
+  received_date: string | null;
+  notes: string | null;
+}
+
+export interface PartMove {
+  txn_type: "received" | "issued" | "returned";
+  quantity: string;
+  aircraft_id?: string | null;
+  work_order_id?: string | null;
+  reference?: string | null;
+  batch_number?: string | null;
+  lot_number?: string | null;
+  notes?: string | null;
+}
+
+export interface PartExpiration {
+  today: string;
+  expired: Part[];
+  within_30: Part[];
+  within_60: Part[];
+  within_90: Part[];
+}
+
+export interface PartTraceRow extends PartTransaction {
+  part_id: string;
+  part_number: string;
+  part_description: string;
+}
+
+export interface PartTrace {
+  results: PartTraceRow[];
+  affected_aircraft: { id: string; tail_number: string; model: string | null }[];
+  /** For the batch box's suggestions. */
+  batches: string[];
+}
+
+export async function listParts(
+  params: { q?: string; category?: string; lowStock?: boolean } = {},
+): Promise<PartList> {
+  const qs = new URLSearchParams();
+  if (params.q) qs.set("q", params.q);
+  if (params.category) qs.set("category", params.category);
+  if (params.lowStock) qs.set("low_stock", "true");
+  const tail = qs.toString() ? `?${qs.toString()}` : "";
+  return apiFetch<PartList>(`/maintenance/parts${tail}`);
+}
+
+export async function listPartCategories(): Promise<{ value: string; label: string }[]> {
+  return apiFetch(`/maintenance/parts/categories`);
+}
+
+export async function lookupPart(code: string): Promise<Part[]> {
+  return apiFetch<Part[]>(`/maintenance/parts/lookup?code=${encodeURIComponent(code)}`);
+}
+
+export async function getPartExpiration(): Promise<PartExpiration> {
+  return apiFetch<PartExpiration>(`/maintenance/parts/expiration`);
+}
+
+export async function tracePart(params: { batch?: string; lot?: string } = {}): Promise<PartTrace> {
+  const qs = new URLSearchParams();
+  if (params.batch) qs.set("batch", params.batch);
+  if (params.lot) qs.set("lot", params.lot);
+  const tail = qs.toString() ? `?${qs.toString()}` : "";
+  return apiFetch<PartTrace>(`/maintenance/parts/trace${tail}`);
+}
+
+export async function getPart(id: string): Promise<PartDetail> {
+  return apiFetch<PartDetail>(`/maintenance/parts/${id}`);
+}
+
+export async function createPart(body: PartInput): Promise<Part> {
+  return apiFetch<Part>(`/maintenance/parts`, { method: "POST", body: JSON.stringify(body) });
+}
+
+export async function updatePart(id: string, body: PartInput): Promise<Part> {
+  return apiFetch<Part>(`/maintenance/parts/${id}`, { method: "PATCH", body: JSON.stringify(body) });
+}
+
+export async function removePart(id: string): Promise<void> {
+  await apiFetch<void>(`/maintenance/parts/${id}`, { method: "DELETE" });
+}
+
+export async function movePart(id: string, body: PartMove): Promise<Part> {
+  return apiFetch<Part>(`/maintenance/parts/${id}/transactions`, {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+}
+
+// ---- The maintenance clock (#172) --------------------------------------------
+
+export interface MxClock {
+  id: string;
+  aircraft: { id: string; tail_number: string; model: string | null; airframe_type: string | null };
+  work_order_id: string | null;
+  wo_number: string | null;
+  status: "active" | "completed";
+  started_at: string;
+  completed_at: string | null;
+  total_hours: number | null;
+  elapsed_hours: number;
+  started_by: string;
+  notes: string | null;
+  milestones: { key: string; label: string; at: string | null }[];
+  mechanics: { user_id: string; name: string; clocked_in: string }[];
+  /** The viewer is on this clock now. */
+  on_clock: boolean;
+}
+
+export interface MxClockList {
+  active: MxClock[];
+  recent: MxClock[];
+}
+
+export async function listMxClocks(): Promise<MxClockList> {
+  return apiFetch<MxClockList>(`/maintenance/mx-clocks`);
+}
+
+export async function startMxClock(body: {
+  aircraft_id: string;
+  work_order_id: string | null;
+  notes: string | null;
+}): Promise<MxClock> {
+  return apiFetch<MxClock>(`/maintenance/mx-clocks`, { method: "POST", body: JSON.stringify(body) });
+}
+
+export async function stampMxMilestone(id: string, milestone: string): Promise<MxClock> {
+  return apiFetch<MxClock>(`/maintenance/mx-clocks/${id}/milestones`, {
+    method: "POST",
+    body: JSON.stringify({ milestone }),
+  });
+}
+
+export async function moveOnMxClock(id: string, move: "join" | "leave" | "complete"): Promise<MxClock> {
+  return apiFetch<MxClock>(`/maintenance/mx-clocks/${id}/${move}`, { method: "POST" });
+}
+
+// ---- Availability (#172) -----------------------------------------------------
+
+export interface AvailabilityRow {
+  aircraft_id: string;
+  tail_number: string;
+  model: string | null;
+  airframe_type: string | null;
+  availability_pct: number;
+  revenue_hours: number;
+  mx_hours: number;
+  non_revenue_hours: number;
+  idle_hours: number;
+  flights: number;
+  mx_events: number;
+  status: "in_mx" | "on_hold" | "available";
+}
+
+export interface AvailabilityReport {
+  start: string;
+  end: string;
+  period_days: number;
+  fleet_availability_pct: number;
+  revenue_hours: number;
+  mx_hours: number;
+  rows: AvailabilityRow[];
+}
+
+export async function getAvailability(
+  params: { start?: string; end?: string } = {},
+): Promise<AvailabilityReport> {
+  const qs = new URLSearchParams();
+  if (params.start) qs.set("start", params.start);
+  if (params.end) qs.set("end", params.end);
+  const tail = qs.toString() ? `?${qs.toString()}` : "";
+  return apiFetch<AvailabilityReport>(`/maintenance/availability${tail}`);
+}
+
+// ---- Return to Service (#172) ------------------------------------------------
+
+export interface RtsAircraft {
+  id: string;
+  tail_number: string;
+  model: string | null;
+  airframe_type: string | null;
+  base: string | null;
+}
+
+export interface RtsSquawk {
+  id: string;
+  aircraft: RtsAircraft;
+  reported_at: string;
+  reported_by: string;
+  title: string;
+  description: string;
+  severity: "minor" | "major" | "grounding";
+  status: "open" | "in_progress" | "resolved";
+  is_rii: boolean;
+  work_order: { id: string; wo_number: string; status: WorkOrderStatus } | null;
+  rts_submitted_at: string | null;
+  /** The viewer signed the work, so may not inspect it. */
+  signed_by_me: boolean;
+  rts_work_notes: string | null;
+  rts_amt_name: string | null;
+  rts_amt_cert_number: string | null;
+  rts_amt_cert_type: string | null;
+  rts_rejection_notes: string | null;
+}
+
+export interface RtsQueue {
+  pending_rii: RtsSquawk[];
+  pending_rts: RtsSquawk[];
+  open_on_hold: RtsSquawk[];
+  held_aircraft: { aircraft: RtsAircraft; reasons: string[] }[];
+}
+
+export type CertType = "ap" | "ia" | "repairman";
+
+export interface RtsSignOff {
+  work_notes: string;
+  amt_name: string;
+  cert_number: string;
+  cert_type: CertType;
+  airworthy: true;
+  is_rii: boolean;
+}
+
+export interface RtsInspection {
+  inspector_name: string;
+  cert_number: string;
+  notes: string | null;
+  confirmed: true;
+}
+
+export interface RtsDeferral {
+  defer_type: "mel" | "dmi";
+  reason: string;
+  mel_category: "A" | "B" | "C" | "D" | null;
+  ata_chapter: string | null;
+  reference: string | null;
+  due_on: string | null;
+}
+
+export async function getRtsQueue(): Promise<RtsQueue> {
+  return apiFetch<RtsQueue>(`/maintenance/rts/queue`);
+}
+
+export async function signOffSquawk(id: string, body: RtsSignOff): Promise<SquawkResponse> {
+  return apiFetch<SquawkResponse>(`/maintenance/squawks/${id}/rts/sign-off`, {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+}
+
+export async function inspectSquawk(id: string, body: RtsInspection): Promise<SquawkResponse> {
+  return apiFetch<SquawkResponse>(`/maintenance/squawks/${id}/rts/rii`, {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+}
+
+export async function rejectSquawkSignOff(id: string, reason: string): Promise<SquawkResponse> {
+  return apiFetch<SquawkResponse>(`/maintenance/squawks/${id}/rts/reject`, {
+    method: "POST",
+    body: JSON.stringify({ reason }),
+  });
+}
+
+export async function deferSquawk(id: string, body: RtsDeferral): Promise<SquawkResponse> {
+  return apiFetch<SquawkResponse>(`/maintenance/squawks/${id}/rts/defer`, {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+}

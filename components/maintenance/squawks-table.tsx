@@ -1,6 +1,8 @@
 import Link from "next/link";
 
 import { ResolveSquawkDialog } from "@/components/dispatch/packet/resolve-squawk-dialog";
+import { SubmitRtsDialog } from "@/components/maintenance/submit-rts-dialog";
+import { certLabel } from "@/lib/maintenance/parts";
 import { cn } from "@/lib/utils";
 import type { SquawkResponse, SquawkSeverity } from "@/lib/api/types";
 import { formatBothWithDate } from "@/lib/format/flight-time";
@@ -23,6 +25,10 @@ import { formatBothWithDate } from "@/lib/format/flight-time";
  *
  * `workOrders` links a squawk to the work order opened for it, and
  * `canOpenWorkOrder` offers to open one (WORK_ORDER_WRITERS, #134).
+ *
+ * `signerName` is the viewer's name for the sign-off that goes beside Resolve
+ * (#172). A squawk waiting for its inspector offers neither: it goes to the queue.
+ * A Required Inspection Item sent back by its inspector offers only the sign-off.
  */
 export function SquawksTable({
   items,
@@ -31,6 +37,7 @@ export function SquawksTable({
   canResolve = false,
   workOrders = {},
   canOpenWorkOrder = false,
+  signerName = "",
 }: {
   items: SquawkResponse[];
   showAircraft?: boolean;
@@ -41,6 +48,8 @@ export function SquawksTable({
   workOrders?: Record<string, { id: string; wo_number: string }>;
   /** The viewer may open a work order (WORK_ORDER_WRITERS). */
   canOpenWorkOrder?: boolean;
+  /** The viewer's name, to start a sign-off from. */
+  signerName?: string;
 }) {
   const actions = canResolve || canOpenWorkOrder || Object.keys(workOrders).length > 0;
   if (items.length === 0) {
@@ -79,6 +88,7 @@ export function SquawksTable({
               actions={actions}
               workOrder={workOrders[sq.id] ?? null}
               canOpenWorkOrder={canOpenWorkOrder}
+              signerName={signerName}
             />
           ))}
         </tbody>
@@ -94,6 +104,7 @@ function SquawkRow({
   actions,
   workOrder,
   canOpenWorkOrder,
+  signerName,
 }: {
   squawk: SquawkResponse;
   showAircraft: boolean;
@@ -101,6 +112,7 @@ function SquawkRow({
   actions: boolean;
   workOrder: { id: string; wo_number: string } | null;
   canOpenWorkOrder: boolean;
+  signerName: string;
 }) {
   const reported = formatBothWithDate(squawk.reported_at);
 
@@ -138,7 +150,7 @@ function SquawkRow({
         {squawk.reported_by.full_name}
       </td>
       <td className="px-3 py-2.5">
-        <StatusChip status={squawk.status} />
+        <StatusChip status={squawk.status} awaitingRii={squawk.awaiting_rii ?? false} />
         {squawk.status === "resolved" && (
           <details className="mt-2 max-w-sm text-xs">
             <summary className="cursor-pointer text-primary">Resolution record</summary>
@@ -148,6 +160,16 @@ function SquawkRow({
             <p className="mt-1 text-muted-foreground">
               Resolved by {squawk.resolved_by?.full_name || "an unrecorded user"}
             </p>
+            {squawk.rts_amt_name ? (
+              <p className="mt-1 text-muted-foreground">
+                Signed off by {squawk.rts_amt_name}, {certLabel(squawk.rts_amt_cert_type)} {squawk.rts_amt_cert_number}
+              </p>
+            ) : null}
+            {squawk.rii_inspector_name ? (
+              <p className="mt-1 text-muted-foreground">
+                RII inspected by {squawk.rii_inspector_name}, {squawk.rii_inspector_cert_number}
+              </p>
+            ) : null}
             {squawk.resolved_at && (
               <p className="mt-1 font-mono text-muted-foreground">
                 {formatBothWithDate(squawk.resolved_at).local}
@@ -179,12 +201,31 @@ function SquawkRow({
                 </Link>
               )
             )}
-            {canResolve && squawk.status !== "resolved" && (
-              <ResolveSquawkDialog
-                squawkId={squawk.id}
-                title={squawk.title}
-                severity={squawk.severity}
-              />
+            {canResolve && squawk.awaiting_rii && (
+              <Link
+                href="/maintenance/rts"
+                className="text-[0.68rem] font-bold uppercase tracking-[0.1em] text-primary hover:underline"
+              >
+                RII sign-off<span className="sr-only"> for {squawk.title}</span> <span aria-hidden>›</span>
+              </Link>
+            )}
+            {canResolve && squawk.status !== "resolved" && !squawk.awaiting_rii && (
+              <>
+                <SubmitRtsDialog
+                  squawkId={squawk.id}
+                  aircraftId={squawk.aircraft.id}
+                  title={squawk.title}
+                  name={signerName}
+                  rii={squawk.is_rii ?? false}
+                />
+                {squawk.is_rii ? null : (
+                  <ResolveSquawkDialog
+                    squawkId={squawk.id}
+                    title={squawk.title}
+                    severity={squawk.severity}
+                  />
+                )}
+              </>
             )}
           </div>
         </td>
@@ -221,8 +262,19 @@ function SeverityPill({ severity }: { severity: SquawkSeverity }) {
   );
 }
 
-function StatusChip({ status }: { status: SquawkResponse["status"] }) {
-  const label =
-    status === "in_progress" ? "In progress" : status === "open" ? "Open" : "Resolved";
+function StatusChip({
+  status,
+  awaitingRii,
+}: {
+  status: SquawkResponse["status"];
+  awaitingRii: boolean;
+}) {
+  const label = awaitingRii
+    ? "Awaiting RII"
+    : status === "in_progress"
+      ? "In progress"
+      : status === "open"
+        ? "Open"
+        : "Resolved";
   return <span className="eyebrow">{label}</span>;
 }
