@@ -1,6 +1,15 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { TestApiError, releaseFlight, packetWeatherFor, cancelFlight, pullBackRelease } = vi.hoisted(() => {
+const {
+  TestApiError,
+  releaseFlight,
+  packetWeatherFor,
+  cancelFlight,
+  pullBackRelease,
+  moveFlightDay,
+  resolveWeightReturn,
+  getFlightManifest,
+} = vi.hoisted(() => {
   class TestApiError extends Error {
     constructor(
       public status: number,
@@ -16,6 +25,9 @@ const { TestApiError, releaseFlight, packetWeatherFor, cancelFlight, pullBackRel
     packetWeatherFor: vi.fn(),
     cancelFlight: vi.fn(),
     pullBackRelease: vi.fn(),
+    moveFlightDay: vi.fn(),
+    resolveWeightReturn: vi.fn(),
+    getFlightManifest: vi.fn(),
   };
 });
 vi.mock("@/lib/api/client", () => ({ ApiError: TestApiError }));
@@ -24,12 +36,18 @@ vi.mock("@/lib/api/ops", () => ({
   updateFlight: vi.fn(),
   cancelFlight,
   pullBackRelease,
+  moveFlightDay,
+  resolveWeightReturn,
 }));
+vi.mock("@/lib/api/manifest", () => ({ getFlightManifest }));
 vi.mock("@/lib/api/dispatch-risk", () => ({ packetWeatherFor }));
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 
 import {
   cancelReleasedFlightAction,
+  flightWalkUpsAction,
+  markReplannedAction,
+  moveFlightDayAction,
   pullBackReleaseAction,
   releaseFlightAction,
 } from "./actions";
@@ -148,3 +166,81 @@ describe("pulling back or cancelling a release (#90)", () => {
   });
 });
 
+describe("moving a flight to another day (#174)", () => {
+  const refused = (status: number, detail: unknown) =>
+    new TestApiError(status, "/ops/flights/f-1/move-day", JSON.stringify({ detail }));
+
+  it("hands back what moved", async () => {
+    const moved = { days: 1, release_withdrawn: false };
+    moveFlightDay.mockResolvedValueOnce(moved);
+    await expect(moveFlightDayAction("f-1", "2026-10-31", "")).resolves.toEqual({ ok: true, moved });
+    expect(moveFlightDay).toHaveBeenCalledWith("f-1", "2026-10-31", undefined);
+  });
+
+  it.each([
+    [400, "reason_required", "Give the reason"],
+    [422, "already_that_day", "already on that day"],
+    [422, "move_into_the_past", "already passed"],
+    [422, "move_too_far", "over a year away"],
+    [409, "flight_already_departed", "has departed"],
+    [409, "flight_not_movable_in_status_cancelled", "This flight is cancelled, so it stays on its day."],
+    [409, "flight_number_conflict", "already uses that flight number"],
+    [403, "forbidden", "Only a dispatcher or an Exec Admin"],
+  ])("%s %s says so", async (status, detail, words) => {
+    moveFlightDay.mockRejectedValueOnce(refused(status, detail));
+    const result = await moveFlightDayAction("f-1", "2026-10-31", "");
+    expect(result.ok).toBe(false);
+    expect(!result.ok && result.error).toContain(words);
+  });
+
+  it("names the flight a busy aircraft is on", async () => {
+    moveFlightDay.mockRejectedValueOnce(
+      refused(409, {
+        error: "aircraft_busy",
+        flight_number: "MM2200",
+        scheduled_departure_at: "2026-10-31T17:00:00Z",
+        scheduled_arrival_at: "2026-10-31T19:00:00Z",
+      }),
+    );
+    const result = await moveFlightDayAction("f-1", "2026-10-31", "");
+    expect(!result.ok && result.error).toContain("already on MM2200");
+  });
+});
+
+describe("marking a returned flight re-planned (#174)", () => {
+  it("saves", async () => {
+    resolveWeightReturn.mockResolvedValueOnce({});
+    await expect(markReplannedAction("f-1")).resolves.toEqual({ ok: true });
+    expect(resolveWeightReturn).toHaveBeenCalledWith("f-1");
+  });
+
+  it("takes someone else having got there first as done", async () => {
+    resolveWeightReturn.mockRejectedValueOnce(new TestApiError(404, "/x", "no_open_weight_return"));
+    await expect(markReplannedAction("f-1")).resolves.toEqual({ ok: true });
+  });
+
+  it("says who can when it's refused", async () => {
+    resolveWeightReturn.mockRejectedValueOnce(new TestApiError(403, "/x", "forbidden"));
+    const result = await markReplannedAction("f-1");
+    expect(!result.ok && result.error).toContain("Only dispatch");
+  });
+});
+
+describe("the passengers a cancelled flight leaves behind (#174)", () => {
+  it("are those with no booking, not the crew or a no-show", async () => {
+    getFlightManifest.mockResolvedValueOnce({
+      pax: [
+        { first_name: "Wally", last_name: "Walkup", is_crew: false, booking_id: null },
+        { first_name: "Marcus", last_name: "Booked", is_crew: false, booking_id: "b-1" },
+        { first_name: "Bob", last_name: "Pilot", is_crew: true, booking_id: null },
+        { first_name: "Nora", last_name: "Absent", is_crew: false, booking_id: null, check_in_status: "no_show" },
+      ],
+    });
+    await expect(flightWalkUpsAction("f-1")).resolves.toEqual(["Wally Walkup"]);
+  });
+
+  it("are nobody when the flight has no manifest", async () => {
+    getFlightManifest.mockRejectedValueOnce(new TestApiError(404, "/x", "no manifest"));
+    await expect(flightWalkUpsAction("f-1")).resolves.toEqual([]);
+  });
+});

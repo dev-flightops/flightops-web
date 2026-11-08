@@ -7,6 +7,7 @@ import type { FlightListItem } from "@/lib/api/types";
 import { DEFAULT_ZONE_TABLE, localClock, type ZoneTable, zoneFor } from "@/lib/format/local-time";
 
 import { assessDelayAction, type AssessResult } from "./actions";
+import { routeText } from "@/lib/route";
 
 /**
  * The day's flights, each assessable on demand.
@@ -189,7 +190,7 @@ function FlightRow({ flight, zones }: { flight: FlightListItem; zones: ZoneTable
               {flight.flight_number}
             </span>
             <span className="text-sm text-foreground">
-              {flight.origin} → {flight.destination}
+              {routeText(flight)}
             </span>
             <span className="text-xs tabular-nums text-muted-foreground">
               {`ETD ${localClock(flight.scheduled_departure_at, zoneFor(zones, flight.origin))} (${hhmmZ(flight.scheduled_departure_at)})`}

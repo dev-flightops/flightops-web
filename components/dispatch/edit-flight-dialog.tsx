@@ -313,8 +313,9 @@ export function EditFlightDialog({
             <DialogTitle>Edit {flight.flight_number}</DialogTitle>
             <DialogDescription>
               Amend the scheduled flight, its route and stops included. Times are
-              local at the departure base ({tz}). Each save is recorded in the
-              audit log with a field-level diff.
+              local at the departure base ({tz}). A new date moves it to another
+              day: its FRAT, acknowledgments and check-in start over. Each save is
+              recorded in the audit log with a field-level diff.
             </DialogDescription>
           </DialogHeader>
 

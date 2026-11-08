@@ -248,6 +248,12 @@ export function FlightPanel({
                   Edit flight
                 </Link>
               ) : null}
+              {/* #174: a released flight too; the move takes the release back. */}
+              {canEdit && (flight.state === "planned" || flight.state === "released") ? (
+                <Link href={`/dispatch?flight=${flight.id}&move=1`} className={buttonOutline}>
+                  Move to another day
+                </Link>
+              ) : null}
               <Link href={`/dispatch?flight=${flight.id}`} className={buttonOutline}>
                 Dispatch packet
               </Link>

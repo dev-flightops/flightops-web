@@ -17,6 +17,7 @@ import type {
 } from "@/lib/api/types";
 
 import { NewFuelOrderForm } from "./new-order-form";
+import { routeText } from "@/lib/route";
 
 /** The caller orders fuel only as a pilot: the services then take an
  *  order only for a flight the pilot crews, from that flight (#134). */
@@ -71,7 +72,7 @@ export default async function NewFuelOrderPage() {
                 >
                   <span>
                     <span className="font-mono font-semibold">{f.flight_number}</span>{" "}
-                    {f.origin} → {f.destination}
+                    {routeText(f)}
                     <span className="ml-2 text-xs text-muted-foreground">
                       {f.aircraft?.tail_number} · departs {localClock(f.scheduled_departure_at, zoneFor(zones, f.origin))}
                     </span>

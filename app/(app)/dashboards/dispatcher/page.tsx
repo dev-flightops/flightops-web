@@ -16,6 +16,7 @@ import { snapshotAlertsToList } from "@/lib/dashboards/snapshot-to-alerts";
 import type { FlightListItem } from "@/lib/api/types";
 import { LoadFailedNotice } from "@/components/ff/setup-notice";
 import { Loads } from "@/lib/api/loads";
+import { routeText } from "@/lib/route";
 
 export default async function DispatcherDashboardPage() {
   // The company's day (#157), as the board and the schedule have it.
@@ -239,7 +240,7 @@ function LiveOpsTable({ flights }: { flights: FlightListItem[] }) {
               <td className="px-2 py-2 font-semibold text-foreground">{f.flight_number}</td>
               <td className="px-2 py-2 text-foreground/90">{f.aircraft.tail_number}</td>
               <td className="px-2 py-2 text-muted-foreground">
-                {f.origin}→{f.destination}
+                {routeText(f)}
               </td>
               <td className="px-2 py-2 text-muted-foreground">—</td>
               <td className="px-2 py-2">
@@ -300,7 +301,7 @@ function PendingDispatchTable({ flights }: { flights: FlightListItem[] }) {
             <tr key={f.id} className="border-b border-border/60 last:border-0">
               <td className="px-2 py-2 font-semibold text-foreground">{f.flight_number}</td>
               <td className="px-2 py-2 text-muted-foreground">
-                {f.origin} → {f.destination}
+                {routeText(f)}
               </td>
               <td className="px-2 py-2 text-foreground/90">{f.aircraft.tail_number}</td>
               <td className="px-2 py-2 text-foreground/80">{formatTime(f.scheduled_departure_at)}</td>

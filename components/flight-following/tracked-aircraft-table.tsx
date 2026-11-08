@@ -1,4 +1,5 @@
 import type { TrackedAircraft } from "@/lib/flight-following/merge-tracked";
+import { routeText } from "@/lib/route";
 
 import { OverdueBadge, StatusBadge } from "./status-badge";
 
@@ -88,9 +89,7 @@ function TrackedAircraftRow({ row }: { row: TrackedAircraft }) {
         )}
       </td>
       <td className="px-2.5 py-2 align-top font-mono">
-        {flight.origin}
-        <span className="text-muted-foreground"> → </span>
-        {flight.destination}
+        {routeText(flight)}
       </td>
       <td className="px-2.5 py-2 align-top font-mono text-muted-foreground">
         {altitude ?? "--"}

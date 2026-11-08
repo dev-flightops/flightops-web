@@ -4,11 +4,15 @@ import { revalidatePath } from "next/cache";
 
 import { ApiError } from "@/lib/api/client";
 import { packetWeatherFor } from "@/lib/api/dispatch-risk";
+import { getFlightManifest } from "@/lib/api/manifest";
 import {
   cancelFlight,
+  moveFlightDay,
   pullBackRelease,
   releaseFlight,
+  resolveWeightReturn,
   updateFlight,
+  type FlightMoveResult,
   type FlightUpdatePayload,
 } from "@/lib/api/ops";
 import { passengerSeatsRefusal } from "@/lib/flights/passenger-seats";
@@ -287,6 +291,75 @@ export async function cancelScheduledFlightAction(
   revalidatePath("/dispatch");
   revalidatePath("/flight-following");
   return { ok: true };
+}
+
+/** Move a flight to another day (#174). Not revalidated here: the dialog
+ *  shows what moved, then refreshes the page when it closes. */
+export async function moveFlightDayAction(
+  flightId: string,
+  toDate: string,
+  reason: string,
+): Promise<{ ok: true; moved: FlightMoveResult } | { ok: false; error: string }> {
+  try {
+    return { ok: true, moved: await moveFlightDay(flightId, toDate, reason || undefined) };
+  } catch (err) {
+    return { ok: false, error: moveError(err) };
+  }
+}
+
+function moveError(err: unknown): string {
+  if (!(err instanceof ApiError)) return "Couldn't save. Please try again.";
+  if (err.status === 401) return "Your session expired — please sign in again.";
+  if (err.status === 403) return "Only a dispatcher or an Exec Admin can do this.";
+  if (err.message.includes("reason_required")) return "Give the reason, in a few words at least.";
+  if (err.message.includes("already_that_day")) return "The flight is already on that day.";
+  if (err.message.includes("move_into_the_past")) {
+    return "That time has already passed. Pick a later day.";
+  }
+  if (err.message.includes("move_too_far")) return "That's over a year away. Check the date.";
+  if (err.message.includes("flight_already_departed")) {
+    return "This flight has departed, so it stays on its day.";
+  }
+  if (err.message.includes("flight_not_movable_in_status_")) {
+    const status = err.message.split("flight_not_movable_in_status_")[1]?.split(/[^a-z_]/)[0] ?? "";
+    return `This flight is ${status.replace(/_/g, " ")}, so it stays on its day.`;
+  }
+  if (err.message.includes("flight_number_conflict")) {
+    return "Another flight already uses that flight number at that time.";
+  }
+  const refused = scheduleRefusal(err.message);
+  if (refused) return refused;
+  return `Save failed (HTTP ${err.status}).`;
+}
+
+/** Dispatch has re-planned a flight its pilot returned over weight (#174). */
+export async function markReplannedAction(flightId: string): Promise<ActionResult> {
+  try {
+    await resolveWeightReturn(flightId);
+  } catch (err) {
+    if (!(err instanceof ApiError)) return { ok: false, error: "Couldn't save. Please try again." };
+    if (err.status === 401) return { ok: false, error: "Your session expired — please sign in again." };
+    if (err.status === 403) {
+      return { ok: false, error: "Only dispatch, the Chief Pilot, the DO or an Exec Admin can do this." };
+    }
+    // Someone else got there first: the card is out of date, not wrong.
+    if (err.status !== 404) return { ok: false, error: `Save failed (HTTP ${err.status}).` };
+  }
+  revalidatePath("/dispatch");
+  return { ok: true };
+}
+
+/** Passengers on a flight's manifest with no booking (#174): cancelling the
+ *  flight brings nothing back for them. Empty when there's no manifest. */
+export async function flightWalkUpsAction(flightId: string): Promise<string[]> {
+  try {
+    const manifest = await getFlightManifest(flightId);
+    return manifest.pax
+      .filter((p) => !p.is_crew && !p.booking_id && p.check_in_status !== "no_show")
+      .map((p) => `${p.first_name} ${p.last_name}`.trim());
+  } catch {
+    return [];
+  }
 }
 
 function withdrawError(err: unknown): string {

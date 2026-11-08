@@ -6,6 +6,7 @@ import { ApiError } from "@/lib/api/client";
 import { type FlightSearchResult, searchFlights } from "@/lib/api/flight-search";
 import { getFleetAirworthiness } from "@/lib/api/maintenance";
 import { withPayloadLeft } from "@/lib/reservations/payload-left";
+import { defaultReturnTime } from "@/lib/reservations/return-default";
 import { CUSTOMERS_MAX_LIMIT, listCustomers } from "@/lib/api/reservations";
 import { utcToLocalInput, zoneFor } from "@/lib/format/local-time";
 import { cn } from "@/lib/utils";
@@ -111,7 +112,7 @@ export default async function NewBookingPage({
   const chosenBack = flightsBack?.find((f) => f.flight_id === params.return_flight) ?? null;
   const backDeparts = chosenBack
     ? utcToLocalInput(chosenBack.scheduled_departure_at, zoneFor(await loadZoneTable(), chosenBack.origin))
-    : `${backDay}T09:00`;
+    : defaultReturnTime(backDay, departs);
 
   const returnTo = params.return_to?.startsWith("/") && !params.return_to.startsWith("//")
     ? params.return_to

@@ -82,6 +82,8 @@ export interface CheckInView {
   flight_number: string;
   origin: string;
   destination: string;
+  /** Every airport on the route, in order. Absent from a service before #174. */
+  stops?: string[];
   scheduled_departure_at: string;
   flight_status: string;
   tail_number: string | null;

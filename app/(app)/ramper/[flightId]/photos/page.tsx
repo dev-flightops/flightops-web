@@ -10,6 +10,7 @@ import type { RampPhotoResponse, RampPhotoType } from "@/lib/api/types";
 import { hasAnyRole, RAMP_OPS } from "@/lib/roles";
 
 import { UploadRampPhotoForm } from "./upload-form";
+import { routeText } from "@/lib/route";
 
 /**
  * /ramper/[flightId]/photos — ramp turnaround photo capture.
@@ -134,7 +135,7 @@ export default async function RamperPhotosPage({
               {flight.aircraft?.model && ` · ${flight.aircraft.model}`}
             </p>
             <p className="mt-1 font-mono text-xs text-muted-foreground">
-              {flight.origin ?? "?"} → {flight.destination ?? "?"}
+              {routeText(flight)}
             </p>
           </div>
           <span

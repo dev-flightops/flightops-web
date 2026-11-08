@@ -511,6 +511,22 @@ describe("the trip's fuel and what is waiting for the route (#75)", () => {
     expect(w.queryByRole("button")).toBeNull();
   });
 
+  it("names what's waiting even with nothing to suggest yet (#174)", async () => {
+    mocks.auth.mockResolvedValue({ roles: ["dispatcher"] });
+    mocks.getFlightManifest.mockResolvedValue(manifest("draft"));
+    const [first, second] = plan().waiting;
+    mocks.getLoadPlan.mockResolvedValue(
+      plan({
+        waiting: [{ ...first, description: "Bumped bags — Gary Albright", weight_lbs: "40.0" }, second],
+        suggestion: [],
+        suggested_lbs: "0",
+        blocked: "fuel_unknown",
+      }),
+    );
+    await renderPage();
+    expect(within(waiting()).getByText("Bumped bags — Gary Albright · 40 lb")).toBeTruthy();
+  });
+
   it("offers no loading on a locked manifest", async () => {
     mocks.auth.mockResolvedValue({ roles: ["dispatcher"] });
     mocks.getFlightManifest.mockResolvedValue(manifest("final", ESTIMATED));
