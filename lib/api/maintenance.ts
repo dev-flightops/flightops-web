@@ -9,6 +9,7 @@
  */
 
 import { apiFetch } from "./client";
+import type { PartShipment } from "./part-logistics";
 import type {
   AirworthinessResponse,
   FleetAirworthinessResponse,
@@ -385,7 +386,12 @@ export interface Part {
   unit: string;
   qty_on_hand: number;
   qty_minimum: number;
+  /** On its way to this row: shipments ordered, shipped or in transit (#178). */
+  incoming: number;
+  /** A minimum, and at or below it counting what's on its way. */
   low_stock: boolean;
+  /** The company base this stock is at (#178); `location` is the shelf or bin. */
+  base: string | null;
   location: string | null;
   is_life_limited: boolean;
   shelf_life_months: number | null;
@@ -405,7 +411,7 @@ export interface PartList {
   low_count: number;
 }
 
-export type PartTransactionType = "received" | "issued" | "returned" | "adjustment";
+export type PartTransactionType = "received" | "issued" | "returned" | "adjustment" | "shipped";
 
 export interface PartTransaction {
   id: string;
@@ -426,6 +432,8 @@ export interface PartTransaction {
 
 export interface PartDetail extends Part {
   transactions: PartTransaction[];
+  /** Shipments from this row and to it, newest first (#178). */
+  shipments: PartShipment[];
 }
 
 export interface PartInput {
@@ -437,6 +445,7 @@ export interface PartInput {
   unit: string;
   qty_on_hand: string;
   qty_minimum: string;
+  base: string | null;
   location: string | null;
   is_life_limited: boolean;
   shelf_life_months: number | null;
@@ -480,18 +489,30 @@ export interface PartTrace {
 }
 
 export async function listParts(
-  params: { q?: string; category?: string; lowStock?: boolean } = {},
+  params: { q?: string; category?: string; lowStock?: boolean; base?: string } = {},
 ): Promise<PartList> {
   const qs = new URLSearchParams();
   if (params.q) qs.set("q", params.q);
   if (params.category) qs.set("category", params.category);
   if (params.lowStock) qs.set("low_stock", "true");
+  if (params.base) qs.set("base", params.base);
   const tail = qs.toString() ? `?${qs.toString()}` : "";
   return apiFetch<PartList>(`/maintenance/parts${tail}`);
 }
 
 export async function listPartCategories(): Promise<{ value: string; label: string }[]> {
   return apiFetch(`/maintenance/parts/categories`);
+}
+
+/** Settings → Bases, for the base pickers (#178). Empty when none are listed:
+ *  the forms then take a typed code. */
+export interface CompanyBaseOption {
+  code: string;
+  name: string;
+}
+
+export async function listPartBases(): Promise<CompanyBaseOption[]> {
+  return apiFetch<CompanyBaseOption[]>(`/maintenance/parts/bases`);
 }
 
 export async function lookupPart(code: string): Promise<Part[]> {

@@ -4,21 +4,24 @@ import Link from "next/link";
 import { useActionState, useState, useTransition } from "react";
 
 import { buttonOutline, buttonSolid } from "@/components/ff/controls";
-import type { Part } from "@/lib/api/maintenance";
+import type { CompanyBaseOption, Part } from "@/lib/api/maintenance";
 
 import { createPartAction, removePartAction, updatePartAction, type PartFormState } from "./actions";
 
 /**
  * Add or edit a part (#172), legacy's part_form.html. Changing the quantity on
  * an existing part counts as a stock count, and the form says so: it goes in
- * the part's history.
+ * the part's history. The base (#178) is where the stock is held; the same
+ * part number and batch at another base is its own row.
  */
 export function PartForm({
   part,
   categories,
+  bases,
 }: {
   part: Part | null;
   categories: { value: string; label: string }[];
+  bases: CompanyBaseOption[];
 }) {
   const [state, action, pending] = useActionState<PartFormState, FormData>(
     part ? updatePartAction.bind(null, part.id) : createPartAction,
@@ -77,9 +80,33 @@ export function PartForm({
         {field("unit_cost", "Unit Cost", { inputMode: "decimal", defaultValue: part?.unit_cost ?? "" })}
         {field("unit", "Unit", { required: true, maxLength: 20, defaultValue: part?.unit ?? "EA" })}
       </div>
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2">
         {field("qty_on_hand", "Qty On Hand", { inputMode: "decimal", defaultValue: part?.qty_on_hand ?? "0" })}
         {field("qty_minimum", "Minimum Stock", { inputMode: "decimal", defaultValue: part?.qty_minimum ?? "0" })}
+      </div>
+      <div className="grid gap-4 sm:grid-cols-2">
+        {bases.length > 0 ? (
+          <div>
+            <label htmlFor="part-base" className="field-label">
+              Base
+            </label>
+            <select id="part-base" name="base" defaultValue={part?.base ?? ""} className="ff-input px-3 py-2 text-sm">
+              <option value="">Not set</option>
+              {bases.map((b) => (
+                <option key={b.code} value={b.code}>
+                  {b.code} · {b.name}
+                </option>
+              ))}
+            </select>
+            {errors.base ? (
+              <p role="alert" className="field-error">
+                {errors.base}
+              </p>
+            ) : null}
+          </div>
+        ) : (
+          field("base", "Base", { maxLength: 10, placeholder: "PABE", defaultValue: part?.base ?? "" })
+        )}
         {field("location", "Location / Bin", { maxLength: 100, defaultValue: part?.location ?? "" })}
       </div>
       {part ? (

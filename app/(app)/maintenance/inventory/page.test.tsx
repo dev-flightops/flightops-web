@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { Part } from "@/lib/api/maintenance";
 
-const { TestApiError, listParts, listPartCategories, auth } = vi.hoisted(() => {
+const { TestApiError, listParts, listPartCategories, listPartBases, auth } = vi.hoisted(() => {
   class TestApiError extends Error {
     constructor(
       public status: number,
@@ -17,11 +17,12 @@ const { TestApiError, listParts, listPartCategories, auth } = vi.hoisted(() => {
     TestApiError,
     listParts: vi.fn(),
     listPartCategories: vi.fn(),
+    listPartBases: vi.fn(async () => [] as { code: string; name: string }[]),
     auth: vi.fn(async () => ({ roles: ["maintenance"] as string[] })),
   };
 });
 vi.mock("@/lib/api/client", () => ({ ApiError: TestApiError }));
-vi.mock("@/lib/api/maintenance", () => ({ listParts, listPartCategories }));
+vi.mock("@/lib/api/maintenance", () => ({ listParts, listPartCategories, listPartBases }));
 vi.mock("@/auth", () => ({ auth }));
 vi.mock("./barcode-scan", () => ({ BarcodeScan: () => <div data-testid="barcode-scan" /> }));
 
@@ -38,8 +39,10 @@ function part(over: Partial<Part> = {}): Part {
     unit: "EA",
     qty_on_hand: 8,
     qty_minimum: 2,
+    incoming: 0,
     low_stock: false,
-    location: "PABE bin 4",
+    base: "PABE",
+    location: "bin 4",
     is_life_limited: false,
     shelf_life_months: null,
     expiration_date: null,
@@ -73,7 +76,8 @@ describe("Parts Inventory (#172)", () => {
     const row = screen.getByRole("row", { name: /CH48110-1/ });
     expect(within(row).getByText("Oil filter")).toBeInTheDocument();
     expect(within(row).getByText("Consumable")).toBeInTheDocument();
-    expect(within(row).getByText("PABE bin 4")).toBeInTheDocument();
+    expect(within(row).getByText("PABE")).toBeInTheDocument();
+    expect(within(row).getByText("bin 4")).toBeInTheDocument();
     expect(within(row).getByText("$12.50")).toBeInTheDocument();
     expect(within(row).getByRole("link", { name: /Open CH48110-1/ })).toHaveAttribute("href", "/maintenance/inventory/p-1");
     expect(screen.getByText("1 part")).toBeInTheDocument();
@@ -96,7 +100,7 @@ describe("Parts Inventory (#172)", () => {
   it("passes the filters on and keeps them in the form", async () => {
     listParts.mockResolvedValue({ items: [], total: 0, low_count: 0 });
     await show({ q: "oil", category: "hardware", low_stock: "1" });
-    expect(listParts).toHaveBeenCalledWith({ q: "oil", category: "hardware", lowStock: true });
+    expect(listParts).toHaveBeenCalledWith({ q: "oil", category: "hardware", lowStock: true, base: "" });
     expect(screen.getByLabelText("Search")).toHaveValue("oil");
     expect(screen.getByLabelText("Category")).toHaveValue("hardware");
     expect(screen.getByLabelText("Low stock only")).toBeChecked();
@@ -124,9 +128,24 @@ describe("Parts Inventory (#172)", () => {
     expect(screen.queryByRole("link", { name: "Add First Part" })).not.toBeInTheDocument();
   });
 
-  it("links the two reports", async () => {
+  it("shows what's on its way and filters by base (#178)", async () => {
+    listPartBases.mockResolvedValueOnce([
+      { code: "PABE", name: "Bethel" },
+      { code: "PADQ", name: "Kodiak" },
+    ]);
+    listParts.mockResolvedValue({ items: [part({ base: "PADQ", incoming: 4 })], total: 1, low_count: 0 });
+    await show({ base: "padq" });
+    expect(listParts).toHaveBeenCalledWith({ q: "", category: "", lowStock: false, base: "PADQ" });
+    expect(screen.getByLabelText("Base")).toHaveValue("PADQ");
+    const row = screen.getByRole("row", { name: /CH48110-1/ });
+    expect(within(row).getByText("+4 on the way")).toBeInTheDocument();
+  });
+
+  it("links the two reports, Shipping and Requests", async () => {
     listParts.mockResolvedValue({ items: [], total: 0, low_count: 0 });
     await show();
+    expect(screen.getByRole("link", { name: "Shipping" })).toHaveAttribute("href", "/maintenance/shipping");
+    expect(screen.getByRole("link", { name: "Requests" })).toHaveAttribute("href", "/maintenance/parts-requests");
     expect(screen.getByRole("link", { name: "Expiration" })).toHaveAttribute("href", "/maintenance/expiration");
     expect(screen.getByRole("link", { name: "Batch Trace" })).toHaveAttribute("href", "/maintenance/batch-trace");
   });

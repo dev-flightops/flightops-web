@@ -68,6 +68,7 @@ const PartSchema = z.object({
   unit: z.string().trim().min(1, "Give the unit, such as EA.").max(20),
   qty_on_hand: count("Give the quantity as a number, with up to two decimals."),
   qty_minimum: count("Give the minimum as a number, with up to two decimals."),
+  base: optional.transform((v) => (v ? v.toUpperCase() : null)),
   location: optional,
   is_life_limited: z
     .string()

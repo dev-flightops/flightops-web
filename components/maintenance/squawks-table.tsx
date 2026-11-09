@@ -138,6 +138,15 @@ function SquawkRow({
             {squawk.description}
           </div>
         )}
+        {squawk.inspection_id ? (
+          // Opened by a failed checklist item (#178): back to its inspection.
+          <Link
+            href={`/maintenance/inspections/${squawk.inspection_id}`}
+            className="mt-0.5 inline-block text-[0.65rem] font-semibold text-primary hover:underline"
+          >
+            From inspection: {squawk.inspection_title}
+          </Link>
+        ) : null}
       </td>
       <td className="px-3 py-2.5">
         <SeverityPill severity={squawk.severity} />

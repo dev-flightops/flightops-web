@@ -22,6 +22,24 @@ import { cn } from "@/lib/utils";
 import { createTagAction, updateTagAction } from "./actions";
 import { TAG_SWATCH, TAG_TONE } from "./tag-tones";
 
+type TagOutcome = { ok: true } | { ok: false; error: string };
+
+/** What the dialogs save through: the crew calendar's actions, or the
+ *  Mechanic Roster's (#178), whose tags are a palette of their own. */
+export interface TagActions {
+  create: (label: string, tone: string) => Promise<TagOutcome>;
+  update: (tagId: string, patch: { label?: string; tone?: string; is_active?: boolean }) => Promise<TagOutcome>;
+  /** Who paints the days, in the new-tag dialog's description. */
+  painted: string;
+}
+
+// Looked up when called, so a page that never opens a dialog needn't load them.
+const CREW_TAG_ACTIONS: TagActions = {
+  create: (label, tone) => createTagAction(label, tone),
+  update: (tagId, patch) => updateTagAction(tagId, patch),
+  painted: "crew days",
+};
+
 const LABEL =
   "mb-1 block eyebrow";
 const FIELD =
@@ -65,15 +83,25 @@ function TonePicker({
   );
 }
 
-export function NewTagDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
+export function NewTagDialog({
+  open,
+  onClose,
+  actions = CREW_TAG_ACTIONS,
+}: {
+  open: boolean;
+  onClose: () => void;
+  actions?: TagActions;
+}) {
   return (
     <Dialog open={open} onOpenChange={(next) => !next && onClose()}>
-      <DialogContent className="sm:max-w-[420px]">{open && <NewTagForm onClose={onClose} />}</DialogContent>
+      <DialogContent className="sm:max-w-[420px]">
+        {open && <NewTagForm onClose={onClose} actions={actions} />}
+      </DialogContent>
     </Dialog>
   );
 }
 
-function NewTagForm({ onClose }: { onClose: () => void }) {
+function NewTagForm({ onClose, actions }: { onClose: () => void; actions: TagActions }) {
   const uid = useId();
   const [label, setLabel] = useState("");
   const [tone, setTone] = useState<ScheduleTagTone>("blue");
@@ -83,7 +111,7 @@ function NewTagForm({ onClose }: { onClose: () => void }) {
   function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     startTransition(async () => {
-      const outcome = await createTagAction(label, tone);
+      const outcome = await actions.create(label, tone);
       if (outcome.ok) onClose();
       else setError(outcome.error);
     });
@@ -94,7 +122,7 @@ function NewTagForm({ onClose }: { onClose: () => void }) {
       <DialogHeader>
         <DialogTitle>New Day Tag</DialogTitle>
         <DialogDescription>
-          A short label your schedulers paint on crew days, such as FLY, OFF or TRN.
+          {`A short label your schedulers paint on ${actions.painted}, such as FLY, OFF or TRN.`}
         </DialogDescription>
       </DialogHeader>
       <form method="post" onSubmit={onSubmit} className="space-y-3" noValidate>
@@ -151,10 +179,12 @@ export function ManageTagsDialog({
   open,
   onClose,
   tags,
+  actions = CREW_TAG_ACTIONS,
 }: {
   open: boolean;
   onClose: () => void;
   tags: ScheduleTag[];
+  actions?: TagActions;
 }) {
   return (
     <Dialog open={open} onOpenChange={(next) => !next && onClose()}>
@@ -168,7 +198,7 @@ export function ManageTagsDialog({
         </DialogHeader>
         <ul className="divide-y divide-border">
           {tags.map((tag) => (
-            <TagRow key={`${tag.id}-${tag.label}-${tag.tone}-${tag.is_active}`} tag={tag} />
+            <TagRow key={`${tag.id}-${tag.label}-${tag.tone}-${tag.is_active}`} tag={tag} actions={actions} />
           ))}
         </ul>
         <DialogFooter className="pt-2">
@@ -181,7 +211,7 @@ export function ManageTagsDialog({
   );
 }
 
-function TagRow({ tag }: { tag: ScheduleTag }) {
+function TagRow({ tag, actions }: { tag: ScheduleTag; actions: TagActions }) {
   const uid = useId();
   const [label, setLabel] = useState(tag.label);
   const [tone, setTone] = useState<ScheduleTagTone>(tag.tone);
@@ -192,7 +222,7 @@ function TagRow({ tag }: { tag: ScheduleTag }) {
   function run(patch: { label?: string; tone?: string; is_active?: boolean }) {
     setError(null);
     startTransition(async () => {
-      const outcome = await updateTagAction(tag.id, patch);
+      const outcome = await actions.update(tag.id, patch);
       if (!outcome.ok) setError(outcome.error);
     });
   }

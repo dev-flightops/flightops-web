@@ -386,12 +386,12 @@ export function CrewCalendarGrid({
 }
 
 /**
- * One day on a pilot's tag line. With a tool picked, a press starts a
- * run, dragging across the row extends it, and releasing paints it;
- * Enter or Space paints just this day. Right-click clears a tagged day,
- * as in legacy.
+ * One day on a pilot's tag line, or a mechanic's on the Mechanic Roster
+ * (#178). With a tool picked, a press starts a run, dragging across the
+ * row extends it, and releasing paints it; Enter or Space paints just this
+ * day. Right-click clears a tagged day, as in legacy.
  */
-function TagCell({
+export function TagCell({
   member,
   iso,
   weekend,
@@ -405,7 +405,7 @@ function TagCell({
   onPaintDay,
   onClearDay,
 }: {
-  member: CrewCalendarMember;
+  member: Pick<CrewCalendarMember, "full_name">;
   iso: string;
   weekend: boolean;
   tag: ScheduleTag | null;

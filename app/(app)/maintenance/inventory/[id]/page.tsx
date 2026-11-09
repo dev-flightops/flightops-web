@@ -18,13 +18,22 @@ import { MoveStockForm } from "./move-stock-form";
 
 /**
  * /maintenance/inventory/[id] (#172): a part, moving its stock, and its history,
- * legacy's part_history.html. Legacy's Location History and Shipments belong to
- * its Shipping page, which isn't built.
+ * legacy's part_history.html. Its shipments (#178), to this base and from it,
+ * stand for legacy's Location History: the base is on the row, and each
+ * shipment says where stock went and came from.
  */
 
 export const dynamic = "force-dynamic";
 
 const OPEN_ORDERS = ["open", "in_progress", "awaiting_parts"] as const;
+
+const SHIPMENT_STATUS = {
+  ordered: "Ordered",
+  shipped: "Shipped",
+  in_transit: "In transit",
+  arrived: "Arrived",
+  cancelled: "Cancelled",
+} as const;
 
 function Fact({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -64,9 +73,21 @@ export default async function PartPage({ params }: { params: Promise<{ id: strin
         back={{ href: "/maintenance/inventory", label: "Inventory" }}
         actions={
           canMove ? (
-            <Link href={`/maintenance/inventory/${part.id}/edit`} className={buttonOutline}>
-              Edit
-            </Link>
+            <>
+              {part.base ? (
+                <>
+                  <Link href={`/maintenance/shipping?part=${part.id}`} className={buttonOutline}>
+                    Ship
+                  </Link>
+                  <Link href={`/maintenance/parts-requests?part=${part.id}`} className={buttonOutline}>
+                    Request
+                  </Link>
+                </>
+              ) : null}
+              <Link href={`/maintenance/inventory/${part.id}/edit`} className={buttonOutline}>
+                Edit
+              </Link>
+            </>
           ) : null
         }
       />
@@ -78,7 +99,9 @@ export default async function PartPage({ params }: { params: Promise<{ id: strin
       ) : null}
       {part.low_stock ? (
         <Notice tone="yellow" label="Low stock" className="mb-4">
-          {formatQty(part.qty_on_hand)} {part.unit} on hand, against a minimum of {formatQty(part.qty_minimum)}.
+          {formatQty(part.qty_on_hand)} {part.unit} on hand
+          {part.incoming > 0 ? `, ${formatQty(part.incoming)} on the way,` : ""} against a minimum of{" "}
+          {formatQty(part.qty_minimum)}.
         </Notice>
       ) : null}
 
@@ -90,6 +113,12 @@ export default async function PartPage({ params }: { params: Promise<{ id: strin
         </Fact>
         <Fact label="Minimum">
           <span className="font-mono">{formatQty(part.qty_minimum)}</span>
+        </Fact>
+        <Fact label="On the way">
+          <span className="font-mono">{part.incoming > 0 ? `${formatQty(part.incoming)} ${part.unit}` : "—"}</span>
+        </Fact>
+        <Fact label="Base">
+          <span className="font-mono">{part.base ?? "Not set"}</span>
         </Fact>
         <Fact label="Location">{part.location ?? "—"}</Fact>
         <Fact label="Category">{category}</Fact>
@@ -132,6 +161,41 @@ export default async function PartPage({ params }: { params: Promise<{ id: strin
               })),
             )}
           />
+        </section>
+      ) : null}
+
+      {part.shipments.length > 0 ? (
+        <section aria-label="Shipments" className="mb-6">
+          <h2 className="section-title mb-2">Shipments</h2>
+          <div className="overflow-x-auto rounded-lg border border-border bg-card">
+            <table className="ff-table w-full text-sm">
+              <thead className="ff-thead">
+                <tr>
+                  <th>From → To</th>
+                  <th className="text-right">Qty</th>
+                  <th>AWB</th>
+                  <th>Shipped</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {part.shipments.map((s) => (
+                  <tr key={s.id}>
+                    <td className="whitespace-nowrap font-mono text-xs">
+                      {s.kind === "vendor" ? <span className="font-sans">{s.vendor_name ?? "Vendor"}</span> : s.origin_base} →{" "}
+                      {s.dest_base}
+                    </td>
+                    <td className="text-right font-mono">{formatQty(s.quantity)}</td>
+                    <td className="font-mono text-xs">{s.airway_bill ?? "—"}</td>
+                    <td className="text-xs">{dayLabel(s.shipped_on)}</td>
+                    <td className="text-xs">
+                      {s.status === "arrived" ? `Arrived ${dayLabel(s.arrived_on)}` : SHIPMENT_STATUS[s.status]}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </section>
       ) : null}
 
