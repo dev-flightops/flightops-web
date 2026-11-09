@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { auth } from "@/auth";
+
 import { linkCaps } from "@/components/ff/controls";
 import { ApiError } from "@/lib/api/client";
 import {
@@ -62,12 +64,12 @@ const DUTY_OFFLINE_DEFAULT: CurrentDutyResponse = {
  * renders the next-required step's UI; previous steps render as
  * collapsed "Completed at HH:MMZ" rows.
  *
- * All 8 steps shipped (M2-G-7):
- *   - Step 1: Review Dispatch Release (scroll-to-bottom + ack checkbox)
- *   - Step 2: Weight and Balance Review (ack checkbox, no W&B math yet)
- *   - Step 3: Weather + NOTAM Review (one ack per routing airport)
- *   - Step 4: FRAT (LOW/MED/HIGH/EXTREME with dispatch / CP+DO
- *             authorization gates)
+ * All 8 steps shipped (M2-G-7); the FRAT first since #175, because the
+ * release waits for the pilot's signature on it:
+ *   - Step 1: FRAT, scored and signed by dispatch, signed by the pilot
+ *   - Step 2: Review Dispatch Release (scroll-to-bottom + ack checkbox)
+ *   - Step 3: Weight and Balance Review
+ *   - Step 4: Weather + NOTAM Review (one ack per routing airport)
  *   - Step 5: Duty In confirmation (reads /duty/current)
  *   - Step 6: Accept or Deny Release (writes flight_pilot_acceptance)
  *   - Step 7: Flight Following Position Reports (ack + dispatch links)
@@ -123,16 +125,17 @@ export default async function PreflightPage({
           if (err instanceof ApiError && err.status === 404) return null;
           throw err;
         }),
-        // Step 2 — null is the normal "within limits" answer, so only a
-        // real failure should surface. Best-effort like the rest: the
-        // server-side step-2 gate is what actually enforces this, so a
-        // failed read here cannot let an over-weight flight through.
+        // Weight and balance (step 3) — null is the normal "within
+        // limits" answer, so only a real failure should surface.
+        // Best-effort like the rest: the server-side gate is what
+        // actually enforces this, so a failed read here cannot let an
+        // over-weight flight through.
         getWeightReturn(flightId).catch(() => null),
         // Company operating limits. Best-effort: without them the wind
         // factor says the limit is unavailable and the pilot scores it
         // by hand, which is what they did before any of this existed.
         getFratThresholds().catch(() => null),
-        // Step 2's weight and balance (#111): useful load less crew,
+        // Step 3's weight and balance (#111): useful load less crew,
         // fuel and the manifest's payload. Best-effort: without it the
         // step shows the aircraft's useful load, as before.
         getFlightLoad(flightId).catch(() => null),
@@ -152,17 +155,11 @@ export default async function PreflightPage({
     flightLog = flightLogResult?.items[0] ?? null;
     fratConfig = fratConfigResult;
     villages = villageResult;
-    // Step 3's weather and step 4's prefill and block FRAT, as the
-    // flight's FRAT page loads them (#155). Non-fatal: without weather,
-    // step 3 renders its "data unavailable" acknowledgment and step 4 the
-    // questionnaire unfilled.
-    // Before step 3 there is no weather/FRAT editor (including completed
-    // steps) to render. Do not hold dispatch and weight review behind
-    // external weather fetches. Once weather has been reached, keep the
-    // inputs available when the pilot reopens that completed step.
-    if (progressResult.next_step === null || progressResult.next_step >= 3) {
-      ({ weather, fratPrefill, fratBlock } = await loadFratInputs(flightResult));
-    }
+    // Step 1's FRAT, which shows what the data suggests beside each score
+    // (#175), and step 4's weather, as the flight's FRAT page loads them
+    // (#155). Non-fatal: without weather the FRAT shows its scores alone
+    // and step 4 renders its "data unavailable" acknowledgment.
+    ({ weather, fratPrefill, fratBlock } = await loadFratInputs(flightResult));
   } catch (err) {
     if (err instanceof ApiError && err.status === 404) {
       notFound();
@@ -193,13 +190,14 @@ export default async function PreflightPage({
   // this aircraft's fuel. Best-effort, like the weather: a failure costs
   // the pilot the fuel card, not the preflight.
   const fuelTypeCode = fuelTypeForAircraft(flight.aircraft.model);
-  const [[fuelOrders, fuelBases, loadAssignment], zones] = await Promise.all([
+  const [[fuelOrders, fuelBases, loadAssignment], zones, session] = await Promise.all([
     Promise.allSettled([
       listFuelOrders({ flightId: flight.id }),
       listSupplierBases({ baseCode: flight.origin }),
       getFlightAssignment(flight.id),
     ]),
     loadZoneTable(),
+    auth(),
   ]);
   const readiness = (
     <Readiness
@@ -246,6 +244,8 @@ export default async function PreflightPage({
         fuel={fuel}
         readiness={readiness}
         flightLog={flightLog}
+        viewerId={session?.user?.id ?? null}
+        timeZone={zoneFor(zones, flight.origin)}
       />
     </div>
   );

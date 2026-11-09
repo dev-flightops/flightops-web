@@ -17,7 +17,7 @@ interface Props {
 }
 
 /**
- * Step 1 — Review Dispatch Release (Spec 4 §"The 8 steps / 1").
+ * Step 2 — Review Dispatch Release (Spec 4 §"The 8 steps / 1"; step 2 since the FRAT went first, #175).
  *
  * Release gate: the pilot's acknowledgment is meaningless if no
  * release has been generated. The step renders in one of two
@@ -94,7 +94,7 @@ export function ReviewDispatchReleaseStep({ flightId, flight }: Props) {
     }
     setError(null);
     startTransition(async () => {
-      const result = await completeStepAction(flightId, 1, {
+      const result = await completeStepAction(flightId, 2, {
         acknowledged_at: new Date().toISOString(),
       });
       if (!result.ok) {
@@ -106,7 +106,7 @@ export function ReviewDispatchReleaseStep({ flightId, flight }: Props) {
   return (
     <section className="rounded-lg border border-border bg-card">
       <header className="border-b border-border px-5 py-3">
-        <p className="eyebrow">Step 1</p>
+        <p className="eyebrow">Step 2</p>
         <h2 className="caption-caps mt-1 text-lg text-foreground">Review Dispatch Release</h2>
       </header>
 
@@ -204,7 +204,7 @@ export function ReviewDispatchReleaseStep({ flightId, flight }: Props) {
             onClick={handleSubmit}
             className="btn-caps inline-flex w-full items-center justify-center rounded-md bg-primary px-4 py-2.5 text-white transition-opacity hover:bg-brand-dark disabled:opacity-50"
           >
-            {pending ? "Saving…" : "Continue to Step 2 →"}
+            {pending ? "Saving…" : "Continue to Step 3 →"}
           </button>
 
           {error && (

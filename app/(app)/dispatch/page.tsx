@@ -39,6 +39,7 @@ import {
   getComplianceBoard,
   getCrewOptions,
   getFlight,
+  getFlightProgress,
   getFratOverLimits,
   getLatestFratAssessment,
   getMorningToday,
@@ -52,6 +53,7 @@ import {
 import { getFlightLoad } from "@/lib/api/manifest";
 import { listMelItems } from "@/lib/api/maintenance";
 import { ReleaseReadinessPanel } from "@/components/dispatch/packet/release-readiness-panel";
+import { FlightProgress, buildGaps } from "@/components/flights/flight-progress";
 import { localDay, localToUtcIso } from "@/lib/format/local-time";
 import { listBookings } from "@/lib/api/reservations";
 import { getTypeQualificationGrid } from "@/lib/api/type-qualifications";
@@ -167,7 +169,7 @@ export default async function DispatchPage({
   // this dispatcher ticked on the packet, as saved (#155: the ticks lived
   // in the page's link, so a pre-filled link released with every box
   // ticked).
-  const [overLimits, frat, releaseLoad, myAcks, openMels] = selectedId
+  const [overLimits, frat, releaseLoad, myAcks, openMels, progress] = selectedId
     ? await Promise.all([
         getFratOverLimits(selectedId).catch(() => null),
         getLatestFratAssessment(selectedId).catch((err): FratAssessmentResponse | null | undefined =>
@@ -180,8 +182,10 @@ export default async function DispatchPage({
         listMelItems({ status: "open", limit: 100 })
           .then((r) => r.items)
           .catch(() => null),
+        // Where the flight is and whose turn it is (#175).
+        getFlightProgress(selectedId).catch(() => null),
       ])
-    : [null, null, null, [], null];
+    : [null, null, null, [], null, null];
   const crew = selectedId
     ? await listFlightCrew(selectedId).catch(() => ({
         items: [],
@@ -249,7 +253,7 @@ export default async function DispatchPage({
       : Promise.resolve(null),
     // Flights handed back over weight. Soft-fail like the crew roster —
     // but note the consequence differs: a failure here hides flights that
-    // are already blocked server-side at preflight step 2, so nothing
+    // are already blocked server-side at the preflight's weight and balance step, so nothing
     // becomes dispatchable that shouldn't be. It just means dispatch has
     // to hear about it by radio, as they do today.
     loads.or(listWeightReturns(), { items: [] }, "the flights handed back over weight"),
@@ -400,7 +404,12 @@ export default async function DispatchPage({
       frat === undefined
         ? null
         : frat === null
-          ? [{ code: "frat_missing", message: "No FRAT on this flight yet. The pilot or dispatch files it." }]
+          ? [
+              {
+                code: "frat_missing",
+                message: "No FRAT on this flight yet. Dispatch scores it and signs it once the flight is built.",
+              },
+            ]
           : frat.release_blockers ?? null,
     releaseLoad: releaseLoad?.release ?? null,
   };
@@ -418,7 +427,7 @@ export default async function DispatchPage({
       />
 
         {/* Held-back flights sit above the packet on purpose: each one is
-            already blocked at preflight step 2 and stays blocked until
+            already blocked at the preflight's weight and balance step and stays blocked until
             dispatch re-plans the load. Renders nothing when the list is
             empty. */}
         <WeightReturnsPanel
@@ -482,6 +491,10 @@ export default async function DispatchPage({
         {/* #155 (the client's item 51): the release shows the FRAT and the
             weight and balance, so the dispatcher sees both before
             releasing, and signs the FRAT here. */}
+        {selectedFlight && progress ? (
+          <FlightProgress progress={progress} timeZone={zones.fallback} />
+        ) : null}
+
         {selectedFlight ? (
           <ReleaseReadinessPanel
             flight={selectedFlight}
@@ -490,6 +503,7 @@ export default async function DispatchPage({
             load={releaseLoad}
             timeZone={zones.fallback}
             canSignForDispatch={hasAnyRole(viewerRoles, FRAT_DISPATCH_SIGNERS)}
+            buildGaps={buildGaps(progress)}
           />
         ) : null}
 

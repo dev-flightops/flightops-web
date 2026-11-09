@@ -28,7 +28,7 @@ interface Props {
 type Verdict = "within" | "over";
 
 /**
- * Step 2 — Weight and Balance Review.
+ * Step 3 — Weight and Balance Review (step 2 until the FRAT went first, #175).
  *
  * Pass/fail. There is deliberately no override.
  *
@@ -42,7 +42,7 @@ type Verdict = "within" | "over";
  *
  * On fail the pilot states the payload they CAN take, which is the number
  * dispatch needs to re-plan the load, and the flight goes back to them.
- * Step 2 stays open until dispatch resolves it — enforced server-side too,
+ * The step stays open until dispatch resolves it — enforced server-side too,
  * so a stale tab can't walk past it.
  *
  * The full W&B math (CG calc, fuel weight conversion, gross weight,
@@ -79,7 +79,7 @@ export function WeightAndBalanceStep({ flightId, flight, openReturn, load = null
   const handleContinue = () => {
     setError(null);
     startTransition(async () => {
-      const result = await completeStepAction(flightId, 2, {
+      const result = await completeStepAction(flightId, 3, {
         confirmed_within_limits: true,
         acknowledged_at: new Date().toISOString(),
       });
@@ -105,7 +105,7 @@ export function WeightAndBalanceStep({ flightId, flight, openReturn, load = null
   return (
     <section className="rounded-lg border border-border bg-card">
       <header className="border-b border-border px-5 py-3">
-        <p className="eyebrow">Step 2</p>
+        <p className="eyebrow">Step 3</p>
         <h2 className="caption-caps mt-1 text-lg text-foreground">Weight and Balance Review</h2>
       </header>
 
@@ -277,7 +277,7 @@ export function WeightAndBalanceStep({ flightId, flight, openReturn, load = null
                 onClick={handleContinue}
                 className="btn-caps inline-flex w-full items-center justify-center rounded-md bg-primary px-4 py-2.5 text-white transition-opacity hover:bg-brand-dark disabled:opacity-50"
               >
-                {pending ? "Saving…" : "Continue to Step 3 →"}
+                {pending ? "Saving…" : "Continue to Step 4 →"}
               </button>
             )}
           </>

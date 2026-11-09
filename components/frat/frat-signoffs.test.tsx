@@ -46,10 +46,56 @@ describe("FratSignoffs (#155)", () => {
         canSign={{ pilot: false, dispatcher: true }}
       />,
     );
+    // The pilot signs after dispatch (#175).
     expect(screen.getByLabelText("Sign the FRAT as the pilot")).toBeDisabled();
-    expect(screen.getByText("— waiting for the pilot")).toBeInTheDocument();
+    expect(screen.getByText("— after dispatch signs")).toBeInTheDocument();
     await user.click(screen.getByLabelText("Sign the FRAT as the dispatcher"));
     expect(sign).toHaveBeenCalledWith("f-1", "frat-1", "dispatcher");
+  });
+
+  it("lists the dispatcher's box first, and holds it until the flight is built (#175)", () => {
+    render(
+      <FratSignoffs
+        flightId="f-1"
+        frat={frat()}
+        timeZone="America/Anchorage"
+        canSign={{ pilot: false, dispatcher: true }}
+        buildGaps={["No PIC on the flight yet."]}
+      />,
+    );
+    const boxes = screen.getAllByRole("checkbox");
+    expect(boxes.map((b) => b.getAttribute("aria-label"))).toEqual([
+      "Sign the FRAT as the dispatcher",
+      "Sign the FRAT as the pilot",
+    ]);
+    expect(screen.getByLabelText("Sign the FRAT as the dispatcher")).toBeDisabled();
+    expect(screen.getByText("— once the flight is built")).toBeInTheDocument();
+    expect(screen.getByText("No PIC on the flight yet.")).toBeInTheDocument();
+  });
+
+  it("lets the pilot sign once dispatch has (#175)", async () => {
+    const user = userEvent.setup();
+    render(
+      <FratSignoffs
+        flightId="f-1"
+        frat={frat({
+          signoffs: [
+            {
+              role: "dispatcher",
+              user_id: "u-disp",
+              signer_name: "Dana Dispatch",
+              signed_at: "2026-10-30T16:05:00Z",
+              flight_minutes_today: null,
+              flight_minutes_remaining: null,
+            },
+          ],
+        })}
+        timeZone="America/Anchorage"
+        canSign={{ pilot: true, dispatcher: false }}
+      />,
+    );
+    await user.click(screen.getByLabelText("Sign the FRAT as the pilot"));
+    expect(sign).toHaveBeenCalledWith("f-1", "frat-1", "pilot");
   });
 
   it("shows who signed, when, the pilot's minutes and the audit trail ID", () => {

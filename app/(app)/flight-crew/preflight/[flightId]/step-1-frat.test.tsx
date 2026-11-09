@@ -16,7 +16,9 @@ import type {
   FratPrefillResponse,
 } from "@/lib/api/types";
 
-import { FlightRiskAssessmentStep } from "./step-4-frat";
+import { FACTOR_GROUPS } from "@/lib/frat/factors";
+
+import { FlightRiskAssessmentStep } from "./step-1-frat";
 
 /**
  * What the wind factor is scored against — and it used to be the wrong
@@ -54,9 +56,18 @@ const renderStep = (props: {
   /** A filed assessment, for the tests that exercise the panel shown
    *  after submission rather than the questionnaire. */
   initial?: FratAssessmentResponse | null;
+  /** The questionnaire with no FRAT on file is the FRAT page's: in the
+   *  preflight the pilot waits for dispatch to file it (#175). A filed
+   *  one is shown as the preflight shows it, with Continue. */
+  mode?: "preflight" | "page";
 }) =>
   render(
-    <FlightRiskAssessmentStep flightId="f-1" initial={null} {...props} />,
+    <FlightRiskAssessmentStep
+      flightId="f-1"
+      initial={null}
+      {...props}
+      mode={props.mode ?? (props.initial ? "preflight" : "page")}
+    />,
   );
 
 /** A single-engine aircraft on the operator's shipped numbers. */
@@ -638,7 +649,7 @@ describe("over company limits", () => {
     // found it".
     renderStep({ initial: filedOverLimits() });
     expect(
-      screen.queryByRole("button", { name: /Continue to Step 5/i }),
+      screen.queryByRole("button", { name: /Continue to Step 2/i }),
     ).not.toBeInTheDocument();
   });
 
@@ -652,7 +663,7 @@ describe("over company limits", () => {
     // The way out of a mis-scored factor, and the only way out.
     renderStep({ initial: filedOverLimits() });
     expect(
-      screen.getByRole("button", { name: /Retake questionnaire/i }),
+      screen.getByRole("button", { name: /Change the FRAT/i }),
     ).toBeInTheDocument();
   });
 
@@ -661,7 +672,7 @@ describe("over company limits", () => {
       initial: { ...filedOverLimits([]), answers: { wx_wind: 4 } },
     });
     expect(
-      screen.getByRole("button", { name: /Continue to Step 5/i }),
+      screen.getByRole("button", { name: /Continue to Step 2/i }),
     ).toBeInTheDocument();
     expect(screen.queryByText(/no-go/i)).not.toBeInTheDocument();
   });
@@ -696,7 +707,7 @@ describe("over company limits", () => {
       "Wind & gusts: accepted by Dan Ops (Director of Operations), Sep 25, 12:20Z.",
     );
     expect(screen.getByRole("note")).toHaveTextContent("“Runway 12 keeps it in limits”");
-    expect(screen.getByRole("button", { name: /Continue to Step 5/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Continue to Step 2/i })).toBeInTheDocument();
   });
 });
 
@@ -922,5 +933,115 @@ describe("the approach minimums on an IFR flight", () => {
         "Ceiling at or above · visibility below, the pilot's answer from the approach plates.",
       ),
     ).toBeInTheDocument();
+  });
+});
+
+// ---- #175: dispatch scores it, the pilot sees each score and signs -------------
+
+describe("the FRAT dispatch scored, in the pilot's preflight (#175)", () => {
+  // Filed from the form, a FRAT answers every factor.
+  const everyFactor = (scores: Record<string, number>) => ({
+    ...Object.fromEntries(FACTOR_GROUPS.flatMap((g) => g.factors).map((f) => [f.code, 0])),
+    ...scores,
+  });
+  const filed = (over: Partial<FratAssessmentResponse> = {}): FratAssessmentResponse => ({
+    id: "a-175",
+    flight_id: "f-1",
+    pilot_user_id: "u-1",
+    answers: everyFactor({ wx_ceiling: 2, wx_wind: 4 }),
+    total_score: 6,
+    risk_level: "low",
+    mitigations: "Wait for the ceiling to lift at PACK.",
+    over_limit_factors: [],
+    affirmed_zero_factors: null,
+    carried_from_assessment_id: null,
+    created_at: "2026-11-09T01:51:00Z",
+    authorizations: [],
+    signoffs: [],
+    ...over,
+  });
+
+  it("waits for dispatch before there is one", () => {
+    renderStep({ mode: "preflight" });
+    expect(screen.getByRole("note")).toHaveTextContent(
+      "Dispatch scores the FRAT and signs it once the flight is built.",
+    );
+    expect(screen.queryByRole("button", { name: /Submit assessment/i })).not.toBeInTheDocument();
+  });
+
+  it("shows every factor's score, and what the data suggests where it differs", () => {
+    renderStep({
+      initial: filed(),
+      fratPrefill: {
+        flight_id: "f-1",
+        suggestions: [
+          { factor: "wx_ceiling", score: 4, source: "lowest ceiling 800 against a 1000 ft floor" },
+          { factor: "wx_wind", score: 4, source: "12 kt at PABE against a 30 kt company limit" },
+        ],
+        crosswind_limit_kt: 30,
+        near_limit_entry_kt: 20,
+        vfr_min_ceiling_ft: 1000,
+        vfr_min_visibility_sm: 3,
+      },
+    });
+    const scores = screen.getByLabelText("Each factor's score");
+    const ceiling = within(scores).getByText("Ceiling").closest("li")!;
+    expect(ceiling).toHaveTextContent("The data suggests 4: lowest ceiling 800 against a 1000 ft floor");
+    expect(within(ceiling).getByText("2")).toBeInTheDocument();
+    const wind = within(scores).getByText("Wind & gusts").closest("li")!;
+    expect(wind).toHaveTextContent("12 kt at PABE against a 30 kt company limit");
+    expect(wind).not.toHaveTextContent("suggests");
+  });
+
+  it("holds Continue until dispatch has signed, then the pilot", () => {
+    const { unmount } = renderStep({ initial: filed() });
+    expect(screen.getByRole("button", { name: "Waiting for dispatch to sign" })).toBeDisabled();
+    unmount();
+    renderStep({
+      initial: filed({
+        signoffs: [
+          {
+            role: "dispatcher",
+            user_id: "d-1",
+            signer_name: "Dana Dispatch",
+            signed_at: "2026-11-09T01:52:00Z",
+            flight_minutes_today: null,
+            flight_minutes_remaining: null,
+          },
+        ],
+      }),
+    });
+    expect(screen.getByRole("button", { name: "Sign the FRAT to continue" })).toBeDisabled();
+  });
+
+  it("starts a change from the scores on file, and shows the new FRAT once it's filed", async () => {
+    const user = userEvent.setup();
+    const { rerender } = renderStep({ initial: filed() });
+    await user.click(screen.getByRole("button", { name: /Change the FRAT/i }));
+    expect(screen.getByLabelText(/Wind & gusts/i, { selector: "input" })).toHaveValue("4");
+    expect(screen.getByLabelText(/Ceiling/i, { selector: "input" })).toHaveValue("2");
+    expect(screen.getByDisplayValue("Wait for the ceiling to lift at PACK.")).toBeInTheDocument();
+    // Every factor on file counts as assessed: no confirmation of zeros.
+    expect(screen.queryByText(/still at zero and have not been assessed/i)).not.toBeInTheDocument();
+
+    // On the demo the form stayed open after filing and the pilot filed
+    // the same change again a minute later. The new FRAT closes it.
+    rerender(
+      <FlightRiskAssessmentStep
+        flightId="f-1"
+        initial={filed({ id: "a-176", answers: everyFactor({ wx_ceiling: 3, wx_wind: 4 }), total_score: 7 })}
+        mode="preflight"
+      />,
+    );
+    expect(screen.queryByRole("button", { name: /File the change/i })).not.toBeInTheDocument();
+    expect(screen.getByLabelText("Each factor's score")).toBeInTheDocument();
+  });
+
+  it("can keep the FRAT as it is", async () => {
+    const user = userEvent.setup();
+    renderStep({ initial: filed() });
+    await user.click(screen.getByRole("button", { name: /Change the FRAT/i }));
+    await user.click(screen.getByRole("button", { name: "Keep the FRAT as it is" }));
+    expect(screen.getByLabelText("Each factor's score")).toBeInTheDocument();
   });
 });

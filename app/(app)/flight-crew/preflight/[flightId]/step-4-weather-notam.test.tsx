@@ -5,7 +5,7 @@ import type { FlightDetail, VillageBoardRow } from "@/lib/api/types";
 
 vi.mock("./actions", () => ({ completeStepAction: vi.fn() }));
 
-import { WeatherAndNotamStep } from "./step-3-weather-notam";
+import { WeatherAndNotamStep } from "./step-4-weather-notam";
 
 describe("Step 3 on a multi-leg flight", () => {
   it("asks for weather and NOTAMs at every stop", () => {

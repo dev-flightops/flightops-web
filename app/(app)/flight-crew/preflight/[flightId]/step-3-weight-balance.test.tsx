@@ -12,7 +12,7 @@ vi.mock("./actions", () => ({
   returnFlightOverWeightAction,
 }));
 
-import { WeightAndBalanceStep } from "./step-2-weight-balance";
+import { WeightAndBalanceStep } from "./step-3-weight-balance";
 import type { FlightDetail, WeightReturn } from "@/lib/api/types";
 
 const FLIGHT = {
@@ -86,7 +86,7 @@ describe("the override is gone", () => {
 
     // The forward button is not merely disabled — it is not rendered.
     expect(
-      screen.queryByRole("button", { name: /continue to step 3/i }),
+      screen.queryByRole("button", { name: /continue to step 4/i }),
     ).not.toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: /send back to dispatch/i }),
@@ -115,7 +115,7 @@ describe("within limits", () => {
       <WeightAndBalanceStep flightId="f-1" flight={FLIGHT} openReturn={null} />,
     );
     expect(
-      screen.getByRole("button", { name: /continue to step 3/i }),
+      screen.getByRole("button", { name: /continue to step 4/i }),
     ).toBeDisabled();
   });
 
@@ -126,12 +126,12 @@ describe("within limits", () => {
     );
     await user.click(screen.getByRole("radio", { name: /within limits/i }));
     await user.click(
-      screen.getByRole("button", { name: /continue to step 3/i }),
+      screen.getByRole("button", { name: /continue to step 4/i }),
     );
 
     expect(completeStepAction).toHaveBeenCalledWith(
       "f-1",
-      2,
+      3,
       expect.objectContaining({ confirmed_within_limits: true }),
     );
     // The retired keys must not reappear in the payload.
@@ -241,7 +241,7 @@ describe("an already-returned flight", () => {
     expect(screen.getByText(/1,750 lbs/)).toBeInTheDocument();
     expect(screen.getByText(/Two bags have to come off/)).toBeInTheDocument();
     expect(
-      screen.queryByRole("button", { name: /continue to step 3/i }),
+      screen.queryByRole("button", { name: /continue to step 4/i }),
     ).not.toBeInTheDocument();
   });
 

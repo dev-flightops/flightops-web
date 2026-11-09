@@ -34,7 +34,7 @@ const OURS = {
     text: "Over: handed back to dispatch, and preflight is held until the load is re-planned.",
     tone: "text-status-red",
   },
-  none: { text: "Not checked yet: the PIC confirms it at preflight step 2.", tone: "text-muted-foreground" },
+  none: { text: "Not checked yet: the PIC confirms it at preflight step 3.", tone: "text-muted-foreground" },
 } as const;
 
 function zulu(iso: string | null): string {

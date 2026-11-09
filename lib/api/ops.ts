@@ -7,6 +7,8 @@ import { asNumber, asNumberOrNull } from "./decimal";
 import type { PacketWeather } from "./dispatch-risk";
 import type {
   AccountingExportResponse,
+  FlightProgressResponse,
+  HandoffsResponse,
   AircraftListItem,
   AircraftListResponse,
   AirmanRecordResponse,
@@ -760,6 +762,18 @@ export async function submitFratAssessment(
     method: "POST",
     body: JSON.stringify(body),
   });
+}
+
+/** What waits on the person asking (#175): the FRAT to sign, a release to
+ *  accept, a flight to release, a FRAT the pilot changed, a load returned,
+ *  a release denied. */
+export async function listMyHandoffs(): Promise<HandoffsResponse> {
+  return apiFetch<HandoffsResponse>("/ops/handoffs");
+}
+
+/** A flight's steps from built to logged, and whose turn it is (#175). */
+export async function getFlightProgress(flightId: string): Promise<FlightProgressResponse> {
+  return apiFetch<FlightProgressResponse>(`/ops/flights/${flightId}/progress`);
 }
 
 export async function getLatestFratAssessment(
