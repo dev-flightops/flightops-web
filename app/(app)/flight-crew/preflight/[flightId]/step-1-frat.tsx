@@ -1334,7 +1334,9 @@ function FratResultPanel({
         </button>
         )}
 
-        {readOnly ? (
+        {/* Released, the FRAT is locked (#155): reopened at step 1 after the
+            release (#175), it offers no change the server would refuse. */}
+        {readOnly || assessment.locked ? (
           assessment.locked ? (
             <p className="text-center text-[0.7rem] text-muted-foreground">
               The flight is released: its FRAT stays as signed. Dispatch pulls the release back to change it.

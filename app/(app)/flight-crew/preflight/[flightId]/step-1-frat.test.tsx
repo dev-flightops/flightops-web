@@ -1037,6 +1037,12 @@ describe("the FRAT dispatch scored, in the pilot's preflight (#175)", () => {
     expect(screen.getByLabelText("Each factor's score")).toBeInTheDocument();
   });
 
+  it("offers no change once the flight is released", () => {
+    renderStep({ initial: filed({ locked: true }) });
+    expect(screen.queryByRole("button", { name: /Change the FRAT/i })).not.toBeInTheDocument();
+    expect(screen.getByText(/its FRAT stays as signed/)).toBeInTheDocument();
+  });
+
   it("can keep the FRAT as it is", async () => {
     const user = userEvent.setup();
     renderStep({ initial: filed() });
