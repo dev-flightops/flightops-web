@@ -17,7 +17,7 @@ import {
 import { getCompanyProfile, listMyTenants } from "@/lib/api/auth";
 import { loadOperationalSnapshot } from "@/lib/dashboards/operational-snapshot";
 import { currentGreeting, firstNameFrom } from "@/lib/greeting";
-import { hasAnyRole, roleGate } from "@/lib/roles";
+import { HANDOFF_VIEWERS, hasAnyRole, roleGate } from "@/lib/roles";
 
 /**
  * Roles permitted to see the Active Alerts panel per the Home Page
@@ -149,8 +149,9 @@ export default async function HomePage() {
       <div className="mx-auto max-w-6xl px-4 pb-16 pt-8 sm:px-8">
         {homeImage ? null : opening}
 
-        {/* What the flow waits on this person for (#175): everyone's own. */}
-        <WaitingOnYou />
+        {/* What the flow waits on this person for (#175): dispatch's and
+            the pilots', who are the hand-offs so far. */}
+        {hasAnyRole(sessionRoles, HANDOFF_VIEWERS) && <WaitingOnYou />}
 
         {canSeeAlerts && (
           <div className="mt-6">

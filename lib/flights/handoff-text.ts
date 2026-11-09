@@ -40,10 +40,12 @@ export function handoffLine(item: HandoffItem): HandoffLine {
         href: `/frat/${item.flight_id}`,
         severity: "yellow",
       };
+    // Both signatures are the FRAT's part: the packet still has its own
+    // checks (the crew's currency, NOTAMs, the weather), so not "ready".
     case "release_ready":
       return {
-        title: `Ready to release — ${flight}`,
-        detail: `${route}. ${item.by_name ?? "The pilot"} signed the FRAT at ${at}.`,
+        title: `FRAT signed by both — ${flight}`,
+        detail: `${route}. ${item.by_name ?? "The pilot"} signed it at ${at}; the release is next.`,
         href: packet,
         severity: "yellow",
       };

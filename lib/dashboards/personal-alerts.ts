@@ -6,6 +6,7 @@ import { formatLocal } from "@/lib/format/flight-time";
 import {
   AIRWORTHINESS_WRITERS,
   DISPATCH_WRITERS,
+  HANDOFF_VIEWERS,
   WORK_ORDER_WRITERS,
   hasAnyRole,
 } from "@/lib/roles";
@@ -39,7 +40,7 @@ export async function loadPersonalAlerts(viewer: {
     mx ? listSquawks({ status: "open", limit: 50 }).catch(() => null) : null,
     mx ? listWorkOrders().catch(() => null) : null,
     dispatch || viewer.userId ? listDayLoads().catch(() => null) : null,
-    listMyHandoffs().catch(() => null),
+    hasAnyRole(viewer.roles, HANDOFF_VIEWERS) ? listMyHandoffs().catch(() => null) : null,
   ]);
   const alerts: OperationalAlert[] = [];
   const now = Date.now();

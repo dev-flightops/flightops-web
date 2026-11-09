@@ -119,6 +119,16 @@ describe("the hand-offs between dispatch and the pilot (#175)", () => {
     expect(alert.href).toBe("/frat/fl-118");
   });
 
+  it("tells dispatch the pilot signed, without calling the flight ready: the packet has its own checks", async () => {
+    listMyHandoffs.mockResolvedValue({
+      items: [item({ kind: "release_ready", turn: "dispatch", by_name: "Grace Okafor" })],
+    });
+    const [alert] = await loadPersonalAlerts({ roles: ["dispatcher"], userId: "u-disp" });
+    expect(alert.title).toBe("FRAT signed by both — MM118");
+    expect(alert.detail).toMatch(/Grace Okafor signed it at .+; the release is next\.$/);
+    expect(alert.href).toBe("/dispatch?flight=fl-118");
+  });
+
   it("puts a denied release and a load returned in red, to the packet", async () => {
     listMyHandoffs.mockResolvedValue({
       items: [
