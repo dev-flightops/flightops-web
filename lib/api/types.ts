@@ -1657,13 +1657,14 @@ export interface FratAssessmentResponse {
   total_score: number;
   /** The level the flight is filed at, and the approval it needs: the
    *  higher of the band the total falls in and the dispatch packet's
-   *  level at release (#88). */
+   *  level when it was filed (#88). */
   risk_level: FratRiskLevel;
   /** The band the total falls in on its own. Absent from servers that
    *  predate #88. */
   score_risk_level?: FratRiskLevel | null;
-  /** The dispatch packet's overall risk as released; null before
-   *  release. */
+  /** The dispatch packet's overall risk now: as released, or before the
+   *  release as last scored (#155). Not the level it had when this FRAT
+   *  was filed, which can differ (#177). Null when it hasn't been scored. */
   packet_risk_level?: FratRiskLevel | null;
   mitigations: string | null;
   /** Factors the pilot scored at the operator's out-of-company-limits
@@ -2723,8 +2724,9 @@ export interface FratPrefillResponse {
    *  not IFR certified (#89). Null otherwise. */
   dispatch_min_ceiling_ft?: number | null;
   dispatch_min_visibility_sm?: number | null;
-  /** The dispatch packet's overall risk as released (#88): the FRAT is
-   *  filed at no lower a level. Null before release. */
+  /** The dispatch packet's overall risk: as released, or before the
+   *  release as last scored (#155). The FRAT is filed at no lower a level
+   *  (#88). Null when it hasn't been scored. */
   packet_risk_level?: FratRiskLevel | null;
   /** Each stop's weather and where it came from (#117). */
   stops?: StopWeather[];

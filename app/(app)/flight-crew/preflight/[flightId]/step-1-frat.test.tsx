@@ -734,28 +734,79 @@ describe("the dispatch packet's level", () => {
     expect(screen.getByText("HIGH")).toBeInTheDocument();
     expect(screen.queryByText("LOW")).not.toBeInTheDocument();
     expect(
-      screen.getByText(/Raised to HIGH by the dispatch packet, which rated this flight HIGH at release/),
-    ).toHaveTextContent("The score alone is LOW.");
+      screen.getByText(
+        "HIGH, not the score's LOW: the dispatch packet rates this flight HIGH, and a FRAT is never filed below the packet.",
+      ),
+    ).toBeInTheDocument();
+    // The form is open only before the release (#155).
+    expect(screen.queryByText(/at release/)).not.toBeInTheDocument();
   });
 
-  it("says nothing before the flight is released", () => {
+  it("says at the top of the form that the packet holds the level up (#177)", () => {
+    // MM1181: the sliders went down and the level stayed HIGH.
+    renderStep({ ...singleEngine, fratPrefill: PREFILL });
+    const notice = screen.getByRole("note");
+    expect(notice).toHaveTextContent("Dispatch packet: HIGH");
+    expect(notice).toHaveTextContent(
+      "The packet rates this flight HIGH, so the FRAT is filed at HIGH or higher, whatever the scores below add up to.",
+    );
+  });
+
+  it("has no notice when the packet is LOW, which holds nothing up", () => {
+    renderStep({ ...singleEngine, fratPrefill: { ...PREFILL, packet_risk_level: "low" } });
+    expect(screen.queryByRole("note")).not.toBeInTheDocument();
+    expect(screen.getByText("The dispatch packet rates this flight LOW.")).toBeInTheDocument();
+  });
+
+  it("says nothing when the packet hasn't been scored", () => {
     renderStep({ ...singleEngine, fratPrefill: { ...PREFILL, packet_risk_level: null } });
     expect(screen.getByText("LOW")).toBeInTheDocument();
-    expect(screen.queryByText(/dispatch packet/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/dispatch packet/i)).not.toBeInTheDocument();
   });
 
-  it("shows the packet's level beside a filed assessment", () => {
-    renderStep({
-      initial: {
-        ...filedOverLimits([]),
-        answers: { wx_ceiling: 4, wx_vis: 4, wx_wind: 2 },
-        total_score: 10,
-        risk_level: "high",
-        score_risk_level: "low",
-        packet_risk_level: "high",
-      },
-    });
-    expect(screen.getByText(/Raised to HIGH by the dispatch packet/)).toBeInTheDocument();
+  // Filed while the packet was HIGH: 10 points, LOW on the bands.
+  const filedHigh = (over: Partial<FratAssessmentResponse> = {}): FratAssessmentResponse => ({
+    ...filedOverLimits([]),
+    answers: { wx_ceiling: 4, wx_vis: 4, wx_wind: 2 },
+    total_score: 10,
+    risk_level: "high",
+    score_risk_level: "low",
+    packet_risk_level: "high",
+    ...over,
+  });
+
+  it("says the packet raised a filed FRAT, and still rates it so", () => {
+    renderStep({ initial: filedHigh() });
+    expect(screen.getByText(/^Filed at HIGH/)).toHaveTextContent(
+      "Filed at HIGH, not the score's LOW: the dispatch packet rated the flight HIGH when this FRAT was filed, and a FRAT is never filed below the packet. The packet still rates it HIGH.",
+    );
+  });
+
+  it("names the packet's level when the FRAT was filed, not today's (MM1181)", () => {
+    // The packet has rated MM1181 MEDIUM since its FRATs were filed. The note
+    // read "Raised to HIGH by the dispatch packet, which rated this flight
+    // MEDIUM at release", before any release.
+    renderStep({ initial: filedHigh({ packet_risk_level: "medium" }) });
+    const note = screen.getByText(/^Filed at HIGH/);
+    expect(note).toHaveTextContent("the dispatch packet rated the flight HIGH when this FRAT was filed");
+    expect(note).toHaveTextContent(
+      "The packet now rates it MEDIUM: filed again with the same scores, it would be MEDIUM.",
+    );
+    expect(note).not.toHaveTextContent(/at release/);
+  });
+
+  it("doesn't say what a released FRAT would be filed at", () => {
+    renderStep({ initial: filedHigh({ packet_risk_level: "medium", locked: true }) });
+    const note = screen.getByText(/^Filed at HIGH/);
+    expect(note).toHaveTextContent("The packet has since changed to MEDIUM.");
+    expect(note).not.toHaveTextContent(/filed again/);
+  });
+
+  it("says when the packet has risen above a filed FRAT", () => {
+    renderStep({ initial: filedHigh({ risk_level: "low" }) });
+    expect(screen.getByText(/^The dispatch packet has since risen/)).toHaveTextContent(
+      "The dispatch packet has since risen to HIGH, above this FRAT's LOW: filed again with the same scores, it would be HIGH.",
+    );
   });
 });
 

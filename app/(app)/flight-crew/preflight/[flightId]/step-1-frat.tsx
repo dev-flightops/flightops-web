@@ -143,33 +143,107 @@ function scoreToRiskLevel(score: number): FratRiskLevel {
 const RISK_ORDER: FratRiskLevel[] = ["low", "medium", "high", "extreme"];
 
 /** The higher of two levels. The FRAT is filed at no lower a level than
- *  the dispatch packet the flight was released on (#88): the client saw
- *  "risk HIGH on dispatch packet. Then Risk low on the FRAT." The server
- *  applies the same rule when it files the assessment. */
+ *  the dispatch packet (#88): the client saw "risk HIGH on dispatch packet.
+ *  Then Risk low on the FRAT." The packet's level is the one it was
+ *  released on, or before the release the one it was last scored at. The
+ *  server applies the same rule when it files the assessment. */
 function higherRisk(
   a: FratRiskLevel,
   b: FratRiskLevel | null | undefined,
 ): FratRiskLevel {
   if (!b) return a;
-  return RISK_ORDER.indexOf(b) > RISK_ORDER.indexOf(a) ? b : a;
+  return isAbove(b, a) ? b : a;
 }
 
-/** Why the level is what it is, when the dispatch packet had a say. */
+function isAbove(a: FratRiskLevel, b: FratRiskLevel): boolean {
+  return RISK_ORDER.indexOf(a) > RISK_ORDER.indexOf(b);
+}
+
+/** At the top of the form, when the packet holds the level up (#177). On
+ *  MM1181 (9 Nov) the client lowered the sliders and the level stayed HIGH:
+ *  the packet was HIGH, and the only word of it was a grey line under the
+ *  totals. */
+function PacketFloorNotice({ packetLevel }: { packetLevel: FratRiskLevel | null }) {
+  if (!packetLevel || packetLevel === "low") return null;
+  const label = RISK_LABEL[packetLevel];
+  return (
+    <p role="note" className="notice notice-blue">
+      <span className="notice-label">{`Dispatch packet: ${label}`}</span>
+      <span className="text-foreground">
+        {`The packet rates this flight ${label}, so the FRAT is filed at ${label} or higher, whatever the scores below add up to. The packet's level comes from its own checks, scored again each time the packet is opened.`}
+      </span>
+    </p>
+  );
+}
+
+/** Under the form's totals: whether the packet or the score sets the level. */
 function PacketLevelNote({
   level,
   scoreLevel,
   packetLevel,
 }: {
   level: FratRiskLevel;
+  scoreLevel: FratRiskLevel;
+  packetLevel: FratRiskLevel | null;
+}) {
+  if (!packetLevel) return null;
+  return isAbove(level, scoreLevel) ? (
+    <p className="text-xs text-foreground">
+      {`${RISK_LABEL[level]}, not the score's ${RISK_LABEL[scoreLevel]}: the dispatch packet rates this flight ${RISK_LABEL[level]}, and a FRAT is never filed below the packet.`}
+    </p>
+  ) : (
+    <p className="text-[0.7rem] text-muted-foreground">
+      {`The dispatch packet rates this flight ${RISK_LABEL[packetLevel]}.`}
+    </p>
+  );
+}
+
+/**
+ * Why a filed FRAT is at its level, when the packet had a say (#88), and what
+ * the packet says now (#177).
+ *
+ * The level on file is the higher of the score's band and the packet's level
+ * when the FRAT was filed, but the packet's level the server sends is today's.
+ * So a FRAT above its own band was raised by the packet, which rated the
+ * flight at the FRAT's level then. (That reads the band with today's
+ * thresholds; they are the operator's, and rarely change.) The note used to
+ * name today's level as the one that raised it, "at release" before any
+ * release: on MM1181 it read "Raised to HIGH by the dispatch packet, which
+ * rated this flight MEDIUM at release".
+ */
+function FiledLevelNote({
+  level,
+  scoreLevel,
+  packetLevel,
+  locked,
+}: {
+  level: FratRiskLevel;
   scoreLevel: FratRiskLevel | null | undefined;
   packetLevel: FratRiskLevel | null | undefined;
+  /** The flight is released: the FRAT can't be filed again until the
+   *  release is pulled back, so the note doesn't offer what it would be. */
+  locked: boolean;
 }) {
+  const refiled = (at: FratRiskLevel) =>
+    locked ? "." : `: filed again with the same scores, it would be ${RISK_LABEL[at]}.`;
+  if (scoreLevel && isAbove(level, scoreLevel)) {
+    const now = !packetLevel
+      ? ""
+      : packetLevel === level
+        ? ` The packet still rates it ${RISK_LABEL[level]}.`
+        : ` The packet ${locked ? "has since changed to" : "now rates it"} ${RISK_LABEL[packetLevel]}${refiled(higherRisk(scoreLevel, packetLevel))}`;
+    return (
+      <p className="text-xs text-foreground">
+        {`Filed at ${RISK_LABEL[level]}, not the score's ${RISK_LABEL[scoreLevel]}: the dispatch packet rated the flight ${RISK_LABEL[level]} when this FRAT was filed, and a FRAT is never filed below the packet.${now}`}
+      </p>
+    );
+  }
   if (!packetLevel) return null;
   return (
     <p className="text-[0.7rem] text-muted-foreground">
-      {scoreLevel && level !== scoreLevel
-        ? `Raised to ${RISK_LABEL[level]} by the dispatch packet, which rated this flight ${RISK_LABEL[packetLevel]} at release: the FRAT is filed at no lower a level. The score alone is ${RISK_LABEL[scoreLevel]}.`
-        : `The dispatch packet rated this flight ${RISK_LABEL[packetLevel]} at release.`}
+      {isAbove(packetLevel, level)
+        ? `The dispatch packet has since risen to ${RISK_LABEL[packetLevel]}, above this FRAT's ${RISK_LABEL[level]}${refiled(packetLevel)}`
+        : `The dispatch packet rates this flight ${RISK_LABEL[packetLevel]}.`}
     </p>
   );
 }
@@ -500,6 +574,8 @@ function FratQuestionnaire({
       </header>
 
       <div className="space-y-4 px-5 py-4 text-sm">
+        <PacketFloorNotice packetLevel={packetRisk} />
+
         {/* Carry the last FRAT forward, which is what the operator
             asked for:
 
@@ -1173,10 +1249,11 @@ function FratResultPanel({
             }
           />
         </div>
-        <PacketLevelNote
+        <FiledLevelNote
           level={risk}
           scoreLevel={assessment.score_risk_level}
           packetLevel={assessment.packet_risk_level}
+          locked={Boolean(assessment.locked)}
         />
         <FactorScores answers={assessment.answers} suggestions={suggestions} />
 
