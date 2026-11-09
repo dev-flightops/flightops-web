@@ -348,7 +348,7 @@ export const HELP_ENTRIES: HelpEntry[] = [
       "Saving records who set them and when, even if you keep the values unchanged.",
     ],
     connectsTo:
-      "High routes a flight through dispatch via the release packet. Extreme cannot depart without a Chief Pilot or Director of Operations authorisation recorded against it. The questionnaire itself is step 4 of a pilot's preflight, which is reached per flight rather than as a page of its own.",
+      "High routes a flight through dispatch via the release packet. Extreme cannot depart without a Chief Pilot or Director of Operations authorisation recorded against it. The questionnaire itself is step 1 of a pilot's preflight, which is reached per flight rather than as a page of its own.",
     worthKnowing: [
       "No FAR sets these numbers — Part 135 does not require a flight risk assessment tool at all — so they belong to whoever signs your manual. What ships is a starting point, not guidance.",
       "Changing a threshold changes the band new assessments land in. Assessments already submitted keep the band they were scored under.",
@@ -470,7 +470,7 @@ export const HELP_ENTRIES: HelpEntry[] = [
       "A pilot's flights, daily aircraft preflight/run-up, flight-release review and acceptance, logbook and currency. Dispatch releases the flight; the assigned pilot reviews and accepts it.",
     howToUse: [
       "Open the flight you are about to operate to start its preflight.",
-      "Duty in, take the aircraft on Flight Crew and record its daily preflight and run-up before accepting a flight in it. Then work the flight’s eight preflight steps in order; dispatch release review comes first and pilot acceptance is step 6.",
+      "Duty in, take the aircraft on Flight Crew and record its daily preflight and run-up before accepting a flight in it. Then work the flight’s eight preflight steps in order: signing the FRAT dispatch signed comes first, then the dispatch release review, and pilot acceptance is step 6.",
       "File the electronic flight log after the flight, while the numbers are still in front of you.",
       "Check your currency before accepting a flight that needs a qualification you are close to losing.",
     ],

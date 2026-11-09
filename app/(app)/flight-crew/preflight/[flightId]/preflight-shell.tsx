@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import { buttonOutline, linkCaps } from "@/components/ff/controls";
 import { CheckGlyph } from "@/components/ff/glyphs";
 import { SquawkDialog } from "@/components/dispatch/packet/squawk-dialog";
+import { FratSignoffs } from "@/components/frat/frat-signoffs";
 import { PageHeader } from "@/components/ff/page-header";
 import { Panel } from "@/components/ff/panel";
 import { cn } from "@/lib/utils";
@@ -30,10 +31,10 @@ import type {
   VillageBoardRow,
 } from "@/lib/api/types";
 
-import { ReviewDispatchReleaseStep } from "./step-1-dispatch-release";
-import { WeightAndBalanceStep } from "./step-2-weight-balance";
-import { WeatherAndNotamStep } from "./step-3-weather-notam";
-import { FlightRiskAssessmentStep } from "./step-4-frat";
+import { ReviewDispatchReleaseStep } from "./step-2-dispatch-release";
+import { WeightAndBalanceStep } from "./step-3-weight-balance";
+import { WeatherAndNotamStep } from "./step-4-weather-notam";
+import { FlightRiskAssessmentStep } from "./step-1-frat";
 import { DutyInConfirmStep } from "./step-5-duty";
 import { AcceptOrDenyStep } from "./step-6-accept-deny";
 import { PositionReportsStep } from "./step-7-position-reports";
@@ -49,10 +50,10 @@ interface Props {
   /** Latest pilot Accept/Deny if any — null when no submission yet. */
   acceptance: PilotAcceptanceResponse | null;
   weightReturn: WeightReturn | null;
-  /** Step 2's weight and balance (#111). Null when it couldn't be read. */
+  /** Step 3's weight and balance (#111). Null when it couldn't be read. */
   flightLoad?: FlightLoad | null;
   /** METAR + TAF for the routing airports, fetched server-side. Null
-   *  when the weather-service failed — Step 3 falls back to a
+   *  when the weather-service failed — Step 4 falls back to a
    *  "data unavailable" state and still lets the pilot ack that
    *  they reviewed weather in their usual source. */
   weather: WeatherBatchResponse | null;
@@ -63,10 +64,9 @@ interface Props {
    *  the pilot scores it by hand, which is what happened before any of
    *  this existed. */
   fratConfig: FratThresholdConfigResponse | null;
-  /** Suggested factor scores for step 4, from data the system already
-   *  holds. Null when the weather was unreachable or the prefill call
-   *  failed — step 4 then renders the questionnaire as it always did,
-   *  which is the status quo rather than a regression. */
+  /** Suggested factor scores for step 1's FRAT, from data the system
+   *  already holds. Null when the weather was unreachable or the prefill
+   *  call failed — the FRAT then shows its scores without them. */
   fratPrefill: FratPrefillResponse | null;
   /** Whether a FRAT the pilot already filed can be carried to this
    *  leg. Null when the weather was unreachable or the check failed. */
@@ -80,6 +80,10 @@ interface Props {
   /** The flight's log for Step 8: the draft its arrival opened, filled
    *  from the flight (the client, 30 Oct). Null before the arrival. */
   flightLog?: FlightLogResponse | null;
+  /** Who is looking: the FRAT's pilot signs it at step 1 (#175). */
+  viewerId?: string | null;
+  /** The company's zone at the departure base, for the sign-off times. */
+  timeZone?: string;
 }
 
 /**
@@ -113,6 +117,8 @@ export function PreflightShell({
   fuel,
   readiness,
   flightLog = null,
+  viewerId = null,
+  timeZone = "UTC",
 }: Props) {
   const completedNumbers = new Set(
     progress.completed.map((s) => s.step_number),
@@ -204,6 +210,8 @@ export function PreflightShell({
           fratPrefill={fratPrefill}
           fratBlock={fratBlock}
           flightLog={flightLog}
+          viewerId={viewerId}
+          timeZone={timeZone}
         />
       )}
 
@@ -355,6 +363,8 @@ function ActiveStep({
   fratPrefill,
   fratBlock,
   flightLog,
+  viewerId,
+  timeZone,
 }: {
   flightId: string;
   flight: FlightDetail;
@@ -370,33 +380,27 @@ function ActiveStep({
   fratPrefill: FratPrefillResponse | null;
   fratBlock: FratBlockEligibilityResponse | null;
   flightLog: FlightLogResponse | null;
+  viewerId: string | null;
+  timeZone: string;
 }) {
   switch (stepNumber) {
+    // The FRAT first (#175): the pilot signs what dispatch scored, and the
+    // release waits for both signatures (#155).
     case 1:
-      return <ReviewDispatchReleaseStep flightId={flightId} flight={flight} />;
-    case 2:
-      return (
-        <WeightAndBalanceStep
-          flightId={flightId}
-          flight={flight}
-          openReturn={weightReturn}
-          load={flightLoad}
-        />
-      );
-    case 3:
-      return (
-        <WeatherAndNotamStep
-          flightId={flightId}
-          flight={flight}
-          weather={weather}
-          villages={villages}
-        />
-      );
-    case 4:
       return (
         <FlightRiskAssessmentStep
           flightId={flightId}
           initial={frat}
+          signoffs={
+            frat ? (
+              <FratSignoffs
+                flightId={flightId}
+                frat={frat}
+                timeZone={timeZone}
+                canSign={{ pilot: viewerId !== null && frat.pilot_user_id === viewerId, dispatcher: false }}
+              />
+            ) : null
+          }
           companyCrosswindLimitKt={
             fratConfig
               ? companyCrosswindLimitKt(
@@ -419,6 +423,26 @@ function ActiveStep({
           fratBlock={fratBlock}
         />
       );
+    case 2:
+      return <ReviewDispatchReleaseStep flightId={flightId} flight={flight} />;
+    case 3:
+      return (
+        <WeightAndBalanceStep
+          flightId={flightId}
+          flight={flight}
+          openReturn={weightReturn}
+          load={flightLoad}
+        />
+      );
+    case 4:
+      return (
+        <WeatherAndNotamStep
+          flightId={flightId}
+          flight={flight}
+          weather={weather}
+          villages={villages}
+        />
+      );
     case 5:
       return <DutyInConfirmStep flightId={flightId} duty={duty} />;
     case 6:
@@ -433,10 +457,10 @@ function ActiveStep({
 }
 
 const STEP_LABELS_BY_NUMBER: Record<number, string> = {
-  1: "Review Dispatch Release",
-  2: "Weight and Balance Review",
-  3: "Weather and NOTAM Review",
-  4: "Flight Risk Assessment Tool (FRAT)",
+  1: "Flight Risk Assessment Tool (FRAT)",
+  2: "Review Dispatch Release",
+  3: "Weight and Balance Review",
+  4: "Weather and NOTAM Review",
   5: "Duty In Confirmation",
   6: "Accept or Deny Release",
   7: "Flight Following Position Reports",

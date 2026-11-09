@@ -6,6 +6,7 @@ vi.mock("@/lib/api/auth", () => ({
   listMyTenants: async () => ({ tenants: [] }), getCompanyProfile: async () => null,
 }));
 vi.mock("@/components/home/active-alerts-panel", () => ({ ActiveAlertsPanel: () => null }));
+vi.mock("@/components/home/waiting-on-you", () => ({ WaitingOnYou: () => null }));
 vi.mock("@/lib/dashboards/operational-snapshot", () => ({
   loadOperationalSnapshot: async () => ({ airborneCount: 3, fleetAirworthy: 5, fleetGrounded: 3,
     board: ["tail-1", "tail-1", "tail-2"].map(id => ({ aircraft: { id }, status: "released",

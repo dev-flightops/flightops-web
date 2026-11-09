@@ -62,7 +62,8 @@ export interface OperationalAlert {
     | "safety_report_new"
     | "seat_open"
     | "squawk_new"
-    | "load_complete";
+    | "load_complete"
+    | "handoff";
   title: string;
   detail: string;
   /** Permalink to the source record. */

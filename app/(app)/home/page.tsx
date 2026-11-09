@@ -5,6 +5,7 @@ import { DEPARTMENTS, departmentForPath, type DepartmentId } from "@/components/
 import { PageHeader } from "@/components/ff/page-header";
 import { Stat, StatStrip } from "@/components/ff/stat-strip";
 import { ActiveAlertsPanel } from "@/components/home/active-alerts-panel";
+import { WaitingOnYou } from "@/components/home/waiting-on-you";
 import { HomeImageBand } from "@/components/home/home-image-band";
 import { HOME_QUICK_LINKS, QuickLinks } from "@/components/home/quick-links";
 import {
@@ -16,7 +17,7 @@ import {
 import { getCompanyProfile, listMyTenants } from "@/lib/api/auth";
 import { loadOperationalSnapshot } from "@/lib/dashboards/operational-snapshot";
 import { currentGreeting, firstNameFrom } from "@/lib/greeting";
-import { hasAnyRole, roleGate } from "@/lib/roles";
+import { HANDOFF_VIEWERS, hasAnyRole, roleGate } from "@/lib/roles";
 
 /**
  * Roles permitted to see the Active Alerts panel per the Home Page
@@ -49,11 +50,12 @@ const ALERT_VIEWING_ROLES = roleGate(
  *
  *   1. The greeting, with the operator's name above it.
  *   2. Today's fleet: aircraft airborne, on the ground, on hold.
- *   3. Active alerts: role-gated, as the M2 spec has it.
- *   4. The departments as a directory: each home entry under the nav
+ *   3. Waiting on you: what the flow waits on this person for (#175).
+ *   4. Active alerts: role-gated, as the M2 spec has it.
+ *   5. The departments as a directory: each home entry under the nav
  *      department its route belongs to, a plain link with its one-line
  *      description; the unbuilt ones muted and marked "Soon".
- *   5. Shortcuts.
+ *   6. Shortcuts.
  *
  * Which entries a user sees is the client's home matrix
  * (HOME_MODULE_ROLES), unchanged; only their presentation moved.
@@ -147,7 +149,15 @@ export default async function HomePage() {
       <div className="mx-auto max-w-6xl px-4 pb-16 pt-8 sm:px-8">
         {homeImage ? null : opening}
 
-        {canSeeAlerts && <ActiveAlertsPanel />}
+        {/* What the flow waits on this person for (#175): dispatch's and
+            the pilots', who are the hand-offs so far. */}
+        {hasAnyRole(sessionRoles, HANDOFF_VIEWERS) && <WaitingOnYou />}
+
+        {canSeeAlerts && (
+          <div className="mt-6">
+            <ActiveAlertsPanel />
+          </div>
+        )}
 
         <section aria-labelledby="departments-heading" className="mt-10">
           <div className="mb-6 flex flex-wrap items-baseline justify-between gap-2 border-b border-border pb-3">

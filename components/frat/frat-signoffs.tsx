@@ -35,12 +35,17 @@ const TITLES: Record<FratSignRole, string> = { pilot: "Pilot", dispatcher: "Disp
  * makes a new FRAT with both boxes empty. Each signs the version on screen
  * (its id goes with the sign-off), so an edit made meanwhile is refused
  * rather than signed unread.
+ *
+ * Dispatch signs first, once the flight is built, and the pilot after, at
+ * preflight step 1 (#175): "once that's complete, the dispatch signs the
+ * FRAT. The pilot should see the scored FRAT ... and they then sign".
  */
 export function FratSignoffs({
   flightId,
   frat,
   timeZone,
   canSign,
+  buildGaps = [],
 }: {
   flightId: string;
   frat: FratAssessmentResponse;
@@ -49,6 +54,8 @@ export function FratSignoffs({
   /** Which box the viewer may check: the FRAT's pilot the pilot's, anyone
    *  who may release the dispatcher's. */
   canSign: Record<FratSignRole, boolean>;
+  /** What the flight still needs before dispatch can sign (#175). */
+  buildGaps?: string[];
 }) {
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -69,15 +76,17 @@ export function FratSignoffs({
       <header className="border-b border-border px-5 py-3">
         <p className="eyebrow">Sign-off</p>
         <p className="mt-1 text-xs text-muted-foreground">
-          The pilot and a dispatcher each sign. Signing records your name and the time against this
-          version of the FRAT; filing it again clears both.
+          Dispatch signs first, once the flight is built; then the pilot, at preflight step 1. Signing
+          records your name and the time against this version of the FRAT; filing it again clears
+          both.
         </p>
       </header>
       <ul className="divide-y divide-border">
-        {(["pilot", "dispatcher"] as const).map((role) => {
+        {(["dispatcher", "pilot"] as const).map((role) => {
           const s: FratSignoff | undefined = signed.get(role);
           const id = `frat-sign-${role}`;
-          const disabled = Boolean(s) || !canSign[role] || locked || pending;
+          const turn = role === "dispatcher" ? buildGaps.length === 0 : signed.has("dispatcher");
+          const disabled = Boolean(s) || !canSign[role] || !turn || locked || pending;
           return (
             <li key={role} className="flex items-start gap-3 px-5 py-3 text-sm">
               <input
@@ -97,13 +106,24 @@ export function FratSignoffs({
                   <span className="text-foreground">{`signed by ${s.signer_name}, ${when(s.signed_at, timeZone)}`}</span>
                 ) : (
                   <span className="text-muted-foreground">
-                    {canSign[role] && !locked
-                      ? "— check the box to sign"
-                      : role === "pilot"
-                        ? "— waiting for the pilot"
-                        : "— waiting for a dispatcher"}
+                    {role === "pilot" && !signed.has("dispatcher")
+                      ? "— after dispatch signs"
+                      : role === "dispatcher" && buildGaps.length > 0
+                        ? "— once the flight is built"
+                        : canSign[role] && !locked
+                          ? "— check the box to sign"
+                          : role === "pilot"
+                            ? "— waiting for the pilot"
+                            : "— waiting for a dispatcher"}
                   </span>
                 )}
+                {!s && role === "dispatcher" && buildGaps.length > 0 ? (
+                  <ul className="mt-0.5 list-disc pl-4 text-xs text-muted-foreground">
+                    {buildGaps.map((gap) => (
+                      <li key={gap}>{gap}</li>
+                    ))}
+                  </ul>
+                ) : null}
                 {s && role === "pilot" ? (
                   <span className="mt-0.5 block text-xs text-muted-foreground">
                     {pilotMinutesLine(s.flight_minutes_today, s.flight_minutes_remaining)}

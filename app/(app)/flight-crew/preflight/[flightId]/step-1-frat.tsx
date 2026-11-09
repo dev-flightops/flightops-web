@@ -73,7 +73,12 @@ interface Props {
 }
 
 /**
- * Step 4 — Flight Risk Assessment Tool (Spec 4 §"The 8 steps / 4").
+ * Step 1 — Flight Risk Assessment Tool (Spec 4 §"The 8 steps / 4"; first
+ * since #175). The client, 9 Nov: "once that's complete, the dispatch signs
+ * the FRAT. The pilot should see the scored FRAT after dispatch assigns the
+ * flight and they then sign the FRAT as a part of their preflight process."
+ * So in the preflight the pilot waits for dispatch's signature, sees every
+ * item's score, and signs; or changes it, which sends it back to dispatch.
  *
  * Structure mirrors legacy `templates/safety/frat_form.html`:
  *   - 5 factor groups (Pilot / Aircraft / Environment / External / Route)
@@ -90,8 +95,8 @@ interface Props {
  *   - EXTREME        — must record a `cp_do_authorization` auth row
  *                      before Continue enables
  *
- * Continue calls `completeStepAction(flightId, 4, ...)` once gating is
- * cleared, advancing the preflight to Step 5.
+ * Continue calls `completeStepAction(flightId, 1, ...)` once both have
+ * signed, advancing the preflight to Step 2, the release.
  */
 
 
@@ -191,24 +196,24 @@ export function FlightRiskAssessmentStep({
   signoffs,
   readOnly = false,
 }: Props) {
-  // Pilots reach this component in two modes:
-  //   1. First-time — no assessment yet, render the questionnaire.
-  //   2. Post-submit — assessment exists, render the result + Continue.
-  // Review item #6 (Aug 2026) added an Edit link to completed steps in the
-  // preflight shell. For FRAT specifically, "editing" means retaking
-  // the questionnaire — a new assessment row is written and becomes
-  // the latest. The result panel exposes a "Retake questionnaire"
-  // link that flips this local override so we re-render the empty
-  // questionnaire without needing a route change.
-  const [override, setOverride] = useState(false);
+  // Changing the FRAT reopens the questionnaire on the one on file; filing
+  // it makes a new assessment, which becomes the latest (Review item #6,
+  // Aug 2026). The change is keyed to the assessment it started from, so
+  // once the new one arrives the result shows again. Before #175 the form
+  // stayed open after filing and looked unsaved: on the demo the pilot
+  // filed the same change twice, a minute apart.
+  const [changing, setChanging] = useState<string | null>(null);
   if (!initial && readOnly) {
     return (
       <section className="rounded-lg border border-border bg-card px-5 py-4 text-sm text-muted-foreground">
-        No FRAT on this flight yet. The pilot or dispatch files it.
+        No FRAT on this flight yet. Dispatch scores it and signs it once the flight is built.
       </section>
     );
   }
-  if (!initial || (override && !readOnly)) {
+  // In the preflight the pilot signs what dispatch scored (#175): there is
+  // nothing to review until dispatch has filed it.
+  if (!initial && mode === "preflight") return <WaitingForDispatch />;
+  if (!initial || (changing === initial.id && !readOnly)) {
     return (
       <FratQuestionnaire
         flightId={flightId}
@@ -219,6 +224,9 @@ export function FlightRiskAssessmentStep({
         hasCompanyLimits={hasCompanyLimits}
         fratPrefill={fratPrefill}
         fratBlock={fratBlock}
+        mode={mode}
+        startFrom={initial}
+        onCancel={initial ? () => setChanging(null) : undefined}
       />
     );
   }
@@ -226,11 +234,33 @@ export function FlightRiskAssessmentStep({
     <FratResultPanel
       flightId={flightId}
       assessment={initial}
-      onRetake={() => setOverride(true)}
+      onRetake={() => setChanging(initial.id)}
       mode={mode}
       signoffs={signoffs}
       readOnly={readOnly}
+      suggestions={fratPrefill?.suggestions ?? []}
     />
+  );
+}
+
+/** Preflight step 1 before dispatch has filed the FRAT (#175). */
+function WaitingForDispatch() {
+  return (
+    <section className="rounded-lg border border-border bg-card">
+      <header className="border-b border-border px-5 py-3">
+        <p className="eyebrow">Step 1</p>
+        <h2 className="caption-caps mt-1 text-lg text-foreground">Flight Risk Assessment Tool (FRAT)</h2>
+      </header>
+      <div className="px-5 py-4 text-sm">
+        <p role="note" className="notice notice-blue">
+          <span className="notice-label">Waiting for dispatch</span>
+          <span className="text-foreground">
+            Dispatch scores the FRAT and signs it once the flight is built. It shows here for you to
+            review and sign, and in Waiting on you.
+          </span>
+        </p>
+      </div>
+    </section>
   );
 }
 
@@ -247,6 +277,9 @@ function FratQuestionnaire({
   demonstratedCrosswindKt,
   engineCount,
   hasCompanyLimits,
+  mode = "preflight",
+  startFrom = null,
+  onCancel,
 }: {
   flightId: string;
   fratPrefill?: FratPrefillResponse | null;
@@ -256,6 +289,12 @@ function FratQuestionnaire({
   demonstratedCrosswindKt?: number | null;
   engineCount?: number | null;
   hasCompanyLimits?: boolean;
+  mode?: "preflight" | "page";
+  /** The FRAT on file, when this changes it (#175): the form starts from
+   *  its scores, not from the suggestions, so the change is the one the
+   *  person makes. */
+  startFrom?: FratAssessmentResponse | null;
+  onCancel?: () => void;
 }) {
   /** Suggestions keyed by factor, for seeding and for the provenance
    *  line under each one. */
@@ -277,15 +316,18 @@ function FratQuestionnaire({
         const hint = (fratPrefill?.suggestions ?? []).find(
           (x) => x.factor === f.code,
         );
-        init[f.code] = hint?.score ?? 0;
+        init[f.code] = startFrom ? (startFrom.answers[f.code] ?? 0) : (hint?.score ?? 0);
       }
     return init;
   });
-  const [mitigations, setMitigations] = useState("");
+  const [mitigations, setMitigations] = useState(startFrom?.mitigations ?? "");
   /** Factors the pilot has moved. Distinct from "not zero": moving a
    *  slider to 0 deliberately is an assessment, and leaving it at 0
-   *  untouched is not. */
-  const [touched, setTouched] = useState<Set<string>>(new Set());
+   *  untouched is not. A FRAT on file was answered whole by whoever filed
+   *  it, so changing it starts with every factor assessed. */
+  const [touched, setTouched] = useState<Set<string>>(
+    () => new Set(startFrom ? Object.keys(startFrom.answers) : []),
+  );
   const [confirming, setConfirming] = useState(false);
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -295,8 +337,8 @@ function FratQuestionnaire({
    *  minimums, for the ceiling and for the visibility. */
   const asksApproach = Boolean(fratPrefill?.asks_approach_minimums);
   const [approach, setApproach] = useState<Record<ApproachWhich, boolean | null>>({
-    ceiling: null,
-    visibility: null,
+    ceiling: startFrom?.approach_minimums?.ceiling ?? null,
+    visibility: startFrom?.approach_minimums?.visibility ?? null,
   });
   const answerApproach = (which: ApproachWhich, met: boolean) => {
     const code = APPROACH_FACTOR[which];
@@ -443,12 +485,18 @@ function FratQuestionnaire({
   return (
     <section className="rounded-lg border border-border bg-card">
       <header className="border-b border-border px-5 py-3">
-        <p className="eyebrow">Step 4</p>
+        {mode === "preflight" ? <p className="eyebrow">Step 1</p> : null}
         <h2 className="caption-caps mt-1 text-lg text-foreground">Flight Risk Assessment Tool (FRAT)</h2>
         <p className="mt-1 text-xs text-muted-foreground">
           Score each factor 0–5. Total determines risk level: LOW &lt;15 ·
           MEDIUM 15–24 · HIGH 25–34 · EXTREME 35+.
         </p>
+        {startFrom ? (
+          <p className="mt-1 text-xs text-foreground">
+            Starts from the FRAT on file. Filing your change clears its signatures: dispatch signs it
+            again, then the pilot.
+          </p>
+        ) : null}
       </header>
 
       <div className="space-y-4 px-5 py-4 text-sm">
@@ -668,14 +716,26 @@ function FratQuestionnaire({
             </div>
           </div>
         ) : (
-          <button
-            type="button"
-            disabled={pending}
-            onClick={handleSubmit}
-            className="btn-caps inline-flex w-full items-center justify-center rounded-md bg-primary px-4 py-2.5 text-white transition-opacity hover:bg-brand-dark disabled:opacity-50"
-          >
-            {pending ? "Submitting…" : "Submit assessment"}
-          </button>
+          <div className="space-y-2">
+            <button
+              type="button"
+              disabled={pending}
+              onClick={handleSubmit}
+              className="btn-caps inline-flex w-full items-center justify-center rounded-md bg-primary px-4 py-2.5 text-white transition-opacity hover:bg-brand-dark disabled:opacity-50"
+            >
+              {pending ? "Submitting…" : startFrom ? "File the change" : "Submit assessment"}
+            </button>
+            {onCancel ? (
+              <button
+                type="button"
+                disabled={pending}
+                onClick={onCancel}
+                className="w-full text-center text-[0.7rem] font-semibold text-primary hover:underline disabled:opacity-50"
+              >
+                Keep the FRAT as it is
+              </button>
+            ) : null}
+          </div>
         )}
 
         {error && (
@@ -932,6 +992,58 @@ function Tile({
 // Result panel (assessment submitted)
 // ---------------------------------------------------------------------------
 
+/**
+ * Every factor's score on the FRAT as filed (#175: "The pilot should see the
+ * scored FRAT"), with what the data suggests for it now and where that comes
+ * from, so a score can be checked without changing the FRAT to look.
+ */
+function FactorScores({
+  answers,
+  suggestions,
+}: {
+  answers: Record<string, number>;
+  suggestions: FratFactorSuggestion[];
+}) {
+  const suggested = new Map(suggestions.map((x) => [x.factor, x]));
+  return (
+    <div aria-label="Each factor's score" className="space-y-3">
+      {FACTOR_GROUPS.map((group) => (
+        <div key={group.group}>
+          <h3 className="eyebrow border-b border-border pb-1">{group.group}</h3>
+          <ul className="divide-y divide-border">
+            {group.factors.map((f) => {
+              const score = answers[f.code] ?? 0;
+              const hint = suggested.get(f.code);
+              const note =
+                hint && hint.score != null
+                  ? hint.score === score
+                    ? hint.source
+                    : `The data suggests ${hint.score}: ${hint.source}`
+                  : null;
+              return (
+                <li key={f.code} className="flex items-start justify-between gap-3 py-1.5">
+                  <div className="min-w-0">
+                    <p className="text-foreground">{f.label}</p>
+                    {note ? <p className="text-[0.7rem] text-muted-foreground">{note}</p> : null}
+                  </div>
+                  <span
+                    className={cn(
+                      "shrink-0 font-mono text-sm font-semibold tabular-nums",
+                      score >= OVER_COMPANY_LIMITS ? "text-status-red" : "text-foreground",
+                    )}
+                  >
+                    {score}
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function FratResultPanel({
   flightId,
   assessment,
@@ -939,12 +1051,15 @@ function FratResultPanel({
   mode = "preflight",
   signoffs,
   readOnly = false,
+  suggestions = [],
 }: {
   flightId: string;
   assessment: FratAssessmentResponse;
   onRetake: () => void;
   mode?: "preflight" | "page";
   signoffs?: React.ReactNode;
+  /** What the data suggests for each factor now, beside the score filed. */
+  suggestions?: FratFactorSuggestion[];
   readOnly?: boolean;
 }) {
   const risk = assessment.risk_level;
@@ -976,6 +1091,7 @@ function FratResultPanel({
   const needsApproval =
     (risk === "extreme" || assessment.last_packet_level === "high") && !approved;
   const pilotSigned = (assessment.signoffs ?? []).some((s) => s.role === "pilot");
+  const dispatchSigned = (assessment.signoffs ?? []).some((s) => s.role === "dispatcher");
   const hasRequiredAuth = pilotSigned || assessment.signoffs === undefined;
 
   const [pending, startTransition] = useTransition();
@@ -984,7 +1100,7 @@ function FratResultPanel({
   const handleContinue = () => {
     setError(null);
     startTransition(async () => {
-      const result = await completeStepAction(flightId, 4, {
+      const result = await completeStepAction(flightId, 1, {
         frat_assessment_id: assessment.id,
         total_score: assessment.total_score,
         risk_level: assessment.risk_level,
@@ -996,7 +1112,7 @@ function FratResultPanel({
   return (
     <section className="rounded-lg border border-border bg-card">
       <header className="border-b border-border px-5 py-3">
-        {mode === "preflight" ? <p className="eyebrow">Step 4</p> : null}
+        {mode === "preflight" ? <p className="eyebrow">Step 1</p> : null}
         <h2 className="caption-caps mt-1 text-lg text-foreground">Flight Risk Assessment Tool (FRAT)</h2>
         {assessment.filed_by_name ? (
           <p className="mt-1 text-xs text-muted-foreground">
@@ -1062,6 +1178,7 @@ function FratResultPanel({
           scoreLevel={assessment.score_risk_level}
           packetLevel={assessment.packet_risk_level}
         />
+        <FactorScores answers={assessment.answers} suggestions={suggestions} />
 
         {accepted && overLimits.length > 0 && (
           <div role="note" className="notice notice-green text-xs">
@@ -1207,11 +1324,19 @@ function FratResultPanel({
           onClick={handleContinue}
           className="btn-caps inline-flex w-full items-center justify-center rounded-md bg-primary px-4 py-2.5 text-white transition-opacity hover:bg-brand-dark disabled:opacity-50"
         >
-          {pending ? "Saving…" : hasRequiredAuth ? "Continue to Step 5 →" : "Sign the FRAT to continue"}
+          {pending
+            ? "Saving…"
+            : hasRequiredAuth
+              ? "Continue to Step 2 →"
+              : dispatchSigned
+                ? "Sign the FRAT to continue"
+                : "Waiting for dispatch to sign"}
         </button>
         )}
 
-        {readOnly ? (
+        {/* Released, the FRAT is locked (#155): reopened at step 1 after the
+            release (#175), it offers no change the server would refuse. */}
+        {readOnly || assessment.locked ? (
           assessment.locked ? (
             <p className="text-center text-[0.7rem] text-muted-foreground">
               The flight is released: its FRAT stays as signed. Dispatch pulls the release back to change it.
@@ -1224,8 +1349,8 @@ function FratResultPanel({
             className="w-full text-center text-[0.7rem] font-semibold text-primary hover:underline"
           >
             {(assessment.signoffs ?? []).length > 0
-              ? "↻ Change the FRAT (clears both signatures)"
-              : "↻ Retake questionnaire"}
+              ? "↻ Change the FRAT (clears the signatures: dispatch signs again, then the pilot)"
+              : "↻ Change the FRAT"}
           </button>
         )}
 

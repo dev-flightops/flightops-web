@@ -1,13 +1,19 @@
 import { notFound } from "next/navigation";
 
 import { auth } from "@/auth";
-import { FlightRiskAssessmentStep } from "@/app/(app)/flight-crew/preflight/[flightId]/step-4-frat";
+import { FlightRiskAssessmentStep } from "@/app/(app)/flight-crew/preflight/[flightId]/step-1-frat";
 import { FratOverLimitsPanel } from "@/components/dispatch/packet/frat-over-limits-panel";
 import { PageHeader } from "@/components/ff/page-header";
 import { FratSignoffs } from "@/components/frat/frat-signoffs";
+import { FlightProgress, buildGaps } from "@/components/flights/flight-progress";
 import { getFratThresholds, loadZoneTable } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
-import { getFlight, getFratOverLimits, getLatestFratAssessment } from "@/lib/api/ops";
+import {
+  getFlight,
+  getFlightProgress,
+  getFratOverLimits,
+  getLatestFratAssessment,
+} from "@/lib/api/ops";
 import type { FratAssessmentResponse } from "@/lib/api/types";
 import { companyCrosswindLimitKt, nearLimitEntryKt } from "@/lib/frat/company-limits";
 import { loadFratInputs } from "@/lib/frat/load-inputs";
@@ -24,9 +30,15 @@ import { routeText } from "@/lib/route";
  *      view and edit it from wherever they're working.
  *   3. When it's complete, the pilot and the dispatcher each check a sign-off box.
  *
- * The questionnaire is the pilot's preflight step 4, shared. Anyone on staff
+ * The questionnaire is the pilot's preflight step 1, shared. Anyone on staff
  * reads it; the flight's crew and dispatch file and change it until the
  * flight is released.
+ *
+ * The client, 9 Nov (#175): "the whole flight should be built ... and once
+ * that's complete, the dispatch signs the FRAT. The pilot should see the
+ * scored FRAT ... and they then sign". Dispatch's box waits for the flight
+ * to be built and the pilot's for dispatch's; the page says where the
+ * flight is and whose turn it is.
  */
 export default async function FratPage({ params }: { params: Promise<{ flightId: string }> }) {
   const { flightId } = await params;
@@ -41,7 +53,7 @@ export default async function FratPage({ params }: { params: Promise<{ flightId:
     if (err instanceof ApiError && err.status === 404) notFound();
     throw err;
   }
-  const [frat, approval, config, zones, inputs] = await Promise.all([
+  const [frat, approval, config, zones, inputs, progress] = await Promise.all([
     getLatestFratAssessment(flightId).catch((err): FratAssessmentResponse | null => {
       if (err instanceof ApiError && err.status === 404) return null;
       throw err;
@@ -50,6 +62,7 @@ export default async function FratPage({ params }: { params: Promise<{ flightId:
     getFratThresholds().catch(() => null),
     loadZoneTable(),
     loadFratInputs(flight),
+    getFlightProgress(flightId).catch(() => null),
   ]);
   const zone = zoneFor(zones, flight.origin);
   const dispatch = hasAnyRole(roles, FRAT_DISPATCH_SIGNERS);
@@ -95,6 +108,7 @@ export default async function FratPage({ params }: { params: Promise<{ flightId:
           <span className="text-foreground">The FRAT is signed by both: it doesn't hold the release.</span>
         </p>
       ) : null}
+      {progress ? <FlightProgress progress={progress} timeZone={zone} /> : null}
       {approval ? (
         <FratOverLimitsPanel view={approval} canAccept={hasAnyRole(roles, FRAT_OVER_LIMIT_ACCEPTORS)} />
       ) : null}
@@ -117,6 +131,7 @@ export default async function FratPage({ params }: { params: Promise<{ flightId:
               frat={frat}
               timeZone={zone}
               canSign={{ pilot: pilotOfFrat, dispatcher: dispatch }}
+              buildGaps={buildGaps(progress)}
             />
           ) : null
         }

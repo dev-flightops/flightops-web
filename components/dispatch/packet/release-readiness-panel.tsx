@@ -28,6 +28,7 @@ export function ReleaseReadinessPanel({
   load,
   timeZone,
   canSignForDispatch,
+  buildGaps = [],
 }: {
   flight: FlightDetail;
   frat: FratAssessmentResponse | null;
@@ -36,6 +37,8 @@ export function ReleaseReadinessPanel({
   load: FlightLoad | null;
   timeZone: string;
   canSignForDispatch: boolean;
+  /** What the flight still needs before dispatch signs its FRAT (#175). */
+  buildGaps?: string[];
 }) {
   const release = load?.release ?? null;
   const remaining = release?.remaining_lbs === null || release === null ? null : Number(release.remaining_lbs);
@@ -56,8 +59,9 @@ export function ReleaseReadinessPanel({
             <p className="text-muted-foreground">The FRAT couldn't be read just now. Release still checks it.</p>
           ) : frat === null ? (
             <p className="text-foreground">
-              No FRAT on this flight yet. The pilot files it from their schedule, or dispatch files it for
-              the PIC. The flight can't be released until the pilot and a dispatcher have both signed it.
+              No FRAT on this flight yet. Dispatch scores it for the PIC and signs it once the flight is
+              built; then the pilot signs it at preflight step 1. The flight can't be released until both
+              have.
             </p>
           ) : (
             <>
@@ -86,6 +90,7 @@ export function ReleaseReadinessPanel({
               frat={frat}
               timeZone={timeZone}
               canSign={{ pilot: false, dispatcher: canSignForDispatch }}
+              buildGaps={buildGaps}
             />
           </div>
         ) : null}

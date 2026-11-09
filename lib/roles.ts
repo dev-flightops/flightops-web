@@ -205,6 +205,17 @@ export const FRAT_OVER_LIMIT_ACCEPTORS = roleGate("chief_pilot", "director_of_op
  *  whoever may release the flight. */
 export const FRAT_DISPATCH_SIGNERS = roleGate("dispatcher", "exec_admin");
 
+/** Who has hand-offs to be told of (#175): whoever signs the FRAT for
+ *  dispatch, and whoever may fly as a flight's PIC. Ops works them out for
+ *  the person asking (GET /ops/handoffs); anyone else has none to ask for. */
+export const HANDOFF_VIEWERS = roleGate(
+  ...FRAT_DISPATCH_SIGNERS,
+  "pilot",
+  "chief_pilot",
+  "check_airman",
+  "crew_member",
+);
+
 /** Build a manifest: its passengers, mail, cargo and fuel, its load plan,
  *  and the mail and freight waiting at a station (#62, #75). Ops'
  *  MANIFEST_EDITORS: every role but the accountant's, whose legacy

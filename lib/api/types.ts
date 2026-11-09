@@ -2649,6 +2649,62 @@ export interface FratPrefillRequest {
  *  `score` is null when no suggestion could be made, with
  *  `unavailable_reason` naming the missing input. It is never 0 for a
  *  missing input — 0 is a real answer meaning "no risk". */
+/** Whose turn it is on a flight (#175): dispatch's, the flight's pilot's,
+ *  or the Chief Pilot's or DO's. */
+export type HandoffTurn = "dispatch" | "pilot" | "chief_pilot_or_do";
+
+export type HandoffKind =
+  | "frat_to_sign"
+  | "release_ready"
+  | "release_to_accept"
+  | "release_denied"
+  | "weight_returned";
+
+/** One thing waiting on the person asking (#175), from GET /ops/handoffs. */
+export interface HandoffItem {
+  kind: HandoffKind;
+  turn: HandoffTurn;
+  flight_id: string;
+  flight_number: string;
+  origin: string;
+  destination: string;
+  stops?: string[];
+  scheduled_departure_at: string;
+  /** When it became their turn. */
+  occurred_at: string;
+  /** Who did what made it their turn. */
+  by_name: string | null;
+  /** frat_to_sign for dispatch: the pilot filed it, in place of another. */
+  filed_by_pilot: boolean;
+  refiled: boolean;
+  /** release_denied: the pilot's reason. weight_returned: the pilot's
+   *  figure, in pounds. */
+  note: string | null;
+}
+
+export interface HandoffsResponse {
+  items: HandoffItem[];
+}
+
+/** One of a flight's steps from built to logged (#175). */
+export interface FlightProgressStep {
+  key: string;
+  label: string;
+  state: "done" | "todo" | "skipped";
+  turn: HandoffTurn | null;
+  by_name: string | null;
+  at: string | null;
+  notes: string[];
+}
+
+export interface FlightProgressResponse {
+  flight_id: string;
+  status: string;
+  steps: FlightProgressStep[];
+  /** What the flight waits for now, and on whom. */
+  next: FlightProgressStep | null;
+}
+
 export interface FratFactorSuggestion {
   factor: string;
   score: number | null;

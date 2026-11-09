@@ -32,6 +32,13 @@ export function signErrorMessage(detail: string): string {
     return "You signed the other box: someone else signs this one.";
   }
   if (detail.includes("already_signed")) return "That box is already signed.";
+  // #175: dispatch signs first, and only a flight that is built.
+  if (detail.includes("dispatcher_signs_first")) {
+    return "Dispatch signs the FRAT first. You sign it once they have.";
+  }
+  if (detail.includes("flight_not_built")) {
+    return "The flight isn't built yet: it needs its PIC, an airworthy aircraft and a load within its useful load before dispatch signs.";
+  }
   if (detail.includes("nothing_to_approve")) return "Nothing on this FRAT waits for approval.";
   if (detail.includes("reason_required")) return "Write the reason first.";
   return "Couldn't sign the FRAT. Try again.";

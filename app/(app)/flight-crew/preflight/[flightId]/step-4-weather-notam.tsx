@@ -28,7 +28,7 @@ interface Props {
 }
 
 /**
- * Step 3 — Weather + NOTAM Review (Spec 4 §"The 8 steps / 3").
+ * Step 4 — Weather + NOTAM Review (Spec 4 §"The 8 steps / 3"; step 4 since #175).
  *
  * Spec gate: one acknowledgment per routing airport ("I have reviewed
  * all weather and NOTAMs for [ICAO]"). All required before Continue.
@@ -100,7 +100,7 @@ export function WeatherAndNotamStep({ flightId, flight, weather, villages = [] }
   const handleSubmit = () => {
     setError(null);
     startTransition(async () => {
-      const result = await completeStepAction(flightId, 3, {
+      const result = await completeStepAction(flightId, 4, {
         airport_acks: airports.map((icao) => ({
           icao,
           acknowledged_at: new Date().toISOString(),
@@ -117,7 +117,7 @@ export function WeatherAndNotamStep({ flightId, flight, weather, villages = [] }
   return (
     <section className="rounded-lg border border-border bg-card">
       <header className="border-b border-border px-5 py-3">
-        <p className="eyebrow">Step 3</p>
+        <p className="eyebrow">Step 4</p>
         <h2 className="caption-caps mt-1 text-lg text-foreground">Weather and NOTAM Review</h2>
       </header>
 
@@ -231,7 +231,7 @@ export function WeatherAndNotamStep({ flightId, flight, weather, villages = [] }
           onClick={handleSubmit}
           className="btn-caps inline-flex w-full items-center justify-center rounded-md bg-primary px-4 py-2.5 text-white transition-opacity hover:bg-brand-dark disabled:opacity-50"
         >
-          {pending ? "Saving…" : "Continue to Step 4 →"}
+          {pending ? "Saving…" : "Continue to Step 5 →"}
         </button>
 
         {error && (

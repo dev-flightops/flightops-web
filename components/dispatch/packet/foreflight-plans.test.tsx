@@ -77,7 +77,7 @@ describe("ForeFlightPlans (#55)", () => {
   it("shows the plan, ForeFlight's weight and balance, and fresh document links", () => {
     render(<ForeFlightPlans data={data()} />);
     expect(screen.getByText("ForeFlight plan")).toBeTruthy();
-    expect(screen.getByText("Not checked yet: the PIC confirms it at preflight step 2.")).toBeTruthy();
+    expect(screen.getByText("Not checked yet: the PIC confirms it at preflight step 3.")).toBeTruthy();
     const plan = within(screen.getByRole("article", { name: "ForeFlight plan: Leg 1 · PANC → PABE · N100PA" }));
     expect(plan.getByText("Sent from Peregrine")).toBeTruthy();
     expect(plan.getByText("2026-10-08 14:00Z")).toBeTruthy();
