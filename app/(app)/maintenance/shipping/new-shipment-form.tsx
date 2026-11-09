@@ -37,7 +37,8 @@ export function NewShipmentForm({
         {errors[name]}
       </p>
     ) : null;
-  const choices = kind === "transfer" ? stock.filter((s) => s.base) : stock;
+  // Both kinds need the row's base: where it leaves from, or where it's going.
+  const choices = stock.filter((s) => s.base);
 
   return (
     <form action={action} className="space-y-4 rounded-lg border border-border bg-card p-4" aria-label="New shipment">
@@ -87,8 +88,8 @@ export function NewShipmentForm({
               </option>
             ))}
           </select>
-          {kind === "transfer" && choices.length < stock.length ? (
-            <p className="mt-1 text-xs text-muted-foreground">Stock with no base set in Inventory can&apos;t ship between bases.</p>
+          {choices.length < stock.length ? (
+            <p className="mt-1 text-xs text-muted-foreground">Stock with no base set in Inventory isn&apos;t listed: set its base first.</p>
           ) : null}
           {error("part_id")}
         </div>

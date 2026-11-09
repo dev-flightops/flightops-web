@@ -48,6 +48,7 @@ export function SignOffForm({
 
   return (
     <form
+      method="post"
       aria-label="Sign off"
       className="rounded-lg border border-border border-l-[3px] border-l-status-green bg-card p-4"
       onSubmit={(e) => {

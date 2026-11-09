@@ -180,6 +180,7 @@ function ItemRow({
           <td />
           <td colSpan={3}>
             <form
+              method="post"
               className="space-y-2 pb-2"
               onSubmit={(e) => {
                 e.preventDefault();
@@ -238,6 +239,7 @@ function AddItem({ inspectionId }: { inspectionId: string }) {
 
   return (
     <form
+      method="post"
       aria-label="Add a checklist item"
       className="rounded-lg border border-border bg-card p-4"
       onSubmit={(e) => {

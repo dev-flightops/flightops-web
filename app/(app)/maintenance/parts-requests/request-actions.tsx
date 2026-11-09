@@ -59,6 +59,7 @@ export function RequestActions({ request }: { request: PartRequest }) {
         </div>
       ) : mode === "deny" ? (
         <form
+          method="post"
           className="flex w-full max-w-xs flex-col gap-1.5"
           onSubmit={(e) => {
             e.preventDefault();
@@ -73,13 +74,14 @@ export function RequestActions({ request }: { request: PartRequest }) {
             <button type="button" onClick={() => setMode(null)} className={buttonOutline}>
               Back
             </button>
-            <button type="submit" disabled={pending} className={`${buttonSolid} bg-status-red`}>
-              Deny
+            <button type="submit" disabled={pending} className={`${buttonOutline} text-status-red`}>
+              Deny Request
             </button>
           </span>
         </form>
       ) : (
         <form
+          method="post"
           className="flex w-full max-w-xs flex-col gap-1.5"
           onSubmit={(e) => {
             e.preventDefault();
