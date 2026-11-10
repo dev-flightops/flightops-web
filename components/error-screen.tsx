@@ -62,8 +62,28 @@ function isRedactedByNext(message: string): boolean {
 }
 
 /**
+ * A page opened before a deploy can't save after it (#179). Next works out
+ * each server action's ID again on every build, so the old page's save names
+ * an action the new deployment doesn't have: Next throws this error instead of
+ * running it, and nothing reaches the API. Try Again re-renders the same old
+ * page, which fails the same way; only a reload loads the new build. The
+ * client hit it on 9 Nov, unticking Flown IFR on a packet left open overnight
+ * across two deploys.
+ *
+ * Matched on the name Next gives the error, as session expiry is, with its
+ * message as a backstop should the name be lost.
+ */
+function isOutOfDate(error: Error): boolean {
+  return (
+    error.name === "UnrecognizedActionError" ||
+    ((error.message ?? "").includes("Server Action") && (error.message ?? "").includes("was not found on the server"))
+  );
+}
+
+/**
  * Shared error UI for Next.js error boundaries. Distinguishes session
- * expiry (offers re-login) from generic errors (offers retry).
+ * expiry (offers re-login) and a page older than the deployment (offers a
+ * reload) from generic errors (offers retry).
  */
 export function ErrorScreen({
   error,
@@ -76,6 +96,7 @@ export function ErrorScreen({
   // Class identity is lost across the server→client boundary, but the
   // `name` property survives. apiFetch sets it to "SessionExpiredError".
   const isSessionExpired = error.name === "SessionExpiredError";
+  const outOfDate = !isSessionExpired && isOutOfDate(error);
   const GENERIC =
     "An unexpected error occurred while loading this page. Retrying often clears it; quote the Error ID below if it does not.";
   // Empty, whitespace-only and redacted messages all fall back.
@@ -121,12 +142,14 @@ export function ErrorScreen({
     <main className="container flex min-h-[60vh] flex-col items-center justify-center gap-4 py-12 text-center">
       <AlertGlyph className="h-10 w-10 text-destructive" />
       <h1 className="page-title text-balance">
-        {isSessionExpired ? "Session expired" : "Something went wrong"}
+        {isSessionExpired ? "Session expired" : outOfDate ? "This page is out of date" : "Something went wrong"}
       </h1>
       <p className="max-w-md text-sm text-muted-foreground">
         {isSessionExpired
           ? "Your sign-in has expired. Sign in again to continue."
-          : detail}
+          : outOfDate
+            ? "FlightOps was updated while this page was open, so what you just did wasn't saved. Reload the page, then do it again."
+            : detail}
       </p>
 
       <div className="mt-2 flex gap-2">
@@ -134,6 +157,11 @@ export function ErrorScreen({
           <Button onClick={handleReLogin} disabled={isPending}>
             <SignInGlyph className="h-4 w-4" />
             {isPending ? "Signing in…" : "Sign in again"}
+          </Button>
+        ) : outOfDate ? (
+          <Button onClick={() => window.location.reload()}>
+            <RefreshGlyph className="h-4 w-4" />
+            Reload page
           </Button>
         ) : (
           <Button onClick={handleRetry} disabled={isPending}>

@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { expectNoA11yViolations } from "@/tests/a11y";
 
@@ -197,6 +197,50 @@ describe("ErrorScreen", () => {
 
     await waitFor(() => expect(signOut).toHaveBeenCalledOnce());
     expect(push).toHaveBeenCalledWith("/login");
+  });
+
+  describe("a page older than the deployment (#179)", () => {
+    // What Next throws when an old page's save names an action the new
+    // deployment doesn't have. Nothing reached the API, and Try Again
+    // re-renders the same old page, so the screen offers a reload.
+    const ACTION_NOT_FOUND =
+      'Server Action "606047dcfe410b05c7505bf36a66dd18aa7a5d5830" was not found on the server. \n' +
+      "Read more: https://nextjs.org/docs/messages/failed-to-find-server-action";
+    const realLocation = window.location;
+    const reload = vi.fn();
+
+    beforeEach(() => {
+      reload.mockReset();
+      Object.defineProperty(window, "location", { configurable: true, value: { ...realLocation, reload } });
+    });
+    afterEach(() => {
+      Object.defineProperty(window, "location", { configurable: true, value: realLocation });
+    });
+
+    it("says the page is out of date and reloads it", async () => {
+      const retry = vi.fn();
+      render(<ErrorScreen error={err(ACTION_NOT_FOUND, "UnrecognizedActionError")} reset={vi.fn()} unstable_retry={retry} />);
+
+      expect(screen.getByRole("heading", { name: "This page is out of date" })).toBeInTheDocument();
+      expect(screen.getByText(/FlightOps was updated while this page was open, so what you just did wasn't saved/)).toBeInTheDocument();
+      expect(screen.queryByText(/was not found on the server/)).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: /try again/i })).not.toBeInTheDocument();
+
+      await userEvent.click(screen.getByRole("button", { name: /reload page/i }));
+      expect(reload).toHaveBeenCalledOnce();
+      expect(retry).not.toHaveBeenCalled();
+    });
+
+    it("knows it by its message when the name is lost", () => {
+      render(<ErrorScreen error={err(ACTION_NOT_FOUND)} reset={vi.fn()} />);
+      expect(screen.getByRole("heading", { name: "This page is out of date" })).toBeInTheDocument();
+    });
+
+    it("leaves other errors to Try again", () => {
+      render(<ErrorScreen error={err("Server Action failed: upstream timed out")} reset={vi.fn()} />);
+      expect(screen.getByText("Something went wrong")).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /try again/i })).toBeInTheDocument();
+    });
   });
 
   it("has no accessibility violations", async () => {
