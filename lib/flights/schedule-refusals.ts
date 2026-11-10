@@ -32,7 +32,7 @@ export function scheduleRefusal(message: string): string | null {
   return null;
 }
 
-/** What the release's new refusals mean (#155), else null. */
+/** What the release's new refusals mean (#155, #181), else null. */
 export function releaseRefusal(message: string): string | null {
   const d = detail(message);
   if (!d) return null;
@@ -53,6 +53,12 @@ export function releaseRefusal(message: string): string | null {
   }
   if (d.error === "mel_ack_required") {
     return "Release blocked — acknowledge each open MEL on the aircraft first.";
+  }
+  if (d.error === "weight_balance_out_of_limits") {
+    // #181 — the pilot's ForeFlight plan: FlightOps calculates no CG itself.
+    const plans = Array.isArray(d.plans) ? (d.plans as { issues?: string[] }[]) : [];
+    const issues = plans.flatMap((p) => p.issues ?? []);
+    return `Release blocked — ForeFlight's weight and balance is outside limits: ${issues.join("; ") || "see the plan"}. Fix the load or the plan in ForeFlight, then bring the plan back.`;
   }
   return null;
 }

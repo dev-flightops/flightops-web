@@ -56,4 +56,17 @@ describe("releaseRefusal (#155)", () => {
       /acknowledge each open MEL/,
     );
   });
+
+  it("says what's outside ForeFlight's weight and balance (#181)", () => {
+    expect(
+      releaseRefusal(
+        body({
+          error: "weight_balance_out_of_limits",
+          plans: [{ leg_sequence: 1, departure: "PABE", destination: "PAKN", issues: ["Takeoff CG 48.2 in is aft of the limit 47.9"] }],
+        }),
+      ),
+    ).toBe(
+      "Release blocked — ForeFlight's weight and balance is outside limits: Takeoff CG 48.2 in is aft of the limit 47.9. Fix the load or the plan in ForeFlight, then bring the plan back.",
+    );
+  });
 });

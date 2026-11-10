@@ -7,7 +7,9 @@ import type {
   RouteFreshness,
 } from "@/lib/api/types";
 
-import { computeHardBlockReason, computeReleaseBlockers, overridesOnRecord } from "./release-gate";
+import type { ExternalPlan } from "@/lib/api/integrations";
+
+import { computeHardBlockReason, computeReleaseBlockers, overridesOnRecord, plansOutOfLimits } from "./release-gate";
 
 function finding(code: string): ComplianceFinding {
   return {
@@ -534,3 +536,57 @@ describe("computeReleaseBlockers — every blocker at once (#134)", () => {
     );
   });
 });
+
+describe("ForeFlight's weight and balance (#181)", () => {
+  // TST901 went out with "no weight and balance". FlightOps calculates no
+  // CG; the pilot's ForeFlight plan does, and outside its limits it holds
+  // the release (Greg, 10 Nov).
+  const plan = (leg: number | null, within: boolean | null, issues: string[] = [], id = `p-${leg}`): ExternalPlan =>
+    ({
+      id,
+      provider: "foreflight",
+      leg_sequence: leg,
+      match: "linked",
+      fetched_at: "2026-11-10T18:00:00Z",
+      plan: { within_limits: within, limit_issues: issues },
+    }) as unknown as ExternalPlan;
+
+  it("blocks a plan outside its limits, saying what's outside", () => {
+    expect(
+      computeHardBlockReason({
+        ...CLEAR,
+        planBalance: [{ leg_sequence: 1, issues: ["Takeoff CG 48.2 in is aft of the limit 47.9"] }],
+      }),
+    ).toBe("ForeFlight's weight and balance is outside limits: Takeoff CG 48.2 in is aft of the limit 47.9.");
+    expect(computeHardBlockReason({ ...CLEAR, planBalance: [] })).toBeNull();
+    // Couldn't be read: release still checks it.
+    expect(computeHardBlockReason({ ...CLEAR, planBalance: null })).toBeNull();
+  });
+
+  it("names the leg when there's more than one out", () => {
+    const blockers = computeReleaseBlockers({
+      ...CLEAR,
+      planBalance: [
+        { leg_sequence: 1, issues: ["Ramp weight 3,900 lb is over the maximum 3,812"] },
+        { leg_sequence: 2, issues: [] },
+      ],
+    });
+    expect(blockers).toEqual([
+      "ForeFlight's weight and balance is outside limits (leg 1): Ramp weight 3,900 lb is over the maximum 3,812.",
+      "ForeFlight's weight and balance is outside limits (leg 2): see the plan.",
+    ]);
+  });
+
+  it("reads each leg's newest plan, as the release does", () => {
+    // The plans come newest first for each leg.
+    expect(
+      plansOutOfLimits([
+        plan(1, true, [], "newest"),
+        plan(1, false, ["an older plan's CG"], "older"),
+        plan(2, false, ["Landing CG 39.1 in is forward of the limit 39.5"]),
+        plan(3, null),
+      ]),
+    ).toEqual([{ leg_sequence: 2, issues: ["Landing CG 39.1 in is forward of the limit 39.5"] }]);
+  });
+});
+

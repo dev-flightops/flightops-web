@@ -4,6 +4,7 @@ import type {
   RouteFreshness,
   WeatherMinimumsView,
 } from "@/lib/api/types";
+import type { ExternalPlan } from "@/lib/api/integrations";
 import type { ReleaseLoad } from "@/lib/api/manifest";
 import { minimumsBlockReason } from "@/lib/frat/weather-minimums";
 
@@ -91,6 +92,26 @@ export interface ReleaseGateInput {
   fratBlockers?: ReleaseBlocker[] | null;
   /** #155 — the load the release is judged on. Null when unknown. */
   releaseLoad?: ReleaseLoad | null;
+  /** #181 — each leg's ForeFlight plan outside its weight and balance
+   *  limits (`plansOutOfLimits`). Null when the plans couldn't be read:
+   *  release still refuses server-side. */
+  planBalance?: PlanBalanceIssue[] | null;
+}
+
+export interface PlanBalanceIssue {
+  leg_sequence: number | null;
+  issues: string[];
+}
+
+/** #181 — each leg's newest plan outside its limits: a weight over its
+ *  maximum or the CG outside its limits, as ForeFlight gave them. The
+ *  plans come newest first for each leg, as the release reads them. */
+export function plansOutOfLimits(plans: ExternalPlan[]): PlanBalanceIssue[] {
+  const newest = new Map<number | null, ExternalPlan>();
+  for (const p of plans) if (!newest.has(p.leg_sequence)) newest.set(p.leg_sequence, p);
+  return [...newest.values()]
+    .filter((p) => p.plan.within_limits === false)
+    .map((p) => ({ leg_sequence: p.leg_sequence, issues: p.plan.limit_issues }));
 }
 
 export function computeReleaseBlockers(input: ReleaseGateInput): string[] {
@@ -110,6 +131,7 @@ export function computeReleaseBlockers(input: ReleaseGateInput): string[] {
     ackedMelIds = [],
     fratBlockers = null,
     releaseLoad = null,
+    planBalance = null,
   } = input;
 
   const blockers: string[] = [];
@@ -190,6 +212,16 @@ export function computeReleaseBlockers(input: ReleaseGateInput): string[] {
     } else if (remaining !== null && remaining < 0) {
       const from = releaseLoad.basis === "manifest" ? "the manifest" : "the passengers and cargo typed on the flight";
       blockers.push(`Over the aircraft's useful load by ${Math.round(-remaining).toLocaleString("en-US")} lb, by ${from}.`);
+    }
+  }
+  // #181 — balance, from the pilot's ForeFlight plan: FlightOps calculates
+  // no CG of its own. The server holds it after the load.
+  if (hasSelectedFlight && planBalance) {
+    for (const p of planBalance) {
+      const leg = planBalance.length > 1 && p.leg_sequence !== null ? ` (leg ${p.leg_sequence})` : "";
+      blockers.push(
+        `ForeFlight's weight and balance is outside limits${leg}: ${p.issues.join("; ") || "see the plan"}.`,
+      );
     }
   }
 

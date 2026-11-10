@@ -32,7 +32,7 @@ import { RightColumn } from "@/components/dispatch/packet/right-column";
 import { SelectedFlightSummary } from "@/components/dispatch/packet/selected-flight-summary";
 import { ApiError } from "@/lib/api/client";
 import { listMyTenants, listStaff, loadZoneTable } from "@/lib/api/auth";
-import { getPlansWaiting } from "@/lib/api/integrations";
+import { getFlightPlans, getPlansWaiting } from "@/lib/api/integrations";
 import { listFlightCrew } from "@/lib/api/crew-assignments";
 import {
   type CrewSeat,
@@ -77,6 +77,7 @@ import {
   computeHardBlockReason,
   computeReleaseBlockers,
   overridesOnRecord,
+  plansOutOfLimits,
   type ReleaseGateInput,
 } from "@/components/dispatch/packet/release-gate";
 import { flightStops, paramToRoute } from "@/lib/route";
@@ -383,6 +384,10 @@ export default async function DispatchPage({
   }
   const canEditRisk = hasAnyRole(viewerRoles, DISPATCH_WRITERS);
 
+  // #181 — the pilot's ForeFlight plan's weight and balance, as release
+  // holds it. Soft-fails to null: release refuses server-side regardless.
+  const flightPlans = selectedFlight ? await getFlightPlans(selectedFlight.id).catch(() => null) : null;
+
   // The Generate-PDF release gate (PIC currency, NOTAM acks, stale
   // weather) lives in one pure, unit-tested function so the precedence
   // rules can't drift.
@@ -412,6 +417,7 @@ export default async function DispatchPage({
             ]
           : frat.release_blockers ?? null,
     releaseLoad: releaseLoad?.release ?? null,
+    planBalance: flightPlans ? plansOutOfLimits(flightPlans.plans) : null,
   };
   const releaseBlockers = computeReleaseBlockers(releaseGate);
   const hardBlockReason = computeHardBlockReason(releaseGate);
