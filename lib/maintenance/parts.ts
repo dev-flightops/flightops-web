@@ -23,6 +23,7 @@ export const TXN_LABEL: Record<PartTransactionType, string> = {
   issued: "Issued",
   returned: "Returned",
   adjustment: "Adjustment",
+  shipped: "Shipped",
 };
 
 export const CERT_LABEL: Record<CertType, string> = {

@@ -6,7 +6,7 @@ import { EmptyState } from "@/components/ff/empty-state";
 import { Notice } from "@/components/ff/notice";
 import { PageHeader } from "@/components/ff/page-header";
 import { ApiError } from "@/lib/api/client";
-import { listPartCategories, listParts, type PartList } from "@/lib/api/maintenance";
+import { listPartBases, listPartCategories, listParts, type CompanyBaseOption, type PartList } from "@/lib/api/maintenance";
 import { formatCost, formatQty } from "@/lib/maintenance/parts";
 import { MX_SHOP_STAFF, hasAnyRole } from "@/lib/roles";
 import { cn } from "@/lib/utils";
@@ -16,10 +16,10 @@ import { BarcodeScan } from "./barcode-scan";
 /**
  * /maintenance/inventory (#172), legacy's templates/maintenance/inventory.html.
  *
- * Search, category and low stock, then the parts. A part's quantity reads red
- * at or below its minimum. Legacy's Shipping and Requests buttons aren't here:
- * those pages aren't built, and a low-stock figure doesn't count stock in
- * transit until they are.
+ * Search, base, category and low stock, then the parts. A row is stock at one
+ * base (#178), and its quantity reads red at or below its minimum, counting
+ * what's on its way to it, as legacy counted stock in transit. Shipping and
+ * Requests are legacy's two buttons.
  */
 
 export const dynamic = "force-dynamic";
@@ -36,16 +36,19 @@ export default async function InventoryPage({
   const params = await searchParams;
   const q = one(params.q);
   const category = one(params.category);
+  const base = one(params.base).toUpperCase();
   const lowStock = one(params.low_stock) === "1";
   const canEdit = hasAnyRole((await auth())?.roles ?? [], MX_SHOP_STAFF);
 
   let list: PartList | null = null;
   let categories: { value: string; label: string }[] = [];
+  let bases: CompanyBaseOption[] = [];
   let loadError: string | null = null;
   try {
-    [list, categories] = await Promise.all([
-      listParts({ q, category, lowStock }),
+    [list, categories, bases] = await Promise.all([
+      listParts({ q, category, lowStock, base }),
       listPartCategories(),
+      listPartBases().catch(() => []),
     ]);
   } catch (err) {
     const status = err instanceof ApiError ? err.status : 0;
@@ -55,7 +58,7 @@ export default async function InventoryPage({
         : "The inventory is unavailable. Try refreshing in a moment.";
   }
   const label = (value: string) => categories.find((c) => c.value === value)?.label ?? value;
-  const filtered = Boolean(q || category || lowStock);
+  const filtered = Boolean(q || category || lowStock || base);
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
@@ -74,6 +77,12 @@ export default async function InventoryPage({
         }
         actions={
           <>
+            <Link href="/maintenance/shipping" className={buttonOutline}>
+              Shipping
+            </Link>
+            <Link href="/maintenance/parts-requests" className={buttonOutline}>
+              Requests
+            </Link>
             <Link href="/maintenance/expiration" className={buttonOutline}>
               Expiration
             </Link>
@@ -104,6 +113,21 @@ export default async function InventoryPage({
             className="ff-input px-3 py-2 text-sm"
           />
         </div>
+        {bases.length > 0 ? (
+          <div className="min-w-[120px]">
+            <label htmlFor="parts-base" className="field-label">
+              Base
+            </label>
+            <select id="parts-base" name="base" defaultValue={base} className="ff-input px-3 py-2 text-sm">
+              <option value="">All</option>
+              {bases.map((b) => (
+                <option key={b.code} value={b.code}>
+                  {b.code}
+                </option>
+              ))}
+            </select>
+          </div>
+        ) : null}
         <div className="min-w-[140px]">
           <label htmlFor="parts-category" className="field-label">
             Category
@@ -140,6 +164,7 @@ export default async function InventoryPage({
                 <th>Category</th>
                 <th className="text-right">Qty</th>
                 <th className="text-right">Min</th>
+                <th>Base</th>
                 <th>Location</th>
                 <th className="text-right">Unit Cost</th>
                 <th>
@@ -158,8 +183,14 @@ export default async function InventoryPage({
                   <td className="text-xs text-muted-foreground">{label(part.category)}</td>
                   <td className={cn("text-right font-mono", part.low_stock && "font-bold text-status-red")}>
                     {formatQty(part.qty_on_hand)} <span className="text-xs font-normal text-muted-foreground">{part.unit}</span>
+                    {part.incoming > 0 ? (
+                      <span className="block text-[0.7rem] font-normal text-muted-foreground">
+                        +{formatQty(part.incoming)} on the way
+                      </span>
+                    ) : null}
                   </td>
                   <td className="text-right font-mono text-xs text-muted-foreground">{formatQty(part.qty_minimum)}</td>
+                  <td className="font-mono text-xs">{part.base ?? "—"}</td>
                   <td className="text-xs text-muted-foreground">{part.location ?? "—"}</td>
                   <td className="text-right font-mono text-xs">{formatCost(part.unit_cost)}</td>
                   <td className="text-right">

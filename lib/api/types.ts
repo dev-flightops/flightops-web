@@ -750,6 +750,9 @@ export interface SquawkResponse {
   rii_inspector_name?: string | null;
   rii_inspector_cert_number?: string | null;
   rii_inspected_at?: string | null;
+  /** The inspection a failed checklist item opened it from (#178). */
+  inspection_id?: string | null;
+  inspection_title?: string | null;
 }
 
 export interface SquawkCreateRequest {

@@ -18,15 +18,12 @@ describe("MaintenanceHeader", () => {
   it("shows only the actions that are built (#156)", () => {
     // The client, 10/29: "Six maintenance tabs look clickable, do
     // nothing: Due List, Inventory, RTS Queue, Inspections, Vendors,
-    // Roster." The due list is built now; Greg (30 Oct): the rest hidden
-    // until they are.
+    // Roster." Greg (30 Oct): hidden until they are built. The last
+    // three were built in #178, so every one shows now.
     render(<MaintenanceHeader />);
 
-    for (const label of ["Squawks", "MEL", "Due List", "Work Orders", "+ Aircraft"]) {
+    for (const label of ["Squawks", "MEL", "Due List", "Work Orders", "Inspections", "Vendors", "Roster", "+ Aircraft"]) {
       expect(screen.getByText(label)).toBeInTheDocument();
-    }
-    for (const label of ["Inspections", "Vendors", "Roster"]) {
-      expect(screen.queryByText(label)).toBeNull();
     }
   });
 
@@ -45,8 +42,12 @@ describe("MaintenanceHeader", () => {
       // the Maintenance Clock: the due list itself (#156).
       "Due List": "/maintenance/due-list",
       "Work Orders": "/maintenance/work-orders",
+      Inspections: "/maintenance/inspections",
       Inventory: "/maintenance/inventory",
+      Vendors: "/maintenance/vendors",
       "RTS Queue": "/maintenance/rts",
+      // Legacy's Mechanic Roster, /maintenance/calendar there (#178).
+      Roster: "/maintenance/roster",
       // Adding a tail ships under Settings, not /maintenance — which is
       // exactly why it was missed: it sat dimmed as "an add form we never
       // built" while /settings/fleet had it.

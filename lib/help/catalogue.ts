@@ -821,9 +821,9 @@ export const HELP_ENTRIES: HelpEntry[] = [
     title: "Parts inventory",
     whoCanUse: ["maintenance", "director_of_maintenance", "exec_admin"],
     whatItDoes:
-      "What parts are held, where, and how many, with each batch or lot as its own line. A quantity reads red at or below its minimum. Every movement is recorded, so the history adds up to what's on the shelf.",
+      "What parts are held, at which base, and how many, with each batch or lot at each base as its own line. A quantity reads red at or below its minimum, counting what's on its way to it. Every movement is recorded, so the history adds up to what's on the shelf.",
     howToUse: [
-      "Search, or filter by category or low stock. Open a part to see its history.",
+      "Search, or filter by base, category or low stock. Open a part to see its history and its shipments.",
       "Move stock on the part's page: Receive when it arrives, Issue when it's used, Return when it comes back. Name the aircraft or work order an issue goes to, because Batch Trace reads that.",
       "Barcode Scan finds a part by its code and checks one in or out. It lists each batch of a part number, soonest to expire first.",
       "Edit a part to correct it. A changed quantity goes in the history as a stock count.",
@@ -831,9 +831,97 @@ export const HELP_ENTRIES: HelpEntry[] = [
     connectsTo:
       "An expired part can't be issued, and an issue can't take more than is on hand. Expiry dates feed the expiration report, and issues feed Batch Trace.",
     worthKnowing: [
-      "Shipping between bases and parts requests aren't built, so stock in transit isn't counted toward low stock.",
+      "A line is stock at one base. Shipping moves stock between bases line to line, and what's on its way counts toward the receiving line's low stock, so a base with a shipment coming isn't told to reorder.",
     ],
-    related: ["/maintenance/expiration", "/maintenance/batch-trace", "/maintenance/work-orders"],
+    related: ["/maintenance/shipping", "/maintenance/parts-requests", "/maintenance/expiration", "/maintenance/batch-trace"],
+  },
+  {
+    route: "/maintenance/shipping",
+    title: "Parts shipping",
+    whoCanUse: ["maintenance", "director_of_maintenance", "exec_admin"],
+    whatItDoes:
+      "Parts on their way to a base, from another base or from a vendor, with the airway bill, carrier and expected arrival. Stock moves line to line: a shipment between bases leaves the sending base's stock when it's entered and joins the receiving base's when it arrives.",
+    howToUse: [
+      "Between bases: pick the stock it's leaving, the base it's going to and the quantity, then Ship It. The quantity comes off the sending base now.",
+      "From a vendor: pick the stock it's for and the vendor, as ordered or shipped. Nothing moves until it arrives.",
+      "Mark a shipment in transit when it's handed over, and Arrived with the day it came in: its stock is received at the destination then, on a new line if that base held none.",
+      "Cancel a shipment entered by mistake: stock between bases goes back to the sender.",
+    ],
+    connectsTo:
+      "The parts' own lines in Inventory, which show their shipments, and Parts Requests, whose shipments are entered here and fulfil the request when they arrive.",
+    worthKnowing: [
+      "Installing a part is an issue to the aircraft in Inventory, not a shipment status: the issue records which aircraft it went on, which Batch Trace reads.",
+      "Expired stock, or more than is on hand, can't be shipped.",
+    ],
+    example:
+      "PABE sends 4 oil filters to PADQ by Everts with AWB 1234. Bethel's count drops to 6 at once; Kodiak's line shows 2 on hand and 4 on the way, so it isn't flagged low. When they land, Mark Arrived puts them on Kodiak's shelf.",
+    related: ["/maintenance/parts-requests", "/maintenance/inventory", "/maintenance/vendors"],
+  },
+  {
+    route: "/maintenance/parts-requests",
+    title: "Parts requests",
+    whoCanUse: ["maintenance", "director_of_maintenance", "exec_admin"],
+    whatItDoes:
+      "One base asking another for a part. The request names the stock wanted, so the base holding it decides: approve, deny with a reason, then ship it. Open requests list AOG first, then urgent.",
+    howToUse: [
+      "Pick the stock (the list shows each base's count), the quantity, the base asking and the priority, then Send Request.",
+      "The sending base approves it, or denies it and says why.",
+      "Ship It on an approved request enters the shipment: the stock leaves the sending base, and the request is fulfilled when the shipment arrives.",
+    ],
+    connectsTo: "Shipping, where its shipment appears, and Inventory, whose counts it moves.",
+    worthKnowing: ["A request can be withdrawn until it ships. A cancelled shipment puts its request back to approved, ready to ship again."],
+    related: ["/maintenance/shipping", "/maintenance/inventory"],
+  },
+  {
+    route: "/maintenance/inspections",
+    title: "Inspections",
+    whoCanUse: ["maintenance", "director_of_maintenance", "exec_admin"],
+    whatItDoes:
+      "An inspection of one aircraft (annual, 100-hour, progressive and the rest) and its checklist by section, with live progress. A failed item opens a squawk on the aircraft, and the inspection is finished by a sign-off with the signer's certificate.",
+    howToUse: [
+      "New Inspection: pick the aircraft, type and title. Its total time is taken when it starts.",
+      "Add the checklist items by section, then mark each Pass or Fail. Failing says what was found: it becomes a squawk on the aircraft, fixed and returned to service the usual way.",
+      "When every item has passed or its squawk is resolved, the inspection is ready to sign off: the signer, certificate and total time, and the due-list item it satisfies.",
+    ],
+    connectsTo:
+      "Squawks, which a failed item opens and which show the inspection they came from, and the due list, where a sign-off records the item done and moves its next due.",
+    worthKnowing: [
+      "An item reads corrected once its squawk is resolved; there's no separate corrected button.",
+      "An annual is signed by an IA. The form says so if another certificate is picked.",
+      "An unchecked item can be removed and an inspection cancelled; a checked item stays on the record.",
+    ],
+    example:
+      "N207GE's annual has 40 items. The left main tyre fails worn to the cords, which opens a grounding squawk. Once the tyre is changed and the squawk resolved, the item reads corrected, the IA signs the annual off at 4,210.4 hours, and the due list moves the next annual a year on.",
+    related: ["/maintenance/due-list", "/maintenance/squawks", "/maintenance/rts"],
+  },
+  {
+    route: "/maintenance/vendors",
+    title: "Vendors",
+    whoCanUse: ["maintenance", "director_of_maintenance", "exec_admin"],
+    whatItDoes:
+      "The shops and suppliers maintenance works with: MROs, parts suppliers, avionics, engine, prop, paint and interior shops, with a contact, phone, email and FAA certificate for each.",
+    howToUse: [
+      "Add Vendor, then fill in what you have. Only the name is needed.",
+      "Edit a vendor to update it, or remove it from the list. Records that name it keep the name.",
+    ],
+    connectsTo: "Inspections done by a vendor name it, and a shipment from a vendor names who sent it.",
+    related: ["/maintenance/inspections", "/maintenance/shipping"],
+  },
+  {
+    route: "/maintenance/roster",
+    title: "Mechanic roster",
+    whoCanUse: ["maintenance", "director_of_maintenance", "exec_admin"],
+    whatItDoes:
+      "Who in maintenance works which days: a month per mechanic, by base, with one day tag a day such as ON, OFF or TRN. The same day tags as the crew calendar, with a palette of their own.",
+    howToUse: [
+      "Pick a tag from the palette, then press and drag across a mechanic's days to paint them. Enter or Space paints the focused day.",
+      "Pick the eraser, or right-click a day, to clear it.",
+      "Add a tag with + Tag; rename, recolour or archive tags under Manage. Archiving keeps the days already painted.",
+    ],
+    worthKnowing: [
+      "Mechanics are staff with the Maintenance or Director of Maintenance role, or in the maintenance department, by their home base.",
+    ],
+    related: ["/maintenance/mx-clock", "/crew"],
   },
   {
     route: "/maintenance/expiration",

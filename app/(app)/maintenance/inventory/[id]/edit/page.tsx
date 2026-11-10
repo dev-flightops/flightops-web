@@ -3,7 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { PageHeader } from "@/components/ff/page-header";
 import { ApiError } from "@/lib/api/client";
-import { getPart, listPartCategories, type PartDetail } from "@/lib/api/maintenance";
+import { getPart, listPartBases, listPartCategories, type PartDetail } from "@/lib/api/maintenance";
 import { MX_SHOP_STAFF, hasAnyRole } from "@/lib/roles";
 
 import { PartForm } from "../../part-form";
@@ -19,7 +19,7 @@ export default async function EditPartPage({ params }: { params: Promise<{ id: s
     if (err instanceof ApiError && (err.status === 404 || err.status === 422)) notFound();
     throw err;
   }
-  const categories = await listPartCategories();
+  const [categories, bases] = await Promise.all([listPartCategories(), listPartBases().catch(() => [])]);
   return (
     <div className="mx-auto max-w-2xl px-4 py-8 sm:px-6">
       <PageHeader
@@ -28,7 +28,7 @@ export default async function EditPartPage({ params }: { params: Promise<{ id: s
         back={{ href: `/maintenance/inventory/${id}`, label: part.part_number }}
       />
       <div className="rounded-lg border border-border bg-card p-4">
-        <PartForm part={part} categories={categories} />
+        <PartForm part={part} categories={categories} bases={bases} />
       </div>
     </div>
   );

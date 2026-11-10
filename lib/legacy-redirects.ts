@@ -156,21 +156,19 @@ export const LEGACY_REDIRECTS: readonly (readonly [from: string, to: string])[] 
   ["/maintenance/aircraft/:id/edit", "/settings/fleet"],
   ["/maintenance/aircraft/:id/mel", "/maintenance/mel"],
   ["/maintenance/availability-report", "/maintenance/availability"],
-  ["/maintenance/calendar", "/maintenance"],
-  ["/maintenance/inspections", "/maintenance"],
-  ["/maintenance/inspections/new", "/maintenance"],
-  ["/maintenance/inspections/:id", "/maintenance"],
+  // Legacy's Mechanic Roster (#178).
+  ["/maintenance/calendar", "/maintenance/roster"],
+  // /maintenance/inspections and /new are pages now (#178).
+  ["/maintenance/inspections/:id", "/maintenance/inspections"],
   ["/maintenance/inventory/:id/edit", "/maintenance/inventory"],
   ["/maintenance/inventory/:id/history", "/maintenance/inventory"],
   ["/maintenance/inventory/batch-trace", "/maintenance/batch-trace"],
   ["/maintenance/inventory/expiration-report", "/maintenance/expiration"],
-  ["/maintenance/parts-requests", "/maintenance/inventory"],
-  ["/maintenance/shipping", "/maintenance/inventory"],
   ["/maintenance/mel/catalog", "/maintenance/mel"],
   ["/maintenance/rts-queue", "/maintenance/rts"],
-  ["/maintenance/vendors", "/maintenance"],
-  ["/maintenance/vendors/new", "/maintenance"],
-  ["/maintenance/vendors/:id/edit", "/maintenance"],
+  // /maintenance/vendors, /new, /shipping and /parts-requests are pages
+  // now (#178).
+  ["/maintenance/vendors/:id/edit", "/maintenance/vendors"],
   // /maintenance/work-orders/new is a page now (#134); :id is a legacy
   // integer, never a work order's UUID.
   ["/maintenance/work-orders/:id", "/maintenance/work-orders"],

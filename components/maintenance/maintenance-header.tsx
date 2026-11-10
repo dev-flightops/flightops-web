@@ -11,13 +11,9 @@ import { cn } from "@/lib/utils";
  *   Fleet Management                         [Due List] [Work Orders] …
  *   Aircraft, maintenance, work orders, and vendors                  [+ Aircraft]
  *
- * 7 of the 8 action buttons point at sub-modules that aren't built
- * yet (M3). They render as visually-styled disabled spans with a
- * "Coming in M3" tooltip — same pattern the DepartmentNav uses —
- * so the layout matches legacy without any of the buttons leading
- * to a 404. `+ Aircraft` is the only enabled-looking entry; the
- * route also lands in M3, so it stays disabled too until the
- * aircraft-create form ships.
+ * Every button is a built page: the maintenance pages came in #172 and
+ * #178. An entry that isn't live is left out of the header (#156), not
+ * drawn dimmed.
  */
 export interface ActionButton {
   label: string;
@@ -26,8 +22,8 @@ export interface ActionButton {
   status: ModuleStatus;
 }
 
-// Inventory and the RTS Queue were shells until #172. Inspections, Vendors
-// and Roster have no page, so the header doesn't show them.
+// Inventory and the RTS Queue were shells until #172; Inspections, Vendors
+// and the Mechanic Roster are pages since #178. Legacy's order.
 // Exported for components/home/module-status.test.ts, which sweeps
 // every catalogue in the app for a status that disagrees with what
 // is on disk. This one sat outside that sweep, which is how five
@@ -40,11 +36,11 @@ export const MAINTENANCE_ACTIONS: ActionButton[] = [
   // unbuilt Maintenance Clock, a different page.
   { label: "Due List", href: "/maintenance/due-list", status: "live" },
   { label: "Work Orders", href: "/maintenance/work-orders", status: "live" },
+  { label: "Inspections", href: "/maintenance/inspections", status: "live" },
   { label: "Inventory", href: "/maintenance/inventory", status: "live" },
+  { label: "Vendors", href: "/maintenance/vendors", status: "live" },
   { label: "RTS Queue", href: "/maintenance/rts", status: "live" },
-  { label: "Inspections", status: "m3" },
-  { label: "Vendors", status: "m3" },
-  { label: "Roster", status: "m3" },
+  { label: "Roster", href: "/maintenance/roster", status: "live" },
   // Adding a tail lives under Settings -> Fleet, where AddAircraftDialog
   // has called createAircraftAction since M2. This entry sat dimmed as
   // `m3` with the note "an add form we never built" — it was built, just
