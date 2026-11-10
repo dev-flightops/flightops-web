@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { buttonOutline } from "@/components/ff/controls";
 import { listMyTenants, listUsers } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
 import type { UserResponse } from "@/lib/api/types";
@@ -81,6 +82,9 @@ export default async function EmployeesPage({
         </div>
         <div className="flex items-center gap-2">
           <StatusFilter value={statusFilter} />
+          <Link href="/employees/onboarding" className={buttonOutline}>
+            Onboarding
+          </Link>
           <Link
             href="/settings/users"
             className="btn-caps rounded-md bg-primary px-4 py-2 text-white hover:bg-brand-dark"

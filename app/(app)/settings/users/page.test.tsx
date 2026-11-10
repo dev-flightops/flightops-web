@@ -9,6 +9,7 @@ const {
   listUsers,
   listRoles,
   listMyTenants,
+  listRequiredOpen,
 } = vi.hoisted(() => {
   class TestApiError extends Error {
     constructor(
@@ -25,11 +26,13 @@ const {
     listUsers: vi.fn(),
     listRoles: vi.fn(),
     listMyTenants: vi.fn(),
+    listRequiredOpen: vi.fn(),
   };
 });
 
 vi.mock("@/lib/api/client", () => ({ ApiError: TestApiError }));
 vi.mock("@/lib/api/auth", () => ({ listUsers, listRoles, listMyTenants }));
+vi.mock("@/lib/api/onboarding", () => ({ listRequiredOpen }));
 vi.mock("@/auth", () => ({ auth }));
 vi.mock("@/components/settings/users/add-user-dialog", () => ({
   AddUserDialog: () => <div data-testid="add-user-dialog" />,
@@ -82,6 +85,8 @@ beforeEach(() => {
   listUsers.mockReset();
   listRoles.mockReset();
   listMyTenants.mockReset();
+  listRequiredOpen.mockReset();
+  listRequiredOpen.mockResolvedValue({ employees: [] });
   auth.mockReset();
   auth.mockResolvedValue({ user: { id: "u-1" } });
   listRoles.mockResolvedValue({ roles: SAMPLE_ROLES });
@@ -188,5 +193,41 @@ describe("SettingsUsersPage (M2-G-48)", () => {
     render(ui);
 
     expect(screen.getByRole("alert")).toHaveTextContent(/session expired/i);
+  });
+});
+
+describe("onboarding still required before starting (#180)", () => {
+  // Greg, 10 Nov: shown, not enforced. The login can still be switched on.
+  it("notes it under the person, linked to their Onboarding tab", async () => {
+    listUsers.mockResolvedValueOnce({
+      items: [
+        makeUser({ id: "u-1", email: "me@x.com", full_name: "Me" }),
+        makeUser({ id: "u-2", email: "new@x.com", full_name: "New Hire", roles: ["pilot"] }),
+      ],
+      total: 2,
+    });
+    listRequiredOpen.mockResolvedValueOnce({
+      employees: [
+        {
+          employee: { id: "u-2", full_name: "New Hire", title: null, department: null, is_active: true },
+          tasks: [
+            { id: "t-1", name: "Background check", assignment_id: "a-1", due_date: null },
+            { id: "t-2", name: "Drug test", assignment_id: "a-1", due_date: null },
+          ],
+        },
+      ],
+    });
+    render(await SettingsUsersPage());
+    const note = screen.getByRole("link", { name: /2 onboarding tasks required before starting/ });
+    expect(note).toHaveAttribute("href", "/employees/u-2?tab=onboarding");
+    expect(screen.getAllByRole("link", { name: /required before starting/ })).toHaveLength(1);
+  });
+
+  it("keeps the page when onboarding can't be read", async () => {
+    listUsers.mockResolvedValueOnce({ items: [makeUser({ id: "u-2", full_name: "New Hire" })], total: 1 });
+    listRequiredOpen.mockRejectedValueOnce(new TestApiError(503, "/onboarding/required-open", "down"));
+    render(await SettingsUsersPage());
+    expect(screen.getByText("New Hire")).toBeInTheDocument();
+    expect(screen.queryByText(/required before starting/)).not.toBeInTheDocument();
   });
 });

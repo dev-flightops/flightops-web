@@ -3,6 +3,8 @@ import { describe, expect, it } from "vitest";
 
 import type { HandoffItem } from "@/lib/api/types";
 
+import { myTask } from "@/app/(app)/employees/onboarding/test-fixtures";
+
 import { WaitingOnYouList } from "./waiting-on-you-list";
 
 const item = (over: Partial<HandoffItem> = {}): HandoffItem => ({
@@ -41,3 +43,26 @@ describe("Home's Waiting on you (#175)", () => {
     expect(screen.getByText(/Couldn.t check what.s waiting on you/)).toBeInTheDocument();
   });
 });
+
+describe("onboarding tasks in Waiting on you (#180)", () => {
+  it("adds the reader's onboarding tasks after the flights, overdue ones marked", () => {
+    render(
+      <WaitingOnYouList
+        items={[item()]}
+        onboarding={[myTask({ id: "t-7", name: "Ramp tour", overdue: true, due_date: "2026-11-05" })]}
+      />,
+    );
+    expect(screen.getByText("2 to do")).toBeInTheDocument();
+    const row = screen.getByText("Onboarding: Ramp tour").closest("li")!;
+    expect(within(row).getByText(/Nina Hale · New Hire Pilot · overdue since/)).toBeInTheDocument();
+    expect(within(row).getByRole("link", { name: "Open ›" })).toHaveAttribute("href", "/employees/onboarding/a-1");
+    expect(row.className).toContain("border-l-status-red");
+  });
+
+  it("still shows the onboarding tasks when the flights couldn't be checked", () => {
+    render(<WaitingOnYouList items={null} onboarding={[myTask()]} />);
+    expect(screen.getByText("Onboarding: Read the GOM")).toBeInTheDocument();
+    expect(screen.getByText(/Couldn.t check the flights waiting on you/)).toBeInTheDocument();
+  });
+});
+

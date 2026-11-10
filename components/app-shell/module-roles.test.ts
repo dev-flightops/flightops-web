@@ -206,14 +206,39 @@ describe("restricted departments", () => {
     "exec_admin",
     "director_of_operations",
   ];
+  // They run onboarding with the two above (Greg, 10 Nov, #180), so they
+  // see HR, and in it Onboarding alone: no records, pay or time clock.
+  const RUN_ONBOARDING_ONLY: readonly Role[] = [
+    "chief_pilot",
+    "director_of_maintenance",
+    "safety_officer",
+  ];
 
   it("keeps HR and settings to exec_admin and the Director of Operations", () => {
     for (const role of ROLES.filter((r) => !MAY_SEE_ADMIN.includes(r))) {
       for (const dept of ADMIN_DEPARTMENTS) {
+        if (dept === "hr" && RUN_ONBOARDING_ONLY.includes(role)) continue;
         expect(idsFor([role]), `${role} should not see ${dept}`).not.toContain(
           dept,
         );
       }
+    }
+  });
+
+  it("shows the Chief Pilot, DOM and Safety Officer HR's Onboarding and nothing else of it (#180)", () => {
+    const hr = deptById("hr");
+    for (const role of RUN_ONBOARDING_ONLY) {
+      expect(idsFor([role]), `${role} should see hr`).toContain("hr");
+      expect(visibleModules(hr, [role]).map((m) => m.id)).toEqual(["hr-onboarding"]);
+    }
+    for (const role of MAY_SEE_ADMIN) {
+      expect(visibleModules(hr, [role]).map((m) => m.id)).toEqual([
+        "hr-employees",
+        "hr-onboarding",
+        "hr-payroll",
+        "hr-time-clock",
+        "hr-records",
+      ]);
     }
   });
 

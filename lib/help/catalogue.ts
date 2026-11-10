@@ -1692,14 +1692,64 @@ export const HELP_ENTRIES: HelpEntry[] = [
       "Edit the profile fields and save — the record is one form rather than several.",
       "Certifications appear on the record for anyone holding an airman certificate.",
       "Use the Documents tab for the documents required of them, and to file one.",
+      "Use the Onboarding tab for the checklists assigned to them and what's still required before they start.",
     ],
     worthKnowing: [
       "Exec Admin only, and deliberately: the record carries a date of birth, a home address and an emergency contact. That is also why an employee cannot currently open their own record.",
-      "Dedicated Onboarding and Drug & Alcohol workflows are not available. Maintain those records through the operator’s approved process; the employee directory does not manage them.",
+      "A dedicated Drug & Alcohol workflow is not available yet. Maintain those records through the operator’s approved process; the employee directory does not manage them.",
     ],
     connectsTo:
       "The certificate record is the same 135.63 record the compliance profile shows. Required documents are defined once in Settings and appear on everyone they apply to.",
-    related: ["/settings/document-requirements", "/compliance/crew-currency", "/payroll"],
+    related: ["/employees/onboarding", "/settings/document-requirements", "/compliance/crew-currency", "/payroll"],
+  },
+  {
+    route: "/employees/onboarding",
+    title: "Onboarding",
+    whoCanUse: ["exec_admin", "director_of_operations", "chief_pilot", "director_of_maintenance", "safety_officer"],
+    whatItDoes:
+      "Every new hire's onboarding: the checklist assigned to them, how much is done, what's overdue and what's still required before they start. Each task is due a number of days after the hire date.",
+    howToUse: [
+      "Assign a Checklist: pick the new hire, the checklist, and the supervisor their Supervisor tasks fall to. Leave the hire date blank to use the one on their record.",
+      "Open a hire to work their tasks: Done, Started, Skip with a reason, or Reopen. A Document Upload task is done by uploading its document.",
+      "Use the views for onboarding that's complete or archived. Archive one that was assigned by mistake; Bring Back restores it.",
+    ],
+    connectsTo:
+      "The tasks are copied from the checklist when it's assigned, so a later edit to the checklist doesn't change a hire already under way. Uploaded documents are filed in the employee's Documents.",
+    worthKnowing: [
+      "A task required before starting is shown here, on the employee's record and in Settings → Users. It doesn't block switching their login on.",
+      "HR tasks fall to whoever runs onboarding, IT tasks to the Executive Admins, Manager tasks to the Exec Admin, Director of Operations, Chief Pilot and Director of Maintenance.",
+    ],
+    related: ["/employees/onboarding/checklists", "/employees/onboarding/my-tasks", "/employees"],
+  },
+  {
+    route: "/employees/onboarding/checklists",
+    title: "Onboarding checklists",
+    whoCanUse: ["exec_admin", "director_of_operations", "chief_pilot", "director_of_maintenance", "safety_officer"],
+    whatItDoes:
+      "The checklists a company builds for its new hires, such as New Hire Pilot or New Hire Ramp Agent: ordered tasks, each with a type, who it falls to and how many days after the hire date it's due.",
+    howToUse: [
+      "Create a checklist with its name and the role it's for, then add its tasks.",
+      "For each task pick its type and who does it: the new hire, their supervisor, HR, IT, a manager or a specific role. A Document Upload task names the document it files.",
+      "Move tasks up and down to set their order. Duplicate a checklist to start a similar one; archive one that's no longer used.",
+    ],
+    connectsTo:
+      "Document Upload tasks file under the document requirements set in Settings → Document Requirements. Assigning a checklist happens on Onboarding or on the employee's record.",
+    worthKnowing: [
+      "Removing or changing a task changes the checklist for hires assigned it from then on. Hires already under way keep the tasks they were given.",
+    ],
+    related: ["/employees/onboarding", "/settings/document-requirements"],
+  },
+  {
+    route: "/employees/onboarding/my-tasks",
+    title: "My onboarding tasks",
+    whatItDoes:
+      "The onboarding tasks that fall to you, across every new hire, soonest due first: your own as a new hire, a supervisor's for their hires, or those of your role. They also appear in Waiting on you on Home.",
+    howToUse: [
+      "Mark a task Done, Started, or Skip it with a reason. Open a hire to see the rest of their checklist.",
+      "For a Document Upload task, choose the file and its dates, then Upload & File. It's filed in the employee's Documents.",
+    ],
+    worthKnowing: ["A task you've done leaves the list. Whoever runs onboarding can reopen it if it needs doing again."],
+    related: ["/employees/onboarding", "/home"],
   },
   {
     route: "/time-clock",
