@@ -73,6 +73,14 @@ export const HOME_MODULES: HomeModule[] = [
     status: "live",
   },
   {
+    // Run by five posts, three of whom don't see HR (#180).
+    id: "onboarding",
+    label: "Onboarding",
+    sub: "New hires' checklists",
+    href: "/employees/onboarding",
+    status: "live",
+  },
+  {
     id: "academy",
     label: "Academy",
     sub: "Training & courses",
@@ -214,6 +222,13 @@ export const HOME_MODULE_ROLES: Record<string, readonly Role[]> = {
     "ground_ops",
   ],
   hr: ["exec_admin", "director_of_operations"],
+  onboarding: [
+    "exec_admin",
+    "director_of_operations",
+    "chief_pilot",
+    "director_of_maintenance",
+    "safety_officer",
+  ],
   housing: ["exec_admin", "director_of_operations", "ground_ops"],
   // Matches billing-service's customer-invoice routes plus
   // MODULE_ROLES.invoicing. Raising and sending an invoice is the

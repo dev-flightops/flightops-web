@@ -331,6 +331,17 @@ export const CUSTOMER_MANAGERS = roleGate("dispatcher", "reservations_agent", "e
  *  and the company's bookkeeper, who sees nothing operational. */
 export const ACCOUNTING_ROLES = roleGate("accountant", "director_of_operations", "exec_admin");
 
+/** Run employee onboarding (#180): build checklists, assign them to new
+ *  hires, see everyone's progress and work any task. documents-service's
+ *  ONBOARDING_ADMINS (Greg, 10 Nov). */
+export const ONBOARDING_ADMINS = roleGate(
+  "exec_admin",
+  "director_of_operations",
+  "chief_pilot",
+  "director_of_maintenance",
+  "safety_officer",
+);
+
 /** Approve a refund over $500 (#127): the post-holders who run the
  *  company, never the person entering it. billing-service's
  *  APPROVER_ROLES. */

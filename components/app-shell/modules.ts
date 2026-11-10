@@ -763,6 +763,14 @@ export const DEPARTMENTS: Department[] = [
         department: "hr",
       },
       {
+        // Employee onboarding (#180), legacy's /records/onboarding.
+        id: "hr-onboarding",
+        label: "Onboarding",
+        href: "/employees/onboarding",
+        status: "live",
+        department: "hr",
+      },
+      {
         id: "hr-payroll",
         label: "Payroll",
         href: "/payroll",
@@ -1153,7 +1161,16 @@ export const DEPARTMENT_ROLES: Partial<Record<DepartmentId, readonly Role[]>> =
     // whoever saw the hazard — gating SMS by job title is how near-misses
     // go unreported.
     safety: [...ROLES],
-    hr: ["exec_admin", "director_of_operations"],
+    // The Chief Pilot, DOM and Safety Officer for Onboarding ONLY (#180):
+    // they run it with the Exec Admin and DO (Greg, 10 Nov). Every other HR
+    // module names exec_admin and director_of_operations below.
+    hr: [
+      "exec_admin",
+      "director_of_operations",
+      "chief_pilot",
+      "director_of_maintenance",
+      "safety_officer",
+    ],
     // Reporting. The GOM puts running special reports at Level 2, which
     // is where the check airman and the DOM sit. The accountant for
     // Invoicing, Accounting and Profitability only (#128): every other
@@ -1239,6 +1256,20 @@ export function visibleAiTools(roles: readonly string[]): AiTool[] {
 }
 
 export const MODULE_ROLES: Record<string, readonly Role[]> = {
+  // HR is employee records and pay: the Exec Admin and DO. Onboarding is
+  // also run by the Chief Pilot, DOM and Safety Officer (#180), which is
+  // why the department admits them; it shows them that module alone.
+  "hr-employees": ["exec_admin", "director_of_operations"],
+  "hr-onboarding": [
+    "exec_admin",
+    "director_of_operations",
+    "chief_pilot",
+    "director_of_maintenance",
+    "safety_officer",
+  ],
+  "hr-payroll": ["exec_admin", "director_of_operations"],
+  "hr-time-clock": ["exec_admin", "director_of_operations"],
+  "hr-records": ["exec_admin", "director_of_operations"],
   // Operations is listed exhaustively rather than half-explicit. A module
   // with no entry here inherits its department, and once reservations_agent
   // was admitted to Operations for Flight Following, inheritance would have

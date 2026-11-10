@@ -276,14 +276,16 @@ export const LEGACY_REDIRECTS: readonly (readonly [from: string, to: string])[] 
   ["/records/dat/result-codes", "/employees"],
   ["/records/dat/selection/:id", "/employees"],
   ["/records/dat/types", "/employees"],
-  ["/records/onboarding", "/employees"],
-  ["/records/onboarding/assignment/:id", "/employees"],
-  ["/records/onboarding/checklists", "/employees"],
-  ["/records/onboarding/checklists/:id", "/employees"],
-  ["/records/onboarding/employee/:id", "/employees"],
-  // An employee's own tasks, reached from emailed links: home, not the
-  // HR list they may not be allowed to open.
-  ["/records/onboarding/my-tasks", "/home"],
+  // Employee onboarding (#180). Legacy's numeric ids don't carry over, so
+  // one checklist or one hire lands on the list it's in.
+  ["/records/onboarding", "/employees/onboarding"],
+  ["/records/onboarding/assignment/:id", "/employees/onboarding"],
+  ["/records/onboarding/checklists", "/employees/onboarding/checklists"],
+  ["/records/onboarding/checklists/:id", "/employees/onboarding/checklists"],
+  ["/records/onboarding/employee/:id", "/employees/onboarding"],
+  // An employee's own tasks, reached from emailed links: My Tasks, which
+  // anyone can open, not the onboarding list they may not be allowed to.
+  ["/records/onboarding/my-tasks", "/employees/onboarding/my-tasks"],
   ["/records/fill/:id", "/home"],
   ["/housing/assignments", "/housing/calendar"],
   ["/housing/maintenance", "/housing"],

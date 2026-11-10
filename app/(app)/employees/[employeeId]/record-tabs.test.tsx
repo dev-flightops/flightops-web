@@ -67,21 +67,25 @@ describe("the outstanding count", () => {
   });
 });
 
-describe("the unbuilt tabs", () => {
-  // Onboarding and Drug & Alcohol aren't built. Shown dimmed and marked
-  // "Not built", the client counted them as faults; now they aren't shown
-  // until they're built (#134).
-  it("aren't shown", () => {
-    render(<RecordTabs employeeId="u-1" active="profile" />);
-    for (const label of ["Onboarding", "Drug & Alcohol"]) {
-      expect(screen.queryByText(label)).not.toBeInTheDocument();
-    }
-    expect(screen.queryByText("Not built")).not.toBeInTheDocument();
+describe("Onboarding (#180) and the unbuilt tab", () => {
+  it("shows Onboarding, linked, with what's required before starting", () => {
+    render(<RecordTabs employeeId="u-1" active="profile" requiredOpen={2} />);
+    const tab = screen.getByRole("link", { name: /Onboarding/ });
+    expect(tab).toHaveAttribute("href", "/employees/u-1?tab=onboarding");
+    expect(screen.getByTitle("2 tasks required before starting")).toHaveTextContent("2");
   });
 
-  it("leave Profile and Documents", () => {
-    render(<RecordTabs employeeId="u-1" active="documents" />);
-    expect(screen.getByRole("link", { name: "Profile" })).toBeInTheDocument();
-    expect(screen.getByText("Documents")).toBeInTheDocument();
+  it("marks Onboarding as the page when it's open", () => {
+    render(<RecordTabs employeeId="u-1" active="onboarding" />);
+    expect(screen.getByText("Onboarding")).toHaveAttribute("aria-current", "page");
+    expect(screen.queryByTitle(/required before starting/)).not.toBeInTheDocument();
+  });
+
+  // Drug & Alcohol isn't built. Shown dimmed and marked "Not built", the
+  // client counted such tabs as faults; it isn't shown until it's built (#134).
+  it("doesn't show Drug & Alcohol", () => {
+    render(<RecordTabs employeeId="u-1" active="profile" />);
+    expect(screen.queryByText("Drug & Alcohol")).not.toBeInTheDocument();
+    expect(screen.queryByText("Not built")).not.toBeInTheDocument();
   });
 });

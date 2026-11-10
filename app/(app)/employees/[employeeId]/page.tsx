@@ -5,16 +5,18 @@ import { cn } from "@/lib/utils";
 import { notFound } from "next/navigation";
 
 import { auth } from "@/auth";
-import { getUser } from "@/lib/api/auth";
+import { getUser, listStaff, loadZoneTable } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
 import {
   getEmployeeChecklist,
   type ChecklistResponse,
 } from "@/lib/api/employee-documents";
+import { getEmployeeOnboarding, listChecklists, type EmployeeOnboarding } from "@/lib/api/onboarding";
 import { getAirmanRecord, listDisqualifications } from "@/lib/api/ops";
 
 import { DocumentsPanel } from "./documents-panel";
 import { EmployeeRecord } from "./employee-record";
+import { OnboardingPanel } from "./onboarding-panel";
 import { RecordTabs, type RecordTab } from "./record-tabs";
 
 /**
@@ -41,7 +43,8 @@ export default async function EmployeeDetailPage({
 }) {
   const { employeeId } = await params;
   const { tab: tabParam } = await searchParams;
-  const tab: RecordTab = tabParam === "documents" ? "documents" : "profile";
+  const tab: RecordTab =
+    tabParam === "documents" ? "documents" : tabParam === "onboarding" ? "onboarding" : "profile";
 
   let employee;
   try {
@@ -102,13 +105,62 @@ export default async function EmployeeDetailPage({
   const session = await auth();
   const canUpload = (session?.roles ?? []).includes("exec_admin");
 
+  // Onboarding (#180), fetched for every tab like the documents, so the
+  // tab can carry what's still required before this person starts.
+  let onboarding: EmployeeOnboarding | null = null;
+  let onboardingError: string | null = null;
+  try {
+    onboarding = await getEmployeeOnboarding(employeeId);
+  } catch (err) {
+    onboardingError =
+      err instanceof ApiError && err.status === 403
+        ? "Onboarding is run by the Exec Admin, Director of Operations, Chief Pilot, Director of Maintenance and Safety Officer."
+        : "Onboarding is unavailable. Try refreshing in a moment.";
+  }
+  const requiredOpen = onboarding?.assignments
+    .filter((a) => a.status === "in_progress")
+    .reduce((n, a) => n + a.progress.required_open, 0);
+
   const tabs = (
     <RecordTabs
       employeeId={employeeId}
       active={tab}
       outstanding={checklist?.outstanding}
+      requiredOpen={requiredOpen}
     />
   );
+
+  if (tab === "onboarding") {
+    const [checklists, staff, zones] = await Promise.all([
+      onboarding?.can_manage ? listChecklists().catch(() => []) : Promise.resolve([]),
+      onboarding?.can_manage
+        ? listStaff()
+            .then((r) => r.items)
+            .catch(() => [])
+        : Promise.resolve([]),
+      loadZoneTable().catch(() => null),
+    ]);
+    return (
+      <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
+        <Link href="/employees" className={cn(linkCaps, "text-muted-foreground hover:text-foreground")}>
+          <span aria-hidden>‹</span> Employees
+        </Link>
+        <header className="mb-6 border-b border-border pb-5">
+          <h1 className="truncate page-title">
+            {employee.preferred_name?.trim() || employee.full_name}
+          </h1>
+        </header>
+        {tabs}
+        <OnboardingPanel
+          onboarding={onboarding}
+          loadError={onboardingError}
+          checklists={checklists}
+          staff={staff}
+          zone={zones?.fallback ?? "America/Anchorage"}
+        />
+      </div>
+    );
+  }
 
   if (tab === "documents") {
     return (

@@ -4,21 +4,20 @@ import Link from "next/link";
  * The tab bar on an employee record.
  *
  * Legacy shows Profile / Documents / Onboarding / Drug & Alcohol.
- * Profile and Documents are ours; the other two are subsystems nobody
- * has scheduled — legacy carries 5 tables behind Onboarding and 9
- * behind Drug & Alcohol, the latter including the 14 CFR 120.217
- * annual MIS summary.
+ * Profile, Documents and Onboarding (#180) are ours. Drug & Alcohol is
+ * its own subsystem, legacy's 9 tables with the random pool and the
+ * annual MIS summary, and is the next story.
  *
- * They were shown dimmed and marked "Not built". The client counts such
- * marks as faults (#157 took them off the dashboards), so they aren't
- * shown until they're built (#134).
+ * Unbuilt tabs were shown dimmed and marked "Not built". The client
+ * counts such marks as faults (#157 took them off the dashboards), so
+ * Drug & Alcohol isn't shown until it's built (#134).
  *
  * Lifted out of employee-record-form.tsx once Documents became a real
  * tab, so both panels render the same bar rather than each owning a
  * copy that can drift.
  */
 
-export type RecordTab = "profile" | "documents";
+export type RecordTab = "profile" | "documents" | "onboarding";
 
 export function RecordTabs({
   employeeId,
@@ -27,10 +26,13 @@ export function RecordTabs({
    *  without opening it. Omitted when nothing is outstanding, rather
    *  than rendering a zero. */
   outstanding,
+  /** Onboarding tasks required before starting that aren't done (#180). */
+  requiredOpen,
 }: {
   employeeId: string;
   active: RecordTab;
   outstanding?: number;
+  requiredOpen?: number;
 }) {
   return (
     <nav
@@ -51,6 +53,20 @@ export function RecordTabs({
             title={`${outstanding} document${outstanding === 1 ? "" : "s"} needing attention`}
           >
             {outstanding}
+          </span>
+        )}
+      </Tab>
+      <Tab
+        href={`/employees/${employeeId}?tab=onboarding`}
+        active={active === "onboarding"}
+      >
+        Onboarding
+        {requiredOpen !== undefined && requiredOpen > 0 && (
+          <span
+            className="status-mark ml-1.5 text-status-red"
+            title={`${requiredOpen} task${requiredOpen === 1 ? "" : "s"} required before starting`}
+          >
+            {requiredOpen}
           </span>
         )}
       </Tab>

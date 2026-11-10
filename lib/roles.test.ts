@@ -8,6 +8,7 @@ import {
   FUEL_CONFIG,
   GSE_WRITERS,
   MANIFEST_EDITORS,
+  ONBOARDING_ADMINS,
   OVERRIDE_AUTHORITY,
   RAMP_OPS,
   ROLES,
@@ -117,6 +118,16 @@ describe("who may do what a release relies on (29 Sep)", () => {
 
   it("release and the risk inputs: the dispatcher and Exec Admin (#50)", () => {
     expect(sorted(DISPATCH_WRITERS)).toEqual(["dispatcher", "exec_admin"]);
+  });
+
+  it("onboarding: the five post-holders who run it (#180)", () => {
+    expect(sorted(ONBOARDING_ADMINS)).toEqual([
+      "chief_pilot",
+      "director_of_maintenance",
+      "director_of_operations",
+      "exec_admin",
+      "safety_officer",
+    ]);
   });
 
   it("MELs and squawks: maintenance", () => {

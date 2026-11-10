@@ -7,6 +7,7 @@ import { EditUserDialog } from "@/components/settings/users/edit-user-dialog";
 import { SetPasswordDialog } from "@/components/settings/users/set-password-dialog";
 import { listMyTenants, listRoles, listUsers } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
+import { listRequiredOpen } from "@/lib/api/onboarding";
 import type { RoleSummary, UserResponse } from "@/lib/api/types";
 
 /**
@@ -56,6 +57,14 @@ export default async function SettingsUsersPage() {
 
   const roleLabel = (id: string) =>
     roles.find((r) => r.id === id)?.label ?? id;
+
+  // Onboarding tasks required before someone starts (#180): shown here,
+  // not enforced on the login (Greg, 10 Nov). Losing it costs the note.
+  const requiredOpen = unauthorized
+    ? new Map<string, number>()
+    : await listRequiredOpen()
+        .then((r) => new Map(r.employees.map((e) => [e.employee.id, e.tasks.length])))
+        .catch(() => new Map<string, number>());
 
   const session = await auth();
   const myId = session?.user?.id ?? null;
@@ -122,6 +131,7 @@ export default async function SettingsUsersPage() {
             roles={roles}
             roleLabel={roleLabel}
             myId={myId}
+            requiredOpen={requiredOpen}
           />
         </section>
       )}
@@ -137,6 +147,7 @@ export default async function SettingsUsersPage() {
               roles={roles}
               roleLabel={roleLabel}
               myId={myId}
+              requiredOpen={requiredOpen}
               muted
             />
           </div>
@@ -163,12 +174,14 @@ function UsersTable({
   roles,
   roleLabel,
   myId,
+  requiredOpen,
   muted,
 }: {
   users: UserResponse[];
   roles: RoleSummary[];
   roleLabel: (id: string) => string;
   myId: string | null;
+  requiredOpen: Map<string, number>;
   muted?: boolean;
 }) {
   return (
@@ -202,6 +215,15 @@ function UsersTable({
                   <span className="text-[0.75rem] text-muted-foreground">
                     {u.email}
                   </span>
+                  {(requiredOpen.get(u.id) ?? 0) > 0 && (
+                    <Link
+                      href={`/employees/${u.id}?tab=onboarding`}
+                      className="text-[0.7rem] font-semibold text-status-red hover:underline"
+                    >
+                      {requiredOpen.get(u.id)} onboarding task
+                      {requiredOpen.get(u.id) === 1 ? "" : "s"} required before starting
+                    </Link>
+                  )}
                 </div>
               </td>
               <td className="px-4 py-3">
