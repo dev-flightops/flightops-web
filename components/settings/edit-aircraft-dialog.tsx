@@ -166,6 +166,38 @@ export function EditAircraftDialog({ aircraft }: { aircraft: AircraftListItem })
               />
             </div>
 
+
+            {/* LOG-32: its own fuel burn, as the operator counts it: pounds
+                an hour for a turbine, gallons for a piston. */}
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field
+                name="fuel_burn_per_hour"
+                label="Fuel burn per hour"
+                type="number"
+                min={0.1}
+                step={0.1}
+                defaultValue={aircraft.fuel_burn_per_hour ?? ""}
+                error={fieldError("fuel_burn_per_hour")}
+              />
+              <div>
+                <label htmlFor="fuel_burn_unit" className="field-label">
+                  Burn in
+                </label>
+                <select
+                  id="fuel_burn_unit"
+                  name="fuel_burn_unit"
+                  defaultValue={aircraft.fuel_burn_unit ?? ((aircraft.fuel_type_code ?? aircraft.effective_fuel_type_code ?? "jet_a") === "jet_a" ? "lb" : "gal")}
+                  className="ff-input px-3 py-2 text-sm"
+                >
+                  <option value="lb">lb an hour (turbine)</option>
+                  <option value="gal">gal an hour (piston)</option>
+                </select>
+              </div>
+            </div>
+            <p className="-mt-2 text-xs text-muted-foreground">
+              The manifest&rsquo;s recommended fuel uses it before the type&rsquo;s burn in Settings &rarr; Costs.
+            </p>
+
             {/* HALT-2 — airframe identity, grouped as its own row because
                 these read together on the fleet card. */}
             <div className="grid gap-4 sm:grid-cols-3">

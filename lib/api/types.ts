@@ -76,6 +76,9 @@ export interface AircraftListItem {
    *  type's. */
   effective_fuel_type_code?: string | null;
   effective_fuel_capacity_gal?: number | null;
+  /** Its own fuel burn per hour, as entered, and the unit (LOG-32). */
+  fuel_burn_per_hour?: number | null;
+  fuel_burn_unit?: "lb" | "gal" | null;
   /** Why an aircraft out of the fleet is out: "mel_expired" (an MEL item
    *  past due grounds it until closed), "manual", or null when retired
    *  (audit 1110-16). */

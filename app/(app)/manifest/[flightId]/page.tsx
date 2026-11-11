@@ -19,6 +19,7 @@ import {
   getLoadPlan,
   MAIL_CLASS_LABELS,
   mailDescription,
+  type LegLoad,
   type LegSeats,
   type LoadPlanResponse,
   type ManifestDetailResponse,
@@ -189,6 +190,9 @@ export default async function FlightManifestPage({
           />
 
           {manifest.legs && manifest.legs.length > 1 ? <LegSeatsPanel legs={manifest.legs} /> : null}
+          {manifest.load?.by_leg && manifest.load.by_leg.length > 1 ? (
+            <LegLoadPanel legs={manifest.load.by_leg} burned={manifest.load.leg_fuel_burned !== false} />
+          ) : null}
 
           {plan ? <LoadPlanSection plan={plan} flight={flight} editable={editable} /> : null}
 
@@ -205,12 +209,14 @@ export default async function FlightManifestPage({
               kind="mail"
               rows={manifest.cargo.filter((c) => c.mail_class !== null)}
               editable={editable}
+              stops={flightStops(flight)}
             />
             <FreightSection
               flightId={flight.id}
               kind="cargo"
               rows={manifest.cargo.filter((c) => c.mail_class === null)}
               editable={editable}
+              stops={flightStops(flight)}
             />
             {photos ? (
               <RampPhotos flightId={flight.id} photos={photos} zone={zone} canAdd={hasAnyRole(roles, RAMP_OPS)} />
@@ -259,6 +265,67 @@ function LegSeatsPanel({ legs }: { legs: LegSeats[] }) {
           </tbody>
         </table>
       </div>
+    </section>
+  );
+}
+
+/** Each leg's own load (LOG-40, 10/23: "there needs to be an ability to
+ *  build a manifest for return leg"): who and what is aboard, the fuel
+ *  it leaves with, and the room left for mail and freight. */
+function LegLoadPanel({ legs, burned }: { legs: LegLoad[]; burned: boolean }) {
+  return (
+    <section aria-label="Load by leg" className="mb-6 overflow-hidden rounded-lg border border-border bg-card">
+      <h2 className="border-b border-border px-4 py-2.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+        Load by leg
+      </h2>
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead className={THEAD}>
+            <tr>
+              <th className={TH}>Leg</th>
+              <th className={`${TH} text-right`}>Passengers</th>
+              <th className={`${TH} text-right`}>Pax &amp; bags</th>
+              <th className={`${TH} text-right`}>Cargo</th>
+              <th className={`${TH} text-right`}>Mail</th>
+              <th className={`${TH} text-right`}>Fuel</th>
+              <th className={`${TH} text-right`}>Left for mail &amp; freight</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-border">
+            {legs.map((leg, i) => {
+              const left = leg.remaining_lbs == null ? null : Number(leg.remaining_lbs);
+              return (
+                <tr key={`${i}-${leg.origin}-${leg.destination}`}>
+                  <td className="whitespace-nowrap px-3 py-2 font-mono text-xs">
+                    {`${i + 1}  ${leg.origin} → ${leg.destination}`}
+                  </td>
+                  <td className="px-3 py-2 text-right font-mono text-xs tabular-nums">{leg.pax_count}</td>
+                  <td className="px-3 py-2 text-right font-mono text-xs tabular-nums">
+                    {fmtLbs(Number(leg.pax_weight_lbs) + Number(leg.baggage_lbs))}
+                  </td>
+                  <td className="px-3 py-2 text-right font-mono text-xs tabular-nums">{fmtLbs(leg.cargo_lbs)}</td>
+                  <td className="px-3 py-2 text-right font-mono text-xs tabular-nums">{fmtLbs(leg.mail_lbs)}</td>
+                  <td className="px-3 py-2 text-right font-mono text-xs tabular-nums">
+                    {leg.fuel_lbs == null ? "—" : fmtLbs(leg.fuel_lbs)}
+                  </td>
+                  <td
+                    className={`px-3 py-2 text-right font-mono text-xs tabular-nums ${
+                      left != null && left < 0 ? "font-semibold text-status-red" : ""
+                    }`}
+                  >
+                    {left == null ? "—" : left < 0 ? `${fmtLbs(-left)} over` : fmtLbs(left)}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+      <p className="border-t border-border px-4 py-2 text-xs text-muted-foreground">
+        {burned
+          ? "Fuel is what each leg leaves with: the planned fuel less what the legs before it burn."
+          : "Each leg is counted with the first leg’s fuel: set the aircraft’s fuel burn (Settings → Fleet) to count what’s burned between stops."}
+      </p>
     </section>
   );
 }
@@ -450,6 +517,11 @@ function LoadPanel({
         <Op>=</Op>
         <Term label={result} value={`${fmtLbs(Math.abs(remaining))} lb`} valueClass={tone} emphasis />
       </div>
+      {load.leg ? (
+        <p className="mt-3 text-xs text-muted-foreground">
+          {`Worked out leg by leg: these are the tightest leg’s, ${load.leg}, with the fuel it leaves with.`}
+        </p>
+      ) : null}
       {load.fuel_basis === "estimated" && load.fuel_estimate ? (
         <p className="mt-3 text-xs text-muted-foreground">
           {`${fuelEstimateLine(load.fuel_estimate)} ${fuelPlanningNote(load.fuel_estimate, { is_ifr: isIfr })} Enter the planned fuel to use your own figure instead.`}

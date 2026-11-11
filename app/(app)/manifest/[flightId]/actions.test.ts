@@ -361,6 +361,37 @@ describe("applyLoadPlanAction (#75)", () => {
   });
 });
 
+describe("freight stops (LOG-40)", () => {
+  const freight = (over: Record<string, string> = {}) =>
+    form({
+      flight_id: FLIGHT,
+      cargo_id: "",
+      kind: "cargo",
+      description: "Freight home",
+      weight_lbs: "100",
+      pieces: "2",
+      tracking_number: "",
+      shipper: "",
+      consignee: "",
+      hazmat_notes: "",
+      notes: "",
+      ...over,
+    });
+
+  it("sends where it goes on and comes off when the form asks", async () => {
+    api.addCargo.mockResolvedValue({});
+    const state = await saveFreightAction(IDLE, freight({ boards_at: "PAKN", leaves_at: "PABE" }));
+    expect(state.status).toBe("ok");
+    expect(api.addCargo).toHaveBeenCalledWith(FLIGHT, expect.objectContaining({ boards_at: "PAKN", leaves_at: "PABE" }));
+  });
+
+  it("sends no stops from a single-leg flight's form", async () => {
+    api.addCargo.mockResolvedValue({});
+    await saveFreightAction(IDLE, freight());
+    expect(Object.keys(api.addCargo.mock.calls[0][1])).not.toContain("boards_at");
+  });
+});
+
 describe("leaveBehindAction (LOG-43)", () => {
   const input = { weight_lbs: "150", pieces: 3, reason: " No room behind the seats " };
 

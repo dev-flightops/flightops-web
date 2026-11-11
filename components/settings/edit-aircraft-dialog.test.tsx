@@ -80,7 +80,21 @@ describe("EditAircraftDialog", () => {
       // Nothing entered for its fuel and tanks (#156): its type's are used.
       fuel_type_code: "",
       fuel_capacity_gal: "",
+      // No burn of its own (LOG-32): its type's; a turbine counts in pounds.
+      fuel_burn_per_hour: "",
+      fuel_burn_unit: "lb",
     });
+  });
+
+  it("asks for its own fuel burn, pounds for a turbine and gallons for a piston (LOG-32)", async () => {
+    await openFor({ ...CARAVAN, fuel_burn_per_hour: 390, fuel_burn_unit: "lb" });
+    expect(screen.getByLabelText("Fuel burn per hour")).toHaveValue(390);
+    expect(screen.getByLabelText("Burn in")).toHaveValue("lb");
+  });
+
+  it("starts a piston's burn in gallons", async () => {
+    await openFor({ ...CARAVAN, fuel_type_code: "100ll" });
+    expect(screen.getByLabelText("Burn in")).toHaveValue("gal");
   });
 
   it("leaves a field empty where nothing is recorded", async () => {
