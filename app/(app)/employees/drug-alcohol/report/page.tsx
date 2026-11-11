@@ -26,16 +26,21 @@ import { CertifyForm } from "./certify-form";
 export const dynamic = "force-dynamic";
 
 function Table({ title, columns, rows }: { title: string; columns: string[]; rows: MisRow[] }) {
+  // The form is 13 columns wide, so its headings are in sentence case and
+  // its cells tighter than a list's, to fit a desktop without scrolling.
   return (
     <div className="mb-5">
       <h3 className="eyebrow mb-2">{title}</h3>
       <div className="overflow-x-auto rounded-lg border border-border">
-        <table className="ff-table w-full text-xs">
+        <table className="w-full text-xs">
           <thead className="ff-thead">
             <tr>
-              <th className="min-w-[8rem]">Type of Test</th>
+              <th className="min-w-[7rem] px-2 py-2 align-bottom">Type of Test</th>
               {columns.map((c, i) => (
-                <th key={c} className="min-w-[4.5rem] text-right align-bottom">
+                <th
+                  key={c}
+                  className="px-2 py-2 text-right align-bottom text-[0.68rem] font-semibold normal-case leading-tight tracking-normal"
+                >
                   <span className="block font-mono text-muted-foreground">{i + 1}</span>
                   {c}
                 </th>
@@ -44,10 +49,10 @@ function Table({ title, columns, rows }: { title: string; columns: string[]; row
           </thead>
           <tbody>
             {rows.map((r) => (
-              <tr key={r.test_type} className={r.test_type === "total" ? "font-semibold" : undefined}>
-                <td>{r.label}</td>
+              <tr key={r.test_type} className={r.test_type === "total" ? "border-t border-border font-semibold" : "border-t border-border"}>
+                <td className="px-2 py-1.5">{r.label}</td>
                 {r.cells.map((n, i) => (
-                  <td key={columns[i]} className="text-right tabular-nums">
+                  <td key={columns[i]} className="px-2 py-1.5 text-right tabular-nums">
                     {n}
                   </td>
                 ))}
