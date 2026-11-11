@@ -23,6 +23,7 @@ import type {
   FuelSupplierBaseResponse,
   FuelSupplierListResponse,
   FuelSupplierResponse,
+  FueledBy,
   FuelTypeListResponse,
   FuelTypeResponse,
   GSEEquipmentType,
@@ -242,6 +243,7 @@ export interface FuelSupplierPayload {
   account_number: string | null;
   billing_terms: string | null;
   notes: string | null;
+  fueled_by: FueledBy;
 }
 
 export async function createFuelSupplier(payload: FuelSupplierPayload): Promise<FuelSupplierResponse> {
@@ -897,6 +899,12 @@ export async function getFlightAssignment(
 
 /** The loads of the teams the signed-in user leads or is on, for a
  *  company day (default today): the ramper's list (#134). */
+/** The caller's own active load teams: their stations are the teams'
+ *  bases (LOG-42). */
+export async function listMyLoadTeams(): Promise<LoadTeamListResponse> {
+  return apiFetch<LoadTeamListResponse>("/ground/load-teams/mine");
+}
+
 export async function listMyTeamLoads(day?: string): Promise<FlightAssignmentListResponse> {
   return apiFetch<FlightAssignmentListResponse>(
     `/ground/flight-assignments/mine${day ? `?day=${day}` : ""}`,
@@ -914,6 +922,15 @@ export async function listDayLoads(day?: string): Promise<FlightAssignmentListRe
 export async function acknowledgeLoad(assignmentId: string): Promise<FlightAssignmentResponse> {
   return apiFetch<FlightAssignmentResponse>(
     `/ground/flight-assignments/${assignmentId}/acknowledge`,
+    { method: "POST" },
+  );
+}
+
+/** Loading began: the ramp timer reads it against the departure
+ *  (LOG-43). Acknowledges the load too, if no one had. */
+export async function startLoad(assignmentId: string): Promise<FlightAssignmentResponse> {
+  return apiFetch<FlightAssignmentResponse>(
+    `/ground/flight-assignments/${assignmentId}/start`,
     { method: "POST" },
   );
 }

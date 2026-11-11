@@ -6,6 +6,7 @@ import { MAIL_CLASSES, MAIL_CLASS_LABELS, type ManifestCargoRow } from "@/lib/ap
 
 import { saveFreightAction, type ManifestFormState } from "./actions";
 import { FIELD, Flag, fmtLbs, FormNotice, MailBadge, TH, THEAD } from "./manifest-bits";
+import { LeaveBehind } from "./leave-behind";
 import { RemoveLine } from "./remove-line";
 
 const _initial: ManifestFormState = { status: "idle", attempt: 0 };
@@ -135,6 +136,13 @@ export function FreightSection({
                           >
                             Edit
                           </button>
+                          <LeaveBehind
+                            flightId={flightId}
+                            cargoId={c.id}
+                            description={c.description}
+                            weightLbs={String(c.weight_lbs)}
+                            pieces={c.pieces}
+                          />
                           <RemoveLine flightId={flightId} kind="cargo" lineId={c.id} label={c.description} />
                         </span>
                       </td>

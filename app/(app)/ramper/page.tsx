@@ -72,16 +72,23 @@ export default async function RamperPage() {
   // task: the demo's Ramper led with orders from August (#134). Those are
   // counted, with the way to them.
   const today = localDay(zones?.fallback ?? DEFAULT_TIME_ZONE);
+  // An order its supplier fuels is the supplier's to confirm and fuel,
+  // through its portal, not the ramp's (LOG-42); those are counted too.
   const due = (result: typeof confirmResult) => {
     const orders = result.status === "fulfilled" ? result.value.items : [];
+    const theirs = orders.filter((o) => o.supplier?.fueled_by === "supplier");
     const current = orders
-      .filter((o) => o.requested_fuel_date >= today)
+      .filter((o) => o.supplier?.fueled_by !== "supplier" && o.requested_fuel_date >= today)
       .sort((a, b) => fuelAt(a).localeCompare(fuelAt(b)));
     const total = result.status === "fulfilled" ? result.value.total : 0;
-    return { current, earlier: Math.max(total - current.length, 0) };
+    return {
+      current,
+      earlier: Math.max(total - current.length - theirs.length, 0),
+      suppliers: theirs.filter((o) => o.requested_fuel_date >= today).length,
+    };
   };
-  const { current: awaitingConfirm, earlier: confirmEarlier } = due(confirmResult);
-  const { current: awaitingFueled, earlier: fueledEarlier } = due(fueledResult);
+  const { current: awaitingConfirm, earlier: confirmEarlier, suppliers: confirmSuppliers } = due(confirmResult);
+  const { current: awaitingFueled, earlier: fueledEarlier, suppliers: fueledSuppliers } = due(fueledResult);
   const todaysFlights: BoardFlightItem[] =
     boardResult.status === "fulfilled" ? boardResult.value.items : [];
   // Pre-flight: everything still on the ground. A released flight is the
@@ -193,7 +200,10 @@ export default async function RamperPage() {
         emptyHint="No orders waiting for supplier confirmation."
         actionHref="/fuel/orders?status=ordered"
         count={awaitingConfirm.length}
-        note={earlierNote(confirmEarlier, "/fuel/orders?status=ordered", "confirm or cancel")}
+        note={notes(
+          earlierNote(confirmEarlier, "/fuel/orders?status=ordered", "confirm or cancel"),
+          suppliersNote(confirmSuppliers, "confirm"),
+        )}
       >
         {awaitingConfirm.map((o) => (
           <TaskRow
@@ -212,7 +222,10 @@ export default async function RamperPage() {
         emptyHint="Nothing in the fueling queue."
         actionHref="/fuel/orders?status=confirmed"
         count={awaitingFueled.length}
-        note={earlierNote(fueledEarlier, "/fuel/orders?status=confirmed", "fuel or cancel")}
+        note={notes(
+          earlierNote(fueledEarlier, "/fuel/orders?status=confirmed", "fuel or cancel"),
+          suppliersNote(fueledSuppliers, "fuel"),
+        )}
       >
         {awaitingFueled.map((o) => (
           <TaskRow
@@ -361,6 +374,26 @@ function earlierNote(count: number, href: string, what: string): React.ReactNode
       </Link>
       .
     </>
+  );
+}
+
+/** The notes that apply, or nothing, so an empty note draws no line. */
+function notes(earlier: React.ReactNode, suppliers: React.ReactNode): React.ReactNode {
+  if (!earlier && !suppliers) return null;
+  return (
+    <>
+      {earlier}
+      {suppliers}
+    </>
+  );
+}
+
+function suppliersNote(count: number, what: string): React.ReactNode {
+  if (count === 0) return null;
+  return (
+    <span className="block">
+      {`${count} ${count === 1 ? "is" : "are"} for a supplier that fuels its own orders, to ${what} through its portal.`}
+    </span>
   );
 }
 

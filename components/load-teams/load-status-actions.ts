@@ -4,11 +4,11 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 import { ApiError } from "@/lib/api/client";
-import { acknowledgeLoad, completeLoad, reopenLoad } from "@/lib/api/ground";
+import { acknowledgeLoad, completeLoad, reopenLoad, startLoad } from "@/lib/api/ground";
 
 /**
- * A load team acknowledges a flight's load, marks it complete, or takes
- * "complete" back (#134). Every page that shows where a load stands is
+ * A load team acknowledges a flight's load, starts loading it (LOG-43),
+ * marks it complete, or takes "complete" back (#134). Every page that shows where a load stands is
  * revalidated: the ramper's list, Ramp Ops, the dispatch packet and the
  * pilot's flight.
  */
@@ -64,6 +64,10 @@ async function run(assignmentId: string, act: (id: string) => Promise<unknown>):
 
 export async function acknowledgeLoadAction(assignmentId: string): Promise<LoadActionResult> {
   return run(assignmentId, acknowledgeLoad);
+}
+
+export async function startLoadAction(assignmentId: string): Promise<LoadActionResult> {
+  return run(assignmentId, startLoad);
 }
 
 export async function completeLoadAction(assignmentId: string): Promise<LoadActionResult> {

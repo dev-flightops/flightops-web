@@ -1,3 +1,4 @@
+import { alertIsFor } from "@/lib/alerts/audience";
 import { listAlertAcknowledgments } from "@/lib/api/ops";
 
 import {
@@ -50,9 +51,11 @@ export async function loadUnacknowledgedAlerts(
     viewer ? loadPersonalAlerts(viewer).catch(() => []) : [],
     listAlertAcknowledgments().catch(() => null),
   ]);
+  // Each of the operation's alerts goes to the roles that act on it (LOG-42).
+  const operation = viewer ? snapshot.alerts.filter((a) => alertIsFor(a, viewer.roles)) : snapshot.alerts;
   return applyDismissals(
-    [...snapshot.alerts.filter((a) => a.severity === "red"), ...personal.filter((a) => a.severity === "red"),
-     ...snapshot.alerts.filter((a) => a.severity !== "red"), ...personal.filter((a) => a.severity !== "red")],
+    [...operation.filter((a) => a.severity === "red"), ...personal.filter((a) => a.severity === "red"),
+     ...operation.filter((a) => a.severity !== "red"), ...personal.filter((a) => a.severity !== "red")],
     acks === null ? null : new Map(acks.map((a) => [a.alert_key, a])),
   );
 }

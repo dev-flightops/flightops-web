@@ -1043,6 +1043,10 @@ export interface FuelTypeListResponse {
   total: number;
 }
 
+/** Who puts the fuel in (LOG-42): the company's own ramp, or the
+ *  supplier, through its portal. */
+export type FueledBy = "own_staff" | "supplier";
+
 export interface FuelSupplierResponse {
   id: string;
   name: string;
@@ -1055,6 +1059,7 @@ export interface FuelSupplierResponse {
   billing_terms: string | null;
   notes: string | null;
   is_active: boolean;
+  fueled_by?: FueledBy;
 }
 
 export interface FuelSupplierListResponse {
@@ -1094,6 +1099,9 @@ export type FuelOrderCloseSource = "supplier" | "ramp" | "dispatch" | "pilot";
 export interface FuelOrderSupplierRef {
   id: string;
   name: string;
+  /** "supplier": the supplier confirms and fuels it, so it's off the
+   *  ramp's list (LOG-42). */
+  fueled_by?: FueledBy;
 }
 
 export interface FuelOrderFuelTypeRef {
@@ -1235,6 +1243,8 @@ export interface RampPhotoResponse {
   notes: string | null;
   uploaded_by_user_id: string;
   uploaded_by_name: string | null;
+  /** When it was taken (LOG-43). */
+  created_at?: string | null;
   /** Client-usable URL — /uploads/ramp_photos/{tenant}/{name} today,
    *  can switch to R2 presigned URL later without shape change. */
   url: string;
@@ -2337,6 +2347,9 @@ export interface FlightAssignmentResponse {
   /** The team took the job, and when the load was on (#134). */
   acknowledged_at?: string | null;
   acknowledged_by?: UserRef | null;
+  /** When loading began: the ramp timer (LOG-43). */
+  load_started_at?: string | null;
+  load_started_by?: UserRef | null;
   load_completed_at?: string | null;
   load_completed_by?: UserRef | null;
   photo_count?: number;

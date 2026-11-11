@@ -75,6 +75,7 @@ function supplierPayload(form: SupplierFields): FuelSupplierPayload | string {
     account_number: orNull(form.account_number),
     billing_terms: orNull(form.billing_terms),
     notes: orNull(form.notes),
+    fueled_by: form.fueled_by === "supplier" ? "supplier" : "own_staff",
   };
 }
 

@@ -10,13 +10,15 @@ import {
   acknowledgeLoadAction,
   completeLoadAction,
   reopenLoadAction,
+  startLoadAction,
   type LoadActionResult,
 } from "./load-status-actions";
 
 /**
- * The load team's next step on a flight (#134): Acknowledge, then Load
- * complete; Reopen takes "complete" back after a mis-tap. Called
- * directly rather than as form actions, like the Load Team picker.
+ * The load team's next step on a flight (#134): Acknowledge, Start
+ * loading (the ramp timer, LOG-43), then Load complete; Reopen takes
+ * "complete" back after a mis-tap. Called directly rather than as form
+ * actions, like the Load Team picker.
  */
 export function LoadButtons({
   assignmentId,
@@ -49,6 +51,16 @@ export function LoadButtons({
           className={buttonOutline}
         >
           Acknowledge<span className="sr-only"> the load for {flightNumber}</span>
+        </button>
+      )}
+      {(stage === "assigned" || stage === "acknowledged") && (
+        <button
+          type="button"
+          disabled={pending}
+          onClick={() => run(startLoadAction)}
+          className={buttonOutline}
+        >
+          Start loading<span className="sr-only"> {flightNumber}</span>
         </button>
       )}
       {stage !== "complete" && (

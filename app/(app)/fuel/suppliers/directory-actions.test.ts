@@ -43,6 +43,7 @@ const FIELDS: SupplierFields = {
   account_number: "A-77",
   billing_terms: "Net 30",
   notes: "",
+  fueled_by: "own_staff",
 };
 
 const PRICE: PriceFields = {
@@ -89,8 +90,17 @@ describe("addSupplierAction (#134)", () => {
       account_number: "A-77",
       billing_terms: "Net 30",
       notes: null,
+      fueled_by: "own_staff",
     });
     expect(revalidatePath).toHaveBeenCalledWith("/fuel/suppliers");
+  });
+
+  it("says who fuels: the supplier only when chosen (LOG-42)", async () => {
+    createFuelSupplier.mockResolvedValue({ id: "s-9" });
+    await addSupplierAction({ ...FIELDS, fueled_by: "supplier" });
+    expect(createFuelSupplier).toHaveBeenLastCalledWith(expect.objectContaining({ fueled_by: "supplier" }));
+    await addSupplierAction({ ...FIELDS, fueled_by: "anything" });
+    expect(createFuelSupplier).toHaveBeenLastCalledWith(expect.objectContaining({ fueled_by: "own_staff" }));
   });
 
   it("needs a name, and an email that is one", async () => {
