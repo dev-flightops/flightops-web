@@ -191,6 +191,8 @@ const FREIGHT_FIELDS = [
   "is_hazmat",
   "hazmat_notes",
   "notes",
+  "boards_at",
+  "leaves_at",
 ] as const;
 
 function _values(formData: FormData, fields: readonly string[]): Record<string, string> {
@@ -289,6 +291,14 @@ export async function saveFreightAction(
     return fail("This form lost track of its flight. Refresh the page.");
   }
 
+  // Where it goes on and comes off (LOG-40): only a multi-stop flight's
+  // form asks.
+  const stops = formData.has("boards_at")
+    ? {
+        boards_at: String(formData.get("boards_at") ?? "") || null,
+        leaves_at: String(formData.get("leaves_at") ?? "") || null,
+      }
+    : {};
   let line: CargoInput;
   if (kind === "mail") {
     const parsed = _mailSchema.safeParse(values);
@@ -309,6 +319,7 @@ export async function saveFreightAction(
       consignee: null,
       tracking_number: null,
       notes: v.notes || null,
+      ...stops,
     };
   } else {
     const parsed = _cargoSchema.safeParse(values);
@@ -326,6 +337,7 @@ export async function saveFreightAction(
       consignee: v.consignee || null,
       tracking_number: v.tracking_number || null,
       notes: v.notes || null,
+      ...stops,
     };
   }
 
@@ -334,7 +346,7 @@ export async function saveFreightAction(
       await addCargo(flightId.data, line);
     } else if (kind === "mail") {
       const { description, weight_lbs, pieces, mail_class, notes } = line;
-      await updateCargo(cargoId, { description, weight_lbs, pieces, mail_class, notes });
+      await updateCargo(cargoId, { description, weight_lbs, pieces, mail_class, notes, ...stops });
     } else {
       await updateCargo(cargoId, line);
     }

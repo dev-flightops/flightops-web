@@ -624,3 +624,47 @@ describe("the ramp's photos on the manifest (LOG-43)", () => {
     expect(within(photos).queryByRole("link", { name: /Add photos/ })).toBeNull();
   });
 });
+
+describe("the load by leg (LOG-40)", () => {
+  it("shows each leg's load and says the panel's figures are the tightest leg's", async () => {
+    mocks.auth.mockResolvedValue({ roles: ["dispatcher"] });
+    const legs = [
+      { origin: "PABE", destination: "PAKN", pax_count: 8, pax_weight_lbs: "1600", baggage_lbs: "240", cargo_lbs: "0", mail_lbs: "300", payload_lbs: "2140", fuel_lbs: "600", remaining_lbs: "60" },
+      { origin: "PAKN", destination: "PABE", pax_count: 8, pax_weight_lbs: "1440", baggage_lbs: "160", cargo_lbs: "100", mail_lbs: "0", payload_lbs: "1700", fuel_lbs: "210", remaining_lbs: "-90" },
+    ];
+    mocks.getFlightManifest.mockResolvedValue({
+      ...manifest("draft", { ...BEFORE_FUEL, fuel_lbs: "210", fuel_counted: true, payload_lbs: "1700", remaining_lbs: "-90" }),
+      load: {
+        ...BEFORE_FUEL,
+        fuel_lbs: "210",
+        fuel_counted: true,
+        payload_lbs: "1700",
+        remaining_lbs: "-90",
+        by_leg: legs,
+        leg: "PAKN → PABE",
+        leg_fuel_burned: true,
+      },
+    });
+    await renderPage();
+    const panel = screen.getByRole("region", { name: "Load by leg" });
+    const rows = within(panel)
+      .getAllByRole("row")
+      .slice(1)
+      .map((r) => within(r).getAllByRole("cell").map((c) => c.textContent?.replace(/\s+/g, " ").trim()));
+    expect(rows).toEqual([
+      ["1 PABE → PAKN", "8", "1,840", "0", "300", "600", "60"],
+      ["2 PAKN → PABE", "8", "1,600", "100", "0", "210", "90 over"],
+    ]);
+    expect(panel).toHaveTextContent("Fuel is what each leg leaves with");
+    expect(screen.getByRole("region", { name: "Load" })).toHaveTextContent(
+      "Worked out leg by leg: these are the tightest leg’s, PAKN → PABE, with the fuel it leaves with.",
+    );
+  });
+
+  it("isn't shown for a single leg", async () => {
+    mocks.auth.mockResolvedValue({ roles: ["dispatcher"] });
+    mocks.getFlightManifest.mockResolvedValue(manifest("draft"));
+    await renderPage();
+    expect(screen.queryByRole("region", { name: "Load by leg" })).toBeNull();
+  });
+});

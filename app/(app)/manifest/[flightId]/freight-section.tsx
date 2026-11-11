@@ -31,11 +31,15 @@ export function FreightSection({
   kind,
   rows,
   editable,
+  stops = [],
 }: {
   flightId: string;
   kind: Kind;
   rows: ManifestCargoRow[];
   editable: boolean;
+  /** The flight's stops: with more than two, each line says where it goes
+   *  on and comes off (LOG-40). */
+  stops?: string[];
 }) {
   const [open, setOpen] = useState<string | null>(null);
   const editing = open && open !== "add" ? (rows.find((c) => c.id === open) ?? null) : null;
@@ -95,7 +99,10 @@ export function FreightSection({
                         <td className="whitespace-nowrap px-3 py-2.5">
                           {c.mail_class ? <MailBadge mailClass={c.mail_class} /> : "—"}
                         </td>
-                        <td className="px-3 py-2.5">{c.description}</td>
+                        <td className="px-3 py-2.5">
+                          {c.description}
+                          <LineStops line={c} stops={stops} />
+                        </td>
                         <td className="whitespace-nowrap px-3 py-2.5 text-right font-mono text-xs">{fmtLbs(c.weight_lbs)}</td>
                         <td className="whitespace-nowrap px-3 py-2.5 text-right font-mono text-xs">{c.pieces}</td>
                         <td className="px-3 py-2.5 text-xs text-muted-foreground">{c.notes ?? "—"}</td>
@@ -104,6 +111,7 @@ export function FreightSection({
                       <>
                         <td className="px-3 py-2.5">
                           <div className="font-medium">{c.description}</div>
+                          <LineStops line={c} stops={stops} />
                           {c.notes ? <div className="mt-0.5 text-xs text-muted-foreground">{c.notes}</div> : null}
                         </td>
                         <td className="whitespace-nowrap px-3 py-2.5 text-right font-mono text-xs">{fmtLbs(c.weight_lbs)}</td>
@@ -155,9 +163,26 @@ export function FreightSection({
         )}
       </div>
       {formOpen ? (
-        <FreightForm key={open} flightId={flightId} kind={kind} line={editing} onClose={() => setOpen(null)} />
+        <FreightForm
+          key={open}
+          flightId={flightId}
+          kind={kind}
+          line={editing}
+          stops={stops.length > 2 ? stops : []}
+          onClose={() => setOpen(null)}
+        />
       ) : null}
     </section>
+  );
+}
+
+/** "PABE → PAKN" under a line on a multi-stop flight (LOG-40). */
+function LineStops({ line, stops }: { line: ManifestCargoRow; stops: string[] }) {
+  if (stops.length <= 2) return null;
+  return (
+    <div className="mt-0.5 font-mono text-xs text-muted-foreground">
+      {line.boards_at ?? stops[0]} → {line.leaves_at ?? stops[stops.length - 1]}
+    </div>
   );
 }
 
@@ -165,11 +190,13 @@ function FreightForm({
   flightId,
   kind,
   line,
+  stops,
   onClose,
 }: {
   flightId: string;
   kind: Kind;
   line: ManifestCargoRow | null;
+  stops: string[];
   onClose: () => void;
 }) {
   const [state, formAction, pending] = useActionState(saveFreightAction, _initial);
@@ -245,6 +272,36 @@ function FreightForm({
           className={FIELD}
         />
       </label>
+      {stops.length > 0 ? (
+        <>
+          {/* LOG-40: where it goes on and comes off, so each leg carries
+              its own load. */}
+          <label className="grid gap-1 text-xs">
+            Goes on at
+            <select name="boards_at" defaultValue={value("boards_at", line?.boards_at ?? stops[0])} className={FIELD}>
+              {stops.slice(0, -1).map((icao, i) => (
+                <option key={`${icao}-${i}`} value={icao}>
+                  {`Leg ${i + 1}: ${icao}`}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="grid gap-1 text-xs">
+            Comes off at
+            <select
+              name="leaves_at"
+              defaultValue={value("leaves_at", line?.leaves_at ?? stops[stops.length - 1])}
+              className={FIELD}
+            >
+              {stops.slice(1).map((icao, i) => (
+                <option key={`${icao}-${i}`} value={icao}>
+                  {`Leg ${i + 1}: ${icao}`}
+                </option>
+              ))}
+            </select>
+          </label>
+        </>
+      ) : null}
       {kind === "cargo" ? (
         <>
           <label className="grid gap-1 text-xs">

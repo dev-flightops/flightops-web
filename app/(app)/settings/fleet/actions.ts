@@ -120,7 +120,26 @@ const CreateSchema = z.object({
       message: "Tank capacity must be 0.1-9,999 gal.",
     })
     .transform((v) => (v === null ? null : Number(v))),
+  // Its own fuel burn (LOG-32): pounds an hour for a turbine, gallons for
+  // a piston. Empty, its type's in Settings → Costs.
+  fuel_burn_per_hour: z
+    .string()
+    .trim()
+    .optional()
+    .transform((v) => (v ? v : null))
+    .refine((v) => v === null || (Number.isFinite(Number(v)) && Number(v) > 0 && Number(v) <= 5000), {
+      message: "Fuel burn must be 0.1-5,000 an hour.",
+    })
+    .transform((v) => (v === null ? null : Number(v))),
+  fuel_burn_unit: z
+    .union([z.literal("lb"), z.literal("gal"), z.literal(""), z.undefined()])
+    .transform((v) => (v ? v : null)),
 });
+
+/** A burn goes with its unit; without a burn, no unit (LOG-32). */
+function _burn<T extends { fuel_burn_per_hour?: number | null; fuel_burn_unit?: "lb" | "gal" | null }>(data: T): T {
+  return data.fuel_burn_per_hour == null ? { ...data, fuel_burn_unit: null } : data;
+}
 
 /** Empty at or above max gross is a typo; the API refuses it too. */
 function _weightErrors(data: {
@@ -201,7 +220,7 @@ export async function createAircraftAction(
   const weightErrors = _weightErrors(parsed.data);
   if (weightErrors) return { status: "field-errors", errors: weightErrors };
   try {
-    await createAircraft(parsed.data);
+    await createAircraft(_burn(parsed.data));
   } catch (err) {
     return _apiErrorState(err, "add the aircraft");
   }
@@ -227,7 +246,7 @@ export async function updateAircraftAction(
   const weightErrors = _weightErrors(parsed.data);
   if (weightErrors) return { status: "field-errors", errors: weightErrors };
   try {
-    await updateAircraft(aircraftId, parsed.data);
+    await updateAircraft(aircraftId, _burn(parsed.data));
   } catch (err) {
     return _apiErrorState(err, "save the aircraft");
   }

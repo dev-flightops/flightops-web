@@ -71,6 +71,10 @@ export interface ManifestCargoRow {
   notes: string | null;
   /** The waiting load it was taken from (#75), if any. */
   waiting_load_id?: string | null;
+  /** Where it goes on and comes off (LOG-40); null is the origin /
+   *  destination. */
+  boards_at?: string | null;
+  leaves_at?: string | null;
 }
 
 export interface ManifestTotals {
@@ -129,6 +133,28 @@ export interface ManifestLoad {
    *  recorded; the useful load is then their difference (#111). */
   max_gross_weight_lbs?: number | null;
   empty_weight_lbs?: number | null;
+  /** A multi-stop flight's legs, each with its own load (LOG-40). The
+   *  figures above are then the tightest leg's, named in `leg`. */
+  by_leg?: LegLoad[];
+  leg?: string | null;
+  /** False when the legs after the first carry the first leg's fuel, for
+   *  want of a fuel burn. */
+  leg_fuel_burned?: boolean;
+}
+
+/** One leg's load (LOG-40). */
+export interface LegLoad {
+  origin: string;
+  destination: string;
+  pax_count: number;
+  pax_weight_lbs: string;
+  baggage_lbs: string;
+  cargo_lbs: string;
+  mail_lbs: string;
+  payload_lbs: string;
+  /** The fuel it leaves with. */
+  fuel_lbs: string | null;
+  remaining_lbs: string | null;
 }
 
 export interface PassengerTally {
@@ -249,6 +275,10 @@ export interface CargoInput {
   consignee: string | null;
   tracking_number: string | null;
   notes: string | null;
+  /** Where it goes on and comes off (LOG-40); null is the origin /
+   *  destination. */
+  boards_at?: string | null;
+  leaves_at?: string | null;
 }
 
 /** GET the manifest for a given flight. 404 if none created yet. */

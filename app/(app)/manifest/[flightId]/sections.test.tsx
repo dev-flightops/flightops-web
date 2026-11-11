@@ -197,4 +197,24 @@ describe("USPS Mail and Cargo & Freight (#62)", () => {
     expect((within(form).getByLabelText("Hazardous materials") as HTMLInputElement).checked).toBe(true);
     expect((within(form).getByLabelText("HazMat Class / Notes") as HTMLInputElement).value).toBe("Class 9");
   });
+
+  it("says where freight goes on and comes off on a flight with stops (LOG-40)", () => {
+    const route = ["PABE", "PAKN", "PABE"];
+    const home = line({ id: "c-7", description: "Freight home", boards_at: "PAKN", leaves_at: null });
+    render(<FreightSection flightId={FLIGHT} kind="cargo" rows={[home]} editable stops={route} />);
+    expect(screen.getByText("PAKN → PABE")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Edit" }));
+    const form = screen.getByRole("form", { name: "Edit Freight home" });
+    const on = within(form).getByLabelText("Goes on at") as HTMLSelectElement;
+    const off = within(form).getByLabelText("Comes off at") as HTMLSelectElement;
+    expect([...on.options].map((o) => o.text)).toEqual(["Leg 1: PABE", "Leg 2: PAKN"]);
+    expect(on.value).toBe("PAKN");
+    expect(off.value).toBe("PABE");
+  });
+
+  it("doesn't ask on a single-leg flight", () => {
+    render(<FreightSection flightId={FLIGHT} kind="cargo" rows={[line()]} editable stops={["PANC", "PABE"]} />);
+    fireEvent.click(screen.getByRole("button", { name: "Edit" }));
+    expect(screen.queryByLabelText("Goes on at")).toBeNull();
+  });
 });
