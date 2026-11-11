@@ -268,14 +268,18 @@ export const LEGACY_REDIRECTS: readonly (readonly [from: string, to: string])[] 
   ["/records/forms", "/employees"],
   ["/records/employee-files", "/employees"],
   ["/records/employee-files/:id", "/employees"],
-  ["/records/dat", "/employees"],
-  ["/records/dat/collectors", "/employees"],
-  ["/records/dat/employee/:id", "/employees"],
-  ["/records/dat/pool", "/employees"],
-  ["/records/dat/report/annual", "/employees"],
-  ["/records/dat/result-codes", "/employees"],
-  ["/records/dat/selection/:id", "/employees"],
-  ["/records/dat/types", "/employees"],
+  // Drug and alcohol testing. Legacy's numeric ids don't carry over, so one
+  // person or one selection lands on the page that lists them; the test
+  // types and result codes are fixed now, so their pages land on the
+  // program's dashboard.
+  ["/records/dat", "/employees/drug-alcohol"],
+  ["/records/dat/collectors", "/employees/drug-alcohol/collectors"],
+  ["/records/dat/employee/:id", "/employees/drug-alcohol/pool"],
+  ["/records/dat/pool", "/employees/drug-alcohol/pool"],
+  ["/records/dat/report/annual", "/employees/drug-alcohol/report"],
+  ["/records/dat/result-codes", "/employees/drug-alcohol"],
+  ["/records/dat/selection/:id", "/employees/drug-alcohol/pool"],
+  ["/records/dat/types", "/employees/drug-alcohol"],
   // Employee onboarding (#180). Legacy's numeric ids don't carry over, so
   // one checklist or one hire lands on the list it's in.
   ["/records/onboarding", "/employees/onboarding"],

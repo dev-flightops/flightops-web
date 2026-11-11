@@ -771,6 +771,14 @@ export const DEPARTMENTS: Department[] = [
         department: "hr",
       },
       {
+        // DOT drug and alcohol testing, legacy's /records/dat (Greg, 11 Nov).
+        id: "hr-drug-alcohol",
+        label: "Drug & Alcohol",
+        href: "/employees/drug-alcohol",
+        status: "live",
+        department: "hr",
+      },
+      {
         id: "hr-payroll",
         label: "Payroll",
         href: "/payroll",
@@ -1258,9 +1266,18 @@ export function visibleAiTools(roles: readonly string[]): AiTool[] {
 export const MODULE_ROLES: Record<string, readonly Role[]> = {
   // HR is employee records and pay: the Exec Admin and DO. Onboarding is
   // also run by the Chief Pilot, DOM and Safety Officer (#180), which is
-  // why the department admits them; it shows them that module alone.
+  // why the department admits them; it shows them that module and Drug &
+  // Alcohol, where they see who's cleared.
   "hr-employees": ["exec_admin", "director_of_operations"],
   "hr-onboarding": [
+    "exec_admin",
+    "director_of_operations",
+    "chief_pilot",
+    "director_of_maintenance",
+    "safety_officer",
+  ],
+  // The leaders see who's cleared; the DER and the Exec Admins run it.
+  "hr-drug-alcohol": [
     "exec_admin",
     "director_of_operations",
     "chief_pilot",

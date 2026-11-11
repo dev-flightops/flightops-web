@@ -67,7 +67,7 @@ describe("the outstanding count", () => {
   });
 });
 
-describe("Onboarding (#180) and the unbuilt tab", () => {
+describe("Onboarding (#180) and Drug & Alcohol", () => {
   it("shows Onboarding, linked, with what's required before starting", () => {
     render(<RecordTabs employeeId="u-1" active="profile" requiredOpen={2} />);
     const tab = screen.getByRole("link", { name: /Onboarding/ });
@@ -81,11 +81,17 @@ describe("Onboarding (#180) and the unbuilt tab", () => {
     expect(screen.queryByTitle(/required before starting/)).not.toBeInTheDocument();
   });
 
-  // Drug & Alcohol isn't built. Shown dimmed and marked "Not built", the
-  // client counted such tabs as faults; it isn't shown until it's built (#134).
-  it("doesn't show Drug & Alcohol", () => {
-    render(<RecordTabs employeeId="u-1" active="profile" />);
-    expect(screen.queryByText("Drug & Alcohol")).not.toBeInTheDocument();
+  it("shows Drug & Alcohol, linked, marked when they aren't cleared", () => {
+    render(<RecordTabs employeeId="u-1" active="profile" notCleared />);
+    const tab = screen.getByRole("link", { name: /Drug & Alcohol/ });
+    expect(tab).toHaveAttribute("href", "/employees/u-1?tab=drug-alcohol");
+    expect(screen.getByTitle("Not cleared for safety-sensitive duty")).toBeInTheDocument();
     expect(screen.queryByText("Not built")).not.toBeInTheDocument();
+  });
+
+  it("doesn't mark Drug & Alcohol for someone cleared or not safety-sensitive", () => {
+    render(<RecordTabs employeeId="u-1" active="drug-alcohol" />);
+    expect(screen.getByText("Drug & Alcohol")).toHaveAttribute("aria-current", "page");
+    expect(screen.queryByTitle("Not cleared for safety-sensitive duty")).not.toBeInTheDocument();
   });
 });
