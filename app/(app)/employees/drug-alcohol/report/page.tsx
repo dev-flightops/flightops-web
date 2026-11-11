@@ -33,9 +33,9 @@ function Table({ title, columns, rows }: { title: string; columns: string[]; row
         <table className="ff-table w-full text-xs">
           <thead className="ff-thead">
             <tr>
-              <th className="min-w-[10rem]">Type of Test</th>
+              <th className="min-w-[8rem]">Type of Test</th>
               {columns.map((c, i) => (
-                <th key={c} className="min-w-[5.5rem] text-right align-bottom">
+                <th key={c} className="min-w-[4.5rem] text-right align-bottom">
                   <span className="block font-mono text-muted-foreground">{i + 1}</span>
                   {c}
                 </th>

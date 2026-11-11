@@ -173,7 +173,7 @@ describe("tests", () => {
     );
     expect(await returnToDutyAction(USER, "test-1")).toEqual({
       ok: false,
-      message: "Not yet: 8 hours after the test is 02 May 2026 02:00Z.",
+      message: "Not yet: 8 hours haven't passed since the test.",
     });
   });
 });

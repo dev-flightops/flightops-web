@@ -318,12 +318,10 @@ export async function returnToDutyAction(userId: string, testId: string): Promis
   } catch (err) {
     if (err instanceof ApiError && err.status === 409) {
       try {
-        const detail = (JSON.parse(err.message) as { detail?: { error?: string; hold_ends_at?: string } }).detail;
-        if (detail?.error === "too_soon" && detail.hold_ends_at) {
-          return {
-            ok: false,
-            message: `Not yet: 8 hours after the test is ${new Date(detail.hold_ends_at).toUTCString().slice(5, 22)}Z.`,
-          };
+        const detail = (JSON.parse(err.message) as { detail?: { error?: string } }).detail;
+        // The test's row says when, in the company's time.
+        if (detail?.error === "too_soon") {
+          return { ok: false, message: "Not yet: 8 hours haven't passed since the test." };
         }
       } catch {
         // Fall through to the service's sentence.
