@@ -11,10 +11,12 @@ import {
   getEmployeeChecklist,
   type ChecklistResponse,
 } from "@/lib/api/employee-documents";
+import { getEmployeeTests, type EmployeeTests } from "@/lib/api/drug-alcohol";
 import { getEmployeeOnboarding, listChecklists, type EmployeeOnboarding } from "@/lib/api/onboarding";
 import { getAirmanRecord, listDisqualifications } from "@/lib/api/ops";
 
 import { DocumentsPanel } from "./documents-panel";
+import { DrugAlcoholPanel } from "./drug-alcohol-panel";
 import { EmployeeRecord } from "./employee-record";
 import { OnboardingPanel } from "./onboarding-panel";
 import { RecordTabs, type RecordTab } from "./record-tabs";
@@ -44,7 +46,7 @@ export default async function EmployeeDetailPage({
   const { employeeId } = await params;
   const { tab: tabParam } = await searchParams;
   const tab: RecordTab =
-    tabParam === "documents" ? "documents" : tabParam === "onboarding" ? "onboarding" : "profile";
+    tabParam === "documents" || tabParam === "onboarding" || tabParam === "drug-alcohol" ? tabParam : "profile";
 
   let employee;
   try {
@@ -121,14 +123,48 @@ export default async function EmployeeDetailPage({
     .filter((a) => a.status === "in_progress")
     .reduce((n, a) => n + a.progress.required_open, 0);
 
+  // Drug and alcohol tests: the record is the Exec Admins', who run the
+  // program, so the tab can say when someone safety-sensitive isn't cleared.
+  let tests: EmployeeTests | null = null;
+  let testsError: string | null = null;
+  try {
+    tests = await getEmployeeTests(employeeId);
+  } catch (err) {
+    testsError =
+      err instanceof ApiError && err.status === 403
+        ? "Test records are for the program's DER, the alternate DER and the Exec Admins."
+        : "Their tests are unavailable. Try refreshing in a moment.";
+  }
+
   const tabs = (
     <RecordTabs
       employeeId={employeeId}
       active={tab}
       outstanding={checklist?.outstanding}
       requiredOpen={requiredOpen}
+      notCleared={Boolean(
+        tests?.program_open && tests.person.covered && tests.person.clearance && !tests.person.clearance.cleared,
+      )}
     />
   );
+
+  if (tab === "drug-alcohol") {
+    const zones = await loadZoneTable().catch(() => null);
+    return (
+      <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
+        <Link href="/employees" className={cn(linkCaps, "text-muted-foreground hover:text-foreground")}>
+          <span aria-hidden>‹</span> Employees
+        </Link>
+        <header className="mb-6 border-b border-border pb-5">
+          <h1 className="truncate page-title">
+            {employee.preferred_name?.trim() || employee.full_name}
+          </h1>
+        </header>
+        {tabs}
+        <DrugAlcoholPanel tests={tests} loadError={testsError} zone={zones?.fallback ?? "America/Anchorage"} />
+      </div>
+    );
+  }
 
   if (tab === "onboarding") {
     const [checklists, staff, zones] = await Promise.all([

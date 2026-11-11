@@ -1693,14 +1693,14 @@ export const HELP_ENTRIES: HelpEntry[] = [
       "Certifications appear on the record for anyone holding an airman certificate.",
       "Use the Documents tab for the documents required of them, and to file one.",
       "Use the Onboarding tab for the checklists assigned to them and what's still required before they start.",
+      "Use the Drug & Alcohol tab for their tests and whether they're cleared for safety-sensitive duty.",
     ],
     worthKnowing: [
       "Exec Admin only, and deliberately: the record carries a date of birth, a home address and an emergency contact. That is also why an employee cannot currently open their own record.",
-      "A dedicated Drug & Alcohol workflow is not available yet. Maintain those records through the operator’s approved process; the employee directory does not manage them.",
     ],
     connectsTo:
       "The certificate record is the same 135.63 record the compliance profile shows. Required documents are defined once in Settings and appear on everyone they apply to.",
-    related: ["/employees/onboarding", "/settings/document-requirements", "/compliance/crew-currency", "/payroll"],
+    related: ["/employees/onboarding", "/employees/drug-alcohol", "/settings/document-requirements", "/compliance/crew-currency", "/payroll"],
   },
   {
     route: "/employees/onboarding",
@@ -1750,6 +1750,92 @@ export const HELP_ENTRIES: HelpEntry[] = [
     ],
     worthKnowing: ["A task you've done leaves the list. Whoever runs onboarding can reopen it if it needs doing again."],
     related: ["/employees/onboarding", "/home"],
+  },
+  {
+    route: "/employees/drug-alcohol",
+    title: "Drug & Alcohol Testing",
+    whoCanUse: ["exec_admin", "director_of_operations", "chief_pilot", "director_of_maintenance", "safety_officer"],
+    whatItDoes:
+      "The company's DOT drug and alcohol testing program (14 CFR 120, 49 CFR 40). The program's Designated Employer Representative (DER), the alternate DER and the Exec Admins see everything: the year's random testing rates, who isn't cleared for safety-sensitive duty and why, who's waiting on a random test, and tests waiting on a result. The Director of Operations, Chief Pilot, Director of Maintenance and Safety Officer see who's cleared, yes or no, and who the DER is.",
+    howToUse: [
+      "Name the DER on the Program tab first; until then only the Exec Admins can open the program.",
+      "Make random selections on the Random Pool tab, then enter each test from the person's page.",
+      "Open someone from Not Cleared to see why, and what clears them.",
+    ],
+    worthKnowing: [
+      "Cleared means a negative pre-employment drug test on file (taken no more than 180 days before their hire date) and not removed from duty: a positive or a refusal clears with a negative return-to-duty test, an alcohol result of 0.02 to 0.039 when the DER returns them at their next duty period, never sooner than 8 hours after the test.",
+      "Test results are confidential (49 CFR 40.321). The leaders, Settings → Users and Home show only that someone isn't cleared, never why.",
+      "With the release check on (Program tab), release refuses a PIC or SIC who isn't cleared.",
+    ],
+    related: ["/employees/drug-alcohol/pool", "/employees/drug-alcohol/report", "/employees/drug-alcohol/program", "/employees/drug-alcohol/my-tests"],
+  },
+  {
+    route: "/employees/drug-alcohol/pool",
+    title: "Random testing pool",
+    whoCanUse: ["exec_admin"],
+    whatItDoes:
+      "The safety-sensitive employees subject to random testing, and the random selections. For the program's DER, the alternate DER and the Exec Admins.",
+    howToUse: [
+      "Everyone holding one of the program's safety-sensitive roles is in the pool. Change someone to add them, or leave them out (on leave, say) with the reason, and set their FAA category if their role doesn't say it.",
+      "Draw a selection here: pick drug, alcohol or both and how many. Or enter the list your consortium drew.",
+      "Open a selection, record when you tell each person, then enter their test. Excuse someone with the reason.",
+    ],
+    worthKnowing: [
+      "A draw keeps the pool it was drawn from and its seed: the same seed over the same pool picks the same people, which shows the draw was fair. Everyone in the pool is equally likely each time.",
+      "Random tests are unannounced, so FlightOps doesn't tell anyone they've been drawn. Once told, they go straight to the collection site.",
+    ],
+    related: ["/employees/drug-alcohol", "/employees/drug-alcohol/program"],
+  },
+  {
+    route: "/employees/drug-alcohol/report",
+    title: "Annual MIS report",
+    whoCanUse: ["exec_admin"],
+    whatItDoes:
+      "The DOT MIS Data Collection form (DOT F 1385) for a calendar year, the annual reports of 14 CFR 120.119 (drug) and 120.219(b) (alcohol), due 15 March for the year before. One form per FAA employee category, filled in from the year's tests.",
+    howToUse: [
+      "Pick the year. Enter any results still pending first: they aren't counted.",
+      "Copy the figures into the DOT's MIS system, or give them to your consortium.",
+      "Once the year is over, certify it with the certifying official's name. If a test changes later, the report says so.",
+    ],
+    worthKnowing: [
+      "Part 121 carriers, and other operators with 50 or more safety-sensitive employees on 1 January, file every year; others when the FAA asks.",
+      "Covered employees and the random rate are measured against the average of the year's selection pools (14 CFR 120.109(b)(6)); random positives, negatives and refusals count toward the rate, cancelled tests don't.",
+    ],
+    related: ["/employees/drug-alcohol", "/employees/drug-alcohol/program"],
+  },
+  {
+    route: "/employees/drug-alcohol/collectors",
+    title: "Collectors, MROs and labs",
+    whoCanUse: ["exec_admin"],
+    whatItDoes:
+      "The collection sites, Medical Review Officers, laboratories and consortiums the company's tests name, with their contacts and after-hours numbers.",
+    howToUse: ["Add each one you use; pick them when entering a test.", "Switch one off when you stop using it: tests that name it keep it."],
+    related: ["/employees/drug-alcohol"],
+  },
+  {
+    route: "/employees/drug-alcohol/program",
+    title: "Drug and alcohol program settings",
+    whoCanUse: ["exec_admin"],
+    whatItDoes:
+      "Who the DER and the alternate DER are, the random testing rates, the roles in the random pool, and what the MIS form's employer section says. Also the switch that holds the release for a pilot who isn't cleared.",
+    howToUse: [
+      "Name the DER and an alternate: with the Exec Admins, they see the results and run the program.",
+      "Keep the rates at or above the FAA's minimums: 25% for drugs and 10% for alcohol in 2026.",
+      "Turn the release check on once everyone's tests are entered. The Director of Operations or an Exec Admin can.",
+    ],
+    related: ["/employees/drug-alcohol", "/settings/currency"],
+  },
+  {
+    route: "/employees/drug-alcohol/my-tests",
+    title: "My drug and alcohol tests",
+    whatItDoes:
+      "Your own drug and alcohol tests, their documents, and whether you're cleared for safety-sensitive duty, with why not.",
+    howToUse: [
+      "Open a test's documents, such as the custody and control form, from its row.",
+      "Ask the DER, named at the top, about any test or why you aren't cleared.",
+    ],
+    worthKnowing: ["A random selection you're on isn't shown here: random tests are unannounced, and the DER tells you when to go."],
+    related: ["/employees/drug-alcohol"],
   },
   {
     route: "/time-clock",

@@ -96,6 +96,11 @@ export interface ReleaseGateInput {
    *  limits (`plansOutOfLimits`). Null when the plans couldn't be read:
    *  release still refuses server-side. */
   planBalance?: PlanBalanceIssue[] | null;
+  /** The pilots on the flight not cleared under the drug and alcohol
+   *  program, where the company holds the release on it (ops `GET
+   *  /flights/{id}/crew-clearance`). Null when it couldn't be read or the
+   *  release doesn't hold on it. */
+  crewNotCleared?: { full_name: string; seat: "pic" | "sic" }[] | null;
 }
 
 export interface PlanBalanceIssue {
@@ -132,6 +137,7 @@ export function computeReleaseBlockers(input: ReleaseGateInput): string[] {
     fratBlockers = null,
     releaseLoad = null,
     planBalance = null,
+    crewNotCleared = null,
   } = input;
 
   const blockers: string[] = [];
@@ -156,6 +162,16 @@ export function computeReleaseBlockers(input: ReleaseGateInput): string[] {
       const n = sic.hard_blocks.length;
       blockers.push(
         `SIC ${sic.pilot.full_name} has ${n} hard-block currency item${n === 1 ? "" : "s"} — assign a current SIC or clear them before release.`,
+      );
+    }
+  }
+
+  // Drug and alcohol, where the company holds the release on it: the
+  // server refuses next, before the soft warnings. Never why (49 CFR 40.321).
+  if (hasSelectedFlight && crewNotCleared) {
+    for (const p of crewNotCleared) {
+      blockers.push(
+        `${p.seat === "pic" ? "PIC" : "SIC"} ${p.full_name} isn't cleared for safety-sensitive duty under the drug and alcohol program — ask the DER.`,
       );
     }
   }

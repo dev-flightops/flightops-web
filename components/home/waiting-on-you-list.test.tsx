@@ -5,7 +5,7 @@ import type { HandoffItem } from "@/lib/api/types";
 
 import { myTask } from "@/app/(app)/employees/onboarding/test-fixtures";
 
-import { WaitingOnYouList } from "./waiting-on-you-list";
+import { WaitingOnYouList, drugAlcoholLines } from "./waiting-on-you-list";
 
 const item = (over: Partial<HandoffItem> = {}): HandoffItem => ({
   kind: "release_to_accept",
@@ -66,3 +66,33 @@ describe("onboarding tasks in Waiting on you (#180)", () => {
   });
 });
 
+describe("the drug and alcohol program in Waiting on you", () => {
+  it("gives whoever runs it what's waiting, and the leaders who isn't cleared", () => {
+    render(
+      <WaitingOnYouList
+        items={[]}
+        drugAlcohol={{
+          runs_program: true,
+          sees_clearance: true,
+          not_cleared: 2,
+          to_test: 1,
+          pending_results: 3,
+          ready_to_return: 0,
+        }}
+      />,
+    );
+    expect(screen.getByText("Drug & alcohol: 1 random test to collect")).toBeInTheDocument();
+    expect(screen.getByText("Drug & alcohol: 3 tests waiting on a result")).toBeInTheDocument();
+    expect(screen.getByText("Drug & alcohol: 2 people not cleared for safety-sensitive duty")).toBeInTheDocument();
+    expect(screen.queryByText(/return to duty/)).not.toBeInTheDocument();
+    expect(screen.getByText("3 to do")).toBeInTheDocument();
+  });
+
+  it("tells a leader only how many aren't cleared, and to ask the DER", () => {
+    expect(drugAlcoholLines({ runs_program: false, sees_clearance: true, not_cleared: 1 })).toEqual([
+      expect.objectContaining({ title: "1 person not cleared for safety-sensitive duty", detail: "Ask the DER about them." }),
+    ]);
+    expect(drugAlcoholLines({ runs_program: false, sees_clearance: false })).toEqual([]);
+    expect(drugAlcoholLines(null)).toEqual([]);
+  });
+});

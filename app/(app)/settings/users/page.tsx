@@ -7,6 +7,7 @@ import { EditUserDialog } from "@/components/settings/users/edit-user-dialog";
 import { SetPasswordDialog } from "@/components/settings/users/set-password-dialog";
 import { listMyTenants, listRoles, listUsers } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
+import { getClearance } from "@/lib/api/drug-alcohol";
 import { listRequiredOpen } from "@/lib/api/onboarding";
 import type { RoleSummary, UserResponse } from "@/lib/api/types";
 
@@ -65,6 +66,15 @@ export default async function SettingsUsersPage() {
     : await listRequiredOpen()
         .then((r) => new Map(r.employees.map((e) => [e.employee.id, e.tasks.length])))
         .catch(() => new Map<string, number>());
+
+  // Safety-sensitive and not cleared under the drug and alcohol program
+  // (Greg, 11 Nov): shown, and held at release only where the company's
+  // switch is on. Losing it costs the note.
+  const notCleared = unauthorized
+    ? new Set<string>()
+    : await getClearance()
+        .then((r) => new Set(r.program_open ? r.items.filter((i) => !i.cleared).map((i) => i.user_id) : []))
+        .catch(() => new Set<string>());
 
   const session = await auth();
   const myId = session?.user?.id ?? null;
@@ -132,6 +142,7 @@ export default async function SettingsUsersPage() {
             roleLabel={roleLabel}
             myId={myId}
             requiredOpen={requiredOpen}
+            notCleared={notCleared}
           />
         </section>
       )}
@@ -148,6 +159,7 @@ export default async function SettingsUsersPage() {
               roleLabel={roleLabel}
               myId={myId}
               requiredOpen={requiredOpen}
+              notCleared={notCleared}
               muted
             />
           </div>
@@ -175,6 +187,7 @@ function UsersTable({
   roleLabel,
   myId,
   requiredOpen,
+  notCleared,
   muted,
 }: {
   users: UserResponse[];
@@ -182,6 +195,7 @@ function UsersTable({
   roleLabel: (id: string) => string;
   myId: string | null;
   requiredOpen: Map<string, number>;
+  notCleared: Set<string>;
   muted?: boolean;
 }) {
   return (
@@ -222,6 +236,14 @@ function UsersTable({
                     >
                       {requiredOpen.get(u.id)} onboarding task
                       {requiredOpen.get(u.id) === 1 ? "" : "s"} required before starting
+                    </Link>
+                  )}
+                  {notCleared.has(u.id) && (
+                    <Link
+                      href={`/employees/${u.id}?tab=drug-alcohol`}
+                      className="text-[0.7rem] font-semibold text-status-red hover:underline"
+                    >
+                      Not cleared for safety-sensitive duty (drug and alcohol)
                     </Link>
                   )}
                 </div>

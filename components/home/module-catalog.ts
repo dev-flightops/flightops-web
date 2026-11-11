@@ -81,6 +81,15 @@ export const HOME_MODULES: HomeModule[] = [
     status: "live",
   },
   {
+    // The DER runs it from here; the leaders see who's cleared, and the
+    // people tested their own tests (Greg, 11 Nov).
+    id: "drug-alcohol",
+    label: "Drug & Alcohol",
+    sub: "DOT testing program",
+    href: "/employees/drug-alcohol",
+    status: "live",
+  },
+  {
     id: "academy",
     label: "Academy",
     sub: "Training & courses",
@@ -228,6 +237,19 @@ export const HOME_MODULE_ROLES: Record<string, readonly Role[]> = {
     "chief_pilot",
     "director_of_maintenance",
     "safety_officer",
+  ],
+  // The leaders, and the roles tested by default, who see their own tests.
+  // A DER outside these reaches it from Waiting on you.
+  "drug-alcohol": [
+    "exec_admin",
+    "director_of_operations",
+    "chief_pilot",
+    "director_of_maintenance",
+    "safety_officer",
+    "pilot",
+    "check_airman",
+    "dispatcher",
+    "maintenance",
   ],
   housing: ["exec_admin", "director_of_operations", "ground_ops"],
   // Matches billing-service's customer-invoice routes plus

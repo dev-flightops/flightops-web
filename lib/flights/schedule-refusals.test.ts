@@ -69,4 +69,14 @@ describe("releaseRefusal (#155)", () => {
       "Release blocked — ForeFlight's weight and balance is outside limits: Takeoff CG 48.2 in is aft of the limit 47.9. Fix the load or the plan in ForeFlight, then bring the plan back.",
     );
   });
+
+  it("names a pilot not cleared under the drug and alcohol program, and not why", () => {
+    expect(
+      releaseRefusal(
+        body({ error: "crew_not_cleared", crew: [{ user_id: "u-1", full_name: "Pat Pilot", seat: "pic" }] }),
+      ),
+    ).toBe(
+      "Release blocked — PIC Pat Pilot isn't cleared for safety-sensitive duty under the drug and alcohol program. Ask the DER, or put another pilot on the flight.",
+    );
+  });
 });

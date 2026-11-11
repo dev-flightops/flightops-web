@@ -7,6 +7,7 @@ import { POST as reportMediaProgress } from "./academy/enrollments/[enrollmentId
 import { GET as lessonMedia } from "./academy/media/[mediaId]/route";
 import { GET as documentDownload } from "./documents/[documentId]/download/route";
 import { GET as versionDownload } from "./documents/[documentId]/versions/[versionNumber]/download/route";
+import { GET as drugAlcoholFile } from "./drug-alcohol/files/[fileId]/download/route";
 import { GET as employeeDocumentDownload } from "./employee-documents/[documentId]/download/route";
 import { GET as gseDocument } from "./gse-documents/[documentId]/route";
 import { GET as rampPhoto } from "./ramp-photos/[photoId]/route";
@@ -69,6 +70,12 @@ const ROUTES: { name: string; handler: Handler; params: Record<string, string>; 
     handler: gseDocument as Handler,
     params: { documentId: "g-1" },
     backend: "https://gw.example/ground/gse/documents/g-1/file",
+  },
+  {
+    name: "drug and alcohol test document",
+    handler: drugAlcoholFile as Handler,
+    params: { fileId: "f-1" },
+    backend: "https://gw.example/drug-alcohol/files/f-1/download",
   },
 ];
 

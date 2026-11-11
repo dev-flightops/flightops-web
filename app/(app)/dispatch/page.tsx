@@ -32,6 +32,7 @@ import { RightColumn } from "@/components/dispatch/packet/right-column";
 import { SelectedFlightSummary } from "@/components/dispatch/packet/selected-flight-summary";
 import { ApiError } from "@/lib/api/client";
 import { listMyTenants, listStaff, loadZoneTable } from "@/lib/api/auth";
+import { getCrewClearance } from "@/lib/api/drug-alcohol";
 import { getFlightPlans, getPlansWaiting } from "@/lib/api/integrations";
 import { listFlightCrew } from "@/lib/api/crew-assignments";
 import {
@@ -387,6 +388,8 @@ export default async function DispatchPage({
   // #181 — the pilot's ForeFlight plan's weight and balance, as release
   // holds it. Soft-fails to null: release refuses server-side regardless.
   const flightPlans = selectedFlight ? await getFlightPlans(selectedFlight.id).catch(() => null) : null;
+  // Drug and alcohol: the pilots not cleared, where the release holds on it.
+  const crewClearance = selectedFlight ? await getCrewClearance(selectedFlight.id).catch(() => null) : null;
 
   // The Generate-PDF release gate (PIC currency, NOTAM acks, stale
   // weather) lives in one pure, unit-tested function so the precedence
@@ -418,6 +421,7 @@ export default async function DispatchPage({
           : frat.release_blockers ?? null,
     releaseLoad: releaseLoad?.release ?? null,
     planBalance: flightPlans ? plansOutOfLimits(flightPlans.plans) : null,
+    crewNotCleared: crewClearance?.blocks ? crewClearance.crew.filter((c) => !c.cleared) : null,
   };
   const releaseBlockers = computeReleaseBlockers(releaseGate);
   const hardBlockReason = computeHardBlockReason(releaseGate);
