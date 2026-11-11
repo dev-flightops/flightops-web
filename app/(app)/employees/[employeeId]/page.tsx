@@ -142,7 +142,9 @@ export default async function EmployeeDetailPage({
       active={tab}
       outstanding={checklist?.outstanding}
       requiredOpen={requiredOpen}
-      notCleared={Boolean(tests?.person.covered && tests.person.clearance && !tests.person.clearance.cleared)}
+      notCleared={Boolean(
+        tests?.program_open && tests.person.covered && tests.person.clearance && !tests.person.clearance.cleared,
+      )}
     />
   );
 

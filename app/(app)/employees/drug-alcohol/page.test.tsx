@@ -36,6 +36,7 @@ function access(over: Partial<DrugAlcoholAccess> = {}): DrugAlcoholAccess {
   return {
     runs_program: false,
     sees_clearance: false,
+    program_open: true,
     der: DER,
     alternate_der: null,
     der_phone: "907-555-0100",
@@ -92,6 +93,7 @@ function testRecord(over: Partial<TestRecord> = {}): TestRecord {
 function overview(over: Partial<Overview> = {}): Overview {
   return {
     year: 2026,
+    program_open: true,
     program: {
       saved: true,
       der: DER,
@@ -154,6 +156,7 @@ describe("/employees/drug-alcohol", () => {
     api.getDrugAlcoholAccess.mockResolvedValueOnce(access({ sees_clearance: true }));
     api.getClearance.mockResolvedValueOnce({
       release_blocks: false,
+      program_open: true,
       items: [
         { user_id: "u-1", full_name: "Nina Hale", roles: ["pilot"], in_pool: true, cleared: true },
         { user_id: "u-2", full_name: "Pat Pilot", roles: ["pilot"], in_pool: true, cleared: false },
@@ -166,6 +169,14 @@ describe("/employees/drug-alcohol", () => {
     expect(screen.queryByText(/pre-employment/)).not.toBeInTheDocument();
     expect(screen.getByText("1 of 2 not cleared.")).toBeInTheDocument();
     expect(screen.getByText("release switch")).toBeInTheDocument();
+  });
+
+  it("tells a leader the program isn't set up yet, rather than flag everyone", async () => {
+    api.getDrugAlcoholAccess.mockResolvedValueOnce(access({ sees_clearance: true, der: null }));
+    api.getClearance.mockResolvedValueOnce({ release_blocks: false, program_open: false, items: [] });
+    render(await DrugAlcoholPage());
+    expect(screen.getByText(/hasn’t set up its drug and alcohol program here yet/)).toBeInTheDocument();
+    expect(screen.queryByText("Not cleared")).not.toBeInTheDocument();
   });
 
   it("points anyone else at their own tests and the DER", async () => {

@@ -73,7 +73,7 @@ export default async function SettingsUsersPage() {
   const notCleared = unauthorized
     ? new Set<string>()
     : await getClearance()
-        .then((r) => new Set(r.items.filter((i) => !i.cleared).map((i) => i.user_id)))
+        .then((r) => new Set(r.program_open ? r.items.filter((i) => !i.cleared).map((i) => i.user_id) : []))
         .catch(() => new Set<string>());
 
   const session = await auth();

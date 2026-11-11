@@ -309,6 +309,11 @@ async function LeaderView({ access }: { access: DrugAlcoholAccess }) {
         <Notice tone="yellow" role="alert">
           {loadError ?? "The drug and alcohol program is unavailable."}
         </Notice>
+      ) : !list.program_open ? (
+        <EmptyState>
+          The company hasn&rsquo;t set up its drug and alcohol program here yet. An Exec Admin names its DER on the
+          program&rsquo;s Program tab; then who&rsquo;s cleared shows here.
+        </EmptyState>
       ) : list.items.length === 0 ? (
         <EmptyState>No one safety-sensitive on the staff yet.</EmptyState>
       ) : (

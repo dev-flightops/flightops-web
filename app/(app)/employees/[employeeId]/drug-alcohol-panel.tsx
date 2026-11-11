@@ -44,7 +44,12 @@ export function DrugAlcoholPanel({
           Open in Drug &amp; Alcohol
         </Link>
       </div>
-      {clearance && person.covered ? (
+      {!tests.program_open ? (
+        <Notice tone="blue" className="mb-5">
+          The company hasn&rsquo;t set up its drug and alcohol program here yet: name its DER on the program&rsquo;s
+          Program tab. Until then no one is flagged as not cleared.
+        </Notice>
+      ) : clearance && person.covered ? (
         clearance.cleared ? (
           <Notice tone="green" className="mb-5">
             Cleared for safety-sensitive duty.

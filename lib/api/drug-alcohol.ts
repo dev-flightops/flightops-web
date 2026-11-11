@@ -48,6 +48,9 @@ export interface Clearance {
 export interface DrugAlcoholAccess {
   runs_program: boolean;
   sees_clearance: boolean;
+  /** The company has set its program up (saved it, naming its DER). Until
+   *  then no one is flagged as not cleared outside the program's pages. */
+  program_open: boolean;
   der: PersonRef | null;
   alternate_der: PersonRef | null;
   der_phone: string | null;
@@ -231,6 +234,7 @@ export interface OpenEntry {
 
 export interface Overview {
   year: number;
+  program_open: boolean;
   program: Program;
   pool_size: number;
   random: RandomRate[];
@@ -250,6 +254,7 @@ export interface Overview {
 }
 
 export interface EmployeeTests {
+  program_open: boolean;
   person: PoolPerson;
   tests: TestRecord[];
   open_entries: OpenEntry[];
@@ -318,6 +323,8 @@ export interface MisReport {
 
 export interface ClearanceList {
   release_blocks: boolean;
+  /** False until the company sets its program up; `items` is then empty. */
+  program_open: boolean;
   items: { user_id: string; full_name: string; roles: string[]; in_pool: boolean; cleared: boolean }[];
 }
 
