@@ -163,7 +163,7 @@ export function NotificationsBell({
               <li className="px-3 py-4 text-center text-[0.7rem] text-muted-foreground">
                 {dismissedCount > 0
                   ? "Everything current has been dismissed."
-                  : "No grounded aircraft, overdue flights or expiring MELs."}
+                  : "Nothing for you right now."}
               </li>
             )}
             {alerts.map((alert) => (

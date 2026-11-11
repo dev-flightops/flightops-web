@@ -151,7 +151,7 @@ describe("the panel", () => {
     bell({ alerts: [], dismissedCount: 0 });
     await user.click(screen.getByRole("button", { name: /Notifications/ }));
     expect(
-      screen.getByText(/No grounded aircraft, overdue flights or expiring MELs/),
+      screen.getByText("Nothing for you right now."),
     ).toBeInTheDocument();
   });
 });
