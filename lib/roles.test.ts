@@ -8,6 +8,7 @@ import {
   FUEL_CONFIG,
   GSE_WRITERS,
   MANIFEST_EDITORS,
+  DRUG_ALCOHOL_LEADERS,
   ONBOARDING_ADMINS,
   OVERRIDE_AUTHORITY,
   RAMP_OPS,
@@ -122,6 +123,16 @@ describe("who may do what a release relies on (29 Sep)", () => {
 
   it("onboarding: the five post-holders who run it (#180)", () => {
     expect(sorted(ONBOARDING_ADMINS)).toEqual([
+      "chief_pilot",
+      "director_of_maintenance",
+      "director_of_operations",
+      "exec_admin",
+      "safety_officer",
+    ]);
+  });
+
+  it("drug and alcohol: the leaders who see who isn't cleared, never why", () => {
+    expect(sorted(DRUG_ALCOHOL_LEADERS)).toEqual([
       "chief_pilot",
       "director_of_maintenance",
       "director_of_operations",

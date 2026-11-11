@@ -3,21 +3,18 @@ import Link from "next/link";
 /**
  * The tab bar on an employee record.
  *
- * Legacy shows Profile / Documents / Onboarding / Drug & Alcohol.
- * Profile, Documents and Onboarding (#180) are ours. Drug & Alcohol is
- * its own subsystem, legacy's 9 tables with the random pool and the
- * annual MIS summary, and is the next story.
- *
- * Unbuilt tabs were shown dimmed and marked "Not built". The client
- * counts such marks as faults (#157 took them off the dashboards), so
- * Drug & Alcohol isn't shown until it's built (#134).
+ * Legacy shows Profile / Documents / Onboarding / Drug & Alcohol, and
+ * so does this: Onboarding came with #180, Drug & Alcohol with the DOT
+ * testing program (Greg, 11 Nov). The record is the Exec Admins', who
+ * run that program, so its tab shows the tests and why someone isn't
+ * cleared.
  *
  * Lifted out of employee-record-form.tsx once Documents became a real
  * tab, so both panels render the same bar rather than each owning a
  * copy that can drift.
  */
 
-export type RecordTab = "profile" | "documents" | "onboarding";
+export type RecordTab = "profile" | "documents" | "onboarding" | "drug-alcohol";
 
 export function RecordTabs({
   employeeId,
@@ -28,11 +25,14 @@ export function RecordTabs({
   outstanding,
   /** Onboarding tasks required before starting that aren't done (#180). */
   requiredOpen,
+  /** Safety-sensitive and not cleared under the drug and alcohol program. */
+  notCleared,
 }: {
   employeeId: string;
   active: RecordTab;
   outstanding?: number;
   requiredOpen?: number;
+  notCleared?: boolean;
 }) {
   return (
     <nav
@@ -69,6 +69,17 @@ export function RecordTabs({
             {requiredOpen}
           </span>
         )}
+      </Tab>
+      <Tab
+        href={`/employees/${employeeId}?tab=drug-alcohol`}
+        active={active === "drug-alcohol"}
+      >
+        Drug &amp; Alcohol
+        {notCleared ? (
+          <span className="status-mark ml-1.5 text-status-red" title="Not cleared for safety-sensitive duty">
+            !
+          </span>
+        ) : null}
       </Tab>
     </nav>
   );

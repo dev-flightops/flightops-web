@@ -342,6 +342,18 @@ export const ONBOARDING_ADMINS = roleGate(
   "safety_officer",
 );
 
+/** See who isn't cleared for safety-sensitive duty under the drug and
+ *  alcohol program, and who its DER is: cleared or not, never why (Greg,
+ *  11 Nov). The results are the DER's and the Exec Admins'. documents-
+ *  service's DRUG_ALCOHOL_LEADERS. */
+export const DRUG_ALCOHOL_LEADERS = roleGate(
+  "exec_admin",
+  "director_of_operations",
+  "chief_pilot",
+  "director_of_maintenance",
+  "safety_officer",
+);
+
 /** Approve a refund over $500 (#127): the post-holders who run the
  *  company, never the person entering it. billing-service's
  *  APPROVER_ROLES. */

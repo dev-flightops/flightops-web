@@ -225,16 +225,17 @@ describe("restricted departments", () => {
     }
   });
 
-  it("shows the Chief Pilot, DOM and Safety Officer HR's Onboarding and nothing else of it (#180)", () => {
+  it("shows the Chief Pilot, DOM and Safety Officer HR's Onboarding and Drug & Alcohol, nothing else of it", () => {
     const hr = deptById("hr");
     for (const role of RUN_ONBOARDING_ONLY) {
       expect(idsFor([role]), `${role} should see hr`).toContain("hr");
-      expect(visibleModules(hr, [role]).map((m) => m.id)).toEqual(["hr-onboarding"]);
+      expect(visibleModules(hr, [role]).map((m) => m.id)).toEqual(["hr-onboarding", "hr-drug-alcohol"]);
     }
     for (const role of MAY_SEE_ADMIN) {
       expect(visibleModules(hr, [role]).map((m) => m.id)).toEqual([
         "hr-employees",
         "hr-onboarding",
+        "hr-drug-alcohol",
         "hr-payroll",
         "hr-time-clock",
         "hr-records",

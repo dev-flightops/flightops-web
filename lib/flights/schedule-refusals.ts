@@ -54,6 +54,12 @@ export function releaseRefusal(message: string): string | null {
   if (d.error === "mel_ack_required") {
     return "Release blocked — acknowledge each open MEL on the aircraft first.";
   }
+  if (d.error === "crew_not_cleared") {
+    // Drug and alcohol: who, never why.
+    const crew = Array.isArray(d.crew) ? (d.crew as { full_name?: string; seat?: string }[]) : [];
+    const names = crew.map((c) => `${c.seat === "sic" ? "SIC" : "PIC"} ${c.full_name ?? ""}`.trim()).join(", ");
+    return `Release blocked — ${names || "a pilot on this flight"} isn't cleared for safety-sensitive duty under the drug and alcohol program. Ask the DER, or put another pilot on the flight.`;
+  }
   if (d.error === "weight_balance_out_of_limits") {
     // #181 — the pilot's ForeFlight plan: FlightOps calculates no CG itself.
     const plans = Array.isArray(d.plans) ? (d.plans as { issues?: string[] }[]) : [];

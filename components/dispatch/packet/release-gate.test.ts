@@ -537,6 +537,28 @@ describe("computeReleaseBlockers — every blocker at once (#134)", () => {
   });
 });
 
+describe("the drug and alcohol program (Greg, 11 Nov)", () => {
+  it("blocks a pilot not cleared, by seat and name, never why", () => {
+    expect(
+      computeReleaseBlockers({
+        ...CLEAR,
+        crewNotCleared: [
+          { full_name: "Pat Pilot", seat: "pic" },
+          { full_name: "Sam Second", seat: "sic" },
+        ],
+      }),
+    ).toEqual([
+      "PIC Pat Pilot isn't cleared for safety-sensitive duty under the drug and alcohol program — ask the DER.",
+      "SIC Sam Second isn't cleared for safety-sensitive duty under the drug and alcohol program — ask the DER.",
+    ]);
+  });
+
+  it("says nothing while the release doesn't hold on it, or it couldn't be read", () => {
+    expect(computeReleaseBlockers({ ...CLEAR, crewNotCleared: [] })).toEqual([]);
+    expect(computeReleaseBlockers({ ...CLEAR, crewNotCleared: null })).toEqual([]);
+  });
+});
+
 describe("ForeFlight's weight and balance (#181)", () => {
   // TST901 went out with "no weight and balance". FlightOps calculates no
   // CG; the pilot's ForeFlight plan does, and outside its limits it holds

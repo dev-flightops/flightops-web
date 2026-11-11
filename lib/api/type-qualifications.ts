@@ -153,6 +153,11 @@ export interface ComplianceSettings {
   not_started_blocks?: boolean;
   not_started_changed_at?: string | null;
   not_started_changed_by?: UserRef | null;
+  /** Release refuses a PIC or SIC not cleared under the drug and alcohol
+   *  program (Greg, 11 Nov); off until the company's tests are in. */
+  drug_alcohol_blocks?: boolean;
+  drug_alcohol_changed_at?: string | null;
+  drug_alcohol_changed_by?: UserRef | null;
 }
 
 export async function getComplianceSettings(): Promise<ComplianceSettings> {
@@ -174,6 +179,15 @@ export async function updateNotStartedBlocks(blocks: boolean): Promise<Complianc
   return apiFetch<ComplianceSettings>("/ops/compliance/settings/not-started", {
     method: "PUT",
     body: JSON.stringify({ not_started_blocks: blocks }),
+  });
+}
+
+/** PUT /ops/compliance/settings/drug-alcohol: whether release holds a
+ *  pilot not cleared under the drug and alcohol program. */
+export async function updateDrugAlcoholBlocks(blocks: boolean): Promise<ComplianceSettings> {
+  return apiFetch<ComplianceSettings>("/ops/compliance/settings/drug-alcohol", {
+    method: "PUT",
+    body: JSON.stringify({ drug_alcohol_blocks: blocks }),
   });
 }
 
