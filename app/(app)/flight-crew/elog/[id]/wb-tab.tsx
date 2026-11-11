@@ -53,12 +53,12 @@ export function WeightBalanceTab({
           </p>
           {!readOnly && (
             <p className="mt-2 text-[0.7rem] text-muted-foreground">
-              Add a leg on{" "}
+              Add a leg on the{" "}
               <Link
                 href={`/flight-crew/elog/${logId}?tab=legs`}
                 className="font-semibold text-primary hover:underline"
               >
-                Tab 2
+                Legs tab
               </Link>{" "}
               first — W&amp;B is per leg.
             </p>

@@ -14,6 +14,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { AirframeTypeSelect } from "@/components/settings/airframe-type-select";
 import { Spinner } from "@/components/ui/spinner";
 import type { AircraftListItem } from "@/lib/api/types";
 
@@ -229,11 +230,7 @@ export function EditAircraftDialog({ aircraft }: { aircraft: AircraftListItem })
               />
             </div>
 
-            <Field
-              name="airframe_type"
-              label="Airframe slug"
-              placeholder="caravan"
-              spellCheck={false}
+            <AirframeTypeSelect
               defaultValue={aircraft.airframe_type ?? ""}
               error={fieldError("airframe_type")}
             />
