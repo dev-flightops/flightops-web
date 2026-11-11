@@ -195,8 +195,9 @@ export default async function SettingsLandingPage() {
       rows: [
         {
           label: "SSO Providers",
-          blurb: "Sign-in through Google, Okta or Entra ID.",
-          value: ssoConnected === 0 ? "None connected" : `${ssoConnected} active`,
+          // 1110-21: "None connected" alone read as no SSO at all.
+          blurb: "Staff sign in with Google, Microsoft (Entra ID) or Okta, once the company connects one.",
+          value: ssoConnected === 0 ? "None connected yet" : `${ssoConnected} active`,
           href: "/settings/sso",
         },
         {

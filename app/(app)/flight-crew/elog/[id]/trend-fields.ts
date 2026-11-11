@@ -92,15 +92,19 @@ export function fieldsForFamily(family: AirframeFamily): TrendField[] {
 }
 
 /** Friendly display name for the airframe family header on the
- *  trend card. Pulled from the legacy template's labels. */
-export function familyDisplayName(family: AirframeFamily, slug: string | null): string {
+ *  trend card: the aircraft's own model, then its engines. Legacy's
+ *  labels named one model per type, so every Caravan read "Cessna 208B"
+ *  (audit 1110-08: N100PA is a 208); they stay only for an aircraft with
+ *  no model on file. */
+export function familyDisplayName(family: AirframeFamily, slug: string | null, model?: string | null): string {
+  const own = model?.trim() || null;
   if (family === "turbine") {
-    if (slug === "caravan") return "Cessna 208B Caravan — PT6A";
-    if (slug === "kingair") return "King Air 200 — Twin PT6A";
-    if (slug === "pilatus") return "Pilatus PC-12 — Single PT6A";
-    return "Turbine";
+    if (slug === "caravan") return `${own ?? "Cessna 208 Caravan"} — PT6A`;
+    if (slug === "kingair") return `${own ?? "King Air 200"} — Twin PT6A`;
+    if (slug === "pilatus") return `${own ?? "Pilatus PC-12"} — Single PT6A`;
+    return own ? `${own} — Turbine` : "Turbine";
   }
-  if (family === "twin_piston") return "PA-31 Navajo — Twin Piston";
-  if (family === "piston") return "Piston Engine";
+  if (family === "twin_piston") return `${own ?? "PA-31 Navajo"} — Twin Piston`;
+  if (family === "piston") return own ? `${own} — Piston Engine` : "Piston Engine";
   return "Engine trend monitoring";
 }

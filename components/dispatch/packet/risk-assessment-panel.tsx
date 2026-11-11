@@ -35,7 +35,7 @@ export function RiskAssessmentPanel({
         <p className="text-xs text-muted-foreground">
           {failed
             ? "The risk matrix couldn't be scored just now. Try Refresh Weather in a moment."
-            : "Pick a flight to score its risk matrix."}
+            : "The risk matrix is scored for a flight: pick one from the list above. A routing typed on its own isn’t scored."}
         </p>
       </SectionPanel>
     );

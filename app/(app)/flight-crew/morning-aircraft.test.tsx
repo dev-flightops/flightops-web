@@ -40,6 +40,13 @@ beforeEach(() => {
 });
 
 describe("MorningAircraft (#93)", () => {
+  it("tells someone who doesn't take an aircraft whose card it is, not that it failed (1110-07)", () => {
+    render(<MorningAircraft morning="pilots" />);
+    expect(screen.getByText(/Pilots take an aircraft for the day here/)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Dispatch" })).toHaveAttribute("href", "/dispatch");
+    expect(screen.queryByText(/couldn.t be read/)).toBeNull();
+  });
+
   it("asks for duty in first", () => {
     render(<MorningAircraft morning={morning({ on_duty: false })} />);
     expect(screen.getByText(/Duty in, then take your aircraft for the day/)).toBeInTheDocument();

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition, type FormEvent } from "react";
 
@@ -20,13 +21,24 @@ import { pickAircraftAction, recordPreflightAction } from "./actions";
  * offered; the rest say why), then records its preflight and run-up. A
  * flight in an aircraft nobody has preflighted that day can't be accepted.
  */
-export function MorningAircraft({ morning }: { morning: MorningResponse | null }) {
+export function MorningAircraft({ morning }: { morning: MorningResponse | "pilots" | null }) {
   const router = useRouter();
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [choice, setChoice] = useState("");
   const [completed, setCompleted] = useState(false);
 
+  if (morning === "pilots") {
+    return (
+      <p className="text-xs text-muted-foreground">
+        {"Pilots take an aircraft for the day here and record its preflight and run-up. The aircraft taken today are on "}
+        <Link href="/dispatch" className="underline underline-offset-2 hover:text-foreground">
+          Dispatch
+        </Link>
+        .
+      </p>
+    );
+  }
   if (morning === null) {
     return (
       <p className="text-xs text-muted-foreground">

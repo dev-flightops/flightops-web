@@ -263,7 +263,11 @@ export const LEGACY_REDIRECTS: readonly (readonly [from: string, to: string])[] 
   ["/customers/:id/edit", "/customers"],
   ["/employees/new", "/employees"],
   ["/employees/:id", "/employees"],
-  ["/records", "/employees"],
+  // Legacy's /records/ was HR's Records Department, but FlightOps calls
+  // Compliance "Records and Compliance" (Home), and the client's audit
+  // (1110-05) expects that there; the department's own pages still go to
+  // Employees.
+  ["/records", "/compliance/crew-currency"],
   ["/records/assign", "/employees"],
   ["/records/forms", "/employees"],
   ["/records/employee-files", "/employees"],

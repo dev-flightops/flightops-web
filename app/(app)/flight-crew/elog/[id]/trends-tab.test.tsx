@@ -93,10 +93,13 @@ describe("TrendsTab", () => {
         logId="log-1"
         logStatus="draft"
         airframeType="caravan"
+        model="Cessna 208 Caravan"
         initialLegs={[makeLeg({ id: "l-1" })]}
       />,
     );
-    expect(screen.getByText(/Cessna 208B Caravan/i)).toBeInTheDocument();
+    // The aircraft's own model (1110-08: a 208 read as a 208B).
+    expect(screen.getByText(/Cessna 208 Caravan — PT6A/)).toBeInTheDocument();
+    expect(screen.queryByText(/208B/)).toBeNull();
     // Turbine-specific inputs.
     expect(screen.getByLabelText(/ITT T\/O/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/NG T\/O/i)).toBeInTheDocument();

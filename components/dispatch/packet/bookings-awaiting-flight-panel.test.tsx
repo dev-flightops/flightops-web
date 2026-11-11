@@ -103,7 +103,7 @@ describe("when bookings are waiting", () => {
     render(<BookingsAwaitingFlightPanel bookings={[booking()]} earlier={17} />);
     expect(screen.getAllByRole("listitem")).toHaveLength(1);
     expect(
-      screen.getByText("17 more are from earlier days: reservations rebooks or cancels them."),
+      screen.getByText("17 more are from earlier days: check Reservations to rebook or cancel them."),
     ).toBeInTheDocument();
   });
 
@@ -131,7 +131,7 @@ describe("bookings from earlier days (#174)", () => {
       <BookingsAwaitingFlightPanel bookings={[]} earlier={1} earlierBookings={[booking({ customer: { id: "c-2", full_name: "Marcus Tester", company_name: null } })]} />,
     );
     expect(screen.getByRole("region", { name: "Bookings awaiting a flight" })).toBeInTheDocument();
-    expect(screen.getByText("1 is from earlier days: reservations rebooks or cancels it.")).toBeInTheDocument();
+    expect(screen.getByText("1 is from earlier days: check Reservations to rebook or cancel it.")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Marcus Tester", hidden: true })).toHaveAttribute("href", "/reservations/bookings/b-1");
   });
 
@@ -139,7 +139,7 @@ describe("bookings from earlier days (#174)", () => {
     render(
       <BookingsAwaitingFlightPanel bookings={[booking()]} earlier={2} earlierBookings={[booking({ id: "b-8" }), booking({ id: "b-9" })]} />,
     );
-    expect(screen.getByText("2 more are from earlier days: reservations rebooks or cancels them.")).toBeInTheDocument();
+    expect(screen.getByText("2 more are from earlier days: check Reservations to rebook or cancel them.")).toBeInTheDocument();
     expect(screen.getByRole("group")).not.toHaveAttribute("open");
   });
 

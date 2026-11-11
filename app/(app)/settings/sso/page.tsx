@@ -66,9 +66,9 @@ export default async function SettingsSsoPage() {
           SSO & Integrations
         </h1>
         <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
-          Per-tenant OAuth credentials for Google / Microsoft / Okta sign-in.
-          Each tenant configures its own — credentials never leave this
-          tenant.
+          Let staff sign in with their Google, Microsoft (Entra ID) or Okta
+          account. Each company connects its own provider here, and its
+          credentials never leave the company.
         </p>
       </header>
 

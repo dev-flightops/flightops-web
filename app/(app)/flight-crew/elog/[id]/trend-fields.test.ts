@@ -83,6 +83,10 @@ describe("familyDisplayName", () => {
 
   it("returns a generic label when family + slug don't pair up", () => {
     expect(familyDisplayName("turbine", null)).toBe("Turbine");
+    // 1110-08: the aircraft's own model, so a 208 isn't called a 208B.
+    expect(familyDisplayName("turbine", "caravan", "Cessna 208 Caravan")).toBe("Cessna 208 Caravan — PT6A");
+    expect(familyDisplayName("turbine", "caravan", "Cessna 208B Grand Caravan")).toBe("Cessna 208B Grand Caravan — PT6A");
+    expect(familyDisplayName("turbine", "caravan", null)).not.toMatch(/208B/);
     expect(familyDisplayName("piston", "unknown")).toBe("Piston Engine");
   });
 

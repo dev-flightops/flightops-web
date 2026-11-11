@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import { Notice } from "@/components/ff/notice";
+
 import type { FlightLogLeg, FlightLogStatus } from "@/lib/api/types";
 
 import { WeightBalanceCard } from "./wb-card";
@@ -11,9 +13,13 @@ import { WeightBalanceCard } from "./wb-card";
  * One W&B card per leg, keyed to the leg's id. Each card lets the
  * pilot enter the seven Tab 3 inputs (basic empty weight, pilot /
  * SIC / PAX / baggage / cargo, fuel gallons + fuel weight) and
- * shows the running ramp-weight total live. Per-aircraft moment-arm
- * config (needed for takeoff/landing weights + CG) lands in M3;
- * until then those derived rows show a "needs aircraft config" hint.
+ * shows the running ramp-weight total live.
+ *
+ * FlightOps holds no moment arms for any aircraft: the CG is worked out
+ * in ForeFlight, whose plan the release checks (#181). Legacy's three
+ * "needs aircraft config" boxes promised a setting nobody could find
+ * (audit 1110-09), so the tab says once what it does and where the rest
+ * comes from.
  *
  * Saves fire on blur through the same per-leg PATCH endpoint Tab 2
  * uses — the backend stores W&B alongside the leg row.
@@ -70,11 +76,14 @@ export function WeightBalanceTab({
         </h2>
         <p className="mt-1 text-[0.7rem] text-muted-foreground">
           {initialLegs.length} leg{initialLegs.length === 1 ? "" : "s"} —
-          enter the load profile for each. Ramp weight updates live;
-          takeoff &amp; landing weights and CG need per-aircraft moment
-          arms, which aren&apos;t configured yet.
+          enter the load profile for each. Ramp weight updates live.
         </p>
       </div>
+      <Notice tone="blue" label="Ramp weight only">
+        FlightOps adds up each leg&rsquo;s ramp weight from the load entered here. It holds no moment arms for the
+        aircraft, so it doesn&rsquo;t work out the CG or the takeoff and landing weights: those come from the
+        aircraft&rsquo;s weight and balance in ForeFlight or on its W&amp;B form.
+      </Notice>
 
       <ul className="space-y-3">
         {initialLegs.map((leg) => (

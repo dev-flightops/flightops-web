@@ -77,7 +77,7 @@ export function BookingsAwaitingFlightPanel({
       {earlier > 0 ? (
         <details className="border-t border-border">
           <summary className="cursor-pointer px-4 py-2 text-[0.65rem] text-muted-foreground">
-            {`${earlier} ${bookings.length > 0 ? "more " : ""}${earlier === 1 ? "is" : "are"} from earlier days: reservations rebooks or cancels ${earlier === 1 ? "it" : "them"}.`}
+            {`${earlier} ${bookings.length > 0 ? "more " : ""}${earlier === 1 ? "is" : "are"} from earlier days: check Reservations to rebook or cancel ${earlier === 1 ? "it" : "them"}.`}
           </summary>
           <ul className="divide-y divide-border">
             {earlierBookings.map((b) => (
