@@ -364,6 +364,15 @@ export function bumpPaxBags(paxId: string, input: { weight_lbs: string; pieces: 
   });
 }
 
+/** The pounds the ramp couldn't fit, off a cargo or mail line and onto
+ *  the waiting list for the next flight (LOG-43). */
+export function leaveCargoBehind(cargoId: string, input: { weight_lbs: string; pieces: number; reason: string }) {
+  return apiFetch<WaitingLoadRow>(`/manifest/cargo/${cargoId}/leave-behind`, {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
 export interface WaitingRouteTotal {
   station_icao: string;
   destination_icao: string;

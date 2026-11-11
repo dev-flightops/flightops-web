@@ -23,6 +23,7 @@ const FIELDS: (keyof SupplierFields)[] = [
   "account_number",
   "billing_terms",
   "notes",
+  "fueled_by",
 ];
 
 /**
@@ -112,6 +113,13 @@ export function SupplierForm({
         />
       </label>
       <label className="sm:col-span-3">
+        <span className="field-label">Who fuels</span>
+        <select name="fueled_by" defaultValue={supplier?.fueled_by ?? "own_staff"} className="ff-input">
+          <option value="own_staff">Our ramp: we confirm and fuel its orders</option>
+          <option value="supplier">The supplier: its orders go to its portal, off the ramp&rsquo;s list</option>
+        </select>
+      </label>
+      <label className="sm:col-span-3">
         <span className="field-label">Notes</span>
         <textarea name="notes" rows={2} defaultValue={value("notes")} className="ff-input" />
       </label>
@@ -163,6 +171,7 @@ export function SupplierHeader({ supplier, canEdit }: { supplier: FuelSupplierRe
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
+          {supplier.fueled_by === "supplier" && <span className="eyebrow">Fuels its own orders</span>}
           {supplier.billing_terms && <span className="eyebrow">{supplier.billing_terms}</span>}
           {canEdit && !open ? (
             <button type="button" className={buttonOutline} onClick={() => setOpen(true)}>

@@ -22,6 +22,7 @@ const api = vi.hoisted(() => {
     lockManifest: vi.fn(),
     setPlannedFuel: vi.fn(),
     applyLoadPlan: vi.fn(),
+    leaveCargoBehind: vi.fn(),
     revalidatePath: vi.fn(),
   };
 });
@@ -38,12 +39,14 @@ vi.mock("@/lib/api/manifest", async (importOriginal) => ({
   lockManifest: api.lockManifest,
   setPlannedFuel: api.setPlannedFuel,
   applyLoadPlan: api.applyLoadPlan,
+  leaveCargoBehind: api.leaveCargoBehind,
 }));
 vi.mock("next/cache", () => ({ revalidatePath: api.revalidatePath }));
 
 import {
   applyLoadPlanAction,
   createManifestAction,
+  leaveBehindAction,
   lockManifestAction,
   removeLineAction,
   saveFreightAction,
@@ -355,5 +358,42 @@ describe("applyLoadPlanAction (#75)", () => {
     const state = await applyLoadPlanAction(IDLE, fill());
     expect(state).toMatchObject({ status: "error", message });
     expect(api.revalidatePath).not.toHaveBeenCalled();
+  });
+});
+
+describe("leaveBehindAction (LOG-43)", () => {
+  const input = { weight_lbs: "150", pieces: 3, reason: " No room behind the seats " };
+
+  it("sends the pounds left behind, the reason trimmed, and refreshes the manifest and the waiting list", async () => {
+    api.leaveCargoBehind.mockResolvedValue({ id: "wl-1" });
+    expect(await leaveBehindAction(FLIGHT, LINE, input)).toEqual({ ok: true });
+    expect(api.leaveCargoBehind).toHaveBeenCalledWith(LINE, { weight_lbs: "150", pieces: 3, reason: "No room behind the seats" });
+    expect(api.revalidatePath).toHaveBeenCalledWith(`/manifest/${FLIGHT}`);
+    expect(api.revalidatePath).toHaveBeenCalledWith("/manifest/waiting");
+  });
+
+  it("asks for pounds, pieces and a reason before asking the service", async () => {
+    expect(await leaveBehindAction(FLIGHT, LINE, { ...input, weight_lbs: "0" })).toEqual({
+      ok: false,
+      error: "Enter the pounds left behind.",
+    });
+    expect(await leaveBehindAction(FLIGHT, LINE, { ...input, pieces: 0 })).toEqual({
+      ok: false,
+      error: "Enter how many pieces are left behind.",
+    });
+    expect(await leaveBehindAction(FLIGHT, LINE, { ...input, reason: "  " })).toEqual({
+      ok: false,
+      error: "Say why it's left behind.",
+    });
+    expect(api.leaveCargoBehind).not.toHaveBeenCalled();
+  });
+
+  it("says the service's reason when it refuses", async () => {
+    api.leaveCargoBehind.mockRejectedValueOnce(
+      new api.TestApiError(422, "/manifest", JSON.stringify({ detail: "That's more than the line weighs." })),
+    );
+    expect(await leaveBehindAction(FLIGHT, LINE, input)).toEqual({ ok: false, error: "That's more than the line weighs." });
+    api.leaveCargoBehind.mockRejectedValueOnce(new api.TestApiError(403, "/manifest", "{}"));
+    expect(await leaveBehindAction(FLIGHT, LINE, input)).toEqual({ ok: false, error: "Your role can't change the manifest." });
   });
 });

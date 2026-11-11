@@ -10,6 +10,7 @@ import { notFound } from "next/navigation";
 import { auth } from "@/auth";
 import { loadZoneTable } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
+import { listRampPhotos } from "@/lib/api/ground";
 import { Loads } from "@/lib/api/loads";
 import { getFlight } from "@/lib/api/ops";
 import { type Booking, listWaitingBookings } from "@/lib/api/reservations";
@@ -23,8 +24,8 @@ import {
   type ManifestDetailResponse,
 } from "@/lib/api/manifest";
 import { fuelEstimateLine, fuelPlanningNote } from "@/lib/flights/fuel-estimate";
-import type { FlightDetail, FlightStatus } from "@/lib/api/types";
-import { CUSTOMER_MANAGERS, hasAnyRole, MANIFEST_EDITORS, MANIFEST_LOCKERS } from "@/lib/roles";
+import type { FlightDetail, FlightStatus, RampPhotoResponse } from "@/lib/api/types";
+import { CUSTOMER_MANAGERS, hasAnyRole, MANIFEST_EDITORS, MANIFEST_LOCKERS, RAMP_OPS } from "@/lib/roles";
 import { crewWeightNote } from "@/lib/flights/crew-weight";
 import { flightStops, routeText } from "@/lib/route";
 import { canSetUp } from "@/lib/setup/places";
@@ -36,6 +37,7 @@ import { FreightSection } from "./freight-section";
 import { CreateManifestButton, LockManifestButton, ReopenManifestButton } from "./manifest-controls";
 import { fmtLbs, TH, THEAD } from "./manifest-bits";
 import { PassengersSection } from "./pax-section";
+import { RampPhotos } from "./ramp-photos";
 import { WaitingBookings } from "./waiting-bookings";
 
 export const dynamic = "force-dynamic";
@@ -107,6 +109,14 @@ export default async function FlightManifestPage({
       "the bookings waiting for this flight",
     );
   }
+  // The ramp's photos of the load, attached to the manifest (LOG-43).
+  const photos: RampPhotoResponse[] | null = manifest
+    ? await loads.or(
+        listRampPhotos(flightId).then((r) => r.items),
+        null,
+        "the ramp's photos of the load",
+      )
+    : null;
   const canSetFleet = canSetUp(roles, "fleet");
   const stops = flightStops(flight);
   // The departure base's zone, for the booking form and the locked time.
@@ -202,6 +212,9 @@ export default async function FlightManifestPage({
               rows={manifest.cargo.filter((c) => c.mail_class === null)}
               editable={editable}
             />
+            {photos ? (
+              <RampPhotos flightId={flight.id} photos={photos} zone={zone} canAdd={hasAnyRole(roles, RAMP_OPS)} />
+            ) : null}
           </div>
 
           <ManifestMeta manifest={manifest} zone={zone} />

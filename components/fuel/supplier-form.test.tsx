@@ -23,6 +23,7 @@ const TUNDRA = {
   account_number: "A-77",
   billing_terms: "Net 30",
   notes: null,
+  fueled_by: "own_staff" as const,
   is_active: true,
 };
 
@@ -47,11 +48,19 @@ describe("SupplierForm (#134)", () => {
         account_number: "",
         billing_terms: "",
         notes: "",
+        fueled_by: "own_staff",
       }),
     );
     expect(await screen.findByRole("status")).toHaveTextContent("Bethel Fuel is in the directory.");
     expect(within(form).getByLabelText("Name")).toHaveValue("");
     expect(within(form).queryByLabelText(/^Active/)).toBeNull();
+  });
+
+  it("asks who fuels, our ramp unless the supplier does (LOG-42)", async () => {
+    render(<SupplierForm supplier={{ ...TUNDRA, fueled_by: "supplier" }} />);
+    const who = screen.getByLabelText("Who fuels");
+    expect(who).toHaveValue("supplier");
+    expect(within(who).getByRole("option", { name: /^Our ramp/ })).toHaveValue("own_staff");
   });
 
   it("says why it wasn't added", async () => {

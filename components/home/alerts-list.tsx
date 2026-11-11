@@ -61,6 +61,8 @@ const CATEGORY_LABEL: Record<OperationalAlert["category"], string> = {
   squawk_new: "New squawks without a work order",
   load_complete: "Loads complete",
   handoff: "Waiting on you",
+  departure_soon: "Departing soon",
+  fuel_order: "Fuel orders",
 };
 
 // Order the groups by what stops an aeroplane leaving, not alphabetically.

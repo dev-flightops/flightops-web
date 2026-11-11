@@ -19,6 +19,8 @@ const mocks = vi.hoisted(() => {
     getLoadPlan: vi.fn(),
     // #138: the bookings waiting for the flight, for a role that books.
     listWaitingBookings: vi.fn(),
+    // LOG-43: the ramp's photos of the load.
+    listRampPhotos: vi.fn(),
     // What a form's last submit returned; tests that need one set it.
     actionState: { current: undefined as unknown },
   };
@@ -39,6 +41,7 @@ vi.mock("@/lib/api/reservations", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/lib/api/reservations")>()),
   listWaitingBookings: mocks.listWaitingBookings,
 }));
+vi.mock("@/lib/api/ground", () => ({ listRampPhotos: mocks.listRampPhotos }));
 vi.mock("./actions", () => ({
   savePaxAction: vi.fn(),
   saveFreightAction: vi.fn(),
@@ -145,6 +148,7 @@ beforeEach(() => {
   mocks.getFlightManifest.mockReset();
   mocks.getLoadPlan.mockReset().mockRejectedValue(new mocks.TestApiError(404, "/manifest", "not found"));
   mocks.listWaitingBookings.mockReset().mockResolvedValue({ items: [], total: 0 });
+  mocks.listRampPhotos.mockReset().mockResolvedValue({ items: [], total: 0 });
   mocks.actionState.current = undefined;
 });
 
@@ -576,5 +580,47 @@ describe("the trip's fuel and what is waiting for the route (#75)", () => {
     mocks.getLoadPlan.mockResolvedValue(plan({ waiting: [], suggestion: [], blocked: "nothing_waiting" }));
     await renderPage();
     expect(within(waiting()).getByText("Nothing is waiting at PANC for PABE.")).toBeTruthy();
+  });
+});
+
+describe("the ramp's photos on the manifest (LOG-43)", () => {
+  it("shows the load's photos, who took them and when, with the way to add more for the ramp", async () => {
+    mocks.auth.mockResolvedValue({ roles: ["ground_ops"] });
+    mocks.getFlightManifest.mockResolvedValue(manifest("draft"));
+    mocks.listRampPhotos.mockResolvedValue({
+      items: [
+        {
+          id: "ph-1",
+          flight_id: FLIGHT,
+          photo_type: "secured_load",
+          file_key: "k",
+          original_filename: "load.jpg",
+          content_type: "image/jpeg",
+          notes: "Strapped, two pallets",
+          uploaded_by_user_id: "u-n",
+          uploaded_by_name: "Nina Brightwater",
+          created_at: "2026-11-03T11:55:00Z",
+          url: "/photos/ph-1/file",
+        },
+      ],
+      total: 1,
+    });
+    await renderPage();
+    const photos = screen.getByRole("region", { name: "Ramp photos" });
+    expect(within(photos).getByText("1 photo")).toBeInTheDocument();
+    expect(within(photos).getByText("Secured load")).toBeInTheDocument();
+    expect(within(photos).getByText(/^Nina Brightwater · /)).toBeInTheDocument();
+    expect(within(photos).getByText("Strapped, two pallets")).toBeInTheDocument();
+    expect(within(photos).getByRole("img", { name: "Secured load of the load" })).toHaveAttribute("src", "/api/ramp-photos/ph-1");
+    expect(within(photos).getByRole("link", { name: /Add photos/ })).toHaveAttribute("href", `/ramper/${FLIGHT}/photos`);
+  });
+
+  it("says when there are none, and the reservations agent isn't offered to add one", async () => {
+    mocks.auth.mockResolvedValue({ roles: ["reservations_agent"] });
+    mocks.getFlightManifest.mockResolvedValue(manifest("draft"));
+    await renderPage();
+    const photos = screen.getByRole("region", { name: "Ramp photos" });
+    expect(within(photos).getByText("No photos of the load yet.")).toBeInTheDocument();
+    expect(within(photos).queryByRole("link", { name: /Add photos/ })).toBeNull();
   });
 });

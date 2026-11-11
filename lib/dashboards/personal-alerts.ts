@@ -1,14 +1,19 @@
-import { listDayLoads } from "@/lib/api/ground";
+import { loadZoneTable } from "@/lib/api/auth";
+import { getFlightBoard } from "@/lib/api/flight-following";
+import { listDayLoads, listFuelOrders, listMyLoadTeams } from "@/lib/api/ground";
 import { listSquawks, listWorkOrders } from "@/lib/api/maintenance";
 import { listMyHandoffs } from "@/lib/api/ops";
+import type { FlightAssignmentResponse } from "@/lib/api/types";
 import { handoffLine } from "@/lib/flights/handoff-text";
 import { formatLocal } from "@/lib/format/flight-time";
+import { localClock, localDay, zoneFor } from "@/lib/format/local-time";
 import {
   AIRWORTHINESS_WRITERS,
   DISPATCH_WRITERS,
   HANDOFF_VIEWERS,
   WORK_ORDER_WRITERS,
   hasAnyRole,
+  roleGate,
 } from "@/lib/roles";
 
 import type { OperationalAlert } from "./operational-snapshot";
@@ -26,9 +31,17 @@ import type { OperationalAlert } from "./operational-snapshot";
  *   - The hand-offs between dispatch and the pilot (#175): "notify the next
  *     party in the flow that their is an item that needs action". Worked
  *     out by ops for the person asking (GET /ops/handoffs), to everyone.
+ *   - The ramp's (LOG-42): "Ramp sees departures and fuel orders at its
+ *     station". Its stations are its load teams' bases, or every station
+ *     for someone on no team; an order the supplier fuels is the
+ *     supplier's.
  */
 
 const NEW_SQUAWK_MS = 2 * 24 * 60 * 60 * 1000;
+const MINUTE = 60_000;
+/** A departure is the ramp's news from an hour out until an hour late. */
+const DEPARTING_SOON_MS = 60 * MINUTE;
+const RAMP = roleGate("ground_ops");
 
 export async function loadPersonalAlerts(viewer: {
   roles: readonly string[];
@@ -80,6 +93,8 @@ export async function loadPersonalAlerts(viewer: {
     }
   }
 
+  if (hasAnyRole(viewer.roles, RAMP)) alerts.push(...(await rampAlerts(loads?.items ?? [], now)));
+
   for (const item of handoffs?.items ?? []) {
     const line = handoffLine(item);
     alerts.push({
@@ -93,6 +108,68 @@ export async function loadPersonalAlerts(viewer: {
       href: line.href,
       scopedToIcao: item.origin,
       occurredAt: item.occurred_at,
+    });
+  }
+  return alerts;
+}
+
+function loadWords(load: FlightAssignmentResponse | undefined, zone: string): string {
+  if (!load) return "No load team on it yet.";
+  if (load.load_started_at) return `${load.load_team.team_name} loading since ${localClock(load.load_started_at, zone)}.`;
+  if (load.acknowledged_at) return `${load.load_team.team_name} acknowledged it, loading not started.`;
+  return `${load.load_team.team_name} hasn't acknowledged it.`;
+}
+
+async function rampAlerts(loads: FlightAssignmentResponse[], now: number): Promise<OperationalAlert[]> {
+  const [teams, board, ordered, confirmed, zones] = await Promise.all([
+    listMyLoadTeams().catch(() => null),
+    getFlightBoard("today").catch(() => null),
+    listFuelOrders({ status: "ordered", limit: 100 }).catch(() => null),
+    listFuelOrders({ status: "confirmed", limit: 100 }).catch(() => null),
+    loadZoneTable(),
+  ]);
+  const stations = teams && teams.items.length > 0 ? new Set(teams.items.map((t) => t.base_icao)) : null;
+  const atMine = (icao: string) => stations === null || stations.has(icao);
+  const loadFor = new Map(loads.map((a) => [a.flight.id, a]));
+  const alerts: OperationalAlert[] = [];
+
+  for (const f of board?.items ?? []) {
+    if (!atMine(f.origin) || f.actual_departure_at || (f.status !== "scheduled" && f.status !== "released")) continue;
+    const departs = Date.parse(f.scheduled_departure_at);
+    if (Math.abs(departs - now) > DEPARTING_SOON_MS) continue;
+    const load = loadFor.get(f.id);
+    if (load?.load_completed_at) continue;
+    const zone = zoneFor(zones, f.origin);
+    alerts.push({
+      id: `departing-${f.id}`,
+      severity: departs - now <= 15 * MINUTE ? "red" : "yellow",
+      category: "departure_soon",
+      title: `Departing ${localClock(f.scheduled_departure_at, zone)} — ${f.flight_number}`,
+      detail: `${f.aircraft.tail_number}, ${f.origin} → ${f.destination}. ${loadWords(load, zone)}`,
+      href: "/ramper",
+      scopedToIcao: f.origin,
+      occurredAt: f.scheduled_departure_at,
+    });
+  }
+
+  const today = localDay(zones.fallback);
+  for (const o of [...(ordered?.items ?? []), ...(confirmed?.items ?? [])]) {
+    if (o.supplier?.fueled_by === "supplier" || !atMine(o.base_code) || o.requested_fuel_date !== today) continue;
+    const toConfirm = o.status === "ordered";
+    const zone = zoneFor(zones, o.base_code);
+    alerts.push({
+      // Confirming it is a new occurrence: "to put in" comes back after
+      // "to confirm" was dismissed.
+      id: `fuel-${o.id}`,
+      severity: "yellow",
+      category: "fuel_order",
+      title: `${toConfirm ? "Fuel to confirm" : "Fuel to put in"} — ${o.n_number} at ${o.base_code}`,
+      detail: `${o.requested_quantity_gallons} gal ${o.fuel_type_label_snapshot}, ${o.supplier_name_snapshot}${
+        o.requested_fuel_time ? `, by ${localClock(o.requested_fuel_time, zone)}` : ""
+      }.`,
+      href: "/ramper",
+      scopedToIcao: o.base_code,
+      occurredAt: toConfirm ? o.requested_at : (o.confirmed_at ?? o.requested_at),
     });
   }
   return alerts;

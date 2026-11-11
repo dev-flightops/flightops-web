@@ -63,7 +63,9 @@ export interface OperationalAlert {
     | "seat_open"
     | "squawk_new"
     | "load_complete"
-    | "handoff";
+    | "handoff"
+    | "departure_soon"
+    | "fuel_order";
   title: string;
   detail: string;
   /** Permalink to the source record. */

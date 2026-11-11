@@ -12,6 +12,7 @@ import {
   createManifest,
   deleteCargo,
   deletePax,
+  leaveCargoBehind,
   lockManifest,
   reopenManifest,
   MAIL_CLASSES,
@@ -56,6 +57,50 @@ export async function bumpBagsAction(flightId: string, paxId: string, input: {we
     return {ok:true};
   } catch (error) {
     return {ok:false, error:error instanceof ApiError ? error.message : "Could not move the bags. Try again."};
+  }
+}
+
+/** The pounds the ramp couldn't fit (LOG-43): off the cargo or mail line
+ *  and onto the waiting list for the next flight. */
+export async function leaveBehindAction(
+  flightId: string,
+  cargoId: string,
+  input: { weight_lbs: string; pieces: number; reason: string },
+): Promise<{ ok: boolean; error?: string }> {
+  const valid = z
+    .object({
+      flightId: _id,
+      cargoId: _id,
+      weight_lbs: z
+        .string()
+        .refine((v) => Number.isFinite(Number(v)) && Number(v) > 0 && Number(v) <= 99999, "Enter the pounds left behind."),
+      pieces: z.number().int().min(1, "Enter how many pieces are left behind.").max(10000),
+      reason: z.string().trim().min(1, "Say why it's left behind.").max(500),
+    })
+    .safeParse({ flightId, cargoId, ...input });
+  if (!valid.success) return { ok: false, error: valid.error.issues[0].message };
+  try {
+    await leaveCargoBehind(cargoId, { ...input, reason: input.reason.trim() });
+  } catch (error) {
+    if (error instanceof ApiError) {
+      if (error.status === 403) return { ok: false, error: "Your role can't change the manifest." };
+      const detail = detailText(error);
+      if (detail) return { ok: false, error: detail };
+    }
+    return { ok: false, error: "Couldn't leave it behind. Try again." };
+  }
+  revalidatePath(`/manifest/${flightId}`);
+  revalidatePath("/manifest/waiting");
+  return { ok: true };
+}
+
+/** The service's own sentence, from a refusal's JSON body. */
+function detailText(error: ApiError): string | null {
+  try {
+    const detail = (JSON.parse(error.message) as { detail?: unknown }).detail;
+    return typeof detail === "string" ? detail : null;
+  } catch {
+    return null;
   }
 }
 

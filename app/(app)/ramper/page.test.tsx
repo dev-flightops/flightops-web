@@ -183,6 +183,36 @@ describe("RamperPage — the team's loads (#134)", () => {
     expect(section).toHaveTextContent("1 more is for earlier days and not listed: confirm or cancel it in Fuel orders.");
     expect(within(section).getByRole("link", { name: "Fuel orders" })).toHaveAttribute("href", "/fuel/orders?status=ordered");
   });
+
+  it("leaves a supplier's own orders to the supplier, and counts them (LOG-42)", async () => {
+    const order = (id: string, tail: string, fueledBy: "own_staff" | "supplier") => ({
+      id,
+      n_number: tail,
+      base_code: "PABE",
+      requested_fuel_date: "2099-01-01",
+      requested_fuel_time: null,
+      supplier_name_snapshot: fueledBy === "supplier" ? "Tundra" : "Crowley",
+      supplier: { id: `s-${fueledBy}`, name: "x", fueled_by: fueledBy },
+      requested_quantity_gallons: 80,
+    });
+    listFuelOrders.mockImplementation(({ status }: { status: string }) =>
+      Promise.resolve(
+        status === "ordered"
+          ? { items: [order("o-ours", "N207GE", "own_staff"), order("o-theirs", "N705PA", "supplier")], total: 2 }
+          : { items: [order("o-fuel", "N503PA", "supplier")], total: 1 },
+      ),
+    );
+    render(await RamperPage());
+    const confirm = screen.getByRole("heading", { name: /Confirm fuel orders/ }).closest("section")!;
+    expect(within(confirm).getAllByRole("listitem").map((li) => li.textContent)).toEqual([
+      "N207GE @ PABEJan 1 • 80 gal • CrowleyConfirm ›",
+    ]);
+    expect(confirm).toHaveTextContent("1 is for a supplier that fuels its own orders, to confirm through its portal.");
+    expect(confirm).not.toHaveTextContent("earlier days");
+    const fuel = screen.getByRole("heading", { name: /Fuel & complete/ }).closest("section")!;
+    expect(within(fuel).queryAllByRole("listitem")).toEqual([]);
+    expect(fuel).toHaveTextContent("1 is for a supplier that fuels its own orders, to fuel through its portal.");
+  });
 });
 
 describe("RamperPage (M2)", () => {
