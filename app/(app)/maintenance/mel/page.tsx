@@ -1,5 +1,6 @@
 import { AircraftFilter } from "@/components/maintenance/aircraft-filter";
 import { MelTable } from "@/components/maintenance/mel-table";
+import { RetiredItems } from "@/components/maintenance/retired-items";
 import { StatusFilterTabs } from "@/components/maintenance/status-filter-tabs";
 import { ApiError } from "@/lib/api/client";
 import { listMelItems } from "@/lib/api/maintenance";
@@ -10,6 +11,7 @@ import type {
   MelStatus,
 } from "@/lib/api/types";
 import { auth } from "@/auth";
+import { splitRetired } from "@/lib/maintenance/retired";
 import { AIRWORTHINESS_WRITERS, hasAnyRole } from "@/lib/roles";
 
 /**
@@ -70,6 +72,10 @@ export default async function MelListPage({
         : "MEL feed unavailable. Try refreshing in a moment.";
   }
 
+  // 1110-16: a retired aircraft's open items below the fleet's, not in it.
+  const split =
+    status === "open" ? splitRetired(items, aircraft, aircraftId) : { current: items, retired: [], tails: [] };
+
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
       <header className="mb-6 border-b border-border pb-5">
@@ -108,16 +114,23 @@ export default async function MelListPage({
           {loadError}
         </div>
       ) : (
-        <MelTable
-          items={items}
-          showAircraft
-          canClose={canClose}
-          emptyMessage={
-            status === "closed"
-              ? "No closed MEL items match this filter."
-              : "No open MEL items match this filter."
-          }
-        />
+        <>
+          <MelTable
+            items={split.current}
+            showAircraft
+            canClose={canClose}
+            emptyMessage={
+              status === "closed"
+                ? "No closed MEL items match this filter."
+                : "No open MEL items match this filter."
+            }
+          />
+          {split.retired.length > 0 ? (
+            <RetiredItems count={split.retired.length} noun="open MEL item" tails={split.tails}>
+              <MelTable items={split.retired} showAircraft canClose={canClose} emptyMessage="" />
+            </RetiredItems>
+          ) : null}
+        </>
       )}
     </div>
   );

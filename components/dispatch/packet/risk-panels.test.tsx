@@ -124,7 +124,7 @@ describe("RiskAssessmentPanel (#50)", () => {
 
   it("says why there's no matrix", () => {
     const { rerender } = render(<RiskAssessmentPanel risk={null} />);
-    expect(screen.getByText("Pick a flight to score its risk matrix.")).toBeInTheDocument();
+    expect(screen.getByText(/The risk matrix is scored for a flight: pick one from the list above/)).toBeInTheDocument();
     rerender(<RiskAssessmentPanel risk={null} failed />);
     expect(screen.getByText(/couldn't be scored just now/)).toBeInTheDocument();
   });

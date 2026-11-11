@@ -76,6 +76,10 @@ export interface AircraftListItem {
    *  type's. */
   effective_fuel_type_code?: string | null;
   effective_fuel_capacity_gal?: number | null;
+  /** Why an aircraft out of the fleet is out: "mel_expired" (an MEL item
+   *  past due grounds it until closed), "manual", or null when retired
+   *  (audit 1110-16). */
+  grounded_reason?: string | null;
 }
 
 export interface AircraftListResponse {

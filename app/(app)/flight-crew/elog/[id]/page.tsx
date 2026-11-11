@@ -164,6 +164,7 @@ export default async function FlightLogDetailPage({
             logId={log.id}
             logStatus={log.status}
             airframeType={log.aircraft.airframe_type ?? null}
+            model={log.aircraft.model ?? null}
             initialLegs={legs}
             canEdit={canEdit}
           />

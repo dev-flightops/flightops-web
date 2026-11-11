@@ -59,7 +59,8 @@ export function NotamAcknowledgmentPanel({
         }
       >
         <p className="text-xs text-muted-foreground">
-          Pick a flight or enter a routing to acknowledge NOTAMs per stop.
+          FlightOps doesn&rsquo;t list NOTAMs: the FAA&rsquo;s NOTAM feed isn&rsquo;t connected. Pick a flight or enter a
+          routing to acknowledge each stop&rsquo;s NOTAMs from your usual source.
         </p>
       </SectionPanel>
     );
@@ -92,9 +93,9 @@ export function NotamAcknowledgmentPanel({
       }
     >
       <p className="mb-3 text-xs text-muted-foreground">
-        Review NOTAMs for each stop in your usual source (1800wxbrief,
-        ForeFlight, etc.) and check the box to confirm. All boxes must be
-        checked before Generate PDF unlocks.
+        FlightOps doesn&rsquo;t list NOTAMs: the FAA&rsquo;s NOTAM feed isn&rsquo;t connected. Review
+        them for each stop in your usual source (1800wxbrief, ForeFlight, etc.) and check the box to confirm. All
+        boxes must be checked before Generate PDF unlocks.
       </p>
 
       <ul className="space-y-1.5">

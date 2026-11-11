@@ -1,4 +1,5 @@
 import { AircraftFilter } from "@/components/maintenance/aircraft-filter";
+import { RetiredItems } from "@/components/maintenance/retired-items";
 import { SquawksTable } from "@/components/maintenance/squawks-table";
 import { StatusFilterTabs } from "@/components/maintenance/status-filter-tabs";
 import { ApiError } from "@/lib/api/client";
@@ -10,6 +11,7 @@ import type {
   SquawkStatus,
 } from "@/lib/api/types";
 import { auth } from "@/auth";
+import { splitRetired } from "@/lib/maintenance/retired";
 import { AIRWORTHINESS_WRITERS, WORK_ORDER_WRITERS, hasAnyRole } from "@/lib/roles";
 
 /**
@@ -86,6 +88,10 @@ export default async function SquawksListPage({
         : "Squawks feed unavailable. Try refreshing in a moment.";
   }
 
+  // 1110-16: a retired aircraft's open squawks below the fleet's, not in it.
+  const split =
+    tab === "resolved" ? { current: items, retired: [], tails: [] } : splitRetired(items, aircraft, aircraftId);
+
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
       <header className="mb-6 border-b border-border pb-5">
@@ -126,21 +132,40 @@ export default async function SquawksListPage({
           {loadError}
         </div>
       ) : (
-        <SquawksTable
-          items={items}
-          showAircraft
-          canResolve={canResolve}
-          signerName={session?.user?.name?.trim() ?? ""}
-          workOrders={workOrders}
-          canOpenWorkOrder={canOpenWorkOrder}
-          emptyMessage={`No ${
-            tab === "active"
-              ? "active"
-              : tab === "in_progress"
-                ? "in-progress"
-                : tab
-          } squawks match this filter.`}
-        />
+        <>
+          <SquawksTable
+            items={split.current}
+            showAircraft
+            canResolve={canResolve}
+            signerName={session?.user?.name?.trim() ?? ""}
+            workOrders={workOrders}
+            canOpenWorkOrder={canOpenWorkOrder}
+            emptyMessage={`No ${
+              tab === "active"
+                ? "active"
+                : tab === "in_progress"
+                  ? "in-progress"
+                  : tab
+            } squawks match this filter.`}
+          />
+          {split.retired.length > 0 ? (
+            <RetiredItems
+              count={split.retired.length}
+              noun={tab === "in_progress" ? "squawk" : "open squawk"}
+              tails={split.tails}
+            >
+              <SquawksTable
+                items={split.retired}
+                showAircraft
+                canResolve={canResolve}
+                signerName={session?.user?.name?.trim() ?? ""}
+                workOrders={workOrders}
+                canOpenWorkOrder={canOpenWorkOrder}
+                emptyMessage=""
+              />
+            </RetiredItems>
+          ) : null}
+        </>
       )}
     </div>
   );

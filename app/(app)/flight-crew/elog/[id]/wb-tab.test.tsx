@@ -137,21 +137,19 @@ describe("WeightBalanceTab", () => {
     expect(screen.getByText("7588")).toBeInTheDocument();
   });
 
-  it("hides Takeoff / Landing / CG behind a 'Needs aircraft moment arms' hint", () => {
+  it("says once that it adds up the ramp weight and where the CG comes from (1110-09)", () => {
     render(
       <WeightBalanceTab
         logId="log-1"
         logStatus="draft"
-        initialLegs={[makeLeg({ id: "l-1" })]}
+        initialLegs={[makeLeg({ id: "l-1" }), makeLeg({ id: "l-2", leg_number: 2 })]}
       />,
     );
-    expect(screen.getByText(/Takeoff Wt/i)).toBeInTheDocument();
-    expect(screen.getByText(/Landing Wt/i)).toBeInTheDocument();
-    expect(screen.getByText(/^CG$/)).toBeInTheDocument();
-    // All three say what they are waiting on.
-    expect(
-      screen.getAllByText(/needs aircraft moment arms/i).length,
-    ).toBeGreaterThanOrEqual(3);
+    expect(screen.getAllByText(/holds no moment arms/)).toHaveLength(1);
+    expect(screen.getByText(/ForeFlight or on its W&B form/)).toBeInTheDocument();
+    // No boxes that wait on a setting nobody can make.
+    expect(screen.queryByText(/needs aircraft moment arms/i)).toBeNull();
+    expect(screen.queryByText(/Takeoff Wt/i)).toBeNull();
   });
 
   it("disables every W&B input in read-only (submitted) mode", () => {

@@ -15,8 +15,9 @@ import { updateLegAction } from "./legs-actions";
  *
  *   Header:  "Leg N W&B: ORIG → DEST" + Ramp Wt total
  *   Inputs:  BEW · Pilot · SIC · PAX · Baggage · Cargo · Fuel gal · Fuel wt
- *   Hints:   Takeoff / Landing weight + CG show as "Needs aircraft
- *            config" until per-aircraft moment-arm data lands in M3
+ *
+ * No takeoff / landing weight or CG: FlightOps holds no moment arms, and
+ * the tab says where those come from (audit 1110-09).
  *
  * Save model identical to Tab 2 LegCard: each input keeps local
  * state, blur diffs vs original, PATCH only changed keys via the
@@ -152,21 +153,6 @@ export function WeightBalanceCard({
         />
       </div>
 
-      <div className="mt-3 grid grid-cols-3 gap-2 rounded-md bg-muted/60 p-2 text-center text-[0.65rem]">
-        <Derived
-          label="Takeoff Wt"
-          hint="Needs aircraft moment arms"
-        />
-        <Derived
-          label="Landing Wt"
-          hint="Needs aircraft moment arms"
-        />
-        <Derived
-          label="CG"
-          hint="Needs aircraft moment arms"
-        />
-      </div>
-
       {pending && (
         <p className="mt-2 inline-flex items-center gap-1.5 text-[0.65rem] text-muted-foreground">
           <Spinner size="xs" /> Saving…
@@ -295,19 +281,6 @@ function NumberField({
         onBlur={onBlur}
         className="ff-input px-3 py-1.5 text-xs"
       />
-    </div>
-  );
-}
-
-function Derived({ label, hint }: { label: string; hint: string }) {
-  return (
-    <div>
-      <div className="eyebrow">
-        {label}
-      </div>
-      <div className="text-[0.65rem] italic text-muted-foreground">
-        {hint}
-      </div>
     </div>
   );
 }

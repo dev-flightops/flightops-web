@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { linkCaps } from "@/components/ff/controls";
 import { OnScreenNotice } from "@/components/ff/setup-notice";
 import { AddAircraftDialog } from "@/components/settings/add-aircraft-dialog";
 import { EditAircraftDialog } from "@/components/settings/edit-aircraft-dialog";
@@ -10,13 +11,15 @@ import {
 import { ApiError } from "@/lib/api/client";
 import { listAircraft } from "@/lib/api/ops";
 import type { AircraftListItem } from "@/lib/api/types";
+import { groundedBecause, outOfService } from "@/lib/maintenance/out-of-service";
 import { aircraftGaps } from "@/lib/setup/aircraft";
 
 /** /settings/fleet — Fleet management.
  *
  * Admin surface for adding / editing / retiring aircraft. Active fleet
- * up top, retired airframes in a muted section below (with a Reactivate
- * button so nothing is permanently gone).
+ * up top, the aircraft out of service in a muted section below: retired
+ * ones with a Reactivate button so nothing is permanently gone, grounded
+ * ones with why (audit 1110-16: they were all called retired).
  *
  * Writes require Role.EXEC_ADMIN or Role.MAINTENANCE — the reservations
  * service enforces this; the UI surfaces the 403 as a friendly message.
@@ -99,7 +102,7 @@ export default async function SettingsFleetPage() {
       {retired.length > 0 && (
         <section className="mt-6">
           <h2 className="mb-2 eyebrow">
-            Retired ({retired.length})
+            Out of service ({retired.length})
           </h2>
           <div className="overflow-x-auto rounded-lg border border-border bg-muted/60">
             <FleetTable aircraft={retired} variant="retired" />
@@ -145,6 +148,12 @@ function FleetTable({
                     </span>
                   ))
                 : null}
+              {/* 1110-16: grounded is not retired; each says which. */}
+              {outOfService(a) === "grounded" ? (
+                <span className="mt-0.5 block text-[0.7rem] text-status-red">{groundedBecause(a.grounded_reason)}</span>
+              ) : outOfService(a) === "retired" ? (
+                <span className="mt-0.5 block text-[0.7rem] text-muted-foreground">Retired</span>
+              ) : null}
             </td>
             <td className="px-4 py-3 text-muted-foreground">
               {a.model ?? "—"}
@@ -167,6 +176,12 @@ function FleetTable({
                       tailNumber={a.tail_number}
                     />
                   </>
+                ) : a.grounded_reason === "mel_expired" ? (
+                  // Back when the MEL item is closed: the MEL expiry job
+                  // returns it, so Reactivate here would only fight it.
+                  <Link href={`/maintenance/mel?aircraft=${a.id}`} className={linkCaps}>
+                    MEL items
+                  </Link>
                 ) : (
                   <ReactivateAircraftButton aircraftId={a.id} />
                 )}

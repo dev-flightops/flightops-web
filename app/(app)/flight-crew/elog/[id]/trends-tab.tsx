@@ -25,12 +25,15 @@ export function TrendsTab({
   logId,
   logStatus,
   airframeType,
+  model = null,
   initialLegs,
   canEdit = true,
 }: {
   logId: string;
   logStatus: FlightLogStatus;
   airframeType: string | null;
+  /** The aircraft's model as the fleet lists it, e.g. "Cessna 208 Caravan". */
+  model?: string | null;
   initialLegs: FlightLogLeg[];
   /** False when the caller may read this log but not change it: it is
    *  another pilot's, and they are not a Chief Pilot, DO or Exec Admin. */
@@ -90,7 +93,7 @@ export function TrendsTab({
           Trends
         </h2>
         <p className="mt-1 text-[0.7rem] text-muted-foreground">
-          {familyDisplayName(family, airframeType)} ·{" "}
+          {familyDisplayName(family, airframeType, model)} ·{" "}
           {initialLegs.length} leg
           {initialLegs.length === 1 ? "" : "s"}
         </p>

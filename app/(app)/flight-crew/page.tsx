@@ -78,8 +78,10 @@ export default async function FlightCrewPage() {
 
   let duty: CurrentDutyResponse = DUTY_OFFLINE_DEFAULT;
   // #93: the aircraft the pilot takes for the day. Null when it couldn't
-  // be read (or the person doesn't fly).
-  let morning: MorningResponse | null = null;
+  // be read; "pilots" when the viewer isn't one who takes an aircraft
+  // (ops answers 403), so the card says whose it is rather than that it
+  // failed (audit 1110-07: the Exec Admin read "couldn't be read").
+  let morning: MorningResponse | "pilots" | null = null;
 
   // The fleet for the squawk form (#92). Losing it costs the pilot the
   // squawk button, not the page.
@@ -128,7 +130,7 @@ export default async function FlightCrewPage() {
     // rather than blocking the whole page.
     const [dutyResult, morningResult, ...dayResults] = await Promise.all([
       getCurrentDuty().catch(() => DUTY_OFFLINE_DEFAULT),
-      getMorning().catch(() => null),
+      getMorning().catch((err) => (err instanceof ApiError && err.status === 403 ? ("pilots" as const) : null)),
       ...windowDates.map((onDate) =>
         listFlights({
           onDate,

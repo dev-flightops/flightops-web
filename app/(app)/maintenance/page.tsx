@@ -62,11 +62,29 @@ export default async function MaintenanceLandingPage() {
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-4">
-          {items.map((summary) => (
-            <FleetCard key={summary.aircraft.id} summary={summary} />
-          ))}
-        </div>
+        <>
+          <div className="grid grid-cols-1 gap-4">
+            {items
+              .filter((summary) => summary.is_active)
+              .map((summary) => (
+                <FleetCard key={summary.aircraft.id} summary={summary} />
+              ))}
+          </div>
+          {/* 1110-16: the aircraft out of service below the fleet, as
+              Settings → Fleet lists them; each card says why it's out. */}
+          {items.some((summary) => !summary.is_active) ? (
+            <section className="mt-8">
+              <h2 className="eyebrow mb-2">Out of service ({items.filter((summary) => !summary.is_active).length})</h2>
+              <div className="grid grid-cols-1 gap-4">
+                {items
+                  .filter((summary) => !summary.is_active)
+                  .map((summary) => (
+                    <FleetCard key={summary.aircraft.id} summary={summary} />
+                  ))}
+              </div>
+            </section>
+          ) : null}
+        </>
       )}
     </div>
   );
