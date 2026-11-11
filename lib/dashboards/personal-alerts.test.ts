@@ -213,6 +213,7 @@ describe("the ramp's own, at its stations (LOG-42)", () => {
         flight("fl4", "PABE", 180),
         flight("fl5", "PABE", -5, { actual_departure_at: at(-4) }),
         flight("fl6", "PABE", 30),
+        flight("fl8", "PABE", 45, { destination: "PABE", stops: ["PABE", "PAKN", "PABE"] }),
       ],
     });
     listDayLoads.mockResolvedValue({
@@ -233,7 +234,10 @@ describe("the ramp's own, at its stations (LOG-42)", () => {
     expect(departing.map((a) => [a.id, a.severity])).toEqual([
       ["departing-fl1", "yellow"],
       ["departing-fl2", "red"],
+      ["departing-fl8", "yellow"],
     ]);
+    // A round trip names its stops, not "PABE → PABE".
+    expect(departing[2].detail).toMatch(/^N603PA, PABE → PAKN → PABE\. /);
     expect(departing[0].title).toMatch(/^Departing \d\d:\d\d AK[SD]T — FL1$/);
     expect(departing[0].detail).toMatch(/^N603PA, PABE → PAKN\. Anchorage Load Team A loading since \d\d:\d\d AK[SD]T\.$/);
     expect(departing[1].detail).toBe("N603PA, PABE → PAKN. No load team on it yet.");

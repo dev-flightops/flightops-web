@@ -7,6 +7,7 @@ import type { FlightAssignmentResponse } from "@/lib/api/types";
 import { handoffLine } from "@/lib/flights/handoff-text";
 import { formatLocal } from "@/lib/format/flight-time";
 import { localClock, localDay, zoneFor } from "@/lib/format/local-time";
+import { routeText } from "@/lib/route";
 import {
   AIRWORTHINESS_WRITERS,
   DISPATCH_WRITERS,
@@ -145,7 +146,7 @@ async function rampAlerts(loads: FlightAssignmentResponse[], now: number): Promi
       severity: departs - now <= 15 * MINUTE ? "red" : "yellow",
       category: "departure_soon",
       title: `Departing ${localClock(f.scheduled_departure_at, zone)} — ${f.flight_number}`,
-      detail: `${f.aircraft.tail_number}, ${f.origin} → ${f.destination}. ${loadWords(load, zone)}`,
+      detail: `${f.aircraft.tail_number}, ${routeText(f)}. ${loadWords(load, zone)}`,
       href: "/ramper",
       scopedToIcao: f.origin,
       occurredAt: f.scheduled_departure_at,
