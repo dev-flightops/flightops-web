@@ -1,7 +1,10 @@
 import Link from "next/link";
 
+import type { BookingFlight } from "@/lib/api/booking-flights";
 import type { Booking } from "@/lib/api/reservations";
-import { DEFAULT_ZONE_TABLE, localDateTime, type ZoneTable, zoneFor } from "@/lib/format/local-time";
+import { DEFAULT_ZONE_TABLE, localClock, localDateTime, type ZoneTable, zoneFor } from "@/lib/format/local-time";
+
+import { BookingFlightOffers } from "./booking-flight-offers";
 
 /**
  * Reservations nobody has put on a flight yet.
@@ -26,9 +29,13 @@ export function BookingsAwaitingFlightPanel({
   earlier = 0,
   earlierBookings = [],
   zones = DEFAULT_ZONE_TABLE,
+  offers = {},
 }: {
   /** Waiting from the company's today on. */
   bookings: Booking[];
+  /** The flights each could go on (LOG-05), by booking id; a booking
+   *  without an entry is offered none. */
+  offers?: Record<string, BookingFlight[]>;
   /** How many wait from earlier days, folded away (#134): oldest first,
    *  seventeen from the week before buried the one booked that morning.
    *  Not out of sight (#174): a flight cancelled the day after it was due
@@ -63,14 +70,14 @@ export function BookingsAwaitingFlightPanel({
       {bookings.length > 0 ? (
         <ul className="divide-y divide-border">
           {bookings.map((b) => (
-            <BookingRow key={b.id} booking={b} zones={zones} />
+            <BookingRow key={b.id} booking={b} zones={zones} offers={offers[b.id]} />
           ))}
         </ul>
       ) : null}
 
       {bookings.length > 0 ? (
         <p className="border-t border-border px-4 py-2 text-[0.65rem] text-muted-foreground">
-          Open a booking to put it on an existing flight, or build one for it here.
+          Place one on a flight it fits, open it to choose another, or build a flight for it here.
         </p>
       ) : null}
 
@@ -90,7 +97,8 @@ export function BookingsAwaitingFlightPanel({
   );
 }
 
-function BookingRow({ booking: b, zones }: { booking: Booking; zones: ZoneTable }) {
+function BookingRow({ booking: b, zones, offers }: { booking: Booking; zones: ZoneTable; offers?: BookingFlight[] }) {
+  const zone = zoneFor(zones, b.origin_icao);
   return (
     <li className="px-4 py-3 text-xs hover:bg-accent">
       <div className="flex flex-wrap items-baseline justify-between gap-3">
@@ -111,6 +119,13 @@ function BookingRow({ booking: b, zones }: { booking: Booking; zones: ZoneTable 
         {b.origin_icao} → {b.destination_icao} ·{" "}
         {b.pax_count} pax
       </p>
+      {offers ? (
+        <BookingFlightOffers
+          bookingId={b.id}
+          offers={offers}
+          clock={Object.fromEntries(offers.map((o) => [o.flight_id, localClock(o.departs_at, zone)]))}
+        />
+      ) : null}
     </li>
   );
 }

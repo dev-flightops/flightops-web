@@ -173,6 +173,8 @@ export interface CheckInConfig {
   standby_enabled: boolean;
   allow_walk_up: boolean;
   lock_manifest_on_close: boolean;
+  /** Place a booking with no flight on the first one that fits (LOG-05). */
+  auto_place_bookings?: boolean;
 }
 
 export type CheckInConfigUpdate = Partial<Omit<CheckInConfig, "id">>;

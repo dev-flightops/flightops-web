@@ -8,6 +8,8 @@ import { formatZuluDateTime } from "@/lib/format/flight-time";
  */
 
 const FIELD_LABELS: Record<string, string> = {
+  // Placed on a flight, by hand or automatically (LOG-05).
+  flight: "Flight",
   origin_icao: "From",
   destination_icao: "To",
   requested_departure_at: "Departure",

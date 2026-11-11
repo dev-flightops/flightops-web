@@ -31,6 +31,7 @@ const AUDIENCE: Record<OperationalAlert["category"], ReadonlySet<Role> | "own"> 
   handoff: "own",
   departure_soon: "own",
   fuel_order: "own",
+  booking_waiting: "own",
 };
 
 /** Is the alert for someone with these roles? A session that came without
