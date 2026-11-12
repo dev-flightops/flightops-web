@@ -151,7 +151,7 @@ export default async function CourseLibraryPage({
           categoryCounts={categoryCounts}
         />
 
-        <main>
+        <div>
           {loadError ? (
             <div
               role="alert"
@@ -171,7 +171,7 @@ export default async function CourseLibraryPage({
               isAdmin={isAdmin}
             />
           )}
-        </main>
+        </div>
       </div>
     </div>
   );
