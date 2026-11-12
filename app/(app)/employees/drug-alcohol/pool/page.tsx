@@ -119,8 +119,8 @@ export default async function PoolPage() {
 
           <h2 className="section-title mb-1">Pool Members ({pool.pool_size})</h2>
           <p className="mb-3 text-xs text-muted-foreground">
-            In by role: {pool.safety_sensitive_roles.map(formatRole).join(", ") || "none"} (change the roles on the Program
-            tab). Add anyone else who does safety-sensitive work, or leave someone out while they&rsquo;re away, with the
+            In by role: {pool.safety_sensitive_roles.map(formatRole).join(", ") || "none"}{" "}(change the roles on the
+            Program tab). Add anyone else who does safety-sensitive work, or leave someone out while they&rsquo;re away, with the
             reason.
           </p>
           <div className="overflow-x-auto rounded-lg border border-border bg-card">

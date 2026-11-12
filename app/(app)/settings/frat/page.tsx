@@ -93,7 +93,7 @@ function Provenance({ config }: { config: FratThresholdConfigResponse }) {
         These are the values the platform ships with —{" "}
         {config.default_medium_entry_score} /{" "}
         {config.default_high_entry_score} /{" "}
-        {config.default_extreme_entry_score} — carried over from one
+        {config.default_extreme_entry_score}{" "}— carried over from one
         operator&rsquo;s review in August 2026. They are a starting
         point, not guidance: no FAR sets FRAT thresholds, and Part 135
         does not require a FRAT at all, so there is nothing to defer

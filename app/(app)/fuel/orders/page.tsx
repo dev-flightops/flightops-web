@@ -187,7 +187,7 @@ function BelowPlan({ order }: { order: FuelOrderResponse }) {
   if (planned === null || planned === undefined || order.requested_quantity_gallons >= planned) return null;
   return (
     <div className="mt-0.5 font-sans text-[0.65rem] font-semibold text-status-yellow">
-      Plan {planned.toLocaleString()} gal: check what&apos;s aboard
+      {`Plan ${planned.toLocaleString()} gal: check what's aboard`}
     </div>
   );
 }

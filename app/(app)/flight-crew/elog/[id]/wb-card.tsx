@@ -72,7 +72,7 @@ export function WeightBalanceCard({
     <div className="rounded-md border border-border p-4">
       <header className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
         <div className="flex items-baseline gap-2">
-          <span className="panel-title">Leg {leg.leg_number} W&amp;B</span>
+          <span className="panel-title">{`Leg ${leg.leg_number} W&B`}</span>
           <span className="text-[0.65rem] font-mono text-muted-foreground">
             {routeLabel}
           </span>

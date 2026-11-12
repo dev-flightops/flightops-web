@@ -357,7 +357,7 @@ export function ThresholdForm({
         ) : (
           <p className="mt-2 text-[0.7rem] text-status-red">
             The margin has to be smaller than the lower crosswind limit
-            ({tighterLimit} kt). Subtracting it from the limit is what
+            ({tighterLimit}{" "}kt). Subtracting it from the limit is what
             finds where &ldquo;near&rdquo; begins, so a margin that big
             would make every wind &mdash; calm included &mdash; count as
             near the limit.
