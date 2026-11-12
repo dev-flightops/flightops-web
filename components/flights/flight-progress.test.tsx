@@ -29,9 +29,15 @@ const progress = (over: Partial<FlightProgressResponse> = {}): FlightProgressRes
 describe("a flight's progress (#175)", () => {
   it("says whose turn it is and who did what", () => {
     render(<FlightProgress progress={progress()} timeZone="America/Anchorage" />);
-    expect(screen.getByText("Next: FRAT signed by the pilot, the pilot.")).toBeInTheDocument();
+    expect(screen.getByText("Next: FRAT signed by the pilot.")).toBeInTheDocument();
     expect(screen.getByText(/Dana Dispatch, Nov 8, 16:51/)).toBeInTheDocument();
     expect(screen.getByText("FRAT signed by the pilot").closest("li")).toHaveAttribute("aria-current", "step");
+  });
+
+  it("names whose turn it is only where the step doesn't", () => {
+    const released: FlightProgressResponse["next"] = { key: "released", label: "Released", state: "todo", turn: "dispatch", by_name: null, at: null, notes: [] };
+    render(<FlightProgress progress={progress({ next: released })} timeZone="America/Anchorage" />);
+    expect(screen.getByText("Next: Released, dispatch's turn.")).toBeInTheDocument();
   });
 
   it("lists what a flight not built still needs, for dispatch's sign-off", () => {
