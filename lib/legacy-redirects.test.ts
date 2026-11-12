@@ -49,6 +49,12 @@ describe("legacyRedirect", () => {
     expect(legacyRedirect("/records/employee-files")).toBe("/employees");
   });
 
+  it("sends each of legacy's Academy reports to its own report", () => {
+    expect(legacyRedirect("/lms/reports")).toBe("/academy/reports");
+    expect(legacyRedirect("/lms/reports/by-bucket")).toBe("/academy/reports?report=by-department");
+    expect(legacyRedirect("/lms/reports/overdue/")).toBe("/academy/reports?report=overdue");
+  });
+
   it("reads an id as a legacy integer: a FlightOps UUID or a word is not one", () => {
     expect(legacyRedirect("/weather/42")).toBe("/weather");
     expect(legacyRedirect(`/weather/${UUID}`)).toBeNull();

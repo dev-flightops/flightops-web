@@ -1173,6 +1173,26 @@ export const HELP_ENTRIES: HelpEntry[] = [
     connectsTo: "Reads the published course catalogue and creates enrollments. Learners must complete the lessons before a completion is recorded.",
     related: ["/academy/studio", "/academy/reports", "/compliance/crew-currency"],
   },
+  {
+    route: "/academy/reports",
+    title: "Academy reports",
+    whoCanUse: ["chief_pilot", "director_of_operations", "exec_admin"],
+    whatItDoes:
+      "Training across the company in five reports: completion by employee, by course and by department, overdue training, and training currency. Each can be filtered and exported as CSV.",
+    howToUse: [
+      "Pick a report from the tabs: By Employee, By Course, By Department, Overdue Training or Training Currency.",
+      "Narrow it with the filters it offers (dates, department, role, base or one person), then press Filter. Clear starts over.",
+      "Export CSV downloads the report with the same filters.",
+    ],
+    worthKnowing: [
+      "Training is overdue when the certificate from someone's latest completion of a course has run out. Assignments have no due date, so nothing is overdue before a first completion.",
+      "Pass rate counts the learners who passed a course's quiz out of those who took it, and the average score is each learner's best on each quiz. A course without a quiz has neither.",
+      "From and To narrow completions and quiz scores; assigned and overdue are as of today. Only published courses and current staff are counted.",
+    ],
+    connectsTo:
+      "Reads the enrollments, quiz attempts and certificates that assignments and learners create. Training Currency covers the courses whose certificate expires.",
+    related: ["/academy/assignments", "/academy/certificates", "/academy/studio"],
+  },
   // ── Your own records ────────────────────────────────────────────────
   {
     route: "/safety/mine",

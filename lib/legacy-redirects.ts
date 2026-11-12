@@ -51,11 +51,11 @@ export const LEGACY_REDIRECTS: readonly (readonly [from: string, to: string])[] 
   ["/lms/assignments", "/academy/assignments"],
   ["/lms/dashboard", "/academy/dashboard"],
   ["/lms/reports", "/academy/reports"],
-  ["/lms/reports/by-bucket", "/academy/reports"],
-  ["/lms/reports/by-course", "/academy/reports"],
-  ["/lms/reports/by-employee", "/academy/reports"],
-  ["/lms/reports/currency", "/academy/reports"],
-  ["/lms/reports/overdue", "/academy/reports"],
+  ["/lms/reports/by-bucket", "/academy/reports?report=by-department"],
+  ["/lms/reports/by-course", "/academy/reports?report=by-course"],
+  ["/lms/reports/by-employee", "/academy/reports?report=by-employee"],
+  ["/lms/reports/currency", "/academy/reports?report=currency"],
+  ["/lms/reports/overdue", "/academy/reports?report=overdue"],
 
   // Accounting and billing
   ["/accounting/coa", "/accounting"],
