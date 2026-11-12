@@ -11,6 +11,7 @@ import {
   mediaSourceText,
   mediaSummary,
   remainingText,
+  scormPassText,
 } from "./media";
 
 const item = (over: Partial<LessonMedia>): LessonMedia => ({
@@ -65,6 +66,30 @@ describe("in words", () => {
     expect(remainingText([item({}), item({ kind: "pdf" })])).toBe("Watch the video and page through the PDF to the end to continue.");
     expect(remainingText([item({}), item({})])).toBe("Watch 2 videos to the end to continue.");
     expect(remainingText([item({ kind: "pdf" }), item({ kind: "pdf" })])).toBe("Page through 2 PDFs to the end to continue.");
+  });
+
+  it("a SCORM module: on the outline, what's left, and what passes it", () => {
+    const scorm = (over: Partial<LessonMedia> = {}) =>
+      item({
+        kind: "scorm",
+        filename: "icing.zip",
+        size_bytes: 2 * 1024 * 1024,
+        scorm: { version: "1.2", title: "Icing", launch_path: "index.html", mastery_score: 80, file_count: 12, unpacked_bytes: 9 },
+        ...over,
+      });
+    expect(mediaSummary([item({}), scorm()])).toBe("SCORM · Video");
+    expect(remainingText([scorm()])).toBe("Pass or complete the SCORM module to continue.");
+    expect(remainingText([item({}), scorm()])).toBe(
+      "Watch the video to the end, and pass or complete the SCORM module, to continue.",
+    );
+    expect(mediaSourceText(scorm())).toBe("SCORM 1.2 package, 12 files: icing.zip (2.0 MB)");
+    expect(scormPassText(scorm())).toBe("Passed at 80% or more, as its manifest says.");
+    expect(
+      scormPassText(scorm({ scorm: { version: "2004", title: "x", launch_path: "a", mastery_score: 0.8, file_count: 1, unpacked_bytes: 1 } })),
+    ).toBe("Passed at 80% or more, as its manifest says.");
+    expect(scormPassText(scorm({ scorm: null }))).toMatch(/The package says/);
+    expect(mediaRefusalWords('{"detail":"several_scos_in_package"}')).toMatch(/several SCOs/);
+    expect(mediaRefusalWords('{"detail":"not_a_scorm_package"}')).toMatch(/imsmanifest\.xml/);
   });
 
   it("the earlier lessons a quiz waits for", () => {

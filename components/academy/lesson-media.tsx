@@ -3,27 +3,35 @@
 import { useMemo } from "react";
 
 import { MEDIA_KIND_LABELS, mediaFileUrl } from "@/lib/academy/media";
-import type { LessonMedia, LessonMediaProgress } from "@/lib/api/academy";
+import type { LessonMedia, LessonMediaProgress, ScormAttempt } from "@/lib/api/academy";
 
 import { EmbedPlayer } from "./embed-player";
 import { PdfPager } from "./pdf-pager";
+import { ScormPlayer } from "./scorm-player";
 import { VideoPlayer } from "./video-player";
 
 /**
- * One picture, video or PDF, shown as a learner sees it. With no `enrollmentId`
- * (the studio's preview, or an admin looking at someone else's enrollment)
- * nothing is recorded and nothing is held back.
+ * One picture, video, PDF or SCORM module, shown as a learner sees it. With no
+ * `enrollmentId` (the studio's preview, or an admin looking at someone else's
+ * enrollment) nothing is recorded and nothing is held back; a SCORM module
+ * then runs as the viewer's own preview.
  */
 export function LessonMediaItem({
   item,
   enrollmentId,
+  scormEnrollmentId = enrollmentId,
   progress,
+  scormAttempt,
   finished,
   onFinished,
 }: {
   item: LessonMedia;
   enrollmentId: string | null;
+  /** Whose SCORM run a module opens: the enrollee's own, even once the course
+   *  is complete; null for anyone else, whose look is a preview. */
+  scormEnrollmentId?: string | null;
   progress?: LessonMediaProgress;
+  scormAttempt?: ScormAttempt;
   finished: boolean;
   onFinished?: () => void;
 }) {
@@ -35,6 +43,17 @@ export function LessonMediaItem({
     [enrollmentId, item.id, item.must_finish, finished],
   );
 
+  if (item.kind === "scorm") {
+    return (
+      <ScormPlayer
+        item={item}
+        enrollmentId={scormEnrollmentId}
+        attempt={scormAttempt}
+        finished={finished}
+        onFinished={onFinished}
+      />
+    );
+  }
   if (item.kind === "image") {
     return (
       <img src={mediaFileUrl(item)} alt={item.title} loading="lazy" className="block h-auto max-w-full" />
@@ -77,13 +96,19 @@ export function LessonMediaItem({
 /** Where a learner stands on an item, in words. */
 export function mediaStatus(item: LessonMedia, finished: boolean): { text: string; done: boolean } {
   if (finished) {
-    return { text: item.kind === "video" ? "✓ Watched" : "✓ Read to the end", done: true };
+    const said = item.kind === "video" ? "✓ Watched" : item.kind === "scorm" ? "✓ Passed or completed" : "✓ Read to the end";
+    return { text: said, done: true };
   }
   if (!item.must_finish) {
     return { text: item.kind === "image" ? "" : "For reference", done: false };
   }
   return {
-    text: item.kind === "video" ? "Watch to the end" : "Page through to the end",
+    text:
+      item.kind === "video"
+        ? "Watch to the end"
+        : item.kind === "scorm"
+          ? "Pass or complete the module"
+          : "Page through to the end",
     done: false,
   };
 }
@@ -92,13 +117,18 @@ export function mediaStatus(item: LessonMedia, finished: boolean): { text: strin
 export function LessonMediaList({
   media,
   enrollmentId,
+  scormEnrollmentId = enrollmentId,
   progress,
+  scormAttempts = [],
   finishedIds,
   onFinished,
 }: {
   media: LessonMedia[];
   enrollmentId: string | null;
+  scormEnrollmentId?: string | null;
   progress: LessonMediaProgress[];
+  /** The learner's runs through the course's SCORM modules. */
+  scormAttempts?: ScormAttempt[];
   finishedIds: ReadonlySet<string>;
   onFinished?: (mediaId: string) => void;
 }) {
@@ -129,7 +159,9 @@ export function LessonMediaList({
             <LessonMediaItem
               item={item}
               enrollmentId={enrollmentId}
+              scormEnrollmentId={scormEnrollmentId}
               progress={progress.find((row) => row.media_id === item.id)}
+              scormAttempt={scormAttempts.find((row) => row.media_id === item.id)}
               finished={finished}
               onFinished={() => onFinished?.(item.id)}
             />
