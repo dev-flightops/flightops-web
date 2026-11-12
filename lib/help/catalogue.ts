@@ -1149,10 +1149,12 @@ export const HELP_ENTRIES: HelpEntry[] = [
       "Add lessons in the order a learner should meet them.",
       "Under a lesson, use + Add to upload a picture, video, PDF or SCORM package (.zip), paste a YouTube or Vimeo link, or pick a document from the library. Preview shows it as a learner will see it; a SCORM preview counts for nothing.",
       "Use Attach Quiz on a lesson, edit its questions, and set the pass threshold. Add questions before learners take it.",
+      "To start from the company's own manual, use Draft lessons from a document under the lessons: pick the document, how many lessons and whether to add a quiz, and the drafts come back in a minute or two. Keep the ones you want; each ends with the pages it came from.",
       "Publish, then assign it from the assignments page.",
     ],
     worthKnowing: [
       "A video has to be watched and a PDF paged to the end before its lesson can complete or its quiz opens, unless you untick that for a reference document. A quiz also waits for the earlier lessons.",
+      "Drafted lessons are written only from the document's pages, and are yours to check and edit: on a published course they show to learners as soon as they are added. Each person can draft ten times an hour.",
       "PowerPoint slides need saving as a PDF first. A SCORM 1.2 or 2004 package (.zip, one SCO) can be added like any file: it plays in the lesson and records status and score, and passed or completed counts as finished.",
     ],
     connectsTo:

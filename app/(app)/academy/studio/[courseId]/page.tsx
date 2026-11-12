@@ -16,10 +16,12 @@ import {
   listLessonMediaLibrary,
 } from "@/lib/api/academy";
 import { ApiError } from "@/lib/api/client";
+import { type DraftDocument, listDraftDocuments } from "@/lib/api/lesson-drafts";
 import { listCurrencyItems } from "@/lib/api/ops";
 import type { CurrencyItemRef } from "@/lib/api/types";
 
 import { CourseEditor } from "./course-editor";
+import { DraftLessons } from "./draft-lessons";
 
 const ADMIN_ROLES = roleGate(
   "chief_pilot",
@@ -47,20 +49,24 @@ export default async function ManageCoursePage({
   let eligibleCurrencyItems: CurrencyItemRef[] = [];
   let mediaLimits: LessonMediaLimits | null = null;
   let mediaLibrary: LessonMediaLibraryItem[] = [];
+  let draftDocuments: DraftDocument[] = [];
   try {
     // Kick off both fetches in parallel — the currency-items list
     // isn't strictly required to render the page, so its failure
     // downgrades the compliance picker to a linked-only view
     // rather than blocking the whole editor.
-    const [courseResp, itemsResp, limitsResp, libraryResp] = await Promise.all([
+    const [courseResp, itemsResp, limitsResp, libraryResp, draftDocsResp] = await Promise.all([
       getCourse(courseId),
       listCurrencyItems().catch(() => null),
       getLessonMediaLimits().catch(() => null),
       listLessonMediaLibrary().catch(() => []),
+      // The documents to draft lessons from (the bug doc's Section 6).
+      listDraftDocuments().catch(() => []),
     ]);
     course = courseResp;
     mediaLimits = limitsResp;
     mediaLibrary = libraryResp;
+    draftDocuments = draftDocsResp;
     if (itemsResp) {
       eligibleCurrencyItems = itemsResp.items.filter(_isEligibleForLink);
     }
@@ -100,6 +106,12 @@ export default async function ManageCoursePage({
         eligibleCurrencyItems={eligibleCurrencyItems}
         mediaLimits={mediaLimits}
         mediaLibrary={mediaLibrary}
+      />
+
+      <DraftLessons
+        courseId={course.id}
+        published={course.publish_status === "published"}
+        documents={draftDocuments}
       />
     </div>
   );
