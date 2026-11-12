@@ -9,6 +9,7 @@ const {
   listFuelOrders,
   getFlightBoard,
   loadZoneTable,
+  listBookings,
 } = vi.hoisted(() => ({
   listDayLoads: vi.fn(),
   listSquawks: vi.fn(),
@@ -18,12 +19,14 @@ const {
   listFuelOrders: vi.fn(),
   getFlightBoard: vi.fn(),
   loadZoneTable: vi.fn(),
+  listBookings: vi.fn(),
 }));
 vi.mock("@/lib/api/ground", () => ({ listDayLoads, listMyLoadTeams, listFuelOrders }));
 vi.mock("@/lib/api/maintenance", () => ({ listSquawks, listWorkOrders }));
 vi.mock("@/lib/api/ops", () => ({ listMyHandoffs }));
 vi.mock("@/lib/api/flight-following", () => ({ getFlightBoard }));
 vi.mock("@/lib/api/auth", () => ({ loadZoneTable }));
+vi.mock("@/lib/api/reservations", () => ({ listBookings }));
 
 import { loadPersonalAlerts } from "./personal-alerts";
 
@@ -49,7 +52,7 @@ const load = (over: Record<string, unknown> = {}) => ({
 });
 
 beforeEach(() => {
-  for (const f of [listDayLoads, listSquawks, listWorkOrders, listMyHandoffs, listMyLoadTeams, listFuelOrders, getFlightBoard, loadZoneTable]) {
+  for (const f of [listDayLoads, listSquawks, listWorkOrders, listMyHandoffs, listMyLoadTeams, listFuelOrders, getFlightBoard, loadZoneTable, listBookings]) {
     f.mockReset();
   }
   listSquawks.mockResolvedValue({ items: [], total: 0 });
@@ -60,6 +63,7 @@ beforeEach(() => {
   listFuelOrders.mockResolvedValue({ items: [], total: 0 });
   getFlightBoard.mockResolvedValue({ items: [] });
   loadZoneTable.mockResolvedValue({ byIcao: { PANC: "America/Anchorage", PABE: "America/Anchorage" }, fallback: "America/Anchorage" });
+  listBookings.mockResolvedValue({ items: [], total: 0 });
 });
 
 describe("the bell, per person (#134)", () => {
@@ -274,5 +278,33 @@ describe("the ramp's own, at its stations (LOG-42)", () => {
     const pilot = await loadPersonalAlerts({ roles: ["pilot"], userId: "u-p" });
     expect(pilot.filter((a) => a.category === "departure_soon")).toEqual([]);
     expect(getFlightBoard).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("a booking with no flight tells dispatch (LOG-05)", () => {
+  it("names each one waiting, for dispatch only", async () => {
+    listBookings.mockResolvedValue({
+      items: [
+        {
+          id: "b-1",
+          customer: { id: "c-1", full_name: "Ada Village" },
+          origin_icao: "PAHP",
+          destination_icao: "PABE",
+          requested_departure_at: "2026-11-12T18:00:00Z",
+          pax_count: 2,
+          created_at: "2026-11-11T19:00:00Z",
+        },
+      ],
+      total: 1,
+    });
+    const dispatch = (await loadPersonalAlerts({ roles: ["dispatcher"], userId: "u-d" })).filter((a) => a.category === "booking_waiting");
+    expect(dispatch.map((a) => [a.id, a.title, a.href])).toEqual([
+      ["booking-b-1", "Booking waiting for a flight — Ada Village", "/dispatch"],
+    ]);
+    expect(dispatch[0].detail).toMatch(/^2 pax PAHP → PABE, .+\. Place it from Dispatch\.$/);
+    expect(dispatch[0].occurredAt).toBe("2026-11-11T19:00:00Z");
+    expect(listBookings).toHaveBeenCalledWith(expect.objectContaining({ awaiting_flight: true, limit: 25 }));
+    const ramp = (await loadPersonalAlerts({ roles: ["ground_ops"], userId: "u-r" })).filter((a) => a.category === "booking_waiting");
+    expect(ramp).toEqual([]);
   });
 });

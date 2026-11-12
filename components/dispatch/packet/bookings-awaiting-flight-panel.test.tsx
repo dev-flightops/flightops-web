@@ -1,5 +1,7 @@
 import { render, screen, within } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+
+vi.mock("./place-booking-actions", () => ({ placeBookingAction: vi.fn() }));
 
 import type { Booking } from "@/lib/api/reservations";
 
@@ -92,7 +94,7 @@ describe("when bookings are waiting", () => {
   it("tells the dispatcher what to do with them", () => {
     render(<BookingsAwaitingFlightPanel bookings={[booking()]} />);
     expect(
-      screen.getByText(/put it on an existing flight, or build one/),
+      screen.getByText(/open it to choose another, or build a flight for it here/),
     ).toBeInTheDocument();
   });
 
@@ -146,5 +148,43 @@ describe("bookings from earlier days (#174)", () => {
   it("renders nothing when nothing waits from any day", () => {
     const { container } = render(<BookingsAwaitingFlightPanel bookings={[]} earlier={0} />);
     expect(container).toBeEmptyDOMElement();
+  });
+});
+
+describe("the flights a waiting booking could go on (LOG-05)", () => {
+  const offer = (n: string, over: Record<string, unknown> = {}) => ({
+    flight_id: `f-${n}`,
+    flight_number: n,
+    route: ["PAHP", "PABE"],
+    departs_at: "2026-09-12T18:00:00Z",
+    aircraft_tail: "N503PA",
+    seats_available: 4,
+    payload_left_lbs: "820",
+    fits: true,
+    short_of: null,
+    ...over,
+  });
+
+  it("offers the ones it fits, each placed with one click", () => {
+    render(
+      <BookingsAwaitingFlightPanel
+        bookings={[booking()]}
+        offers={{ "b-1": [offer("PGR101"), offer("PGR102", { fits: false, short_of: "seats", seats_available: 0 }), offer("PGR103", { payload_left_lbs: null })] }}
+      />,
+    );
+    const buttons = screen.getAllByRole("button").map((b) => b.textContent);
+    expect(buttons).toEqual([
+      "Place on PGR10110:00 AKDT · 4 seats · 820 lb left",
+      "Place on PGR10310:00 AKDT · 4 seats · payload not on file",
+    ]);
+    expect(screen.getByText(/Place one on a flight it fits/)).toBeInTheDocument();
+  });
+
+  it("says when none that day has room", () => {
+    render(
+      <BookingsAwaitingFlightPanel bookings={[booking()]} offers={{ "b-1": [offer("PGR102", { fits: false, short_of: "payload" })] }} />,
+    );
+    expect(screen.queryAllByRole("button")).toEqual([]);
+    expect(screen.getByText("No flight that day on its route has room for it: build one, or open it to choose.")).toBeInTheDocument();
   });
 });

@@ -37,6 +37,11 @@ const POLICY: { key: keyof CheckInConfig; label: string; hint: string }[] = [
     label: "Lock the manifest when boarding closes",
     hint: "Final for weight and balance and the reports, unless it's reopened before departure.",
   },
+  {
+    key: "auto_place_bookings",
+    label: "Place waiting bookings automatically",
+    hint: "A booking with no flight goes on the first flight that day on its route with seats and payload for its party. Dispatch is offered the flights either way.",
+  },
 ];
 
 const INPUT = "ff-input px-3 py-2 text-sm";

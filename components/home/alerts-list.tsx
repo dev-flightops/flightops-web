@@ -63,6 +63,7 @@ const CATEGORY_LABEL: Record<OperationalAlert["category"], string> = {
   handoff: "Waiting on you",
   departure_soon: "Departing soon",
   fuel_order: "Fuel orders",
+  booking_waiting: "Bookings waiting for a flight",
 };
 
 // Order the groups by what stops an aeroplane leaving, not alphabetically.
