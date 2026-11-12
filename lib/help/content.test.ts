@@ -106,9 +106,21 @@ describe("the help content stays honest", () => {
       "dispatch minimums",
       "stale or missing weather",
       "roster",
+      "weight and balance is outside limits",
+      "safety-sensitive duty",
     ]) {
       expect(answer, words).toContain(words);
     }
+  });
+
+  it("says a ForeFlight plan outside its limits holds the release", () => {
+    // #181: the release refuses it. The help said the verdict was only
+    // "displayed for review", and the assistant repeated that.
+    const text = helpCorpus();
+    expect(text).not.toContain("displayed for review");
+    expect(text).not.toContain("CG/envelope calculation is not implemented");
+    expect(text).toContain("outside its limits there holds the release");
+    expect(text).toContain("doesn't calculate the CG");
   });
 });
 

@@ -180,7 +180,7 @@ export default async function EnrollmentLessonPage({
           </ol>
         </aside>
 
-        <main className="rounded-lg border border-border bg-card p-6">
+        <section className="rounded-lg border border-border bg-card p-6">
           {activeLesson ? (
             <LessonPlayer
               key={activeLesson.id}
@@ -199,7 +199,7 @@ export default async function EnrollmentLessonPage({
               No lessons in this course yet.
             </div>
           )}
-        </main>
+        </section>
       </div>
     </div>
   );

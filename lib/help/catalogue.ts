@@ -110,7 +110,7 @@ export const HELP_ENTRIES: HelpEntry[] = [
     connectsTo:
       "Reads the manifest for weight and balance, the maintenance file for airworthiness, crew records for currency, and the weather service for the briefing. A release writes to the flight record and is what the flight board reads to show a flight as released.",
     worthKnowing: [
-      "The displayed load check is weight-only. CG/envelope calculation is not implemented; balance must be verified with the approved aircraft loading procedure. No AI helper can certify it or supply missing approved aircraft data.",
+      "Peregrine checks the weight; it doesn't calculate the CG or check the balance envelope. When the flight's ForeFlight plan comes back, a weight or the CG outside its limits there holds the release; otherwise balance must be verified with the approved aircraft loading procedure. No AI helper can certify it or supply missing approved aircraft data.",
       "The packet shows each pilot's standing in their seat on the aircraft's type. Once aircraft qualifications are switched on in Settings → Currency, a PIC who isn't current as PIC on the type is a hard block that a Chief Pilot, Director of Operations or Exec Admin can override for that one flight. The PIC picker and the crew panel name the problem beside each pilot.",
       "The Risk Assessment scores the flight the way the operator's original dispatch tool did: each applicable factor's severity times its likelihood, with no-cue/not-applicable factors unscored, the worst row setting LOW (up to 5), MEDIUM (up to 12) or HIGH. Weather and PIREPs, runways, the company's crosswind limits from Settings → Flight Risk, open MELs, hazmat on the manifest, the aircraft's 100-hour and night are worked out automatically, and the dispatcher can override any of them. Each stop's ceiling, visibility and wind are the worst current reading of its METAR, its FAA WeatherCam (a VWOS reading, or the cameras' estimated visibility) and its village report, and the weather card names the source; where any of it isn't certified, the packet says that only an operator whose OpSpecs authorize non-certified weather may use it for dispatch. Outside Pilot Restrictions and VFR Mountain Terrain at Night are the dispatcher's answers. A stop whose runway isn't known scores HIGH until it's entered under Stations.",
       "The dispatch packet PDF is laid out as the operator's original was: the risk matrix and its plain-English summary, the AAWU icing and turbulence charts, each stop's METAR, TAF and PIREPs, the area forecast for the region chosen in Flight Details, the non-certified FAA WeatherCam and village readings and whether each was scored, the dispatcher's notes, the NOTAMs reviewed, open MELs and the signature block. The weather and risk are kept as they were at release, so printing it later shows what the flight was released on. A flight released before packets were kept prints today's weather and says so. The company logo from Settings → Company prints at the top, as on the original.",
@@ -314,7 +314,7 @@ export const HELP_ENTRIES: HelpEntry[] = [
     worthKnowing: [
       "Only the Director of Operations or an Exec Admin sees this page: the key reads and writes the company's ForeFlight account. It can be replaced but is never shown again.",
       "A flight released here, or released in ForeFlight, is left alone from then on. A cancelled flight is taken out of ForeFlight unless ForeFlight already released it.",
-      "Peregrine's own weight check stays on the record. What's sent pre-loads the pilot's weight and balance in ForeFlight; any verdict returned is displayed for review. Peregrine does not itself calculate CG or check the aircraft's balance envelope.",
+      "Peregrine's own weight check stays on the record. What's sent pre-loads the pilot's weight and balance in ForeFlight. A plan that comes back with a weight or the CG outside its limits holds the release until the load or the plan is fixed and the plan comes back again. Peregrine does not itself calculate CG or check the aircraft's balance envelope.",
     ],
     related: ["/settings", "/dispatch", "/dispatch/foreflight-plans"],
   },
@@ -480,7 +480,7 @@ export const HELP_ENTRIES: HelpEntry[] = [
         body: "The flow is deliberately linear. Each step writes something the next one reads, so skipping ahead would mean signing a release against numbers nobody had entered yet.",
         steps: [
           "Dispatch release — the packet the dispatcher built, for the pilot to accept or reject.",
-          "Weight check — loaded from the manifest and checked against the aircraft’s weight limits. CG/envelope calculation is not implemented; balance requires the approved aircraft loading procedure.",
+          "Weight check — loaded from the manifest and checked against the aircraft’s weight limits. Peregrine doesn’t calculate the CG: balance is checked in the flight’s ForeFlight plan when one has come back, otherwise with the approved aircraft loading procedure.",
           "Weather and NOTAMs — what was current when the release was signed, kept with the flight.",
           "Risk assessment — the FRAT, scored against the operator's own thresholds.",
           "Duty In confirmation — confirm the current duty period before acceptance.",
@@ -1361,7 +1361,7 @@ export const HELP_ENTRIES: HelpEntry[] = [
     title: "Manifest",
     whoCanUse: ["dispatcher", "reservations_agent", "ground_ops", "pilot", "exec_admin"],
     whatItDoes:
-      "Who and what is on the aircraft: passengers, their weights, and cargo. These feed the weight check on the release. The app does not calculate CG or check a balance envelope; use the approved aircraft loading procedure for balance.",
+      "Who and what is on the aircraft: passengers, their weights, and cargo. These feed the weight check on the release. The app does not calculate CG or check a balance envelope: when the flight's ForeFlight plan comes back, a weight or the CG outside its limits there holds the release; otherwise use the approved aircraft loading procedure for balance.",
     howToUse: [
       "Open the flight's manifest, and create it if the flight has none.",
       "Add passengers and crew with actual or standard weights, as the operator's policy requires, and their bags.",
