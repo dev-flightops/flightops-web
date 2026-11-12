@@ -38,7 +38,9 @@ export type AirframeFamily = "turbine" | "piston" | "twin_piston" | "unsupported
 export function classifyAirframe(slug: string | null | undefined): AirframeFamily {
   if (!slug) return "unsupported";
   const normalized = slug.trim().toLowerCase();
-  if (normalized === "caravan" || normalized === "kingair" || normalized === "pilatus") {
+  // 1900d: N200PA's own type since 30 Oct (it had been a "kingair"),
+  // which left its trend tab saying it wasn't set up.
+  if (normalized === "caravan" || normalized === "kingair" || normalized === "1900d" || normalized === "pilatus") {
     return "turbine";
   }
   if (normalized === "navajo") return "twin_piston";
@@ -101,6 +103,7 @@ export function familyDisplayName(family: AirframeFamily, slug: string | null, m
   if (family === "turbine") {
     if (slug === "caravan") return `${own ?? "Cessna 208 Caravan"} — PT6A`;
     if (slug === "kingair") return `${own ?? "King Air 200"} — Twin PT6A`;
+    if (slug === "1900d") return `${own ?? "Beechcraft 1900D"} — Twin PT6A`;
     if (slug === "pilatus") return `${own ?? "Pilatus PC-12"} — Single PT6A`;
     return own ? `${own} — Turbine` : "Turbine";
   }

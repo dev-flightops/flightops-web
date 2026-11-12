@@ -22,7 +22,7 @@ export function OpenAssistantButton({
   const assistant = useAssistant();
   if (!assistant) {
     return (
-      <button type="button" disabled title="AI Assistant · Coming in M4" className={disabledClassName}>
+      <button type="button" disabled title="The assistant isn't available on this page" className={disabledClassName}>
         {children}
       </button>
     );

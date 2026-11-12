@@ -168,8 +168,8 @@ export default async function DispatchIntelligencePage() {
           )}
 
           <p className="mt-5 text-xs text-muted-foreground">
-            Assigning a suggestion to a flight is not built yet — this board
-            reads, it does not write. Build the leg in Dispatch as usual.
+            This board suggests; it doesn&apos;t assign anything to a flight.
+            Build the leg in Dispatch as usual.
           </p>
         </>
       ) : null}

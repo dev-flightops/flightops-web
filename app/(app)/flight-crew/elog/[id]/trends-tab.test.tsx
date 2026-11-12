@@ -55,7 +55,7 @@ describe("TrendsTab", () => {
     );
     expect(screen.getByText(/no legs to monitor/i)).toBeInTheDocument();
     expect(
-      screen.getByRole("link", { name: /Tab 2/ }),
+      screen.getByRole("link", { name: /Legs tab/ }),
     ).toBeInTheDocument();
   });
 
@@ -69,7 +69,7 @@ describe("TrendsTab", () => {
       />,
     );
     expect(
-      screen.queryByRole("link", { name: /Tab 2/ }),
+      screen.queryByRole("link", { name: /Legs tab/ }),
     ).not.toBeInTheDocument();
   });
 
@@ -83,7 +83,7 @@ describe("TrendsTab", () => {
       />,
     );
     expect(
-      screen.getByText(/engine trend monitoring not configured/i),
+      screen.getByText(/Engine trends aren.t set up for this aircraft.s type\. Set its airframe type under Settings → Fleet/),
     ).toBeInTheDocument();
   });
 
@@ -209,6 +209,6 @@ describe("TrendsTab: someone else's draft (29 Sep)", () => {
         canEdit={false}
       />,
     );
-    expect(screen.queryByRole("link", { name: /Tab 2/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /Legs tab/ })).not.toBeInTheDocument();
   });
 });

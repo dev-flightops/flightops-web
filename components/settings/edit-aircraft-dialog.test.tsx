@@ -54,7 +54,7 @@ describe("EditAircraftDialog", () => {
   it("opens with what the aircraft has, base, type and notes included", async () => {
     await openFor(CARAVAN);
     expect(screen.getByLabelText("Home base ICAO")).toHaveValue("PANC");
-    expect(screen.getByLabelText("Airframe slug")).toHaveValue("caravan");
+    expect(screen.getByLabelText("Airframe type")).toHaveValue("caravan");
     expect(screen.getByLabelText("Special notes")).toHaveValue("Cargo pod fitted");
   });
 
@@ -100,7 +100,7 @@ describe("EditAircraftDialog", () => {
   it("leaves a field empty where nothing is recorded", async () => {
     await openFor({ ...CARAVAN, base: null, airframe_type: undefined, special_notes: null });
     expect(screen.getByLabelText("Home base ICAO")).toHaveValue("");
-    expect(screen.getByLabelText("Airframe slug")).toHaveValue("");
+    expect(screen.getByLabelText("Airframe type")).toHaveValue("");
     expect(screen.getByLabelText("Special notes")).toHaveValue("");
   });
 });

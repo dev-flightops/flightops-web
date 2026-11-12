@@ -13,6 +13,12 @@ describe("classifyAirframe", () => {
     expect(classifyAirframe("pilatus")).toBe("turbine");
   });
 
+  it("gives the 1900D the turbine form, as the King Air it was entered as before 30 Oct", () => {
+    expect(classifyAirframe("1900d")).toBe("turbine");
+    expect(familyDisplayName("turbine", "1900d", "Beechcraft 1900D")).toBe("Beechcraft 1900D — Twin PT6A");
+    expect(familyDisplayName("turbine", "1900d")).toBe("Beechcraft 1900D — Twin PT6A");
+  });
+
   it("maps Navajo to 'twin_piston' (manifold pressure field)", () => {
     expect(classifyAirframe("navajo")).toBe("twin_piston");
   });

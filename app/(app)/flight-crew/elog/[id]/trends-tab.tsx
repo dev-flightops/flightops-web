@@ -52,12 +52,12 @@ export function TrendsTab({
           <p className="text-xs text-muted-foreground">No legs to monitor.</p>
           {!readOnly && (
             <p className="mt-2 text-[0.7rem] text-muted-foreground">
-              Add a leg on{" "}
+              Add a leg on the{" "}
               <Link
                 href={`/flight-crew/elog/${logId}?tab=legs`}
                 className="font-semibold text-primary hover:underline"
               >
-                Tab 2
+                Legs tab
               </Link>{" "}
               first — trend samples are per leg.
             </p>
@@ -77,10 +77,9 @@ export function TrendsTab({
           role="status"
           className="notice notice-yellow"
         >
-          Engine trend monitoring not configured for this airframe.
-          Set the aircraft&apos;s airframe type (caravan / kingair /
-          pilatus / navajo / c207 / ga8) on the Maintenance fleet
-          page to enable Tab 5 inputs.
+          Engine trends aren&apos;t set up for this aircraft&apos;s type.
+          Set its airframe type under Settings → Fleet to record them
+          here.
         </div>
       </div>
     );
