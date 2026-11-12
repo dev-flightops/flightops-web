@@ -90,8 +90,9 @@ export function SicPicker({
         ))}
       </select>
       <p className="mt-1 text-[0.6rem] text-muted-foreground">
-        Selecting a SIC routes per-leg SIC landings + Tab 4 SIC counters
-        into their currency records on submit.
+        With a SIC chosen, their landings on each leg and their counts on
+        the Summary tab go to their currency records when the log is
+        submitted.
       </p>
       {error && (
         <p role="alert" className="field-error">

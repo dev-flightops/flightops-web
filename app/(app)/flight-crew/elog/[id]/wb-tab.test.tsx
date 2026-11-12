@@ -44,12 +44,12 @@ function makeLeg(over: Partial<FlightLogLeg> & { id: string }): FlightLogLeg {
 }
 
 describe("WeightBalanceTab", () => {
-  it("renders the empty-state hint pointing back to Tab 2 when no legs exist", () => {
+  it("renders the empty-state hint pointing back to the Legs tab when no legs exist", () => {
     render(
       <WeightBalanceTab logId="log-1" logStatus="draft" initialLegs={[]} />,
     );
     expect(screen.getByText(/no legs to load yet/i)).toBeInTheDocument();
-    const tab2 = screen.getByRole("link", { name: /Tab 2/ });
+    const tab2 = screen.getByRole("link", { name: /Legs tab/ });
     expect(tab2.getAttribute("href")).toBe(
       "/flight-crew/elog/log-1?tab=legs",
     );
@@ -64,7 +64,7 @@ describe("WeightBalanceTab", () => {
       />,
     );
     expect(
-      screen.queryByRole("link", { name: /Tab 2/ }),
+      screen.queryByRole("link", { name: /Legs tab/ }),
     ).not.toBeInTheDocument();
   });
 
@@ -176,6 +176,6 @@ describe("WeightBalanceTab: someone else's draft (29 Sep)", () => {
     render(
       <WeightBalanceTab logId="log-1" logStatus="draft" initialLegs={[]} canEdit={false} />,
     );
-    expect(screen.queryByRole("link", { name: /Tab 2/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /Legs tab/ })).not.toBeInTheDocument();
   });
 });
