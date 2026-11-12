@@ -1149,10 +1149,12 @@ export const HELP_ENTRIES: HelpEntry[] = [
       "Add lessons in the order a learner should meet them.",
       "Under a lesson, use + Add to upload a picture, video or PDF, paste a YouTube or Vimeo link, or pick a document from the library. Preview shows it as a learner will see it.",
       "Use Attach Quiz on a lesson, edit its questions, and set the pass threshold. Add questions before learners take it.",
+      "To start from the company's own manual, use Draft lessons from a document under the lessons: pick the document, how many lessons and whether to add a quiz, and the drafts come back in a minute or two. Keep the ones you want; each ends with the pages it came from.",
       "Publish, then assign it from the assignments page.",
     ],
     worthKnowing: [
       "A video has to be watched and a PDF paged to the end before its lesson can complete or its quiz opens, unless you untick that for a reference document. A quiz also waits for the earlier lessons.",
+      "Drafted lessons are written only from the document's pages, and are yours to check and edit: on a published course they show to learners as soon as they are added. Each person can draft ten times an hour.",
       "PowerPoint slides need saving as a PDF first. SCORM import and playback are not available.",
     ],
     connectsTo:
