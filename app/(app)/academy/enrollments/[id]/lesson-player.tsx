@@ -5,7 +5,7 @@ import { useActionState, useState } from "react";
 
 import { LessonMediaList } from "@/components/academy/lesson-media";
 import { lessonNumbersText, remainingText } from "@/lib/academy/media";
-import type { Lesson, LessonMediaProgress } from "@/lib/api/academy";
+import type { Lesson, LessonMediaProgress, ScormAttempt } from "@/lib/api/academy";
 
 import {
   completeLessonAction,
@@ -33,6 +33,7 @@ export function LessonPlayer({
   locked,
   quizPassed,
   mediaProgress = [],
+  scormAttempts = [],
   isEnrollee = true,
   earlierLessonsOpen = [],
 }: {
@@ -47,6 +48,8 @@ export function LessonPlayer({
    *  drives whether we show "Take Quiz" or "Mark Complete". */
   quizPassed: boolean;
   mediaProgress?: LessonMediaProgress[];
+  /** The learner's runs through this lesson's SCORM modules. */
+  scormAttempts?: ScormAttempt[];
   /** False when an admin opens someone else's enrollment: their viewing
    *  isn't the learner's, so nothing is recorded. */
   isEnrollee?: boolean;
@@ -97,7 +100,9 @@ export function LessonPlayer({
         <LessonMediaList
           media={media}
           enrollmentId={isEnrollee && !locked ? enrollmentId : null}
+          scormEnrollmentId={isEnrollee ? enrollmentId : null}
           progress={mediaProgress}
+          scormAttempts={scormAttempts}
           finishedIds={finishedIds}
           onFinished={(mediaId) =>
             setFinishedIds((current) => new Set(current).add(mediaId))

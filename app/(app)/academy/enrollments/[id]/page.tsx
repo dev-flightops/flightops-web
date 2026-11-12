@@ -9,10 +9,12 @@ import {
   type Enrollment,
   type Lesson,
   type LessonMediaProgress,
+  type ScormAttempt,
   getCourse,
   getEnrollment,
   listLessonMediaProgress,
   listMyQuizAttempts,
+  listScormAttempts,
 } from "@/lib/api/academy";
 import { ApiError } from "@/lib/api/client";
 import { formatZuluDate } from "@/lib/format/flight-time";
@@ -89,6 +91,11 @@ export default async function EnrollmentLessonPage({
   let mediaProgress: LessonMediaProgress[] = [];
   if (activeLesson?.media?.some((item) => item.must_finish)) {
     mediaProgress = await listLessonMediaProgress(enrollment.id).catch(() => []);
+  }
+  // And where they stand in its SCORM modules: status and score.
+  let scormAttempts: ScormAttempt[] = [];
+  if (activeLesson?.media?.some((item) => item.kind === "scorm")) {
+    scormAttempts = await listScormAttempts(enrollment.id).catch(() => []);
   }
   const session = await auth();
   const activeIndex = activeLesson
@@ -191,6 +198,7 @@ export default async function EnrollmentLessonPage({
               locked={enrollment.status !== "in_progress"}
               quizPassed={quizPassed}
               mediaProgress={mediaProgress}
+              scormAttempts={scormAttempts}
               isEnrollee={session?.user?.id === enrollment.user.id}
               earlierLessonsOpen={earlierLessonsOpen}
             />

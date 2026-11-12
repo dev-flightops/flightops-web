@@ -15,6 +15,7 @@ import {
   MEDIA_KIND_LABELS,
   fileRefusalBeforeSending,
   mediaSourceText,
+  scormPassText,
 } from "@/lib/academy/media";
 import type {
   Lesson,
@@ -39,6 +40,7 @@ import {
 type AddWith = "file" | "link" | "library";
 
 const MUST_FINISH_LABEL = "The learner has to watch it or page it to the end";
+const MUST_PASS_LABEL = "The learner has to pass or complete it";
 const IMAGE_FILE = /\.(jpe?g|png|gif|webp)$/i;
 
 /** Why a file over the web host's limit can't be uploaded here, or null when
@@ -49,7 +51,8 @@ export function largeFileRefusal(file: File, limits: LessonMediaLimits | null): 
   return `${file.name} is too large: files over ${MAX_UPLOAD_LABEL} can't be uploaded on this server. For a video, add a YouTube or Vimeo link instead.`;
 }
 
-/** A lesson's pictures, videos and PDFs, for the course's author (#170). */
+/** A lesson's pictures, videos, PDFs and SCORM modules, for the course's
+ *  author (#170; SCORM from the bug doc's Section 6). */
 export function LessonMediaEditor({
   courseId,
   lesson,
@@ -66,7 +69,7 @@ export function LessonMediaEditor({
   return (
     <div className="mt-3 border-t border-border pt-3">
       <div className="flex items-center justify-between gap-2">
-        <h4 className="eyebrow">Pictures, videos and PDFs</h4>
+        <h4 className="eyebrow">Pictures, videos, PDFs and SCORM</h4>
         <button type="button" className={linkCaps} onClick={() => setAdding((open) => !open)}>
           {adding ? "Close" : "+ Add"}
         </button>
@@ -131,6 +134,9 @@ function MediaRow({
           <span className="ml-2 break-words text-xs text-muted-foreground">
             {mediaSourceText(item)}
           </span>
+          {item.kind === "scorm" ? (
+            <p className="mt-0.5 text-xs text-muted-foreground">{scormPassText(item)}</p>
+          ) : null}
         </div>
         <div className="flex flex-wrap items-center gap-3">
           <button type="button" className={linkCaps} onClick={() => setPreviewing((open) => !open)}>
@@ -180,7 +186,7 @@ function MediaRow({
               run(() => updateMediaAction(courseId, item.id, { must_finish: mustFinish }));
             }}
           />
-          {MUST_FINISH_LABEL}
+          {item.kind === "scorm" ? MUST_PASS_LABEL : MUST_FINISH_LABEL}
         </label>
       ) : null}
       {error ? (
@@ -322,7 +328,7 @@ function AddMediaForm({
           <input
             id={`media-file-${lessonId}`}
             type="file"
-            accept="image/jpeg,image/png,image/gif,image/webp,application/pdf,video/mp4,video/quicktime,video/webm,.m4v,.pptx,.ppt"
+            accept="image/jpeg,image/png,image/gif,image/webp,application/pdf,video/mp4,video/quicktime,video/webm,.m4v,.pptx,.ppt,.zip,application/zip"
             className="ff-input"
             onChange={(event) => {
               setFile(event.currentTarget.files?.[0] ?? null);
@@ -330,10 +336,11 @@ function AddMediaForm({
             }}
           />
           <p className="mt-1 text-xs text-muted-foreground">
-            Pictures (JPEG, PNG, GIF, WebP), PDFs, and videos (MP4 plays everywhere; also MOV and
-            WebM). For PowerPoint slides, save them as a PDF first.{" "}
+            Pictures (JPEG, PNG, GIF, WebP), PDFs, videos (MP4 plays everywhere; also MOV and
+            WebM), and SCORM 1.2 or 2004 packages as exported (.zip, one SCO). For PowerPoint
+            slides, save them as a PDF first.{" "}
             {limits?.direct_uploads
-              ? "Pictures up to 10 MB, PDFs up to 100 MB, videos up to 2 GB."
+              ? "Pictures up to 10 MB, PDFs up to 100 MB, videos up to 2 GB, SCORM packages up to 500 MB."
               : `Files up to ${MAX_UPLOAD_LABEL} on this server: for a longer video, use a link.`}
           </p>
         </div>
