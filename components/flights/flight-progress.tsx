@@ -8,6 +8,15 @@ const TURN: Record<HandoffTurn, string> = {
   chief_pilot_or_do: "the Chief Pilot or DO",
 };
 
+/** "Next: FRAT signed by dispatch." A step that already names who does it
+ *  isn't followed by them again (it read "…by dispatch, dispatch."); one
+ *  that doesn't says whose turn it is. */
+function nextLine(next: NonNullable<FlightProgressResponse["next"]>): string {
+  const who = next.turn ? TURN[next.turn] : null;
+  if (!who || next.label.toLowerCase().includes(`by ${who.toLowerCase()}`)) return `Next: ${next.label}.`;
+  return `Next: ${next.label}, ${who}'s turn.`;
+}
+
 function time(iso: string, timeZone: string): string {
   return new Date(iso).toLocaleString("en-US", {
     month: "short",
@@ -40,7 +49,7 @@ export function FlightProgress({
           {progress.status === "cancelled"
             ? "Cancelled."
             : next
-              ? `Next: ${next.label}${next.turn ? `, ${TURN[next.turn]}` : ""}.`
+              ? nextLine(next)
               : "Every step is done."}
         </p>
       </div>

@@ -46,7 +46,7 @@ export const GUIDES: Guide[] = [
       "Have the learner complete the course using [Complete Academy training](/help#guide-complete-academy-training), then verify the completion in Assignments and [Certificates](/academy/certificates).",
     ],
     notes: [
-      "Lessons hold text, pictures, videos and PDFs, and optional quizzes. A video has to be watched and a PDF paged to the end before the lesson completes or its quiz opens, unless the author marks it as reference. SCORM playback and Academy aggregate reports/CSV export are not available. Assignments and Certificates show the underlying records.",
+      "Lessons hold text, pictures, videos and PDFs, and optional quizzes. A video has to be watched and a PDF paged to the end before the lesson completes or its quiz opens, unless the author marks it as reference. SCORM playback is not available. [Academy reports](/academy/reports) give completion by employee, course and department, overdue training and training currency, each with a CSV export; Assignments and Certificates show the underlying records.",
       "Peregrine Assistant can explain these steps. It cannot author a course, assign a learner, grade an answer or record completion for you.",
     ],
     pages: ["/academy/studio", "/academy/assignments", "/academy/certificates"],
