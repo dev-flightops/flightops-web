@@ -1143,17 +1143,17 @@ export const HELP_ENTRIES: HelpEntry[] = [
     title: "Course studio",
     whoCanUse: ["chief_pilot", "director_of_operations", "exec_admin"],
     whatItDoes:
-      "Where courses are built: lessons with text, pictures, videos and PDFs, ordering, and optional quizzes attached to individual lessons. This is the authoring side of Academy, separate from taking a course.",
+      "Where courses are built: lessons with text, pictures, videos, PDFs and SCORM modules, ordering, and optional quizzes attached to individual lessons. This is the authoring side of Academy, separate from taking a course.",
     howToUse: [
       "Create the course and describe what completing it means.",
       "Add lessons in the order a learner should meet them.",
-      "Under a lesson, use + Add to upload a picture, video or PDF, paste a YouTube or Vimeo link, or pick a document from the library. Preview shows it as a learner will see it.",
+      "Under a lesson, use + Add to upload a picture, video, PDF or SCORM package (.zip), paste a YouTube or Vimeo link, or pick a document from the library. Preview shows it as a learner will see it; a SCORM preview counts for nothing.",
       "Use Attach Quiz on a lesson, edit its questions, and set the pass threshold. Add questions before learners take it.",
       "Publish, then assign it from the assignments page.",
     ],
     worthKnowing: [
       "A video has to be watched and a PDF paged to the end before its lesson can complete or its quiz opens, unless you untick that for a reference document. A quiz also waits for the earlier lessons.",
-      "PowerPoint slides need saving as a PDF first. SCORM import and playback are not available.",
+      "PowerPoint slides need saving as a PDF first. A SCORM 1.2 or 2004 package (.zip, one SCO) can be added like any file: it plays in the lesson and records status and score, and passed or completed counts as finished.",
     ],
     connectsTo:
       "Published courses become assignable. Completions feed training records and, where the course satisfies one, a currency item.",

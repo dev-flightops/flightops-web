@@ -31,7 +31,7 @@ import { LessonMediaEditor, largeFileRefusal } from "./lesson-media-editor";
 
 const LOCAL: LessonMediaLimits = {
   direct_uploads: false,
-  max_bytes: { image: 10 * 1024 ** 2, pdf: 100 * 1024 ** 2, video: 2048 * 1024 ** 2 },
+  max_bytes: { image: 10 * 1024 ** 2, pdf: 100 * 1024 ** 2, video: 2048 * 1024 ** 2, scorm: 500 * 1024 ** 2 },
 };
 const BUCKET: LessonMediaLimits = { ...LOCAL, direct_uploads: true };
 

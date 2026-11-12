@@ -76,10 +76,21 @@ export const ENROLLMENT_STATUS_LABELS: Record<EnrollmentStatus, string> = {
   expired: "Expired",
 };
 
-export type LessonMediaKind = "image" | "video" | "pdf";
+export type LessonMediaKind = "image" | "video" | "pdf" | "scorm";
 
-/** A picture, video or PDF in a lesson (#170): uploaded here, a video link,
- *  or a document from the library. */
+/** What a SCORM package's manifest says (the bug doc's Section 6). */
+export interface ScormPackageInfo {
+  version: "1.2" | "2004";
+  title: string;
+  launch_path: string;
+  /** 1.2: the raw score that passes (0-100); 2004: the scaled score (-1 to 1). */
+  mastery_score: number | null;
+  file_count: number;
+  unpacked_bytes: number;
+}
+
+/** A picture, video, PDF or SCORM package in a lesson (#170): uploaded here,
+ *  a video link, or a document from the library. */
 export interface LessonMedia {
   id: string;
   lesson_id: string;
@@ -97,6 +108,29 @@ export interface LessonMedia {
   /** The provider's id for the video; for an unlisted Vimeo video, "id/hash". */
   link_ref: string | null;
   document_id: string | null;
+  /** A SCORM package's manifest; null for anything else. */
+  scorm?: ScormPackageInfo | null;
+}
+
+/** A learner's run through a SCORM package, as the service read it. */
+export interface ScormAttempt {
+  media_id: string;
+  status: string;
+  score_percent: number | null;
+  score_raw: number | null;
+  score_max: number | null;
+  total_seconds: number;
+  launch_count: number;
+  finished: boolean;
+  finished_at: string | null;
+  last_saved_at: string | null;
+}
+
+/** A SCORM run's own link, under the API's address: framed as
+ *  NEXT_PUBLIC_API_URL + path. It carries no login, and lapses. */
+export interface ScormLaunch {
+  path: string;
+  expires_at: string;
 }
 
 /** How far a learner has got through one video or PDF. */
@@ -420,6 +454,29 @@ export async function deleteLessonMedia(mediaId: string): Promise<void> {
   await apiFetch<void>(`/academy/lesson-media/${mediaId}`, {
     method: "DELETE",
   });
+}
+
+/** The enrollee's own run through a SCORM item: started, or picked up. */
+export async function launchScorm(enrollmentId: string, mediaId: string): Promise<ScormLaunch> {
+  return apiFetch<ScormLaunch>(
+    `/academy/enrollments/${enrollmentId}/media/${mediaId}/scorm-launch`,
+    { method: "POST" },
+  );
+}
+
+/** The author's own look at a SCORM item from the studio; counts for nothing. */
+export async function previewScorm(mediaId: string): Promise<ScormLaunch> {
+  return apiFetch<ScormLaunch>(`/academy/lesson-media/${mediaId}/scorm-preview`, {
+    method: "POST",
+  });
+}
+
+/** The learner's runs through the course's SCORM items. */
+export async function listScormAttempts(enrollmentId: string): Promise<ScormAttempt[]> {
+  const { items } = await apiFetch<{ items: ScormAttempt[] }>(
+    `/academy/enrollments/${enrollmentId}/scorm-attempts`,
+  );
+  return items;
 }
 
 /** How far this learner has got through the course's videos and PDFs. */
