@@ -56,6 +56,7 @@ import { listMelItems } from "@/lib/api/maintenance";
 import { ReleaseReadinessPanel } from "@/components/dispatch/packet/release-readiness-panel";
 import { FlightProgress, buildGaps } from "@/components/flights/flight-progress";
 import { localDay, localToUtcIso } from "@/lib/format/local-time";
+import { listBookingFlights, type BookingFlight } from "@/lib/api/booking-flights";
 import { listBookings } from "@/lib/api/reservations";
 import { getTypeQualificationGrid } from "@/lib/api/type-qualifications";
 import {
@@ -297,6 +298,21 @@ export default async function DispatchPage({
     hasAnyRole(viewerRoles, AIRCRAFT_ASSIGNERS) ? listStaff().catch(() => null) : Promise.resolve(null),
   ]);
 
+  // The flights each waiting booking could go on (LOG-05), for the first
+  // few: one query each. Without them a booking is offered nothing and
+  // is opened to choose, as before.
+  const offers: Record<string, BookingFlight[]> = Object.fromEntries(
+    (
+      await Promise.all(
+        awaitingFlight.items.slice(0, 8).map((b) =>
+          listBookingFlights(b.id)
+            .then((r) => [b.id, r.items] as const)
+            .catch(() => null),
+        ),
+      )
+    ).filter((entry): entry is readonly [string, BookingFlight[]] => entry !== null),
+  );
+
   // #46 — who is current in which seat on this flight's aircraft type,
   // for the PIC picker and the crew panel. Soft-fail: losing it costs
   // the warnings, and release still checks the PIC.
@@ -452,6 +468,7 @@ export default async function DispatchPage({
           earlier={awaitingEarlier.total}
           earlierBookings={awaitingEarlier.items}
           zones={zones}
+          offers={offers}
         />
 
         <ForeFlightPlansWaitingBanner count={plansWaiting} />

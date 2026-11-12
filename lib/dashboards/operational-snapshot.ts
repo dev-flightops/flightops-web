@@ -65,7 +65,8 @@ export interface OperationalAlert {
     | "load_complete"
     | "handoff"
     | "departure_soon"
-    | "fuel_order";
+    | "fuel_order"
+    | "booking_waiting";
   title: string;
   detail: string;
   /** Permalink to the source record. */

@@ -3,10 +3,11 @@ import { getFlightBoard } from "@/lib/api/flight-following";
 import { listDayLoads, listFuelOrders, listMyLoadTeams } from "@/lib/api/ground";
 import { listSquawks, listWorkOrders } from "@/lib/api/maintenance";
 import { listMyHandoffs } from "@/lib/api/ops";
+import { listBookings } from "@/lib/api/reservations";
 import type { FlightAssignmentResponse } from "@/lib/api/types";
 import { handoffLine } from "@/lib/flights/handoff-text";
 import { formatLocal } from "@/lib/format/flight-time";
-import { localClock, localDay, zoneFor } from "@/lib/format/local-time";
+import { localClock, localDateTime, localDay, localToUtcIso, zoneFor } from "@/lib/format/local-time";
 import { routeText } from "@/lib/route";
 import {
   AIRWORTHINESS_WRITERS,
@@ -32,6 +33,9 @@ import type { OperationalAlert } from "./operational-snapshot";
  *   - The hand-offs between dispatch and the pilot (#175): "notify the next
  *     party in the flow that their is an item that needs action". Worked
  *     out by ops for the person asking (GET /ops/handoffs), to everyone.
+ *   - A booking with no flight tells dispatch (LOG-05, 8/28: "if a new
+ *     booking is made, how does dispatch know they need to make a new
+ *     flight?"), until it's on one.
  *   - The ramp's (LOG-42): "Ramp sees departures and fuel orders at its
  *     station". Its stations are its load teams' bases, or every station
  *     for someone on no team; an order the supplier fuels is the
@@ -94,6 +98,7 @@ export async function loadPersonalAlerts(viewer: {
     }
   }
 
+  if (dispatch) alerts.push(...(await bookingAlerts()));
   if (hasAnyRole(viewer.roles, RAMP)) alerts.push(...(await rampAlerts(loads?.items ?? [], now)));
 
   for (const item of handoffs?.items ?? []) {
@@ -174,4 +179,25 @@ async function rampAlerts(loads: FlightAssignmentResponse[], now: number): Promi
     });
   }
   return alerts;
+}
+
+/** The bookings nobody has put on a flight, from the company's today on
+ *  (LOG-05): each its own occurrence, gone once it's placed. */
+async function bookingAlerts(): Promise<OperationalAlert[]> {
+  const zones = await loadZoneTable();
+  const from = localToUtcIso(`${localDay(zones.fallback)}T00:00`, zones.fallback) ?? undefined;
+  const waiting = await listBookings({ awaiting_flight: true, from_date: from, limit: 25 }).catch(() => null);
+  return (waiting?.items ?? []).map((b) => ({
+    id: `booking-${b.id}`,
+    severity: "yellow" as const,
+    category: "booking_waiting" as const,
+    title: `Booking waiting for a flight — ${b.customer.full_name}`,
+    detail: `${b.pax_count} pax ${b.origin_icao} → ${b.destination_icao}, ${localDateTime(
+      b.requested_departure_at,
+      zoneFor(zones, b.origin_icao),
+    )}. Place it from Dispatch.`,
+    href: "/dispatch",
+    scopedToIcao: b.origin_icao,
+    occurredAt: b.created_at,
+  }));
 }
