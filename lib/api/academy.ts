@@ -801,3 +801,186 @@ export async function getCertificate(
     `${QUIZ_GATEWAY_PREFIX}/certificates/${certificateId}`,
   );
 }
+
+// ---- Reports ----------------------------------------------------------------
+//
+// Academy Reports (legacy /lms/reports): the academy service works out the
+// figures (its app/reports.py says what each one counts, and where legacy
+// can't carry over).
+
+export type AcademyReportKind = "by-employee" | "by-course" | "by-department" | "overdue" | "currency";
+
+/** Which filters a report takes: the From/To dates, the courses' department,
+ *  and the people ones (role, base, a person). */
+export type AcademyReportFilter = "dates" | "category" | "people";
+
+/** Legacy's five reports, in its order, each with legacy's filters: By
+ *  Department has no dates or people, By Course no people, and Overdue and
+ *  Currency are as of today. */
+export const ACADEMY_REPORTS: readonly {
+  key: AcademyReportKind;
+  label: string;
+  title: string;
+  about: string;
+  filters: readonly AcademyReportFilter[];
+}[] = [
+  {
+    key: "by-employee",
+    label: "By Employee",
+    title: "Completion by Employee",
+    about: "Each person's training: courses assigned, completed and overdue, and their average quiz score.",
+    filters: ["dates", "category", "people"],
+  },
+  {
+    key: "by-course",
+    label: "By Course",
+    title: "Completion by Course",
+    about: "Each published course: how many have it, how many completed it, and how its quiz went.",
+    filters: ["dates", "category"],
+  },
+  {
+    key: "by-department",
+    label: "By Department",
+    title: "Completion by Department",
+    about: "Completion rates by the courses' department, to see which ones are lagging.",
+    filters: ["category"],
+  },
+  {
+    key: "overdue",
+    label: "Overdue Training",
+    title: "Overdue Training",
+    about: "Training whose certificate has run out without being renewed, the longest overdue first.",
+    filters: ["category", "people"],
+  },
+  {
+    key: "currency",
+    label: "Training Currency",
+    title: "Training Currency",
+    about: "Each person against each course whose certificate expires: when they last completed it, when it runs out, and how long is left.",
+    filters: ["category", "people"],
+  },
+];
+
+export interface AcademyReportParams {
+  from?: string;
+  to?: string;
+  category?: CourseCategory;
+  role?: string;
+  base?: string;
+  user_id?: string;
+}
+
+const REPORT_PARAMS = ["from", "to", "category", "role", "base", "user_id"] as const;
+
+/** "?from=…&role=…" for the filters that are set, or "". */
+export function academyReportQs(p: AcademyReportParams): string {
+  const s = new URLSearchParams();
+  for (const key of REPORT_PARAMS) {
+    const v = p[key];
+    if (v) s.set(key, v);
+  }
+  const qs = s.toString();
+  return qs ? `?${qs}` : "";
+}
+
+export interface AcademyReportFilterOptions {
+  roles: string[];
+  bases: string[];
+  people: { id: string; full_name: string }[];
+}
+
+export interface EmployeeReportRow {
+  user_id: string;
+  full_name: string;
+  department: string | null;
+  base: string | null;
+  assigned: number;
+  completed: number;
+  overdue: number;
+  avg_score: number | null;
+}
+
+export interface CourseReportRow {
+  course_id: string;
+  title: string;
+  category: CourseCategory;
+  assigned: number;
+  completed: number;
+  /** Null when the course has no quiz: nothing to pass. */
+  passed: number | null;
+  pass_rate: number | null;
+  avg_score: number | null;
+}
+
+export interface DepartmentReportRow {
+  category: CourseCategory;
+  courses: number;
+  assigned: number;
+  completed: number;
+  overdue: number;
+  completion_rate: number;
+}
+
+export interface OverdueReportRow {
+  user_id: string;
+  full_name: string;
+  course_id: string;
+  title: string;
+  category: CourseCategory;
+  expired_on: string;
+  days_overdue: number;
+}
+
+export type CurrencyStatus = "expired" | "due_soon" | "current" | "never";
+
+export const CURRENCY_STATUS_LABELS: Record<CurrencyStatus, string> = {
+  expired: "Expired",
+  due_soon: "Due soon",
+  current: "Current",
+  never: "Never",
+};
+
+export interface CurrencyReportRow {
+  user_id: string;
+  full_name: string;
+  course_id: string;
+  title: string;
+  category: CourseCategory;
+  cert_valid_days: number;
+  last_completed: string | null;
+  expires_on: string | null;
+  days_left: number | null;
+  status: CurrencyStatus;
+}
+
+export interface AcademyReportRows {
+  "by-employee": EmployeeReportRow;
+  "by-course": CourseReportRow;
+  "by-department": DepartmentReportRow;
+  overdue: OverdueReportRow;
+  currency: CurrencyReportRow;
+}
+
+export interface AcademyReport<K extends AcademyReportKind> {
+  as_of: string;
+  rows: AcademyReportRows[K][];
+}
+
+/** Chief Pilot, Director of Operations and Exec Admin; 403 for others. */
+export async function getAcademyReport<K extends AcademyReportKind>(
+  kind: K,
+  params: AcademyReportParams = {},
+): Promise<AcademyReport<K>> {
+  return apiFetch<AcademyReport<K>>(`/academy/reports/${kind}${academyReportQs(params)}`);
+}
+
+export async function getAcademyReportFilterOptions(): Promise<AcademyReportFilterOptions> {
+  return apiFetch<AcademyReportFilterOptions>("/academy/reports/filters");
+}
+
+export async function getAcademyReportCsv(
+  kind: AcademyReportKind,
+  params: AcademyReportParams = {},
+): Promise<string> {
+  return apiFetch<string>(`/academy/reports/${kind}/csv${academyReportQs(params)}`, { parseAs: "text" });
+}
