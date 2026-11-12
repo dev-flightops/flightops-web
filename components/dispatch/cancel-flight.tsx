@@ -70,7 +70,8 @@ export function CancelFlight({
             <DialogDescription>
               The flight leaves the board and stays on record as cancelled.
               Active passenger bookings return to the awaiting-flight queue;
-              mail and freight go back to the waiting list.
+              mail and freight go back to the waiting list. Its open fuel
+              orders are cancelled, and the supplier sees that in their portal.
             </DialogDescription>
           </DialogHeader>
           {open ? <WalkUpsNotice flightId={flightId} /> : null}
