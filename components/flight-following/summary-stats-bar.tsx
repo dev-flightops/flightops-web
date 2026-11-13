@@ -1,5 +1,6 @@
 import { Stat, StatStrip } from "@/components/ff/stat-strip";
 import type { BoardFlightItem } from "@/lib/api/types";
+import { stopState } from "@/lib/flight-following/stops";
 
 /**
  * 4-chip stats bar above the flight board / map per the Flight
@@ -9,7 +10,9 @@ import type { BoardFlightItem } from "@/lib/api/types";
  *
  * Counts are derived from the same board response that drives the
  * table — one source, no extra fetch. "Airborne" = released flights
- * that have an actual_departure_at recorded; "Released" = released
+ * in the air: left and not landed, or with a leg in the air (on the
+ * ground at a stop it's "At PADM", in none of the four, LOG-14);
+ * "Released" = released
  * without ATD yet; "Planned" = scheduled status; "Delayed" = released
  * AND scheduled departure passed AND no actual_departure_at yet. The
  * dedicated DELAYED status the spec lists isn't on the backend yet
@@ -31,7 +34,7 @@ export function SummaryStatsBar({
       planned += 1;
     } else if (f.status === "released") {
       if (f.actual_departure_at) {
-        airborne += 1;
+        if (stopState(f).inAir) airborne += 1;
       } else {
         released += 1;
         const sched = new Date(f.scheduled_departure_at).getTime();
