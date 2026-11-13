@@ -279,3 +279,20 @@ it("counts each airborne aircraft once despite overlapping imported flights", as
   expect(snapshot.airborneCount).toBe(2);
   expect(snapshot.releasedCount).toBe(4);
 });
+
+it("doesn't count an aircraft on the ground at a stop as airborne (LOG-14)", async () => {
+  api.listSafetyReports.mockResolvedValue({ items: [] });
+  const leg = (sequence: number, origin: string, destination: string, off: string | null, on: string | null) => ({
+    sequence, origin, destination, actual_departure_at: off, actual_arrival_at: on,
+  });
+  const T = "2026-11-02T01:00:00Z";
+  api.getFlightBoard.mockResolvedValue({ items: [
+    { id: "f1", status: "released", aircraft: { id: "a1" }, origin: "PABE", destination: "PAKN", actual_departure_at: T,
+      actual_arrival_at: null, legs: [leg(1, "PABE", "PADM", T, T), leg(2, "PADM", "PAKN", null, null)] },
+    { id: "f2", status: "released", aircraft: { id: "a2" }, origin: "PABE", destination: "PAKN", actual_departure_at: T,
+      actual_arrival_at: null, legs: [leg(1, "PABE", "PADM", T, T), leg(2, "PADM", "PAKN", T, null)] },
+  ] });
+  const snapshot = await loadOperationalSnapshot();
+  expect(snapshot.airborneCount).toBe(1);
+  expect(snapshot.releasedCount).toBe(2);
+});

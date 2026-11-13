@@ -135,6 +135,10 @@ export interface FlightLeg {
   destination: string;
   scheduled_departure_at: string;
   scheduled_arrival_at: string;
+  /** Flight Following's marks at the leg's stops (LOG-14); null until
+   *  marked, absent from services before it. */
+  actual_departure_at?: string | null;
+  actual_arrival_at?: string | null;
 }
 
 export interface FlightDetail extends FlightListItem {
@@ -841,6 +845,9 @@ export interface BoardFlightItem {
   last_contact_at: string | null;
   /** Every airport on the route (services migration 0104). */
   stops?: string[];
+  /** A multi-stop flight's legs with their marks (LOG-14); empty for a
+   *  single leg, absent from services before it. */
+  legs?: FlightLeg[];
 }
 
 export interface BoardResponse {

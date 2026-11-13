@@ -14,6 +14,13 @@ import {
 } from "@/components/ui/dialog";
 import { Spinner } from "@/components/ui/spinner";
 import type { DepartureFlag } from "@/lib/api/types";
+import {
+  DEFAULT_TIME_ZONE,
+  localToUtcIso,
+  utcToLocalInput,
+  zoneAbbreviation,
+  zuluHint,
+} from "@/lib/format/local-time";
 
 import {
   checkInFlightAction,
@@ -36,15 +43,33 @@ import {
  * recorded anyway, since the aircraft has left and flight following has
  * to track it; the flags go to the Chief Pilot and DO and onto Data
  * Integrity.
+ *
+ * A multi-stop flight is marked at each stop (LOG-14; Greg, 13 Nov: "mark
+ * those"): the button names the stop, and only the flight's first
+ * departure is flagged. The time is now unless the dispatcher changes it,
+ * so a stop caught late is marked when it happened rather than in a rush
+ * of marks the five-minute rule would refuse.
  */
 export function CheckInButton({
   flightId,
   flightNumber,
   event,
+  leg = null,
+  airport,
+  first = true,
+  last = true,
 }: {
   flightId: string;
   flightNumber?: string;
   event: CheckInEvent;
+  /** The leg this mark is for, on a multi-stop flight; null for a single leg. */
+  leg?: number | null;
+  /** The stop it leaves or lands at, named on a multi-stop flight. */
+  airport?: string;
+  /** Its departure from where it started: flagged (#155). */
+  first?: boolean;
+  /** Its landing at its destination: the flight completes. */
+  last?: boolean;
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -52,14 +77,30 @@ export function CheckInButton({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+  const [when, setWhen] = useState("");
+  const [edited, setEdited] = useState(false);
+  /** The typed time the service checked the flags for, once it has. */
+  const [checkedFor, setCheckedFor] = useState<string | null>(null);
 
-  const label = event === "depart" ? "Mark Departed" : "Mark Arrived";
+  const stop = leg !== null && airport ? ` ${airport}` : "";
+  const label = `${event === "depart" ? "Mark Departed" : "Mark Arrived"}${stop}`;
+  const flagsApply = event === "depart" && first;
+  const zone = DEFAULT_TIME_ZONE;
+  const at = edited ? localToUtcIso(when, zone) : null;
+  // The flags shown are for the time recorded. The dialog's check is for
+  // now, and a typed time can flag differently (more than an hour early,
+  // the PIC not clocked in then), so a typed departure goes unconfirmed
+  // first and the service's flags for that time come back to confirm.
+  const current = !edited || (at !== null && checkedFor === at);
 
   const begin = async () => {
     setError(null);
     setFlags(null);
+    setCheckedFor(null);
+    setWhen(utcToLocalInput(new Date().toISOString(), zone));
+    setEdited(false);
     setOpen(true);
-    if (event === "depart") {
+    if (flagsApply) {
       setLoading(true);
       setFlags(await departureCheckAction(flightId));
       setLoading(false);
@@ -68,19 +109,28 @@ export function CheckInButton({
 
   const confirm = () => {
     setError(null);
+    if (edited && !at) {
+      setError("Enter the date and time it happened.");
+      return;
+    }
     startTransition(async () => {
-      const result = await checkInFlightAction(flightId, event, true);
+      const result = await checkInFlightAction(flightId, event, !flagsApply || current, { at, leg });
       if (result.ok) {
         setOpen(false);
         router.refresh();
         return;
       }
+      if (result.flags) {
+        setFlags(result.flags);
+        setCheckedFor(at);
+        // The typed time's flags, shown here to confirm, aren't an error.
+        if (!current) return;
+      }
       setError(result.error);
-      if (result.flags) setFlags(result.flags);
     });
   };
 
-  const flagged = (flags ?? []).length > 0;
+  const flagged = current && (flags ?? []).length > 0;
 
   return (
     <>
@@ -102,13 +152,40 @@ export function CheckInButton({
             </DialogTitle>
             <DialogDescription>
               {event === "depart"
-                ? "Records the departure now."
-                : "Records the arrival now and closes the flight as completed. The block time goes onto the aircraft's hours and a draft flight log opens for the PIC."}
+                ? first
+                  ? "Records the departure now."
+                  : `Records the departure from ${airport} now.`
+                : last
+                  ? "Records the arrival now and closes the flight as completed. The block time goes onto the aircraft's hours and a draft flight log opens for the PIC."
+                  : `Records the landing at ${airport} now. The flight stays open until it lands at its destination.`}
             </DialogDescription>
           </DialogHeader>
-          {event === "depart" ? (
+          <div>
+            <label htmlFor={`check-in-when-${flightId}`} className="field-label">
+              When ({zoneAbbreviation(zone)}), if not now
+            </label>
+            <input
+              id={`check-in-when-${flightId}`}
+              type="datetime-local"
+              value={when}
+              onChange={(e) => {
+                setWhen(e.target.value);
+                setEdited(true);
+              }}
+              disabled={pending}
+              className="ff-input px-3 py-2 font-mono text-sm"
+            />
+            <p className="mt-1 font-mono text-[0.65rem] text-muted-foreground">
+              {edited ? zuluHint(when, zone) : "Now, unless you change it."}
+            </p>
+          </div>
+          {flagsApply ? (
             loading ? (
               <p className="text-sm text-muted-foreground">Checking the flight…</p>
+            ) : !current ? (
+              <p className="text-sm text-muted-foreground">
+                The flight is checked for the time you entered when you record it, and anything it&apos;s flagged for shows here first.
+              </p>
             ) : flagged ? (
               <div role="alert" className="notice notice-yellow text-sm">
                 <p className="notice-label">It will be recorded with these flags</p>
