@@ -10,6 +10,7 @@ import {
   updateCompanyProfile,
   uploadHomeImage,
 } from "@/lib/api/auth";
+import type { CompanyProfileResponse } from "@/lib/api/types";
 
 /**
  * /settings/branding server action. Validates hex colors and the Home
@@ -45,7 +46,8 @@ const Schema = z.object({
 
 export type UpdateBrandingState =
   | { status: "idle" }
-  | { status: "saved" }
+  /** With the uploaded picture's time as saved: an address replaces it. */
+  | { status: "saved"; homeImageUploadedAt: string | null }
   | { status: "field-errors"; errors: Record<string, string> }
   | { status: "api-error"; message: string };
 
@@ -63,8 +65,9 @@ export async function updateBrandingAction(
     return { status: "field-errors", errors };
   }
 
+  let saved: CompanyProfileResponse;
   try {
-    await updateCompanyProfile(parsed.data);
+    saved = await updateCompanyProfile(parsed.data);
   } catch (err) {
     if (err instanceof ApiError) {
       if (err.status === 401) {
@@ -87,7 +90,7 @@ export async function updateBrandingAction(
   // Everything inside (app) reads the theme via the layout's server
   // fetch, so revalidate the layout scope.
   revalidatePath("/", "layout");
-  return { status: "saved" };
+  return { status: "saved", homeImageUploadedAt: saved.home_image_uploaded_at ?? null };
 }
 
 // ---- The Home picture uploaded from a computer ---------------------------

@@ -9,6 +9,8 @@ const actions = vi.hoisted(() => ({
   remove: vi.fn(),
   /** What the suggest form's action last returned, for a test to set. */
   extracted: { status: "idle" } as Record<string, unknown>,
+  /** What Save's action last returned, for a test to set. */
+  saved: { status: "idle" } as Record<string, unknown>,
 }));
 const downscale = vi.hoisted(() => vi.fn(async (file: File) => new Blob([`small ${file.name}`], { type: "image/jpeg" })));
 
@@ -20,11 +22,11 @@ vi.mock("./actions", () => ({
 }));
 vi.mock("@/lib/images/downscale", () => ({ downscalePhoto: downscale }));
 // Next runs the form on React 19; the test runner has React 18, which has
-// no useActionState. The suggest form's state is the one a test sets.
+// no useActionState. Each form's state is the one a test sets.
 vi.mock("react", async (importOriginal) => ({
   ...(await importOriginal<typeof import("react")>()),
   useActionState: (action: unknown, initial: unknown) => [
-    action === actions.extract ? actions.extracted : initial,
+    action === actions.extract ? actions.extracted : action === actions.update ? actions.saved : initial,
     () => {},
     false,
   ],
@@ -137,6 +139,22 @@ describe("the Home picture uploaded from this computer", () => {
     await user.type(addressBox(), "https://cdn.brand.example/new.jpg");
     expect(screen.getByText("Saving this address replaces the uploaded picture.")).toBeInTheDocument();
     expect(container.querySelector('img[src="https://cdn.brand.example/new.jpg"]')).not.toBeNull();
+  });
+
+  it("lets the uploaded picture go once an address is saved over it, as the server did", async () => {
+    const user = userEvent.setup();
+    const props = { initialPrimary: null, initialPrimaryDark: null, initialHomeImageUploadedAt: UPLOADED };
+    const { container, rerender } = render(<BrandingForm {...props} />);
+    await user.type(addressBox(), "https://cdn.brand.example/new.jpg");
+    actions.saved = { status: "saved", homeImageUploadedAt: null };
+    rerender(<BrandingForm {...props} />);
+    expect(screen.getByRole("button", { name: "Upload a picture" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Remove picture" })).toBeNull();
+    // Cleared again, the address leaves Home without a picture, not the old upload.
+    await user.clear(addressBox());
+    expect(sources(container)).not.toContain(uploadedSrc);
+    expect(screen.getByText(/No image: Home shows the greeting/)).toBeInTheDocument();
+    actions.saved = { status: "idle" };
   });
 
   it("never sends the file with Save", () => {

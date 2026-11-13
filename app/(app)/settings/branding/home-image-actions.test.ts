@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { uploadHomeImage, removeHomeImage, revalidatePath, TestApiError } = vi.hoisted(() => {
+const { uploadHomeImage, removeHomeImage, updateCompanyProfile, revalidatePath, TestApiError } = vi.hoisted(() => {
   class TestApiError extends Error {
     constructor(
       public status: number,
@@ -10,20 +10,20 @@ const { uploadHomeImage, removeHomeImage, revalidatePath, TestApiError } = vi.ho
       super(message);
     }
   }
-  return { uploadHomeImage: vi.fn(), removeHomeImage: vi.fn(), revalidatePath: vi.fn(), TestApiError };
+  return { uploadHomeImage: vi.fn(), removeHomeImage: vi.fn(), updateCompanyProfile: vi.fn(), revalidatePath: vi.fn(), TestApiError };
 });
 vi.mock("@/lib/api/auth", () => ({
   uploadHomeImage,
   removeHomeImage,
   extractBrandingFromUrl: vi.fn(),
-  updateCompanyProfile: vi.fn(),
+  updateCompanyProfile,
 }));
 vi.mock("@/lib/api/client", () => ({ ApiError: TestApiError }));
 vi.mock("next/cache", () => ({ revalidatePath }));
 
 import { homeImageSource } from "@/lib/branding/home-image";
 
-import { removeHomeImageAction, uploadHomeImageAction } from "./actions";
+import { removeHomeImageAction, updateBrandingAction, uploadHomeImageAction } from "./actions";
 
 const form = (image?: Blob, name = "hangar.jpg") => {
   const body = new FormData();
@@ -66,6 +66,19 @@ describe("the Home picture's actions", () => {
   it("removes the picture", async () => {
     expect(await removeHomeImageAction()).toEqual({ ok: true, uploadedAt: null });
     expect(revalidatePath).toHaveBeenCalledWith("/", "layout");
+  });
+
+  it.each([
+    ["an address replaces it", "https://cdn.brand.example/new.jpg", null],
+    ["no address keeps it", "", "2026-11-13T01:02:03Z"],
+  ])("says what Save kept of the uploaded picture: %s", async (_, link, kept) => {
+    updateCompanyProfile.mockReset().mockResolvedValue({ home_image_url: link || null, home_image_uploaded_at: kept });
+    const body = new FormData();
+    body.append("brand_primary_color", "");
+    body.append("brand_primary_dark_color", "");
+    body.append("home_image_url", link);
+    expect(await updateBrandingAction({ status: "idle" }, body)).toEqual({ status: "saved", homeImageUploadedAt: kept });
+    expect(updateCompanyProfile).toHaveBeenCalledWith({ brand_primary_color: "", brand_primary_dark_color: "", home_image_url: link });
   });
 });
 

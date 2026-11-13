@@ -66,6 +66,13 @@ export function BrandingForm({
     }
   }, [extractState]);
 
+  // A saved address replaces an uploaded picture on the server, and this
+  // page's state doesn't reload with it: follow what the save kept, so the
+  // form doesn't offer the old upload's Remove or preview it again.
+  useEffect(() => {
+    if (state.status === "saved") setUploadedAt(state.homeImageUploadedAt);
+  }, [state]);
+
   // The preview falls back exactly as the live theme does
   // (BrandThemeStyle): no colour → the platform default, no hover shade
   // → the one derived from the primary. It used to fall back to the old
