@@ -1115,6 +1115,8 @@ describe("mountain terrain, yes or no (LOG-03)", () => {
   const prefill = (night: boolean | null, night_reason: string | null = null): FratPrefillResponse => ({
     flight_id: "f-1",
     suggestions: [],
+    crosswind_limit_kt: null,
+    near_limit_entry_kt: null,
     vfr_min_ceiling_ft: 1000,
     vfr_min_visibility_sm: 3,
     night,
