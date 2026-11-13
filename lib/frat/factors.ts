@@ -16,6 +16,8 @@ export interface FratFactor {
   label: string;
   hint: string;
   anchors: Record<number, string>;
+  /** Answered yes or no rather than 0–5: mountain terrain (LOG-03). */
+  yesNo?: boolean;
 }
 export const FACTOR_GROUPS: ReadonlyArray<{
   group: string;
@@ -214,15 +216,15 @@ export const FACTOR_GROUPS: ReadonlyArray<{
     group: "Route / Terrain",
     factors: [
       {
-        code: "route_terrain",
-        label: "Terrain challenge",
-        hint: "Elevation and obstacles under the planned track.",
-        anchors: {
-          0: "Flat delta or coastline",
-          2: "Rolling terrain with scattered obstacles",
-          4: "Mountains with defined pass routing",
-          5: "High mountainous, single-engine-out-of-glide",
-        },
+        // The client, 11/13 (LOG-03): "it should read mountain terrain yes
+        // or no and add a small risk for terrain maybe a point in day two at
+        // night if marked yes". It took the place of the 0–5 "Terrain
+        // challenge", which FRATs filed before it keep (RETIRED_FACTORS).
+        code: "route_mountain",
+        label: "Mountain terrain",
+        hint: "Mountains along the route or at a stop.",
+        anchors: { 0: "No", 1: "Yes, by day", 2: "Yes, at night" },
+        yesNo: true,
       },
       {
         code: "route_remote",
@@ -250,7 +252,34 @@ export const FACTOR_GROUPS: ReadonlyArray<{
   },
 ];
 
+/** Factors no longer asked, by group, for FRATs filed with them. */
+export const RETIRED_FACTORS: Readonly<Record<string, ReadonlyArray<FratFactor>>> = {
+  "Route / Terrain": [
+    {
+      code: "route_terrain",
+      label: "Terrain challenge",
+      hint: "Elevation and obstacles under the planned track.",
+      anchors: {
+        0: "Flat delta or coastline",
+        2: "Rolling terrain with scattered obstacles",
+        4: "Mountains with defined pass routing",
+        5: "High mountainous, single-engine-out-of-glide",
+      },
+    },
+  ],
+};
+
 /** A factor's label as the pilot's FRAT shows it, e.g. "Wind & gusts". */
 export function factorLabel(code: string): string {
-  return FACTOR_GROUPS.flatMap((g) => g.factors).find((f) => f.code === code)?.label ?? code;
+  return (
+    [...FACTOR_GROUPS.flatMap((g) => g.factors), ...Object.values(RETIRED_FACTORS).flat()].find(
+      (f) => f.code === code,
+    )?.label ?? code
+  );
+}
+
+/** A yes/no factor's score: yes counts 1 by day and 2 at night, or when
+ *  the flight's night can't be told, the higher (LOG-03). */
+export function yesNoScore(yes: boolean, night: boolean | null | undefined): number {
+  return yes ? (night === false ? 1 : 2) : 0;
 }

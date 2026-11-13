@@ -1102,3 +1102,109 @@ describe("the FRAT dispatch scored, in the pilot's preflight (#175)", () => {
     expect(screen.getByLabelText("Each factor's score")).toBeInTheDocument();
   });
 });
+
+/**
+ * Mountain terrain (LOG-03). The client, 11/13: "it should read mountain
+ * terrain yes or no and add a small risk for terrain maybe a point in day
+ * two at night if marked yes". The prefill says whether the flight is at
+ * night, by the dispatch matrix's own reading.
+ */
+describe("mountain terrain, yes or no (LOG-03)", () => {
+  beforeEach(() => vi.mocked(submitFratAction).mockClear());
+
+  const prefill = (night: boolean | null, night_reason: string | null = null): FratPrefillResponse => ({
+    flight_id: "f-1",
+    suggestions: [],
+    vfr_min_ceiling_ft: 1000,
+    vfr_min_visibility_sm: 3,
+    night,
+    night_reason,
+  });
+  const mountain = () => screen.getByRole("group", { name: "Mountain terrain" });
+  const fileIt = async (user: ReturnType<typeof userEvent.setup>) => {
+    await user.click(screen.getByRole("button", { name: /Submit assessment/i }));
+    await user.click(screen.getByRole("button", { name: /genuinely zero/i }));
+    return vi.mocked(submitFratAction).mock.calls.at(-1)![1];
+  };
+
+  it("asks yes or no, and a yes counts 2 on a flight at night", async () => {
+    const user = userEvent.setup();
+    renderStep({ fratPrefill: prefill(true, "night at departure PANC 1000Z") });
+    expect(within(mountain()).getByRole("button", { name: "No" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByText("Yes counts 2: night at departure PANC 1000Z.")).toBeInTheDocument();
+    await user.click(within(mountain()).getByRole("button", { name: "Yes" }));
+    expect(within(mountain()).getByRole("button", { name: "Yes" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByText("Yes, at night")).toBeInTheDocument();
+    expect((await fileIt(user)).answers.route_mountain).toBe(2);
+  });
+
+  it("counts a yes 1 by day", async () => {
+    const user = userEvent.setup();
+    renderStep({ fratPrefill: prefill(false) });
+    expect(screen.getByText("Yes counts 1: the flight is by day.")).toBeInTheDocument();
+    await user.click(within(mountain()).getByRole("button", { name: "Yes" }));
+    expect(screen.getByText("Yes, by day")).toBeInTheDocument();
+    expect((await fileIt(user)).answers.route_mountain).toBe(1);
+  });
+
+  it("counts a yes 2 when day can't be told from night, and says why", async () => {
+    const user = userEvent.setup();
+    renderStep({ fratPrefill: prefill(null, "position unknown for 9Z8; enter it under Stations") });
+    expect(
+      screen.getByText("Yes counts 2, as at night: position unknown for 9Z8; enter it under Stations."),
+    ).toBeInTheDocument();
+    await user.click(within(mountain()).getByRole("button", { name: "Yes" }));
+    expect((await fileIt(user)).answers.route_mountain).toBe(2);
+  });
+
+  it("sends no terrain score from before, and a no as a 0", async () => {
+    const user = userEvent.setup();
+    renderStep({ fratPrefill: prefill(false) });
+    const answers = (await fileIt(user)).answers;
+    expect(answers.route_mountain).toBe(0);
+    expect(answers).not.toHaveProperty("route_terrain");
+  });
+
+  const everyFactor = (scores: Record<string, number>) => ({
+    ...Object.fromEntries(FACTOR_GROUPS.flatMap((g) => g.factors).map((f) => [f.code, 0])),
+    ...scores,
+  });
+  const filed = (answers: Record<string, number>): FratAssessmentResponse => ({
+    id: "a-03",
+    flight_id: "f-1",
+    pilot_user_id: "u-1",
+    answers,
+    total_score: Object.values(answers).reduce((a, b) => a + b, 0),
+    risk_level: "low",
+    mitigations: null,
+    over_limit_factors: [],
+    affirmed_zero_factors: null,
+    carried_from_assessment_id: null,
+    created_at: "2026-11-13T15:00:00Z",
+    authorizations: [],
+    signoffs: [],
+  });
+
+  it("reads a filed yes back as yes, at night", () => {
+    renderStep({ initial: filed(everyFactor({ route_mountain: 2 })) });
+    const scores = screen.getByLabelText("Each factor's score");
+    expect(within(scores).getByText("Mountain terrain")).toBeInTheDocument();
+    expect(within(scores).getByText("Yes, at night")).toBeInTheDocument();
+  });
+
+  it("shows a FRAT filed before it with its terrain score, not a mountain answer it wasn't asked", () => {
+    const { route_mountain: _, ...before } = everyFactor({ route_terrain: 4 });
+    renderStep({ initial: filed(before) });
+    const scores = screen.getByLabelText("Each factor's score");
+    expect(within(scores).getByText("Terrain challenge")).toBeInTheDocument();
+    expect(within(scores).queryByText("Mountain terrain")).not.toBeInTheDocument();
+  });
+
+  it("scores a yes on file for this flight's night when the FRAT is changed", async () => {
+    const user = userEvent.setup();
+    renderStep({ initial: filed(everyFactor({ route_mountain: 1 })), fratPrefill: prefill(true, "night at arrival PABE 1130Z") });
+    await user.click(screen.getByRole("button", { name: /Change the FRAT/i }));
+    expect(within(mountain()).getByRole("button", { name: "Yes" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByText("Yes, at night")).toBeInTheDocument();
+  });
+});

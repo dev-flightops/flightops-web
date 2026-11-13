@@ -20,7 +20,13 @@ import {
   completeStepAction,
   submitFratAction,
 } from "./actions";
-import { FACTOR_GROUPS, type FratFactor } from "@/lib/frat/factors";
+import {
+  FACTOR_GROUPS,
+  RETIRED_FACTORS,
+  factorLabel,
+  yesNoScore,
+  type FratFactor,
+} from "@/lib/frat/factors";
 
 interface Props {
   flightId: string;
@@ -390,7 +396,12 @@ function FratQuestionnaire({
         const hint = (fratPrefill?.suggestions ?? []).find(
           (x) => x.factor === f.code,
         );
-        init[f.code] = startFrom ? (startFrom.answers[f.code] ?? 0) : (hint?.score ?? 0);
+        init[f.code] = f.yesNo
+          ? // Yes or no, scored for this flight's day or night (LOG-03).
+            yesNoScore(Boolean(startFrom?.answers[f.code]), fratPrefill?.night)
+          : startFrom
+            ? (startFrom.answers[f.code] ?? 0)
+            : (hint?.score ?? 0);
       }
     return init;
   });
@@ -562,7 +573,7 @@ function FratQuestionnaire({
         {mode === "preflight" ? <p className="eyebrow">Step 1</p> : null}
         <h2 className="caption-caps mt-1 text-lg text-foreground">Flight Risk Assessment Tool (FRAT)</h2>
         <p className="mt-1 text-xs text-muted-foreground">
-          Score each factor 0–5. Total determines risk level: LOW &lt;15 ·
+          Score each factor 0–5, and mountain terrain yes or no. Total determines risk level: LOW &lt;15 ·
           MEDIUM 15–24 · HIGH 25–34 · EXTREME 35+.
         </p>
         {startFrom ? (
@@ -659,6 +670,8 @@ function FratQuestionnaire({
                     demonstratedCrosswindKt={demonstratedCrosswindKt}
                     engineCount={engineCount}
                     hasCompanyLimits={hasCompanyLimits}
+                    night={fratPrefill?.night}
+                    nightReason={fratPrefill?.night_reason}
                     value={answers[f.code]}
                     onChange={(v) => {
                       setAnswers((prev) => ({ ...prev, [f.code]: v }));
@@ -834,6 +847,8 @@ function FactorRow({
   demonstratedCrosswindKt,
   engineCount,
   hasCompanyLimits,
+  night,
+  nightReason,
   approach,
 }: {
   factor: FratFactor;
@@ -845,6 +860,10 @@ function FactorRow({
   demonstratedCrosswindKt?: number | null;
   engineCount?: number | null;
   hasCompanyLimits?: boolean;
+  /** Whether the flight is at night, for a yes/no factor's score (LOG-03),
+   *  and why; null when it can't be told. */
+  night?: boolean | null;
+  nightReason?: string | null;
   /** On an IFR flight, the approach-minimums question for this factor
    *  (#124). A "no" holds the score at over company limits. */
   approach?: {
@@ -867,15 +886,30 @@ function FactorRow({
   return (
     <div className="grid grid-cols-12 items-start gap-2">
       <div className="col-span-8">
-        <label
-          htmlFor={`factor-${factor.code}`}
-          className="block text-xs font-semibold text-foreground"
-        >
-          {factor.label}
-        </label>
+        {factor.yesNo ? (
+          <p id={`factor-${factor.code}-label`} className="block text-xs font-semibold text-foreground">
+            {factor.label}
+          </p>
+        ) : (
+          <label
+            htmlFor={`factor-${factor.code}`}
+            className="block text-xs font-semibold text-foreground"
+          >
+            {factor.label}
+          </label>
+        )}
         <p className="text-[0.65rem] leading-snug text-muted-foreground">
           {factor.hint}
         </p>
+        {factor.yesNo ? (
+          <p className="mt-0.5 text-[0.65rem] leading-snug text-muted-foreground">
+            {night === false
+              ? "Yes counts 1: the flight is by day."
+              : night === true
+                ? `Yes counts 2: ${nightReason ?? "the flight is at night"}.`
+                : `Yes counts 2, as at night: ${nightReason ?? "the flight's day or night couldn't be checked"}.`}
+          </p>
+        ) : null}
         {/* The wind anchors are written in terms of "the aircraft's
             crosswind limit". Until this was stored, the pilot had to
             supply that number from memory while scoring against it. */}
@@ -957,6 +991,31 @@ function FactorRow({
         ) : null}
       </div>
       <div className="col-span-4 flex flex-col items-stretch gap-1">
+        {factor.yesNo ? (
+          <div className="flex items-center gap-2">
+            <div
+              role="group"
+              aria-labelledby={`factor-${factor.code}-label`}
+              className={cn(segmentGroup, "min-w-0 flex-1")}
+            >
+              {[false, true].map((yes) => (
+                <button
+                  key={String(yes)}
+                  type="button"
+                  aria-pressed={value > 0 === yes}
+                  aria-describedby={`factor-${factor.code}-anchor`}
+                  className={cn(segment(value > 0 === yes), "flex-1")}
+                  onClick={() => onChange(yesNoScore(yes, night))}
+                >
+                  {yes ? "Yes" : "No"}
+                </button>
+              ))}
+            </div>
+            <span className={cn("w-4 text-right font-mono text-sm font-bold", valueClass)}>
+              {value}
+            </span>
+          </div>
+        ) : (
         <div className="flex items-center gap-2">
           <input
             id={`factor-${factor.code}`}
@@ -983,6 +1042,7 @@ function FactorRow({
             {value}
           </span>
         </div>
+        )}
         <p
           id={`factor-${factor.code}-anchor`}
           className={cn("text-right text-[0.65rem] leading-snug", valueClass)}
@@ -1087,7 +1147,12 @@ function FactorScores({
         <div key={group.group}>
           <h3 className="eyebrow border-b border-border pb-1">{group.group}</h3>
           <ul className="divide-y divide-border">
-            {group.factors.map((f) => {
+            {[
+              // As filed: one filed before mountain terrain (LOG-03) shows its
+              // terrain score, not a mountain answer it wasn't asked.
+              ...group.factors.filter((f) => !f.yesNo || f.code in answers),
+              ...(RETIRED_FACTORS[group.group] ?? []).filter((f) => f.code in answers),
+            ].map((f) => {
               const score = answers[f.code] ?? 0;
               const hint = suggested.get(f.code);
               const note =
@@ -1095,7 +1160,9 @@ function FactorScores({
                   ? hint.score === score
                     ? hint.source
                     : `The data suggests ${hint.score}: ${hint.source}`
-                  : null;
+                  : f.yesNo
+                    ? (f.anchors[score] ?? null)
+                    : null;
               return (
                 <li key={f.code} className="flex items-start justify-between gap-3 py-1.5">
                   <div className="min-w-0">
@@ -1142,13 +1209,7 @@ function FratResultPanel({
   // Named by the server, so the client cannot disagree with it about
   // what "out of company limits" means.
   const overLimits = assessment.over_limit_factors ?? [];
-  const overLimitLabels = overLimits
-    .map(
-      (code) =>
-        FACTOR_GROUPS.flatMap((g) => g.factors).find((f) => f.code === code)
-          ?.label ?? code,
-    )
-    .join(" · ");
+  const overLimitLabels = overLimits.map(factorLabel).join(" · ");
   // Only EXTREME hard-gates the pilot behind an authorization row.
   // HIGH used to require a `dispatch_contact` gate on this screen —
   // The Aug 2026 review removed it: dispatch controls whether the packet
