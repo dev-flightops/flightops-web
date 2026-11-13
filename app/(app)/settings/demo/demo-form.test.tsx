@@ -21,6 +21,8 @@ describe("Demo preparation", () => {
     expect(screen.getByRole("button", { name: "Preparing today’s demo…" })).toBeDisabled();
     finish({ result: { company_date: "2026-11-01", timezone: "America/Anchorage", summary: { flights: 6, aircraft: 6 } } });
     expect(await screen.findByRole("status")).toHaveTextContent("Demo ready for 2026-11-01");
+    expect(screen.getByRole("status")).toHaveTextContent("Use Evan Brooks (prepared.pilot@demo.example) for the pilot workflow; Maya Larsen and Daniel Kowalski fly DEMO102 and DEMO103.");
+    expect(screen.getByText(/three reserved demo pilots’ duty/)).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Open Fleet Board" })).toHaveAttribute("href", "/reservations/fleet-board");
     expect(input).toHaveValue("");
   });
