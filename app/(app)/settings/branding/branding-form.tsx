@@ -1,17 +1,26 @@
 "use client";
 
-import { type CSSProperties, useActionState, useEffect, useMemo, useState } from "react";
+import { type CSSProperties, useActionState, useEffect, useMemo, useRef, useState } from "react";
 
-import { buttonSolid, segment, segmentGroup } from "@/components/ff/controls";
+import { buttonOutline, buttonSolid, segment, segmentGroup } from "@/components/ff/controls";
 import { Spinner } from "@/components/ui/spinner";
+import { uploadedHomeImageSource } from "@/lib/branding/home-image";
+import { downscalePhoto } from "@/lib/images/downscale";
 import { brandTones, DEFAULT_BRAND } from "@/lib/theme/brand";
 
 import {
   extractBrandingAction,
+  removeHomeImageAction,
   updateBrandingAction,
+  uploadHomeImageAction,
   type ExtractBrandingState,
   type UpdateBrandingState,
 } from "./actions";
+
+/** The uploaded picture's longest side and size as sent: the auth service
+ *  keeps 2,400 px, and the demo's gateway takes 1 MB a request. */
+const UPLOAD_EDGE = 2400;
+const UPLOAD_MAX_BYTES = 900 * 1024;
 
 /** Client form for setting the tenant's primary + primary-dark brand
  *  colors. Live preview shows a mock button pair in the current values
@@ -22,11 +31,14 @@ export function BrandingForm({
   initialPrimary,
   initialPrimaryDark,
   initialHomeImage = null,
+  initialHomeImageUploadedAt = null,
 }: {
   initialPrimary: string | null;
   initialPrimaryDark: string | null;
   /** The image behind Home (#118), a link. */
   initialHomeImage?: string | null;
+  /** When a picture for Home was uploaded instead; null when none was. */
+  initialHomeImageUploadedAt?: string | null;
 }) {
   const [state, action, pending] = useActionState<UpdateBrandingState, FormData>(
     updateBrandingAction,
@@ -40,6 +52,7 @@ export function BrandingForm({
   const [primary, setPrimary] = useState(initialPrimary ?? "");
   const [primaryDark, setPrimaryDark] = useState(initialPrimaryDark ?? "");
   const [homeImage, setHomeImage] = useState(initialHomeImage ?? "");
+  const [uploadedAt, setUploadedAt] = useState(initialHomeImageUploadedAt);
   const [imageBroken, setImageBroken] = useState(false);
 
   // When an extract succeeds, pipe the suggested palette into the color
@@ -200,6 +213,12 @@ export function BrandingForm({
         onChange={setHomeImage}
         error={fieldError("home_image_url")}
         onBroken={setImageBroken}
+        uploadedAt={uploadedAt}
+        onUploaded={(at) => {
+          setUploadedAt(at);
+          // The upload replaced the link, on the server as here.
+          if (at) setHomeImage("");
+        }}
       />
 
       <div className="flex items-center justify-end gap-2">
@@ -275,19 +294,26 @@ function ColorField({
   );
 }
 
-/** The image behind Home (#118): a link, and how Home will look with it,
- *  drawn as Home draws it (a dark band, the scrim, the greeting). */
+/** The image behind Home (#118): a picture uploaded from this computer or
+ *  a link (Greg, 13 Nov: both), and how Home will look with it, drawn as
+ *  Home draws it (a dark band, the scrim, the greeting). */
 function HomeImageField({
   value,
   onChange,
   error,
   onBroken,
+  uploadedAt,
+  onUploaded,
 }: {
   value: string;
   onChange: (v: string) => void;
   error?: string;
   /** Whether the link fails to load as an image (#158). */
   onBroken: (broken: boolean) => void;
+  /** When the picture now on Home was uploaded; null when none was. */
+  uploadedAt: string | null;
+  /** A picture uploaded (its time) or removed (null). */
+  onUploaded: (uploadedAt: string | null) => void;
 }) {
   const link = /^https?:\/\/\S+$/.test(value.trim()) ? value.trim() : null;
   // The client, 10/29: "The branding function does not work for images /
@@ -297,10 +323,85 @@ function HomeImageField({
   const [broken, setBroken] = useState<string | null>(null);
   const isBroken = link !== null && broken === link;
   useEffect(() => onBroken(isBroken), [isBroken, onBroken]);
+
+  const picker = useRef<HTMLInputElement>(null);
+  const [busy, setBusy] = useState<"upload" | "remove" | null>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  // What Home will show once saved: a typed link replaces the upload.
+  const shown = link ?? (uploadedAt ? uploadedHomeImageSource(uploadedAt) : null);
+
+  async function upload(file: File) {
+    setBusy("upload");
+    setUploadError(null);
+    try {
+      const body = new FormData();
+      body.append("image", await downscalePhoto(file, UPLOAD_EDGE, UPLOAD_MAX_BYTES), file.name || "home.jpg");
+      const result = await uploadHomeImageAction(body);
+      if (result.ok) onUploaded(result.uploadedAt);
+      else setUploadError(result.error);
+    } catch {
+      setUploadError("Couldn't send the picture. Reload the page and try again.");
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function remove() {
+    setBusy("remove");
+    setUploadError(null);
+    try {
+      const result = await removeHomeImageAction();
+      if (result.ok) onUploaded(null);
+      else setUploadError(result.error);
+    } catch {
+      setUploadError("Couldn't remove the picture. Reload the page and try again.");
+    } finally {
+      setBusy(null);
+    }
+  }
+
   return (
     <div className="rounded-lg border border-border bg-card p-5">
-      <label htmlFor="home_image_url" className="field-label">
+      <span id="home_image_label" className="field-label">
         Home image
+      </span>
+      <div className="mb-3 flex flex-wrap items-center gap-2" role="group" aria-labelledby="home_image_label">
+        {/* No name: Save never sends the file; picking one uploads it. */}
+        <input
+          ref={picker}
+          type="file"
+          accept="image/jpeg,image/png,image/webp,image/gif"
+          aria-label="Picture for Home"
+          className="sr-only"
+          tabIndex={-1}
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            e.target.value = "";
+            if (file) void upload(file);
+          }}
+        />
+        <button type="button" className={buttonOutline} disabled={busy !== null} onClick={() => picker.current?.click()}>
+          {busy === "upload" && <Spinner size="xs" />}
+          {busy === "upload" ? "Uploading…" : uploadedAt ? "Replace picture" : "Upload a picture"}
+        </button>
+        {uploadedAt && (
+          <button type="button" className={buttonOutline} disabled={busy !== null} onClick={() => void remove()}>
+            {busy === "remove" ? "Removing…" : "Remove picture"}
+          </button>
+        )}
+        <span className="text-xs text-muted-foreground">
+          {uploadedAt
+            ? `Uploaded ${new Date(uploadedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}. It's on Home now.`
+            : "A wide photo from this computer: JPEG, PNG or WebP."}
+        </span>
+      </div>
+      {uploadError && (
+        <p role="alert" className="field-error mb-3">
+          {uploadError}
+        </p>
+      )}
+      <label htmlFor="home_image_url" className="field-label">
+        Or the picture&rsquo;s address
       </label>
       <input
         id="home_image_url"
@@ -326,6 +427,10 @@ function HomeImageField({
           page. Open the picture you want, copy the image&rsquo;s own address
           (right-click it, then Copy image address), and paste that here.
         </p>
+      ) : link && uploadedAt ? (
+        <p role="status" className="mt-1 text-[0.65rem] text-muted-foreground">
+          Saving this address replaces the uploaded picture.
+        </p>
       ) : (
         <p className="mt-1 text-[0.65rem] text-muted-foreground">
           The address of a wide photo (ending .jpg, .png or .webp), shown
@@ -335,13 +440,14 @@ function HomeImageField({
       )}
       <div className="mt-4">
         <div className="eyebrow mb-2">Home preview</div>
-        {link ? (
+        {shown ? (
           <div className="dark relative h-32 overflow-hidden bg-ink sm:h-40">
-            {/* The company's link on any host, so not next/image. */}
+            {/* The company's link on any host, or this app's route for the
+                uploaded picture, so not next/image. */}
             <img
-              src={link}
+              src={shown}
               alt=""
-              onError={() => setBroken(link)}
+              onError={() => link && setBroken(link)}
               onLoad={() => setBroken(null)}
               className="absolute inset-0 h-full w-full object-cover"
             />

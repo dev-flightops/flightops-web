@@ -1316,6 +1316,9 @@ export interface CompanyProfileResponse {
   brand_primary_dark_color: string | null;
   /** The company's image behind Home (#118), a link; null shows none. */
   home_image_url: string | null;
+  /** When a picture for Home was uploaded instead of linked; null or
+   *  absent (a service before it) when none was. */
+  home_image_uploaded_at?: string | null;
   /** Minutes on the ground at each stop for a new flight's times (#126);
    *  absent from services before it, read as 15. */
   ground_minutes?: number;

@@ -15,6 +15,7 @@ import {
   type HomeModule,
 } from "@/components/home/module-catalog";
 import { getCompanyProfile, listMyTenants } from "@/lib/api/auth";
+import { homeImageSource } from "@/lib/branding/home-image";
 import { loadOperationalSnapshot } from "@/lib/dashboards/operational-snapshot";
 import { currentGreeting, firstNameFrom } from "@/lib/greeting";
 import { HANDOFF_VIEWERS, hasAnyRole, roleGate } from "@/lib/roles";
@@ -60,8 +61,9 @@ const ALERT_VIEWING_ROLES = roleGate(
  * Which entries a user sees is the client's home matrix
  * (HOME_MODULE_ROLES), unchanged; only their presentation moved.
  *
- * A company that sets an image under Settings → Branding (#118) gets it
- * behind the greeting and the figures; without one, Home is as above.
+ * A company that sets an image under Settings → Branding (#118), a link
+ * or an uploaded picture, gets it behind the greeting and the figures;
+ * without one, Home is as above.
  */
 export default async function HomePage() {
   const [session, tenantsResponse, snapshot, profile] = await Promise.all([
@@ -70,7 +72,7 @@ export default async function HomePage() {
     loadOperationalSnapshot(),
     getCompanyProfile().catch(() => null),
   ]);
-  const homeImage = profile?.home_image_url?.trim() || null;
+  const homeImage = homeImageSource(profile);
 
   const currentTenant =
     tenantsResponse.tenants.find((t) => t.is_current) ??

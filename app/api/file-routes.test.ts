@@ -5,6 +5,7 @@ vi.mock("@/auth", () => ({ auth }));
 
 import { POST as reportMediaProgress } from "./academy/enrollments/[enrollmentId]/media-progress/route";
 import { GET as lessonMedia } from "./academy/media/[mediaId]/route";
+import { GET as homeImage } from "./branding/home-image/route";
 import { GET as documentDownload } from "./documents/[documentId]/download/route";
 import { GET as versionDownload } from "./documents/[documentId]/versions/[versionNumber]/download/route";
 import { GET as drugAlcoholFile } from "./drug-alcohol/files/[fileId]/download/route";
@@ -244,6 +245,33 @@ describe("village report photo (#121)", () => {
   it("refuses without a session", async () => {
     auth.mockResolvedValue(null);
     expect((await call()).status).toBe(401);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+});
+
+// Also kept in the database: the company's picture for Home, uploaded.
+describe("the uploaded Home picture", () => {
+  it("asks the auth service with the session's token and serves the JPEG, held a day", async () => {
+    fetchMock.mockResolvedValue(new Response("jpeg", { status: 200, headers: { "Content-Type": "text/html" } }));
+    const res = await homeImage();
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toBe("https://gw.example/auth/settings/company/home-image");
+    expect(init.headers.Authorization).toBe("Bearer tok");
+    expect(await res.text()).toBe("jpeg");
+    expect(res.headers.get("content-type")).toBe("image/jpeg");
+    expect(res.headers.get("x-content-type-options")).toBe("nosniff");
+    expect(res.headers.get("cache-control")).toBe("private, max-age=86400");
+  });
+
+  it("says plainly when none is uploaded", async () => {
+    fetchMock.mockResolvedValue(new Response("", { status: 404 }));
+    const res = await homeImage();
+    expect([res.status, await res.text()]).toEqual([404, "No picture is uploaded for Home."]);
+  });
+
+  it("refuses without a session", async () => {
+    auth.mockResolvedValue(null);
+    expect((await homeImage()).status).toBe(401);
     expect(fetchMock).not.toHaveBeenCalled();
   });
 });

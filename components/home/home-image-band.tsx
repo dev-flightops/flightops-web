@@ -10,9 +10,9 @@ import type { ReactNode } from "react";
  *
  * As the sign-in page's photograph is drawn: a dark island in both modes,
  * under a scrim so the type on it reads. The image is the company's own
- * link on any host, so it's a plain <img> rather than next/image (which
- * would need every host configured); one that fails to load leaves the
- * band dark.
+ * link on any host, or the picture uploaded under Branding through this
+ * app's route, so it's a plain <img> rather than next/image (which would
+ * need every host configured); one that fails to load leaves the band dark.
  */
 export function HomeImageBand({ src, children }: { src: string; children: ReactNode }) {
   return (
