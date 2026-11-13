@@ -1439,7 +1439,7 @@ export const HELP_ENTRIES: HelpEntry[] = [
     ],
     worthKnowing: [
       "A stale observation is shown as stale rather than as current. At strips reporting a few times a day, treating the last report as the present conditions is how a flight launches into something nobody checked.",
-      "Each airport shows its runway and the crosswind from the latest report, on the best-aligned runway. Runways come from the FAA's airport file, or from Stations where one has been entered. Report the wind direction in degrees magnetic, as on a compass: it's compared with the runway's number.",
+      "Each airport shows its runway and the crosswind from the latest report, on the best-aligned runway. Runways come from the FAA's airport file, or from Stations where one has been entered. Report where the wind is from as a compass point, N, NE, E, SE, S, SW, W or NW: it's compared with the runway's number.",
     ],
     connectsTo: "Station observations, the same source the per-flight briefings draw on. The same crosswind goes into the risk matrix and the FRAT.",
     related: ["/weather", "/dispatch"],

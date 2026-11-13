@@ -113,3 +113,17 @@ describe("photos with a village report (#121)", () => {
     expect(screen.queryByText(/to send with the report/)).not.toBeInTheDocument();
   });
 });
+
+// The client, 11/13 (LOG-38): "Cardinal direction usually north south east
+// west, northwest, southeast, etc."
+describe("the wind's direction", () => {
+  it("is asked as a compass point, not in degrees", () => {
+    render(<AddReportDialog airports={AIRPORTS} />);
+    fireEvent.click(screen.getByRole("button", { name: "+ Add Report" }));
+    const select = screen.getByLabelText("Wind from") as HTMLSelectElement;
+    expect(select.name).toBe("wind_dir_compass");
+    expect(Array.from(select.options).map((o) => o.value)).toEqual(["", "N", "NE", "E", "SE", "S", "SW", "W", "NW"]);
+    expect(screen.getByRole("option", { name: "NW — northwest" })).toBeInTheDocument();
+    expect(screen.queryByLabelText(/Wind direction/)).not.toBeInTheDocument();
+  });
+});

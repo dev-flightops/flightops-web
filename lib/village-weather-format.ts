@@ -41,13 +41,18 @@ export function villageVisibility(sm: number): string {
   return `${sm}SM`;
 }
 
+/** The wind as village agents give it (LOG-38; the client, 11/13: "Cardinal
+ *  direction usually north south east west, northwest, southeast, etc."). */
+export const COMPASS_POINTS = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"] as const;
+export type CompassPoint = (typeof COMPASS_POINTS)[number];
+
 export function villageWind(r: VillageWeatherReportResponse): string | null {
   if (r.wind_speed_kt == null && r.wind_dir_deg == null) return null;
   if (r.wind_speed_kt === 0) return "Calm";
+  // A compass point as the agent gave it (LOG-38), else the degrees.
   const dir =
-    r.wind_dir_deg != null
-      ? String(r.wind_dir_deg).padStart(3, "0") + "°"
-      : "VRB";
+    r.wind_dir_compass ??
+    (r.wind_dir_deg != null ? String(r.wind_dir_deg).padStart(3, "0") + "°" : "VRB");
   const speed = r.wind_speed_kt != null ? `${r.wind_speed_kt}kt` : "";
   const gust = r.wind_gust_kt ? `G${r.wind_gust_kt}` : "";
   return `Wind ${dir}/${speed}${gust}`;
