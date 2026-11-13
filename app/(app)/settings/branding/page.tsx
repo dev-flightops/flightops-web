@@ -7,7 +7,7 @@ import { BrandingForm } from "./branding-form";
 
 /**
  * /settings/branding — per-tenant brand colors, and the image behind
- * Home (#118).
+ * Home (#118): a link, or a picture uploaded from the computer.
  *
  * First slice of the M3 AI-branded-theming feature (roadmap #12). MVP is
  * two hex color inputs (primary + primary-dark). Follow-up PRs add font
@@ -21,12 +21,14 @@ export default async function SettingsBrandingPage() {
   let primary: string | null = null;
   let primaryDark: string | null = null;
   let homeImage: string | null = null;
+  let homeImageUploadedAt: string | null = null;
   let loadError: string | null = null;
   try {
     const profile = await getCompanyProfile();
     primary = profile.brand_primary_color;
     primaryDark = profile.brand_primary_dark_color;
     homeImage = profile.home_image_url ?? null;
+    homeImageUploadedAt = profile.home_image_uploaded_at ?? null;
   } catch (err) {
     const status = err instanceof ApiError ? err.status : 0;
     loadError =
@@ -67,6 +69,7 @@ export default async function SettingsBrandingPage() {
           initialPrimary={primary}
           initialPrimaryDark={primaryDark}
           initialHomeImage={homeImage}
+          initialHomeImageUploadedAt={homeImageUploadedAt}
         />
       )}
     </div>

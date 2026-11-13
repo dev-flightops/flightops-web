@@ -6,8 +6,11 @@ import { z } from "zod";
 import { ApiError } from "@/lib/api/client";
 import {
   extractBrandingFromUrl,
+  removeHomeImage,
   updateCompanyProfile,
+  uploadHomeImage,
 } from "@/lib/api/auth";
+import type { CompanyProfileResponse } from "@/lib/api/types";
 
 /**
  * /settings/branding server action. Validates hex colors and the Home
@@ -43,7 +46,8 @@ const Schema = z.object({
 
 export type UpdateBrandingState =
   | { status: "idle" }
-  | { status: "saved" }
+  /** With the uploaded picture's time as saved: an address replaces it. */
+  | { status: "saved"; homeImageUploadedAt: string | null }
   | { status: "field-errors"; errors: Record<string, string> }
   | { status: "api-error"; message: string };
 
@@ -61,8 +65,9 @@ export async function updateBrandingAction(
     return { status: "field-errors", errors };
   }
 
+  let saved: CompanyProfileResponse;
   try {
-    await updateCompanyProfile(parsed.data);
+    saved = await updateCompanyProfile(parsed.data);
   } catch (err) {
     if (err instanceof ApiError) {
       if (err.status === 401) {
@@ -85,7 +90,64 @@ export async function updateBrandingAction(
   // Everything inside (app) reads the theme via the layout's server
   // fetch, so revalidate the layout scope.
   revalidatePath("/", "layout");
-  return { status: "saved" };
+  return { status: "saved", homeImageUploadedAt: saved.home_image_uploaded_at ?? null };
+}
+
+// ---- The Home picture uploaded from a computer ---------------------------
+//
+// Greg, 13 Nov: a link or an upload, both possible. The browser makes the
+// picture small first (lib/images/downscale); the auth service checks it,
+// keeps it as a JPEG in place of any link, and a saved link replaces it.
+
+export type HomeImageResult =
+  | { ok: true; uploadedAt: string | null }
+  | { ok: false; error: string };
+
+export async function uploadHomeImageAction(formData: FormData): Promise<HomeImageResult> {
+  const image = formData.get("image");
+  if (!(image instanceof Blob) || image.size === 0) {
+    return { ok: false, error: "Choose a picture first." };
+  }
+  try {
+    const profile = await uploadHomeImage(image, image instanceof File && image.name ? image.name : "home.jpg");
+    revalidatePath("/", "layout");
+    return { ok: true, uploadedAt: profile.home_image_uploaded_at ?? null };
+  } catch (err) {
+    return { ok: false, error: homeImageError(err) };
+  }
+}
+
+export async function removeHomeImageAction(): Promise<HomeImageResult> {
+  try {
+    await removeHomeImage();
+  } catch (err) {
+    return { ok: false, error: homeImageError(err) };
+  }
+  revalidatePath("/", "layout");
+  return { ok: true, uploadedAt: null };
+}
+
+const HOME_IMAGE_REFUSALS: Record<string, string> = {
+  content_type_must_be_image: "That file isn't a picture. Choose a JPEG, PNG or WebP photo.",
+  image_must_be_jpeg_png_webp_or_gif:
+    "That picture is HEIC, which most browsers can't show. Save it as a JPEG, then upload it.",
+  image_too_large: "That picture has too many pixels to use. Choose a smaller one.",
+  image_unreadable: "That picture couldn't be read. Save it again as a JPEG, then upload it.",
+};
+
+function homeImageError(err: unknown): string {
+  if (!(err instanceof ApiError)) return "Couldn't save the picture. Try again in a moment.";
+  if (err.status === 401) return "Your session expired — please sign in again.";
+  if (err.status === 403) return "Only an Exec Admin or Director of Operations can change the Home picture.";
+  if (err.status === 413) return "That picture is too large to send. Choose a smaller one.";
+  let detail: unknown;
+  try {
+    detail = (JSON.parse(err.message) as { detail?: unknown }).detail;
+  } catch {
+    detail = undefined;
+  }
+  if (typeof detail === "string" && HOME_IMAGE_REFUSALS[detail]) return HOME_IMAGE_REFUSALS[detail];
+  return `Couldn't save the picture (HTTP ${err.status}). Try again in a moment.`;
 }
 
 // ---- Suggest palette from URL --------------------------------------------

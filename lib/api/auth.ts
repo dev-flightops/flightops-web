@@ -132,6 +132,23 @@ export async function updateCompanyProfile(
   });
 }
 
+/** A picture for Home from the company's own computer: the auth service
+ *  keeps it as a JPEG, in place of the link. */
+export async function uploadHomeImage(image: Blob, filename: string): Promise<CompanyProfileResponse> {
+  const form = new FormData();
+  form.append("image", image, filename);
+  return apiFetch<CompanyProfileResponse>("/auth/settings/company/home-image", {
+    method: "POST",
+    body: form,
+  });
+}
+
+export async function removeHomeImage(): Promise<CompanyProfileResponse> {
+  return apiFetch<CompanyProfileResponse>("/auth/settings/company/home-image", {
+    method: "DELETE",
+  });
+}
+
 export interface BrandingExtractResponse {
   suggested_primary: string;
   suggested_primary_dark: string;
