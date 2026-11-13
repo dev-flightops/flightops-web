@@ -54,4 +54,33 @@ describe("the Flight Following board", () => {
     expect(screen.queryByRole("link", { name: "Edit" })).toBeNull();
     expect(screen.queryByRole("link", { name: "Update" })).toBeNull();
   });
+
+  // LOG-14 (Greg, 13 Nov: "mark those"): marked at each stop.
+  describe("a multi-stop flight marked at each stop", () => {
+    const legs = [
+      { sequence: 1, origin: "PABE", destination: "PAHP", scheduled_departure_at: "2026-09-27T16:00:00Z",
+        scheduled_arrival_at: "2026-09-27T16:40:00Z", actual_departure_at: "2026-09-27T16:02:00Z",
+        actual_arrival_at: "2026-09-27T16:40:00Z" },
+      { sequence: 2, origin: "PAHP", destination: "PASM", scheduled_departure_at: "2026-09-27T17:00:00Z",
+        scheduled_arrival_at: "2026-09-27T17:35:00Z", actual_departure_at: null, actual_arrival_at: null },
+    ];  // prettier-ignore
+    const released = { ...row, status: "released", actual_departure_at: "2026-09-27T16:02:00Z", legs } as BoardFlightItem;
+
+    it("is on the ground at its stop, and leaves it next", () => {
+      render(<FlightBoard canDispatch flights={[released]} />);
+      const line = screen.getByRole("row", { name: /GV2026/ });
+      expect(line).toHaveTextContent("At PAHP");
+      expect(line).toHaveTextContent("PAHP 08:40 AKDT, on the ground");
+      expect(screen.getByRole("button", { name: "Mark Departed PAHP" })).toBeInTheDocument();
+    });
+
+    it("is in the air again once it has left, bound for the next stop", () => {
+      const away = [legs[0], { ...legs[1], actual_departure_at: "2026-09-27T17:05:00Z" }];
+      render(<FlightBoard canDispatch flights={[{ ...released, legs: away }]} />);
+      const line = screen.getByRole("row", { name: /GV2026/ });
+      expect(line).toHaveTextContent("Airborne");
+      expect(line).toHaveTextContent("PAHP 08:40–09:05 AKDT");
+      expect(screen.getByRole("button", { name: "Mark Arrived PASM" })).toBeInTheDocument();
+    });
+  });
 });

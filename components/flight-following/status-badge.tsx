@@ -31,8 +31,11 @@ import type { FlightStatus } from "@/lib/api/types";
 export function StatusBadge({
   status,
   actualDepartureAt,
+  atStop = null,
 }: {
   status: FlightStatus;
+  /** On the ground at a stop on its way (LOG-14): "At PADM", not airborne. */
+  atStop?: string | null;
   /** Explicit `null` = "known to have no actual_departure_at yet";
    *  the pill renders RELEASED (yellow) instead of AIRBORNE. Omit
    *  the prop entirely (undefined) when the caller doesn't have
@@ -43,9 +46,11 @@ export function StatusBadge({
   actualDepartureAt?: string | null;
 }) {
   const config =
-    status === "released" && actualDepartureAt === null
-      ? RELEASED_ON_GROUND
-      : STATUS_LABELS[status];
+    status === "released" && atStop
+      ? { label: `At ${atStop}`, tone: RELEASED_ON_GROUND.tone }
+      : status === "released" && actualDepartureAt === null
+        ? RELEASED_ON_GROUND
+        : STATUS_LABELS[status];
   return <StatusMark label={config.label} tone={config.tone} />;
 }
 

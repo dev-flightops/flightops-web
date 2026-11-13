@@ -33,7 +33,7 @@ describe("Mark Departed / Mark Arrived (#155)", () => {
     expect(await screen.findByText("Tomas Eklund wasn't clocked in.")).toBeInTheDocument();
     expect(screen.getByText("Left 6 h 00 min before its ETD.")).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Record it, flagged" }));
-    expect(checkIn).toHaveBeenCalledWith("f-1", "depart", true);
+    expect(checkIn).toHaveBeenCalledWith("f-1", "depart", true, { at: null, leg: null });
     expect(refresh).toHaveBeenCalled();
   });
 
@@ -52,5 +52,35 @@ describe("Mark Departed / Mark Arrived (#155)", () => {
     await user.click(screen.getByRole("button", { name: "Mark Arrived" }));
     await user.click(screen.getByRole("button", { name: "Mark Arrived" }));
     expect(await screen.findByRole("alert")).toHaveTextContent(/within 5 minutes/);
+  });
+
+  // LOG-14: a multi-stop flight is marked at each stop.
+  it("names the stop, and doesn't flag a departure from one", async () => {
+    const user = userEvent.setup();
+    render(<CheckInButton flightId="f-1" flightNumber="TST901" event="depart" leg={2} airport="PADM" first={false} last={false} />);
+    await user.click(screen.getByRole("button", { name: "Mark Departed PADM" }));
+    expect(screen.getByText("Records the departure from PADM now.")).toBeInTheDocument();
+    expect(check).not.toHaveBeenCalled();
+    await user.click(screen.getAllByRole("button", { name: "Mark Departed PADM" }).at(-1)!);
+    expect(checkIn).toHaveBeenCalledWith("f-1", "depart", true, { at: null, leg: 2 });
+  });
+
+  it("says a landing at a stop leaves the flight open", async () => {
+    const user = userEvent.setup();
+    render(<CheckInButton flightId="f-1" event="arrive" leg={1} airport="PADM" first={false} last={false} />);
+    await user.click(screen.getByRole("button", { name: "Mark Arrived PADM" }));
+    expect(screen.getByText(/stays open until it lands at its destination/)).toBeInTheDocument();
+  });
+
+  it("records a typed time instead of now, in UTC", async () => {
+    const user = userEvent.setup();
+    render(<CheckInButton flightId="f-1" event="arrive" leg={1} airport="PADM" first={false} last={false} />);
+    await user.click(screen.getByRole("button", { name: "Mark Arrived PADM" }));
+    const when = screen.getByLabelText(/When \(AK[SD]T\), if not now/);
+    await user.clear(when);
+    await user.type(when, "2026-11-13T10:30");
+    expect(screen.getByText(/= 19:30Z 2026-11-13/)).toBeInTheDocument();
+    await user.click(screen.getAllByRole("button", { name: "Mark Arrived PADM" }).at(-1)!);
+    expect(checkIn).toHaveBeenCalledWith("f-1", "arrive", true, { at: "2026-11-13T19:30:00Z", leg: 1 });
   });
 });

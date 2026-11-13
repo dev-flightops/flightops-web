@@ -37,11 +37,22 @@ export async function checkInFlightAction(
   event: CheckInEvent,
   /** The departure's flags were shown in the dialog (#155). */
   confirmFlags = false,
+  {
+    at = null,
+    leg = null,
+  }: {
+    /** When it left or landed, typed in the dialog; null for now. */
+    at?: string | null;
+    /** The stop's leg the board showed, on a multi-stop flight (LOG-14). */
+    leg?: number | null;
+  } = {},
 ): Promise<CheckInActionResult> {
   try {
     await checkInFlight(flightId, {
       event,
       ...(event === "depart" && confirmFlags ? { confirm_flags: true } : {}),
+      ...(at ? { at } : {}),
+      ...(leg !== null ? { leg } : {}),
     });
   } catch (err) {
     if (err instanceof ApiError) {
@@ -58,6 +69,14 @@ export async function checkInFlightAction(
           ok: false,
           error: "Something changed since the dialog opened. Read the flags again and confirm.",
           flags: structured.flags as DepartureFlag[] | undefined,
+        };
+      }
+      if (structured?.error === "stop_already_marked") {
+        // Someone marked it meanwhile: the board catches up.
+        revalidatePath("/flight-following");
+        return {
+          ok: false,
+          error: "Someone has marked that stop already. Close this and look at the board again.",
         };
       }
       if (structured?.error === "block_too_short") {
@@ -77,6 +96,18 @@ export async function checkInFlightAction(
           ok: false,
           error: "This flight is already marked departed.",
         };
+      }
+      if (detail === "previous_stop_not_arrived") {
+        return { ok: false, error: "It's still in the air: mark its arrival at the next stop first." };
+      }
+      if (detail === "next_leg_not_departed") {
+        return { ok: false, error: "It's on the ground at a stop: mark its departure from there first." };
+      }
+      if (detail === "departure_before_arrival_at_stop") {
+        return { ok: false, error: "It can't leave the stop before it landed there. Check the time." };
+      }
+      if (detail === "check_in_time_too_far_in_past") {
+        return { ok: false, error: "That time is more than a day before the flight was due to leave." };
       }
       if (detail === "arrival_before_departure") {
         return {
