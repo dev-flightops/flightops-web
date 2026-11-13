@@ -1,4 +1,5 @@
 import { cleanup, render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 afterEach(cleanup);
 
@@ -80,6 +81,19 @@ describe("the Flight Following board", () => {
       const line = screen.getByRole("row", { name: /GV2026/ });
       expect(line).toHaveTextContent("Airborne");
       expect(line).toHaveTextContent("PAHP 08:40–09:05 AKDT");
+      expect(screen.getByRole("button", { name: "Mark Arrived PASM" })).toBeInTheDocument();
+    });
+
+    // The review on #485: the board refreshes under an open dialog when
+    // someone else marks the stop, and the dialog mustn't become the next mark.
+    it("closes an open mark when someone else makes it first", async () => {
+      const user = userEvent.setup();
+      const { rerender } = render(<FlightBoard canDispatch flights={[released]} />);
+      await user.click(screen.getByRole("button", { name: "Mark Departed PAHP" }));
+      expect(screen.getByRole("dialog")).toHaveTextContent("Records the departure from PAHP now.");
+      const away = [legs[0], { ...legs[1], actual_departure_at: "2026-09-27T17:05:00Z" }];
+      rerender(<FlightBoard canDispatch flights={[{ ...released, legs: away }]} />);
+      expect(screen.queryByRole("dialog")).toBeNull();
       expect(screen.getByRole("button", { name: "Mark Arrived PASM" })).toBeInTheDocument();
     });
   });

@@ -143,7 +143,10 @@ function FlightBoardRow({ flight, canDispatch }: { flight: BoardFlightItem; canD
       </td>
       <td className="whitespace-nowrap px-4 py-3.5 text-right">
         {canDispatch && next && (
+          // A new mark is a new button: an open dialog for a mark someone
+          // else just made closes with the refresh, and can't send the next.
           <CheckInButton
+            key={`${next.event}-${next.leg ?? "flight"}`}
             flightId={flight.id}
             flightNumber={flight.flight_number}
             event={next.event}
