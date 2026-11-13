@@ -79,15 +79,24 @@ export function CheckInButton({
   const [pending, startTransition] = useTransition();
   const [when, setWhen] = useState("");
   const [edited, setEdited] = useState(false);
+  /** The typed time the service checked the flags for, once it has. */
+  const [checkedFor, setCheckedFor] = useState<string | null>(null);
 
   const stop = leg !== null && airport ? ` ${airport}` : "";
   const label = `${event === "depart" ? "Mark Departed" : "Mark Arrived"}${stop}`;
   const flagsApply = event === "depart" && first;
   const zone = DEFAULT_TIME_ZONE;
+  const at = edited ? localToUtcIso(when, zone) : null;
+  // The flags shown are for the time recorded. The dialog's check is for
+  // now, and a typed time can flag differently (more than an hour early,
+  // the PIC not clocked in then), so a typed departure goes unconfirmed
+  // first and the service's flags for that time come back to confirm.
+  const current = !edited || (at !== null && checkedFor === at);
 
   const begin = async () => {
     setError(null);
     setFlags(null);
+    setCheckedFor(null);
     setWhen(utcToLocalInput(new Date().toISOString(), zone));
     setEdited(false);
     setOpen(true);
@@ -100,24 +109,28 @@ export function CheckInButton({
 
   const confirm = () => {
     setError(null);
-    const at = edited ? localToUtcIso(when, zone) : null;
     if (edited && !at) {
       setError("Enter the date and time it happened.");
       return;
     }
     startTransition(async () => {
-      const result = await checkInFlightAction(flightId, event, true, { at, leg });
+      const result = await checkInFlightAction(flightId, event, !flagsApply || current, { at, leg });
       if (result.ok) {
         setOpen(false);
         router.refresh();
         return;
       }
+      if (result.flags) {
+        setFlags(result.flags);
+        setCheckedFor(at);
+        // The typed time's flags, shown here to confirm, aren't an error.
+        if (!current) return;
+      }
       setError(result.error);
-      if (result.flags) setFlags(result.flags);
     });
   };
 
-  const flagged = (flags ?? []).length > 0;
+  const flagged = current && (flags ?? []).length > 0;
 
   return (
     <>
@@ -169,6 +182,10 @@ export function CheckInButton({
           {flagsApply ? (
             loading ? (
               <p className="text-sm text-muted-foreground">Checking the flight…</p>
+            ) : !current ? (
+              <p className="text-sm text-muted-foreground">
+                The flight is checked for the time you entered when you record it, and anything it&apos;s flagged for shows here first.
+              </p>
             ) : flagged ? (
               <div role="alert" className="notice notice-yellow text-sm">
                 <p className="notice-label">It will be recorded with these flags</p>
