@@ -16,6 +16,7 @@ import {
 } from "@/components/home/module-catalog";
 import { getCompanyProfile, listMyTenants } from "@/lib/api/auth";
 import { loadOperationalSnapshot } from "@/lib/dashboards/operational-snapshot";
+import { stopState } from "@/lib/flight-following/stops";
 import { currentGreeting, firstNameFrom } from "@/lib/greeting";
 import { HANDOFF_VIEWERS, hasAnyRole, roleGate } from "@/lib/roles";
 
@@ -114,10 +115,10 @@ export default async function HomePage() {
   // Aircraft, all three (#157): "1 on the ground" had counted today's
   // unflown flights, beside 8 aircraft, 3 on hold and 1 airborne.
   // Historical imports may contain overlapping airborne flight records.
-  // These tiles count aircraft, so count each tail only once.
-  const airborne = new Set(snapshot.board.filter(flight =>
-    flight.status === "released" && flight.actual_departure_at && !flight.actual_arrival_at,
-  ).map(flight => flight.aircraft.id)).size;
+  // These tiles count aircraft, so count each tail only once. An aircraft
+  // on the ground at a stop on its way is on the ground (LOG-14).
+  const airborne = new Set(snapshot.board.filter(flight => stopState(flight).inAir)
+    .map(flight => flight.aircraft.id)).size;
   // Use the same maintenance assessment as the fleet board and alerts.
   // An active aircraft may still be held by an overdue inspection.
   const onGround = Math.max(0, snapshot.fleetAirworthy - airborne);

@@ -37,6 +37,7 @@
 
 import { getFlightBoard } from "@/lib/api/flight-following";
 import { getFleetAirworthiness, listMelItems } from "@/lib/api/maintenance";
+import { stopState } from "@/lib/flight-following/stops";
 import { listOpenSeats, type Opening } from "@/lib/api/open-seats";
 import { getDutyOverLimit, listFratAwaitingAcceptance } from "@/lib/api/ops";
 import { inFleet } from "@/lib/fleet/in-fleet";
@@ -307,8 +308,9 @@ export async function loadOperationalSnapshot(): Promise<OperationalSnapshot> {
       releasedCount += 1;
       // "Airborne" inferred from released + actual_departure_at set —
       // legacy uses an explicit airborne status that we collapse into
-      // released until the check-in flow records ATD.
-      if (row.actual_departure_at && !row.actual_arrival_at) airborneAircraft.add(row.aircraft.id);
+      // released until the check-in flow records ATD. A multi-stop flight
+      // on the ground at a stop isn't (LOG-14).
+      if (stopState(row).inAir) airborneAircraft.add(row.aircraft.id);
     }
     const list = flightsByOrigin.get(row.origin) ?? [];
     list.push(row);

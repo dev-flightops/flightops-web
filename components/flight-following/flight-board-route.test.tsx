@@ -1,4 +1,5 @@
 import { cleanup, render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 afterEach(cleanup);
 
@@ -53,5 +54,47 @@ describe("the Flight Following board", () => {
     expect(screen.queryByRole("button", { name: "Mark Departed" })).toBeNull();
     expect(screen.queryByRole("link", { name: "Edit" })).toBeNull();
     expect(screen.queryByRole("link", { name: "Update" })).toBeNull();
+  });
+
+  // LOG-14 (Greg, 13 Nov: "mark those"): marked at each stop.
+  describe("a multi-stop flight marked at each stop", () => {
+    const legs = [
+      { sequence: 1, origin: "PABE", destination: "PAHP", scheduled_departure_at: "2026-09-27T16:00:00Z",
+        scheduled_arrival_at: "2026-09-27T16:40:00Z", actual_departure_at: "2026-09-27T16:02:00Z",
+        actual_arrival_at: "2026-09-27T16:40:00Z" },
+      { sequence: 2, origin: "PAHP", destination: "PASM", scheduled_departure_at: "2026-09-27T17:00:00Z",
+        scheduled_arrival_at: "2026-09-27T17:35:00Z", actual_departure_at: null, actual_arrival_at: null },
+    ];  // prettier-ignore
+    const released = { ...row, status: "released", actual_departure_at: "2026-09-27T16:02:00Z", legs } as BoardFlightItem;
+
+    it("is on the ground at its stop, and leaves it next", () => {
+      render(<FlightBoard canDispatch flights={[released]} />);
+      const line = screen.getByRole("row", { name: /GV2026/ });
+      expect(line).toHaveTextContent("At PAHP");
+      expect(line).toHaveTextContent("PAHP 08:40 AKDT, on the ground");
+      expect(screen.getByRole("button", { name: "Mark Departed PAHP" })).toBeInTheDocument();
+    });
+
+    it("is in the air again once it has left, bound for the next stop", () => {
+      const away = [legs[0], { ...legs[1], actual_departure_at: "2026-09-27T17:05:00Z" }];
+      render(<FlightBoard canDispatch flights={[{ ...released, legs: away }]} />);
+      const line = screen.getByRole("row", { name: /GV2026/ });
+      expect(line).toHaveTextContent("Airborne");
+      expect(line).toHaveTextContent("PAHP 08:40–09:05 AKDT");
+      expect(screen.getByRole("button", { name: "Mark Arrived PASM" })).toBeInTheDocument();
+    });
+
+    // The review on #485: the board refreshes under an open dialog when
+    // someone else marks the stop, and the dialog mustn't become the next mark.
+    it("closes an open mark when someone else makes it first", async () => {
+      const user = userEvent.setup();
+      const { rerender } = render(<FlightBoard canDispatch flights={[released]} />);
+      await user.click(screen.getByRole("button", { name: "Mark Departed PAHP" }));
+      expect(screen.getByRole("dialog")).toHaveTextContent("Records the departure from PAHP now.");
+      const away = [legs[0], { ...legs[1], actual_departure_at: "2026-09-27T17:05:00Z" }];
+      rerender(<FlightBoard canDispatch flights={[{ ...released, legs: away }]} />);
+      expect(screen.queryByRole("dialog")).toBeNull();
+      expect(screen.getByRole("button", { name: "Mark Arrived PASM" })).toBeInTheDocument();
+    });
   });
 });

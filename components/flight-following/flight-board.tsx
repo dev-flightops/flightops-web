@@ -2,7 +2,8 @@ import Link from "next/link";
 
 import { buttonSolid, linkCaps } from "@/components/ff/controls";
 import type { BoardFlightItem } from "@/lib/api/types";
-import { formatBoth, formatZulu } from "@/lib/format/flight-time";
+import { stopState } from "@/lib/flight-following/stops";
+import { formatBoth, formatLocal, formatZulu } from "@/lib/format/flight-time";
 import { flightStops } from "@/lib/route";
 
 import { CheckInButton } from "./check-in-button";
@@ -68,6 +69,8 @@ export function FlightBoard({ flights, canDispatch = false }: { flights: BoardFl
 }
 
 function FlightBoardRow({ flight, canDispatch }: { flight: BoardFlightItem; canDispatch: boolean }) {
+  // Marked stop by stop on a multi-stop flight (LOG-14).
+  const { next, inAir, atStop } = stopState(flight);
   const dep = formatBoth(flight.scheduled_departure_at);
   // Once it has left, its scheduled block after the departure (#155): MM001
   // left at 21:42Z and showed an ETA of 19:45Z.
@@ -103,6 +106,7 @@ function FlightBoardRow({ flight, canDispatch }: { flight: BoardFlightItem; canD
             </span>
           ))}
         </div>
+        <StopMarks flight={flight} />
         {hasPax && (
           <div className="mt-0.5 text-xs">
             <LoadIndicator
@@ -129,26 +133,28 @@ function FlightBoardRow({ flight, canDispatch }: { flight: BoardFlightItem; canD
           <StatusBadge
             status={flight.status}
             actualDepartureAt={flight.actual_departure_at}
+            atStop={atStop}
           />
           {flight.is_overdue && <OverdueBadge />}
         </div>
       </td>
       <td className="px-4 py-3.5">
-        <LastContactCell
-          iso={flight.last_contact_at}
-          airborne={
-            flight.status === "released" &&
-            flight.actual_departure_at !== null &&
-            flight.actual_arrival_at === null
-          }
-        />
+        <LastContactCell iso={flight.last_contact_at} airborne={inAir} />
       </td>
       <td className="whitespace-nowrap px-4 py-3.5 text-right">
-        {canDispatch && flight.status === "released" && flight.actual_departure_at === null && (
-          <CheckInButton flightId={flight.id} flightNumber={flight.flight_number} event="depart" />
-        )}
-        {canDispatch && flight.status === "released" && flight.actual_departure_at !== null && (
-          <CheckInButton flightId={flight.id} flightNumber={flight.flight_number} event="arrive" />
+        {canDispatch && next && (
+          // A new mark is a new button: an open dialog for a mark someone
+          // else just made closes with the refresh, and can't send the next.
+          <CheckInButton
+            key={`${next.event}-${next.leg ?? "flight"}`}
+            flightId={flight.id}
+            flightNumber={flight.flight_number}
+            event={next.event}
+            leg={next.leg}
+            airport={next.airport}
+            first={next.first}
+            last={next.last}
+          />
         )}
         {/* No Docs here: legacy's per-flight documents (`/following/{id}/docs`,
             a FlightDocument model, per-category upload permissions) don't
@@ -165,6 +171,29 @@ function FlightBoardRow({ flight, canDispatch }: { flight: BoardFlightItem; canD
         </Link>}
       </td>
     </tr>
+  );
+}
+
+/** A multi-stop flight's marks at the stops it has reached (LOG-14):
+ *  "PADM 14:50–15:12 AKST", landed and left, in the board's local time. */
+function StopMarks({ flight }: { flight: BoardFlightItem }) {
+  const legs = [...(flight.legs ?? [])].sort((a, b) => a.sequence - b.sequence);
+  const reached = legs.slice(0, -1).flatMap((leg, i) =>
+    leg.actual_arrival_at
+      ? [{ icao: leg.destination, landed: leg.actual_arrival_at, left: legs[i + 1]?.actual_departure_at ?? null }]
+      : [],
+  );
+  if (reached.length === 0) return null;
+  return (
+    <div className="mt-0.5 font-mono text-xs text-muted-foreground">
+      {reached.map((stop) => (
+        <div key={stop.icao + stop.landed}>
+          {stop.left
+            ? `${stop.icao} ${formatLocal(stop.landed).replace(/ \S+$/, "")}–${formatLocal(stop.left)}`
+            : `${stop.icao} ${formatLocal(stop.landed)}, on the ground`}
+        </div>
+      ))}
+    </div>
   );
 }
 

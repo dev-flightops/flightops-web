@@ -9,8 +9,17 @@ vi.mock("@/components/home/active-alerts-panel", () => ({ ActiveAlertsPanel: () 
 vi.mock("@/components/home/waiting-on-you", () => ({ WaitingOnYou: () => null }));
 vi.mock("@/lib/dashboards/operational-snapshot", () => ({
   loadOperationalSnapshot: async () => ({ airborneCount: 3, fleetAirworthy: 5, fleetGrounded: 3,
-    board: ["tail-1", "tail-1", "tail-2"].map(id => ({ aircraft: { id }, status: "released",
-      actual_departure_at: "2026-11-02T03:00:00Z", actual_arrival_at: null })),
+    board: [
+      ...["tail-1", "tail-1", "tail-2"].map(id => ({ aircraft: { id }, status: "released",
+        actual_departure_at: "2026-11-02T03:00:00Z", actual_arrival_at: null })),
+      // On the ground at its stop (LOG-14): not airborne.
+      { aircraft: { id: "tail-3" }, status: "released", origin: "PABE", destination: "PAKN",
+        actual_departure_at: "2026-11-02T03:00:00Z", actual_arrival_at: null, legs: [
+          { sequence: 1, origin: "PABE", destination: "PADM",
+            actual_departure_at: "2026-11-02T03:00:00Z", actual_arrival_at: "2026-11-02T03:40:00Z" },
+          { sequence: 2, origin: "PADM", destination: "PAKN", actual_departure_at: null, actual_arrival_at: null },
+        ] },
+    ],
   }),
 }));
 // An active flag is insufficient: active aircraft can have overdue inspections.

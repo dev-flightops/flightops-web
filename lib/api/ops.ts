@@ -295,6 +295,9 @@ export interface CheckInPayload {
   at?: string | null;
   /** The departure's flags were shown and it is recorded anyway (#155). */
   confirm_flags?: boolean;
+  /** A multi-stop flight (LOG-14): the leg the board showed this mark for;
+   *  refused (409 stop_already_marked) when another stop is next. */
+  leg?: number | null;
 }
 
 /** What Mark Departed would flag if the flight left now (#155). */

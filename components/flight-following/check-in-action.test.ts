@@ -135,4 +135,33 @@ describe("checkInFlightAction", () => {
       expect(result.error).toMatch(/HTTP 502/);
     }
   });
+
+  // LOG-14: a multi-stop flight is marked at each stop.
+  it("sends the stop's leg and a typed time with the mark", async () => {
+    checkInFlight.mockResolvedValueOnce({});
+    await checkInFlightAction("flight-1", "arrive", false, { at: "2026-11-13T19:30:00Z", leg: 1 });
+    expect(checkInFlight).toHaveBeenCalledWith("flight-1", { event: "arrive", at: "2026-11-13T19:30:00Z", leg: 1 });
+  });
+
+  it.each([
+    ['{"detail":"previous_stop_not_arrived"}', "It's still in the air: mark its arrival at the next stop first."],
+    ['{"detail":"next_leg_not_departed"}', "It's on the ground at a stop: mark its departure from there first."],
+    ['{"detail":"departure_before_arrival_at_stop"}', "It can't leave the stop before it landed there. Check the time."],
+    ['{"detail":"check_in_time_too_far_in_past"}', "That time is more than a day before the flight was due to leave."],
+  ])("explains a stop marked out of turn (%s)", async (body, error) => {
+    checkInFlight.mockRejectedValueOnce(new TestApiError(409, "/ops/flights/x/check-in", body));
+    expect(await checkInFlightAction("flight-1", "depart")).toEqual({ ok: false, error });
+  });
+
+  it("brings the board up to date when someone marked the stop meanwhile", async () => {
+    checkInFlight.mockRejectedValueOnce(
+      new TestApiError(409, "/ops/flights/x/check-in", '{"detail":{"error":"stop_already_marked","leg":2}}'),
+    );
+    const result = await checkInFlightAction("flight-1", "arrive", false, { leg: 1 });
+    expect(result).toEqual({
+      ok: false,
+      error: "Someone has marked that stop already. Close this and look at the board again.",
+    });
+    expect(revalidatePathSpy).toHaveBeenCalledWith("/flight-following");
+  });
 });
