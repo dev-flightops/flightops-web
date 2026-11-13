@@ -54,6 +54,9 @@ export function BrandingForm({
   const [homeImage, setHomeImage] = useState(initialHomeImage ?? "");
   const [uploadedAt, setUploadedAt] = useState(initialHomeImageUploadedAt);
   const [imageBroken, setImageBroken] = useState(false);
+  // A picture going up or coming off. Save waits for it: run alongside, it
+  // sent the address as it stood and could put the old one back after it.
+  const [imageBusy, setImageBusy] = useState(false);
 
   // When an extract succeeds, pipe the suggested palette into the color
   // inputs, and the site's share image into Home's (#118) when it names
@@ -226,12 +229,14 @@ export function BrandingForm({
           // The upload replaced the link, on the server as here.
           if (at) setHomeImage("");
         }}
+        saving={pending}
+        onBusy={setImageBusy}
       />
 
       <div className="flex items-center justify-end gap-2">
         <button
           type="submit"
-          disabled={pending || imageBroken}
+          disabled={pending || imageBroken || imageBusy}
           className="btn-caps inline-flex items-center gap-1.5 rounded-md bg-primary px-4 py-2 text-white hover:bg-brand-dark disabled:opacity-60 text-[0.72rem]"
         >
           {pending && <Spinner size="xs" />}
@@ -311,6 +316,8 @@ function HomeImageField({
   onBroken,
   uploadedAt,
   onUploaded,
+  saving,
+  onBusy,
 }: {
   value: string;
   onChange: (v: string) => void;
@@ -321,6 +328,10 @@ function HomeImageField({
   uploadedAt: string | null;
   /** A picture uploaded (its time) or removed (null). */
   onUploaded: (uploadedAt: string | null) => void;
+  /** The form is saving: the picture waits for it. */
+  saving: boolean;
+  /** Whether a picture is going up or coming off. */
+  onBusy: (busy: boolean) => void;
 }) {
   const link = /^https?:\/\/\S+$/.test(value.trim()) ? value.trim() : null;
   // The client, 10/29: "The branding function does not work for images /
@@ -333,6 +344,8 @@ function HomeImageField({
 
   const picker = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState<"upload" | "remove" | null>(null);
+  useEffect(() => onBusy(busy !== null), [busy, onBusy]);
+  const held = busy !== null || saving;
   const [uploadError, setUploadError] = useState<string | null>(null);
   // What Home will show once saved: a typed link replaces the upload.
   const shown = link ?? (uploadedAt ? uploadedHomeImageSource(uploadedAt) : null);
@@ -381,18 +394,19 @@ function HomeImageField({
           aria-label="Picture for Home"
           className="sr-only"
           tabIndex={-1}
+          disabled={held}
           onChange={(e) => {
             const file = e.target.files?.[0];
             e.target.value = "";
             if (file) void upload(file);
           }}
         />
-        <button type="button" className={buttonOutline} disabled={busy !== null} onClick={() => picker.current?.click()}>
+        <button type="button" className={buttonOutline} disabled={held} onClick={() => picker.current?.click()}>
           {busy === "upload" && <Spinner size="xs" />}
           {busy === "upload" ? "Uploading…" : uploadedAt ? "Replace picture" : "Upload a picture"}
         </button>
         {uploadedAt && (
-          <button type="button" className={buttonOutline} disabled={busy !== null} onClick={() => void remove()}>
+          <button type="button" className={buttonOutline} disabled={held} onClick={() => void remove()}>
             {busy === "remove" ? "Removing…" : "Remove picture"}
           </button>
         )}

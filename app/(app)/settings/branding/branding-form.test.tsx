@@ -11,6 +11,8 @@ const actions = vi.hoisted(() => ({
   extracted: { status: "idle" } as Record<string, unknown>,
   /** What Save's action last returned, for a test to set. */
   saved: { status: "idle" } as Record<string, unknown>,
+  /** Whether Save is running, for a test to set. */
+  saving: false,
 }));
 const downscale = vi.hoisted(() => vi.fn(async (file: File) => new Blob([`small ${file.name}`], { type: "image/jpeg" })));
 
@@ -28,7 +30,7 @@ vi.mock("react", async (importOriginal) => ({
   useActionState: (action: unknown, initial: unknown) => [
     action === actions.extract ? actions.extracted : action === actions.update ? actions.saved : initial,
     () => {},
-    false,
+    action === actions.update && actions.saving,
   ],
 }));
 
@@ -155,6 +157,30 @@ describe("the Home picture uploaded from this computer", () => {
     expect(sources(container)).not.toContain(uploadedSrc);
     expect(screen.getByText(/No image: Home shows the greeting/)).toBeInTheDocument();
     actions.saved = { status: "idle" };
+  });
+
+  // The review on #484: Save and the upload ran side by side, and Save sent
+  // the address as it stood, which could put the old link back after it.
+  it("holds Save while a picture is going up", async () => {
+    const user = userEvent.setup();
+    let finish!: (result: unknown) => void;
+    actions.upload.mockReturnValueOnce(new Promise((resolve) => { finish = resolve; }));
+    render(<BrandingForm initialPrimary={null} initialPrimaryDark={null} initialHomeImage="https://cdn.brand.example/old.jpg" />);
+    await user.upload(screen.getByLabelText("Picture for Home"), new File(["camera"], "hangar.jpg", { type: "image/jpeg" }));
+    expect(await screen.findByRole("button", { name: /Uploading…/ })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /Save brand theme/ })).toBeDisabled();
+    finish({ ok: true, uploadedAt: UPLOADED });
+    expect(await screen.findByRole("button", { name: "Replace picture" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: /Save brand theme/ })).toBeEnabled();
+  });
+
+  it("holds the picture while the form saves", () => {
+    actions.saving = true;
+    render(<BrandingForm initialPrimary={null} initialPrimaryDark={null} initialHomeImageUploadedAt={UPLOADED} />);
+    expect(screen.getByRole("button", { name: "Replace picture" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Remove picture" })).toBeDisabled();
+    expect(screen.getByLabelText("Picture for Home")).toBeDisabled();
+    actions.saving = false;
   });
 
   it("never sends the file with Save", () => {
