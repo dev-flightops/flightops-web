@@ -2772,6 +2772,11 @@ export interface FratPrefillResponse {
   /** An IFR flight landing where there is an instrument approach: the
    *  pilot answers on the approach minimums (#124). */
   asks_approach_minimums?: boolean;
+  /** Night at any scheduled departure or arrival, as the dispatch matrix
+   *  reads it: mountain terrain marked yes counts 2 then and 1 by day
+   *  (LOG-03). Null when a stop can't be placed; night_reason says which. */
+  night?: boolean | null;
+  night_reason?: string | null;
 }
 
 /** A duty position on an aircraft type (#45), as 135ACM names them. */
