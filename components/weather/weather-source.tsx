@@ -62,7 +62,8 @@ export function scoredElsewhere(stop: StopWeather): string[] {
     lines.push(`Visibility ${miles(stop.visibility_sm)} SM (${stop.visibility_from})`);
   }
   if (stop.wind_from && stop.wind_from !== "METAR" && stop.wind_kt !== null) {
-    const direction = stop.wind_direction === "VRB" ? "VRB" : `${stop.wind_direction}°`;
+    // Degrees get their sign; VRB and an agent's compass point (LOG-38) don't.
+    const direction = /^\d+$/.test(stop.wind_direction ?? "") ? `${stop.wind_direction}°` : stop.wind_direction;
     const gust = stop.wind_gust_kt ? `G${stop.wind_gust_kt}` : "";
     lines.push(`Wind ${direction} @ ${stop.wind_kt}${gust} kt (${stop.wind_from})`);
   }

@@ -14,6 +14,7 @@ import {
 import { Spinner } from "@/components/ui/spinner";
 import type { VillageAirportResponse } from "@/lib/api/types";
 import { downscalePhoto } from "@/lib/images/downscale";
+import { COMPASS_POINTS, type CompassPoint } from "@/lib/village-weather-format";
 
 import {
   fileVillageReportAction,
@@ -29,6 +30,23 @@ const CLOUD_COVERS: { value: string; label: string }[] = [
   { value: "BKN", label: "BKN — broken" },
   { value: "OVC", label: "OVC — overcast" },
   { value: "VV", label: "VV — vertical visibility" },
+];
+
+// The client, 11/13 (LOG-38): "Cardinal direction usually north south east
+// west, northwest, southeast, etc." Blank with a speed is a variable wind.
+const COMPASS_NAMES: Record<CompassPoint, string> = {
+  N: "north",
+  NE: "northeast",
+  E: "east",
+  SE: "southeast",
+  S: "south",
+  SW: "southwest",
+  W: "west",
+  NW: "northwest",
+};
+const WIND_FROM: { value: string; label: string }[] = [
+  { value: "", label: "— Variable, or none —" },
+  ...COMPASS_POINTS.map((p) => ({ value: p, label: `${p} — ${COMPASS_NAMES[p]}` })),
 ];
 
 export function AddReportDialog({
@@ -182,14 +200,11 @@ export function AddReportDialog({
             </div>
 
             <div className="grid gap-4 sm:grid-cols-3">
-              <Field
-                name="wind_dir_deg"
-                label="Wind direction (° magnetic)"
-                type="number"
-                placeholder="180"
-                min={0}
-                max={360}
-                error={fieldError("wind_dir_deg")}
+              <Select
+                name="wind_dir_compass"
+                label="Wind from"
+                options={WIND_FROM}
+                error={fieldError("wind_dir_compass")}
               />
               <Field
                 name="wind_speed_kt"

@@ -4,7 +4,7 @@ import { scoredElsewhere } from "@/components/weather/weather-source";
 import type { StopWeather } from "@/lib/api/dispatch-risk";
 import type { VillageWeatherReportResponse } from "@/lib/api/types";
 
-import { villageCategoryBecause, villageCrosswind, villageRunways } from "./village-weather-format";
+import { villageCategoryBecause, villageCrosswind, villageRunways, villageWind } from "./village-weather-format";
 
 function report(over: Partial<VillageWeatherReportResponse>): VillageWeatherReportResponse {
   return {
@@ -58,6 +58,19 @@ describe("villageCategoryBecause (#149)", () => {
   });
 });
 
+// The client, 11/13 (LOG-38): agents give the wind as a compass point.
+describe("a village wind", () => {
+  it("reads as the agent gave it, a compass point", () => {
+    expect(villageWind(report({ wind_dir_deg: 45, wind_dir_compass: "NE", wind_speed_kt: 15, wind_gust_kt: 22 }))).toBe(
+      "Wind NE/15ktG22",
+    );
+  });
+
+  it("or in degrees, as before", () => {
+    expect(villageWind(report({ wind_dir_deg: 50, wind_speed_kt: 20 }))).toBe("Wind 050°/20kt");
+  });
+});
+
 describe("scoredElsewhere", () => {
   const stop = (over: Partial<StopWeather>): StopWeather => ({
     ident: "9Z8",
@@ -81,6 +94,15 @@ describe("scoredElsewhere", () => {
         stop({ ceiling_from: "village report", visibility_sm: 3, visibility_from: "village report" }),
       ),
     ).toEqual(["No ceiling (village report)", "Visibility 3 SM (village report)"]);
+  });
+
+  it("gives an agent's compass point without a degree sign (LOG-38)", () => {
+    expect(scoredElsewhere(stop({ wind_direction: "NE", wind_kt: 20, wind_from: "village report" }))).toEqual([
+      "Wind NE @ 20 kt (village report)",
+    ]);
+    expect(scoredElsewhere(stop({ wind_direction: "045", wind_kt: 20, wind_from: "village report" }))).toEqual([
+      "Wind 045° @ 20 kt (village report)",
+    ]);
   });
 
   it("gives the ceiling when there is one", () => {

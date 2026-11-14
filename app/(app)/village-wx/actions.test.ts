@@ -72,6 +72,40 @@ describe("village weather refused by role (29 Sep)", () => {
   });
 });
 
+// The client, 11/13 (LOG-38): "Cardinal direction usually north south east
+// west, northwest, southeast, etc."
+describe("the wind as a compass point", () => {
+  const AIRPORT = "11111111-1111-1111-1111-111111111111";
+
+  it("sends the point the agent gave", async () => {
+    createVillageWeatherReport.mockResolvedValueOnce({ id: "r-2" });
+    await fileVillageReportAction(
+      { status: "idle" },
+      form({ village_airport_id: AIRPORT, wind_dir_compass: "NW", wind_speed_kt: "15" }),
+    );
+    expect(createVillageWeatherReport).toHaveBeenLastCalledWith(
+      expect.objectContaining({ wind_dir_compass: "NW", wind_speed_kt: 15 }),
+    );
+  });
+
+  it("sends none for a variable wind", async () => {
+    createVillageWeatherReport.mockResolvedValueOnce({ id: "r-3" });
+    await fileVillageReportAction(
+      { status: "idle" },
+      form({ village_airport_id: AIRPORT, wind_dir_compass: "", wind_speed_kt: "5" }),
+    );
+    expect(createVillageWeatherReport.mock.lastCall![0].wind_dir_compass ?? null).toBeNull();
+  });
+
+  it("refuses anything but the eight points", async () => {
+    const state = await fileVillageReportAction(
+      { status: "idle" },
+      form({ village_airport_id: AIRPORT, wind_dir_compass: "NNE" }),
+    );
+    expect(state.status).toBe("field-errors");
+  });
+});
+
 describe("a filed report's photos (#121)", () => {
   it("answers with the report, so its photos can follow", async () => {
     createVillageWeatherReport.mockResolvedValueOnce({ id: "r-1" });

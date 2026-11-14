@@ -11,6 +11,7 @@ import {
   updateVillageAirport,
 } from "@/lib/api/weather";
 import { ApiError } from "@/lib/api/client";
+import { COMPASS_POINTS } from "@/lib/village-weather-format";
 
 /**
  * /village-wx server actions — file a fresh weather observation and add
@@ -58,7 +59,12 @@ const ReportSchema = z.object({
     .optional(),
   ceiling_ft: optionalNumber({ min: 0, max: 50_000 }),
   visibility_sm: optionalNumber({ min: 0, max: 99 }),
-  wind_dir_deg: optionalNumber({ min: 0, max: 360 }),
+  // The client, 11/13 (LOG-38): agents give the wind as a compass point.
+  wind_dir_compass: z
+    .enum(COMPASS_POINTS)
+    .or(z.literal("").transform(() => null))
+    .nullable()
+    .optional(),
   wind_speed_kt: optionalNumber({ min: 0, max: 200 }),
   wind_gust_kt: optionalNumber({ min: 0, max: 200 }),
   temperature_c: optionalNumber({ min: -90, max: 60 }),

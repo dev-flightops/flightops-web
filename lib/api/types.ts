@@ -2262,6 +2262,8 @@ export interface VillageWeatherReportResponse {
   visibility_sm: number | null;
 
   wind_dir_deg: number | null;
+  /** The compass point the agent gave (LOG-38); wind_dir_deg is its degrees. */
+  wind_dir_compass?: string | null;
   wind_speed_kt: number | null;
   wind_gust_kt: number | null;
 
@@ -2295,6 +2297,8 @@ export interface VillageWeatherReportCreateRequest {
   ceiling_ft?: number | null;
   visibility_sm?: number | null;
   wind_dir_deg?: number | null;
+  /** Or a compass point (LOG-38), not both. */
+  wind_dir_compass?: "N" | "NE" | "E" | "SE" | "S" | "SW" | "W" | "NW" | null;
   wind_speed_kt?: number | null;
   wind_gust_kt?: number | null;
   temperature_c?: number | null;
