@@ -86,13 +86,21 @@ export function lessonNumbersText(numbers: number[]): string {
 }
 
 const REFUSALS: Record<string, string> = {
-  save_slides_as_pdf:
-    "PowerPoint files can't be shown directly. In PowerPoint choose File, Save As, PDF, then upload the PDF. It looks exactly as you made it.",
+  // A deck is made into a PDF as it's added (the client, 11/13: ".pptx
+  // eventually for sure"); these say why one wasn't.
+  save_keynote_as_pdf:
+    "Keynote files can't be read here. In Keynote choose File, Export To, PowerPoint or PDF, then upload that.",
+  slides_unreadable:
+    "That deck can't be read. Open it in PowerPoint and save it again, or save it as a PDF, then upload that.",
+  slides_took_too_long:
+    "That deck took too long to turn into pages. In PowerPoint choose File, Save As, PDF, then upload the PDF.",
+  slides_not_available:
+    "Slides can't be turned into pages on this server just now. In PowerPoint choose File, Save As, PDF, then upload the PDF.",
   save_heic_as_jpeg: "This is a HEIC photo. Save it as a JPEG and upload that.",
   unsupported_file_type:
-    "A lesson can show pictures (JPEG, PNG, GIF, WebP), PDFs, videos (MP4, MOV, WebM) and SCORM packages (.zip).",
+    "A lesson can show pictures (JPEG, PNG, GIF, WebP), PDFs, PowerPoint decks (.pptx, .ppt), videos (MP4, MOV, WebM) and SCORM packages (.zip).",
   file_too_large:
-    "That file is too large: pictures up to 10 MB, PDFs up to 100 MB, videos up to 2 GB, SCORM packages up to 500 MB.",
+    "That file is too large: pictures up to 10 MB, PDFs and decks up to 100 MB, videos up to 2 GB, SCORM packages up to 500 MB.",
   not_a_scorm_package:
     "That zip isn't a SCORM package: it has no imsmanifest.xml at its top. Export the course as SCORM 1.2 or 2004 and upload that zip.",
   manifest_unreadable: "The package's imsmanifest.xml can't be read. Export the course again and upload the new zip.",
@@ -132,5 +140,5 @@ export function mediaRefusalWords(raw: string): string | null {
 
 /** Why a chosen file can't be sent, judged in the browser, or null. */
 export function fileRefusalBeforeSending(name: string): string | null {
-  return /\.(pptx?|ppsx?|key|odp)$/i.test(name) ? REFUSALS.save_slides_as_pdf : null;
+  return /\.key$/i.test(name) ? REFUSALS.save_keynote_as_pdf : null;
 }

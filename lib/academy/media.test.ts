@@ -99,15 +99,19 @@ describe("in words", () => {
   });
 
   it("the service's refusals", () => {
-    expect(mediaRefusalWords('{"detail":"save_slides_as_pdf"}')).toMatch(/Save As, PDF/);
+    expect(mediaRefusalWords('{"detail":"slides_took_too_long"}')).toMatch(/Save As, PDF/);
+    expect(mediaRefusalWords('{"detail":"slides_unreadable"}')).toMatch(/can't be read/);
     expect(mediaRefusalWords('{"detail":"unsupported_video_link"}')).toMatch(/YouTube or Vimeo/);
     expect(mediaRefusalWords('{"detail":"something_else"}')).toBeNull();
     expect(mediaRefusalWords("<html>")).toBeNull();
   });
 
-  it("a PowerPoint file is stopped before it's sent", () => {
-    expect(fileRefusalBeforeSending("Winter.PPTX")).toMatch(/Save As, PDF/);
-    expect(fileRefusalBeforeSending("old.ppt")).toMatch(/Save As, PDF/);
+  // The client, 11/13: ".pptx eventually for sure". A deck is sent and made
+  // into a PDF; only Keynote is stopped here.
+  it("a PowerPoint deck goes, and Keynote is stopped before it's sent", () => {
+    expect(fileRefusalBeforeSending("Winter.PPTX")).toBeNull();
+    expect(fileRefusalBeforeSending("old.ppt")).toBeNull();
+    expect(fileRefusalBeforeSending("talk.key")).toMatch(/Export To, PowerPoint or PDF/);
     expect(fileRefusalBeforeSending("winter.pdf")).toBeNull();
   });
 });

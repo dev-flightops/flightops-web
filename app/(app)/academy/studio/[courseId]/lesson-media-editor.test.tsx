@@ -31,7 +31,7 @@ import { LessonMediaEditor, largeFileRefusal } from "./lesson-media-editor";
 
 const LOCAL: LessonMediaLimits = {
   direct_uploads: false,
-  max_bytes: { image: 10 * 1024 ** 2, pdf: 100 * 1024 ** 2, video: 2048 * 1024 ** 2, scorm: 500 * 1024 ** 2 },
+  max_bytes: { image: 10 * 1024 ** 2, pdf: 100 * 1024 ** 2, video: 2048 * 1024 ** 2, scorm: 500 * 1024 ** 2, slides: 100 * 1024 ** 2 },
 };
 const BUCKET: LessonMediaLimits = { ...LOCAL, direct_uploads: true };
 
@@ -119,13 +119,32 @@ describe("adding a file", () => {
     expect(screen.queryByRole("checkbox", { name: /has to watch it or page it/ })).toBeNull();
   });
 
-  it("PowerPoint is stopped with what to do instead", async () => {
+  // The client, 11/13: ".pptx eventually for sure". A deck is sent as it is:
+  // the service makes it into a PDF.
+  it("sends a PowerPoint deck", async () => {
     show();
     open();
     pick(file("winter.pptx"));
     add();
-    expect(await screen.findByRole("alert")).toHaveTextContent(/Save As, PDF/);
+    await waitFor(() => expect(actions.addMediaFileAction).toHaveBeenCalled());
+    const sent = vi.mocked(actions.addMediaFileAction).mock.calls.at(-1)![0] as FormData;
+    expect((sent.get("file") as File).name).toBe("winter.pptx");
+  });
+
+  it("Keynote is stopped with what to do instead", async () => {
+    show();
+    open();
+    pick(file("talk.key"));
+    add();
+    expect(await screen.findByRole("alert")).toHaveTextContent(/Export To, PowerPoint or PDF/);
     expect(actions.addMediaFileAction).not.toHaveBeenCalled();
+  });
+
+  it("says a deck is shown as its slides", () => {
+    show();
+    open();
+    expect(screen.getByText(/A deck is shown as its slides/)).toBeInTheDocument();
+    expect(screen.getByLabelText("File")).toHaveAttribute("accept", expect.stringContaining(".pptx,.ppt,.ppsx,.pps,.odp"));
   });
 
   it("a large file on a server with no bucket is refused, with a way round", async () => {

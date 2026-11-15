@@ -328,7 +328,7 @@ function AddMediaForm({
           <input
             id={`media-file-${lessonId}`}
             type="file"
-            accept="image/jpeg,image/png,image/gif,image/webp,application/pdf,video/mp4,video/quicktime,video/webm,.m4v,.pptx,.ppt,.zip,application/zip"
+            accept="image/jpeg,image/png,image/gif,image/webp,application/pdf,video/mp4,video/quicktime,video/webm,.m4v,.pptx,.ppt,.ppsx,.pps,.odp,.zip,application/zip"
             className="ff-input"
             onChange={(event) => {
               setFile(event.currentTarget.files?.[0] ?? null);
@@ -336,11 +336,12 @@ function AddMediaForm({
             }}
           />
           <p className="mt-1 text-xs text-muted-foreground">
-            Pictures (JPEG, PNG, GIF, WebP), PDFs, videos (MP4 plays everywhere; also MOV and
-            WebM), and SCORM 1.2 or 2004 packages as exported (.zip, one SCO). For PowerPoint
-            slides, save them as a PDF first.{" "}
+            Pictures (JPEG, PNG, GIF, WebP), PDFs, PowerPoint decks (.pptx, .ppt), videos (MP4
+            plays everywhere; also MOV and WebM), and SCORM 1.2 or 2004 packages as exported (.zip,
+            one SCO). A deck is shown as its slides, as it would print: animations and video in it
+            don&apos;t carry over.{" "}
             {limits?.direct_uploads
-              ? "Pictures up to 10 MB, PDFs up to 100 MB, videos up to 2 GB, SCORM packages up to 500 MB."
+              ? "Pictures up to 10 MB, PDFs and decks up to 100 MB, videos up to 2 GB, SCORM packages up to 500 MB."
               : `Files up to ${MAX_UPLOAD_LABEL} on this server: for a longer video, use a link.`}
           </p>
         </div>
