@@ -1155,7 +1155,7 @@ export const HELP_ENTRIES: HelpEntry[] = [
     worthKnowing: [
       "A video has to be watched and a PDF paged to the end before its lesson can complete or its quiz opens, unless you untick that for a reference document. A quiz also waits for the earlier lessons.",
       "Drafted lessons are written only from the document's pages, and are yours to check and edit: on a published course they show to learners as soon as they are added. Each person can draft ten times an hour.",
-      "PowerPoint slides need saving as a PDF first. A SCORM 1.2 or 2004 package (.zip, one SCO) can be added like any file: it plays in the lesson and records status and score, and passed or completed counts as finished.",
+      "A PowerPoint deck (.pptx or .ppt) can be added like any file: it's shown as its slides, as it would print, so animations and video in it don't carry over. A SCORM 1.2 or 2004 package (.zip, one SCO) can be added like any file: it plays in the lesson and records status and score, and passed or completed counts as finished.",
     ],
     connectsTo:
       "Published courses become assignable. Completions feed training records and, where the course satisfies one, a currency item.",

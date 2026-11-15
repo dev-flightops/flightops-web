@@ -23,6 +23,10 @@ import type { CurrencyItemRef } from "@/lib/api/types";
 import { CourseEditor } from "./course-editor";
 import { DraftLessons } from "./draft-lessons";
 
+// A PowerPoint deck is turned into its pages while it's added: the service
+// gives up at 50 seconds, inside this.
+export const maxDuration = 60;
+
 const ADMIN_ROLES = roleGate(
   "chief_pilot",
   "director_of_operations",

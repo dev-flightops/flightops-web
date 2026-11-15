@@ -146,7 +146,8 @@ export interface LessonMediaProgress {
 
 export interface LessonMediaLimits {
   direct_uploads: boolean;
-  max_bytes: Record<LessonMediaKind, number>;
+  /** By kind, and "slides" for a deck, which is shown as its PDF. */
+  max_bytes: Record<LessonMediaKind | "slides", number>;
 }
 
 export interface LessonMediaLibraryItem {
