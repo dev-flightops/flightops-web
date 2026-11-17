@@ -66,7 +66,11 @@ export function ReleaseReadinessPanel({
           ) : (
             <>
               <p className="text-foreground">
-                {`Risk ${frat.risk_level.toUpperCase()} · total ${frat.total_score}`}
+                {/* Its level now, which follows the packet (17 Nov). */}
+                {`Risk ${(frat.current_risk_level ?? frat.risk_level).toUpperCase()} · total ${frat.total_score}`}
+                {frat.current_risk_level && frat.current_risk_level !== frat.risk_level
+                  ? ` · filed at ${frat.risk_level.toUpperCase()}`
+                  : ""}
                 {frat.filed_by_name ? ` · filed by ${frat.filed_by_name}` : ""}
               </p>
               {blockers.length > 0 ? (

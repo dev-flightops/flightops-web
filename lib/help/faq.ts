@@ -83,7 +83,7 @@ export const FAQ: FaqEntry[] = [
     slug: "packet-and-frat",
     question: "Why does the dispatch packet show a different risk level from my FRAT?",
     answer:
-      "They are scored differently. The packet's risk assessment takes its worst single row (severity times likelihood); the FRAT adds up all its factors. A FRAT is never filed at a lower level than the packet, so a HIGH packet means at least a HIGH FRAT, and a HIGH packet needs the Chief Pilot or DO to approve the flight. A stop with no weather report scores as unknown, which is HIGH.",
+      "They are scored differently. The packet's risk assessment takes its worst single row (severity times likelihood); the FRAT adds up all its factors. A FRAT is never below the packet's latest score, so a HIGH packet means at least a HIGH FRAT, and a HIGH packet needs the Chief Pilot or DO to approve the flight. When the packet scores the flight lower again, after a refresh on the packet or the FRAT, the FRAT comes down with it and keeps its signatures. The weather each stop is scored on is the worst of the METAR, the FAA WeatherCam and the village report, so a camera's visibility estimate under 3 miles makes it HIGH even when the METAR is VFR; the packet's FRAT box says what made it HIGH. A stop with no weather report scores as unknown, which is HIGH.",
     pages: ["/dispatch", "/flight-crew"],
   },
   {

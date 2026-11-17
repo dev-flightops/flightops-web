@@ -1685,10 +1685,14 @@ export interface FratAssessmentResponse {
   pilot_user_id: string;
   answers: Record<string, number>;
   total_score: number;
-  /** The level the flight is filed at, and the approval it needs: the
-   *  higher of the band the total falls in and the dispatch packet's
-   *  level when it was filed (#88). */
+  /** The level it was filed and signed at: the higher of the band the
+   *  total falls in and the dispatch packet's level then (#88). The level
+   *  now is `current_risk_level`. */
   risk_level: FratRiskLevel;
+  /** The FRAT's level now (17 Nov): the higher of `score_risk_level` and
+   *  `packet_risk_level`, so it follows the packet down as well as up.
+   *  Absent from servers before it. */
+  current_risk_level?: FratRiskLevel | null;
   /** The band the total falls in on its own. Absent from servers that
    *  predate #88. */
   score_risk_level?: FratRiskLevel | null;

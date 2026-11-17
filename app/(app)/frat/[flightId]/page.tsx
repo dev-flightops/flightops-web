@@ -53,15 +53,23 @@ export default async function FratPage({ params }: { params: Promise<{ flightId:
     if (err instanceof ApiError && err.status === 404) notFound();
     throw err;
   }
-  const [frat, approval, config, zones, inputs, progress] = await Promise.all([
+  // A refresh here is the packet's too (17 Nov): the client, "if dispatcher
+  // refreshes the data and then it goes back to low, the FRAT should also go
+  // back to low." Before release the packet is scored again from the weather
+  // gathered for the FRAT, and only then is the FRAT read, so its level, the
+  // box asking for the Chief Pilot or DO and the progress line follow the
+  // score just made, as on the packet (#489).
+  const [inputs, config, zones] = await Promise.all([
+    loadFratInputs(flight, { scorePacket: flight.status === "scheduled" }),
+    getFratThresholds().catch(() => null),
+    loadZoneTable(),
+  ]);
+  const [frat, approval, progress] = await Promise.all([
     getLatestFratAssessment(flightId).catch((err): FratAssessmentResponse | null => {
       if (err instanceof ApiError && err.status === 404) return null;
       throw err;
     }),
     getFratOverLimits(flightId).catch(() => null),
-    getFratThresholds().catch(() => null),
-    loadZoneTable(),
-    loadFratInputs(flight),
     getFlightProgress(flightId).catch(() => null),
   ]);
   const zone = zoneFor(zones, flight.origin);

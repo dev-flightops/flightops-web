@@ -8,7 +8,7 @@
  * did before the prefill existed.
  */
 
-import { riskStops, weatherCamsFor } from "@/lib/api/dispatch-risk";
+import { getAirports, riskStops, scoreFlightRisk, weatherCamsFor } from "@/lib/api/dispatch-risk";
 import { getFratBlockEligibility, getFratPrefill } from "@/lib/api/ops";
 import type {
   FlightDetail,
@@ -31,7 +31,16 @@ export function routingAirports(flight: FlightDetail): string[] {
   return Array.from(new Set(flightStops(flight).filter(Boolean)));
 }
 
-export async function loadFratInputs(flight: FlightDetail): Promise<FratInputs> {
+export async function loadFratInputs(
+  flight: FlightDetail,
+  {
+    scorePacket = false,
+  }: {
+    /** Score the dispatch packet again from this weather first (17 Nov):
+     *  the FRAT page's refresh is the packet's too. */
+    scorePacket?: boolean;
+  } = {},
+): Promise<FratInputs> {
   const routeIcaos = routingAirports(flight);
   if (routeIcaos.length === 0) return { weather: null, fratPrefill: null, fratBlock: null };
   const reqs = routeIcaos.flatMap((icao) => [
@@ -39,10 +48,22 @@ export async function loadFratInputs(flight: FlightDetail): Promise<FratInputs> 
     { icao, kind: "taf" as const },
     { icao, kind: "pirep" as const },
   ]);
-  const [weather, cams] = await Promise.all([
+  const [weather, cams, airports] = await Promise.all([
     batchWeather(reqs).catch(() => null),
     weatherCamsFor(routeIcaos),
+    scorePacket ? getAirports(routeIcaos).catch(() => null) : Promise.resolve(null),
   ]);
+  // The client, 17 Nov: "if dispatcher refreshes the data and then it goes
+  // back to low, the FRAT should also go back to low." The FRAT's level now
+  // follows the packet's latest score, so the FRAT page scores the packet
+  // again from the weather just gathered, as the packet page does, before
+  // the prefill and the FRAT read the packet's level. Best-effort: without
+  // it they read the score saved last.
+  if (scorePacket) {
+    await scoreFlightRisk(flight.id, { stops: riskStops(routeIcaos, weather, airports, cams) }).catch(
+      () => null,
+    );
+  }
   // Each stop's reports as the dispatch packet sends them (#117), so the
   // FRAT scores the same weather. The prefill runs even with no weather:
   // duty, rest, currency and maintenance need none. The block eligibility
