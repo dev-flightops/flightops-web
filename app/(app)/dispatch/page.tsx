@@ -166,18 +166,12 @@ export default async function DispatchPage({
   //
   // Soft-fail: a roster that will not load should cost the dispatcher
   // the crew panel, not the whole packet.
-  // The flight's FRAT, when the Chief Pilot or DO has anything to accept
-  // or approve on it (#152, #155); the FRAT itself, its sign-offs and what
-  // it still needs before release; the load the release judges; and what
-  // this dispatcher ticked on the packet, as saved (#155: the ticks lived
-  // in the page's link, so a pre-filled link released with every box
-  // ticked).
-  const [overLimits, frat, releaseLoad, myAcks, openMels, progress] = selectedId
+  // The load the release judges, and what this dispatcher ticked on the
+  // packet, as saved (#155: the ticks lived in the page's link, so a
+  // pre-filled link released with every box ticked). The FRAT is read
+  // further down, once the risk is scored.
+  const [releaseLoad, myAcks, openMels] = selectedId
     ? await Promise.all([
-        getFratOverLimits(selectedId).catch(() => null),
-        getLatestFratAssessment(selectedId).catch((err): FratAssessmentResponse | null | undefined =>
-          err instanceof ApiError && err.status === 404 ? null : undefined,
-        ),
         getFlightLoad(selectedId).catch(() => null),
         listReleaseAcknowledgments(selectedId)
           .then((r) => r.items.filter((a) => a.mine))
@@ -185,10 +179,8 @@ export default async function DispatchPage({
         listMelItems({ status: "open", limit: 100 })
           .then((r) => r.items)
           .catch(() => null),
-        // Where the flight is and whose turn it is (#175).
-        getFlightProgress(selectedId).catch(() => null),
       ])
-    : [null, null, null, [], null, null];
+    : [null, [], null];
   const crew = selectedId
     ? await listFlightCrew(selectedId).catch(() => ({
         items: [],
@@ -401,11 +393,29 @@ export default async function DispatchPage({
   }
   const canEditRisk = hasAnyRole(viewerRoles, DISPATCH_WRITERS);
 
-  // #181 — the pilot's ForeFlight plan's weight and balance, as release
-  // holds it. Soft-fails to null: release refuses server-side regardless.
-  const flightPlans = selectedFlight ? await getFlightPlans(selectedFlight.id).catch(() => null) : null;
-  // Drug and alcohol: the pilots not cleared, where the release holds on it.
-  const crewClearance = selectedFlight ? await getCrewClearance(selectedFlight.id).catch(() => null) : null;
+  const [overLimits, frat, progress, flightPlans, crewClearance] = await Promise.all([
+    // The flight's FRAT, when the Chief Pilot or DO has anything to accept
+    // or approve on it (#152, #155); the FRAT itself, its sign-offs and
+    // what it still needs before release; and where the flight is and
+    // whose turn it is (#175). Read once the risk above is scored: ops
+    // holds a flight for a HIGH packet by the packet's last score, so read
+    // before it, the FRAT box, the release blockers and the progress line
+    // showed the previous load's score beside this one's risk panel. On
+    // 17 Nov a FRAT filed LOW sat behind "Risk HIGH — needs the Chief Pilot
+    // or DO" after the packet had scored the flight LOW again.
+    selectedId ? getFratOverLimits(selectedId).catch(() => null) : Promise.resolve(null),
+    selectedId
+      ? getLatestFratAssessment(selectedId).catch((err): FratAssessmentResponse | null | undefined =>
+          err instanceof ApiError && err.status === 404 ? null : undefined,
+        )
+      : Promise.resolve(null),
+    selectedId ? getFlightProgress(selectedId).catch(() => null) : Promise.resolve(null),
+    // #181 — the pilot's ForeFlight plan's weight and balance, as release
+    // holds it. Soft-fails to null: release refuses server-side regardless.
+    selectedFlight ? getFlightPlans(selectedFlight.id).catch(() => null) : Promise.resolve(null),
+    // Drug and alcohol: the pilots not cleared, where the release holds on it.
+    selectedFlight ? getCrewClearance(selectedFlight.id).catch(() => null) : Promise.resolve(null),
+  ]);
 
   // The Generate-PDF release gate (PIC currency, NOTAM acks, stale
   // weather) lives in one pure, unit-tested function so the precedence
@@ -512,6 +522,7 @@ export default async function DispatchPage({
           <FratOverLimitsPanel
             view={overLimits}
             canAccept={hasAnyRole(viewerRoles, FRAT_OVER_LIMIT_ACCEPTORS)}
+            risk={risk}
           />
         ) : null}
 

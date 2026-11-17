@@ -4,10 +4,57 @@ import { useActionState } from "react";
 
 import { acceptOverLimitsAction, type AcceptOverLimitsState } from "@/app/(app)/dispatch/frat-actions";
 import { buttonSolid } from "@/components/ff/controls";
+import type { DispatchRisk, RiskRow } from "@/lib/api/dispatch-risk";
 import type { FratOverLimits } from "@/lib/api/types";
 import { factorLabel } from "@/lib/frat/factors";
 
 const _initial: AcceptOverLimitsState = { status: "idle", attempt: 0 };
+
+/** A matrix row in the packet's own words: "Ceiling / Visibility: no
+ *  weather at PABE, scored unknown", or just the factor where the comment
+ *  only repeats it ("Outside Pilot Restrictions"). */
+function inWords(row: RiskRow): string {
+  return row.comment && row.comment.toLowerCase() !== row.factor.toLowerCase()
+    ? `${row.factor}: ${row.comment}`
+    : row.factor;
+}
+
+/**
+ * Why the dispatch packet asks the Chief Pilot or DO, from the risk this
+ * page scored: each row it scored HIGH, each trigger of its Management
+ * Approval Flag, and the stops no current weather reached (weather the
+ * packet can't see scores HIGH). Nothing where that score disagrees with
+ * the view, which ops reads from the score it saved last.
+ *
+ * The client, 17 Nov: "the FRAT was filed low but now it won't release
+ * because it says it's HIGH and needs DO/chief approval". The box said
+ * only that the packet scored it HIGH; a Bethel report that hadn't come
+ * through was the reason.
+ */
+export function highRiskReasons(
+  view: FratOverLimits,
+  risk: DispatchRisk | null | undefined,
+): { reasons: string[]; noWeather: string[] } {
+  if (!risk) return { reasons: [], noWeather: [] };
+  const packetHigh = view.packet_level === "high" && risk.level === "HIGH";
+  const management = Boolean(view.management_required) && risk.management_required;
+  const triggers = new Set<string>();
+  if (management) {
+    // The flag's triggers, as ops sets it: an override wins over what the
+    // system worked out, and maintenance it can't answer for flags too.
+    const maintenance = risk.inputs.maintenance_override ?? risk.automatic.maintenance.value;
+    if (risk.inputs.outside_pilot_restrictions) triggers.add("Outside Pilot Restrictions");
+    if (risk.inputs.vfr_mountain_night) triggers.add("VFR Mountain Terrain at Night");
+    if (maintenance !== false) triggers.add("<4 hrs until MX");
+  }
+  const reasons = risk.rows
+    .filter((row) => (packetHigh && row.level === "HIGH") || triggers.has(row.factor))
+    .map(inWords);
+  const noWeather = packetHigh
+    ? (risk.stops ?? []).filter((stop) => stop.source === null).map((stop) => stop.ident)
+    : [];
+  return { reasons, noWeather };
+}
 
 function zulu(iso: string): string {
   return `${new Date(iso).toLocaleString("en-US", {
@@ -34,10 +81,14 @@ function zulu(iso: string): string {
 export function FratOverLimitsPanel({
   view,
   canAccept,
+  risk,
 }: {
   view: FratOverLimits;
   /** The Chief Pilot or DO (FRAT_OVER_LIMIT_ACCEPTORS). */
   canAccept: boolean;
+  /** The packet's risk as this page scored it, before reading `view`: what
+   *  names the reasons for a HIGH. Pages that don't score it leave it out. */
+  risk?: DispatchRisk | null;
 }) {
   const [state, formAction, pending] = useActionState(acceptOverLimitsAction, _initial);
   const labels = view.over_limit_factors.map(factorLabel).join(" · ");
@@ -51,6 +102,7 @@ export function FratOverLimitsPanel({
     view.management_required ? "the dispatch packet flags management approval" : null,
     view.risk_level === "extreme" ? "the FRAT is EXTREME" : null,
   ].filter(Boolean);
+  const { reasons, noWeather } = highRiskReasons(view, risk);
 
   return (
     <section
@@ -74,6 +126,18 @@ export function FratOverLimitsPanel({
       {highRisk ? (
         <p className="mt-1 text-foreground">
           {`The risk is HIGH: ${why.join(" and ") || "it needs management approval"}. The Chief Pilot or DO approves the flight before it is released.`}
+        </p>
+      ) : null}
+      {highRisk && reasons.length > 0 ? (
+        <ul aria-label="Why the packet asks for approval" className="mt-1 list-disc space-y-0.5 pl-5 text-foreground">
+          {reasons.map((reason) => (
+            <li key={reason}>{reason}</li>
+          ))}
+        </ul>
+      ) : null}
+      {highRisk && noWeather.length > 0 ? (
+        <p className="mt-1 text-foreground">
+          {`No current weather for ${noWeather.join(", ")}: the packet scores weather it can't see as HIGH. If a report didn't come through, reload the page to fetch the weather again.`}
         </p>
       ) : null}
       {view.mitigations ? (
