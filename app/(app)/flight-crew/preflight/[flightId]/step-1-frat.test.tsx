@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -1208,5 +1208,116 @@ describe("mountain terrain, yes or no (LOG-03)", () => {
     await user.click(screen.getByRole("button", { name: /Change the FRAT/i }));
     expect(within(mountain()).getByRole("button", { name: "Yes" })).toHaveAttribute("aria-pressed", "true");
     expect(screen.getByText("Yes, at night")).toBeInTheDocument();
+  });
+});
+
+/**
+ * 17 Nov, the client: "Pilot review should allow the pilot to change the
+ * scale on any of the items. If they do change the frat, the dispatcher
+ * should be alerted to those changes and then require signing again after
+ * the changes have been acknowledged." The pilot's change is their
+ * signature: the preflight files it signed, and dispatch reviews it.
+ */
+describe("the pilot's change is their signature (17 Nov)", () => {
+  beforeEach(() => vi.mocked(submitFratAction).mockClear());
+
+  const signedByDispatch = (over: Partial<FratAssessmentResponse> = {}): FratAssessmentResponse => ({
+    id: "a-742",
+    flight_id: "f-1",
+    pilot_user_id: "u-1",
+    filed_by_user_id: "d-1",
+    answers: Object.fromEntries(
+      FACTOR_GROUPS.flatMap((g) => g.factors).map((f) => [f.code, f.code === "wx_wind" ? 2 : 0]),
+    ),
+    total_score: 2,
+    risk_level: "low",
+    mitigations: null,
+    over_limit_factors: [],
+    affirmed_zero_factors: null,
+    carried_from_assessment_id: null,
+    created_at: "2026-11-17T18:05:15Z",
+    authorizations: [],
+    signoffs: [
+      {
+        role: "dispatcher",
+        user_id: "d-1",
+        signer_name: "Dana Dispatch",
+        signed_at: "2026-11-17T18:05:21Z",
+        flight_minutes_today: null,
+        flight_minutes_remaining: null,
+      },
+    ],
+    ...over,
+  });
+  const wind = () => screen.getByLabelText(/Wind & gusts/i, { selector: "input" });
+
+  it("files the pilot's change signed, once something has changed", async () => {
+    const user = userEvent.setup();
+    renderStep({ initial: signedByDispatch() });
+    await user.click(
+      screen.getByRole("button", {
+        name: "↻ Change the FRAT (your change is your signature: dispatch reviews it and signs again)",
+      }),
+    );
+    const signIt = screen.getByRole("button", { name: "Sign with these changes" });
+    expect(signIt).toBeDisabled();
+    expect(
+      screen.getByText("Nothing has changed yet: change a score or the mitigation, or keep the FRAT as it is."),
+    ).toBeInTheDocument();
+
+    fireEvent.change(wind(), { target: { value: "4" } });
+    expect(signIt).toBeEnabled();
+    expect(
+      screen.getByText(
+        "Your change is your signature: dispatch sees what you changed, reviews it and signs again. You won't be asked to sign again.",
+      ),
+    ).toBeInTheDocument();
+    await user.click(signIt);
+    const [flightId, body] = vi.mocked(submitFratAction).mock.calls.at(-1)!;
+    expect(flightId).toBe("f-1");
+    expect(body.sign).toBe(true);
+    expect(body.answers.wx_wind).toBe(4);
+  });
+
+  it("counts a new mitigation as a change", async () => {
+    const user = userEvent.setup();
+    renderStep({ initial: signedByDispatch() });
+    await user.click(screen.getByRole("button", { name: /Change the FRAT/ }));
+    await user.type(screen.getByPlaceholderText(/What risk controls/), "Leaving before the front");
+    expect(screen.getByRole("button", { name: "Sign with these changes" })).toBeEnabled();
+  });
+
+  it("lets the pilot go on to step 2 once they have signed their change", () => {
+    renderStep({
+      initial: signedByDispatch({
+        id: "a-743",
+        filed_by_user_id: "u-1",
+        signoffs: [
+          {
+            role: "pilot",
+            user_id: "u-1",
+            signer_name: "Tomas Pilot",
+            signed_at: "2026-11-17T18:20:00Z",
+            flight_minutes_today: 0,
+            flight_minutes_remaining: 480,
+          },
+        ],
+      }),
+    });
+    expect(screen.getByRole("button", { name: "Continue to Step 2 →" })).toBeEnabled();
+  });
+
+  it("files dispatch's change on the FRAT page unsigned, as before", async () => {
+    const user = userEvent.setup();
+    render(<FlightRiskAssessmentStep flightId="f-1" initial={signedByDispatch()} mode="page" />);
+    await user.click(
+      screen.getByRole("button", {
+        name: "↻ Change the FRAT (clears the signatures: dispatch signs again, then the pilot)",
+      }),
+    );
+    fireEvent.change(wind(), { target: { value: "4" } });
+    await user.click(screen.getByRole("button", { name: "File the change" }));
+    const [, body] = vi.mocked(submitFratAction).mock.calls.at(-1)!;
+    expect(body.sign).toBeUndefined();
   });
 });

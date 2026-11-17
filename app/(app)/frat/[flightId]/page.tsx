@@ -117,6 +117,9 @@ export default async function FratPage({ params }: { params: Promise<{ flightId:
         initial={frat}
         mode="page"
         readOnly={readOnly}
+        // What the FRAT's pilot files they sign (17 Nov). ops files the
+        // viewer's own FRAT unless dispatch files it for the PIC.
+        signAsPilot={pilotOfFrat || !dispatch}
         companyCrosswindLimitKt={config ? companyCrosswindLimitKt(config, flight.aircraft.engine_count) : null}
         nearLimitEntryKt={config ? nearLimitEntryKt(config, flight.aircraft.engine_count) : null}
         demonstratedCrosswindKt={flight.aircraft.max_demonstrated_crosswind_kt}

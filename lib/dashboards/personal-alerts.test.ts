@@ -140,7 +140,9 @@ describe("the hand-offs between dispatch and the pilot (#175)", () => {
     });
     const [alert] = await loadPersonalAlerts({ roles: ["dispatcher"], userId: "u-disp" });
     expect(alert.title).toBe("FRAT changed by the pilot — MM118");
-    expect(alert.detail).toMatch(/Grace Okafor changed it at .+\. Review it and sign again; then the pilot signs\.$/);
+    // 17 Nov: the pilot's change carries their signature, so they aren't
+    // asked a second time.
+    expect(alert.detail).toMatch(/Grace Okafor changed it at .+\. Review the changes and sign it again\.$/);
     expect(alert.href).toBe("/frat/fl-118");
   });
 

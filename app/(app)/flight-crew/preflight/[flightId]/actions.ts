@@ -133,6 +133,9 @@ function fratErrorToMessage(err: unknown): string {
   if (err instanceof ApiError) {
     if (err.status === 401) return "Your session expired — sign in again.";
     if (err.status === 400) return "One of the answers is out of range (0–5).";
+    // 17 Nov: filing and signing together is the FRAT's pilot's.
+    if (err.status === 403 && err.message.includes("not_the_pilot"))
+      return "Only the FRAT's pilot signs it as they file it.";
     if (err.status === 404) return "Submit an assessment first.";
     if (err.status === 409 && err.message.includes("frat_locked"))
       return "The flight is released: its FRAT stays as signed. Dispatch pulls the release back to change it.";

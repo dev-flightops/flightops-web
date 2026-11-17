@@ -843,10 +843,12 @@ export async function signFrat(
   flightId: string,
   assessmentId: string,
   role: FratSignRole,
+  /** The dispatcher has reviewed what the pilot changed (17 Nov). */
+  changesReviewed = false,
 ): Promise<FratAssessmentResponse> {
   return apiFetch<FratAssessmentResponse>(`/ops/frat/${flightId}/sign`, {
     method: "POST",
-    body: JSON.stringify({ assessment_id: assessmentId, role }),
+    body: JSON.stringify({ assessment_id: assessmentId, role, changes_reviewed: changesReviewed }),
   });
 }
 

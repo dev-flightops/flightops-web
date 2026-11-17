@@ -50,7 +50,7 @@ describe("FratSignoffs (#155)", () => {
     expect(screen.getByLabelText("Sign the FRAT as the pilot")).toBeDisabled();
     expect(screen.getByText("— after dispatch signs")).toBeInTheDocument();
     await user.click(screen.getByLabelText("Sign the FRAT as the dispatcher"));
-    expect(sign).toHaveBeenCalledWith("f-1", "frat-1", "dispatcher");
+    expect(sign).toHaveBeenCalledWith("f-1", "frat-1", "dispatcher", false);
   });
 
   it("lists the dispatcher's box first, and holds it until the flight is built (#175)", () => {
@@ -95,7 +95,7 @@ describe("FratSignoffs (#155)", () => {
       />,
     );
     await user.click(screen.getByLabelText("Sign the FRAT as the pilot"));
-    expect(sign).toHaveBeenCalledWith("f-1", "frat-1", "pilot");
+    expect(sign).toHaveBeenCalledWith("f-1", "frat-1", "pilot", false);
   });
 
   it("shows who signed, when, the pilot's minutes and the audit trail ID", () => {
@@ -157,3 +157,139 @@ describe("FratSignoffs (#155)", () => {
     expect(screen.getByLabelText("Sign the FRAT as the dispatcher")).toBeDisabled();
   });
 });
+
+/**
+ * 17 Nov, the client: "Pilot review should allow the pilot to change the
+ * scale on any of the items. If they do change the frat, the dispatcher
+ * should be alerted to those changes and then require signing again after
+ * the changes have been acknowledged." The pilot's change is their
+ * signature; the dispatcher's box lists what changed and opens once they
+ * say they have reviewed it.
+ */
+describe("FratSignoffs: the pilot's change (17 Nov)", () => {
+  const pilotSigned = {
+    role: "pilot" as const,
+    user_id: "u-pilot",
+    signer_name: "Tomas Pilot",
+    signed_at: "2026-11-17T18:20:00Z",
+    flight_minutes_today: 0,
+    flight_minutes_remaining: 480,
+  };
+  const pilotChange = frat({
+    id: "frat-2",
+    filed_by_user_id: "u-pilot",
+    answers: { pilot_rest: 3, wx_wind: 2 },
+    mitigations: "Leaving before the front",
+    signoffs: [pilotSigned],
+    changes: {
+      by_role: "pilot",
+      by_name: "Tomas Pilot",
+      at: "2026-11-17T18:20:00Z",
+      since_assessment_id: "frat-1",
+      since_filed_at: "2026-11-17T18:05:00Z",
+      since_signed_at: "2026-11-17T18:05:30Z",
+      factors: [
+        { code: "wx_wind", before: 0, after: 2 },
+        { code: "pilot_rest", before: 1, after: 3 },
+      ],
+      mitigations_before: null,
+      mitigations_after: "Leaving before the front",
+    },
+  });
+
+  it("lists what the pilot changed and opens dispatch's box once it's reviewed", async () => {
+    const user = userEvent.setup();
+    render(
+      <FratSignoffs
+        flightId="f-1"
+        frat={pilotChange}
+        timeZone="UTC"
+        canSign={{ pilot: false, dispatcher: true }}
+      />,
+    );
+    expect(
+      screen.getByText("Tomas Pilot changed the FRAT Nov 17, 18:20 UTC (18:20Z) and signed it. Since dispatch signed it:"),
+    ).toBeInTheDocument();
+    const list = screen.getByRole("list", { name: "The pilot's changes" });
+    expect(Array.from(list.querySelectorAll("li"), (li) => li.textContent)).toEqual([
+      "Rest in last 24h: 1 → 3",
+      "Wind & gusts: 0 → 2",
+      "Mitigation added: “Leaving before the front”",
+    ]);
+    const box = screen.getByLabelText("Sign the FRAT as the dispatcher");
+    expect(box).toBeDisabled();
+    expect(screen.getByText("— review the pilot's changes, then sign")).toBeInTheDocument();
+    await user.click(screen.getByLabelText("I've reviewed the pilot's changes"));
+    expect(box).toBeEnabled();
+    await user.click(box);
+    expect(sign).toHaveBeenCalledWith("f-1", "frat-2", "dispatcher", true);
+  });
+
+  it("shows the pilot signed it as they filed it", () => {
+    render(
+      <FratSignoffs flightId="f-1" frat={pilotChange} timeZone="UTC" canSign={{ pilot: true, dispatcher: false }} />,
+    );
+    expect(
+      screen.getByText("signed by Tomas Pilot as they filed it, Nov 17, 18:20 UTC (18:20Z)"),
+    ).toBeInTheDocument();
+    // Only a dispatcher ticks the review.
+    expect(screen.queryByLabelText("I've reviewed the pilot's changes")).not.toBeInTheDocument();
+  });
+
+  it("lets the pilot sign their own FRAT first, before dispatch", async () => {
+    const user = userEvent.setup();
+    render(
+      <FratSignoffs
+        flightId="f-1"
+        frat={frat({ filed_by_user_id: "u-pilot" })}
+        timeZone="UTC"
+        canSign={{ pilot: true, dispatcher: false }}
+      />,
+    );
+    await user.click(screen.getByLabelText("Sign the FRAT as the pilot"));
+    expect(sign).toHaveBeenCalledWith("f-1", "frat-1", "pilot", false);
+  });
+
+  it("lists what dispatch changed since the pilot signed, in the pilot's box", () => {
+    render(
+      <FratSignoffs
+        flightId="f-1"
+        frat={frat({
+          id: "frat-3",
+          filed_by_user_id: "u-disp",
+          signoffs: [
+            {
+              role: "dispatcher",
+              user_id: "u-disp",
+              signer_name: "Dana Dispatch",
+              signed_at: "2026-11-17T19:00:30Z",
+              flight_minutes_today: null,
+              flight_minutes_remaining: null,
+            },
+          ],
+          changes: {
+            by_role: "dispatcher",
+            by_name: "Dana Dispatch",
+            at: "2026-11-17T19:00:00Z",
+            since_assessment_id: "frat-2",
+            since_filed_at: "2026-11-17T18:20:00Z",
+            since_signed_at: "2026-11-17T18:20:00Z",
+            factors: [{ code: "wx_wind", before: 2, after: 4 }],
+            mitigations_before: null,
+            mitigations_after: null,
+          },
+        })}
+        timeZone="UTC"
+        canSign={{ pilot: true, dispatcher: false }}
+      />,
+    );
+    expect(
+      screen.getByText("Dana Dispatch changed the FRAT Nov 17, 19:00 UTC (19:00Z). Since the pilot signed it:"),
+    ).toBeInTheDocument();
+    const list = screen.getByRole("list", { name: "Dispatch's changes" });
+    expect(list.textContent).toBe("Wind & gusts: 2 → 4");
+    // The pilot signs again as before, with no tick of their own.
+    expect(screen.getByLabelText("Sign the FRAT as the pilot")).toBeEnabled();
+  });
+});
+

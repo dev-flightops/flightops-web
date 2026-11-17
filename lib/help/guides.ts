@@ -148,8 +148,8 @@ export const GUIDES: Guide[] = [
       "The flight can't be released until both have signed. Each is told under **Waiting on you**, in the bell and on Home, when it's their turn. The signed FRAT, with its audit trail ID, prints as a PDF and with the flight packet.",
     ],
     notes: [
-      "The pilot can change a score. A change starts from the scores on file and makes a new version, so both signatures clear: dispatch signs it again, then the pilot. Once the flight is released the FRAT stays as signed; dispatch pulls the release back to change it.",
-      "In the preflight the FRAT is step 1: the pilot signs it there, after dispatch, before the release.",
+      "The pilot can change any score. A change starts from the scores on file and makes a new version, and the pilot's change is their signature: dispatch is told what changed, under **Waiting on you** and on the FRAT, ticks that they've reviewed it and signs again. The pilot isn't asked to sign a second time. When dispatch changes a FRAT the pilot signed, the pilot sees what changed and signs again. Once the flight is released the FRAT stays as signed; dispatch pulls the release back to change it.",
+      "In the preflight the FRAT is step 1: the pilot signs it there, after dispatch, before the release. A pilot who changes it has signed it, and goes on while dispatch reviews the change; the release waits for dispatch's signature.",
       "For a VFR flight, an aircraft not IFR certified, or a field without an instrument approach, weather below the company's dispatch minimums scores 5: over company limits.",
       "On an IFR flight the FRAT asks whether the forecast ceiling and visibility at arrival are at or above the approach minimums, from your approach plates. A no scores that factor 5: below them the flight may not take off IFR (14 CFR 135.219), and a carried block FRAT doesn't apply, since each leg answers for its own landings.",
       "The levels are explained in [What do the FRAT levels mean?](/help#faq-frat-levels).",

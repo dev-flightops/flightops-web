@@ -19,6 +19,10 @@ describe("the FRAT sign-off's words (#155)", () => {
     expect(signErrorMessage('{"detail":{"error":"frat_changed"}}')).toMatch(/changed since you opened it/);
     expect(signErrorMessage('{"detail":{"error":"same_person_signs_both"}}')).toMatch(/someone else signs/);
     expect(signErrorMessage('{"detail":{"error":"dispatcher_signs_first"}}')).toMatch(/Dispatch signs the FRAT first/);
+    // 17 Nov: the pilot's change is signed again once dispatch has reviewed it.
+    expect(signErrorMessage('{"detail":{"error":"changes_not_reviewed"}}')).toBe(
+      "Tick that you've reviewed the pilot's changes, then sign.",
+    );
     expect(
       signErrorMessage('{"detail":{"error":"flight_not_built","gaps":[{"code":"pic_required"}]}}'),
     ).toMatch(/isn't built yet/);
