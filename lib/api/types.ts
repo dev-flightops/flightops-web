@@ -1736,6 +1736,10 @@ export interface FratAssessmentResponse {
   release_blockers?: ReleaseBlocker[];
   /** The flight is released: the FRAT can't change until it's pulled back. */
   locked?: boolean;
+  /** What the FRAT changed since the other side last saw it, while they
+   *  haven't signed it (17 Nov): the pilot's change for dispatch to review
+   *  before signing again, or dispatch's for the pilot. */
+  changes?: FratChanges | null;
 }
 
 export type FratSignRole = "pilot" | "dispatcher";
@@ -1799,6 +1803,31 @@ export interface ApproachMinimums {
   visibility: boolean;
 }
 
+/** One FRAT factor scored differently (17 Nov); null where a version
+ *  doesn't have the factor. */
+export interface FratFactorChange {
+  code: string;
+  before: number | null;
+  after: number | null;
+}
+
+/** What a FRAT changed since the other side last saw it (17 Nov). */
+export interface FratChanges {
+  /** Who changed it. */
+  by_role: FratSignRole;
+  by_name: string | null;
+  /** When the change was filed. */
+  at: string;
+  /** The version they saw: last signed, or else filed. */
+  since_assessment_id: string;
+  since_filed_at: string;
+  /** When they signed it; null when they filed it and hadn't signed. */
+  since_signed_at: string | null;
+  factors: FratFactorChange[];
+  mitigations_before: string | null;
+  mitigations_after: string | null;
+}
+
 export interface FratSubmitRequest {
   answers: Record<string, number>;
   mitigations?: string;
@@ -1818,6 +1847,9 @@ export interface FratSubmitRequest {
   /** On an IFR flight (#124). A `false` must come with that factor scored
    *  5, or the submit is a 422. */
   approach_minimums?: ApproachMinimums;
+  /** The FRAT's pilot signs it as they file it (17 Nov): their change is
+   *  their signature, and dispatch reviews it and signs again. */
+  sign?: boolean;
 }
 
 export interface FratAuthorizeRequest {
@@ -2718,6 +2750,10 @@ export interface HandoffItem {
   /** release_denied: the pilot's reason. weight_returned: the pilot's
    *  figure, in pounds. */
   note: string | null;
+  /** frat_to_sign: what the other side changed since this side last saw
+   *  the FRAT (17 Nov). */
+  changes?: FratFactorChange[];
+  mitigations_changed?: boolean;
 }
 
 export interface HandoffsResponse {

@@ -1,4 +1,5 @@
 import type { HandoffItem } from "@/lib/api/types";
+import { changeSummary } from "@/lib/frat/changes";
 import { formatLocal } from "@/lib/format/flight-time";
 import { routeText } from "@/lib/route";
 
@@ -23,23 +24,35 @@ export function handoffLine(item: HandoffItem): HandoffLine {
   const preflight = `/flight-crew/preflight/${item.flight_id}`;
   const packet = `/dispatch?flight=${item.flight_id}`;
   switch (item.kind) {
-    case "frat_to_sign":
+    case "frat_to_sign": {
+      // 17 Nov: what the other side changed since this side last saw it.
+      const changed =
+        (item.changes?.length ?? 0) > 0 || item.mitigations_changed
+          ? changeSummary(item.changes, item.mitigations_changed)
+          : null;
       if (item.turn === "pilot") {
         return {
           title: `Sign the FRAT — ${flight}`,
-          detail: `${route}. ${item.by_name ?? "Dispatch"} scored and signed it at ${at}. Review it and sign it at preflight step 1.`,
+          detail: changed
+            ? `${route}. ${item.by_name ?? "Dispatch"} changed it at ${at}: ${changed}. Review it and sign it again at preflight step 1.`
+            : `${route}. ${item.by_name ?? "Dispatch"} scored and signed it at ${at}. Review it and sign it at preflight step 1.`,
           href: preflight,
           severity: "yellow",
         };
       }
+      // The pilot's change carries their signature: dispatch reviews it
+      // and signs again, and the pilot isn't asked a second time.
       return {
         title: item.filed_by_pilot && item.refiled ? `FRAT changed by the pilot — ${flight}` : `Sign the FRAT — ${flight}`,
         detail: item.filed_by_pilot
-          ? `${route}. ${item.by_name ?? "The pilot"} ${item.refiled ? "changed" : "filed"} it at ${at}. Review it and sign${item.refiled ? " again" : ""}; then the pilot signs.`
+          ? item.refiled
+            ? `${route}. ${item.by_name ?? "The pilot"} changed it at ${at}${changed ? `: ${changed}` : ""}. Review the changes and sign it again.`
+            : `${route}. ${item.by_name ?? "The pilot"} filed it at ${at}. Review it and sign it.`
           : `${route}. Filed at ${at}; dispatch hasn't signed it yet.`,
         href: `/frat/${item.flight_id}`,
         severity: "yellow",
       };
+    }
     // Both signatures are the FRAT's part: the packet still has its own
     // checks (the crew's currency, NOTAMs, the weather), so not "ready".
     case "release_ready":

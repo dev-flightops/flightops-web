@@ -5,6 +5,7 @@ import { useState, useTransition } from "react";
 import { signFratAction } from "@/app/(app)/frat/actions";
 import { linkCaps } from "@/components/ff/controls";
 import type { FratAssessmentResponse, FratSignRole, FratSignoff } from "@/lib/api/types";
+import { changeLines } from "@/lib/frat/changes";
 import { pilotMinutesLine } from "@/lib/frat/signoff-text";
 import { cn } from "@/lib/utils";
 
@@ -39,6 +40,13 @@ const TITLES: Record<FratSignRole, string> = { pilot: "Pilot", dispatcher: "Disp
  * Dispatch signs first, once the flight is built, and the pilot after, at
  * preflight step 1 (#175): "once that's complete, the dispatch signs the
  * FRAT. The pilot should see the scored FRAT ... and they then sign".
+ *
+ * A pilot who changes the FRAT signs it as they file the change (17 Nov),
+ * so their box is checked first. The client: "the dispatcher should be
+ * alerted to those changes and then require signing again after the
+ * changes have been acknowledged": the dispatcher's box lists what changed
+ * and opens once they tick that they have reviewed it. A change dispatch
+ * makes after the pilot signed is listed in the pilot's box the same way.
  */
 export function FratSignoffs({
   flightId,
@@ -59,14 +67,21 @@ export function FratSignoffs({
 }) {
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  // The version the dispatcher ticked the pilot's changes reviewed on: a
+  // newer one is reviewed again.
+  const [reviewedFor, setReviewedFor] = useState<string | null>(null);
   const signed = new Map((frat.signoffs ?? []).map((s) => [s.role, s] as const));
   const check = frat.verification ?? null;
   const locked = Boolean(frat.locked);
+  const filedByPilot = Boolean(frat.filed_by_user_id) && frat.filed_by_user_id === frat.pilot_user_id;
+  const pilotChange = frat.changes?.by_role === "pilot" ? frat.changes : null;
+  const dispatchChange = frat.changes?.by_role === "dispatcher" ? frat.changes : null;
+  const reviewed = reviewedFor === frat.id;
 
   const sign = (role: FratSignRole) => {
     setError(null);
     startTransition(async () => {
-      const result = await signFratAction(flightId, frat.id, role);
+      const result = await signFratAction(flightId, frat.id, role, role === "dispatcher" && reviewed);
       if (!result.ok) setError(result.error);
     });
   };
@@ -76,17 +91,22 @@ export function FratSignoffs({
       <header className="border-b border-border px-5 py-3">
         <p className="eyebrow">Sign-off</p>
         <p className="mt-1 text-xs text-muted-foreground">
-          Dispatch signs first, once the flight is built; then the pilot, at preflight step 1. Signing
-          records your name and the time against this version of the FRAT; filing it again clears
-          both.
+          Dispatch signs first, once the flight is built; then the pilot, at preflight step 1. A pilot
+          who changes the FRAT signs it as they file the change, and dispatch reviews what changed and
+          signs again. Signing records your name and the time against this version of the FRAT.
         </p>
       </header>
       <ul className="divide-y divide-border">
         {(["dispatcher", "pilot"] as const).map((role) => {
           const s: FratSignoff | undefined = signed.get(role);
           const id = `frat-sign-${role}`;
-          const turn = role === "dispatcher" ? buildGaps.length === 0 : signed.has("dispatcher");
-          const disabled = Boolean(s) || !canSign[role] || !turn || locked || pending;
+          // The pilot signs their own change first (17 Nov).
+          const turn =
+            role === "dispatcher" ? buildGaps.length === 0 : signed.has("dispatcher") || filedByPilot;
+          const unreviewed = role === "dispatcher" && pilotChange !== null && !reviewed;
+          const disabled = Boolean(s) || !canSign[role] || !turn || unreviewed || locked || pending;
+          const change = role === "dispatcher" ? pilotChange : dispatchChange;
+          const changed = !s && change ? changeLines(change) : [];
           return (
             <li key={role} className="flex items-start gap-3 px-5 py-3 text-sm">
               <input
@@ -100,23 +120,31 @@ export function FratSignoffs({
                 aria-label={`Sign the FRAT as the ${TITLES[role].toLowerCase()}`}
                 className="mt-1 h-4 w-4 shrink-0 accent-status-green disabled:cursor-not-allowed"
               />
-              <label htmlFor={id} className="min-w-0 flex-1">
-                <span className="font-semibold text-foreground">{TITLES[role]}</span>{" "}
-                {s ? (
-                  <span className="text-foreground">{`signed by ${s.signer_name}, ${when(s.signed_at, timeZone)}`}</span>
-                ) : (
-                  <span className="text-muted-foreground">
-                    {role === "pilot" && !signed.has("dispatcher")
-                      ? "— after dispatch signs"
-                      : role === "dispatcher" && buildGaps.length > 0
-                        ? "— once the flight is built"
-                        : canSign[role] && !locked
-                          ? "— check the box to sign"
-                          : role === "pilot"
-                            ? "— waiting for the pilot"
-                            : "— waiting for a dispatcher"}
-                  </span>
-                )}
+              <div className="min-w-0 flex-1">
+                <label htmlFor={id}>
+                  <span className="font-semibold text-foreground">{TITLES[role]}</span>{" "}
+                  {s ? (
+                    <span className="text-foreground">
+                      {role === "pilot" && filedByPilot
+                        ? `signed by ${s.signer_name} as they filed it, ${when(s.signed_at, timeZone)}`
+                        : `signed by ${s.signer_name}, ${when(s.signed_at, timeZone)}`}
+                    </span>
+                  ) : (
+                    <span className="text-muted-foreground">
+                      {role === "pilot" && !turn
+                        ? "— after dispatch signs"
+                        : role === "dispatcher" && buildGaps.length > 0
+                          ? "— once the flight is built"
+                          : unreviewed && canSign[role] && !locked
+                            ? "— review the pilot's changes, then sign"
+                            : canSign[role] && !locked
+                              ? "— check the box to sign"
+                              : role === "pilot"
+                                ? "— waiting for the pilot"
+                                : "— waiting for a dispatcher"}
+                    </span>
+                  )}
+                </label>
                 {!s && role === "dispatcher" && buildGaps.length > 0 ? (
                   <ul className="mt-0.5 list-disc pl-4 text-xs text-muted-foreground">
                     {buildGaps.map((gap) => (
@@ -124,12 +152,47 @@ export function FratSignoffs({
                     ))}
                   </ul>
                 ) : null}
+                {!s && change ? (
+                  <p className="mt-1 text-xs text-foreground">
+                    {`${change.by_name ?? (change.by_role === "pilot" ? "The pilot" : "Dispatch")} changed the FRAT ${when(change.at, timeZone)}${
+                      change.by_role === "pilot" ? " and signed it" : ""
+                    }. Since ${change.by_role === "pilot" ? "dispatch" : "the pilot"} ${change.since_signed_at ? "signed" : "filed"} it:`}
+                  </p>
+                ) : null}
+                {!s && change ? (
+                  changed.length > 0 ? (
+                    <ul
+                      aria-label={change.by_role === "pilot" ? "The pilot's changes" : "Dispatch's changes"}
+                      className="mt-0.5 list-disc pl-4 text-xs text-foreground"
+                    >
+                      {changed.map((line) => (
+                        <li key={line}>{line}</li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="mt-0.5 text-xs text-muted-foreground">
+                      Nothing scored differently, and the mitigation is the same.
+                    </p>
+                  )
+                ) : null}
+                {!s && role === "dispatcher" && pilotChange && canSign.dispatcher && !locked ? (
+                  <label className="mt-1.5 flex items-center gap-2 text-xs text-foreground">
+                    <input
+                      type="checkbox"
+                      checked={reviewed}
+                      disabled={pending}
+                      onChange={(e) => setReviewedFor(e.target.checked ? frat.id : null)}
+                      className="h-3.5 w-3.5 shrink-0 accent-status-green"
+                    />
+                    {"I've reviewed the pilot's changes"}
+                  </label>
+                ) : null}
                 {s && role === "pilot" ? (
                   <span className="mt-0.5 block text-xs text-muted-foreground">
                     {pilotMinutesLine(s.flight_minutes_today, s.flight_minutes_remaining)}
                   </span>
                 ) : null}
-              </label>
+              </div>
             </li>
           );
         })}

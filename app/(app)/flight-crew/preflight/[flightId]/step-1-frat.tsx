@@ -76,6 +76,9 @@ interface Props {
   /** The FRAT can't be filed or changed here: the flight is released, or
    *  the viewer is neither on the flight nor dispatch (#155). */
   readOnly?: boolean;
+  /** The viewer is the FRAT's pilot, so what they file they sign (17 Nov):
+   *  their change is their signature. The preflight's viewer always is. */
+  signAsPilot?: boolean;
 }
 
 /**
@@ -275,6 +278,7 @@ export function FlightRiskAssessmentStep({
   mode = "preflight",
   signoffs,
   readOnly = false,
+  signAsPilot = mode === "preflight",
 }: Props) {
   // Changing the FRAT reopens the questionnaire on the one on file; filing
   // it makes a new assessment, which becomes the latest (Review item #6,
@@ -307,6 +311,7 @@ export function FlightRiskAssessmentStep({
         mode={mode}
         startFrom={initial}
         onCancel={initial ? () => setChanging(null) : undefined}
+        signAsPilot={signAsPilot}
       />
     );
   }
@@ -319,6 +324,7 @@ export function FlightRiskAssessmentStep({
       signoffs={signoffs}
       readOnly={readOnly}
       suggestions={fratPrefill?.suggestions ?? []}
+      signAsPilot={signAsPilot}
     />
   );
 }
@@ -360,6 +366,7 @@ function FratQuestionnaire({
   mode = "preflight",
   startFrom = null,
   onCancel,
+  signAsPilot = false,
 }: {
   flightId: string;
   fratPrefill?: FratPrefillResponse | null;
@@ -375,6 +382,8 @@ function FratQuestionnaire({
    *  person makes. */
   startFrom?: FratAssessmentResponse | null;
   onCancel?: () => void;
+  /** Filing signs it as the FRAT's pilot (17 Nov). */
+  signAsPilot?: boolean;
 }) {
   /** Suggestions keyed by factor, for seeding and for the provenance
    *  line under each one. */
@@ -479,11 +488,24 @@ function FratQuestionnaire({
         suggested.get(code)?.score == null,
     );
 
+  // A change that changes nothing would only take the signatures off
+  // (17 Nov: the pilot signs what they change, and dispatch reviews it).
+  const unchanged =
+    startFrom !== null &&
+    Object.keys({ ...answers, ...startFrom.answers }).every(
+      (code) => (answers[code] ?? null) === (startFrom.answers[code] ?? null),
+    ) &&
+    (mitigations.trim() || null) === ((startFrom.mitigations ?? "").trim() || null) &&
+    (!asksApproach ||
+      (approach.ceiling === (startFrom.approach_minimums?.ceiling ?? null) &&
+        approach.visibility === (startFrom.approach_minimums?.visibility ?? null)));
+
   const submit = (affirmed: boolean) => {
     setError(null);
     setConfirming(false);
     startTransition(async () => {
       const result = await submitFratAction(flightId, {
+        ...(signAsPilot ? { sign: true } : {}),
         answers,
         // The pilot's own words, and only theirs. This used to have the
         // affirmation appended to it as a sentence, which mixed the
@@ -559,6 +581,7 @@ function FratQuestionnaire({
     setConfirming(false);
     startTransition(async () => {
       const result = await submitFratAction(flightId, {
+        ...(signAsPilot ? { sign: true } : {}),
         answers: carried,
         mitigations: mitigations.trim() || undefined,
         carried_from_assessment_id: sourceId,
@@ -800,7 +823,7 @@ function FratQuestionnaire({
                 onClick={() => submit(true)}
                 className="btn-caps rounded-md border border-input px-3 py-1.5 text-[0.72rem] text-foreground hover:border-foreground disabled:opacity-50"
               >
-                They are genuinely zero — file it
+                {signAsPilot ? "They are genuinely zero — sign it" : "They are genuinely zero — file it"}
               </button>
             </div>
           </div>
@@ -808,12 +831,31 @@ function FratQuestionnaire({
           <div className="space-y-2">
             <button
               type="button"
-              disabled={pending}
+              disabled={pending || unchanged}
               onClick={handleSubmit}
               className="btn-caps inline-flex w-full items-center justify-center rounded-md bg-primary px-4 py-2.5 text-white transition-opacity hover:bg-brand-dark disabled:opacity-50"
             >
-              {pending ? "Submitting…" : startFrom ? "File the change" : "Submit assessment"}
+              {pending
+                ? "Submitting…"
+                : signAsPilot
+                  ? startFrom
+                    ? "Sign with these changes"
+                    : "File and sign"
+                  : startFrom
+                    ? "File the change"
+                    : "Submit assessment"}
             </button>
+            {unchanged ? (
+              <p className="text-center text-[0.7rem] text-muted-foreground">
+                Nothing has changed yet: change a score or the mitigation, or keep the FRAT as it is.
+              </p>
+            ) : signAsPilot ? (
+              <p className="text-center text-[0.7rem] text-muted-foreground">
+                {startFrom
+                  ? "Your change is your signature: dispatch sees what you changed, reviews it and signs again. You won't be asked to sign again."
+                  : "Filing it signs it as the pilot: dispatch then reviews it and signs."}
+              </p>
+            ) : null}
             {onCancel ? (
               <button
                 type="button"
@@ -1195,10 +1237,13 @@ function FratResultPanel({
   signoffs,
   readOnly = false,
   suggestions = [],
+  signAsPilot = false,
 }: {
   flightId: string;
   assessment: FratAssessmentResponse;
   onRetake: () => void;
+  /** The viewer is the FRAT's pilot: changing it signs it (17 Nov). */
+  signAsPilot?: boolean;
   mode?: "preflight" | "page";
   signoffs?: React.ReactNode;
   /** What the data suggests for each factor now, beside the score filed. */
@@ -1487,7 +1532,9 @@ function FratResultPanel({
             className="w-full text-center text-[0.7rem] font-semibold text-primary hover:underline"
           >
             {(assessment.signoffs ?? []).length > 0
-              ? "↻ Change the FRAT (clears the signatures: dispatch signs again, then the pilot)"
+              ? signAsPilot
+                ? "↻ Change the FRAT (your change is your signature: dispatch reviews it and signs again)"
+                : "↻ Change the FRAT (clears the signatures: dispatch signs again, then the pilot)"
               : "↻ Change the FRAT"}
           </button>
         )}
