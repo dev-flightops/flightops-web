@@ -59,7 +59,7 @@ export const FAQ: FaqEntry[] = [
     answer:
       "A flight is VFR unless dispatch marks it IFR, and some flights can only go VFR: an aircraft that isn't IFR certified, and any aircraft going to a village airport without an instrument approach. A VFR flight's release is refused while the latest weather at any stop is below the company's dispatch minimums, 600 ft and 2 sm unless the company has set others under Settings → Flight Risk; an IFR flight in an IFR-certified aircraft is held only at a village airport without an instrument approach. The latest weather is the METAR or a village report from the last 6 hours, whichever is worse.",
     points: [
-      "Whether a flight is flown IFR is ticked on [Open New Flight](/flight-following/new), or later under **Edit** on the flight's dispatch packet.",
+      "Whether a flight is flown IFR is ticked on [Open New Flight](/flight-following/new), or later under **Edit** on the flight's dispatch packet. The flight's pilots choose IFR or VFR at the top of their preflight too, until it's released.",
       "Which aircraft types aren't IFR certified is set under Settings → Flight Risk.",
       "Which village airports have an instrument approach is marked on [Village weather](/village-wx). They all start as having none.",
       "The packet says which stop and which report before anyone presses Release.",
@@ -189,5 +189,29 @@ export const FAQ: FaqEntry[] = [
     answer:
       "A turbine's fuel reads in pounds and a piston's in gallons, from the aircraft's fuel: Jet A is a turbine's. The morning check on [Flight Crew](/flight-crew) takes a turbine's fuel in pounds and its oil as quarts below full (Full, -1, -2, -3), and a piston's fuel in gallons and its oil in quarts. The e-log's weight and balance takes a turbine's fuel in pounds. Fuel orders stay in gallons, as fuel is bought. The aircraft's fuel is under [Fleet](/settings/fleet), or its type's under [Costs](/settings/costs).",
     pages: ["/flight-crew", "/settings/fleet", "/settings/costs"],
+  },
+  {
+    slug: "weather-order",
+    question: "Why wasn't the camera's or the village report's weather scored?",
+    answer:
+      "Each stop's ceiling, visibility and wind come from its METAR first, then the village observer's report, then the FAA WeatherCam, as the operator asked: \"Metar over everything. Village report maybe slightly higher than wx cam.\" A worse reading from a source further down is listed under **Not scored** on the dispatch packet and the FRAT, so it's seen without raising the score. Where the METAR doesn't report something, the next source fills it in and says so. Each stop with an FAA WeatherCam site links its cameras, even when they have no current reading.",
+    points: [
+      "The release's dispatch minimums still hold a VFR flight on a village report below them, as before.",
+    ],
+    pages: ["/dispatch"],
+  },
+  {
+    slug: "fuel-by-tank",
+    question: "Why does marking an order fueled ask for each tank?",
+    answer:
+      "An order placed left and right is confirmed left and right, for the fuel balance. Each tank is held to the order as the total is: more than 5% off on either side, and the order reads **Fueled, not as ordered**. An order placed as a total is still closed with its total.",
+    pages: ["/fuel/orders"],
+  },
+  {
+    slug: "ramp-ops-loads",
+    question: "Which loads does a team's card on Ramp Ops count?",
+    answer:
+      "Today's loads still to do, the same the team's lead and members see on the [Ramper](/ramper). A flight that's completed or cancelled drops off the card, though its own card keeps its team for the day.",
+    pages: ["/ramp-ops", "/ramper"],
   },
 ];

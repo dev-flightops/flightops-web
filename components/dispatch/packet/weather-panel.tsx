@@ -3,6 +3,7 @@ import { FlightCategoryBadge } from "@/components/weather/flight-category-badge"
 import { SpecialReportChip } from "@/components/weather/special-report-chip";
 import {
   NonCertifiedWeatherNotice,
+  NotScored,
   scoredElsewhere,
   sourceLabel,
 } from "@/components/weather/weather-source";
@@ -241,7 +242,7 @@ function AirportWeather({
 
       {elsewhere.length > 0 ? (
         <div className="mt-3">
-          <p className="eyebrow">{metar.ok ? "Scored on a worse reading" : "Scored on"}</p>
+          <p className="eyebrow">{weather?.certified ? "Where the METAR has none" : "Scored on"}</p>
           <ul className="mt-1 space-y-0.5 text-sm font-semibold text-foreground">
             {elsewhere.map((line) => (
               <li key={line}>{line}</li>
@@ -249,6 +250,8 @@ function AirportWeather({
           </ul>
         </div>
       ) : null}
+
+      <NotScored flags={weather?.flags} />
 
       {camera ? <WeatherCamReport report={camera} now={now} /> : null}
 
@@ -312,7 +315,9 @@ function AirportHeader({
 
 /** The FAA WeatherCam site's reading (#117): its VWOS line, or the
  *  cameras' estimated visibility, with a link to the FAA's page and its
- *  pictures. Not certified. */
+ *  pictures. Not certified. A site with nothing current (no estimate after
+ *  dark) still links its cameras: the client, 18 Nov, "can you put a link
+ *  to wx cam so dispatch pilot can look at it in frat/packet?" */
 function WeatherCamReport({ report, now }: { report: WeatherReportResponse; now: number }) {
   const observed = report.observed_at ? new Date(report.observed_at).getTime() : null;
   return (
@@ -320,7 +325,9 @@ function WeatherCamReport({ report, now }: { report: WeatherReportResponse; now:
       <p className="eyebrow">
         FAA WeatherCam{report.site_name ? ` · ${report.site_name}` : ""} · not certified
       </p>
-      {report.estimate ? (
+      {observed === null ? (
+        <p className="mt-1 text-sm text-muted-foreground">No current reading.</p>
+      ) : report.estimate ? (
         <p className="mt-1 text-sm font-semibold text-foreground">
           {`${report.raw} (the cameras' estimate${
             report.confidence != null ? `, ${report.confidence}% confidence` : ""

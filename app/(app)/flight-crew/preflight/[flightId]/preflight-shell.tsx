@@ -34,6 +34,7 @@ import type {
 import { ReviewDispatchReleaseStep } from "./step-2-dispatch-release";
 import { WeightAndBalanceStep } from "./step-3-weight-balance";
 import { WeatherAndNotamStep } from "./step-4-weather-notam";
+import { FlightRules } from "./flight-rules";
 import { FlightRiskAssessmentStep } from "./step-1-frat";
 import { DutyInConfirmStep } from "./step-5-duty";
 import { AcceptOrDenyStep } from "./step-6-accept-deny";
@@ -176,6 +177,7 @@ export function PreflightShell({
   return (
     <>
       <FlightContextBar flight={flight} />
+      <FlightRules flightId={flight.id} isIfr={Boolean(flight.is_ifr)} status={flight.status} />
       {readiness}
       <ProgressIndicator
         completedNumbers={completedNumbers}

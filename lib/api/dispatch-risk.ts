@@ -109,11 +109,14 @@ export interface AreaForecastRegion {
 
 /** An FAA WeatherCam site's reading as ops takes it (#117). Not certified:
  *  "vwos" is the site's visual weather observation, "estimate" the
- *  cameras' estimated visibility alone. */
+ *  cameras' estimated visibility alone, and "none" a site with no current
+ *  reading, sent for its page and never scored (the client, 18 Nov: "can
+ *  you put a link to wx cam so dispatch pilot can look at it in
+ *  frat/packet?"). */
 export interface WeatherCamIn {
   site_name: string;
-  kind: "vwos" | "estimate";
-  observed_at: string;
+  kind: "vwos" | "estimate" | "none";
+  observed_at: string | null;
   raw: string | null;
   reports_sky: boolean;
   ceiling_ft: number | null;
@@ -139,11 +142,12 @@ export interface RiskStopIn {
   weathercam?: WeatherCamIn | null;
 }
 
-/** Where a stop's weather came from (#117). Each element is the worst of
- *  the METAR, the FAA WeatherCam and the village report, and names which
- *  ("METAR", "FAA WeatherCam", "FAA WeatherCam estimate", "village
- *  report"). `source` is the first of them used. A null ceiling with a
- *  `ceiling_from` is a clear sky. */
+/** Where a stop's weather came from (#117). Each element is from the first
+ *  of the METAR, the village report and the FAA WeatherCam that reports it
+ *  (the client, 18 Nov: "Metar over everything. Village report maybe
+ *  slightly higher than wx cam."), and names which ("METAR", "village
+ *  report", "FAA WeatherCam", "FAA WeatherCam estimate"). `source` is the
+ *  first of them used. A null ceiling with a `ceiling_from` is a clear sky. */
 export interface StopWeather {
   ident: string;
   source: "metar" | "weathercam" | "village" | null;
@@ -158,6 +162,13 @@ export interface StopWeather {
   wind_kt: number | null;
   wind_gust_kt: number | null;
   wind_from: string | null;
+  /** Worse readings further down the client's order, shown and not
+   *  scored: "visibility 1.5 SM from the FAA WeatherCam estimate, not
+   *  scored: the METAR comes first". Absent from an older service. */
+  flags?: string[];
+  /** The stop's FAA WeatherCam site and its page, to look at. */
+  camera_site?: string | null;
+  camera_url?: string | null;
 }
 
 /** The area forecast for a region, as weather-service returns it (#51). */
@@ -247,7 +258,26 @@ export async function weatherCamsFor(icaos: string[]): Promise<WeatherBatchRespo
 
 /** A WeatherCam reading from the weather service, as ops takes it. */
 export function weatherCamIn(report: WeatherReportResponse | undefined): WeatherCamIn | null {
-  if (!report || report.kind !== "wxcam" || !report.observed_at) return null;
+  if (!report || report.kind !== "wxcam") return null;
+  if (!report.observed_at) {
+    // A site with nothing current: its page alone, for the FRAT's and the
+    // packet's link.
+    return report.site_url
+      ? {
+          site_name: report.site_name ?? "",
+          kind: "none",
+          observed_at: null,
+          raw: null,
+          reports_sky: false,
+          ceiling_ft: null,
+          visibility_sm: null,
+          wind_direction_deg: null,
+          wind_speed_kt: null,
+          wind_gust_kt: null,
+          page_url: report.site_url,
+        }
+      : null;
+  }
   return {
     site_name: report.site_name ?? "",
     kind: report.estimate ? "estimate" : "vwos",

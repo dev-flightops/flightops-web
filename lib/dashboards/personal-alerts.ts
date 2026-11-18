@@ -214,7 +214,7 @@ async function fuelOrderAlerts(): Promise<OperationalAlert[]> {
         ...common,
         id: `fuel-confirmed-${o.id}`,
         title: `Fuel confirmed — ${where}`,
-        detail: `${o.requested_quantity_gallons} gal ${o.fuel_type_label_snapshot}, ${o.supplier_name_snapshot}${
+        detail: `${o.requested_quantity_gallons} gal${tanks(o.requested_left_gallons, o.requested_right_gallons)} ${o.fuel_type_label_snapshot}, ${o.supplier_name_snapshot}${
           o.requested_fuel_time ? `, by ${localClock(o.requested_fuel_time, zone)}` : ""
         }.${confirmedBy(o)}`,
         occurredAt: o.confirmed_at ?? o.requested_at,
@@ -222,18 +222,34 @@ async function fuelOrderAlerts(): Promise<OperationalAlert[]> {
       continue;
     }
     const asOrdered = o.status === "fueled";
-    const amount = o.actual_quantity_gallons != null ? `${o.actual_quantity_gallons} gal ` : "";
+    // A split order's tanks, as they went in and as ordered (the client,
+    // 18 Nov: "for fuel balance requirements").
+    const amount =
+      o.actual_quantity_gallons != null
+        ? `${o.actual_quantity_gallons} gal${tanks(o.actual_left_gallons, o.actual_right_gallons)} `
+        : "";
     alerts.push({
       ...common,
       id: `fuel-fueled-${o.id}`,
       title: `${asOrdered ? "Fueled" : "Fueled, not as ordered"} — ${where}`,
       detail: `${amount}${o.fuel_type_label_snapshot} put in${o.fueled_at ? ` at ${localClock(o.fueled_at, zone)}` : ""}${
         o.fueled_by_name ? ` by ${o.fueled_by_name}` : ""
-      }${asOrdered ? "" : `; ${o.requested_quantity_gallons} gal ordered${o.discrepancy_reason ? `: ${o.discrepancy_reason}` : ""}`}.`,
+      }${
+        asOrdered
+          ? ""
+          : `; ${o.requested_quantity_gallons} gal${tanks(o.requested_left_gallons, o.requested_right_gallons)} ordered${
+              o.discrepancy_reason ? `: ${o.discrepancy_reason}` : ""
+            }`
+      }.`,
       occurredAt: o.fueled_at ?? o.confirmed_at ?? o.requested_at,
     });
   }
   return alerts;
+}
+
+/** " (25 L / 25 R)" for an order by tank, else nothing. */
+function tanks(left: number | null | undefined, right: number | null | undefined): string {
+  return left != null && right != null ? ` (${left} L / ${right} R)` : "";
 }
 
 function confirmedBy(o: FuelOrderResponse): string {
