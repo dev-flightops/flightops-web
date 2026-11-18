@@ -19,8 +19,17 @@ function hhmmZ(iso: unknown): string {
   return typeof iso === "string" && iso.length >= 16 ? `${iso.slice(11, 16)}Z` : "";
 }
 
-/** The sentence for an unknown airport or a busy aircraft, else null. */
+/** The sentence for an unknown airport, a busy aircraft or dates that can't
+ *  be right, else null. The client's BK-59414132 (18 Nov) had its first leg
+ *  saved as leaving Nov 12 and landing Nov 18; such dates are refused now. */
 export function scheduleRefusal(message: string): string | null {
+  if (message.includes("flight_longer_than_a_day")) {
+    return "The last leg lands more than 24 hours after the first leaves. Check the dates.";
+  }
+  if (message.includes("move_into_the_past")) {
+    return "That day has passed. Check the date: a flight can't move into the past.";
+  }
+  if (message.includes("move_too_far")) return "That's over a year away. Check the date.";
   const d = detail(message);
   if (d?.error === "unknown_airport") {
     const codes = Array.isArray(d.codes) ? (d.codes as string[]).join(", ") : "";

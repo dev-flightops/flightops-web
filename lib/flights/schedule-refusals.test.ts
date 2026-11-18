@@ -24,6 +24,16 @@ describe("scheduleRefusal (#155)", () => {
     ).toBe("The aircraft is already on MM001 (17:00Z–19:45Z). Pick another aircraft or other times.");
   });
 
+  it("asks to check dates that can't be right (client, 18 Nov)", () => {
+    expect(scheduleRefusal(body("flight_longer_than_a_day"))).toBe(
+      "The last leg lands more than 24 hours after the first leaves. Check the dates.",
+    );
+    expect(scheduleRefusal(body("move_into_the_past"))).toBe(
+      "That day has passed. Check the date: a flight can't move into the past.",
+    );
+    expect(scheduleRefusal(body("move_too_far"))).toBe("That's over a year away. Check the date.");
+  });
+
   it("is null for anything else", () => {
     expect(scheduleRefusal(body("flight_number_conflict"))).toBeNull();
     expect(scheduleRefusal("not json")).toBeNull();
