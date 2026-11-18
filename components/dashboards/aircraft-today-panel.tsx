@@ -1,6 +1,7 @@
 import type { DayPreflight } from "@/lib/api/ops";
 
 import { ReassignAircraft } from "./reassign-aircraft";
+import { readingParts } from "@/lib/format/fuel-reading";
 import { DEFAULT_TIME_ZONE, localClock } from "@/lib/format/local-time";
 
 /**
@@ -104,10 +105,9 @@ function at(iso: string): string {
   return localClock(iso, DEFAULT_TIME_ZONE);
 }
 
+/** Its time, then its fuel and oil as read: a turbine's in pounds and
+ *  quarts low, a piston's in gallons and quarts (the client, 17 Nov). */
 function preflight(row: DayPreflight): string {
-  const amounts = [
-    row.fuel_gallons != null ? `${Number(row.fuel_gallons)} gal` : null,
-    row.oil_quarts != null ? `${Number(row.oil_quarts)} qt` : null,
-  ].filter(Boolean);
+  const amounts = readingParts(row);
   return `${at(row.preflight_at!)}${amounts.length ? ` · ${amounts.join(", ")}` : ""}`;
 }

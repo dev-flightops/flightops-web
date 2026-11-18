@@ -34,6 +34,8 @@ export interface FlightLogSummary {
   totalLandings: number;
   totalNightLandings: number;
   totalFuelGallons: number | null;
+  /** The legs' fuel weight: a turbine's fuel reads in pounds (17 Nov). */
+  totalFuelLbs: number | null;
 }
 
 export function computeFlightLogSummary(
@@ -49,6 +51,8 @@ export function computeFlightLogSummary(
   let nightLandings = 0;
   let fuel = 0;
   let fuelHasAny = false;
+  let fuelLbs = 0;
+  let fuelLbsHasAny = false;
 
   for (const leg of legs) {
     const f = legHours(leg.engine_on, leg.engine_off, leg.crosses_midnight);
@@ -75,6 +79,10 @@ export function computeFlightLogSummary(
       fuel += leg.fuel_gallons;
       fuelHasAny = true;
     }
+    if (leg.fuel_weight_lbs !== null) {
+      fuelLbs += leg.fuel_weight_lbs;
+      fuelLbsHasAny = true;
+    }
   }
 
   return {
@@ -85,6 +93,7 @@ export function computeFlightLogSummary(
     totalLandings: landings,
     totalNightLandings: nightLandings,
     totalFuelGallons: fuelHasAny ? round1(fuel) : null,
+    totalFuelLbs: fuelLbsHasAny ? Math.round(fuelLbs) : null,
   };
 }
 

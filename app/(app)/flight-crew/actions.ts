@@ -73,7 +73,7 @@ export async function pickAircraftAction(aircraftId: string): Promise<MorningAct
 /** #93: the aircraft's preflight and run-up on record. */
 export async function recordPreflightAction(
   id: string,
-  body: { fuel_gallons: number | null; oil_quarts: number | null; notes: string | null },
+  body: Parameters<typeof recordMorningPreflight>[1],
 ): Promise<MorningActionResult> {
   try {
     await recordMorningPreflight(id, body);

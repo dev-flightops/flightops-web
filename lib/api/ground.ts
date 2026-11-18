@@ -605,6 +605,9 @@ export interface ListFuelOrdersParams {
   nNumber?: string;
   /** A flight's orders (flightops-services migration 0103). */
   flightId?: string;
+  /** The ones the caller placed, or for a flight they're crewed on: the
+   *  bell tells them when theirs is confirmed and fueled (17 Nov). */
+  mine?: boolean;
   limit?: number;
 }
 
@@ -616,6 +619,7 @@ export async function listFuelOrders(
   if (params.baseCode) search.set("base_code", params.baseCode);
   if (params.nNumber) search.set("n_number", params.nNumber);
   if (params.flightId) search.set("flight_id", params.flightId);
+  if (params.mine) search.set("mine", "true");
   if (params.limit !== undefined) search.set("limit", String(params.limit));
   const qs = search.toString() ? `?${search.toString()}` : "";
   return apiFetch<FuelOrderListResponse>(`/ground/fuel/orders${qs}`);

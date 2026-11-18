@@ -2,7 +2,7 @@ import Link from "next/link";
 
 import { Notice } from "@/components/ff/notice";
 
-import type { FlightLogLeg, FlightLogStatus } from "@/lib/api/types";
+import type { FlightLogLeg, FlightLogStatus, FuelUnit } from "@/lib/api/types";
 
 import { WeightBalanceCard } from "./wb-card";
 
@@ -31,10 +31,13 @@ export function WeightBalanceTab({
   logStatus,
   initialLegs,
   canEdit = true,
+  fuelUnit,
 }: {
   logId: string;
   logStatus: FlightLogStatus;
   initialLegs: FlightLogLeg[];
+  /** The aircraft's: a turbine's fuel is entered in pounds (17 Nov). */
+  fuelUnit?: FuelUnit | null;
   /** False when the caller may read this log but not change it: it is
    *  another pilot's, and they are not a Chief Pilot, DO or Exec Admin. */
   canEdit?: boolean;
@@ -92,6 +95,7 @@ export function WeightBalanceTab({
               logId={logId}
               leg={leg}
               readOnly={readOnly}
+              fuelUnit={fuelUnit}
             />
           </li>
         ))}

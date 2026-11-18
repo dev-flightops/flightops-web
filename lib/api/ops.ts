@@ -7,6 +7,7 @@ import { asNumber, asNumberOrNull } from "./decimal";
 import type { PacketWeather } from "./dispatch-risk";
 import type {
   AccountingExportResponse,
+  FuelUnit,
   FlightProgressResponse,
   HandoffsResponse,
   AircraftListItem,
@@ -626,6 +627,12 @@ export interface DayPreflight {
   preflight_at: string | null;
   fuel_gallons: string | number | null;
   oil_quarts: string | number | null;
+  /** A turbine's (17 Nov): fuel in pounds, and oil in quarts below full,
+   *  0 being full ("full -1, -2 -3 qts low"). */
+  fuel_lbs?: string | number | null;
+  oil_quarts_low?: string | number | null;
+  /** How the aircraft's fuel reads; none from an older service (gallons). */
+  fuel_unit?: FuelUnit;
   notes: string | null;
   assigned_by_name: string | null;
 }
@@ -661,7 +668,13 @@ export async function pickMorningAircraft(aircraftId: string): Promise<DayPrefli
 
 export async function recordMorningPreflight(
   id: string,
-  body: { fuel_gallons?: number | null; oil_quarts?: number | null; notes?: string | null },
+  body: {
+    fuel_gallons?: number | null;
+    oil_quarts?: number | null;
+    fuel_lbs?: number | null;
+    oil_quarts_low?: number | null;
+    notes?: string | null;
+  },
 ): Promise<DayPreflight> {
   return apiFetch<DayPreflight>(`/ops/morning/${id}/preflight`, {
     method: "POST",
