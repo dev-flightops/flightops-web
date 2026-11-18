@@ -37,6 +37,26 @@ describe("Bumped baggage recovery", () => {
     expect(screen.queryByRole("status")).not.toBeInTheDocument();
   });
 
+  it("bumps the bags chosen when they're listed one by one (18 Nov)", async () => {
+    bump.mockResolvedValue({ ok: true });
+    const bags = [
+      { id: "b-1", weight_lbs: "40.0", carry_on: false, description: "Black duffel, red tag", status: "aboard" as const },
+      { id: "b-2", weight_lbs: "25.0", carry_on: false, description: "Blue cooler", status: "aboard" as const },
+    ];
+    render(<BumpBags flightId="flight" paxId="passenger" name="Demo Traveller" baggageLbs="65" bags={bags} />);
+    fireEvent.click(screen.getByRole("button", { name: "Bump bags" }));
+    // No weight to type: the bags themselves, with what they look like.
+    expect(screen.queryByRole("spinbutton", { name: "Weight to bump (lb)" })).not.toBeInTheDocument();
+    fireEvent.change(screen.getByRole("textbox", { name: "Reason" }), { target: { value: "Payload limit" } });
+    fireEvent.click(screen.getByRole("button", { name: "Move bags to waiting list" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("Choose the bags to bump.");
+    expect(bump).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("checkbox", { name: "25 lb: Blue cooler" }));
+    fireEvent.click(screen.getByRole("button", { name: "Move bags to waiting list" }));
+    expect(await screen.findByRole("status")).toHaveTextContent("Bags moved to the waiting-load queue");
+    expect(bump).toHaveBeenCalledWith("flight", "passenger", { bag_ids: ["b-2"], reason: "Payload limit" });
+  });
+
   it("asks the user to check the result after an interrupted connection", async () => {
     bump.mockRejectedValue(new Error("offline"));
     openForm();

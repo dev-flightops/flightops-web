@@ -109,6 +109,22 @@ describe("passengers (#62)", () => {
     expect(api.revalidatePath).toHaveBeenCalledWith(`/manifest/${FLIGHT}`);
   });
 
+  it("sends each bag listed, which then make the baggage weight (18 Nov)", async () => {
+    api.updatePax.mockResolvedValueOnce({});
+    const bags = [
+      { weight_lbs: 40, carry_on: false, description: " Black duffel " },
+      { weight_lbs: 12.5, carry_on: true, description: "" },
+    ];
+    await savePaxAction(IDLE, pax({ pax_id: PAX, bags: JSON.stringify(bags) }));
+    expect(api.updatePax.mock.calls[0][1].bags).toEqual([
+      { weight_lbs: 40, carry_on: false, description: "Black duffel" },
+      { weight_lbs: 12.5, carry_on: true, description: null },
+    ]);
+    const bad = await savePaxAction(IDLE, pax({ bags: JSON.stringify([{ weight_lbs: 2500 }]) }));
+    expect(bad).toMatchObject({ status: "error", message: expect.stringContaining("Check each bag's weight") });
+    expect(api.addPax).not.toHaveBeenCalled();
+  });
+
   it("sends the stops they board and deplane at, and the waitlist (#120)", async () => {
     api.addPax.mockResolvedValueOnce({});
     await savePaxAction(IDLE, pax({ boards_at: "PAHP", leaves_at: "PABE", is_waitlist: "on" }));

@@ -3,6 +3,8 @@
  * Router is mounted at /manifest on the gateway (see infra/nginx/dev.conf).
  */
 
+import type { Bag, BagInput } from "@/lib/bags";
+
 import { apiFetch } from "./client";
 
 export type ManifestStatus = "draft" | "final";
@@ -25,6 +27,12 @@ export interface ManifestPaxRow {
   last_name: string;
   weight_lbs: string;
   baggage_lbs: string;
+  /** How many bags, when known; with bags listed one by one, theirs.
+   *  Absent from servers before 18 Nov. */
+  bags_count?: number | null;
+  /** Each bag (18 Nov), aboard first, then any bumped; empty for a
+   *  passenger with a baggage total alone. */
+  bags?: Bag[];
   seat_number: string | null;
   ticket_type: TicketType;
   is_crew: boolean;
@@ -83,6 +91,8 @@ export interface ManifestTotals {
   crew_count: number;
   pax_weight_lbs: string;
   baggage_weight_lbs: string;
+  /** Of baggage_weight_lbs, the passengers' carry-on bags (18 Nov). */
+  carry_on_weight_lbs?: string;
   /** Crew rows' weight and bags: never passengers or payload (#62). */
   crew_weight_lbs: string;
   cargo_weight_lbs: string;
@@ -250,6 +260,9 @@ export interface PaxInput {
   last_name: string;
   weight_lbs: string;
   baggage_lbs: string;
+  /** Each bag aboard (18 Nov). Sent, they are the baggage weight and
+   *  count; left out, baggage_lbs is the total and any bags listed go. */
+  bags?: BagInput[];
   seat_number: string | null;
   ticket_type: TicketType;
   is_crew: boolean;
@@ -388,7 +401,12 @@ export interface WaitingLoadRow {
   source_pax_id?: string | null;
 }
 
-export function bumpPaxBags(paxId: string, input: { weight_lbs: string; pieces: number; reason: string }) {
+/** Bags off the manifest to the waiting list: by bag when they're
+ *  listed one by one (18 Nov), else the weight and pieces. */
+export function bumpPaxBags(
+  paxId: string,
+  input: { bag_ids: string[]; reason: string } | { weight_lbs: string; pieces: number; reason: string },
+) {
   return apiFetch<WaitingLoadRow>(`/manifest/pax/${paxId}/bump-bags`, {
     method: "POST", body: JSON.stringify(input),
   });

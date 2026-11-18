@@ -3,7 +3,9 @@
 import Link from "next/link";
 import { useActionState, useEffect, useState } from "react";
 
+import { BagsEditor } from "@/components/bags/bags-editor";
 import { TICKET_TYPES, TICKET_TYPE_LABELS, type ManifestLoad, type ManifestPaxRow } from "@/lib/api/manifest";
+import { aboard, bagLine, draftsFrom, type BagDraft } from "@/lib/bags";
 import { crewWeightNote } from "@/lib/flights/crew-weight";
 import { bookingRef } from "@/lib/api/reservations";
 
@@ -115,7 +117,17 @@ export function PassengersSection({
                       </td>
                     ) : null}
                     <td className="whitespace-nowrap px-3 py-2.5 text-right font-mono text-xs">{fmtLbs(p.weight_lbs)}</td>
-                    <td className="whitespace-nowrap px-3 py-2.5 text-right font-mono text-xs">{fmtLbs(p.baggage_lbs)}</td>
+                    <td className="px-3 py-2.5 text-right font-mono text-xs">
+                      <span className="whitespace-nowrap">{fmtLbs(p.baggage_lbs)}</span>
+                      {/* Each bag, with what it looks like (18 Nov). */}
+                      {(p.bags ?? []).length > 0 ? (
+                        <ul className="mt-1 min-w-[11rem] space-y-0.5 text-left font-sans text-[0.7rem] text-muted-foreground">
+                          {(p.bags ?? []).map((bag) => (
+                            <li key={bag.id}>{`${bag.status === "bumped" ? "Bumped: " : ""}${bagLine(bag)}`}</li>
+                          ))}
+                        </ul>
+                      ) : null}
+                    </td>
                     <td className="whitespace-nowrap px-3 py-2.5">
                       <div className="flex flex-wrap gap-1">
                         {p.is_crew && <Flag label="CREW" tone="blue" />}
@@ -152,7 +164,15 @@ export function PassengersSection({
                           >
                             Edit
                           </button>
-                          {Number(p.baggage_lbs) > 0 && !p.is_crew && <BumpBags flightId={flightId} paxId={p.id} name={`${p.first_name} ${p.last_name}`} baggageLbs={String(p.baggage_lbs)} />}
+                          {Number(p.baggage_lbs) > 0 && !p.is_crew && (
+                            <BumpBags
+                              flightId={flightId}
+                              paxId={p.id}
+                              name={`${p.first_name} ${p.last_name}`}
+                              baggageLbs={String(p.baggage_lbs)}
+                              bags={aboard(p.bags)}
+                            />
+                          )}
                           {p.booking_id ? (
                             // Their seat is the booking's (#137): cancelling
                             // or moving it takes them off.
@@ -206,6 +226,18 @@ function PaxForm({
   const sent = state.status === "error" ? state.values : undefined;
   const value = (key: string, saved: string | null | undefined) => sent?.[key] ?? saved ?? "";
   const checked = (key: string, saved: boolean | undefined) => (sent ? sent[key] === "on" : (saved ?? false));
+  // Each bag on its own (18 Nov): the passenger's bags listed, or, until
+  // one is added, the baggage total as before.
+  const [bags, setBags] = useState<BagDraft[] | null>(() => {
+    const listed = aboard(pax?.bags);
+    return listed.length > 0 ? draftsFrom(listed) : null;
+  });
+  // A refused save keeps the bags as typed; an add empties them for the
+  // next passenger, as it does the rest of the form.
+  const added = state.status === "ok" && pax === null;
+  useEffect(() => {
+    if (added) setBags(null);
+  }, [added, state.attempt]);
   const done = state.status === "ok" && pax !== null;
   useEffect(() => {
     if (done) onClose();
@@ -245,17 +277,19 @@ function PaxForm({
           className={FIELD}
         />
       </label>
-      <label className="grid gap-1 text-xs">
-        Baggage (lbs)
-        <input
-          name="baggage_lbs"
-          type="number"
-          min={0}
-          step="any"
-          defaultValue={value("baggage_lbs", pax ? String(Number(pax.baggage_lbs)) : "0")}
-          className={FIELD}
-        />
-      </label>
+      {bags === null ? (
+        <label className="grid gap-1 text-xs">
+          Baggage (lbs)
+          <input
+            name="baggage_lbs"
+            type="number"
+            min={0}
+            step="any"
+            defaultValue={value("baggage_lbs", pax ? String(Number(pax.baggage_lbs)) : "0")}
+            className={FIELD}
+          />
+        </label>
+      ) : null}
       <label className="grid gap-1 text-xs">
         Seat
         <input name="seat_number" maxLength={10} placeholder="1A" defaultValue={value("seat_number", pax?.seat_number)} className={FIELD} />
@@ -325,6 +359,18 @@ function PaxForm({
         <input type="checkbox" name="is_waitlist" defaultChecked={checked("is_waitlist", pax?.is_waitlist)} className="accent-primary" />
         Waitlist: waits for a seat
       </label>
+      <div className="col-span-full">
+        <BagsEditor
+          value={bags}
+          onChange={setBags}
+          name="bags"
+          hint={
+            bags === null
+              ? "Add each bag to weigh it on its own; the bags then make the baggage weight."
+              : "Each bag's weight, and what it looks like in case it's bumped or lost."
+          }
+        />
+      </div>
       <label className="col-span-full grid gap-1 text-xs">
         Notes
         <input

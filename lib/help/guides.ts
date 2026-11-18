@@ -195,7 +195,7 @@ export const GUIDES: Guide[] = [
     summary: "Check passengers in, mark no-shows and board the flight.",
     steps: [
       "Open the flight on [Manifest](/manifest) and press **Gate Check-in**.",
-      "For each passenger, press **Check In**, enter what your company requires (actual weight, seat, bags and bag weight, the hazmat declaration), then **Check In Passenger**. Weighed weights replace booked ones for weight and balance.",
+      "For each passenger, press **Check In**, enter what your company requires (actual weight, seat, each bag with its weight and a description, or **No bags**, the hazmat declaration), then **Check In Passenger**. Weighed weights replace booked ones for weight and balance.",
       "Mark anyone who doesn't turn up as **No-show**, with the reason. **Promote** standby passengers into free seats, and add walk-ups with **+ Walk-up** where your company allows them.",
       "Press **Begin Boarding**, **Board** each passenger as they go, then **Close Boarding**.",
     ],

@@ -136,7 +136,16 @@ describe("CheckInBoard (#103)", () => {
     const dialog = await screen.findByRole("dialog");
     // Not answered for them: legacy pre-ticked "No hazmat".
     expect(within(dialog).getByRole("radio", { name: "No hazmat" })).not.toBeChecked();
-    fireEvent.change(within(dialog).getByLabelText(/^Bags/), { target: { value: "2" } });
+    // Each bag on its own, carry-on or checked, with what it looks like (18 Nov).
+    fireEvent.click(within(dialog).getByRole("button", { name: "Add bag" }));
+    fireEvent.click(within(dialog).getByRole("button", { name: "Add bag" }));
+    const first = within(dialog).getByRole("group", { name: "Bag 1" });
+    fireEvent.change(within(first).getByLabelText("Weight (lb)"), { target: { value: "40" } });
+    fireEvent.change(within(first).getByLabelText("Description"), { target: { value: "Black duffel, red tag" } });
+    const second = within(dialog).getByRole("group", { name: "Bag 2" });
+    fireEvent.change(within(second).getByLabelText("Weight (lb)"), { target: { value: "12.5" } });
+    fireEvent.click(within(second).getByRole("checkbox", { name: "Carry-on" }));
+    expect(within(dialog).getByText("2 bags, 52.5 lb (1 carry-on, 12.5 lb)")).toBeInTheDocument();
     fireEvent.click(within(dialog).getByRole("checkbox", { name: /Government ID verified/ }));
     fireEvent.click(within(dialog).getByRole("radio", { name: "No hazmat" }));
     fireEvent.change(within(dialog).getByLabelText(/Home village/), { target: { value: "Emmonak" } });
@@ -146,7 +155,10 @@ describe("CheckInBoard (#103)", () => {
     const [flightId, paxId, input] = actions.checkInAction.mock.calls[0];
     expect([flightId, paxId]).toEqual(["f-1", "p-ana"]);
     expect(input).toMatchObject({
-      bags_count: 2,
+      bags: [
+        { weight_lbs: 40, carry_on: false, description: "Black duffel, red tag" },
+        { weight_lbs: 12.5, carry_on: true, description: null },
+      ],
       id_verified: true,
       hazmat_declared: false,
       actual_weight_lbs: 180,
@@ -154,6 +166,33 @@ describe("CheckInBoard (#103)", () => {
     });
     await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
     expect(within(screen.getByRole("table")).getByText("Checked in")).toBeInTheDocument();
+  });
+
+  it("starts an edit from the bags listed, and sends no bags as an answer", async () => {
+    const listed = view({
+      passengers: [
+        pax({
+          check_in_status: "checked_in",
+          baggage_lbs: "40.0",
+          bags_count: 1,
+          bags: [{ id: "b-1", weight_lbs: "40.0", carry_on: false, description: "Black duffel", status: "aboard" }],
+        }),
+      ],
+    });
+    actions.checkInAction.mockResolvedValue({ ok: true, view: listed });
+    render(<CheckInBoard initial={listed} canAct />);
+    // The board says what the bags come to.
+    expect(within(screen.getByRole("table")).getByText("40 lb")).toBeInTheDocument();
+    fireEvent.click(within(screen.getByRole("table")).getByRole("button", { name: /Edit Ana Andrews|Edit check-in Ana Andrews/ }));
+    const dialog = await screen.findByRole("dialog");
+    const bag = within(dialog).getByRole("group", { name: "Bag 1" });
+    expect(within(bag).getByLabelText("Weight (lb)")).toHaveValue(40);
+    expect(within(bag).getByLabelText("Description")).toHaveValue("Black duffel");
+    fireEvent.click(within(dialog).getByRole("button", { name: "Remove bag 1" }));
+    expect(within(dialog).getByRole("checkbox", { name: "No bags" })).toBeChecked();
+    fireEvent.click(within(dialog).getByRole("button", { name: /Check In Passenger|Save Changes/ }));
+    await waitFor(() => expect(actions.checkInAction).toHaveBeenCalled());
+    expect(actions.checkInAction.mock.calls[0][2]).toMatchObject({ bags: [] });
   });
 
   it("keeps the dialog open with the server's refusal", async () => {

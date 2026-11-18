@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 import { ApiError } from "@/lib/api/client";
+import { bagsFromForm } from "@/lib/bags";
 import {
   addCargo,
   bumpPaxBags,
@@ -41,14 +42,31 @@ export interface ManifestFormState {
 
 const _id = z.string().uuid();
 
-export async function bumpBagsAction(flightId: string, paxId: string, input: {weight_lbs: string; pieces: number; reason: string}): Promise<{ok: boolean; error?: string}> {
-  const valid = z.object({
-    flightId: _id, paxId: _id,
-    weight_lbs: z.string().refine(value => Number.isFinite(Number(value)) && Number(value) > 0 && Number(value) <= 9999, "Enter a positive baggage weight."),
-    pieces: z.number().int().min(1).max(1000),
-    reason: z.string().trim().min(1).max(500),
-  }).safeParse({flightId, paxId, ...input});
-  if (!valid.success) return {ok:false, error:valid.error.issues[0].message};
+export async function bumpBagsAction(
+  flightId: string,
+  paxId: string,
+  input: { bag_ids: string[]; reason: string } | { weight_lbs: string; pieces: number; reason: string },
+): Promise<{ ok: boolean; error?: string }> {
+  // By bag when the passenger's bags are listed one by one (18 Nov), so
+  // each is found again; else the weight and pieces.
+  const valid = z
+    .union([
+      z.object({
+        flightId: _id,
+        paxId: _id,
+        bag_ids: z.array(_id).min(1, "Choose the bags to bump.").max(50),
+        reason: z.string().trim().min(1, "Enter a reason for bumping the bags.").max(500),
+      }),
+      z.object({
+        flightId: _id,
+        paxId: _id,
+        weight_lbs: z.string().refine(value => Number.isFinite(Number(value)) && Number(value) > 0 && Number(value) <= 9999, "Enter a positive baggage weight."),
+        pieces: z.number().int().min(1).max(1000),
+        reason: z.string().trim().min(1).max(500),
+      }),
+    ])
+    .safeParse({ flightId, paxId, ...input });
+  if (!valid.success) return { ok: false, error: valid.error.issues[0].message };
   try {
     await bumpPaxBags(paxId, input);
     revalidatePath(`/manifest/${flightId}`);
@@ -56,7 +74,11 @@ export async function bumpBagsAction(flightId: string, paxId: string, input: {we
     revalidatePath("/schedule");
     return {ok:true};
   } catch (error) {
-    return {ok:false, error:error instanceof ApiError ? error.message : "Could not move the bags. Try again."};
+    if (error instanceof ApiError) {
+      if (error.status === 403) return { ok: false, error: "Your role can't change the manifest." };
+      return { ok: false, error: detailText(error) ?? "Could not move the bags. Try again." };
+    }
+    return { ok: false, error: "Could not move the bags. Try again." };
   }
 }
 
@@ -168,6 +190,8 @@ const PAX_FIELDS = [
   "last_name",
   "weight_lbs",
   "baggage_lbs",
+  // Each bag, as JSON (18 Nov); kept to fill the form again on an error.
+  "bags",
   "seat_number",
   "ticket_type",
   "contact_phone",
@@ -242,6 +266,9 @@ export async function savePaxAction(
   const parsed = _paxSchema.safeParse(values);
   if (!parsed.success) return fail(parsed.error.issues[0]?.message ?? "Check the fields and try again.");
   const v = parsed.data;
+  // Bags listed one by one are the baggage weight (18 Nov).
+  const bags = bagsFromForm(formData.get("bags"));
+  if (bags === "invalid") return fail("Check each bag's weight: up to 2,000 lb in all, with descriptions of 200 characters or fewer.");
 
   const pax: PaxInput = {
     first_name: v.first_name,
@@ -258,6 +285,7 @@ export async function savePaxAction(
     boards_at: v.boards_at || null,
     leaves_at: v.leaves_at || null,
     is_waitlist: values.is_waitlist === "on",
+    ...(bags !== null ? { bags } : {}),
   };
   try {
     if (paxId) await updatePax(paxId, pax);
