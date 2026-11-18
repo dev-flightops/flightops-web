@@ -323,6 +323,27 @@ describe("EditFlightDialog — a multi-leg flight", () => {
     expect(updateFlightAction).not.toHaveBeenCalled();
   });
 
+  it("counts a night across the clock change in real hours", async () => {
+    // Alaska springs forward on 14 Mar 2027: 10:00 AKST to 10:20 AKDT the
+    // next day is 23 h 20 min, though the clocks read 24 h 20 min.
+    updateFlightAction.mockReset().mockResolvedValue({ ok: true });
+    const overnight: FlightDetail = {
+      ...baseFlight,
+      scheduled_departure_at: "2027-03-13T19:00:00Z",
+      scheduled_arrival_at: "2027-03-14T18:00:00Z",
+    };
+    const user = userEvent.setup();
+    render(<EditFlightDialog flight={overnight} aircraft={[aircraft207]} zones={ZONES} />);
+    await user.click(screen.getByRole("button", { name: /edit/i }));
+    fireEvent.change(screen.getByLabelText("Arrival (AKST)"), {
+      target: { value: "2027-03-14T10:20" },
+    });
+    await user.click(screen.getByRole("button", { name: /save changes/i }));
+    expect(updateFlightAction).toHaveBeenCalledWith(overnight.id, {
+      scheduled_arrival_at: "2027-03-14T18:20:00Z",
+    });
+  });
+
   it("does not send the times back even when they do not round-trip", async () => {
     // The form holds minutes, so a time stored with seconds comes back
     // different. On a single-leg flight that only trims the seconds; on

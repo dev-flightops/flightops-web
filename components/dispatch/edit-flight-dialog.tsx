@@ -106,20 +106,20 @@ const schema = z
       }
       landed = stop.arrival;
     });
-    // A flight's legs fall within a day. The client's BK-59414132 (18 Nov)
-    // had its first leg saved as leaving Nov 12 and landing Nov 18.
-    if (v.scheduled_departure_at && landed && hoursBetween(v.scheduled_departure_at, landed) > 24) {
-      ctx.addIssue({
-        code: "custom",
-        path: ["scheduled_departure_at"],
-        message: "The last leg lands more than 24 hours after this. Check the dates.",
-      });
-    }
   });
 
-/** Hours from one local "YYYY-MM-DDTHH:MM" to another, both in one zone. */
-function hoursBetween(from: string, to: string): number {
-  return (Date.parse(`${to.slice(0, 16)}:00Z`) - Date.parse(`${from.slice(0, 16)}:00Z`)) / 3_600_000;
+const OVER_A_DAY = "The last leg lands more than 24 hours after this. Check the dates.";
+
+/** Whether the last leg lands more than 24 hours after the first leaves,
+ *  the typed local times read in the departure base's zone (so a night
+ *  across a clock change counts its real hours). Ops refuses such a flight;
+ *  the client's BK-59414132 (18 Nov) had its first leg saved as leaving
+ *  Nov 12 and landing Nov 18. */
+function overADay(v: FormValues, timeZone: string): boolean {
+  const last = v.stops.length > 0 ? v.stops[v.stops.length - 1].arrival : v.scheduled_arrival_at;
+  const from = localToUtcIso(v.scheduled_departure_at, timeZone);
+  const to = localToUtcIso(last, timeZone);
+  return from !== null && to !== null && Date.parse(to) - Date.parse(from) > 24 * 3_600_000;
 }
 
 type FormValues = z.infer<typeof schema>;
@@ -296,10 +296,17 @@ export function EditFlightDialog({
 
   const onSubmit = (values: FormValues) => {
     setError(null);
-    const patch = buildPatch(flight, values, zoneFor(zones, values.origin), storedZone);
+    const zone = zoneFor(zones, values.origin);
+    const patch = buildPatch(flight, values, zone, storedZone);
     if (Object.keys(patch).length === 0) {
       // Nothing changed — just close. Backend would no-op anyway.
       setOpen(false);
+      return;
+    }
+    // Only when the times go out, as ops checks them.
+    const retimed = "legs" in patch || "scheduled_departure_at" in patch || "scheduled_arrival_at" in patch;
+    if (retimed && overADay(values, zone)) {
+      form.setError("scheduled_departure_at", { type: "custom", message: OVER_A_DAY });
       return;
     }
     startTransition(async () => {
