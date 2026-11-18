@@ -424,6 +424,7 @@ export const HELP_ENTRIES: HelpEntry[] = [
       "An agent is asked for a same-day charter to PADU. The board shows the 208B free after 14:00 and the Navajo committed all afternoon, so they quote the 208B and avoid a conflict that a list view would have buried.",
     worthKnowing: [
       "Drag a booking block onto another aircraft row, review the confirmation and confirm the move. A flight-linked booking moves its flight and the other bookings on that flight; availability, capacity and release-state checks can refuse the move. For another day, edit the booking/flight date rather than dragging horizontally.",
+      "The board and the Schedule show the same flights; neither controls the other. A flight's times are changed on the Schedule, and the bookings on it take the new times of the legs they fly.",
     ],
     related: ["/reservations", "/schedule", "/flight-following"],
   },
@@ -1375,7 +1376,7 @@ export const HELP_ENTRIES: HelpEntry[] = [
       "Watch for flights without a crew or an aircraft — those are the ones that will not release.",
     ],
     connectsTo:
-      "Flights arrive here from confirmed bookings and from being created directly. Releasing one moves it onto the Flight Following board.",
+      "Flights arrive here from confirmed bookings and from being created directly. Releasing one moves it onto the Flight Following board. The Fleet Board shows the same flights by their bookings: when a flight's times change here, its bookings take the new times.",
     related: ["/schedule/master", "/dispatch", "/flight-following", "/reservations/fleet-board"],
   },
   {

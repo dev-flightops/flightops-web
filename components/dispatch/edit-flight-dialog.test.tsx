@@ -308,6 +308,21 @@ describe("EditFlightDialog — a multi-leg flight", () => {
     expect(updateFlightAction).not.toHaveBeenCalled();
   });
 
+  it("refuses a first leg dated days before the last one lands (client, 18 Nov)", async () => {
+    updateFlightAction.mockReset();
+    const user = userEvent.setup();
+    render(<EditFlightDialog flight={multiLeg} aircraft={[aircraft207]} zones={ZONES} />);
+    await user.click(screen.getByRole("button", { name: /edit/i }));
+    fireEvent.change(screen.getByLabelText("Departure (AKDT)"), {
+      target: { value: "2026-05-26T06:00" },
+    });
+    await user.click(screen.getByRole("button", { name: /save changes/i }));
+    expect(
+      await screen.findByText("The last leg lands more than 24 hours after this. Check the dates."),
+    ).toBeInTheDocument();
+    expect(updateFlightAction).not.toHaveBeenCalled();
+  });
+
   it("does not send the times back even when they do not round-trip", async () => {
     // The form holds minutes, so a time stored with seconds comes back
     // different. On a single-leg flight that only trims the seconds; on

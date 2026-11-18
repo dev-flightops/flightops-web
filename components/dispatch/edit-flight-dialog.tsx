@@ -106,7 +106,21 @@ const schema = z
       }
       landed = stop.arrival;
     });
+    // A flight's legs fall within a day. The client's BK-59414132 (18 Nov)
+    // had its first leg saved as leaving Nov 12 and landing Nov 18.
+    if (v.scheduled_departure_at && landed && hoursBetween(v.scheduled_departure_at, landed) > 24) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["scheduled_departure_at"],
+        message: "The last leg lands more than 24 hours after this. Check the dates.",
+      });
+    }
   });
+
+/** Hours from one local "YYYY-MM-DDTHH:MM" to another, both in one zone. */
+function hoursBetween(from: string, to: string): number {
+  return (Date.parse(`${to.slice(0, 16)}:00Z`) - Date.parse(`${from.slice(0, 16)}:00Z`)) / 3_600_000;
+}
 
 type FormValues = z.infer<typeof schema>;
 
