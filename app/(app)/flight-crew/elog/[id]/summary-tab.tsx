@@ -1,5 +1,6 @@
 import { Stat, StatStrip } from "@/components/ff/stat-strip";
 import type { FlightLogLeg, FlightLogResponse } from "@/lib/api/types";
+import { fuelUnitOf } from "@/lib/format/fuel-reading";
 
 import { CurrencyCountersField } from "./currency-counters-field";
 import { computeFlightLogSummary } from "./summary-fields";
@@ -32,6 +33,8 @@ export function SummaryTab({
 }) {
   const summary = computeFlightLogSummary(legs);
   const readOnly = log.status === "submitted" || !canEdit;
+  // A turbine's fuel in pounds, a piston's in gallons (the client, 17 Nov).
+  const turbine = fuelUnitOf(log.aircraft.fuel_unit) === "lb";
 
   return (
     <div className="space-y-4">
@@ -78,11 +81,19 @@ export function SummaryTab({
               value={summary.totalNightLandings}
               dim={summary.totalNightLandings === 0}
             />
-            <Counter
-              label="Fuel (gal)"
-              value={formatGallons(summary.totalFuelGallons)}
-              dim={summary.totalFuelGallons === null}
-            />
+            {turbine ? (
+              <Counter
+                label="Fuel (lb)"
+                value={summary.totalFuelLbs === null ? "—" : summary.totalFuelLbs.toLocaleString("en-US")}
+                dim={summary.totalFuelLbs === null}
+              />
+            ) : (
+              <Counter
+                label="Fuel (gal)"
+                value={formatGallons(summary.totalFuelGallons)}
+                dim={summary.totalFuelGallons === null}
+              />
+            )}
           </StatStrip>
 
           <p className="text-[0.65rem] text-muted-foreground">

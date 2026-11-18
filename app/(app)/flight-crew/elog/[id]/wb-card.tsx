@@ -4,7 +4,8 @@ import { useId, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 
 import { Spinner } from "@/components/ui/spinner";
-import type { FlightLogLeg, FlightLogLegUpdateRequest } from "@/lib/api/types";
+import type { FlightLogLeg, FlightLogLegUpdateRequest, FuelUnit } from "@/lib/api/types";
+import { fuelUnitOf } from "@/lib/format/fuel-reading";
 
 import { updateLegAction } from "./legs-actions";
 
@@ -15,6 +16,11 @@ import { updateLegAction } from "./legs-actions";
  *
  *   Header:  "Leg N W&B: ORIG → DEST" + Ramp Wt total
  *   Inputs:  BEW · Pilot · SIC · PAX · Baggage · Cargo · Fuel gal · Fuel wt
+ *
+ * A turbine's fuel is entered in pounds only. The client, 17 Nov: "fuel
+ * on turbines should be in LBS. Fuel on pistons can be in gallons." The
+ * gallons a release fills in beside the pounds would go stale the moment
+ * the pilot changed the pounds, so a turbine's card doesn't show them.
  *
  * No takeoff / landing weight or CG: FlightOps holds no moment arms, and
  * the tab says where those come from (audit 1110-09).
@@ -30,11 +36,14 @@ export function WeightBalanceCard({
   logId,
   leg,
   readOnly,
+  fuelUnit,
 }: {
   logId: string;
   leg: FlightLogLeg;
   readOnly: boolean;
+  fuelUnit?: FuelUnit | null;
 }) {
+  const turbine = fuelUnitOf(fuelUnit) === "lb";
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -135,22 +144,35 @@ export function WeightBalanceCard({
           step={0.1}
           disabled={readOnly || pending}
         />
-        <NumberField
-          label="Fuel Gallons"
-          value={state.fuel_gallons}
-          onChange={(v) => patch("fuel_gallons", v)}
-          onBlur={() => commit("fuel_gallons")}
-          step={0.1}
-          disabled={readOnly || pending}
-        />
-        <NumberField
-          label="Fuel Weight"
-          value={state.fuel_weight_lbs}
-          onChange={(v) => patch("fuel_weight_lbs", v)}
-          onBlur={() => commit("fuel_weight_lbs")}
-          step={0.1}
-          disabled={readOnly || pending}
-        />
+        {turbine ? (
+          <NumberField
+            label="Fuel (lb)"
+            value={state.fuel_weight_lbs}
+            onChange={(v) => patch("fuel_weight_lbs", v)}
+            onBlur={() => commit("fuel_weight_lbs")}
+            step={1}
+            disabled={readOnly || pending}
+          />
+        ) : (
+          <>
+            <NumberField
+              label="Fuel Gallons"
+              value={state.fuel_gallons}
+              onChange={(v) => patch("fuel_gallons", v)}
+              onBlur={() => commit("fuel_gallons")}
+              step={0.1}
+              disabled={readOnly || pending}
+            />
+            <NumberField
+              label="Fuel Weight"
+              value={state.fuel_weight_lbs}
+              onChange={(v) => patch("fuel_weight_lbs", v)}
+              onBlur={() => commit("fuel_weight_lbs")}
+              step={0.1}
+              disabled={readOnly || pending}
+            />
+          </>
+        )}
       </div>
 
       {pending && (

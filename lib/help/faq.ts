@@ -176,4 +176,18 @@ export const FAQ: FaqEntry[] = [
       "Texts go out from the company's own text-message account, set up under [Text Messages](/settings/text-messages) by an Exec Admin or the Director of Operations. Until it's set up, the gate page keeps the texts unsent.",
     pages: ["/settings/text-messages"],
   },
+  {
+    slug: "fuel-order-news",
+    question: "How do I know my fuel order was confirmed, and that the fuel is in?",
+    answer:
+      "The bell tells whoever placed the order, and the crew of its flight: **Fuel confirmed** once the supplier or the ramp confirms it, then **Fueled** once it's in, with the gallons put in. Fuel put in other than as ordered reads **Fueled, not as ordered**, with what was ordered and the reason given. Each opens the order under [Fuel Orders](/fuel/orders).",
+    pages: ["/fuel/orders"],
+  },
+  {
+    slug: "fuel-units",
+    question: "Why is fuel in pounds on some aircraft and gallons on others?",
+    answer:
+      "A turbine's fuel reads in pounds and a piston's in gallons, from the aircraft's fuel: Jet A is a turbine's. The morning check on [Flight Crew](/flight-crew) takes a turbine's fuel in pounds and its oil as quarts below full (Full, -1, -2, -3), and a piston's fuel in gallons and its oil in quarts. The e-log's weight and balance takes a turbine's fuel in pounds. Fuel orders stay in gallons, as fuel is bought. The aircraft's fuel is under [Fleet](/settings/fleet), or its type's under [Costs](/settings/costs).",
+    pages: ["/flight-crew", "/settings/fleet", "/settings/costs"],
+  },
 ];

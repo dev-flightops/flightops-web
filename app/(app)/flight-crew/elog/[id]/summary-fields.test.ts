@@ -46,7 +46,18 @@ describe("computeFlightLogSummary", () => {
       totalLandings: 0,
       totalNightLandings: 0,
       totalFuelGallons: null,
+      totalFuelLbs: null,
     });
+  });
+
+  it("totals the fuel weight too: a turbine's fuel reads in pounds (17 Nov)", () => {
+    const s = computeFlightLogSummary([
+      leg({ fuel_weight_lbs: 1005.4 }),
+      leg({ fuel_weight_lbs: 603 }),
+      leg({ fuel_weight_lbs: null }),
+    ]);
+    expect(s.totalFuelLbs).toBe(1608);
+    expect(s.totalFuelGallons).toBeNull();
   });
 
   it("sums a single fully-populated leg", () => {

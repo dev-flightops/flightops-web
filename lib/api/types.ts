@@ -42,7 +42,15 @@ export interface AircraftRef {
    *  name: a wrong engine count picks the wrong limit silently, and the
    *  FRAT would then score a flight against a number nobody chose. */
   engine_count?: number | null;
+  /** How its fuel reads, from its fuel: pounds on a turbine, gallons on
+   *  a piston (the client, 17 Nov). An older service sends none. */
+  fuel_unit?: FuelUnit | null;
 }
+
+/** "lb" on a turbine, which burns jet fuel; "gal" on a piston. The
+ *  client, 17 Nov: "fuel on turbines should be in LBS. Fuel on pistons
+ *  can be in gallons." */
+export type FuelUnit = "lb" | "gal";
 
 export interface AircraftListItem {
   id: string;

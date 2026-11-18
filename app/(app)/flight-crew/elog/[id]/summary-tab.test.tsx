@@ -147,6 +147,23 @@ describe("SummaryTab", () => {
     expect(screen.getByText("75.0")).toBeInTheDocument();
   });
 
+  it("totals a turbine's fuel in pounds (the client, 17 Nov)", () => {
+    const caravan = makeLog();
+    caravan.aircraft = { ...caravan.aircraft, fuel_unit: "lb" };
+    render(
+      <SummaryTab
+        log={caravan}
+        legs={[
+          leg({ fuel_gallons: 150, fuel_weight_lbs: 1005 }),
+          leg({ fuel_gallons: 90, fuel_weight_lbs: 603 }),
+        ]}
+      />,
+    );
+    expect(screen.queryByText("Fuel (gal)")).toBeNull();
+    expect(screen.getByText("Fuel (lb)")).toBeInTheDocument();
+    expect(screen.getByText("1,608")).toBeInTheDocument();
+  });
+
   it("renders the derived-from-legs footnote when legs exist", () => {
     render(
       <SummaryTab
