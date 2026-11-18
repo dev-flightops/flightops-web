@@ -69,6 +69,10 @@ function FuelAndLegs({
       {canPlanFuel ? (
         data.has_manifest ? (
           <PlannedFuelForm
+            // A new one for each flight: picking another flight on the packet
+            // keeps the page, and a figure typed for the last flight would
+            // otherwise stay in the box and be saved on this one (Codex, #496).
+            key={flightId}
             flightId={flightId}
             current={gate.fuel_basis === "planned" && departs != null ? String(departs) : null}
           />

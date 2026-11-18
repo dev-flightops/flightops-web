@@ -1,4 +1,5 @@
 import { render, screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
 vi.mock("@/components/frat/frat-signoffs", () => ({ FratSignoffs: () => null }));
@@ -10,7 +11,7 @@ vi.mock("@/app/(app)/manifest/[flightId]/fuel-form", () => ({
     <form aria-label="Plan the fuel" data-flight={flightId}>
       <label>
         Planned fuel (lb)
-        <input readOnly defaultValue={current ?? ""} />
+        <input defaultValue={current ?? ""} />
       </label>
     </form>
   ),
@@ -120,6 +121,26 @@ describe("the packet's weight and balance (client, 18 Nov)", () => {
     });
     expect(screen.getByText("Fuel at departure").closest("p")).toHaveTextContent("1,200 lb, planned");
     expect(screen.getByLabelText("Planned fuel (lb)")).toHaveValue("1200");
+  });
+
+  it("starts the fuel box afresh when another flight is picked (Codex, #496)", async () => {
+    const user = userEvent.setup();
+    const { rerender } = renderPanel(LOAD);
+    await user.type(screen.getByLabelText("Planned fuel (lb)"), "1500");
+    const other = { ...FLIGHT, id: "f-2" } as FlightDetail;
+    rerender(
+      <ReleaseReadinessPanel
+        flight={other}
+        frat={null}
+        fratUnavailable={false}
+        load={{ ...LOAD, flight_id: "f-2" }}
+        timeZone="America/Anchorage"
+        canSignForDispatch
+        canPlanFuel
+      />,
+    );
+    expect(screen.getByLabelText("Planned fuel (lb)")).toHaveValue("");
+    expect(screen.getByRole("form", { name: "Plan the fuel" })).toHaveAttribute("data-flight", "f-2");
   });
 
   it("points to the manifest when there isn't one to plan the fuel on", () => {
