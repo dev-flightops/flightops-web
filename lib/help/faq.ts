@@ -214,4 +214,11 @@ export const FAQ: FaqEntry[] = [
       "Today's loads still to do, the same the team's lead and members see on the [Ramper](/ramper). A flight that's completed or cancelled drops off the card, though its own card keeps its team for the day.",
     pages: ["/ramp-ops", "/ramper"],
   },
+  {
+    slug: "each-bag",
+    question: "How do I record a passenger's bags?",
+    answer:
+      "At check-in, or in the passenger's row on the manifest, **Add bag** for each one: its weight, **Carry-on** if it goes into the cabin, and a description (\"black duffel, red tag\") so it can be found if it's bumped or lost. The bags make the passenger's bag weight, and the carry-on weight is shown on its own. **No bags** answers for a passenger without any. To bump bags, tick the ones staying behind: their descriptions go with them to the waiting list.",
+    pages: ["/manifest"],
+  },
 ];

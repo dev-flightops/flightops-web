@@ -430,6 +430,10 @@ function TotalsStrip({
         value={`${fmtLbs(totals.baggage_weight_lbs)} lb`}
         label="Baggage"
       />
+      {/* Of the baggage, what's carried into the cabin (18 Nov). */}
+      {Number(totals.carry_on_weight_lbs ?? 0) > 0 ? (
+        <Stat value={`${fmtLbs(totals.carry_on_weight_lbs ?? 0)} lb`} label="Carry-On Bags" />
+      ) : null}
       <Stat
         value={`${fmtLbs(totals.cargo_weight_lbs)} lb`}
         label="Cargo"

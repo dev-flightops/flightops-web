@@ -22,8 +22,9 @@ import {
 
 const REQUIREMENTS: { key: keyof CheckInConfig; label: string }[] = [
   { key: "require_actual_weight", label: "Actual weight" },
-  { key: "require_actual_bag_weight", label: "Actual bag weight" },
-  { key: "require_bags_count", label: "Bag count" },
+  // Bags are listed one by one at check-in (18 Nov), each with its weight.
+  { key: "require_actual_bag_weight", label: "Each bag's weight" },
+  { key: "require_bags_count", label: "Bags, or No bags" },
   { key: "require_id_verification", label: "Government ID verified" },
   { key: "require_hazmat_declaration", label: "Hazmat declaration" },
   { key: "require_seat_assignment", label: "Seat" },

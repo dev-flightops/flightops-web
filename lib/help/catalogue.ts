@@ -1386,7 +1386,7 @@ export const HELP_ENTRIES: HelpEntry[] = [
       "Who and what is on the aircraft: passengers, their weights, and cargo. These feed the weight check on the release. The app does not calculate CG or check a balance envelope: when the flight's ForeFlight plan comes back, a weight or the CG outside its limits there holds the release; otherwise use the approved aircraft loading procedure for balance.",
     howToUse: [
       "Open the flight's manifest, and create it if the flight has none.",
-      "Add passengers and crew with actual or standard weights, as the operator's policy requires, and their bags.",
+      "Add passengers and crew with actual or standard weights, as the operator's policy requires, and their bags, each with its weight, carry-on or checked, and a description.",
       "Add USPS mail by class, and cargo with its weight. A UPS package is a cargo line with its tracking number.",
       "Check the weight left for mail and freight: the aircraft's useful load less the crew, the fuel (dispatch's planned figure, or else the trip's estimate from the type's burn rate) and everything on board.",
       "Load what is waiting for the route: the manifest suggests mail and freight to fill the weight left, priority mail first, and loads it in one click. What doesn't fit stays waiting.",

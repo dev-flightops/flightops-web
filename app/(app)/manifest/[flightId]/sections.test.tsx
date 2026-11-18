@@ -95,6 +95,35 @@ describe("Passengers & Crew (#62)", () => {
     expect((within(form).getByLabelText("Crew member") as HTMLInputElement).checked).toBe(false);
   });
 
+  it("lists each bag with what it looks like, and edits them in place of a total (18 Nov)", () => {
+    const listed = [
+      pax({
+        baggage_lbs: "52.5",
+        bags_count: 2,
+        bags: [
+          { id: "b-1", weight_lbs: "40.0", carry_on: false, description: "Black duffel, red tag", status: "aboard" },
+          { id: "b-2", weight_lbs: "12.5", carry_on: true, description: null, status: "aboard" },
+          { id: "b-3", weight_lbs: "25.0", carry_on: false, description: "Blue cooler", status: "bumped" },
+        ],
+      }),
+    ];
+    render(<PassengersSection flightId={FLIGHT} rows={listed} editable />);
+    const row = screen.getByRole("row", { name: /Quill/ });
+    expect(within(row).getByText("40 lb: Black duffel, red tag")).toBeInTheDocument();
+    expect(within(row).getByText("12.5 lb, carry-on")).toBeInTheDocument();
+    expect(within(row).getByText("Bumped: 25 lb: Blue cooler")).toBeInTheDocument();
+
+    fireEvent.click(screen.getAllByRole("button", { name: "Edit" })[0]);
+    const form = screen.getByRole("form", { name: "Edit Ann Quill" });
+    // The bags aboard make the weight: no total to type beside them.
+    expect(within(form).queryByLabelText("Baggage (lbs)")).not.toBeInTheDocument();
+    expect(within(form).getAllByRole("group", { name: /^Bag \d$/ })).toHaveLength(2);
+    expect(JSON.parse(hidden(form, "bags") ?? "null")).toEqual([
+      { weight_lbs: 40, carry_on: false, description: "Black duffel, red tag" },
+      { weight_lbs: 12.5, carry_on: true, description: null },
+    ]);
+  });
+
   it("shows a refusal with the passenger as typed", () => {
     actionState.current = {
       status: "error",

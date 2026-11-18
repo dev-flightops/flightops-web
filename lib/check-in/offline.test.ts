@@ -103,6 +103,27 @@ describe("a step kept without signal, shown at once", () => {
     expect(v.counts.booked).toBe(1);
   });
 
+  it("weighs each bag on its own, and an undone check-in takes them off (18 Nov)", () => {
+    const bags = [
+      { weight_lbs: 40, carry_on: false, description: "Black duffel" },
+      { weight_lbs: 12.5, carry_on: true, description: null },
+    ];
+    let v = applyStep(view([pax("ana")]), {
+      kind: "check-in",
+      paxId: "ana",
+      input: { bags, id_verified: true, hazmat_declared: false },
+      at: AT,
+    });
+    const ana = v.passengers[0];
+    expect([ana.baggage_lbs, ana.bags_count, ana.planned_baggage_lbs]).toEqual(["52.5", 2, "20.0"]);
+    expect(ana.bags?.map((bag) => [bag.weight_lbs, bag.carry_on, bag.description, bag.status])).toEqual([
+      ["40", false, "Black duffel", "aboard"],
+      ["12.5", true, null, "aboard"],
+    ]);
+    v = applyStep(v, { kind: "reset", paxId: "ana", at: AT });
+    expect([v.passengers[0].baggage_lbs, v.passengers[0].bags_count, v.passengers[0].bags]).toEqual(["20.0", null, []]);
+  });
+
   it("doesn't board anyone not checked in, as the server wouldn't", () => {
     const v = applyStep(view([pax("ana")]), { kind: "board", paxId: "ana", at: AT });
     expect(v.passengers[0].check_in_status).toBe("booked");

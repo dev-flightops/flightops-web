@@ -11,6 +11,8 @@
  * Weights are backend Decimals and arrive as strings, as on the manifest.
  */
 
+import type { Bag, BagInput } from "@/lib/bags";
+
 import { apiFetch } from "./client";
 import type { ManifestLoad, TicketType } from "./manifest";
 
@@ -39,6 +41,9 @@ export interface CheckInPax {
   planned_weight_lbs: string | null;
   planned_baggage_lbs: string | null;
   bags_count: number | null;
+  /** Each bag, when listed one by one (18 Nov): aboard first, then any
+   *  bumped. Absent from services before it. */
+  bags?: Bag[];
   check_in_status: CheckInStatus;
   /** Booked on a standby ticket, waiting for a seat. */
   standby: boolean;
@@ -110,6 +115,8 @@ export interface CheckInView {
     planned_bags_lbs: string;
     actual_pax_lbs: string;
     actual_bags_lbs: string;
+    /** Of actual_bags_lbs, the bags carried into the cabin (18 Nov). */
+    actual_carry_on_lbs?: string;
   };
   /** What is left of the aircraft's useful load with the weights weighed
    *  here (#146); null until there is a manifest. Boarding is refused
@@ -123,6 +130,9 @@ export interface CheckInInput {
   actual_weight_lbs?: number | null;
   actual_baggage_lbs?: number | null;
   bags_count?: number | null;
+  /** Each bag weighed (18 Nov); [] is no bags. Sent, they are the bag
+   *  weight and count, and the two above are not read. */
+  bags?: BagInput[] | null;
   seat_number?: string | null;
   id_verified: boolean;
   /** null: the question was not answered. */

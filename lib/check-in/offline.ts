@@ -72,18 +72,42 @@ function applyToPax(p: CheckInPax, step: QueuedStep): CheckInPax {
     case "check-in": {
       const { input } = step;
       if (p.check_in_status !== "booked" && p.check_in_status !== "checked_in") return p;
+      // Bags weighed one by one (18 Nov) are the bag weight and count, as
+      // the server makes them; a total alone takes the place of the list.
+      const listed = input.bags ?? null;
+      const bagsWeighed = listed !== null || input.actual_baggage_lbs != null;
+      const bumped = (p.bags ?? []).filter((bag) => bag.status !== "aboard");
       return {
         ...p,
         check_in_status: "checked_in",
         standby: false,
         checked_in_at: p.checked_in_at ?? step.at,
         weight_lbs: input.actual_weight_lbs != null ? String(input.actual_weight_lbs) : p.weight_lbs,
-        baggage_lbs: input.actual_baggage_lbs != null ? String(input.actual_baggage_lbs) : p.baggage_lbs,
+        baggage_lbs:
+          listed !== null
+            ? String(Math.round(listed.reduce((sum, bag) => sum + bag.weight_lbs, 0) * 10) / 10)
+            : input.actual_baggage_lbs != null
+              ? String(input.actual_baggage_lbs)
+              : p.baggage_lbs,
         planned_weight_lbs:
           input.actual_weight_lbs != null ? (p.planned_weight_lbs ?? p.weight_lbs) : p.planned_weight_lbs,
-        planned_baggage_lbs:
-          input.actual_baggage_lbs != null ? (p.planned_baggage_lbs ?? p.baggage_lbs) : p.planned_baggage_lbs,
-        bags_count: input.bags_count ?? p.bags_count,
+        planned_baggage_lbs: bagsWeighed ? (p.planned_baggage_lbs ?? p.baggage_lbs) : p.planned_baggage_lbs,
+        bags_count: listed !== null ? listed.length : (input.bags_count ?? p.bags_count),
+        bags:
+          listed !== null
+            ? [
+                ...listed.map((bag, i) => ({
+                  id: `queued-${step.paxId}-${i}`,
+                  weight_lbs: String(bag.weight_lbs),
+                  carry_on: bag.carry_on,
+                  description: bag.description,
+                  status: "aboard" as const,
+                })),
+                ...bumped,
+              ]
+            : input.actual_baggage_lbs != null
+              ? bumped
+              : p.bags,
         seat_number: input.seat_number?.trim() ? input.seat_number.trim().toUpperCase() : p.seat_number,
         id_verified: input.id_verified,
         hazmat_declared: input.hazmat_declared ?? p.hazmat_declared,
@@ -104,14 +128,18 @@ function applyToPax(p: CheckInPax, step: QueuedStep): CheckInPax {
             no_show_notes: step.notes,
             no_show_at: step.at,
           };
-    case "reset":
+    case "reset": {
       if (p.check_in_status === "boarded") return p;
+      // The booked total comes back, not the bags weighed.
+      const weighedBags = p.planned_baggage_lbs !== null && (p.bags ?? []).some((bag) => bag.status === "aboard");
       return {
         ...p,
         check_in_status: "booked",
         standby: p.ticket_type === "standby",
         weight_lbs: p.planned_weight_lbs ?? p.weight_lbs,
         baggage_lbs: p.planned_baggage_lbs ?? p.baggage_lbs,
+        bags: weighedBags ? (p.bags ?? []).filter((bag) => bag.status !== "aboard") : p.bags,
+        bags_count: weighedBags ? null : p.bags_count,
         planned_weight_lbs: null,
         planned_baggage_lbs: null,
         checked_in_at: null,
@@ -120,6 +148,7 @@ function applyToPax(p: CheckInPax, step: QueuedStep): CheckInPax {
         no_show_notes: null,
         no_show_at: null,
       };
+    }
     default:
       return p;
   }

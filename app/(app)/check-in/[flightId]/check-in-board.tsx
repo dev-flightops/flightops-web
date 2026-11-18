@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, useTransition, type FormEvent } from "react";
 
+import { BagsEditor } from "@/components/bags/bags-editor";
 import { buttonOutline, buttonSolid, linkCaps } from "@/components/ff/controls";
 import { Notice } from "@/components/ff/notice";
 import { Stat, StatStrip } from "@/components/ff/stat-strip";
@@ -31,6 +32,7 @@ import {
   stepPaxId,
   type QueuedStep,
 } from "@/lib/check-in/offline";
+import { aboard, bagInputs, bagsSummary, draftsFrom, type BagDraft } from "@/lib/bags";
 import { cn } from "@/lib/utils";
 
 import {
@@ -456,7 +458,11 @@ export function CheckInBoard({ initial, canAct }: { initial: CheckInView; canAct
           value={lbs(actual)}
           label="Actual"
           tone="green"
-          hint={`${lbs(view.weights.actual_pax_lbs)} pax + ${lbs(view.weights.actual_bags_lbs)} bags`}
+          hint={`${lbs(view.weights.actual_pax_lbs)} pax + ${lbs(view.weights.actual_bags_lbs)} bags${
+            Number(view.weights.actual_carry_on_lbs ?? 0) > 0
+              ? `, ${lbs(view.weights.actual_carry_on_lbs ?? 0)} of them carry-on`
+              : ""
+          }`}
         />
         <Stat
           value={`${delta >= 0 ? "+" : "−"}${lbs(Math.abs(delta))}`}
@@ -553,7 +559,12 @@ export function CheckInBoard({ initial, canAct }: { initial: CheckInView; canAct
                       </td>
                       <td className={cn(TD, "font-mono text-xs")}>{p.seat_number ?? "—"}</td>
                       <td className={cn(TD, "text-xs capitalize")}>{p.ticket_type.replace("_", " ")}</td>
-                      <td className={cn(TD, "text-right font-mono text-xs")}>{p.bags_count ?? "—"}</td>
+                      <td className={cn(TD, "text-right font-mono text-xs")}>
+                        {p.bags_count ?? "—"}
+                        {aboard(p.bags).length > 0 ? (
+                          <span className="block whitespace-nowrap text-muted-foreground">{bagsDetail(p)}</span>
+                        ) : null}
+                      </td>
                       <td className={cn(TD, "whitespace-nowrap text-right font-mono text-xs")}>
                         {lbs(p.weight_lbs)}
                         {weighed ? (
@@ -731,7 +742,11 @@ function PhoneRow({
           ) : null}
         </p>
         <p className="font-mono text-xs text-muted-foreground">
-          {[pax.seat_number ? `Seat ${pax.seat_number}` : null, lbs(pax.weight_lbs), `${pax.bags_count ?? "—"} bags`]
+          {[
+            pax.seat_number ? `Seat ${pax.seat_number}` : null,
+            lbs(pax.weight_lbs),
+            aboard(pax.bags).length > 0 ? bagsSummary(aboard(pax.bags)) : `${pax.bags_count ?? "—"} bags`,
+          ]
             .filter(Boolean)
             .join(" · ")}
         </p>
@@ -830,6 +845,14 @@ function RowActions({
   );
 }
 
+/** A passenger's bags listed one by one, beside their count: "52.5 lb,
+ *  1 carry-on". */
+function bagsDetail(p: CheckInPax): string {
+  const listed = aboard(p.bags);
+  const carried = listed.filter((bag) => bag.carry_on).length;
+  return `${lbs(p.baggage_lbs)}${carried ? `, ${carried} carry-on` : ""}`;
+}
+
 function Required({ when }: { when: boolean }) {
   return when ? (
     <span className="text-status-red" aria-hidden>
@@ -867,6 +890,12 @@ function CheckInDialog({
   // A booked passenger has not been asked yet, so nothing is chosen: legacy
   // ticked "No hazmat" for them, which answered the question for the agent.
   const [hazmat, setHazmat] = useState<boolean | null>(editing ? pax.hazmat_declared : null);
+  // Each bag on its own (18 Nov). A passenger checked in with their bags
+  // listed starts from them; one checked in with no bags, from "No bags".
+  const listed = aboard(pax.bags);
+  const [bags, setBags] = useState<BagDraft[] | null>(
+    listed.length > 0 ? draftsFrom(listed) : editing && pax.bags_count === 0 ? [] : null,
+  );
 
   function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -884,8 +913,7 @@ function CheckInDialog({
       first_name: String(form.get("first_name") ?? "").trim() || undefined,
       last_name: String(form.get("last_name") ?? "").trim() || undefined,
       actual_weight_lbs: num(form.get("actual_weight_lbs")),
-      actual_baggage_lbs: num(form.get("actual_baggage_lbs")),
-      bags_count: num(form.get("bags_count")),
+      bags: bags === null ? null : bagInputs(bags),
       seat_number: String(form.get("seat_number") ?? "").trim() || null,
       id_verified: form.get("id_verified") === "yes",
       hazmat_declared: hazmat,
@@ -941,36 +969,19 @@ function CheckInDialog({
                 className={cn(INPUT, "font-mono uppercase")}
               />
             </label>
-            <label className="block">
-              <span className="field-label">
-                Bags
-                <Required when={rules.require_bags_count} />
-              </span>
-              <input
-                name="bags_count"
-                type="number"
-                min={0}
-                max={50}
-                defaultValue={pax.bags_count ?? undefined}
-                className={INPUT}
-              />
-            </label>
-            <label className="block">
-              <span className="field-label">
-                Actual Bag Weight (lb)
-                <Required when={rules.require_actual_bag_weight} />
-              </span>
-              <input
-                name="actual_baggage_lbs"
-                type="number"
-                min={0}
-                max={2000}
-                step="0.1"
-                defaultValue={Number(pax.baggage_lbs) || undefined}
-                className={INPUT}
-              />
-            </label>
           </div>
+
+          <BagsEditor
+            value={bags}
+            onChange={setBags}
+            required={rules.require_bags_count || rules.require_actual_bag_weight}
+            disabled={pending}
+            hint={
+              listed.length === 0 && Number(pax.baggage_lbs) > 0
+                ? `On record: ${pax.bags_count != null ? `${pax.bags_count} ${pax.bags_count === 1 ? "bag" : "bags"}, ` : ""}${lbs(pax.baggage_lbs)} in all. Weigh each bag on its own.`
+                : "Weigh each bag on its own, and say what it looks like in case it's bumped or lost."
+            }
+          />
 
           <label className="flex items-center gap-2 text-sm">
             <input type="checkbox" name="id_verified" value="yes" defaultChecked={pax.id_verified} />
