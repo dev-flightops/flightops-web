@@ -235,4 +235,11 @@ export const FAQ: FaqEntry[] = [
       "At check-in, or in the passenger's row on the manifest, **Add bag** for each one: its weight, **Carry-on** if it goes into the cabin, and a description (\"black duffel, red tag\") so it can be found if it's bumped or lost. The bags make the passenger's bag weight, and the carry-on weight is shown on its own. **No bags** answers for a passenger without any. To bump bags, tick the ones staying behind: their descriptions go with them to the waiting list.",
     pages: ["/manifest"],
   },
+  {
+    slug: "schedule-or-fleet-board",
+    question: "Which one is in charge, the Schedule or the Fleet Board?",
+    answer:
+      "Neither: both show the same flights. The **Schedule** lists the flights by aircraft, and the **Fleet Board** lists the bookings on them. Change a flight's aircraft on either one, by **Edit flight** or by dragging a booking to another aircraft's row, and both show it. A flight's times are changed on the Schedule, and each booking on it takes the new times of the legs it flies. A flight's legs must fall within 24 hours, and its new day can't be one that has passed.",
+    pages: ["/schedule", "/reservations/fleet-board"],
+  },
 ];
