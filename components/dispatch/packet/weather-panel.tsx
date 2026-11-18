@@ -183,8 +183,8 @@ export async function WeatherPanel({
         Source: Aviation Weather Center via weather-service. METAR cached 2 min,
         TAF 30 min, PIREPs (within 50 nm, last 3 hours) 15 min. FAA WeatherCams
         and village reports aren&rsquo;t certified; WeatherCams cached 10 min.
-        Each stop is scored on the worst current reading. ATIS is not shown
-        yet.
+        Each stop is scored on its METAR first, then the village report, then
+        the FAA WeatherCam. ATIS is not shown yet.
       </p>
     </SectionPanel>
   );
