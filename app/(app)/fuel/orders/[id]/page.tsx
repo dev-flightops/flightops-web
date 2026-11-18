@@ -86,6 +86,8 @@ export default async function FuelOrderDetailPage({
         orderId={order.id}
         supplierName={order.supplier_name_snapshot}
         requestedGallons={order.requested_quantity_gallons}
+        requestedLeft={order.requested_left_gallons}
+        requestedRight={order.requested_right_gallons}
         canConfirm={canConfirm}
         canMarkFueled={canMarkFueled}
         canCancel={canCancel}
@@ -135,6 +137,8 @@ function ActionsRow({
   orderId,
   supplierName,
   requestedGallons,
+  requestedLeft,
+  requestedRight,
   canConfirm,
   canMarkFueled,
   canCancel,
@@ -142,6 +146,8 @@ function ActionsRow({
   orderId: string;
   supplierName: string;
   requestedGallons: number;
+  requestedLeft: number | null;
+  requestedRight: number | null;
   canConfirm: boolean;
   canMarkFueled: boolean;
   canCancel: boolean;
@@ -165,6 +171,8 @@ function ActionsRow({
         <MarkFueledDialog
           orderId={orderId}
           requestedGallons={requestedGallons}
+          requestedLeft={requestedLeft}
+          requestedRight={requestedRight}
         />
       )}
       {canCancel && <CancelOrderDialog orderId={orderId} />}

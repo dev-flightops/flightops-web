@@ -6,7 +6,7 @@ import { formatLocal, formatZulu } from "@/lib/format/flight-time";
 import { listCompanyBases, loadZoneTable } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
 import { getFlightBoard } from "@/lib/api/flight-following";
-import { listAssignmentsByTeam, listLoadTeams } from "@/lib/api/ground";
+import { listDayLoads, listLoadTeams } from "@/lib/api/ground";
 import type {
   BoardFlightItem,
   CompanyBaseResponse,
@@ -30,10 +30,10 @@ import { BaseFilter } from "./base-filter";
  * Header: All Bases filter + right-aligned `<weekday>, <month> <day>
  * · N flights` summary.
  *
- * Assignment state comes from /ground/flight-assignments — we fan out
- * one call per active team and build a flight→team lookup so flight
- * cards can render their current assignment chip without a per-flight
- * round-trip.
+ * Assignment state is today's loads, every team's
+ * (/ground/flight-assignments/day), the same day's the Ramper lists for
+ * each team's lead and members. A flight→team lookup lets flight cards
+ * render their assignment chip without a per-flight round-trip.
  */
 export default async function RampOpsPage({
   searchParams,
@@ -44,10 +44,11 @@ export default async function RampOpsPage({
   const baseFilter = baseFilterRaw?.trim().toUpperCase() || null;
 
   const zonesPromise = loadZoneTable();
-  const [basesResult, flightsResult, teamsResult] = await Promise.allSettled([
+  const [basesResult, flightsResult, teamsResult, loadsResult] = await Promise.allSettled([
     listCompanyBases(),
     getFlightBoard("today"),
     listLoadTeams({ baseIcao: baseFilter ?? undefined }),
+    listDayLoads(),
   ]);
 
   const bases: CompanyBaseResponse[] =
@@ -68,33 +69,31 @@ export default async function RampOpsPage({
       ? teamsResult.value.items.filter((t) => t.is_active)
       : [];
 
-  // Fan out one assignment fetch per team — parallel, capped by team
-  // count (small N for an op). Build both maps from the results so
-  // flight cards can show their current team chip and team cards can
-  // list assigned flights.
+  // Today's loads, as the teams themselves see them on the Ramper. The
+  // client, 18 Nov: "load team doesn't appear to be reading correctly.
+  // Owen has several flights assigned to his team but doesn't see it in
+  // his dashboard." The team cards listed every assignment never cleared,
+  // whatever its day: Bethel's three were PGR701 of 20 Oct and two flights
+  // cancelled in September, while Owen's Ramper rightly listed today's.
+  // A card counts what's still to load, as the Ramper does; the flight
+  // cards keep their team chip all day.
   const assignmentsByTeam = new Map<string, FlightAssignmentResponse[]>();
   const teamByFlightId = new Map<string, LoadTeamResponse>();
-  let assignmentError = false;
-  const assignmentResults = await Promise.allSettled(
-    teams.map((t) => listAssignmentsByTeam(t.id)),
-  );
-  assignmentResults.forEach((r, i) => {
-    const team = teams[i];
-    if (r.status === "fulfilled") {
-      assignmentsByTeam.set(team.id, r.value.items);
-      for (const a of r.value.items) {
-        teamByFlightId.set(a.flight.id, team);
-      }
-    } else {
-      assignmentError = true;
-    }
-  });
+  const teamsById = new Map(teams.map((t) => [t.id, t]));
+  for (const a of loadsResult.status === "fulfilled" ? loadsResult.value.items : []) {
+    const team = teamsById.get(a.load_team.id);
+    if (!team) continue;
+    teamByFlightId.set(a.flight.id, team);
+    if (a.flight.status === "completed" || a.flight.status === "cancelled") continue;
+    assignmentsByTeam.set(team.id, [...(assignmentsByTeam.get(team.id) ?? []), a]);
+  }
 
   const errors: string[] = [];
   for (const [label, r] of [
     ["Bases", basesResult],
     ["Today's flights", flightsResult],
     ["Load teams", teamsResult],
+    ["Today's team loads", loadsResult],
   ] as const) {
     if (r.status === "rejected") {
       const status = r.reason instanceof ApiError ? r.reason.status : 0;
@@ -105,7 +104,6 @@ export default async function RampOpsPage({
       );
     }
   }
-  if (assignmentError) errors.push("Some team assignments unavailable.");
 
   const zones = await zonesPromise;
   return (

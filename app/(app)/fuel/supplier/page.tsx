@@ -177,6 +177,8 @@ function SupplierOrderTable({ orders }: { orders: FuelOrderResponse[] }) {
                     orderId={o.id}
                     tail={o.n_number}
                     requestedGallons={o.requested_quantity_gallons}
+                    requestedLeft={o.requested_left_gallons}
+                    requestedRight={o.requested_right_gallons}
                   />
                 ) : (
                   <span className="text-[0.65rem] text-muted-foreground">

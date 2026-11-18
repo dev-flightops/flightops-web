@@ -147,4 +147,39 @@ describe("markFueledAction", () => {
       expect(result.message).toMatch(/order not found/i);
     }
   });
+
+  it("closes an order placed left and right by tank (the client, 18 Nov)", async () => {
+    markSupplierFuelOrderFueled.mockResolvedValueOnce({ status: "discrepancy" });
+    const result = await markFueledAction("o-1", "Sarah", "50", "", { left: "35", right: "15" });
+    expect(markSupplierFuelOrderFueled).toHaveBeenCalledWith("o-1", {
+      fueled_by_name: "Sarah",
+      actual_left_gallons: 35,
+      actual_right_gallons: 15,
+      discrepancy_reason: null,
+    });
+    expect(result).toEqual({ status: "ok", resulting_status: "discrepancy" });
+  });
+
+  it("asks for both tanks", async () => {
+    const result = await markFueledAction("o-1", "Sarah", "50", "", { left: "25", right: "" });
+    expect(result).toEqual({
+      status: "error",
+      message: "Enter the gallons that went into each tank (0 or higher).",
+    });
+    expect(markSupplierFuelOrderFueled).not.toHaveBeenCalled();
+  });
+
+  it("shows the service's sentence for a split order closed by a total", async () => {
+    markSupplierFuelOrderFueled.mockRejectedValueOnce(
+      new TestApiError(422, "/x", JSON.stringify({
+        detail: "This order is for 25 L / 25 R: give the gallons that went into each tank.",
+      })),
+    );
+    const result = await markFueledAction("o-1", "Sarah", "50", "");
+    expect(result).toEqual({
+      status: "error",
+      message: "This order is for 25 L / 25 R: give the gallons that went into each tank.",
+    });
+  });
 });
+
