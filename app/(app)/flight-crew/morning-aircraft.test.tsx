@@ -76,6 +76,47 @@ describe("MorningAircraft (#93)", () => {
     expect(record).toHaveBeenCalledWith("m-1", { fuel_gallons: 60, oil_quarts: 9, notes: null });
   });
 
+  it("takes a turbine's fuel in pounds and its oil in quarts low (the client, 17 Nov)", async () => {
+    record.mockResolvedValue({ ok: true });
+    const user = userEvent.setup();
+    render(<MorningAircraft morning={morning({ mine: { ...MINE, fuel_unit: "lb" } })} />);
+    expect(screen.queryByLabelText("Fuel on board (gal)")).toBeNull();
+    expect(screen.queryByLabelText("Oil (qt)")).toBeNull();
+    const oil = screen.getByLabelText("Oil (qts low)");
+    expect([...oil.querySelectorAll("option")].map((o) => o.textContent)).toEqual(["—", "Full", "-1", "-2", "-3", "-4", "-5"]);
+    await user.type(screen.getByLabelText("Fuel on board (lb)"), "2100");
+    await user.selectOptions(oil, "-2");
+    await user.click(screen.getByRole("checkbox", { name: "Preflight and run-up complete" }));
+    await user.click(screen.getByRole("button", { name: "Record preflight and run-up" }));
+    expect(record).toHaveBeenCalledWith("m-1", { fuel_lbs: 2100, oil_quarts_low: 2, notes: null });
+  });
+
+  it("records a full turbine as none low, and nothing when the oil wasn't read", async () => {
+    record.mockResolvedValue({ ok: true });
+    const user = userEvent.setup();
+    const { unmount } = render(<MorningAircraft morning={morning({ mine: { ...MINE, fuel_unit: "lb" } })} />);
+    await user.selectOptions(screen.getByLabelText("Oil (qts low)"), "Full");
+    await user.click(screen.getByRole("checkbox", { name: "Preflight and run-up complete" }));
+    await user.click(screen.getByRole("button", { name: "Record preflight and run-up" }));
+    expect(record).toHaveBeenLastCalledWith("m-1", { fuel_lbs: null, oil_quarts_low: 0, notes: null });
+    unmount();
+    render(<MorningAircraft morning={morning({ mine: { ...MINE, fuel_unit: "lb" } })} />);
+    await user.click(screen.getByRole("checkbox", { name: "Preflight and run-up complete" }));
+    await user.click(screen.getByRole("button", { name: "Record preflight and run-up" }));
+    expect(record).toHaveBeenLastCalledWith("m-1", { fuel_lbs: null, oil_quarts_low: null, notes: null });
+  });
+
+  it("says a turbine's preflight is on record in pounds and quarts low", () => {
+    render(
+      <MorningAircraft
+        morning={morning({
+          mine: { ...MINE, fuel_unit: "lb", preflight_at: "2026-10-31T16:05:00Z", fuel_lbs: "2100.0", oil_quarts_low: "0.0" },
+        })}
+      />,
+    );
+    expect(screen.getByText(/recorded at 08:05 AKDT \(2,100 lb, oil full\)/)).toBeInTheDocument();
+  });
+
   it("says when the preflight is on record", () => {
     render(
       <MorningAircraft

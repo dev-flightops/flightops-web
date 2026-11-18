@@ -252,9 +252,10 @@ describe("the ramp's own, at its stations (LOG-42)", () => {
 
   it("tells them of today's fuel at their stations that the ramp puts in, not a supplier's", async () => {
     listMyLoadTeams.mockResolvedValue({ items: [{ id: "lt-b", team_name: "Bethel Load Team", base_icao: "PABE" }], total: 1 });
-    listFuelOrders.mockImplementation(async ({ status }: { status: string }) => ({
-      items:
-        status === "ordered"
+    listFuelOrders.mockImplementation(async ({ status, mine }: { status: string; mine?: boolean }) => ({
+      items: mine
+        ? []
+        : status === "ordered"
           ? [
               order("o1"),
               order("o2", { supplier: { id: "s-2", name: "Tundra", fueled_by: "supplier" } }),
@@ -280,6 +281,69 @@ describe("the ramp's own, at its stations (LOG-42)", () => {
     const pilot = await loadPersonalAlerts({ roles: ["pilot"], userId: "u-p" });
     expect(pilot.filter((a) => a.category === "departure_soon")).toEqual([]);
     expect(getFlightBoard).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("a fuel order's news to whoever placed it and its crew (17 Nov)", () => {
+  const at = (offsetMin: number) => new Date(Date.now() + offsetMin * 60_000).toISOString();
+  const today = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Anchorage" }).format(new Date());
+  const order = (id: string, over: Record<string, unknown> = {}) => ({
+    id,
+    n_number: "N603PA",
+    base_code: "PABE",
+    requested_fuel_date: today,
+    requested_fuel_time: null,
+    requested_quantity_gallons: 100,
+    fuel_type_label_snapshot: "Jet A",
+    supplier_name_snapshot: "Crowley",
+    supplier: { id: "s-1", name: "Crowley", fueled_by: "supplier" },
+    requested_at: at(-60),
+    confirmed_at: null,
+    confirmed_by_name: null,
+    confirmed_note: null,
+    fueled_at: null,
+    fueled_by_name: null,
+    actual_quantity_gallons: null,
+    discrepancy_reason: null,
+    ...over,
+  });
+
+  it("tells them it's confirmed, then that it's in, and when it isn't as ordered", async () => {
+    const fueledAt = at(-5);
+    listFuelOrders.mockImplementation(async ({ status, mine }: { status: string; mine?: boolean }) => ({
+      items: !mine
+        ? []
+        : status === "confirmed"
+          ? [
+              order("o1", { status: "confirmed", confirmed_at: at(-20), confirmed_by_name: "Joe at Crowley", confirmed_note: "truck at 13:30" }),
+              order("o-old", { status: "confirmed", confirmed_at: at(-3000), requested_fuel_date: "2026-08-01" }),
+            ]
+          : status === "fueled"
+            ? [order("o2", { status: "fueled", fueled_at: fueledAt, fueled_by_name: "Sam Ramp", actual_quantity_gallons: 100 })]
+            : [order("o3", { status: "discrepancy", fueled_at: at(-2), fueled_by_name: "Sam Ramp", actual_quantity_gallons: 80, discrepancy_reason: "truck ran dry" })],
+      total: 1,
+    }));
+    const fuel = (await loadPersonalAlerts({ roles: ["pilot"], userId: "u-p" })).filter((a) => a.category === "fuel_order");
+    expect(fuel.map((a) => [a.id, a.title, a.href])).toEqual([
+      ["fuel-confirmed-o1", "Fuel confirmed — N603PA at PABE", "/fuel/orders/o1"],
+      ["fuel-fueled-o2", "Fueled — N603PA at PABE", "/fuel/orders/o2"],
+      ["fuel-fueled-o3", "Fueled, not as ordered — N603PA at PABE", "/fuel/orders/o3"],
+    ]);
+    expect(fuel[0].detail).toBe("100 gal Jet A, Crowley. Confirmed by Joe at Crowley: truck at 13:30.");
+    expect(fuel[1].detail).toMatch(/^100 gal Jet A put in at \d\d:\d\d AK[SD]T by Sam Ramp\.$/);
+    expect(fuel[2].detail).toMatch(/^80 gal Jet A put in at \d\d:\d\d AK[SD]T by Sam Ramp; 100 gal ordered: truck ran dry\.$/);
+    // Each step its own occurrence: fueled comes back after confirmed was dismissed.
+    expect(fuel[1].occurredAt).toBe(fueledAt);
+    expect(fuel.every((a) => a.severity === "yellow" && a.scopedToIcao === "PABE")).toBe(true);
+    // Only the caller's own: placed by them or for a flight they're crewed on.
+    for (const status of ["confirmed", "fueled", "discrepancy"]) {
+      expect(listFuelOrders).toHaveBeenCalledWith({ mine: true, status, limit: 50 });
+    }
+  });
+
+  it("asks nothing for someone it can't name", async () => {
+    await loadPersonalAlerts({ roles: ["pilot"], userId: null });
+    expect(listFuelOrders).not.toHaveBeenCalled();
   });
 });
 

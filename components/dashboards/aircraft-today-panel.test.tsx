@@ -29,7 +29,7 @@ describe("AircraftTodayPanel (#93)", () => {
       />,
     );
     const done = screen.getByRole("row", { name: /N701PS/ });
-    expect(within(done).getByText("08:05 AKDT · 60 gal, 9 qt")).toBeInTheDocument();
+    expect(within(done).getByText("08:05 AKDT · 60 gal, 9 qt oil")).toBeInTheDocument();
     const waiting = screen.getByRole("row", { name: /N703PS/ });
     expect(within(waiting).getByText("Not yet")).toBeInTheDocument();
     expect(within(waiting).getByText("given by Nadia Petrov")).toBeInTheDocument();
@@ -62,7 +62,15 @@ describe("AircraftTodayLine: the selected flight's aircraft on the packet (#134)
   it("says whose it is and when its preflight went on record", () => {
     render(<AircraftTodayLine tail="N701PS" aircraftId="a-1" today={{ items: [ROW] }} />);
     expect(screen.getByLabelText("Aircraft today")).toHaveTextContent(
-      "N701PS is Beth Nolan's today; preflight and run-up at 08:05 AKDT · 60 gal, 9 qt.",
+      "N701PS is Beth Nolan's today; preflight and run-up at 08:05 AKDT · 60 gal, 9 qt oil.",
+    );
+  });
+
+  it("reads a turbine's fuel in pounds and its oil in quarts low (the client, 17 Nov)", () => {
+    const caravan = { ...ROW, fuel_unit: "lb" as const, fuel_gallons: null, oil_quarts: null, fuel_lbs: "2100.0", oil_quarts_low: "2.0" };
+    render(<AircraftTodayLine tail="N701PS" aircraftId="a-1" today={{ items: [caravan] }} />);
+    expect(screen.getByLabelText("Aircraft today")).toHaveTextContent(
+      "N701PS is Beth Nolan's today; preflight and run-up at 08:05 AKDT · 2,100 lb, oil 2 qt low.",
     );
   });
 

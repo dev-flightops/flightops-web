@@ -171,6 +171,26 @@ describe("WeightBalanceTab", () => {
   });
 });
 
+describe("WeightBalanceTab: a turbine's fuel in pounds (the client, 17 Nov)", () => {
+  it("asks for a turbine's fuel in pounds, and keeps gallons for a piston", () => {
+    const legs = [makeLeg({ id: "l-1", basic_empty_weight_lbs: 4825, fuel_gallons: 150, fuel_weight_lbs: 1005 })];
+    const { unmount } = render(
+      <WeightBalanceTab logId="log-1" logStatus="draft" initialLegs={legs} fuelUnit="lb" />,
+    );
+    expect((screen.getByLabelText(/^fuel \(lb\)$/i) as HTMLInputElement).value).toBe("1005");
+    // The gallons a release filled in beside the pounds aren't shown: they
+    // would go stale once the pilot changed the pounds.
+    expect(screen.queryByLabelText(/^fuel gallons$/i)).toBeNull();
+    expect(screen.getByText("5830")).toBeInTheDocument();
+    unmount();
+
+    render(<WeightBalanceTab logId="log-1" logStatus="draft" initialLegs={legs} fuelUnit="gal" />);
+    expect((screen.getByLabelText(/^fuel gallons$/i) as HTMLInputElement).value).toBe("150");
+    expect(screen.getByLabelText(/^fuel weight$/i)).toBeInTheDocument();
+    expect(screen.queryByLabelText(/^fuel \(lb\)$/i)).toBeNull();
+  });
+});
+
 describe("WeightBalanceTab: someone else's draft (29 Sep)", () => {
   it("drops the Tab-2 link when the caller may not change the draft", () => {
     render(

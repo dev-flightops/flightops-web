@@ -4,7 +4,7 @@ import { listDayLoads, listFuelOrders, listMyLoadTeams } from "@/lib/api/ground"
 import { listSquawks, listWorkOrders } from "@/lib/api/maintenance";
 import { listMyHandoffs } from "@/lib/api/ops";
 import { listBookings } from "@/lib/api/reservations";
-import type { FlightAssignmentResponse } from "@/lib/api/types";
+import type { FlightAssignmentResponse, FuelOrderResponse } from "@/lib/api/types";
 import { handoffLine } from "@/lib/flights/handoff-text";
 import { formatLocal } from "@/lib/format/flight-time";
 import { localClock, localDateTime, localDay, localToUtcIso, zoneFor } from "@/lib/format/local-time";
@@ -40,6 +40,10 @@ import type { OperationalAlert } from "./operational-snapshot";
  *     station". Its stations are its load teams' bases, or every station
  *     for someone on no team; an order the supplier fuels is the
  *     supplier's.
+ *   - A fuel order's news to whoever placed it and to its flight's crew
+ *     (17 Nov): "can we get a notification in the system when a plane
+ *     order has been confirmed by supplier/ramp as well as a confirmation
+ *     that the plane has been fueled?"
  */
 
 const NEW_SQUAWK_MS = 2 * 24 * 60 * 60 * 1000;
@@ -54,6 +58,8 @@ export async function loadPersonalAlerts(viewer: {
 }): Promise<OperationalAlert[]> {
   const mx = hasAnyRole(viewer.roles, WORK_ORDER_WRITERS) || hasAnyRole(viewer.roles, AIRWORTHINESS_WRITERS);
   const dispatch = hasAnyRole(viewer.roles, DISPATCH_WRITERS);
+  // Started first, so it reads beside everything else.
+  const fuelNews = viewer.userId ? fuelOrderAlerts().catch(() => []) : Promise.resolve([]);
   const [squawks, orders, loads, handoffs] = await Promise.all([
     mx ? listSquawks({ status: "open", limit: 50 }).catch(() => null) : null,
     mx ? listWorkOrders().catch(() => null) : null,
@@ -100,6 +106,7 @@ export async function loadPersonalAlerts(viewer: {
 
   if (dispatch) alerts.push(...(await bookingAlerts()));
   if (hasAnyRole(viewer.roles, RAMP)) alerts.push(...(await rampAlerts(loads?.items ?? [], now)));
+  alerts.push(...(await fuelNews));
 
   for (const item of handoffs?.items ?? []) {
     const line = handoffLine(item);
@@ -179,6 +186,59 @@ async function rampAlerts(loads: FlightAssignmentResponse[], now: number): Promi
     });
   }
   return alerts;
+}
+
+/**
+ * A fuel order's news to whoever placed it and to its flight's crew (GET
+ * /fuel/orders?mine=true): once the supplier or the ramp confirms it, then
+ * once it's in. Each step is its own occurrence, so "fueled" comes back
+ * after "confirmed" was dismissed. Orders from the company's today on; an
+ * order fueled other than as ordered says so.
+ */
+async function fuelOrderAlerts(): Promise<OperationalAlert[]> {
+  const [confirmed, fueled, discrepancy, zones] = await Promise.all([
+    listFuelOrders({ mine: true, status: "confirmed", limit: 50 }).catch(() => null),
+    listFuelOrders({ mine: true, status: "fueled", limit: 50 }).catch(() => null),
+    listFuelOrders({ mine: true, status: "discrepancy", limit: 50 }).catch(() => null),
+    loadZoneTable(),
+  ]);
+  const today = localDay(zones.fallback);
+  const alerts: OperationalAlert[] = [];
+  for (const o of [...(confirmed?.items ?? []), ...(fueled?.items ?? []), ...(discrepancy?.items ?? [])]) {
+    if (o.requested_fuel_date < today) continue;
+    const zone = zoneFor(zones, o.base_code);
+    const where = `${o.n_number} at ${o.base_code}`;
+    const common = { severity: "yellow" as const, category: "fuel_order" as const, href: `/fuel/orders/${o.id}`, scopedToIcao: o.base_code };
+    if (o.status === "confirmed") {
+      alerts.push({
+        ...common,
+        id: `fuel-confirmed-${o.id}`,
+        title: `Fuel confirmed — ${where}`,
+        detail: `${o.requested_quantity_gallons} gal ${o.fuel_type_label_snapshot}, ${o.supplier_name_snapshot}${
+          o.requested_fuel_time ? `, by ${localClock(o.requested_fuel_time, zone)}` : ""
+        }.${confirmedBy(o)}`,
+        occurredAt: o.confirmed_at ?? o.requested_at,
+      });
+      continue;
+    }
+    const asOrdered = o.status === "fueled";
+    const amount = o.actual_quantity_gallons != null ? `${o.actual_quantity_gallons} gal ` : "";
+    alerts.push({
+      ...common,
+      id: `fuel-fueled-${o.id}`,
+      title: `${asOrdered ? "Fueled" : "Fueled, not as ordered"} — ${where}`,
+      detail: `${amount}${o.fuel_type_label_snapshot} put in${o.fueled_at ? ` at ${localClock(o.fueled_at, zone)}` : ""}${
+        o.fueled_by_name ? ` by ${o.fueled_by_name}` : ""
+      }${asOrdered ? "" : `; ${o.requested_quantity_gallons} gal ordered${o.discrepancy_reason ? `: ${o.discrepancy_reason}` : ""}`}.`,
+      occurredAt: o.fueled_at ?? o.confirmed_at ?? o.requested_at,
+    });
+  }
+  return alerts;
+}
+
+function confirmedBy(o: FuelOrderResponse): string {
+  if (!o.confirmed_by_name && !o.confirmed_note) return "";
+  return ` Confirmed${o.confirmed_by_name ? ` by ${o.confirmed_by_name}` : ""}${o.confirmed_note ? `: ${o.confirmed_note}` : ""}.`;
 }
 
 /** The bookings nobody has put on a flight, from the company's today on

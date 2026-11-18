@@ -154,6 +154,7 @@ export default async function FlightLogDetailPage({
             logStatus={log.status}
             initialLegs={legs}
             canEdit={canEdit}
+            fuelUnit={log.aircraft.fuel_unit}
           />
         )}
         {activeTab === "times" && (

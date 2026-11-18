@@ -7,6 +7,7 @@ import { useState, useTransition, type FormEvent } from "react";
 import { buttonOutline, buttonSolid } from "@/components/ff/controls";
 import { Notice } from "@/components/ff/notice";
 import type { MorningResponse } from "@/lib/api/ops";
+import { fuelUnitOf, OIL_QUARTS_LOW, oilLowOption, readingParts } from "@/lib/format/fuel-reading";
 import { DEFAULT_TIME_ZONE, localClock } from "@/lib/format/local-time";
 
 import { pickAircraftAction, recordPreflightAction } from "./actions";
@@ -20,6 +21,11 @@ import { pickAircraftAction, recordPreflightAction } from "./actions";
  * those airworthy, at their base and not taken by another pilot today are
  * offered; the rest say why), then records its preflight and run-up. A
  * flight in an aircraft nobody has preflighted that day can't be accepted.
+ *
+ * The client, 17 Nov: "fuel on turbines should be in LBS. Fuel on pistons
+ * can be in gallons. Turbine oil measurement is typically annotated as
+ * full -1, -2 -3 qts low. Pistons are reverse." So a turbine's fuel is
+ * entered in pounds and its oil as quarts below full; a piston's as before.
  */
 export function MorningAircraft({ morning }: { morning: MorningResponse | "pilots" | null }) {
   const router = useRouter();
@@ -58,10 +64,7 @@ export function MorningAircraft({ morning }: { morning: MorningResponse | "pilot
 
   if (mine?.preflight_at) {
     const at = localClock(mine.preflight_at, DEFAULT_TIME_ZONE);
-    const amounts = [
-      mine.fuel_gallons != null ? `${Number(mine.fuel_gallons)} gal` : null,
-      mine.oil_quarts != null ? `${Number(mine.oil_quarts)} qt oil` : null,
-    ].filter(Boolean);
+    const amounts = readingParts(mine);
     return (
       <p className="text-sm text-foreground">
         <span className="font-mono font-semibold">{mine.tail_number}</span>
@@ -80,6 +83,7 @@ export function MorningAircraft({ morning }: { morning: MorningResponse | "pilot
     );
   }
 
+  const turbine = fuelUnitOf(mine?.fuel_unit) === "lb";
   const record = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!mine || !completed) return;
@@ -88,12 +92,14 @@ export function MorningAircraft({ morning }: { morning: MorningResponse | "pilot
       const value = String(form.get(key) ?? "").trim();
       return value === "" ? null : Number(value);
     };
+    const notes = String(form.get("notes") ?? "").trim() || null;
     run(() =>
-      recordPreflightAction(mine.id, {
-        fuel_gallons: num("fuel_gallons"),
-        oil_quarts: num("oil_quarts"),
-        notes: String(form.get("notes") ?? "").trim() || null,
-      }),
+      recordPreflightAction(
+        mine.id,
+        turbine
+          ? { fuel_lbs: num("fuel_lbs"), oil_quarts_low: num("oil_quarts_low"), notes }
+          : { fuel_gallons: num("fuel_gallons"), oil_quarts: num("oil_quarts"), notes },
+      ),
     );
   };
 
@@ -105,14 +111,36 @@ export function MorningAircraft({ morning }: { morning: MorningResponse | "pilot
             <span className="font-mono font-semibold">{mine.tail_number}</span>
             {` is yours today. Record its preflight and run-up:`}
           </p>
-          <label>
-            <span className="field-label">Fuel on board (gal)</span>
-            <input name="fuel_gallons" type="number" min={0} step="0.1" className="ff-input" />
-          </label>
-          <label>
-            <span className="field-label">Oil (qt)</span>
-            <input name="oil_quarts" type="number" min={0} step="0.5" className="ff-input" />
-          </label>
+          {turbine ? (
+            <>
+              <label>
+                <span className="field-label">Fuel on board (lb)</span>
+                <input name="fuel_lbs" type="number" min={0} max={99999} step="1" className="ff-input" />
+              </label>
+              <label>
+                <span className="field-label">Oil (qts low)</span>
+                <select name="oil_quarts_low" defaultValue="" className="ff-input">
+                  <option value="">—</option>
+                  {OIL_QUARTS_LOW.map((low) => (
+                    <option key={low} value={low}>
+                      {oilLowOption(low)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </>
+          ) : (
+            <>
+              <label>
+                <span className="field-label">Fuel on board (gal)</span>
+                <input name="fuel_gallons" type="number" min={0} step="0.1" className="ff-input" />
+              </label>
+              <label>
+                <span className="field-label">Oil (qt)</span>
+                <input name="oil_quarts" type="number" min={0} step="0.5" className="ff-input" />
+              </label>
+            </>
+          )}
           <label className="sm:col-span-2">
             <span className="field-label">Notes</span>
             <input name="notes" type="text" maxLength={2000} className="ff-input" placeholder="Run-up normal" />
