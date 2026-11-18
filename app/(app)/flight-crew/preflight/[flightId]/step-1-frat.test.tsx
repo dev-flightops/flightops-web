@@ -1141,6 +1141,22 @@ describe("the FRAT dispatch scored, in the pilot's preflight (#175)", () => {
     await user.click(screen.getByRole("button", { name: "Keep the FRAT as it is" }));
     expect(screen.getByLabelText("Each factor's score")).toBeInTheDocument();
   });
+
+  it("puts a Change beside each score, opening the form at it (client, 18 Nov)", async () => {
+    // "In pilot view, still can't modify FRAT": the way in was a small link
+    // under Continue.
+    const user = userEvent.setup();
+    renderStep({ initial: filed() });
+    await user.click(screen.getByRole("button", { name: "Change Wind & gusts" }));
+    const wind = screen.getByLabelText(/Wind & gusts/i, { selector: "input" });
+    expect(wind).toHaveValue("4");
+    expect(wind).toHaveFocus();
+  });
+
+  it("offers no Change beside the scores once the flight is released", () => {
+    renderStep({ initial: filed({ locked: true }) });
+    expect(screen.queryByRole("button", { name: "Change Wind & gusts" })).not.toBeInTheDocument();
+  });
 });
 
 /**

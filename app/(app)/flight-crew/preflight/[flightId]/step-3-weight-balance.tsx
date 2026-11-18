@@ -1,6 +1,7 @@
 "use client";
 
 import { BalanceScopeNote } from "@/components/manifest/balance-scope-note";
+import { LegLoadPanel } from "@/components/manifest/leg-load-panel";
 
 import { useState, useTransition } from "react";
 
@@ -394,6 +395,18 @@ function LoadBreakdown({ flight, data }: { flight: FlightDetail; data: FlightLoa
             : `${lbs(remaining)} under the max payload.`}
           {fuel == null ? " Fuel isn’t counted yet." : ""}
         </p>
+      ) : null}
+      {load.by_leg && load.by_leg.length > 1 ? (
+        // Client, 18 Nov: the leg back has the fuel burned on the way out
+        // as useful load, which the tightest leg's figures alone hid.
+        <div className="mt-3 space-y-2">
+          {load.leg ? (
+            <p className="text-[0.7rem] text-muted-foreground">
+              {`These are the tightest leg’s figures, ${load.leg}. Each leg after the first leaves with less fuel:`}
+            </p>
+          ) : null}
+          <LegLoadPanel legs={load.by_leg} burned={load.leg_fuel_burned !== false} className="rounded-md" />
+        </div>
       ) : null}
       <p className="mt-2 text-[0.7rem] text-muted-foreground">
         The manifest’s figures. Your own weight and balance decides; record it below.

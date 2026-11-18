@@ -534,6 +534,10 @@ export async function savePlannedFuelAction(
     return fail(_refusal(err, _ANY_STAFF));
   }
   revalidatePath(_page(flightId.data));
+  // Planned from the dispatch packet too (client, 18 Nov), and read by the
+  // pilot's weight and balance.
+  revalidatePath("/dispatch");
+  revalidatePath(`/flight-crew/preflight/${flightId.data}`);
   return {
     status: "ok",
     message: lbs ? `Planned fuel set to ${Number(lbs).toLocaleString()} lb.` : "Planned fuel cleared.",

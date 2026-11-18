@@ -163,6 +163,20 @@ export const FAQ: FaqEntry[] = [
     pages: ["/manifest", "/settings/fleet", "/settings/costs"],
   },
   {
+    slug: "fuel-by-leg",
+    question: "How is the fuel counted on a flight with stops?",
+    answer:
+      "Each leg leaves with the fuel at departure less what the legs before it burn, at the aircraft's fuel burn, so the leg back has more useful load than the leg out. The dispatch packet, the manifest and the pilot's weight and balance list each leg; the figures the release judges are the tightest leg's. Plan the fuel at departure on the packet or the manifest; until then the estimate is used.",
+    pages: ["/dispatch", "/manifest"],
+  },
+  {
+    slug: "pilot-changes-frat",
+    question: "How does the pilot change a FRAT dispatch filed?",
+    answer:
+      "At preflight step 1, press **Change** beside any score, or **Change the FRAT** above the scores, set the scale, and sign. The change is the pilot's signature: dispatch reviews what changed and signs again. Once the flight is released the FRAT is locked, and dispatch pulls the release back to change it.",
+    pages: ["/flight-crew", "/dispatch"],
+  },
+  {
     slug: "no-cost",
     question: "Why does a dispatch option say no cost?",
     answer:
