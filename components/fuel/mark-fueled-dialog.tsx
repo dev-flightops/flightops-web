@@ -17,13 +17,26 @@ import {
   type FuelOrderActionState,
 } from "@/app/(app)/fuel/orders/[id]/actions";
 
+/**
+ * Close a confirmed order with what went in. An order placed left and
+ * right is closed left and right: the client, 18 Nov, "Would like the
+ * confirmation to match the order. So if 25L and 25 R are on the order it
+ * should be confirmed for fuel balance requirements." Each tank is held to
+ * the order as the total is, so a load off balance reads "not as ordered".
+ */
 export function MarkFueledDialog({
   orderId,
   requestedGallons,
+  requestedLeft = null,
+  requestedRight = null,
 }: {
   orderId: string;
   requestedGallons: number;
+  /** The order's tanks, when it was placed left and right. */
+  requestedLeft?: number | null;
+  requestedRight?: number | null;
 }) {
+  const split = requestedLeft !== null && requestedRight !== null;
   const [open, setOpen] = useState(false);
   const [state, action, pending] = useActionState<
     FuelOrderActionState,
@@ -49,7 +62,8 @@ export function MarkFueledDialog({
           <DialogHeader>
             <DialogTitle>Mark order fueled</DialogTitle>
             <DialogDescription>
-              Actuals diverging from requested by more than 5% flip the order
+              Actuals diverging from requested by more than 5%
+              {split ? ", in total or in either tank," : ""} flip the order
               to <span className="font-semibold">discrepancy</span>. A
               discrepancy note also forces that branch.
             </DialogDescription>
@@ -84,27 +98,65 @@ export function MarkFueledDialog({
               />
             </div>
 
-            <div>
-              <label
-                htmlFor="actual_quantity_gallons"
-                className="field-label"
-              >
-                Actual gallons <span className="text-status-red">*</span>
-              </label>
-              <input
-                id="actual_quantity_gallons"
-                name="actual_quantity_gallons"
-                type="number"
-                step="0.1"
-                min={0}
-                defaultValue={requestedGallons}
-                required
-                className="ff-input px-3 py-2 text-sm focus:border-status-green"
-              />
-              <p className="mt-1 text-[0.65rem] text-muted-foreground">
-                Requested {requestedGallons.toLocaleString()} gal.
-              </p>
-            </div>
+            {split ? (
+              <fieldset>
+                <legend className="field-label">
+                  Actual gallons by tank <span className="text-status-red">*</span>
+                </legend>
+                <div className="grid grid-cols-2 gap-3">
+                  {(
+                    [
+                      ["actual_left_gallons", "Left", requestedLeft],
+                      ["actual_right_gallons", "Right", requestedRight],
+                    ] as const
+                  ).map(([name, side, ordered]) => (
+                    <div key={name}>
+                      <label htmlFor={name} className="field-label">
+                        {side} tank (gal)
+                      </label>
+                      <input
+                        id={name}
+                        name={name}
+                        type="number"
+                        step="0.1"
+                        min={0}
+                        defaultValue={ordered ?? undefined}
+                        required
+                        className="ff-input px-3 py-2 text-sm focus:border-status-green"
+                      />
+                      {state.status === "field-errors" && state.errors[name] ? (
+                        <p className="field-error">{state.errors[name]}</p>
+                      ) : null}
+                    </div>
+                  ))}
+                </div>
+                <p className="mt-1 text-[0.65rem] text-muted-foreground">
+                  {`Ordered ${requestedLeft} L / ${requestedRight} R, ${requestedGallons.toLocaleString()} gal.`}
+                </p>
+              </fieldset>
+            ) : (
+              <div>
+                <label
+                  htmlFor="actual_quantity_gallons"
+                  className="field-label"
+                >
+                  Actual gallons <span className="text-status-red">*</span>
+                </label>
+                <input
+                  id="actual_quantity_gallons"
+                  name="actual_quantity_gallons"
+                  type="number"
+                  step="0.1"
+                  min={0}
+                  defaultValue={requestedGallons}
+                  required
+                  className="ff-input px-3 py-2 text-sm focus:border-status-green"
+                />
+                <p className="mt-1 text-[0.65rem] text-muted-foreground">
+                  Requested {requestedGallons.toLocaleString()} gal.
+                </p>
+              </div>
+            )}
 
             <div>
               <label

@@ -612,7 +612,8 @@ describe("WeatherPanel — where each stop's weather came from (#117)", () => {
     expect(weatherCamsFor).toHaveBeenCalledWith(["PABE", "PAEE"]);
   });
 
-  it("shows a worse reading beside the METAR, and the cameras' estimate as one", async () => {
+  it("shows a worse camera estimate beside the METAR as not scored (the client, 18 Nov)", async () => {
+    // "Metar over everything. Village report maybe slightly higher than wx cam."
     batchWeather.mockReset().mockResolvedValueOnce(makeBatch([{ icao: "PAHP", kind: "metar" }]));
     weatherCamsFor.mockResolvedValueOnce({
       items: [
@@ -634,22 +635,75 @@ describe("WeatherPanel — where each stop's weather came from (#117)", () => {
         stopWeather: [
           stop({
             ident: "PAHP",
-            certified: false,
-            described: "METAR and FAA WeatherCam estimate, not certified",
-            visibility_sm: 1.75,
-            visibility_from: "FAA WeatherCam estimate",
+            flags: [
+              "visibility 1.75 SM from the FAA WeatherCam estimate, not scored: the METAR comes first",
+            ],
           }),
         ],
       }),
     );
-    expect(screen.getByText("METAR and FAA WeatherCam estimate · Not certified")).toBeInTheDocument();
-    expect(screen.getByText("Scored on a worse reading")).toBeInTheDocument();
-    expect(screen.getByText("Visibility 1.75 SM (FAA WeatherCam estimate)")).toBeInTheDocument();
+    expect(screen.getByText("Official METAR/TAF")).toBeInTheDocument();
+    expect(screen.queryByText(/^Scored on/)).not.toBeInTheDocument();
+    expect(screen.getByText("Not scored")).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Visibility 1.75 SM from the FAA WeatherCam estimate, not scored: the METAR comes first",
+      ),
+    ).toBeInTheDocument();
     expect(
       screen.getByText("Estimated visibility 1.75 SM (the cameras' estimate, 52% confidence)"),
     ).toBeInTheDocument();
-    // The notice comes from the risk's verdict, which this render didn't pass.
-    expect(screen.queryByText("Not certified weather")).not.toBeInTheDocument();
+  });
+
+  it("says what fills in where the METAR has none", async () => {
+    batchWeather.mockReset().mockResolvedValueOnce(makeBatch([{ icao: "PAKI", kind: "metar" }]));
+    render(
+      await WeatherPanel({
+        icaos: ["PAKI"],
+        stopWeather: [
+          stop({
+            ident: "PAKI",
+            described: "METAR, and the village report where the METAR has none",
+            visibility_sm: 2,
+            visibility_from: "village report",
+          }),
+        ],
+      }),
+    );
+    expect(
+      screen.getByText("Official METAR/TAF, and the village report where the METAR has none"),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Where the METAR has none")).toBeInTheDocument();
+    expect(screen.getByText("Visibility 2 SM (village report)")).toBeInTheDocument();
+  });
+
+  it("links a camera site's pictures when it has nothing current (the client, 18 Nov)", async () => {
+    // "can you put a link to wx cam so dispatch pilot can look at it in frat/packet?"
+    batchWeather.mockReset().mockResolvedValueOnce(makeBatch([{ icao: "PAHP", kind: "metar" }]));
+    weatherCamsFor.mockResolvedValueOnce({
+      items: [
+        makeReport({
+          ...CAM,
+          icao: "PAHP",
+          raw: "No current reading",
+          observed_at: null,
+          site_name: "Hooper Bay",
+          site_url: "https://weathercams.faa.gov/map/-180,51,-129,72/cameraSite/151/details/weather",
+          estimate: null,
+          reports_sky: null,
+          ceiling_ft: null,
+          visibility_sm: null,
+        }),
+      ],
+      errors: [],
+    });
+    render(await WeatherPanel({ icaos: ["PAHP"], stopWeather: [stop({ ident: "PAHP" })] }));
+    expect(screen.getByText("FAA WeatherCam · Hooper Bay · not certified")).toBeInTheDocument();
+    expect(screen.getByText("No current reading.")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Cameras on FAA WeatherCams" })).toHaveAttribute(
+      "href",
+      "https://weathercams.faa.gov/map/-180,51,-129,72/cameraSite/151/details/weather",
+    );
   });
 
   it("names the METAR alone without the risk, as before", async () => {

@@ -34,7 +34,7 @@ vi.mock("@/lib/api/ground", () => ({
 }));
 vi.mock("@/lib/api/client", () => ({ ApiError: TestApiError }));
 
-import { confirmOrderAction } from "./actions";
+import { confirmOrderAction, fueledOrderAction } from "./actions";
 
 const ORDER_ID = "96cb78e2-37f2-4809-bbb0-7e4c6c86896d";
 
@@ -182,5 +182,69 @@ describe("confirmOrderAction — error mapping (M2-C-4)", () => {
       errors: { confirmed_by_name: "Name is required" },
     });
     expect(confirmFuelOrder).not.toHaveBeenCalled();
+  });
+});
+
+
+describe("fueledOrderAction — by tank (the client, 18 Nov)", () => {
+  it("sends each tank of a split order, and no total", async () => {
+    markFuelOrderFueled.mockResolvedValueOnce({});
+    const state = await fueledOrderAction(
+      { status: "idle" },
+      fd({ order_id: ORDER_ID, fueled_by_name: "Agent", actual_left_gallons: "25",
+           actual_right_gallons: "24.5", discrepancy_reason: "", closed_by_source: "ramp" }),
+    );
+    expect(state).toEqual({ status: "ok" });
+    expect(markFuelOrderFueled).toHaveBeenCalledWith(
+      ORDER_ID,
+      expect.objectContaining({
+        fueled_by_name: "Agent",
+        actual_left_gallons: 25,
+        actual_right_gallons: 24.5,
+        closed_by_source: "ramp",
+      }),
+    );
+    expect(markFuelOrderFueled.mock.calls[0][1]).not.toHaveProperty("actual_quantity_gallons");
+  });
+
+  it("asks for the other tank when one is blank", async () => {
+    const state = await fueledOrderAction(
+      { status: "idle" },
+      fd({ order_id: ORDER_ID, fueled_by_name: "Agent", actual_left_gallons: "25", actual_right_gallons: "" }),
+    );
+    expect(state).toEqual({
+      status: "field-errors",
+      errors: expect.objectContaining({ actual_right_gallons: "Right tank gallons must be ≥ 0" }),
+    });
+    expect(markFuelOrderFueled).not.toHaveBeenCalled();
+  });
+
+  it("still sends a total for an order by total", async () => {
+    markFuelOrderFueled.mockResolvedValueOnce({});
+    await fueledOrderAction(
+      { status: "idle" },
+      fd({ order_id: ORDER_ID, fueled_by_name: "Agent", actual_quantity_gallons: "50" }),
+    );
+    expect(markFuelOrderFueled).toHaveBeenCalledWith(
+      ORDER_ID,
+      expect.objectContaining({ actual_quantity_gallons: 50 }),
+    );
+    expect(markFuelOrderFueled.mock.calls[0][1]).not.toHaveProperty("actual_left_gallons");
+  });
+
+  it("shows the service's own words for a split order closed by a total", async () => {
+    markFuelOrderFueled.mockRejectedValueOnce(
+      new TestApiError(422, "/ground/fuel/orders/x/fueled", JSON.stringify({
+        detail: "This order is for 25 L / 25 R: give the gallons that went into each tank.",
+      })),
+    );
+    const state = await fueledOrderAction(
+      { status: "idle" },
+      fd({ order_id: ORDER_ID, fueled_by_name: "Agent", actual_quantity_gallons: "50" }),
+    );
+    expect(state).toEqual({
+      status: "api-error",
+      message: "This order is for 25 L / 25 R: give the gallons that went into each tank.",
+    });
   });
 });

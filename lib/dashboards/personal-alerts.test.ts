@@ -341,6 +341,27 @@ describe("a fuel order's news to whoever placed it and its crew (17 Nov)", () =>
     }
   });
 
+  it("says a split order's tanks, as ordered and as they went in (18 Nov)", async () => {
+    listFuelOrders.mockImplementation(async ({ status, mine }: { status: string; mine?: boolean }) => ({
+      items: !mine
+        ? []
+        : status === "confirmed"
+          ? [order("o1", { status: "confirmed", confirmed_at: at(-20), requested_quantity_gallons: 50,
+                           requested_left_gallons: 25, requested_right_gallons: 25 })]
+          : status === "discrepancy"
+            ? [order("o3", { status: "discrepancy", fueled_at: at(-2), fueled_by_name: "Sam Ramp",
+                             requested_quantity_gallons: 50, requested_left_gallons: 25, requested_right_gallons: 25,
+                             actual_quantity_gallons: 50, actual_left_gallons: 35, actual_right_gallons: 15 })]
+            : [],
+      total: 1,
+    }));
+    const fuel = (await loadPersonalAlerts({ roles: ["pilot"], userId: "u-p" })).filter((a) => a.category === "fuel_order");
+    expect(fuel[0].detail).toBe("50 gal (25 L / 25 R) Jet A, Crowley.");
+    expect(fuel[1].detail).toMatch(
+      /^50 gal \(35 L \/ 15 R\) Jet A put in at \d\d:\d\d AK[SD]T by Sam Ramp; 50 gal \(25 L \/ 25 R\) ordered\.$/,
+    );
+  });
+
   it("asks nothing for someone it can't name", async () => {
     await loadPersonalAlerts({ roles: ["pilot"], userId: null });
     expect(listFuelOrders).not.toHaveBeenCalled();

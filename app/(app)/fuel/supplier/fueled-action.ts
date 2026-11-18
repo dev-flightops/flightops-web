@@ -21,11 +21,20 @@ export type FueledActionResult =
   | { status: "ok"; resulting_status: "fueled" | "discrepancy" }
   | { status: "error"; message: string };
 
+function gallonsOf(raw: string): number | null {
+  const value = Number(raw);
+  return raw.trim() === "" || !Number.isFinite(value) || value < 0 ? null : value;
+}
+
+/** `tanks` is what went into each tank of an order placed left and right,
+ *  which is closed by tank (the client, 18 Nov: "if 25L and 25 R are on the
+ *  order it should be confirmed for fuel balance requirements"). */
 export async function markFueledAction(
   orderId: string,
   fueledByName: string,
   actualGallonsRaw: string,
   discrepancyReason: string,
+  tanks?: { left: string; right: string },
 ): Promise<FueledActionResult> {
   const trimmedName = fueledByName.trim();
   const trimmedReason = discrepancyReason.trim();
@@ -35,22 +44,32 @@ export async function markFueledAction(
       message: "Tell us who's reporting this fueling.",
     };
   }
-  const actuals = Number(actualGallonsRaw);
-  if (
-    !Number.isFinite(actuals) ||
-    actuals < 0 ||
-    actualGallonsRaw.trim() === ""
-  ) {
-    return {
-      status: "error",
-      message: "Enter the actual gallons delivered (0 or higher).",
-    };
+  let went: { actual_quantity_gallons: number } | { actual_left_gallons: number; actual_right_gallons: number };
+  if (tanks) {
+    const left = gallonsOf(tanks.left);
+    const right = gallonsOf(tanks.right);
+    if (left === null || right === null) {
+      return {
+        status: "error",
+        message: "Enter the gallons that went into each tank (0 or higher).",
+      };
+    }
+    went = { actual_left_gallons: left, actual_right_gallons: right };
+  } else {
+    const actuals = gallonsOf(actualGallonsRaw);
+    if (actuals === null) {
+      return {
+        status: "error",
+        message: "Enter the actual gallons delivered (0 or higher).",
+      };
+    }
+    went = { actual_quantity_gallons: actuals };
   }
 
   try {
     const order = await markSupplierFuelOrderFueled(orderId, {
       fueled_by_name: trimmedName,
-      actual_quantity_gallons: actuals,
+      ...went,
       discrepancy_reason: trimmedReason === "" ? null : trimmedReason,
     });
     revalidatePath("/fuel/supplier");
@@ -89,9 +108,18 @@ export async function markFueledAction(
         };
       }
       if (err.status === 422) {
+        // The service's own sentence when it wrote one (a split order
+        // closed by a total); otherwise a value out of range.
+        let said = "";
+        try {
+          const detail = (JSON.parse(err.message) as { detail?: unknown }).detail;
+          said = typeof detail === "string" ? detail : "";
+        } catch {
+          said = "";
+        }
         return {
           status: "error",
-          message: "Out of range — actuals must be 0 or higher.",
+          message: said || "Out of range — actuals must be 0 or higher.",
         };
       }
     }

@@ -880,6 +880,35 @@ describe("the weather each stop was scored on", () => {
     expect(screen.getByText(/light icing PIREP near PABE/)).toBeInTheDocument();
   });
 
+  it("links each stop's cameras and lists what wasn't scored (the client, 18 Nov)", () => {
+    const page = "https://weathercams.faa.gov/map/-180,51,-129,72/cameraSite/48/details/weather";
+    renderStep({
+      ...singleEngine,
+      fratPrefill: {
+        ...PREFILL,
+        stops: [
+          {
+            ...STOP,
+            ident: "PACM",
+            source: "metar",
+            flags: ["visibility 1.5 SM from the FAA WeatherCam estimate, not scored: the METAR comes first"],
+            camera_site: "Scammon Bay",
+            camera_url: page,
+          },
+          { ...STOP, ident: "PABE", source: "metar", camera_site: "Elsewhere", camera_url: "https://example.com/cams" },
+        ],
+        non_certified_weather: false,
+      },
+    });
+    expect(screen.getByRole("link", { name: /^Scammon Bay cameras/ })).toHaveAttribute("href", page);
+    expect(screen.queryByRole("link", { name: /^Elsewhere cameras/ })).toBeNull();
+    expect(
+      screen.getByText(
+        "Visibility 1.5 SM from the FAA WeatherCam estimate, not scored: the METAR comes first",
+      ),
+    ).toBeInTheDocument();
+  });
+
   it("gives no notice when every stop is on its METAR", () => {
     renderStep({
       ...singleEngine,

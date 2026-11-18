@@ -372,6 +372,16 @@ export interface FlightUpdatePayload {
   legs?: FlightLegPayload[];
 }
 
+/** IFR or VFR, chosen by the flight's own pilots at preflight or by
+ *  dispatch, until release (the client, 18 Nov: "the IFR flight needs to be
+ *  selectable for any flight by the pilot"). */
+export async function setFlightRules(flightId: string, isIfr: boolean): Promise<FlightDetail> {
+  return apiFetch<FlightDetail>(`/ops/flights/${flightId}/flight-rules`, {
+    method: "POST",
+    body: JSON.stringify({ is_ifr: isIfr }),
+  });
+}
+
 export async function updateFlight(
   flightId: string,
   patch: FlightUpdatePayload,

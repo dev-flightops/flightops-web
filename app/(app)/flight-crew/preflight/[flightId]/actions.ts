@@ -7,6 +7,7 @@ import {
   completePreflightStep,
   openWeightReturn,
   recordFratAuthorization,
+  setFlightRules,
   submitFratAssessment,
   submitPilotAcceptance,
 } from "@/lib/api/ops";
@@ -260,4 +261,33 @@ export async function returnFlightOverWeightAction(
     }
     return { ok: false, error: "Couldn't send — try again." };
   }
+}
+
+/**
+ * IFR or VFR for the flight, from its pilot (the client, 18 Nov: "for fuel
+ * planning etc. the IFR flight needs to be selectable for any flight by the
+ * pilot. I'm not seeing a way for the pilot to select that in the
+ * preflight"). The FRAT, the fuel planning and the dispatch minimums read
+ * the flight's own rules, so the page is drawn again with them.
+ */
+export async function setFlightRulesAction(flightId: string, isIfr: boolean): Promise<StepResult> {
+  try {
+    await setFlightRules(flightId, isIfr);
+  } catch (err) {
+    if (err instanceof ApiError) {
+      if (err.status === 401) return { ok: false, error: "Your session expired — sign in again." };
+      if (err.status === 403) {
+        return { ok: false, error: "Only the flight's own pilots and dispatch choose its rules." };
+      }
+      if (err.status === 409) {
+        return {
+          ok: false,
+          error: "The flight is released under its rules. Ask dispatch to pull the release back to change them.",
+        };
+      }
+    }
+    return { ok: false, error: "Couldn't change the flight rules. Try again." };
+  }
+  revalidatePath(`/flight-crew/preflight/${flightId}`);
+  return { ok: true };
 }

@@ -4,7 +4,12 @@ import { Fragment, useMemo, useState, useTransition } from "react";
 
 import { segment, segmentGroup } from "@/components/ff/controls";
 import { OnScreenText } from "@/components/ff/setup-notice";
-import { NonCertifiedWeatherNotice, sourceLabel } from "@/components/weather/weather-source";
+import {
+  CameraLink,
+  isFaaCameraPage,
+  NonCertifiedWeatherNotice,
+  sourceLabel,
+} from "@/components/weather/weather-source";
 import type { StopWeather } from "@/lib/api/dispatch-risk";
 import type {
   ApproachMinimums,
@@ -1579,7 +1584,10 @@ function formatBlockExpiry(iso: string | null): string {
 
 /** Where each stop's weather came from (#117), and the client's notice
  *  when some of it isn't certified: "should note in the FRAT where the
- *  weather was sourced". */
+ *  weather was sourced". With each stop's FAA WeatherCam page and the worse
+ *  readings not scored (the client, 18 Nov: "Metar over everything", and
+ *  "can you put a link to wx cam so dispatch pilot can look at it in
+ *  frat/packet?"). */
 function WeatherUsed({
   stops,
   nonCertified,
@@ -1602,6 +1610,19 @@ function WeatherUsed({
                 }
               >
                 {sourceLabel(stop)}
+                {stop.camera_url && isFaaCameraPage(stop.camera_url) ? (
+                  <>
+                    {" · "}
+                    <CameraLink url={stop.camera_url} site={stop.camera_site} />
+                  </>
+                ) : null}
+                {stop.flags?.length ? (
+                  <ul className="mt-0.5 space-y-0.5 text-foreground">
+                    {stop.flags.map((flag) => (
+                      <li key={flag}>{`${flag.charAt(0).toUpperCase()}${flag.slice(1)}`}</li>
+                    ))}
+                  </ul>
+                ) : null}
               </dd>
             </Fragment>
           ))}

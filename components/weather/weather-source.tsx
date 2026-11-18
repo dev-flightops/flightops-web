@@ -6,9 +6,12 @@ import type { StopWeather } from "@/lib/api/dispatch-risk";
  *
  * The client, 26 Oct: the FRAT "should note in the FRAT where the weather
  * was sourced. Ideally where it says the source (metar) it could also
- * denote village wx, etc." Each element is the worst of the METAR, the FAA
- * WeatherCam and the village report, so a stop can be scored on more than
- * one; ops says which (`StopWeather`), and this only words it.
+ * denote village wx, etc." Each element is from the first of the METAR, the
+ * village report and the FAA WeatherCam that reports it (the client, 18
+ * Nov: "Metar over everything. Village report maybe slightly higher than wx
+ * cam."), so a stop can be scored on more than one, and a worse reading
+ * further down is shown, not scored; ops says which (`StopWeather`), and
+ * this only words it.
  */
 
 /** The client's notice, word for word with the packet PDF's
@@ -27,9 +30,9 @@ export function NonCertifiedWeatherNotice() {
   );
 }
 
-/** "Official METAR/TAF", with a worse reading beside it named (#151:
- *  "Official METAR/TAF, and the FAA WeatherCam estimate where worse"), or
- *  the sources scored, e.g. "Village report · Not certified". */
+/** "Official METAR/TAF", with what fills in where the METAR has none
+ *  ("Official METAR/TAF, and the village report where the METAR has
+ *  none"), or the sources scored, e.g. "Village report · Not certified". */
 export function sourceLabel(stop: StopWeather): string {
   if (stop.certified) {
     return stop.described.startsWith("METAR")
@@ -68,4 +71,47 @@ export function scoredElsewhere(stop: StopWeather): string[] {
     lines.push(`Wind ${direction} @ ${stop.wind_kt}${gust} kt (${stop.wind_from})`);
   }
   return lines;
+}
+
+/** Worse readings further down the client's order, shown and not scored:
+ *  the client, 18 Nov, "Metar over everything. Village report maybe
+ *  slightly higher than wx cam." */
+export function NotScored({ flags, className = "mt-3" }: { flags?: string[]; className?: string }) {
+  if (!flags?.length) return null;
+  return (
+    <div className={`${className} border-l-[3px] border-l-status-yellow pl-3`}>
+      <p className="eyebrow">Not scored</p>
+      <ul className="mt-1 space-y-0.5 text-sm text-foreground">
+        {flags.map((flag) => (
+          <li key={flag}>{`${flag.charAt(0).toUpperCase()}${flag.slice(1)}`}</li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+/** The stop's FAA WeatherCam page, to look at the pictures (the client,
+ *  18 Nov: "can you put a link to wx cam so dispatch pilot can look at it
+ *  in frat/packet?"). Only the FAA's page is linked. */
+export function CameraLink({ url, site }: { url?: string | null; site?: string | null }) {
+  if (!url || !isFaaCameraPage(url)) return null;
+  return (
+    <a
+      href={url}
+      target="_blank"
+      rel="noreferrer"
+      className="underline underline-offset-2 hover:text-foreground"
+    >
+      {site ? `${site} cameras` : "Cameras"}
+      <span className="sr-only"> (opens the FAA WeatherCams page)</span>
+    </a>
+  );
+}
+
+export function isFaaCameraPage(url: string): boolean {
+  try {
+    return new URL(url).hostname === "weathercams.faa.gov";
+  } catch {
+    return false;
+  }
 }

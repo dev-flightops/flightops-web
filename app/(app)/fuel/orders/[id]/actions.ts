@@ -47,22 +47,44 @@ export async function confirmOrderAction(
   return { status: "ok" };
 }
 
-const FueledSchema = z.object({
-  order_id: z.string().uuid(),
-  fueled_by_name: z.string().trim().min(1, "Name is required").max(200),
-  actual_quantity_gallons: z
+const gallons = (message: string) =>
+  z
     .string()
+    .trim()
+    .min(1, message)
     .transform((v) => Number(v))
-    .refine((v) => Number.isFinite(v) && v >= 0, {
-      message: "Actual gallons must be ≥ 0",
-    }),
-  discrepancy_reason: z
-    .string()
-    .max(2000)
-    .optional()
-    .or(z.literal("").transform(() => undefined)),
-  closed_by_source: z.enum(["supplier", "ramp", "dispatch"]).default("ramp"),
-});
+    .refine((v) => Number.isFinite(v) && v >= 0, { message });
+
+/** A total, or both tanks of an order placed left and right: the client,
+ *  18 Nov, "Would like the confirmation to match the order. So if 25L and
+ *  25 R are on the order it should be confirmed for fuel balance
+ *  requirements." The form sends whichever it asked for. */
+const FueledSchema = z
+  .object({
+    order_id: z.string().uuid(),
+    fueled_by_name: z.string().trim().min(1, "Name is required").max(200),
+    actual_quantity_gallons: gallons("Actual gallons must be ≥ 0").optional(),
+    actual_left_gallons: gallons("Left tank gallons must be ≥ 0").optional(),
+    actual_right_gallons: gallons("Right tank gallons must be ≥ 0").optional(),
+    discrepancy_reason: z
+      .string()
+      .max(2000)
+      .optional()
+      .or(z.literal("").transform(() => undefined)),
+    closed_by_source: z.enum(["supplier", "ramp", "dispatch"]).default("ramp"),
+  })
+  .superRefine((v, ctx) => {
+    const sides = v.actual_left_gallons !== undefined || v.actual_right_gallons !== undefined;
+    if (sides) {
+      for (const key of ["actual_left_gallons", "actual_right_gallons"] as const) {
+        if (v[key] === undefined) {
+          ctx.addIssue({ code: "custom", path: [key], message: "Give the gallons for each tank" });
+        }
+      }
+    } else if (v.actual_quantity_gallons === undefined) {
+      ctx.addIssue({ code: "custom", path: ["actual_quantity_gallons"], message: "Actual gallons must be ≥ 0" });
+    }
+  });
 
 export async function fueledOrderAction(
   _prev: ActionState,
@@ -73,9 +95,12 @@ export async function fueledOrderAction(
   );
   if (!parsed.success) return zodToFieldErrors(parsed.error.issues);
   try {
+    const { actual_left_gallons: left, actual_right_gallons: right } = parsed.data;
     await markFuelOrderFueled(parsed.data.order_id, {
       fueled_by_name: parsed.data.fueled_by_name,
-      actual_quantity_gallons: parsed.data.actual_quantity_gallons,
+      ...(left !== undefined && right !== undefined
+        ? { actual_left_gallons: left, actual_right_gallons: right }
+        : { actual_quantity_gallons: parsed.data.actual_quantity_gallons }),
       discrepancy_reason: parsed.data.discrepancy_reason ?? null,
       closed_by_source: parsed.data.closed_by_source,
       invoice_pending: true,
@@ -170,7 +195,11 @@ function apiToState(err: unknown): ActionState {
       // Field validation failed at the backend (usually a mismatch
       // between the zod schema and the Pydantic schema). Surface the
       // first field message so the user has a chance of fixing it,
-      // rather than a bare "HTTP 422".
+      // rather than a bare "HTTP 422". A sentence the service wrote for
+      // people (an order split left and right, closed by a total) shows
+      // as written.
+      const said = parseDetail(err.message);
+      if (said) return { status: "api-error", message: said };
       const field = parseFirstFieldError(err.message);
       return {
         status: "api-error",

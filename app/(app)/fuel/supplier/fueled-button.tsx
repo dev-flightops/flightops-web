@@ -22,15 +22,24 @@ export function MarkFueledButton({
   orderId,
   tail,
   requestedGallons,
+  requestedLeft = null,
+  requestedRight = null,
 }: {
   orderId: string;
   tail: string;
   requestedGallons: number;
+  /** The order's tanks, when it was placed left and right: then it's
+   *  closed by tank (the client, 18 Nov). */
+  requestedLeft?: number | null;
+  requestedRight?: number | null;
 }) {
+  const split = requestedLeft !== null && requestedRight !== null;
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [gallons, setGallons] = useState(String(requestedGallons));
+  const [left, setLeft] = useState(String(requestedLeft ?? ""));
+  const [right, setRight] = useState(String(requestedRight ?? ""));
   const [reason, setReason] = useState("");
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -70,25 +79,54 @@ export function MarkFueledButton({
           placeholder="e.g. Sarah at AvFuel"
         />
       </label>
-      <label className="block">
-        <span className="eyebrow">
-          Actual gallons *
-        </span>
-        <input
-          type="number"
-          inputMode="decimal"
-          min={0}
-          step={0.1}
-          value={gallons}
-          disabled={pending}
-          onChange={(e) => setGallons(e.target.value)}
-          className="ff-input mt-0.5 px-2 py-1 text-xs"
-          placeholder={String(requestedGallons)}
-        />
-        <span className="text-[0.6rem] text-muted-foreground">
-          Off by &gt;5% from {requestedGallons} auto-flags as discrepancy.
-        </span>
-      </label>
+      {split ? (
+        <div className="grid grid-cols-2 gap-1.5">
+          {(
+            [
+              ["Left tank (gal) *", left, setLeft, requestedLeft],
+              ["Right tank (gal) *", right, setRight, requestedRight],
+            ] as const
+          ).map(([label, value, set, ordered]) => (
+            <label key={label} className="block">
+              <span className="eyebrow">{label}</span>
+              <input
+                type="number"
+                inputMode="decimal"
+                min={0}
+                step={0.1}
+                value={value}
+                disabled={pending}
+                onChange={(e) => set(e.target.value)}
+                className="ff-input mt-0.5 px-2 py-1 text-xs"
+                placeholder={String(ordered)}
+              />
+            </label>
+          ))}
+          <span className="col-span-2 text-[0.6rem] text-muted-foreground">
+            {`Ordered ${requestedLeft} L / ${requestedRight} R. A tank off by >5% auto-flags as discrepancy.`}
+          </span>
+        </div>
+      ) : (
+        <label className="block">
+          <span className="eyebrow">
+            Actual gallons *
+          </span>
+          <input
+            type="number"
+            inputMode="decimal"
+            min={0}
+            step={0.1}
+            value={gallons}
+            disabled={pending}
+            onChange={(e) => setGallons(e.target.value)}
+            className="ff-input mt-0.5 px-2 py-1 text-xs"
+            placeholder={String(requestedGallons)}
+          />
+          <span className="text-[0.6rem] text-muted-foreground">
+            Off by &gt;5% from {requestedGallons} auto-flags as discrepancy.
+          </span>
+        </label>
+      )}
       <label className="block">
         <span className="eyebrow">
           Discrepancy note (optional)
@@ -115,6 +153,7 @@ export function MarkFueledButton({
                 name,
                 gallons,
                 reason,
+                split ? { left, right } : undefined,
               );
               if (result.status === "error") {
                 setError(result.message);

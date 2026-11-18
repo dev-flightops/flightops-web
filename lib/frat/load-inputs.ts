@@ -74,7 +74,8 @@ export async function loadFratInputs(
     getFratPrefill(flight.id, { observations, stops, is_ifr: isIfrPlanned(flight) }).catch(
       () => null,
     ),
-    observations.length > 0 || stops.some((stop) => stop.weathercam)
+    // A camera site with no current reading is sent for its page alone.
+    observations.length > 0 || stops.some((stop) => stop.weathercam && stop.weathercam.kind !== "none")
       ? getFratBlockEligibility(flight.id, {
           observations,
           stops,

@@ -757,7 +757,10 @@ export async function acknowledgeSupplierFuelOrder(
 
 export interface SupplierFueledPayload {
   fueled_by_name: string;
-  actual_quantity_gallons: number;
+  /** The total, or each tank of an order placed left and right. */
+  actual_quantity_gallons?: number;
+  actual_left_gallons?: number;
+  actual_right_gallons?: number;
   discrepancy_reason?: string | null;
   invoice_pending?: boolean;
 }
@@ -778,9 +781,14 @@ export async function markSupplierFuelOrderFueled(
   );
 }
 
+/** What went in: the total, or each tank of an order placed left and right
+ *  (the service then takes their sum, and refuses a split order closed by
+ *  a total alone: the client, 18 Nov). */
 export interface FuelOrderFueledPayload {
   fueled_by_name: string;
-  actual_quantity_gallons: number;
+  actual_quantity_gallons?: number;
+  actual_left_gallons?: number;
+  actual_right_gallons?: number;
   discrepancy_reason?: string | null;
   closed_by_source?: FuelOrderCloseSource;
   invoice_pending?: boolean;

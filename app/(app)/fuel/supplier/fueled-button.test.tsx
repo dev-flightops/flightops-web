@@ -73,4 +73,21 @@ describe("MarkFueledButton", () => {
     expect(screen.getByText(/mark fueled for/i)).toBeInTheDocument();
     expect(screen.getByText("N510PA")).toBeInTheDocument();
   });
+
+  it("asks for each tank of an order placed left and right (the client, 18 Nov)", async () => {
+    markFueledAction.mockResolvedValueOnce({ status: "ok", resulting_status: "fueled" });
+    render(
+      <MarkFueledButton orderId="o-1" tail="N207GE" requestedGallons={50} requestedLeft={25} requestedRight={25} />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: /^mark fueled$/i }));
+    expect(screen.queryByLabelText(/actual gallons/i)).toBeNull();
+    expect(screen.getByText("Ordered 25 L / 25 R. A tank off by >5% auto-flags as discrepancy.")).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText(/your name/i), { target: { value: "Sarah" } });
+    fireEvent.change(screen.getByLabelText(/left tank/i), { target: { value: "26" } });
+    fireEvent.change(screen.getByLabelText(/right tank/i), { target: { value: "24" } });
+    fireEvent.click(screen.getByRole("button", { name: /^confirm$/i }));
+    await vi.waitFor(() =>
+      expect(markFueledAction).toHaveBeenCalledWith("o-1", "Sarah", "50", "", { left: "26", right: "24" }),
+    );
+  });
 });

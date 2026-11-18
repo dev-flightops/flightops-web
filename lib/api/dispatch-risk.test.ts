@@ -144,6 +144,29 @@ describe("FAA WeatherCams (#117)", () => {
     expect(weatherCamIn(undefined)).toBeNull();
   });
 
+  it("hands ops a camera site with nothing current, for its page alone (the client, 18 Nov)", () => {
+    const dark = {
+      ...report("PAHP", "wxcam", "No current reading"),
+      observed_at: null,
+      site_name: "Hooper Bay",
+      site_url: "https://weathercams.faa.gov/map/-180,51,-129,72/cameraSite/151/details/weather",
+    } as WeatherReportResponse;
+    expect(weatherCamIn(dark)).toEqual({
+      site_name: "Hooper Bay",
+      kind: "none",
+      observed_at: null,
+      raw: null,
+      reports_sky: false,
+      ceiling_ft: null,
+      visibility_sm: null,
+      wind_direction_deg: null,
+      wind_speed_kt: null,
+      wind_gust_kt: null,
+      page_url: dark.site_url,
+    });
+    expect(weatherCamIn({ ...dark, site_url: null } as WeatherReportResponse)).toBeNull();
+  });
+
   it("asks in a batch of their own and doesn't wait on a slow FAA page", async () => {
     vi.mocked(batchWeather).mockResolvedValueOnce({ items: [VWOS], errors: [] });
     expect((await weatherCamsFor(["PAEE", "PABE"]))?.items).toEqual([VWOS]);
