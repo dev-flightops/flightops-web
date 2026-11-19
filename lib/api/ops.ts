@@ -160,6 +160,8 @@ export interface FlightCreatePayload {
   notes?: string | null;
   /** Flown IFR (#123); VFR when left out. */
   is_ifr?: boolean;
+  /** An IFR flight's alternate (#201); ignored for a VFR flight. */
+  alternate_ident?: string | null;
   /** A multi-stop route (services migration 0104): origin and the
    *  departure are the first leg's, destination and arrival the last's. */
   legs?: FlightLegPayload[];
@@ -367,6 +369,8 @@ export interface FlightUpdatePayload {
   notes?: string | null;
   /** Flown IFR (#123). */
   is_ifr?: boolean;
+  /** An IFR flight's alternate (#201); null clears it. Going VFR clears it. */
+  alternate_ident?: string | null;
   /** Replace the route (#106): two or more legs make it multi-stop and
    *  set the endpoints from them; [] makes it a single leg again. */
   legs?: FlightLegPayload[];
@@ -374,11 +378,19 @@ export interface FlightUpdatePayload {
 
 /** IFR or VFR, chosen by the flight's own pilots at preflight or by
  *  dispatch, until release (the client, 18 Nov: "the IFR flight needs to be
- *  selectable for any flight by the pilot"). */
-export async function setFlightRules(flightId: string, isIfr: boolean): Promise<FlightDetail> {
+ *  selectable for any flight by the pilot"), and an IFR flight's alternate
+ *  (#201). Left out, the alternate stays as it is; going VFR clears it. */
+export async function setFlightRules(
+  flightId: string,
+  isIfr: boolean,
+  alternateIdent?: string | null,
+): Promise<FlightDetail> {
   return apiFetch<FlightDetail>(`/ops/flights/${flightId}/flight-rules`, {
     method: "POST",
-    body: JSON.stringify({ is_ifr: isIfr }),
+    body: JSON.stringify({
+      is_ifr: isIfr,
+      ...(alternateIdent !== undefined ? { alternate_ident: alternateIdent } : {}),
+    }),
   });
 }
 

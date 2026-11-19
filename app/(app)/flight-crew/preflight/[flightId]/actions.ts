@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 
 import { ApiError } from "@/lib/api/client";
+import { scheduleRefusal } from "@/lib/flights/schedule-refusals";
 import {
   completePreflightStep,
   openWeightReturn,
@@ -268,14 +269,28 @@ export async function returnFlightOverWeightAction(
  * planning etc. the IFR flight needs to be selectable for any flight by the
  * pilot. I'm not seeing a way for the pilot to select that in the
  * preflight"). The FRAT, the fuel planning and the dispatch minimums read
- * the flight's own rules, so the page is drawn again with them.
+ * the flight's own rules, so the page is drawn again with them. An IFR
+ * flight's alternate (#201) comes with it, for its fuel; left out, it stays.
  */
-export async function setFlightRulesAction(flightId: string, isIfr: boolean): Promise<StepResult> {
+export async function setFlightRulesAction(
+  flightId: string,
+  isIfr: boolean,
+  alternateIdent?: string | null,
+): Promise<StepResult> {
   try {
-    await setFlightRules(flightId, isIfr);
+    if (alternateIdent === undefined) await setFlightRules(flightId, isIfr);
+    else await setFlightRules(flightId, isIfr, alternateIdent);
   } catch (err) {
     if (err instanceof ApiError) {
       if (err.status === 401) return { ok: false, error: "Your session expired — sign in again." };
+      if (err.status === 422) {
+        return {
+          ok: false,
+          error:
+            scheduleRefusal(err.message) ??
+            "That isn't an airport code: 3 or 4 letters and digits, an ICAO or FAA identifier.",
+        };
+      }
       if (err.status === 403) {
         return { ok: false, error: "Only the flight's own pilots and dispatch choose its rules." };
       }

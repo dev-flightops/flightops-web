@@ -78,8 +78,18 @@ const schema = z
     cargo_lbs: z.coerce.number().int().nonnegative("Cannot be negative"),
     notes: z.string().max(500, "Max 500 characters"),
     is_ifr: z.boolean(),
+    // #201: an IFR flight's alternate, for its fuel. Blank is none yet;
+    // checked below, only while IFR is ticked (the box is hidden for VFR).
+    alternate_ident: z.string(),
   })
   .superRefine((v, ctx) => {
+    if (v.is_ifr && !/^([A-Z0-9]{3,4})?$/.test(v.alternate_ident.trim())) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["alternate_ident"],
+        message: "3- or 4-character airport code (ICAO or FAA)",
+      });
+    }
     // The same zone throughout, so the local strings compare in order.
     if (v.scheduled_arrival_at && v.scheduled_arrival_at <= v.scheduled_departure_at) {
       ctx.addIssue({
@@ -257,6 +267,9 @@ function buildPatch(
   if (notesNormalized !== (flight.notes ?? null))
     patch.notes = notesNormalized;
   if (values.is_ifr !== Boolean(flight.is_ifr)) patch.is_ifr = values.is_ifr;
+  // #201: only an IFR flight keeps an alternate; ops clears it for VFR.
+  const alternate = values.is_ifr ? values.alternate_ident.trim() || null : null;
+  if (values.is_ifr && alternate !== (flight.alternate_ident ?? null)) patch.alternate_ident = alternate;
   return patch;
 }
 
@@ -282,6 +295,7 @@ export function EditFlightDialog({
       cargo_lbs: flight.cargo_lbs,
       notes: flight.notes ?? "",
       is_ifr: Boolean(flight.is_ifr),
+      alternate_ident: flight.alternate_ident ?? "",
     },
   });
   const stops = useFieldArray({ control: form.control, name: "stops" });
@@ -582,6 +596,33 @@ export function EditFlightDialog({
                   Flown IFR
                 </label>
               </div>
+
+              {/* #201: the fuel estimate flies an IFR flight on to its
+                  alternate, so it asks for one when IFR is ticked. */}
+              {form.watch("is_ifr") && (
+                <FormField
+                  control={form.control}
+                  name="alternate_ident"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Alternate</FormLabel>
+                      <FormControl>
+                        <Input
+                          autoComplete="off"
+                          placeholder="e.g. PABE"
+                          className="font-mono uppercase"
+                          {...field}
+                          onChange={(e) => field.onChange(e.target.value.toUpperCase())}
+                        />
+                      </FormControl>
+                      <p className="text-xs text-muted-foreground">
+                        The fuel estimate adds the flight to it.
+                      </p>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
 
               <FormItem className="sm:col-span-2">
                 <Label htmlFor="edit-notes">Notes</Label>

@@ -127,6 +127,8 @@ export function OpenFlightForm({
    * selects silently blanked on save for the same reason.
    */
   const [submitCount, setSubmitCount] = useState(0);
+  // #201: the Alternate box shows while Flown IFR is ticked.
+  const [ifr, setIfr] = useState(submitted("is_ifr") === "on");
   const wasPending = useRef(false);
   useEffect(() => {
     if (wasPending.current && !pending) setSubmitCount((n) => n + 1);
@@ -438,6 +440,7 @@ export function OpenFlightForm({
               type="checkbox"
               name="is_ifr"
               defaultChecked={submitted("is_ifr") === "on"}
+              onChange={(e) => setIfr(e.target.checked)}
               className="accent-primary"
             />
             Flown IFR
@@ -446,6 +449,19 @@ export function OpenFlightForm({
             Leave it unticked for a VFR flight: below the company&apos;s dispatch minimums at any stop it isn&apos;t released.
           </p>
         </div>
+        {/* #201: the fuel estimate flies an IFR flight on to its alternate. */}
+        {ifr && (
+          <Field
+            name="alternate_ident"
+            label="Alternate"
+            placeholder="e.g. PABE"
+            autoComplete="off"
+            className="w-full rounded-md border border-border bg-background px-3 py-2 font-mono text-xs uppercase text-foreground focus:border-primary focus:outline-none aria-[invalid=true]:border-status-red"
+            defaultValue={submitted("alternate_ident")}
+            error={fieldError("alternate_ident")}
+            hint="The fuel estimate adds the flight to it."
+          />
+        )}
       </div>
 
       <div>

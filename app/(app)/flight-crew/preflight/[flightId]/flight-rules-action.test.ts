@@ -22,6 +22,21 @@ describe("setFlightRulesAction", () => {
     expect(revalidatePath).toHaveBeenCalledWith("/flight-crew/preflight/f-1");
   });
 
+  it("sends an IFR flight's alternate when given (#201)", async () => {
+    setFlightRules.mockResolvedValueOnce({});
+    expect(await setFlightRulesAction("f-1", true, "PABE")).toEqual({ ok: true });
+    expect(setFlightRules).toHaveBeenCalledWith("f-1", true, "PABE");
+  });
+
+  it("says an airport isn't known", async () => {
+    setFlightRules.mockRejectedValueOnce(
+      new ApiError(422, "/flight-rules", JSON.stringify({ detail: { error: "unknown_airport", codes: ["ZZZZ"] } })),
+    );
+    const result = await setFlightRulesAction("f-1", true, "ZZZZ");
+    expect(result.ok).toBe(false);
+    expect(result.error).toMatch(/^ZZZZ isn't an airport we know/);
+  });
+
   it.each([
     [403, "Only the flight's own pilots and dispatch choose its rules."],
     [409, "The flight is released under its rules. Ask dispatch to pull the release back to change them."],

@@ -31,9 +31,40 @@ describe("FlightRules (the client, 18 Nov)", () => {
   it("says what IFR means for the plan, and choosing it again does nothing", async () => {
     const user = userEvent.setup();
     render(<FlightRules flightId="f-1" isIfr status="scheduled" />);
-    expect(screen.getByText(/plan fuel to your alternate/)).toBeInTheDocument();
+    expect(screen.getByText(/name your alternate for the fuel estimate/)).toBeInTheDocument();
     await user.click(screen.getByRole("radio", { name: "IFR" }));
     expect(setRules).not.toHaveBeenCalled();
+  });
+
+  it("asks an IFR flight for its alternate and saves it, for the fuel (#201)", async () => {
+    setRules.mockResolvedValue({ ok: true });
+    const user = userEvent.setup();
+    render(<FlightRules flightId="f-1" isIfr status="scheduled" />);
+    const box = screen.getByLabelText("Alternate");
+    await user.type(box, "pa-b");
+    await user.click(screen.getByRole("button", { name: "Save" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("An airport code: 3 or 4 letters and digits");
+    expect(setRules).not.toHaveBeenCalled();
+    await user.clear(box);
+    await user.type(box, "pabe{Enter}");
+    expect(setRules).toHaveBeenCalledWith("f-1", true, "PABE");
+    expect(refresh).toHaveBeenCalled();
+  });
+
+  it("says where the fuel flies on to, and has no box once released", () => {
+    const { unmount } = render(<FlightRules flightId="f-1" isIfr status="scheduled" alternate="PABE" />);
+    expect(screen.getByLabelText("Alternate")).toHaveValue("PABE");
+    expect(screen.getByRole("button", { name: "Save" })).toBeDisabled();
+    expect(screen.getByText(/the fuel estimate flies on to PABE/)).toBeInTheDocument();
+    unmount();
+    render(<FlightRules flightId="f-1" isIfr status="released" alternate="PABE" />);
+    expect(screen.queryByLabelText("Alternate")).toBeNull();
+    expect(screen.getByText("Released IFR, alternate PABE. Dispatch pulls the release back to change it.")).toBeInTheDocument();
+  });
+
+  it("has no alternate box for VFR", () => {
+    render(<FlightRules flightId="f-1" isIfr={false} status="scheduled" alternate={null} />);
+    expect(screen.queryByLabelText("Alternate")).toBeNull();
   });
 
   it("keeps the released rules, and says who changes them", () => {
