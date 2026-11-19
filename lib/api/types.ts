@@ -134,6 +134,34 @@ export interface FlightListItem {
   /** Seats held on each leg, in leg order, when the list is asked
    *  `withSeats` (#139); else null or absent. */
   seats_held_by_leg?: number[] | null;
+  /** Open MEL deferrals on the aircraft whose limit the flight breaks
+   *  (#200), on a flight not yet flown: the release refuses it. Absent
+   *  from services before it. */
+  mel_limits?: MelLimitBreach[];
+}
+
+/** A departure or arrival at night against a Day VFR only deferral. */
+export interface MelLimitStop {
+  ident: string;
+  kind: "departure" | "arrival";
+  at: string;
+  /** There: the end of evening civil twilight before `at`, and the
+   *  beginning of morning civil twilight after it (14 CFR 1.1). */
+  dusk: string | null;
+  dawn: string | null;
+}
+
+/** An open MEL deferral whose operating limit the flight breaks (#200). */
+export interface MelLimitBreach {
+  mel_id: string;
+  ata_chapter: string;
+  description: string;
+  limit: MelOperatingLimit;
+  ifr: boolean;
+  night: MelLimitStop[];
+  unknown: string[];
+  /** What a dispatcher reads, in each stop's local time. */
+  message: string;
 }
 
 /** One leg of a multi-stop flight. */
@@ -706,6 +734,8 @@ export interface FleetAirworthinessResponse {
 
 export type MelCategory = "A" | "B" | "C" | "D";
 export type MelStatus = "open" | "closed";
+/** What an MEL deferral limits the aircraft to (#200). */
+export type MelOperatingLimit = "day_vfr" | "vfr";
 
 export interface MelItemResponse {
   id: string;
@@ -719,6 +749,9 @@ export interface MelItemResponse {
   closed_at: string | null;
   closed_by: UserRef | null;
   notes: string | null;
+  /** Day VFR only or VFR only (#200); null when it limits nothing.
+   *  Absent from services before it. */
+  operating_limit?: MelOperatingLimit | null;
 }
 
 export interface MelItemCreateRequest {
@@ -729,6 +762,7 @@ export interface MelItemCreateRequest {
   deferred_at: string; // ISO 8601 UTC
   due_at: string; // ISO 8601 UTC
   notes?: string | null;
+  operating_limit?: MelOperatingLimit | null;
 }
 
 export interface MelItemCloseRequest {

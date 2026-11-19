@@ -75,3 +75,26 @@ describe("the schedule by aircraft", () => {
     expect(screen.queryByText("Now")).toBeNull();
   });
 });
+
+describe("an MEL deferral's limit on the day (#200)", () => {
+  it("marks the blocks of a flight the release would refuse, saying why", () => {
+    const limited = { ...flight, mel_limits: [{
+  mel_id: "mel-1",
+  ata_chapter: "33-40",
+  description: "Right nav light inoperative",
+  limit: "day_vfr" as const,
+  ifr: false,
+  night: [],
+  unknown: [],
+  message: "N100PA is day VFR only under MEL 33-40: the departure from PABE at 18:30 AKST is after civil twilight ends at 17:58.",
+}] };
+    const fleet = [{ id: "ac-100", tail: "N100PA", model: "Cessna 208 Caravan", active: true, airworthy: true, groundedReason: null }];
+    const cols = aircraftColumns(fleet, dayLegs([limited])).map((c) => ({ ...c, legs: placeLegs("2026-10-30", c.legs, AK, 6) }));
+    render(<AircraftDay columns={cols} start={6} end={20} zone={AK} zones={ZONES} nowMinute={null} />);
+    const block = screen.getByRole("button", { name: /^PGR790\.1/ });
+    expect(block).toHaveAccessibleName(
+      "PGR790.1, PABE to 9Z8, 10:30–11:45, Released, 5 of 9 seats booked. Can't be released: N100PA is day VFR only under MEL 33-40: the departure from PABE at 18:30 AKST is after civil twilight ends at 17:58.",
+    );
+    expect(within(block).getByText("MEL")).toBeInTheDocument();
+  });
+});

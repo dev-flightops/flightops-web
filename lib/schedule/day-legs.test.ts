@@ -132,3 +132,21 @@ describe("placing legs on the day", () => {
     ]);
   });
 });
+
+describe("an MEL deferral's limit on the day (#200)", () => {
+  it("goes with every leg of the flight that breaks it, and none without", () => {
+    const limited = dayLegs([flight({ mel_limits: [{
+  mel_id: "mel-1",
+  ata_chapter: "33-40",
+  description: "Right nav light inoperative",
+  limit: "day_vfr" as const,
+  ifr: false,
+  night: [],
+  unknown: [],
+  message: "N100PA is day VFR only under MEL 33-40: the departure from PABE at 18:30 AKST is after civil twilight ends at 17:58.",
+}] })]);
+    expect(limited.map((l) => l.melLimits.length)).toEqual([1, 1]);
+    expect(limited[0].melLimits[0]).toMatch(/^N100PA is day VFR only/);
+    expect(dayLegs([flight({})]).map((l) => l.melLimits)).toEqual([[], []]);
+  });
+});

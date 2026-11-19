@@ -8,10 +8,12 @@ import {
   createMelItem,
   createSquawk,
   resolveSquawk,
+  setMelOperatingLimit,
 } from "@/lib/api/maintenance";
 import type {
   MelItemCloseRequest,
   MelItemCreateRequest,
+  MelOperatingLimit,
   SquawkCreateRequest,
   SquawkResolveRequest,
 } from "@/lib/api/types";
@@ -197,6 +199,36 @@ export async function resolveSquawkAction(
       return { ok: false, error: `Resolve failed (HTTP ${err.status}).` };
     }
     return { ok: false, error: "Resolve failed. Please try again." };
+  }
+}
+
+export type MelLimitActionResult = { ok: true } | { ok: false; error: string };
+
+/**
+ * Set or clear what an open deferral limits the aircraft to (#200): Day
+ * VFR only or VFR only. The release reads it, so it is maintenance's
+ * sign-off like the deferral itself.
+ */
+export async function setMelLimitAction(
+  melItemId: string,
+  limit: MelOperatingLimit | null,
+): Promise<MelLimitActionResult> {
+  try {
+    await setMelOperatingLimit(melItemId, limit);
+    revalidatePath(`/dispatch`, "layout");
+    revalidatePath(`/maintenance`, "layout");
+    revalidatePath(`/schedule`, "layout");
+    return { ok: true };
+  } catch (err) {
+    if (err instanceof ApiError) {
+      if (err.status === 403) {
+        return { ok: false, error: "Only maintenance (the DOM or a mechanic) can change an MEL item." };
+      }
+      if (err.status === 404) return { ok: false, error: "MEL item not found." };
+      if (err.status === 409) return { ok: false, error: "This MEL item is closed." };
+      return { ok: false, error: `Save failed (HTTP ${err.status}).` };
+    }
+    return { ok: false, error: "Save failed. Please try again." };
   }
 }
 

@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 
+import { loadZoneTable } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
 import { getAirworthiness } from "@/lib/api/maintenance";
 import type {
@@ -8,6 +9,9 @@ import type {
   BlockingIssue,
   FlightDetail,
 } from "@/lib/api/types";
+
+import { DEFAULT_TIME_ZONE, zoneFor } from "@/lib/format/local-time";
+import { melLimitLabel, melLimitRemedy } from "@/lib/maintenance/mel-limits";
 
 import { CloseMelDialog } from "./close-mel-dialog";
 import { MelDeferralDialog } from "./mel-deferral-dialog";
@@ -55,6 +59,14 @@ export async function MaintenancePanel({
     );
   }
 
+  // The flight breaks an open deferral's Day VFR only or VFR only limit
+  // (#200): the release refuses it, so it leads the panel.
+  const limits = flight.mel_limits ?? [];
+  // Squawks and deferrals are typed in the departure base's time (#200),
+  // like the flight's own times (#68).
+  const zones = await loadZoneTable().catch(() => null);
+  const zone = zones ? zoneFor(zones, flight.origin) : DEFAULT_TIME_ZONE;
+
   let verdict: AirworthinessResponse;
   try {
     verdict = await getAirworthiness(flight.aircraft.id);
@@ -74,8 +86,22 @@ export async function MaintenancePanel({
   return (
     <SectionPanel
       title="Maintenance & Airworthiness"
-      titleAction={<VerdictBadge isAirworthy={verdict.is_airworthy} />}
+      titleAction={<VerdictBadge isAirworthy={verdict.is_airworthy} limited={limits.length > 0} />}
     >
+      {limits.length > 0 && (
+        <div className="mb-3">
+          <IssueGroup
+            kind="blocking"
+            label="Blocking — this flight breaks an MEL limit"
+            items={limits.map((b) => ({
+              kind: "mel_limit",
+              description: b.message,
+              meta: `ATA ${b.ata_chapter} · ${melLimitLabel(b.limit)} · ${melLimitRemedy([b])}`,
+              action: null,
+            }))}
+          />
+        </div>
+      )}
       {verdict.blocking_issues.length === 0 &&
       verdict.advisory_issues.length === 0 ? (
         <p className="text-xs text-muted-foreground">
@@ -130,11 +156,13 @@ export async function MaintenancePanel({
           <SquawkDialog
             aircraftId={verdict.aircraft.id}
             tailNumber={verdict.aircraft.tail_number}
+            timeZone={zone}
           />
           {canSignOff && (
             <MelDeferralDialog
               aircraftId={verdict.aircraft.id}
               tailNumber={verdict.aircraft.tail_number}
+              timeZone={zone}
             />
           )}
         </div>
@@ -215,7 +243,17 @@ function advisoryAction(issue: AdvisoryIssue): ReactNode {
   return null;
 }
 
-function VerdictBadge({ isAirworthy }: { isAirworthy: boolean }) {
+function VerdictBadge({ isAirworthy, limited = false }: { isAirworthy: boolean; limited?: boolean }) {
+  if (isAirworthy && limited) {
+    return (
+      <span
+        className="status-mark text-status-red"
+        title="Airworthy, but an MEL limit stops this flight — release will be refused."
+      >
+        Limited
+      </span>
+    );
+  }
   return (
     <span
       className={

@@ -34,6 +34,9 @@ export interface DayLeg {
   seats: number | null;
   /** Seats held on this leg, when the day's list carried them. */
   held: number | null;
+  /** What breaks an open MEL deferral's limit on the flight (#200): the
+   *  release refuses it. Empty when nothing does. */
+  melLimits: string[];
 }
 
 export function legState(flight: FlightListItem): LegState {
@@ -74,6 +77,7 @@ export function dayLegs(flights: FlightListItem[]): DayLeg[] {
       tail: flight.aircraft.tail_number,
       seats: flight.aircraft.seats ?? null,
       held: flight.seats_held_by_leg?.[i] ?? null,
+      melLimits: (flight.mel_limits ?? []).map((m) => m.message),
     }));
   });
 }

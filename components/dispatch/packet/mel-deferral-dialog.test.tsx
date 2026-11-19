@@ -43,8 +43,8 @@ describe("MelDeferralDialog", () => {
     render(<MelDeferralDialog aircraftId="ac-1" tailNumber="N207GE" />);
     await user.click(screen.getByRole("button", { name: /mel deferral/i }));
 
-    const deferred = screen.getByLabelText(/Deferred at \(UTC\)/i) as HTMLInputElement;
-    const due = screen.getByLabelText(/Due by \(UTC\)/i) as HTMLInputElement;
+    const deferred = screen.getByLabelText(/Deferred at \(AK[SD]T\)/i) as HTMLInputElement;
+    const due = screen.getByLabelText(/Due by \(AK[SD]T\)/i) as HTMLInputElement;
 
     // Default category is C → 10 days.
     const depDate = new Date(`${deferred.value}:00Z`);
@@ -59,8 +59,8 @@ describe("MelDeferralDialog", () => {
     render(<MelDeferralDialog aircraftId="ac-1" tailNumber="N207GE" />);
     await user.click(screen.getByRole("button", { name: /mel deferral/i }));
 
-    const deferred = screen.getByLabelText(/Deferred at \(UTC\)/i) as HTMLInputElement;
-    const due = screen.getByLabelText(/Due by \(UTC\)/i) as HTMLInputElement;
+    const deferred = screen.getByLabelText(/Deferred at \(AK[SD]T\)/i) as HTMLInputElement;
+    const due = screen.getByLabelText(/Due by \(AK[SD]T\)/i) as HTMLInputElement;
     const categorySelect = screen.getByLabelText(/Category/i);
 
     // Switch to B (3 days) — due should re-suggest.
@@ -114,6 +114,7 @@ describe("MelDeferralDialog", () => {
     );
     expect(payload.category).toBe("C");
     expect(payload.notes).toBeNull();
+    expect(payload.operating_limit).toBeNull();
     // ISO 8601 UTC shape: "...T...Z"
     expect(payload.deferred_at).toMatch(/T.*Z$/);
     expect(payload.due_at).toMatch(/T.*Z$/);
@@ -174,8 +175,8 @@ describe("MelDeferralDialog", () => {
     await user.type(screen.getByLabelText(/ATA chapter/i), "21-30");
     await user.type(screen.getByLabelText(/Description/i), "X");
 
-    const deferred = screen.getByLabelText(/Deferred at \(UTC\)/i);
-    const due = screen.getByLabelText(/Due by \(UTC\)/i);
+    const deferred = screen.getByLabelText(/Deferred at \(AK[SD]T\)/i);
+    const due = screen.getByLabelText(/Due by \(AK[SD]T\)/i);
     fireEvent.change(deferred, { target: { value: "2026-12-31T00:00" } });
     fireEvent.change(due, { target: { value: "2026-12-01T00:00" } }); // before deferred
 
@@ -187,5 +188,40 @@ describe("MelDeferralDialog", () => {
       ).toBeInTheDocument();
     });
     expect(createMelDeferralAction).not.toHaveBeenCalled();
+  });
+
+  it("takes the times on the base's clock and saves them in UTC (#200)", async () => {
+    const user = userEvent.setup();
+    createMelDeferralAction.mockResolvedValueOnce({ ok: true, mel_item_id: "mel-1" });
+    render(<MelDeferralDialog aircraftId="ac-1" tailNumber="N100PA" timeZone="America/Anchorage" />);
+    await user.click(screen.getByRole("button", { name: /mel deferral/i }));
+
+    // The client's nav light, 18 Nov at 4:27 PM in Bethel.
+    fireEvent.change(screen.getByLabelText(/Deferred at \(AKST\)/), { target: { value: "2026-11-18T16:27" } });
+    fireEvent.change(screen.getByLabelText(/Due by \(AKST\)/), { target: { value: "2026-11-28T16:27" } });
+    await user.type(screen.getByLabelText(/ATA chapter/i), "33-40");
+    await user.type(screen.getByLabelText(/Description/i), "Right nav light inoperative");
+    await user.click(screen.getByRole("button", { name: /file deferral/i }));
+
+    await waitFor(() => expect(createMelDeferralAction).toHaveBeenCalledTimes(1));
+    const payload = createMelDeferralAction.mock.calls[0][0];
+    expect([payload.deferred_at, payload.due_at]).toEqual(["2026-11-19T01:27:00Z", "2026-11-29T01:27:00Z"]);
+  });
+
+  it("files what the deferral limits the aircraft to (#200)", async () => {
+    const user = userEvent.setup();
+    createMelDeferralAction.mockResolvedValueOnce({ ok: true, mel_item_id: "mel-1" });
+    render(<MelDeferralDialog aircraftId="ac-1" tailNumber="N100PA" />);
+    await user.click(screen.getByRole("button", { name: /mel deferral/i }));
+
+    const limit = screen.getByLabelText("Limits the aircraft to");
+    expect(limit).toHaveValue("");
+    await user.selectOptions(limit, "Day VFR only");
+    await user.type(screen.getByLabelText(/ATA chapter/i), "33-40");
+    await user.type(screen.getByLabelText(/Description/i), "Right nav light inoperative");
+    await user.click(screen.getByRole("button", { name: /file deferral/i }));
+
+    await waitFor(() => expect(createMelDeferralAction).toHaveBeenCalledTimes(1));
+    expect(createMelDeferralAction.mock.calls[0][0].operating_limit).toBe("day_vfr");
   });
 });

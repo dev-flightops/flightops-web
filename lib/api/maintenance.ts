@@ -17,6 +17,7 @@ import type {
   MelItemCreateRequest,
   MelItemListResponse,
   MelItemResponse,
+  MelOperatingLimit,
   MelStatus,
   SquawkCreateRequest,
   SquawkListResponse,
@@ -84,6 +85,17 @@ export async function createMelItem(
   return apiFetch<MelItemResponse>(`/maintenance/mel-items`, {
     method: "POST",
     body: JSON.stringify(payload),
+  });
+}
+
+/** Set or clear what an open deferral limits the aircraft to (#200). */
+export async function setMelOperatingLimit(
+  melItemId: string,
+  limit: MelOperatingLimit | null,
+): Promise<MelItemResponse> {
+  return apiFetch<MelItemResponse>(`/maintenance/mel-items/${melItemId}`, {
+    method: "PATCH",
+    body: JSON.stringify({ operating_limit: limit }),
   });
 }
 

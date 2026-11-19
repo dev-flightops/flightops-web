@@ -1,9 +1,11 @@
 import Link from "next/link";
 
 import { CloseMelDialog } from "@/components/dispatch/packet/close-mel-dialog";
+import { MelLimitSelect } from "@/components/maintenance/mel-limit-select";
 import { cn } from "@/lib/utils";
 import type { MelItemResponse } from "@/lib/api/types";
 import { formatBothWithDate } from "@/lib/format/flight-time";
+import { melLimitLabel } from "@/lib/maintenance/mel-limits";
 
 /**
  * MEL items list — used in two contexts:
@@ -22,7 +24,8 @@ import { formatBothWithDate } from "@/lib/format/flight-time";
  *
  * Close is inlined here for maintenance (`canClose`, the M2-G-20b
  * plan): since 29 Sep only AIRWORTHINESS_WRITERS may close an item, and
- * the dispatch packet no longer offers it to anyone else.
+ * the dispatch packet no longer offers it to anyone else. The same
+ * writers set an open item's limit here (#200): Day VFR only or VFR only.
  */
 export function MelTable({
   items,
@@ -54,6 +57,7 @@ export function MelTable({
             <th className="px-3 py-2">ATA</th>
             <th className="px-3 py-2">Description</th>
             <th className="px-3 py-2">Category</th>
+            <th className="px-3 py-2">Limit</th>
             <th className="px-3 py-2">Deferred</th>
             <th className="px-3 py-2">Due</th>
             <th className="px-3 py-2">Status</th>
@@ -127,6 +131,21 @@ function MelRow({
       <td className="px-3 py-2.5 text-foreground">{item.description}</td>
       <td className="px-3 py-2.5 font-mono text-muted-foreground">
         {item.category}
+      </td>
+      <td className="px-3 py-2.5">
+        {canClose && !isClosed ? (
+          <MelLimitSelect
+            melItemId={item.id}
+            ataChapter={item.ata_chapter}
+            limit={item.operating_limit ?? null}
+          />
+        ) : item.operating_limit ? (
+          <span className="status-mark text-[0.6rem] text-status-orange">
+            {melLimitLabel(item.operating_limit)}
+          </span>
+        ) : (
+          <span className="text-muted-foreground">—</span>
+        )}
       </td>
       <td className="px-3 py-2.5 text-muted-foreground">
         <div className="font-mono">{deferred.local}</div>
