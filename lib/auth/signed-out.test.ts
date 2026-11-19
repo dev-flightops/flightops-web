@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  clearsSession,
   SIGNED_OUT_COOKIE,
   SIGNED_OUT_MAX_AGE_SECONDS,
   sessionStart,
@@ -75,5 +76,24 @@ describe("the request the proxy passes on for a refused session", () => {
     expect(withoutSessionCookies("a=1; fo_signed_out_at=5")).toBeNull();
     expect(withoutSessionCookies(null)).toBeNull();
     expect(withoutSessionCookies("")).toBeNull();
+  });
+});
+
+describe("a sign-out Auth.js accepted", () => {
+  const res = (...cookies: string[]) => {
+    const headers = new Headers();
+    for (const c of cookies) headers.append("Set-Cookie", c);
+    return new Response(null, { headers });
+  };
+
+  it("cleared the session, whole or in chunks", () => {
+    expect(clearsSession(res("__Secure-authjs.session-token=; Max-Age=0; Path=/"))).toBe(true);
+    expect(clearsSession(res("authjs.session-token.0=; Expires=Thu, 01 Jan 1970 00:00:00 GMT"))).toBe(true);
+  });
+
+  it("is not one that cleared nothing, or set a session", () => {
+    expect(clearsSession(res())).toBe(false);
+    expect(clearsSession(res("__Secure-authjs.session-token=abc; Path=/"))).toBe(false);
+    expect(clearsSession(res("__Host-authjs.csrf-token=; Max-Age=0"))).toBe(false);
   });
 });

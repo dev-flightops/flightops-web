@@ -51,6 +51,17 @@ export function withoutSessionCookies(header: string | null): string | null {
   return kept.length === pairs.length ? null : kept.join("; ");
 }
 
+/** Auth.js cleared the session in this response: a sign-out it accepted.
+ *  One it refused (a missing or wrong CSRF token, say, from another site's
+ *  form) clears nothing, and must leave no mark either. */
+export function clearsSession(res: Response): boolean {
+  return res.headers.getSetCookie().some((cookie) => {
+    const [pair] = cookie.split(";");
+    const [name, value = ""] = pair.split("=");
+    return SESSION_COOKIE.test(name.trim()) && value.trim() === "";
+  });
+}
+
 /** The request came over https, as Auth.js judges its own cookies: on
  *  Vercel the forwarded protocol, else the URL itself. Safari drops a
  *  Secure cookie sent over plain http, so the mark is Secure only on https
