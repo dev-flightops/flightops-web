@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { type NextFetchEvent, type NextRequest, NextResponse } from "next/server";
 
 import { auth } from "@/auth";
 import { withoutSessionCookies } from "@/lib/auth/signed-out";
@@ -19,7 +19,7 @@ import { legacyRedirect } from "@/lib/legacy-redirects";
  * is just `/login`, and Auth.js's own callback-url cookie handles the
  * post-OAuth return trip well enough.
  */
-export default auth((req) => {
+const guard = auth((req) => {
   const path = req.nextUrl.pathname;
 
   // A legacy tab still open when the old address moves here keeps making
@@ -83,6 +83,16 @@ export default auth((req) => {
     }
   }
 });
+
+/** The proxy. auth.ts initialises Auth.js lazily (#201), and a lazy
+ *  `auth(handler)` gives a promise of the wrapped handler, not the handler:
+ *  exported as it was, Next refused it ("must export a function"). */
+export default async function proxy(req: NextRequest, event: NextFetchEvent) {
+  // Auth.js types the wrapped handler as a route handler (its second
+  // argument a route's params); as the proxy it gets the fetch event.
+  const handler = (await guard) as unknown as (r: NextRequest, e: NextFetchEvent) => Promise<Response>;
+  return handler(req, event);
+}
 
 // Match everything except Next.js internals, the next-auth route, and
 // the public images.
