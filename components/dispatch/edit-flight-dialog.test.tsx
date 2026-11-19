@@ -128,7 +128,7 @@ describe("EditFlightDialog", () => {
     expect(screen.getByText("= 14:00Z 2026-06-01")).toBeInTheDocument();
   });
 
-  it("saves a changed local time in UTC", async () => {
+  it("saves a changed local time in UTC, the arrival following it (#202)", async () => {
     updateFlightAction.mockReset().mockResolvedValue({ ok: true });
     const user = userEvent.setup();
     render(<EditFlightDialog flight={baseFlight} aircraft={[aircraft207]} zones={ZONES} />);
@@ -136,10 +136,23 @@ describe("EditFlightDialog", () => {
     fireEvent.change(screen.getByLabelText("Departure (AKDT)"), {
       target: { value: "2026-06-01T07:30" },
     });
+    // The two hours it took still take two hours.
+    expect(screen.getByLabelText("Arrival (AKDT)")).toHaveValue("2026-06-01T09:30");
     await user.click(screen.getByRole("button", { name: /save changes/i }));
     expect(updateFlightAction).toHaveBeenCalledWith(baseFlight.id, {
       scheduled_departure_at: "2026-06-01T15:30:00Z",
+      scheduled_arrival_at: "2026-06-01T17:30:00Z",
     });
+  });
+
+  it("keeps an arrival typed by hand when the departure moves", async () => {
+    updateFlightAction.mockReset().mockResolvedValue({ ok: true });
+    const user = userEvent.setup();
+    render(<EditFlightDialog flight={baseFlight} aircraft={[aircraft207]} zones={ZONES} />);
+    await user.click(screen.getByRole("button", { name: /edit/i }));
+    fireEvent.change(screen.getByLabelText("Arrival (AKDT)"), { target: { value: "2026-06-01T08:45" } });
+    fireEvent.change(screen.getByLabelText("Departure (AKDT)"), { target: { value: "2026-06-01T06:30" } });
+    expect(screen.getByLabelText("Arrival (AKDT)")).toHaveValue("2026-06-01T08:45");
   });
 
   it("adds a stop to a one-leg flight, departing when the first leg lands (#106)", async () => {
@@ -277,6 +290,44 @@ describe("EditFlightDialog — a multi-leg flight", () => {
       },
     ],
   };
+
+  it("moves every later leg with a new departure time, keeping their lengths (#202)", async () => {
+    // BK-FD6204DD, 19 Nov: the departure changed and the arrival stayed put.
+    updateFlightAction.mockReset().mockResolvedValue({ ok: true });
+    const user = userEvent.setup();
+    render(<EditFlightDialog flight={multiLeg} aircraft={[aircraft207]} zones={ZONES} />);
+    await user.click(screen.getByRole("button", { name: /edit/i }));
+    fireEvent.change(screen.getByLabelText("Departure (AKDT)"), { target: { value: "2026-06-01T07:15" } });
+    expect(screen.getByLabelText("Arrival (AKDT)")).toHaveValue("2026-06-01T07:55");
+    expect(screen.getByLabelText("Leg 2 Departure (AKDT)")).toHaveValue("2026-06-01T08:15");
+    expect(screen.getByLabelText("Leg 2 Arrival (AKDT)")).toHaveValue("2026-06-01T08:50");
+    await user.click(screen.getByRole("button", { name: /save changes/i }));
+    expect(updateFlightAction).toHaveBeenLastCalledWith(multiLeg.id, {
+      legs: [
+        {
+          origin: "PABE",
+          destination: "PAHP",
+          scheduled_departure_at: "2026-06-01T15:15:00Z",
+          scheduled_arrival_at: "2026-06-01T15:55:00Z",
+        },
+        {
+          origin: "PAHP",
+          destination: "PASM",
+          scheduled_departure_at: "2026-06-01T16:15:00Z",
+          scheduled_arrival_at: "2026-06-01T16:50:00Z",
+        },
+      ],
+    });
+  });
+
+  it("moves nothing else when the date changes: that's Move to Another Day", async () => {
+    const user = userEvent.setup();
+    render(<EditFlightDialog flight={multiLeg} aircraft={[aircraft207]} zones={ZONES} />);
+    await user.click(screen.getByRole("button", { name: /edit/i }));
+    fireEvent.change(screen.getByLabelText("Departure (AKDT)"), { target: { value: "2026-06-02T06:00" } });
+    expect(screen.getByLabelText("Arrival (AKDT)")).toHaveValue("2026-06-01T06:40");
+    expect(screen.getByLabelText("Leg 2 Departure (AKDT)")).toHaveValue("2026-06-01T07:00");
+  });
 
   it("shows every leg, and a passengers-only edit leaves the route alone", async () => {
     updateFlightAction.mockResolvedValue({ ok: true });

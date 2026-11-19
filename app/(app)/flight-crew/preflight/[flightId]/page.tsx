@@ -159,7 +159,19 @@ export default async function PreflightPage({
     // (#175), and step 4's weather, as the flight's FRAT page loads them
     // (#155). Non-fatal: without weather the FRAT shows its scores alone
     // and step 4 renders its "data unavailable" acknowledgment.
-    ({ weather, fratPrefill, fratBlock } = await loadFratInputs(flightResult));
+    // Before release, the packet is scored again from the weather just
+    // gathered (#202), as the FRAT page does: the pilot's FRAT read the
+    // packet as last scored, and the client's stayed HIGH from the morning's
+    // crosswind at PAMO until dispatch opened the packet again. The FRAT and
+    // the steps are read again after it, so they follow the score just made.
+    const scorePacket = flightResult.status === "scheduled";
+    ({ weather, fratPrefill, fratBlock } = await loadFratInputs(flightResult, { scorePacket }));
+    if (scorePacket) {
+      [frat, progress] = await Promise.all([
+        frat ? getLatestFratAssessment(flightId).catch(() => frat) : Promise.resolve(frat),
+        getPreflightProgress(flightId).catch(() => progress),
+      ]);
+    }
   } catch (err) {
     if (err instanceof ApiError && err.status === 404) {
       notFound();

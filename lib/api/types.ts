@@ -1724,6 +1724,14 @@ export interface FratAuthorizationResponse {
   authorized_at: string;
 }
 
+/** One row that sets the dispatch packet's risk level (#202): the
+ *  matrix's factor, its score and the packet's own comment. */
+export interface PacketRiskDriver {
+  factor: string;
+  score: number | null;
+  comment: string;
+}
+
 export interface FratAssessmentResponse {
   id: string;
   flight_id: string;
@@ -1745,6 +1753,9 @@ export interface FratAssessmentResponse {
    *  release as last scored (#155). Not the level it had when this FRAT
    *  was filed, which can differ (#177). Null when it hasn't been scored. */
   packet_risk_level?: FratRiskLevel | null;
+  /** Why the packet has that level (#202): its rows at that level, worst
+   *  first. Absent from servers before it. */
+  packet_risk_drivers?: PacketRiskDriver[];
   mitigations: string | null;
   /** Factors the pilot scored at the operator's out-of-company-limits
    *  mark. Any one of them makes the flight a no-go, independently of
@@ -2850,6 +2861,9 @@ export interface FratPrefillResponse {
    *  release as last scored (#155). The FRAT is filed at no lower a level
    *  (#88). Null when it hasn't been scored. */
   packet_risk_level?: FratRiskLevel | null;
+  /** Why the packet has that level (#202): its rows at that level, worst
+   *  first. Absent from servers before it. */
+  packet_risk_drivers?: PacketRiskDriver[];
   /** Each stop's weather and where it came from (#117). */
   stops?: StopWeather[];
   /** Some stop's weather used isn't certified. */

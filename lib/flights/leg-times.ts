@@ -38,6 +38,15 @@ export function addMinutes(local: string, minutes: number, timeZone: string): st
   return utcToLocalInput(new Date(new Date(iso).getTime() + minutes * 60_000).toISOString(), timeZone);
 }
 
+/** Minutes from one local time to another in a zone, in real time (a
+ *  clock change between them counts). Null when either isn't a time. */
+export function minutesBetween(fromLocal: string, toLocal: string, timeZone: string): number | null {
+  const from = localToUtcIso(fromLocal, timeZone);
+  const to = localToUtcIso(toLocal, timeZone);
+  if (!from || !to) return null;
+  return Math.round((new Date(to).getTime() - new Date(from).getTime()) / 60_000);
+}
+
 /** Every leg of the route from the first departure. A leg that can't be
  *  worked out has no times, and nor has any leg after it. */
 export function planLegs({
