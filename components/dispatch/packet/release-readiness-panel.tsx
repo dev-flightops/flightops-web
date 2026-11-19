@@ -1,14 +1,92 @@
 import Link from "next/link";
 
+import { PlannedFuelForm } from "@/app/(app)/manifest/[flightId]/fuel-form";
 import { linkCaps } from "@/components/ff/controls";
 import { FratSignoffs } from "@/components/frat/frat-signoffs";
 import { BalanceScopeNote } from "@/components/manifest/balance-scope-note";
+import { LegLoadPanel } from "@/components/manifest/leg-load-panel";
 import type { FlightLoad } from "@/lib/api/manifest";
 import type { FlightDetail, FratAssessmentResponse } from "@/lib/api/types";
+import { fuelEstimateLine, fuelPlanningNote } from "@/lib/flights/fuel-estimate";
 
 function lb(value: number | string | null | undefined): string {
   if (value === null || value === undefined) return "—";
   return `${Math.round(Number(value)).toLocaleString("en-US")} lb`;
+}
+
+/**
+ * The fuel the flight leaves with, what it is worked out from, and each
+ * leg's load with the fuel the legs before it burn (client, 18 Nov: "I
+ * should have a greater useful load leaving PAMO back to PABE"). The
+ * figures above are the tightest leg's, which is what the release judges.
+ * Dispatch plans the fuel here, as on the manifest.
+ */
+function FuelAndLegs({
+  flightId,
+  data,
+  isIfr,
+  canPlanFuel,
+}: {
+  flightId: string;
+  data: FlightLoad;
+  isIfr: boolean;
+  canPlanFuel: boolean;
+}) {
+  const gate = data.load;
+  if (!gate) return null;
+  const legs = gate.by_leg ?? [];
+  const departs = legs.length > 1 ? legs[0].fuel_lbs : gate.fuel_lbs;
+  const basis =
+    departs == null
+      ? "not counted yet"
+      : gate.fuel_basis === "planned"
+        ? "planned"
+        : gate.fuel_basis === "estimated"
+          ? "estimated"
+          : "";
+  return (
+    <div className="mt-3 space-y-3 border-t border-border pt-3">
+      <p className="text-sm text-foreground">
+        <span className="field-label mr-2">Fuel at departure</span>
+        <span className="tabular-nums">{departs == null ? "—" : lb(departs)}</span>
+        {basis ? <span className="text-muted-foreground">{`, ${basis}`}</span> : null}
+      </p>
+      {gate.fuel_basis === "estimated" && gate.fuel_estimate ? (
+        <p className="text-xs text-muted-foreground">
+          {`${fuelEstimateLine(gate.fuel_estimate)} ${fuelPlanningNote(gate.fuel_estimate, { is_ifr: isIfr })}`}
+        </p>
+      ) : null}
+      {legs.length > 1 ? (
+        <>
+          {gate.leg ? (
+            <p className="text-xs text-muted-foreground">
+              {`The figures above are the tightest leg’s, ${gate.leg}. Each leg after the first leaves with less fuel:`}
+            </p>
+          ) : null}
+          <LegLoadPanel legs={legs} burned={gate.leg_fuel_burned !== false} className="rounded-md" />
+        </>
+      ) : null}
+      {canPlanFuel ? (
+        data.has_manifest ? (
+          <PlannedFuelForm
+            // A new one for each flight: picking another flight on the packet
+            // keeps the page, and a figure typed for the last flight would
+            // otherwise stay in the box and be saved on this one (Codex, #496).
+            key={flightId}
+            flightId={flightId}
+            current={gate.fuel_basis === "planned" && departs != null ? String(departs) : null}
+          />
+        ) : (
+          <p className="text-xs text-muted-foreground">
+            {"Start the flight’s manifest to plan its fuel. "}
+            <Link href={`/manifest/${flightId}`} className={linkCaps}>
+              Open the manifest ›
+            </Link>
+          </p>
+        )
+      ) : null}
+    </div>
+  );
 }
 
 /**
@@ -28,6 +106,7 @@ export function ReleaseReadinessPanel({
   load,
   timeZone,
   canSignForDispatch,
+  canPlanFuel = false,
   buildGaps = [],
 }: {
   flight: FlightDetail;
@@ -37,6 +116,8 @@ export function ReleaseReadinessPanel({
   load: FlightLoad | null;
   timeZone: string;
   canSignForDispatch: boolean;
+  /** The viewer may plan the flight's fuel (the manifest's editors). */
+  canPlanFuel?: boolean;
   /** What the flight still needs before dispatch signs its FRAT (#175). */
   buildGaps?: string[];
 }) {
@@ -142,6 +223,9 @@ export function ReleaseReadinessPanel({
                   : "No manifest yet: from the passengers and cargo typed on the flight, passengers at 190 lb."}
                 {over ? " The release refuses a load over the aircraft's useful load." : ""}
               </p>
+              {load ? (
+                <FuelAndLegs flightId={flight.id} data={load} isIfr={Boolean(flight.is_ifr)} canPlanFuel={canPlanFuel} />
+              ) : null}
             </>
           )}
         </div>

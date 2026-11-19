@@ -7,6 +7,7 @@ import {
   FRAT_DISPATCH_SIGNERS,
   FRAT_OVER_LIMIT_ACCEPTORS,
   hasAnyRole,
+  MANIFEST_EDITORS,
   OVERRIDE_AUTHORITY,
   PLAN_REVIEWERS,
   WEIGHT_RETURN_RESOLVERS,
@@ -541,6 +542,7 @@ export default async function DispatchPage({
             load={releaseLoad}
             timeZone={zones.fallback}
             canSignForDispatch={hasAnyRole(viewerRoles, FRAT_DISPATCH_SIGNERS)}
+            canPlanFuel={hasAnyRole(viewerRoles, MANIFEST_EDITORS)}
             buildGaps={buildGaps(progress)}
           />
         ) : null}

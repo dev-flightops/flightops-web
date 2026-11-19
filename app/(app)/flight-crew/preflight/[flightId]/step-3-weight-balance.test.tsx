@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -406,5 +406,47 @@ describe("the client's payload arithmetic (#111)", () => {
       screen.getByText(/N100PA’s useful load \(its max gross and empty weight\) isn’t set, so its payload can’t be worked out here\./),
     ).toBeInTheDocument();
     expect(screen.getByText(/to set it under Settings → Fleet\./)).toBeInTheDocument();
+  });
+
+  it("shows each leg, the one back leaving with the fuel the way out didn't burn (client, 18 Nov)", () => {
+    const leg = (origin: string, destination: string, fuel: string, left: string) => ({
+      origin,
+      destination,
+      pax_count: 1,
+      pax_weight_lbs: "120.0",
+      baggage_lbs: "0",
+      cargo_lbs: "0",
+      mail_lbs: "0",
+      payload_lbs: "120.0",
+      fuel_lbs: fuel,
+      remaining_lbs: left,
+    });
+    render(
+      <WeightAndBalanceStep
+        flightId="f-1"
+        flight={FLIGHT}
+        openReturn={null}
+        load={{
+          ...LOAD,
+          load: {
+            ...LOAD.load,
+            leg: "PABE → PAMO",
+            leg_fuel_burned: true,
+            by_leg: [leg("PABE", "PAMO", "908", "2818.0"), leg("PAMO", "PABE", "649", "3077.0")],
+          },
+        }}
+      />,
+    );
+    expect(screen.getByText("These are the tightest leg’s figures, PABE → PAMO. Each leg after the first leaves with less fuel:")).toBeInTheDocument();
+    const legs = screen.getByRole("region", { name: "Load by leg" });
+    const back = within(legs).getByRole("row", { name: /PAMO → PABE/ });
+    expect(back).toHaveTextContent("649");
+    expect(back).toHaveTextContent("3,077");
+    expect(legs).toHaveTextContent("the fuel at departure less what the legs before it burn");
+  });
+
+  it("shows no legs for a one-leg flight", () => {
+    render(<WeightAndBalanceStep flightId="f-1" flight={FLIGHT} openReturn={null} load={LOAD} />);
+    expect(screen.queryByRole("region", { name: "Load by leg" })).not.toBeInTheDocument();
   });
 });

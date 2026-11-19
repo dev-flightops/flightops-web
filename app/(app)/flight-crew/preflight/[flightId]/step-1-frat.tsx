@@ -1,8 +1,8 @@
 "use client";
 
-import { Fragment, useMemo, useState, useTransition } from "react";
+import { Fragment, useEffect, useMemo, useState, useTransition } from "react";
 
-import { segment, segmentGroup } from "@/components/ff/controls";
+import { buttonOutline, linkCaps, segment, segmentGroup } from "@/components/ff/controls";
 import { OnScreenText } from "@/components/ff/setup-notice";
 import {
   CameraLink,
@@ -302,6 +302,8 @@ export function FlightRiskAssessmentStep({
   // stayed open after filing and looked unsaved: on the demo the pilot
   // filed the same change twice, a minute apart.
   const [changing, setChanging] = useState<string | null>(null);
+  // The factor whose Change was pressed, to open the form at (18 Nov).
+  const [focus, setFocus] = useState<string | null>(null);
   if (!initial && readOnly) {
     return (
       <section className="rounded-lg border border-border bg-card px-5 py-4 text-sm text-muted-foreground">
@@ -327,6 +329,7 @@ export function FlightRiskAssessmentStep({
         startFrom={initial}
         onCancel={initial ? () => setChanging(null) : undefined}
         signAsPilot={signAsPilot}
+        focusFactor={initial ? focus : null}
       />
     );
   }
@@ -334,7 +337,10 @@ export function FlightRiskAssessmentStep({
     <FratResultPanel
       flightId={flightId}
       assessment={initial}
-      onRetake={() => setChanging(initial.id)}
+      onRetake={(factor) => {
+        setFocus(factor ?? null);
+        setChanging(initial.id);
+      }}
       mode={mode}
       signoffs={signoffs}
       readOnly={readOnly}
@@ -382,6 +388,7 @@ function FratQuestionnaire({
   startFrom = null,
   onCancel,
   signAsPilot = false,
+  focusFactor = null,
 }: {
   flightId: string;
   fratPrefill?: FratPrefillResponse | null;
@@ -399,7 +406,18 @@ function FratQuestionnaire({
   onCancel?: () => void;
   /** Filing signs it as the FRAT's pilot (17 Nov). */
   signAsPilot?: boolean;
+  /** The factor whose Change was pressed: the form opens at it. */
+  focusFactor?: string | null;
 }) {
+  // Opened from a factor's Change (client, 18 Nov): straight to that factor.
+  useEffect(() => {
+    if (!focusFactor) return;
+    const el =
+      document.getElementById(`factor-${focusFactor}`) ??
+      document.getElementById(`factor-${focusFactor}-label`);
+    el?.scrollIntoView?.({ block: "center" });
+    if (el instanceof HTMLInputElement) el.focus({ preventScroll: true });
+  }, [focusFactor]);
   /** Suggestions keyed by factor, for seeding and for the provenance
    *  line under each one. */
   const suggested = new Map(
@@ -1193,9 +1211,13 @@ function Tile({
 function FactorScores({
   answers,
   suggestions,
+  onChange,
 }: {
   answers: Record<string, number>;
   suggestions: FratFactorSuggestion[];
+  /** Change one factor's score (client, 18 Nov: "In pilot view, still
+   *  can't modify FRAT": the only way in was a small link under Continue). */
+  onChange?: (factor: string) => void;
 }) {
   const suggested = new Map(suggestions.map((x) => [x.factor, x]));
   return (
@@ -1226,14 +1248,26 @@ function FactorScores({
                     <p className="text-foreground">{f.label}</p>
                     {note ? <p className="text-[0.7rem] text-muted-foreground">{note}</p> : null}
                   </div>
-                  <span
-                    className={cn(
-                      "shrink-0 font-mono text-sm font-semibold tabular-nums",
-                      score >= OVER_COMPANY_LIMITS ? "text-status-red" : "text-foreground",
-                    )}
-                  >
-                    {score}
-                  </span>
+                  <div className="flex shrink-0 items-center gap-3">
+                    {onChange ? (
+                      <button
+                        type="button"
+                        onClick={() => onChange(f.code)}
+                        aria-label={`Change ${f.label}`}
+                        className={linkCaps}
+                      >
+                        Change
+                      </button>
+                    ) : null}
+                    <span
+                      className={cn(
+                        "font-mono text-sm font-semibold tabular-nums",
+                        score >= OVER_COMPANY_LIMITS ? "text-status-red" : "text-foreground",
+                      )}
+                    >
+                      {score}
+                    </span>
+                  </div>
                 </li>
               );
             })}
@@ -1256,7 +1290,8 @@ function FratResultPanel({
 }: {
   flightId: string;
   assessment: FratAssessmentResponse;
-  onRetake: () => void;
+  /** Open the form on this FRAT, at `factor` when one was picked. */
+  onRetake: (factor?: string) => void;
   /** The viewer is the FRAT's pilot: changing it signs it (17 Nov). */
   signAsPilot?: boolean;
   mode?: "preflight" | "page";
@@ -1297,6 +1332,8 @@ function FratResultPanel({
   const pilotSigned = (assessment.signoffs ?? []).some((s) => s.role === "pilot");
   const dispatchSigned = (assessment.signoffs ?? []).some((s) => s.role === "dispatcher");
   const hasRequiredAuth = pilotSigned || assessment.signoffs === undefined;
+  // A released flight's FRAT is locked (#155); a read-only view changes nothing.
+  const changeable = !readOnly && !assessment.locked;
 
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -1384,7 +1421,23 @@ function FratResultPanel({
           packetLevel={assessment.packet_risk_level}
           locked={Boolean(assessment.locked)}
         />
-        <FactorScores answers={assessment.answers} suggestions={suggestions} />
+        {/* Up here and beside each score, where it's seen (client, 18 Nov:
+            "In pilot view, still can't modify FRAT"): it had been a small
+            link under Continue. Released, the FRAT is locked (#155). */}
+        {changeable ? (
+          <button type="button" onClick={() => onRetake()} className={cn(buttonOutline, "w-full text-[0.7rem]")}>
+            {(assessment.signoffs ?? []).length > 0
+              ? signAsPilot
+                ? "↻ Change the FRAT (your change is your signature: dispatch reviews it and signs again)"
+                : "↻ Change the FRAT (clears the signatures: dispatch signs again, then the pilot)"
+              : "↻ Change the FRAT"}
+          </button>
+        ) : null}
+        <FactorScores
+          answers={assessment.answers}
+          suggestions={suggestions}
+          onChange={changeable ? (factor) => onRetake(factor) : undefined}
+        />
 
         {accepted && overLimits.length > 0 && (
           <div role="note" className="notice notice-green text-xs">
@@ -1542,25 +1595,11 @@ function FratResultPanel({
 
         {/* Released, the FRAT is locked (#155): reopened at step 1 after the
             release (#175), it offers no change the server would refuse. */}
-        {readOnly || assessment.locked ? (
-          assessment.locked ? (
-            <p className="text-center text-[0.7rem] text-muted-foreground">
-              The flight is released: its FRAT stays as signed. Dispatch pulls the release back to change it.
-            </p>
-          ) : null
-        ) : (
-          <button
-            type="button"
-            onClick={onRetake}
-            className="w-full text-center text-[0.7rem] font-semibold text-primary hover:underline"
-          >
-            {(assessment.signoffs ?? []).length > 0
-              ? signAsPilot
-                ? "↻ Change the FRAT (your change is your signature: dispatch reviews it and signs again)"
-                : "↻ Change the FRAT (clears the signatures: dispatch signs again, then the pilot)"
-              : "↻ Change the FRAT"}
-          </button>
-        )}
+        {assessment.locked ? (
+          <p className="text-center text-[0.7rem] text-muted-foreground">
+            The flight is released: its FRAT stays as signed. Dispatch pulls the release back to change it.
+          </p>
+        ) : null}
 
         {error && (
           <p role="alert" className="field-error">
