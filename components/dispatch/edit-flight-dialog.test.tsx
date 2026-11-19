@@ -211,6 +211,13 @@ describe("EditFlightDialog", () => {
     await user.click(screen.getByRole("button", { name: /save changes/i }));
     expect(await screen.findByText("3- or 4-character airport code (ICAO or FAA)")).toBeInTheDocument();
     expect(updateFlightAction).not.toHaveBeenCalled();
+    // Unticked, the hidden box holds nothing up: the flight stays VFR, unchanged.
+    await user.click(screen.getByLabelText("Flown IFR"));
+    await user.click(screen.getByRole("button", { name: /save changes/i }));
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(updateFlightAction).not.toHaveBeenCalled();
+    await user.click(screen.getByRole("button", { name: /edit/i }));
+    await user.click(screen.getByLabelText("Flown IFR"));
     await user.clear(screen.getByLabelText("Alternate"));
     await user.type(screen.getByLabelText("Alternate"), "pabe");
     expect(screen.getByLabelText("Alternate")).toHaveValue("PABE");

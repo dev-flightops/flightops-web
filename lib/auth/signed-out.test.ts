@@ -6,6 +6,7 @@ import {
   sessionStart,
   signedOutHeader,
   signedOutSince,
+  withoutSessionCookies,
 } from "./signed-out";
 
 describe("a session from before this browser's last sign-out (#201)", () => {
@@ -46,5 +47,22 @@ describe("the mark as a header", () => {
     expect(signedOutHeader(1234)).toBe(
       `${SIGNED_OUT_COOKIE}=1234; Path=/; Max-Age=${SIGNED_OUT_MAX_AGE_SECONDS}; HttpOnly; SameSite=Lax`,
     );
+  });
+});
+
+describe("the request the proxy passes on for a refused session", () => {
+  it("has no session in it, whole or in chunks, and keeps the rest", () => {
+    expect(
+      withoutSessionCookies(
+        "a=1; __Secure-authjs.session-token=abc; __Host-authjs.csrf-token=x; fo_signed_out_at=5",
+      ),
+    ).toBe("a=1; __Host-authjs.csrf-token=x; fo_signed_out_at=5");
+    expect(withoutSessionCookies("authjs.session-token.0=a; authjs.session-token.1=b")).toBe("");
+  });
+
+  it("is left alone when there is no session to take", () => {
+    expect(withoutSessionCookies("a=1; fo_signed_out_at=5")).toBeNull();
+    expect(withoutSessionCookies(null)).toBeNull();
+    expect(withoutSessionCookies("")).toBeNull();
   });
 });

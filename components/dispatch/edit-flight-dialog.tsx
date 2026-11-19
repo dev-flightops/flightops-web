@@ -78,12 +78,18 @@ const schema = z
     cargo_lbs: z.coerce.number().int().nonnegative("Cannot be negative"),
     notes: z.string().max(500, "Max 500 characters"),
     is_ifr: z.boolean(),
-    // #201: an IFR flight's alternate, for its fuel. Blank is none yet.
-    alternate_ident: z
-      .string()
-      .regex(/^([A-Z0-9]{3,4})?$/, "3- or 4-character airport code (ICAO or FAA)"),
+    // #201: an IFR flight's alternate, for its fuel. Blank is none yet;
+    // checked below, only while IFR is ticked (the box is hidden for VFR).
+    alternate_ident: z.string(),
   })
   .superRefine((v, ctx) => {
+    if (v.is_ifr && !/^([A-Z0-9]{3,4})?$/.test(v.alternate_ident.trim())) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["alternate_ident"],
+        message: "3- or 4-character airport code (ICAO or FAA)",
+      });
+    }
     // The same zone throughout, so the local strings compare in order.
     if (v.scheduled_arrival_at && v.scheduled_arrival_at <= v.scheduled_departure_at) {
       ctx.addIssue({

@@ -1,5 +1,4 @@
 import NextAuth, { CredentialsSignin } from "next-auth";
-import { cookies } from "next/headers";
 import type { NextRequest } from "next/server";
 
 import {
@@ -159,17 +158,12 @@ async function exchangeOAuthForFlightOpsJwt(
   return { access_token: body.access_token, claims: decodeJwtPayload(body.access_token) };
 }
 
-/** When this browser last signed out (#201; lib/auth/signed-out.ts): from
- *  the request in the proxy and the route handlers, else from the page's or
- *  the action's own cookies. */
-async function signedOutMark(req: NextRequest | undefined): Promise<string | undefined> {
-  if (req) return req.cookies.get(SIGNED_OUT_COOKIE)?.value;
-  try {
-    return (await cookies()).get(SIGNED_OUT_COOKIE)?.value;
-  } catch {
-    // Outside a request there is no browser, so no mark.
-    return undefined;
-  }
+/** When this browser last signed out (#201; lib/auth/signed-out.ts), from
+ *  the request: the proxy's and the route handlers'. A page or an action
+ *  has none here, and needs none: the proxy runs first and takes a session
+ *  it refused off the request it passes on. */
+function signedOutMark(req: NextRequest | undefined): string | undefined {
+  return req?.cookies.get(SIGNED_OUT_COOKIE)?.value;
 }
 
 // Lazily, so the session check can read the request it runs for (#201).
@@ -218,7 +212,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth((req) => ({
       return true;
     },
     async jwt({ token, user }) {
-      const mark = await signedOutMark(req);
+      const mark = signedOutMark(req);
       // Initial sign-in: copy the backend JWT + its expiry onto the
       // Auth.js token so subsequent calls can validate without an extra
       // round-trip.

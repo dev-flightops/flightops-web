@@ -1,4 +1,7 @@
+import { NextResponse } from "next/server";
+
 import { auth } from "@/auth";
+import { withoutSessionCookies } from "@/lib/auth/signed-out";
 import { guardRedirect } from "@/lib/external-access";
 import { legacyRedirect } from "@/lib/legacy-redirects";
 
@@ -65,6 +68,20 @@ export default auth((req) => {
     isServerAction,
   });
   if (target) return Response.redirect(new URL(target, req.url));
+
+  // #201: a session the check refused (from before this browser's last
+  // sign-out, or expired) doesn't reach what's behind this either: a page
+  // or an action reads the cookie again, with no request to see the mark
+  // on. Auth.js clears the cookie in this response.
+  if (!req.auth) {
+    const kept = withoutSessionCookies(req.headers.get("cookie"));
+    if (kept !== null) {
+      const headers = new Headers(req.headers);
+      if (kept) headers.set("cookie", kept);
+      else headers.delete("cookie");
+      return NextResponse.next({ request: { headers } });
+    }
+  }
 });
 
 // Match everything except Next.js internals, the next-auth route, and

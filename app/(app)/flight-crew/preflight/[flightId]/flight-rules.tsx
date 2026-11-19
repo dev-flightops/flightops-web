@@ -99,6 +99,7 @@ export function FlightRules({
       )}
       {open && isIfr ? (
         <form
+          method="post"
           className="flex items-center gap-2"
           onSubmit={(event) => {
             event.preventDefault();

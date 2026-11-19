@@ -37,6 +37,20 @@ export function sessionStart(mark: string | undefined, now: number = Date.now())
   return Number.isFinite(signedOutAt) && signedOutAt >= now ? signedOutAt + 1 : now;
 }
 
+/** Auth.js's session cookie, in either form (`__Secure-` on https) and
+ *  either whole or in chunks (`.0`, `.1`). */
+const SESSION_COOKIE = /^(__Secure-)?authjs\.session-token(\.\d+)?$/;
+
+/** A Cookie header without the session (#201): what the proxy passes on
+ *  for a request whose session it refused, so the page or the action behind
+ *  it can't read that session again. Null when there is nothing to take. */
+export function withoutSessionCookies(header: string | null): string | null {
+  if (!header) return null;
+  const pairs = header.split(";").map((pair) => pair.trim()).filter(Boolean);
+  const kept = pairs.filter((pair) => !SESSION_COOKIE.test(pair.split("=")[0]));
+  return kept.length === pairs.length ? null : kept.join("; ");
+}
+
 /** The mark, for `cookies().set(...)`. Secure in production (https); the
  *  dev server and the test copies are plain http. */
 export function signedOutCookie(now: number = Date.now()) {
