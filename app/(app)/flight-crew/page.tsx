@@ -5,9 +5,11 @@ import { linkCaps } from "@/components/ff/controls";
 import { EmptyState } from "@/components/ff/empty-state";
 import { PageHeader } from "@/components/ff/page-header";
 import { Panel } from "@/components/ff/panel";
+import { loadZoneTable } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
 import { getCurrentDuty, getMorning, listAircraft, listFlights, type MorningResponse } from "@/lib/api/ops";
 import type { CurrentDutyResponse, FlightListItem } from "@/lib/api/types";
+import { DEFAULT_TIME_ZONE } from "@/lib/format/local-time";
 import { currentGreeting, firstNameFrom } from "@/lib/greeting";
 
 import { CorrectDuty } from "@/components/duty/correct-duty";
@@ -71,6 +73,8 @@ export default async function FlightCrewPage() {
   let unauthorized = false;
 
   const session = await auth();
+  // A squawk is typed in the company's time (#200).
+  const companyZone = (await loadZoneTable().catch(() => null))?.fallback ?? DEFAULT_TIME_ZONE;
   const firstName =
     firstNameFrom(session?.user?.name) ||
     firstNameFrom((session?.user?.email ?? "").split("@")[0]);
@@ -191,7 +195,7 @@ export default async function FlightCrewPage() {
       {(aircraft.length > 0 || morning) && (
         <Panel
           title="At the aircraft"
-          actions={aircraft.length > 0 ? <SquawkDialog choices={aircraft} /> : undefined}
+          actions={aircraft.length > 0 ? <SquawkDialog choices={aircraft} timeZone={companyZone} /> : undefined}
           className="mb-8"
         >
           {/* #93: take the aircraft for the day and record its preflight

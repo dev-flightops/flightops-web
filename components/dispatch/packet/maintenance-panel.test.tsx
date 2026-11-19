@@ -422,4 +422,34 @@ describe("MaintenancePanel", () => {
       screen.getByText(/MEL with missing id/i),
     ).toBeInTheDocument();
   });
+
+  it("leads with an MEL limit the flight breaks, the aircraft airworthy but limited (#200)", async () => {
+    getAirworthiness.mockReset().mockResolvedValueOnce(makeVerdict());
+    const ui = await MaintenancePanel({
+      flight: {
+        ...baseFlight,
+        mel_limits: [
+          {
+            mel_id: "mel-1",
+            ata_chapter: "33-40",
+            description: "Right nav light inoperative",
+            limit: "day_vfr",
+            ifr: false,
+            night: [],
+            unknown: [],
+            message:
+              "N207GE is day VFR only under MEL 33-40: the departure from PADU at 18:30 AKST is after civil twilight ends at 17:40.",
+          },
+        ],
+      },
+    });
+    render(ui);
+    expect(screen.getByText("Limited")).toBeInTheDocument();
+    expect(screen.getByText("Blocking — this flight breaks an MEL limit")).toBeInTheDocument();
+    expect(screen.getByText(/^N207GE is day VFR only under MEL 33-40/)).toBeInTheDocument();
+    expect(
+      screen.getByText("ATA 33-40 · Day VFR only · Move it into daylight, or put another aircraft on it."),
+    ).toBeInTheDocument();
+  });
 });
+

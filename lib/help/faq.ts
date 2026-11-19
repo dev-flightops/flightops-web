@@ -177,6 +177,13 @@ export const FAQ: FaqEntry[] = [
     pages: ["/flight-crew", "/dispatch"],
   },
   {
+    slug: "mel-day-vfr",
+    question: "Can an MEL item keep an aircraft to day VFR?",
+    answer:
+      "Yes. When maintenance defers the item, set **Limits the aircraft to** to Day VFR only or VFR only, or change it later on the MEL list. Day VFR only: the release refuses a flight that leaves or lands at a stop after civil twilight ends or before it begins (the sun more than 6° below the horizon, 14 CFR 1.1), or that is flown IFR. VFR only refuses an IFR flight. The Schedule, the Fleet Board and the dispatch packet mark such a flight first, and a departure that slips into the dark is flagged.",
+    pages: ["/maintenance", "/dispatch", "/schedule"],
+  },
+  {
     slug: "no-cost",
     question: "Why does a dispatch option say no cost?",
     answer:

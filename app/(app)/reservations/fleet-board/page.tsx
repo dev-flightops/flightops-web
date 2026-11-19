@@ -6,13 +6,17 @@ import { bookingAircraftId as aircraftIdOf, matchesBooking, seatTotals, bookingL
 import { isValidIsoDay } from "@/lib/iso-day";
 
 import { ApiError } from "@/lib/api/client";
-import { listAircraft } from "@/lib/api/ops";
+import { listAircraft, listFlights } from "@/lib/api/ops";
 import {
   BOOKING_STATUS_LABELS,
   type Booking,
   listBookings,
 } from "@/lib/api/reservations";
 import type { AircraftListItem } from "@/lib/api/types";
+
+/** A booking with what breaks an open MEL deferral's limit on its flight
+ *  (#200): the release refuses that flight. */
+type BoardBooking = Booking & { melLimits?: string[] };
 
 import { BookingClickable } from "./booking-clickable";
 import { BookingDrawerContent } from "./booking-drawer-content";
@@ -90,19 +94,32 @@ export default async function FleetBoardPage({
   const newDrawerAircraftId = params.aircraft_id ?? null;
   const newDrawerHour = _validHour(params.t) ?? "09:00";
 
-  let bookings: Booking[] = [];
+  let bookings: BoardBooking[] = [];
   let aircraft: AircraftListItem[] = [];
   let loadError: string | null = null;
   try {
-    const [bookingsResp, aircraftResp] = await Promise.all([
+    const [bookingsResp, aircraftResp, flightsResp] = await Promise.all([
       listBookings({
         from_date: day.toISOString(),
         to_date: dayEnd.toISOString(),
         limit: 500,
       }),
       listAircraft(),
+      // The day's flights, for what breaks an MEL limit (#200). Without
+      // them the board still shows the bookings.
+      listFlights({ onCompanyDate: isoDay, status: ["scheduled", "released"], limit: 200 }).catch(() => null),
     ]);
-    bookings = bookingsResp.items;
+    const limits = new Map(
+      (flightsResp?.items ?? [])
+        .filter((f) => (f.mel_limits ?? []).length > 0)
+        .map((f) => [f.id, (f.mel_limits ?? []).map((m) => m.message)]),
+    );
+    bookings = bookingsResp.items.map((b) => {
+      // A cancelled or completed booking isn't going anywhere.
+      const live = b.status !== "cancelled" && b.status !== "completed";
+      const melLimits = b.flight && live ? limits.get(b.flight.id) : undefined;
+      return melLimits ? { ...b, melLimits } : b;
+    });
     aircraft = aircraftResp.items.filter((a) => a.is_active || bookings.some((b) => aircraftIdOf(b) === a.id));
   } catch (err) {
     const status = err instanceof ApiError ? err.status : 0;
@@ -193,7 +210,7 @@ function ListView({
   aircraftById,
   timeZone,
 }: {
-  bookings: Booking[];
+  bookings: BoardBooking[];
   aircraftById: Map<string, AircraftListItem>;
   timeZone: string;
 }) {
@@ -267,6 +284,9 @@ function ListView({
                     ~{payload.toLocaleString("en-US")} lbs est.
                   </span>
                 </p>
+                {b.melLimits ? (
+                  <p className="mt-1 text-xs text-status-red">{b.melLimits.join(" ")}</p>
+                ) : null}
               </div>
               <StatusChip status={b.status} />
             </BookingClickable>
@@ -473,7 +493,7 @@ function BookingBlock({
   day,
   onFlight,
 }: {
-  b: Booking;
+  b: BoardBooking;
   lane: number;
   aircraftById: Map<string, AircraftListItem>;
   timeZone: string;
@@ -531,10 +551,12 @@ function BookingBlock({
       style={{ left: `${leftPct}%`, width: `${widthPct}%`, top: 4 + lane * 48, height: 44 }}
       className={
         "absolute flex items-center gap-1 overflow-hidden rounded border px-1.5 text-[0.65rem] font-semibold whitespace-nowrap hover:z-10 hover:shadow-md hover:ring-1 hover:ring-foreground/20 " +
-        bg
+        bg +
+        (b.melLimits ? " ring-2 ring-status-red" : "")
       }
-      title={`${b.origin_icao} → ${b.destination_icao} · ${b.customer.full_name} · ${seatsText} · ~${payload.toLocaleString("en-US")} lbs payload (est.) · ${BOOKING_STATUS_LABELS[b.status]}`}
+      title={`${b.origin_icao} → ${b.destination_icao} · ${b.customer.full_name} · ${seatsText} · ~${payload.toLocaleString("en-US")} lbs payload (est.) · ${BOOKING_STATUS_LABELS[b.status]}${b.melLimits ? ` · ${b.melLimits.join(" ")}` : ""}`}
     >
+      {b.melLimits ? <span className="text-status-red">MEL</span> : null}
       <span className="tabular-nums">
         {_timeOnly(b.requested_departure_at, timeZone)}
       </span>

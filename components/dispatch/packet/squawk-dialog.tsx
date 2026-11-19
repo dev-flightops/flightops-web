@@ -27,6 +27,12 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  DEFAULT_TIME_ZONE,
+  localToUtcIso,
+  utcToLocalInput,
+  zoneAbbreviation,
+} from "@/lib/format/local-time";
 
 const schema = z.object({
   aircraft_id: z.string().min(1, "Pick the aircraft"),
@@ -43,14 +49,9 @@ const schema = z.object({
 
 type FormValues = z.infer<typeof schema>;
 
-/** Treat a datetime-local string as UTC (matches edit-flight + MEL dialog). */
-function localInputToIso(local: string): string {
-  return `${local}:00Z`;
-}
-
-/** "now" rounded down to the minute, in datetime-local format (UTC). */
-function nowAsLocalInput(): string {
-  return new Date().toISOString().slice(0, 16);
+/** "now" to the minute on the base's clock, for a datetime-local input. */
+function nowAsLocalInput(timeZone: string): string {
+  return utcToLocalInput(new Date().toISOString(), timeZone);
 }
 
 export interface AircraftChoice {
@@ -67,6 +68,10 @@ export interface SquawkDialogProps {
   /** The pilot's home (#92): at the morning run-up there is often no
    *  flight yet, so the pilot picks the aircraft in the form. */
   choices?: AircraftChoice[];
+  /** The zone "Reported at" is typed in: the departure base's, else the
+   *  company's (#200). It was UTC, and the client's nav light squawk of
+   *  18 Nov at 16:24 Alaska time was saved as reported nine hours later. */
+  timeZone?: string;
 }
 
 /**
@@ -80,7 +85,12 @@ export interface SquawkDialogProps {
  * A warning strip appears when severity=grounding is selected so the user
  * realises they're about to ground the aircraft from the dispatch side.
  */
-export function SquawkDialog({ aircraftId, tailNumber, choices }: SquawkDialogProps) {
+export function SquawkDialog({
+  aircraftId,
+  tailNumber,
+  choices,
+  timeZone = DEFAULT_TIME_ZONE,
+}: SquawkDialogProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -91,7 +101,7 @@ export function SquawkDialog({ aircraftId, tailNumber, choices }: SquawkDialogPr
     title: "",
     description: "",
     severity: "minor",
-    reported_at: nowAsLocalInput(),
+    reported_at: nowAsLocalInput(timeZone),
   });
 
   const form = useForm<FormValues>({
@@ -101,7 +111,7 @@ export function SquawkDialog({ aircraftId, tailNumber, choices }: SquawkDialogPr
       title: "",
       description: "",
       severity: "minor",
-      reported_at: nowAsLocalInput(),
+      reported_at: nowAsLocalInput(timeZone),
     },
   });
 
@@ -118,10 +128,15 @@ export function SquawkDialog({ aircraftId, tailNumber, choices }: SquawkDialogPr
 
   const onSubmit = (values: FormValues) => {
     setError(null);
+    const reportedAt = localToUtcIso(values.reported_at, timeZone);
+    if (!reportedAt) {
+      setError("Check the time it was reported.");
+      return;
+    }
     startTransition(async () => {
       const result = await createSquawkAction({
         aircraft_id: values.aircraft_id,
-        reported_at: localInputToIso(values.reported_at),
+        reported_at: reportedAt,
         title: values.title,
         description: values.description,
         severity: values.severity,
@@ -256,7 +271,7 @@ export function SquawkDialog({ aircraftId, tailNumber, choices }: SquawkDialogPr
                 name="reported_at"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Reported at (UTC)</FormLabel>
+                    <FormLabel>Reported at ({zoneAbbreviation(timeZone)})</FormLabel>
                     <FormControl>
                       <Input type="datetime-local" {...field} />
                     </FormControl>

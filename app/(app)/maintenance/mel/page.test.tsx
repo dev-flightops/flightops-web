@@ -31,6 +31,16 @@ const { auth } = vi.hoisted(() => ({
   auth: vi.fn(async () => ({ roles: ["dispatcher"] as string[] })),
 }));
 vi.mock("@/auth", () => ({ auth }));
+// The limit posts through a server action too (#200).
+vi.mock("@/components/maintenance/mel-limit-select", () => ({
+  MelLimitSelect: ({ ataChapter, limit }: { ataChapter: string; limit: string | null }) => (
+    <select aria-label={`Limit for MEL ${ataChapter}`} defaultValue={limit ?? ""}>
+      <option value="">None</option>
+      <option value="day_vfr">Day VFR only</option>
+      <option value="vfr">VFR only</option>
+    </select>
+  ),
+}));
 vi.mock("@/components/dispatch/packet/close-mel-dialog", () => ({
   CloseMelDialog: ({ melItemId }: { melItemId: string }) => (
     <button data-testid="close-mel" data-mel-id={melItemId}>Close</button>

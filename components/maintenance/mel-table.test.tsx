@@ -4,6 +4,16 @@ import { describe, expect, it, vi } from "vitest";
 import type { MelItemResponse } from "@/lib/api/types";
 
 // The dialog posts through a server action; its own tests cover that.
+// The limit posts through a server action too (#200).
+vi.mock("@/components/maintenance/mel-limit-select", () => ({
+  MelLimitSelect: ({ ataChapter, limit }: { ataChapter: string; limit: string | null }) => (
+    <select aria-label={`Limit for MEL ${ataChapter}`} defaultValue={limit ?? ""}>
+      <option value="">None</option>
+      <option value="day_vfr">Day VFR only</option>
+      <option value="vfr">VFR only</option>
+    </select>
+  ),
+}));
 vi.mock("@/components/dispatch/packet/close-mel-dialog", () => ({
   CloseMelDialog: ({ melItemId }: { melItemId: string }) => (
     <button data-testid="close-mel" data-mel-id={melItemId}>
@@ -145,4 +155,25 @@ describe("MelTable — closing items", () => {
     expect(buttons).toHaveLength(1);
     expect(buttons[0]).toHaveAttribute("data-mel-id", "m-1");
   });
+
+  it("shows what a deferral limits the aircraft to, and lets maintenance change it on an open one (#200)", () => {
+    const items = [
+      makeMel({ id: "m-1", ata_chapter: "33-40", operating_limit: "day_vfr" }),
+      makeMel({ id: "m-2", ata_chapter: "34-10", operating_limit: null }),
+      makeMel({ id: "m-3", ata_chapter: "21-30", operating_limit: "vfr", status: "closed" }),
+    ];
+    const { unmount } = render(<MelTable items={items} />);
+    expect(screen.getByRole("columnheader", { name: "Limit" })).toBeInTheDocument();
+    expect(screen.getByText("Day VFR only")).toBeInTheDocument();
+    expect(screen.getByText("VFR only")).toBeInTheDocument();
+    expect(screen.queryByLabelText(/Limit for MEL/)).not.toBeInTheDocument();
+    unmount();
+
+    render(<MelTable items={items} canClose />);
+    expect(screen.getByLabelText("Limit for MEL 33-40")).toHaveValue("day_vfr");
+    expect(screen.getByLabelText("Limit for MEL 34-10")).toHaveValue("");
+    // A closed item keeps its limit, read only.
+    expect(screen.queryByLabelText("Limit for MEL 21-30")).not.toBeInTheDocument();
+  });
 });
+

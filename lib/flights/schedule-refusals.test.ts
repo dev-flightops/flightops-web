@@ -90,3 +90,37 @@ describe("releaseRefusal (#155)", () => {
     );
   });
 });
+
+describe("an MEL deferral's limit (#200)", () => {
+  it("says what the flight breaks and what to do", () => {
+    const said = releaseRefusal(body({ error: "mel_operating_limit", items: [{
+  mel_id: "mel-1",
+  ata_chapter: "33-40",
+  description: "Right nav light inoperative",
+  limit: "day_vfr" as const,
+  ifr: false,
+  night: [],
+  unknown: [],
+  message: "N100PA is day VFR only under MEL 33-40: the departure from PABE at 18:30 AKST is after civil twilight ends at 17:58.",
+}] }));
+    expect(said).toBe(
+      "Release blocked — N100PA is day VFR only under MEL 33-40: the departure from PABE at 18:30 AKST is after civil twilight ends at 17:58. Move it into daylight, or put another aircraft on it.",
+    );
+  });
+
+  it("says fly it VFR when the flight is IFR", () => {
+    const said = releaseRefusal(
+      body({ error: "mel_operating_limit", items: [{ ...{
+  mel_id: "mel-1",
+  ata_chapter: "33-40",
+  description: "Right nav light inoperative",
+  limit: "day_vfr" as const,
+  ifr: false,
+  night: [],
+  unknown: [],
+  message: "N100PA is day VFR only under MEL 33-40: the departure from PABE at 18:30 AKST is after civil twilight ends at 17:58.",
+}, limit: "vfr", ifr: true, message: "N100PA is VFR only under MEL 34-10, and the flight is IFR." }] }),
+    );
+    expect(said).toMatch(/and the flight is IFR\. Fly it VFR, or put another aircraft on it\.$/);
+  });
+});

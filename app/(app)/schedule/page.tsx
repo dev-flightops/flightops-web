@@ -348,6 +348,12 @@ function FlightRow({ flight, zones, canEdit }: { flight: FlightListItem; zones: 
         <span className="ml-2 text-xs text-muted-foreground">
           {flight.aircraft.model}
         </span>
+        {/* #200: an open MEL deferral's limit this flight breaks. */}
+        {flight.mel_limits?.length ? (
+          <p className="mt-1 max-w-xs text-xs text-status-red">
+            {flight.mel_limits.map((m) => m.message).join(" ")}
+          </p>
+        ) : null}
       </td>
       <td className="px-4 py-3 font-mono text-xs text-foreground">
         {localClock(flight.scheduled_departure_at, zone)}

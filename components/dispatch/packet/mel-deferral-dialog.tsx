@@ -27,7 +27,14 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import type { MelCategory } from "@/lib/api/types";
+import type { MelCategory, MelOperatingLimit } from "@/lib/api/types";
+import {
+  DEFAULT_TIME_ZONE,
+  localToUtcIso,
+  utcToLocalInput,
+  zoneAbbreviation,
+} from "@/lib/format/local-time";
+import { MEL_LIMIT_LABELS } from "@/lib/maintenance/mel-limits";
 
 // Category caps drive the default "due_at" suggestion. These mirror the
 // FAA-approved MMEL/MEL document categories enforced by the backend
@@ -52,6 +59,7 @@ const schema = z
     deferred_at: z.string().min(1, "Required"),
     due_at: z.string().min(1, "Required"),
     notes: z.string().max(2000, "Max 2000 characters"),
+    operating_limit: z.enum(["", "day_vfr", "vfr"]),
   })
   .refine(
     (v) => {
@@ -67,31 +75,24 @@ const schema = z
 
 type FormValues = z.infer<typeof schema>;
 
-/** Treat a datetime-local string as UTC (matches dispatch's edit dialog). */
-function localInputToIso(local: string): string {
-  return `${local}:00Z`;
+/** "now" to the minute on the base's clock, for a datetime-local input. */
+function nowAsLocalInput(timeZone: string): string {
+  return utcToLocalInput(new Date().toISOString(), timeZone);
 }
 
-/** ISO 8601 UTC → "YYYY-MM-DDTHH:MM" for use as a datetime-local input value. */
-function isoToLocalInput(iso: string): string {
-  return iso.slice(0, 16);
-}
-
-/** "now" rounded down to the minute, in datetime-local format (UTC). */
-function nowAsLocalInput(): string {
-  return new Date().toISOString().slice(0, 16);
-}
-
-/** Add `days` to a datetime-local string. */
+/** Add `days` to a datetime-local string: the same clock time, days on. */
 function addDays(local: string, days: number): string {
   const dt = new Date(`${local}:00Z`);
   dt.setUTCDate(dt.getUTCDate() + days);
-  return isoToLocalInput(dt.toISOString());
+  return dt.toISOString().slice(0, 16);
 }
 
 export interface MelDeferralDialogProps {
   aircraftId: string;
   tailNumber: string;
+  /** The zone the times are typed in: the departure base's on the packet,
+   *  the company's in Maintenance (#200; they were UTC). */
+  timeZone?: string;
 }
 
 /**
@@ -101,13 +102,17 @@ export interface MelDeferralDialogProps {
  * C: +10, D: +120). Suggestion only fires when the user hasn't manually
  * touched the due_at field — once they edit it, we stop overriding.
  *
- * The form keeps deferred_at + due_at in UTC the same way edit-flight-dialog
- * does — a datetime-local input value treated as UTC. The label makes it
- * explicit.
+ * The times are typed on the local clock (`timeZone`) and saved in UTC,
+ * as a flight's are (#68). They were UTC until 18 Nov (#200): the client's
+ * squawk dialog, built the same way, saved a time nine hours out.
+ *
+ * What the deferral limits the aircraft to (#200): Day VFR only or VFR
+ * only. The release refuses a flight that breaks it.
  */
 export function MelDeferralDialog({
   aircraftId,
   tailNumber,
+  timeZone = DEFAULT_TIME_ZONE,
 }: MelDeferralDialogProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -117,8 +122,9 @@ export function MelDeferralDialog({
   // category change handler stops overwriting their value.
   const [dueAtTouched, setDueAtTouched] = useState(false);
 
-  const initialDeferred = nowAsLocalInput();
+  const initialDeferred = nowAsLocalInput(timeZone);
   const initialCategory: MelCategory = "C";
+  const zone = zoneAbbreviation(timeZone);
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
@@ -128,13 +134,14 @@ export function MelDeferralDialog({
       deferred_at: initialDeferred,
       due_at: addDays(initialDeferred, CATEGORY_MAX_DAYS[initialCategory]),
       notes: "",
+      operating_limit: "",
     },
   });
 
   const onCategoryChange = (next: MelCategory) => {
     form.setValue("category", next, { shouldValidate: true });
     if (!dueAtTouched) {
-      const deferred = form.getValues("deferred_at") || nowAsLocalInput();
+      const deferred = form.getValues("deferred_at") || nowAsLocalInput(timeZone);
       form.setValue("due_at", addDays(deferred, CATEGORY_MAX_DAYS[next]), {
         shouldValidate: false,
       });
@@ -162,20 +169,28 @@ export function MelDeferralDialog({
       deferred_at: initialDeferred,
       due_at: addDays(initialDeferred, CATEGORY_MAX_DAYS[initialCategory]),
       notes: "",
+      operating_limit: "",
     });
   };
 
   const onSubmit = (values: FormValues) => {
     setError(null);
+    const deferredAt = localToUtcIso(values.deferred_at, timeZone);
+    const dueAt = localToUtcIso(values.due_at, timeZone);
+    if (!deferredAt || !dueAt) {
+      setError("Check the dates.");
+      return;
+    }
     startTransition(async () => {
       const result = await createMelDeferralAction({
         aircraft_id: aircraftId,
         ata_chapter: values.ata_chapter,
         description: values.description,
         category: values.category,
-        deferred_at: localInputToIso(values.deferred_at),
-        due_at: localInputToIso(values.due_at),
+        deferred_at: deferredAt,
+        due_at: dueAt,
         notes: values.notes.trim() || null,
+        operating_limit: (values.operating_limit || null) as MelOperatingLimit | null,
       });
       if (result.ok) {
         closeAndReset();
@@ -207,7 +222,7 @@ export function MelDeferralDialog({
           <DialogHeader>
             <DialogTitle>New MEL deferral · {tailNumber}</DialogTitle>
             <DialogDescription>
-              Defer an inoperative item under the approved MEL. Times are UTC.
+              Defer an inoperative item under the approved MEL. Times are {zone}.
               Due date auto-suggests from the category cap (A:1d, B:3d, C:10d,
               D:120d) — adjust as needed.
             </DialogDescription>
@@ -284,7 +299,7 @@ export function MelDeferralDialog({
                 name="deferred_at"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Deferred at (UTC)</FormLabel>
+                    <FormLabel>Deferred at ({zone})</FormLabel>
                     <FormControl>
                       <Input
                         type="datetime-local"
@@ -302,7 +317,7 @@ export function MelDeferralDialog({
                 name="due_at"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Due by (UTC)</FormLabel>
+                    <FormLabel>Due by ({zone})</FormLabel>
                     <FormControl>
                       <Input
                         type="datetime-local"
@@ -313,6 +328,32 @@ export function MelDeferralDialog({
                         }}
                       />
                     </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="operating_limit"
+                render={({ field }) => (
+                  <FormItem className="sm:col-span-2">
+                    <FormLabel>Limits the aircraft to</FormLabel>
+                    <FormControl>
+                      <select
+                        {...field}
+                        className="flex h-9 w-full rounded-lg border border-border bg-background px-3 py-2 text-[0.8125rem] focus-visible:outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20"
+                      >
+                        <option value="">Nothing</option>
+                        <option value="day_vfr">{MEL_LIMIT_LABELS.day_vfr}</option>
+                        <option value="vfr">{MEL_LIMIT_LABELS.vfr}</option>
+                      </select>
+                    </FormControl>
+                    <p className="text-[0.65rem] text-muted-foreground">
+                      The release refuses a flight that breaks it: day VFR only, any
+                      departure or arrival after civil twilight ends or before it
+                      begins, or an IFR flight; VFR only, an IFR flight.
+                    </p>
                     <FormMessage />
                   </FormItem>
                 )}

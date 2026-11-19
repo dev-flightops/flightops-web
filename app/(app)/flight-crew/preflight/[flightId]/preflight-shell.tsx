@@ -176,7 +176,7 @@ export function PreflightShell({
 
   return (
     <>
-      <FlightContextBar flight={flight} />
+      <FlightContextBar flight={flight} timeZone={timeZone} />
       <FlightRules flightId={flight.id} isIfr={Boolean(flight.is_ifr)} status={flight.status} />
       {readiness}
       <ProgressIndicator
@@ -260,7 +260,7 @@ function EditingBanner({
 
 /** The page's head (#81): the flight as the title, its route, aircraft
  *  and ETD under it, and the way back to the crew page. */
-function FlightContextBar({ flight }: { flight: FlightDetail }) {
+function FlightContextBar({ flight, timeZone }: { flight: FlightDetail; timeZone: string }) {
   return (
     <PageHeader
       back={{ href: "/flight-crew", label: "Flight Crew" }}
@@ -278,6 +278,7 @@ function FlightContextBar({ flight }: { flight: FlightDetail }) {
           <SquawkDialog
             aircraftId={flight.aircraft.id}
             tailNumber={flight.aircraft.tail_number}
+            timeZone={timeZone}
           />
         </>
       }

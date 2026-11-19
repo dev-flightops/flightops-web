@@ -177,16 +177,21 @@ function LegBlock({
   const times = `${localClock(leg.departsAt, zone).slice(0, 5)}–${localClock(leg.arrivesAt, zone).slice(0, 5)}`;
   const seats = leg.held !== null && leg.seats ? `${leg.held}/${leg.seats}` : null;
   const width = 100 / leg.lanes;
+  // An open MEL deferral's limit the flight breaks (#200): the release
+  // refuses it, so the block says so before then.
+  const limited = leg.melLimits.length > 0;
   return (
     <button
       type="button"
       onClick={onOpen}
-      aria-label={`${leg.label}, ${leg.origin} to ${leg.destination}, ${times}, ${STATE_LABEL[leg.state]}${seats ? `, ${leg.held} of ${leg.seats} seats booked` : ""}`}
-      className={`absolute z-10 overflow-hidden border border-border border-l-[3px] ${EDGE[leg.state]} ${FILL[leg.state]} px-1.5 py-0.5 text-left text-[0.7rem] leading-tight text-foreground transition-colors hover:border-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary`}
+      aria-label={`${leg.label}, ${leg.origin} to ${leg.destination}, ${times}, ${STATE_LABEL[leg.state]}${seats ? `, ${leg.held} of ${leg.seats} seats booked` : ""}${limited ? `. Can't be released: ${leg.melLimits.join(" ")}` : ""}`}
+      title={limited ? leg.melLimits.join(" ") : undefined}
+      className={`absolute z-10 overflow-hidden border border-border border-l-[3px] ${limited ? "border-l-status-red" : EDGE[leg.state]} ${FILL[leg.state]} px-1.5 py-0.5 text-left text-[0.7rem] leading-tight text-foreground transition-colors hover:border-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary`}
       style={{ top, height, left: `calc(${leg.lane * width}% + 2px)`, width: `calc(${width}% - 4px)` }}
     >
       <span className="flex items-baseline justify-between gap-1">
         <span className="truncate">
+          {limited ? <span className="mr-1 font-bold text-status-red">MEL</span> : null}
           <span className="font-mono font-semibold">{leg.label}</span>{" "}
           <span className="font-mono">
             {leg.origin} → {leg.destination}

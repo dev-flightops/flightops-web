@@ -1,6 +1,7 @@
 "use client";
 
 import type { MelItemResponse } from "@/lib/api/types";
+import { melLimitLabel } from "@/lib/maintenance/mel-limits";
 
 import { useSavedAcks } from "./use-saved-acks";
 
@@ -86,6 +87,11 @@ export function MelAckList({
                     ATA {mel.ata_chapter}
                   </span>
                   <CategoryBadge category={mel.category} />
+                  {mel.operating_limit ? (
+                    <span className="status-mark text-status-orange">
+                      {melLimitLabel(mel.operating_limit)}
+                    </span>
+                  ) : null}
                   <span className="text-[0.65rem] text-muted-foreground">
                     Due {formatDate(mel.due_at)}
                   </span>

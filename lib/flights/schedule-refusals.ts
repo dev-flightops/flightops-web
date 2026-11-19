@@ -1,3 +1,6 @@
+import type { MelLimitBreach } from "@/lib/api/types";
+import { melLimitRemedy } from "@/lib/maintenance/mel-limits";
+
 /**
  * What the ops service's new schedule refusals mean to a dispatcher (#155).
  * The client's TST901 flew to "ZZZZ", and N503PA was on three flights at
@@ -59,6 +62,12 @@ export function releaseRefusal(message: string): string | null {
   }
   if (d.error === "aircraft_weights_missing") {
     return `Release blocked — ${String(d.tail_number ?? "the aircraft")} has no max payload on record, so the load can't be checked. Set it in Settings → Fleet.`;
+  }
+  if (d.error === "mel_operating_limit") {
+    // #200: an open MEL deferral limits the aircraft to day VFR or VFR.
+    const items = Array.isArray(d.items) ? (d.items as MelLimitBreach[]) : [];
+    const said = items.map((i) => i.message).filter(Boolean).join(" ");
+    return `Release blocked — ${said || "an open MEL deferral limits this aircraft to day VFR or VFR."} ${melLimitRemedy(items)}`;
   }
   if (d.error === "mel_ack_required") {
     return "Release blocked — acknowledge each open MEL on the aircraft first.";

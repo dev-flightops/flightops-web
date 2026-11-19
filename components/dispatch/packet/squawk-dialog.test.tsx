@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -65,4 +65,19 @@ describe("SquawkDialog", () => {
     );
     await waitFor(() => expect(refresh).toHaveBeenCalled());
   });
+
+  it("takes the time it was reported on the base's clock and saves it in UTC (#200)", async () => {
+    // The client's nav light squawk, 18 Nov at 4:24 PM in Bethel: the field
+    // was UTC, and it was saved as reported nine hours later.
+    const user = userEvent.setup();
+    render(<SquawkDialog aircraftId="a-100" tailNumber="N100PA" timeZone="America/Anchorage" />);
+    await user.click(screen.getByRole("button", { name: "Squawk" }));
+    fireEvent.change(screen.getByLabelText("Reported at (AKST)"), { target: { value: "2026-11-18T16:24" } });
+    await describeDefect(user);
+    await user.click(screen.getByRole("button", { name: "File squawk" }));
+
+    await waitFor(() => expect(createSquawkAction).toHaveBeenCalledTimes(1));
+    expect(createSquawkAction.mock.calls[0][0].reported_at).toBe("2026-11-19T01:24:00Z");
+  });
 });
+

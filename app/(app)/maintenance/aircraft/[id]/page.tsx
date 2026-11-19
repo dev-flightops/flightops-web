@@ -8,7 +8,9 @@ import { DueListTable } from "@/components/maintenance/due-list-table";
 import { MelTable } from "@/components/maintenance/mel-table";
 import { SquawksTable } from "@/components/maintenance/squawks-table";
 import { cn } from "@/lib/utils";
+import { loadZoneTable } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
+import { DEFAULT_TIME_ZONE } from "@/lib/format/local-time";
 import {
   getAirworthiness,
   getFleetAirworthiness,
@@ -59,6 +61,8 @@ export default async function AircraftDetailPage({
   const { id } = await params;
   const session = await auth();
   const canSignOff = hasAnyRole(session?.roles ?? [], AIRWORTHINESS_WRITERS);
+  // A deferral is typed in the company's time (#200).
+  const zone = (await loadZoneTable().catch(() => null))?.fallback ?? DEFAULT_TIME_ZONE;
 
   let verdict: AirworthinessResponse | null = null;
   let mels: MelItemResponse[] = [];
@@ -145,6 +149,7 @@ export default async function AircraftDetailPage({
             <MelDeferralDialog
               aircraftId={verdict.aircraft.id}
               tailNumber={verdict.aircraft.tail_number}
+              timeZone={zone}
             />
           )}
         </div>
