@@ -51,22 +51,31 @@ export function withoutSessionCookies(header: string | null): string | null {
   return kept.length === pairs.length ? null : kept.join("; ");
 }
 
-/** The mark, for `cookies().set(...)`. Secure in production (https); the
- *  dev server and the test copies are plain http. */
-export function signedOutCookie(now: number = Date.now()) {
+/** The request came over https, as Auth.js judges its own cookies: on
+ *  Vercel the forwarded protocol, else the URL itself. Safari drops a
+ *  Secure cookie sent over plain http, so the mark is Secure only on https
+ *  (a production build served over http left Safari with no mark at all). */
+export function overHttps(headers: Headers, url?: string): boolean {
+  const forwarded = (headers.get("x-forwarded-proto") ?? "").split(",")[0].trim();
+  if (forwarded) return forwarded === "https";
+  return (url ?? headers.get("origin") ?? "").startsWith("https:");
+}
+
+/** The mark, for `cookies().set(...)`. */
+export function signedOutCookie(secure: boolean, now: number = Date.now()) {
   return {
     name: SIGNED_OUT_COOKIE,
     value: String(now),
     httpOnly: true,
     sameSite: "lax" as const,
-    secure: process.env.NODE_ENV === "production",
+    secure,
     path: "/",
     maxAge: SIGNED_OUT_MAX_AGE_SECONDS,
   };
 }
 
 /** The mark as a Set-Cookie header, for a route handler's response. */
-export function signedOutHeader(now: number = Date.now()): string {
-  const c = signedOutCookie(now);
+export function signedOutHeader(secure: boolean, now: number = Date.now()): string {
+  const c = signedOutCookie(secure, now);
   return `${c.name}=${c.value}; Path=${c.path}; Max-Age=${c.maxAge}; HttpOnly; SameSite=Lax${c.secure ? "; Secure" : ""}`;
 }

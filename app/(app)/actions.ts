@@ -1,11 +1,11 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 
 import { signOut } from "@/auth";
 import { switchTenant as switchTenantApi } from "@/lib/api/auth";
-import { signedOutCookie } from "@/lib/auth/signed-out";
+import { overHttps, signedOutCookie } from "@/lib/auth/signed-out";
 
 /** Shared sign-out server action. Used by the standard app-shell
  *  HeaderActions AND by the /home top bar.
@@ -15,7 +15,7 @@ import { signedOutCookie } from "@/lib/auth/signed-out";
  *  button: a full page load to the sign-in, not this action's redirect,
  *  which was a soft navigation that kept the page's requests in flight. */
 export async function signOutAction(): Promise<void> {
-  (await cookies()).set(signedOutCookie());
+  (await cookies()).set(signedOutCookie(overHttps(await headers())));
   await signOut({ redirect: false });
 }
 

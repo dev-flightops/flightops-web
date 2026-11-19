@@ -1,7 +1,7 @@
 import type { NextRequest } from "next/server";
 
 import { handlers } from "@/auth";
-import { signedOutHeader } from "@/lib/auth/signed-out";
+import { overHttps, signedOutHeader } from "@/lib/auth/signed-out";
 
 export const { GET } = handlers;
 
@@ -12,6 +12,6 @@ export async function POST(req: NextRequest): Promise<Response> {
   const res = await handlers.POST(req);
   if (!req.nextUrl.pathname.replace(/\/+$/, "").endsWith("/signout")) return res;
   const marked = new Response(res.body, res);
-  marked.headers.append("Set-Cookie", signedOutHeader());
+  marked.headers.append("Set-Cookie", signedOutHeader(overHttps(req.headers, req.url)));
   return marked;
 }

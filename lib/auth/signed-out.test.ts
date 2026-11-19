@@ -5,6 +5,7 @@ import {
   SIGNED_OUT_MAX_AGE_SECONDS,
   sessionStart,
   signedOutHeader,
+  overHttps,
   signedOutSince,
   withoutSessionCookies,
 } from "./signed-out";
@@ -43,10 +44,20 @@ describe("a new session's start", () => {
 });
 
 describe("the mark as a header", () => {
-  it("lives as long as a session and only for this site", () => {
-    expect(signedOutHeader(1234)).toBe(
+  it("lives as long as a session, and is Secure only on https", () => {
+    expect(signedOutHeader(false, 1234)).toBe(
       `${SIGNED_OUT_COOKIE}=1234; Path=/; Max-Age=${SIGNED_OUT_MAX_AGE_SECONDS}; HttpOnly; SameSite=Lax`,
     );
+    expect(signedOutHeader(true, 1234)).toMatch(/; Secure$/);
+  });
+
+  it("knows https from the forwarded protocol, else the address", () => {
+    expect(overHttps(new Headers({ "x-forwarded-proto": "https" }))).toBe(true);
+    expect(overHttps(new Headers({ "x-forwarded-proto": "http" }), "https://x.test/")).toBe(false);
+    expect(overHttps(new Headers(), "https://www.example.test/api/auth/signout")).toBe(true);
+    expect(overHttps(new Headers(), "http://localhost:3292/api/auth/signout")).toBe(false);
+    expect(overHttps(new Headers({ origin: "https://www.example.test" }))).toBe(true);
+    expect(overHttps(new Headers())).toBe(false);
   });
 });
 
