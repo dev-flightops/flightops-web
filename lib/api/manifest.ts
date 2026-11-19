@@ -113,6 +113,13 @@ export interface FuelEstimate {
   reserve_minutes: number;
   /** What it needs and doesn't have, in words a dispatcher can act on. */
   missing: string[];
+  /** Flown IFR (#201). The fuel to `alternate` is in the figure when
+   *  `alternate_minutes` is set; otherwise `alternate_missing` says what
+   *  it still needs. Absent from services before #201. */
+  ifr?: boolean;
+  alternate?: string | null;
+  alternate_minutes?: number | null;
+  alternate_missing?: string | null;
 }
 
 /** What is left of the aircraft's useful load for mail and freight (#74):

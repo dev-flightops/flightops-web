@@ -128,6 +128,9 @@ export interface FlightListItem {
   /** Flown IFR (#123); VFR unless dispatch marks it. Absent from a
    *  service from before it. */
   is_ifr?: boolean;
+  /** An IFR flight's alternate airport (#201), which its fuel estimate
+   *  flies to. Absent from a service from before it. */
+  alternate_ident?: string | null;
   /** The legs in flying order (#139); empty for a single-leg flight,
    *  whose own times are its leg's. Absent from services before #139. */
   legs?: FlightLeg[];

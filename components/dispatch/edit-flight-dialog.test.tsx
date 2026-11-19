@@ -198,6 +198,43 @@ describe("EditFlightDialog", () => {
     expect(updateFlightAction).toHaveBeenLastCalledWith(baseFlight.id, { is_ifr: false });
   });
 
+  it("asks an IFR flight for its alternate, for its fuel (#201)", async () => {
+    updateFlightAction.mockReset().mockResolvedValue({ ok: true });
+    const user = userEvent.setup();
+    const { unmount } = render(
+      <EditFlightDialog flight={baseFlight} aircraft={[aircraft207, aircraft510]} />,
+    );
+    await user.click(screen.getByRole("button", { name: /edit/i }));
+    expect(screen.queryByLabelText("Alternate")).toBeNull();
+    await user.click(screen.getByLabelText("Flown IFR"));
+    await user.type(screen.getByLabelText("Alternate"), "pa-b");
+    await user.click(screen.getByRole("button", { name: /save changes/i }));
+    expect(await screen.findByText("3- or 4-character airport code (ICAO or FAA)")).toBeInTheDocument();
+    expect(updateFlightAction).not.toHaveBeenCalled();
+    await user.clear(screen.getByLabelText("Alternate"));
+    await user.type(screen.getByLabelText("Alternate"), "pabe");
+    expect(screen.getByLabelText("Alternate")).toHaveValue("PABE");
+    await user.click(screen.getByRole("button", { name: /save changes/i }));
+    expect(updateFlightAction).toHaveBeenLastCalledWith(baseFlight.id, {
+      is_ifr: true,
+      alternate_ident: "PABE",
+    });
+    unmount();
+
+    // An IFR flight shows its alternate; emptied, it goes.
+    render(
+      <EditFlightDialog
+        flight={{ ...baseFlight, is_ifr: true, alternate_ident: "PABE" }}
+        aircraft={[aircraft207, aircraft510]}
+      />,
+    );
+    await user.click(screen.getByRole("button", { name: /edit/i }));
+    expect(screen.getByLabelText("Alternate")).toHaveValue("PABE");
+    await user.clear(screen.getByLabelText("Alternate"));
+    await user.click(screen.getByRole("button", { name: /save changes/i }));
+    expect(updateFlightAction).toHaveBeenLastCalledWith(baseFlight.id, { alternate_ident: null });
+  });
+
   it("closes without calling the server action when no fields changed", async () => {
     updateFlightAction.mockReset();
     const user = userEvent.setup();

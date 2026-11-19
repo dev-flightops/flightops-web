@@ -94,6 +94,25 @@ describe("createFlightAction", () => {
     expect(createFlight.mock.calls.map(([arg]) => arg.is_ifr)).toEqual([false, true]);
   });
 
+  it("sends an IFR flight's alternate, and none for a VFR one (#201)", async () => {
+    createFlight.mockReset().mockResolvedValue({});
+    await expect(
+      createFlightAction({ status: "idle" }, makeFormData({ is_ifr: "on", alternate_ident: " pabe " })),
+    ).rejects.toThrow("NEXT_REDIRECT");
+    await expect(
+      createFlightAction({ status: "idle" }, makeFormData({ alternate_ident: "PABE" })),
+    ).rejects.toThrow("NEXT_REDIRECT");
+    expect(createFlight.mock.calls.map(([arg]) => arg.alternate_ident)).toEqual(["PABE", undefined]);
+    const bad = await createFlightAction(
+      { status: "idle" },
+      makeFormData({ is_ifr: "on", alternate_ident: "PA-B" }),
+    );
+    expect(bad).toMatchObject({
+      status: "field-errors",
+      errors: { alternate_ident: "3- or 4-character airport code (ICAO or FAA)" },
+    });
+  });
+
   it("returns field errors for missing required fields", async () => {
     const fd = makeFormData({ flight_number: "" });
     const result = await createFlightAction({ status: "idle" }, fd);

@@ -138,6 +138,16 @@ describe("OpenFlightForm: VFR unless marked IFR (#123)", () => {
     await userEvent.click(ifr);
     expect(ifr).toBeChecked();
   });
+
+  it("asks an IFR flight for its alternate (#201)", async () => {
+    renderForm();
+    expect(screen.queryByLabelText("Alternate")).toBeNull();
+    await userEvent.click(screen.getByRole("checkbox", { name: "Flown IFR" }));
+    expect(screen.getByLabelText("Alternate")).toHaveAttribute("name", "alternate_ident");
+    expect(screen.getByText("The fuel estimate adds the flight to it.")).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("checkbox", { name: "Flown IFR" }));
+    expect(screen.queryByLabelText("Alternate")).toBeNull();
+  });
 });
 
 describe("OpenFlightForm: a charter's flight (#133)", () => {

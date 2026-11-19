@@ -1,9 +1,12 @@
 import NextAuth, { CredentialsSignin } from "next-auth";
+import { cookies } from "next/headers";
+import type { NextRequest } from "next/server";
 
 import {
   decideSessionAction,
   refreshAccessToken,
 } from "@/lib/session-refresh";
+import { SIGNED_OUT_COOKIE, sessionStart, signedOutSince } from "@/lib/auth/signed-out";
 import { COMPANY_SUSPENDED, lockoutMinutes, tooManyAttemptsCode } from "@/lib/login-errors";
 import { postOAuthExchange } from "@/lib/sso-exchange";
 import { ssoProfileAllowed, ssoProviderConfigs } from "@/lib/sso-providers";
@@ -156,7 +159,21 @@ async function exchangeOAuthForFlightOpsJwt(
   return { access_token: body.access_token, claims: decodeJwtPayload(body.access_token) };
 }
 
-export const { handlers, signIn, signOut, auth } = NextAuth({
+/** When this browser last signed out (#201; lib/auth/signed-out.ts): from
+ *  the request in the proxy and the route handlers, else from the page's or
+ *  the action's own cookies. */
+async function signedOutMark(req: NextRequest | undefined): Promise<string | undefined> {
+  if (req) return req.cookies.get(SIGNED_OUT_COOKIE)?.value;
+  try {
+    return (await cookies()).get(SIGNED_OUT_COOKIE)?.value;
+  } catch {
+    // Outside a request there is no browser, so no mark.
+    return undefined;
+  }
+}
+
+// Lazily, so the session check can read the request it runs for (#201).
+export const { handlers, signIn, signOut, auth } = NextAuth((req) => ({
   trustHost: true,
   pages: { signIn: "/login" },
   session: { strategy: "jwt" },
@@ -201,6 +218,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       return true;
     },
     async jwt({ token, user }) {
+      const mark = await signedOutMark(req);
       // Initial sign-in: copy the backend JWT + its expiry onto the
       // Auth.js token so subsequent calls can validate without an extra
       // round-trip.
@@ -211,7 +229,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         token.admin_access = user.admin_access;
         token.access_token_exp = user.access_token_exp;
         token.refresh_token = user.refresh_token ?? null;
+        // When the session began, always after the browser's last sign-out.
+        token.login_at = sessionStart(mark);
       }
+      // A session from before this browser's last sign-out is one a late
+      // response put back (#201): refused, and Auth.js clears the cookie.
+      if (signedOutSince(token.login_at, mark)) return null;
       // Subsequent calls. Three outcomes, decided in lib/session-refresh.ts:
       //
       //   keep     still comfortably valid
@@ -259,4 +282,4 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       return session;
     },
   },
-});
+}));

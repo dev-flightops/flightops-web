@@ -177,7 +177,12 @@ export function PreflightShell({
   return (
     <>
       <FlightContextBar flight={flight} timeZone={timeZone} />
-      <FlightRules flightId={flight.id} isIfr={Boolean(flight.is_ifr)} status={flight.status} />
+      <FlightRules
+        flightId={flight.id}
+        isIfr={Boolean(flight.is_ifr)}
+        status={flight.status}
+        alternate={flight.alternate_ident ?? null}
+      />
       {readiness}
       <ProgressIndicator
         completedNumbers={completedNumbers}

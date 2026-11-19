@@ -47,6 +47,13 @@ const FlightCreateSchema = z
     pax_count: z.coerce.number().int().min(0).default(0),
     cargo_lbs: z.coerce.number().int().min(0).default(0),
     notes: z.string().max(500).optional().or(z.literal("").transform(() => undefined)),
+    // #201: an IFR flight's alternate, for its fuel. Blank is none yet.
+    alternate_ident: z
+      .string()
+      .trim()
+      .toUpperCase()
+      .regex(/^([A-Z0-9]{3,4})?$/, AIRPORT_CODE_MESSAGE)
+      .optional(),
   })
   .refine(
     (data) =>
@@ -247,6 +254,10 @@ export async function createFlightAction(
       cargo_lbs: parsed.data.cargo_lbs,
       notes: parsed.data.notes ?? null,
       is_ifr: formData.get("is_ifr") === "on",
+      // #201: only an IFR flight keeps one.
+      ...(formData.get("is_ifr") === "on" && parsed.data.alternate_ident
+        ? { alternate_ident: parsed.data.alternate_ident }
+        : {}),
       ...(legs.length > 1 ? { legs } : {}),
       // A confirmed charter's flight (#133): ops links the charter to it.
       ...(UUID.test(charterRequestId) ? { charter_request_id: charterRequestId } : {}),

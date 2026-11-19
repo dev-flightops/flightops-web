@@ -1,4 +1,6 @@
-import { SignOutGlyph } from "@/components/ff/glyphs";
+import { SignOutButton } from "./sign-out-button";
+
+export { SignOutButton };
 
 /**
  * Who is signed in, and the way out — the end of the top bar for staff
@@ -23,21 +25,6 @@ export function IdentityCluster({ displayName }: { displayName: string }) {
         {displayName}
       </span>
     </div>
-  );
-}
-
-export function SignOutButton({ action }: { action: () => Promise<void> }) {
-  return (
-    <form action={action}>
-      <button
-        type="submit"
-        className="inline-flex items-center gap-1 rounded-md p-2 text-xs font-medium text-muted-foreground hover:bg-foreground/8 hover:text-foreground"
-        aria-label="Sign out"
-      >
-        <span className="hidden sm:inline">Sign out</span>
-        <SignOutGlyph className="h-3 w-3 sm:hidden" aria-hidden />
-      </button>
-    </form>
   );
 }
 
