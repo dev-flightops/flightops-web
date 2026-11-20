@@ -44,6 +44,9 @@ export interface ManifestPaxRow {
    *  totals. Absent from servers that predate it. */
   check_in_status?: "booked" | "checked_in" | "boarded" | "no_show";
   no_show_reason?: string | null;
+  /** When they checked in and boarded (20 Nov). Absent before then. */
+  checked_in_at?: string | null;
+  boarded_at?: string | null;
   /** The stops they get on and off at (#120); null is the flight's
    *  origin / destination. Absent from servers that predate it. */
   boards_at?: string | null;
@@ -306,6 +309,25 @@ export async function getFlightManifest(
   flightId: string,
 ): Promise<ManifestDetailResponse> {
   return apiFetch<ManifestDetailResponse>(`/manifest/flights/${flightId}`);
+}
+
+/** One of the caller's flights and how its passengers' check-in stands
+ *  (20 Nov). No-shows are neither passengers nor checked in. */
+export interface MyCheckIn {
+  flight_id: string;
+  flight_number: string;
+  origin: string;
+  scheduled_departure_at: string;
+  passengers: number;
+  checked_in: number;
+  /** When the last of them checked in, once every one has. */
+  all_checked_in_at: string | null;
+}
+
+/** `GET /manifest/check-ins/mine`: one read for every flight the caller
+ *  is crewed on, for the bell. */
+export async function listMyCheckIns(): Promise<{ items: MyCheckIn[] }> {
+  return apiFetch<{ items: MyCheckIn[] }>(`/manifest/check-ins/mine`);
 }
 
 /** The pilot's weight and balance for a flight (#111), manifest or not. */

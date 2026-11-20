@@ -1,7 +1,7 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
-import type { FlightListItem } from "@/lib/api/types";
+import type { FlightListItem, WeatherReportResponse } from "@/lib/api/types";
 
 import { TodayFlightsPanel } from "./today-flights-panel";
 
@@ -30,13 +30,20 @@ describe("TodayFlightsPanel", () => {
     );
   });
 
-  it("formats departure and arrival as UTC", () => {
+  it("shows departure and arrival in the departure base's time, with the Zulu beside them", () => {
+    // #68: times are the base's, as Flight Following shows them; the
+    // Zulu stays beside them for the flight plan.
     render(<TodayFlightsPanel flights={[flight()]} />);
-    // Dispatch and flight-following use the same 14:25Z convention; a
-    // pilot reading a local-time ETD off this card would be an hour or
-    // more out depending on the season.
-    expect(screen.getByText(/ETD 14:25Z/)).toBeInTheDocument();
-    expect(screen.getByText(/ETA 16:05Z/)).toBeInTheDocument();
+    expect(screen.getByText(/ETD 06:25 AKDT · ETA 08:05 AKDT/)).toBeInTheDocument();
+    expect(screen.getByText("14:25Z–16:05Z")).toBeInTheDocument();
+  });
+
+  it("opens the preflight at its fuel from Order fuel", () => {
+    render(<TodayFlightsPanel flights={[flight()]} />);
+    expect(screen.getByRole("link", { name: /Order fuel/i })).toHaveAttribute(
+      "href",
+      "/flight-crew/preflight/f-1#preflight-fuel-heading",
+    );
   });
 
   it("says you are not rostered, not that nothing is flying", () => {
@@ -93,15 +100,13 @@ describe("dates on the cards", () => {
     // Without it, two cards are indistinguishable as to which is
     // tonight's flight.
     render(<TodayFlightsPanel flights={[flight()]} />);
-    expect(screen.getByText("08-21")).toBeInTheDocument();
+    expect(screen.getByText("Aug 21")).toBeInTheDocument();
   });
 
-  it("takes the date from the ISO string rather than a local render", () => {
-    // 23:30Z on the 1st is still the 2nd in UTC+1 and the 1st in
-    // Alaska. Slicing the ISO string keeps the date matched to the Z
-    // times beside it, and keeps the server and client renders the
-    // same — parsing through Date would shift it under the reader on
-    // hydration.
+  it("dates the flight on the departure base's day, not UTC's", () => {
+    // 23:30Z on the 1st is 15:30 on the 1st in Alaska. The date and
+    // times are formatted in the base's named zone, so the server and
+    // the browser render the same thing whatever zone either is in.
     render(
       <TodayFlightsPanel
         flights={[
@@ -112,8 +117,9 @@ describe("dates on the cards", () => {
         ]}
       />,
     );
-    expect(screen.getByText("06-01")).toBeInTheDocument();
-    expect(screen.getByText(/ETD 23:30Z/)).toBeInTheDocument();
+    expect(screen.getByText("Jun 1")).toBeInTheDocument();
+    expect(screen.getByText(/ETD 15:30 AKDT/)).toBeInTheDocument();
+    expect(screen.getByText("23:30Z–01:00Z")).toBeInTheDocument();
   });
 
   it("says nothing about which day is today", () => {
@@ -122,5 +128,83 @@ describe("dates on the cards", () => {
     const { container } = render(<TodayFlightsPanel flights={[flight()]} />);
     expect(container.textContent).not.toMatch(/\btoday\b/i);
     expect(container.textContent).not.toMatch(/\btomorrow\b/i);
+  });
+});
+
+// 20 Nov, the client: "the ability to see routing/current weather
+// (winds/ceiling/vis), so that I can order fuel while I'm still in the air."
+describe("the next flight, read from the air", () => {
+  const metar = (over: Partial<WeatherReportResponse> = {}): WeatherReportResponse =>
+    ({
+      icao: "PAKN",
+      kind: "metar",
+      raw: "METAR PAKN 211353Z 27008KT 10SM CLR",
+      parsed_at: "2026-08-21T14:00:00Z",
+      observed_at: "2026-08-21T13:53:00Z",
+      flight_category: "VFR",
+      visibility_sm: 10,
+      ceiling_ft: null,
+      wind_direction_deg: 270,
+      wind_speed_kt: 8,
+      wind_gust_kt: null,
+      wind_variable: false,
+      wind_calm: false,
+      ...over,
+    }) as WeatherReportResponse;
+
+  it("gives each stop once with its wind, visibility and ceiling, and says when there's no METAR", () => {
+    render(
+      <TodayFlightsPanel
+        flights={[flight({ stops: ["PAKN", "PADU", "PAKN"] } as Partial<FlightListItem>)]}
+        weather={{ PAKN: metar() }}
+      />,
+    );
+    const now = screen.getByRole("region", { name: "Weather now" });
+    expect(within(now).getAllByText("PAKN")).toHaveLength(1);
+    expect(within(now).getByText("270° @ 8 kt · 10.0 SM · Clear")).toBeInTheDocument();
+    expect(within(now).getByText("METAR 13:53Z")).toBeInTheDocument();
+    expect(within(now).getByText("No current METAR")).toBeInTheDocument();
+  });
+
+  it("times the report by its own observation, never by when it was fetched", () => {
+    // Codex, web #501: a 13:53Z observation fetched at 14:20Z must not read
+    // as "METAR 14:20Z", which makes older conditions look newer.
+    render(
+      <TodayFlightsPanel
+        flights={[flight()]}
+        weather={{ PAKN: metar({ observed_at: undefined, parsed_at: "2026-08-21T14:20:00Z" }) }}
+      />,
+    );
+    const now = screen.getByRole("region", { name: "Weather now" });
+    expect(within(now).getByText("METAR 13:53Z")).toBeInTheDocument();
+    expect(within(now).queryByText(/14:20Z/)).toBeNull();
+  });
+
+  it("shows the fuel, the load and the passengers as the preflight does", () => {
+    render(
+      <TodayFlightsPanel
+        flights={[flight()]}
+        ready={{
+          "f-1": {
+            fuelOrders: [],
+            assignment: null,
+            flightLoad: {
+              checked_in: { count: 1, weight_lbs: "180", baggage_lbs: "20" },
+              to_check_in: { count: 1, weight_lbs: "170", baggage_lbs: "10" },
+            } as never,
+          },
+        }}
+      />,
+    );
+    const ready = screen.getByRole("region", { name: "Ready to go" });
+    expect(within(ready).getByText(/No fuel ordered/i)).toBeInTheDocument();
+    expect(within(ready).getByText(/No load team/i)).toBeInTheDocument();
+    expect(within(ready).getByText(/1 of 2 checked in/i)).toBeInTheDocument();
+  });
+
+  it("leaves the weather and readiness out when the page couldn't read them", () => {
+    render(<TodayFlightsPanel flights={[flight()]} />);
+    expect(screen.queryByRole("region", { name: "Weather now" })).toBeNull();
+    expect(screen.queryByRole("region", { name: "Ready to go" })).toBeNull();
   });
 });

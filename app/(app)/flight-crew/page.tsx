@@ -8,7 +8,7 @@ import { Panel } from "@/components/ff/panel";
 import { loadZoneTable } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
 import { getCurrentDuty, getMorning, listAircraft, listFlights, type MorningResponse } from "@/lib/api/ops";
-import type { CurrentDutyResponse, FlightListItem } from "@/lib/api/types";
+import type { CurrentDutyResponse, FlightListItem, WeatherReportResponse } from "@/lib/api/types";
 import { DEFAULT_TIME_ZONE } from "@/lib/format/local-time";
 import { currentGreeting, firstNameFrom } from "@/lib/greeting";
 
@@ -19,6 +19,8 @@ import { Loads } from "@/lib/api/loads";
 
 import { DutyClockButton } from "./duty-clock-button";
 import { MorningAircraft } from "./morning-aircraft";
+import { flightReadiness, stopsWeather, type FlightReady } from "@/lib/flights/next-flight";
+
 import { TodayFlightsPanel } from "./today-flights-panel";
 import { TrainingCurrencySummary } from "./training-currency-summary";
 
@@ -74,7 +76,13 @@ export default async function FlightCrewPage() {
 
   const session = await auth();
   // A squawk is typed in the company's time (#200).
-  const companyZone = (await loadZoneTable().catch(() => null))?.fallback ?? DEFAULT_TIME_ZONE;
+  const zoneTable = await loadZoneTable().catch(() => null);
+  const companyZone = zoneTable?.fallback ?? DEFAULT_TIME_ZONE;
+  // The next flights, read from the air (20 Nov): each stop's METAR and
+  // what's ready. Best-effort: losing them costs a row its weather or its
+  // status, not the schedule.
+  let weather: Record<string, WeatherReportResponse> = {};
+  let ready: Record<string, FlightReady> = {};
   const firstName =
     firstNameFrom(session?.user?.name) ||
     firstNameFrom((session?.user?.email ?? "").split("@")[0]);
@@ -153,6 +161,7 @@ export default async function FlightCrewPage() {
     flights = [...byId.values()].sort((a, b) =>
       a.scheduled_departure_at.localeCompare(b.scheduled_departure_at),
     );
+    [weather, ready] = await Promise.all([stopsWeather(flights), flightReadiness(flights)]);
     duty = dutyResult;
     morning = morningResult;
   } catch (err) {
@@ -235,7 +244,7 @@ export default async function FlightCrewPage() {
             </div>
           </div>
         ) : (
-          <TodayFlightsPanel flights={flights} />
+          <TodayFlightsPanel flights={flights} zones={zoneTable} weather={weather} ready={ready} />
         )}
       </Panel>
 

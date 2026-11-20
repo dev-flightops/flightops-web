@@ -160,3 +160,17 @@ export const fieldFormat = {
   altimeter: (r: WeatherReportResponse): string =>
     r.altimeter_in_hg === null ? "—" : `${r.altimeter_in_hg.toFixed(2)} inHg`,
 };
+
+/** "METAR 13:53Z" or "SPECI 13:59Z": when the report was observed, from
+ *  the report's own time group when the service didn't say. Never the
+ *  time it was fetched (`parsed_at`), which would make older conditions
+ *  look newer (Codex, web #501, on My Flights). Null when neither is known. */
+export function observedLabel(r: WeatherReportResponse): string | null {
+  const kind = /^SPECI\b/.test(r.raw.trim()) ? "SPECI" : "METAR";
+  if (r.observed_at) {
+    const at = new Date(r.observed_at);
+    if (!Number.isNaN(at.getTime())) return `${kind} ${at.toISOString().slice(11, 16)}Z`;
+  }
+  const group = /\b\d{2}(\d{2})(\d{2})Z\b/.exec(r.raw);
+  return group ? `${kind} ${group[1]}:${group[2]}Z` : null;
+}

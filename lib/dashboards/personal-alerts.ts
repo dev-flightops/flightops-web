@@ -2,6 +2,7 @@ import { loadZoneTable } from "@/lib/api/auth";
 import { getFlightBoard } from "@/lib/api/flight-following";
 import { listDayLoads, listFuelOrders, listMyLoadTeams } from "@/lib/api/ground";
 import { listSquawks, listWorkOrders } from "@/lib/api/maintenance";
+import { listMyCheckIns } from "@/lib/api/manifest";
 import { listMyHandoffs } from "@/lib/api/ops";
 import { listBookings } from "@/lib/api/reservations";
 import type { FlightAssignmentResponse, FuelOrderResponse } from "@/lib/api/types";
@@ -60,6 +61,7 @@ export async function loadPersonalAlerts(viewer: {
   const dispatch = hasAnyRole(viewer.roles, DISPATCH_WRITERS);
   // Started first, so it reads beside everything else.
   const fuelNews = viewer.userId ? fuelOrderAlerts().catch(() => []) : Promise.resolve([]);
+  const checkInNews = viewer.userId ? checkInAlerts().catch(() => []) : Promise.resolve([]);
   const [squawks, orders, loads, handoffs] = await Promise.all([
     mx ? listSquawks({ status: "open", limit: 50 }).catch(() => null) : null,
     mx ? listWorkOrders().catch(() => null) : null,
@@ -107,6 +109,7 @@ export async function loadPersonalAlerts(viewer: {
   if (dispatch) alerts.push(...(await bookingAlerts()));
   if (hasAnyRole(viewer.roles, RAMP)) alerts.push(...(await rampAlerts(loads?.items ?? [], now)));
   alerts.push(...(await fuelNews));
+  alerts.push(...(await checkInNews));
 
   for (const item of handoffs?.items ?? []) {
     const line = handoffLine(item);
@@ -259,6 +262,33 @@ function confirmedBy(o: FuelOrderResponse): string {
 
 /** The bookings nobody has put on a flight, from the company's today on
  *  (LOG-05): each its own occurrence, gone once it's placed. */
+/**
+ * "All passengers checked in" on the caller's own flights (20 Nov). The
+ * client: "An all pax checked in and a load complete confirmation for
+ * pilots would be great for closing the communication loop." The load has
+ * its alert above; this is the passengers' half, from one read
+ * (`/manifest/check-ins/mine`) rather than a manifest per flight. The id
+ * carries the count, so a passenger added later brings it back.
+ */
+async function checkInAlerts(): Promise<OperationalAlert[]> {
+  const mine = await listMyCheckIns();
+  const alerts: OperationalAlert[] = [];
+  for (const f of mine.items) {
+    if (f.passengers === 0 || f.checked_in < f.passengers || !f.all_checked_in_at) continue;
+    alerts.push({
+      id: `pax-in-${f.flight_id}-${f.passengers}`,
+      severity: "yellow",
+      category: "pax_checked_in",
+      title: `All passengers checked in — ${f.flight_number}`,
+      detail: `${f.passengers === 1 ? "The passenger checked in" : `All ${f.passengers} checked in, the last`} at ${formatLocal(f.all_checked_in_at)}.`,
+      href: `/flight-crew/preflight/${f.flight_id}`,
+      scopedToIcao: f.origin,
+      occurredAt: f.all_checked_in_at,
+    });
+  }
+  return alerts;
+}
+
 async function bookingAlerts(): Promise<OperationalAlert[]> {
   const zones = await loadZoneTable();
   const from = localToUtcIso(`${localDay(zones.fallback)}T00:00`, zones.fallback) ?? undefined;

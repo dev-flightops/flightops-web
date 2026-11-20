@@ -10,6 +10,7 @@ const {
   getFlightBoard,
   loadZoneTable,
   listBookings,
+  listMyCheckIns,
 } = vi.hoisted(() => ({
   listDayLoads: vi.fn(),
   listSquawks: vi.fn(),
@@ -20,7 +21,9 @@ const {
   getFlightBoard: vi.fn(),
   loadZoneTable: vi.fn(),
   listBookings: vi.fn(),
+  listMyCheckIns: vi.fn(),
 }));
+vi.mock("@/lib/api/manifest", () => ({ listMyCheckIns }));
 vi.mock("@/lib/api/ground", () => ({ listDayLoads, listMyLoadTeams, listFuelOrders }));
 vi.mock("@/lib/api/maintenance", () => ({ listSquawks, listWorkOrders }));
 vi.mock("@/lib/api/ops", () => ({ listMyHandoffs }));
@@ -52,7 +55,7 @@ const load = (over: Record<string, unknown> = {}) => ({
 });
 
 beforeEach(() => {
-  for (const f of [listDayLoads, listSquawks, listWorkOrders, listMyHandoffs, listMyLoadTeams, listFuelOrders, getFlightBoard, loadZoneTable, listBookings]) {
+  for (const f of [listDayLoads, listSquawks, listWorkOrders, listMyHandoffs, listMyLoadTeams, listFuelOrders, getFlightBoard, loadZoneTable, listBookings, listMyCheckIns]) {
     f.mockReset();
   }
   listSquawks.mockResolvedValue({ items: [], total: 0 });
@@ -64,6 +67,57 @@ beforeEach(() => {
   getFlightBoard.mockResolvedValue({ items: [] });
   loadZoneTable.mockResolvedValue({ byIcao: { PANC: "America/Anchorage", PABE: "America/Anchorage" }, fallback: "America/Anchorage" });
   listBookings.mockResolvedValue({ items: [], total: 0 });
+  listMyCheckIns.mockResolvedValue({ items: [] });
+});
+
+const checkIn = (over: Record<string, unknown> = {}) => ({
+  flight_id: "fl-792",
+  flight_number: "PGR792",
+  origin: "PABE",
+  scheduled_departure_at: now,
+  passengers: 2,
+  checked_in: 2,
+  all_checked_in_at: "2026-11-21T20:40:00Z",
+  ...over,
+});
+
+// 20 Nov, the client: "An all pax checked in and a load complete
+// confirmation for pilots would be great for closing the communication loop."
+describe("the bell: every passenger checked in", () => {
+  const pilot = { roles: ["pilot"], userId: "u-pilot" };
+
+  it("tells the pilot when the last passenger checks in, linking to the preflight", async () => {
+    listMyCheckIns.mockResolvedValue({ items: [checkIn()] });
+    const alerts = await loadPersonalAlerts(pilot);
+    const pax = alerts.filter((a) => a.category === "pax_checked_in");
+    expect(pax).toHaveLength(1);
+    expect(pax[0]).toMatchObject({
+      id: "pax-in-fl-792-2",
+      title: "All passengers checked in — PGR792",
+      href: "/flight-crew/preflight/fl-792",
+      occurredAt: "2026-11-21T20:40:00Z",
+    });
+    expect(pax[0].detail).toMatch(/^All 2 checked in, the last at /);
+  });
+
+  it("says nothing while one is still to come, or with nobody booked", async () => {
+    listMyCheckIns.mockResolvedValue({
+      items: [
+        checkIn({ checked_in: 1, all_checked_in_at: null }),
+        checkIn({ flight_id: "fl-793", passengers: 0, checked_in: 0, all_checked_in_at: null }),
+      ],
+    });
+    const alerts = await loadPersonalAlerts(pilot);
+    expect(alerts.filter((a) => a.category === "pax_checked_in")).toEqual([]);
+  });
+
+  it("goes without it when the manifest can't be reached, and asks nothing for a signed-out viewer", async () => {
+    listMyCheckIns.mockRejectedValue(new Error("down"));
+    await expect(loadPersonalAlerts(pilot)).resolves.toEqual([]);
+    listMyCheckIns.mockClear();
+    await loadPersonalAlerts({ roles: ["pilot"], userId: null });
+    expect(listMyCheckIns).not.toHaveBeenCalled();
+  });
 });
 
 describe("the bell, per person (#134)", () => {

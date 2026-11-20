@@ -17,7 +17,7 @@ import {
 import { getFratThresholds, loadZoneTable } from "@/lib/api/auth";
 import { loadFratInputs } from "@/lib/frat/load-inputs";
 import { getVillageBoard } from "@/lib/api/weather";
-import { getFlightLoad, type FlightLoad } from "@/lib/api/manifest";
+import { getFlightLoad, getFlightManifest, type FlightLoad } from "@/lib/api/manifest";
 import { getFlightAssignment, listFuelOrders, listSupplierBases } from "@/lib/api/ground";
 import { zoneFor } from "@/lib/format/local-time";
 import { fuelTypeForAircraft, supplierOptionsFor } from "@/lib/fuel";
@@ -38,6 +38,7 @@ import type {
 } from "@/lib/api/types";
 
 import { PreflightFuel } from "./preflight-fuel";
+import { PreflightLoad, PreflightPassengers } from "./preflight-load-passengers";
 import { Readiness } from "./readiness";
 import { PreflightShell } from "./preflight-shell";
 
@@ -200,11 +201,13 @@ export default async function PreflightPage({
   // this aircraft's fuel. Best-effort, like the weather: a failure costs
   // the pilot the fuel card, not the preflight.
   const fuelTypeCode = fuelTypeForAircraft(flight.aircraft.model);
-  const [[fuelOrders, fuelBases, loadAssignment], zones, session] = await Promise.all([
+  const [[fuelOrders, fuelBases, loadAssignment, manifestRead], zones, session] = await Promise.all([
     Promise.allSettled([
       listFuelOrders({ flightId: flight.id }),
       listSupplierBases({ baseCode: flight.origin }),
       getFlightAssignment(flight.id),
+      // The passengers' names and check-in, for the box beside the fuel.
+      getFlightManifest(flight.id),
     ]),
     loadZoneTable(),
     auth(),
@@ -217,23 +220,37 @@ export default async function PreflightPage({
       timeZone={zoneFor(zones, flight.origin)}
     />
   );
+  // No manifest yet is "no passengers"; a failure is "unavailable".
+  const manifest =
+    manifestRead.status === "fulfilled"
+      ? manifestRead.value
+      : manifestRead.reason instanceof ApiError && manifestRead.reason.status === 404
+        ? null
+        : undefined;
   const fuel = (
-    <PreflightFuel
-      flight={flight}
-      fuelTypeCode={fuelTypeCode}
-      timeZone={zoneFor(zones, flight.origin)}
-      orders={fuelOrders.status === "fulfilled" ? fuelOrders.value.items : []}
-      options={
-        fuelBases.status === "fulfilled"
-          ? supplierOptionsFor(fuelBases.value.items, fuelTypeCode)
-          : []
-      }
-      unavailable={
-        fuelOrders.status === "rejected" || fuelBases.status === "rejected"
-          ? "Fuel unavailable — try refreshing in a moment."
-          : null
-      }
-    />
+    <>
+      <PreflightFuel
+        flight={flight}
+        fuelTypeCode={fuelTypeCode}
+        timeZone={zoneFor(zones, flight.origin)}
+        orders={fuelOrders.status === "fulfilled" ? fuelOrders.value.items : []}
+        options={
+          fuelBases.status === "fulfilled"
+            ? supplierOptionsFor(fuelBases.value.items, fuelTypeCode)
+            : []
+        }
+        unavailable={
+          fuelOrders.status === "rejected" || fuelBases.status === "rejected"
+            ? "Fuel unavailable — try refreshing in a moment."
+            : null
+        }
+      />
+      <PreflightLoad
+        assignment={loadAssignment.status === "fulfilled" ? loadAssignment.value : undefined}
+        timeZone={zoneFor(zones, flight.origin)}
+      />
+      <PreflightPassengers flightId={flight.id} manifest={manifest} timeZone={zoneFor(zones, flight.origin)} />
+    </>
   );
 
   return (

@@ -36,11 +36,14 @@ export function Readiness({
   assignment,
   flightLoad,
   timeZone,
+  compact = false,
 }: {
   fuelOrders: FuelOrderResponse[] | null;
   assignment: FlightAssignmentResponse | null | undefined;
   flightLoad: FlightLoad | null;
   timeZone: string;
+  /** On a My Flights row (20 Nov): the same three, without the strip's rules. */
+  compact?: boolean;
 }) {
   const fuel = fuelOrders ? fuelState(fuelOrders) : null;
   const booked = flightLoad
@@ -48,7 +51,7 @@ export function Readiness({
     : null;
   const checkedIn = flightLoad?.checked_in.count ?? null;
   return (
-    <section aria-label="Ready to go" className="mb-6 border-y border-border py-3">
+    <section aria-label="Ready to go" className={compact ? "mt-3" : "mb-6 border-y border-border py-3"}>
       <p className="eyebrow mb-2">Ready to go</p>
       <ul className="grid gap-2 text-sm sm:grid-cols-3">
         <li>

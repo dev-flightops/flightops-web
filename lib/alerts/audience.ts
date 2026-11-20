@@ -28,6 +28,7 @@ const AUDIENCE: Record<OperationalAlert["category"], ReadonlySet<Role> | "own"> 
   frat_over_limits: NO_ONE_ELSE,
   squawk_new: "own",
   load_complete: "own",
+  pax_checked_in: "own",
   handoff: "own",
   departure_soon: "own",
   fuel_order: "own",
