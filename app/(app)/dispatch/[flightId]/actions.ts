@@ -14,8 +14,10 @@ import {
   updateFlight,
   type FlightMoveResult,
   type FlightUpdatePayload,
+  type OffRoute,
 } from "@/lib/api/ops";
 import { passengerSeatsRefusal } from "@/lib/flights/passenger-seats";
+import { routeChangeRefusal } from "@/lib/flights/route-change-refusal";
 import { releaseRefusal, scheduleRefusal } from "@/lib/flights/schedule-refusals";
 
 import { belowMinimumsFromError } from "@/lib/frat/weather-minimums";
@@ -198,12 +200,19 @@ export async function releaseFlightAction(
   return { ok: true };
 }
 
+/** Saved, with what came off the route when the edit took stops off it
+ *  (#208). */
+export type UpdateFlightResult =
+  | { ok: true; offRoute: OffRoute | null }
+  | { ok: false; error: string };
+
 export async function updateFlightAction(
   flightId: string,
   patch: FlightUpdatePayload,
-): Promise<ActionResult> {
+): Promise<UpdateFlightResult> {
+  let offRoute: OffRoute | null = null;
   try {
-    await updateFlight(flightId, patch);
+    offRoute = (await updateFlight(flightId, patch)).off_route ?? null;
   } catch (err) {
     if (err instanceof ApiError) {
       if (err.message.includes("not_editable_in_status_")) {
@@ -233,6 +242,8 @@ export async function updateFlightAction(
       }
       const overSeats = passengerSeatsRefusal(err);
       if (overSeats) return { ok: false, error: overSeats };
+      const offRouteRefused = routeChangeRefusal(err);
+      if (offRouteRefused) return { ok: false, error: offRouteRefused };
       const refused = scheduleRefusal(err.message);
       if (refused) return { ok: false, error: refused };
       return { ok: false, error: `Save failed (HTTP ${err.status}).` };
@@ -242,7 +253,12 @@ export async function updateFlightAction(
 
   revalidatePath(`/dispatch/${flightId}`);
   revalidatePath("/dispatch");
-  return { ok: true };
+  if (offRoute) {
+    // Back on Awaiting a flight and the waiting list.
+    revalidatePath("/manifest/waiting");
+    revalidatePath(`/manifest/${flightId}`);
+  }
+  return { ok: true, offRoute };
 }
 
 /** Take a release back before departure (#90). */

@@ -185,6 +185,10 @@ export default async function RamperPage() {
                 <LoadStatusLine assignment={a} timeZone={zone} className="mt-1 block" />
               </div>
               <div className="flex flex-wrap items-center gap-3">
+                {/* What to pull and load at each stop (#208). */}
+                <Link href={`/ramper/${a.flight.id}/load-sheet`} className="text-[0.68rem] font-bold uppercase tracking-[0.1em] text-primary hover:underline">
+                  Load sheet <span aria-hidden>›</span>
+                </Link>
                 <Link href={`/ramper/${a.flight.id}/photos`} className="text-[0.68rem] font-bold uppercase tracking-[0.1em] text-primary hover:underline">
                   Photos{a.photo_count ? ` (${a.photo_count})` : ""} <span aria-hidden>›</span>
                 </Link>

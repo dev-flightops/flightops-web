@@ -28,7 +28,8 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import type { FlightLegPayload, FlightUpdatePayload } from "@/lib/api/ops";
+import { OffRouteReport } from "@/components/dispatch/off-route-report";
+import type { FlightLegPayload, FlightUpdatePayload, OffRoute } from "@/lib/api/ops";
 import type { AircraftListItem, FlightDetail } from "@/lib/api/types";
 import { addMinutes, minutesBetween } from "@/lib/flights/leg-times";
 import {
@@ -287,6 +288,8 @@ export function EditFlightDialog({
   const storedZone = zoneFor(zones, flight.origin);
   const [open, setOpen] = useState(defaultOpen);
   const [error, setError] = useState<string | null>(null);
+  // What the saved route no longer flies (#208), shown before closing.
+  const [offRoute, setOffRoute] = useState<OffRoute | null>(null);
   const [isPending, startTransition] = useTransition();
 
   const form = useForm<FormValues>({
@@ -361,13 +364,26 @@ export function EditFlightDialog({
     startTransition(async () => {
       const result = await updateFlightAction(flight.id, patch);
       if (result.ok) {
-        setOpen(false);
         form.reset(values); // Make the just-saved values the new "baseline".
+        if (result.offRoute) {
+          setOffRoute(result.offRoute);
+          return;
+        }
+        setOpen(false);
         router.refresh();
       } else {
         setError(result.error);
       }
     });
+  };
+
+  const close = () => {
+    if (isPending) return;
+    setOpen(false);
+    if (offRoute) {
+      setOffRoute(null);
+      router.refresh();
+    }
   };
 
   return (
@@ -377,342 +393,348 @@ export function EditFlightDialog({
         Edit
       </Button>
 
-      <Dialog open={open} onOpenChange={(o) => !isPending && setOpen(o)}>
+      <Dialog open={open} onOpenChange={(o) => (o ? setOpen(true) : close())}>
         <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Edit {flight.flight_number}</DialogTitle>
-            <DialogDescription>
-              Amend the scheduled flight, its route and stops included. Times are
-              local at the departure base ({tz}). A new date moves it to another
-              day: its FRAT, acknowledgments and check-in start over. Each save is
-              recorded in the audit log with a field-level diff.
-            </DialogDescription>
-          </DialogHeader>
+          {offRoute ? (
+            <OffRouteReport flightNumber={flight.flight_number} offRoute={offRoute} onClose={close} />
+          ) : (
+            <>
+              <DialogHeader>
+                <DialogTitle>Edit {flight.flight_number}</DialogTitle>
+                <DialogDescription>
+                  Amend the scheduled flight, its route and stops included. Times are
+                  local at the departure base ({tz}). A new date moves it to another
+                  day: its FRAT, acknowledgments and check-in start over. Each save is
+                  recorded in the audit log with a field-level diff.
+                </DialogDescription>
+              </DialogHeader>
 
-          <Form {...form}>
-            <form
-              method="post"
-              onSubmit={form.handleSubmit(onSubmit)}
-              className="grid gap-3 sm:grid-cols-2"
-            >
-              <FormField
-                control={form.control}
-                name="flight_number"
-                render={({ field }) => (
-                  <FormItem className="sm:col-span-2">
-                    <FormLabel>Flight number</FormLabel>
-                    <FormControl>
-                      <Input autoComplete="off" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <Form {...form}>
+                <form
+                  method="post"
+                  onSubmit={form.handleSubmit(onSubmit)}
+                  className="grid gap-3 sm:grid-cols-2"
+                >
+                  <FormField
+                    control={form.control}
+                    name="flight_number"
+                    render={({ field }) => (
+                      <FormItem className="sm:col-span-2">
+                        <FormLabel>Flight number</FormLabel>
+                        <FormControl>
+                          <Input autoComplete="off" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-              <FormField
-                control={form.control}
-                name="aircraft_id"
-                render={({ field }) => (
-                  <FormItem className="sm:col-span-2">
-                    <FormLabel>Aircraft</FormLabel>
-                    <FormControl>
-                      <select
-                        {...field}
-                        className="flex h-9 w-full rounded-lg border border-border bg-background px-3 py-2 text-[0.8125rem] focus-visible:outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20"
-                      >
-                        {aircraft.map((a) => (
-                          <option
-                            key={a.id}
-                            value={a.id}
-                            disabled={!a.is_active}
+                  <FormField
+                    control={form.control}
+                    name="aircraft_id"
+                    render={({ field }) => (
+                      <FormItem className="sm:col-span-2">
+                        <FormLabel>Aircraft</FormLabel>
+                        <FormControl>
+                          <select
+                            {...field}
+                            className="flex h-9 w-full rounded-lg border border-border bg-background px-3 py-2 text-[0.8125rem] focus-visible:outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20"
                           >
-                            {a.tail_number} — {a.model}
-                            {!a.is_active ? " (inactive)" : ""}
-                          </option>
-                        ))}
-                      </select>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                            {aircraft.map((a) => (
+                              <option
+                                key={a.id}
+                                value={a.id}
+                                disabled={!a.is_active}
+                              >
+                                {a.tail_number} — {a.model}
+                                {!a.is_active ? " (inactive)" : ""}
+                              </option>
+                            ))}
+                          </select>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-              <FormField
-                control={form.control}
-                name="origin"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Origin</FormLabel>
-                    <FormControl>
-                      <Input
-                        autoComplete="off"
-                        className="font-mono uppercase"
-                        {...field}
-                        onChange={(e) =>
-                          field.onChange(e.target.value.toUpperCase())
-                        }
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                  <FormField
+                    control={form.control}
+                    name="origin"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Origin</FormLabel>
+                        <FormControl>
+                          <Input
+                            autoComplete="off"
+                            className="font-mono uppercase"
+                            {...field}
+                            onChange={(e) =>
+                              field.onChange(e.target.value.toUpperCase())
+                            }
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-              <FormField
-                control={form.control}
-                name="destination"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{stops.fields.length > 0 ? "Leg 1 Destination" : "Destination"}</FormLabel>
-                    <FormControl>
-                      <Input
-                        autoComplete="off"
-                        className="font-mono uppercase"
-                        {...field}
-                        onChange={(e) =>
-                          field.onChange(e.target.value.toUpperCase())
-                        }
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                  <FormField
+                    control={form.control}
+                    name="destination"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{stops.fields.length > 0 ? "Leg 1 Destination" : "Destination"}</FormLabel>
+                        <FormControl>
+                          <Input
+                            autoComplete="off"
+                            className="font-mono uppercase"
+                            {...field}
+                            onChange={(e) =>
+                              field.onChange(e.target.value.toUpperCase())
+                            }
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-              <FormField
-                control={form.control}
-                name="scheduled_departure_at"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{`Departure (${tz})`}</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="datetime-local"
-                        {...field}
-                        onChange={(e) => {
-                          field.onChange(e);
-                          followDeparture(e.target.value);
-                        }}
-                      />
-                    </FormControl>
-                    <ZuluHint value={field.value} timeZone={timeZone} />
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                  <FormField
+                    control={form.control}
+                    name="scheduled_departure_at"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{`Departure (${tz})`}</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="datetime-local"
+                            {...field}
+                            onChange={(e) => {
+                              field.onChange(e);
+                              followDeparture(e.target.value);
+                            }}
+                          />
+                        </FormControl>
+                        <ZuluHint value={field.value} timeZone={timeZone} />
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-              <FormField
-                control={form.control}
-                name="scheduled_arrival_at"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{`Arrival (${tz})`}</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="datetime-local"
-                        {...field}
-                        onChange={(e) => {
-                          typedByHand.current.add("arrival");
-                          field.onChange(e);
-                        }}
-                      />
-                    </FormControl>
-                    <ZuluHint value={field.value} timeZone={timeZone} />
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                  <FormField
+                    control={form.control}
+                    name="scheduled_arrival_at"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{`Arrival (${tz})`}</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="datetime-local"
+                            {...field}
+                            onChange={(e) => {
+                              typedByHand.current.add("arrival");
+                              field.onChange(e);
+                            }}
+                          />
+                        </FormControl>
+                        <ZuluHint value={field.value} timeZone={timeZone} />
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-              {stops.fields.map((stop, i) => {
-                const from =
-                  i === 0 ? form.watch("destination") : form.watch(`stops.${i - 1}.destination`);
-                return (
-                  <div
-                    key={stop.id}
-                    role="group"
-                    aria-label={`Leg ${i + 2}`}
-                    className="grid gap-3 border-t border-border pt-3 sm:col-span-2 sm:grid-cols-2"
-                  >
-                    <div className="flex items-baseline justify-between sm:col-span-2">
-                      <span className="eyebrow">{`Leg ${i + 2} · from ${from || "?"}`}</span>
-                      <button
-                        type="button"
-                        className={linkCaps}
-                        onClick={() => stops.remove(i)}
-                        aria-label={`Remove leg ${i + 2}`}
+                  {stops.fields.map((stop, i) => {
+                    const from =
+                      i === 0 ? form.watch("destination") : form.watch(`stops.${i - 1}.destination`);
+                    return (
+                      <div
+                        key={stop.id}
+                        role="group"
+                        aria-label={`Leg ${i + 2}`}
+                        className="grid gap-3 border-t border-border pt-3 sm:col-span-2 sm:grid-cols-2"
                       >
-                        Remove
-                      </button>
+                        <div className="flex items-baseline justify-between sm:col-span-2">
+                          <span className="eyebrow">{`Leg ${i + 2} · from ${from || "?"}`}</span>
+                          <button
+                            type="button"
+                            className={linkCaps}
+                            onClick={() => stops.remove(i)}
+                            aria-label={`Remove leg ${i + 2}`}
+                          >
+                            Remove
+                          </button>
+                        </div>
+                        <FormField
+                          control={form.control}
+                          name={`stops.${i}.destination`}
+                          render={({ field }) => (
+                            <FormItem className="sm:col-span-2">
+                              <FormLabel>{`Leg ${i + 2} Destination`}</FormLabel>
+                              <FormControl>
+                                <Input
+                                  autoComplete="off"
+                                  className="font-mono uppercase"
+                                  {...field}
+                                  onChange={(e) => field.onChange(e.target.value.toUpperCase())}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        {(["departure", "arrival"] as const).map((when) => (
+                          <FormField
+                            key={when}
+                            control={form.control}
+                            name={`stops.${i}.${when}`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>
+                                  {`Leg ${i + 2} ${when === "departure" ? "Departure" : "Arrival"} (${tz})`}
+                                </FormLabel>
+                                <FormControl>
+                                  <Input
+                                    type="datetime-local"
+                                    {...field}
+                                    onChange={(e) => {
+                                      typedByHand.current.add(`${stop.id}:${when}`);
+                                      field.onChange(e);
+                                    }}
+                                  />
+                                </FormControl>
+                                <ZuluHint value={field.value} timeZone={timeZone} />
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        ))}
+                      </div>
+                    );
+                  })}
+
+                  {stops.fields.length + 1 < MAX_LEGS ? (
+                    <div className="sm:col-span-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          const all = form.getValues("stops");
+                          const landed =
+                            all.length > 0 ? all[all.length - 1].arrival : form.getValues("scheduled_arrival_at");
+                          stops.append({ destination: "", departure: landed, arrival: "" });
+                        }}
+                      >
+                        + Add Stop
+                      </Button>
                     </div>
+                  ) : null}
+
+                  <FormField
+                    control={form.control}
+                    name="pax_count"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Passengers</FormLabel>
+                        <FormControl>
+                          <Input type="number" min={0} {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="cargo_lbs"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Cargo (lbs)</FormLabel>
+                        <FormControl>
+                          <Input type="number" min={0} {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  {/* #123: VFR unless ticked, and then held to the company's
+                      dispatch minimums at every stop. */}
+                  <div className="sm:col-span-2">
+                    <label className="flex items-center gap-2 text-xs text-foreground">
+                      <input type="checkbox" {...form.register("is_ifr")} className="accent-primary" />
+                      Flown IFR
+                    </label>
+                  </div>
+
+                  {/* #201: the fuel estimate flies an IFR flight on to its
+                      alternate, so it asks for one when IFR is ticked. */}
+                  {form.watch("is_ifr") && (
                     <FormField
                       control={form.control}
-                      name={`stops.${i}.destination`}
+                      name="alternate_ident"
                       render={({ field }) => (
-                        <FormItem className="sm:col-span-2">
-                          <FormLabel>{`Leg ${i + 2} Destination`}</FormLabel>
+                        <FormItem>
+                          <FormLabel>Alternate</FormLabel>
                           <FormControl>
                             <Input
                               autoComplete="off"
+                              placeholder="e.g. PABE"
                               className="font-mono uppercase"
                               {...field}
                               onChange={(e) => field.onChange(e.target.value.toUpperCase())}
                             />
                           </FormControl>
+                          <p className="text-xs text-muted-foreground">
+                            The fuel estimate adds the flight to it.
+                          </p>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
-                    {(["departure", "arrival"] as const).map((when) => (
-                      <FormField
-                        key={when}
-                        control={form.control}
-                        name={`stops.${i}.${when}`}
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>
-                              {`Leg ${i + 2} ${when === "departure" ? "Departure" : "Arrival"} (${tz})`}
-                            </FormLabel>
-                            <FormControl>
-                              <Input
-                                type="datetime-local"
-                                {...field}
-                                onChange={(e) => {
-                                  typedByHand.current.add(`${stop.id}:${when}`);
-                                  field.onChange(e);
-                                }}
-                              />
-                            </FormControl>
-                            <ZuluHint value={field.value} timeZone={timeZone} />
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    ))}
-                  </div>
-                );
-              })}
-
-              {stops.fields.length + 1 < MAX_LEGS ? (
-                <div className="sm:col-span-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      const all = form.getValues("stops");
-                      const landed =
-                        all.length > 0 ? all[all.length - 1].arrival : form.getValues("scheduled_arrival_at");
-                      stops.append({ destination: "", departure: landed, arrival: "" });
-                    }}
-                  >
-                    + Add Stop
-                  </Button>
-                </div>
-              ) : null}
-
-              <FormField
-                control={form.control}
-                name="pax_count"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Passengers</FormLabel>
-                    <FormControl>
-                      <Input type="number" min={0} {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="cargo_lbs"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Cargo (lbs)</FormLabel>
-                    <FormControl>
-                      <Input type="number" min={0} {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* #123: VFR unless ticked, and then held to the company's
-                  dispatch minimums at every stop. */}
-              <div className="sm:col-span-2">
-                <label className="flex items-center gap-2 text-xs text-foreground">
-                  <input type="checkbox" {...form.register("is_ifr")} className="accent-primary" />
-                  Flown IFR
-                </label>
-              </div>
-
-              {/* #201: the fuel estimate flies an IFR flight on to its
-                  alternate, so it asks for one when IFR is ticked. */}
-              {form.watch("is_ifr") && (
-                <FormField
-                  control={form.control}
-                  name="alternate_ident"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Alternate</FormLabel>
-                      <FormControl>
-                        <Input
-                          autoComplete="off"
-                          placeholder="e.g. PABE"
-                          className="font-mono uppercase"
-                          {...field}
-                          onChange={(e) => field.onChange(e.target.value.toUpperCase())}
-                        />
-                      </FormControl>
-                      <p className="text-xs text-muted-foreground">
-                        The fuel estimate adds the flight to it.
-                      </p>
-                      <FormMessage />
-                    </FormItem>
                   )}
-                />
-              )}
 
-              <FormItem className="sm:col-span-2">
-                <Label htmlFor="edit-notes">Notes</Label>
-                <FormControl>
-                  <textarea
-                    id="edit-notes"
-                    rows={3}
-                    {...form.register("notes")}
-                    className="flex w-full rounded-lg border border-border bg-background px-3 py-2 text-[0.8125rem] focus-visible:outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20"
-                  />
-                </FormControl>
-                <FormMessage>
-                  {form.formState.errors.notes?.message}
-                </FormMessage>
-              </FormItem>
+                  <FormItem className="sm:col-span-2">
+                    <Label htmlFor="edit-notes">Notes</Label>
+                    <FormControl>
+                      <textarea
+                        id="edit-notes"
+                        rows={3}
+                        {...form.register("notes")}
+                        className="flex w-full rounded-lg border border-border bg-background px-3 py-2 text-[0.8125rem] focus-visible:outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20"
+                      />
+                    </FormControl>
+                    <FormMessage>
+                      {form.formState.errors.notes?.message}
+                    </FormMessage>
+                  </FormItem>
 
-              {error && (
-                <p
-                  role="alert"
-                  className="sm:col-span-2 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive"
-                >
-                  {error}
-                </p>
-              )}
+                  {error && (
+                    <p
+                      role="alert"
+                      className="sm:col-span-2 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+                    >
+                      {error}
+                    </p>
+                  )}
 
-              <DialogFooter className="sm:col-span-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setOpen(false)}
-                  disabled={isPending}
-                >
-                  Cancel
-                </Button>
-                <Button type="submit" disabled={isPending}>
-                  {isPending ? "Saving…" : "Save changes"}
-                </Button>
-              </DialogFooter>
-            </form>
-          </Form>
+                  <DialogFooter className="sm:col-span-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setOpen(false)}
+                      disabled={isPending}
+                    >
+                      Cancel
+                    </Button>
+                    <Button type="submit" disabled={isPending}>
+                      {isPending ? "Saving…" : "Save changes"}
+                    </Button>
+                  </DialogFooter>
+                </form>
+              </Form>
+            </>
+          )}
         </DialogContent>
       </Dialog>
     </>
