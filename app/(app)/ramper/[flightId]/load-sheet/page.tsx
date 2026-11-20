@@ -37,7 +37,12 @@ function PassengerRow({ p }: { p: SheetPassenger }) {
       <div className="flex items-baseline justify-between gap-3 text-sm">
         <span className="font-medium text-foreground">
           {p.name}
-          {!p.checkedIn && <span className="ml-2 text-[0.68rem] text-muted-foreground">not checked in</span>}
+          {!p.checkedIn && (
+            <>
+              {" "}
+              <span className="ml-1 text-[0.68rem] text-muted-foreground">not checked in</span>
+            </>
+          )}
         </span>
         <span className="shrink-0 font-mono text-xs tabular-nums text-muted-foreground">
           {`${fmt(p.weightLbs)} + ${bagsText(p)}`}

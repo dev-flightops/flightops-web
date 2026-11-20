@@ -516,4 +516,3 @@ describe("EditFlightDialog — a multi-leg flight", () => {
     expect(refresh).toHaveBeenCalledTimes(1);
   });
 });
-

@@ -378,7 +378,9 @@ export function EditFlightDialog({
   };
 
   const close = () => {
-    if (isPending) return;
+    // The form stays open while it saves. Once the report is up the save is
+    // done, though the page's refresh may still count as pending.
+    if (isPending && !offRoute) return;
     setOpen(false);
     if (offRoute) {
       setOffRoute(null);
