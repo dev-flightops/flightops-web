@@ -458,4 +458,61 @@ describe("EditFlightDialog — a multi-leg flight", () => {
     await user.click(screen.getByRole("button", { name: /save changes/i }));
     expect(updateFlightAction).toHaveBeenLastCalledWith(withSeconds.id, { pax_count: 6 });
   });
+
+  it("says what came off the route before closing (#208)", async () => {
+    refresh.mockReset();
+    updateFlightAction.mockReset().mockResolvedValue({
+      ok: true,
+      offRoute: {
+        stops: ["PAVA"],
+        bookings: [
+          {
+            booking_id: "ae956651-eaca-4aeb-b35c-cfe34f5155f0",
+            customer: "Ella Ramirez",
+            origin: "PABE",
+            destination: "PAVA",
+            passengers: ["Ella Ramirez"],
+          },
+        ],
+        lines: [
+          {
+            description: "USPS Bypass Mail",
+            weight_lbs: "100.0",
+            pieces: 2,
+            mail_class: "bypass_mail",
+            waiting_load_id: "w-1",
+            station: "PABE",
+            destination: "PAVA",
+          },
+        ],
+        walk_ups: ["Sam Walkup"],
+      },
+    });
+    const user = userEvent.setup();
+    render(<EditFlightDialog flight={baseFlight} aircraft={[aircraft207, aircraft510]} />);
+    await user.click(screen.getByRole("button", { name: /edit/i }));
+    const paxInput = screen.getByLabelText(/passengers/i);
+    await user.clear(paxInput);
+    await user.type(paxInput, "3");
+    await user.click(screen.getByRole("button", { name: /save changes/i }));
+
+    expect(await screen.findByRole("heading", { name: "GV101 no longer stops at PAVA" })).toBeInTheDocument();
+    const back = screen.getByRole("region", { name: "Back on Awaiting a flight" });
+    expect(back).toHaveTextContent("Ella Ramirez, PABE → PAVA");
+    expect(screen.getByRole("link", { name: /^BK-/ })).toHaveAttribute(
+      "href",
+      "/reservations/bookings/ae956651-eaca-4aeb-b35c-cfe34f5155f0",
+    );
+    expect(screen.getByRole("region", { name: "Back on the waiting list" })).toHaveTextContent(
+      "USPS Bypass Mail, 2 pieces, 100 lb: waiting at PABE for PAVA",
+    );
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "Sam Walkup was added on the manifest with no booking, so stays on it.",
+    );
+    expect(refresh).not.toHaveBeenCalled();
+
+    await user.click(screen.getByRole("button", { name: "Done" }));
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(refresh).toHaveBeenCalledTimes(1);
+  });
 });

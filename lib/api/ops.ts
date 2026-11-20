@@ -5,6 +5,7 @@
 import { apiFetch } from "./client";
 import { asNumber, asNumberOrNull } from "./decimal";
 import type { PacketWeather } from "./dispatch-risk";
+import type { MailClass } from "./manifest";
 import type {
   AccountingExportResponse,
   FuelUnit,
@@ -394,11 +395,48 @@ export async function setFlightRules(
   });
 }
 
+/** A booking the edited route no longer flies, back on Awaiting a flight
+ *  (#208). */
+export interface BookingOffRoute {
+  booking_id: string;
+  customer: string;
+  origin: string;
+  destination: string;
+  /** The names on the manifest, or the booking's when it had none there. */
+  passengers: string[];
+}
+
+/** Mail or freight for a stop that's gone, back on the waiting list at
+ *  `station` for `destination` (#208). */
+export interface LineOffRoute {
+  description: string;
+  weight_lbs: string;
+  pieces: number;
+  mail_class: MailClass | null;
+  waiting_load_id: string;
+  station: string;
+  destination: string;
+}
+
+/** What an edit took off the route (#208): the client pulled PAVA from
+ *  GVTripleStop and the passenger going there stayed on the whole flight. */
+export interface OffRoute {
+  /** The airports no longer on it; empty when only their order changed. */
+  stops: string[];
+  bookings: BookingOffRoute[];
+  lines: LineOffRoute[];
+  /** Added on the manifest with no booking: still on it, to rebook by hand. */
+  walk_ups: string[];
+}
+
+/** PATCH /flights/{id}: the flight, and what came off its route. */
+export type FlightUpdateResult = FlightDetail & { off_route?: OffRoute | null };
+
 export async function updateFlight(
   flightId: string,
   patch: FlightUpdatePayload,
-): Promise<FlightDetail> {
-  return apiFetch<FlightDetail>(`/ops/flights/${flightId}`, {
+): Promise<FlightUpdateResult> {
+  return apiFetch<FlightUpdateResult>(`/ops/flights/${flightId}`, {
     method: "PATCH",
     body: JSON.stringify(patch),
   });
