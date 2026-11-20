@@ -138,6 +138,25 @@ describe("loadSheet (#208)", () => {
     expect(sheet.notOnRoute.lbs).toBe(38);
   });
 
+  it("sets standby and waitlisted passengers apart until they're given a seat (Codex P2)", () => {
+    const sheet = loadSheet(FLIGHT, {
+      pax: [
+        ...manifest.pax,
+        pax({ first_name: "Sid", last_name: "Standby", ticket_type: "standby", leaves_at: "PACM", baggage_lbs: "40.0" }),
+        pax({ first_name: "Wren", last_name: "Waitlist", is_waitlist: true, leaves_at: "PAHP", baggage_lbs: "25.0" }),
+        // Given a seat at check-in: loaded like anyone else.
+        pax({ first_name: "Gus", last_name: "Seated", ticket_type: "standby", check_in_status: "checked_in", leaves_at: "PACM", baggage_lbs: "10.0" }),
+      ],
+      cargo: manifest.cargo,
+    });
+    expect(sheet.waitingForSeat.passengers.map((p) => p.name)).toEqual(["Sid Standby", "Wren Waitlist"]);
+    expect(sheet.waitingForSeat.lbs).toBe(65);
+    const chevakOff = sheet.stops[1].off;
+    expect(chevakOff.passengers.map((p) => p.name)).toEqual(["Bob Kalskag", "Gus Seated"]);
+    expect(chevakOff.lbs).toBe(50 + 10 + 750);
+    expect(sheet.stops[2].off.passengers.map((p) => p.name)).toEqual(["Alice Northrup"]);
+  });
+
   it("gives each stop the times the flight lands and leaves", () => {
     const sheet = loadSheet(FLIGHT, manifest);
     expect(sheet.stops.map((s) => [s.arrives, s.departs])).toEqual([

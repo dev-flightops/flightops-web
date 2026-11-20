@@ -100,6 +100,9 @@ export interface LoadSheet {
   /** On the manifest for stops the route no longer flies: dispatch's to
    *  sort out, so the ramp asks before loading them. */
   notOnRoute: SheetGroup;
+  /** Standby or waitlisted and not yet given a seat: their bags go on
+   *  once they have one (check-in gives it), so they count nowhere yet. */
+  waitingForSeat: SheetGroup;
 }
 
 function passenger(row: ManifestPaxRow): SheetPassenger {
@@ -133,6 +136,11 @@ function line(row: ManifestCargoRow): SheetLine {
 }
 
 const empty = (): SheetGroup => ({ passengers: [], lines: [], lbs: 0 });
+
+/** Waiting for a seat rather than holding one, as ops counts seats
+ *  (leg_seats.waiting): booked on standby or the waitlist. */
+const waitingForSeat = (row: ManifestPaxRow): boolean =>
+  (row.check_in_status ?? "booked") === "booked" && (row.ticket_type === "standby" || row.is_waitlist === true);
 
 function add(group: SheetGroup, item: { passenger?: SheetPassenger; line?: SheetLine }) {
   if (item.passenger) {
@@ -178,6 +186,7 @@ export function loadSheet(
       on: empty(),
     })),
     notOnRoute: empty(),
+    waitingForSeat: empty(),
   };
   const place = (boardsAt: string | null | undefined, leavesAt: string | null | undefined, item: { passenger?: SheetPassenger; line?: SheetLine }) => {
     const at = onAndOff(flight.stops, boardsAt, leavesAt);
@@ -191,6 +200,10 @@ export function loadSheet(
   for (const row of manifest?.pax ?? []) {
     // Crew bring their own; a no-show's bags aren't at the ramp.
     if (row.is_crew || row.check_in_status === "no_show") continue;
+    if (waitingForSeat(row)) {
+      add(sheet.waitingForSeat, { passenger: passenger(row) });
+      continue;
+    }
     place(row.boards_at, row.leaves_at, { passenger: passenger(row) });
   }
   for (const row of manifest?.cargo ?? []) {

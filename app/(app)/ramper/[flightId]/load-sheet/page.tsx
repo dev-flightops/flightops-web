@@ -141,6 +141,7 @@ export default async function LoadSheetPage({ params }: { params: Promise<{ flig
   const sheet = loadSheet({ ...flight, stops }, manifest);
   const last = stops.length - 1;
   const lost = sheet.notOnRoute.passengers.length + sheet.notOnRoute.lines.length;
+  const standby = sheet.waitingForSeat.passengers.length;
 
   return (
     <div className="mx-auto w-full max-w-[640px] px-4 pb-24 pt-3 sm:px-6">
@@ -182,6 +183,15 @@ export default async function LoadSheetPage({ params }: { params: Promise<{ flig
             On the manifest for a stop this flight no longer makes. Check with dispatch before loading them.
           </p>
           <Group title="Not on the route" group={sheet.notOnRoute} empty="" />
+        </div>
+      )}
+
+      {standby > 0 && (
+        <div className="mb-4">
+          <p className="notice notice-yellow mb-2">
+            Standby or waitlisted, not given a seat yet: load their bags only once they have one.
+          </p>
+          <Group title="Waiting for a seat" group={sheet.waitingForSeat} empty="" />
         </div>
       )}
 

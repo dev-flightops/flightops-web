@@ -173,6 +173,22 @@ describe("ramper load sheet (#208)", () => {
     expect(within(alert).getByRole("region", { name: "Not on the route" })).toHaveTextContent("not checked in");
   });
 
+  it("lists standby and waitlisted passengers apart, not in any stop's load", async () => {
+    getFlightManifest.mockResolvedValue({
+      ...MANIFEST,
+      pax: [
+        ...MANIFEST.pax,
+        row({ id: "p-wren", first_name: "Wren", last_name: "Waitlist", is_waitlist: true, check_in_status: "booked", baggage_lbs: "25.0", leaves_at: "PACM" }),
+      ],
+    });
+    await renderPage();
+    expect(screen.getByText("Standby or waitlisted, not given a seat yet: load their bags only once they have one.")).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "Waiting for a seat" })).toHaveTextContent("Wren Waitlist");
+    const chevak = within(screen.getByRole("listitem", { name: "Stop 2, PACM" })).getByRole("region", { name: "Off here" });
+    expect(chevak).not.toHaveTextContent("Wren Waitlist");
+    expect(chevak).toHaveTextContent("790 lb bags, mail and freight");
+  });
+
   it("says when there's no manifest yet, and 404s an unknown flight", async () => {
     getFlightManifest.mockRejectedValue(new TestApiError(404, "/manifest/flights/f-1", "not found"));
     await renderPage();
