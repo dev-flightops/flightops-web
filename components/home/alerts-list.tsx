@@ -60,6 +60,7 @@ const CATEGORY_LABEL: Record<OperationalAlert["category"], string> = {
   seat_open: "Seats a no-show opened",
   squawk_new: "New squawks without a work order",
   load_complete: "Loads complete",
+  pax_checked_in: "Passengers all checked in",
   handoff: "Waiting on you",
   departure_soon: "Departing soon",
   fuel_order: "Fuel orders",

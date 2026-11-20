@@ -64,6 +64,7 @@ export interface OperationalAlert {
     | "seat_open"
     | "squawk_new"
     | "load_complete"
+    | "pax_checked_in"
     | "handoff"
     | "departure_soon"
     | "fuel_order"
