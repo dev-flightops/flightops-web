@@ -6,7 +6,9 @@ import {
   type Enrollment,
   listMyEnrollments,
 } from "@/lib/api/academy";
+import { loadZoneTable } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
+import { localDate } from "@/lib/format/local-time";
 
 import { AcademyHeader } from "../academy-header";
 
@@ -24,6 +26,8 @@ export default async function MyEnrollmentsPage() {
   }
 
   const [active, done, expired] = _partition(enrollments);
+  // Expiry days in the company's zone (#68), not the server's.
+  const zone = (await loadZoneTable()).fallback;
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6">
@@ -54,13 +58,13 @@ export default async function MyEnrollmentsPage() {
       ) : (
         <div className="space-y-6">
           {active.length > 0 ? (
-            <EnrollmentGroup label="In progress" items={active} />
+            <EnrollmentGroup label="In progress" items={active} zone={zone} />
           ) : null}
           {expired.length > 0 ? (
-            <EnrollmentGroup label="Needs re-enrollment" items={expired} />
+            <EnrollmentGroup label="Needs re-enrollment" items={expired} zone={zone} />
           ) : null}
           {done.length > 0 ? (
-            <EnrollmentGroup label="Completed" items={done} />
+            <EnrollmentGroup label="Completed" items={done} zone={zone} />
           ) : null}
         </div>
       )}
@@ -71,9 +75,11 @@ export default async function MyEnrollmentsPage() {
 function EnrollmentGroup({
   label,
   items,
+  zone,
 }: {
   label: string;
   items: Enrollment[];
+  zone: string;
 }) {
   return (
     <section>
@@ -102,7 +108,7 @@ function EnrollmentGroup({
                   <p className="line-clamp-1 text-xs text-muted-foreground">
                     {e.completed_lessons} / {e.total_lessons} lessons · {pct}%
                     {e.expires_at
-                      ? ` · Expires ${new Date(e.expires_at).toLocaleDateString()}`
+                      ? ` · Expires ${localDate(e.expires_at, zone, { withYear: true })}`
                       : e.completed_at
                         ? " · Cert never expires"
                         : ""}

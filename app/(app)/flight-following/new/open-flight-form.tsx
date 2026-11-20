@@ -201,7 +201,29 @@ export function OpenFlightForm({
     );
     const home = edited.find((s) => s.returning);
     if (roundTrip && !home) setRoundTrip(false);
-    setStops(home && edited[edited.length - 1] !== home ? [...edited.filter((s) => s !== home), home] : edited);
+    const result = home && edited[edited.length - 1] !== home ? [...edited.filter((s) => s !== home), home] : edited;
+    keepFilled(stops, result);
+    setStops(result);
+  }
+
+  /** The times filled in are remembered by a stop's place in the route,
+   *  so a stop that moves takes its record with it. Without that, a stop
+   *  added before the way home left the way home's filled times looking
+   *  typed by hand: they stopped following, and the way home departed
+   *  before the new leg landed (Bethel → Hooper Bay → Chevak → Bethel kept
+   *  11:40). A stop the change kept is the same object in both lists. */
+  function keepFilled(before: SubmittedStop[], after: SubmittedStop[]) {
+    const old = filled.current;
+    const next: Record<string, string> = old.eta !== undefined ? { eta: old.eta } : {};
+    after.forEach((stop, i) => {
+      const was = before.indexOf(stop);
+      if (was < 0) return;
+      for (const part of ["departure", "arrival"]) {
+        const value = old[`${part}-${was}`];
+        if (value !== undefined) next[`${part}-${i}`] = value;
+      }
+    });
+    filled.current = next;
   }
 
   const timeZone = zoneFor(zones, origin);

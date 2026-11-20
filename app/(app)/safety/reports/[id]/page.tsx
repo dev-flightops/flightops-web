@@ -4,6 +4,7 @@ import { notFound, redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { CorrectiveActionPanel } from "@/components/safety/corrective-action-panel";
 import { RiskBadge, StatusBadge } from "@/components/safety/safety-report-badges";
+import { loadZoneTable } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
 import { listCapasForSource } from "@/lib/api/safety";
 import {
@@ -15,6 +16,7 @@ import {
   listSafetyReportReviewers,
   safetyReportAttachmentHref,
 } from "@/lib/api/safety-reports";
+import { localDateTime } from "@/lib/format/local-time";
 import { hasAnyRole } from "@/lib/roles";
 import { safeReturnPath } from "@/lib/safety/return-path";
 import { ASAP_REVIEWERS, MANAGE_ROLES, SAFETY_REPORT_REVIEWERS } from "@/lib/safety-roles";
@@ -55,6 +57,11 @@ export default async function SafetyReportPage({
     }
     throw err;
   }
+
+  // When it was filed, reviewed and closed, in the company's time (#68):
+  // the server's clock showed UTC with no zone.
+  const zone = (await loadZoneTable()).fallback;
+  const at = (iso: string) => localDateTime(iso, zone, { withYear: true });
 
   const reviewer = hasAnyRole(roles, SAFETY_REPORT_REVIEWERS);
   // A chief pilot can read an ASAP report they filed, but not review it.
@@ -158,12 +165,12 @@ export default async function SafetyReportPage({
                 value={report.likelihood ? `${report.likelihood} — ${LIKELIHOOD_LABELS[report.likelihood]}` : null}
               />
               <Detail label="Assigned To" value={report.assigned_to?.full_name} />
-              <Detail label="Filed" value={new Date(report.created_at).toLocaleString()} />
+              <Detail label="Filed" value={at(report.created_at)} />
               <Detail
                 label="Reviewed"
                 value={
                   report.reviewed_at
-                    ? `${new Date(report.reviewed_at).toLocaleString()} by ${report.reviewed_by?.full_name ?? "unknown"}`
+                    ? `${at(report.reviewed_at)} by ${report.reviewed_by?.full_name ?? "unknown"}`
                     : null
                 }
               />
@@ -171,7 +178,7 @@ export default async function SafetyReportPage({
                 label="Closed"
                 value={
                   report.closed_at
-                    ? `${new Date(report.closed_at).toLocaleString()} by ${report.closed_by?.full_name ?? "unknown"}`
+                    ? `${at(report.closed_at)} by ${report.closed_by?.full_name ?? "unknown"}`
                     : null
                 }
               />

@@ -8,6 +8,8 @@ import { auth } from "@/auth";
 import { hasAnyRole } from "@/lib/roles";
 import { BOARD_ROLES, MANAGE_ROLES } from "@/lib/safety-roles";
 import { ApiError } from "@/lib/api/client";
+import { loadZoneTable } from "@/lib/api/auth";
+import { localDateTime } from "@/lib/format/local-time";
 import {
   CAPA_SOURCE_LABELS,
   CAPA_STATUS_LABELS,
@@ -39,6 +41,8 @@ export default async function CapaDetailPage({
   const { id } = await params;
   const { opened } = await searchParams;
   const session = await auth();
+  // The company's time (#68), not the server's UTC.
+  const zone = (await loadZoneTable()).fallback;
   const roles = new Set(session?.roles ?? []);
   const canManage = hasAnyRole([...roles], MANAGE_ROLES);
 
@@ -124,7 +128,7 @@ export default async function CapaDetailPage({
           </h2>
           <p className="text-xs">
             <span className="font-semibold">Closed</span>{" "}
-            {new Date(capa.closed_at).toLocaleString()} by{" "}
+            {localDateTime(capa.closed_at, zone, { withYear: true })} by{" "}
             {capa.closed_by?.full_name ?? "unknown"}
           </p>
           {capa.closed_reason ? (

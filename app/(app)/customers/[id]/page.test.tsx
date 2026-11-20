@@ -27,6 +27,9 @@ vi.mock("@/lib/api/reservations", () => ({
 vi.mock("@/lib/api/client", () => ({ ApiError: class extends Error {} }));
 vi.mock("@/lib/api/customer-invoices", () => ({ listCustomerInvoices }));
 vi.mock("next/navigation", () => ({ notFound: vi.fn(), redirect: vi.fn() }));
+vi.mock("@/lib/api/auth", () => ({
+  loadZoneTable: async () => ({ byIcao: { PABE: "America/Anchorage" }, fallback: "America/Anchorage" }),
+}));
 
 import CustomerDetailPage from "./page";
 
@@ -85,3 +88,24 @@ describe("a customer's invoices and balance (#30)", () => {
     expect(screen.getByText("Booking history")).toBeInTheDocument();
   });
 });
+
+describe("a customer's trips (#68)", () => {
+  it("gives each trip's time at its departure base, with the zone", async () => {
+    listBookings.mockResolvedValue({
+      items: [
+        {
+          id: "b-1",
+          origin_icao: "PABE",
+          destination_icao: "PAHP",
+          requested_departure_at: "2026-11-23T19:30:00Z",
+          status: "confirmed",
+        },
+      ],
+      total: 1,
+    });
+    await renderPage();
+    // 10:30 in Bethel; the server's clock had shown "7:30:00 PM".
+    expect(screen.getByRole("link", { name: /PABE → PAHP/ })).toHaveTextContent("Nov 23, 2026, 10:30 AKST");
+  });
+});
+
