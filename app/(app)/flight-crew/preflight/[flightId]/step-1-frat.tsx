@@ -18,6 +18,7 @@ import type {
   FratFactorSuggestion,
   FratPrefillResponse,
   FratRiskLevel,
+  PacketRiskDriver,
 } from "@/lib/api/types";
 import { cn } from "@/lib/utils";
 
@@ -173,20 +174,48 @@ function isAbove(a: FratRiskLevel, b: FratRiskLevel): boolean {
   return RISK_ORDER.indexOf(a) > RISK_ORDER.indexOf(b);
 }
 
+/** Why the packet rates the flight as it does (#202): its rows at that
+ *  level, worst first, in the packet's own words. The client, 19 Nov, took
+ *  a HIGH for the morning's crosswind at PAMO, long gone; it was PAMO's
+ *  ceiling and visibility, and the FRAT never said. */
+function PacketDrivers({ drivers, level }: { drivers: PacketRiskDriver[] | undefined; level: FratRiskLevel }) {
+  if (!drivers?.length) return null;
+  return (
+    <div className="mt-1 text-xs text-foreground">
+      <p className="font-semibold">{`What the packet rates ${RISK_LABEL[level]}:`}</p>
+      <ul className="mt-0.5 list-disc space-y-0.5 pl-4">
+        {drivers.map((d) => (
+          <li key={d.factor}>
+            <span className="font-semibold">{d.score != null ? `${d.factor} (${d.score})` : d.factor}</span>
+            {d.comment ? `: ${d.comment}` : null}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 /** At the top of the form, when the packet holds the level up (#177). On
  *  MM1181 (9 Nov) the client lowered the sliders and the level stayed HIGH:
  *  the packet was HIGH, and the only word of it was a grey line under the
  *  totals. */
-function PacketFloorNotice({ packetLevel }: { packetLevel: FratRiskLevel | null }) {
+function PacketFloorNotice({
+  packetLevel,
+  drivers,
+}: {
+  packetLevel: FratRiskLevel | null;
+  drivers?: PacketRiskDriver[];
+}) {
   if (!packetLevel || packetLevel === "low") return null;
   const label = RISK_LABEL[packetLevel];
   return (
-    <p role="note" className="notice notice-blue">
+    <div role="note" className="notice notice-blue">
       <span className="notice-label">{`Dispatch packet: ${label}`}</span>
       <span className="text-foreground">
-        {`The packet rates this flight ${label}, so the FRAT is filed at ${label} or higher, whatever the scores below add up to. The packet's level comes from its own checks, scored again each time the packet is opened.`}
+        {`The packet rates this flight ${label}, so the FRAT is filed at ${label} or higher, whatever the scores below add up to. The packet scores the current weather again each time it or this page opens.`}
       </span>
-    </p>
+      <PacketDrivers drivers={drivers} level={packetLevel} />
+    </div>
   );
 }
 
@@ -195,16 +224,21 @@ function PacketLevelNote({
   level,
   scoreLevel,
   packetLevel,
+  drivers,
 }: {
   level: FratRiskLevel;
   scoreLevel: FratRiskLevel;
   packetLevel: FratRiskLevel | null;
+  drivers?: PacketRiskDriver[];
 }) {
   if (!packetLevel) return null;
   return isAbove(level, scoreLevel) ? (
-    <p className="text-xs text-foreground">
-      {`${RISK_LABEL[level]}, not the score's ${RISK_LABEL[scoreLevel]}: the dispatch packet rates this flight ${RISK_LABEL[level]}, and a FRAT is never filed below the packet.`}
-    </p>
+    <div>
+      <p className="text-xs text-foreground">
+        {`${RISK_LABEL[level]}, not the score's ${RISK_LABEL[scoreLevel]}: the dispatch packet rates this flight ${RISK_LABEL[level]}, and a FRAT is never filed below the packet.`}
+      </p>
+      <PacketDrivers drivers={drivers} level={level} />
+    </div>
   ) : (
     <p className="text-[0.7rem] text-muted-foreground">
       {`The dispatch packet rates this flight ${RISK_LABEL[packetLevel]}.`}
@@ -230,6 +264,7 @@ function FiledLevelNote({
   scoreLevel,
   packetLevel,
   locked,
+  drivers,
 }: {
   /** The level now. */
   level: FratRiskLevel;
@@ -239,6 +274,8 @@ function FiledLevelNote({
   packetLevel: FratRiskLevel | null | undefined;
   /** The flight is released: the packet's level is the one at release. */
   locked: boolean;
+  /** Why the packet has its level (#202). */
+  drivers?: PacketRiskDriver[];
 }) {
   const ownScore = scoreLevel && level === scoreLevel && packetLevel !== level ? ", its score's level" : "";
   if (isAbove(filed, level)) {
@@ -259,9 +296,12 @@ function FiledLevelNote({
   }
   if (scoreLevel && isAbove(level, scoreLevel)) {
     return (
-      <p className="text-xs text-foreground">
-        {`${RISK_LABEL[level]}, not the score's ${RISK_LABEL[scoreLevel]}: the dispatch packet rates this flight ${RISK_LABEL[level]}, and a FRAT is never below the packet. If the packet scores it lower, the FRAT comes down with it.`}
-      </p>
+      <div>
+        <p className="text-xs text-foreground">
+          {`${RISK_LABEL[level]}, not the score's ${RISK_LABEL[scoreLevel]}: the dispatch packet rates this flight ${RISK_LABEL[level]}, and a FRAT is never below the packet. If the packet scores it lower, the FRAT comes down with it.`}
+        </p>
+        <PacketDrivers drivers={drivers} level={level} />
+      </div>
     );
   }
   if (!packetLevel) return null;
@@ -491,6 +531,7 @@ function FratQuestionnaire({
   );
   const scoreRisk = scoreToRiskLevel(total);
   const packetRisk = fratPrefill?.packet_risk_level ?? null;
+  const packetDrivers = fratPrefill?.packet_risk_drivers;
   const risk = higherRisk(scoreRisk, packetRisk);
 
   /**
@@ -641,7 +682,7 @@ function FratQuestionnaire({
       </header>
 
       <div className="space-y-4 px-5 py-4 text-sm">
-        <PacketFloorNotice packetLevel={packetRisk} />
+        <PacketFloorNotice packetLevel={packetRisk} drivers={packetDrivers} />
 
         {/* Carry the last FRAT forward, which is what the operator
             asked for:
@@ -782,7 +823,7 @@ function FratQuestionnaire({
             }
           />
         </div>
-        <PacketLevelNote level={risk} scoreLevel={scoreRisk} packetLevel={packetRisk} />
+        <PacketLevelNote level={risk} scoreLevel={scoreRisk} packetLevel={packetRisk} drivers={packetDrivers} />
 
         <div>
           <label className="field-label">
@@ -1420,6 +1461,7 @@ function FratResultPanel({
           scoreLevel={assessment.score_risk_level}
           packetLevel={assessment.packet_risk_level}
           locked={Boolean(assessment.locked)}
+          drivers={assessment.packet_risk_drivers}
         />
         {/* Up here and beside each score, where it's seen (client, 18 Nov:
             "In pilot view, still can't modify FRAT"): it had been a small

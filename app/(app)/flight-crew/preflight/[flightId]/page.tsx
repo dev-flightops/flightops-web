@@ -98,14 +98,21 @@ export default async function PreflightPage({
   let villages: VillageBoardRow[] | null = null;
 
   try {
-    // Fan-out: flight + progress are required; duty + latest FRAT +
-    // latest pilot acceptance are best-effort (404 / missing data is
-    // normal and the step UIs handle the empty case gracefully).
+    // The flight first (#202). Before release the dispatch packet is scored
+    // again from the current weather, as the FRAT page does, and only then
+    // are the FRAT and the steps read: the pilot's FRAT had read the packet
+    // as last scored, and the client's stayed HIGH from the morning's
+    // crosswind at PAMO until dispatch opened the packet again. Read before
+    // the scoring, they would be read again in vain: Next memoizes a
+    // render's identical GETs and serves the first answer (Codex, web #499).
+    const flightResult = await getFlight(flightId);
+    const scorePacket = flightResult.status === "scheduled";
+    // The rest of the fan-out runs beside the scoring. Duty, the latest
+    // acceptance and the rest are best-effort (404 / missing data is normal
+    // and the step UIs handle the empty case gracefully).
     const [
-      flightResult,
-      progressResult,
+      inputs,
       dutyResult,
-      fratResult,
       acceptanceResult,
       weightReturnResult,
       fratConfigResult,
@@ -113,14 +120,12 @@ export default async function PreflightPage({
       flightLogResult,
       villageResult,
     ] = await Promise.all([
-        getFlight(flightId),
-        getPreflightProgress(flightId),
+        // Step 1's FRAT, which shows what the data suggests beside each
+        // score (#175), and step 4's weather, as the flight's FRAT page
+        // loads them (#155). Non-fatal: without weather the FRAT shows its
+        // scores alone and step 4 renders its "data unavailable" ack.
+        loadFratInputs(flightResult, { scorePacket }),
         getCurrentDuty().catch(() => DUTY_OFFLINE_DEFAULT),
-        getLatestFratAssessment(flightId).catch((err) => {
-          // 404 'no_assessment' is the normal pre-FRAT state.
-          if (err instanceof ApiError && err.status === 404) return null;
-          throw err;
-        }),
         getLatestPilotAcceptance(flightId).catch((err) => {
           if (err instanceof ApiError && err.status === 404) return null;
           throw err;
@@ -145,6 +150,15 @@ export default async function PreflightPage({
         listFlightLogs({ flightId, mine: true, limit: 1 }).catch(() => null),
         getVillageBoard().then(board => board.items).catch(() => null),
       ]);
+    // After the scoring: progress is required; the FRAT's 404 is the
+    // normal pre-FRAT state.
+    const [progressResult, fratResult] = await Promise.all([
+      getPreflightProgress(flightId),
+      getLatestFratAssessment(flightId).catch((err) => {
+        if (err instanceof ApiError && err.status === 404) return null;
+        throw err;
+      }),
+    ]);
     flight = flightResult;
     progress = progressResult;
     duty = dutyResult;
@@ -155,11 +169,7 @@ export default async function PreflightPage({
     flightLog = flightLogResult?.items[0] ?? null;
     fratConfig = fratConfigResult;
     villages = villageResult;
-    // Step 1's FRAT, which shows what the data suggests beside each score
-    // (#175), and step 4's weather, as the flight's FRAT page loads them
-    // (#155). Non-fatal: without weather the FRAT shows its scores alone
-    // and step 4 renders its "data unavailable" acknowledgment.
-    ({ weather, fratPrefill, fratBlock } = await loadFratInputs(flightResult));
+    ({ weather, fratPrefill, fratBlock } = inputs);
   } catch (err) {
     if (err instanceof ApiError && err.status === 404) {
       notFound();

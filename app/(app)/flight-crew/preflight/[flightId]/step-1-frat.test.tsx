@@ -752,6 +752,28 @@ describe("the dispatch packet's level", () => {
     );
   });
 
+  // #202: the client, 19 Nov, took the HIGH for the morning's crosswind at
+  // PAMO; it was PAMO's ceiling. The FRAT now says what the packet rates.
+  const DRIVERS = [
+    { factor: "Ceiling / Visibility", score: 20, comment: "worst route METAR cig≈200ft at PAMO" },
+    { factor: "Crosswind Component", score: 15, comment: "crosswind 25KT at PAMO RWY 02/20" },
+  ];
+
+  it("says what the packet rates HIGH, at the top and under the totals (#202)", () => {
+    renderStep({ ...singleEngine, fratPrefill: { ...PREFILL, packet_risk_drivers: DRIVERS } });
+    const notice = screen.getByRole("note");
+    expect(notice).toHaveTextContent("What the packet rates HIGH:");
+    expect(notice).toHaveTextContent("Ceiling / Visibility (20): worst route METAR cig≈200ft at PAMO");
+    expect(notice).toHaveTextContent("Crosswind Component (15): crosswind 25KT at PAMO RWY 02/20");
+    expect(notice).toHaveTextContent("The packet scores the current weather again each time it or this page opens.");
+    expect(screen.getAllByText("What the packet rates HIGH:")).toHaveLength(2);
+  });
+
+  it("lists nothing when the server sends no reasons", () => {
+    renderStep({ ...singleEngine, fratPrefill: PREFILL });
+    expect(screen.queryByText(/What the packet rates/)).not.toBeInTheDocument();
+  });
+
   it("has no notice when the packet is LOW, which holds nothing up", () => {
     renderStep({ ...singleEngine, fratPrefill: { ...PREFILL, packet_risk_level: "low" } });
     expect(screen.queryByRole("note")).not.toBeInTheDocument();
@@ -784,6 +806,13 @@ describe("the dispatch packet's level", () => {
     expect(screen.getByText(/^HIGH, not the score's LOW/)).toHaveTextContent(
       "HIGH, not the score's LOW: the dispatch packet rates this flight HIGH, and a FRAT is never below the packet. If the packet scores it lower, the FRAT comes down with it.",
     );
+  });
+
+  it("says what holds a filed FRAT up (#202)", () => {
+    renderStep({ initial: filedHigh({ packet_risk_drivers: DRIVERS }) });
+    expect(levelTile()).toBe("HIGH");
+    expect(screen.getByText("What the packet rates HIGH:")).toBeInTheDocument();
+    expect(screen.getByText("Ceiling / Visibility (20)")).toBeInTheDocument();
   });
 
   it("comes down with the packet, and says it was filed at HIGH (MM1181, 17 Nov)", () => {

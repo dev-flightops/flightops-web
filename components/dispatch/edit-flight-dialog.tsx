@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { useFieldArray, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -30,6 +30,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { FlightLegPayload, FlightUpdatePayload } from "@/lib/api/ops";
 import type { AircraftListItem, FlightDetail } from "@/lib/api/types";
+import { addMinutes, minutesBetween } from "@/lib/flights/leg-times";
 import {
   DEFAULT_ZONE_TABLE,
   localToUtcIso,
@@ -133,6 +134,9 @@ function overADay(v: FormValues, timeZone: string): boolean {
 }
 
 type FormValues = z.infer<typeof schema>;
+
+/** A time on the form after the first departure (#202). */
+type TimeField = "scheduled_arrival_at" | `stops.${number}.departure` | `stops.${number}.arrival`;
 
 interface EditFlightDialogProps {
   flight: FlightDetail;
@@ -300,6 +304,37 @@ export function EditFlightDialog({
   });
   const stops = useFieldArray({ control: form.control, name: "stops" });
 
+  // #202: the times after the departure follow it, as on Open Flight. The
+  // client changed BK-FD6204DD's departure and the arrival stayed where it
+  // was. Each leg keeps its length and each stop its time on the ground; a
+  // time typed here by hand stays; and a new date moves nothing (that's
+  // Move to Another Day, and a mistyped date is caught by the span check,
+  // as on BK-59414132).
+  const typedByHand = useRef(new Set<string>());
+  const lastDeparture = useRef(form.getValues("scheduled_departure_at"));
+  const followDeparture = (next: string) => {
+    const before = lastDeparture.current;
+    if (!next) return; // mid-typing: the last whole time stands
+    lastDeparture.current = next;
+    if (!before || before.slice(0, 10) !== next.slice(0, 10)) return;
+    const zone = zoneFor(zones, form.getValues("origin"));
+    const moved = minutesBetween(before, next, zone);
+    if (!moved) return;
+    const later: { key: string; name: TimeField }[] = [
+      { key: "arrival", name: "scheduled_arrival_at" },
+      ...stops.fields.flatMap((stop, i) => [
+        { key: `${stop.id}:departure`, name: `stops.${i}.departure` as TimeField },
+        { key: `${stop.id}:arrival`, name: `stops.${i}.arrival` as TimeField },
+      ]),
+    ];
+    for (const { key, name } of later) {
+      const current = form.getValues(name);
+      if (typedByHand.current.has(key) || !current) continue;
+      const shifted = addMinutes(current, moved, zone);
+      if (shifted) form.setValue(name, shifted, { shouldDirty: true });
+    }
+  };
+
   // The times follow the departure base: a new origin in another zone
   // reads them in its zone, and the labels say which.
   const timeZone = zoneFor(zones, form.watch("origin"));
@@ -454,6 +489,10 @@ export function EditFlightDialog({
                       <Input
                         type="datetime-local"
                         {...field}
+                        onChange={(e) => {
+                          field.onChange(e);
+                          followDeparture(e.target.value);
+                        }}
                       />
                     </FormControl>
                     <ZuluHint value={field.value} timeZone={timeZone} />
@@ -472,6 +511,10 @@ export function EditFlightDialog({
                       <Input
                         type="datetime-local"
                         {...field}
+                        onChange={(e) => {
+                          typedByHand.current.add("arrival");
+                          field.onChange(e);
+                        }}
                       />
                     </FormControl>
                     <ZuluHint value={field.value} timeZone={timeZone} />
@@ -530,7 +573,14 @@ export function EditFlightDialog({
                               {`Leg ${i + 2} ${when === "departure" ? "Departure" : "Arrival"} (${tz})`}
                             </FormLabel>
                             <FormControl>
-                              <Input type="datetime-local" {...field} />
+                              <Input
+                                type="datetime-local"
+                                {...field}
+                                onChange={(e) => {
+                                  typedByHand.current.add(`${stop.id}:${when}`);
+                                  field.onChange(e);
+                                }}
+                              />
                             </FormControl>
                             <ZuluHint value={field.value} timeZone={timeZone} />
                             <FormMessage />
