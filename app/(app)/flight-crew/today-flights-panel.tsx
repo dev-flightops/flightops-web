@@ -4,27 +4,14 @@ import { buttonOutline, linkCaps } from "@/components/ff/controls";
 import { EmptyState } from "@/components/ff/empty-state";
 import { StatusMark, type StatusTone } from "@/components/ff/status-mark";
 import { FlightCategoryBadge } from "@/components/weather/flight-category-badge";
-import type { FlightLoad } from "@/lib/api/manifest";
-import type {
-  FlightAssignmentResponse,
-  FlightListItem,
-  FuelOrderResponse,
-  WeatherReportResponse,
-} from "@/lib/api/types";
+import type { FlightListItem, WeatherReportResponse } from "@/lib/api/types";
+import type { FlightReady } from "@/lib/flights/next-flight";
 import { DEFAULT_ZONE_TABLE, localClock, localDate, zoneFor, type ZoneTable } from "@/lib/format/local-time";
 import { flightStops, routeText } from "@/lib/route";
 import { cn } from "@/lib/utils";
-import { fieldFormat, utcHm } from "@/lib/weather-format";
+import { fieldFormat, observedLabel, utcHm } from "@/lib/weather-format";
 
 import { Readiness } from "./preflight/[flightId]/readiness";
-
-/** A flight's fuel, load and passengers, as the preflight reads them. */
-export interface FlightReady {
-  fuelOrders: FuelOrderResponse[] | null;
-  /** null: no load team; undefined: it couldn't be read. */
-  assignment: FlightAssignmentResponse | null | undefined;
-  flightLoad: FlightLoad | null;
-}
 
 interface Props {
   flights: FlightListItem[];
@@ -187,6 +174,7 @@ function StopsWeather({ stops, weather }: { stops: string[]; weather: Record<str
       <ul className="space-y-1 text-xs">
         {unique.map((icao) => {
           const r = weather[icao];
+          const seen = r ? observedLabel(r) : null;
           return (
             <li key={icao} className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
               <span className="w-10 font-mono font-semibold text-foreground">{icao}</span>
@@ -196,7 +184,7 @@ function StopsWeather({ stops, weather }: { stops: string[]; weather: Record<str
                   <span className="text-foreground">
                     {`${fieldFormat.wind(r)} · ${fieldFormat.visibility(r)} · ${fieldFormat.ceiling(r)}`}
                   </span>
-                  <span className="text-muted-foreground">{`METAR ${utcHm(r.observed_at ?? r.parsed_at)}`}</span>
+                  {seen ? <span className="text-muted-foreground">{seen}</span> : null}
                 </>
               ) : (
                 <span className="text-muted-foreground">No current METAR</span>

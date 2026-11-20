@@ -7,12 +7,8 @@ import { PageHeader } from "@/components/ff/page-header";
 import { Panel } from "@/components/ff/panel";
 import { loadZoneTable } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
-import { getFlightAssignment, listFuelOrders } from "@/lib/api/ground";
-import { getFlightLoad } from "@/lib/api/manifest";
 import { getCurrentDuty, getMorning, listAircraft, listFlights, type MorningResponse } from "@/lib/api/ops";
 import type { CurrentDutyResponse, FlightListItem, WeatherReportResponse } from "@/lib/api/types";
-import { batchWeather } from "@/lib/api/weather";
-import { flightStops } from "@/lib/route";
 import { DEFAULT_TIME_ZONE } from "@/lib/format/local-time";
 import { currentGreeting, firstNameFrom } from "@/lib/greeting";
 
@@ -23,7 +19,9 @@ import { Loads } from "@/lib/api/loads";
 
 import { DutyClockButton } from "./duty-clock-button";
 import { MorningAircraft } from "./morning-aircraft";
-import { TodayFlightsPanel, type FlightReady } from "./today-flights-panel";
+import { flightReadiness, stopsWeather, type FlightReady } from "@/lib/flights/next-flight";
+
+import { TodayFlightsPanel } from "./today-flights-panel";
 import { TrainingCurrencySummary } from "./training-currency-summary";
 
 const DUTY_OFFLINE_DEFAULT: CurrentDutyResponse = {
@@ -163,7 +161,7 @@ export default async function FlightCrewPage() {
     flights = [...byId.values()].sort((a, b) =>
       a.scheduled_departure_at.localeCompare(b.scheduled_departure_at),
     );
-    [weather, ready] = await Promise.all([stopsWeather(flights), readiness(flights)]);
+    [weather, ready] = await Promise.all([stopsWeather(flights), flightReadiness(flights)]);
     duty = dutyResult;
     morning = morningResult;
   } catch (err) {
@@ -300,36 +298,4 @@ export default async function FlightCrewPage() {
       </section>
     </div>
   );
-}
-
-/** The current METAR at every stop of these flights, by ICAO, in one batch
- *  (the weather service takes 20 at a time). */
-async function stopsWeather(flights: FlightListItem[]): Promise<Record<string, WeatherReportResponse>> {
-  const icaos = [...new Set(flights.flatMap((f) => flightStops(f).map((s) => s.toUpperCase())))].slice(0, 20);
-  if (icaos.length === 0) return {};
-  const batch = await batchWeather(icaos.map((icao) => ({ icao, kind: "metar" as const }))).catch(() => null);
-  const byIcao: Record<string, WeatherReportResponse> = {};
-  for (const r of batch?.items ?? []) if (r.kind === "metar") byIcao[r.icao.toUpperCase()] = r;
-  return byIcao;
-}
-
-/** Each flight's fuel orders, load team and passengers, as its preflight
- *  reads them. */
-async function readiness(flights: FlightListItem[]): Promise<Record<string, FlightReady>> {
-  const rows = await Promise.all(
-    flights.map(async (f) => {
-      const [orders, assignment, load] = await Promise.allSettled([
-        listFuelOrders({ flightId: f.id }),
-        getFlightAssignment(f.id),
-        getFlightLoad(f.id),
-      ]);
-      const row: FlightReady = {
-        fuelOrders: orders.status === "fulfilled" ? orders.value.items : null,
-        assignment: assignment.status === "fulfilled" ? assignment.value : undefined,
-        flightLoad: load.status === "fulfilled" ? load.value : null,
-      };
-      return [f.id, row] as const;
-    }),
-  );
-  return Object.fromEntries(rows);
 }

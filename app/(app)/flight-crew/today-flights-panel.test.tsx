@@ -166,6 +166,20 @@ describe("the next flight, read from the air", () => {
     expect(within(now).getByText("No current METAR")).toBeInTheDocument();
   });
 
+  it("times the report by its own observation, never by when it was fetched", () => {
+    // Codex, web #501: a 13:53Z observation fetched at 14:20Z must not read
+    // as "METAR 14:20Z", which makes older conditions look newer.
+    render(
+      <TodayFlightsPanel
+        flights={[flight()]}
+        weather={{ PAKN: metar({ observed_at: undefined, parsed_at: "2026-08-21T14:20:00Z" }) }}
+      />,
+    );
+    const now = screen.getByRole("region", { name: "Weather now" });
+    expect(within(now).getByText("METAR 13:53Z")).toBeInTheDocument();
+    expect(within(now).queryByText(/14:20Z/)).toBeNull();
+  });
+
   it("shows the fuel, the load and the passengers as the preflight does", () => {
     render(
       <TodayFlightsPanel
