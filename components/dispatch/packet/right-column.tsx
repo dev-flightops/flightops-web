@@ -256,6 +256,7 @@ function FlightActionsRow({
           <ReleasedFooter
             releasedAt={flight.released_at}
             releasedBy={flight.released_by}
+            timeZone={moveZone}
           />
         </div>
         <div className="flex flex-wrap items-center gap-2">
