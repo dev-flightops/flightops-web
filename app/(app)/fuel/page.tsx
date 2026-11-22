@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ApiError } from "@/lib/api/client";
 import {
   listFuelOrders,
+  listFuelQualityTests,
   listFuelSuppliers,
   listFuelTypes,
 } from "@/lib/api/ground";
@@ -18,17 +19,20 @@ export default async function FuelLandingPage() {
   let openOrders = 0;
   let activeSuppliers = 0;
   let activeTypes = 0;
+  let qualityTests = 0;
   let loadError: string | null = null;
 
   try {
-    const [orders, suppliers, types] = await Promise.all([
+    const [orders, suppliers, types, quality] = await Promise.all([
       listFuelOrders({ status: "ordered", limit: 1 }),
       listFuelSuppliers(),
       listFuelTypes(),
+      listFuelQualityTests({ limit: 1 }),
     ]);
     openOrders = orders.total;
     activeSuppliers = suppliers.total;
     activeTypes = types.total;
+    qualityTests = quality.total;
   } catch (err) {
     const status = err instanceof ApiError ? err.status : 0;
     loadError =
@@ -60,7 +64,7 @@ export default async function FuelLandingPage() {
         <StatTile label="Open orders" value={openOrders} accent={openOrders > 0 ? "yellow" : undefined} />
         <StatTile label="Suppliers" value={activeSuppliers} />
         <StatTile label="Fuel types" value={activeTypes} />
-        <StatTile label="Quality logs" value="—" />
+        <StatTile label="Quality logs" value={qualityTests} />
       </section>
 
       <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -84,6 +88,14 @@ export default async function FuelLandingPage() {
           blurb="Tenant's fuel catalog — Jet A, 100LL, mogas, etc."
           links={[
             { label: "Types & Bases", sublabel: `${activeTypes} active types`, href: "/fuel/types" },
+          ]}
+        />
+        {/* The quality log had a figure here but no way in from this page. */}
+        <SectionCard
+          title="Fuel Quality"
+          blurb="Sump checks and supplier samples, kept for Part 135. Append-only."
+          links={[
+            { label: "Quality Log", sublabel: `${qualityTests} tests logged`, href: "/fuel/quality" },
           ]}
         />
       </section>
