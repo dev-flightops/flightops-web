@@ -244,6 +244,20 @@ describe("GroundOpsHubPage", () => {
     ).toHaveAttribute("href", "/fuel/quality");
   });
 
+  it("links the mail and freight waiting at each station", async () => {
+    listStations.mockResolvedValueOnce({ items: [], total: 0 });
+    listOpenStationIssues.mockResolvedValueOnce({ items: [], total: 0 });
+    listGseUnits.mockResolvedValueOnce({ items: [], total: 0 });
+
+    await renderPage();
+
+    // Ground logs what it has on hand there; only a flight's manifest
+    // led to it before.
+    expect(
+      screen.getByRole("link", { name: /mail & freight waiting/i }),
+    ).toHaveAttribute("href", "/manifest/waiting");
+  });
+
   it("renders the session-expired alert on 401", async () => {
     listStations.mockRejectedValueOnce(
       new TestApiError(401, "/ground/stations", "Unauthorized"),

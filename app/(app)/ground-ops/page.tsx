@@ -119,6 +119,9 @@ export default async function GroundOpsHubPage() {
           blurb="Mobile-optimized flight board for ramp agents. Track turnarounds, confirm loads, capture photos, manage fuel orders."
           links={[
             L.rampDashboard,
+            // Where ground logs the mail and freight on hand; only a flight's
+            // manifest linked to it before.
+            L.mailFreightWaiting,
             {
               ...L.rampFuelOrders,
               badge:
