@@ -140,6 +140,21 @@ describe("OpenFlightForm: a round trip by default, its times from the cruise spe
     expect(home.lands > home.departs).toBe(true);
   });
 
+  it("keeps a stop's other filled time following when one of its times is typed", async () => {
+    // Editing a stop makes it a new row: its record went with the edit, so
+    // its untouched arrival read as typed and stopped following (review).
+    renderForm();
+    await userEvent.selectOptions(screen.getByLabelText(/Aircraft/), "ac-1");
+    await userEvent.type(input("origin"), "pabe");
+    await userEvent.type(input("destination"), "pahp");
+    fireEvent.change(input("scheduled_departure_at"), { target: { value: "2026-11-23T10:30" } });
+    fireEvent.change(stopInputs("stop_departure")[0], { target: { value: "2026-11-23T13:00" } });
+    const landsBefore = stopInputs("stop_arrival")[0].value;
+    fireEvent.change(input("scheduled_departure_at"), { target: { value: "2026-11-23T11:30" } });
+    expect(stopInputs("stop_departure")[0].value).toBe("2026-11-23T13:00");
+    expect(stopInputs("stop_arrival")[0].value).not.toBe(landsBefore);
+  });
+
   it("still keeps a time typed by hand on a stop that moves", async () => {
     renderForm();
     await userEvent.selectOptions(screen.getByLabelText(/Aircraft/), "ac-1");

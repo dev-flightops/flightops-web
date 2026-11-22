@@ -211,12 +211,16 @@ export function OpenFlightForm({
    *  added before the way home left the way home's filled times looking
    *  typed by hand: they stopped following, and the way home departed
    *  before the new leg landed (Bethel → Hooper Bay → Chevak → Bethel kept
-   *  11:40). A stop the change kept is the same object in both lists. */
+   *  11:40). A stop the change kept is the same object in both lists; a
+   *  stop edited in place is a new object at the same place, and keeps its
+   *  record too, so its other time goes on following the plan. */
   function keepFilled(before: SubmittedStop[], after: SubmittedStop[]) {
     const old = filled.current;
     const next: Record<string, string> = old.eta !== undefined ? { eta: old.eta } : {};
+    const sameRows = before.length === after.length;
     after.forEach((stop, i) => {
-      const was = before.indexOf(stop);
+      let was = before.indexOf(stop);
+      if (was < 0 && sameRows && !after.includes(before[i])) was = i;
       if (was < 0) return;
       for (const part of ["departure", "arrival"]) {
         const value = old[`${part}-${was}`];
