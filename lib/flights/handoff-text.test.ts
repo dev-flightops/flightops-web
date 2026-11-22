@@ -70,3 +70,18 @@ describe("the FRAT hand-offs say what changed (17 Nov)", () => {
     );
   });
 });
+
+describe("a FRAT waiting on the Chief Pilot or DO (#152)", () => {
+  it("asks them to accept a FRAT over company limits, on its page", () => {
+    const line = handoffLine(item({ kind: "frat_to_accept", turn: "chief_pilot_or_do", note: "over_limits" }));
+    expect(line.title).toBe("Accept the FRAT — CH742");
+    expect(line.detail).toMatch(/Over company limits\. Signed by dispatch and Tomas Pilot at .+; accept it with a reason before it can be released\.$/);
+    expect(line.href).toBe("/frat/f-1");
+    expect(line.severity).toBe("red");
+  });
+
+  it("asks them to approve a HIGH one", () => {
+    const line = handoffLine(item({ kind: "frat_to_accept", turn: "chief_pilot_or_do", note: "high_risk" }));
+    expect(line.detail).toMatch(/The packet rates it HIGH\..+approve it with a reason before it can be released\.$/);
+  });
+});
