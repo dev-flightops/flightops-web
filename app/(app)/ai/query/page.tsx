@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 
 import { auth } from "@/auth";
 import { getQueryEntities } from "@/lib/api/ai";
+import { loadZoneTable } from "@/lib/api/auth";
 import { hasAnyRole, roleGate } from "@/lib/roles";
 
 import { QueryChat } from "./query-chat";
@@ -37,6 +38,8 @@ export default async function AiQueryPage() {
   // unreachable the box still works and the question still fails
   // honestly.
   const entities = await getQueryEntities().catch(() => []);
+  // Instants in an answer read in the company's zone (#68).
+  const zone = (await loadZoneTable()).fallback;
 
-  return <QueryChat entities={entities} />;
+  return <QueryChat entities={entities} zone={zone} />;
 }

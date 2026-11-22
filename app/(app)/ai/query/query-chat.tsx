@@ -12,7 +12,7 @@ import { QueryView, type Turn } from "./query-view";
  * renders under vitest without the server action dragging next/server
  * in behind it.
  */
-export function QueryChat({ entities }: { entities: QueryEntity[] }) {
+export function QueryChat({ entities, zone }: { entities: QueryEntity[]; zone: string }) {
   const [turns, setTurns] = useState<Turn[]>([]);
   const [draft, setDraft] = useState("");
   const [pending, setPending] = useState(false);
@@ -54,6 +54,7 @@ export function QueryChat({ entities }: { entities: QueryEntity[] }) {
       draft={draft}
       pending={pending}
       entities={entities}
+      zone={zone}
       onDraftChange={setDraft}
       onAsk={ask}
     />
