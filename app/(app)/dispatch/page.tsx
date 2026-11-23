@@ -6,11 +6,12 @@ import {
   DISPATCH_WRITERS,
   FRAT_DISPATCH_SIGNERS,
   FRAT_OVER_LIMIT_ACCEPTORS,
-  hasAnyRole,
   MANIFEST_EDITORS,
   OVERRIDE_AUTHORITY,
   PLAN_REVIEWERS,
+  RECORD_DELETERS,
   WEIGHT_RETURN_RESOLVERS,
+  hasAnyRole,
 } from "@/lib/roles";
 import { DispatchComplianceGate } from "@/components/dispatch/packet/dispatch-compliance-gate";
 import { AircraftTodayLine, AircraftTodayPanel } from "@/components/dashboards/aircraft-today-panel";
@@ -646,6 +647,7 @@ export default async function DispatchPage({
             acknowledgedWarnings={Array.from(ackedWarnCodes)}
             risk={risk}
             canEditRisk={canEditRisk}
+            canDelete={hasAnyRole(viewerRoles, RECORD_DELETERS)}
           />
         </div>
       </div>

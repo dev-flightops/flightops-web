@@ -16,9 +16,10 @@ import {
 } from "@/lib/api/maintenance";
 import { CERT_TYPE_LABELS, type SquawkResponse } from "@/lib/api/types";
 import { localDateTime } from "@/lib/format/local-time";
-import { AIRWORTHINESS_WRITERS, WORK_ORDER_WRITERS, hasAnyRole } from "@/lib/roles";
+import { AIRWORTHINESS_WRITERS, RECORD_DELETERS, WORK_ORDER_WRITERS, hasAnyRole } from "@/lib/roles";
 import { cn } from "@/lib/utils";
 
+import { DeleteWorkOrder } from "@/components/records/delete-work-order";
 import { WorkOrderActions } from "./work-order-actions";
 
 export const dynamic = "force-dynamic";
@@ -191,6 +192,13 @@ export default async function WorkOrderPage({ params }: { params: Promise<{ id: 
           }
         />
       )}
+
+      {/* A test work order nobody signed off can go (1119-30). */}
+      {hasAnyRole(roles, RECORD_DELETERS) && wo.closure !== "signed_off" && !wo.signed_off_at ? (
+        <section aria-label="Delete" className="mt-6 border-t border-border pt-4">
+          <DeleteWorkOrder workOrderId={wo.id} woNumber={wo.wo_number} />
+        </section>
+      ) : null}
     </div>
   );
 }

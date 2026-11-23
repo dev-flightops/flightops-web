@@ -7,12 +7,14 @@ import { z } from "zod";
 import { ApiError } from "@/lib/api/client";
 import {
   createWorkOrder,
+  deleteWorkOrder,
   resolveSquawk,
   transitionWorkOrder,
   type WorkOrderStatus,
 } from "@/lib/api/maintenance";
 import type { Closure, SignOff } from "@/lib/api/types";
 import { validationSummary } from "@/lib/api/validation-errors";
+import { type DeleteResult, deleteRefusal } from "@/lib/records/delete-refusal";
 
 /**
  * Work orders from the web (#134): open one, from a squawk or not, and
@@ -164,5 +166,17 @@ export async function transitionWorkOrderAction(input: {
   revalidatePath("/maintenance/squawks");
   revalidatePath("/maintenance");
   revalidatePath("/dispatch");
+  return { ok: true };
+}
+
+/** Delete a test work order nobody signed off (1119-30). */
+export async function deleteWorkOrderAction(workOrderId: string): Promise<DeleteResult> {
+  try {
+    await deleteWorkOrder(workOrderId);
+  } catch (err) {
+    return { ok: false, message: deleteRefusal(err, "work order") };
+  }
+  revalidatePath("/maintenance/work-orders");
+  revalidatePath("/maintenance");
   return { ok: true };
 }

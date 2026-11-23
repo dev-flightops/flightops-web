@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
+import { auth } from "@/auth";
 import { linkCaps } from "@/components/ff/controls";
+import { DeleteCustomer } from "@/components/records/delete-customer";
 import { loadZoneTable } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
 import { type CustomerInvoiceList, listCustomerInvoices } from "@/lib/api/customer-invoices";
@@ -15,6 +17,7 @@ import {
 } from "@/lib/api/reservations";
 
 import { localDateTime, zoneFor } from "@/lib/format/local-time";
+import { RECORD_DELETERS, hasAnyRole } from "@/lib/roles";
 import { cn } from "@/lib/utils";
 
 import { money, STATUS_LABELS, statusClasses } from "../../invoicing/money";
@@ -49,6 +52,7 @@ export default async function CustomerDetailPage({
   // Each trip's time at its departure base (#68). It was the server's
   // clock: a 10:30 AKST booking read "7:30:00 PM".
   const zones = await loadZoneTable();
+  const canDelete = hasAnyRole((await auth())?.roles ?? [], RECORD_DELETERS);
 
   // The customer's invoices and balance (#30), for the roles billing
   // admits. Anyone else is refused by the service, and the section is
@@ -194,6 +198,13 @@ export default async function CustomerDetailPage({
               Open in Invoicing →
             </Link>
           </p>
+        </section>
+      ) : null}
+
+      {/* A test customer who never flew can go, with their bookings (1119-30). */}
+      {canDelete ? (
+        <section aria-label="Delete" className="mt-6 border-t border-border pt-4">
+          <DeleteCustomer customerId={customer.id} name={customer.full_name} />
         </section>
       ) : null}
     </div>

@@ -1423,3 +1423,9 @@ export async function undoAlertAcknowledgment(
     { method: "DELETE", parseAs: "text", cache: "no-store" },
   );
 }
+
+/** Delete a cancelled test flight that never left (1119-30). The server
+ *  refuses (409) one that is part of the record, and says why. */
+export async function deleteFlight(flightId: string): Promise<void> {
+  await apiFetch<void>(`/ops/flights/${encodeURIComponent(flightId)}`, { method: "DELETE" });
+}

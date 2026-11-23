@@ -11,6 +11,7 @@ vi.mock("next/navigation", () => ({
 
 vi.mock("@/app/(app)/dispatch/[flightId]/actions", () => ({
   releaseFlightAction: vi.fn(),
+  deleteFlightAction: vi.fn(),
 }));
 
 import { RightColumn } from "./right-column";
@@ -200,6 +201,22 @@ describe("RightColumn / flight-actions row", () => {
     expect(
       screen.getByText(/This flight is cancelled — no actions available/i),
     ).toBeInTheDocument();
+  });
+
+  it("offers an Exec Admin Delete flight on a cancelled flight that never left (1119-30)", () => {
+    render(<RightColumn flight={baseFlight({ status: "cancelled" })} canDelete />);
+    expect(screen.getByRole("button", { name: "Delete flight" })).toBeInTheDocument();
+  });
+
+  it("offers no Delete without the role, before cancelling, or once it left", () => {
+    const { rerender } = render(<RightColumn flight={baseFlight({ status: "cancelled" })} />);
+    expect(screen.queryByRole("button", { name: "Delete flight" })).not.toBeInTheDocument();
+    rerender(<RightColumn flight={baseFlight({ status: "scheduled" })} canDelete />);
+    expect(screen.queryByRole("button", { name: "Delete flight" })).not.toBeInTheDocument();
+    rerender(
+      <RightColumn flight={baseFlight({ status: "cancelled", actual_departure_at: "2026-11-20T18:05:00Z" })} canDelete />,
+    );
+    expect(screen.queryByRole("button", { name: "Delete flight" })).not.toBeInTheDocument();
   });
 });
 
