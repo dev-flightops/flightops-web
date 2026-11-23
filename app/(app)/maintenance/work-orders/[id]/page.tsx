@@ -14,7 +14,7 @@ import {
   type WorkOrderDetail,
   type WorkOrderStatus,
 } from "@/lib/api/maintenance";
-import type { SquawkResponse } from "@/lib/api/types";
+import { CERT_TYPE_LABELS, type SquawkResponse } from "@/lib/api/types";
 import { localDateTime } from "@/lib/format/local-time";
 import { AIRWORTHINESS_WRITERS, WORK_ORDER_WRITERS, hasAnyRole } from "@/lib/roles";
 import { cn } from "@/lib/utils";
@@ -112,6 +112,20 @@ export default async function WorkOrderPage({ params }: { params: Promise<{ id: 
           </div>
         )}
       </dl>
+
+      {wo.closure ? (
+        // 1119-19: the 14 CFR 43.9 entry it closed with.
+        <section className="mb-6" aria-label="Sign-off">
+          <h2 className="section-title mb-2">{wo.closure === "signed_off" ? "Sign-off" : "Closed with no work done"}</h2>
+          <p className="whitespace-pre-line text-sm">{wo.corrective_action}</p>
+          {wo.closure === "signed_off" ? (
+            <p className="mt-1 text-xs text-muted-foreground">
+              {`Signed by ${wo.signer_name}, ${wo.signer_cert_type ? CERT_TYPE_LABELS[wo.signer_cert_type] : "certificate"} ${wo.signer_cert_number}`}
+              {wo.signed_off_at ? `, ${localDateTime(wo.signed_off_at, zone)}` : ""}
+            </p>
+          ) : null}
+        </section>
+      ) : null}
 
       {wo.description && (
         <section className="mb-6">

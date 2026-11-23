@@ -62,6 +62,24 @@ describe("dispatch minimums in words (#89)", () => {
     );
   });
 
+  it("names the TAF a flight hours off is held to, and its time (1119-03)", () => {
+    const forecast: MinimumsStation = {
+      icao: "PABE",
+      below: true,
+      observations: [
+        {
+          source: "taf",
+          observed_at: "2026-11-23T21:00:00Z",
+          ceiling_ft: 300,
+          visibility_sm: 1.5,
+          below_ceiling: true,
+          below_visibility: true,
+        },
+      ],
+    };
+    expect(belowSummary([forecast])).toBe("PABE ceiling 300 ft, visibility 1.5 sm (TAF for 21:00Z)");
+  });
+
   it("reads release's refusal", () => {
     const body = JSON.stringify({
       detail: {

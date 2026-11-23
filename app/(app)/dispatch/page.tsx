@@ -83,7 +83,7 @@ import {
   plansOutOfLimits,
   type ReleaseGateInput,
 } from "@/components/dispatch/packet/release-gate";
-import { flightStops, paramToRoute } from "@/lib/route";
+import { alternateOf, flightStops, paramToRoute } from "@/lib/route";
 
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -388,7 +388,10 @@ export default async function DispatchPage({
   let areaForecastRegions: AreaForecastRegion[] = [];
   if (selectedFlight) {
     [risk, areaForecastRegions] = await Promise.all([
-      loadDispatchRisk(selectedFlight.id, flightStops(selectedFlight)).catch(() => null),
+      // An IFR flight's alternate too (1119-18): ops checks its weather.
+      loadDispatchRisk(selectedFlight.id, flightStops(selectedFlight), alternateOf(selectedFlight)).catch(
+        () => null,
+      ),
       getAreaForecastRegions().catch(() => []),
     ]);
   }
@@ -578,7 +581,10 @@ export default async function DispatchPage({
           />
         )}
 
-        <CrewLegalityHints />
+        <CrewLegalityHints
+          hasPic={Boolean(selectedFlight && effectivePicId)}
+          hasAircraft={Boolean(selectedFlight?.aircraft?.tail_number)}
+        />
 
         {/* Crew-currency status only makes sense once a PIC is loaded.
             The PIC selection lives in the URL as `?pic=<uuid>`; the

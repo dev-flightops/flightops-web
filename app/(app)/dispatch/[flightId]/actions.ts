@@ -201,9 +201,10 @@ export async function releaseFlightAction(
 }
 
 /** Saved, with what came off the route when the edit took stops off it
- *  (#208). */
+ *  (#208), and what changed that the FRAT was scored on, which starts it
+ *  over (1119-21). */
 export type UpdateFlightResult =
-  | { ok: true; offRoute: OffRoute | null }
+  | { ok: true; offRoute: OffRoute | null; fratStartsOver?: string[] }
   | { ok: false; error: string };
 
 export async function updateFlightAction(
@@ -211,8 +212,11 @@ export async function updateFlightAction(
   patch: FlightUpdatePayload,
 ): Promise<UpdateFlightResult> {
   let offRoute: OffRoute | null = null;
+  let fratStartsOver: string[] = [];
   try {
-    offRoute = (await updateFlight(flightId, patch)).off_route ?? null;
+    const saved = await updateFlight(flightId, patch);
+    offRoute = saved.off_route ?? null;
+    fratStartsOver = saved.frat_starts_over ?? [];
   } catch (err) {
     if (err instanceof ApiError) {
       if (err.message.includes("not_editable_in_status_")) {
@@ -258,7 +262,7 @@ export async function updateFlightAction(
     revalidatePath("/manifest/waiting");
     revalidatePath(`/manifest/${flightId}`);
   }
-  return { ok: true, offRoute };
+  return fratStartsOver.length > 0 ? { ok: true, offRoute, fratStartsOver } : { ok: true, offRoute };
 }
 
 /** Take a release back before departure (#90). */

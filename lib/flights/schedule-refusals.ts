@@ -1,4 +1,6 @@
+import type { TypedPart } from "@/lib/api/manifest";
 import type { MelLimitBreach } from "@/lib/api/types";
+import { loadSource } from "@/lib/flights/typed-load";
 import { melLimitRemedy } from "@/lib/maintenance/mel-limits";
 
 /**
@@ -54,10 +56,10 @@ export function releaseRefusal(message: string): string | null {
   }
   if (d.error === "over_max_payload") {
     const over = Math.round(Number(d.over_by_lbs ?? 0)).toLocaleString("en-US");
-    const from =
-      d.basis === "manifest"
-        ? "the manifest"
-        : "the passengers and cargo typed on the flight (no manifest yet; passengers at 190 lb)";
+    const from = loadSource(
+      typeof d.basis === "string" ? d.basis : undefined,
+      Array.isArray(d.typed_parts) ? (d.typed_parts as TypedPart[]) : undefined,
+    );
     return `Release blocked — the load is ${over} lb over the aircraft's useful load, by ${from}.`;
   }
   if (d.error === "aircraft_weights_missing") {

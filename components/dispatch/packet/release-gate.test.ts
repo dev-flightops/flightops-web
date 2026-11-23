@@ -460,7 +460,23 @@ describe("computeHardBlockReason — #155 the MELs, the FRAT and the load", () =
         releaseLoad: { basis: "typed", useful_load_lbs: 1400, payload_lbs: 6140, remaining_lbs: "-5090.0" },
       }),
     ).toBe(
-      "Over the aircraft's useful load by 5,090 lb, by the passengers and cargo typed on the flight.",
+      "Over the aircraft's useful load by 5,090 lb, by the passengers and cargo typed on the flight (no manifest yet; passengers at 190 lb).",
+    );
+    // 1119-04: a manifest just started still weighs what was typed.
+    expect(
+      computeHardBlockReason({
+        ...CLEAR,
+        fratBlockers: [],
+        releaseLoad: {
+          basis: "manifest",
+          typed_parts: ["freight"],
+          useful_load_lbs: 1400,
+          payload_lbs: 5380,
+          remaining_lbs: "-3980.0",
+        },
+      }),
+    ).toBe(
+      "Over the aircraft's useful load by 3,980 lb, by the manifest, with the cargo typed on the flight until it has its own.",
     );
     expect(
       computeHardBlockReason({

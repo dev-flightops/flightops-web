@@ -160,7 +160,14 @@ export interface ManifestLoad {
   /** False when the legs after the first carry the first leg's fuel, for
    *  want of a fuel burn. */
   leg_fuel_burned?: boolean;
+  /** The parts of the payload taken from the numbers typed on the flight
+   *  because the manifest doesn't carry them yet (1119-04). */
+  typed_parts?: TypedPart[];
 }
+
+/** A part of the load the manifest has none of yet (1119-04): "passengers"
+ *  count as typed on the flight at 190 lb each, "freight" as typed. */
+export type TypedPart = "passengers" | "freight";
 
 /** One leg's load (LOG-40). */
 export interface LegLoad {
@@ -204,6 +211,8 @@ export interface FlightLoad {
 
 export interface ReleaseLoad {
   basis: "manifest" | "typed";
+  /** On a manifest, the parts still taken from the typed numbers (1119-04). */
+  typed_parts?: TypedPart[];
   useful_load_lbs: number | null;
   payload_lbs: number | string;
   /** Negative: over the aircraft's useful load. */

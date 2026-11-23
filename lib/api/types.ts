@@ -755,7 +755,39 @@ export interface MelItemResponse {
   /** Day VFR only or VFR only (#200); null when it limits nothing.
    *  Absent from services before it. */
   operating_limit?: MelOperatingLimit | null;
+  /** How it was cleared (1119-19); null while open and on older items. */
+  closure?: ClosureKind | null;
+  /** The repair (signed_off), or why nothing was done (no_work). */
+  corrective_action?: string | null;
+  signer_name?: string | null;
+  signer_cert_number?: string | null;
+  signer_cert_type?: CertType | null;
 }
+
+/** 1119-19: maintenance that returns an aircraft to service is signed off
+ *  as a 14 CFR 43.9 entry, as the RTS queue's sign-off is (#172). */
+export type CertType = "ap" | "ia" | "repairman";
+
+export const CERT_TYPE_LABELS: Record<CertType, string> = {
+  ap: "A&P",
+  ia: "IA",
+  repairman: "Repairman",
+};
+
+export interface SignOff {
+  work_done: string;
+  signer_name: string;
+  cert_number: string;
+  cert_type: CertType;
+  airworthy: true;
+}
+
+/** "signed_off": the work signed for. "no_work": closed with nothing done,
+ *  the reason in corrective_action. */
+export type ClosureKind = "signed_off" | "no_work";
+
+/** Closing a work order or an MEL item: the sign-off, or why no work was done. */
+export type Closure = { sign_off: SignOff } | { no_work_reason: string };
 
 export interface MelItemCreateRequest {
   aircraft_id: string;
@@ -768,11 +800,11 @@ export interface MelItemCreateRequest {
   operating_limit?: MelOperatingLimit | null;
 }
 
-export interface MelItemCloseRequest {
+export type MelItemCloseRequest = Closure & {
   /** Optional closing note. Backend appends to any existing notes
    *  rather than overwriting. */
   notes?: string | null;
-}
+};
 
 export interface MelItemListResponse {
   items: MelItemResponse[];
@@ -823,6 +855,12 @@ export interface SquawkResolveRequest {
   /** Required — what was done to clear the discrepancy. Backend
    *  enforces min_length=1. */
   resolution_notes: string;
+  /** The mechanic who signs it off, their certificate and its kind, and
+   *  their statement that it is airworthy (1119-19). */
+  signer_name: string;
+  cert_number: string;
+  cert_type: CertType;
+  airworthy: true;
 }
 
 export interface SquawkListResponse {
@@ -893,6 +931,8 @@ export interface BoardFlightItem {
   /** A multi-stop flight's legs with their marks (LOG-14); empty for a
    *  single leg, absent from services before it. */
   legs?: FlightLeg[];
+  /** An open MEL deferral's limit the flight breaks (#200, 1119-12). */
+  mel_limits?: MelLimitBreach[];
 }
 
 export interface BoardResponse {
@@ -2884,7 +2924,9 @@ export type TypePosition = "pic" | "sic" | "instructor" | "check_airman" | "advi
 
 /** One report at one stop, held against the dispatch minimums (#89). */
 export interface MinimumsObservation {
-  source: "metar" | "field_report";
+  /** "taf": the TAF's forecast for the flight's time at the stop, held when
+   *  that is more than an hour off (1119-03); `observed_at` is that time. */
+  source: "metar" | "field_report" | "taf";
   observed_at: string | null;
   ceiling_ft: number | null;
   visibility_sm: number | null;

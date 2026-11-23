@@ -2,7 +2,9 @@ import Link from "next/link";
 
 import { linkCaps } from "@/components/ff/controls";
 import { cn } from "@/lib/utils";
+import { loadZoneTable } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
+import { localDay } from "@/lib/format/local-time";
 import {
   CAPA_STATUS_LABELS,
   type CorrectiveAction,
@@ -26,8 +28,8 @@ export default async function MyCapasPage() {
         : "Feed unavailable. Try refreshing in a moment.";
   }
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  // The company's day (1119-25): the server's UTC one moves on at 15:00 in Alaska.
+  const today = localDay((await loadZoneTable()).fallback);
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6">
@@ -61,7 +63,7 @@ export default async function MyCapasPage() {
         <ul className="space-y-2">
           {items.map((c) => {
             const dueDate = new Date(c.due_date + "T00:00:00");
-            const overdue = dueDate < today && c.status !== "closed";
+            const overdue = c.due_date < today && c.status !== "closed";
             return (
               <li key={c.id}>
                 <Link

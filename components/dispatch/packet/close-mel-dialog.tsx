@@ -14,7 +14,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
+import {
+  EMPTY_SIGN_OFF,
+  SignOffFields,
+  signOffProblem,
+  toClosure,
+} from "@/components/maintenance/sign-off-fields";
 
 export interface CloseMelDialogProps {
   melItemId: string;
@@ -26,8 +31,9 @@ export interface CloseMelDialogProps {
 }
 
 /**
- * Confirms a MEL closure (M2-G-17). Optional notes textarea — backend
- * appends to any existing notes (it doesn't overwrite). Submits to the
+ * Confirms a MEL closure (M2-G-17), signed off (1119-19): the repair, the
+ * mechanic, their certificate and their statement, or that no work was
+ * done and why (one deferred in error). Submits to the
  * `closeMelDeferralAction` server action, refreshes the panel on
  * success, surfaces server errors inline.
  */
@@ -38,23 +44,26 @@ export function CloseMelDialog({
 }: CloseMelDialogProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
-  const [notes, setNotes] = useState("");
+  const [signOff, setSignOff] = useState(EMPTY_SIGN_OFF);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
   const closeAndReset = () => {
     setOpen(false);
     setError(null);
-    setNotes("");
+    setSignOff(EMPTY_SIGN_OFF);
   };
 
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    const problem = signOffProblem(signOff);
+    if (problem) {
+      setError(problem);
+      return;
+    }
     setError(null);
     startTransition(async () => {
-      const result = await closeMelDeferralAction(melItemId, {
-        notes: notes.trim() || null,
-      });
+      const result = await closeMelDeferralAction(melItemId, toClosure(signOff));
       if (result.ok) {
         closeAndReset();
         router.refresh();
@@ -81,13 +90,13 @@ export function CloseMelDialog({
         open={open}
         onOpenChange={(o) => (isPending ? null : o ? setOpen(true) : closeAndReset())}
       >
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>Close MEL · ATA {ataChapter}</DialogTitle>
             <DialogDescription>
-              Mark this MEL item as closed (equipment repaired or replaced).
-              The closure is stamped with your login + the current time and
-              recorded in the audit trail.
+              Clear this MEL item once the equipment is repaired or replaced,
+              signed off by the mechanic. The closure is stamped with your
+              login and the time, and recorded in the audit trail.
             </DialogDescription>
           </DialogHeader>
 
@@ -96,20 +105,14 @@ export function CloseMelDialog({
               {description}
             </p>
 
-            <div>
-              <Label htmlFor="close-mel-notes">Closing notes (optional)</Label>
-              <textarea
-                id="close-mel-notes"
-                rows={3}
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                placeholder="e.g. Replaced controller P/N XXXX-YY; tested OK on ground run."
-                className="mt-1.5 flex w-full rounded-lg border border-border bg-background px-3 py-2 text-[0.8125rem] focus-visible:outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20"
-              />
-              <p className="mt-1 text-[0.65rem] text-muted-foreground">
-                Appended to any existing notes on this MEL — not a replacement.
-              </p>
-            </div>
+            <SignOffFields
+              idPrefix={`close-mel-${melItemId}`}
+              value={signOff}
+              onChange={setSignOff}
+              allowNoWork
+              workLabel="Repair done"
+              disabled={isPending}
+            />
 
             {error && (
               <p

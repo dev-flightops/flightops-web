@@ -30,6 +30,7 @@ import type {
 import { auth } from "@/auth";
 import { AIRWORTHINESS_WRITERS, hasAnyRole } from "@/lib/roles";
 import { MelDeferralDialog } from "@/components/dispatch/packet/mel-deferral-dialog";
+import { SquawkDialog } from "@/components/dispatch/packet/squawk-dialog";
 
 /**
  * /maintenance/aircraft/[id] — per-aircraft maintenance detail (M2-G-20).
@@ -157,7 +158,15 @@ export default async function AircraftDetailPage({
       </section>
 
       <section className="mt-8">
-        <SectionHeader title="Open squawks" count={squawks.length} />
+        <div className="flex items-start justify-between gap-3">
+          <SectionHeader title="Open squawks" count={squawks.length} />
+          {/* 1119-24: maintenance writes a squawk against the aircraft here. */}
+          <SquawkDialog
+            aircraftId={verdict.aircraft.id}
+            tailNumber={verdict.aircraft.tail_number}
+            timeZone={zone}
+          />
+        </div>
         <SquawksTable items={squawks} canResolve={canSignOff} signerName={session?.user?.name?.trim() ?? ""} />
       </section>
 

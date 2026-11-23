@@ -4,7 +4,9 @@ import type { WeatherReportResponse } from "@/lib/api/types";
 import {
   fieldFormat,
   metarAge,
+  metarObservedAt,
   metarSummary,
+  reportAge,
   routeRoleFor,
   specialReport,
   utcHm,
@@ -77,6 +79,37 @@ describe("metarAge", () => {
   it("returns just hours when on the hour", () => {
     const now = new Date("2026-06-07T17:53:00Z"); // +2h exact
     expect(metarAge(parsedAt, now)).toBe("2h");
+  });
+});
+
+// ---- reportAge (1119-10) ------------------------------------------------------
+
+describe("reportAge", () => {
+  it("counts from the observation, not the fetch: PADM read 'just now' at 8 hr 56 min old", () => {
+    const now = new Date("2026-11-20T05:11:20Z");
+    const report = { raw: "METAR PADM 192015Z AUTO 10SM CLR M04/M06 A2967", parsed_at: "2026-11-20T05:11:10Z" };
+    expect(reportAge(report, now)).toBe("8h 56m");
+  });
+
+  it("falls back to the fetch time when the report has no stamp", () => {
+    const now = new Date("2026-11-20T05:16:10Z");
+    expect(reportAge({ raw: "PADM AUTO 10SM CLR", parsed_at: "2026-11-20T05:11:10Z" }, now)).toBe("5 min");
+  });
+});
+
+describe("metarObservedAt", () => {
+  it("takes a day after today's as last month's", () => {
+    expect(metarObservedAt("METAR PABE 302353Z 10SM", new Date("2026-12-01T00:10:00Z"))?.toISOString()).toBe(
+      "2026-11-30T23:53:00.000Z",
+    );
+    expect(metarObservedAt("METAR PABE 312353Z 10SM", new Date("2027-01-01T00:10:00Z"))?.toISOString()).toBe(
+      "2026-12-31T23:53:00.000Z",
+    );
+  });
+
+  it("refuses a stamp that isn't a real time", () => {
+    expect(metarObservedAt("METAR PABE 311200Z 10SM", new Date("2026-12-01T00:10:00Z"))).toBeNull(); // Nov 31
+    expect(metarObservedAt("METAR PABE 192460Z 10SM", new Date("2026-11-20T00:10:00Z"))).toBeNull();
   });
 });
 

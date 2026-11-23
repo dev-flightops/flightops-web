@@ -22,8 +22,9 @@ export function passengersFromForm(formData: FormData): BookingPassenger[] | str
     if (!first) continue;
     const weightText = (weights[i] ?? "").trim();
     const weight = weightText === "" ? null : Number(weightText);
-    if (weight !== null && (!Number.isFinite(weight) || weight < 0 || weight > 1000)) {
-      return `Passenger ${i + 1}'s weight should be 0-1000 lb.`;
+    // 1119-26: 0 lb was taken; nobody weighs nothing. Blank is "not known yet".
+    if (weight !== null && (!Number.isFinite(weight) || weight <= 0 || weight > 1000)) {
+      return `Passenger ${i + 1}'s weight should be 1-1000 lb, or left blank.`;
     }
     const bagsText = (bags[i] ?? "").trim();
     const person: BookingPassenger = {

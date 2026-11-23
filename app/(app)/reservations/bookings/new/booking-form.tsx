@@ -224,6 +224,8 @@ export function BookingForm({
             step="0.01"
             className="ff-input"
             placeholder="2500.00"
+            // Kept through a refusal (1119-26): the form resets to it.
+            defaultValue={state.values?.quoted_total_dollars ?? ""}
           />
         </Field>
       </div>
@@ -235,6 +237,7 @@ export function BookingForm({
           rows={3}
           maxLength={4000}
           className="ff-input"
+          defaultValue={state.values?.notes ?? ""}
         />
       </Field>
 

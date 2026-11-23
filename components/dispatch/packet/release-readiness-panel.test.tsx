@@ -98,7 +98,7 @@ describe("the packet's weight and balance (client, 18 Nov)", () => {
     renderPanel(LOAD);
     const fuel = screen.getByText("Fuel at departure").closest("p");
     expect(fuel).toHaveTextContent("908 lb, estimated");
-    expect(screen.getByText(/^Fuel estimated: one way, 1 h 35 min/)).toBeInTheDocument();
+    expect(screen.getByText(/^Fuel estimated: 1 h 35 min as scheduled/)).toBeInTheDocument();
     expect(
       screen.getByText("The figures above are the tightest leg’s, PABE → PAMO. Each leg after the first leaves with less fuel:"),
     ).toBeInTheDocument();

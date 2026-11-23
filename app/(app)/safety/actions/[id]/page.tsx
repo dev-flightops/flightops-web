@@ -9,7 +9,7 @@ import { hasAnyRole } from "@/lib/roles";
 import { BOARD_ROLES, MANAGE_ROLES } from "@/lib/safety-roles";
 import { ApiError } from "@/lib/api/client";
 import { loadZoneTable } from "@/lib/api/auth";
-import { localDateTime } from "@/lib/format/local-time";
+import { localDate, localDateTime, localDay } from "@/lib/format/local-time";
 import {
   CAPA_SOURCE_LABELS,
   CAPA_STATUS_LABELS,
@@ -64,10 +64,9 @@ export default async function CapaDetailPage({
 
   const sourceHref = capaSourceHref(capa.source_type, capa.source_id);
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  // The company's day (1119-25): the server's UTC one moves on at 15:00 in Alaska.
   const dueDate = new Date(capa.due_date + "T00:00:00");
-  const overdue = dueDate < today && capa.status !== "closed";
+  const overdue = capa.due_date < localDay(zone) && capa.status !== "closed";
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
@@ -87,7 +86,8 @@ export default async function CapaDetailPage({
           </span>
         </h1>
         <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
-          Opened {new Date(capa.created_at).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" })} by{" "}
+          {/* The base's day, not the server's UTC one (1119-22: "Opened Nov 20" for an evening of Nov 19). */}
+          Opened {localDate(capa.created_at, zone, { withYear: true })} by{" "}
           {capa.opened_by.full_name} — linked to a{" "}
           <Link href={sourceHref} className="text-primary hover:underline">
             {CAPA_SOURCE_LABELS[capa.source_type].toLowerCase()}

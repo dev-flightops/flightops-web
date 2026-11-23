@@ -167,6 +167,15 @@ describe("Passengers & Crew (#62)", () => {
     expect((within(form).getByLabelText("Waitlist: waits for a seat") as HTMLInputElement).checked).toBe(false);
   });
 
+  it("puts a new passenger off at the next stop on a round trip (1119-20)", () => {
+    // TCL1: "PABE → PABE" for everyone added on the way out.
+    render(<PassengersSection flightId={FLIGHT} rows={rows} editable stops={["PABE", "PADM", "PABE"]} />);
+    fireEvent.click(screen.getByRole("button", { name: "+ Add Passenger" }));
+    const form = screen.getByRole("form", { name: "Add passenger" });
+    expect((within(form).getByLabelText("Boards at") as HTMLSelectElement).value).toBe("PABE");
+    expect((within(form).getByLabelText("Deplanes at") as HTMLSelectElement).value).toBe("PADM");
+  });
+
   it("has no stop pickers on a flight of one leg", () => {
     render(<PassengersSection flightId={FLIGHT} rows={rows} editable stops={["PABE", "PAEM"]} />);
     expect(screen.queryByText("Stops")).toBeNull();

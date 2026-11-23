@@ -64,6 +64,14 @@ export async function openCapaAction(
     });
     newId = created.id;
   } catch (err) {
+    // 1119-25: a due date already past is refused; it showed overdue at once.
+    if (err instanceof ApiError && err.status === 422 && err.message.includes("due_date_in_the_past")) {
+      return {
+        status: "error",
+        message: "Please fix the highlighted field.",
+        fieldErrors: { due_date: "That day has passed: pick today or later." },
+      };
+    }
     if (err instanceof ApiError) {
       return {
         status: "error",

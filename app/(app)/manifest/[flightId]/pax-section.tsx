@@ -320,9 +320,13 @@ function PaxForm({
           </label>
           <label className="grid gap-1 text-xs">
             Deplanes at
+            {/* A new passenger gets off at the next stop (1119-20): the
+                last stop had every outbound passenger on a round trip
+                riding both legs, "PABE → PABE". A saved passenger keeps
+                their own, unset being the flight's last stop. */}
             <select
               name="leaves_at"
-              defaultValue={value("leaves_at", pax?.leaves_at ?? stops[stops.length - 1])}
+              defaultValue={value("leaves_at", pax ? (pax.leaves_at ?? stops[stops.length - 1]) : stops[1])}
               className={FIELD}
             >
               {stops.slice(1).map((icao, i) => (

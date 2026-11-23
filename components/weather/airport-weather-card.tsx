@@ -1,5 +1,5 @@
 import type { WeatherReportResponse } from "@/lib/api/types";
-import { metarAge, metarSummary } from "@/lib/weather-format";
+import { metarSummary, reportAge } from "@/lib/weather-format";
 
 import { FlightCategoryBadge } from "./flight-category-badge";
 import { SpecialReportChip } from "./special-report-chip";
@@ -46,7 +46,7 @@ export function AirportWeatherCard({
         {metar.ok && metar.report && (
           <span className="flex items-baseline gap-2 text-xs text-muted-foreground">
             <SpecialReportChip raw={metar.report.raw} />
-            METAR age: {metarAge(metar.report.parsed_at)}
+            METAR age: {reportAge(metar.report)}
           </span>
         )}
       </header>

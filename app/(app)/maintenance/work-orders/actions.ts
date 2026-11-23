@@ -11,6 +11,7 @@ import {
   transitionWorkOrder,
   type WorkOrderStatus,
 } from "@/lib/api/maintenance";
+import type { Closure, SignOff } from "@/lib/api/types";
 import { validationSummary } from "@/lib/api/validation-errors";
 
 /**
@@ -49,6 +50,10 @@ const NewSchema = z.object({
   opened_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Give the date it opened."),
   due_date: optional,
   squawk_id: optional,
+}).refine((v) => !v.due_date || v.due_date >= v.opened_date, {
+  // 1119-25: it took a due date before the day it opened, overdue at once.
+  message: "It can't fall due before the day it's opened.",
+  path: ["due_date"],
 });
 
 function refusal(err: unknown, what: string): string {
@@ -89,34 +94,62 @@ export async function createWorkOrderAction(
 
 export type TransitionResult = { ok: true } | { ok: false; message: string };
 
+// 1119-19: closing, and resolving its squawk, are signed off (14 CFR 43.9).
+const SignOffSchema = z.object({
+  work_done: z.string().trim().min(1).max(4000),
+  signer_name: z.string().trim().min(1).max(200),
+  cert_number: z.string().trim().min(1).max(64),
+  cert_type: z.enum(["ap", "ia", "repairman"]),
+  airworthy: z.literal(true),
+});
+
 const Transition = z.object({
   workOrderId: z.string().uuid(),
   toStatus: z.enum(["open", "in_progress", "awaiting_parts", "completed", "closed"]),
   note: z.string().trim().max(2000),
-  resolveSquawkId: z.string().uuid().nullable(),
+  closure: z
+    .union([z.object({ sign_off: SignOffSchema }), z.object({ no_work_reason: z.string().trim().min(1).max(2000) })])
+    .nullable(),
+  resolveSquawk: z.object({ id: z.string().uuid(), signOff: SignOffSchema }).nullable(),
 });
 
 export async function transitionWorkOrderAction(input: {
   workOrderId: string;
   toStatus: WorkOrderStatus;
   note: string;
-  /** Also resolve this squawk, with the note as what was done. */
-  resolveSquawkId: string | null;
+  /** Closing needs it: the sign-off, or why no work was done. */
+  closure: Closure | null;
+  /** Also resolve this squawk, signed off with this. */
+  resolveSquawk: { id: string; signOff: SignOff } | null;
 }): Promise<TransitionResult> {
   const parsed = Transition.safeParse(input);
-  if (!parsed.success) return { ok: false, message: "That change isn't valid." };
-  const { workOrderId, toStatus, note, resolveSquawkId } = parsed.data;
-  if (resolveSquawkId && !note) {
-    return { ok: false, message: "Say what was done: it goes on the squawk as its resolution." };
+  if (!parsed.success) {
+    return {
+      ok: false,
+      message:
+        input.toStatus === "closed" || input.resolveSquawk
+          ? "The sign-off needs the work done, the mechanic, their certificate number and kind, and the statement."
+          : "That change isn't valid.",
+    };
+  }
+  const { workOrderId, toStatus, note, closure, resolveSquawk: squawk } = parsed.data;
+  if (toStatus === "closed" && !closure) {
+    return { ok: false, message: "Sign it off to close it, or say why no work was done." };
   }
   try {
-    await transitionWorkOrder(workOrderId, toStatus, note || null);
+    await transitionWorkOrder(workOrderId, toStatus, note || null, closure);
   } catch (err) {
     return { ok: false, message: refusal(err, "change the work order") };
   }
-  if (resolveSquawkId) {
+  if (squawk) {
     try {
-      await resolveSquawk(resolveSquawkId, { resolution_notes: note });
+      await resolveSquawk(squawk.id, {
+        resolution_notes: squawk.signOff.work_done,
+        signer_name: squawk.signOff.signer_name,
+        cert_number: squawk.signOff.cert_number,
+        cert_type: squawk.signOff.cert_type,
+        airworthy: true,
+      });
     } catch (err) {
       revalidatePath(`/maintenance/work-orders/${workOrderId}`);
       const why =

@@ -1,3 +1,4 @@
+import { SquawkDialog } from "@/components/dispatch/packet/squawk-dialog";
 import { AircraftFilter } from "@/components/maintenance/aircraft-filter";
 import { RetiredItems } from "@/components/maintenance/retired-items";
 import { SquawksTable } from "@/components/maintenance/squawks-table";
@@ -11,6 +12,8 @@ import type {
   SquawkStatus,
 } from "@/lib/api/types";
 import { auth } from "@/auth";
+import { loadZoneTable } from "@/lib/api/auth";
+import { outOfService } from "@/lib/maintenance/out-of-service";
 import { splitRetired } from "@/lib/maintenance/retired";
 import { AIRWORTHINESS_WRITERS, WORK_ORDER_WRITERS, hasAnyRole } from "@/lib/roles";
 
@@ -88,20 +91,31 @@ export default async function SquawksListPage({
         : "Squawks feed unavailable. Try refreshing in a moment.";
   }
 
+  // 1119-24: maintenance writes squawks here too, on any aircraft not
+  // retired, a grounded one included. The zone "Reported at" is typed in.
+  const zone = (await loadZoneTable()).fallback;
+  const choices = aircraft
+    .filter((a) => outOfService(a) !== "retired")
+    .map((a) => ({ id: a.id, tail_number: a.tail_number, model: a.model }))
+    .sort((a, b) => a.tail_number.localeCompare(b.tail_number));
+
   // 1110-16: a retired aircraft's open squawks below the fleet's, not in it.
   const split =
     tab === "resolved" ? { current: items, retired: [], tails: [] } : splitRetired(items, aircraft, aircraftId);
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
-      <header className="mb-6 border-b border-border pb-5">
-        <h1 className="page-title">
-          Squawks
-        </h1>
-        <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
-          Pilot- and mechanic-reported discrepancies across the fleet.
-          Most recent first.
-        </p>
+      <header className="mb-6 flex flex-wrap items-end justify-between gap-4 border-b border-border pb-5">
+        <div>
+          <h1 className="page-title">
+            Squawks
+          </h1>
+          <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
+            Pilot- and mechanic-reported discrepancies across the fleet.
+            Most recent first.
+          </p>
+        </div>
+        {choices.length > 0 ? <SquawkDialog choices={choices} timeZone={zone} /> : null}
       </header>
 
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">

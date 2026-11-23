@@ -49,6 +49,29 @@ describe("the Flight Following board", () => {
     const edits = screen.getAllByRole("link", { name: "Edit" });
     expect(edits.map((a) => a.getAttribute("href"))).toEqual(["/dispatch?flight=f-1&edit=1"]);
   });
+  it("flags a flight that breaks an MEL limit (1119-12)", () => {
+    const limited = {
+      ...row,
+      mel_limits: [
+        {
+          mel_id: "m-1",
+          ata_chapter: "33-40",
+          description: "Left nav light inoperative",
+          limit: "day_vfr" as const,
+          ifr: false,
+          night: [],
+          unknown: [],
+          message: "Day VFR only: departs PABE at 17:20 AKST, after dark.",
+        },
+      ],
+    };
+    render(<FlightBoard flights={[limited, { ...row, id: "f-2", flight_number: "GV2027" }]} />);
+    expect(screen.getByRole("row", { name: /GV2026/ })).toHaveTextContent(
+      "MEL: can't be released. Day VFR only: departs PABE at 17:20 AKST, after dark.",
+    );
+    expect(screen.getByRole("row", { name: /GV2027/ })).not.toHaveTextContent("MEL");
+  });
+
   it("hides dispatch-only movement and edit controls from read-only viewers", () => {
     render(<FlightBoard flights={[row, { ...row, id: "f-2", status: "released" }]} />);
     expect(screen.queryByRole("button", { name: "Mark Departed" })).toBeNull();

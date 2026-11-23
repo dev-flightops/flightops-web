@@ -379,6 +379,29 @@ describe("the client's payload arithmetic (#111)", () => {
     expect(screen.getByText("Over the max payload by 140 lb.")).toHaveClass("text-status-red");
   });
 
+  it("weighs what a manifest just started has none of as typed on the flight (1119-04)", () => {
+    // TCL1: 3 passengers and 400 lb typed, the manifest started and empty.
+    render(
+      <WeightAndBalanceStep
+        flightId="f-1"
+        flight={FLIGHT}
+        openReturn={null}
+        load={{
+          ...LOAD,
+          booked_passengers: 3,
+          checked_in: { count: 0, weight_lbs: "0", baggage_lbs: "0" },
+          to_check_in: { count: 0, weight_lbs: "0", baggage_lbs: "0" },
+          cargo_lbs: "400",
+          load: { ...LOAD.load, payload_lbs: "970.0", typed_parts: ["passengers", "freight"] },
+        }}
+      />,
+    );
+    expect(row("Passengers typed on the flight")).toHaveTextContent("3 at 190 lb each, until the manifest names them");
+    expect(row("Passengers typed on the flight")).toHaveTextContent("570 lb");
+    expect(row("Cargo and mail")).toHaveTextContent("typed on the flight, until the manifest has its freight");
+    expect(row("= Load")).toHaveTextContent("970 lb");
+  });
+
   it("before a manifest, says there are no weights yet", () => {
     render(
       <WeightAndBalanceStep

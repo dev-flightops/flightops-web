@@ -71,9 +71,50 @@ export interface NewBookingFormState {
   status: "idle" | "error" | "ok";
   message?: string;
   fieldErrors?: Record<string, string>;
+  /** What was typed in the fields the form doesn't keep by itself, given
+   *  back on an error so they aren't lost (1119-26: the quote and the
+   *  notes were cleared). */
+  values?: { quoted_total_dollars: string; notes: string };
 }
 
+/** The fields' names, for the message over the form (1119-26: "Please fix
+ *  the highlighted fields" named none of them). */
+const FIELD_NAMES: Record<string, string> = {
+  customer_id: "Customer",
+  new_customer_name: "Customer",
+  origin_icao: "From",
+  destination_icao: "To",
+  requested_departure_at_local: "Departure",
+  return_departure_at_local: "Return",
+  aircraft_id: "Aircraft",
+  pax_count: "Passengers",
+  passengers: "Passengers",
+  quoted_total_dollars: "Quote",
+  notes: "Notes",
+  flight_id: "Flight",
+};
+
 export async function createBookingAction(
+  prev: NewBookingFormState,
+  formData: FormData,
+): Promise<NewBookingFormState> {
+  const result = await _createBooking(prev, formData);
+  if (result.status !== "error") return result;
+  const named = [...new Set(Object.keys(result.fieldErrors ?? {}).map((key) => FIELD_NAMES[key] ?? key))];
+  return {
+    ...result,
+    message:
+      named.length > 0 && result.message === "Please fix the highlighted fields."
+        ? `Please fix: ${named.join(", ")}.`
+        : result.message,
+    values: {
+      quoted_total_dollars: String(formData.get("quoted_total_dollars") ?? ""),
+      notes: String(formData.get("notes") ?? ""),
+    },
+  };
+}
+
+async function _createBooking(
   _prev: NewBookingFormState,
   formData: FormData,
 ): Promise<NewBookingFormState> {

@@ -97,6 +97,23 @@ describe("EditFlightDialog", () => {
     });
   });
 
+  it("says when the save starts the FRAT over (1119-21)", async () => {
+    updateFlightAction.mockResolvedValue({ ok: true, offRoute: null, fratStartsOver: ["VFR or IFR", "alternate"] });
+    const user = userEvent.setup();
+    render(<EditFlightDialog flight={baseFlight} aircraft={[aircraft207, aircraft510]} />);
+    await user.click(screen.getByRole("button", { name: /edit/i }));
+    const paxInput = screen.getByLabelText(/passengers/i);
+    await user.clear(paxInput);
+    await user.type(paxInput, "8");
+    await user.click(screen.getByRole("button", { name: /save changes/i }));
+
+    expect(await screen.findByRole("status")).toHaveTextContent(
+      "The FRAT starts over: VFR or IFR, alternate changed, and the FRAT was scored on them. File a new one; it is signed again before release.",
+    );
+    await user.click(screen.getByRole("button", { name: "Done" }));
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
   it("shows the server-action error message when saving fails", async () => {
     updateFlightAction.mockResolvedValue({
       ok: false,

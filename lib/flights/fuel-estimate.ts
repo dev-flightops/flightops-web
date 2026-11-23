@@ -20,11 +20,13 @@ function minutes(m: number | null): string {
 
 /** "Fuel estimated: round trip, 55 min each way + 50 min to the alternate
  *  PABE + 45 min reserve at 58 gal/h = 198.2 gal of Jet A." The alternate
- *  only for an IFR flight whose leg to it is worked out (#201). */
+ *  only for an IFR flight whose leg to it is worked out (#201). Fuel bought
+ *  where the flight ends, the flight's own scheduled time: "one way" read
+ *  wrong on PABE → PADM → PABE, which is round trip by its route (1119-16). */
 export function fuelEstimateLine(e: FuelEstimate): string {
   const trip = e.round_trip
     ? `round trip, ${minutes(e.flight_minutes)} each way (no ${FUEL_LABELS[e.fuel_type_code ?? ""] ?? "fuel"} at the destination)`
-    : `one way, ${minutes(e.flight_minutes)}`;
+    : `${minutes(e.flight_minutes)} as scheduled`;
   const alternate =
     e.alternate_minutes != null && e.alternate
       ? ` + ${minutes(e.alternate_minutes)} to the alternate ${e.alternate}`
