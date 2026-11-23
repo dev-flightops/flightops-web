@@ -65,6 +65,9 @@ vi.mock("@/components/dispatch/packet/resolve-squawk-dialog", () => ({
     <button data-testid="resolve-squawk" data-squawk-id={squawkId}>Resolve</button>
   ),
 }));
+vi.mock("@/components/dispatch/packet/squawk-dialog", () => ({
+  SquawkDialog: ({ tailNumber }: { tailNumber?: string }) => <button data-testid="new-squawk">{`New squawk ${tailNumber}`}</button>,
+}));
 vi.mock("@/components/dispatch/packet/mel-deferral-dialog", () => ({
   MelDeferralDialog: ({ tailNumber }: { tailNumber: string }) => (
     <button data-testid="defer-mel">Defer an item on {tailNumber}</button>
@@ -149,6 +152,8 @@ describe("AircraftDetailPage", () => {
     expect(screen.getByText("N207GE")).toBeInTheDocument();
     expect(screen.getByText("Cessna 208")).toBeInTheDocument();
     expect(screen.getByText(/^airworthy$/i)).toBeInTheDocument();
+    // 1119-24: maintenance writes a squawk against the aircraft from here.
+    expect(screen.getByTestId("new-squawk")).toHaveTextContent("New squawk N207GE");
   });
 
   it("fetches MEL + open + in_progress squawks for the aircraft", async () => {

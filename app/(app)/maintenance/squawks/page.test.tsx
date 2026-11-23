@@ -35,6 +35,15 @@ vi.mock("@/components/dispatch/packet/resolve-squawk-dialog", () => ({
   ),
 }));
 
+vi.mock("@/lib/api/auth", () => ({ loadZoneTable: vi.fn(async () => ({ fallback: "America/Anchorage" })) }));
+vi.mock("@/components/dispatch/packet/squawk-dialog", () => ({
+  SquawkDialog: ({ choices, timeZone }: { choices?: { tail_number: string }[]; timeZone?: string }) => (
+    <button data-testid="new-squawk" data-zone={timeZone}>
+      {`New squawk (${(choices ?? []).map((c) => c.tail_number).join(",")})`}
+    </button>
+  ),
+}));
+
 import SquawksListPage from "./page";
 
 function makeSquawk(
@@ -77,6 +86,22 @@ async function renderPage(
 }
 
 describe("SquawksListPage", () => {
+  it("lets maintenance write a squawk, on any aircraft not retired (1119-24)", async () => {
+    listSquawks.mockResolvedValue({ items: [], total: 0 });
+    listAircraft.mockResolvedValue({
+      items: [
+        { id: "a-2", tail_number: "N503PA", model: "C208B", is_active: false, grounded_reason: "Grounding squawk" },
+        { id: "a-1", tail_number: "N100PA", model: "C208", is_active: true, grounded_reason: null },
+        { id: "a-3", tail_number: "N301PA", model: "C207", is_active: false, grounded_reason: null },
+      ],
+      total: 3,
+    });
+    await renderPage();
+    const button = screen.getByTestId("new-squawk");
+    expect(button).toHaveTextContent("New squawk (N100PA,N503PA)");
+    expect(button).toHaveAttribute("data-zone", "America/Anchorage");
+  });
+
   it("default tab 'Active' fans out two parallel calls (open + in_progress)", async () => {
     listSquawks
       .mockResolvedValueOnce({ items: [], total: 0 })
