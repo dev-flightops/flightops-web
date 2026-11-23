@@ -50,6 +50,10 @@ const NewSchema = z.object({
   opened_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Give the date it opened."),
   due_date: optional,
   squawk_id: optional,
+}).refine((v) => !v.due_date || v.due_date >= v.opened_date, {
+  // 1119-25: it took a due date before the day it opened, overdue at once.
+  message: "It can't fall due before the day it's opened.",
+  path: ["due_date"],
 });
 
 function refusal(err: unknown, what: string): string {

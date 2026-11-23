@@ -7,7 +7,9 @@ import { hasAnyRole, roleGate } from "@/lib/roles";
 import { redirect } from "next/navigation";
 
 import { auth } from "@/auth";
+import { loadZoneTable } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
+import { localDay } from "@/lib/format/local-time";
 import {
   CAPA_SOURCE_LABELS,
   CAPA_STATUS_LABELS,
@@ -98,6 +100,9 @@ export default async function CapaBoardPage({
         : "CAPA board unavailable. Try refreshing in a moment.";
   }
 
+  // The company's day (1119-25): the server's UTC one moves on at 15:00 in Alaska.
+  const today = localDay((await loadZoneTable()).fallback);
+
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
       <header className="mb-6 flex flex-wrap items-end justify-between gap-4 border-b border-border pb-5">
@@ -166,7 +171,7 @@ export default async function CapaBoardPage({
           </p>
         </div>
       ) : (
-        <CapaTable items={items} total={total} />
+        <CapaTable items={items} total={total} today={today} />
       )}
     </div>
   );
@@ -204,12 +209,14 @@ function OverdueToggle({
 function CapaTable({
   items,
   total,
+  today,
 }: {
   items: CorrectiveAction[];
   total: number;
+  /** The company's day, YYYY-MM-DD: the server's is UTC's, which moves on
+   *  at 15:00 in Alaska and had a CAPA due today read overdue (1119-25). */
+  today: string;
 }) {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
   return (
     <div className="overflow-hidden rounded-lg border border-border bg-card">
       <div className="overflow-x-auto">
@@ -239,7 +246,7 @@ function CapaTable({
           <tbody className="divide-y divide-border">
             {items.map((c) => {
               const dueDate = new Date(c.due_date + "T00:00:00");
-              const overdue = dueDate < today && c.status !== "closed";
+              const overdue = c.due_date < today && c.status !== "closed";
               return (
                 <tr key={c.id} className="hover:bg-accent">
                   <td className="whitespace-nowrap px-4 py-3 text-xs">
