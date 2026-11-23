@@ -31,7 +31,12 @@ const {
 });
 
 vi.mock("@/lib/api/client", () => ({ ApiError: TestApiError }));
-vi.mock("@/lib/api/auth", () => ({ listUsers, listRoles, listMyTenants }));
+vi.mock("@/lib/api/auth", () => ({
+  listUsers,
+  listRoles,
+  listMyTenants,
+  loadZoneTable: async () => ({ byIcao: {}, fallback: "America/Anchorage" }),
+}));
 vi.mock("@/lib/api/onboarding", () => ({ listRequiredOpen }));
 vi.mock("@/auth", () => ({ auth }));
 vi.mock("@/components/settings/users/add-user-dialog", () => ({

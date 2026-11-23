@@ -1,6 +1,8 @@
 import Link from "next/link";
 
 import { ApiError } from "@/lib/api/client";
+import { loadZoneTable } from "@/lib/api/auth";
+import { localDate } from "@/lib/format/local-time";
 import {
   myRequiredReading,
   type RequiredReadingRow,
@@ -25,6 +27,8 @@ export const dynamic = "force-dynamic";
 export default async function RequiredReadingPage() {
   let feed: RequiredReadingResponse = { items: [], pending: 0, total: 0 };
   let loadError: string | null = null;
+  // The day each was read, in the company's zone (1119-22).
+  const zones = loadZoneTable();
   try {
     feed = await myRequiredReading();
   } catch (err) {
@@ -37,6 +41,8 @@ export default async function RequiredReadingPage() {
 
   const pending = feed.items.filter((r) => !r.status.acknowledged);
   const acknowledged = feed.items.filter((r) => r.status.acknowledged);
+
+  const zone = (await zones).fallback;
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6">
@@ -101,6 +107,7 @@ export default async function RequiredReadingPage() {
           count={pending.length}
           tone="pending"
           rows={pending}
+          zone={zone}
         />
       )}
 
@@ -110,6 +117,7 @@ export default async function RequiredReadingPage() {
           count={acknowledged.length}
           tone="acknowledged"
           rows={acknowledged}
+          zone={zone}
         />
       )}
     </div>
@@ -121,11 +129,13 @@ function Section({
   count,
   tone,
   rows,
+  zone,
 }: {
   title: string;
   count: number;
   tone: "pending" | "acknowledged";
   rows: RequiredReadingRow[];
+  zone: string;
 }) {
   return (
     <section className="mb-6">
@@ -139,7 +149,7 @@ function Section({
       </div>
       <ul className="space-y-2">
         {rows.map((row) => (
-          <RowCard key={row.document.id} row={row} tone={tone} />
+          <RowCard key={row.document.id} row={row} tone={tone} zone={zone} />
         ))}
       </ul>
     </section>
@@ -149,9 +159,11 @@ function Section({
 function RowCard({
   row,
   tone,
+  zone,
 }: {
   row: RequiredReadingRow;
   tone: "pending" | "acknowledged";
+  zone: string;
 }) {
   const doc = row.document;
   const status = row.status;
@@ -200,7 +212,7 @@ function RowCard({
           </span>
           {tone === "acknowledged" && status.acknowledged_at && (
             <span className="text-[0.65rem] text-muted-foreground">
-              {fmtDate(status.acknowledged_at)}
+              {fmtDate(status.acknowledged_at, zone)}
             </span>
           )}
         </div>
@@ -209,10 +221,6 @@ function RowCard({
   );
 }
 
-function fmtDate(iso: string): string {
-  return new Date(iso).toLocaleDateString(undefined, {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
+function fmtDate(iso: string, zone: string): string {
+  return localDate(iso, zone, { withYear: true });
 }

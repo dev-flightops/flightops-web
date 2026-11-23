@@ -5,7 +5,8 @@ import { AddUserDialog } from "@/components/settings/users/add-user-dialog";
 import { DeactivateUserButton } from "@/components/settings/users/deactivate-user-button";
 import { EditUserDialog } from "@/components/settings/users/edit-user-dialog";
 import { SetPasswordDialog } from "@/components/settings/users/set-password-dialog";
-import { listMyTenants, listRoles, listUsers } from "@/lib/api/auth";
+import { listMyTenants, listRoles, listUsers, loadZoneTable } from "@/lib/api/auth";
+import { localDate } from "@/lib/format/local-time";
 import { ApiError } from "@/lib/api/client";
 import { getClearance } from "@/lib/api/drug-alcohol";
 import { listRequiredOpen } from "@/lib/api/onboarding";
@@ -25,6 +26,8 @@ export default async function SettingsUsersPage() {
   let loadError: string | null = null;
   let unauthorized = false;
   let tenantName: string | null = null;
+  // Last seen, in the company's zone (1119-22), not the server's UTC.
+  const zones = loadZoneTable();
   try {
     const [usersResponse, rolesResponse, tenantsResponse] = await Promise.all([
       listUsers(),
@@ -81,6 +84,8 @@ export default async function SettingsUsersPage() {
 
   const active = users.filter((u) => u.is_active);
   const inactive = users.filter((u) => !u.is_active);
+
+  const zone = (await zones).fallback;
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
@@ -143,6 +148,7 @@ export default async function SettingsUsersPage() {
             myId={myId}
             requiredOpen={requiredOpen}
             notCleared={notCleared}
+            zone={zone}
           />
         </section>
       )}
@@ -160,6 +166,7 @@ export default async function SettingsUsersPage() {
               myId={myId}
               requiredOpen={requiredOpen}
               notCleared={notCleared}
+              zone={zone}
               muted
             />
           </div>
@@ -188,6 +195,7 @@ function UsersTable({
   myId,
   requiredOpen,
   notCleared,
+  zone,
   muted,
 }: {
   users: UserResponse[];
@@ -196,6 +204,7 @@ function UsersTable({
   myId: string | null;
   requiredOpen: Map<string, number>;
   notCleared: Set<string>;
+  zone: string;
   muted?: boolean;
 }) {
   return (
@@ -274,7 +283,7 @@ function UsersTable({
                   </span>
                 ) : u.last_login_at ? (
                   <span className="text-[0.7rem]">
-                    Last seen {formatDate(u.last_login_at)}
+                    Last seen {formatDate(u.last_login_at, zone)}
                   </span>
                 ) : (
                   <span className="text-[0.7rem]">Never signed in</span>
@@ -312,14 +321,6 @@ function UsersTable({
   );
 }
 
-function formatDate(iso: string): string {
-  try {
-    return new Date(iso).toLocaleDateString(undefined, {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    });
-  } catch {
-    return iso;
-  }
+function formatDate(iso: string, zone: string): string {
+  return localDate(iso, zone, { withYear: true });
 }

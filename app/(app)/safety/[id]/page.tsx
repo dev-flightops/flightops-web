@@ -5,6 +5,8 @@ import { auth } from "@/auth";
 import { hasAnyRole } from "@/lib/roles";
 import { MANAGE_ROLES, TRIAGE_ROLES } from "@/lib/safety-roles";
 import { ApiError } from "@/lib/api/client";
+import { loadZoneTable } from "@/lib/api/auth";
+import { localDateTime } from "@/lib/format/local-time";
 import {
   HAZARD_CATEGORY_LABELS,
   HAZARD_SEVERITY_LABELS,
@@ -42,6 +44,9 @@ export default async function SafetyHazardDetailPage({
   const roles = new Set(session?.roles ?? []);
   const canTriage = hasAnyRole([...roles], TRIAGE_ROLES);
   const canManageCapas = hasAnyRole([...roles], MANAGE_ROLES);
+  // Times in the company's zone (1119-22): the server's own is UTC, so a
+  // hazard filed on an Alaska evening read as the next morning.
+  const zones = loadZoneTable();
 
   let hazard: HazardReport;
   try {
@@ -73,6 +78,9 @@ export default async function SafetyHazardDetailPage({
     }
   }
 
+  const zone = (await zones).fallback;
+  const at = (iso: string) => localDateTime(iso, zone, { withYear: true });
+
   return (
     <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
       <header className="mb-6 border-b border-border pb-5">
@@ -91,7 +99,7 @@ export default async function SafetyHazardDetailPage({
           </span>
         </h1>
         <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
-          Filed {new Date(hazard.created_at).toLocaleString()} —{" "}
+          Filed {at(hazard.created_at)} —{" "}
           {hazard.is_anonymous && !hazard.reporter
             ? "Anonymous reporter"
             : hazard.reporter?.full_name ?? "Unknown reporter"}
@@ -147,14 +155,14 @@ export default async function SafetyHazardDetailPage({
             {hazard.triaged_at ? (
               <li>
                 <span className="font-semibold">Triaged</span> —{" "}
-                {new Date(hazard.triaged_at).toLocaleString()} by{" "}
+                {at(hazard.triaged_at)} by{" "}
                 {hazard.triaged_by?.full_name ?? "unknown"}
               </li>
             ) : null}
             {hazard.closed_at ? (
               <li>
                 <span className="font-semibold">Closed</span> —{" "}
-                {new Date(hazard.closed_at).toLocaleString()} by{" "}
+                {at(hazard.closed_at)} by{" "}
                 {hazard.closed_by?.full_name ?? "unknown"}
                 {hazard.closed_reason ? (
                   <p className="mt-1 whitespace-pre-wrap text-muted-foreground">

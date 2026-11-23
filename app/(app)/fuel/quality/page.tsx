@@ -4,6 +4,8 @@ import { segment, segmentGroup } from "@/components/ff/controls";
 
 import { AddFuelQualityTestDialog } from "@/components/fuel/quality/add-test-dialog";
 import { ApiError } from "@/lib/api/client";
+import { loadZoneTable } from "@/lib/api/auth";
+import { localDateTime } from "@/lib/format/local-time";
 import {
   listFuelQualityTests,
   listFuelTypes,
@@ -53,6 +55,8 @@ export default async function FuelQualityPage({
 
   let tests: FuelQualityTestResponse[] = [];
   let fuelTypes: FuelTypeResponse[] = [];
+  // Test times in the company's zone (1119-22), not the server's UTC.
+  const zones = loadZoneTable();
   let loadError: string | null = null;
   try {
     const [testsResp, fuelTypesResp] = await Promise.all([
@@ -74,6 +78,8 @@ export default async function FuelQualityPage({
   }
 
   const failuresInView = tests.filter((t) => t.result !== "pass").length;
+
+  const zone = (await zones).fallback;
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
@@ -171,7 +177,7 @@ export default async function FuelQualityPage({
                   }
                 >
                   <td className="px-4 py-3 text-[0.75rem] text-muted-foreground">
-                    {formatStamp(t.tested_at)}
+                    {formatStamp(t.tested_at, zone)}
                   </td>
                   <td className="px-4 py-3">
                     <div className="font-mono font-semibold">{t.base_code}</div>
@@ -245,15 +251,6 @@ function ResultChip({ result }: { result: FuelQualityResult }) {
   );
 }
 
-function formatStamp(iso: string): string {
-  try {
-    return new Date(iso).toLocaleString(undefined, {
-      month: "2-digit",
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  } catch {
-    return iso;
-  }
+function formatStamp(iso: string, zone: string): string {
+  return localDateTime(iso, zone);
 }
