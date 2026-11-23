@@ -241,7 +241,7 @@ export async function createFlightAction(
   const last = legs[legs.length - 1];
 
   const charterRequestId = String(formData.get("charter_request_id") ?? "").trim();
-  let opened: { id: string; day: string } | null = null;
+  let opened: { id: string; day: string; melLimited: boolean } | null = null;
   try {
     const flight = await createFlight({
       flight_number: parsed.data.flight_number,
@@ -263,7 +263,12 @@ export async function createFlightAction(
       ...(UUID.test(charterRequestId) ? { charter_request_id: charterRequestId } : {}),
     });
     if (flight?.id) {
-      opened = { id: flight.id, day: (flight.scheduled_departure_at ?? "").slice(0, 10) };
+      opened = {
+        id: flight.id,
+        day: (flight.scheduled_departure_at ?? "").slice(0, 10),
+        // 1119-12: an MEL limit it breaks, seen on the packet straight away.
+        melLimited: (flight.mel_limits ?? []).length > 0,
+      };
     }
   } catch (err) {
     if (err instanceof ApiError) {
@@ -358,7 +363,7 @@ export async function createFlightAction(
   // intentionally and we don't want it caught by the API error handler).
   const sourceBooking = String(formData.get("booking_id") ?? "").trim();
   if (opened && UUID.test(sourceBooking)) redirect(`/manifest/${opened.id}`);
-  if (opened && minimums?.below) {
+  if (opened && (minimums?.below || opened.melLimited)) {
     redirect(`/dispatch?flight=${opened.id}&date=${opened.day}`);
   }
   redirect("/flight-following");

@@ -83,6 +83,17 @@ describe("createFlightAction", () => {
     expect(redirectSpy).toHaveBeenCalledWith("/flight-following");
   });
 
+  it("goes to the packet when the new flight breaks an MEL limit (1119-12)", async () => {
+    createFlight.mockResolvedValueOnce({
+      id: "22222222-2222-4222-8222-222222222222",
+      scheduled_departure_at: "2026-07-01T22:00:00Z",
+      mel_limits: [{ mel_id: "m-1", limit: "day_vfr", ifr: true, night: [], unknown: [], message: "Day VFR only: flown IFR." }],
+    });
+    getWeatherMinimums.mockResolvedValueOnce({ below: false });
+    await expect(createFlightAction({ status: "idle" }, makeFormData())).rejects.toThrow("NEXT_REDIRECT");
+    expect(redirectSpy).toHaveBeenCalledWith("/dispatch?flight=22222222-2222-4222-8222-222222222222&date=2026-07-01");
+  });
+
   it("opens a flight VFR unless Flown IFR is ticked (#123)", async () => {
     createFlight.mockResolvedValueOnce({}).mockResolvedValueOnce({});
     await expect(createFlightAction({ status: "idle" }, makeFormData())).rejects.toThrow(

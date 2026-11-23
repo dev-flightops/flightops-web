@@ -931,6 +931,8 @@ export interface BoardFlightItem {
   /** A multi-stop flight's legs with their marks (LOG-14); empty for a
    *  single leg, absent from services before it. */
   legs?: FlightLeg[];
+  /** An open MEL deferral's limit the flight breaks (#200, 1119-12). */
+  mel_limits?: MelLimitBreach[];
 }
 
 export interface BoardResponse {

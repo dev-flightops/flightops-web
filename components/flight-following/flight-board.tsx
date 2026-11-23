@@ -136,6 +136,16 @@ function FlightBoardRow({ flight, canDispatch }: { flight: BoardFlightItem; canD
             atStop={atStop}
           />
           {flight.is_overdue && <OverdueBadge />}
+          {/* 1119-12: a Day VFR or VFR only MEL the flight breaks, flagged
+              here as on the Schedule, before the release refuses it. */}
+          {flight.mel_limits?.length ? (
+            <span
+              className="status-mark text-status-red"
+              title={flight.mel_limits.map((m) => m.message).join(" ")}
+            >
+              MEL<span className="sr-only">{`: can't be released. ${flight.mel_limits.map((m) => m.message).join(" ")}`}</span>
+            </span>
+          ) : null}
         </div>
       </td>
       <td className="px-4 py-3.5">
