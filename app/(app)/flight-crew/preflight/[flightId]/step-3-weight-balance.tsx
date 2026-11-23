@@ -306,6 +306,8 @@ const lbs = (value: string | number) => `${Math.round(Number(value)).toLocaleStr
  */
 function LoadBreakdown({ flight, data }: { flight: FlightDetail; data: FlightLoad }) {
   const { load } = data;
+  // 1119-04: what the manifest has none of yet is weighed as typed on the flight.
+  const typed = load.typed_parts ?? [];
   const useful = load.useful_load_lbs;
   if (useful == null) {
     // #138: the same notice as the manifest's, which the assistant sees.
@@ -371,7 +373,18 @@ function LoadBreakdown({ flight, data }: { flight: FlightDetail; data: FlightLoa
                   note={`${data.to_check_in.count} at their booked weights`}
                 />
               ) : null}
-              <Line label="Cargo and mail" value={lbs(data.cargo_lbs)} />
+              {typed.includes("passengers") ? (
+                <Line
+                  label="Passengers typed on the flight"
+                  value={lbs(data.booked_passengers * 190)}
+                  note={`${data.booked_passengers} at 190 lb each, until the manifest names them`}
+                />
+              ) : null}
+              <Line
+                label="Cargo and mail"
+                value={lbs(data.cargo_lbs)}
+                note={typed.includes("freight") ? "typed on the flight, until the manifest has its freight" : undefined}
+              />
               <Line label="= Load" value={lbs(load.payload_lbs)} strong />
             </>
           ) : (

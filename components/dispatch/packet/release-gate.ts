@@ -6,6 +6,7 @@ import type {
 } from "@/lib/api/types";
 import type { ExternalPlan } from "@/lib/api/integrations";
 import type { ReleaseLoad } from "@/lib/api/manifest";
+import { loadSource } from "@/lib/flights/typed-load";
 import { minimumsBlockReason } from "@/lib/frat/weather-minimums";
 
 import { unacknowledgedNotamIcaos } from "./notam-acks";
@@ -226,7 +227,7 @@ export function computeReleaseBlockers(input: ReleaseGateInput): string[] {
     if (releaseLoad.useful_load_lbs === null) {
       blockers.push("The aircraft has no max payload on record, so the load can't be checked — set it in Settings → Fleet.");
     } else if (remaining !== null && remaining < 0) {
-      const from = releaseLoad.basis === "manifest" ? "the manifest" : "the passengers and cargo typed on the flight";
+      const from = loadSource(releaseLoad.basis, releaseLoad.typed_parts);
       blockers.push(`Over the aircraft's useful load by ${Math.round(-remaining).toLocaleString("en-US")} lb, by ${from}.`);
     }
   }
