@@ -288,9 +288,11 @@ function FreightForm({
           </label>
           <label className="grid gap-1 text-xs">
             Comes off at
+            {/* A new line comes off at the next stop, as a new passenger does
+                (1119-20); a saved one keeps its own. */}
             <select
               name="leaves_at"
-              defaultValue={value("leaves_at", line?.leaves_at ?? stops[stops.length - 1])}
+              defaultValue={value("leaves_at", line ? (line.leaves_at ?? stops[stops.length - 1]) : stops[1])}
               className={FIELD}
             >
               {stops.slice(1).map((icao, i) => (
