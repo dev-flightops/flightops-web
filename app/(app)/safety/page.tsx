@@ -7,6 +7,8 @@ import { redirect } from "next/navigation";
 
 import { auth } from "@/auth";
 import { ApiError } from "@/lib/api/client";
+import { loadZoneTable } from "@/lib/api/auth";
+import { localDateTime } from "@/lib/format/local-time";
 import {
   HAZARD_CATEGORY_LABELS,
   HAZARD_SEVERITY_LABELS,
@@ -54,6 +56,8 @@ export default async function SafetyInboxPage({
   searchParams: Promise<{ status?: string }>;
 }) {
   const session = await auth();
+  // Filed times in the company's zone (1119-22), not the server's UTC.
+  const zones = loadZoneTable();
   const roles = new Set(session?.roles ?? []);
   const canTriage = hasAnyRole([...roles], TRIAGE_ROLES);
   if (!canTriage) {
@@ -99,6 +103,8 @@ export default async function SafetyInboxPage({
         : "Safety inbox unavailable. Try refreshing in a moment.";
   }
 
+  const zone = (await zones).fallback;
+
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
       <header className="mb-6 flex flex-wrap items-end justify-between gap-4 border-b border-border pb-5">
@@ -142,7 +148,7 @@ export default async function SafetyInboxPage({
       ) : hazards.length === 0 ? (
         <EmptyState filter={activeFilter.label} />
       ) : (
-        <HazardTable hazards={hazards} total={total} />
+        <HazardTable hazards={hazards} total={total} zone={zone} />
       )}
     </div>
   );
@@ -188,9 +194,11 @@ function EmptyState({ filter }: { filter: string }) {
 function HazardTable({
   hazards,
   total,
+  zone,
 }: {
   hazards: HazardReport[];
   total: number;
+  zone: string;
 }) {
   return (
     <div className="overflow-hidden rounded-lg border border-border bg-card">
@@ -225,7 +233,7 @@ function HazardTable({
             {hazards.map((h) => (
               <tr key={h.id} className="hover:bg-accent">
                 <td className="whitespace-nowrap px-4 py-3 text-xs text-muted-foreground">
-                  {formatFiledDate(h.created_at)}
+                  {formatFiledDate(h.created_at, zone)}
                 </td>
                 <td className="px-4 py-3">
                   <SeverityChip severity={h.severity} />
@@ -270,14 +278,8 @@ function HazardTable({
   );
 }
 
-function formatFiledDate(iso: string): string {
-  const d = new Date(iso);
-  return d.toLocaleString(undefined, {
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  });
+function formatFiledDate(iso: string, zone: string): string {
+  return localDateTime(iso, zone);
 }
 
 function SeverityChip({ severity }: { severity: HazardReport["severity"] }) {

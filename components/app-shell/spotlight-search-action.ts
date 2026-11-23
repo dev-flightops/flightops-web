@@ -1,6 +1,8 @@
 "use server";
 
 import { ApiError } from "@/lib/api/client";
+import { loadZoneTable } from "@/lib/api/auth";
+import { localDate, zoneFor } from "@/lib/format/local-time";
 import { listAircraft, listFlights } from "@/lib/api/ops";
 import { listBookings, listCustomers } from "@/lib/api/reservations";
 
@@ -95,7 +97,9 @@ async function _aircraft(lower: string): Promise<SpotlightGroup> {
 
 async function _bookings(lower: string): Promise<SpotlightGroup> {
   try {
-    const { items } = await listBookings({ limit: 100 });
+    // The day at the departure base (1119-22): the server's own is UTC, so
+    // an evening departure read as the next day.
+    const [{ items }, zones] = await Promise.all([listBookings({ limit: 100 }), loadZoneTable()]);
     const matched = items.filter((b) => {
       const shortId = b.id.slice(0, 8).toLowerCase();
       return (
@@ -109,7 +113,7 @@ async function _bookings(lower: string): Promise<SpotlightGroup> {
     const hits: SpotlightHit[] = matched.slice(0, MAX_PER_GROUP).map((b) => ({
       id: b.id,
       label: `${b.origin_icao} → ${b.destination_icao}`,
-      sublabel: `${b.customer.full_name} · ${new Date(b.requested_departure_at).toLocaleDateString()}`,
+      sublabel: `${b.customer.full_name} · ${localDate(b.requested_departure_at, zoneFor(zones, b.origin_icao), { withYear: true })}`,
       href: `/reservations/bookings/${b.id}`,
     }));
     return { key: "bookings", label: "Bookings", items: hits };
@@ -123,11 +127,14 @@ async function _flights(lower: string): Promise<SpotlightGroup> {
     // The server searches, nearest to now first (#168). This read the oldest
     // 100 flights on file and looked through those, so a flight today wasn't
     // found once there were more than 100.
-    const { items } = await listFlights({ q: lower, order: "nearest", limit: MAX_PER_GROUP });
+    const [{ items }, zones] = await Promise.all([
+      listFlights({ q: lower, order: "nearest", limit: MAX_PER_GROUP }),
+      loadZoneTable(),
+    ]);
     const hits: SpotlightHit[] = items.map((f) => ({
       id: f.id,
       label: `${f.flight_number} · ${f.origin} → ${f.destination}`,
-      sublabel: `${f.aircraft.tail_number} · ${new Date(f.scheduled_departure_at).toLocaleDateString()}`,
+      sublabel: `${f.aircraft.tail_number} · ${localDate(f.scheduled_departure_at, zoneFor(zones, f.origin), { withYear: true })}`,
       // /flight-following has no [id] route — there is no per-flight
       // page under it, so this used to send every flight result to a
       // 404. The flight's working detail surface is the dispatch
