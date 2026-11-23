@@ -29,6 +29,17 @@ describe("fuelPlanningNote (#126)", () => {
   });
 });
 
+describe("fuelEstimateLine", () => {
+  it("gives a flight fuelled where it ends its scheduled time, not 'one way' (1119-16)", () => {
+    // TCL1, PABE → PADM → PABE: round trip by its route, fuel at Bethel.
+    const fuelled = { ...ESTIMATE, round_trip: false, flight_minutes: 90 };
+    expect(fuelEstimateLine(fuelled)).toBe(
+      "Fuel estimated: 1 h 30 min as scheduled + 45 min reserve at 54 gal/h = 112.5 gal of Jet A.",
+    );
+    expect(fuelEstimateLine(fuelled)).not.toMatch(/one way/);
+  });
+});
+
 describe("an IFR flight's alternate (#201)", () => {
   const IFR: FuelEstimate = {
     ...ESTIMATE,
