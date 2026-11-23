@@ -6,6 +6,7 @@ vi.mock("./ops", () => ({ getFlight: vi.fn() }));
 
 import { apiFetch } from "./client";
 import {
+  loadDispatchRisk,
   packetWeatherFor,
   riskStops,
   weatherCamIn,
@@ -38,6 +39,25 @@ const PABE: AirportInfo = {
     { name: "01L/19R", length_ft: 6400, width_ft: 150, surface: "A", true_alignment_deg: 23 },
   ],
 };
+
+describe("loadDispatchRisk with an IFR alternate (1119-18)", () => {
+  it("sends the alternate's weather even when the route fills the cap, without its airport record", async () => {
+    // Codex on #504: a ten-airport route lost the alternate to the cap.
+    const route = ["PABE", "PAKN", "PADM", "PAVA", "PAHP", "PACM", "PASM", "PAEM", "PANI", "PAKI"];
+    vi.mocked(batchWeather).mockResolvedValue({ items: [], errors: [] });
+    vi.mocked(apiFetch).mockImplementation(async (path: string) =>
+      path.startsWith("/weather/airports") ? { airports: [] } : { rows: [], stops: [] },
+    );
+    await loadDispatchRisk("f-1", route, "padq");
+    const weatherFor = vi.mocked(batchWeather).mock.calls[0][0].map((r: { icao: string }) => r.icao);
+    expect(new Set(weatherFor)).toEqual(new Set([...route, "PADQ"]));
+    const airportsPath = vi.mocked(apiFetch).mock.calls.find(([path]) => String(path).startsWith("/weather/airports"))?.[0];
+    expect(decodeURIComponent(String(airportsPath))).toBe(`/weather/airports?ids=${route.join(",")}`);
+    const scored = vi.mocked(apiFetch).mock.calls.find(([path]) => String(path) === "/ops/dispatch/f-1/risk");
+    const body = JSON.parse(String((scored?.[1] as { body: string }).body));
+    expect(body.stops.map((stop: { ident: string }) => stop.ident)).toEqual([...route, "PADQ"]);
+  });
+});
 
 describe("riskStops (#50)", () => {
   it("hands ops each stop's reports and airport record", () => {

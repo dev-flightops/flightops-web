@@ -83,7 +83,7 @@ import {
   plansOutOfLimits,
   type ReleaseGateInput,
 } from "@/components/dispatch/packet/release-gate";
-import { flightStops, paramToRoute, withAlternate } from "@/lib/route";
+import { alternateOf, flightStops, paramToRoute } from "@/lib/route";
 
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -389,7 +389,7 @@ export default async function DispatchPage({
   if (selectedFlight) {
     [risk, areaForecastRegions] = await Promise.all([
       // An IFR flight's alternate too (1119-18): ops checks its weather.
-      loadDispatchRisk(selectedFlight.id, withAlternate(selectedFlight, flightStops(selectedFlight))).catch(
+      loadDispatchRisk(selectedFlight.id, flightStops(selectedFlight), alternateOf(selectedFlight)).catch(
         () => null,
       ),
       getAreaForecastRegions().catch(() => []),

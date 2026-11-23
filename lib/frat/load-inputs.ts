@@ -53,7 +53,8 @@ export async function loadFratInputs(
   const [weather, cams, airports] = await Promise.all([
     batchWeather(reqs).catch(() => null),
     weatherCamsFor(routeIcaos),
-    scorePacket ? getAirports(scored).catch(() => null) : Promise.resolve(null),
+    // The airport lookup takes ten; the alternate's runways aren't scored.
+    scorePacket ? getAirports(routeIcaos).catch(() => null) : Promise.resolve(null),
   ]);
   // The client, 17 Nov: "if dispatcher refreshes the data and then it goes
   // back to low, the FRAT should also go back to low." The FRAT's level now

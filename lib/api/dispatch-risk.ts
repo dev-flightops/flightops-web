@@ -333,12 +333,17 @@ export function riskStops(
   });
 }
 
-/** Each stop's weather and airport record, gathered from weather-service. */
-async function gatherStops(stops: string[]): Promise<RiskStopIn[]> {
+/** Each stop's weather and airport record, gathered from weather-service.
+ *  An IFR flight's `alternate` (1119-18) comes after the route's cap, so a
+ *  route at the cap doesn't drop it, with its weather alone: the airport
+ *  lookup takes ten, and the alternate's runways aren't scored. */
+async function gatherStops(stops: string[], alternate: string | null = null): Promise<RiskStopIn[]> {
   const unique = [...new Set(stops)].slice(0, MAX_STOPS);
+  const alt = alternate?.trim().toUpperCase() || null;
+  const weighed = alt && !unique.includes(alt) ? [...unique, alt] : unique;
   const [weather, airports, cams] = await Promise.all([
     batchWeather(
-      unique.flatMap((icao) => [
+      weighed.flatMap((icao) => [
         { icao, kind: "metar" as const },
         { icao, kind: "taf" as const },
         { icao, kind: "pirep" as const },
@@ -347,15 +352,17 @@ async function gatherStops(stops: string[]): Promise<RiskStopIn[]> {
     getAirports(unique).catch(() => null),
     weatherCamsFor(unique),
   ]);
-  return riskStops(unique, weather, airports, cams);
+  return riskStops(weighed, weather, airports, cams);
 }
 
-/** Gather the flight's weather and airport data, then have ops score it. */
+/** Gather the flight's weather and airport data, then have ops score it,
+ *  with an IFR flight's alternate (1119-18). */
 export async function loadDispatchRisk(
   flightId: string,
   stops: string[],
+  alternate: string | null = null,
 ): Promise<DispatchRisk> {
-  return scoreFlightRisk(flightId, { stops: await gatherStops(stops) });
+  return scoreFlightRisk(flightId, { stops: await gatherStops(stops, alternate) });
 }
 
 /**

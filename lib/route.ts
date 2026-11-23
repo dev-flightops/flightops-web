@@ -43,6 +43,12 @@ export function flightStops(flight: {
     : [flight.origin, flight.destination];
 }
 
+/** An IFR flight's alternate, upper-cased; null for a VFR flight or one
+ *  with none (1119-18). */
+export function alternateOf(flight: { is_ifr?: boolean; alternate_ident?: string | null }): string | null {
+  return flight.is_ifr ? flight.alternate_ident?.trim().toUpperCase() || null : null;
+}
+
 /** The flight's stops, and an IFR flight's alternate after them, for the
  *  weather the packet scores (1119-18): ops checks the alternate against
  *  the alternate minimums. */
@@ -50,7 +56,7 @@ export function withAlternate(
   flight: { is_ifr?: boolean; alternate_ident?: string | null },
   stops: string[],
 ): string[] {
-  const alternate = flight.is_ifr ? flight.alternate_ident?.trim().toUpperCase() : null;
+  const alternate = alternateOf(flight);
   return alternate && !stops.includes(alternate) ? [...stops, alternate] : stops;
 }
 

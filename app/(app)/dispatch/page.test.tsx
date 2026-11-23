@@ -215,7 +215,8 @@ async function open() {
 describe("the packet reads the FRAT after scoring the packet (17 Nov)", () => {
   it("asks for the FRAT box, the FRAT and the progress line only once the packet is scored", async () => {
     await open();
-    expect(api.loadDispatchRisk).toHaveBeenCalledWith(FLIGHT, ["PABE", "PACM", "PABE"]);
+    // No alternate on a VFR flight (1119-18).
+    expect(api.loadDispatchRisk).toHaveBeenCalledWith(FLIGHT, ["PABE", "PACM", "PABE"], null);
     const scored = calls.indexOf("scored");
     expect(scored).toBeGreaterThanOrEqual(0);
     for (const read of ["over-limits", "frat", "progress"]) {
