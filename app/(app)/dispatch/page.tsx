@@ -578,7 +578,10 @@ export default async function DispatchPage({
           />
         )}
 
-        <CrewLegalityHints />
+        <CrewLegalityHints
+          hasPic={Boolean(selectedFlight && effectivePicId)}
+          hasAircraft={Boolean(selectedFlight?.aircraft?.tail_number)}
+        />
 
         {/* Crew-currency status only makes sense once a PIC is loaded.
             The PIC selection lives in the URL as `?pic=<uuid>`; the
