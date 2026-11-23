@@ -194,6 +194,26 @@ describe("who it's for, and the flight (#137)", () => {
     expect(createBooking).not.toHaveBeenCalled();
   });
 
+  it("names the field to fix and gives back the quote and notes (1119-26)", async () => {
+    const result = await createBookingAction(
+      { status: "idle" },
+      form({ customer_id: "", new_customer_name: "", quoted_total_dollars: "1850", notes: "Two dogs in crates." }),
+    );
+    expect(result.message).toBe("Please fix: Customer.");
+    expect(result.values).toEqual({ quoted_total_dollars: "1850", notes: "Two dogs in crates." });
+  });
+
+  it("won't take a passenger weighing 0 lb (1119-26)", async () => {
+    const fd = form();
+    fd.append("passenger_first_name", "Anna");
+    fd.append("passenger_last_name", "Nanok");
+    fd.append("passenger_weight_lbs", "0");
+    const result = await createBookingAction({ status: "idle" }, fd);
+    expect(result.fieldErrors?.passengers).toBe("Passenger 1's weight should be 1-1000 lb, or left blank.");
+    expect(result.message).toBe("Please fix: Passengers.");
+    expect(createBooking).not.toHaveBeenCalled();
+  });
+
   it("goes back where it was started, never to another site", async () => {
     await expect(
       createBookingAction({ status: "idle" }, form({ return_to: `/manifest/${FLIGHT}` })),
