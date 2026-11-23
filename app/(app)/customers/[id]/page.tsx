@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
 import { linkCaps } from "@/components/ff/controls";
+import { loadZoneTable } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
 import { type CustomerInvoiceList, listCustomerInvoices } from "@/lib/api/customer-invoices";
 import {
@@ -13,6 +14,7 @@ import {
   listBookings,
 } from "@/lib/api/reservations";
 
+import { localDateTime, zoneFor } from "@/lib/format/local-time";
 import { cn } from "@/lib/utils";
 
 import { money, STATUS_LABELS, statusClasses } from "../../invoicing/money";
@@ -44,6 +46,9 @@ export default async function CustomerDetailPage({
   } catch {
     history = [];
   }
+  // Each trip's time at its departure base (#68). It was the server's
+  // clock: a 10:30 AKST booking read "7:30:00 PM".
+  const zones = await loadZoneTable();
 
   // The customer's invoices and balance (#30), for the roles billing
   // admits. Anyone else is refused by the service, and the section is
@@ -136,9 +141,7 @@ export default async function CustomerDetailPage({
                         {b.origin_icao} → {b.destination_icao}
                       </span>
                       <span className="text-[0.6875rem] text-muted-foreground">
-                        {new Date(
-                          b.requested_departure_at,
-                        ).toLocaleString()}
+                        {localDateTime(b.requested_departure_at, zoneFor(zones, b.origin_icao), { withYear: true })}
                       </span>
                     </div>
                   </div>

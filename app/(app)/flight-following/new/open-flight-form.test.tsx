@@ -116,6 +116,57 @@ describe("OpenFlightForm: a round trip by default, its times from the cruise spe
     expect(destinations.map((i) => i.value)).toEqual(["", "PABE"]);
   });
 
+  it("moves the way home's filled times when a stop goes in before it", async () => {
+    // Bethel to Hooper Bay and back, then a stop at Chevak on the way back:
+    // the way home kept the 11:40 filled in before Chevak was there, now
+    // earlier than the Chevak leg lands, and the form refused it.
+    renderForm();
+    await userEvent.selectOptions(screen.getByLabelText(/Aircraft/), "ac-1");
+    await userEvent.type(input("origin"), "pabe");
+    await userEvent.type(input("destination"), "pahp");
+    fireEvent.change(input("scheduled_departure_at"), { target: { value: "2026-11-23T10:30" } });
+    const homeBefore = stopInputs("stop_departure")[0].value;
+    await userEvent.click(screen.getByRole("button", { name: "+ Add stop" }));
+    await userEvent.type(stopInputs("stop_destination")[0], "pava");
+
+    const [chevak, home] = [0, 1].map((i) => ({
+      departs: stopInputs("stop_departure")[i].value,
+      lands: stopInputs("stop_arrival")[i].value,
+    }));
+    expect(chevak.departs).toBe(homeBefore);
+    expect(chevak.lands > chevak.departs).toBe(true);
+    // 15 minutes on the ground at Chevak, then home.
+    expect(home.departs > chevak.lands).toBe(true);
+    expect(home.lands > home.departs).toBe(true);
+  });
+
+  it("keeps a stop's other filled time following when one of its times is typed", async () => {
+    // Editing a stop makes it a new row: its record went with the edit, so
+    // its untouched arrival read as typed and stopped following (review).
+    renderForm();
+    await userEvent.selectOptions(screen.getByLabelText(/Aircraft/), "ac-1");
+    await userEvent.type(input("origin"), "pabe");
+    await userEvent.type(input("destination"), "pahp");
+    fireEvent.change(input("scheduled_departure_at"), { target: { value: "2026-11-23T10:30" } });
+    fireEvent.change(stopInputs("stop_departure")[0], { target: { value: "2026-11-23T13:00" } });
+    const landsBefore = stopInputs("stop_arrival")[0].value;
+    fireEvent.change(input("scheduled_departure_at"), { target: { value: "2026-11-23T11:30" } });
+    expect(stopInputs("stop_departure")[0].value).toBe("2026-11-23T13:00");
+    expect(stopInputs("stop_arrival")[0].value).not.toBe(landsBefore);
+  });
+
+  it("still keeps a time typed by hand on a stop that moves", async () => {
+    renderForm();
+    await userEvent.selectOptions(screen.getByLabelText(/Aircraft/), "ac-1");
+    await userEvent.type(input("origin"), "pabe");
+    await userEvent.type(input("destination"), "pahp");
+    fireEvent.change(input("scheduled_departure_at"), { target: { value: "2026-11-23T10:30" } });
+    fireEvent.change(stopInputs("stop_departure")[0], { target: { value: "2026-11-23T14:00" } });
+    await userEvent.click(screen.getByRole("button", { name: "+ Add stop" }));
+    await userEvent.type(stopInputs("stop_destination")[0], "pava");
+    expect(stopInputs("stop_departure")[1].value).toBe("2026-11-23T14:00");
+  });
+
   it("asks for the cruise speed, or for times by hand off the list", async () => {
     renderForm();
     await userEvent.selectOptions(screen.getByLabelText(/Aircraft/), "ac-2");

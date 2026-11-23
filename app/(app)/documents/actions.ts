@@ -141,6 +141,7 @@ export async function updateDocumentAction(
     category?: string;
     description?: string | null;
     is_compliance_source?: boolean;
+    requires_acknowledgment?: boolean;
   },
 ): Promise<ActionResult> {
   try {

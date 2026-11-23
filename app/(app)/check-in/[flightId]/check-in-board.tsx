@@ -558,7 +558,7 @@ export function CheckInBoard({ initial, canAct }: { initial: CheckInView; canAct
                         {p.notes ? <span className="block text-xs text-muted-foreground">{p.notes}</span> : null}
                       </td>
                       <td className={cn(TD, "font-mono text-xs")}>{p.seat_number ?? "—"}</td>
-                      <td className={cn(TD, "text-xs capitalize")}>{p.ticket_type.replace("_", " ")}</td>
+                      <td className={cn(TD, "text-xs capitalize")}>{p.ticket_type.replaceAll("_", " ")}</td>
                       <td className={cn(TD, "text-right font-mono text-xs")}>
                         {p.bags_count ?? "—"}
                         {aboard(p.bags).length > 0 ? (

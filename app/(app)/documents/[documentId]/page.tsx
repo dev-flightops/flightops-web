@@ -15,6 +15,7 @@ import {
 
 import { AckPanel } from "./ack-panel";
 import { ComplianceSourceToggle } from "./compliance-source-toggle";
+import { RequiredReadingToggle } from "./required-reading-toggle";
 import { UploadVersionDrawer } from "./upload-version-drawer";
 
 /**
@@ -133,7 +134,11 @@ export default async function DocumentDetailPage({
         />
       )}
 
-      <div className="mt-4">
+      <div className="mt-4 grid gap-3 sm:grid-cols-2">
+        <RequiredReadingToggle
+          documentId={doc.id}
+          initialValue={doc.requires_acknowledgment}
+        />
         <ComplianceSourceToggle
           documentId={doc.id}
           initialValue={doc.is_compliance_source}

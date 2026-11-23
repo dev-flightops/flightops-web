@@ -544,7 +544,7 @@ function MxStatusChip({ status }: { status: GSEMxStatus }) {
     <span
       className={`status-mark text-[0.6rem] ${map[status]}`}
     >
-      {status.replace("_", " ")}
+      {status.replaceAll("_", " ")}
     </span>
   );
 }
@@ -560,7 +560,7 @@ function SquawkStatusChip({ status }: { status: GSESquawkResponse["status"] }) {
     <span
       className={`status-mark text-[0.6rem] ${map[status]}`}
     >
-      {status.replace("_", " ")}
+      {status.replaceAll("_", " ")}
     </span>
   );
 }
@@ -586,7 +586,7 @@ function UnitStatusChip({
     <span
       className={`status-mark ${sizing} ${map[status]}`}
     >
-      {status.replace("_", " ")}
+      {status.replaceAll("_", " ")}
     </span>
   );
 }

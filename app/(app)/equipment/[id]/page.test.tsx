@@ -284,6 +284,9 @@ describe("EquipmentDetailPage (M2-G-39)", () => {
     expect(
       screen.getByText(/hydraulic pump failure/i),
     ).toBeInTheDocument();
+    // Every underscore goes, not only the first ("out of_service").
+    expect(screen.getAllByText("out of service").length).toBeGreaterThan(0);
+    expect(screen.queryByText(/of_service/)).not.toBeInTheDocument();
   });
 
   it("calls notFound when the unit is missing", async () => {

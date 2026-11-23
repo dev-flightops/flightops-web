@@ -53,6 +53,18 @@ export function handoffLine(item: HandoffItem): HandoffLine {
         severity: "yellow",
       };
     }
+    // The Chief Pilot or DO (#152): a no-go until they accept it, with a
+    // reason, on the FRAT's page.
+    case "frat_to_accept":
+      return {
+        title: `Accept the FRAT — ${flight}`,
+        detail:
+          item.note === "high_risk"
+            ? `${route}. The packet rates it HIGH. Signed by dispatch and ${item.by_name ?? "the pilot"} at ${at}; approve it with a reason before it can be released.`
+            : `${route}. Over company limits. Signed by dispatch and ${item.by_name ?? "the pilot"} at ${at}; accept it with a reason before it can be released.`,
+        href: `/frat/${item.flight_id}`,
+        severity: "red",
+      };
     // Both signatures are the FRAT's part: the packet still has its own
     // checks (the crew's currency, NOTAMs, the weather), so not "ready".
     case "release_ready":

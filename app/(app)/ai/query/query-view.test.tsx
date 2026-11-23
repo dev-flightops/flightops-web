@@ -65,6 +65,7 @@ function view(turns: Turn[] = [], onAsk = vi.fn(), entities = ENTITIES) {
       draft=""
       pending={false}
       entities={entities}
+      zone="America/Anchorage"
       onDraftChange={vi.fn()}
       onAsk={onAsk}
     />,
@@ -142,6 +143,29 @@ describe("an answer", () => {
     view([{ id: 1, question: "which aircraft", at: "09:15", result: result() }]);
     expect(screen.getByText("N100PA")).toBeInTheDocument();
     expect(screen.getByText("2 rows")).toBeInTheDocument();
+  });
+
+  it("names the columns as a person reads them", () => {
+    view([{ id: 1, question: "which aircraft", at: "09:15", result: result() }]);
+    expect(screen.getByRole("columnheader", { name: "Tail number" })).toBeInTheDocument();
+    expect(screen.queryByRole("columnheader", { name: "tail_number" })).not.toBeInTheDocument();
+  });
+
+  it("gives an instant in the company's zone, not as stored", () => {
+    view([
+      {
+        id: 1,
+        question: "which aircraft are grounded",
+        at: "09:15",
+        result: result({
+          columns: ["tail_number", "grounded_at"],
+          rows: [{ tail_number: "N96DM", grounded_at: "2026-11-20T01:07:16.404011Z" }],
+        }),
+      },
+    ]);
+    // 16:07 on the 19th in Alaska; stored, it read 2026-11-20T01:07:16.404011Z.
+    expect(screen.getByText("Nov 19, 2026, 16:07 AKST")).toBeInTheDocument();
+    expect(screen.queryByText(/T01:07:16/)).not.toBeInTheDocument();
   });
 
   it("counts one row without pluralising", () => {

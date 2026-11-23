@@ -12,7 +12,9 @@ import {
   getCourse,
   listMyEnrollments,
 } from "@/lib/api/academy";
+import { loadZoneTable } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
+import { localDate } from "@/lib/format/local-time";
 
 import { EnrolButton } from "./enrol-button";
 
@@ -84,7 +86,7 @@ export default async function CourseDetailPage({
         ) : null}
       </header>
 
-      <EnrolCtaSection course={course} enrollment={myEnrollment} />
+      <EnrolCtaSection course={course} enrollment={myEnrollment} zone={(await loadZoneTable()).fallback} />
 
       <section className="mt-6 rounded-lg border border-border bg-card p-5">
         <h2 className="mb-3 eyebrow">
@@ -135,9 +137,12 @@ export default async function CourseDetailPage({
 function EnrolCtaSection({
   course,
   enrollment,
+  zone,
 }: {
   course: CourseDetail;
   enrollment: Enrollment | null;
+  /** The company's zone (#68): the day it was done there, not the server's. */
+  zone: string;
 }) {
   if (course.lesson_count === 0) {
     return (
@@ -170,10 +175,10 @@ function EnrolCtaSection({
         <div className="text-sm">
           <span className="font-semibold">Completed</span>{" "}
           {enrollment.completed_at
-            ? new Date(enrollment.completed_at).toLocaleDateString()
+            ? localDate(enrollment.completed_at, zone, { withYear: true })
             : ""}
           {enrollment.expires_at
-            ? ` — cert valid through ${new Date(enrollment.expires_at).toLocaleDateString()}`
+            ? ` — cert valid through ${localDate(enrollment.expires_at, zone, { withYear: true })}`
             : " — cert never expires"}
         </div>
         <Link

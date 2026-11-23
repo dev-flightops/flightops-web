@@ -16,8 +16,9 @@ import {
   listMyQuizAttempts,
   listScormAttempts,
 } from "@/lib/api/academy";
+import { loadZoneTable } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
-import { formatZuluDate } from "@/lib/format/flight-time";
+import { localDate } from "@/lib/format/local-time";
 
 import { LessonPlayer } from "./lesson-player";
 
@@ -57,6 +58,8 @@ export default async function EnrollmentLessonPage({
     if (err instanceof ApiError && err.status === 401) redirect("/login");
     throw err;
   }
+  // Completion and expiry days in the company's zone (#68), not UTC.
+  const zone = (await loadZoneTable()).fallback;
 
   const completedLessonIds = new Set(
     enrollment.completions.map((c) => c.lesson_id),
@@ -131,10 +134,10 @@ export default async function EnrollmentLessonPage({
           {enrollment.completed_lessons} of {enrollment.total_lessons}{" "}
           lesson{enrollment.total_lessons === 1 ? "" : "s"} complete
           {enrollment.completed_at
-            ? ` · Completed ${formatZuluDate(enrollment.completed_at)} (UTC)`
+            ? ` · Completed ${localDate(enrollment.completed_at, zone, { withYear: true })}`
             : ""}
           {enrollment.expires_at
-            ? ` · Expires ${formatZuluDate(enrollment.expires_at)} (UTC)`
+            ? ` · Expires ${localDate(enrollment.expires_at, zone, { withYear: true })}`
             : ""}
         </p>
         {enrollment.status === "completed" ? (

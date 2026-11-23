@@ -2785,6 +2785,7 @@ export type HandoffTurn = "dispatch" | "pilot" | "chief_pilot_or_do";
 
 export type HandoffKind =
   | "frat_to_sign"
+  | "frat_to_accept"
   | "release_ready"
   | "release_to_accept"
   | "release_denied"

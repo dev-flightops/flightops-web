@@ -397,7 +397,7 @@ function StatusChip({
     resolved: "status-mark text-status-green",
     closed: "eyebrow",
   };
-  return <span className={map[status]}>{status.replace("_", " ")}</span>;
+  return <span className={map[status]}>{status.replaceAll("_", " ")}</span>;
 }
 
 function Field({ label, value }: { label: string; value: string }) {

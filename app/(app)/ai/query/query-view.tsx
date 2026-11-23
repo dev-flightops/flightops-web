@@ -1,6 +1,7 @@
 "use client";
 
 import type { AiQueryResult, QueryEntity, QuerySpec } from "@/lib/api/ai";
+import { localDateTime } from "@/lib/format/local-time";
 
 /**
  * Intelligence Query, laid out to follow legacy's /ai/query.
@@ -76,8 +77,22 @@ function moneyColumns(spec: QuerySpec | null): Set<string> {
   return money;
 }
 
-function formatCell(value: unknown, column: string, money: Set<string>): string {
+/** A column as a person reads it: "tail_number" is "Tail number", and a
+ *  money column drops its "_cents" (its cells are dollars). */
+export function headerLabel(column: string): string {
+  const words = column.replace(/_cents$/i, "").replace(/_/g, " ").trim();
+  return words ? words.charAt(0).toUpperCase() + words.slice(1) : column;
+}
+
+// A stored instant ("2026-11-20T01:07:16.404011Z"); a plain date stays as it is.
+const INSTANT = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/;
+
+function formatCell(value: unknown, column: string, money: Set<string>, zone: string): string {
   if (value === null || value === undefined) return "—";
+  // Instants in the company's zone (#68), as every other page gives them.
+  if (typeof value === "string" && INSTANT.test(value) && !Number.isNaN(Date.parse(value))) {
+    return localDateTime(value, zone, { withYear: true });
+  }
   if (typeof value === "boolean") return value ? "yes" : "no";
   if (money.has(column) || column.toLowerCase().endsWith("_cents")) {
     const cents = Number(value);
@@ -133,6 +148,7 @@ export function QueryView({
   draft,
   pending,
   entities,
+  zone,
   onDraftChange,
   onAsk,
 }: {
@@ -140,6 +156,8 @@ export function QueryView({
   draft: string;
   pending: boolean;
   entities: QueryEntity[];
+  /** The company's time zone, for the instants in an answer. */
+  zone: string;
   onDraftChange: (value: string) => void;
   onAsk: (question: string) => void;
 }) {
@@ -210,7 +228,7 @@ export function QueryView({
 
       <div className="mt-4 space-y-4">
         {turns.map((turn) => (
-          <TurnBlock key={turn.id} turn={turn} />
+          <TurnBlock key={turn.id} turn={turn} zone={zone} />
         ))}
       </div>
 
@@ -241,7 +259,7 @@ export function QueryView({
   );
 }
 
-function TurnBlock({ turn }: { turn: Turn }) {
+function TurnBlock({ turn, zone }: { turn: Turn; zone: string }) {
   return (
     <section
       aria-label={`Answer to: ${turn.question}`}
@@ -268,7 +286,7 @@ function TurnBlock({ turn }: { turn: Turn }) {
             Nothing matched that.
           </p>
         ) : (
-          <ResultTable result={turn.result} />
+          <ResultTable result={turn.result} zone={zone} />
         )}
 
         {turn.result?.spec ? (
@@ -289,7 +307,7 @@ function TurnBlock({ turn }: { turn: Turn }) {
   );
 }
 
-function ResultTable({ result }: { result: AiQueryResult }) {
+function ResultTable({ result, zone }: { result: AiQueryResult; zone: string }) {
   const money = moneyColumns(result.spec);
   return (
     <div className="overflow-x-auto">
@@ -302,7 +320,7 @@ function ResultTable({ result }: { result: AiQueryResult }) {
                 scope="col"
                 className="whitespace-nowrap px-2 py-1.5 font-semibold"
               >
-                {col}
+                {headerLabel(col)}
               </th>
             ))}
           </tr>
@@ -312,7 +330,7 @@ function ResultTable({ result }: { result: AiQueryResult }) {
             <tr key={i} className="border-b border-border/50 last:border-0">
               {result.columns.map((col) => (
                 <td key={col} className="px-2 py-1.5 tabular-nums">
-                  {formatCell(row[col], col, money)}
+                  {formatCell(row[col], col, money, zone)}
                 </td>
               ))}
             </tr>

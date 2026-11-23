@@ -25,6 +25,12 @@ export const GROUND_OPS_LINKS = {
     href: "/ramper",
     status: "live",
   },
+  mailFreightWaiting: {
+    label: "Mail & Freight Waiting",
+    sublabel: "What's on hand at each station, before it's on a flight",
+    href: "/manifest/waiting",
+    status: "live",
+  },
   rampFuelOrders: {
     label: "Fuel Orders",
     sublabel: "Confirm and complete fuel deliveries",

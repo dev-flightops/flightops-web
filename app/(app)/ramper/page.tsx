@@ -189,6 +189,11 @@ export default async function RamperPage() {
                 <Link href={`/ramper/${a.flight.id}/load-sheet`} className="text-[0.68rem] font-bold uppercase tracking-[0.1em] text-primary hover:underline">
                   Load sheet <span aria-hidden>›</span>
                 </Link>
+                {/* The gate: ground staff check the passengers in at small
+                    stations, and nothing in Ground Ops led there. */}
+                <Link href={`/check-in/${a.flight.id}`} className="text-[0.68rem] font-bold uppercase tracking-[0.1em] text-primary hover:underline">
+                  Check-in <span aria-hidden>›</span>
+                </Link>
                 <Link href={`/ramper/${a.flight.id}/photos`} className="text-[0.68rem] font-bold uppercase tracking-[0.1em] text-primary hover:underline">
                   Photos{a.photo_count ? ` (${a.photo_count})` : ""} <span aria-hidden>›</span>
                 </Link>

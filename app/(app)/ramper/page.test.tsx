@@ -98,6 +98,8 @@ describe("RamperPage — the team's loads (#134)", () => {
     expect(screen.getByRole("button", { name: /Acknowledge the load for DEMO104/ })).toBeInTheDocument();
     // What to pull and load at each stop (#208).
     expect(screen.getByRole("link", { name: /Load sheet/ })).toHaveAttribute("href", "/ramper/fl-1/load-sheet");
+    // And the gate, where ground staff check the passengers in.
+    expect(screen.getByRole("link", { name: /Check-in/ })).toHaveAttribute("href", "/check-in/fl-1");
   });
 
   it.each(["completed", "cancelled"])("does not offer ground actions for a %s flight", async (status) => {
