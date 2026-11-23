@@ -15,6 +15,8 @@ vi.mock("next/navigation", () => ({
   useRouter: () => ({ refresh: routerRefresh }),
 }));
 
+import { fillSignOff, SIGNER } from "@/tests/sign-off";
+
 import { CloseMelDialog } from "./close-mel-dialog";
 
 describe("CloseMelDialog", () => {
@@ -40,50 +42,43 @@ describe("CloseMelDialog", () => {
     ).toBeInTheDocument();
   });
 
-  it("submits with optional notes (empty stays null on the wire)", async () => {
+  it("won't close without the sign-off (1119-19)", async () => {
+    const user = userEvent.setup();
+    render(<CloseMelDialog melItemId="mel-1" ataChapter="21-30" description="X" />);
+    await user.click(screen.getByRole("button", { name: /^Close$/i }));
+    await user.click(screen.getByRole("button", { name: /Close MEL/i }));
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "The sign-off needs the work done, the mechanic's name, their certificate number, the kind of certificate.",
+    );
+    expect(closeMelDeferralAction).not.toHaveBeenCalled();
+  });
+
+  it("closes signed off by the mechanic", async () => {
     const user = userEvent.setup();
     closeMelDeferralAction.mockResolvedValueOnce({ ok: true });
-
-    render(
-      <CloseMelDialog
-        melItemId="mel-1"
-        ataChapter="21-30"
-        description="X"
-      />,
-    );
+    render(<CloseMelDialog melItemId="mel-1" ataChapter="21-30" description="X" />);
     await user.click(screen.getByRole("button", { name: /^Close$/i }));
+    await fillSignOff(user, "Replaced controller P/N 1234-AB; tested OK.");
     await user.click(screen.getByRole("button", { name: /Close MEL/i }));
 
     await waitFor(() => {
       expect(closeMelDeferralAction).toHaveBeenCalledWith("mel-1", {
-        notes: null,
+        sign_off: { work_done: "Replaced controller P/N 1234-AB; tested OK.", ...SIGNER },
       });
     });
     expect(routerRefresh).toHaveBeenCalled();
   });
 
-  it("submits with notes when the user fills them in", async () => {
+  it("closes one deferred in error with the reason, no certificate", async () => {
     const user = userEvent.setup();
     closeMelDeferralAction.mockResolvedValueOnce({ ok: true });
-
-    render(
-      <CloseMelDialog
-        melItemId="mel-1"
-        ataChapter="21-30"
-        description="X"
-      />,
-    );
+    render(<CloseMelDialog melItemId="mel-1" ataChapter="21-30" description="X" />);
     await user.click(screen.getByRole("button", { name: /^Close$/i }));
-    await user.type(
-      screen.getByLabelText(/Closing notes/i),
-      "Replaced controller P/N 1234-AB; tested OK.",
-    );
+    await user.click(screen.getByRole("radio", { name: "No work done" }));
+    await user.type(screen.getByLabelText("Why no work was done"), "Deferred on the wrong tail.");
     await user.click(screen.getByRole("button", { name: /Close MEL/i }));
-
     await waitFor(() => {
-      expect(closeMelDeferralAction).toHaveBeenCalledWith("mel-1", {
-        notes: "Replaced controller P/N 1234-AB; tested OK.",
-      });
+      expect(closeMelDeferralAction).toHaveBeenCalledWith("mel-1", { no_work_reason: "Deferred on the wrong tail." });
     });
   });
 
@@ -102,6 +97,7 @@ describe("CloseMelDialog", () => {
       />,
     );
     await user.click(screen.getByRole("button", { name: /^Close$/i }));
+    await fillSignOff(user);
     await user.click(screen.getByRole("button", { name: /Close MEL/i }));
 
     await waitFor(() => {

@@ -13,7 +13,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
+import {
+  EMPTY_SIGN_OFF,
+  SignOffFields,
+  signOffProblem,
+  toSignOff,
+} from "@/components/maintenance/sign-off-fields";
 
 export interface ResolveSquawkDialogProps {
   squawkId: string;
@@ -22,10 +27,11 @@ export interface ResolveSquawkDialogProps {
 }
 
 /**
- * Resolve-squawk dialog (M2-G-17). Unlike close-MEL, resolution_notes
- * is REQUIRED (backend enforces min_length=1 — squawk closures need a
- * documented fix for the audit trail). Posts to resolveSquawkAction,
- * refreshes the maintenance panel on success.
+ * Resolve-squawk dialog (M2-G-17). Resolving returns what the squawk
+ * grounded to service, so it is signed off as on the RTS queue (1119-19):
+ * the work done, the mechanic, their certificate and its kind, and their
+ * statement. Posts to resolveSquawkAction, refreshes the maintenance panel
+ * on success.
  */
 export function ResolveSquawkDialog({
   squawkId,
@@ -34,27 +40,32 @@ export function ResolveSquawkDialog({
 }: ResolveSquawkDialogProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
-  const [notes, setNotes] = useState("");
+  const [signOff, setSignOff] = useState(EMPTY_SIGN_OFF);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
   const closeAndReset = () => {
     setOpen(false);
     setError(null);
-    setNotes("");
+    setSignOff(EMPTY_SIGN_OFF);
   };
 
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const trimmed = notes.trim();
-    if (!trimmed) {
-      setError("Resolution notes are required.");
+    const problem = signOffProblem(signOff);
+    if (problem) {
+      setError(problem);
       return;
     }
     setError(null);
+    const signed = toSignOff(signOff);
     startTransition(async () => {
       const result = await resolveSquawkAction(squawkId, {
-        resolution_notes: trimmed,
+        resolution_notes: signed.work_done,
+        signer_name: signed.signer_name,
+        cert_number: signed.cert_number,
+        cert_type: signed.cert_type,
+        airworthy: true,
       });
       if (result.ok) {
         closeAndReset();
@@ -81,7 +92,7 @@ export function ResolveSquawkDialog({
         open={open}
         onOpenChange={(o) => (isPending ? null : o ? setOpen(true) : closeAndReset())}
       >
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>Resolve squawk</DialogTitle>
             <DialogDescription>
@@ -99,23 +110,13 @@ export function ResolveSquawkDialog({
               {title}
             </p>
 
-            <div>
-              <Label htmlFor="resolve-notes">
-                Resolution notes <span className="text-destructive">*</span>
-              </Label>
-              <textarea
-                id="resolve-notes"
-                rows={4}
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                placeholder="What did you do to clear this? Replace P/N, adjust tolerances, deferred via MEL #..., etc."
-                className="mt-1.5 flex w-full rounded-lg border border-border bg-background px-3 py-2 text-[0.8125rem] focus-visible:outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20"
-              />
-              <p className="mt-1 text-[0.65rem] text-muted-foreground">
-                Required — every squawk closure needs a documented fix for
-                the audit trail.
-              </p>
-            </div>
+            <SignOffFields
+              idPrefix={`resolve-${squawkId}`}
+              value={signOff}
+              onChange={setSignOff}
+              workLabel="Resolution: what was done"
+              disabled={isPending}
+            />
 
             {error && (
               <p

@@ -13,6 +13,8 @@ import type { PartShipment } from "./part-logistics";
 import type {
   AirworthinessResponse,
   FleetAirworthinessResponse,
+  Closure,
+  ClosureKind,
   MelItemCloseRequest,
   MelItemCreateRequest,
   MelItemListResponse,
@@ -163,6 +165,14 @@ export interface WorkOrderRow {
   opened_by_name: string | null;
   /** Past its due date and not completed or closed (#156). */
   is_overdue?: boolean;
+  /** How it was closed (1119-19); null while open and on older ones. */
+  closure?: ClosureKind | null;
+  /** The work done (signed_off), or why nothing was (no_work). */
+  corrective_action?: string | null;
+  signer_name?: string | null;
+  signer_cert_number?: string | null;
+  signer_cert_type?: CertType | null;
+  signed_off_at?: string | null;
 }
 
 export interface WorkOrderListResponse {
@@ -247,10 +257,12 @@ export async function transitionWorkOrder(
   id: string,
   toStatus: WorkOrderStatus,
   note: string | null,
+  /** Closing needs it (1119-19): the sign-off, or why no work was done. */
+  closure: Closure | null = null,
 ): Promise<WorkOrderRow> {
   return apiFetch<WorkOrderRow>(`/maintenance/work-orders/${id}/transition`, {
     method: "POST",
-    body: JSON.stringify({ to_status: toStatus, note }),
+    body: JSON.stringify({ to_status: toStatus, note, ...(closure ? { closure } : {}) }),
   });
 }
 

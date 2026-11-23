@@ -13,6 +13,8 @@ vi.mock("next/navigation", () => ({
   useRouter: () => ({ refresh: routerRefresh }),
 }));
 
+import { fillSignOff, SIGNER } from "@/tests/sign-off";
+
 import { ResolveSquawkDialog } from "./resolve-squawk-dialog";
 
 describe("ResolveSquawkDialog", () => {
@@ -56,50 +58,30 @@ describe("ResolveSquawkDialog", () => {
     ).toBeInTheDocument();
   });
 
-  it("rejects empty resolution notes client-side", async () => {
+  it("won't resolve without the sign-off (1119-19)", async () => {
     const user = userEvent.setup();
-
-    render(
-      <ResolveSquawkDialog
-        squawkId="sq-1"
-        title="X"
-        severity="major"
-      />,
-    );
+    render(<ResolveSquawkDialog squawkId="sq-1" title="X" severity="major" />);
     await user.click(screen.getByRole("button", { name: /^Resolve$/i }));
-    await user.click(
-      screen.getByRole("button", { name: /Resolve squawk/i }),
+    await user.type(screen.getByLabelText("Resolution: what was done"), "Replaced LH main tire.");
+    await user.click(screen.getByRole("button", { name: /Resolve squawk/i }));
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "The sign-off needs the mechanic's name, their certificate number, the kind of certificate.",
     );
-
-    expect(
-      await screen.findByRole("alert"),
-    ).toHaveTextContent(/Resolution notes are required/i);
     expect(resolveSquawkAction).not.toHaveBeenCalled();
   });
 
-  it("trims whitespace and submits the trimmed notes", async () => {
+  it("submits the trimmed work with the mechanic's sign-off", async () => {
     const user = userEvent.setup();
     resolveSquawkAction.mockResolvedValueOnce({ ok: true });
-
-    render(
-      <ResolveSquawkDialog
-        squawkId="sq-1"
-        title="X"
-        severity="major"
-      />,
-    );
+    render(<ResolveSquawkDialog squawkId="sq-1" title="X" severity="major" />);
     await user.click(screen.getByRole("button", { name: /^Resolve$/i }));
-    await user.type(
-      screen.getByLabelText(/Resolution notes/i),
-      "  Replaced LH main tire; rebalanced.  ",
-    );
-    await user.click(
-      screen.getByRole("button", { name: /Resolve squawk/i }),
-    );
+    await fillSignOff(user, "  Replaced LH main tire; rebalanced.  ");
+    await user.click(screen.getByRole("button", { name: /Resolve squawk/i }));
 
     await waitFor(() => {
       expect(resolveSquawkAction).toHaveBeenCalledWith("sq-1", {
         resolution_notes: "Replaced LH main tire; rebalanced.",
+        ...SIGNER,
       });
     });
     expect(routerRefresh).toHaveBeenCalled();
@@ -120,10 +102,7 @@ describe("ResolveSquawkDialog", () => {
       />,
     );
     await user.click(screen.getByRole("button", { name: /^Resolve$/i }));
-    await user.type(
-      screen.getByLabelText(/Resolution notes/i),
-      "Done.",
-    );
+    await fillSignOff(user, "Done.");
     await user.click(
       screen.getByRole("button", { name: /Resolve squawk/i }),
     );
