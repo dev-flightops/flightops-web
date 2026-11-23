@@ -35,7 +35,10 @@ function observationText(o: MinimumsObservation): string {
     parts.push(`visibility ${o.visibility_sm} sm`);
   }
   const text = parts.join(", ");
-  return o.source === "field_report" ? `${text} (village report)` : text;
+  if (o.source === "field_report") return `${text} (village report)`;
+  // 1119-03: a flight more than an hour off is held to its forecast too.
+  if (o.source === "taf" && o.observed_at) return `${text} (TAF for ${o.observed_at.slice(11, 16)}Z)`;
+  return text;
 }
 
 /** "PAEM ceiling 500 ft, visibility 1.5 sm; PABE ceiling 400 ft

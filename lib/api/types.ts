@@ -2924,7 +2924,9 @@ export type TypePosition = "pic" | "sic" | "instructor" | "check_airman" | "advi
 
 /** One report at one stop, held against the dispatch minimums (#89). */
 export interface MinimumsObservation {
-  source: "metar" | "field_report";
+  /** "taf": the TAF's forecast for the flight's time at the stop, held when
+   *  that is more than an hour off (1119-03); `observed_at` is that time. */
+  source: "metar" | "field_report" | "taf";
   observed_at: string | null;
   ceiling_ft: number | null;
   visibility_sm: number | null;

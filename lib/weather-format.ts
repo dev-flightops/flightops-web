@@ -13,7 +13,8 @@
 
 import type { FlightCategory, WeatherReportResponse } from "@/lib/api/types";
 
-export type RouteRole = "DEPARTURE" | "EN ROUTE" | "DESTINATION";
+/** ALTERNATE: an IFR flight's alternate, shown after the route (1119-18). */
+export type RouteRole = "DEPARTURE" | "EN ROUTE" | "DESTINATION" | "ALTERNATE";
 
 /** Returns the legacy-style role tag for an ICAO based on its position in
  *  the route. Single-stop routes get no tag (return null). */

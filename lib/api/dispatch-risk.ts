@@ -150,7 +150,9 @@ export interface RiskStopIn {
  *  first of them used. A null ceiling with a `ceiling_from` is a clear sky. */
 export interface StopWeather {
   ident: string;
-  source: "metar" | "weathercam" | "village" | null;
+  /** "taf": a flight more than an hour off, scored on the TAF for its time
+   *  at the stop (1119-03). */
+  source: "taf" | "metar" | "weathercam" | "village" | "taf_temporary" | null;
   certified: boolean;
   /** e.g. "METAR and village report, not certified". */
   described: string;

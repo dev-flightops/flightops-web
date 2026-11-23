@@ -51,10 +51,14 @@ const MAX_STOPS = 10;
  */
 export async function WeatherPanel({
   icaos,
+  alternate = null,
   stopWeather = null,
   nonCertified = false,
 }: {
   icaos: string[];
+  /** An IFR flight's alternate, shown after the route with its own reports
+   *  (1119-18: "the packet never pulls or checks PANI's weather"). */
+  alternate?: string | null;
   /** Each stop's scored weather and its sources, from ops (#117). */
   stopWeather?: StopWeather[] | null;
   /** Some stop's scored weather isn't certified: show the notice. */
@@ -81,7 +85,9 @@ export async function WeatherPanel({
   }
 
   const truncated = uniq.length > MAX_STOPS;
-  const stops = truncated ? uniq.slice(0, MAX_STOPS) : uniq;
+  const route = truncated ? uniq.slice(0, MAX_STOPS) : uniq;
+  const alt = alternate?.trim().toUpperCase() || null;
+  const stops = alt && !route.includes(alt) ? [...route, alt] : route;
 
   // The village observers' reports (#110): the client put one in for
   // PAII and it never reached the brief. The board is a convenience here,
@@ -146,7 +152,7 @@ export async function WeatherPanel({
 
   const cards = stops.map((icao, idx) => ({
     icao,
-    role: routeRoleFor(idx, stops.length),
+    role: idx >= route.length ? ("ALTERNATE" as const) : routeRoleFor(idx, route.length),
     metar: outcomeFor(icao, "metar", lookup, errorLookup),
     taf: outcomeFor(icao, "taf", lookup, errorLookup),
     pireps: outcomeFor(icao, "pirep", lookup, errorLookup),
@@ -432,6 +438,7 @@ const ROLE_TAG_STYLE: Record<RouteRole, string> = {
   DEPARTURE: "text-status-blue",
   "EN ROUTE": "text-muted-foreground",
   DESTINATION: "text-status-blue",
+  ALTERNATE: "text-status-yellow",
 };
 
 function RoleTag({ role }: { role: RouteRole }) {

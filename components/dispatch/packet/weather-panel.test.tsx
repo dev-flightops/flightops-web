@@ -115,6 +115,25 @@ describe("WeatherPanel", () => {
     expect(screen.getByText(/TAF PANC/)).toBeInTheDocument();
   });
 
+  it("adds an IFR flight's alternate after the route, tagged ALTERNATE (1119-18)", async () => {
+    batchWeather.mockReset().mockResolvedValueOnce(
+      makeBatch([
+        { icao: "PABE", kind: "metar" },
+        { icao: "PADQ", kind: "metar" },
+        { icao: "PADQ", kind: "taf", raw: "TAF PADQ ..." },
+      ]),
+    );
+    const ui = await WeatherPanel({ icaos: ["PABE", "PAEM"], alternate: "padq" });
+    render(ui);
+    expect(batchWeather.mock.calls[0][0].map((r: { icao: string }) => r.icao)).toEqual([
+      "PABE", "PABE", "PABE", "PAEM", "PAEM", "PAEM", "PADQ", "PADQ", "PADQ",
+    ]);
+    expect(screen.getByText("ALTERNATE")).toBeInTheDocument();
+    // The route's own roles stay as they were.
+    expect(screen.getByText("DEPARTURE")).toBeInTheDocument();
+    expect(screen.getByText("DESTINATION")).toBeInTheDocument();
+  });
+
   it("says when the latest report is a special one, as PABE's was (#71)", async () => {
     batchWeather.mockReset().mockResolvedValueOnce(
       makeBatch([

@@ -1682,8 +1682,9 @@ function WeatherUsed({
       <div>
         <p className="eyebrow">Weather used</p>
         <dl className="mt-1 grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5 text-xs">
-          {stops.map((stop) => (
-            <Fragment key={stop.ident}>
+          {/* A base can show twice, weighed on a TAF for each visit (1119-03). */}
+          {stops.map((stop, i) => (
+            <Fragment key={`${stop.ident}-${i}`}>
               <dt className="font-mono font-semibold text-foreground">{stop.ident}</dt>
               <dd
                 className={

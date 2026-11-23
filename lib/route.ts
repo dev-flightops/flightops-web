@@ -43,6 +43,17 @@ export function flightStops(flight: {
     : [flight.origin, flight.destination];
 }
 
+/** The flight's stops, and an IFR flight's alternate after them, for the
+ *  weather the packet scores (1119-18): ops checks the alternate against
+ *  the alternate minimums. */
+export function withAlternate(
+  flight: { is_ifr?: boolean; alternate_ident?: string | null },
+  stops: string[],
+): string[] {
+  const alternate = flight.is_ifr ? flight.alternate_ident?.trim().toUpperCase() : null;
+  return alternate && !stops.includes(alternate) ? [...stops, alternate] : stops;
+}
+
 /** A flight's route as one line: "PABE → PAHP → PASM". */
 export function routeText(flight: {
   origin: string;

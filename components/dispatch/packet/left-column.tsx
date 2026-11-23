@@ -93,6 +93,7 @@ export async function LeftColumn({
 
       <WeatherPanel
         icaos={icaos}
+        alternate={flight?.is_ifr ? (flight.alternate_ident ?? null) : null}
         stopWeather={risk?.stops ?? null}
         nonCertified={Boolean(risk?.non_certified_weather)}
       />

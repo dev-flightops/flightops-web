@@ -18,7 +18,7 @@ import type {
 } from "@/lib/api/types";
 import { batchWeather } from "@/lib/api/weather";
 import { isIfrPlanned, observationsFromWeather } from "@/lib/frat/observations";
-import { flightStops } from "@/lib/route";
+import { flightStops, withAlternate } from "@/lib/route";
 
 export interface FratInputs {
   weather: WeatherBatchResponse | null;
@@ -43,7 +43,9 @@ export async function loadFratInputs(
 ): Promise<FratInputs> {
   const routeIcaos = routingAirports(flight);
   if (routeIcaos.length === 0) return { weather: null, fratPrefill: null, fratBlock: null };
-  const reqs = routeIcaos.flatMap((icao) => [
+  // The packet scores an IFR flight's alternate too (1119-18).
+  const scored = withAlternate(flight, routeIcaos);
+  const reqs = scored.flatMap((icao) => [
     { icao, kind: "metar" as const },
     { icao, kind: "taf" as const },
     { icao, kind: "pirep" as const },
@@ -51,7 +53,7 @@ export async function loadFratInputs(
   const [weather, cams, airports] = await Promise.all([
     batchWeather(reqs).catch(() => null),
     weatherCamsFor(routeIcaos),
-    scorePacket ? getAirports(routeIcaos).catch(() => null) : Promise.resolve(null),
+    scorePacket ? getAirports(scored).catch(() => null) : Promise.resolve(null),
   ]);
   // The client, 17 Nov: "if dispatcher refreshes the data and then it goes
   // back to low, the FRAT should also go back to low." The FRAT's level now
@@ -60,7 +62,7 @@ export async function loadFratInputs(
   // the prefill and the FRAT read the packet's level. Best-effort: without
   // it they read the score saved last.
   if (scorePacket) {
-    await scoreFlightRisk(flight.id, { stops: riskStops(routeIcaos, weather, airports, cams) }).catch(
+    await scoreFlightRisk(flight.id, { stops: riskStops(scored, weather, airports, cams) }).catch(
       () => null,
     );
   }
