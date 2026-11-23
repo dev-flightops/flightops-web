@@ -3,7 +3,9 @@ import Link from "next/link";
 import { linkCaps } from "@/components/ff/controls";
 import { cn } from "@/lib/utils";
 import { RiskBadge, StatusBadge } from "@/components/safety/safety-report-badges";
+import { loadZoneTable } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
+import { localDate } from "@/lib/format/local-time";
 import {
   HAZARD_CATEGORY_LABELS,
   HAZARD_SEVERITY_LABELS,
@@ -29,10 +31,13 @@ import {
  * team's now, so most people have none and the section is left out.
  */
 export default async function MySafetyReportsPage() {
+  // The day each was filed, in the base's time (1119-22). Never throws.
+  const zones = loadZoneTable();
   const [reportsResult, hazardsResult] = await Promise.allSettled([
     listMySafetyReports(200),
     listMyHazards({ limit: 200 }),
   ]);
+  const zone = (await zones).fallback;
   const failed = [reportsResult, hazardsResult].find((r) => r.status === "rejected");
   const reports: SafetyReport[] = reportsResult.status === "fulfilled" ? reportsResult.value.items : [];
   const hazards: HazardReport[] = hazardsResult.status === "fulfilled" ? hazardsResult.value.items : [];
@@ -110,7 +115,7 @@ export default async function MySafetyReportsPage() {
                         {r.is_anonymous ? " · Anonymous" : ""}
                       </span>
                       <span className="text-[0.6875rem] text-muted-foreground">
-                        Filed {new Date(r.created_at).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" })}
+                        Filed {localDate(r.created_at, zone, { withYear: true })}
                       </span>
                     </div>
                     <p className="line-clamp-2 font-medium text-foreground/90">{r.title}</p>
@@ -145,7 +150,7 @@ export default async function MySafetyReportsPage() {
                       {HAZARD_CATEGORY_LABELS[h.category]}
                     </span>
                     <span className="text-[0.6875rem] text-muted-foreground">
-                      Filed {new Date(h.created_at).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" })}
+                      Filed {localDate(h.created_at, zone, { withYear: true })}
                     </span>
                   </div>
                   <p className="line-clamp-2 text-foreground/90">
