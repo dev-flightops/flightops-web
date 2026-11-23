@@ -16,8 +16,8 @@ import {
 } from "@/lib/village-weather-format";
 import {
   fieldFormat,
-  metarAge,
   metarSummary,
+  reportAge,
   routeRoleFor,
   utcHm,
   type RouteRole,
@@ -306,7 +306,7 @@ function AirportHeader({
       {metar.ok && (
         <span className="flex flex-wrap items-baseline gap-2 text-xs text-muted-foreground">
           <SpecialReportChip raw={metar.report.raw} />
-          METAR age: {metarAge(metar.report.parsed_at)}
+          METAR age: {reportAge(metar.report)}
         </span>
       )}
     </div>

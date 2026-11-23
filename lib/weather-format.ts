@@ -27,6 +27,38 @@ export function routeRoleFor(
   return "EN ROUTE";
 }
 
+/** When a METAR was observed, from its "DDHHMMZ" stamp: the report's own
+ *  time, as the server's stale-weather check reads it
+ *  (weather_sources.parse_metar_observed_at). The stamp has no month, so a
+ *  day after today's is last month's. Null when there is no stamp or it
+ *  isn't a real date. */
+export function metarObservedAt(raw: string, now: Date = new Date()): Date | null {
+  const match = /\b(\d{2})(\d{2})(\d{2})Z\b/.exec(raw ?? "");
+  if (!match) return null;
+  const [day, hour, minute] = match.slice(1).map(Number);
+  let year = now.getUTCFullYear();
+  let month = now.getUTCMonth();
+  if (day > now.getUTCDate()) {
+    month -= 1;
+    if (month < 0) {
+      month = 11;
+      year -= 1;
+    }
+  }
+  const at = new Date(Date.UTC(year, month, day, hour, minute));
+  // The 31st of a 30-day month, hour 24, minute 60: a corrupt stamp.
+  if (at.getUTCDate() !== day || at.getUTCHours() !== hour || at.getUTCMinutes() !== minute) return null;
+  return at;
+}
+
+/** A METAR's age (1119-10): from when it was observed, not when FlightOps
+ *  fetched it. PADM's card read "just now" for a report 8 hr 56 min old,
+ *  while the stale-weather box beside it asked for an acknowledgment. */
+export function reportAge(report: { raw: string; parsed_at: string }, now: Date = new Date()): string {
+  const observed = metarObservedAt(report.raw, now);
+  return metarAge(observed ? observed.toISOString() : report.parsed_at, now);
+}
+
 /** Format METAR age relative to `now` as "X min" / "Xh Ym" / "just now".
  *  `now` is injected so tests can lock the clock. */
 export function metarAge(
