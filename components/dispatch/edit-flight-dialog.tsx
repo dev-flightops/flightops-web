@@ -290,6 +290,8 @@ export function EditFlightDialog({
   const [error, setError] = useState<string | null>(null);
   // What the saved route no longer flies (#208), shown before closing.
   const [offRoute, setOffRoute] = useState<OffRoute | null>(null);
+  // What changed that the FRAT was scored on (1119-21), said before closing.
+  const [fratRestart, setFratRestart] = useState<string[] | null>(null);
   const [isPending, startTransition] = useTransition();
 
   const form = useForm<FormValues>({
@@ -365,10 +367,12 @@ export function EditFlightDialog({
       const result = await updateFlightAction(flight.id, patch);
       if (result.ok) {
         form.reset(values); // Make the just-saved values the new "baseline".
+        if (result.fratStartsOver?.length) setFratRestart(result.fratStartsOver);
         if (result.offRoute) {
           setOffRoute(result.offRoute);
           return;
         }
+        if (result.fratStartsOver?.length) return;
         setOpen(false);
         router.refresh();
       } else {
@@ -380,10 +384,11 @@ export function EditFlightDialog({
   const close = () => {
     // The form stays open while it saves. Once the report is up the save is
     // done, though the page's refresh may still count as pending.
-    if (isPending && !offRoute) return;
+    if (isPending && !offRoute && !fratRestart) return;
     setOpen(false);
-    if (offRoute) {
+    if (offRoute || fratRestart) {
       setOffRoute(null);
+      setFratRestart(null);
       router.refresh();
     }
   };
@@ -398,7 +403,22 @@ export function EditFlightDialog({
       <Dialog open={open} onOpenChange={(o) => (o ? setOpen(true) : close())}>
         <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
           {offRoute ? (
-            <OffRouteReport flightNumber={flight.flight_number} offRoute={offRoute} onClose={close} />
+            <>
+              <OffRouteReport flightNumber={flight.flight_number} offRoute={offRoute} onClose={close} />
+              {fratRestart ? <FratRestartNote changed={fratRestart} /> : null}
+            </>
+          ) : fratRestart ? (
+            <>
+              <DialogHeader>
+                <DialogTitle>{flight.flight_number} saved</DialogTitle>
+              </DialogHeader>
+              <FratRestartNote changed={fratRestart} />
+              <DialogFooter>
+                <Button type="button" onClick={close}>
+                  Done
+                </Button>
+              </DialogFooter>
+            </>
           ) : (
             <>
               <DialogHeader>
@@ -406,8 +426,9 @@ export function EditFlightDialog({
                 <DialogDescription>
                   Amend the scheduled flight, its route and stops included. Times are
                   local at the departure base ({tz}). A new date moves it to another
-                  day: its FRAT, acknowledgments and check-in start over. Each save is
-                  recorded in the audit log with a field-level diff.
+                  day: its FRAT, acknowledgments and check-in start over. VFR or IFR,
+                  new times, another aircraft or route start its FRAT over too. Each
+                  save is recorded in the audit log with a field-level diff.
                 </DialogDescription>
               </DialogHeader>
 
@@ -747,4 +768,16 @@ export function EditFlightDialog({
 function ZuluHint({ value, timeZone }: { value: string; timeZone: string }) {
   const hint = zuluHint(value, timeZone);
   return hint ? <p className="font-mono text-[0.65rem] text-muted-foreground">{hint}</p> : null;
+}
+
+/** The FRAT starts over (1119-21, the client: "A new FRAT should be
+ *  required"): what changed, and what is to be done. */
+function FratRestartNote({ changed }: { changed: string[] }) {
+  return (
+    <p role="status" className="notice notice-yellow text-sm">
+      {`The FRAT starts over: ${changed.join(", ")} changed, and the FRAT was scored on ${
+        changed.length === 1 ? "it" : "them"
+      }. File a new one; it is signed again before release.`}
+    </p>
+  );
 }

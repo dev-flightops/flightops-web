@@ -430,7 +430,12 @@ export interface OffRoute {
 }
 
 /** PATCH /flights/{id}: the flight, and what came off its route. */
-export type FlightUpdateResult = FlightDetail & { off_route?: OffRoute | null };
+export type FlightUpdateResult = FlightDetail & {
+  off_route?: OffRoute | null;
+  /** What changed that its FRAT was scored on (1119-21): "VFR or IFR",
+   *  "times", "aircraft", "route", "alternate". The FRAT starts over. */
+  frat_starts_over?: string[];
+};
 
 export async function updateFlight(
   flightId: string,
