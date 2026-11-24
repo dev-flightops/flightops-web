@@ -255,6 +255,54 @@ describe("packetWeatherFor (#52)", () => {
     });
   });
 
+  it("brings an IFR flight's alternate, as the page scores it (1119-18)", async () => {
+    // Left out, the release scored the alternate it couldn't see as HIGH and
+    // refused PGR800 while the page showed MEDIUM (24 Nov).
+    vi.mocked(getFlight).mockResolvedValue({
+      origin: "PABE",
+      destination: "PABE",
+      stops: ["PABE", "PAHP", "PAVA", "PABE"],
+      is_ifr: true,
+      alternate_ident: "paem",
+    } as FlightDetail);
+    vi.mocked(batchWeather).mockResolvedValue({
+      items: [report("PAEM", "metar", "PAEM 241812Z AUTO 3SM -SN BR FEW007 BKN012 OVC020")],
+      errors: [],
+    });
+    vi.mocked(apiFetch).mockImplementation(async (path: string) => {
+      if (path.startsWith("/weather/airports")) return { airports: [PABE] };
+      if (path === "/ops/dispatch/f-1/risk-inputs") return { area_forecast_product: null };
+      throw new Error(`unexpected ${path}`);
+    });
+
+    const weather = await packetWeatherFor("f-1");
+
+    expect(weather?.stops.map((s) => s.ident)).toEqual(["PABE", "PAHP", "PAVA", "PAEM"]);
+    expect(weather?.stops.at(-1)?.metar).toBe("PAEM 241812Z AUTO 3SM -SN BR FEW007 BKN012 OVC020");
+    const asked = vi.mocked(batchWeather).mock.calls[0][0].map((r) => r.icao);
+    expect(new Set(asked)).toEqual(new Set(["PABE", "PAHP", "PAVA", "PAEM"]));
+  });
+
+  it("leaves a VFR flight's alternate out", async () => {
+    vi.mocked(getFlight).mockResolvedValue({
+      origin: "PABE",
+      destination: "PABE",
+      stops: ["PABE", "PAHP", "PABE"],
+      is_ifr: false,
+      alternate_ident: "PAEM",
+    } as FlightDetail);
+    vi.mocked(batchWeather).mockResolvedValue({ items: [], errors: [] });
+    vi.mocked(apiFetch).mockImplementation(async (path: string) => {
+      if (path.startsWith("/weather/airports")) return { airports: [PABE] };
+      if (path === "/ops/dispatch/f-1/risk-inputs") return { area_forecast_product: null };
+      throw new Error(`unexpected ${path}`);
+    });
+
+    const weather = await packetWeatherFor("f-1");
+
+    expect(weather?.stops.map((s) => s.ident)).toEqual(["PABE", "PAHP"]);
+  });
+
   it("gives up rather than hold the release up", async () => {
     vi.mocked(getFlight).mockRejectedValueOnce(new Error("ops down"));
     expect(await packetWeatherFor("f-1")).toBeNull();
