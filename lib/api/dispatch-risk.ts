@@ -6,7 +6,7 @@
  * services don't call each other (the FRAT prefill works the same way).
  */
 
-import { flightStops } from "@/lib/route";
+import { alternateOf, flightStops } from "@/lib/route";
 
 import { apiFetch } from "./client";
 import { getFlight } from "./ops";
@@ -369,13 +369,22 @@ export async function loadDispatchRisk(
  * The weather a dispatch packet prints (#52): each stop's reports and the
  * area forecast for the region the dispatcher chose. What can't be
  * fetched is left out, and the packet prints it as unavailable.
+ *
+ * An IFR flight's alternate comes too, as the page sends it to be scored
+ * (1119-18): the release scores the flight again from this weather, and an
+ * alternate it can't see scores HIGH. Left out, every IFR flight with an
+ * alternate was refused at release for a HIGH risk that the page, scored
+ * with the alternate's weather, didn't show, so the Chief Pilot or DO had
+ * nothing to approve (PGR800, 24 Nov). The print walks the route, so the
+ * alternate's reports don't change it.
  */
 export async function gatherPacketWeather(
   flightId: string,
   stops: string[],
+  alternate: string | null = null,
 ): Promise<PacketWeather> {
   const [sent, inputs] = await Promise.all([
-    gatherStops(stops),
+    gatherStops(stops, alternate),
     getRiskInputs(flightId).catch(() => null),
   ]);
   const product = inputs?.area_forecast_product;
@@ -404,7 +413,9 @@ export async function packetWeatherFor(flightId: string): Promise<PacketWeather 
   });
   try {
     return await Promise.race([
-      getFlight(flightId).then((flight) => gatherPacketWeather(flightId, flightStops(flight))),
+      getFlight(flightId).then((flight) =>
+        gatherPacketWeather(flightId, flightStops(flight), alternateOf(flight)),
+      ),
       timeout,
     ]);
   } catch {
