@@ -759,3 +759,9 @@ export async function deferSquawk(id: string, body: RtsDeferral): Promise<Squawk
     body: JSON.stringify(body),
   });
 }
+
+/** Delete a test work order nobody signed off (1119-30); refused (409) once
+ *  it is the aircraft's maintenance record. */
+export async function deleteWorkOrder(id: string): Promise<void> {
+  await apiFetch<void>(`/maintenance/work-orders/${encodeURIComponent(id)}`, { method: "DELETE" });
+}

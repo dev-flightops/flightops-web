@@ -456,3 +456,9 @@ export async function getFlightBookings(flightId: string): Promise<FlightBooking
 export async function listWaitingBookings(flightId: string): Promise<BookingListResponse> {
   return apiFetch<BookingListResponse>(`/reservations/flights/${flightId}/waiting-bookings`);
 }
+
+/** Delete a test customer and their bookings (1119-30); refused (409) once
+ *  they flew, have an invoice or a booking on a flight. */
+export async function deleteCustomer(customerId: string): Promise<void> {
+  await apiFetch<void>(`/reservations/customers/${encodeURIComponent(customerId)}`, { method: "DELETE" });
+}

@@ -354,6 +354,11 @@ export const DRUG_ALCOHOL_LEADERS = roleGate(
   "safety_officer",
 );
 
+/** Delete a test record that never became the operation's record: a
+ *  cancelled flight that never left, a work order nobody signed off, a
+ *  customer who never flew (1119-30). The services' RECORD_DELETERS. */
+export const RECORD_DELETERS = roleGate("exec_admin");
+
 /** Approve a refund over $500 (#127): the post-holders who run the
  *  company, never the person entering it. billing-service's
  *  APPROVER_ROLES. */

@@ -7,6 +7,7 @@ import { packetWeatherFor } from "@/lib/api/dispatch-risk";
 import { getFlightManifest } from "@/lib/api/manifest";
 import {
   cancelFlight,
+  deleteFlight,
   moveFlightDay,
   pullBackRelease,
   releaseFlight,
@@ -17,6 +18,7 @@ import {
   type OffRoute,
 } from "@/lib/api/ops";
 import { passengerSeatsRefusal } from "@/lib/flights/passenger-seats";
+import { type DeleteResult, deleteRefusal } from "@/lib/records/delete-refusal";
 import { routeChangeRefusal } from "@/lib/flights/route-change-refusal";
 import { releaseRefusal, scheduleRefusal } from "@/lib/flights/schedule-refusals";
 
@@ -310,6 +312,20 @@ export async function cancelScheduledFlightAction(
   revalidatePath(`/dispatch/${flightId}`);
   revalidatePath("/dispatch");
   revalidatePath("/flight-following");
+  return { ok: true };
+}
+
+/** Delete a cancelled test flight that never left (1119-30). The server
+ *  refuses one that is part of the record and says why. */
+export async function deleteFlightAction(flightId: string): Promise<DeleteResult> {
+  try {
+    await deleteFlight(flightId);
+  } catch (err) {
+    return { ok: false, message: deleteRefusal(err, "flight") };
+  }
+  revalidatePath("/dispatch");
+  revalidatePath("/flight-following");
+  revalidatePath("/schedule");
   return { ok: true };
 }
 

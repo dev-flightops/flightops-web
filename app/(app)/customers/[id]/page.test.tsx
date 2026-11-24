@@ -26,7 +26,8 @@ vi.mock("@/lib/api/reservations", () => ({
 }));
 vi.mock("@/lib/api/client", () => ({ ApiError: class extends Error {} }));
 vi.mock("@/lib/api/customer-invoices", () => ({ listCustomerInvoices }));
-vi.mock("next/navigation", () => ({ notFound: vi.fn(), redirect: vi.fn() }));
+vi.mock("next/navigation", () => ({ notFound: vi.fn(), redirect: vi.fn(), useRouter: () => ({ push: vi.fn(), refresh: vi.fn() }) }));
+vi.mock("@/auth", () => ({ auth: vi.fn(async () => ({ roles: ["dispatcher"] })) }));
 vi.mock("@/lib/api/auth", () => ({
   loadZoneTable: async () => ({ byIcao: { PABE: "America/Anchorage" }, fallback: "America/Anchorage" }),
 }));

@@ -43,7 +43,7 @@ export function DemoForm({ status }: { status: DemoStatus }) {
       {result && <div role="status" className="space-y-2">
         <p>Demo ready for {result.company_date} ({result.timezone}).</p>
         <p>{result.summary.flights} flights, {result.summary.aircraft} aircraft, {result.summary.bookings ?? 0} bookings, {result.summary.confirmed_charters ?? 0} confirmed charter and {result.summary.invoices ?? 0} invoice are ready, along with fuel, housing and safety examples.</p>
-        <p>Look for flights DEMO101–DEMO107 and aircraft N91DM–N96DM. DEMO101 provides completed flight hours; DEMO102 is airborne; DEMO103 is released; DEMO104 has passengers and DEMO107 is its return. N96DM is grounded. Use Evan Brooks (prepared.pilot@demo.example) for the pilot workflow; Maya Larsen and Daniel Kowalski fly DEMO102 and DEMO103.</p>
+        <p>Look for flights DEMO101–DEMO107 and aircraft N91DM–N96DM. DEMO101 provides completed flight hours; DEMO102 is airborne; DEMO103 is released; DEMO104 has passengers and DEMO107 is its return. N96DM is grounded. Use Evan Brooks (evan.brooks@peregrine.local) for the pilot workflow; Maya Larsen and Daniel Kowalski fly DEMO102 and DEMO103.</p>
         <nav aria-label="Prepared demo examples" className="flex flex-wrap gap-4">
           <Link className={linkCaps} href="/reservations/fleet-board">Open Fleet Board</Link>
           <Link className={linkCaps} href="/flight-following">Flight Following</Link>

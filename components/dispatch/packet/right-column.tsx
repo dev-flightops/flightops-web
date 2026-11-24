@@ -1,6 +1,7 @@
 
 import { DownloadPdfButton } from "@/components/dispatch/download-pdf-button";
 import { CancelFlight } from "@/components/dispatch/cancel-flight";
+import { DeleteFlight } from "@/components/records/delete-flight";
 import { EditFlightDialog } from "@/components/dispatch/edit-flight-dialog";
 import { MoveFlightDay } from "@/components/dispatch/move-flight-day";
 import { ReleaseButton } from "@/components/dispatch/release-button";
@@ -47,6 +48,7 @@ export function RightColumn({
   acknowledgedWarnings = [],
   risk = null,
   canEditRisk = false,
+  canDelete = false,
 }: {
   flight?: FlightDetail | null;
   /** Aircraft list for the Edit dialog's tail-swap selector. Only needed
@@ -85,6 +87,8 @@ export function RightColumn({
   risk?: DispatchRisk | null;
   /** DISPATCH_WRITERS: the dispatcher or Exec Admin. */
   canEditRisk?: boolean;
+  /** RECORD_DELETERS: a cancelled test flight can be deleted (1119-30). */
+  canDelete?: boolean;
 }) {
   return (
     <div className="space-y-5">
@@ -105,6 +109,7 @@ export function RightColumn({
             acknowledgedWarnings={acknowledgedWarnings}
             // The same roles release, cancel and pull back (#90).
             canDispatch={canEditRisk}
+            canDelete={canDelete}
           />
         </div>
       )}
@@ -168,6 +173,7 @@ function FlightActionsRow({
   staleWeatherAcknowledged = false,
   acknowledgedWarnings = [],
   canDispatch = false,
+  canDelete = false,
 }: {
   flight: FlightDetail;
   aircraft: AircraftListItem[];
@@ -190,6 +196,8 @@ function FlightActionsRow({
   acknowledgedWarnings?: string[];
   /** DISPATCH_WRITERS: may pull a release back or cancel the flight (#90). */
   canDispatch?: boolean;
+  /** RECORD_DELETERS: may delete a cancelled test flight that never left (1119-30). */
+  canDelete?: boolean;
 }) {
   const moveZone = zoneFor(zones ?? DEFAULT_ZONE_TABLE, flight.origin);
   if (flight.status === "scheduled") {
@@ -290,6 +298,9 @@ function FlightActionsRow({
           : `This flight is ${flight.status} — no actions available.`}
       </span>
       {flight.released_at && <DownloadPdfButton flightId={flight.id} />}
+      {canDelete && flight.status === "cancelled" && !flight.actual_departure_at ? (
+        <DeleteFlight flightId={flight.id} flightNumber={flight.flight_number} />
+      ) : null}
     </div>
   );
 }
