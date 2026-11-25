@@ -97,6 +97,24 @@ describe("EditFlightDialog", () => {
     });
   });
 
+  it("opens from the flight as it stands, not as it was when the page loaded (Codex on #509)", async () => {
+    // The packet's steps each have an Edit. IFR saved through another one
+    // refreshes the flight; this one, mounted before, must not send it back.
+    updateFlightAction.mockResolvedValue({ ok: true });
+    const user = userEvent.setup();
+    const { rerender } = render(<EditFlightDialog flight={baseFlight} aircraft={[aircraft207, aircraft510]} />);
+    const refreshed = { ...baseFlight, is_ifr: true, alternate_ident: "PAEM" };
+    rerender(<EditFlightDialog flight={refreshed} aircraft={[aircraft207, aircraft510]} />);
+    await user.click(screen.getByRole("button", { name: /edit/i }));
+
+    const paxInput = screen.getByLabelText(/passengers/i);
+    await user.clear(paxInput);
+    await user.type(paxInput, "8");
+    await user.click(screen.getByRole("button", { name: /save changes/i }));
+
+    expect(updateFlightAction).toHaveBeenCalledWith(baseFlight.id, { pax_count: 8 });
+  });
+
   it("says when the save starts the FRAT over (1119-21)", async () => {
     updateFlightAction.mockResolvedValue({ ok: true, offRoute: null, fratStartsOver: ["VFR or IFR", "alternate"] });
     const user = userEvent.setup();

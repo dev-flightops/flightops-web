@@ -108,6 +108,7 @@ export function ReleaseReadinessPanel({
   canSignForDispatch,
   canPlanFuel = false,
   buildGaps = [],
+  part,
 }: {
   flight: FlightDetail;
   frat: FratAssessmentResponse | null;
@@ -120,6 +121,9 @@ export function ReleaseReadinessPanel({
   canPlanFuel?: boolean;
   /** What the flight still needs before dispatch signs its FRAT (#175). */
   buildGaps?: string[];
+  /** One card for the packet in steps (24 Nov): the FRAT, or the weight
+   *  and balance. Both without. */
+  part?: "frat" | "load";
 }) {
   const release = load?.release ?? null;
   const remaining = release?.remaining_lbs === null || release === null ? null : Number(release.remaining_lbs);
@@ -128,108 +132,117 @@ export function ReleaseReadinessPanel({
 
   return (
     <section aria-label="Release readiness" className="space-y-3">
-      <div className="rounded-lg border border-border bg-card">
-        <header className="flex flex-wrap items-baseline justify-between gap-2 border-b border-border px-5 py-3">
-          <h2 className="section-title">FRAT</h2>
-          <Link href={`/frat/${flight.id}`} className={linkCaps}>
-            {frat ? "Open FRAT ›" : "File the FRAT ›"}
-          </Link>
-        </header>
-        <div className="space-y-2 px-5 py-3 text-sm">
-          {fratUnavailable ? (
-            <p className="text-muted-foreground">The FRAT couldn't be read just now. Release still checks it.</p>
-          ) : frat === null ? (
-            <p className="text-foreground">
-              No FRAT on this flight yet. Dispatch scores it for the PIC and signs it once the flight is
-              built; then the pilot signs it at preflight step 1. The flight can't be released until both
-              have.
-            </p>
-          ) : (
-            <>
+      {part !== "load" && (
+        <div className="rounded-lg border border-border bg-card">
+          <header
+            className={`flex flex-wrap items-baseline gap-2 border-b border-border px-5 py-3 ${part ? "justify-end" : "justify-between"}`}
+          >
+            {/* In its step of the packet, the step's own title names it. */}
+            {part ? null : <h2 className="section-title">FRAT</h2>}
+            <Link href={`/frat/${flight.id}`} className={linkCaps}>
+              {frat ? "Open FRAT ›" : "File the FRAT ›"}
+            </Link>
+          </header>
+          <div className="space-y-2 px-5 py-3 text-sm">
+            {fratUnavailable ? (
+              <p className="text-muted-foreground">The FRAT couldn't be read just now. Release still checks it.</p>
+            ) : frat === null ? (
               <p className="text-foreground">
-                {/* Its level now, which follows the packet (17 Nov). */}
-                {`Risk ${(frat.current_risk_level ?? frat.risk_level).toUpperCase()} · total ${frat.total_score}`}
-                {frat.current_risk_level && frat.current_risk_level !== frat.risk_level
-                  ? ` · filed at ${frat.risk_level.toUpperCase()}`
-                  : ""}
-                {frat.filed_by_name ? ` · filed by ${frat.filed_by_name}` : ""}
+                No FRAT on this flight yet. Dispatch scores it for the PIC and signs it once the flight is
+                built; then the pilot signs it at preflight step 1. The flight can't be released until both
+                have.
               </p>
-              {blockers.length > 0 ? (
-                <ul className="list-disc pl-5 text-status-yellow">
-                  {blockers.map((b) => (
-                    <li key={b.code}>
-                      <span className="text-foreground">{b.message}</span>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="text-status-green">Signed by both: the FRAT doesn&apos;t hold the release.</p>
-              )}
-            </>
-          )}
-        </div>
-        {frat ? (
-          <div className="px-5 pb-4">
-            <FratSignoffs
-              flightId={flight.id}
-              frat={frat}
-              timeZone={timeZone}
-              canSign={{ pilot: false, dispatcher: canSignForDispatch }}
-              buildGaps={buildGaps}
-            />
+            ) : (
+              <>
+                <p className="text-foreground">
+                  {/* Its level now, which follows the packet (17 Nov). */}
+                  {`Risk ${(frat.current_risk_level ?? frat.risk_level).toUpperCase()} · total ${frat.total_score}`}
+                  {frat.current_risk_level && frat.current_risk_level !== frat.risk_level
+                    ? ` · filed at ${frat.risk_level.toUpperCase()}`
+                    : ""}
+                  {frat.filed_by_name ? ` · filed by ${frat.filed_by_name}` : ""}
+                </p>
+                {blockers.length > 0 ? (
+                  <ul className="list-disc pl-5 text-status-yellow">
+                    {blockers.map((b) => (
+                      <li key={b.code}>
+                        <span className="text-foreground">{b.message}</span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-status-green">Signed by both: the FRAT doesn&apos;t hold the release.</p>
+                )}
+              </>
+            )}
           </div>
-        ) : null}
-      </div>
-
-      <div className={`rounded-lg border bg-card ${over ? "border-status-red/50" : "border-border"}`}>
-        <header className="border-b border-border px-5 py-3">
-          <h2 className="section-title">Weight and balance</h2>
-        </header>
-        <div className="px-5 py-3 text-sm">
-          <BalanceScopeNote />
-          {release === null ? (
-            <p className="text-muted-foreground">The load couldn&apos;t be read just now. Release still checks it.</p>
-          ) : release.useful_load_lbs === null ? (
-            <p className="text-status-red">
-              {`${flight.aircraft.tail_number} has no max payload on record, so the load can't be checked. Set it in Settings → Fleet.`}
-            </p>
-          ) : (
-            <>
-              <dl className="grid grid-cols-2 gap-x-6 gap-y-1 sm:grid-cols-4">
-                <div>
-                  <dt className="field-label">Useful load</dt>
-                  <dd className="tabular-nums">{lb(release.useful_load_lbs)}</dd>
-                </div>
-                <div>
-                  <dt className="field-label">Crew and fuel</dt>
-                  <dd className="tabular-nums">
-                    {lb(release.useful_load_lbs - Number(release.payload_lbs) - (remaining ?? 0))}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="field-label">Payload</dt>
-                  <dd className="tabular-nums">{lb(release.payload_lbs)}</dd>
-                </div>
-                <div>
-                  <dt className="field-label">{over ? "Over by" : "Left"}</dt>
-                  <dd className={`tabular-nums font-semibold ${over ? "text-status-red" : "text-status-green"}`}>
-                    {lb(remaining === null ? null : Math.abs(remaining))}
-                  </dd>
-                </div>
-              </dl>
-              <p className="mt-2 text-xs text-muted-foreground">
-                {release.basis === "manifest"
-                  ? "From the flight's manifest."
-                  : "No manifest yet: from the passengers and cargo typed on the flight, passengers at 190 lb."}
-                {over ? " The release refuses a load over the aircraft's useful load." : ""}
-              </p>
-              {load ? (
-                <FuelAndLegs flightId={flight.id} data={load} isIfr={Boolean(flight.is_ifr)} canPlanFuel={canPlanFuel} />
-              ) : null}
-            </>
-          )}
+          {frat ? (
+            <div className="px-5 pb-4">
+              <FratSignoffs
+                flightId={flight.id}
+                frat={frat}
+                timeZone={timeZone}
+                canSign={{ pilot: false, dispatcher: canSignForDispatch }}
+                buildGaps={buildGaps}
+              />
+            </div>
+          ) : null}
         </div>
-      </div>
+      )}
+
+      {part !== "frat" && (
+        <div className={`rounded-lg border bg-card ${over ? "border-status-red/50" : "border-border"}`}>
+          {part ? null : (
+            <header className="border-b border-border px-5 py-3">
+              <h2 className="section-title">Weight and balance</h2>
+            </header>
+          )}
+          <div className="px-5 py-3 text-sm">
+            <BalanceScopeNote />
+            {release === null ? (
+              <p className="text-muted-foreground">The load couldn&apos;t be read just now. Release still checks it.</p>
+            ) : release.useful_load_lbs === null ? (
+              <p className="text-status-red">
+                {`${flight.aircraft.tail_number} has no max payload on record, so the load can't be checked. Set it in Settings → Fleet.`}
+              </p>
+            ) : (
+              <>
+                <dl className="grid grid-cols-2 gap-x-6 gap-y-1 sm:grid-cols-4">
+                  <div>
+                    <dt className="field-label">Useful load</dt>
+                    <dd className="tabular-nums">{lb(release.useful_load_lbs)}</dd>
+                  </div>
+                  <div>
+                    <dt className="field-label">Crew and fuel</dt>
+                    <dd className="tabular-nums">
+                      {lb(release.useful_load_lbs - Number(release.payload_lbs) - (remaining ?? 0))}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="field-label">Payload</dt>
+                    <dd className="tabular-nums">{lb(release.payload_lbs)}</dd>
+                  </div>
+                  <div>
+                    <dt className="field-label">{over ? "Over by" : "Left"}</dt>
+                    <dd className={`tabular-nums font-semibold ${over ? "text-status-red" : "text-status-green"}`}>
+                      {lb(remaining === null ? null : Math.abs(remaining))}
+                    </dd>
+                  </div>
+                </dl>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  {release.basis === "manifest"
+                    ? "From the flight's manifest."
+                    : "No manifest yet: from the passengers and cargo typed on the flight, passengers at 190 lb."}
+                  {over ? " The release refuses a load over the aircraft's useful load." : ""}
+                </p>
+                {load ? (
+                  <FuelAndLegs flightId={flight.id} data={load} isIfr={Boolean(flight.is_ifr)} canPlanFuel={canPlanFuel} />
+                ) : null}
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </section>
   );
 }

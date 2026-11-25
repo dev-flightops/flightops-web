@@ -24,6 +24,7 @@ import { FratOverLimitsPanel } from "@/components/dispatch/packet/frat-over-limi
 import { LoadFailedNotice } from "@/components/ff/setup-notice";
 import { Loads } from "@/lib/api/loads";
 import {
+  AreaForecastRegionField,
   FlightDetailsPanel,
 } from "@/components/dispatch/packet/flight-details-panel";
 import { LeftColumn } from "@/components/dispatch/packet/left-column";
@@ -82,8 +83,12 @@ import {
   computeReleaseBlockers,
   overridesOnRecord,
   plansOutOfLimits,
+  releaseBlockersByStep,
   type ReleaseGateInput,
 } from "@/components/dispatch/packet/release-gate";
+import { PacketStep, PacketStepStrip, type PacketStepInfo } from "@/components/dispatch/packet/packet-steps";
+import { RefreshWeatherButton } from "@/components/dispatch/packet/refresh-weather-button";
+import { EditFlightDialog } from "@/components/dispatch/edit-flight-dialog";
 import { alternateOf, flightStops, paramToRoute } from "@/lib/route";
 
 const UUID_RE =
@@ -461,6 +466,62 @@ export default async function DispatchPage({
   const releaseBlockers = computeReleaseBlockers(releaseGate);
   const hardBlockReason = computeHardBlockReason(releaseGate);
 
+  // The packet in the order a dispatcher builds a flight (the client, 24
+  // Nov): the weather, the aircraft and pilot, the weight and balance, the
+  // FRAT, the release. Each step reads what holds it from the gate above.
+  const byStep = releaseBlockersByStep(releaseGate);
+  const areaForecast = risk
+    ? { value: risk.inputs.area_forecast_product, regions: areaForecastRegions, canEdit: canEditRisk }
+    : null;
+  const picName = crew.items.find((a) => a.crew_role === "pic")?.user.full_name ?? null;
+  const remainingLbs =
+    releaseLoad?.release && releaseLoad.release.remaining_lbs !== null ? Number(releaseLoad.release.remaining_lbs) : null;
+  const steps: PacketStepInfo[] | null = selectedFlight
+    ? [
+        {
+          id: "step-weather",
+          n: 1,
+          title: "Weather",
+          state: byStep.weather.length ? "attention" : "done",
+          notes: byStep.weather,
+        },
+        {
+          id: "step-aircraft",
+          n: 2,
+          title: "Aircraft and pilot",
+          state: byStep.aircraft.length ? "attention" : "done",
+          notes: byStep.aircraft,
+        },
+        {
+          id: "step-load",
+          n: 3,
+          title: "Weight and balance",
+          state: byStep.load.length ? "attention" : releaseLoad?.release ? "done" : "waiting",
+          notes: byStep.load,
+        },
+        {
+          id: "step-frat",
+          n: 4,
+          title: "FRAT",
+          state: frat === undefined ? "waiting" : byStep.frat.length ? "attention" : "done",
+          notes: byStep.frat,
+        },
+        {
+          id: "step-release",
+          n: 5,
+          title: "Release",
+          state:
+            selectedFlight.status === "released" || selectedFlight.status === "completed"
+              ? "done"
+              : selectedFlight.status === "scheduled" && releaseBlockers.length === 0
+                ? "ready"
+                : "waiting",
+        },
+      ]
+    : null;
+  const editable = selectedFlight?.status === "scheduled";
+  const fratLevel = frat?.current_risk_level ?? frat?.risk_level ?? null;
+
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
       <PacketHeader tenantName={tenantName} flight={selectedFlight} />
@@ -510,150 +571,258 @@ export default async function DispatchPage({
           )}
         </LoadFromSchedule>
 
-        {selectedFlight ? (
-          aircraftToday && aircraftToday.company_date === scheduleDate ? (
-            <AircraftTodayLine
-              tail={selectedFlight.aircraft.tail_number}
-              aircraftId={selectedFlight.aircraft.id}
-              today={aircraftToday}
-            />
-          ) : null
+        {selectedFlight && steps ? (
+          <>
+            <PacketStepStrip steps={steps} />
+
+            <PacketStep
+              info={steps[0]}
+              summary={
+                selectedFlight.is_ifr
+                  ? `Planned IFR${selectedFlight.alternate_ident ? `, alternate ${selectedFlight.alternate_ident}` : ""}. The weather decides the aircraft and the rules.`
+                  : "Planned VFR. The weather decides the aircraft and the rules."
+              }
+              action={
+                editable ? (
+                  <EditFlightDialog flight={selectedFlight} aircraft={aircraft} zones={zones} label="Change rules or aircraft" />
+                ) : null
+              }
+            >
+              <div className="flex flex-wrap items-end gap-4">
+                <AreaForecastRegionField flightId={selectedFlight.id} areaForecast={areaForecast} />
+                <RefreshWeatherButton flightSelected />
+              </div>
+              <LeftColumn
+                part="weather"
+                flight={selectedFlight}
+                icaos={icaos}
+                notamAckedIcaos={notamAckedIcaos}
+                weatherFreshness={weatherFreshness}
+                weatherMinimums={weatherMinimums}
+                staleWeatherAcknowledged={staleWeatherAcknowledged}
+                risk={risk}
+                canEditRisk={canEditRisk}
+              />
+            </PacketStep>
+
+            <PacketStep
+              info={steps[1]}
+              summary={`${selectedFlight.aircraft.tail_number}${selectedFlight.aircraft.model ? `, ${selectedFlight.aircraft.model}` : ""} · ${picName ? `PIC ${picName}` : "no PIC yet"}`}
+              action={
+                editable ? (
+                  <EditFlightDialog flight={selectedFlight} aircraft={aircraft} zones={zones} label="Change aircraft" />
+                ) : null
+              }
+            >
+              {aircraftToday && aircraftToday.company_date === scheduleDate ? (
+                <AircraftTodayLine
+                  tail={selectedFlight.aircraft.tail_number}
+                  aircraftId={selectedFlight.aircraft.id}
+                  today={aircraftToday}
+                />
+              ) : null}
+              <FlightDetailsPanel
+                flight={selectedFlight}
+                picOptions={candidates}
+                picAvailability={picAvailability}
+                currentPicId={effectivePicId}
+                flightId={selectedFlight.id}
+                showAreaForecast={false}
+              />
+              {/* Crew for this flight, under the PIC picker that makes it a
+                  row someone else can see. */}
+              <CrewPanel
+                flightId={selectedFlight.id}
+                assignments={crew.items}
+                candidates={candidates}
+                sicAvailability={sicAvailability}
+              />
+              <CrewLegalityHints
+                hasPic={Boolean(effectivePicId)}
+                hasAircraft={Boolean(selectedFlight.aircraft?.tail_number)}
+              />
+              <DispatchComplianceGate
+                pilotUserId={effectivePicId}
+                prefetched={picCompliance}
+                ackedWarnCodes={ackedWarnCodes}
+                flightId={selectedFlight.id}
+                overridesAcknowledged={overridesAcknowledged}
+                sicChecks={sicChecks}
+                canOverride={hasAnyRole(viewerRoles, OVERRIDE_AUTHORITY)}
+              />
+              {/* Open MEL items on the aircraft (Spec 7), each acknowledged
+                  by the dispatcher who ticks it (#155). */}
+              <OpenMelPanel
+                flightId={selectedFlight.id}
+                aircraftId={selectedFlight.aircraft.id}
+                ackedMelIds={ackedMelIds}
+              />
+              <LeftColumn
+                part="aircraft"
+                flight={selectedFlight}
+                icaos={icaos}
+                notamAckedIcaos={notamAckedIcaos}
+                weatherFreshness={weatherFreshness}
+                staleWeatherAcknowledged={staleWeatherAcknowledged}
+                canSignOffMaintenance={hasAnyRole(viewerRoles, AIRWORTHINESS_WRITERS)}
+              />
+            </PacketStep>
+
+            <PacketStep
+              info={steps[2]}
+              summary={
+                remainingLbs === null
+                  ? "The load the release judges, from the manifest."
+                  : remainingLbs < 0
+                    ? `Over the useful load by ${Math.round(-remainingLbs).toLocaleString("en-US")} lb.`
+                    : `${Math.round(remainingLbs).toLocaleString("en-US")} lb left of the useful load. The load team can start.`
+              }
+            >
+              <ReleaseReadinessPanel
+                part="load"
+                flight={selectedFlight}
+                frat={frat ?? null}
+                fratUnavailable={frat === undefined}
+                load={releaseLoad}
+                timeZone={zones.fallback}
+                canSignForDispatch={hasAnyRole(viewerRoles, FRAT_DISPATCH_SIGNERS)}
+                canPlanFuel={hasAnyRole(viewerRoles, MANIFEST_EDITORS)}
+                buildGaps={buildGaps(progress)}
+              />
+              {/* The pilot's plan from ForeFlight (#55), beside the weight
+                  and balance check, which stays the record. */}
+              <ForeFlightPlanPanel flightId={selectedFlight.id} />
+              <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                <LeftColumn
+                  part="load"
+                  flight={selectedFlight}
+                  icaos={icaos}
+                  notamAckedIcaos={notamAckedIcaos}
+                  weatherFreshness={weatherFreshness}
+                  staleWeatherAcknowledged={staleWeatherAcknowledged}
+                />
+              </div>
+            </PacketStep>
+
+            <PacketStep
+              info={steps[3]}
+              summary={
+                fratLevel
+                  ? `Risk ${fratLevel.toUpperCase()}: checks what the weather, aircraft, pilot and load already showed.`
+                  : "Checks what the weather, aircraft, pilot and load already showed."
+              }
+            >
+              {overLimits ? (
+                <FratOverLimitsPanel
+                  view={overLimits}
+                  canAccept={hasAnyRole(viewerRoles, FRAT_OVER_LIMIT_ACCEPTORS)}
+                  risk={risk}
+                />
+              ) : null}
+              <ReleaseReadinessPanel
+                part="frat"
+                flight={selectedFlight}
+                frat={frat ?? null}
+                fratUnavailable={frat === undefined}
+                load={releaseLoad}
+                timeZone={zones.fallback}
+                canSignForDispatch={hasAnyRole(viewerRoles, FRAT_DISPATCH_SIGNERS)}
+                canPlanFuel={hasAnyRole(viewerRoles, MANIFEST_EDITORS)}
+                buildGaps={buildGaps(progress)}
+              />
+              <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                <LeftColumn
+                  part="risk"
+                  flight={selectedFlight}
+                  icaos={icaos}
+                  notamAckedIcaos={notamAckedIcaos}
+                  weatherFreshness={weatherFreshness}
+                  staleWeatherAcknowledged={staleWeatherAcknowledged}
+                  risk={risk}
+                  canEditRisk={canEditRisk}
+                />
+                <RightColumn
+                  part="risk"
+                  flight={selectedFlight}
+                  aircraft={aircraft}
+                  zones={zones}
+                  risk={risk}
+                  canEditRisk={canEditRisk}
+                />
+              </div>
+            </PacketStep>
+
+            <PacketStep info={steps[4]} summary={releaseBlockers.length ? `Waiting on ${releaseBlockers.length} thing${releaseBlockers.length === 1 ? "" : "s"}, listed under the buttons.` : undefined}>
+              {progress ? <FlightProgress progress={progress} timeZone={zones.fallback} /> : null}
+              <RightColumn
+                part="release"
+                flight={selectedFlight}
+                aircraft={aircraft}
+                zones={zones}
+                openEdit={editParam === "1"}
+                openMove={moveParam === "1"}
+                hardBlockReason={hardBlockReason}
+                releaseBlockers={releaseBlockers}
+                pilotUserId={effectivePicId}
+                overridesAcknowledged={overridesAcknowledged}
+                notamAckedIcaos={notamAckedIcaos}
+                staleWeatherAcknowledged={staleWeatherAcknowledged}
+                acknowledgedWarnings={Array.from(ackedWarnCodes)}
+                risk={risk}
+                canEditRisk={canEditRisk}
+                canDelete={hasAnyRole(viewerRoles, RECORD_DELETERS)}
+              />
+            </PacketStep>
+          </>
         ) : (
-          <AircraftTodayPanel
-            today={aircraftToday}
-            pilots={(staff?.items ?? [])
-              .filter((m) => m.roles.includes("pilot"))
-              .map((m) => ({ id: m.id, name: m.full_name }))}
-          />
+          <>
+            <AircraftTodayPanel
+              today={aircraftToday}
+              pilots={(staff?.items ?? [])
+                .filter((m) => m.roles.includes("pilot"))
+                .map((m) => ({ id: m.id, name: m.full_name }))}
+            />
+            <FlightDetailsPanel
+              flight={null}
+              picOptions={candidates}
+              picAvailability={picAvailability}
+              currentPicId={effectivePicId}
+              flightId={null}
+              areaForecast={null}
+            />
+            <CrewLegalityHints hasPic={false} hasAircraft={false} />
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+              <LeftColumn
+                flight={null}
+                icaos={icaos}
+                notamAckedIcaos={notamAckedIcaos}
+                weatherFreshness={weatherFreshness}
+                weatherMinimums={weatherMinimums}
+                staleWeatherAcknowledged={staleWeatherAcknowledged}
+                canSignOffMaintenance={hasAnyRole(viewerRoles, AIRWORTHINESS_WRITERS)}
+                risk={risk}
+                canEditRisk={canEditRisk}
+              />
+              <RightColumn
+                flight={null}
+                aircraft={aircraft}
+                zones={zones}
+                openEdit={editParam === "1"}
+                openMove={moveParam === "1"}
+                hardBlockReason={hardBlockReason}
+                releaseBlockers={releaseBlockers}
+                pilotUserId={effectivePicId}
+                overridesAcknowledged={overridesAcknowledged}
+                notamAckedIcaos={notamAckedIcaos}
+                staleWeatherAcknowledged={staleWeatherAcknowledged}
+                acknowledgedWarnings={Array.from(ackedWarnCodes)}
+                risk={risk}
+                canEditRisk={canEditRisk}
+                canDelete={hasAnyRole(viewerRoles, RECORD_DELETERS)}
+              />
+            </div>
+          </>
         )}
-
-        {overLimits ? (
-          <FratOverLimitsPanel
-            view={overLimits}
-            canAccept={hasAnyRole(viewerRoles, FRAT_OVER_LIMIT_ACCEPTORS)}
-            risk={risk}
-          />
-        ) : null}
-
-        {/* #155 (the client's item 51): the release shows the FRAT and the
-            weight and balance, so the dispatcher sees both before
-            releasing, and signs the FRAT here. */}
-        {selectedFlight && progress ? (
-          <FlightProgress progress={progress} timeZone={zones.fallback} />
-        ) : null}
-
-        {selectedFlight ? (
-          <ReleaseReadinessPanel
-            flight={selectedFlight}
-            frat={frat ?? null}
-            fratUnavailable={frat === undefined}
-            load={releaseLoad}
-            timeZone={zones.fallback}
-            canSignForDispatch={hasAnyRole(viewerRoles, FRAT_DISPATCH_SIGNERS)}
-            canPlanFuel={hasAnyRole(viewerRoles, MANIFEST_EDITORS)}
-            buildGaps={buildGaps(progress)}
-          />
-        ) : null}
-
-        <FlightDetailsPanel
-          flight={selectedFlight}
-          picOptions={candidates}
-          picAvailability={picAvailability}
-          currentPicId={effectivePicId}
-          flightId={selectedFlight?.id ?? null}
-          areaForecast={
-            risk
-              ? {
-                  value: risk.inputs.area_forecast_product,
-                  regions: areaForecastRegions,
-                  canEdit: canEditRisk,
-                }
-              : null
-          }
-        />
-
-        {/* Crew for this flight. Sits directly under Flight Details
-            because the PIC dropdown up there is what a dispatcher
-            reaches for first — this is where that choice becomes a row
-            someone else can see. Only meaningful once a flight is
-            selected; there is nothing to crew otherwise. */}
-        {selectedFlight && (
-          <CrewPanel
-            flightId={selectedFlight.id}
-            assignments={crew.items}
-            candidates={candidates}
-            sicAvailability={sicAvailability}
-          />
-        )}
-
-        <CrewLegalityHints
-          hasPic={Boolean(selectedFlight && effectivePicId)}
-          hasAircraft={Boolean(selectedFlight?.aircraft?.tail_number)}
-        />
-
-        {/* Crew-currency status only makes sense once a PIC is loaded.
-            The PIC selection lives in the URL as `?pic=<uuid>`; the
-            picker inside FlightDetailsPanel writes it. The compliance
-            data is fetched once at the page level and shared with the
-            gate + the Generate-PDF hard-block guard. */}
-        {selectedFlight && (
-          <DispatchComplianceGate
-            pilotUserId={effectivePicId}
-            prefetched={picCompliance}
-            ackedWarnCodes={ackedWarnCodes}
-            flightId={selectedFlight.id}
-            overridesAcknowledged={overridesAcknowledged}
-            sicChecks={sicChecks}
-            canOverride={hasAnyRole(viewerRoles, OVERRIDE_AUTHORITY)}
-          />
-        )}
-
-        {/* Open MEL items on the selected aircraft — Spec 7. Each item
-            gets a dispatcher ack checkbox, saved for the dispatcher who
-            ticks it (#155). */}
-        {selectedFlight && (
-          <OpenMelPanel
-            flightId={selectedFlight.id}
-            aircraftId={selectedFlight.aircraft.id}
-            ackedMelIds={ackedMelIds}
-          />
-        )}
-
-        {/* The pilot's plan from ForeFlight (#55), beside Peregrine's own
-            weight and balance check, which stays the record. Nothing for
-            a company that doesn't bring plans back. */}
-        {selectedFlight && <ForeFlightPlanPanel flightId={selectedFlight.id} />}
-
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-          <LeftColumn
-            flight={selectedFlight}
-            icaos={icaos}
-            notamAckedIcaos={notamAckedIcaos}
-            weatherFreshness={weatherFreshness}
-            weatherMinimums={weatherMinimums}
-            staleWeatherAcknowledged={staleWeatherAcknowledged}
-            canSignOffMaintenance={hasAnyRole(viewerRoles, AIRWORTHINESS_WRITERS)}
-            risk={risk}
-            canEditRisk={canEditRisk}
-          />
-          <RightColumn
-            flight={selectedFlight}
-            aircraft={aircraft}
-            zones={zones}
-            openEdit={editParam === "1"}
-            openMove={moveParam === "1"}
-            hardBlockReason={hardBlockReason}
-            releaseBlockers={releaseBlockers}
-            pilotUserId={effectivePicId}
-            overridesAcknowledged={overridesAcknowledged}
-            notamAckedIcaos={notamAckedIcaos}
-            staleWeatherAcknowledged={staleWeatherAcknowledged}
-            acknowledgedWarnings={Array.from(ackedWarnCodes)}
-            risk={risk}
-            canEditRisk={canEditRisk}
-            canDelete={hasAnyRole(viewerRoles, RECORD_DELETERS)}
-          />
-        </div>
       </div>
     </div>
   );

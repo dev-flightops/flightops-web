@@ -104,6 +104,7 @@ export function FlightDetailsPanel({
   flightId,
   areaForecast = null,
   picAvailability = null,
+  showAreaForecast = true,
 }: {
   flight?: FlightDetail | null;
   /** Pilot roster + overall status for the PIC dropdown (M2-G-5). */
@@ -119,6 +120,9 @@ export function FlightDetailsPanel({
   /** The flight's saved area forecast region and the regions to pick
    *  from (#50). Null on a hand-filled packet, or when it couldn't load. */
   areaForecast?: { value: string | null; regions: AreaForecastRegion[]; canEdit: boolean } | null;
+  /** The packet in steps shows the region with the weather (24 Nov), whose
+   *  AAWU charts it picks, so it isn't here too. */
+  showAreaForecast?: boolean;
 }) {
   return (
     <SectionPanel title="Flight Details">
@@ -231,6 +235,7 @@ export function FlightDetailsPanel({
           )}
         </Field>
 
+        {showAreaForecast && (
         <Field label="Area Forecast Region" htmlFor="flight-afd-region">
           {flightId && areaForecast ? (
             <AreaForecastSelect
@@ -257,9 +262,36 @@ export function FlightDetailsPanel({
           </select>
           )}
         </Field>
+        )}
       </div>
 
     </SectionPanel>
+  );
+}
+
+/** The area forecast region on its own, for the weather step of the packet
+ *  in steps (24 Nov): its AAWU charts print with the packet. */
+export function AreaForecastRegionField({
+  flightId,
+  areaForecast,
+}: {
+  flightId: string;
+  areaForecast: { value: string | null; regions: AreaForecastRegion[]; canEdit: boolean } | null;
+}) {
+  if (!areaForecast) return null;
+  return (
+    <div className="max-w-sm">
+      <Field label="Area Forecast Region" htmlFor="flight-afd-region">
+        <AreaForecastSelect
+          key={flightId}
+          id="flight-afd-region"
+          flightId={flightId}
+          value={areaForecast.value}
+          regions={areaForecast.regions}
+          canEdit={areaForecast.canEdit}
+        />
+      </Field>
+    </div>
   );
 }
 

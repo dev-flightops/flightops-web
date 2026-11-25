@@ -49,6 +49,7 @@ export function RightColumn({
   risk = null,
   canEditRisk = false,
   canDelete = false,
+  part,
 }: {
   flight?: FlightDetail | null;
   /** Aircraft list for the Edit dialog's tail-swap selector. Only needed
@@ -89,10 +90,16 @@ export function RightColumn({
   canEditRisk?: boolean;
   /** RECORD_DELETERS: a cancelled test flight can be deleted (1119-30). */
   canDelete?: boolean;
+  /** One step's part of the packet in steps (24 Nov): the weather (Refresh
+   *  Weather), the risk (the matrix and the dispatcher's notes) or the
+   *  release (the flight's actions and the PDF). All of it without. */
+  part?: "weather" | "risk" | "release";
 }) {
+  const show = (p: NonNullable<typeof part>) => !part || part === p;
+  const pdfShown = !flight || flight.status === "scheduled" || flight.status === "released";
   return (
     <div className="space-y-5">
-      {flight && (
+      {show("release") && flight && (
         <div id="release-actions">
           <FlightActionsRow
             flight={flight}
@@ -114,28 +121,32 @@ export function RightColumn({
         </div>
       )}
 
-      <SectionPanel title={null}>
-        <div className="flex flex-wrap gap-3">
-          <RefreshWeatherButton flightSelected={!!flight} />
+      {(show("weather") || (show("release") && pdfShown)) && (
+        <SectionPanel title={null}>
+          <div className="flex flex-wrap gap-3">
+            {show("weather") && <RefreshWeatherButton flightSelected={!!flight} />}
 
-          {/* AI Review had sat here disabled ("Coming in M4"); it isn't
-              built, so it isn't shown (#157). The AI Assistant is above. */}
+            {/* AI Review had sat here disabled ("Coming in M4"); it isn't
+                built, so it isn't shown (#157). The AI Assistant is above. */}
 
-          {(!flight || flight.status === "scheduled" || flight.status === "released") && <GeneratePdfButton
-            flight={flight ?? null}
-            hardBlockReason={hardBlockReason}
-            pilotUserId={pilotUserId}
-            overridesAcknowledged={overridesAcknowledged}
-            notamAckedIcaos={notamAckedIcaos}
-            staleWeatherAcknowledged={staleWeatherAcknowledged}
-            acknowledgedWarnings={acknowledgedWarnings}
-          />}
-        </div>
-      </SectionPanel>
+            {show("release") && pdfShown && (
+              <GeneratePdfButton
+                flight={flight ?? null}
+                hardBlockReason={hardBlockReason}
+                pilotUserId={pilotUserId}
+                overridesAcknowledged={overridesAcknowledged}
+                notamAckedIcaos={notamAckedIcaos}
+                staleWeatherAcknowledged={staleWeatherAcknowledged}
+                acknowledgedWarnings={acknowledgedWarnings}
+              />
+            )}
+          </div>
+        </SectionPanel>
+      )}
 
-      <RiskAssessmentPanel risk={risk} failed={!!flight && !risk} />
+      {show("risk") && <RiskAssessmentPanel risk={risk} failed={!!flight && !risk} />}
 
-      {flight && risk && (
+      {show("risk") && flight && risk && (
         <DispatcherNotes
           key={`${flight.id}-dispatcher-notes`}
           flightId={flight.id}
