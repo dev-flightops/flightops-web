@@ -59,6 +59,75 @@ describe("loadDispatchRisk with an IFR alternate (1119-18)", () => {
   });
 });
 
+describe("a METAR that didn't come through (24 Nov)", () => {
+  afterEach(() => {
+    vi.mocked(batchWeather).mockReset();
+    vi.mocked(apiFetch).mockReset();
+  });
+
+  const PABE_METAR = "PABE 241753Z 02005KT 3SM -SN BR BKN010 OVC033 M03/M04 A2948";
+  const PAHP_METAR = "PAHP 241807Z AUTO 27003KT 2 1/2SM BR SCT003 OVC029 M01/M01 A2951";
+
+  /** Weather-service answering each weather batch in turn (WeatherCams,
+   *  asked alongside, get nothing). */
+  function answers(...batches: WeatherBatchResponse[]) {
+    const asked: Array<Array<{ icao: string; kind: string }>> = [];
+    vi.mocked(batchWeather).mockImplementation(async (requests) => {
+      if (requests.every((r) => r.kind === "wxcam")) return { items: [], errors: [] };
+      asked.push(requests.map(({ icao, kind }) => ({ icao, kind })));
+      return batches[asked.length - 1] ?? { items: [], errors: [] };
+    });
+    vi.mocked(apiFetch).mockImplementation(async (path: string) =>
+      path.startsWith("/weather/airports") ? { airports: [] } : { rows: [], stops: [] },
+    );
+    return asked;
+  }
+
+  const scoredStops = () => {
+    // This load's scoring: an earlier test's call may still be on the mock.
+    const scored = vi
+      .mocked(apiFetch)
+      .mock.calls.filter(([path]) => String(path) === "/ops/dispatch/f-1/risk")
+      .at(-1);
+    return JSON.parse(String((scored?.[1] as { body: string }).body)).stops as Array<{
+      ident: string;
+      metar: string | null;
+    }>;
+  };
+
+  it("is asked for once more, so the packet doesn't score PAHP HIGH for weather it can't see", async () => {
+    const asked = answers(
+      {
+        items: [report("PABE", "metar", PABE_METAR)],
+        errors: [
+          { icao: "PAHP", kind: "metar", status: 404, detail: "No METAR available for PAHP" },
+          { icao: "PAHP", kind: "taf", status: 404, detail: "No TAF available for PAHP" },
+        ],
+      },
+      { items: [report("PAHP", "metar", PAHP_METAR)], errors: [] },
+    );
+
+    await loadDispatchRisk("f-1", ["PABE", "PAHP", "PABE"]);
+
+    expect(asked).toHaveLength(2);
+    // Only the METAR: PAHP has no TAF, and asking again for it would hold
+    // every village packet up.
+    expect(asked[1]).toEqual([{ icao: "PAHP", kind: "metar" }]);
+    expect(scoredStops().find((s) => s.ident === "PAHP")?.metar).toBe(PAHP_METAR);
+  });
+
+  it("isn't asked for again when every METAR came through", async () => {
+    const asked = answers({
+      items: [report("PABE", "metar", PABE_METAR)],
+      errors: [{ icao: "PABE", kind: "pirep", status: 502, detail: "upstream error" }],
+    });
+
+    await loadDispatchRisk("f-1", ["PABE", "PABE"]);
+
+    expect(asked).toHaveLength(1);
+  });
+});
+
 describe("riskStops (#50)", () => {
   it("hands ops each stop's reports and airport record", () => {
     const weather: WeatherBatchResponse = {
