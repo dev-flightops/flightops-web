@@ -366,21 +366,6 @@ export default async function DispatchPage({
         ? flightStops(selectedFlight)
         : [];
 
-  // HALT-2 — weather staleness for the routed stops. Soft-fails to null:
-  // the release endpoint runs the same evaluator server-side, so a
-  // weather-service blip degrades the button hint rather than stranding
-  // every release. `computeHardBlockReason` documents that contract.
-  let weatherFreshness: RouteFreshness | null = null;
-  if (selectedFlight && icaos.length > 0) {
-    weatherFreshness = await loads.or(getRouteFreshness(icaos), null, "how fresh the route’s weather is");
-  }
-  // #89 — for an aircraft the company lists as not IFR certified, the
-  // route held against its dispatch minimums, as release will hold it.
-  // Soft-fails like freshness: release refuses server-side regardless.
-  const weatherMinimums = selectedFlight
-    ? await loads.or(getWeatherMinimums(selectedFlight.id), null, "the dispatch minimums check")
-    : null;
-
   // The dispatch risk matrix (#50): scored by ops from the flight's weather
   // and airport data, which loadDispatchRisk gathers. Both columns use it:
   // the left for the dispatcher's inputs, the right for the matrix.
@@ -396,6 +381,25 @@ export default async function DispatchPage({
       getAreaForecastRegions().catch(() => []),
     ]);
   }
+
+  // HALT-2 — weather staleness for the routed stops, and #89's minimums for
+  // an aircraft the company lists as not IFR certified. Both read the
+  // reports weather-service keeps, so both come after the scoring above,
+  // whose gathering fetches and keeps this load's reports. Read before it,
+  // a report kept overnight was judged: on 24 Nov the release was blocked
+  // for "PAHP: METAR 15 hr 52 min old" beside the 18:07Z SPECI the same
+  // page showed. Both soft-fail to null: the release endpoint runs the same
+  // evaluators server-side, so a weather-service blip degrades the button
+  // hint rather than stranding every release. `computeHardBlockReason`
+  // documents that contract.
+  const [weatherFreshness, weatherMinimums] = await Promise.all([
+    selectedFlight && icaos.length > 0
+      ? loads.or(getRouteFreshness(icaos), null, "how fresh the route’s weather is")
+      : Promise.resolve<RouteFreshness | null>(null),
+    selectedFlight
+      ? loads.or(getWeatherMinimums(selectedFlight.id), null, "the dispatch minimums check")
+      : Promise.resolve(null),
+  ]);
   const canEditRisk = hasAnyRole(viewerRoles, DISPATCH_WRITERS);
 
   const [overLimits, frat, progress, flightPlans, crewClearance] = await Promise.all([

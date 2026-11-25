@@ -10,7 +10,7 @@ import { alternateOf, flightStops } from "@/lib/route";
 
 import { apiFetch } from "./client";
 import { getFlight } from "./ops";
-import type { WeatherBatchResponse, WeatherReportResponse } from "./types";
+import type { WeatherBatchRequestItem, WeatherBatchResponse, WeatherReportResponse } from "./types";
 import { batchWeather } from "./weather";
 
 export type RiskLevel = "LOW" | "MEDIUM" | "HIGH";
@@ -333,6 +333,34 @@ export function riskStops(
   });
 }
 
+/** How long before a stop's METAR that didn't come through is asked for
+ *  once more. */
+export const WEATHER_RETRY_MS = 1000;
+
+/** The route's reports, with a METAR that didn't come through asked for
+ *  once more. A stop without its METAR is scored as weather the packet
+ *  can't see, HIGH: on 24 Nov PAHP's missed the first load and the packet
+ *  read HIGH until the dispatcher reloaded. Asked again a moment later, AWC
+ *  usually answers (weather-service no longer remembers one empty answer
+ *  for an airport that reports as "no report"). Only METARs: most village
+ *  stops have no TAF at all, and asking again for those would hold every
+ *  packet up for nothing. */
+async function batchWeatherOnceMore(requests: WeatherBatchRequestItem[]): Promise<WeatherBatchResponse> {
+  const first = await batchWeather(requests);
+  const missed = first.errors.filter((e) => e.kind === "metar");
+  if (missed.length === 0) return first;
+  await new Promise((resolve) => setTimeout(resolve, WEATHER_RETRY_MS));
+  const again = await batchWeather(missed.map((e) => ({ icao: e.icao, kind: "metar" as const }))).catch(
+    () => null,
+  );
+  if (!again || again.items.length === 0) return first;
+  const answered = new Set(again.items.map((i) => `${i.icao}/${i.kind}`));
+  return {
+    items: [...first.items, ...again.items],
+    errors: first.errors.filter((e) => !answered.has(`${e.icao}/${e.kind}`)),
+  };
+}
+
 /** Each stop's weather and airport record, gathered from weather-service.
  *  An IFR flight's `alternate` (1119-18) comes after the route's cap, so a
  *  route at the cap doesn't drop it, with its weather alone: the airport
@@ -342,7 +370,7 @@ async function gatherStops(stops: string[], alternate: string | null = null): Pr
   const alt = alternate?.trim().toUpperCase() || null;
   const weighed = alt && !unique.includes(alt) ? [...unique, alt] : unique;
   const [weather, airports, cams] = await Promise.all([
-    batchWeather(
+    batchWeatherOnceMore(
       weighed.flatMap((icao) => [
         { icao, kind: "metar" as const },
         { icao, kind: "taf" as const },
