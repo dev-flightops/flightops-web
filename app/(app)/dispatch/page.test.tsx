@@ -224,6 +224,19 @@ describe("the packet reads the FRAT after scoring the packet (17 Nov)", () => {
     }
   });
 
+  it("judges the weather's age and minimums only once the scoring has fetched it (24 Nov)", async () => {
+    // Read first, a report kept overnight blocked the release as "PAHP:
+    // METAR 15 hr 52 min old" beside the fresh SPECI on the same page.
+    api.getRouteFreshness.mockImplementation(logged("freshness", null));
+    api.getWeatherMinimums.mockImplementation(logged("minimums", null));
+    await open();
+    const scored = calls.indexOf("scored");
+    expect(scored).toBeGreaterThanOrEqual(0);
+    for (const read of ["freshness", "minimums"]) {
+      expect(calls.indexOf(read), read).toBeGreaterThan(scored);
+    }
+  });
+
   it("gives the box the score this load made, to name its reasons", async () => {
     await open();
     expect(seen.box?.view).toEqual(box);
