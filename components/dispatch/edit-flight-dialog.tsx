@@ -298,18 +298,19 @@ export function EditFlightDialog({
   const [fratRestart, setFratRestart] = useState<string[] | null>(null);
   const [isPending, startTransition] = useTransition();
 
+  const defaultsFor = (f: FlightDetail) => ({
+    flight_number: f.flight_number,
+    aircraft_id: f.aircraft.id,
+    ...routeDefaults(f, zoneFor(zones, f.origin)),
+    pax_count: f.pax_count,
+    cargo_lbs: f.cargo_lbs,
+    notes: f.notes ?? "",
+    is_ifr: Boolean(f.is_ifr),
+    alternate_ident: f.alternate_ident ?? "",
+  });
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: {
-      flight_number: flight.flight_number,
-      aircraft_id: flight.aircraft.id,
-      ...routeDefaults(flight, storedZone),
-      pax_count: flight.pax_count,
-      cargo_lbs: flight.cargo_lbs,
-      notes: flight.notes ?? "",
-      is_ifr: Boolean(flight.is_ifr),
-      alternate_ident: flight.alternate_ident ?? "",
-    },
+    defaultValues: defaultsFor(flight),
   });
   const stops = useFieldArray({ control: form.control, name: "stops" });
 
@@ -321,6 +322,17 @@ export function EditFlightDialog({
   // as on BK-59414132).
   const typedByHand = useRef(new Set<string>());
   const lastDeparture = useRef(form.getValues("scheduled_departure_at"));
+  // The packet has an Edit in the weather step, the aircraft step and the
+  // release row (24 Nov), each its own form, mounted once. Each opens afresh
+  // from the flight as it stands, so a change saved through one isn't sent
+  // back as it was by the next (Codex on #509: IFR set in step 1, then the
+  // aircraft changed in step 2, sent is_ifr: false).
+  const openEditor = () => {
+    form.reset(defaultsFor(flight));
+    typedByHand.current.clear();
+    lastDeparture.current = form.getValues("scheduled_departure_at");
+    setOpen(true);
+  };
   const followDeparture = (next: string) => {
     const before = lastDeparture.current;
     if (!next) return; // mid-typing: the last whole time stands
@@ -399,7 +411,7 @@ export function EditFlightDialog({
 
   return (
     <>
-      <Button variant="outline" onClick={() => setOpen(true)}>
+      <Button variant="outline" onClick={openEditor}>
         <EditGlyph className="h-4 w-4" />
         {label}
       </Button>
