@@ -108,7 +108,7 @@ export function PacketStep({
         <div className="flex min-w-0 items-center gap-3">
           <StepMark n={info.n} state={info.state} large />
           <div className="min-w-0">
-            <h2 id={`${info.id}-title`} className="font-display text-base font-extrabold uppercase tracking-wide">
+            <h2 id={`${info.id}-title`} className="font-display text-xl font-extrabold uppercase tracking-wide">
               {info.title}
             </h2>
             {summary ? <p className="text-xs text-muted-foreground">{summary}</p> : null}

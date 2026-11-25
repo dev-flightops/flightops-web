@@ -190,11 +190,14 @@ describe("ReleaseReadinessPanel by step", () => {
 
   it("shows the FRAT card in the FRAT step and the weight and balance in its own", () => {
     const { unmount } = render(<ReleaseReadinessPanel {...props} part="frat" />);
-    expect(screen.getByRole("heading", { name: "FRAT" })).toBeInTheDocument();
-    expect(screen.queryByRole("heading", { name: "Weight and balance" })).not.toBeInTheDocument();
+    // The step's title names the card, so the card doesn't title itself again.
+    expect(screen.getByRole("link", { name: /File the FRAT/ })).toBeInTheDocument();
+    expect(screen.queryByText("The load couldn't be read just now. Release still checks it.")).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading")).not.toBeInTheDocument();
     unmount();
     render(<ReleaseReadinessPanel {...props} part="load" />);
-    expect(screen.getByRole("heading", { name: "Weight and balance" })).toBeInTheDocument();
-    expect(screen.queryByRole("heading", { name: "FRAT" })).not.toBeInTheDocument();
+    expect(screen.getByText("The load couldn't be read just now. Release still checks it.")).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /File the FRAT/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading")).not.toBeInTheDocument();
   });
 });

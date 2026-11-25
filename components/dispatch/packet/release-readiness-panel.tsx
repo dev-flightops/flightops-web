@@ -134,8 +134,11 @@ export function ReleaseReadinessPanel({
     <section aria-label="Release readiness" className="space-y-3">
       {part !== "load" && (
         <div className="rounded-lg border border-border bg-card">
-          <header className="flex flex-wrap items-baseline justify-between gap-2 border-b border-border px-5 py-3">
-            <h2 className="section-title">FRAT</h2>
+          <header
+            className={`flex flex-wrap items-baseline gap-2 border-b border-border px-5 py-3 ${part ? "justify-end" : "justify-between"}`}
+          >
+            {/* In its step of the packet, the step's own title names it. */}
+            {part ? null : <h2 className="section-title">FRAT</h2>}
             <Link href={`/frat/${flight.id}`} className={linkCaps}>
               {frat ? "Open FRAT ›" : "File the FRAT ›"}
             </Link>
@@ -189,9 +192,11 @@ export function ReleaseReadinessPanel({
 
       {part !== "frat" && (
         <div className={`rounded-lg border bg-card ${over ? "border-status-red/50" : "border-border"}`}>
-          <header className="border-b border-border px-5 py-3">
-            <h2 className="section-title">Weight and balance</h2>
-          </header>
+          {part ? null : (
+            <header className="border-b border-border px-5 py-3">
+              <h2 className="section-title">Weight and balance</h2>
+            </header>
+          )}
           <div className="px-5 py-3 text-sm">
             <BalanceScopeNote />
             {release === null ? (
