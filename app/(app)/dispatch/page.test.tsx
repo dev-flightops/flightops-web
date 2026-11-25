@@ -1,4 +1,4 @@
-import { render } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { DispatchRisk } from "@/lib/api/dispatch-risk";
@@ -111,7 +111,12 @@ vi.mock("@/components/dispatch/packet/foreflight-plan-panel", () => ({ ForeFligh
 vi.mock("@/components/dispatch/packet/foreflight-plans", () => ({ ForeFlightPlansWaitingBanner: stub }));
 vi.mock("@/components/dispatch/packet/weight-returns-panel", () => ({ WeightReturnsPanel: stub }));
 vi.mock("@/components/ff/setup-notice", () => ({ LoadFailedNotice: stub }));
-vi.mock("@/components/dispatch/packet/flight-details-panel", () => ({ FlightDetailsPanel: stub }));
+vi.mock("@/components/dispatch/packet/flight-details-panel", () => ({
+  FlightDetailsPanel: stub,
+  AreaForecastRegionField: stub,
+}));
+vi.mock("@/components/dispatch/edit-flight-dialog", () => ({ EditFlightDialog: stub }));
+vi.mock("@/components/dispatch/packet/refresh-weather-button", () => ({ RefreshWeatherButton: stub }));
 vi.mock("@/components/dispatch/packet/left-column", () => ({ LeftColumn: stub }));
 vi.mock("@/components/dispatch/packet/crew-panel", () => ({ CrewPanel: stub }));
 vi.mock("@/components/dispatch/packet/load-from-schedule", () => ({ LoadFromSchedule: stub }));
@@ -236,5 +241,21 @@ describe("the packet reads the FRAT after scoring the packet (17 Nov)", () => {
     expect(api.getFratOverLimits).toHaveBeenCalledWith(FLIGHT);
     expect(api.getLatestFratAssessment).toHaveBeenCalledWith(FLIGHT);
     expect(seen.box?.risk).toBeNull();
+  });
+});
+
+describe("the packet in steps (the client, 24 Nov)", () => {
+  it("shows the weather first, then the aircraft and pilot, the weight and balance, the FRAT and the release", async () => {
+    await open();
+    const titles = Array.from(document.querySelectorAll("section[data-step] h2")).map((h) => h.textContent);
+    expect(titles).toEqual(["Weather", "Aircraft and pilot", "Weight and balance", "FRAT", "Release"]);
+    const strip = screen.getByRole("navigation", { name: "Dispatch steps" });
+    expect(within(strip).getAllByRole("link").map((a) => a.getAttribute("href"))).toEqual([
+      "#step-weather",
+      "#step-aircraft",
+      "#step-load",
+      "#step-frat",
+      "#step-release",
+    ]);
   });
 });

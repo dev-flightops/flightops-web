@@ -9,7 +9,14 @@ import type {
 
 import type { ExternalPlan } from "@/lib/api/integrations";
 
-import { computeHardBlockReason, computeReleaseBlockers, overridesOnRecord, plansOutOfLimits } from "./release-gate";
+import type { ReleaseLoad } from "@/lib/api/manifest";
+import {
+  computeHardBlockReason,
+  computeReleaseBlockers,
+  overridesOnRecord,
+  plansOutOfLimits,
+  releaseBlockersByStep,
+} from "./release-gate";
 
 function finding(code: string): ComplianceFinding {
   return {
@@ -628,3 +635,38 @@ describe("ForeFlight's weight and balance (#181)", () => {
   });
 });
 
+describe("releaseBlockersByStep (the packet in steps, 24 Nov)", () => {
+  it("puts each blocker in the step that clears it, in the gate's order", () => {
+    const input = {
+      ...CLEAR,
+      picAssigned: false,
+      notamAckedIcaos: ["PANC"],
+      weatherFreshness: freshness({ acknowledgment_required: true, stations_requiring_acknowledgment: ["PAHP"] }),
+      openMelIds: ["mel-1"],
+      ackedMelIds: [],
+      fratBlockers: [{ code: "dispatcher_signoff_missing", message: "Dispatch hasn't signed the FRAT." }],
+      releaseLoad: { useful_load_lbs: null, remaining_lbs: null, basis: "manifest" } as unknown as ReleaseLoad,
+    };
+    const steps = releaseBlockersByStep(input);
+
+    expect(steps.weather).toEqual([
+      "NOTAMs not acknowledged for PABE — review each stop and check the box before release.",
+      "Stale or missing weather for PAHP — review it and acknowledge before release.",
+    ]);
+    expect(steps.aircraft).toEqual([
+      "No PIC on this flight's crew — pick one in Flight Details before release.",
+      "1 open MEL item still needs dispatcher acknowledgment.",
+    ]);
+    expect(steps.frat).toEqual(["FRAT: Dispatch hasn't signed the FRAT."]);
+    expect(steps.load).toEqual([
+      "The aircraft has no max payload on record, so the load can't be checked — set it in Settings → Fleet.",
+    ]);
+    // The same blockers as the release button's list, none lost or added.
+    const all = [...steps.weather, ...steps.aircraft, ...steps.load, ...steps.frat];
+    expect([...all].sort()).toEqual([...computeReleaseBlockers(input)].sort());
+  });
+
+  it("is empty in every step when nothing blocks", () => {
+    expect(releaseBlockersByStep(CLEAR)).toEqual({ weather: [], aircraft: [], load: [], frat: [] });
+  });
+});

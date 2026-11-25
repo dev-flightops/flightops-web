@@ -146,6 +146,9 @@ interface EditFlightDialogProps {
   zones?: ZoneTable;
   /** Open on arrival: the board's Edit link (#132). */
   defaultOpen?: boolean;
+  /** The button's words: the packet's steps open it to change the flight
+   *  rules or the aircraft (24 Nov). */
+  label?: string;
 }
 
 /** The typed local time as a UTC instant, if it differs from `stored`. */
@@ -283,6 +286,7 @@ export function EditFlightDialog({
   aircraft,
   zones = DEFAULT_ZONE_TABLE,
   defaultOpen = false,
+  label = "Edit",
 }: EditFlightDialogProps) {
   const router = useRouter();
   const storedZone = zoneFor(zones, flight.origin);
@@ -397,7 +401,7 @@ export function EditFlightDialog({
     <>
       <Button variant="outline" onClick={() => setOpen(true)}>
         <EditGlyph className="h-4 w-4" />
-        Edit
+        {label}
       </Button>
 
       <Dialog open={open} onOpenChange={(o) => (o ? setOpen(true) : close())}>

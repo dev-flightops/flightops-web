@@ -120,7 +120,18 @@ export function plansOutOfLimits(plans: ExternalPlan[]): PlanBalanceIssue[] {
     .map((p) => ({ leg_sequence: p.leg_sequence, issues: p.plan.limit_issues }));
 }
 
-export function computeReleaseBlockers(input: ReleaseGateInput): string[] {
+
+/** The release's blockers, each read in its step of the dispatch packet
+ *  (the client, 24 Nov: weather first, then the aircraft and pilot, the
+ *  weight and balance, the FRAT, and the release). */
+export type PacketStepKey = "weather" | "aircraft" | "load" | "frat";
+
+export interface TaggedBlocker {
+  step: PacketStepKey;
+  message: string;
+}
+
+export function taggedReleaseBlockers(input: ReleaseGateInput): TaggedBlocker[] {
   const {
     picCompliance,
     sicCompliance = [],
@@ -141,10 +152,10 @@ export function computeReleaseBlockers(input: ReleaseGateInput): string[] {
     crewNotCleared = null,
   } = input;
 
-  const blockers: string[] = [];
+  const blockers: TaggedBlocker[] = [];
 
   if (hasSelectedFlight && !picAssigned) {
-    blockers.push("No PIC on this flight's crew — pick one in Flight Details before release.");
+    blockers.push({ step: "aircraft", message: "No PIC on this flight's crew — pick one in Flight Details before release." });
   }
 
   if (
@@ -153,17 +164,19 @@ export function computeReleaseBlockers(input: ReleaseGateInput): string[] {
     !overridesAcknowledged
   ) {
     const n = picCompliance.hard_blocks.length;
-    blockers.push(
-      `PIC ${picCompliance.pilot.full_name} has ${n} hard-block currency item${n === 1 ? "" : "s"} — release blocked until cleared or overridden.`,
-    );
+    blockers.push({
+      step: "aircraft",
+      message: `PIC ${picCompliance.pilot.full_name} has ${n} hard-block currency item${n === 1 ? "" : "s"} — release blocked until cleared or overridden.`,
+    });
   }
 
   for (const sic of sicCompliance) {
     if (sic.dot_color === "red") {
       const n = sic.hard_blocks.length;
-      blockers.push(
-        `SIC ${sic.pilot.full_name} has ${n} hard-block currency item${n === 1 ? "" : "s"} — assign a current SIC or clear them before release.`,
-      );
+      blockers.push({
+        step: "aircraft",
+        message: `SIC ${sic.pilot.full_name} has ${n} hard-block currency item${n === 1 ? "" : "s"} — assign a current SIC or clear them before release.`,
+      });
     }
   }
 
@@ -171,9 +184,10 @@ export function computeReleaseBlockers(input: ReleaseGateInput): string[] {
   // server refuses next, before the soft warnings. Never why (49 CFR 40.321).
   if (hasSelectedFlight && crewNotCleared) {
     for (const p of crewNotCleared) {
-      blockers.push(
-        `${p.seat === "pic" ? "PIC" : "SIC"} ${p.full_name} isn't cleared for safety-sensitive duty under the drug and alcohol program — ask the DER.`,
-      );
+      blockers.push({
+        step: "aircraft",
+        message: `${p.seat === "pic" ? "PIC" : "SIC"} ${p.full_name} isn't cleared for safety-sensitive duty under the drug and alcohol program — ask the DER.`,
+      });
     }
   }
 
@@ -183,20 +197,24 @@ export function computeReleaseBlockers(input: ReleaseGateInput): string[] {
   ]);
   const unacked = warnings.filter((w) => !ackedWarnCodes.has(w.key));
   if (unacked.length > 0) {
-    blockers.push(`${unacked.length} of ${warnings.length} soft warnings still need dispatcher acknowledgment.`);
+    blockers.push({
+      step: "aircraft",
+      message: `${unacked.length} of ${warnings.length} soft warnings still need dispatcher acknowledgment.`,
+    });
   }
 
   if (hasSelectedFlight && icaos.length > 0) {
     const unackedIcaos = unacknowledgedNotamIcaos(icaos, notamAckedIcaos);
     if (unackedIcaos.length > 0) {
-      blockers.push(
-        `NOTAMs not acknowledged for ${unackedIcaos.join(", ")} — review each stop and check the box before release.`,
-      );
+      blockers.push({
+        step: "weather",
+        message: `NOTAMs not acknowledged for ${unackedIcaos.join(", ")} — review each stop and check the box before release.`,
+      });
     }
   }
 
   const belowMinimums = hasSelectedFlight ? minimumsBlockReason(weatherMinimums) : null;
-  if (belowMinimums) blockers.push(belowMinimums);
+  if (belowMinimums) blockers.push({ step: "weather", message: belowMinimums });
 
   if (
     hasSelectedFlight &&
@@ -206,29 +224,36 @@ export function computeReleaseBlockers(input: ReleaseGateInput): string[] {
   ) {
     const stations = weatherFreshness.stations_requiring_acknowledgment;
     const where = stations.length > 0 ? ` for ${stations.join(", ")}` : "";
-    blockers.push(`Stale or missing weather${where} — review it and acknowledge before release.`);
+    blockers.push({ step: "weather", message: `Stale or missing weather${where} — review it and acknowledge before release.` });
   }
 
   if (hasSelectedFlight) {
     const unackedMels = openMelIds.filter((id) => !ackedMelIds.includes(id));
     if (unackedMels.length > 0) {
-      blockers.push(
-        `${unackedMels.length} open MEL item${unackedMels.length === 1 ? "" : "s"} still need${unackedMels.length === 1 ? "s" : ""} dispatcher acknowledgment.`,
-      );
+      blockers.push({
+        step: "aircraft",
+        message: `${unackedMels.length} open MEL item${unackedMels.length === 1 ? "" : "s"} still need${unackedMels.length === 1 ? "s" : ""} dispatcher acknowledgment.`,
+      });
     }
   }
 
   // #155 — the FRAT, then the load. The server holds them last too.
   if (hasSelectedFlight && fratBlockers) {
-    for (const blocker of fratBlockers) blockers.push(`FRAT: ${blocker.message}`);
+    for (const blocker of fratBlockers) blockers.push({ step: "frat", message: `FRAT: ${blocker.message}` });
   }
   if (hasSelectedFlight && releaseLoad) {
     const remaining = releaseLoad.remaining_lbs === null ? null : Number(releaseLoad.remaining_lbs);
     if (releaseLoad.useful_load_lbs === null) {
-      blockers.push("The aircraft has no max payload on record, so the load can't be checked — set it in Settings → Fleet.");
+      blockers.push({
+        step: "load",
+        message: "The aircraft has no max payload on record, so the load can't be checked — set it in Settings → Fleet.",
+      });
     } else if (remaining !== null && remaining < 0) {
       const from = loadSource(releaseLoad.basis, releaseLoad.typed_parts);
-      blockers.push(`Over the aircraft's useful load by ${Math.round(-remaining).toLocaleString("en-US")} lb, by ${from}.`);
+      blockers.push({
+        step: "load",
+        message: `Over the aircraft's useful load by ${Math.round(-remaining).toLocaleString("en-US")} lb, by ${from}.`,
+      });
     }
   }
   // #181 — balance, from the pilot's ForeFlight plan: FlightOps calculates
@@ -236,9 +261,10 @@ export function computeReleaseBlockers(input: ReleaseGateInput): string[] {
   if (hasSelectedFlight && planBalance) {
     for (const p of planBalance) {
       const leg = planBalance.length > 1 && p.leg_sequence !== null ? ` (leg ${p.leg_sequence})` : "";
-      blockers.push(
-        `ForeFlight's weight and balance is outside limits${leg}: ${p.issues.join("; ") || "see the plan"}.`,
-      );
+      blockers.push({
+        step: "load",
+        message: `ForeFlight's weight and balance is outside limits${leg}: ${p.issues.join("; ") || "see the plan"}.`,
+      });
     }
   }
 
@@ -249,6 +275,17 @@ export function computeReleaseBlockers(input: ReleaseGateInput): string[] {
   // instead would strand every release whenever weather-service blips,
   // for a check the server is already making.
   return blockers;
+}
+
+export function computeReleaseBlockers(input: ReleaseGateInput): string[] {
+  return taggedReleaseBlockers(input).map((b) => b.message);
+}
+
+/** The blockers by the packet step that clears them, each in the gate's order. */
+export function releaseBlockersByStep(input: ReleaseGateInput): Record<PacketStepKey, string[]> {
+  const steps: Record<PacketStepKey, string[]> = { weather: [], aircraft: [], load: [], frat: [] };
+  for (const b of taggedReleaseBlockers(input)) steps[b.step].push(b.message);
+  return steps;
 }
 
 /** The first reason release is blocked, and how many more there are: a

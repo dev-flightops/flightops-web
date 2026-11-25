@@ -57,6 +57,7 @@ export async function LeftColumn({
   canSignOffMaintenance = false,
   risk = null,
   canEditRisk = false,
+  part,
 }: {
   flight: FlightDetail | null;
   icaos: string[];
@@ -78,67 +79,81 @@ export async function LeftColumn({
   risk?: DispatchRisk | null;
   /** DISPATCH_WRITERS: the dispatcher or Exec Admin. */
   canEditRisk?: boolean;
+  /** One step's panels of the packet in steps (24 Nov): the weather (route,
+   *  weather, minimums, stale weather, alternate, NOTAMs), the aircraft
+   *  (maintenance), the load (fuel order, load team) or the risk inputs.
+   *  Every panel without it. */
+  part?: "weather" | "aircraft" | "load" | "risk";
 }) {
+  const show = (p: NonNullable<typeof part>) => !part || part === p;
   return (
     <div className="space-y-5">
-      <SectionPanel title="Route">
-        <p className="mb-2 text-xs text-muted-foreground">
-          One ICAO per line — origin first, destination last. Blur (or
-          Cmd/Ctrl-Enter) refreshes the Weather panel for every stop.
-        </p>
-        {/* Keyed to the route so an edited flight's new stops (#106)
-            replace what the box was first given, not only on reload. */}
-        <RouteInput key={icaos.join(",")} defaultText={icaos.join("\n")} />
-      </SectionPanel>
+      {show("weather") && (
+        <>
+          <SectionPanel title="Route">
+            <p className="mb-2 text-xs text-muted-foreground">
+              One ICAO per line — origin first, destination last. Blur (or
+              Cmd/Ctrl-Enter) refreshes the Weather panel for every stop.
+            </p>
+            {/* Keyed to the route so an edited flight's new stops (#106)
+                replace what the box was first given, not only on reload. */}
+            <RouteInput key={icaos.join(",")} defaultText={icaos.join("\n")} />
+          </SectionPanel>
 
-      <WeatherPanel
-        icaos={icaos}
-        alternate={flight?.is_ifr ? (flight.alternate_ident ?? null) : null}
-        stopWeather={risk?.stops ?? null}
-        nonCertified={Boolean(risk?.non_certified_weather)}
-      />
+          <WeatherPanel
+            icaos={icaos}
+            alternate={flight?.is_ifr ? (flight.alternate_ident ?? null) : null}
+            stopWeather={risk?.stops ?? null}
+            nonCertified={Boolean(risk?.non_certified_weather)}
+          />
 
-      {/* #89: under the weather it judges, above the stale-weather box,
-          since no acknowledgment clears it. Nothing for an aircraft the
-          company hasn't listed as not IFR certified. */}
-      <WeatherMinimumsNotice minimums={weatherMinimums} />
+          {/* #89: under the weather it judges, above the stale-weather box,
+              since no acknowledgment clears it. Nothing for an aircraft the
+              company hasn't listed as not IFR certified. */}
+          <WeatherMinimumsNotice minimums={weatherMinimums} />
 
-      {/* Sits directly under the weather it refers to — the dispatcher
-          reads the stale METAR, then ticks the box, without hunting for
-          a control somewhere else on the page. Renders nothing when the
-          route's weather is current. */}
-      <StaleWeatherAck
-        flightId={flight?.id ?? null}
-        freshness={weatherFreshness}
-        acknowledged={staleWeatherAcknowledged}
-      />
+          {/* Sits directly under the weather it refers to — the dispatcher
+              reads the stale METAR, then ticks the box, without hunting for
+              a control somewhere else on the page. Renders nothing when the
+              route's weather is current. */}
+          <StaleWeatherAck
+            flightId={flight?.id ?? null}
+            freshness={weatherFreshness}
+            acknowledged={staleWeatherAcknowledged}
+          />
 
-      <AlternateReviewPanel icaos={icaos} />
+          <AlternateReviewPanel icaos={icaos} />
 
-      <NotamAcknowledgmentPanel
-        flightId={flight?.id ?? null}
-        icaos={icaos}
-        acked={notamAckedIcaos}
-      />
-
-      {flight && risk ? (
-        <ComplianceGatesInputs
-          key={flight.id}
-          flightId={flight.id}
-          risk={risk}
-          canEdit={canEditRisk}
-        />
-      ) : (
-        <RiskInputsUnavailable flightSelected={!!flight} />
+          <NotamAcknowledgmentPanel
+            flightId={flight?.id ?? null}
+            icaos={icaos}
+            acked={notamAckedIcaos}
+          />
+        </>
       )}
 
-      <MaintenancePanel flight={flight} canSignOff={canSignOffMaintenance} />
+      {show("risk") &&
+        (flight && risk ? (
+          <ComplianceGatesInputs
+            key={flight.id}
+            flightId={flight.id}
+            risk={risk}
+            canEdit={canEditRisk}
+          />
+        ) : (
+          <RiskInputsUnavailable flightSelected={!!flight} />
+        ))}
 
-      <FuelOrderPanel flight={flight} />
+      {show("aircraft") && <MaintenancePanel flight={flight} canSignOff={canSignOffMaintenance} />}
 
-      <LoadTeamPanel flight={flight} />
+      {show("load") && (
+        <>
+          <FuelOrderPanel flight={flight} />
+          <LoadTeamPanel flight={flight} />
+        </>
+      )}
 
-      {flight && risk && (
+      {show("risk") && flight && risk && (
         <>
           <CompanyRiskInputs
             key={`${flight.id}-company`}
