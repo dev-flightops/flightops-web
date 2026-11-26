@@ -227,6 +227,40 @@ describe("chief pilot dashboard: duty (1124-17)", () => {
   });
 });
 
+describe("dispatcher dashboard: the live board (1124-18)", () => {
+  it("names the PIC and keeps an earlier day's released flight, from the board", async () => {
+    const before = snapshot.board;
+    snapshot.board = [
+      {
+        id: "f-1",
+        flight_number: "BK-544B2748",
+        aircraft: { id: "a-1", tail_number: "N503PA", model: "C208", seats: 9 },
+        origin: "PABE",
+        destination: "PAKI",
+        scheduled_departure_at: "2026-11-24T02:30:00Z",
+        scheduled_arrival_at: "2026-11-24T03:30:00Z",
+        actual_departure_at: null,
+        actual_arrival_at: null,
+        status: "released",
+        pax_count: 2,
+        cargo_lbs: 0,
+        pic_name: "Mike O'Brien",
+        is_overdue: false,
+        not_departed: true,
+        last_contact_at: null,
+      },
+    ] as OperationalSnapshot["board"];
+    try {
+      render(await DispatcherDashboardPage());
+      const row = screen.getByRole("row", { name: /BK-544B2748/ });
+      expect(row).toHaveTextContent("Mike O'Brien");
+      expect(row).toHaveTextContent("Not departed");
+    } finally {
+      snapshot.board = before;
+    }
+  });
+});
+
 describe("director of operations dashboard", () => {
   it("drops the hardcoded crew and risk rows", async () => {
     render(await DirectorOpsDashboardPage());

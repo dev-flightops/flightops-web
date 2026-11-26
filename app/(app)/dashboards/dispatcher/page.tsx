@@ -13,7 +13,7 @@ import { AIRCRAFT_ASSIGNERS, hasAnyRole } from "@/lib/roles";
 import { DEFAULT_TIME_ZONE, localDay } from "@/lib/format/local-time";
 import { loadOperationalSnapshot } from "@/lib/dashboards/operational-snapshot";
 import { snapshotAlertsToList } from "@/lib/dashboards/snapshot-to-alerts";
-import type { FlightListItem } from "@/lib/api/types";
+import type { BoardFlightItem, FlightListItem } from "@/lib/api/types";
 import { LoadFailedNotice } from "@/components/ff/setup-notice";
 import { Loads } from "@/lib/api/loads";
 import { routeText } from "@/lib/route";
@@ -26,9 +26,8 @@ export default async function DispatcherDashboardPage() {
   // #93: dispatch and the crew's managers can give an aircraft to another pilot.
   const session = await auth();
   const canAssign = hasAnyRole(session?.roles ?? [], AIRCRAFT_ASSIGNERS);
-  const [stats, todaysFlights, pendingResult, snapshot, crew, aircraftToday, staff] = await Promise.all([
+  const [stats, pendingResult, snapshot, crew, aircraftToday, staff] = await Promise.all([
     getFlightStats().catch(() => null),
-    loads.or(listFlights({ onCompanyDate: today }), { items: [], total: 0 }, "today’s flights"),
     // Wider window then filter to today + tomorrow — same fix as
     // director-ops. Bare status='scheduled' picks up orphan rows from
     // prior seed runs.
@@ -147,7 +146,10 @@ export default async function DispatcherDashboardPage() {
             Full following →
           </Link>
         </div>
-        <LiveOpsTable flights={todaysFlights.items} />
+        {/* The Flight Following board, as Executive's (1124-18): it has the
+            PIC, and keeps a released flight from an earlier day that the
+            overdue count names. Today's list had neither. */}
+        <LiveOpsTable flights={snapshot.board} />
       </section>
 
       {/* Row 4 — 2-col: Pending dispatch + Fleet Availability */}
@@ -203,7 +205,10 @@ function RecentOutcomesPanel() {
   );
 }
 
-function LiveOpsTable({ flights }: { flights: FlightListItem[] }) {
+function LiveOpsTable({ flights: unsorted }: { flights: BoardFlightItem[] }) {
+  const flights = unsorted
+    .slice()
+    .sort((a, b) => Date.parse(a.scheduled_departure_at) - Date.parse(b.scheduled_departure_at));
   if (flights.length === 0) {
     return (
       <p className="py-8 text-center text-xs text-muted-foreground">
@@ -214,9 +219,8 @@ function LiveOpsTable({ flights }: { flights: FlightListItem[] }) {
 
   // Columns mirror legacy peregrineflight verbatim:
   // FLIGHT / TAIL / ROUTE / PIC / STATUS / ETD / ATD / ETA / CONTACT.
-  // PIC stays "—" until crew-service ships (M3). ATD reads from
-  // actual_departure_at; CONTACT from a future position-tracker. Both
-  // null-safe with "—" fallback.
+  // PIC from the flight's crew; ATD from the check-in; CONTACT from the
+  // last position report. Each "—" when there is none.
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-xs">
@@ -242,7 +246,7 @@ function LiveOpsTable({ flights }: { flights: FlightListItem[] }) {
               <td className="px-2 py-2 text-muted-foreground">
                 {routeText(f)}
               </td>
-              <td className="px-2 py-2 text-muted-foreground">—</td>
+              <td className="px-2 py-2 text-muted-foreground">{f.pic_name ?? "—"}</td>
               <td className="px-2 py-2">
                 <StatusPill flight={f} />
               </td>
@@ -257,7 +261,9 @@ function LiveOpsTable({ flights }: { flights: FlightListItem[] }) {
               <td className="px-2 py-2 text-foreground/80">
                 {formatTime(f.scheduled_arrival_at)}
               </td>
-              <td className="px-2 py-2 text-muted-foreground">—</td>
+              <td className="px-2 py-2 text-muted-foreground">
+                {f.last_contact_at ? formatTime(f.last_contact_at) : "—"}
+              </td>
               <td className="px-2 py-2 text-right">
                 <Link href={`/dispatch/${f.id}`} className="text-primary hover:underline">
                   →
@@ -321,18 +327,26 @@ function PendingDispatchTable({ flights }: { flights: FlightListItem[] }) {
   );
 }
 
-function StatusPill({ flight }: { flight: FlightListItem }) {
+function StatusPill({ flight }: { flight: BoardFlightItem }) {
   // Same status taxonomy as the executive/director Live Ops Board so
   // dispatch reads the same vibe across dashboards.
   const isAirborne =
     flight.status === "released" && flight.actual_departure_at;
-  const label = isAirborne
-    ? "Airborne"
-    : flight.status === "scheduled"
-      ? "Planned"
-      : flight.status.charAt(0).toUpperCase() + flight.status.slice(1);
-  const styles = isAirborne
-    ? "text-status-green"
+  const label = flight.is_overdue
+    ? "Overdue"
+    : flight.not_departed
+      ? "Not departed"
+      : isAirborne
+        ? "Airborne"
+        : flight.status === "scheduled"
+          ? "Planned"
+          : flight.status.charAt(0).toUpperCase() + flight.status.slice(1);
+  const styles = flight.is_overdue
+    ? "text-status-red"
+    : flight.not_departed
+      ? "text-status-yellow"
+      : isAirborne
+        ? "text-status-green"
     : flight.status === "released"
       ? "text-status-blue"
       : flight.status === "cancelled"
