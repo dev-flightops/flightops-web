@@ -31,6 +31,9 @@ vi.mock("@/lib/api/ops", () => ({
   listAircraft,
   listFlights,
 }));
+vi.mock("@/lib/api/auth", () => ({
+  loadZoneTable: vi.fn(async () => ({ byIcao: {}, fallback: "America/Anchorage" })),
+}));
 
 // NewFlightLogForm is a client component using useActionState — stub
 // it to a marker. The dedicated actions.test.ts covers the action
@@ -205,5 +208,23 @@ describe("FlightLogPage (M2-G-26b)", () => {
     await renderPage();
 
     expect(screen.getByText(/flight log unavailable/i)).toBeInTheDocument();
+  });
+});
+
+describe("the page's date (1124-28)", () => {
+  it("is the company's day, not UTC's", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    // 7 pm on Nov 24 in Alaska is 04:00Z on Nov 25.
+    vi.setSystemTime(new Date("2026-11-25T04:00:00Z"));
+    listFlightLogs.mockResolvedValue({ items: [], total: 0 });
+    listAircraft.mockResolvedValue({ items: [], total: 0 });
+    listFlights.mockResolvedValue({ items: [], total: 0 });
+    try {
+      render(await FlightLogPage());
+      expect(screen.getByText("Tuesday, November 24, 2026")).toBeInTheDocument();
+      expect(screen.queryByText(/\(UTC\)/)).toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

@@ -77,6 +77,7 @@ vi.mock("@/lib/api/ops", () => ({
   getPicCompliance: api.getPicCompliance,
   listAircraft: api.listAircraft,
   getWeatherMinimums: api.getWeatherMinimums,
+  getAircraftPosition: vi.fn(async () => ({ conflicts: [] })),
   listFlights: api.listFlights,
   listReleaseAcknowledgments: api.listReleaseAcknowledgments,
   listWeightReturns: api.listWeightReturns,
@@ -270,5 +271,32 @@ describe("the packet in steps (the client, 24 Nov)", () => {
       "#step-frat",
       "#step-release",
     ]);
+  });
+});
+
+describe("the PIC the packet shows (1124-20)", () => {
+  const LINKED = "0b6b9a52-3c3e-4f2b-9d6e-2f3c1a7e9d11";
+
+  it("is the flight's saved one, not a pilot named in the link", async () => {
+    // A link carrying &pic= showed that pilot picked while the page said
+    // "No PIC on the flight yet".
+    render(await DispatchPage({ searchParams: Promise.resolve({ flight: FLIGHT, pic: LINKED }) }));
+    expect(api.getPicCompliance.mock.calls.map((call) => call[0])).not.toContain(LINKED);
+  });
+
+  it("pre-screens the linked pilot on a packet with no flight", async () => {
+    render(await DispatchPage({ searchParams: Promise.resolve({ pic: LINKED }) }));
+    expect(api.getPicCompliance).toHaveBeenCalled();
+    expect(api.getPicCompliance.mock.calls[0][0]).toBe(LINKED);
+  });
+});
+
+describe("the flight's ops notes (1124-21)", () => {
+  it("are on the packet, where they had been saved and shown nowhere", async () => {
+    const flight = await api.getFlight(FLIGHT);
+    api.getFlight.mockResolvedValue({ ...flight, notes: "Cooler for Rose at Chevak, keep it upright." });
+    await open();
+    const notes = screen.getByLabelText("Ops notes");
+    expect(notes).toHaveTextContent("Cooler for Rose at Chevak, keep it upright.");
   });
 });

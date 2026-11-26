@@ -7,7 +7,8 @@ import { scheduleRefusal } from "@/lib/flights/schedule-refusals";
 import { loadZoneTable } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
 import { validationSummary } from "@/lib/api/validation-errors";
-import { createFlight, getWeatherMinimums } from "@/lib/api/ops";
+import { createFlight, getAircraftPosition, getWeatherMinimums } from "@/lib/api/ops";
+import { getFlightLoad } from "@/lib/api/manifest";
 import { passengerSeatsRefusal } from "@/lib/flights/passenger-seats";
 import { localToUtcIso, zoneFor } from "@/lib/format/local-time";
 
@@ -353,17 +354,30 @@ export async function createFlightAction(
     };
   }
 
-  // The warning is best-effort: the flight exists either way, and
-  // release holds it server-side.
-  const minimums = opened
-    ? await getWeatherMinimums(opened.id).catch(() => null)
-    : null;
+  // The warnings are best-effort: the flight exists either way, and
+  // release holds it server-side. Each one opens the packet, which says
+  // what it is.
+  // - 1124-05: the aircraft lands elsewhere before it, or leaves
+  //   elsewhere after.
+  // - 1124-26: over the aircraft's useful load by the numbers typed here,
+  //   passengers at the standard weight with the trip's fuel, as release
+  //   judges it. Open Flight took a Caravan 3,182 lb over without a word,
+  //   and only the release said so.
+  const [minimums, position, load] = opened
+    ? await Promise.all([
+        getWeatherMinimums(opened.id).catch(() => null),
+        getAircraftPosition(opened.id).catch(() => null),
+        getFlightLoad(opened.id).catch(() => null),
+      ])
+    : [null, null, null];
+  const remaining = load?.release?.remaining_lbs;
+  const overweight = remaining !== null && remaining !== undefined && Number(remaining) < 0;
 
   // Success — redirect outside the try/catch (NEXT_REDIRECT throws
   // intentionally and we don't want it caught by the API error handler).
   const sourceBooking = String(formData.get("booking_id") ?? "").trim();
   if (opened && UUID.test(sourceBooking)) redirect(`/manifest/${opened.id}`);
-  if (opened && (minimums?.below || opened.melLimited)) {
+  if (opened && (minimums?.below || opened.melLimited || position?.conflicts.length || overweight)) {
     redirect(`/dispatch?flight=${opened.id}&date=${opened.day}`);
   }
   redirect("/flight-following");

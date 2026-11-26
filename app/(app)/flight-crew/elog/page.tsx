@@ -1,7 +1,9 @@
 import { EmptyState } from "@/components/ff/empty-state";
 import { PageHeader } from "@/components/ff/page-header";
 import { Panel } from "@/components/ff/panel";
+import { loadZoneTable } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
+import { DEFAULT_TIME_ZONE } from "@/lib/format/local-time";
 import { listAircraft, listFlightLogs, listFlights } from "@/lib/api/ops";
 import type {
   AircraftListItem,
@@ -33,9 +35,11 @@ import { NewFlightLogForm } from "./new-flight-log-form";
 
 const PAGE_LIMIT = 50;
 
-function todayLong(): string {
+/** Today in the company's zone (1124-28: at 7 pm in Alaska it read the next
+ *  day, "(UTC)"). */
+function todayLong(timeZone: string): string {
   return new Date().toLocaleDateString("en-US", {
-    timeZone: "UTC",
+    timeZone,
     weekday: "long",
     month: "long",
     day: "numeric",
@@ -44,6 +48,9 @@ function todayLong(): string {
 }
 
 export default async function FlightLogPage() {
+  const zone = await loadZoneTable()
+    .then((table) => table.fallback)
+    .catch(() => DEFAULT_TIME_ZONE);
   let drafts: FlightLogResponse[] = [];
   let aircraft: AircraftListItem[] = [];
   let recentFlights: FlightListItem[] = [];
@@ -75,7 +82,7 @@ export default async function FlightLogPage() {
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
-      <PageHeader title="Electronic Flight Log" description={`${todayLong()} (UTC)`} />
+      <PageHeader title="Electronic Flight Log" description={todayLong(zone)} />
 
       {loadError ? (
         <div role="alert" className="notice notice-yellow">

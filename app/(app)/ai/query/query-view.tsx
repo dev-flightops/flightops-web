@@ -106,6 +106,12 @@ function formatCell(value: unknown, column: string, money: Set<string>, zone: st
   return String(value);
 }
 
+/** A field as words in a sentence: "scheduled departure at", not
+ *  "scheduled_departure_at" (1124-27). */
+function words(field: string): string {
+  return headerLabel(field).toLowerCase();
+}
+
 /** A spec read back as a sentence, so it can be checked at a glance
  *  rather than parsed. */
 export function describeSpec(spec: QuerySpec): string {
@@ -113,32 +119,32 @@ export function describeSpec(spec: QuerySpec): string {
   if (spec.aggregates.length > 0) {
     parts.push(
       spec.aggregates
-        .map((a) => (a.field ? `${a.fn} of ${a.field}` : a.fn))
+        .map((a) => (a.field ? `${a.fn} of ${words(a.field)}` : a.fn))
         .join(", "),
     );
   } else if (spec.select.length > 0) {
-    parts.push(spec.select.join(", "));
+    parts.push(spec.select.map(words).join(", "));
   } else {
     parts.push("everything");
   }
-  parts.push(`from ${spec.entity}`);
+  parts.push(`from ${words(spec.entity)}`);
   if (spec.filters.length > 0) {
     parts.push(
       "where " +
         spec.filters
           .map((f) =>
             f.op === "is_null"
-              ? `${f.field} is empty`
+              ? `${words(f.field)} is empty`
               : f.op === "is_not_null"
-                ? `${f.field} is set`
-                : `${f.field} ${f.op} ${JSON.stringify(f.value)}`,
+                ? `${words(f.field)} is set`
+                : `${words(f.field)} ${f.op} ${JSON.stringify(f.value)}`,
           )
           .join(" and "),
     );
   }
-  if (spec.group_by.length > 0) parts.push(`grouped by ${spec.group_by.join(", ")}`);
+  if (spec.group_by.length > 0) parts.push(`grouped by ${spec.group_by.map(words).join(", ")}`);
   if (spec.order_by) {
-    parts.push(`ordered by ${spec.order_by}${spec.order_desc ? " (high to low)" : ""}`);
+    parts.push(`ordered by ${words(spec.order_by)}${spec.order_desc ? " (high to low)" : ""}`);
   }
   return parts.join(" ");
 }
@@ -245,10 +251,10 @@ export function QueryView({
           <ul className="space-y-1.5">
             {entities.map((e) => (
               <li key={e.name} className="text-xs">
-                <span className="font-semibold">{e.name}</span>
+                <span className="font-semibold">{headerLabel(e.name)}</span>
                 <span className="text-muted-foreground"> — {e.description}</span>
                 <span className="block text-[0.65rem] text-muted-foreground">
-                  {e.fields.join(", ")}
+                  {e.fields.map(headerLabel).join(", ")}
                 </span>
               </li>
             ))}

@@ -66,6 +66,11 @@ export function OverdueBadge() {
   return <StatusMark label="Overdue" tone="red" />;
 }
 
+/** Released, never marked departed, past its departure (1124-06). */
+export function NotDepartedBadge() {
+  return <StatusMark label="Not departed" tone="yellow" />;
+}
+
 const STATUS_LABELS: Record<FlightStatus, { label: string; tone: StatusTone }> = {
   scheduled: {
     label: "Planned",

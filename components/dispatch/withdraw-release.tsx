@@ -77,9 +77,12 @@ export function WithdrawRelease({
       const act = mode === "pull-back" ? pullBackReleaseAction : cancelReleasedFlightAction;
       const result = await act(flightId, reason.trim());
       if (result.ok) {
-        setMode(null);
-        setReason("");
-        router.refresh();
+        // Closed with the refreshed packet, as Cancel Flight (1124-31).
+        startTransition(() => {
+          setMode(null);
+          setReason("");
+          router.refresh();
+        });
       } else {
         setError(result.error);
       }

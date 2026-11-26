@@ -1,6 +1,7 @@
 import type { TypedPart } from "@/lib/api/manifest";
 import type { MelLimitBreach } from "@/lib/api/types";
 import { loadSource } from "@/lib/flights/typed-load";
+import { DEFAULT_TIME_ZONE, localClock } from "@/lib/format/local-time";
 import { melLimitRemedy } from "@/lib/maintenance/mel-limits";
 
 /**
@@ -20,19 +21,25 @@ function detail(message: string): Record<string, unknown> | null {
   }
 }
 
-function hhmmZ(iso: unknown): string {
-  return typeof iso === "string" && iso.length >= 16 ? `${iso.slice(11, 16)}Z` : "";
+/** "09:00–11:45 AKDT": the other flight's times in the company's zone, as
+ *  the form was typed (1124-26: they read in Zulu). */
+function span(from: unknown, to: unknown): string {
+  if (typeof from !== "string" || typeof to !== "string") return "";
+  const start = localClock(from, DEFAULT_TIME_ZONE);
+  const end = localClock(to, DEFAULT_TIME_ZONE);
+  const [time, zone] = start.split(" ");
+  return zone && end.endsWith(` ${zone}`) ? `${time}–${end}` : `${start}–${end}`;
 }
 
 function hours(n: unknown): string {
   return Number(n ?? 0).toLocaleString("en-US", { maximumFractionDigits: 1 });
 }
 
-/** "Pat Pilot is already on GV101 (14:00Z–16:00Z)…": one pilot, one flight at
+/** "Pat Pilot is already on GV101 (06:00–08:00 AKDT)…": one pilot, one flight at
  *  a time (audit, 26 Nov). */
 function pilotBusy(d: Record<string, unknown>): string {
   const name = String(d.full_name ?? "That pilot");
-  return `${name} is already on ${String(d.flight_number ?? "another flight")} (${hhmmZ(d.scheduled_departure_at)}–${hhmmZ(d.scheduled_arrival_at)}). A pilot can't be on two flights at once: take them off one, or choose other times.`;
+  return `${name} is already on ${String(d.flight_number ?? "another flight")} (${span(d.scheduled_departure_at, d.scheduled_arrival_at)}). A pilot can't be on two flights at once: take them off one, or choose other times.`;
 }
 
 function seatName(d: Record<string, unknown>): string {
@@ -56,9 +63,14 @@ export function scheduleRefusal(message: string): string | null {
     return `${codes || "An airport"} isn't an airport we know. Check the code: an Alaska airport by its ICAO or FAA identifier, or a station or village airport set up in Settings.`;
   }
   if (d?.error === "aircraft_busy") {
-    return `The aircraft is already on ${String(d.flight_number ?? "another flight")} (${hhmmZ(d.scheduled_departure_at)}–${hhmmZ(d.scheduled_arrival_at)}). Pick another aircraft or other times.`;
+    return `The aircraft is already on ${String(d.flight_number ?? "another flight")} (${span(d.scheduled_departure_at, d.scheduled_arrival_at)}). Pick another aircraft or other times.`;
   }
   if (d?.error === "pilot_busy") return pilotBusy(d);
+  if (d?.error === "flight_number_taken") {
+    // 1124-25: two TCL3 on one day were taken.
+    const at = typeof d.scheduled_departure_at === "string" ? ` at ${localClock(d.scheduled_departure_at, DEFAULT_TIME_ZONE)}` : "";
+    return `${String(d.flight_number ?? "That number")} already flies that day${at}. Give this flight another number.`;
+  }
   return null;
 }
 

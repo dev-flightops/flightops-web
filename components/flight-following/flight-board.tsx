@@ -7,7 +7,7 @@ import { formatBoth, formatLocal, formatZulu } from "@/lib/format/flight-time";
 import { flightStops } from "@/lib/route";
 
 import { CheckInButton } from "./check-in-button";
-import { OverdueBadge, StatusBadge } from "./status-badge";
+import { NotDepartedBadge, OverdueBadge, StatusBadge } from "./status-badge";
 
 /**
  * Flight Following board table — the List-view body (M2-G-11).
@@ -116,6 +116,12 @@ function FlightBoardRow({ flight, canDispatch }: { flight: BoardFlightItem; canD
             />
           </div>
         )}
+        {/* 1124-21: the ops notes typed on the flight, shown nowhere before. */}
+        {flight.notes?.trim() ? (
+          <div className="mt-0.5 max-w-[22rem] truncate text-xs text-muted-foreground" title={flight.notes.trim()}>
+            Note: {flight.notes.trim()}
+          </div>
+        ) : null}
       </td>
       <td className="px-4 py-3.5 text-muted-foreground">
         {flight.pic_name ?? "—"}
@@ -136,6 +142,7 @@ function FlightBoardRow({ flight, canDispatch }: { flight: BoardFlightItem; canD
             atStop={atStop}
           />
           {flight.is_overdue && <OverdueBadge />}
+          {flight.not_departed && <NotDepartedBadge />}
           {/* 1119-12: a Day VFR or VFR only MEL the flight breaks, flagged
               here as on the Schedule, before the release refuses it. */}
           {flight.mel_limits?.length ? (

@@ -111,6 +111,7 @@ export default async function AvailabilityPage({
                     <th>Availability</th>
                     <th className="text-right">Revenue Hrs</th>
                     <th className="text-right">MX Hrs</th>
+                    <th className="text-right">On Hold Hrs</th>
                     <th className="text-right">Non-rev Hrs</th>
                     <th className="text-right">Idle Hrs</th>
                     <th className="text-right">Flights</th>
@@ -145,6 +146,8 @@ export default async function AvailabilityPage({
                         </td>
                         <td className="text-right font-mono">{row.revenue_hours}</td>
                         <td className="text-right font-mono">{row.mx_hours}</td>
+                        {/* Grounded time (1124-19): grounded aircraft were left out. */}
+                        <td className="text-right font-mono">{row.hold_hours ?? 0}</td>
                         <td className="text-right font-mono text-muted-foreground">{row.non_revenue_hours}</td>
                         <td className="text-right font-mono text-muted-foreground">{row.idle_hours}</td>
                         <td className="text-right font-mono">{row.flights}</td>

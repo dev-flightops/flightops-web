@@ -106,6 +106,14 @@ export async function checkInFlightAction(
       if (detail === "departure_before_arrival_at_stop") {
         return { ok: false, error: "It can't leave the stop before it landed there. Check the time." };
       }
+      if (detail === "flight_longer_than_a_day") {
+        // 1124-07: a stop marked the next day made a 27.3 h flight.
+        return {
+          ok: false,
+          error:
+            "That's more than 24 hours after the flight left. Check the date: a flight lasts a day at most, and a night at a stop makes the rest the next day's flight.",
+        };
+      }
       if (detail === "check_in_time_too_far_in_past") {
         return { ok: false, error: "That time is more than a day before the flight was due to leave." };
       }

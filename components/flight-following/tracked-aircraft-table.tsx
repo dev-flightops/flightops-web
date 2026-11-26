@@ -1,7 +1,7 @@
 import type { TrackedAircraft } from "@/lib/flight-following/merge-tracked";
 import { routeText } from "@/lib/route";
 
-import { OverdueBadge, StatusBadge } from "./status-badge";
+import { NotDepartedBadge, OverdueBadge, StatusBadge } from "./status-badge";
 
 /**
  * Condensed flight table for the Split view's right pane.
@@ -104,6 +104,7 @@ function TrackedAircraftRow({ row }: { row: TrackedAircraft }) {
             actualDepartureAt={flight.actual_departure_at}
           />
           {flight.is_overdue && <OverdueBadge />}
+          {flight.not_departed && <NotDepartedBadge />}
         </div>
       </td>
     </tr>

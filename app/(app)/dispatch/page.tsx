@@ -15,6 +15,7 @@ import {
 } from "@/lib/roles";
 import { DispatchComplianceGate } from "@/components/dispatch/packet/dispatch-compliance-gate";
 import { AircraftTodayLine, AircraftTodayPanel } from "@/components/dashboards/aircraft-today-panel";
+import { AircraftPositionWarning } from "@/components/dispatch/aircraft-position-warning";
 import { OpenMelPanel } from "@/components/dispatch/packet/open-mel-panel";
 import { BookingsAwaitingFlightPanel } from "@/components/dispatch/packet/bookings-awaiting-flight-panel";
 import { ForeFlightPlanPanel } from "@/components/dispatch/packet/foreflight-plan-panel";
@@ -50,6 +51,7 @@ import {
   getPicCompliance,
   listAircraft,
   getWeatherMinimums,
+  getAircraftPosition,
   listFlights,
   listReleaseAcknowledgments,
   listWeightReturns,
@@ -209,7 +211,11 @@ export default async function DispatchPage({
   // described the intent; the fetch did not implement it.
   const assignedPicId =
     crew.items.find((a) => a.crew_role === "pic")?.user.id ?? null;
-  const effectivePicId = assignedPicId ?? currentPicId;
+  // With a flight loaded, its saved PIC and no other (1124-20): a link's
+  // ?pic=, or a pick whose assignment was refused, had the picker show a
+  // pilot the flight didn't have while the page said "No PIC on the
+  // flight yet". ?pic= pre-screens only on a hand-filled packet.
+  const effectivePicId = selectedId ? assignedPicId : currentPicId;
   // Anyone in the SIC seat is checked for that seat. None on a
   // single-pilot flight, which is the case the client reported: the PIC
   // was asked to acknowledge their own SIC counters with no SIC aboard.
@@ -397,13 +403,15 @@ export default async function DispatchPage({
   // evaluators server-side, so a weather-service blip degrades the button
   // hint rather than stranding every release. `computeHardBlockReason`
   // documents that contract.
-  const [weatherFreshness, weatherMinimums] = await Promise.all([
+  const [weatherFreshness, weatherMinimums, aircraftPosition] = await Promise.all([
     selectedFlight && icaos.length > 0
       ? loads.or(getRouteFreshness(icaos), null, "how fresh the route’s weather is")
       : Promise.resolve<RouteFreshness | null>(null),
     selectedFlight
       ? loads.or(getWeatherMinimums(selectedFlight.id), null, "the dispatch minimums check")
       : Promise.resolve(null),
+    // 1124-05: a warning only, so a blip leaves it out quietly.
+    selectedFlight ? getAircraftPosition(selectedFlight.id).catch(() => null) : Promise.resolve(null),
   ]);
   const canEditRisk = hasAnyRole(viewerRoles, DISPATCH_WRITERS);
 
@@ -620,6 +628,20 @@ export default async function DispatchPage({
                   aircraftId={selectedFlight.aircraft.id}
                   today={aircraftToday}
                 />
+              ) : null}
+              <AircraftPositionWarning
+                tail={selectedFlight.aircraft.tail_number}
+                origin={selectedFlight.origin}
+                destination={selectedFlight.destination}
+                conflicts={aircraftPosition?.conflicts ?? []}
+              />
+              {/* The notes typed on Open New Flight or Edit (1124-21: they
+                  were saved and shown nowhere). */}
+              {selectedFlight.notes?.trim() ? (
+                <div className="notice" aria-label="Ops notes">
+                  <p className="notice-label">Ops notes</p>
+                  <p className="whitespace-pre-line text-sm">{selectedFlight.notes.trim()}</p>
+                </div>
               ) : null}
               <FlightDetailsPanel
                 flight={selectedFlight}

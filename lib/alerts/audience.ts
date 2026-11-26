@@ -23,6 +23,7 @@ const AUDIENCE: Record<OperationalAlert["category"], ReadonlySet<Role> | "own"> 
   // "let the Hooper agent/dispatch know" (#120): whoever checks passengers in.
   seat_open: CHECKIN_ROLES,
   flight_overdue: NO_ONE_ELSE,
+  flight_not_departed: NO_ONE_ELSE,
   departure_flagged: NO_ONE_ELSE,
   duty_over_limit: NO_ONE_ELSE,
   frat_over_limits: NO_ONE_ELSE,

@@ -41,6 +41,7 @@ import { stopState } from "@/lib/flight-following/stops";
 import { listOpenSeats, type Opening } from "@/lib/api/open-seats";
 import { getDutyOverLimit, listFratAwaitingAcceptance } from "@/lib/api/ops";
 import { inFleet } from "@/lib/fleet/in-fleet";
+import { routeText } from "@/lib/route";
 import { DEFAULT_TIME_ZONE, localDate } from "@/lib/format/local-time";
 import { factorLabel } from "@/lib/frat/factors";
 import { SAFETY_REPORT_TYPE_LABELS, listSafetyReports } from "@/lib/api/safety-reports";
@@ -59,6 +60,7 @@ export interface OperationalAlert {
     | "duty_over_limit"
     | "frat_over_limits"
     | "flight_overdue"
+    | "flight_not_departed"
     | "mel_expiring"
     | "safety_report_new"
     | "seat_open"
@@ -158,7 +160,21 @@ export async function loadOperationalSnapshot(): Promise<OperationalSnapshot> {
           // With its date (#157): two overdue MM001s from different days
           // read "MM001, MM001".
           title: `Flight overdue — ${row.flight_number} ${localDate(row.scheduled_departure_at, DEFAULT_TIME_ZONE)}`,
-          detail: `${row.aircraft.tail_number} · ${row.origin} → ${row.destination} · no contact 20+ min`,
+          // Every stop (1124-12): a round trip read PABE → PABE.
+          detail: `${row.aircraft.tail_number} · ${routeText(row)} · no contact 20+ min`,
+          href: "/flight-following",
+          scopedToIcao: row.origin,
+          occurredAt: row.scheduled_departure_at,
+        });
+      } else if (row.not_departed) {
+        // 1124-06: released, never marked departed. BK-544B2748 read
+        // "Flight overdue, no contact 20+ min" for a day on the ground.
+        alerts.push({
+          id: `not-departed-${row.id}`,
+          severity: "yellow",
+          category: "flight_not_departed",
+          title: `Not departed — ${row.flight_number} ${localDate(row.scheduled_departure_at, DEFAULT_TIME_ZONE)}`,
+          detail: `${row.aircraft.tail_number} · ${routeText(row)} · released, not marked departed`,
           href: "/flight-following",
           scopedToIcao: row.origin,
           occurredAt: row.scheduled_departure_at,

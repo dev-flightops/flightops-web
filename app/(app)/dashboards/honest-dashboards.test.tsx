@@ -62,9 +62,10 @@ const board: ComplianceBoardResponse = {
   ] as unknown as ComplianceBoardResponse["rows"],
   chips: { fully_current: 1, early_month: 0, grace_month: 0, non_current: 1, records_missing: 0 },
 };
-const { boardMock, invoicesMock } = vi.hoisted(() => ({
+const { boardMock, invoicesMock, overLimitMock } = vi.hoisted(() => ({
   boardMock: vi.fn(),
   invoicesMock: vi.fn(),
+  overLimitMock: vi.fn(async () => ({ max_duty_hours: 14, items: [] as unknown[] })),
 }));
 
 vi.mock("@/lib/api/client", () => ({ ApiError: class extends Error {} }));
@@ -76,6 +77,7 @@ vi.mock("@/lib/api/ops", () => ({
   listFlights: vi.fn(async () => ({ items: [], total: 0 })),
   getComplianceBoard: boardMock,
   getMorningToday: vi.fn(async () => ({ company_date: "2026-10-31", items: [] })),
+  getDutyOverLimit: overLimitMock,
 }));
 vi.mock("@/lib/api/customer-invoices", () => ({ listCustomerInvoices: invoicesMock }));
 vi.mock("@/auth", () => ({ auth: vi.fn(async () => ({ roles: ["dispatcher"] })) }));
@@ -90,10 +92,14 @@ vi.mock("@/lib/api/auth", () => ({
 vi.mock("@/lib/api/reports", () => ({
   getOpsScore: vi.fn(async () => ({
     as_of: "2026-10-20",
-    score: 97,
+    score: 93.1,
     max_achievable: 97,
     band: "excellent",
-    pillars: [],
+    pillars: [
+      { key: "completion", label: "Completion Factor", score: 25, max: 25, context: "", not_measured: null },
+      { key: "crew", label: "Crew Compliance", score: 19, max: 20, context: "", not_measured: null },
+      { key: "safety", label: "Safety Indicators", score: 7, max: 10, context: "", not_measured: null },
+    ],
     advisory: "",
   })),
 }));
@@ -136,6 +142,22 @@ describe("executive dashboard", () => {
     // A measured tile keeps its number.
     expect(within(tile("Fleet Airworthy")).getByText("3/4")).toBeInTheDocument();
     expectNoMilestonePills();
+  });
+
+  it("shows the Ops Score page's score and pillars, not one of its own (1124-10)", async () => {
+    // It summed three pillars itself (62.1) with crew and safety at 0,
+    // while the Ops Score page said 93.1.
+    render(await ExecutiveDashboardPage());
+    // Out of what it can measure, 97, as the Ops Score page has it.
+    expect(screen.getAllByText("93.1/97").length).toBeGreaterThan(0);
+    expect(screen.getByText("Crew Compliance")).toBeInTheDocument();
+    expect(screen.queryByText("On-Time Performance")).toBeNull();
+  });
+
+  it("counts completed flights as complete, not released ones (1124-16)", async () => {
+    render(await ExecutiveDashboardPage());
+    // 1 completed of 4 today.
+    expect(screen.getByText("25.0% complete")).toBeInTheDocument();
   });
 
   it("says who the crew fraction leaves out (#134)", async () => {
@@ -183,6 +205,86 @@ describe("chief pilot dashboard", () => {
     expect(within(row).getByText("Medical")).toBeInTheDocument();
     expect(screen.queryByText(/not built yet/i)).toBeNull();
     expectNoMilestonePills();
+  });
+});
+
+describe("chief pilot dashboard: landings and IFR (1124-15)", () => {
+  it("are a per-flight line, not issues against a pilot whose status is current", async () => {
+    boardMock.mockResolvedValueOnce({
+      items: [
+        { id: "i-day", code: "day_landing_currency", name: "Day Landing Currency", interval_type: "rolling_days", rolling_threshold: 3 },
+        { id: "i-sic", code: "sic_day_landing_currency", name: "SIC Day Landing Currency", interval_type: "rolling_days", rolling_threshold: 3 },
+      ],
+      rows: [
+        {
+          pilot: { id: "p-1", full_name: "Grace Okafor" },
+          overall_status: "early_month",
+          cells: [
+            { currency_item_id: "i-day", status: "not_started", rolling_count: 1 },
+            { currency_item_id: "i-sic", status: "not_started", rolling_count: null },
+          ],
+        },
+      ],
+      chips: { fully_current: 1, early_month: 1, grace_month: 0, non_current: 0, records_missing: 0 },
+    } as unknown as ComplianceBoardResponse);
+    render(await ChiefPilotDashboardPage());
+    const row = screen.getByRole("row", { name: /Grace Okafor/ });
+    expect(row).toHaveTextContent("Per flight: day landings 1/3");
+    expect(row).not.toHaveTextContent("Day Landing Currency");
+    expect(row).not.toHaveTextContent("SIC");
+  });
+});
+
+describe("chief pilot dashboard: duty (1124-17)", () => {
+  it("lists who is on duty past the limit, where it said a list wasn't built", async () => {
+    overLimitMock.mockResolvedValueOnce({
+      max_duty_hours: 14,
+      items: [{ user_id: "u-g", full_name: "Grace Okafor", clock_in_at: "2026-11-19T17:00:00Z", elapsed_hours: 128 }],
+    });
+    render(await ChiefPilotDashboardPage());
+    expect(screen.getByText("Grace Okafor")).toBeInTheDocument();
+    expect(screen.getByText("128.0 h on duty")).toBeInTheDocument();
+    expect(screen.queryByText(/not built/i)).toBeNull();
+    expect(screen.queryByText(/not wired/i)).toBeNull();
+  });
+
+  it("says nobody is, against the company's limit", async () => {
+    render(await ChiefPilotDashboardPage());
+    expect(screen.getByText("Nobody is on duty past the 14 h limit.")).toBeInTheDocument();
+  });
+});
+
+describe("dispatcher dashboard: the live board (1124-18)", () => {
+  it("names the PIC and keeps an earlier day's released flight, from the board", async () => {
+    const before = snapshot.board;
+    snapshot.board = [
+      {
+        id: "f-1",
+        flight_number: "BK-544B2748",
+        aircraft: { id: "a-1", tail_number: "N503PA", model: "C208", seats: 9 },
+        origin: "PABE",
+        destination: "PAKI",
+        scheduled_departure_at: "2026-11-24T02:30:00Z",
+        scheduled_arrival_at: "2026-11-24T03:30:00Z",
+        actual_departure_at: null,
+        actual_arrival_at: null,
+        status: "released",
+        pax_count: 2,
+        cargo_lbs: 0,
+        pic_name: "Mike O'Brien",
+        is_overdue: false,
+        not_departed: true,
+        last_contact_at: null,
+      },
+    ] as OperationalSnapshot["board"];
+    try {
+      render(await DispatcherDashboardPage());
+      const row = screen.getByRole("row", { name: /BK-544B2748/ });
+      expect(row).toHaveTextContent("Mike O'Brien");
+      expect(row).toHaveTextContent("Not departed");
+    } finally {
+      snapshot.board = before;
+    }
   });
 });
 

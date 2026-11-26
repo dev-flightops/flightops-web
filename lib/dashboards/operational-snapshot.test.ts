@@ -267,6 +267,59 @@ describe("#155: duty past the limit, flagged departures, a HIGH risk", () => {
 });
 
 
+describe("1124-06: a released flight that never left", () => {
+  it("reads not departed, yellow, not overdue; an overdue one names every stop", async () => {
+    api.listSafetyReports.mockResolvedValue({ items: [], total: 0 });
+    const row = {
+      aircraft: { id: "a-1", tail_number: "N503PA", model: "C208", seats: 9 },
+      scheduled_arrival_at: "2026-11-24T03:30:00Z",
+      actual_arrival_at: null,
+      status: "released",
+      pax_count: 2,
+      cargo_lbs: 0,
+      pic_name: "Mike O'Brien",
+      last_contact_at: null,
+    };
+    api.getFlightBoard.mockResolvedValue({
+      items: [
+        {
+          ...row,
+          id: "f-1",
+          flight_number: "BK-544B2748",
+          origin: "PABE",
+          destination: "PAKI",
+          scheduled_departure_at: "2026-11-24T02:30:00Z",
+          actual_departure_at: null,
+          is_overdue: false,
+          not_departed: true,
+        },
+        {
+          ...row,
+          id: "f-2",
+          flight_number: "PGR800",
+          origin: "PABE",
+          destination: "PABE",
+          stops: ["PABE", "PAHP", "PABE"],
+          scheduled_departure_at: "2026-11-24T01:00:00Z",
+          actual_departure_at: "2026-11-24T01:05:00Z",
+          is_overdue: true,
+          not_departed: false,
+        },
+      ],
+      view: "today",
+      total: 2,
+    });
+    const { alerts } = await loadOperationalSnapshot();
+    const notDeparted = alerts.find((a) => a.id === "not-departed-f-1");
+    expect(notDeparted?.severity).toBe("yellow");
+    expect(notDeparted?.title).toMatch(/^Not departed — BK-544B2748/);
+    expect(alerts.find((a) => a.id === "overdue-f-1")).toBeUndefined();
+    expect(alerts.find((a) => a.id === "overdue-f-2")?.detail).toBe(
+      "N503PA · PABE → PAHP → PABE · no contact 20+ min",
+    );
+  });
+});
+
 it("counts each airborne aircraft once despite overlapping imported flights", async () => {
   api.listSafetyReports.mockResolvedValue({ items: [] });
   api.getFlightBoard.mockResolvedValue({ items: [

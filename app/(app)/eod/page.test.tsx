@@ -92,6 +92,32 @@ describe("EodPage", () => {
     expect(screen.getByText("Recorded Flight Hours").parentElement).toHaveTextContent("0.1");
     expect(screen.getByText(/Flights without recorded departure/)).toBeInTheDocument();
   });
+  it("counts a flight with stops by its legs, not first takeoff to last landing (1124-24)", async () => {
+    // Off 20:38Z, on 01:47Z: 5 h 9 min, most of it on the ground at the stop.
+    listFlights
+      .mockResolvedValueOnce({
+        items: [
+          makeFlight({
+            flight_number: "BK-D04CA797",
+            status: "completed",
+            actual_departure_at: "2026-06-15T14:00:00Z",
+            actual_arrival_at: "2026-06-15T19:09:00Z",
+            legs: [
+              { sequence: 1, origin: "PABE", destination: "PADM", scheduled_departure_at: "2026-06-15T14:00:00Z", scheduled_arrival_at: "2026-06-15T14:40:00Z" },
+              { sequence: 2, origin: "PADM", destination: "PABE", scheduled_departure_at: "2026-06-15T18:00:00Z", scheduled_arrival_at: "2026-06-15T18:40:00Z" },
+            ],
+          }),
+        ],
+        total: 1,
+      })
+      .mockResolvedValueOnce({ items: [], total: 0 })
+      .mockResolvedValueOnce({ items: [], total: 0 });
+
+    await renderPage();
+
+    expect(screen.getByText("Recorded Flight Hours").parentElement).toHaveTextContent("1.3");
+  });
+
   it("issues three parallel listFlights calls (today completed, all released, all scheduled)", async () => {
     listFlights.mockResolvedValue({ items: [], total: 0 });
 

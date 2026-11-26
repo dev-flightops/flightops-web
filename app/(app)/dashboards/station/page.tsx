@@ -13,9 +13,15 @@ import {
   scopeSnapshotToIcao,
 } from "@/lib/dashboards/operational-snapshot";
 import { snapshotAlertsToList } from "@/lib/dashboards/snapshot-to-alerts";
-import type { CompanyBaseResponse, FlightListItem } from "@/lib/api/types";
+import type { FlightListItem } from "@/lib/api/types";
 import { DEFAULT_TIME_ZONE, localDay } from "@/lib/format/local-time";
-import { routeText } from "@/lib/route";
+import { flightStops, routeText } from "@/lib/route";
+
+/** A station on the dashboard: a base, or an airport today's flights stop at. */
+interface StationRow {
+  icao: string;
+  display_name: string;
+}
 
 interface SearchParams {
   station?: string;
@@ -32,20 +38,30 @@ export default async function StationDashboardPage({
   // #138: a load that fails says so; it had read as no traffic, or as
   // "No bases configured".
   const loads = new Loads();
-  const [todaysFlights, snapshot, basesResponse] = await Promise.all([
+  const weekAgo = localDay(DEFAULT_TIME_ZONE, new Date(Date.now() - 7 * 24 * 60 * 60 * 1000));
+  const [todaysFlights, snapshot, basesResponse, weeksFlights] = await Promise.all([
     loads.or(listFlights({ onCompanyDate: today, limit: 200 }), { items: [], total: 0 }, "today’s flights"),
     loadOperationalSnapshot(),
     // Full bases catalog drives both the dropdown picker and the
     // network grid — same source legacy uses. Falls back to today's
     // traffic stations if the catalog query fails.
     loads.or(listCompanyBases(), { items: [], total: 0 }, "the company’s bases"),
+    // The stations flown this past week, so the villages served daily are
+    // listed before today's flights leave.
+    listFlights({ departsFrom: weekAgo, limit: 200 }).catch(() => ({ items: [], total: 0 })),
   ]);
   const basesFailed = loads.failed.includes("the company’s bases");
 
-  // Bases sorted by ICAO — drives the <select> and the network grid.
-  const bases = [...basesResponse.items].sort((a, b) =>
-    a.icao.localeCompare(b.icao),
-  );
+  // The bases, and the airports this week's flights stop at (1124-32: PAHP,
+  // PAVA, PAQH and the other villages flown daily weren't listed). The hub
+  // first, the rest by code; the page opens on the hub, not on whichever
+  // sorts first (9Z8 Levelock).
+  const named = new Map(basesResponse.items.map((b) => [b.icao, b.display_name]));
+  const hub = basesResponse.items.find((b) => b.is_hub)?.icao ?? null;
+  const flown = [...todaysFlights.items, ...weeksFlights.items].flatMap((f) => flightStops(f));
+  const bases: StationRow[] = [...new Set([...named.keys(), ...flown])]
+    .map((icao) => ({ icao, display_name: named.get(icao) ?? icao }))
+    .sort((a, b) => Number(b.icao === hub) - Number(a.icao === hub) || a.icao.localeCompare(b.icao));
   const baseIcaos = new Set(bases.map((b) => b.icao));
   const station =
     requestedStation && baseIcaos.has(requestedStation)
@@ -57,11 +73,11 @@ export default async function StationDashboardPage({
   // pass through so dispatchers see them on every base view.
   const scopedSnapshot = scopeSnapshotToIcao(snapshot, station);
 
-  const inbound = todaysFlights.items.filter((f) => f.destination === station);
-  const outbound = todaysFlights.items.filter((f) => f.origin === station);
-  const allAtStation = todaysFlights.items.filter(
-    (f) => f.origin === station || f.destination === station,
-  );
+  // A flight lands at every stop after its first and leaves every stop
+  // before its last, so a village in the middle of a route counts.
+  const inbound = todaysFlights.items.filter((f) => flightStops(f).slice(1).includes(station));
+  const outbound = todaysFlights.items.filter((f) => flightStops(f).slice(0, -1).includes(station));
+  const allAtStation = todaysFlights.items.filter((f) => flightStops(f).includes(station));
 
   // Airborne legs scoped to this station: an inbound is "Inbound Now"
   // when it has departed (status=released + actual_departure_at set) but
@@ -88,7 +104,7 @@ export default async function StationDashboardPage({
             current={station}
             options={bases.map((b) => ({
               icao: b.icao,
-              label: `${b.icao} — ${b.display_name}`,
+              label: b.display_name === b.icao ? b.icao : `${b.icao} — ${b.display_name}`,
             }))}
           />
         }
@@ -253,7 +269,7 @@ function NetworkGrid({
   flights,
   currentStation,
 }: {
-  bases: CompanyBaseResponse[];
+  bases: StationRow[];
   /** The bases didn't load: the notice at the top says so. */
   basesFailed: boolean;
   flights: FlightListItem[];
@@ -262,16 +278,20 @@ function NetworkGrid({
   // Tally departures + arrivals per ICAO from today's board.
   const counts = new Map<string, { dep: number; arr: number; inbound: number }>();
   for (const f of flights) {
-    const dep = counts.get(f.origin) ?? { dep: 0, arr: 0, inbound: 0 };
-    dep.dep += 1;
-    counts.set(f.origin, dep);
-    const arr = counts.get(f.destination) ?? { dep: 0, arr: 0, inbound: 0 };
-    arr.arr += 1;
+    // Leg by leg, so each stop counts (1124-32).
+    const stops = flightStops(f);
+    stops.forEach((icao, i) => {
+      const c = counts.get(icao) ?? { dep: 0, arr: 0, inbound: 0 };
+      if (i < stops.length - 1) c.dep += 1;
+      if (i > 0) c.arr += 1;
+      counts.set(icao, c);
+    });
     // Inbound = currently airborne, destined here.
     if (f.status === "released" && f.actual_departure_at && !f.actual_arrival_at) {
+      const arr = counts.get(f.destination) ?? { dep: 0, arr: 0, inbound: 0 };
       arr.inbound += 1;
+      counts.set(f.destination, arr);
     }
-    counts.set(f.destination, arr);
   }
 
   if (bases.length === 0) {

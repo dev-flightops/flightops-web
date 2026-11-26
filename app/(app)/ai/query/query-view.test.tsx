@@ -124,8 +124,9 @@ describe("the catalogue panel", () => {
     const panel = within(
       screen.getByRole("region", { name: "What I can answer about" }),
     );
-    expect(panel.getByText("aircraft")).toBeInTheDocument();
-    expect(panel.getByText(/tail_number, model, base/)).toBeInTheDocument();
+    // Names and fields as words, not codes (1124-27).
+    expect(panel.getByText("Aircraft")).toBeInTheDocument();
+    expect(panel.getByText(/Tail number, Model, Base/)).toBeInTheDocument();
   });
 
   it("is omitted when the service could not be reached", () => {
@@ -255,7 +256,8 @@ describe("what it understood", () => {
   });
 
   it("reads a plain selection back as a sentence", () => {
-    expect(describeSpec(spec())).toBe("tail_number from aircraft");
+    // Fields as words, not codes (1124-27).
+    expect(describeSpec(spec())).toBe("tail number from aircraft");
   });
 
   it("reads an aggregate back", () => {
@@ -279,7 +281,7 @@ describe("what it understood", () => {
       describeSpec(
         spec({ filters: [{ field: "grounded_at", op: "is_not_null", value: null }] }),
       ),
-    ).toContain("grounded_at is set");
+    ).toContain("grounded at is set");
   });
 
   it("reads grouping and ordering back", () => {

@@ -81,6 +81,17 @@ describe("Aircraft Revenue Availability (#172)", () => {
     expect(within(third).getByText("Available")).toBeInTheDocument();
   });
 
+  it("shows a grounded aircraft's time on hold (1124-19)", async () => {
+    getAvailability.mockResolvedValue({
+      ...report,
+      rows: [{ ...row, aircraft_id: "ac-9", tail_number: "N705PA", availability_pct: 16.7, mx_hours: 2, hold_hours: 58, status: "on_hold" }],
+    });
+    await show();
+    const held = screen.getByRole("row", { name: /N705PA/ });
+    expect(within(held).getByText("58")).toBeInTheDocument();
+    expect(within(held).getByText("RTS Hold")).toBeInTheDocument();
+  });
+
   it("sends the dates it's given, and ignores anything that isn't one", async () => {
     getAvailability.mockResolvedValue(report);
     await show({ start: "2026-01-01", end: "soon" });

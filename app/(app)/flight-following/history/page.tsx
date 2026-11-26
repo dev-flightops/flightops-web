@@ -8,8 +8,9 @@ import type {
   AircraftListItem,
   FlightListItem,
 } from "@/lib/api/types";
-import { formatBoth } from "@/lib/format/flight-time";
+import { formatBoth, formatBothWithDate } from "@/lib/format/flight-time";
 import { DEFAULT_TIME_ZONE, localDate } from "@/lib/format/local-time";
+import { blockMs } from "@/lib/flights/block";
 import { routeText } from "@/lib/route";
 
 /**
@@ -94,10 +95,11 @@ export default async function FlightFollowingHistoryPage({
     return true;
   });
 
-  // Newest first.
+  // Newest first, by the day the Date column shows: its departure (1124-33:
+  // BK-FEC742B3, of Nov 17 and marked in on Nov 19, sat among Nov 19's).
   filtered.sort((a, b) => {
-    const aT = Date.parse(a.actual_arrival_at ?? a.scheduled_arrival_at);
-    const bT = Date.parse(b.actual_arrival_at ?? b.scheduled_arrival_at);
+    const aT = Date.parse(a.scheduled_departure_at);
+    const bT = Date.parse(b.scheduled_departure_at);
     return bT - aT;
   });
 
@@ -206,12 +208,12 @@ function FlightHistoryRow({ flight }: { flight: FlightListItem }) {
         <div className="font-mono">{etd.local}</div>
         <div className="font-mono text-[0.6rem]">{etd.zulu}</div>
       </td>
-      <ActualTimeCell actualIso={flight.actual_departure_at ?? null} />
+      <ActualTimeCell actualIso={flight.actual_departure_at ?? null} dueIso={flight.scheduled_departure_at} />
       <td className="px-3 py-2.5 text-muted-foreground">
         <div className="font-mono">{eta.local}</div>
         <div className="font-mono text-[0.6rem]">{eta.zulu}</div>
       </td>
-      <ActualTimeCell actualIso={flight.actual_arrival_at ?? null} />
+      <ActualTimeCell actualIso={flight.actual_arrival_at ?? null} dueIso={flight.scheduled_departure_at} />
       <td className="px-3 py-2.5 font-mono">{formatBlockHours(flight)}</td>
       <td className="px-3 py-2.5">
         <StatusBadge status={flight.status} />
@@ -220,11 +222,15 @@ function FlightHistoryRow({ flight }: { flight: FlightListItem }) {
   );
 }
 
-function ActualTimeCell({ actualIso }: { actualIso: string | null }) {
+function ActualTimeCell({ actualIso, dueIso }: { actualIso: string | null; dueIso: string }) {
   if (actualIso === null) {
     return <td className="px-3 py-2.5 text-muted-foreground">—</td>;
   }
-  const formatted = formatBoth(actualIso);
+  // With its date when it isn't the day the flight was due out (1124-07:
+  // BK-A5B47E66's arrival, marked the next afternoon, read as that day's).
+  const otherDay =
+    localDate(actualIso, DEFAULT_TIME_ZONE) !== localDate(dueIso, DEFAULT_TIME_ZONE);
+  const formatted = otherDay ? formatBothWithDate(actualIso) : formatBoth(actualIso);
   return (
     <td className="px-3 py-2.5 text-status-green">
       <div className="font-mono">{formatted.local}</div>
@@ -234,6 +240,12 @@ function ActualTimeCell({ actualIso }: { actualIso: string | null }) {
 }
 
 function formatBlockHours(f: FlightListItem): string {
+  // By legs, not first off to last on, which counts the ground time at the
+  // stops (1124-07, 1124-11): as pay and the aircraft's hours count it.
+  const flown = blockMs(f);
+  if (flown !== null) {
+    return `${(flown / 3_600_000).toLocaleString("en-US", { minimumFractionDigits: 1, maximumFractionDigits: 1 })}h`;
+  }
   const dep = f.actual_departure_at ?? f.scheduled_departure_at;
   const arr = f.actual_arrival_at ?? f.scheduled_arrival_at;
   const depMs = Date.parse(dep);

@@ -101,6 +101,7 @@ function Row({ row }: { row: BoardFlightItem }) {
 function StatusBadge({ row }: { row: BoardFlightItem }) {
   // A quiet mark (#82): the status in its colour behind a square.
   if (row.is_overdue) return <StatusMark label="Overdue" tone="red" />;
+  if (row.not_departed) return <StatusMark label="Not departed" tone="yellow" />;
   if (row.status === "released" && row.actual_departure_at) {
     return <StatusMark label="Airborne" tone="green" />;
   }

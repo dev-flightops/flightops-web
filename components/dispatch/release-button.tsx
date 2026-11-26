@@ -80,8 +80,11 @@ export function ReleaseButton({
         acknowledgedWarnings,
       );
       if (result.ok) {
-        setOpen(false);
-        router.refresh();
+        // Closed with the refreshed packet, as Cancel Flight (1124-31).
+        startTransition(() => {
+          setOpen(false);
+          router.refresh();
+        });
       } else {
         setError(result.error);
       }

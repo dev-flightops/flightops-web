@@ -168,6 +168,21 @@ export interface MelLimitBreach {
 }
 
 /** One leg of a multi-stop flight. */
+/** The aircraft's neighbouring flight puts it somewhere else (1124-05):
+ *  its flight before this one lands at `airport` at `at`, or its next one
+ *  leaves `airport` at `at`. */
+export interface AircraftPositionConflict {
+  kind: "arrives_elsewhere" | "next_leaves_elsewhere";
+  flight_id: string;
+  flight_number: string;
+  airport: string;
+  at: string;
+}
+
+export interface AircraftPositionView {
+  conflicts: AircraftPositionConflict[];
+}
+
 export interface FlightLeg {
   sequence: number;
   origin: string;
@@ -917,8 +932,14 @@ export interface BoardFlightItem {
   cargo_lbs: number;
   /** The PIC on the flight's crew (#155). */
   pic_name: string | null;
-  /** Computed: status==="released" AND now > the estimated arrival + 30 min. */
+  /** Computed: status==="released", departed, AND now > the estimated
+   *  arrival + 30 min. */
   is_overdue: boolean;
+  /** Released, never marked departed, 30 min past its departure (1124-06):
+   *  not overdue, which means a search. Absent from services before it. */
+  not_departed?: boolean;
+  /** The ops notes typed on the flight (1124-21). */
+  notes?: string | null;
   /** When it should land (#155): the scheduled arrival, or once it has
    *  left, its scheduled block after the actual departure. */
   estimated_arrival_at?: string | null;

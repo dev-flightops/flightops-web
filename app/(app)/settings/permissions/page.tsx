@@ -97,12 +97,11 @@ export default async function SettingsPermissionsPage() {
                 <div className="flex items-start justify-between gap-4">
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
+                      {/* The name only (1124-27: the code beside it read
+                          "exec_admin"). */}
                       <h2 className="text-base font-semibold text-foreground">
                         {role.label}
                       </h2>
-                      <code className="font-mono text-[0.65rem] text-muted-foreground">
-                        {role.id}
-                      </code>
                     </div>
                     <p className="mt-1 text-sm text-muted-foreground">
                       {role.description}

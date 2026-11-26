@@ -73,6 +73,7 @@ import type {
   StepCompletionResponse,
   UserRef,
   WeatherMinimumsView,
+  AircraftPositionView,
   WeightReturn,
   WeightReturnCreateRequest,
   WeightReturnListResponse,
@@ -187,6 +188,11 @@ export async function getFlight(flightId: string): Promise<FlightDetail> {
  *  decide now, for an aircraft the company lists as not IFR certified. */
 export async function getWeatherMinimums(flightId: string): Promise<WeatherMinimumsView> {
   return apiFetch<WeatherMinimumsView>(`/ops/flights/${flightId}/weather-minimums`);
+}
+
+/** Where the aircraft will be, against where the flight takes it (1124-05). */
+export async function getAircraftPosition(flightId: string): Promise<AircraftPositionView> {
+  return apiFetch<AircraftPositionView>(`/ops/flights/${flightId}/aircraft-position`);
 }
 
 export async function releaseFlight(
