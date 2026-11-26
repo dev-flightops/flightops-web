@@ -163,7 +163,8 @@ function ItemsList({
             <table className="w-full text-sm">
               <thead className="ff-thead">
                 <tr>
-                  <th scope="col" className="px-4 py-2.5 font-semibold">Code</th>
+                  {/* By name; the item's code read like "crm_initial"
+                      (1124-27). */}
                   <th scope="col" className="px-4 py-2.5 font-semibold">Name</th>
                   <th scope="col" className="px-4 py-2.5 font-semibold">Regulation</th>
                   <th scope="col" className="px-4 py-2.5 font-semibold">Interval</th>
@@ -175,9 +176,6 @@ function ItemsList({
               <tbody className="divide-y divide-border">
                 {items.map((i) => (
                   <tr key={i.id} className="hover:bg-accent">
-                    <td className="whitespace-nowrap px-4 py-3 font-mono text-xs">
-                      {i.code}
-                    </td>
                     <td className="whitespace-nowrap px-4 py-3 text-xs font-semibold">
                       {i.name}
                     </td>

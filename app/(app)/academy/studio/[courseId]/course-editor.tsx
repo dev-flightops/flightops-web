@@ -116,7 +116,8 @@ function ComplianceLinkPicker({
         </h2>
         {linkedItem ? (
           <span className="eyebrow">
-            Fires {linkedItem.code || linkedItem.regulation || "linked item"}
+            {/* By name (1124-27: it read "Fires crm_recurrent"). */}
+            Files {linkedItem.name}
           </span>
         ) : null}
       </div>
@@ -149,7 +150,7 @@ function ComplianceLinkPicker({
             >
               {items.map((i) => (
                 <option key={i.id} value={i.id}>
-                  {i.code ? `${i.code} · ${i.name}` : i.name}
+                  {i.name}
                 </option>
               ))}
             </optgroup>
