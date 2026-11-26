@@ -10,6 +10,7 @@ import type {
 } from "@/lib/api/types";
 import { formatBoth, formatBothWithDate } from "@/lib/format/flight-time";
 import { DEFAULT_TIME_ZONE, localDate } from "@/lib/format/local-time";
+import { blockMs } from "@/lib/flights/block";
 import { routeText } from "@/lib/route";
 
 /**
@@ -239,16 +240,11 @@ function ActualTimeCell({ actualIso, dueIso }: { actualIso: string | null; dueIs
 }
 
 function formatBlockHours(f: FlightListItem): string {
-  // A flight marked at its stops (LOG-14) is its legs' block, not first off
-  // to last on, which counts the ground time at the stops (1124-07), as pay
-  // and the aircraft's hours do.
-  const legs = f.legs ?? [];
-  if (legs.length > 0 && legs.every((leg) => leg.actual_departure_at && leg.actual_arrival_at)) {
-    const ms = legs.reduce(
-      (sum, leg) => sum + Date.parse(leg.actual_arrival_at!) - Date.parse(leg.actual_departure_at!),
-      0,
-    );
-    return `${(ms / 3_600_000).toLocaleString("en-US", { minimumFractionDigits: 1, maximumFractionDigits: 1 })}h`;
+  // By legs, not first off to last on, which counts the ground time at the
+  // stops (1124-07, 1124-11): as pay and the aircraft's hours count it.
+  const flown = blockMs(f);
+  if (flown !== null) {
+    return `${(flown / 3_600_000).toLocaleString("en-US", { minimumFractionDigits: 1, maximumFractionDigits: 1 })}h`;
   }
   const dep = f.actual_departure_at ?? f.scheduled_departure_at;
   const arr = f.actual_arrival_at ?? f.scheduled_arrival_at;

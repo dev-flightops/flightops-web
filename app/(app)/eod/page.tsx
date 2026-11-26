@@ -12,6 +12,7 @@ import { formatBoth, formatZulu } from "@/lib/format/flight-time";
 import { DEFAULT_TIME_ZONE, localDate, localDay, zoneName } from "@/lib/format/local-time";
 
 import { CancelStaleButton } from "./cancel-stale-button";
+import { blockMs } from "@/lib/flights/block";
 
 /**
  * /eod — End-of-Day Closeout (M2-G-25).
@@ -454,9 +455,8 @@ function flightBlockHours(f: FlightListItem): string {
   }) + "h";
 }
 
+/** By legs, as pay counts it (1124-24: PGR800 read 2.4 h here, the ground
+ *  time at its stops included, against 1.86 h on the roster and in pay). */
 function recordedDurationMs(flight: FlightListItem): number | null {
-  if (!flight.actual_departure_at || !flight.actual_arrival_at) return null;
-  const departure = Date.parse(flight.actual_departure_at);
-  const arrival = Date.parse(flight.actual_arrival_at);
-  return Number.isFinite(departure) && Number.isFinite(arrival) && arrival >= departure ? arrival - departure : null;
+  return blockMs(flight);
 }
