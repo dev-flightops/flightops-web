@@ -158,7 +158,7 @@ export default async function OpsScoreDashboardPage({
           />
           <Methodology
             title="Safety Indicators (10 pts)"
-            body="Starts at 10. Deducts 2 pts per currently overdue flight. The 3 pts allocated to diversions and returns-to-departure are withheld rather than awarded: a flight record has no actual destination, so a diversion cannot be detected, and scoring it as clean would assert something we cannot see. This is not a safety compliance score — it is a signal of unusual events that warrant leadership attention."
+            body="Starts at 10. Deducts 2 pts per currently overdue flight. The 3 pts for diversions and returns to departure are withheld rather than awarded: a flight doesn't record where it actually landed yet, and scoring that as clean would claim something unseen. This is not a safety compliance score — it is a signal of unusual events that warrant leadership attention."
           />
         </div>
         <div className="mt-4 space-y-1 border-t border-border pt-3 text-[0.7rem] text-muted-foreground">

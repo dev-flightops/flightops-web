@@ -119,6 +119,21 @@ export async function getMorningBrief(
   return apiFetch<MorningBrief>(`/ai/brief${qs}`, { cache: "no-store" });
 }
 
+/** Which AI tools this deployment can run (ai-service
+ *  GET /ai/capabilities): the three that need a model are false when the
+ *  AI service has no key. */
+export interface AiCapabilities {
+  fleetbrain: boolean;
+  morning_brief: boolean;
+  ai_query: boolean;
+  safety_intelligence: boolean;
+  delay_alerts: boolean;
+}
+
+export async function getAiCapabilities(): Promise<AiCapabilities> {
+  return apiFetch<AiCapabilities>("/ai/capabilities", { cache: "no-store" });
+}
+
 // ── AI Query ─────────────────────────────────────────────────────────
 
 export interface QueryFilter {

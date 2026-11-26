@@ -62,9 +62,10 @@ const board: ComplianceBoardResponse = {
   ] as unknown as ComplianceBoardResponse["rows"],
   chips: { fully_current: 1, early_month: 0, grace_month: 0, non_current: 1, records_missing: 0 },
 };
-const { boardMock, invoicesMock } = vi.hoisted(() => ({
+const { boardMock, invoicesMock, overLimitMock } = vi.hoisted(() => ({
   boardMock: vi.fn(),
   invoicesMock: vi.fn(),
+  overLimitMock: vi.fn(async () => ({ max_duty_hours: 14, items: [] as unknown[] })),
 }));
 
 vi.mock("@/lib/api/client", () => ({ ApiError: class extends Error {} }));
@@ -76,6 +77,7 @@ vi.mock("@/lib/api/ops", () => ({
   listFlights: vi.fn(async () => ({ items: [], total: 0 })),
   getComplianceBoard: boardMock,
   getMorningToday: vi.fn(async () => ({ company_date: "2026-10-31", items: [] })),
+  getDutyOverLimit: overLimitMock,
 }));
 vi.mock("@/lib/api/customer-invoices", () => ({ listCustomerInvoices: invoicesMock }));
 vi.mock("@/auth", () => ({ auth: vi.fn(async () => ({ roles: ["dispatcher"] })) }));
@@ -203,6 +205,25 @@ describe("chief pilot dashboard", () => {
     expect(within(row).getByText("Medical")).toBeInTheDocument();
     expect(screen.queryByText(/not built yet/i)).toBeNull();
     expectNoMilestonePills();
+  });
+});
+
+describe("chief pilot dashboard: duty (1124-17)", () => {
+  it("lists who is on duty past the limit, where it said a list wasn't built", async () => {
+    overLimitMock.mockResolvedValueOnce({
+      max_duty_hours: 14,
+      items: [{ user_id: "u-g", full_name: "Grace Okafor", clock_in_at: "2026-11-19T17:00:00Z", elapsed_hours: 128 }],
+    });
+    render(await ChiefPilotDashboardPage());
+    expect(screen.getByText("Grace Okafor")).toBeInTheDocument();
+    expect(screen.getByText("128.0 h on duty")).toBeInTheDocument();
+    expect(screen.queryByText(/not built/i)).toBeNull();
+    expect(screen.queryByText(/not wired/i)).toBeNull();
+  });
+
+  it("says nobody is, against the company's limit", async () => {
+    render(await ChiefPilotDashboardPage());
+    expect(screen.getByText("Nobody is on duty past the 14 h limit.")).toBeInTheDocument();
   });
 });
 

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { PageHeader } from "@/components/ff/page-header";
 import { linkCaps } from "@/components/ff/controls";
 import { StatusMark } from "@/components/ff/status-mark";
+import { getAiCapabilities } from "@/lib/api/ai";
 import { getCompanyProfile } from "@/lib/api/auth";
 import { PLATFORM_SERVICES, healthPath } from "@/lib/platform-services";
 import { listFlights } from "@/lib/api/ops";
@@ -62,7 +63,7 @@ async function checkServices(): Promise<{
 }
 
 export default async function SystemHealthDashboardPage() {
-  const [gateway, services, snapshot, recentReleased, companyProfile] =
+  const [gateway, services, snapshot, recentReleased, companyProfile, ai] =
     await Promise.all([
       checkGateway(),
       checkServices(),
@@ -73,13 +74,13 @@ export default async function SystemHealthDashboardPage() {
       listFlights({ status: "released", limit: 1 })
         .catch(() => null),
       getCompanyProfile().catch(() => null),
+      // 1124-17: the AI service says whether it has a model key. The web
+      // server's own environment never holds it, so reading that said
+      // "No API key set" while the AI tools answered.
+      getAiCapabilities().catch(() => null),
     ]);
 
-  // AI / Compliance Engine — we don't ship an LLM in M2. Honest INFO
-  // state until risk-analytics + compliance services land in M3.
-  const aiKeyConfigured = Boolean(
-    process.env.OPENAI_API_KEY || process.env.ANTHROPIC_API_KEY,
-  );
+  const aiKeyConfigured = Boolean(ai?.ai_query);
 
   const lastPacket = recentReleased?.items[0];
   const cards: Array<{
@@ -110,8 +111,10 @@ export default async function SystemHealthDashboardPage() {
       // feature they can click on is coming in a past milestone is the
       // same overclaim in reverse.
       detail: aiKeyConfigured
-        ? "API key configured"
-        : "No API key set for this environment — the AI tools will not answer",
+        ? "The AI tools are answering"
+        : ai === null
+          ? "The AI service didn't answer"
+          : "The AI service has no model key: AI Query, Safety Intelligence and Delay Alerts are off",
     },
     {
       title: "Active Flights",
@@ -214,13 +217,6 @@ export default async function SystemHealthDashboardPage() {
         </dl>
       </section>
 
-      {/* Says what is absent, without naming a milestone. "Ships with
-          M4" was written during M2; read during M4 it promises the
-          reader something the page they are looking at does not have. */}
-      <p className="mt-4 text-center text-[0.65rem] text-muted-foreground">
-        Deeper observability — request latency p50/p95/p99, deploy history, job
-        queue depth, and per-route error rates — is not built.
-      </p>
     </div>
   );
 }

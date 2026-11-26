@@ -3,7 +3,7 @@ import Link from "next/link";
 import { PageHeader } from "@/components/ff/page-header";
 import { AlertList } from "@/components/dashboards/alert-list";
 import { StatTile } from "@/components/dashboards/stat-tile";
-import { getComplianceBoard } from "@/lib/api/ops";
+import { getComplianceBoard, getDutyOverLimit } from "@/lib/api/ops";
 import { loadOperationalSnapshot } from "@/lib/dashboards/operational-snapshot";
 import { snapshotAlertsToList } from "@/lib/dashboards/snapshot-to-alerts";
 
@@ -19,9 +19,12 @@ const STATUS_WORDS: Record<string, string> = {
 export default async function ChiefPilotDashboardPage() {
   // The crew tiles read the currency board (#157: they had said "Not
   // built yet"); the snapshot gives "Airborne Now".
-  const [snapshot, crew] = await Promise.all([
+  const [snapshot, crew, overLimit] = await Promise.all([
     loadOperationalSnapshot(),
     getComplianceBoard().catch(() => null),
+    // 1124-17: who is on duty past the limit, company-wide, in place of a
+    // note that said a list of open duty periods wasn't built.
+    getDutyOverLimit().catch(() => null),
   ]);
 
   return (
@@ -80,22 +83,34 @@ export default async function ChiefPilotDashboardPage() {
         <Panel title="Crew & Ops Alerts">
           <AlertList
             alerts={snapshotAlertsToList(snapshot.alerts)}
-            emptyHint="No grounded aircraft, overdue flights or MELs expiring in the next two days. Medical certificate expirations, recurrent due dates and crew legality violations are not wired — no crew-service exists to supply them."
+            emptyHint="No grounded aircraft, overdue flights, duty past the limit or MELs expiring in the next two days. Each pilot's currency is in the matrix below."
           />
         </Panel>
 
         <Panel
-          title="Open Duty Periods"
+          title="On Duty Past the Limit"
           headerLink={{ label: "pilot roster →", href: "/compliance/roster" }}
         >
-          {/* Not "0 pilots on duty" — that asserted a count with
-              nothing behind it. /ops/duty/current returns the caller's
-              own duty status; there is no tenant-wide endpoint for who
-              is on duty, so this panel cannot know the number is zero. */}
-          <p className="py-4 text-center text-xs text-muted-foreground">
-            Tenant-wide duty periods with FAR 117 rest progress are not
-            built — /ops/duty/current reports only your own status.
-          </p>
+          {overLimit === null ? (
+            <p className="py-4 text-center text-xs text-muted-foreground">
+              Who is on duty couldn&rsquo;t be loaded.
+            </p>
+          ) : overLimit.items.length === 0 ? (
+            <p className="py-4 text-center text-xs text-muted-foreground">
+              Nobody is on duty past the {overLimit.max_duty_hours} h limit.
+            </p>
+          ) : (
+            <ul className="divide-y divide-border text-sm">
+              {overLimit.items.map((person) => (
+                <li key={person.user_id} className="flex items-baseline justify-between gap-3 py-2">
+                  <span className="text-foreground">{person.full_name}</span>
+                  <span className="font-mono text-status-red">
+                    {person.elapsed_hours.toFixed(1)} h on duty
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
         </Panel>
       </div>
 

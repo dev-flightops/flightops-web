@@ -3,7 +3,6 @@ import Link from "next/link";
 import { PageHeader } from "@/components/ff/page-header";
 import { CheckGlyph } from "@/components/ff/glyphs";
 import { AlertList } from "@/components/dashboards/alert-list";
-import { CompletionTrendNotMeasured } from "@/components/dashboards/completion-trend-not-measured";
 import { ScorePill } from "@/components/dashboards/score-pill";
 import { StatTile } from "@/components/dashboards/stat-tile";
 import { listFlights, getFlightStats } from "@/lib/api/ops";
@@ -145,8 +144,9 @@ export default async function DirectorOpsDashboardPage() {
         </section>
       </div>
 
-      {/* Row 3 — 2-col: Pending Dispatch + 8-Week Completion Trend */}
-      <div className="mt-6 grid grid-cols-1 items-start gap-5 md:grid-cols-2">
+      {/* Row 3 — Pending Dispatch. The 8-week completion trend isn't
+          computed, so it isn't shown (1124-17: it said "not computed"). */}
+      <div className="mt-6 grid grid-cols-1 items-start gap-5">
         <section className="overflow-hidden rounded-lg border border-border bg-card p-5">
           <div className="-mx-5 -mt-5 mb-4 flex flex-wrap items-baseline justify-between gap-2 border-b border-border px-5 py-3">
             <h2 className="panel-title">
@@ -174,17 +174,6 @@ export default async function DirectorOpsDashboardPage() {
           />
         </section>
 
-        <section className="overflow-hidden rounded-lg border border-border bg-card p-5">
-          <div className="-mx-5 -mt-5 mb-4 flex flex-wrap items-baseline justify-between gap-2 border-b border-border px-5 py-3">
-            <h2 className="panel-title">
-              8-Week Completion Trend
-            </h2>
-            <span className="text-[0.65rem] text-muted-foreground">
-              not computed
-            </span>
-          </div>
-          <CompletionTrendNotMeasured />
-        </section>
       </div>
 
       {/* Row 4 — stations. Crew Compliance and Risk Distribution had
