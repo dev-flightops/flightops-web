@@ -6,6 +6,7 @@ import { z } from "zod";
 import { ApiError } from "@/lib/api/client";
 import { validationSummary } from "@/lib/api/validation-errors";
 import { logCurrencyCompletion } from "@/lib/api/ops";
+import { companyToday } from "@/lib/company-today";
 
 /**
  * Server action behind the Log Completion modal — Spec 5 §"What
@@ -56,7 +57,7 @@ const Schema = z
   })
   // Spec 5 §"Modal fields": "Cannot be a future date."
   .refine(
-    (data) => data.completion_date <= todayIso(),
+    async (data) => data.completion_date <= (await companyToday()),
     {
       path: ["completion_date"],
       message: "Cannot be in the future",
@@ -74,7 +75,7 @@ export async function logCompletionAction(
   formData: FormData,
 ): Promise<LogCompletionState> {
   const raw = Object.fromEntries(formData.entries());
-  const parsed = Schema.safeParse(raw);
+  const parsed = await Schema.safeParseAsync(raw);
   if (!parsed.success) {
     const errors: Record<string, string> = {};
     for (const issue of parsed.error.issues) {
@@ -192,6 +193,3 @@ function parseDetail(message: string): string {
   }
 }
 
-function todayIso(): string {
-  return new Date().toISOString().slice(0, 10);
-}

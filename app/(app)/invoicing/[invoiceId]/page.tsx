@@ -25,6 +25,7 @@ import { InvoiceActions } from "./invoice-actions";
 import { PaymentHistory } from "./payment-history";
 import { RecordPayment } from "./record-payment";
 import { type Approver, Refunds } from "./refunds";
+import { companyToday } from "@/lib/company-today";
 
 /**
  * /invoicing/{id} — one invoice, as the customer will see it.
@@ -44,9 +45,6 @@ import { type Approver, Refunds } from "./refunds";
 
 export const dynamic = "force-dynamic";
 
-function todayUtc(): string {
-  return new Date().toISOString().slice(0, 10);
-}
 
 /** Who may approve a refund over $500 (#127): everyone on the staff
  *  holding the role, but not the person entering it. None when the
@@ -91,7 +89,7 @@ export default async function InvoiceDetailPage({
     throw err;
   }
 
-  const overdue = isOverdue(invoice.status, invoice.due_date, todayUtc());
+  const overdue = isOverdue(invoice.status, invoice.due_date, await companyToday());
   // What can still be given back (#127): received and not yet refunded.
   const refundable = invoice.paid_cents - invoice.refunded_cents;
   const canRefund =

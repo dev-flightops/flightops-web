@@ -4,6 +4,7 @@ import { useActionState, useEffect } from "react";
 
 import { Spinner } from "@/components/ui/spinner";
 import type { CurrencyItemRef } from "@/lib/api/types";
+import { DEFAULT_TIME_ZONE, localDay } from "@/lib/format/local-time";
 
 import {
   logCompletionAction,
@@ -62,7 +63,9 @@ export function LogCompletionModal({
   const fieldError = (key: string): string | undefined =>
     state.status === "field-errors" ? state.errors[key] : undefined;
 
-  const today = new Date().toISOString().slice(0, 10);
+  // Today in the company's default zone (Alaska), not UTC's; the action
+  // checks against the company's own (code audit, 26 Nov).
+  const today = localDay(DEFAULT_TIME_ZONE);
   const isMedical = item.interval_type === "medical_hard_expiry";
 
   return (

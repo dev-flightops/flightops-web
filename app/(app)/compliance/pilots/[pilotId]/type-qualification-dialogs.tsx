@@ -11,6 +11,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Spinner } from "@/components/ui/spinner";
+import { DEFAULT_TIME_ZONE, localDay } from "@/lib/format/local-time";
 import type {
   TypeCheck,
   TypePosition,
@@ -482,6 +483,8 @@ function text(form: FormData, key: string): string {
   return String(form.get(key) ?? "");
 }
 
+/** The date inputs' default and limit: today in the company's default zone
+ *  (Alaska), not UTC's. The server action checks against the company's own. */
 function todayIso(): string {
-  return new Date().toISOString().slice(0, 10);
+  return localDay(DEFAULT_TIME_ZONE);
 }
