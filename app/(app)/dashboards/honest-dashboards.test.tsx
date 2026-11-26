@@ -146,7 +146,8 @@ describe("executive dashboard", () => {
     // It summed three pillars itself (62.1) with crew and safety at 0,
     // while the Ops Score page said 93.1.
     render(await ExecutiveDashboardPage());
-    expect(screen.getAllByText("93.1/100").length).toBeGreaterThan(0);
+    // Out of what it can measure, 97, as the Ops Score page has it.
+    expect(screen.getAllByText("93.1/97").length).toBeGreaterThan(0);
     expect(screen.getByText("Crew Compliance")).toBeInTheDocument();
     expect(screen.queryByText("On-Time Performance")).toBeNull();
   });

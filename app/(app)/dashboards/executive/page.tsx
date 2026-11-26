@@ -165,7 +165,9 @@ export default async function ExecutiveDashboardPage() {
             <h2 className="panel-title">
               Daily Operations Score —{" "}
               <span className="text-foreground">
-                {opsScore !== null ? `${opsScore.toFixed(1)}/100` : "unavailable"}
+                {/* Out of what it can measure (Codex, #514): unmeasured
+                    indicators withhold points, they aren't failures. */}
+                {score ? `${score.score.toFixed(1)}/${score.max_achievable}` : "unavailable"}
               </span>
             </h2>
             <Link href="/dashboards/ops-score" className={linkCaps}>
