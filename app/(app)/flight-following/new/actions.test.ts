@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { TestApiError, createFlight, getWeatherMinimums, getAircraftPosition, redirectSpy, loadZoneTable } = vi.hoisted(() => {
+const { TestApiError, createFlight, getWeatherMinimums, getAircraftPosition, getFlightLoad, redirectSpy, loadZoneTable } = vi.hoisted(() => {
   class TestApiError extends Error {
     constructor(
       public status: number,
@@ -15,6 +15,7 @@ const { TestApiError, createFlight, getWeatherMinimums, getAircraftPosition, red
     createFlight: vi.fn(),
     getWeatherMinimums: vi.fn(),
     getAircraftPosition: vi.fn(async (): Promise<{ conflicts: { kind: string; flight_id: string; flight_number: string; airport: string; at: string }[] }> => ({ conflicts: [] })),
+    getFlightLoad: vi.fn(async (): Promise<{ release: { remaining_lbs: string | number | null } | null }> => ({ release: { remaining_lbs: "412" } })),
     // Bases with zones: the departure base's decides how times are read.
     loadZoneTable: vi.fn(async () => ({
       byIcao: { PADU: "America/Anchorage", PADK: "America/Adak" },
@@ -33,6 +34,7 @@ const { TestApiError, createFlight, getWeatherMinimums, getAircraftPosition, red
 });
 vi.mock("@/lib/api/client", () => ({ ApiError: TestApiError }));
 vi.mock("@/lib/api/ops", () => ({ createFlight, getWeatherMinimums, getAircraftPosition }));
+vi.mock("@/lib/api/manifest", () => ({ getFlightLoad }));
 vi.mock("@/lib/api/auth", () => ({ loadZoneTable }));
 vi.mock("next/navigation", () => ({ redirect: redirectSpy }));
 
@@ -458,6 +460,35 @@ describe("createFlightAction and the dispatch minimums (#89)", () => {
     await expect(createFlightAction({ status: "idle" }, makeFormData())).rejects.toThrow("NEXT_REDIRECT");
     expect(getAircraftPosition).toHaveBeenCalledWith("f-1");
     expect(redirectSpy).toHaveBeenCalledWith("/dispatch?flight=f-1&date=2026-07-01");
+  });
+
+  it("lands on the packet when the typed load is over the useful load (1124-26)", async () => {
+    createFlight.mockResolvedValueOnce(OPENED);
+    getWeatherMinimums.mockResolvedValueOnce({ applies: false, below: false, stations: [] });
+    getFlightLoad.mockResolvedValueOnce({ release: { remaining_lbs: "-3182" } });
+    await expect(createFlightAction({ status: "idle" }, makeFormData())).rejects.toThrow("NEXT_REDIRECT");
+    expect(getFlightLoad).toHaveBeenCalledWith("f-1");
+    expect(redirectSpy).toHaveBeenCalledWith("/dispatch?flight=f-1&date=2026-07-01");
+  });
+
+  it.each([
+    ["within it", { release: { remaining_lbs: "0" } }],
+    ["with no useful load on record", { release: { remaining_lbs: null } }],
+    ["from an older backend", { release: null }],
+  ])("goes back to the board with a load %s", async (_, load) => {
+    createFlight.mockResolvedValueOnce(OPENED);
+    getWeatherMinimums.mockResolvedValueOnce({ applies: false, below: false, stations: [] });
+    getFlightLoad.mockResolvedValueOnce(load);
+    await expect(createFlightAction({ status: "idle" }, makeFormData())).rejects.toThrow("NEXT_REDIRECT");
+    expect(redirectSpy).toHaveBeenCalledWith("/flight-following");
+  });
+
+  it("goes back to the board when the load can't be read", async () => {
+    createFlight.mockResolvedValueOnce(OPENED);
+    getWeatherMinimums.mockResolvedValueOnce({ applies: false, below: false, stations: [] });
+    getFlightLoad.mockRejectedValueOnce(new Error("manifest down"));
+    await expect(createFlightAction({ status: "idle" }, makeFormData())).rejects.toThrow("NEXT_REDIRECT");
+    expect(redirectSpy).toHaveBeenCalledWith("/flight-following");
   });
 
   it("goes back to the board when they are met, or don't apply", async () => {
