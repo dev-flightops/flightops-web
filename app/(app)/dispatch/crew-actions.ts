@@ -8,6 +8,7 @@ import {
   unassignFlightCrew,
   type CrewRole,
 } from "@/lib/api/crew-assignments";
+import { scheduleRefusal } from "@/lib/flights/schedule-refusals";
 
 export type CrewActionResult = { ok: true } | { ok: false; error: string };
 
@@ -33,7 +34,7 @@ function _failure(err: unknown, verb: string): CrewActionResult {
       return { ok: false, error: "Only dispatch can change a flight's crew." };
     }
     if (err.status === 409 || err.status === 404) {
-      const detail = _detail(err);
+      const detail = _detail(err) ?? scheduleRefusal(err.message);
       if (detail) return { ok: false, error: detail };
     }
     return { ok: false, error: `Couldn't ${verb} (HTTP ${err.status}).` };

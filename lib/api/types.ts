@@ -2275,6 +2275,10 @@ export interface ComplianceFinding {
    *  asked about (getPicCompliance's flightId): the override's id. The
    *  rule release applies (29 Sep). */
   override_id?: string | null;
+  /** False for a block no supervisor override waives: 14 CFR 61.57
+   *  landing or instrument currency the flight needs (audit, 26 Nov).
+   *  Missing means true. */
+  overridable?: boolean;
 }
 
 export interface PicComplianceResponse {

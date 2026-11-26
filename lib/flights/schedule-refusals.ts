@@ -24,6 +24,21 @@ function hhmmZ(iso: unknown): string {
   return typeof iso === "string" && iso.length >= 16 ? `${iso.slice(11, 16)}Z` : "";
 }
 
+function hours(n: unknown): string {
+  return Number(n ?? 0).toLocaleString("en-US", { maximumFractionDigits: 1 });
+}
+
+/** "Pat Pilot is already on GV101 (14:00Z–16:00Z)…": one pilot, one flight at
+ *  a time (audit, 26 Nov). */
+function pilotBusy(d: Record<string, unknown>): string {
+  const name = String(d.full_name ?? "That pilot");
+  return `${name} is already on ${String(d.flight_number ?? "another flight")} (${hhmmZ(d.scheduled_departure_at)}–${hhmmZ(d.scheduled_arrival_at)}). A pilot can't be on two flights at once: take them off one, or choose other times.`;
+}
+
+function seatName(d: Record<string, unknown>): string {
+  return `${d.seat === "sic" ? "SIC" : "PIC"} ${String(d.full_name ?? "")}`.trim();
+}
+
 /** The sentence for an unknown airport, a busy aircraft or dates that can't
  *  be right, else null. The client's BK-59414132 (18 Nov) had its first leg
  *  saved as leaving Nov 12 and landing Nov 18; such dates are refused now. */
@@ -43,6 +58,7 @@ export function scheduleRefusal(message: string): string | null {
   if (d?.error === "aircraft_busy") {
     return `The aircraft is already on ${String(d.flight_number ?? "another flight")} (${hhmmZ(d.scheduled_departure_at)}–${hhmmZ(d.scheduled_arrival_at)}). Pick another aircraft or other times.`;
   }
+  if (d?.error === "pilot_busy") return pilotBusy(d);
   return null;
 }
 
@@ -79,6 +95,14 @@ export function releaseRefusal(message: string): string | null {
     const crew = Array.isArray(d.crew) ? (d.crew as { full_name?: string; seat?: string }[]) : [];
     const names = crew.map((c) => `${c.seat === "sic" ? "SIC" : "PIC"} ${c.full_name ?? ""}`.trim()).join(", ");
     return `Release blocked — ${names || "a pilot on this flight"} isn't cleared for safety-sensitive duty under the drug and alcohol program. Ask the DER, or put another pilot on the flight.`;
+  }
+  if (d.error === "pilot_busy") return `Release blocked — ${pilotBusy(d)}`;
+  if (d.error === "crew_rest") {
+    // 14 CFR 135.267(d), audit 26 Nov.
+    return `Release blocked — ${seatName(d)} has had ${hours(d.rest_hours)} hours off in a row in the 24 hours before this flight lands; 14 CFR 135.267 needs ${hours(d.required_hours)}. Put a rested pilot on the flight, or move it later.`;
+  }
+  if (d.error === "duty_limit") {
+    return `Release blocked — ${seatName(d)}'s duty day would reach ${hours(d.duty_hours)} hours by landing, past the company's ${hours(d.limit_hours)}-hour limit. Put another pilot on the flight, or move it.`;
   }
   if (d.error === "weight_balance_out_of_limits") {
     // #181 — the pilot's ForeFlight plan: FlightOps calculates no CG itself.
