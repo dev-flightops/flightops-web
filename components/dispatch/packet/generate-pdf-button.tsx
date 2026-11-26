@@ -168,10 +168,13 @@ export function GeneratePdfButton({
       }
       // Open the PDF in a new tab so the user keeps their place on /dispatch/.
       window.open(pdfUrl, "_blank", "noopener,noreferrer");
-      setOpen(false);
       // Refresh the server-rendered page so the SelectedFlightSummary +
-      // FlightDetails inputs reflect the new "released" status.
-      router.refresh();
+      // FlightDetails inputs reflect the new "released" status, and close
+      // with it, not before it (1124-31, as Cancel Flight).
+      startTransition(() => {
+        setOpen(false);
+        router.refresh();
+      });
     });
   };
 

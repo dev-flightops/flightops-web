@@ -49,9 +49,16 @@ export function CancelFlight({
     startTransition(async () => {
       const result = await cancelScheduledFlightAction(flightId, reason);
       if (result.ok) {
-        setOpen(false);
-        setReason("");
-        router.refresh();
+        // 1124-31: the dialog closes with the refreshed packet, not before
+        // it. Closed first, the packet showed the flight as scheduled for
+        // the ten seconds it took to render again, Delete flight missing,
+        // and the client reloaded. Updates after an await need their own
+        // transition to stay in this one.
+        startTransition(() => {
+          setOpen(false);
+          setReason("");
+          router.refresh();
+        });
       } else {
         setError(result.error);
       }
