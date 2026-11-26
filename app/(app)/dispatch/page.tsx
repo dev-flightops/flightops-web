@@ -211,7 +211,11 @@ export default async function DispatchPage({
   // described the intent; the fetch did not implement it.
   const assignedPicId =
     crew.items.find((a) => a.crew_role === "pic")?.user.id ?? null;
-  const effectivePicId = assignedPicId ?? currentPicId;
+  // With a flight loaded, its saved PIC and no other (1124-20): a link's
+  // ?pic=, or a pick whose assignment was refused, had the picker show a
+  // pilot the flight didn't have while the page said "No PIC on the
+  // flight yet". ?pic= pre-screens only on a hand-filled packet.
+  const effectivePicId = selectedId ? assignedPicId : currentPicId;
   // Anyone in the SIC seat is checked for that seat. None on a
   // single-pilot flight, which is the case the client reported: the PIC
   // was asked to acknowledge their own SIC counters with no SIC aboard.
@@ -631,6 +635,14 @@ export default async function DispatchPage({
                 destination={selectedFlight.destination}
                 conflicts={aircraftPosition?.conflicts ?? []}
               />
+              {/* The notes typed on Open New Flight or Edit (1124-21: they
+                  were saved and shown nowhere). */}
+              {selectedFlight.notes?.trim() ? (
+                <div className="notice" aria-label="Ops notes">
+                  <p className="notice-label">Ops notes</p>
+                  <p className="whitespace-pre-line text-sm">{selectedFlight.notes.trim()}</p>
+                </div>
+              ) : null}
               <FlightDetailsPanel
                 flight={selectedFlight}
                 picOptions={candidates}

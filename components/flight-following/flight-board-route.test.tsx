@@ -42,6 +42,20 @@ describe("the Flight Following board", () => {
     expect(screen.getByRole("row", { name: /GV2026/ })).toHaveTextContent("PABE → PAHP → PASM");
   });
 
+  it("shows the flight's ops notes (1124-21)", () => {
+    render(<FlightBoard flights={[{ ...row, notes: "Cooler for Rose at Chevak, keep it upright." }]} />);
+    expect(screen.getByRole("row", { name: /GV2026/ })).toHaveTextContent(
+      "Note: Cooler for Rose at Chevak, keep it upright.",
+    );
+  });
+
+  it("marks a released flight that never left Not departed, not Overdue (1124-06)", () => {
+    render(<FlightBoard flights={[{ ...row, status: "released", not_departed: true }]} />);
+    const line = screen.getByRole("row", { name: /GV2026/ });
+    expect(line).toHaveTextContent("Not departed");
+    expect(line).not.toHaveTextContent("Overdue");
+  });
+
   it("offers Edit until the flight is released (#132)", () => {
     // Client, 23 Oct: "is there a way that we can go back in and edit a
     // flight after it's made it to this stage?"

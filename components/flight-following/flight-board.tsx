@@ -116,6 +116,12 @@ function FlightBoardRow({ flight, canDispatch }: { flight: BoardFlightItem; canD
             />
           </div>
         )}
+        {/* 1124-21: the ops notes typed on the flight, shown nowhere before. */}
+        {flight.notes?.trim() ? (
+          <div className="mt-0.5 max-w-[22rem] truncate text-xs text-muted-foreground" title={flight.notes.trim()}>
+            Note: {flight.notes.trim()}
+          </div>
+        ) : null}
       </td>
       <td className="px-4 py-3.5 text-muted-foreground">
         {flight.pic_name ?? "—"}

@@ -938,6 +938,8 @@ export interface BoardFlightItem {
   /** Released, never marked departed, 30 min past its departure (1124-06):
    *  not overdue, which means a search. Absent from services before it. */
   not_departed?: boolean;
+  /** The ops notes typed on the flight (1124-21). */
+  notes?: string | null;
   /** When it should land (#155): the scheduled arrival, or once it has
    *  left, its scheduled block after the actual departure. */
   estimated_arrival_at?: string | null;
