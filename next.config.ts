@@ -1,5 +1,7 @@
 import type { NextConfig } from "next";
 
+import { SECURITY_HEADERS } from "./lib/security-headers";
+
 const nextConfig: NextConfig = {
   // reactStrictMode is off while we're on React 18 + react-leaflet 4.2.1.
   // v4 has a known bug where MapContainer's cleanup doesn't reset
@@ -15,6 +17,11 @@ const nextConfig: NextConfig = {
   // is binary, so we disable its auto-redirect entirely and let internal
   // Links + the proxy middleware pick the canonical form per-route.
   skipTrailingSlashRedirect: true,
+  // No "X-Powered-By: Next.js" (code audit, 26 Nov).
+  poweredByHeader: false,
+  async headers() {
+    return [{ source: "/:path*", headers: [...SECURITY_HEADERS] }];
+  },
   experimental: {
     // Uploads (documents, employee documents, ramp photos) are server
     // actions. Next's default 1 MB refused most phone photos and scanned
