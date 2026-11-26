@@ -221,4 +221,17 @@ describe("logCompletionAction", () => {
     expect(result.status).toBe("field-errors");
     expect(logCurrencyCompletion).not.toHaveBeenCalled();
   });
+
+  it("refuses tomorrow's date on an Alaska evening, when UTC is already there (code audit, 26 Nov)", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    // 23:30 on 30 Nov in Alaska: 1 Dec in UTC.
+    vi.setSystemTime(new Date("2026-12-01T08:30:00Z"));
+    try {
+      const state = await logCompletionAction({ status: "idle" }, makeFormData({ completion_date: "2026-12-01" }));
+      expect(state.status).toBe("field-errors");
+      expect(logCurrencyCompletion).not.toHaveBeenCalled();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });

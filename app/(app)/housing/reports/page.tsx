@@ -19,6 +19,7 @@ import {
 } from "@/lib/housing/reports";
 
 import { ExportButton } from "./export-button";
+import { companyToday } from "@/lib/company-today";
 
 /**
  * /housing/reports — Housing Reports.
@@ -58,10 +59,11 @@ const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 
 /** Default window: the current calendar month, which is the period an
  *  operator reconciles housing against. */
-function defaultRange(): { from: string; to: string } {
-  const now = new Date();
-  const y = now.getUTCFullYear();
-  const m = now.getUTCMonth();
+async function defaultRange(): Promise<{ from: string; to: string }> {
+  // The company's month, not UTC's: on a month's last evening UTC's is the
+  // next one (code audit, 26 Nov).
+  const [y, month] = (await companyToday()).split("-").map(Number);
+  const m = month - 1;
   const first = new Date(Date.UTC(y, m, 1));
   const last = new Date(Date.UTC(y, m + 1, 0));
   return { from: iso(first), to: iso(last) };
@@ -87,7 +89,7 @@ export default async function HousingReportsPage({
   const tab: TabKey =
     TABS.find((t) => t.key === params.tab)?.key ?? "occupancy";
 
-  const fallback = defaultRange();
+  const fallback = await defaultRange();
   // A malformed date in the URL falls back rather than being passed to
   // the API, where it would either 422 or be silently reinterpreted.
   const from = ISO_DATE.test(params.from ?? "") ? params.from! : fallback.from;
