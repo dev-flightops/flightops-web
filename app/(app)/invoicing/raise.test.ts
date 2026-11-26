@@ -58,6 +58,13 @@ describe("flownFlightOption", () => {
     });
   });
 
+  it("reads a round trip by every stop, not as PABE → PABE (audit, 26 Nov)", () => {
+    const roundTrip = flight({ origin: "PABE", destination: "PABE", stops: ["PABE", "PAHP", "PAVA", "PABE"] });
+    expect(flownFlightOption(roundTrip).label).toBe(
+      "PGR733 · PABE → PAHP → PAVA → PABE · Sep 28, 16:00z · N733RX",
+    );
+  });
+
   it("keeps the UTC day, as the board shows it", () => {
     // 01:30z on the 29th is the evening of the 28th in Alaska; the
     // picker says the same day the rest of the app says.

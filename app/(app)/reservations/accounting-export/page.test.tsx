@@ -178,6 +178,34 @@ describe("/reservations/accounting-export", () => {
     expect(link?.textContent).toMatch(/\(1 rows\)/);
   });
 
+  it("shows a round trip by every stop, not PABE → PABE (audit, 26 Nov)", async () => {
+    getAccountingExport.mockResolvedValue({
+      start: "2026-11-01",
+      end: "2026-11-30",
+      rows: [
+        {
+          id: "f-2",
+          date: "2026-11-25",
+          flight_number: "PGR802",
+          flight_type: "scheduled",
+          origin: "PABE",
+          destination: "PABE",
+          stops: ["PABE", "PAHP", "PAVA", "PABE"],
+          aircraft_tail: "N503PA",
+          pic_name: "Priya Raman",
+          customer: null,
+          revenue_pax: 4,
+          cargo_lbs: 0,
+          mail_lbs: null,
+          notes: null,
+        },
+      ],
+      totals: { flights: 1, revenue_pax: 4, cargo_lbs: 0, mail_lbs: 0 },
+    });
+    await renderPage();
+    expect(screen.getByText("PABE → PAHP → PAVA → PABE")).toBeDefined();
+  });
+
   it("renders the 'About this export' info panel from legacy", async () => {
     getAccountingExport.mockResolvedValue(emptyResponse());
     await renderPage();
