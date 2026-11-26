@@ -21,7 +21,7 @@ describe("scheduleRefusal (#155)", () => {
           scheduled_arrival_at: "2026-10-28T19:45:00+00:00",
         }),
       ),
-    ).toBe("The aircraft is already on MM001 (17:00Z–19:45Z). Pick another aircraft or other times.");
+    ).toBe("The aircraft is already on MM001 (09:00–11:45 AKDT). Pick another aircraft or other times.");
   });
 
   it("asks to check dates that can't be right (client, 18 Nov)", () => {
@@ -125,6 +125,16 @@ describe("an MEL deferral's limit (#200)", () => {
   });
 });
 
+describe("a number taken that day (1124-25)", () => {
+  it("names the number and the other flight's time", () => {
+    expect(
+      scheduleRefusal(
+        body({ error: "flight_number_taken", flight_number: "TCL3", scheduled_departure_at: "2026-11-25T19:00:00+00:00" }),
+      ),
+    ).toBe("TCL3 already flies that day at 10:00 AKST. Give this flight another number.");
+  });
+});
+
 describe("crew legality refusals (audit, 26 Nov)", () => {
   const busy = {
     error: "pilot_busy",
@@ -136,13 +146,13 @@ describe("crew legality refusals (audit, 26 Nov)", () => {
 
   it("names the flight a double-booked pilot is already on, when crewing or moving a flight", () => {
     expect(scheduleRefusal(body(busy))).toBe(
-      "Pat Pilot is already on GV101 (14:00Z–16:00Z). A pilot can't be on two flights at once: take them off one, or choose other times.",
+      "Pat Pilot is already on GV101 (06:00–08:00 AKDT). A pilot can't be on two flights at once: take them off one, or choose other times.",
     );
   });
 
   it("says the same at release", () => {
     expect(releaseRefusal(body(busy))).toBe(
-      "Release blocked — Pat Pilot is already on GV101 (14:00Z–16:00Z). A pilot can't be on two flights at once: take them off one, or choose other times.",
+      "Release blocked — Pat Pilot is already on GV101 (06:00–08:00 AKDT). A pilot can't be on two flights at once: take them off one, or choose other times.",
     );
   });
 
