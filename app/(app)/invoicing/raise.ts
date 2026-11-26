@@ -12,6 +12,7 @@ import { ApiError, SessionExpiredError } from "@/lib/api/client";
 import type { GenerateResult } from "@/lib/api/customer-invoices";
 import type { FlightListItem } from "@/lib/api/types";
 import { formatZuluDateTime } from "@/lib/format/flight-time";
+import { routeText } from "@/lib/route";
 
 /** The most flights one day's list shows: ops-service's page limit.
  *  More than that in a day is flagged rather than silently cut. */
@@ -26,7 +27,8 @@ export interface FlownFlightOption {
 export function flownFlightOption(f: FlightListItem): FlownFlightOption {
   const bits = [
     f.flight_number,
-    `${f.origin} → ${f.destination}`,
+    // Every stop: a Bethel round trip's two ends are both PABE (audit, 26 Nov).
+    routeText(f),
     // Zulu, with the date, as the rest of the app shows flight times:
     // the picker must not say a different day from the board.
     formatZuluDateTime(f.scheduled_departure_at),

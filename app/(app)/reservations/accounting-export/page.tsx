@@ -1,3 +1,4 @@
+import { routeText } from "@/lib/route";
 import Link from "next/link";
 import { loadZoneTable } from "@/lib/api/auth";
 import { getAccountingExport } from "@/lib/api/ops";
@@ -255,7 +256,7 @@ function Activity({
                       )}
                     </td>
                     <td className="whitespace-nowrap px-4 py-3 font-mono text-xs">
-                      {r.origin} → {r.destination}
+                      {routeText(r)}
                     </td>
                     <td className="whitespace-nowrap px-4 py-3 font-mono text-xs text-muted-foreground">
                       {r.aircraft_tail ?? "—"}

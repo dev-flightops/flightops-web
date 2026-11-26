@@ -2191,6 +2191,9 @@ export interface AccountingExportRow {
   flight_type: string | null;
   origin: string;
   destination: string;
+  /** Every stop, for the screen (audit, 26 Nov); the CSV keeps legacy's
+   *  origin and destination columns. Absent from an older service. */
+  stops?: string[];
   aircraft_tail: string | null;
   pic_name: string | null;
   customer: string | null; // "Multiple" or "USPS" as in legacy; null when none
