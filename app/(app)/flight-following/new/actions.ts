@@ -7,7 +7,7 @@ import { scheduleRefusal } from "@/lib/flights/schedule-refusals";
 import { loadZoneTable } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
 import { validationSummary } from "@/lib/api/validation-errors";
-import { createFlight, getWeatherMinimums } from "@/lib/api/ops";
+import { createFlight, getAircraftPosition, getWeatherMinimums } from "@/lib/api/ops";
 import { passengerSeatsRefusal } from "@/lib/flights/passenger-seats";
 import { localToUtcIso, zoneFor } from "@/lib/format/local-time";
 
@@ -358,12 +358,17 @@ export async function createFlightAction(
   const minimums = opened
     ? await getWeatherMinimums(opened.id).catch(() => null)
     : null;
+  // 1124-05: the aircraft lands elsewhere before it, or leaves elsewhere
+  // after: the packet says where.
+  const position = opened
+    ? await getAircraftPosition(opened.id).catch(() => null)
+    : null;
 
   // Success — redirect outside the try/catch (NEXT_REDIRECT throws
   // intentionally and we don't want it caught by the API error handler).
   const sourceBooking = String(formData.get("booking_id") ?? "").trim();
   if (opened && UUID.test(sourceBooking)) redirect(`/manifest/${opened.id}`);
-  if (opened && (minimums?.below || opened.melLimited)) {
+  if (opened && (minimums?.below || opened.melLimited || position?.conflicts.length)) {
     redirect(`/dispatch?flight=${opened.id}&date=${opened.day}`);
   }
   redirect("/flight-following");

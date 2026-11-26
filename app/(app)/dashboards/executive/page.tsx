@@ -11,12 +11,13 @@ import { StatTile } from "@/components/dashboards/stat-tile";
 import { listMyTenants } from "@/lib/api/auth";
 import { listCustomerInvoices } from "@/lib/api/customer-invoices";
 import { getComplianceBoard, getFlightStats } from "@/lib/api/ops";
+import { getOpsScore } from "@/lib/api/reports";
 import type { ComplianceChips } from "@/lib/api/types";
 import { loadOperationalSnapshot } from "@/lib/dashboards/operational-snapshot";
 import { snapshotAlertsToList } from "@/lib/dashboards/snapshot-to-alerts";
 
 export default async function ExecutiveDashboardPage() {
-  const [stats, tenantsResponse, snapshot, crew, invoices] = await Promise.all([
+  const [stats, tenantsResponse, snapshot, crew, invoices, score] = await Promise.all([
     getFlightStats().catch(() => null),
     listMyTenants().catch(() => ({ tenants: [] })),
     loadOperationalSnapshot(),
@@ -24,12 +25,17 @@ export default async function ExecutiveDashboardPage() {
     // come from the currency board and billing; the rest are hidden.
     getComplianceBoard().catch(() => null),
     listCustomerInvoices({ limit: 1 }).catch(() => null),
+    // 1124-10: the Ops Score page's own five pillars, not a three-pillar
+    // sum made here (62.1 here against 93.1 there, crew and safety at 0).
+    getOpsScore().catch(() => null),
   ]);
 
   const todayCount = stats?.today.total ?? 0;
-  const todayReleased = stats?.today.released ?? 0;
+  // 1124-16: completed, not released ("2 flights today, 0.0% complete"
+  // with PGR800 landed).
+  const todayCompleted = stats?.today.completed ?? 0;
   const completedPct =
-    todayCount > 0 ? Math.round((todayReleased / todayCount) * 1000) / 10 : 0;
+    todayCount > 0 ? Math.round((todayCompleted / todayCount) * 1000) / 10 : 0;
   // Prefer the real airworthiness rollup from maintenance-service when
   // it's available — that's `is_active && is_airworthy` per aircraft.
   // Fall back to ops `aircraft_active` (just `is_active`) if maintenance
@@ -45,34 +51,7 @@ export default async function ExecutiveDashboardPage() {
       ? snapshot.fleetGrounded
       : Math.max(0, fleetTotal - fleetActive);
 
-  // Pillar scoring — Fleet/Completion/On-Time are derivable from M1+M2
-  // data; Crew Compliance + Safety Indicators need M3 services and stay
-  // at 0 until then.
-  //
-  // The model is "default-full-credit, subtract for visible failures" —
-  // matches the legacy peregrineflight behavior. Early in the day with
-  // no cancellations or delays, the score is high; each failure event
-  // docks points until floored at 0.
-  const fleetPillar =
-    fleetTotal > 0 ? Math.round((fleetActive / fleetTotal) * 200) / 10 : 0;
-
-  const cancelledOrOverdue = snapshot.board.filter(
-    (f) => f.status === "cancelled" || f.is_overdue,
-  ).length;
-  const completionPillar = Math.max(0, 25 - cancelledOrOverdue * 5);
-
-  const FIFTEEN_MIN_MS = 15 * 60 * 1000;
-  const delayedDepartures = snapshot.board.filter((f) => {
-    if (!f.actual_departure_at) return false;
-    const delta =
-      new Date(f.actual_departure_at).getTime() -
-      new Date(f.scheduled_departure_at).getTime();
-    return delta > FIFTEEN_MIN_MS;
-  }).length;
-  const onTimePillar = Math.max(0, 25 - delayedDepartures * 5);
-
-  const opsScore =
-    Math.round((completionPillar + onTimePillar + fleetPillar) * 10) / 10;
+  const opsScore = score?.score ?? null;
 
   // Executive Analytics sub: passengers on today's board + actual flown
   // hours for any completed leg today. Matches legacy's "N pax · X.X hrs"
@@ -99,7 +78,7 @@ export default async function ExecutiveDashboardPage() {
       <PageHeader
         eyebrow={currentTenantName}
         title="Executive Overview"
-        actions={<ScorePill score={opsScore} />}
+        actions={opsScore !== null ? <ScorePill score={opsScore} band={score?.band} /> : undefined}
       />
 
       {/* Row 1 — 5-col headline stat tiles.
@@ -185,38 +164,18 @@ export default async function ExecutiveDashboardPage() {
           <div className="-mx-5 -mt-5 mb-4 flex flex-wrap items-baseline justify-between gap-2 border-b border-border px-5 py-3">
             <h2 className="panel-title">
               Daily Operations Score —{" "}
-              <span className="text-foreground">{opsScore.toFixed(1)}/100</span>
+              <span className="text-foreground">
+                {opsScore !== null ? `${opsScore.toFixed(1)}/100` : "unavailable"}
+              </span>
             </h2>
             <Link href="/dashboards/ops-score" className={linkCaps}>
               Details <span aria-hidden>›</span>
             </Link>
           </div>
           <div className="space-y-3">
-            <PillarBar
-              label="Completion Factor"
-              score={completionPillar}
-              max={25}
-            />
-            <PillarBar
-              label="On-Time Performance"
-              score={onTimePillar}
-              max={25}
-            />
-            <PillarBar
-              label="Crew Compliance"
-              score={0}
-              max={20}
-            />
-            <PillarBar
-              label="Fleet Airworthiness"
-              score={fleetPillar}
-              max={20}
-            />
-            <PillarBar
-              label="Safety Indicators"
-              score={0}
-              max={10}
-            />
+            {(score?.pillars ?? []).map((pillar) => (
+              <PillarBar key={pillar.key} label={pillar.label} score={pillar.score} max={pillar.max} />
+            ))}
           </div>
         </section>
       </div>

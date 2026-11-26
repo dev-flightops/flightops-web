@@ -349,7 +349,7 @@ function HardBlockBanner({
           choice, 29 Sep), so nobody else is offered the button. */}
       {!overridesAcknowledged && seat === "pic" && regulation && (
         <p className="mt-3 text-xs text-muted-foreground">
-          Landing and instrument currency (14 CFR 61.57) can&rsquo;t be waived by an
+          Landing and instrument currency (14 CFR 135.247 and 61.57) can&rsquo;t be waived by an
           override. Put a current pilot on this flight. A flight without
           passengers is how a pilot gets current again.
         </p>

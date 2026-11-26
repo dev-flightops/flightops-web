@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { TestApiError, createFlight, getWeatherMinimums, redirectSpy, loadZoneTable } = vi.hoisted(() => {
+const { TestApiError, createFlight, getWeatherMinimums, getAircraftPosition, redirectSpy, loadZoneTable } = vi.hoisted(() => {
   class TestApiError extends Error {
     constructor(
       public status: number,
@@ -14,6 +14,7 @@ const { TestApiError, createFlight, getWeatherMinimums, redirectSpy, loadZoneTab
     TestApiError,
     createFlight: vi.fn(),
     getWeatherMinimums: vi.fn(),
+    getAircraftPosition: vi.fn(async (): Promise<{ conflicts: { kind: string; flight_id: string; flight_number: string; airport: string; at: string }[] }> => ({ conflicts: [] })),
     // Bases with zones: the departure base's decides how times are read.
     loadZoneTable: vi.fn(async () => ({
       byIcao: { PADU: "America/Anchorage", PADK: "America/Adak" },
@@ -31,7 +32,7 @@ const { TestApiError, createFlight, getWeatherMinimums, redirectSpy, loadZoneTab
   };
 });
 vi.mock("@/lib/api/client", () => ({ ApiError: TestApiError }));
-vi.mock("@/lib/api/ops", () => ({ createFlight, getWeatherMinimums }));
+vi.mock("@/lib/api/ops", () => ({ createFlight, getWeatherMinimums, getAircraftPosition }));
 vi.mock("@/lib/api/auth", () => ({ loadZoneTable }));
 vi.mock("next/navigation", () => ({ redirect: redirectSpy }));
 
@@ -443,6 +444,19 @@ describe("createFlightAction and the dispatch minimums (#89)", () => {
       "NEXT_REDIRECT",
     );
     expect(getWeatherMinimums).toHaveBeenCalledWith("f-1");
+    expect(redirectSpy).toHaveBeenCalledWith("/dispatch?flight=f-1&date=2026-07-01");
+  });
+
+  it("lands on the packet when the aircraft is somewhere else (1124-05)", async () => {
+    createFlight.mockResolvedValueOnce(OPENED);
+    getWeatherMinimums.mockResolvedValueOnce({ applies: false, below: false, stations: [] });
+    getAircraftPosition.mockResolvedValueOnce({
+      conflicts: [
+        { kind: "arrives_elsewhere", flight_id: "f-0", flight_number: "TCL3", airport: "PAKI", at: "2026-07-01T19:35:00Z" },
+      ],
+    });
+    await expect(createFlightAction({ status: "idle" }, makeFormData())).rejects.toThrow("NEXT_REDIRECT");
+    expect(getAircraftPosition).toHaveBeenCalledWith("f-1");
     expect(redirectSpy).toHaveBeenCalledWith("/dispatch?flight=f-1&date=2026-07-01");
   });
 

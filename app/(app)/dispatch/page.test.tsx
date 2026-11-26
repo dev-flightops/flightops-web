@@ -77,6 +77,7 @@ vi.mock("@/lib/api/ops", () => ({
   getPicCompliance: api.getPicCompliance,
   listAircraft: api.listAircraft,
   getWeatherMinimums: api.getWeatherMinimums,
+  getAircraftPosition: vi.fn(async () => ({ conflicts: [] })),
   listFlights: api.listFlights,
   listReleaseAcknowledgments: api.listReleaseAcknowledgments,
   listWeightReturns: api.listWeightReturns,

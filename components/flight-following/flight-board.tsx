@@ -7,7 +7,7 @@ import { formatBoth, formatLocal, formatZulu } from "@/lib/format/flight-time";
 import { flightStops } from "@/lib/route";
 
 import { CheckInButton } from "./check-in-button";
-import { OverdueBadge, StatusBadge } from "./status-badge";
+import { NotDepartedBadge, OverdueBadge, StatusBadge } from "./status-badge";
 
 /**
  * Flight Following board table — the List-view body (M2-G-11).
@@ -136,6 +136,7 @@ function FlightBoardRow({ flight, canDispatch }: { flight: BoardFlightItem; canD
             atStop={atStop}
           />
           {flight.is_overdue && <OverdueBadge />}
+          {flight.not_departed && <NotDepartedBadge />}
           {/* 1119-12: a Day VFR or VFR only MEL the flight breaks, flagged
               here as on the Schedule, before the release refuses it. */}
           {flight.mel_limits?.length ? (

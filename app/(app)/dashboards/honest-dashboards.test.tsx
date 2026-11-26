@@ -90,10 +90,14 @@ vi.mock("@/lib/api/auth", () => ({
 vi.mock("@/lib/api/reports", () => ({
   getOpsScore: vi.fn(async () => ({
     as_of: "2026-10-20",
-    score: 97,
+    score: 93.1,
     max_achievable: 97,
     band: "excellent",
-    pillars: [],
+    pillars: [
+      { key: "completion", label: "Completion Factor", score: 25, max: 25, context: "", not_measured: null },
+      { key: "crew", label: "Crew Compliance", score: 19, max: 20, context: "", not_measured: null },
+      { key: "safety", label: "Safety Indicators", score: 7, max: 10, context: "", not_measured: null },
+    ],
     advisory: "",
   })),
 }));
@@ -136,6 +140,21 @@ describe("executive dashboard", () => {
     // A measured tile keeps its number.
     expect(within(tile("Fleet Airworthy")).getByText("3/4")).toBeInTheDocument();
     expectNoMilestonePills();
+  });
+
+  it("shows the Ops Score page's score and pillars, not one of its own (1124-10)", async () => {
+    // It summed three pillars itself (62.1) with crew and safety at 0,
+    // while the Ops Score page said 93.1.
+    render(await ExecutiveDashboardPage());
+    expect(screen.getAllByText("93.1/100").length).toBeGreaterThan(0);
+    expect(screen.getByText("Crew Compliance")).toBeInTheDocument();
+    expect(screen.queryByText("On-Time Performance")).toBeNull();
+  });
+
+  it("counts completed flights as complete, not released ones (1124-16)", async () => {
+    render(await ExecutiveDashboardPage());
+    // 1 completed of 4 today.
+    expect(screen.getByText("25.0% complete")).toBeInTheDocument();
   });
 
   it("says who the crew fraction leaves out (#134)", async () => {

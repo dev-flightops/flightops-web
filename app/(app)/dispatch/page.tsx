@@ -15,6 +15,7 @@ import {
 } from "@/lib/roles";
 import { DispatchComplianceGate } from "@/components/dispatch/packet/dispatch-compliance-gate";
 import { AircraftTodayLine, AircraftTodayPanel } from "@/components/dashboards/aircraft-today-panel";
+import { AircraftPositionWarning } from "@/components/dispatch/aircraft-position-warning";
 import { OpenMelPanel } from "@/components/dispatch/packet/open-mel-panel";
 import { BookingsAwaitingFlightPanel } from "@/components/dispatch/packet/bookings-awaiting-flight-panel";
 import { ForeFlightPlanPanel } from "@/components/dispatch/packet/foreflight-plan-panel";
@@ -50,6 +51,7 @@ import {
   getPicCompliance,
   listAircraft,
   getWeatherMinimums,
+  getAircraftPosition,
   listFlights,
   listReleaseAcknowledgments,
   listWeightReturns,
@@ -397,13 +399,15 @@ export default async function DispatchPage({
   // evaluators server-side, so a weather-service blip degrades the button
   // hint rather than stranding every release. `computeHardBlockReason`
   // documents that contract.
-  const [weatherFreshness, weatherMinimums] = await Promise.all([
+  const [weatherFreshness, weatherMinimums, aircraftPosition] = await Promise.all([
     selectedFlight && icaos.length > 0
       ? loads.or(getRouteFreshness(icaos), null, "how fresh the route’s weather is")
       : Promise.resolve<RouteFreshness | null>(null),
     selectedFlight
       ? loads.or(getWeatherMinimums(selectedFlight.id), null, "the dispatch minimums check")
       : Promise.resolve(null),
+    // 1124-05: a warning only, so a blip leaves it out quietly.
+    selectedFlight ? getAircraftPosition(selectedFlight.id).catch(() => null) : Promise.resolve(null),
   ]);
   const canEditRisk = hasAnyRole(viewerRoles, DISPATCH_WRITERS);
 
@@ -621,6 +625,12 @@ export default async function DispatchPage({
                   today={aircraftToday}
                 />
               ) : null}
+              <AircraftPositionWarning
+                tail={selectedFlight.aircraft.tail_number}
+                origin={selectedFlight.origin}
+                destination={selectedFlight.destination}
+                conflicts={aircraftPosition?.conflicts ?? []}
+              />
               <FlightDetailsPanel
                 flight={selectedFlight}
                 picOptions={candidates}

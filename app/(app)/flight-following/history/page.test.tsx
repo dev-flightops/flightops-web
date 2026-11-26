@@ -191,6 +191,77 @@ describe("FlightFollowingHistoryPage", () => {
     expect(screen.getByText(/08:10 AKD/)).toBeInTheDocument();
   });
 
+  it("dates a time marked on another day, and counts a stop-marked flight's legs (1124-07)", async () => {
+    // BK-A5B47E66: left 22 Nov 13:14 AKST, its second leg marked the next
+    // afternoon. First off to last on read 27.3 h.
+    listFlights.mockResolvedValueOnce({
+      items: [
+        makeFlight({
+          flight_number: "BK-A5B47E66",
+          origin: "PABE",
+          destination: "PABE",
+          scheduled_departure_at: "2026-06-10T22:00:00Z",
+          scheduled_arrival_at: "2026-06-10T23:35:00Z",
+          actual_departure_at: "2026-06-10T22:14:00Z",
+          actual_arrival_at: "2026-06-12T01:35:00Z",
+          legs: [
+            {
+              sequence: 1,
+              origin: "PABE",
+              destination: "PASM",
+              scheduled_departure_at: "2026-06-10T22:00:00Z",
+              scheduled_arrival_at: "2026-06-10T22:40:00Z",
+              actual_departure_at: "2026-06-10T22:14:00Z",
+              actual_arrival_at: "2026-06-10T22:50:00Z",
+            },
+            {
+              sequence: 2,
+              origin: "PASM",
+              destination: "PABE",
+              scheduled_departure_at: "2026-06-10T23:00:00Z",
+              scheduled_arrival_at: "2026-06-10T23:35:00Z",
+              actual_departure_at: "2026-06-12T00:50:00Z",
+              actual_arrival_at: "2026-06-12T01:35:00Z",
+            },
+          ],
+        }),
+      ],
+      total: 1,
+    });
+
+    await renderPage({ range: "all" });
+
+    // The arrival is on 11 Jun in Alaska, the day after it was due out.
+    expect(screen.getByText(/Jun 11, 17:35 AKD/)).toBeInTheDocument();
+    // 36 min + 45 min of legs, not 27.4 h.
+    expect(screen.getByText("1.4h")).toBeInTheDocument();
+  });
+
+  it("lists by the day it was due out, newest first (1124-33)", async () => {
+    listFlights.mockResolvedValueOnce({
+      items: [
+        makeFlight({
+          flight_number: "OLDER",
+          scheduled_departure_at: "2026-06-08T14:00:00Z",
+          scheduled_arrival_at: "2026-06-08T16:00:00Z",
+          actual_arrival_at: "2026-06-11T16:00:00Z",
+        }),
+        makeFlight({
+          flight_number: "NEWER",
+          scheduled_departure_at: "2026-06-10T14:00:00Z",
+          scheduled_arrival_at: "2026-06-10T16:00:00Z",
+          actual_arrival_at: "2026-06-10T16:00:00Z",
+        }),
+      ],
+      total: 2,
+    });
+
+    await renderPage({ range: "all" });
+
+    const rows = screen.getAllByRole("row").slice(1);
+    expect(rows.map((r) => (r.textContent?.includes("NEWER") ? "NEWER" : "OLDER"))).toEqual(["NEWER", "OLDER"]);
+  });
+
   it("renders em-dashes in ATD / ATA when actuals are missing", async () => {
     listFlights.mockResolvedValueOnce({
       items: [

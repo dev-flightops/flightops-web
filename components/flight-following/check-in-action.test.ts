@@ -91,6 +91,17 @@ describe("checkInFlightAction", () => {
     }
   });
 
+  it("says a mark more than a day after it left is refused (1124-07)", async () => {
+    checkInFlight.mockRejectedValueOnce(
+      new TestApiError(422, "/ops/flights/x/check-in", JSON.stringify({ detail: "flight_longer_than_a_day" })),
+    );
+
+    const result = await checkInFlightAction("flight-1", "depart");
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.error).toMatch(/more than 24 hours after the flight left/);
+  });
+
   it("decodes flight_not_checkinable_in_status_X into the actual status word", async () => {
     checkInFlight.mockRejectedValueOnce(
       new TestApiError(

@@ -7,6 +7,7 @@ import { CompletionTrendNotMeasured } from "@/components/dashboards/completion-t
 import { ScorePill } from "@/components/dashboards/score-pill";
 import { StatTile } from "@/components/dashboards/stat-tile";
 import { listFlights, getFlightStats } from "@/lib/api/ops";
+import { getOpsScore } from "@/lib/api/reports";
 import { loadOperationalSnapshot } from "@/lib/dashboards/operational-snapshot";
 import { snapshotAlertsToList } from "@/lib/dashboards/snapshot-to-alerts";
 import type { FlightListItem } from "@/lib/api/types";
@@ -20,7 +21,7 @@ export default async function DirectorOpsDashboardPage() {
   const today = localDay(DEFAULT_TIME_ZONE);
   // #138: flights that didn't load say so; they had read as a quiet day.
   const loads = new Loads();
-  const [stats, todaysFlights, pendingResult, snapshot] = await Promise.all([
+  const [stats, todaysFlights, pendingResult, snapshot, score] = await Promise.all([
     getFlightStats().catch(() => null),
     loads.or(listFlights({ onCompanyDate: today }), { items: [], total: 0 }, "today’s flights"),
     // Pull a wider window then filter to today + tomorrow client-side —
@@ -29,6 +30,8 @@ export default async function DirectorOpsDashboardPage() {
     // from prior seed runs. Mirrors legacy's "today + tomorrow" scope.
     loads.or(listFlights({ status: "scheduled", limit: 50 }), { items: [], total: 0 }, "the scheduled flights"),
     loadOperationalSnapshot(),
+    // 1124-10: the Ops Score page's score, not one made here.
+    getOpsScore().catch(() => null),
   ]);
 
   const todayDate = today;
@@ -40,11 +43,12 @@ export default async function DirectorOpsDashboardPage() {
 
   const todayCounts = stats?.today;
   const scheduledToday = todayCounts?.scheduled ?? 0;
-  const releasedToday = todayCounts?.released ?? 0;
   const totalToday = todayCounts?.total ?? todaysFlights.total;
   const cancelledToday = todayCounts?.cancelled ?? 0;
+  // 1124-16: completed, not released.
+  const completedToday = todayCounts?.completed ?? 0;
   const completedPct =
-    totalToday > 0 ? Math.round((releasedToday / totalToday) * 1000) / 10 : 0;
+    totalToday > 0 ? Math.round((completedToday / totalToday) * 1000) / 10 : 0;
   // Prefer real airworthiness rollup; fall back to ops aircraft_active
   // if maintenance is down.
   const fleetTotal =
@@ -57,30 +61,7 @@ export default async function DirectorOpsDashboardPage() {
     snapshot.fleetTotal > 0
       ? snapshot.fleetGrounded
       : Math.max(0, fleetTotal - fleetActive);
-  // Same default-full-credit / subtract-for-failures score model as the
-  // executive dashboard (see ExecutiveDashboardPage). Completion + on-time
-  // start at full credit, fleet airworthiness scales linearly, and the
-  // M3 pillars (crew, safety) stay 0 until those services ship.
-  const fleetPillar =
-    fleetTotal > 0 ? Math.round((fleetActive / fleetTotal) * 200) / 10 : 0;
-
-  const cancelledOrOverdue = snapshot.board.filter(
-    (f) => f.status === "cancelled" || f.is_overdue,
-  ).length;
-  const completionPillar = Math.max(0, 25 - cancelledOrOverdue * 5);
-
-  const FIFTEEN_MIN_MS = 15 * 60 * 1000;
-  const delayedDepartures = snapshot.board.filter((f) => {
-    if (!f.actual_departure_at) return false;
-    const delta =
-      new Date(f.actual_departure_at).getTime() -
-      new Date(f.scheduled_departure_at).getTime();
-    return delta > FIFTEEN_MIN_MS;
-  }).length;
-  const onTimePillar = Math.max(0, 25 - delayedDepartures * 5);
-
-  const opsScore =
-    Math.round((completionPillar + onTimePillar + fleetPillar) * 10) / 10;
+  const opsScore = score?.score ?? null;
 
   const overdueCount = snapshot.alerts.filter(
     (a) => a.category === "flight_overdue",
@@ -92,7 +73,7 @@ export default async function DirectorOpsDashboardPage() {
       <PageHeader
         title="Director of Operations"
         description="Real-time operational overview"
-        actions={<ScorePill score={opsScore} />}
+        actions={opsScore !== null ? <ScorePill score={opsScore} band={score?.band} /> : undefined}
       />
 
       <LoadFailedNotice what={loads.failed} className="mb-4" />
