@@ -636,6 +636,8 @@ export interface AvailabilityRow {
   availability_pct: number;
   revenue_hours: number;
   mx_hours: number;
+  /** Grounded and not in a maintenance clock (1124-19); absent before it. */
+  hold_hours?: number;
   non_revenue_hours: number;
   idle_hours: number;
   flights: number;
