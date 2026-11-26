@@ -124,3 +124,45 @@ describe("an MEL deferral's limit (#200)", () => {
     expect(said).toMatch(/and the flight is IFR\. Fly it VFR, or put another aircraft on it\.$/);
   });
 });
+
+describe("crew legality refusals (audit, 26 Nov)", () => {
+  const busy = {
+    error: "pilot_busy",
+    full_name: "Pat Pilot",
+    flight_number: "GV101",
+    scheduled_departure_at: "2026-06-01T14:00:00+00:00",
+    scheduled_arrival_at: "2026-06-01T16:00:00+00:00",
+  };
+
+  it("names the flight a double-booked pilot is already on, when crewing or moving a flight", () => {
+    expect(scheduleRefusal(body(busy))).toBe(
+      "Pat Pilot is already on GV101 (14:00Z–16:00Z). A pilot can't be on two flights at once: take them off one, or choose other times.",
+    );
+  });
+
+  it("says the same at release", () => {
+    expect(releaseRefusal(body(busy))).toBe(
+      "Release blocked — Pat Pilot is already on GV101 (14:00Z–16:00Z). A pilot can't be on two flights at once: take them off one, or choose other times.",
+    );
+  });
+
+  it("says how much rest the pilot had against 135.267's ten hours", () => {
+    expect(
+      releaseRefusal(
+        body({ error: "crew_rest", seat: "pic", full_name: "Pat Pilot", rest_hours: 6, required_hours: 10 }),
+      ),
+    ).toBe(
+      "Release blocked — PIC Pat Pilot has had 6 hours off in a row in the 24 hours before this flight lands; 14 CFR 135.267 needs 10. Put a rested pilot on the flight, or move it later.",
+    );
+  });
+
+  it("says how long the duty day would run against the company's limit", () => {
+    expect(
+      releaseRefusal(
+        body({ error: "duty_limit", seat: "sic", full_name: "Sam Second", duty_hours: 13.5, limit_hours: 12 }),
+      ),
+    ).toBe(
+      "Release blocked — SIC Sam Second's duty day would reach 13.5 hours by landing, past the company's 12-hour limit. Put another pilot on the flight, or move it.",
+    );
+  });
+});
