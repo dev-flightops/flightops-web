@@ -41,11 +41,14 @@ export function LogCompletionModal({
   pilotName,
   item,
   onClose,
+  timeZone = DEFAULT_TIME_ZONE,
 }: {
   pilotId: string;
   pilotName: string;
   item: CurrencyItemRef;
   onClose: () => void;
+  /** The company's zone (companyZone), whose today the action checks. */
+  timeZone?: string;
 }) {
   const [state, action, pending] = useActionState<
     LogCompletionState,
@@ -63,9 +66,9 @@ export function LogCompletionModal({
   const fieldError = (key: string): string | undefined =>
     state.status === "field-errors" ? state.errors[key] : undefined;
 
-  // Today in the company's default zone (Alaska), not UTC's; the action
-  // checks against the company's own (code audit, 26 Nov).
-  const today = localDay(DEFAULT_TIME_ZONE);
+  // Today in the company's zone, not UTC's: the action checks against the
+  // same day (code audit, 26 Nov).
+  const today = localDay(timeZone);
   const isMedical = item.interval_type === "medical_hard_expiry";
 
   return (

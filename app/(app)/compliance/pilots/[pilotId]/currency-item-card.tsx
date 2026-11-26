@@ -25,11 +25,14 @@ export function CurrencyItemCard({
   pilotId,
   pilotName,
   canLogCompletion = false,
+  timeZone,
 }: {
   item: CurrencyItemRef;
   cell: PilotCurrencyCell;
   pilotId: string;
   pilotName: string;
+  /** The company's zone, for Log Completion's today. */
+  timeZone?: string;
   /** The viewer may sign off a completion (CURRENCY_SIGNOFF, enforced by
    *  the backend since 29 Sep): it can turn a grounded pilot into one who
    *  flies, so it is not a self-report. */
@@ -115,6 +118,7 @@ export function CurrencyItemCard({
             pilotId={pilotId}
             pilotName={pilotName}
             item={item}
+            timeZone={timeZone}
           />
         </div>
       )}

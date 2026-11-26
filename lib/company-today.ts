@@ -9,11 +9,16 @@ import { DEFAULT_ZONE_TABLE, localDay } from "@/lib/format/local-time";
  * (code audit, 26 Nov). Server-side: it reads the company's bases.
  */
 export async function companyToday(at: Date = new Date()): Promise<string> {
-  let table = DEFAULT_ZONE_TABLE;
+  return localDay(await companyZone(), at);
+}
+
+/** The company's zone, for a client form's "today": its first base's, else
+ *  Alaska's. Server-side, as companyToday. */
+export async function companyZone(): Promise<string> {
   try {
-    table = await loadZoneTable();
+    return (await loadZoneTable()).fallback;
   } catch {
     // Alaska's, the default, when the company's bases can't be read.
+    return DEFAULT_ZONE_TABLE.fallback;
   }
-  return localDay(table.fallback, at);
 }

@@ -19,6 +19,7 @@ import { PilotWeightCard } from "./pilot-weight-card";
 import type { CheckItemRef } from "./type-qualification-dialogs";
 import { TypeQualificationsCard } from "./type-qualifications-card";
 import { auth } from "@/auth";
+import { companyZone } from "@/lib/company-today";
 import {
   CURRENCY_SIGNOFF,
   TYPE_QUALIFICATION_ADMINS,
@@ -79,11 +80,13 @@ export default async function PilotComplianceProfilePage({
   // Soft-failed on purpose, and fetched in parallel with each other.
   // Currency is what this page is primarily for; losing the airman
   // record should cost the reader that section, not the whole page.
-  const [airman, disqualifications, typeQuals, dutySettings] = await Promise.all([
+  // The company's zone, for the dialogs' "today" (the actions check it).
+  const [airman, disqualifications, typeQuals, dutySettings, timeZone] = await Promise.all([
     getAirmanRecord(pilotId).catch(() => null),
     listDisqualifications(pilotId).catch(() => null),
     getPilotTypeQualifications(pilotId).catch(() => null),
     getDutySettings().catch(() => null),
+    companyZone(),
   ]);
   // The pilot's duty history, for someone the company lets correct
   // anyone's duty times (#100): a forgotten clock-out is fixed here.
@@ -128,6 +131,7 @@ export default async function PilotComplianceProfilePage({
               pilotId={profile.pilot.id}
               pilotName={profile.pilot.full_name}
               canLogCompletion={canLogCompletion}
+              timeZone={timeZone}
             />
           );
         })}
@@ -142,6 +146,7 @@ export default async function PilotComplianceProfilePage({
           }}
           canAuthorise={canAuthoriseType}
           canRecordCheck={canLogCompletion}
+          timeZone={timeZone}
         />
       ) : null}
 

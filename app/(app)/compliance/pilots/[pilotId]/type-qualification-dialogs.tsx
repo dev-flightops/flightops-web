@@ -59,6 +59,7 @@ export function TypeQualificationDialogs({
   pilotName,
   airframeTypes,
   checkItems,
+  timeZone = DEFAULT_TIME_ZONE,
 }: {
   dialog: TypeDialog | null;
   onClose: () => void;
@@ -66,6 +67,8 @@ export function TypeQualificationDialogs({
   pilotName: string;
   airframeTypes: string[];
   checkItems: Record<TypeCheck, CheckItemRef | null>;
+  /** The company's zone (companyZone), whose today the actions check. */
+  timeZone?: string;
 }) {
   return (
     <Dialog open={dialog !== null} onOpenChange={(next) => !next && onClose()}>
@@ -77,6 +80,7 @@ export function TypeQualificationDialogs({
             pilotName={pilotName}
             airframeTypes={airframeTypes}
             onClose={onClose}
+            timeZone={timeZone}
           />
         )}
         {dialog?.kind === "revoke" && (
@@ -85,6 +89,7 @@ export function TypeQualificationDialogs({
             pilotId={pilotId}
             pilotName={pilotName}
             onClose={onClose}
+            timeZone={timeZone}
           />
         )}
         {dialog?.kind === "check" && (
@@ -95,6 +100,7 @@ export function TypeQualificationDialogs({
             airframeTypes={airframeTypes}
             checkItems={checkItems}
             onClose={onClose}
+            timeZone={timeZone}
           />
         )}
       </DialogContent>
@@ -123,16 +129,18 @@ function AuthoriseForm({
   pilotName,
   airframeTypes,
   onClose,
+  timeZone,
 }: {
   initial: { airframeType: string; position: TypePosition };
   pilotId: string;
   pilotName: string;
   airframeTypes: string[];
   onClose: () => void;
+  timeZone: string;
 }) {
   const uid = useId();
   const { error, pending, submit } = useSubmit(onClose);
-  const today = todayIso();
+  const today = todayIso(timeZone);
 
   function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -228,15 +236,17 @@ function RevokeForm({
   pilotId,
   pilotName,
   onClose,
+  timeZone,
 }: {
   cell: TypeQualificationCell;
   pilotId: string;
   pilotName: string;
   onClose: () => void;
+  timeZone: string;
 }) {
   const uid = useId();
   const { error, pending, submit } = useSubmit(onClose);
-  const today = todayIso();
+  const today = todayIso(timeZone);
   const qualificationId = cell.qualification_id;
 
   function onSubmit(event: FormEvent<HTMLFormElement>) {
@@ -303,6 +313,7 @@ function CheckRideForm({
   airframeTypes,
   checkItems,
   onClose,
+  timeZone,
 }: {
   initial: { airframeType: string; check: TypeCheck };
   pilotId: string;
@@ -310,12 +321,13 @@ function CheckRideForm({
   airframeTypes: string[];
   checkItems: Record<TypeCheck, CheckItemRef | null>;
   onClose: () => void;
+  timeZone: string;
 }) {
   const uid = useId();
   const { error, pending, submit } = useSubmit(onClose);
   const [check, setCheck] = useState<TypeCheck>(initial.check);
   const item = checkItems[check];
-  const today = todayIso();
+  const today = todayIso(timeZone);
 
   function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -483,8 +495,8 @@ function text(form: FormData, key: string): string {
   return String(form.get(key) ?? "");
 }
 
-/** The date inputs' default and limit: today in the company's default zone
- *  (Alaska), not UTC's. The server action checks against the company's own. */
-function todayIso(): string {
-  return localDay(DEFAULT_TIME_ZONE);
+/** The date inputs' default and limit: today in the company's zone, not
+ *  UTC's. The server action checks against the same day. */
+function todayIso(timeZone: string): string {
+  return localDay(timeZone);
 }
