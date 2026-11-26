@@ -296,6 +296,9 @@ function HardBlockBanner({
   overridesAcknowledged: boolean;
   canOverride: boolean;
 }) {
+  // 61.57 currency the flight needs (audit, 26 Nov): the regulation, which
+  // release never lets an override clear, so none is offered.
+  const regulation = data.hard_blocks.some((b) => b.overridable === false);
   return (
     <div
       className={
@@ -332,7 +335,9 @@ function HardBlockBanner({
               ? "Cleared for release with audit trail on record"
               : seat === "sic"
                 ? "Assign a current SIC in the Crew panel, or clear the items"
-                : "Supervisor override required to release"
+                : regulation
+                  ? "Put a current pilot on this flight"
+                  : "Supervisor override required to release"
           }
         />
         <ViewProfileLink pilotId={data.pilot.id} />
@@ -342,8 +347,16 @@ function HardBlockBanner({
       {/* The override records PIC deviations; an SIC is replaced. The
           supervisor records it from their own login (the operator's
           choice, 29 Sep), so nobody else is offered the button. */}
+      {!overridesAcknowledged && seat === "pic" && regulation && (
+        <p className="mt-3 text-xs text-muted-foreground">
+          Landing and instrument currency (14 CFR 61.57) can&rsquo;t be waived by an
+          override. Put a current pilot on this flight. A flight without
+          passengers is how a pilot gets current again.
+        </p>
+      )}
       {!overridesAcknowledged &&
         seat === "pic" &&
+        !regulation &&
         (canOverride ? (
           <OverrideDialog
             pilotUserId={data.pilot.id}

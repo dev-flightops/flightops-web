@@ -162,6 +162,27 @@ describe("DispatchComplianceGate", () => {
     expect(screen.getByRole("button", { name: "Supervisor Override…" })).toBeInTheDocument();
   });
 
+  it("offers no override for landing currency the flight needs (61.57, audit 26 Nov)", async () => {
+    getPicCompliance.mockResolvedValueOnce(
+      makeData({
+        dot_color: "red",
+        hard_blocks: [
+          makeFinding({
+            code: "day_landing_currency",
+            name: "Day Landing Currency",
+            regulation: "14 CFR 61.57(a)",
+            message: "2 of 3 required in last 90 days, and this flight needs them: it carries passengers.",
+            overridable: false,
+          }),
+        ],
+      }),
+    );
+    render(await DispatchComplianceGate({ pilotUserId: "p-1", flightId: "f-1", canOverride: true }));
+    expect(screen.queryByRole("button", { name: /override/i })).toBeNull();
+    expect(screen.getByText(/can\u2019t be waived by an\s+override/)).toBeInTheDocument();
+    expect(screen.getByText("Put a current pilot on this flight")).toBeInTheDocument();
+  });
+
   it("tells anyone else who records the override, instead of offering it", async () => {
     // 29 Sep: the supervisor records it from their own login; the
     // backend refuses anyone else and would record them as supervisor.
