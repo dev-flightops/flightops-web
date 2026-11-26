@@ -208,6 +208,33 @@ describe("chief pilot dashboard", () => {
   });
 });
 
+describe("chief pilot dashboard: landings and IFR (1124-15)", () => {
+  it("are a per-flight line, not issues against a pilot whose status is current", async () => {
+    boardMock.mockResolvedValueOnce({
+      items: [
+        { id: "i-day", code: "day_landing_currency", name: "Day Landing Currency", interval_type: "rolling_days", rolling_threshold: 3 },
+        { id: "i-sic", code: "sic_day_landing_currency", name: "SIC Day Landing Currency", interval_type: "rolling_days", rolling_threshold: 3 },
+      ],
+      rows: [
+        {
+          pilot: { id: "p-1", full_name: "Grace Okafor" },
+          overall_status: "early_month",
+          cells: [
+            { currency_item_id: "i-day", status: "not_started", rolling_count: 1 },
+            { currency_item_id: "i-sic", status: "not_started", rolling_count: null },
+          ],
+        },
+      ],
+      chips: { fully_current: 1, early_month: 1, grace_month: 0, non_current: 0, records_missing: 0 },
+    } as unknown as ComplianceBoardResponse);
+    render(await ChiefPilotDashboardPage());
+    const row = screen.getByRole("row", { name: /Grace Okafor/ });
+    expect(row).toHaveTextContent("Per flight: day landings 1/3");
+    expect(row).not.toHaveTextContent("Day Landing Currency");
+    expect(row).not.toHaveTextContent("SIC");
+  });
+});
+
 describe("chief pilot dashboard: duty (1124-17)", () => {
   it("lists who is on duty past the limit, where it said a list wasn't built", async () => {
     overLimitMock.mockResolvedValueOnce({

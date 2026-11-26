@@ -16,6 +16,13 @@ const STATUS_WORDS: Record<string, string> = {
   not_started: "Records missing",
 };
 
+/** The rolling items by what they count, for the matrix's per-flight line. */
+const PER_FLIGHT: Record<string, string> = {
+  day_landing_currency: "day landings",
+  night_landing_currency: "night landings",
+  ifr_currency: "IFR approaches",
+};
+
 export default async function ChiefPilotDashboardPage() {
   // The crew tiles read the currency board (#157: they had said "Not
   // built yet"); the snapshot gives "Airborne Now".
@@ -146,10 +153,22 @@ export default async function ChiefPilotDashboardPage() {
                 crew.rows.map((row) => {
                   const medicalId = crew.items.find((i) => i.code === "medical_certificate")?.id;
                   const medical = row.cells.find((c) => c.currency_item_id === medicalId);
+                  // 1124-15: landings and IFR (61.57, 135.247) bind per flight,
+                  // so they don't change a pilot's status, and the list named
+                  // them, SIC twins and all, for every pilot reading Current.
+                  // They're a line of their own; the release checks each flight.
+                  const item = (c: (typeof row.cells)[number]) =>
+                    crew.items.find((i) => i.id === c.currency_item_id);
                   const issues = row.cells
+                    .filter((c) => item(c)?.interval_type !== "rolling_days")
                     .filter((c) => ["non_current", "grace_month", "not_started"].includes(c.status))
-                    .map((c) => crew.items.find((i) => i.id === c.currency_item_id)?.name ?? "")
+                    .map((c) => item(c)?.name ?? "")
                     .filter(Boolean);
+                  const perFlight = row.cells
+                    .map((c) => ({ c, i: item(c) }))
+                    .filter(({ i }) => i?.interval_type === "rolling_days" && !i.code.startsWith("sic_"))
+                    .filter(({ c, i }) => (c.rolling_count ?? 0) < (i?.rolling_threshold ?? 0))
+                    .map(({ c, i }) => `${PER_FLIGHT[i!.code] ?? i!.name} ${c.rolling_count ?? 0}/${i!.rolling_threshold}`);
                   return (
                     <tr key={row.pilot.id} className="border-t border-border">
                       <td className="px-2 py-1.5 font-semibold">{row.pilot.full_name}</td>
@@ -157,6 +176,14 @@ export default async function ChiefPilotDashboardPage() {
                       <td className="px-2 py-1.5">{STATUS_WORDS[row.overall_status] ?? row.overall_status}</td>
                       <td className="px-2 py-1.5 text-muted-foreground">
                         {issues.length ? issues.join(", ") : "—"}
+                        {perFlight.length ? (
+                          <span
+                            className="block text-[0.65rem]"
+                            title="Needed only on a flight that carries passengers (day landings), passengers at night (night landings) or flies IFR. The release checks each flight."
+                          >
+                            Per flight: {perFlight.join(" · ")}
+                          </span>
+                        ) : null}
                       </td>
                     </tr>
                   );
