@@ -124,8 +124,8 @@ describe("the catalogue panel", () => {
     const panel = within(
       screen.getByRole("region", { name: "What I can answer about" }),
     );
-    expect(panel.getByText("aircraft")).toBeInTheDocument();
-    // Fields as words, not codes (1124-27).
+    // Names and fields as words, not codes (1124-27).
+    expect(panel.getByText("Aircraft")).toBeInTheDocument();
     expect(panel.getByText(/Tail number, Model, Base/)).toBeInTheDocument();
   });
 

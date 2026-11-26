@@ -117,10 +117,13 @@ export function AppShellHeader({
           </Link>
 
           <div className="flex flex-1 items-stretch justify-end">
+            {/* From 1440 px (1124-14): at 1280 an admin's header ran 46 px
+                past the edge, Sign out with it, and every page scrolled
+                sideways. Measured in Chrome at 1280, 1366 and 1440. */}
             {opsPhone ? (
               <a
                 href={`tel:${opsPhone.replace(/[^0-9+]/g, "")}`}
-                className="hidden items-center gap-1.5 whitespace-nowrap px-4 text-[0.78rem] font-semibold tabular-nums text-foreground transition-colors hover:text-white lg:flex"
+                className="hidden items-center gap-1.5 whitespace-nowrap px-4 text-[0.78rem] font-semibold tabular-nums text-foreground transition-colors hover:text-white min-[1440px]:flex"
               >
                 <PhoneIcon />
                 <span>{opsPhone}</span>

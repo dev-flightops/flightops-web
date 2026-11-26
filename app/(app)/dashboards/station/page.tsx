@@ -38,23 +38,27 @@ export default async function StationDashboardPage({
   // #138: a load that fails says so; it had read as no traffic, or as
   // "No bases configured".
   const loads = new Loads();
-  const [todaysFlights, snapshot, basesResponse] = await Promise.all([
+  const weekAgo = localDay(DEFAULT_TIME_ZONE, new Date(Date.now() - 7 * 24 * 60 * 60 * 1000));
+  const [todaysFlights, snapshot, basesResponse, weeksFlights] = await Promise.all([
     loads.or(listFlights({ onCompanyDate: today, limit: 200 }), { items: [], total: 0 }, "today’s flights"),
     loadOperationalSnapshot(),
     // Full bases catalog drives both the dropdown picker and the
     // network grid — same source legacy uses. Falls back to today's
     // traffic stations if the catalog query fails.
     loads.or(listCompanyBases(), { items: [], total: 0 }, "the company’s bases"),
+    // The stations flown this past week, so the villages served daily are
+    // listed before today's flights leave.
+    listFlights({ departsFrom: weekAgo, limit: 200 }).catch(() => ({ items: [], total: 0 })),
   ]);
   const basesFailed = loads.failed.includes("the company’s bases");
 
-  // The bases, and the airports today's flights stop at (1124-32: PAHP,
+  // The bases, and the airports this week's flights stop at (1124-32: PAHP,
   // PAVA, PAQH and the other villages flown daily weren't listed). The hub
   // first, the rest by code; the page opens on the hub, not on whichever
   // sorts first (9Z8 Levelock).
   const named = new Map(basesResponse.items.map((b) => [b.icao, b.display_name]));
   const hub = basesResponse.items.find((b) => b.is_hub)?.icao ?? null;
-  const flown = todaysFlights.items.flatMap((f) => flightStops(f));
+  const flown = [...todaysFlights.items, ...weeksFlights.items].flatMap((f) => flightStops(f));
   const bases: StationRow[] = [...new Set([...named.keys(), ...flown])]
     .map((icao) => ({ icao, display_name: named.get(icao) ?? icao }))
     .sort((a, b) => Number(b.icao === hub) - Number(a.icao === hub) || a.icao.localeCompare(b.icao));

@@ -127,7 +127,7 @@ export function describeSpec(spec: QuerySpec): string {
   } else {
     parts.push("everything");
   }
-  parts.push(`from ${spec.entity}`);
+  parts.push(`from ${words(spec.entity)}`);
   if (spec.filters.length > 0) {
     parts.push(
       "where " +
@@ -251,7 +251,7 @@ export function QueryView({
           <ul className="space-y-1.5">
             {entities.map((e) => (
               <li key={e.name} className="text-xs">
-                <span className="font-semibold">{e.name}</span>
+                <span className="font-semibold">{headerLabel(e.name)}</span>
                 <span className="text-muted-foreground"> — {e.description}</span>
                 <span className="block text-[0.65rem] text-muted-foreground">
                   {e.fields.map(headerLabel).join(", ")}
