@@ -78,3 +78,22 @@ it("dates an evening departure on the Alaska day, not the UTC one (1119-22)", as
   const bookings = groups.find((g) => g.key === "bookings");
   expect(bookings?.items.map((hit) => hit.sublabel)).toEqual(["Ella Evening · Nov 19, 2026"]);
 });
+
+it("names every stop of a round trip, not PABE → PABE (audit, 26 Nov)", async () => {
+  listFlights.mockResolvedValue({
+    items: [
+      {
+        id: "f-2",
+        flight_number: "PGR802",
+        origin: "PABE",
+        destination: "PABE",
+        stops: ["PABE", "PAHP", "PAVA", "PABE"],
+        scheduled_departure_at: "2026-11-25T19:30:00Z",
+        aircraft: { tail_number: "N503PA" },
+      },
+    ],
+  });
+  const groups = await spotlightSearch("PGR8");
+  const flights = groups.find((g) => g.key === "flights");
+  expect(flights?.items.map((hit) => hit.label)).toEqual(["PGR802 · PABE → PAHP → PAVA → PABE"]);
+});

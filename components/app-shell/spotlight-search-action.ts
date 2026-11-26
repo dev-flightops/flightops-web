@@ -1,5 +1,6 @@
 "use server";
 
+import { routeText } from "@/lib/route";
 import { ApiError } from "@/lib/api/client";
 import { loadZoneTable } from "@/lib/api/auth";
 import { localDate, zoneFor } from "@/lib/format/local-time";
@@ -133,7 +134,7 @@ async function _flights(lower: string): Promise<SpotlightGroup> {
     ]);
     const hits: SpotlightHit[] = items.map((f) => ({
       id: f.id,
-      label: `${f.flight_number} · ${f.origin} → ${f.destination}`,
+      label: `${f.flight_number} · ${routeText(f)}`,
       sublabel: `${f.aircraft.tail_number} · ${localDate(f.scheduled_departure_at, zoneFor(zones, f.origin), { withYear: true })}`,
       // /flight-following has no [id] route — there is no per-flight
       // page under it, so this used to send every flight result to a
