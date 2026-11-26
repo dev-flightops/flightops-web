@@ -16,6 +16,7 @@ import {
   statusClasses,
 } from "./money";
 import { RaiseInvoices } from "./raise-invoices";
+import { companyToday } from "@/lib/company-today";
 
 /**
  * /invoicing — what customers owe us for flights flown.
@@ -65,9 +66,6 @@ async function customerOptions(): Promise<{ id: string; name: string }[]> {
   }
 }
 
-function todayUtc(): string {
-  return new Date().toISOString().slice(0, 10);
-}
 
 export default async function InvoicingPage({
   searchParams,
@@ -106,7 +104,7 @@ export default async function InvoicingPage({
         : "Could not load invoices just now.";
   }
 
-  const today = todayUtc();
+  const today = await companyToday();
 
   return (
     <div className="mx-auto max-w-6xl px-4 sm:px-6 py-8">

@@ -14,10 +14,13 @@ export function LogCompletionButton({
   pilotId,
   pilotName,
   item,
+  timeZone,
 }: {
   pilotId: string;
   pilotName: string;
   item: CurrencyItemRef;
+  /** The company's zone, for the form's today. */
+  timeZone?: string;
 }) {
   const [open, setOpen] = useState(false);
 
@@ -36,6 +39,7 @@ export function LogCompletionButton({
           pilotName={pilotName}
           item={item}
           onClose={() => setOpen(false)}
+          timeZone={timeZone}
         />
       )}
     </>

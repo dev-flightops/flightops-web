@@ -6,6 +6,7 @@ import { getOpsScore, type OpsScorePillar } from "@/lib/api/reports";
 import { CompletionTrendNotMeasured } from "@/components/dashboards/completion-trend-not-measured";
 import { PillarBar } from "@/components/dashboards/pillar-bar";
 import { ScorePill } from "@/components/dashboards/score-pill";
+import { companyToday } from "@/lib/company-today";
 
 export default async function OpsScoreDashboardPage({
   searchParams,
@@ -32,7 +33,7 @@ export default async function OpsScoreDashboardPage({
   let maxAchievable = 100;
   let band: string | null = null;
   let pillars: OpsScorePillar[] = [];
-  let asOf = new Date().toISOString().slice(0, 10);
+  let asOf = await companyToday();
   let scoreError: string | null = null;
   try {
     const result = await getOpsScore(tz);

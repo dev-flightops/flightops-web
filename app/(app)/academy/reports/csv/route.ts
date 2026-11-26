@@ -2,6 +2,7 @@ import { getAcademyReportCsv } from "@/lib/api/academy";
 import { ApiError } from "@/lib/api/client";
 
 import { readReportSearch } from "../params";
+import { companyToday } from "@/lib/company-today";
 
 /** Academy Reports' Export CSV: the report on the page, with its filters, as
  *  the academy service writes it. */
@@ -14,7 +15,7 @@ export async function GET(request: Request): Promise<Response> {
   }
   try {
     const csv = await getAcademyReportCsv(report, filters);
-    const day = new Date().toISOString().slice(0, 10);
+    const day = await companyToday();
     return new Response(csv, {
       headers: {
         "Content-Type": "text/csv; charset=utf-8",

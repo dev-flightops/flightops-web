@@ -43,7 +43,10 @@ export function TypeQualificationsCard({
   checkItems,
   canAuthorise,
   canRecordCheck,
+  timeZone,
 }: {
+  /** The company's zone, for the dialogs' today. */
+  timeZone?: string;
   data: PilotTypeQualifications;
   checkItems: Record<TypeCheck, CheckItemRef | null>;
   /** TYPE_QUALIFICATION_ADMINS: Chief Pilot, DO, Exec Admin. */
@@ -172,6 +175,7 @@ export function TypeQualificationsCard({
         pilotName={pilot.full_name}
         airframeTypes={data.airframe_types}
         checkItems={checkItems}
+        timeZone={timeZone}
       />
     </section>
   );

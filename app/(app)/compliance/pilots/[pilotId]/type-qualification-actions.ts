@@ -6,6 +6,7 @@ import { z } from "zod";
 import { ApiError } from "@/lib/api/client";
 import { validationSummary } from "@/lib/api/validation-errors";
 import { logCurrencyCompletion } from "@/lib/api/ops";
+import { companyToday } from "@/lib/company-today";
 import {
   authoriseTypePosition,
   revokeTypePosition,
@@ -50,7 +51,8 @@ const airframeType = z
   .toLowerCase()
   .min(1, "Pick an aircraft type.")
   .max(40, "Pick an aircraft type.");
-const notFuture = (day: string) => day <= todayIso();
+// The company's day, not UTC's (code audit, 26 Nov).
+const notFuture = async (day: string) => day <= (await companyToday());
 
 const AuthoriseSchema = z.object({
   airframe_type: airframeType,
@@ -99,7 +101,7 @@ export async function authorisePositionAction(
   input: z.input<typeof AuthoriseSchema>,
 ): Promise<ActionResult> {
   if (!isUuid(pilotId)) return STALE;
-  const parsed = AuthoriseSchema.safeParse(input);
+  const parsed = await AuthoriseSchema.safeParseAsync(input);
   if (!parsed.success) return firstIssue(parsed.error);
   try {
     await authoriseTypePosition(pilotId, parsed.data);
@@ -116,7 +118,7 @@ export async function revokePositionAction(
   input: z.input<typeof RevokeSchema>,
 ): Promise<ActionResult> {
   if (!isUuid(pilotId) || !isUuid(qualificationId)) return STALE;
-  const parsed = RevokeSchema.safeParse(input);
+  const parsed = await RevokeSchema.safeParseAsync(input);
   if (!parsed.success) return firstIssue(parsed.error);
   try {
     await revokeTypePosition(qualificationId, parsed.data);
@@ -132,7 +134,7 @@ export async function recordCheckRideAction(
   input: z.input<typeof CheckRideSchema>,
 ): Promise<ActionResult> {
   if (!isUuid(pilotId)) return STALE;
-  const parsed = CheckRideSchema.safeParse(input);
+  const parsed = await CheckRideSchema.safeParseAsync(input);
   if (!parsed.success) return firstIssue(parsed.error);
   try {
     await logCurrencyCompletion({
@@ -202,6 +204,3 @@ function detailOf(raw: string): string | null {
   }
 }
 
-function todayIso(): string {
-  return new Date().toISOString().slice(0, 10);
-}
