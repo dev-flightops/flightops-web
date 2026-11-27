@@ -240,3 +240,42 @@ describe("CrewPanel: an SIC the release would refuse isn't offered (#91)", () =>
     expect(Array.from(cabin.querySelectorAll("option")).some((o) => o.textContent?.startsWith("Bo Pilot"))).toBe(true);
   });
 });
+
+describe("CrewPanel: an assigned pilot the release would refuse reads so (#91)", () => {
+  // Ann is "Fully current" across her records; this flight carries
+  // passengers and she hasn't the landings, which bind this flight only.
+  const out = [
+    {
+      pilot: CANDIDATES[0].pilot,
+      available: false,
+      reasons: ["Day Landing Currency: 0 of 3 in 90 days, and this flight carries passengers."],
+      warnings: [],
+    },
+  ];
+
+  it("says the PIC isn't available for this flight, not Fully current", () => {
+    render(
+      <CrewPanel flightId="f-1" assignments={[assignment()]} candidates={CANDIDATES} picAvailability={out} />,
+    );
+    expect(
+      screen.getByText(
+        "Not available for this flight: Day Landing Currency: 0 of 3 in 90 days, and this flight carries passengers.",
+      ),
+    ).toBeInTheDocument();
+    expect(screen.queryByText("Fully current")).toBeNull();
+  });
+
+  it("says the same of an SIC, and keeps Fully current for a pilot release would take", () => {
+    render(
+      <CrewPanel
+        flightId="f-1"
+        assignments={[assignment(), assignment({ id: "a-2", user: CANDIDATES[0].pilot, crew_role: "sic" })]}
+        candidates={CANDIDATES}
+        picAvailability={[{ pilot: CANDIDATES[0].pilot, available: true, reasons: [], warnings: [] }]}
+        sicAvailability={out}
+      />,
+    );
+    expect(screen.getByText("Fully current")).toBeInTheDocument();
+    expect(screen.getByText(/^Not available for this flight: Day Landing Currency/)).toBeInTheDocument();
+  });
+});

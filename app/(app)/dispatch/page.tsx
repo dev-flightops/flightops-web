@@ -657,6 +657,7 @@ export default async function DispatchPage({
                 flightId={selectedFlight.id}
                 assignments={crew.items}
                 candidates={candidates}
+                picAvailability={picAvailability}
                 sicAvailability={sicAvailability}
               />
               <CrewLegalityHints

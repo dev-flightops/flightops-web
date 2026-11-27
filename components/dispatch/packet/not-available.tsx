@@ -5,8 +5,14 @@ import type { CrewOption } from "@/lib/api/ops";
 /** The first two reasons and how many more: a pilot with every record
  *  still to enter has a dozen, and the record lists them all. */
 function summary(reasons: string[]): string {
-  if (reasons.length <= 2) return reasons.join("; ");
-  return `${reasons.slice(0, 2).join("; ")}; and ${reasons.length - 2} more`;
+  // Each reason is a sentence; joined, it drops its full stop (it read
+  // "carries passengers.; Night Landing …").
+  const bare = (reason: string) => reason.replace(/\.$/, "");
+  const shown = reasons.slice(0, 2);
+  if (reasons.length <= 2) {
+    return shown.map((reason, i) => (i < shown.length - 1 ? bare(reason) : reason)).join("; ");
+  }
+  return `${shown.map(bare).join("; ")}; and ${reasons.length - 2} more`;
 }
 
 /**
@@ -44,4 +50,21 @@ export function NotAvailableList({ seat, options }: { seat: string; options: Cre
  *  and then every pilot is offered as before, with release still checking. */
 export function unavailableIds(options: CrewOption[] | null | undefined): Set<string> {
   return new Set((options ?? []).filter((o) => !o.available).map((o) => o.pilot.id));
+}
+
+/** "Not available for this flight: Day Landing Currency 0/3 …" for a pilot
+ *  release would refuse in the seat, else null. Shown in place of the
+ *  pilot's overall status: "Fully current" reads their records across the
+ *  board, which leave out what binds only this flight, landings with
+ *  passengers aboard among them. The packet showed "Fully current · not
+ *  available" beside its HARD BLOCK. */
+export function unavailableLabel(
+  options: CrewOption[] | null | undefined,
+  pilotId: string | null | undefined,
+): string | null {
+  const option = (options ?? []).find((o) => o.pilot.id === pilotId && !o.available);
+  if (!option) return null;
+  return option.reasons.length > 0
+    ? `Not available for this flight: ${summary(option.reasons)}`
+    : "Not available for this flight";
 }

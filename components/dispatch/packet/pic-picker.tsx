@@ -12,7 +12,7 @@ import {
 import type { CrewOption } from "@/lib/api/ops";
 import type { CurrencyStatus, UserRef } from "@/lib/api/types";
 
-import { NotAvailableList, unavailableIds } from "./not-available";
+import { NotAvailableList, unavailableIds, unavailableLabel } from "./not-available";
 import type { SeatTypeWarning } from "./type-warnings";
 import { useDispatchQuery } from "./use-dispatch-query";
 
@@ -209,9 +209,9 @@ export function PicPicker({
         </option>
         {options.map((opt) => (
           <option key={opt.pilot.id} value={opt.pilot.id}>
-            ● {opt.pilot.full_name} — {STATUS_LABEL[opt.status]}
-            {opt.typeWarning?.pic ? ` · ${opt.typeWarning.pic}` : ""}
-            {out.has(opt.pilot.id) ? " · not available" : ""}
+            {`● ${opt.pilot.full_name} — ${
+              unavailableLabel(availability, opt.pilot.id) ?? STATUS_LABEL[opt.status]
+            }${opt.typeWarning?.pic ? ` · ${opt.typeWarning.pic}` : ""}`}
           </option>
         ))}
       </select>
