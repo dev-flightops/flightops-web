@@ -276,7 +276,13 @@ describe("PicPicker: a pilot the release would refuse isn't offered (#91)", () =
         availability={availability}
       />,
     );
-    expect(screen.getByRole("option", { name: /Alice Chen .* not available/ })).toBeInTheDocument();
+    // Why, in place of her overall status: "Fully current · not available"
+    // stood beside the packet's HARD BLOCK.
+    expect(
+      screen.getByRole("option", {
+        name: "● Alice Chen — Not available for this flight: Medical Certificate: Expired Oct 1.",
+      }),
+    ).toBeInTheDocument();
   });
 
   it("offers everyone when who's available couldn't be read", () => {

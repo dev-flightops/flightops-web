@@ -15,7 +15,7 @@ import type {
 import type { CrewOption } from "@/lib/api/ops";
 import type { CurrencyStatus, UserRef } from "@/lib/api/types";
 
-import { NotAvailableList, unavailableIds } from "./not-available";
+import { NotAvailableList, unavailableIds, unavailableLabel } from "./not-available";
 import type { SeatTypeWarning } from "./type-warnings";
 
 /**
@@ -116,11 +116,15 @@ export function CrewPanel({
   flightId,
   assignments,
   candidates,
+  picAvailability,
   sicAvailability,
 }: {
   flightId: string;
   assignments: CrewAssignment[];
   candidates: CrewCandidate[];
+  /** Who release would take as PIC on this flight (#91): the assigned PIC
+   *  it would refuse reads so, not "Fully current". */
+  picAvailability?: CrewOption[] | null;
   /** Who release would take as SIC on this flight (#91); those it would
    *  refuse aren't offered. Null when it couldn't be read. */
   sicAvailability?: CrewOption[] | null;
@@ -134,6 +138,9 @@ export function CrewPanel({
   const picCandidate = pic
     ? candidates.find((c) => c.pilot.id === pic.user.id)
     : undefined;
+  // What release would say of the assigned PIC on this flight, where it
+  // would refuse them, in place of their overall status.
+  const picOut = pic ? unavailableLabel(picAvailability, pic.user.id) : null;
 
   function run(action: () => Promise<{ ok: boolean; error?: string }>) {
     setError(null);
@@ -173,7 +180,7 @@ export function CrewPanel({
             <span className="flex min-w-0 flex-1 items-center gap-2">
               {picCandidate ? (
                 <span
-                  className={`h-2 w-2 shrink-0 ${DOT_CLASS[STATUS_TO_DOT[picCandidate.status]]}`}
+                  className={`h-2 w-2 shrink-0 ${DOT_CLASS[picOut ? "red" : STATUS_TO_DOT[picCandidate.status]]}`}
                   aria-hidden="true"
                 />
               ) : null}
@@ -182,7 +189,7 @@ export function CrewPanel({
               </span>
               {picCandidate ? (
                 <span className="shrink-0 text-[0.68rem] text-muted-foreground">
-                  {STATUS_LABEL[picCandidate.status]}
+                  {picOut ?? STATUS_LABEL[picCandidate.status]}
                 </span>
               ) : null}
               <TypeWarning text={seatWarning(picCandidate, "pic")} />
@@ -209,6 +216,8 @@ export function CrewPanel({
           const current = assigned
             ? candidates.find((c) => c.pilot.id === assigned.user.id)
             : undefined;
+          const currentOut =
+            assigned && role === "sic" ? unavailableLabel(sicAvailability, assigned.user.id) : null;
 
           return (
             <div key={role} className="px-5 py-3">
@@ -227,7 +236,7 @@ export function CrewPanel({
                     <span className="flex min-w-0 flex-1 items-center gap-2">
                       {current ? (
                         <span
-                          className={`h-2 w-2 shrink-0 ${DOT_CLASS[STATUS_TO_DOT[current.status]]}`}
+                          className={`h-2 w-2 shrink-0 ${DOT_CLASS[currentOut ? "red" : STATUS_TO_DOT[current.status]]}`}
                           aria-hidden="true"
                         />
                       ) : null}
@@ -236,7 +245,7 @@ export function CrewPanel({
                       </span>
                       {current ? (
                         <span className="shrink-0 text-[0.68rem] text-muted-foreground">
-                          {STATUS_LABEL[current.status]}
+                          {currentOut ?? STATUS_LABEL[current.status]}
                         </span>
                       ) : null}
                       <TypeWarning text={seatWarning(current, role)} />

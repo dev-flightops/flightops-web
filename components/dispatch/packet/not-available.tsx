@@ -45,3 +45,20 @@ export function NotAvailableList({ seat, options }: { seat: string; options: Cre
 export function unavailableIds(options: CrewOption[] | null | undefined): Set<string> {
   return new Set((options ?? []).filter((o) => !o.available).map((o) => o.pilot.id));
 }
+
+/** "Not available for this flight: Day Landing Currency 0/3 …" for a pilot
+ *  release would refuse in the seat, else null. Shown in place of the
+ *  pilot's overall status: "Fully current" reads their records across the
+ *  board, which leave out what binds only this flight, landings with
+ *  passengers aboard among them. The packet showed "Fully current · not
+ *  available" beside its HARD BLOCK. */
+export function unavailableLabel(
+  options: CrewOption[] | null | undefined,
+  pilotId: string | null | undefined,
+): string | null {
+  const option = (options ?? []).find((o) => o.pilot.id === pilotId && !o.available);
+  if (!option) return null;
+  return option.reasons.length > 0
+    ? `Not available for this flight: ${summary(option.reasons)}`
+    : "Not available for this flight";
+}
