@@ -42,15 +42,32 @@ function observationText(o: MinimumsObservation): string {
 }
 
 /** "PAEM ceiling 500 ft, visibility 1.5 sm; PABE ceiling 400 ft
- *  (village report)": the stops that are below, and what is. */
+ *  (village report)": the stops that are below, and what is. A stop the
+ *  flight is at during the night says so (LOG-68). */
 export function belowSummary(stations: MinimumsStation[]): string {
   return stations
     .filter((s) => s.below)
     .map((s) => {
       const what = s.observations.filter((o) => o.below_ceiling || o.below_visibility);
-      return `${s.icao} ${what.map(observationText).join("; ")}`;
+      return `${s.icao}${s.at_night ? " (at night)" : ""} ${what.map(observationText).join("; ")}`;
     })
     .join("; ");
+}
+
+/** ", 1,500 ft ceiling at night at PABE and PAQH": the stops the flight is
+ *  at during the night, held to the company's night ceiling (LOG-68, the
+ *  client's GOM). Empty when there are none, or from an older backend. */
+export function nightClause(view: Pick<WeatherMinimumsView, "min_ceiling_ft" | "stations">): string {
+  const route = Number(view.min_ceiling_ft ?? 0);
+  const night = view.stations.filter(
+    (s) => s.at_night && s.min_ceiling_ft != null && s.min_ceiling_ft > route,
+  );
+  if (night.length === 0) return "";
+  const ceiling = Math.max(...night.map((s) => Number(s.min_ceiling_ft)));
+  const icaos = night.map((s) => s.icao);
+  const where =
+    icaos.length > 1 ? `${icaos.slice(0, -1).join(", ")} and ${icaos[icaos.length - 1]}` : icaos[0];
+  return `, ${ceiling.toLocaleString("en-US")} ft ceiling at night at ${where}`;
 }
 
 /** True when the stops are held for the aircraft's type, not for want of
@@ -76,7 +93,7 @@ export function withoutApproach(stations: MinimumsStation[]): string {
 /** Why the packet's Release is held, or null when it isn't (#89, #110). */
 export function minimumsBlockReason(view: WeatherMinimumsView | null | undefined): string | null {
   if (!view?.applies || !view.below) return null;
-  const label = minimumsLabel(view.min_ceiling_ft, view.min_visibility_sm);
+  const label = minimumsLabel(view.min_ceiling_ft, view.min_visibility_sm) + nightClause(view);
   if (heldForType(view.stations)) {
     return (
       `Below the company's dispatch minimums for aircraft not IFR certified ` +

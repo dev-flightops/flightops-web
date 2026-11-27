@@ -334,6 +334,9 @@ function normalizeFratConfig(
     default_dispatch_min_visibility_sm: asNumber(
       config.default_dispatch_min_visibility_sm ?? 2,
     ),
+    // LOG-68: a backend from before it sends neither; the GOM's 1,500 ft.
+    dispatch_night_min_ceiling_ft: config.dispatch_night_min_ceiling_ft ?? 1500,
+    default_dispatch_night_min_ceiling_ft: config.default_dispatch_night_min_ceiling_ft ?? 1500,
   };
 }
 

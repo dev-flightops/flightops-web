@@ -51,6 +51,8 @@ export interface FratPolicyInput {
    *  aircraft not IFR certified are not released. */
   dispatchMinCeilingFt: number;
   dispatchMinVisibilitySm: number;
+  /** The client's GOM (LOG-68): VFR at night needs a 1,500 ft ceiling. */
+  dispatchNightMinCeilingFt: number;
   /** "4 hours or any condition that increases risk." Zero turns blocks
    *  off, which is a policy rather than a missing value. */
   blockValidityHours: number;
@@ -72,6 +74,7 @@ export async function saveFratThresholdsAction(
     vfrMinVisibilitySm,
     dispatchMinCeilingFt,
     dispatchMinVisibilitySm,
+    dispatchNightMinCeilingFt,
     rationale,
   } = input;
 
@@ -158,6 +161,16 @@ export async function saveFratThresholdsAction(
       message: "The dispatch minimum visibility has to be between 0 and 10 miles.",
     };
   }
+  if (
+    !Number.isInteger(dispatchNightMinCeilingFt) ||
+    dispatchNightMinCeilingFt < 0 ||
+    dispatchNightMinCeilingFt > 10000
+  ) {
+    return {
+      status: "error",
+      message: "The night ceiling has to be whole feet between 0 and 10,000.",
+    };
+  }
 
   if (
     !Number.isInteger(blockValidityHours) ||
@@ -186,6 +199,7 @@ export async function saveFratThresholdsAction(
       vfr_min_visibility_sm: vfrMinVisibilitySm,
       dispatch_min_ceiling_ft: dispatchMinCeilingFt,
       dispatch_min_visibility_sm: dispatchMinVisibilitySm,
+      dispatch_night_min_ceiling_ft: dispatchNightMinCeilingFt,
       block_validity_hours: blockValidityHours,
       rationale: rationale.trim() || null,
     });

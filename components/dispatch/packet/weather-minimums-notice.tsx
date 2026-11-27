@@ -4,6 +4,7 @@ import {
   heldForType,
   heldForVfr,
   minimumsLabel,
+  nightClause,
   withoutApproach,
 } from "@/lib/frat/weather-minimums";
 
@@ -26,6 +27,8 @@ export function WeatherMinimumsNotice({
 }) {
   if (!minimums?.applies) return null;
   const label = minimumsLabel(minimums.min_ceiling_ft, minimums.min_visibility_sm);
+  // LOG-68: ", 1,500 ft ceiling at night at PAQH" where the flight is there at night.
+  const night = nightClause(minimums);
   const type = (minimums.airframe_type ?? "this aircraft").toUpperCase();
   const unchecked = minimums.stations
     .filter((s) => s.observations.length === 0)
@@ -42,20 +45,20 @@ export function WeatherMinimumsNotice({
             after an expression in text that also holds an entity. */}
         <p className="mt-1 text-xs">
           {forType
-            ? `${belowSummary(minimums.stations)}. The ${type} is not IFR certified, and the company’s dispatch minimums are ${label} at every stop. It can’t be released until the weather comes up, or on an IFR-certified aircraft.`
+            ? `${belowSummary(minimums.stations)}. The ${type} is not IFR certified, and the company’s dispatch minimums are ${label} at every stop${night}. It can’t be released until the weather comes up, or on an IFR-certified aircraft.`
             : forVfr
-            ? `${belowSummary(minimums.stations)}. The flight is flown VFR, and the company’s dispatch minimums for a VFR flight are ${label} at every stop. It can’t be released until the weather comes up. If it will be flown IFR, tick Flown IFR under Edit.`
-            : `${belowSummary(minimums.stations)}. There’s no instrument approach at ${fields}, so it’s reached VFR whatever the aircraft, and the company’s dispatch minimums there are ${label}. It can’t be released until the weather there comes up.`}
+            ? `${belowSummary(minimums.stations)}. The flight is flown VFR, and the company’s dispatch minimums for a VFR flight are ${label} at every stop${night}. It can’t be released until the weather comes up. If it will be flown IFR, tick Flown IFR under Edit.`
+            : `${belowSummary(minimums.stations)}. There’s no instrument approach at ${fields}, so it’s reached VFR whatever the aircraft, and the company’s dispatch minimums there are ${label}${night}. It can’t be released until the weather there comes up.`}
         </p>
       </div>
     );
   }
 
-  const held = forType
+  const held = (forType
     ? `The ${type} is not IFR certified: held to the company’s dispatch minimums of ${label} at every stop`
     : forVfr
       ? `Flown VFR: held to the company’s dispatch minimums of ${label} at every stop`
-      : `No instrument approach at ${withoutApproach(minimums.stations)}: held to the company’s dispatch minimums of ${label} there`;
+      : `No instrument approach at ${withoutApproach(minimums.stations)}: held to the company’s dispatch minimums of ${label} there`) + night;
   if (unchecked.length > 0) {
     // #155: a stop with no report read "met" (the client's ZZZZ). It can't
     // be checked, which is not the same thing.

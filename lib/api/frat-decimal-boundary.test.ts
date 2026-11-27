@@ -76,6 +76,13 @@ describe("FRAT decimal fields at the client boundary", () => {
     );
   });
 
+  it("reads the GOM's night ceiling from a backend that doesn't send one (LOG-68)", async () => {
+    mockedApiFetch.mockResolvedValueOnce(WIRE_CONFIG);
+    const config = await getFratThresholds();
+    expect(config.dispatch_night_min_ceiling_ft).toBe(1500);
+    expect(config.default_dispatch_night_min_ceiling_ft).toBe(1500);
+  });
+
   it("coerces what comes back from a save, not only a read", async () => {
     // The PUT returns the same shape, and its response is what
     // router.refresh() renders next.
@@ -91,6 +98,7 @@ describe("FRAT decimal fields at the client boundary", () => {
       vfr_min_visibility_sm: 3,
       dispatch_min_ceiling_ft: 600,
       dispatch_min_visibility_sm: 2,
+      dispatch_night_min_ceiling_ft: 1500,
       block_validity_hours: 4,
     });
     expect(saved.vfr_min_visibility_sm).toBe(3);

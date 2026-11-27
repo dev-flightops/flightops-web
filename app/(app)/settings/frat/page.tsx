@@ -236,6 +236,7 @@ export default async function FratThresholdsPage() {
                 vfr_min_visibility_sm: config.vfr_min_visibility_sm,
                 dispatch_min_ceiling_ft: config.dispatch_min_ceiling_ft,
                 dispatch_min_visibility_sm: config.dispatch_min_visibility_sm,
+                dispatch_night_min_ceiling_ft: config.dispatch_night_min_ceiling_ft,
               }}
             />
           )}

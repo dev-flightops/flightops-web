@@ -142,6 +142,9 @@ export function ThresholdForm({
   const [dispatchMinVisibilitySm, setDispatchMinVisibilitySm] = useState(
     config.dispatch_min_visibility_sm,
   );
+  const [dispatchNightMinCeilingFt, setDispatchNightMinCeilingFt] = useState(
+    config.dispatch_night_min_ceiling_ft,
+  );
   const [blockValidityHours, setBlockValidityHours] = useState(
     config.block_validity_hours,
   );
@@ -166,6 +169,8 @@ export function ThresholdForm({
     dispatchMinCeilingFt <= 10000 &&
     dispatchMinVisibilitySm >= 0 &&
     dispatchMinVisibilitySm <= 10 &&
+    dispatchNightMinCeilingFt >= 0 &&
+    dispatchNightMinCeilingFt <= 10000 &&
     blockValidityHours >= 0 &&
     blockValidityHours <= 24;
   const savable = ordered && marginFits && limitsInRange;
@@ -181,6 +186,7 @@ export function ThresholdForm({
     vfrMinVisibilitySm === config.default_vfr_min_visibility_sm &&
     dispatchMinCeilingFt === config.default_dispatch_min_ceiling_ft &&
     dispatchMinVisibilitySm === config.default_dispatch_min_visibility_sm &&
+    dispatchNightMinCeilingFt === config.default_dispatch_night_min_ceiling_ft &&
     blockValidityHours === config.default_block_validity_hours;
 
   // Widths as percentages of the reachable maximum, so the bar is to
@@ -206,6 +212,7 @@ export function ThresholdForm({
       vfrMinVisibilitySm,
       dispatchMinCeilingFt,
       dispatchMinVisibilitySm,
+      dispatchNightMinCeilingFt,
       blockValidityHours,
       rationale,
     });
@@ -414,6 +421,19 @@ export function ThresholdForm({
             max={10}
             step={0.5}
             onChange={setDispatchMinVisibilitySm}
+          />
+          {/* The client's GOM (LOG-68): VFR at night needs at least a
+              1,500 ft ceiling to dispatch. */}
+          <Field
+            name="dispatch_night_min_ceiling_ft"
+            source={config.sources?.["dispatch_night_min_ceiling_ft"]}
+            label="Dispatch minimum ceiling at night (ft)"
+            hint="A VFR flight at a stop it reaches at night, where it's higher than the ceiling above."
+            value={dispatchNightMinCeilingFt}
+            min={0}
+            max={10000}
+            step={100}
+            onChange={setDispatchNightMinCeilingFt}
           />
         </div>
         <p className="mt-2 text-[0.65rem] text-muted-foreground">

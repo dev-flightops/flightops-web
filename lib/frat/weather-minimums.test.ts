@@ -8,6 +8,7 @@ import {
   heldForType,
   heldForVfr,
   minimumsLabel,
+  nightClause,
   withoutApproach,
 } from "./weather-minimums";
 
@@ -191,5 +192,59 @@ describe("dispatch minimums on a VFR flight (#123)", () => {
     expect(
       heldForVfr([{ icao: "PAII", below: true, reason: "no_instrument_approach", observations: [] }]),
     ).toBe(false);
+  });
+});
+
+// LOG-68: the client's GOM holds VFR at night to a 1,500 ft ceiling. BK-802D3711
+// left PABE at 09:00 AKST in the dark with PAQH at 1,100 ft.
+describe("the night ceiling (LOG-68)", () => {
+  const night: MinimumsStation[] = [
+    {
+      icao: "PABE",
+      below: false,
+      reason: "vfr_flight",
+      min_ceiling_ft: 1500,
+      at_night: true,
+      observations: [
+        { source: "metar", observed_at: null, ceiling_ft: 2500, visibility_sm: 10, below_ceiling: false, below_visibility: false },
+      ],
+    },
+    {
+      icao: "PAQH",
+      below: true,
+      reason: "vfr_flight",
+      min_ceiling_ft: 1500,
+      at_night: true,
+      observations: [
+        { source: "metar", observed_at: null, ceiling_ft: 1100, visibility_sm: 10, below_ceiling: true, below_visibility: false },
+      ],
+    },
+  ];
+
+  it("names the night ceiling and where it holds", () => {
+    expect(nightClause({ min_ceiling_ft: 600, stations: night })).toBe(
+      ", 1,500 ft ceiling at night at PABE and PAQH",
+    );
+  });
+
+  it("says nothing by day, or from a backend before it", () => {
+    const day = night.map((s) => ({ ...s, at_night: false, min_ceiling_ft: 600 }));
+    expect(nightClause({ min_ceiling_ft: 600, stations: day })).toBe("");
+    const older = night.map(({ icao, below, reason, observations }) => ({ icao, below, reason, observations }));
+    expect(nightClause({ min_ceiling_ft: 600, stations: older })).toBe("");
+  });
+
+  it("says the stop below is at night", () => {
+    expect(belowSummary(night)).toBe("PAQH (at night) ceiling 1,100 ft");
+  });
+
+  it("gives the night ceiling with the reason release refuses", () => {
+    const body = JSON.stringify({
+      detail: { error: "below_weather_minimums", min_ceiling_ft: 600, min_visibility_sm: 2, stations: [night[1]] },
+    });
+    expect(belowMinimumsFromError(body)).toBe(
+      "Below the company's dispatch minimums for a VFR flight (600 ft / 2 sm, 1,500 ft ceiling at night at PAQH): " +
+        "PAQH (at night) ceiling 1,100 ft. No release until it comes up. If the flight will be flown IFR, tick Flown IFR under Edit.",
+    );
   });
 });
