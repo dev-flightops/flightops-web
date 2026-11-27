@@ -169,36 +169,40 @@ export function CrewPanel({
 
       <div className="divide-y divide-border">
         {/* PIC, read-only — assigned by the picker in Flight Details. */}
-        <div className="flex items-center gap-3 px-5 py-3">
-          <span className="w-32 shrink-0 text-xs font-semibold text-foreground">
-            PIC
-            <span className="ml-1 text-status-yellow" aria-hidden="true">
-              *
-            </span>
-          </span>
-          {pic ? (
-            <span className="flex min-w-0 flex-1 items-center gap-2">
-              {picCandidate ? (
-                <span
-                  className={`h-2 w-2 shrink-0 ${DOT_CLASS[picOut ? "red" : STATUS_TO_DOT[picCandidate.status]]}`}
-                  aria-hidden="true"
-                />
-              ) : null}
-              <span className="truncate text-sm text-foreground">
-                {pic.user.full_name}
+        <div className="px-5 py-3">
+          <div className="flex items-center gap-3">
+            <span className="w-32 shrink-0 text-xs font-semibold text-foreground">
+              PIC
+              <span className="ml-1 text-status-yellow" aria-hidden="true">
+                *
               </span>
-              {picCandidate ? (
-                <span className="shrink-0 text-[0.68rem] text-muted-foreground">
-                  {picOut ?? STATUS_LABEL[picCandidate.status]}
+            </span>
+            {pic ? (
+              <span className="flex min-w-0 flex-1 items-center gap-2">
+                {picCandidate ? (
+                  <span
+                    className={`h-2 w-2 shrink-0 ${DOT_CLASS[picOut ? "red" : STATUS_TO_DOT[picCandidate.status]]}`}
+                    aria-hidden="true"
+                  />
+                ) : null}
+                <span className="truncate text-sm text-foreground">
+                  {pic.user.full_name}
                 </span>
-              ) : null}
-              <TypeWarning text={seatWarning(picCandidate, "pic")} />
-            </span>
-          ) : (
-            <span className="flex-1 text-sm italic text-muted-foreground">
-              Not assigned — pick a PIC in Flight Details above.
-            </span>
-          )}
+                {picCandidate ? (
+                  <span className="shrink-0 text-[0.68rem] text-muted-foreground">
+                    {picOut ? "Not available" : STATUS_LABEL[picCandidate.status]}
+                  </span>
+                ) : null}
+                <TypeWarning text={seatWarning(picCandidate, "pic")} />
+              </span>
+            ) : (
+              <span className="flex-1 text-sm italic text-muted-foreground">
+                Not assigned — pick a PIC in Flight Details above.
+              </span>
+            )}
+          </div>
+          {/* Why, under the row, where it can wrap (Codex, #516). */}
+          {picOut ? <p className="mt-1 pl-[8.75rem] text-[0.68rem] text-status-red">{picOut}</p> : null}
         </div>
 
         {SEATS.map(({ role, label, required }) => {
@@ -245,7 +249,7 @@ export function CrewPanel({
                       </span>
                       {current ? (
                         <span className="shrink-0 text-[0.68rem] text-muted-foreground">
-                          {currentOut ?? STATUS_LABEL[current.status]}
+                          {currentOut ? "Not available" : STATUS_LABEL[current.status]}
                         </span>
                       ) : null}
                       <TypeWarning text={seatWarning(current, role)} />
@@ -288,6 +292,9 @@ export function CrewPanel({
                   </select>
                 )}
               </div>
+              {currentOut ? (
+                <p className="mt-1 pl-[8.75rem] text-[0.68rem] text-status-red">{currentOut}</p>
+              ) : null}
               {role === "sic" && !assigned && sicAvailability ? (
                 <NotAvailableList seat="SIC" options={sicAvailability} />
               ) : null}
