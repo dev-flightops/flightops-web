@@ -1599,6 +1599,9 @@ export interface FratThresholdConfigResponse {
    *  ops' compliance settings (`vfr_only_types`). */
   dispatch_min_ceiling_ft: number;
   dispatch_min_visibility_sm: number;
+  /** The ceiling a VFR flight is held to at a stop it reaches at night
+   *  (LOG-68): the GOM's 1,500 ft unless the company changes it. */
+  dispatch_night_min_ceiling_ft: number;
   /** How long a filed FRAT can be carried to a later leg. The
    *  operator, 22 Sep 2026, on what breaks a block: "4 hours or any
    *  condition that increases risk." Zero switches blocks off — every
@@ -1613,6 +1616,7 @@ export interface FratThresholdConfigResponse {
   default_vfr_min_visibility_sm: number;
   default_dispatch_min_ceiling_ft: number;
   default_dispatch_min_visibility_sm: number;
+  default_dispatch_night_min_ceiling_ft: number;
   default_block_validity_hours: number;
   /** Where each company limit came from, for those a person approved
    *  from a company document (#48). A limit set by hand has none. */
@@ -1638,6 +1642,7 @@ export interface FratThresholdConfigUpdateRequest {
    *  keeps them; this app always sends both. */
   dispatch_min_ceiling_ft: number;
   dispatch_min_visibility_sm: number;
+  dispatch_night_min_ceiling_ft: number;
   block_validity_hours: number;
   rationale?: string | null;
 }
@@ -2971,6 +2976,12 @@ export interface MinimumsStation {
   /** Why the minimums hold this stop (#110): the aircraft isn't IFR
    *  certified, or the field has no instrument approach. */
   reason?: "not_ifr_certified" | "vfr_flight" | "no_instrument_approach" | null;
+  /** The ceiling this stop is held to (LOG-68): the company's night ceiling
+   *  where the flight is here at night and it's higher. Absent from an
+   *  older backend: the view's own. */
+  min_ceiling_ft?: number | null;
+  /** The flight is at this stop at night (14 CFR 1.1). */
+  at_night?: boolean;
   /** Empty when the stop has no weather to compare. */
   observations: MinimumsObservation[];
 }

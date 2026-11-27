@@ -194,3 +194,59 @@ describe("WeatherMinimumsNotice — a VFR flight (#123)", () => {
     expect(alert).not.toHaveTextContent(/not IFR certified/);
   });
 });
+
+describe("WeatherMinimumsNotice — at night (LOG-68)", () => {
+  const AT_NIGHT: WeatherMinimumsView = {
+    applies: true,
+    airframe_type: "caravan",
+    min_ceiling_ft: 600,
+    min_visibility_sm: "2.0",
+    below: true,
+    stations: [
+      {
+        icao: "PAQH",
+        below: true,
+        reason: "vfr_flight",
+        min_ceiling_ft: 1500,
+        at_night: true,
+        observations: [
+          {
+            source: "metar",
+            observed_at: null,
+            ceiling_ft: 1100,
+            visibility_sm: 10,
+            below_ceiling: true,
+            below_visibility: false,
+          },
+        ],
+      },
+    ],
+  };
+
+  it("holds a VFR stop at night to the night ceiling, and says so", () => {
+    render(<WeatherMinimumsNotice minimums={AT_NIGHT} />);
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "PAQH (at night) ceiling 1,100 ft. The flight is flown VFR, and the company’s dispatch minimums for a VFR flight are 600 ft / 2 sm at every stop, 1,500 ft ceiling at night at PAQH.",
+    );
+  });
+
+  it("says where the night ceiling held and was met", () => {
+    const met: WeatherMinimumsView = {
+      ...AT_NIGHT,
+      below: false,
+      stations: [
+        {
+          ...AT_NIGHT.stations[0],
+          below: false,
+          observations: [{ ...AT_NIGHT.stations[0].observations[0], ceiling_ft: 2000, below_ceiling: false }],
+        },
+      ],
+    };
+    render(<WeatherMinimumsNotice minimums={met} />);
+    expect(
+      screen.getByText(
+        "Flown VFR: held to the company’s dispatch minimums of 600 ft / 2 sm at every stop, 1,500 ft ceiling at night at PAQH, and met on the latest weather.",
+      ),
+    ).toBeInTheDocument();
+  });
+});

@@ -50,6 +50,9 @@ function config(over: Partial<FratThresholdConfigResponse> = {}) {
     dispatch_min_visibility_sm: 2,
     default_dispatch_min_ceiling_ft: 600,
     default_dispatch_min_visibility_sm: 2,
+    // LOG-68: the GOM's night ceiling.
+    dispatch_night_min_ceiling_ft: 1500,
+    default_dispatch_night_min_ceiling_ft: 1500,
     block_validity_hours: 4,
     default_block_validity_hours: 4,
     ...over,
@@ -171,6 +174,7 @@ describe("saving", () => {
       vfrMinVisibilitySm: 3,
       dispatchMinCeilingFt: 600,
       dispatchMinVisibilitySm: 2,
+      dispatchNightMinCeilingFt: 1500,
       blockValidityHours: 4,
       rationale: "Tightened after review.",
     });
@@ -488,12 +492,25 @@ describe("ThresholdForm — limits approved from a document (#48)", () => {
   it("saves the dispatch minimums with the rest of the policy (#89)", async () => {
     const user = userEvent.setup();
     const action = form();
-    const ceiling = screen.getByLabelText(/Dispatch minimum ceiling/i);
+    const ceiling = screen.getByLabelText(/^Dispatch minimum ceiling \(ft\)/i);
     await user.clear(ceiling);
     await user.type(ceiling, "700");
     await user.click(screen.getByRole("button", { name: /FRAT policy/i }));
     expect(action).toHaveBeenCalledWith(
       expect.objectContaining({ dispatchMinCeilingFt: 700, dispatchMinVisibilitySm: 2 }),
+    );
+  });
+
+  it("saves the night ceiling with the rest of the policy (LOG-68)", async () => {
+    const user = userEvent.setup();
+    const action = form();
+    const night = screen.getByLabelText(/Dispatch minimum ceiling at night/i);
+    expect(night).toHaveValue(1500);
+    await user.clear(night);
+    await user.type(night, "1200");
+    await user.click(screen.getByRole("button", { name: /FRAT policy/i }));
+    expect(action).toHaveBeenCalledWith(
+      expect.objectContaining({ dispatchMinCeilingFt: 600, dispatchNightMinCeilingFt: 1200 }),
     );
   });
 
