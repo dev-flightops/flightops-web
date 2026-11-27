@@ -311,7 +311,7 @@ describe("PicPicker: when nobody is available (#91)", () => {
     );
     expect(
       screen.getByText(
-        "— Item 1: Not on file: no record entered yet.; Item 2: Not on file: no record entered yet.; and 12 more",
+        "— Item 1: Not on file: no record entered yet; Item 2: Not on file: no record entered yet; and 12 more",
       ),
     ).toBeInTheDocument();
   });

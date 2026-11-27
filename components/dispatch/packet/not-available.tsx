@@ -5,8 +5,14 @@ import type { CrewOption } from "@/lib/api/ops";
 /** The first two reasons and how many more: a pilot with every record
  *  still to enter has a dozen, and the record lists them all. */
 function summary(reasons: string[]): string {
-  if (reasons.length <= 2) return reasons.join("; ");
-  return `${reasons.slice(0, 2).join("; ")}; and ${reasons.length - 2} more`;
+  // Each reason is a sentence; joined, it drops its full stop (it read
+  // "carries passengers.; Night Landing …").
+  const bare = (reason: string) => reason.replace(/\.$/, "");
+  const shown = reasons.slice(0, 2);
+  if (reasons.length <= 2) {
+    return shown.map((reason, i) => (i < shown.length - 1 ? bare(reason) : reason)).join("; ");
+  }
+  return `${shown.map(bare).join("; ")}; and ${reasons.length - 2} more`;
 }
 
 /**
